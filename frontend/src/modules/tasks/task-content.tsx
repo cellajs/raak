@@ -1,4 +1,5 @@
 import '@blocknote/shadcn/style.css';
+import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dispatchCustomEvent } from '~/lib/custom-events';
@@ -33,12 +34,12 @@ const TaskContent = ({ task, mode, isExpanded, isEditing }: Props) => {
           />
 
           {(task.expandable || task.subTasks.length > 0) && (
-            <div className="inline-flex gap-1 items-center opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 pl-2">
+            <div className="inline-flex gap-1 items-center opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 pl-2 -mt-[0.15rem]">
               <Button variant="link" size="micro" onClick={() => dispatchCustomEvent('toggleTaskExpand', task.id)} className="inline-flex py-0 h-5">
                 {t('common:more').toLowerCase()}
               </Button>
               {task.subTasks.length > 0 && (
-                <div className="inline-flex py-0.5 text-xs h-5 ml-1 gap-[.1rem]">
+                <div className="inline-flex py-0.5 text-xs h-5 ml-1 gap-[.1rem] cursor-pointer">
                   <span className="text-success">{task.subTasks.filter((t) => t.status === 6).length}</span>
                   <span className="font-light">/</span>
                   <span className="font-light">{task.subTasks.length}</span>
@@ -52,7 +53,7 @@ const TaskContent = ({ task, mode, isExpanded, isEditing }: Props) => {
           )}
         </div>
       ) : (
-        <>
+        <motion.div initial={{ y: -10 }} animate={{ y: 0 }} exit={{ y: -10 }} transition={{ duration: 0.3 }}>
           {isEditing ? (
             <TaskBlockNote id={task.id} projectId={task.projectId} html={task.description || ''} mode={mode} className={expandedStyle} />
           ) : (
@@ -75,7 +76,7 @@ const TaskContent = ({ task, mode, isExpanded, isEditing }: Props) => {
 
             <CreateSubTaskForm formOpen={createSubTask} setFormState={(value) => setCreateSubTask(value)} parentTask={task} />
           </div>
-        </>
+        </motion.div>
       )}
     </div>
   );
