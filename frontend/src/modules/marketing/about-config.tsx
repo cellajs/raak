@@ -41,6 +41,19 @@ export const pricingPlans: PricingPlan[] = [
   { id: 'pro', action: 'contact_us', priceId: null, featureCount: 4, borderColor: 'ring-4 ring-primary/5', popular: true },
 ];
 
+interface FaqItem {
+  id: string;
+  link?: string;
+}
+export const faqsData: FaqItem[] = [
+  { id: 'roadmap', link: config.company.githubUrl },
+  { id: 'open-source-software', link: '/contact' },
+  { id: 'linear-comparison' },
+  { id: 'pivotal-comparison', link: 'https://news.ycombinator.com/item?id=41591622' },
+  { id: 'raak-integration' },
+  { id: 'pivotal-migrations', link: '/contact' },
+];
+
 export const counts = [
   { id: 'user', title: 'common:users', icon: Users },
   { id: 'organization', title: 'common:organizations', icon: Building2 },
