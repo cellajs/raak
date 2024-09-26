@@ -1,7 +1,7 @@
 import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { infiniteQueryOptions, useInfiniteQuery } from '@tanstack/react-query';
+import { infiniteQueryOptions, useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { Bird } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -9,10 +9,9 @@ import type { SortColumn } from 'react-data-grid';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { z } from 'zod';
-import { type GetTasksParams, getTasksList, updateTask } from '~/api/tasks';
+import { type GetTasksParams, getTasksList } from '~/api/tasks';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { useHotkeys } from '~/hooks/use-hot-keys';
-import { useMutateInfiniteTaskQueryData } from '~/hooks/use-mutate-query-data';
 import useSaveInSearchParams from '~/hooks/use-save-in-search-params';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { DataTable } from '~/modules/common/data-table';
@@ -30,7 +29,7 @@ import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-dow
 import { useColumns } from '~/modules/tasks/tasks-table/columns';
 import TableHeader from '~/modules/tasks/tasks-table/header/table-header';
 import { TaskTableSearch } from '~/modules/tasks/tasks-table/header/table-search';
-import type { TaskTableOperationEvent } from '~/modules/tasks/types';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
@@ -117,14 +116,18 @@ export default function TasksTable() {
     }),
   );
 
-  const callback = useMutateInfiniteTaskQueryData([
-    'tasks',
-    search.projectId ? search.projectId : projects.map((p) => p.id).join('_'),
-    selectedStatuses.join('_'),
-    searchQuery,
-    sort,
-    order,
-  ]);
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
+
+  // const callback = useMutateInfiniteTaskQueryData([
+  //   'tasks',
+  //   search.projectId ? search.projectId : projects.map((p) => p.id).join('_'),
+  //   selectedStatuses.join('_'),
+  //   searchQuery,
+  //   sort,
+  //   order,
+  // ]);
 
   const tasks = useMemo(() => tasksQuery.data?.pages[0].items || [], [tasksQuery.data]);
 
@@ -153,10 +156,10 @@ export default function TasksTable() {
     setFocusedTaskId(taskId);
   };
 
-  const handleCRUD = (event: TaskTableOperationEvent) => {
-    const { array, action } = event.detail;
-    callback(array, action);
-  };
+  // const handleCRUD = (event: TaskTableOperationEvent) => {
+  //   const { array, action } = event.detail;
+  //   callback(array, action);
+  // };
 
   // Open on key press
   const hotKeyPress = (field: string) => {
@@ -178,7 +181,7 @@ export default function TasksTable() {
     ['T', () => hotKeyPress('type')],
   ]);
   useEventListener('openTaskCardPreview', (event) => handleOpenPreview(event.detail));
-  useEventListener('taskTableOperation', handleCRUD);
+  // useEventListener('taskTableOperation', handleCRUD);
 
   useEffect(() => {
     if (!rows.length || !sheet.get(`task-preview-${focusedTaskId}`)) return;
@@ -220,8 +223,12 @@ export default function TasksTable() {
           if (!edge || !isSubTask) return;
           const newOrder: number = getRelativeTaskOrder(edge, rows, targetData.order, sourceData.item.id, targetData.item.parentId ?? undefined);
           try {
-            const updatedTask = await updateTask(sourceData.item.id, 'order', newOrder);
-            callback([updatedTask], 'updateSubTask');
+            await updateTask.mutateAsync({
+              id: sourceData.item.id,
+              key: 'order',
+              data: newOrder,
+            });
+            // callback([updatedTask], 'updateSubTask');
           } catch (err) {
             toast.error(t('common:error.reorder_resources', { resources: t('app:todo') }));
           }

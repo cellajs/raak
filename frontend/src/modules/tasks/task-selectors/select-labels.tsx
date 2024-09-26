@@ -1,22 +1,21 @@
-import { useLocation } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
 import { CommandEmpty } from 'cmdk';
 import { Check, Dot, History, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { type CreateLabelParams, createLabel, updateLabel } from '~/api/labels.ts';
-import { updateTask } from '~/api/tasks.ts';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
-import { dispatchCustomEvent } from '~/lib/custom-events';
 import { nanoid, recentlyUsed } from '~/lib/utils.ts';
 import { Kbd } from '~/modules/common/kbd.tsx';
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Badge } from '~/modules/ui/badge.tsx';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandLoading } from '~/modules/ui/command.tsx';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import { useWorkspaceUIStore } from '~/store/workspace-ui.ts';
 import { useWorkspaceStore } from '~/store/workspace.ts';
-import type { Label } from '~/types/app';
+import type { Label, Task } from '~/types/app';
 
 export const badgeStyle = (color?: string | null) => {
   if (!color) return {};
@@ -33,7 +32,7 @@ interface SetLabelsProps {
 
 const SetLabels = ({ value, projectId, organizationId, creationValueChange, triggerWidth = 280 }: SetLabelsProps) => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
+  // const { pathname } = useLocation();
   const isMobile = useBreakpoints('max', 'sm');
   const { changeColumn } = useWorkspaceUIStore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,6 +47,10 @@ const SetLabels = ({ value, projectId, organizationId, creationValueChange, trig
     () => labels.filter((l) => l.projectId === projectId).sort((a, b) => new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime()),
     [labels],
   );
+
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
 
   const isSearching = searchValue.length > 0;
 
@@ -65,9 +68,14 @@ const SetLabels = ({ value, projectId, organizationId, creationValueChange, trig
     if (!focusedTaskId) return;
     try {
       const labelIds = labels.map((l) => l.id);
-      const updatedTask = await updateTask(focusedTaskId, 'labels', labelIds);
-      const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
+      await updateTask.mutateAsync({
+        id: focusedTaskId,
+        key: 'labels',
+        data: labelIds,
+        projectId,
+      });
+      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
+      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
       return;
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));

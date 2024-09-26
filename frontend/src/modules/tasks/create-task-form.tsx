@@ -266,10 +266,18 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ tasks, projectId, organ
                       className="relative font-light flex gap-2 justify-start"
                       type="button"
                       onClick={(event) => {
-                        dropdowner(<SelectImpact value={selectedImpactValue} triggerWidth={bounds.width - 3} creationValueChange={onChange} />, {
-                          id: `impact-${defaultId}`,
-                          trigger: event.currentTarget,
-                        });
+                        dropdowner(
+                          <SelectImpact
+                            projectId={projectId}
+                            value={selectedImpactValue}
+                            triggerWidth={bounds.width - 3}
+                            creationValueChange={onChange}
+                          />,
+                          {
+                            id: `impact-${defaultId}`,
+                            trigger: event.currentTarget,
+                          },
+                        );
                       }}
                     >
                       {selectedImpact !== null ? (

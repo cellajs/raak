@@ -1,17 +1,17 @@
-import { useLocation } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
 import { Bolt, Bug, Check, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { updateTask } from '~/api/tasks';
-import { dispatchCustomEvent } from '~/lib/custom-events';
 import { cn } from '~/lib/utils';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { Kbd } from '~/modules/common/kbd';
 import type { TaskType } from '~/modules/tasks/create-task-form';
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/modules/ui/command';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import { useWorkspaceStore } from '~/store/workspace';
+import type { Task } from '~/types/app';
 
 type Type = {
   value: (typeof taskTypes)[number]['value'];
@@ -26,24 +26,34 @@ export const taskTypes = [
 ] as const;
 
 export interface SelectTaskTypeProps {
+  projectId?: string;
   currentType: TaskType;
   className?: string;
 }
 
-const SelectTaskType = ({ currentType, className = '' }: SelectTaskTypeProps) => {
+const SelectTaskType = ({ projectId, currentType, className = '' }: SelectTaskTypeProps) => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
+  // const { pathname } = useLocation();
   const { focusedTaskId } = useWorkspaceStore();
   const [selectedType, setSelectedType] = useState<Type | undefined>(taskTypes[taskTypes.findIndex((type) => type.value === currentType)]);
   const [searchValue, setSearchValue] = useState('');
   const isSearching = searchValue.length > 0;
 
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
+
   const changeTaskType = async (newType: TaskType) => {
     if (!focusedTaskId) return;
     try {
-      const updatedTask = await updateTask(focusedTaskId, 'type', newType);
-      const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
+      await updateTask.mutateAsync({
+        id: focusedTaskId,
+        key: 'type',
+        data: newType,
+        projectId,
+      });
+      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
+      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }

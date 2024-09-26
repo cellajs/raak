@@ -8,6 +8,7 @@ import { queryClient } from '~/lib/router';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
+import { taskKeys } from '~/query-client-provider';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
 
@@ -16,7 +17,7 @@ const TaskSelectedTableButtons = () => {
   const { pathname } = useLocation();
   const { selectedTasks, setSelectedTasks } = useWorkspaceStore();
 
-  const queries = queryClient.getQueriesData({ queryKey: ['boardTasks'] });
+  const queries = queryClient.getQueriesData({ queryKey: taskKeys.list() });
 
   const onRemove = () => {
     deleteTasks(selectedTasks)

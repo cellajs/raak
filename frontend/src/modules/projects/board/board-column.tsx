@@ -21,6 +21,7 @@ import { TaskCard } from '~/modules/tasks/task';
 import type { CustomEventDetailId, TaskChangeEvent, TaskStates } from '~/modules/tasks/types';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
+import { taskKeys } from '~/query-client-provider';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
@@ -35,7 +36,7 @@ interface BoardColumnProps {
 
 export const tasksQueryOptions = ({ projectId }: GetTasksParams) => {
   return queryOptions({
-    queryKey: ['boardTasks', projectId],
+    queryKey: taskKeys.list({ projectId }),
     queryFn: async () =>
       await getTasksList({
         projectId,

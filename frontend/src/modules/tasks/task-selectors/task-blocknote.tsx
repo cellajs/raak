@@ -2,7 +2,6 @@ import { FilePanelController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { useLocation } from '@tanstack/react-router';
 import { type KeyboardEventHandler, Suspense, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { updateTask } from '~/api/tasks';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import router from '~/lib/router';
 import type { Mode } from '~/store/theme';
@@ -16,7 +15,10 @@ import { customSchema } from '~/modules/common/blocknote/blackbote-config';
 import { BlockNoteForTaskContent } from '~/modules/common/blocknote/blocknote-content';
 import { triggerFocus } from '~/modules/common/blocknote/helpers';
 import '~/modules/common/blocknote/styles.css';
+import { useMutation } from '@tanstack/react-query';
 import { taskExpandable } from '~/modules/tasks/helpers';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
+import type { Task } from '~/types/app';
 import UppyFilePanel from './uppy-file-panel';
 
 interface TaskBlockNoteProps {
@@ -44,8 +46,11 @@ export const TaskBlockNote = ({
 }: TaskBlockNoteProps) => {
   const { t } = useTranslation();
   const editor = useCreateBlockNote({ schema: customSchema, trailingBlock: false });
-
   const wasInitial = useRef(false);
+
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
 
   const { pathname } = useLocation();
   const { members } = useWorkspaceStore();
@@ -53,15 +58,32 @@ export const TaskBlockNote = ({
   const handleUpdateHTML = useCallback(
     async (newContent: string, newSummary: string) => {
       try {
-        await updateTask(id, 'summary', newSummary);
-        const updatedTask = await updateTask(id, 'description', newContent);
+        await updateTask.mutateAsync({
+          id,
+          key: 'summary',
+          data: newSummary,
+          projectId,
+        });
+        const updatedTask = await updateTask.mutateAsync({
+          id,
+          key: 'description',
+          data: newContent,
+          projectId,
+        });
         const expandable = taskExpandable(newSummary, newContent);
 
-        if (updatedTask.expandable !== expandable) updateTask(id, 'expandable', expandable);
+        if (updatedTask.expandable !== expandable) {
+          updateTask.mutate({
+            id,
+            key: 'expandable',
+            data: expandable,
+            projectId,
+          });
+        }
 
-        const action = updatedTask.parentId ? 'updateSubTask' : 'update';
-        const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-        dispatchCustomEvent(eventName, { array: [{ ...updatedTask, expandable }], action, projectId: updatedTask.projectId });
+        // const action = updatedTask.parentId ? 'updateSubTask' : 'update';
+        // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
+        // dispatchCustomEvent(eventName, { array: [{ ...updatedTask, expandable }], action, projectId: updatedTask.projectId });
       } catch (err) {
         toast.error(t('common:error.update_resource', { resource: t('app:todo') }));
       }

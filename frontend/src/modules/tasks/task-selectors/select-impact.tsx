@@ -1,10 +1,8 @@
-import { useLocation } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { updateTask } from '~/api/tasks';
-import { dispatchCustomEvent } from '~/lib/custom-events';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { Kbd } from '~/modules/common/kbd';
 import type { TaskImpact } from '~/modules/tasks/create-task-form';
@@ -14,7 +12,9 @@ import { LowIcon } from '~/modules/tasks/task-selectors/impact-icons/low';
 import { MediumIcon } from '~/modules/tasks/task-selectors/impact-icons/medium';
 import { NoneIcon } from '~/modules/tasks/task-selectors/impact-icons/none';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/modules/ui/command';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import { useWorkspaceStore } from '~/store/workspace';
+import type { Task } from '~/types/app';
 
 type ImpactOption = {
   value: (typeof impacts)[number]['value'];
@@ -31,26 +31,36 @@ export const impacts = [
 ] as const;
 
 interface SelectImpactProps {
+  projectId?: string;
   value: TaskImpact;
   triggerWidth?: number;
   creationValueChange?: (newValue: TaskImpact) => void;
 }
 
-const SelectImpact = ({ value, triggerWidth = 192, creationValueChange }: SelectImpactProps) => {
+const SelectImpact = ({ projectId, value, triggerWidth = 192, creationValueChange }: SelectImpactProps) => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
+  // const { pathname } = useLocation();
   const { focusedTaskId } = useWorkspaceStore();
   const [selectedImpact, setSelectedImpact] = useState<ImpactOption | null>(value !== null ? impacts[value] : null);
   const [searchValue, setSearchValue] = useState('');
   const isSearching = searchValue.length > 0;
 
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
+
   const changeTaskImpact = async (newImpact: TaskImpact) => {
     try {
       if (creationValueChange) return creationValueChange(newImpact);
       if (!focusedTaskId) return;
-      const updatedTask = await updateTask(focusedTaskId, 'impact', newImpact);
-      const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
+      await updateTask.mutateAsync({
+        id: focusedTaskId,
+        key: 'impact',
+        data: newImpact,
+        projectId,
+      });
+      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
+      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }

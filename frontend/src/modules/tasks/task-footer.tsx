@@ -1,8 +1,7 @@
-import { useLocation } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
 import { ChevronDown, Tag, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { updateTask } from '~/api/tasks';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { queryClient } from '~/lib/router';
@@ -17,6 +16,7 @@ import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import type { Task } from '~/types/app';
 
 interface TasksFooterProps {
@@ -29,18 +29,28 @@ interface TasksFooterProps {
 
 export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSheet = false }: TasksFooterProps) => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
+  // const { pathname } = useLocation();
   const isMobile = useBreakpoints('max', 'sm');
 
   const selectedImpact = task.impact !== null ? impacts[task.impact] : null;
 
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
+
   const updateStatus = async (newStatus: number) => {
     try {
-      const query = queryClient.getQueryData(['boardTasks', task.projectId]) as { items: Task[] };
+      const query = queryClient.getQueryData(taskKeys.list({ projectId: task.projectId })) as { items: Task[] };
       const newOrder = getNewStatusTaskOrder(task.status, newStatus, isSheet ? (tasks ?? []) : (query.items ?? []));
-      const updatedTask = await updateTask(task.id, 'status', newStatus, newOrder);
-      const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: task.projectId });
+      await updateTask.mutateAsync({
+        id: task.id,
+        key: 'status',
+        data: newStatus,
+        order: newOrder,
+        projectId: task.projectId,
+      });
+      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
+      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: task.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }

@@ -1,18 +1,18 @@
-import { useLocation } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
 import { Check, XCircle } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { updateTask } from '~/api/tasks';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
-import { dispatchCustomEvent } from '~/lib/custom-events';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { Kbd } from '~/modules/common/kbd';
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '~/modules/ui/command';
 import { Input } from '~/modules/ui/input';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import { useWorkspaceStore } from '~/store/workspace';
+import type { Task } from '~/types/app';
 import type { User } from '~/types/common';
 
 type AssignableMember = Omit<User, 'counts'>;
@@ -26,13 +26,17 @@ interface AssignMembersProps {
 
 const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 320 }: AssignMembersProps) => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
+  // const { pathname } = useLocation();
   const { focusedTaskId, members } = useWorkspaceStore();
   const [selectedMembers, setSelectedMembers] = useState<AssignableMember[]>(value);
   const [searchValue, setSearchValue] = useState('');
   const [showAll, setShowAll] = useState(false);
   const isMobile = useBreakpoints('max', 'sm');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
 
   const projectMembers = members.filter((m) => m.membership.projectId === projectId);
 
@@ -51,13 +55,14 @@ const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 3
   const changeAssignedTo = async (members: AssignableMember[]) => {
     if (!focusedTaskId) return;
     try {
-      const updatedTask = await updateTask(
-        focusedTaskId,
-        'assignedTo',
-        members.map((user) => user.id),
-      );
-      const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
+      await updateTask.mutateAsync({
+        id: focusedTaskId,
+        key: 'assignedTo',
+        data: members.map((user) => user.id),
+        projectId,
+      });
+      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
+      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }

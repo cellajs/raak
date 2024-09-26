@@ -20,8 +20,8 @@ import type { ContextEntity, DraggableItemData, Membership } from '~/types/commo
 import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { updateTask } from '~/api/tasks';
 import { useMutateTasksQueryData, useMutateWorkSpaceQueryData } from '~/hooks/use-mutate-query-data';
 import { queryClient } from '~/lib/router';
 import { dropdowner } from '~/modules/common/dropdowner/state';
@@ -30,6 +30,7 @@ import { getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers'
 import { TaskCard } from '~/modules/tasks/task';
 import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
 import type { TaskCardFocusEvent, TaskCardToggleSelectEvent, TaskOperationEvent, TaskStates, TaskStatesChangeEvent } from '~/modules/tasks/types';
+import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
@@ -102,13 +103,17 @@ export default function Board() {
     from: WorkspaceBoardRoute.id,
   });
 
+  const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
+    mutationKey: taskKeys.update(),
+  });
+
   // Finding the project based on the query parameter or defaulting to the first project
   const mobileDeviceProject = useMemo(() => {
     if (project) return projects.find((p) => p.slug === project) || projects[0];
     return projects[0];
   }, [project, projects]);
 
-  const queries = queryClient.getQueriesData({ queryKey: ['boardTasks'] });
+  const queries = queryClient.getQueriesData({ queryKey: taskKeys.list() });
 
   const tasks = useMemo(() => {
     return queries.flatMap((el) => {
@@ -129,7 +134,7 @@ export default function Board() {
     let newFocusedTask: { projectId: string; id: string } | undefined;
     if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId);
     else {
-      const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
+      const { items: tasks } = queryClient.getQueryData(taskKeys.list({ projectId: projects[0].id })) as { items: Task[] };
       const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
       newFocusedTask = sortedTasks[0];
     }
@@ -149,7 +154,7 @@ export default function Board() {
     let newFocusedTask: { projectId: string } | undefined;
     if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId);
     else {
-      const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
+      const { items: tasks } = queryClient.getQueryData(taskKeys.list({ projectId: projects[0].id })) as { items: Task[] };
       const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
       newFocusedTask = sortedTasks[0];
     }
@@ -264,9 +269,9 @@ export default function Board() {
 
   const handleTaskOperations = (event: TaskOperationEvent) => {
     const { array, action, projectId } = event.detail;
-    const callback = useMutateTasksQueryData(['boardTasks', projectId]);
+    const callback = useMutateTasksQueryData(taskKeys.list({ projectId }));
     callback(array, action);
-    const { items: tasks } = queryClient.getQueryData(['boardTasks', projectId]) as { items: Task[] };
+    const { items: tasks } = queryClient.getQueryData(taskKeys.list({ projectId })) as { items: Task[] };
     if (!tasks.length || !sheet.get(`task-preview-${focusedTaskId}`)) return;
     const [sheetTask] = tasks.filter((t) => t.id === focusedTaskId);
     sheet.update(`task-preview-${sheetTask.id}`, {
@@ -319,19 +324,28 @@ export default function Board() {
 
           if (!isTask && !isSubTask) return;
 
-          const { items: tasks } = queryClient.getQueryData(['boardTasks', sourceData.item.projectId]) as { items: Task[] };
-          const mainCallback = useMutateTasksQueryData(['boardTasks', sourceData.item.projectId]);
+          const { items: tasks } = queryClient.getQueryData(taskKeys.list({ projectId: sourceData.item.projectId })) as { items: Task[] };
+          const mainCallback = useMutateTasksQueryData(taskKeys.list({ projectId: sourceData.item.projectId }));
           if (isTask) {
             const newOrder: number = getRelativeTaskOrder(edge, tasks, targetData.order, sourceData.item.id, undefined, sourceData.item.status);
 
             try {
               if (sourceData.item.projectId !== targetData.item.projectId) {
-                const updatedTask = await updateTask(sourceData.item.id, 'projectId', targetData.item.projectId, newOrder);
-                const targetProjectCallback = useMutateTasksQueryData(['boardTasks', targetData.item.projectId]);
+                const updatedTask = await updateTask.mutateAsync({
+                  id: sourceData.item.id,
+                  key: 'projectId',
+                  data: targetData.item.projectId,
+                  order: newOrder,
+                });
+                const targetProjectCallback = useMutateTasksQueryData(taskKeys.list({ projectId: targetData.item.projectId }));
                 mainCallback([updatedTask], 'delete');
                 targetProjectCallback([updatedTask], 'create');
               } else {
-                const updatedTask = await updateTask(sourceData.item.id, 'order', newOrder);
+                const updatedTask = await updateTask.mutateAsync({
+                  id: sourceData.item.id,
+                  key: 'order',
+                  data: newOrder,
+                });
                 mainCallback([updatedTask], 'update');
               }
             } catch (err) {
@@ -342,7 +356,11 @@ export default function Board() {
           if (isSubTask) {
             const newOrder = getRelativeTaskOrder(edge, tasks, targetData.order, sourceData.item.id, targetData.item.parentId ?? undefined);
             try {
-              const updatedTask = await updateTask(sourceData.item.id, 'order', newOrder);
+              const updatedTask = await updateTask.mutateAsync({
+                id: sourceData.item.id,
+                key: 'order',
+                data: newOrder,
+              });
               mainCallback([updatedTask], 'updateSubTask');
             } catch (err) {
               toast.error(t('common:error.reorder_resources', { resources: t('app:todo') }));
