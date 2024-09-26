@@ -29,7 +29,13 @@ import { sheet } from '~/modules/common/sheeter/state';
 import { getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
 import { TaskCard } from '~/modules/tasks/task';
 import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
-import type { TaskCardFocusEvent, TaskCardToggleSelectEvent, TaskEditToggleEvent, TaskOperationEvent } from '~/modules/tasks/types';
+import type {
+  CustomEventDetailId,
+  TaskCardFocusEvent,
+  TaskCardToggleSelectEvent,
+  TaskEditToggleEvent,
+  TaskOperationEvent,
+} from '~/modules/tasks/types';
 import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
@@ -60,14 +66,12 @@ function BoardDesktop({
   expandedTasks,
   editingTasks,
   columnTaskCreate,
-  toggleCreateForm,
 }: {
   expandedTasks: Record<string, boolean>;
   editingTasks: Record<string, boolean>;
   projects: Project[];
   workspaceId: string;
   columnTaskCreate: Record<string, boolean>;
-  toggleCreateForm: (projectId: string) => void;
 }) {
   const { ref, bounds } = useMeasure();
   const scrollerWidth = getScrollerWidth(bounds.width, projects.length);
@@ -82,14 +86,7 @@ function BoardDesktop({
             return (
               <Fragment key={project.id}>
                 <ResizablePanel key={project.id} id={project.id} order={index} minSize={panelMinSize}>
-                  <BoardColumn
-                    expandedTasks={expandedTasks}
-                    editingTasks={editingTasks}
-                    createForm={isFormOpen}
-                    toggleCreateForm={toggleCreateForm}
-                    key={project.id}
-                    project={project}
-                  />
+                  <BoardColumn expandedTasks={expandedTasks} editingTasks={editingTasks} createForm={isFormOpen} key={project.id} project={project} />
                 </ResizablePanel>
                 {projects.length > index + 1 && (
                   <ResizableHandle className="w-1.5 rounded border border-background -mx-2 bg-transparent hover:bg-primary/50 data-[resize-handle-state=drag]:bg-primary transition-all" />
@@ -126,12 +123,14 @@ export default function Board() {
   }, [project, projects]);
 
   const queries = queryClient.getQueriesData({ queryKey: ['boardTasks'] });
+
   const tasks = useMemo(() => {
     return queries.flatMap((el) => {
       const [, data] = el as [string[], undefined | { items: Task[] }];
       return data?.items ?? [];
     });
   }, [queries]);
+
   const [currentTask] = useMemo(() => {
     const taskId = taskIdPreview ? taskIdPreview : focusedTaskId;
     return tasks.filter((t) => t.id === taskId);
@@ -159,7 +158,7 @@ export default function Board() {
   };
 
   const handleVerticalArrowKeyDown = async (event: KeyboardEvent) => {
-    if (!projects.length) return;
+    if (!projects.length || (focusedTaskId && editingTasks[focusedTaskId])) return;
 
     const projectSettings = workspaces[workspace.id]?.columns.find((el) => el.columnId === projects[0].id);
     let newFocusedTask: { projectId: string; id: string } | undefined;
@@ -212,6 +211,13 @@ export default function Board() {
     toggleCreateTaskForm(projects[projectIndex].id);
   };
 
+  const handleTaskFormClick = (e: CustomEventDetailId) => {
+    const { detail: idOrSlug } = e;
+    if (!idOrSlug) return toggleCreateTaskForm(mobileDeviceProject.id);
+    const projectId = projects.find((p) => p.slug === idOrSlug)?.id ?? idOrSlug;
+    toggleCreateTaskForm(projectId);
+  };
+
   const setTaskExpanded = (taskId: string, isExpanded: boolean) => {
     setExpandedTasks((prevState) => ({
       ...prevState,
@@ -227,6 +233,7 @@ export default function Board() {
 
   const handleEscKeyPress = () => {
     if (!focusedTaskId || !expandedTasks[focusedTaskId]) return;
+    if (editingTasks[focusedTaskId]) return setTaskEditing(focusedTaskId, false);
     setTaskExpanded(focusedTaskId, false);
   };
 
@@ -267,7 +274,7 @@ export default function Board() {
 
     if (focusedTaskId && focusedTaskId !== taskId) {
       dispatchCustomEvent('toggleSubTaskEditing', { id: focusedTaskId, state: false });
-      dispatchCustomEvent('toggleTaskEditing', { id: focusedTaskId, state: false });
+      setTaskEditing(focusedTaskId, false);
     }
     if (clickTarget.tagName === 'BUTTON' || clickTarget.closest('button')) return setFocusedTaskId(taskId);
 
@@ -287,7 +294,9 @@ export default function Board() {
   };
 
   const handleOpenTaskSheet = (taskId: string) => {
+    if (!focusedTaskId || focusedTaskId !== taskId) setFocusedTaskId(taskId);
     navigate({
+      to: '.',
       replace: true,
       resetScroll: false,
       search: (prev) => ({
@@ -336,6 +345,7 @@ export default function Board() {
   useEventListener('toggleTaskExpand', (e) => setTaskExpanded(e.detail, !expandedTasks[e.detail]));
   useEventListener('openTaskCardPreview', (event) => handleOpenTaskSheet(event.detail));
   useEventListener('toggleTaskEditing', handleTaskEditingToggle);
+  useEventListener('toggleCreateTaskForm', handleTaskFormClick);
 
   useEffect(() => {
     if (q?.length) setSearchQuery(q);
@@ -426,7 +436,6 @@ export default function Board() {
               expandedTasks={expandedTasks}
               editingTasks={editingTasks}
               columnTaskCreate={columnTaskCreate}
-              toggleCreateForm={toggleCreateTaskForm}
               projects={projects}
               workspaceId={workspace.id}
             />
@@ -435,7 +444,6 @@ export default function Board() {
               expandedTasks={expandedTasks}
               editingTasks={editingTasks}
               createForm={columnTaskCreate[mobileDeviceProject.id] || false}
-              toggleCreateForm={toggleCreateTaskForm}
               project={mobileDeviceProject}
             />
           )}

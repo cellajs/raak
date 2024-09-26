@@ -1,13 +1,12 @@
+import { onlineManager } from '@tanstack/react-query';
 import { createRoute } from '@tanstack/react-router';
 import type { ErrorType } from 'backend/lib/errors';
-import { config } from 'config';
-import { Construction } from 'lucide-react';
 import { Suspense, lazy } from 'react';
 import { z } from 'zod';
 import { queryClient } from '~/lib/router';
 import { noDirectAccess } from '~/lib/utils';
-import ContentPlaceholder from '~/modules/common/content-placeholder';
 import ErrorNotice from '~/modules/common/error-notice';
+import Overview from '~/modules/projects/overview';
 import { workspaceQueryOptions } from '~/modules/workspaces/helpers/query-options';
 import { baseEntityRoutes } from '~/nav-config';
 import { useWorkspaceStore } from '~/store/workspace';
@@ -29,14 +28,31 @@ export const WorkspaceRoute = createRoute({
   staticData: { pageTitle: 'Workspace', isAuth: true },
   beforeLoad: ({ location, params }) => noDirectAccess(location.pathname, params.idOrSlug, '/board'),
   getParentRoute: () => AppRoute,
-  loader: async ({ params: { idOrSlug } }) => {
-    const workspaceData = await queryClient.ensureQueryData(workspaceQueryOptions(idOrSlug));
-    useWorkspaceStore.setState({
-      workspace: workspaceData.workspace,
-      projects: workspaceData.projects,
-      labels: workspaceData.labels,
-      members: workspaceData.members,
-    });
+  loader: ({ params: { idOrSlug } }) => {
+    const queryOptions = workspaceQueryOptions(idOrSlug);
+    const cachedData = queryClient.getQueryData(queryOptions.queryKey);
+    if (cachedData) {
+      useWorkspaceStore.setState({
+        workspace: cachedData.workspace,
+        projects: cachedData.projects,
+        labels: cachedData.labels,
+        members: cachedData.members,
+      });
+    }
+    // do not load if we are offline or hydrating because it returns a promise that is pending until we go online again
+    return (
+      cachedData ??
+      (onlineManager.isOnline()
+        ? queryClient.fetchQuery(queryOptions).then((data) => {
+            useWorkspaceStore.setState({
+              workspace: data.workspace,
+              projects: data.projects,
+              labels: data.labels,
+              members: data.members,
+            });
+          })
+        : undefined)
+    );
   },
   errorComponent: ({ error }) => <ErrorNotice error={error as ErrorType} />,
   component: () => {
@@ -86,24 +102,5 @@ export const WorkspaceOverviewRoute = createRoute({
   path: '/overview',
   staticData: { pageTitle: 'Overview', isAuth: true },
   getParentRoute: () => WorkspaceRoute,
-  component: () => (
-    <div className="text-sm text-center mt-12">
-      <ContentPlaceholder
-        Icon={Construction}
-        title="Not built yet."
-        text={
-          <>
-            <p>Here will be a grid of project cards for stats, analytics and advisory.</p>
-            <p className="mt-4">
-              Please connect on
-              <a href={config.company.githubUrl} className="underline underline-offset-2 text-primary mx-1" target="_blank" rel="noreferrer">
-                Github
-              </a>
-              if you want to help out as OS contributor!
-            </p>
-          </>
-        }
-      />
-    </div>
-  ),
+  component: () => <Overview />,
 });
