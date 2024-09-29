@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { createSelectSchema } from 'drizzle-zod';
 import { tasksTable } from '#/db/schema/tasks';
-import { paginationQuerySchema } from '#/lib/common-schemas';
+import { paginationQuerySchema } from '#/utils/schema/common-schemas';
 import { labelSchema } from '../labels/schema';
 import { userSchema } from '../users/schema';
 
@@ -71,6 +71,7 @@ export const subTaskSchema = z.array(
       projectId: true,
       parentId: true,
       entity: true,
+      organizationId: true,
     }).shape,
   }),
 );

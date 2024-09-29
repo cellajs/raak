@@ -1,6 +1,6 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Bird, Redo } from 'lucide-react';
-import { Fragment, type LegacyRef, useEffect, useMemo, useState } from 'react';
+import { Fragment, type LegacyRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getTask } from '~/api/tasks';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
@@ -29,13 +29,7 @@ import { sheet } from '~/modules/common/sheeter/state';
 import { getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
 import { TaskCard } from '~/modules/tasks/task';
 import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
-import type {
-  CustomEventDetailId,
-  TaskCardFocusEvent,
-  TaskCardToggleSelectEvent,
-  TaskEditToggleEvent,
-  TaskOperationEvent,
-} from '~/modules/tasks/types';
+import type { TaskCardFocusEvent, TaskCardToggleSelectEvent, TaskOperationEvent, TaskStates, TaskStatesChangeEvent } from '~/modules/tasks/types';
 import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
@@ -63,15 +57,11 @@ function getScrollerWidth(containerWidth: number, projectsLength: number) {
 function BoardDesktop({
   workspaceId,
   projects,
-  expandedTasks,
-  editingTasks,
-  columnTaskCreate,
+  tasksState,
 }: {
-  expandedTasks: Record<string, boolean>;
-  editingTasks: Record<string, boolean>;
+  tasksState: Record<string, TaskStates>;
   projects: Project[];
   workspaceId: string;
-  columnTaskCreate: Record<string, boolean>;
 }) {
   const { ref, bounds } = useMeasure();
   const scrollerWidth = getScrollerWidth(bounds.width, projects.length);
@@ -81,19 +71,16 @@ function BoardDesktop({
     <div className="transition sm:h-[calc(100vh-4rem)] md:h-[calc(100vh-4.88rem)] overflow-x-auto" ref={ref as LegacyRef<HTMLDivElement>}>
       <div className="h-[inherit]" style={{ width: scrollerWidth }}>
         <ResizablePanelGroup direction="horizontal" className="flex gap-2 group/board" id="project-panels" autoSaveId={workspaceId}>
-          {projects.map((project, index) => {
-            const isFormOpen = columnTaskCreate[project.id] || false;
-            return (
-              <Fragment key={project.id}>
-                <ResizablePanel key={project.id} id={project.id} order={index} minSize={panelMinSize}>
-                  <BoardColumn expandedTasks={expandedTasks} editingTasks={editingTasks} createForm={isFormOpen} key={project.id} project={project} />
-                </ResizablePanel>
-                {projects.length > index + 1 && (
-                  <ResizableHandle className="w-1.5 rounded border border-background -mx-2 bg-transparent hover:bg-primary/50 data-[resize-handle-state=drag]:bg-primary transition-all" />
-                )}
-              </Fragment>
-            );
-          })}
+          {projects.map((project, index) => (
+            <Fragment key={project.id}>
+              <ResizablePanel key={project.id} id={project.id} order={index} minSize={panelMinSize}>
+                <BoardColumn tasksState={tasksState} key={project.id} project={project} />
+              </ResizablePanel>
+              {projects.length > index + 1 && (
+                <ResizableHandle className="w-1.5 rounded border border-background -mx-2 bg-transparent hover:bg-primary/50 data-[resize-handle-state=drag]:bg-primary transition-all" />
+              )}
+            </Fragment>
+          ))}
         </ResizablePanelGroup>
       </div>
     </div>
@@ -109,9 +96,8 @@ export default function Board() {
   const isDesktopLayout = useBreakpoints('min', 'sm');
   const { workspaces } = useWorkspaceUIStore();
 
-  const [columnTaskCreate, setColumnTaskCreate] = useState<Record<string, boolean>>({});
-  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
-  const [editingTasks, setEditingTasks] = useState<Record<string, boolean>>({});
+  const [tasksState, setTasksState] = useState<Record<string, TaskStates>>({});
+
   const { project, q, taskIdPreview } = useSearch({
     from: WorkspaceBoardRoute.id,
   });
@@ -136,33 +122,12 @@ export default function Board() {
     return tasks.filter((t) => t.id === taskId);
   }, [tasks, focusedTaskId, taskIdPreview]);
 
-  const toggleCreateTaskForm = (itemId: string) => {
-    setColumnTaskCreate((prevState) => {
-      const newState = {
-        ...prevState,
-        [itemId]: !prevState[itemId],
-      };
-
-      // Scroll to top only when opening the form
-      if (newState[itemId] && !prevState[itemId]) {
-        const listElement = document.getElementById(`tasks-list-${itemId}`);
-        if (!listElement) return newState;
-        listElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }
-
-      return newState;
-    });
-  };
-
   const handleVerticalArrowKeyDown = async (event: KeyboardEvent) => {
-    if (!projects.length || (focusedTaskId && editingTasks[focusedTaskId])) return;
+    if (!projects.length || (focusedTaskId && (tasksState[focusedTaskId] === 'editing' || tasksState[focusedTaskId] === 'unsaved'))) return;
 
     const projectSettings = workspaces[workspace.id]?.columns.find((el) => el.columnId === projects[0].id);
     let newFocusedTask: { projectId: string; id: string } | undefined;
-    if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId);
+    if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId, workspace.organizationId);
     else {
       const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
       const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
@@ -182,7 +147,8 @@ export default function Board() {
     if (!projects.length) return;
     const projectSettings = workspaces[workspace.id]?.columns.find((el) => el.columnId === projects[0].id);
     let newFocusedTask: { projectId: string } | undefined;
-    if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId);
+    // TODO refactor this to use cache from query client instead of API?
+    if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId, workspace.organizationId);
     else {
       const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
       const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
@@ -199,48 +165,35 @@ export default function Board() {
     dispatchCustomEvent('focusedProjectChange', nextProject.id);
   };
 
-  const handleNKeyDown = async () => {
-    if (!projects.length) return;
-
-    const focusedTask = await getTask(focusedTaskId ? focusedTaskId : projects[0].id);
-    if (!focusedTask) return;
-
-    const projectIndex = projects.findIndex((p) => p.id === focusedTask.projectId);
-    if (projectIndex === -1) return;
-
-    toggleCreateTaskForm(projects[projectIndex].id);
-  };
-
-  const handleTaskFormClick = (e: CustomEventDetailId) => {
-    const { detail: idOrSlug } = e;
-    if (!idOrSlug) return toggleCreateTaskForm(mobileDeviceProject.id);
-    const projectId = projects.find((p) => p.slug === idOrSlug)?.id ?? idOrSlug;
-    toggleCreateTaskForm(projectId);
-  };
-
-  const setTaskExpanded = (taskId: string, isExpanded: boolean) => {
-    setExpandedTasks((prevState) => ({
+  const setTaskState = (taskId: string, state: TaskStates) => {
+    setTasksState((prevState) => ({
       ...prevState,
-      [taskId]: isExpanded,
-    }));
-  };
-  const setTaskEditing = (taskId: string, isEditing: boolean) => {
-    setEditingTasks((prevState) => ({
-      ...prevState,
-      [taskId]: isEditing,
+      [taskId]: state,
     }));
   };
 
   const handleEscKeyPress = () => {
-    if (!focusedTaskId || !expandedTasks[focusedTaskId]) return;
-    if (editingTasks[focusedTaskId]) return setTaskEditing(focusedTaskId, false);
-    setTaskExpanded(focusedTaskId, false);
+    if (!focusedTaskId) return;
+    const taskState = tasksState[focusedTaskId];
+    if (!taskState || taskState === 'folded') return;
+    if (taskState === 'editing' || taskState === 'unsaved') return setTaskState(focusedTaskId, 'expanded');
+    if (taskState === 'expanded') return setTaskState(focusedTaskId, 'folded');
   };
 
   const handleEnterKeyPress = () => {
     if (!focusedTaskId) return;
-    setTaskExpanded(focusedTaskId, true);
-    if (expandedTasks[focusedTaskId]) setTaskEditing(focusedTaskId, true);
+    const taskState = tasksState[focusedTaskId];
+    if (taskState === 'folded') setTaskState(focusedTaskId, 'expanded');
+    if (taskState === 'expanded') setTaskState(focusedTaskId, 'editing');
+  };
+
+  const handleNKeyDown = async () => {
+    if (!projects.length) return;
+    if (!focusedTaskId) return dispatchCustomEvent('toggleCreateTaskForm', projects[0].id);
+
+    const focusedTask = await getTask(focusedTaskId, workspace.organizationId);
+    const project = projects.find((p) => p.id === focusedTask.projectId);
+    dispatchCustomEvent('toggleCreateTaskForm', project?.id ?? projects[0].id);
   };
 
   // Open on key press
@@ -270,21 +223,35 @@ export default function Board() {
   ]);
 
   const handleTaskClick = (event: TaskCardFocusEvent) => {
-    const { taskId, clickTarget } = event.detail;
+    const { taskId: newFocused, clickTarget } = event.detail;
+    const currentFocused = focusedTaskId;
 
-    if (focusedTaskId && focusedTaskId !== taskId) {
-      dispatchCustomEvent('toggleSubTaskEditing', { id: focusedTaskId, state: false });
-      setTaskEditing(focusedTaskId, false);
+    // Check if the clicked element is a button or inside a button,
+    // if so, set the new focused task and return early (no need to fold/expand in this case)
+    if (clickTarget.tagName === 'BUTTON' || clickTarget.closest('button')) return setFocusedTaskId(newFocused);
+
+    // If the task clicked is already focused
+    if (currentFocused === newFocused) return setTaskState(currentFocused, 'expanded');
+
+    // If there's a different task already focused
+    if (currentFocused && currentFocused !== newFocused) {
+      //change the state of previously focused subtasks
+      dispatchCustomEvent('changeSubTaskState', { taskId: currentFocused, state: 'folded' });
+
+      // Set the state of the previously focused task
+      setTaskState(currentFocused, tasksState[currentFocused] === 'folded' ? 'folded' : 'expanded');
+      // Set the state of the newly focused task
+      setTaskState(newFocused, tasksState[newFocused] === 'expanded' ? 'editing' : 'expanded');
     }
-    if (clickTarget.tagName === 'BUTTON' || clickTarget.closest('button')) return setFocusedTaskId(taskId);
 
-    if (focusedTaskId === taskId) return setTaskExpanded(taskId, true);
+    // If there's no currently focused task, expand the newly focused task
+    if (!currentFocused) setTaskState(newFocused, 'expanded');
 
-    const taskCard = document.getElementById(taskId);
+    // ensure newly focused task receives focus
+    const taskCard = document.getElementById(newFocused);
     if (taskCard && document.activeElement !== taskCard) taskCard.focus();
-
-    setFocusedTaskId(taskId);
-    setTaskExpanded(taskId, true);
+    // Set the new focused task ID
+    setFocusedTaskId(newFocused);
   };
 
   const handleToggleTaskSelect = (event: TaskCardToggleSelectEvent) => {
@@ -293,26 +260,26 @@ export default function Board() {
     return setSelectedTasks(selectedTasks.filter((id) => id !== taskId));
   };
 
-  const handleOpenTaskSheet = (taskId: string) => {
-    if (!focusedTaskId || focusedTaskId !== taskId) setFocusedTaskId(taskId);
-    navigate({
-      to: '.',
-      replace: true,
-      resetScroll: false,
-      search: (prev) => ({
-        ...prev,
-        ...{ taskIdPreview: taskId },
-      }),
-    });
-    sheet.create(
-      <TaskCard mode={mode} task={currentTask} tasks={tasks} isEditing={true} isExpanded={true} isSelected={false} isFocused={true} isSheet />,
-      {
+  const handleOpenTaskSheet = useCallback(
+    (taskId: string) => {
+      if (!focusedTaskId || focusedTaskId !== taskId) setFocusedTaskId(taskId);
+      navigate({
+        to: '.',
+        replace: true,
+        resetScroll: false,
+        search: (prev) => ({
+          ...prev,
+          ...{ taskIdPreview: taskId },
+        }),
+      });
+      sheet.create(<TaskCard mode={mode} task={currentTask} tasks={tasks} state={'editing'} isSelected={false} isFocused={true} isSheet />, {
         className: 'max-w-full lg:max-w-4xl',
         title: <span className="pl-4">{t('app:task')}</span>,
         id: `task-preview-${taskId}`,
-      },
-    );
-  };
+      });
+    },
+    [currentTask, focusedTaskId, tasks],
+  );
 
   const handleTaskOperations = (event: TaskOperationEvent) => {
     const { array, action, projectId } = event.detail;
@@ -322,7 +289,7 @@ export default function Board() {
     if (!tasks.length || !sheet.get(`task-preview-${focusedTaskId}`)) return;
     const [sheetTask] = tasks.filter((t) => t.id === focusedTaskId);
     sheet.update(`task-preview-${sheetTask.id}`, {
-      content: <TaskCard mode={mode} task={sheetTask} tasks={tasks} isEditing={true} isExpanded={true} isSelected={false} isFocused={true} isSheet />,
+      content: <TaskCard mode={mode} task={sheetTask} tasks={tasks} state={'editing'} isSelected={false} isFocused={true} isSheet />,
     });
   };
 
@@ -333,19 +300,18 @@ export default function Board() {
     callback([membership], entity === 'project' ? 'updateProjectMembership' : 'updateWorkspaceMembership');
   };
 
-  const handleTaskEditingToggle = (event: TaskEditToggleEvent) => {
-    const { id, state } = event.detail;
-    setTaskEditing(id, state);
+  const handleTaskState = (event: TaskStatesChangeEvent) => {
+    const { taskId, state } = event.detail;
+    setTaskState(taskId, state);
   };
 
+  useEventListener('changeTaskState', handleTaskState);
   useEventListener('entityArchiveToggle', handleEntityUpdate);
   useEventListener('taskOperation', handleTaskOperations);
   useEventListener('toggleTaskCard', handleTaskClick);
   useEventListener('toggleSelectTask', handleToggleTaskSelect);
-  useEventListener('toggleTaskExpand', (e) => setTaskExpanded(e.detail, !expandedTasks[e.detail]));
   useEventListener('openTaskCardPreview', (event) => handleOpenTaskSheet(event.detail));
-  useEventListener('toggleTaskEditing', handleTaskEditingToggle);
-  useEventListener('toggleCreateTaskForm', handleTaskFormClick);
+  // useEventListener('toggleCreateTaskForm', handleTaskFormClick);
 
   useEffect(() => {
     if (q?.length) setSearchQuery(q);
@@ -384,7 +350,7 @@ export default function Board() {
                 mainCallback([updatedTask], 'delete');
                 targetProjectCallback([updatedTask], 'create');
               } else {
-                const updatedTask = await updateTask(sourceData.item.id, 'order', newOrder);
+                const updatedTask = await updateTask(sourceData.item.id, workspace.organizationId, 'order', newOrder);
                 mainCallback([updatedTask], 'update');
               }
             } catch (err) {
@@ -395,7 +361,7 @@ export default function Board() {
           if (isSubTask) {
             const newOrder = getRelativeTaskOrder(edge, tasks, targetData.order, sourceData.item.id, targetData.item.parentId ?? undefined);
             try {
-              const updatedTask = await updateTask(sourceData.item.id, 'order', newOrder);
+              const updatedTask = await updateTask(sourceData.item.id, workspace.organizationId, 'order', newOrder);
               mainCallback([updatedTask], 'updateSubTask');
             } catch (err) {
               toast.error(t('common:error.reorder_resources', { resources: t('app:todo') }));
@@ -432,20 +398,9 @@ export default function Board() {
       ) : (
         <>
           {isDesktopLayout ? (
-            <BoardDesktop
-              expandedTasks={expandedTasks}
-              editingTasks={editingTasks}
-              columnTaskCreate={columnTaskCreate}
-              projects={projects}
-              workspaceId={workspace.id}
-            />
+            <BoardDesktop tasksState={tasksState} projects={projects} workspaceId={workspace.id} />
           ) : (
-            <BoardColumn
-              expandedTasks={expandedTasks}
-              editingTasks={editingTasks}
-              createForm={columnTaskCreate[mobileDeviceProject.id] || false}
-              project={mobileDeviceProject}
-            />
+            <BoardColumn tasksState={tasksState} project={mobileDeviceProject} />
           )}
         </>
       )}

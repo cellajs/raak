@@ -46,6 +46,7 @@ const tasksQueryOptions = ({
   projectId,
   status,
   rowsLength = 0,
+  orgIdOrSlug,
 }: GetTasksParams & {
   rowsLength?: number;
 }) => {
@@ -70,6 +71,7 @@ const tasksQueryOptions = ({
           offset: rowsLength - page * limit > 0 ? undefined : rowsLength,
           projectId,
           status,
+          orgIdOrSlug,
         },
         signal,
       ),
@@ -81,7 +83,7 @@ export default function TasksTable() {
   const { t } = useTranslation();
   const { mode } = useThemeStore();
   const search = useSearch({ from: WorkspaceTableRoute.id });
-  const { focusedTaskId, searchQuery, selectedTasks, setSelectedTasks, setSearchQuery, projects, setFocusedTaskId } = useWorkspaceStore();
+  const { focusedTaskId, searchQuery, selectedTasks, setSelectedTasks, setSearchQuery, projects, setFocusedTaskId, workspace } = useWorkspaceStore();
 
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(getInitialSortColumns(search, 'createdAt'));
   const [selectedStatuses] = useState<number[]>(typeof search.status === 'number' ? [search.status] : search.status?.split('_').map(Number) || []);
@@ -114,6 +116,7 @@ export default function TasksTable() {
       order,
       projectId: search.projectId ? search.projectId : projects.map((p) => p.id).join('_'),
       status: selectedStatuses.join('_'),
+      orgIdOrSlug: workspace.organizationId,
     }),
   );
 
@@ -145,14 +148,11 @@ export default function TasksTable() {
   const handleOpenPreview = (taskId: string) => {
     const relativeTasks = rows.filter((t) => t.id === taskId || t.parentId === taskId);
     const [currentTask] = relativeTasks.filter((t) => t.id === taskId);
-    sheet.create(
-      <TaskCard mode={mode} task={currentTask} tasks={rows} isEditing={true} isExpanded={true} isSelected={false} isFocused={true} isSheet />,
-      {
-        className: 'max-w-full lg:max-w-4xl',
-        title: <span className="pl-4">{t('app:task')}</span>,
-        id: `task-preview-${taskId}`,
-      },
-    );
+    sheet.create(<TaskCard mode={mode} task={currentTask} tasks={rows} state="editing" isSelected={false} isFocused={true} isSheet />, {
+      className: 'max-w-full lg:max-w-4xl',
+      title: <span className="pl-4">{t('app:task')}</span>,
+      id: `task-preview-${taskId}`,
+    });
     setFocusedTaskId(taskId);
   };
 
@@ -188,9 +188,7 @@ export default function TasksTable() {
     const relativeTasks = rows.filter((t) => t.id === focusedTaskId || t.parentId === focusedTaskId);
     const [currentTask] = relativeTasks.filter((t) => t.id === focusedTaskId);
     sheet.update(`task-preview-${currentTask.id}`, {
-      content: (
-        <TaskCard mode={mode} task={currentTask} tasks={rows} isEditing={true} isExpanded={true} isSelected={false} isFocused={true} isSheet />
-      ),
+      content: <TaskCard mode={mode} task={currentTask} tasks={rows} state="editing" isSelected={false} isFocused={true} isSheet />,
     });
   }, [rows, focusedTaskId]);
 
@@ -225,7 +223,7 @@ export default function TasksTable() {
           if (!edge || !isSubTask) return;
           const newOrder: number = getRelativeTaskOrder(edge, rows, targetData.order, sourceData.item.id, targetData.item.parentId ?? undefined);
           try {
-            const updatedTask = await updateTask(sourceData.item.id, 'order', newOrder);
+            const updatedTask = await updateTask(sourceData.item.id, workspace.organizationId, 'order', newOrder);
             callback([updatedTask], 'updateSubTask');
           } catch (err) {
             toast.error(t('common:error.reorder_resources', { resources: t('app:todo') }));

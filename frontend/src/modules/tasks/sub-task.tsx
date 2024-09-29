@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { deleteTasks, updateTask } from '~/api/tasks';
+import useDoubleClick from '~/hooks/use-double-click';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { getDraggableItemData } from '~/lib/drag-drop';
@@ -21,25 +22,19 @@ import { Checkbox } from '~/modules/ui/checkbox';
 import type { Mode } from '~/store/theme';
 import type { SubTask as BaseSubTask, Task } from '~/types/app';
 import { isSubTaskData } from '../projects/board/board';
+import type { TaskStates } from './types';
 
-const SubTask = ({
-  task,
-  mode,
-}: {
-  task: BaseSubTask;
-  mode: Mode;
-}) => {
+const SubTask = ({ task, mode }: { task: BaseSubTask; mode: Mode }) => {
   const { t } = useTranslation();
 
   const { pathname } = useLocation();
   const subTaskRef = useRef<HTMLDivElement>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [state, setState] = useState<TaskStates>('folded');
   const [dragging, setDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 
   const onRemove = (subTaskId: string) => {
-    deleteTasks([subTaskId]).then((resp) => {
+    deleteTasks([subTaskId], task.organizationId).then((resp) => {
       const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
       dispatchCustomEvent(eventName, { array: [{ id: subTaskId }], action: 'deleteSubTask', projectId: task.projectId });
       if (resp) toast.success(t('common:success.delete_resources', { resources: t('app:todos') }));
@@ -54,7 +49,7 @@ const SubTask = ({
 
   const handleUpdateStatus = async (newStatus: number) => {
     try {
-      const updatedTask = await updateTask(task.id, 'status', newStatus);
+      const updatedTask = await updateTask(task.id, task.organizationId, 'status', newStatus);
       const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
       dispatchCustomEvent(eventName, { array: [updatedTask], action: 'updateSubTask', projectId: task.projectId });
     } catch (err) {
@@ -62,13 +57,35 @@ const SubTask = ({
     }
   };
 
-  useEventListener('toggleSubTaskEditing', (e) => {
-    const { id, state } = e.detail;
-    // Update the sub-task editing state based on the event id:
-    // - matches the task's parentId
-    // - doesn't match both the task's parentId and task id
-    if (task.parentId === id || (task.parentId !== id && task.id !== id)) {
-      setIsEditing(state);
+  useDoubleClick({
+    onSingleClick: () => {
+      if (state !== 'folded') return;
+      setState('expanded');
+    },
+    onDoubleClick: () => {
+      if (state === 'editing' || state === 'unsaved') return;
+      setState('editing');
+    },
+    allowedTargets: ['p', 'div'],
+    ref: subTaskRef,
+  });
+
+  useEventListener('changeSubTaskState', (e) => {
+    const { taskId, state: newState } = e.detail;
+
+    // The logic ensures that tasks are expanded from 'editing' or 'unsaved' states when 'removeEditing' is triggered
+    if ((task.parentId === taskId || (task.parentId !== taskId && task.id !== taskId)) && newState === 'removeEditing') {
+      if (state === 'editing' || state === 'unsaved') return setState('expanded');
+      return;
+    }
+
+    // If the task is a sub-task of the taskId from the event and the newState is 'folded', fold the task
+    if (task.parentId === taskId && newState === 'folded') return setState(newState);
+
+    // If the task.id as the event's taskId, update the task state
+    if (task.id === taskId) {
+      if (newState === 'removeEditing') return;
+      setState(newState);
     }
   });
 
@@ -84,7 +101,7 @@ const SubTask = ({
         dragHandle: element,
         getInitialData: () => data,
         onDragStart: () => setDragging(true),
-        canDrag: () => !isEditing,
+        canDrag: () => state === 'folded' || state === 'expanded',
         onDrop: () => setDragging(false),
       }),
       dropTargetForExternal({
@@ -133,20 +150,14 @@ const SubTask = ({
             onCheckedChange={async (checkStatus) => await handleUpdateStatus(checkStatus ? 6 : 1)}
           />
         </div>
-        <div
-          onClick={() => {
-            if (!isExpanded) setIsExpanded(true);
-          }}
-          onKeyDown={() => {}}
-          className="flex flex-col grow min-h-7 justify-center gap-2 mx-1"
-        >
-          <div className={!isExpanded ? 'inline-flex items-center mt-1' : 'mt-1 flex flex-col items-start'}>
-            {!isExpanded ? (
+        <div className="flex flex-col grow min-h-7 justify-center gap-2 mx-1">
+          <div className={state !== 'folded' ? 'inline-flex items-center mt-1' : 'mt-1 flex flex-col items-start'}>
+            {state === 'folded' ? (
               // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
               <div dangerouslySetInnerHTML={{ __html: task.summary as string }} className="mr-1.5" />
             ) : (
               <>
-                {isEditing ? (
+                {state === 'editing' || state === 'unsaved' ? (
                   <TaskBlockNote
                     id={task.id}
                     projectId={task.projectId}
@@ -158,26 +169,16 @@ const SubTask = ({
                   />
                 ) : (
                   <div className={'w-full bg-transparent pr-2 border-none bn-container bn-shadcn'} data-color-scheme={mode}>
-                    <div
-                      // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
-                      dangerouslySetInnerHTML={{ __html: task.description }}
-                      onClick={() => setIsEditing(true)}
-                      onKeyDown={() => {}}
-                    />
+                    {/* biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend */}
+                    <div dangerouslySetInnerHTML={{ __html: task.description }} />
                   </div>
                 )}
-                <TaskHeader
-                  task={task as Task}
-                  isEditing={isEditing}
-                  onRemove={onRemove}
-                  changeEditingState={(state) => setIsEditing(state)}
-                  closeExpand={() => setIsExpanded(false)}
-                />
+                <TaskHeader task={task as Task} state={state} onRemove={onRemove} />
               </>
             )}
 
-            {task.expandable && !isExpanded && (
-              <Button onClick={() => setIsExpanded(true)} variant="link" size="micro" className="py-0 -mt-[0.15rem]">
+            {task.expandable && state === 'folded' && (
+              <Button onClick={() => setState('expanded')} variant="link" size="micro" className="py-0 -mt-[0.15rem]">
                 {t('common:more').toLowerCase()}
               </Button>
             )}
