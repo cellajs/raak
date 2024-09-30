@@ -2,7 +2,6 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Bird, Redo } from 'lucide-react';
 import { Fragment, type LegacyRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getTask } from '~/api/tasks';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { useHotkeys } from '~/hooks/use-hot-keys';
@@ -127,8 +126,9 @@ export default function Board() {
 
     const projectSettings = workspaces[workspace.id]?.columns.find((el) => el.columnId === projects[0].id);
     let newFocusedTask: { projectId: string; id: string } | undefined;
-    if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId, workspace.organizationId);
-    else {
+    if (focusedTaskId) {
+      newFocusedTask = tasks.find((t) => t.id === focusedTaskId);
+    } else {
       const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
       const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
       newFocusedTask = sortedTasks[0];
@@ -147,9 +147,9 @@ export default function Board() {
     if (!projects.length) return;
     const projectSettings = workspaces[workspace.id]?.columns.find((el) => el.columnId === projects[0].id);
     let newFocusedTask: { projectId: string } | undefined;
-    // TODO refactor this to use cache from query client instead of API?
-    if (focusedTaskId) newFocusedTask = await getTask(focusedTaskId, workspace.organizationId);
-    else {
+    if (focusedTaskId) {
+      newFocusedTask = tasks.find((t) => t.id === focusedTaskId);
+    } else {
       const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
       const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
       newFocusedTask = sortedTasks[0];
@@ -191,7 +191,8 @@ export default function Board() {
     if (!projects.length) return;
     if (!focusedTaskId) return dispatchCustomEvent('toggleCreateTaskForm', projects[0].id);
 
-    const focusedTask = await getTask(focusedTaskId, workspace.organizationId);
+    const focusedTask = tasks.find((t) => t.id === focusedTaskId);
+    if (!focusedTask) return;
     const project = projects.find((p) => p.id === focusedTask.projectId);
     dispatchCustomEvent('toggleCreateTaskForm', project?.id ?? projects[0].id);
   };
@@ -228,7 +229,13 @@ export default function Board() {
 
     // Check if the clicked element is a button or inside a button,
     // if so, set the new focused task and return early (no need to fold/expand in this case)
-    if (clickTarget.tagName === 'BUTTON' || clickTarget.closest('button')) return setFocusedTaskId(newFocused);
+    if (clickTarget.tagName === 'BUTTON' || clickTarget.closest('button')) {
+      if (clickTarget.id === 'edit-toggle' && currentFocused) {
+        // Set the state of the previously focused task after edit button clicked
+        setTaskState(currentFocused, tasksState[currentFocused] === 'folded' || !tasksState[currentFocused] ? 'folded' : 'expanded');
+      }
+      return setFocusedTaskId(newFocused);
+    }
 
     // If the task clicked is already focused
     if (currentFocused === newFocused) return setTaskState(currentFocused, 'expanded');
@@ -239,7 +246,7 @@ export default function Board() {
       dispatchCustomEvent('changeSubTaskState', { taskId: currentFocused, state: 'folded' });
 
       // Set the state of the previously focused task
-      setTaskState(currentFocused, tasksState[currentFocused] === 'folded' ? 'folded' : 'expanded');
+      setTaskState(currentFocused, tasksState[currentFocused] === 'folded' || !tasksState[currentFocused] ? 'folded' : 'expanded');
       // Set the state of the newly focused task
       setTaskState(newFocused, tasksState[newFocused] === 'expanded' ? 'editing' : 'expanded');
     }
@@ -306,12 +313,11 @@ export default function Board() {
   };
 
   useEventListener('changeTaskState', handleTaskState);
-  useEventListener('entityArchiveToggle', handleEntityUpdate);
+  useEventListener('menuEntityChange', handleEntityUpdate);
   useEventListener('taskOperation', handleTaskOperations);
   useEventListener('toggleTaskCard', handleTaskClick);
   useEventListener('toggleSelectTask', handleToggleTaskSelect);
   useEventListener('openTaskCardPreview', (event) => handleOpenTaskSheet(event.detail));
-  // useEventListener('toggleCreateTaskForm', handleTaskFormClick);
 
   useEffect(() => {
     if (q?.length) setSearchQuery(q);
@@ -345,7 +351,7 @@ export default function Board() {
 
             try {
               if (sourceData.item.projectId !== targetData.item.projectId) {
-                const updatedTask = await updateTask(sourceData.item.id, 'projectId', targetData.item.projectId, newOrder);
+                const updatedTask = await updateTask(sourceData.item.id, workspace.organizationId, 'projectId', targetData.item.projectId, newOrder);
                 const targetProjectCallback = useMutateTasksQueryData(['boardTasks', targetData.item.projectId]);
                 mainCallback([updatedTask], 'delete');
                 targetProjectCallback([updatedTask], 'create');

@@ -13,13 +13,13 @@ import { useThemeStore } from '~/store/theme';
 import type { EnabledOauthProviderOptions } from '#/types/common';
 import type { Step } from '.';
 
-const enabledStrategies: readonly string[] = config.enabledAuthenticationStrategies;
-
 export const mapOauthProviders = [
   { id: 'github', name: 'Github', url: githubSignInUrl },
   { id: 'google', name: 'Google', url: googleSignInUrl },
   { id: 'microsoft', name: 'Microsoft', url: microsoftSignInUrl },
 ];
+
+const enabledStrategies: readonly string[] = config.enabledAuthenticationStrategies;
 
 interface OauthOptions {
   id: EnabledOauthProviderOptions;
@@ -61,7 +61,7 @@ const OauthOptions = ({ email, actionType = 'signIn', hasPasskey }: OauthOptions
 
   return (
     <>
-      {(config.enabledOauthProviders.length || hasPasskey) && (
+      {(enabledStrategies.includes('oauth') || hasPasskey) && (
         <div className="relative flex justify-center text-xs uppercase">
           <span className="text-muted-foreground px-2">{t('common:or')}</span>
         </div>
@@ -76,7 +76,10 @@ const OauthOptions = ({ email, actionType = 'signIn', hasPasskey }: OauthOptions
         )}
         {enabledStrategies.includes('oauth') &&
           config.enabledOauthProviders.map((provider) => {
-            const url = mapOauthProviders.find((p) => p.id === provider);
+            // Map the provider data
+            const providerData = mapOauthProviders.find((p) => p.id === provider);
+            if (!providerData) return;
+
             return (
               <Button
                 loading={loading}
@@ -91,7 +94,7 @@ const OauthOptions = ({ email, actionType = 'signIn', hasPasskey }: OauthOptions
                       window.location.href = config.defaultRedirectPath;
                     });
                   } else {
-                    window.location.href = url + redirectQuery;
+                    window.location.href = providerData.url + redirectQuery;
                   }
                 }}
               >
@@ -101,7 +104,11 @@ const OauthOptions = ({ email, actionType = 'signIn', hasPasskey }: OauthOptions
                   className={`w-4 h-4 ${provider === 'github' ? invertClass : ''}`}
                   loading="lazy"
                 />
-                {token ? t('common:accept') : actionType === 'signUp' ? t('common:sign_up') : t('common:sign_in_with', { provider })}
+                {token
+                  ? t('common:accept')
+                  : actionType === 'signUp'
+                    ? t('common:sign_up')
+                    : t('common:sign_in_with', { provider: providerData.name })}
               </Button>
             );
           })}

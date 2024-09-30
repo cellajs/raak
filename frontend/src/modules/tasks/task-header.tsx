@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { ChevronUp, Maximize2, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { dateShort, dateTwitterFormat } from '~/lib/utils';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import StickyBox from '~/modules/common/sticky-box';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -12,6 +11,7 @@ import { taskTypes } from '~/modules/tasks/task-selectors/select-task-type';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/store/user';
 import type { Task } from '~/types/app';
+import { dateShort, dateTwitterFormat } from '~/utils/utils';
 import HeaderInfo from './header-info';
 import type { TaskStates } from './types';
 
@@ -29,7 +29,6 @@ export const TaskHeader = ({
   const { t } = useTranslation();
   const { user } = useUserStore();
   const isSubTask = task.parentId !== null;
-  const initialAndExitParams = { opacity: isSubTask ? 1 : 0, y: isSubTask ? 0 : -10 };
   const isEditing = state === 'editing' || state === 'unsaved';
 
   const buttonText = isEditing ? t(`app:${state}`) : t('common:edit');
@@ -49,9 +48,9 @@ export const TaskHeader = ({
       )}
       <motion.div
         className="flex flex-row gap-1 w-full items-center ml-1"
-        initial={initialAndExitParams}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={initialAndExitParams}
+        exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.3 }}
       >
         {!isSubTask && task.createdBy && (
@@ -76,6 +75,7 @@ export const TaskHeader = ({
             hideWhenDetached
           >
             <Button
+              id="edit-toggle"
               onClick={() => {
                 const event = isSubTask ? 'changeSubTaskState' : 'changeTaskState';
                 dispatchCustomEvent(event, { taskId: task.id, state: isEditing ? 'expanded' : 'editing' });

@@ -5,26 +5,23 @@ import { Fragment, Suspense, lazy, useEffect, useMemo } from 'react';
 import { useThemeStore } from '~/store/theme';
 
 import { useBreakpoints } from '~/hooks/use-breakpoints';
-import { cn } from '~/lib/utils';
 import { dialog } from '~/modules/common/dialoger/state';
 import { NavSheet } from '~/modules/common/nav-sheet';
 import { useNavigationStore } from '~/store/navigation';
+import { cn } from '~/utils/utils';
 
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { impersonationStop } from '~/api/auth';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import useMounted from '~/hooks/use-mounted';
-import { dispatchCustomEvent } from '~/lib/custom-events';
 import router from '~/lib/router';
-import { NavButton } from '~/modules/common/app-nav-button';
-import { AppSearch } from '~/modules/common/app-search';
+import { NavButton } from '~/modules/common/main-nav/main-nav-button';
+import { MainSearch } from '~/modules/common/main-search';
 import { sheet } from '~/modules/common/sheeter/state';
 import { getAndSetMe, getAndSetMenu } from '~/modules/users/helpers';
 import { navItems } from '~/nav-config';
 import { useUserStore } from '~/store/user';
-
-type RoutePaths = keyof typeof router.routesByPath;
 
 export type NavItem = {
   id: string;
@@ -32,9 +29,6 @@ export type NavItem = {
   sheet?: React.ReactNode;
   href?: string;
   mirrorOnMobile?: boolean;
-  visibleOn?: RoutePaths[];
-  hiddenOn?: RoutePaths[];
-  visibilityMobileOnly?: boolean;
 };
 
 const DebugToolbars = config.mode === 'development' ? lazy(() => import('~/modules/common/debug-toolbars')) : () => null;
@@ -42,20 +36,19 @@ const DebugToolbars = config.mode === 'development' ? lazy(() => import('~/modul
 const AppNav = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-
   const { hasStarted } = useMounted();
   const isSmallScreen = useBreakpoints('max', 'xl');
-  const isMobile = useBreakpoints('max', 'sm');
 
   const { activeSheet, setSheet, setLoading, setFocusView, focusView } = useNavigationStore();
   const { theme } = useThemeStore();
+
   const { user } = useUserStore();
   const currentSession = useMemo(() => user?.sessions.find((s) => s.isCurrent), [user]);
 
   const stopImpersonation = async () => {
     await impersonationStop();
     await Promise.all([getAndSetMe(), getAndSetMenu()]);
-    navigate({ to: '/', replace: true });
+    navigate({ to: config.defaultRedirectPath, replace: true });
     toast.success(t('common:success.stopped_impersonation'));
   };
 
@@ -64,7 +57,7 @@ const AppNav = () => {
   const navButtonClick = (navItem: NavItem) => {
     // Search is a special case, it will open a dialog
     if (navItem.id === 'search') {
-      return dialog(<AppSearch />, {
+      return dialog(<MainSearch />, {
         className: 'sm:max-w-2xl p-0 border-0 mb-4',
         drawerOnMobile: false,
         refocus: false,
@@ -72,8 +65,6 @@ const AppNav = () => {
         autoFocus: !isSmallScreen,
       });
     }
-    if (navItem.id === '+task') return dispatchCustomEvent('toggleCreateTaskForm', router.latestLocation.search.project);
-    if (navItem.id === 'return') return router.history.go(-1);
 
     // If its a route, navigate to it
     if (navItem.href) return navigate({ to: navItem.href });
@@ -116,7 +107,7 @@ const AppNav = () => {
   return (
     <>
       <nav
-        id="app-nav"
+        id="main-nav"
         className={cn(
           'fixed z-[90] w-full max-sm:bottom-0 transition-transform ease-out shadow-sm sm:left-0 sm:top-0 sm:h-screen sm:w-16',
           navBackground,
@@ -126,23 +117,6 @@ const AppNav = () => {
       >
         <ul className="flex flex-row justify-between p-1 sm:flex-col sm:space-y-1">
           {navItems.map((navItem: NavItem, index: number) => {
-            // TODO: Refactor this
-            // Retrieve the full paths of all currently matched routes
-            const matchPaths = router.state.matches.map((el) => el.fullPath);
-            //  navItem should be hidden based on the current route (using hiddenOn)
-            const isHiddenOnCurrentRoute = navItem.hiddenOn?.some((route) => matchPaths.includes(route)) ?? false;
-
-            // Check if the navItem is restricted to mobile visibility only and if the screen is mobile
-            const shouldApplyMobileVisibility = navItem.visibilityMobileOnly && isMobile;
-            // This is only checked if the navItem is marked for mobile-only visibility
-            const isVisibleOnCurrentRoute = shouldApplyMobileVisibility ? navItem.visibleOn?.some((route) => matchPaths.includes(route)) : false;
-
-            const isDefaultVisible = navItem.visibleOn ? isVisibleOnCurrentRoute : true;
-            // Determine whether the navItem should be hidden based on the hiddenOn rules and current route
-            const shouldBeHidden = shouldApplyMobileVisibility ? isHiddenOnCurrentRoute : false;
-
-            if (shouldBeHidden || !isDefaultVisible) return null;
-
             const isSecondItem = index === 1;
             const isActive = activeSheet?.id === navItem.id;
 

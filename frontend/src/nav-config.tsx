@@ -1,4 +1,4 @@
-import { ArrowLeftCircle, Home, Menu, PlusCircle, Search, User } from 'lucide-react';
+import { Home, Menu, Search, User } from 'lucide-react';
 
 import { SheetAccount } from '~/modules/common/nav-sheet/sheet-account';
 import { SheetMenu } from '~/modules/common/nav-sheet/sheet-menu';
@@ -6,9 +6,9 @@ import { SheetMenu } from '~/modules/common/nav-sheet/sheet-menu';
 import CreateOrganizationForm from '~/modules/organizations/create-organization-form';
 import CreateWorkspaceForm from '~/modules/workspaces/create-workspace-form';
 
-import type { FooterLinkProps } from '~/modules/common/app-footer';
-import type { NavItem } from '~/modules/common/app-nav';
-import type { SuggestionSection } from '~/modules/common/app-search';
+import type { FooterLinkProps } from '~/modules/common/main-footer';
+import type { NavItem } from '~/modules/common/main-nav';
+import type { SuggestionSection } from '~/modules/common/main-search';
 import type { SectionItem } from '~/modules/common/nav-sheet/sheet-menu';
 
 // Set entities paths
@@ -21,19 +21,15 @@ export const baseEntityRoutes = {
 
 // Here you declare main navigation items
 export const navItems: NavItem[] = [
-  { id: 'menu', sheet: <SheetMenu />, icon: Menu, hiddenOn: ['/$orgIdOrSlug/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
-  { id: 'home', icon: Home, href: '/', hiddenOn: ['/$orgIdOrSlug/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
-  { id: 'search', icon: Search, hiddenOn: ['/$orgIdOrSlug/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
+  { id: 'menu', sheet: <SheetMenu />, icon: Menu },
+  { id: 'home', icon: Home, href: '/home' },
+  { id: 'search', icon: Search },
   {
     id: 'account',
     sheet: <SheetAccount />,
-    hiddenOn: ['/$orgIdOrSlug/workspaces/$idOrSlug/board'],
     icon: User,
     mirrorOnMobile: true,
-    visibilityMobileOnly: true,
   },
-  { id: 'return', icon: ArrowLeftCircle, visibleOn: ['/$orgIdOrSlug/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
-  { id: '+task', icon: PlusCircle, visibleOn: ['/$orgIdOrSlug/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
 ];
 
 // Here you declare the menu sections(same need in BE with storageType, type & isSubmenu )
