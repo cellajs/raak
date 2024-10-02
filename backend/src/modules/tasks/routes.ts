@@ -1,17 +1,17 @@
-import { errorResponses, successWithDataSchema, successWithPaginationSchema, successWithoutDataSchema } from '#/utils/schema/common-responses';
+import { errorResponses, successWithDataSchema, successWithErrorsSchema, successWithPaginationSchema } from '#/utils/schema/common-responses';
 import { idOrSlugSchema, idsQuerySchema, productParamSchema } from '#/utils/schema/common-schemas';
 
 import { createRouteConfig } from '#/lib/route-config';
-import { hasOrgAccess, isAllowedTo, isAuthenticated } from '#/middlewares/guard';
+import { hasOrgAccess, isAuthenticated } from '#/middlewares/guard';
 
 import { z } from 'zod';
-import { createTaskSchema, fullTaskSchema, getTasksQuerySchema, simpleTaskSchema, updateTaskSchema } from './schema';
+import { createTaskSchema, getTasksQuerySchema, simpleTaskSchema, taskWithSubTasksSchema, updateTaskSchema } from './schema';
 
 class TaskRoutesConfig {
   public createTask = createRouteConfig({
     method: 'post',
     path: '/',
-    guard: [isAuthenticated, hasOrgAccess, isAllowedTo('create', 'task')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['tasks'],
     summary: 'Create new task',
     description: 'Create a new task in a project.',
@@ -31,7 +31,7 @@ class TaskRoutesConfig {
         description: 'Task',
         content: {
           'application/json': {
-            schema: successWithDataSchema(fullTaskSchema),
+            schema: successWithDataSchema(taskWithSubTasksSchema),
           },
         },
       },
@@ -55,7 +55,7 @@ class TaskRoutesConfig {
         description: 'Tasks',
         content: {
           'application/json': {
-            schema: successWithPaginationSchema(fullTaskSchema),
+            schema: successWithPaginationSchema(taskWithSubTasksSchema),
           },
         },
       },
@@ -66,7 +66,7 @@ class TaskRoutesConfig {
   public getTask = createRouteConfig({
     method: 'get',
     path: '/{id}',
-    guard: [isAuthenticated, hasOrgAccess, isAllowedTo('read', 'task')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['tasks'],
     summary: 'Get task',
     description: 'Get a task by id.',
@@ -89,7 +89,7 @@ class TaskRoutesConfig {
   public updateTask = createRouteConfig({
     method: 'put',
     path: '/{id}',
-    guard: [isAuthenticated, hasOrgAccess, isAllowedTo('update', 'task')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['tasks'],
     summary: 'Update task',
     description: 'Update task by id.',
@@ -108,7 +108,7 @@ class TaskRoutesConfig {
         description: 'Task updated',
         content: {
           'application/json': {
-            schema: successWithDataSchema(fullTaskSchema),
+            schema: successWithDataSchema(taskWithSubTasksSchema),
           },
         },
       },
@@ -132,7 +132,7 @@ class TaskRoutesConfig {
         description: 'Success',
         content: {
           'application/json': {
-            schema: successWithoutDataSchema,
+            schema: successWithErrorsSchema(),
           },
         },
       },
