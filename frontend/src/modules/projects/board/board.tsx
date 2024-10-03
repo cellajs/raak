@@ -34,7 +34,7 @@ import { useThemeStore } from '~/store/theme';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
 
 // TODO empty space width should be dynamic based on window width and amount of projects and width of each project?
-const PANEL_MIN_WIDTH = 350;
+const PANEL_MIN_WIDTH = 400;
 // Allow resizing of panels
 const EMPTY_SPACE_WIDTH = 600;
 
@@ -401,7 +401,7 @@ export default function Board() {
                 mainCallback([updatedTask], 'update');
               }
             } catch (err) {
-              toast.error(t('common:error.reorder_resources', { resources: t('app:todo') }));
+              toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
             }
           }
 
@@ -411,7 +411,7 @@ export default function Board() {
               const updatedTask = await updateTask(sourceData.item.id, workspace.organizationId, 'order', newOrder);
               mainCallback([updatedTask], 'updateSubTask');
             } catch (err) {
-              toast.error(t('common:error.reorder_resources', { resources: t('app:todo') }));
+              toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
             }
           }
         },
