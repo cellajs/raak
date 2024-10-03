@@ -18,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/u
 import { useThemeStore } from '~/store/theme.ts';
 import { useUserStore } from '~/store/user.ts';
 import type { Task } from '~/types/app';
-import { nanoid } from '~/utils/utils';
+import { nanoid } from '~/utils/nanoid';
 
 const formSchema = z.object({
   id: z.string(),
@@ -138,7 +138,7 @@ export const CreateSubTaskForm = ({
     );
   return (
     <Form {...form}>
-      <form id="create-sub-task" onSubmit={form.handleSubmit(onSubmit)} className="p-3 flex gap-2 flex-col bg-secondary/50">
+      <form id="create-sub-task" onSubmit={form.handleSubmit(onSubmit)} className="p-3 mb-2 flex gap-2 flex-col bg-secondary/50">
         <FormField
           control={form.control}
           name="description"

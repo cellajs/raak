@@ -1,7 +1,8 @@
 import '@blocknote/shadcn/style.css';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import useDoubleClick from '~/hooks/use-double-click';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import CreateSubTaskForm from '~/modules/tasks/create-sub-task-form';
 import SubTask from '~/modules/tasks/sub-task';
@@ -19,9 +20,24 @@ interface Props {
 
 const TaskContent = ({ task, mode, state }: Props) => {
   const { t } = useTranslation();
+  const taskContentRef = useRef<HTMLDivElement>(null);
+
   const [createSubTask, setCreateSubTask] = useState(false);
 
   const expandedStyle = 'min-h-16 [&>.bn-editor]:min-h-16 w-full bg-transparent border-none pl-9';
+
+  useDoubleClick({
+    onSingleClick: () => {
+      if (state !== 'folded') return;
+      dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' });
+    },
+    onDoubleClick: () => {
+      if (state === 'editing' || state === 'unsaved') return;
+      dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'editing' });
+    },
+    allowedTargets: ['p', 'div'],
+    ref: taskContentRef,
+  });
 
   useEffect(() => {
     if (state !== 'expanded') return;
@@ -39,7 +55,7 @@ const TaskContent = ({ task, mode, state }: Props) => {
   }, [task.description, state]);
 
   return (
-    <div className="flex flex-col grow gap-2">
+    <div ref={taskContentRef} className="flex flex-col grow gap-2">
       {state === 'folded' ? (
         <div className="mt-1 inline-flex">
           <div
@@ -51,17 +67,19 @@ const TaskContent = ({ task, mode, state }: Props) => {
 
           {(task.expandable || task.subTasks.length > 0) && (
             <div className="inline-flex gap-1 items-center opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 pl-2 -mt-[0.15rem]">
-              <Button
-                variant="link"
-                size="micro"
-                onClick={(e) => {
-                  e.preventDefault();
-                  dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' });
-                }}
-                className="inline-flex py-0 h-5"
-              >
-                {t('common:more').toLowerCase()}
-              </Button>
+              {task.expandable && (
+                <Button
+                  variant="link"
+                  size="micro"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' });
+                  }}
+                  className="inline-flex py-0 h-5"
+                >
+                  {t('common:more').toLowerCase()}
+                </Button>
+              )}
               {task.subTasks.length > 0 && (
                 <div className="inline-flex py-0.5 text-xs h-5 ml-1 gap-[.1rem] cursor-pointer">
                   <span className="text-success">{task.subTasks.filter((t) => t.status === 6).length}</span>
@@ -85,11 +103,6 @@ const TaskContent = ({ task, mode, state }: Props) => {
               <div
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
                 dangerouslySetInnerHTML={{ __html: task.description }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'editing' });
-                }}
-                onKeyDown={() => {}}
               />
             </div>
           )}
