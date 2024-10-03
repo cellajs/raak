@@ -33,9 +33,10 @@ import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
 
-const PANEL_MIN_WIDTH = 300;
+// TODO empty space width should be dynamic based on window width and amount of projects and width of each project?
+const PANEL_MIN_WIDTH = 350;
 // Allow resizing of panels
-const EMPTY_SPACE_WIDTH = 300;
+const EMPTY_SPACE_WIDTH = 600;
 
 // TODO can this be simplified or moved?
 export type TaskDraggableItemData = DraggableItemData<Task> & { type: 'task' };
@@ -193,6 +194,14 @@ export default function Board() {
 
   const handleEscKeyPress = () => {
     if (!focusedTaskId) return;
+    // check if creation of subtask open
+    const subTaskCreation = !!document.getElementById('create-sub-task');
+    if (subTaskCreation) return;
+
+    // check if creation of subtask open or  some of the subtasks editing
+    const subTasksEditing = document.querySelectorAll(`[id^="blocknote-subtask-"]`);
+    if (subTasksEditing.length) return dispatchCustomEvent('changeSubTaskState', { taskId: focusedTaskId, state: 'removeEditing' });
+
     const taskState = tasksState[focusedTaskId];
     if (!taskState || taskState === 'folded') return;
     if (taskState === 'editing' || taskState === 'unsaved') return setTaskState(focusedTaskId, 'expanded');
@@ -202,7 +211,7 @@ export default function Board() {
   const handleEnterKeyPress = () => {
     if (!focusedTaskId) return;
     const taskState = tasksState[focusedTaskId];
-    if (taskState === 'folded') setTaskState(focusedTaskId, 'expanded');
+    if (!taskState || taskState === 'folded') setTaskState(focusedTaskId, 'expanded');
     if (taskState === 'expanded') setTaskState(focusedTaskId, 'editing');
   };
 
@@ -249,10 +258,11 @@ export default function Board() {
     // Check if the clicked element is a button or inside a button,
     // if so, set the new focused task and return early (no need to fold/expand in this case)
     if (clickTarget.tagName === 'BUTTON' || clickTarget.closest('button')) {
-      if (clickTarget.id === 'edit-toggle' && currentFocused) {
+      if (currentFocused) {
         // Set the state of the previously focused task after edit button clicked
         setTaskState(currentFocused, tasksState[currentFocused] === 'folded' || !tasksState[currentFocused] ? 'folded' : 'expanded');
       }
+
       return setFocusedTaskId(newFocused);
     }
 
