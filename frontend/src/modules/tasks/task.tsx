@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { type DropDownToRemove, dropdownerState } from '~/modules/common/dropdowner/state';
-import { isTaskData } from '~/modules/projects/board/board';
+import { isTaskData } from '~/modules/projects/board/helpers';
 import TaskDescription from '~/modules/tasks/task-content.tsx';
 import { TaskFooter } from '~/modules/tasks/task-footer';
 import { TaskHeader } from '~/modules/tasks/task-header';
@@ -106,7 +106,7 @@ export function TaskCard({ style, task, tasks, mode, isSelected, isFocused, stat
           // Check if there are any sub taskEditing in current task
           const subTasksEditing = taskDragRef.current.querySelectorAll(`[id^="blocknote-subtask-"]`);
 
-          return !subTasksEditing.length || state === 'folded' || (state === 'expanded' && !subTasksEditing.length);
+          return state === 'folded' || (state === 'expanded' && !subTasksEditing.length);
         },
       }),
       dropTargetForExternal({
