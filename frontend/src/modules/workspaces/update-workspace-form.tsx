@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { type UpdateWorkspaceParams, updateWorkspace } from '~/api/workspaces';
 import { useBeforeUnload } from '~/hooks/use-before-unload';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
-import { cleanUrl } from '~/lib/utils';
 import { dialog } from '~/modules/common/dialoger/state';
 import AvatarFormField from '~/modules/common/form-fields/avatar';
 import InputFormField from '~/modules/common/form-fields/input';
@@ -21,6 +20,7 @@ import { sheet } from '~/modules/common/sheeter/state';
 import UnsavedBadge from '~/modules/common/unsaved-badge';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/form';
+import { cleanUrl } from '~/utils/clean-url';
 
 interface Props {
   workspace: Workspace;
@@ -33,10 +33,10 @@ const formSchema = updateWorkspaceBodySchema;
 
 type FormValues = z.infer<typeof formSchema>;
 
-export const useUpdateWorkspaceMutation = (idOrSlug: string) => {
+export const useUpdateWorkspaceMutation = (idOrSlug: string, orgIdOrSlug: string) => {
   return useMutation<Workspace, DefaultError, UpdateWorkspaceParams>({
     mutationKey: ['workspaces', 'update', idOrSlug],
-    mutationFn: (params) => updateWorkspace(idOrSlug, params),
+    mutationFn: (params) => updateWorkspace(idOrSlug, orgIdOrSlug, params),
     gcTime: 1000 * 10,
   });
 };
@@ -44,7 +44,7 @@ export const useUpdateWorkspaceMutation = (idOrSlug: string) => {
 const UpdateWorkspaceForm = ({ workspace, callback, dialog: isDialog, sheet: isSheet }: Props) => {
   const { t } = useTranslation();
 
-  const { mutate, isPending } = useUpdateWorkspaceMutation(workspace.id);
+  const { mutate, isPending } = useUpdateWorkspaceMutation(workspace.id, workspace.organizationId);
 
   const formOptions: UseFormProps<FormValues> = {
     resolver: zodResolver(formSchema),

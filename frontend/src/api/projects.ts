@@ -6,14 +6,16 @@ import { clientConfig, handleResponse } from '.';
 export const client = projectsHc(config.backendUrl, clientConfig);
 
 export type CreateProjectParams = Parameters<(typeof client.index)['$post']>['0']['json'] & {
+  workspaceId: string;
   organizationId: string;
 };
 
 // Create a new project
-export const createProject = async (workspaceId: string, { ...rest }: CreateProjectParams) => {
+export const createProject = async ({ workspaceId, organizationId, ...project }: CreateProjectParams) => {
   const response = await client.index.$post({
+    param: { orgIdOrSlug: organizationId },
     query: { workspaceId },
-    json: rest,
+    json: project,
   });
 
   const json = await handleResponse(response);
@@ -21,37 +23,36 @@ export const createProject = async (workspaceId: string, { ...rest }: CreateProj
 };
 
 // Get an project by its slug or ID
-export const getProject = async (idOrSlug: string) => {
+export const getProject = async (idOrSlug: string, orgIdOrSlug: string) => {
   const response = await client[':idOrSlug'].$get({
-    param: { idOrSlug },
+    param: { idOrSlug, orgIdOrSlug },
   });
 
   const json = await handleResponse(response);
   return json.data;
 };
 
-export type GetProjectsParams = Partial<
-  Omit<Parameters<(typeof client.index)['$get']>['0']['query'], 'limit' | 'offset'> & {
-    limit?: number;
-    offset?: number;
-    page?: number;
-  }
->;
+export type GetProjectsParams = Omit<Parameters<(typeof client.index)['$get']>['0']['query'], 'limit' | 'offset'> & {
+  orgIdOrSlug: string;
+  limit?: number;
+  offset?: number;
+  page?: number;
+};
 
 // Get a list of projects
 export const getProjects = async (
-  { q, sort = 'id', order = 'asc', page = 0, limit = 50, organizationId, userId, offset }: GetProjectsParams = {},
+  { q, sort = 'id', order = 'asc', page = 0, limit = 50, userId, offset, orgIdOrSlug }: GetProjectsParams,
   signal?: AbortSignal,
 ) => {
   const response = await client.index.$get(
     {
+      param: { orgIdOrSlug },
       query: {
         q,
         sort,
         order,
         offset: typeof offset === 'number' ? String(offset) : String(page * limit),
         limit: String(limit),
-        organizationId,
         userId,
       },
     },
@@ -73,9 +74,9 @@ export const getProjects = async (
 export type UpdateProjectParams = Parameters<(typeof client)[':idOrSlug']['$put']>['0']['json'];
 
 // Update a project
-export const updateProject = async (idOrSlug: string, params: UpdateProjectParams) => {
+export const updateProject = async (idOrSlug: string, orgIdOrSlug: string, params: UpdateProjectParams) => {
   const response = await client[':idOrSlug'].$put({
-    param: { idOrSlug },
+    param: { idOrSlug, orgIdOrSlug },
     json: params,
   });
 
@@ -84,8 +85,9 @@ export const updateProject = async (idOrSlug: string, params: UpdateProjectParam
 };
 
 // Delete projects
-export const deleteProjects = async (ids: string[]) => {
+export const deleteProjects = async (ids: string[], orgIdOrSlug: string) => {
   const response = await client.index.$delete({
+    param: { orgIdOrSlug },
     query: { ids },
   });
 

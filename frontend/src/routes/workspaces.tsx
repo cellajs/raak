@@ -1,15 +1,15 @@
-import { onlineManager } from '@tanstack/react-query';
 import { createRoute } from '@tanstack/react-router';
 import type { ErrorType } from 'backend/lib/errors';
 import { Suspense, lazy } from 'react';
 import { z } from 'zod';
-import { queryClient } from '~/lib/router';
-import { noDirectAccess } from '~/lib/utils';
+import type { GetWorkspaceResponse } from '~/api/workspaces';
+import { offlineFetch } from '~/lib/query-client';
 import ErrorNotice from '~/modules/common/error-notice';
 import Overview from '~/modules/projects/overview';
 import { workspaceQueryOptions } from '~/modules/workspaces/helpers/query-options';
 import { baseEntityRoutes } from '~/nav-config';
 import { useWorkspaceStore } from '~/store/workspace';
+import { noDirectAccess } from '~/utils/no-direct-access';
 import { AppRoute } from './general';
 
 // Lazy-loaded components
@@ -28,31 +28,21 @@ export const WorkspaceRoute = createRoute({
   staticData: { pageTitle: 'Workspace', isAuth: true },
   beforeLoad: ({ location, params }) => noDirectAccess(location.pathname, params.idOrSlug, '/board'),
   getParentRoute: () => AppRoute,
-  loader: ({ params: { idOrSlug } }) => {
-    const queryOptions = workspaceQueryOptions(idOrSlug);
-    const cachedData = queryClient.getQueryData(queryOptions.queryKey);
-    if (cachedData) {
+  loader: ({ params: { idOrSlug, orgIdOrSlug } }) => {
+    const queryOptions = workspaceQueryOptions(idOrSlug, orgIdOrSlug);
+    const offlineFetchResult = offlineFetch(queryOptions);
+    offlineFetchResult.then((data) => {
+      if (!data) return;
+      const { workspace, projects, labels, members } = data as GetWorkspaceResponse;
       useWorkspaceStore.setState({
-        workspace: cachedData.workspace,
-        projects: cachedData.projects,
-        labels: cachedData.labels,
-        members: cachedData.members,
+        workspace,
+        projects,
+        labels,
+        members,
       });
-    }
-    // do not load if we are offline or hydrating because it returns a promise that is pending until we go online again
-    return (
-      cachedData ??
-      (onlineManager.isOnline()
-        ? queryClient.fetchQuery(queryOptions).then((data) => {
-            useWorkspaceStore.setState({
-              workspace: data.workspace,
-              projects: data.projects,
-              labels: data.labels,
-              members: data.members,
-            });
-          })
-        : undefined)
-    );
+    });
+
+    return offlineFetchResult;
   },
   errorComponent: ({ error }) => <ErrorNotice error={error as ErrorType} />,
   component: () => {
@@ -76,8 +66,12 @@ export const tasksSearchSchema = z.object({
 
 export const WorkspaceBoardRoute = createRoute({
   path: '/board',
-  staticData: { pageTitle: 'Board', isAuth: true },
-  validateSearch: z.object({ project: z.string().optional(), q: z.string().optional(), taskIdPreview: z.string().optional() }),
+  staticData: { pageTitle: 'Board', isAuth: true, showedMobileNavButtons: ['menu', 'workspace-add-task'] },
+  validateSearch: z.object({
+    project: z.string().optional(),
+    q: z.string().optional(),
+    taskIdPreview: z.string().optional(),
+  }),
   getParentRoute: () => WorkspaceRoute,
   component: () => (
     <Suspense>

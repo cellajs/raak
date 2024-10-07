@@ -1,8 +1,8 @@
-import { errorResponses, successWithDataSchema, successWithErrorsSchema, successWithPaginationSchema } from '#/lib/common-responses';
-import { entityParamSchema, idsQuerySchema } from '#/lib/common-schemas';
+import { z } from 'zod';
 import { createRouteConfig } from '#/lib/route-config';
-import { isAllowedTo, isAuthenticated, splitByAllowance } from '#/middlewares/guard';
-import checkUserPermissions from './middlewares/userPermissionsCheck';
+import { hasOrgAccess, isAuthenticated } from '#/middlewares/guard';
+import { errorResponses, successWithDataSchema, successWithErrorsSchema, successWithPaginationSchema } from '#/utils/schema/common-responses';
+import { entityInOrgParamSchema, idOrSlugSchema, idsQuerySchema } from '#/utils/schema/common-schemas';
 
 import { createProjectBodySchema, createProjectQuerySchema, getProjectsQuerySchema, projectSchema, updateProjectBodySchema } from './schema';
 
@@ -10,12 +10,13 @@ class ProjectRoutesConfig {
   public createProject = createRouteConfig({
     method: 'post',
     path: '/',
-    guard: [isAuthenticated, isAllowedTo('create', 'project')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['projects'],
     summary: 'Create new project',
     description: 'Create a new project in an organization. Creator will become admin and can invite other members.',
     security: [{ bearerAuth: [] }],
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: createProjectQuerySchema,
       body: {
         required: true,
@@ -42,12 +43,12 @@ class ProjectRoutesConfig {
   public getProject = createRouteConfig({
     method: 'get',
     path: '/{idOrSlug}',
-    guard: [isAuthenticated, checkUserPermissions, isAllowedTo('read', 'project')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['projects'],
     summary: 'Get project',
     description: 'Get project by id or slug.',
     request: {
-      params: entityParamSchema,
+      params: entityInOrgParamSchema,
     },
     responses: {
       200: {
@@ -65,11 +66,12 @@ class ProjectRoutesConfig {
   public getProjects = createRouteConfig({
     method: 'get',
     path: '/',
-    guard: [isAuthenticated, checkUserPermissions],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['projects'],
     summary: 'Get list of projects',
     description: 'Get list of projects.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: getProjectsQuerySchema,
     },
     responses: {
@@ -88,12 +90,12 @@ class ProjectRoutesConfig {
   public updateProject = createRouteConfig({
     method: 'put',
     path: '/{idOrSlug}',
-    guard: [isAuthenticated, isAllowedTo('update', 'project')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['projects'],
     summary: 'Update project',
     description: 'Update project by id or slug.',
     request: {
-      params: entityParamSchema,
+      params: entityInOrgParamSchema,
       body: {
         content: {
           'application/json': {
@@ -118,11 +120,12 @@ class ProjectRoutesConfig {
   public deleteProjects = createRouteConfig({
     method: 'delete',
     path: '/',
-    guard: [isAuthenticated, splitByAllowance('delete', 'project')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['projects'],
     summary: 'Delete projects',
     description: 'Delete projects by ids.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: idsQuerySchema,
     },
     responses: {

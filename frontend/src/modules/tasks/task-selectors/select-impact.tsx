@@ -39,8 +39,7 @@ interface SelectImpactProps {
 
 const SelectImpact = ({ projectId, value, triggerWidth = 192, creationValueChange }: SelectImpactProps) => {
   const { t } = useTranslation();
-  // const { pathname } = useLocation();
-  const { focusedTaskId } = useWorkspaceStore();
+  const { focusedTaskId, workspace } = useWorkspaceStore();
   const [selectedImpact, setSelectedImpact] = useState<ImpactOption | null>(value !== null ? impacts[value] : null);
   const [searchValue, setSearchValue] = useState('');
   const isSearching = searchValue.length > 0;
@@ -58,6 +57,7 @@ const SelectImpact = ({ projectId, value, triggerWidth = 192, creationValueChang
         key: 'impact',
         data: newImpact,
         projectId,
+        orgIdOrSlug: workspace.organizationId,
       });
       // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
       // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
@@ -112,7 +112,7 @@ const SelectImpact = ({ projectId, value, triggerWidth = 192, creationValueChang
                 <span>{Impact.label}</span>
               </div>
               <div className="flex items-center">
-                <Check size={16} className={`text-success ${!selectedImpact || (selectedImpact.value !== Impact.value && 'invisible')}`} />
+                <Check size={16} className={`text-success ${(!selectedImpact || selectedImpact.value !== Impact.value) && 'invisible'}`} />
                 {!isSearching && <span className="max-sm:hidden text-xs ml-3 opacity-50 mr-1">{index + 1}</span>}
               </div>
             </CommandItem>

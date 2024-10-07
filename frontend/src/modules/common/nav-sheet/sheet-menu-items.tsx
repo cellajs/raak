@@ -1,12 +1,12 @@
 import { Link, useParams } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '~/lib/utils';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { Button } from '~/modules/ui/button';
 import { baseEntityRoutes } from '~/nav-config';
 import { useNavigationStore } from '~/store/navigation';
 import type { ContextEntity, UserMenuItem } from '~/types/common';
+import { cn } from '~/utils/cn';
 
 interface SheetMenuItemProps {
   item: UserMenuItem;
@@ -27,6 +27,7 @@ export const SheetMenuItem = ({ item, type, className, mainItemIdOrSlug, searchR
   const queryParams = mainItemIdOrSlug ? `?${type}=${item.slug}` : '';
   const path = `${basePath}${queryParams}`;
   const idOrSlug = mainItemIdOrSlug ?? item.slug;
+  const orgIdOrSlug = item.membership.organizationId;
 
   return (
     <Link
@@ -36,11 +37,11 @@ export const SheetMenuItem = ({ item, type, className, mainItemIdOrSlug, searchR
           mainItemIdOrSlug && !searchResults ? 'h-12 relative menu-item-sub' : 'h-14'
         } w-full flex my-1 cursor-pointer items-start justify-start space-x-1 rounded p-0 focus:outline-none ring-2 ring-inset ring-transparent focus:ring-foreground hover:bg-accent/50 hover:text-accent-foreground`,
         className,
-        isActive && 'ring-transparent after:right-0 after:top-0 after:w-1 after:bg-primary after:h-full after:rounded-sm',
+        isActive && 'ring-transparent bg-accent',
       )}
       aria-label={item.name}
       to={path}
-      params={{ idOrSlug }}
+      params={{ idOrSlug, orgIdOrSlug }}
     >
       <AvatarWrap
         className={`${mainItemIdOrSlug && !searchResults ? 'my-2 mx-3 h-8 w-8 text-xs' : 'm-2'} z-[1] items-center`}

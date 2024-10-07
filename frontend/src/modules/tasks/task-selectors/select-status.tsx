@@ -94,7 +94,7 @@ const SelectStatus = ({
 
   const search = useSearch({ from: WorkspaceRoute.id });
   const { pathname } = useLocation();
-  const { focusedTaskId, projects } = useWorkspaceStore();
+  const { focusedTaskId, projects, workspace } = useWorkspaceStore();
   const [searchValue, setSearchValue] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<Status>(taskStatuses[taskStatus]);
 
@@ -115,7 +115,7 @@ const SelectStatus = ({
       const isTable = pathname.includes('/table');
       const tableSearch = search as z.infer<typeof tasksSearchSchema>;
       const queryKeys = !isTable
-        ? taskKeys.list({ projectId })
+        ? taskKeys.list({ projectId, orgIdOrSlug: workspace.organizationId })
         : [
             'tasks',
             tableSearch.projectId ?? projects.map((p) => p.id).join('_'),
@@ -134,9 +134,8 @@ const SelectStatus = ({
         data: newStatus,
         order: newOrder,
         projectId,
+        orgIdOrSlug: workspace.organizationId,
       });
-      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }

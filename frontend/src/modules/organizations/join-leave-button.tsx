@@ -1,11 +1,13 @@
 import { onlineManager, useSuspenseQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { config } from 'config';
 import { Check, UserRoundCheck, UserRoundX } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { inviteMembers as baseInvite, removeMembers } from '~/api/memberships';
 import { useMutation } from '~/hooks/use-mutations';
-import { showToast } from '~/lib/taosts-show';
+import { showToast } from '~/lib/toasts';
 import { organizationQueryOptions } from '~/modules/organizations/organization-page';
 import { Button } from '~/modules/ui/button';
 import { Command, CommandGroup, CommandItem, CommandList } from '~/modules/ui/command';
@@ -20,6 +22,7 @@ interface Props {
 const JoinLeaveButton = ({ organization }: Props) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
+  const navigate = useNavigate();
   const [openPopover, setOpenPopover] = useState(false);
   const organizationQuery = useSuspenseQuery(organizationQueryOptions(organization.slug));
 
@@ -34,8 +37,9 @@ const JoinLeaveButton = ({ organization }: Props) => {
   const { mutate: leave } = useMutation({
     mutationFn: removeMembers,
     onSuccess: () => {
-      organizationQuery.refetch();
       showToast(t('common:success.you_left_organization'), 'success');
+      if (organizationQuery.data.counts.memberships.total === 1) return navigate({ to: config.defaultRedirectPath, replace: true });
+      organizationQuery.refetch();
     },
   });
 
@@ -53,6 +57,7 @@ const JoinLeaveButton = ({ organization }: Props) => {
     if (!onlineManager.isOnline()) return toast.warning(t('common:action.offline.text'));
 
     leave({
+      organizationId: organization.id,
       idOrSlug: organization.id,
       entityType: 'organization',
       ids: [user.id],

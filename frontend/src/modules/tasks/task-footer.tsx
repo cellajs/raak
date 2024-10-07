@@ -5,19 +5,19 @@ import { toast } from 'sonner';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { queryClient } from '~/lib/router';
-import { cn } from '~/lib/utils';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { getNewStatusTaskOrder } from '~/modules/tasks/helpers';
 import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
 import { NotSelected } from '~/modules/tasks/task-selectors/impact-icons/not-selected';
 import { impacts } from '~/modules/tasks/task-selectors/select-impact';
-import { type TaskStatus, statusVariants, taskStatuses } from '~/modules/tasks/task-selectors/select-status';
+import { statusVariants, taskStatuses } from '~/modules/tasks/task-selectors/select-status';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import type { Task } from '~/types/app';
+import { cn } from '~/utils/cn';
 
 interface TasksFooterProps {
   task: Task;
@@ -40,7 +40,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
 
   const updateStatus = async (newStatus: number) => {
     try {
-      const query = queryClient.getQueryData(taskKeys.list({ projectId: task.projectId })) as { items: Task[] };
+      const query = queryClient.getQueryData(taskKeys.list({ projectId: task.projectId, orgIdOrSlug: task.organizationId })) as { items: Task[] };
       const newOrder = getNewStatusTaskOrder(task.status, newStatus, isSheet ? (tasks ?? []) : (query.items ?? []));
       await updateTask.mutateAsync({
         id: task.id,
@@ -48,9 +48,8 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
         data: newStatus,
         order: newOrder,
         projectId: task.projectId,
+        orgIdOrSlug: task.organizationId,
       });
-      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: task.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }
@@ -109,11 +108,11 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
             <div className="flex truncate flex-wrap gap-[.07rem]">
               {task.labels.map(({ name, id }) => {
                 return (
-                  <div key={id} className="flex flex-wrap max-w-24 align-center justify-center items-center rounded-full px-0 bg-border">
+                  <div key={id} className="flex flex-wrap max-w-24 align-center justify-center items-center rounded-full px-0">
                     <Badge
                       variant="outline"
                       key={id}
-                      className="inline-block border-0 max-w-32 truncate font-normal text-[.75rem] h-5 bg-transparent last:mr-0 leading-4"
+                      className="inline-block border-0 max-w-32 opacity-75 truncate font-normal text-[.75rem] h-5 bg-transparent last:mr-0 leading-4"
                     >
                       {name}
                     </Badge>
@@ -152,15 +151,15 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
         <Button
           id={`status-${task.id}`}
           onClick={() => updateStatus(task.status + 1)}
-          disabled={(task.status as TaskStatus) === 6}
+          disabled={task.status === 6}
           variant="outlineGhost"
           size="xs"
           className={cn(
             'relative border-r-0 rounded-r-none font-normal [&:not(.absolute)]:active:translate-y-0 disabled:opacity-100 mr-1',
-            statusVariants({ status: task.status as TaskStatus }),
+            statusVariants({ status: task.status }),
           )}
         >
-          {t(`app:${taskStatuses[task.status as TaskStatus].action}`)}
+          {t(`app:${taskStatuses[task.status].action}`)}
         </Button>
         <Button
           onClick={(event) => handleTaskDropDownClick(task, `status-${task.id}`, event.currentTarget)}
@@ -169,7 +168,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
           size="xs"
           className={cn(
             'relative rounded-none rounded-r -ml-2 px-2 [&:not(.absolute)]:active:translate-y-0',
-            statusVariants({ status: task.status as TaskStatus }),
+            statusVariants({ status: task.status }),
           )}
         >
           <ChevronDown size={12} className={`transition-transform ${isStatusDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />

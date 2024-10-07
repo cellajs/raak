@@ -4,11 +4,11 @@ import { useThemeStore } from '~/store/theme';
 
 import { Ban, Circle, type LucideProps, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { objectEntries } from '~/lib/object';
-import { cn } from '~/lib/utils';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { Switch } from '~/modules/ui/switch';
+import { cn } from '~/utils/cn';
+import { objectEntries } from '~/utils/object';
 
 interface UserThemeProps {
   size?: number;
@@ -34,7 +34,7 @@ const UserTheme = ({ size = 24, className = '' }: UserThemeProps) => {
       <Switch
         size="sm"
         id="changeTheme"
-        className={cn(mode === 'light' && '!bg-border/50', className)}
+        className={cn(mode === 'light' && '!bg-border/50', 'scale-125 m-2', className)}
         checked={mode === 'light'}
         onCheckedChange={() => setMode(mode === 'light' ? 'dark' : 'light')}
         aria-label={'changeTheme'}

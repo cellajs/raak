@@ -1,25 +1,33 @@
-import { errorResponses, successWithDataSchema, successWithPaginationSchema, successWithoutDataSchema } from '#/lib/common-responses';
-import { idsQuerySchema, productParamSchema } from '#/lib/common-schemas';
+import {
+  errorResponses,
+  successWithDataSchema,
+  successWithErrorsSchema,
+  successWithPaginationSchema,
+  successWithoutDataSchema,
+} from '#/utils/schema/common-responses';
+import { idOrSlugSchema, idsQuerySchema, productParamSchema } from '#/utils/schema/common-schemas';
 
 import { createRouteConfig } from '#/lib/route-config';
-import { isAuthenticated } from '#/middlewares/guard';
+import { hasOrgAccess, isAuthenticated } from '#/middlewares/guard';
 
-import { getLabelsQuerySchema, labelSchema, updateLabelSchema } from './schema';
+import { z } from 'zod';
+import { createLabelSchema, getLabelsQuerySchema, labelSchema, updateLabelSchema } from './schema';
 
 class LabelsRoutesConfig {
   public createLabel = createRouteConfig({
     method: 'post',
     path: '/',
-    guard: [isAuthenticated],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['labels'],
     summary: 'Create new label',
     description: 'Create a new label with project bound.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       body: {
         required: true,
         content: {
           'application/json': {
-            schema: labelSchema,
+            schema: createLabelSchema,
           },
         },
       },
@@ -40,11 +48,12 @@ class LabelsRoutesConfig {
   public getLabels = createRouteConfig({
     method: 'get',
     path: '/',
-    guard: [isAuthenticated],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['labels'],
     summary: 'Get list of labels',
     description: 'Get list of labels in a project.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: getLabelsQuerySchema,
     },
     responses: {
@@ -63,7 +72,7 @@ class LabelsRoutesConfig {
   public updateLabel = createRouteConfig({
     method: 'put',
     path: '/{id}',
-    guard: [isAuthenticated],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['labels'],
     summary: 'Update label',
     description: 'Update label by id.',
@@ -93,11 +102,12 @@ class LabelsRoutesConfig {
   public deleteLabels = createRouteConfig({
     method: 'delete',
     path: '/',
-    guard: [isAuthenticated],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['labels'],
     summary: 'Delete labels',
     description: 'Delete labels by ids.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: idsQuerySchema,
     },
     responses: {
@@ -105,7 +115,7 @@ class LabelsRoutesConfig {
         description: 'Success',
         content: {
           'application/json': {
-            schema: successWithoutDataSchema,
+            schema: successWithErrorsSchema(),
           },
         },
       },

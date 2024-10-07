@@ -1,7 +1,8 @@
-import { errorResponses, successWithDataSchema, successWithErrorsSchema } from '#/lib/common-responses';
-import { entityParamSchema, idsQuerySchema } from '#/lib/common-schemas';
+import { z } from 'zod';
 import { createRouteConfig } from '#/lib/route-config';
-import { isAllowedTo, isAuthenticated, splitByAllowance } from '#/middlewares/guard';
+import { hasOrgAccess, isAuthenticated } from '#/middlewares/guard';
+import { errorResponses, successWithDataSchema, successWithErrorsSchema } from '#/utils/schema/common-responses';
+import { entityInOrgParamSchema, idOrSlugSchema, idsQuerySchema } from '#/utils/schema/common-schemas';
 
 import { createWorkspaceBodySchema, updateWorkspaceBodySchema, workspaceSchema, workspaceWithProjectSchema } from './schema';
 
@@ -9,11 +10,12 @@ class WorkspaceRoutesConfig {
   public createWorkspace = createRouteConfig({
     method: 'post',
     path: '/',
-    guard: [isAuthenticated, isAllowedTo('create', 'workspace')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['workspaces'],
     summary: 'Create new workspace',
     description: 'Create personal workspace to organize projects and tasks.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       body: {
         required: true,
         content: {
@@ -39,12 +41,12 @@ class WorkspaceRoutesConfig {
   public getWorkspace = createRouteConfig({
     method: 'get',
     path: '/{idOrSlug}',
-    guard: [isAuthenticated, isAllowedTo('read', 'workspace')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['workspaces'],
     summary: 'Get workspace',
     description: 'Get workspace by id or slug.',
     request: {
-      params: entityParamSchema,
+      params: entityInOrgParamSchema,
     },
     responses: {
       200: {
@@ -62,12 +64,12 @@ class WorkspaceRoutesConfig {
   public updateWorkspace = createRouteConfig({
     method: 'put',
     path: '/{idOrSlug}',
-    guard: [isAuthenticated, isAllowedTo('update', 'workspace')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['workspaces'],
     summary: 'Update workspace',
     description: 'Update workspace by id or slug.',
     request: {
-      params: entityParamSchema,
+      params: entityInOrgParamSchema,
       body: {
         content: {
           'application/json': {
@@ -92,11 +94,12 @@ class WorkspaceRoutesConfig {
   public deleteWorkspaces = createRouteConfig({
     method: 'delete',
     path: '/',
-    guard: [isAuthenticated, splitByAllowance('delete', 'workspace')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['workspaces'],
     summary: 'Delete workspaces',
     description: 'Delete workspaces by ids.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: idsQuerySchema,
     },
     responses: {

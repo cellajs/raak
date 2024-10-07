@@ -11,7 +11,6 @@ import { type UpdateProjectParams, updateProject } from '~/api/projects';
 import { useBeforeUnload } from '~/hooks/use-before-unload';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { queryClient } from '~/lib/router';
-import { cleanUrl } from '~/lib/utils';
 import { dialog } from '~/modules/common/dialoger/state';
 import AvatarFormField from '~/modules/common/form-fields/avatar';
 import InputFormField from '~/modules/common/form-fields/input';
@@ -23,6 +22,7 @@ import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/form';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Project } from '~/types/app';
+import { cleanUrl } from '~/utils/clean-url';
 
 interface Props {
   project: Project;
@@ -35,10 +35,10 @@ const formSchema = updateProjectBodySchema;
 
 type FormValues = z.infer<typeof formSchema>;
 
-export const useUpdateProjectMutation = (idOrSlug: string) => {
+export const useUpdateProjectMutation = (idOrSlug: string, orgIdOrSlug: string) => {
   return useMutation<Project, DefaultError, UpdateProjectParams>({
     mutationKey: ['projects', 'update', idOrSlug],
-    mutationFn: (params) => updateProject(idOrSlug, params),
+    mutationFn: (params) => updateProject(idOrSlug, orgIdOrSlug, params),
     onSuccess: (updatedProject) => {
       queryClient.setQueryData(['projects', idOrSlug], updatedProject);
       queryClient.invalidateQueries({
@@ -52,7 +52,7 @@ export const useUpdateProjectMutation = (idOrSlug: string) => {
 const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet }: Props) => {
   const { t } = useTranslation();
   const { setWorkspace, workspace, projects } = useWorkspaceStore();
-  const { mutate, isPending } = useUpdateProjectMutation(project.id);
+  const { mutate, isPending } = useUpdateProjectMutation(project.id, project.organizationId);
 
   const formOptions: UseFormProps<FormValues> = {
     resolver: zodResolver(formSchema),

@@ -20,8 +20,7 @@ import { toast } from 'sonner';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import useHideElementsById from '~/hooks/use-hide-elements-by-id';
 import { queryClient } from '~/lib/router';
-import { showToast } from '~/lib/taosts-show';
-import { cleanUrl } from '~/lib/utils';
+import { showToast } from '~/lib/toasts';
 import InputFormField from '~/modules/common/form-fields/input';
 import { SelectLanguage } from '~/modules/common/form-fields/language-selector';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
@@ -29,6 +28,7 @@ import { sheet } from '~/modules/common/sheeter/state';
 import { useStepper } from '~/modules/common/stepper/use-stepper';
 import UnsavedBadge from '~/modules/common/unsaved-badge';
 import { useUserStore } from '~/store/user';
+import { cleanUrl } from '~/utils/clean-url';
 
 interface UpdateUserFormProps {
   user: User;

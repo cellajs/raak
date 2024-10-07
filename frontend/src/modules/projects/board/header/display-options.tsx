@@ -1,9 +1,9 @@
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
 import { Grid2X2, Rows4, SquareKanban } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '~/lib/utils';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
+import { cn } from '~/utils/cn';
 
 interface Props {
   className?: string;
@@ -17,7 +17,7 @@ const DisplayOptions = ({ className = '' }: Props) => {
 
   const handleItemChange = (value: string) => {
     navigate({
-      to: `/workspaces/$idOrSlug/${value}`,
+      to: `/$orgIdOrSlug/workspaces/$idOrSlug/${value}`,
       params: { idOrSlug },
     });
   };

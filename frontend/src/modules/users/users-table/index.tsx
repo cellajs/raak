@@ -16,7 +16,7 @@ import useMapQueryDataToRows from '~/hooks/use-map-query-data-to-rows';
 import { useMutateInfiniteQueryData } from '~/hooks/use-mutate-query-data';
 import { useMutation } from '~/hooks/use-mutations';
 import useSaveInSearchParams from '~/hooks/use-save-in-search-params';
-import { showToast } from '~/lib/taosts-show';
+import { showToast } from '~/lib/toasts';
 import { DataTable } from '~/modules/common/data-table';
 import ColumnsView from '~/modules/common/data-table/columns-view';
 import { getInitialSortColumns } from '~/modules/common/data-table/sort-columns';
@@ -136,8 +136,9 @@ const UsersTable = () => {
     dialog(<InviteUsers mode={'email'} dialog />, {
       id: 'user-invite',
       drawerOnMobile: false,
-      className: 'w-auto shadow-none relative z-[120] max-w-4xl',
+      className: 'w-auto shadow-none relative z-[60] max-w-4xl',
       container: containerRef.current,
+      containerBackdrop: false,
       title: t('common:invite'),
       text: `${t('common:invite_users.text')}`,
     });

@@ -5,13 +5,12 @@ import { z } from 'zod';
 
 import { useLocation } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 import { createTask } from '~/api/tasks.ts';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
-import { useHotkeys } from '~/hooks/use-hot-keys.ts';
+import { useHotkeys } from '~/hooks/use-hot-keys';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { nanoid } from '~/lib/utils.ts';
 import { extractUniqueWordsFromHTML, getNewTaskOrder, taskExpandable } from '~/modules/tasks/helpers';
 import { TaskBlockNote } from '~/modules/tasks/task-selectors/task-blocknote.tsx';
 import { Button } from '~/modules/ui/button';
@@ -19,6 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/u
 import { useThemeStore } from '~/store/theme.ts';
 import { useUserStore } from '~/store/user.ts';
 import type { Task } from '~/types/app';
+import { nanoid } from '~/utils/nanoid';
 
 const formSchema = z.object({
   id: z.string(),
@@ -45,10 +45,6 @@ export const CreateSubTaskForm = ({
   const { mode } = useThemeStore();
   const { pathname } = useLocation();
   const { user } = useUserStore();
-
-  const handleHotKeysKeyPress = useCallback(() => {
-    setFormState(false);
-  }, [setFormState]);
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
@@ -127,18 +123,18 @@ export const CreateSubTaskForm = ({
     return true;
   };
 
-  useHotkeys([['Escape', handleHotKeysKeyPress]]);
+  useHotkeys([['Escape', () => setFormState(false)]]);
 
   if (!formOpen)
     return (
-      <Button variant="secondary" size="sm" className="w-full mb-1 rounded-none bg-secondary/50" onClick={() => setFormState(true)}>
+      <Button variant="ghost" size="sm" className="w-full mb-1 pl-11 justify-start rounded-none" onClick={() => setFormState(true)}>
         <Plus size={16} />
-        <span className="ml-1 font-normal">{t('common:add_resource', { resource: t('app:todo').toLowerCase() })}</span>
+        <span className="ml-1 font-normal">{t('app:todo')}</span>
       </Button>
     );
   return (
     <Form {...form}>
-      <form id="create-sub-task" onSubmit={form.handleSubmit(onSubmit)} className="p-3 flex gap-2 flex-col bg-secondary/50">
+      <form id="create-sub-task" onSubmit={form.handleSubmit(onSubmit)} className="p-3 mb-2 flex gap-2 flex-col bg-secondary/50">
         <FormField
           control={form.control}
           name="description"
@@ -149,7 +145,8 @@ export const CreateSubTaskForm = ({
                   <TaskBlockNote
                     id={parentTask.id}
                     projectId={parentTask.projectId}
-                    html={value || ''}
+                    orgIdOrSlug={parentTask.organizationId}
+                    html={value}
                     onChange={(description, summary) => {
                       onChange(description);
                       form.setValue('summary', summary);

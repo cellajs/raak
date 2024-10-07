@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 
 import { db } from '#/db/db';
-import { nanoid } from '#/lib/nanoid';
+import { nanoid } from '#/utils/nanoid';
 
 import { type InsertLabelModel, labelsTable } from '#/db/schema/labels';
 import { type InsertMembershipModel, membershipsTable } from '#/db/schema/memberships';
@@ -13,9 +13,9 @@ import { type InsertWorkspaceModel, workspacesTable } from '#/db/schema/workspac
 import { and, eq } from 'drizzle-orm';
 import { UniqueEnforcer } from 'enforce-unique';
 import slugify from 'slugify';
+import { extractKeywords } from '#/modules/tasks/helpers';
 import type { Status } from '../progress';
 import { adminUser } from '../user/seed';
-import { extractKeywords } from './helpers';
 
 export const dataSeed = async (progressCallback?: (stage: string, count: number, status: Status) => void) => {
   const organizations = await db.select().from(organizationsTable);
@@ -48,7 +48,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
         id: nanoid(),
         organizationId: organization.id,
         name: faker.company.name(),
-        slug: faker.helpers.slugify(name).toLowerCase(),
+        slug: slugify(name, { lower: true }),
         bannerUrl: null,
         thumbnailUrl: null,
         createdAt: faker.date.past(),
@@ -110,7 +110,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
           organizationId: organization.id,
           name,
           color: faker.internet.color(),
-          slug: faker.helpers.slugify(name).toLowerCase(),
+          slug: slugify(name, { lower: true }),
           createdAt: faker.date.past(),
           createdBy: membersGroup[Math.floor(Math.random() * membersGroup.length)].id,
           modifiedAt: faker.date.past(),
@@ -191,10 +191,10 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
                 organizationId: organization.id,
                 projectId: project.id,
                 summary: `<div class="bn-block-content"><p class="bn-inline-content">${subTaskName}</p></div>`,
-                keywords: extractKeywords(subTaskDescription),
+                keywords: extractKeywords(subTaskName + subTaskDescription),
                 expandable: true,
                 parentId: mainTaskId,
-                slug: faker.helpers.slugify(subTaskName).toLowerCase(),
+                slug: slugify(subTaskName, { lower: true }),
                 order: subIndex + 1,
                 // status in sub tasks only 1 or 6
                 status: Math.random() < 0.5 ? 1 : 6,
@@ -214,7 +214,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
             organizationId: organization.id,
             projectId: project.id,
             summary: `<div class="bn-block-content"><p class="bn-inline-content">${name}</p></div>`,
-            keywords: extractKeywords(taskDescription),
+            keywords: extractKeywords(name + taskDescription),
             expandable: true,
             // Selection 1-2 random members
             assignedTo: projectMemberships
@@ -226,7 +226,6 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
               .sort(() => 0.5 - Math.random())
               .slice(0, Math.floor(Math.random() * 3) + 2)
               .map((l) => l.id),
-            slug: faker.helpers.slugify(name).toLowerCase(),
             order: index + 1,
             // random integer between 0 and 6
             status: Math.floor(Math.random() * 7),

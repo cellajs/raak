@@ -1,4 +1,4 @@
-import { and, asc, count, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 import { db } from '#/db/db';
 import { auth } from '#/db/lucia';
@@ -17,8 +17,8 @@ import type { PgColumn } from 'drizzle-orm/pg-core';
 import type { z } from 'zod';
 import { oauthAccountsTable } from '#/db/schema/oauth-accounts';
 import { passkeysTable } from '#/db/schema/passkeys';
-import { entityMenuSections, entityTables } from '#/entity-config';
-import { getContextUser } from '#/lib/context';
+import { entityIdFields, entityMenuSections, entityTables } from '#/entity-config';
+import { getContextUser, getMemberships } from '#/lib/context';
 import { getPreparedSessions } from './helpers/get-sessions';
 import type { menuItemsSchema, userMenuSchema } from './schema';
 
@@ -31,13 +31,7 @@ const meRoutes = app
    */
   .openapi(meRoutesConfig.getSelf, async (ctx) => {
     const user = getContextUser();
-
-    const [{ memberships }] = await db
-      .select({
-        memberships: count(),
-      })
-      .from(membershipsTable)
-      .where(eq(membershipsTable.userId, user.id));
+    const memberships = getMemberships();
 
     const passkey = await db.select().from(passkeysTable).where(eq(passkeysTable.userEmail, user.email));
 
@@ -58,7 +52,7 @@ const meRoutes = app
       {
         success: true,
         data: {
-          ...transformDatabaseUserWithCount(user, memberships),
+          ...transformDatabaseUserWithCount(user, memberships.length),
           oauth: validOAuthAccounts,
           passkey: !!passkey.length,
           sessions: await getPreparedSessions(user.id, ctx),
@@ -76,6 +70,8 @@ const meRoutes = app
     const fetchAndFormatEntities = async (type: ContextEntity, subEntityType?: ContextEntity) => {
       let formattedSubmenus: z.infer<typeof menuItemsSchema>;
       const mainTable = entityTables[type];
+      const mainEntityIdField = entityIdFields[type];
+
       const entity = await db
         .select({
           entity: mainTable,
@@ -84,10 +80,12 @@ const meRoutes = app
         .from(mainTable)
         .where(and(eq(membershipsTable.userId, user.id), eq(membershipsTable.type, type)))
         .orderBy(asc(membershipsTable.order))
-        .innerJoin(membershipsTable, eq(membershipsTable[`${type}Id`], mainTable.id));
+        .innerJoin(membershipsTable, eq(membershipsTable[mainEntityIdField], mainTable.id));
 
       if (subEntityType && 'parentId' in entityTables[subEntityType]) {
         const subTable = entityTables[subEntityType];
+        const subEntityIdField = entityIdFields[subEntityType];
+
         const subEntity = await db
           .select({
             entity: subTable,
@@ -97,7 +95,7 @@ const meRoutes = app
           .from(subTable)
           .where(and(eq(membershipsTable.userId, user.id), eq(membershipsTable.type, subEntityType)))
           .orderBy(asc(membershipsTable.order))
-          .innerJoin(membershipsTable, eq(membershipsTable[`${subEntityType}Id`], subTable.id))
+          .innerJoin(membershipsTable, eq(membershipsTable[subEntityIdField], subTable.id))
           .innerJoin(mainTable, eq(mainTable.id, subTable.parentId as PgColumn));
 
         formattedSubmenus = subEntity.map(({ entity, membership, parent }) => ({
@@ -105,6 +103,7 @@ const meRoutes = app
           id: entity.id,
           createdAt: entity.createdAt.toDateString(),
           modifiedAt: entity.modifiedAt?.toDateString() ?? null,
+          organizationId: 'organizationId' in entity ? entity.organizationId : undefined,
           name: entity.name,
           entity: entity.entity,
           thumbnailUrl: entity.thumbnailUrl,
@@ -119,6 +118,7 @@ const meRoutes = app
         id: entity.id,
         createdAt: entity.createdAt.toDateString(),
         modifiedAt: entity.modifiedAt?.toDateString() ?? null,
+        organizationId: 'organizationId' in entity ? entity.organizationId : undefined,
         name: entity.name,
         entity: entity.entity,
         thumbnailUrl: entity.thumbnailUrl,
@@ -181,6 +181,7 @@ const meRoutes = app
    */
   .openapi(meRoutesConfig.updateSelf, async (ctx) => {
     const user = getContextUser();
+    const memberships = getMemberships();
 
     if (!user) return errorResponse(ctx, 404, 'not_found', 'warn', 'user', { user: 'self' });
 
@@ -210,13 +211,6 @@ const meRoutes = app
       .where(eq(usersTable.id, user.id))
       .returning();
 
-    const [{ memberships }] = await db
-      .select({
-        memberships: count(),
-      })
-      .from(membershipsTable)
-      .where(eq(membershipsTable.userId, user.id));
-
     const passkey = await db.select().from(passkeysTable).where(eq(passkeysTable.userEmail, user.email));
 
     const oauthAccounts = await db
@@ -235,7 +229,7 @@ const meRoutes = app
       {
         success: true,
         data: {
-          ...transformDatabaseUserWithCount(updatedUser, memberships),
+          ...transformDatabaseUserWithCount(updatedUser, memberships.length),
           oauth: validOAuthAccounts,
           passkey: !!passkey.length,
         },
@@ -248,6 +242,7 @@ const meRoutes = app
    */
   .openapi(meRoutesConfig.deleteSelf, async (ctx) => {
     const user = getContextUser();
+
     // Check if user exists
     if (!user) return errorResponse(ctx, 404, 'not_found', 'warn', 'user', { user: 'self' });
 
@@ -261,6 +256,7 @@ const meRoutes = app
 
     return ctx.json({ success: true }, 200);
   })
+
   /*
    * Delete passkey of self
    */

@@ -4,11 +4,14 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useEffect, useRef } from 'react';
-import { cn, getColorClass } from '~/lib/utils';
-import { AppFooter } from '~/modules/common/app-footer';
+import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
+import { MainFooter } from '~/modules/common/main-footer';
 import { buttonVariants } from '~/modules/ui/button';
+import { ScrollArea } from '~/modules/ui/scroll-area';
 import { useUserStore } from '~/store/user';
+import { cn } from '~/utils/cn';
+import { numberToColorClass } from '~/utils/number-to-color-class';
 
 type AccountButtonProps = {
   lucide: React.ElementType<LucideProps>;
@@ -32,41 +35,45 @@ const AccountButton: React.FC<AccountButtonProps> = ({ lucide: Icon, label, id, 
 export const SheetAccount = () => {
   const { t } = useTranslation();
   const { user } = useUserStore();
+  const isMobile = useBreakpoints('max', 'sm');
 
   const isSystemAdmin = user.role === 'admin';
   const buttonWrapper = useRef<HTMLDivElement | null>(null);
-  const bgClass = user.bannerUrl ? 'bg-background' : getColorClass(user.id);
+  const bgClass = user.bannerUrl ? 'bg-background' : numberToColorClass(user.id);
   const bannerClass = `relative transition-all duration-300 hover:bg-opacity-50 hover:-mx-8 -mx-4 -mt-4 bg-cover bg-center h-24 ${bgClass} bg-opacity-80`;
 
   useEffect(() => {
+    if (isMobile) return;
     const firstRow = buttonWrapper.current?.querySelector<HTMLElement>('#btn-profile');
     firstRow?.focus();
   }, []);
 
   return (
-    <div ref={buttonWrapper} className="flex flex-col gap-4 min-h-[calc(100vh-2rem)]">
-      <Link id="account" to="/user/$idOrSlug" params={{ idOrSlug: user.slug }} className="w-full relative">
-        <div className={bannerClass} style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : {}}>
-          <AvatarWrap
-            className="h-16 w-16 absolute top-4 text-2xl left-[50%] -ml-8 border-bg border-2 rounded-full"
-            type="user"
-            id={user.id}
-            name={user.name}
-            url={user.thumbnailUrl}
-          />
+    <ScrollArea className="h-full" id="nav-sheet">
+      <div ref={buttonWrapper} className="p-3 flex flex-col gap-4 min-h-[calc(100vh-0.5rem)]">
+        <Link id="account" to="/user/$idOrSlug" params={{ idOrSlug: user.slug }} className="w-full relative">
+          <div className={bannerClass} style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : {}}>
+            <AvatarWrap
+              className="h-16 w-16 absolute top-4 text-2xl left-[50%] -ml-8 border-bg border-2 rounded-full"
+              type="user"
+              id={user.id}
+              name={user.name}
+              url={user.thumbnailUrl}
+            />
+          </div>
+        </Link>
+
+        <div className="flex flex-col gap-1 max-sm:mt-4">
+          <AccountButton lucide={CircleUserRound} id="btn-profile" label={t('common:view_profile')} action={`/user/${user.slug}`} />
+          <AccountButton lucide={UserCog} id="btn-account" label={t('common:settings')} action="/user/settings" />
+          {isSystemAdmin && <AccountButton lucide={Wrench} id="btn-system" label={t('common:system_panel')} action="/system/users" />}
+          <AccountButton lucide={LogOut} id="btn-signout" label={t('common:sign_out')} action="/sign-out" />
         </div>
-      </Link>
 
-      <div className="flex flex-col gap-1 max-sm:mt-4">
-        <AccountButton lucide={CircleUserRound} id="btn-profile" label={t('common:view_profile')} action={`/user/${user.slug}`} />
-        <AccountButton lucide={UserCog} id="btn-account" label={t('common:settings')} action="/user/settings" />
-        {isSystemAdmin && <AccountButton lucide={Wrench} id="btn-system" label={t('common:system_panel')} action="/system/users" />}
-        <AccountButton lucide={LogOut} id="btn-signout" label={t('common:sign_out')} action="/sign-out" />
+        <div className="grow border-b border-dashed" />
+
+        <MainFooter className="items-center" />
       </div>
-
-      <div className="grow border-b border-dashed" />
-
-      <AppFooter className="items-center" />
-    </div>
+    </ScrollArea>
   );
 };

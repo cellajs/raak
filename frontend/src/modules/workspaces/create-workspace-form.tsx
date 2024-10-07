@@ -12,11 +12,11 @@ import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { useMutation } from '~/hooks/use-mutations';
-import { addMenuItem } from '~/lib/utils';
 import { isDialog as checkDialog, dialog } from '~/modules/common/dialoger/state';
 import InputFormField from '~/modules/common/form-fields/input';
 import SelectParentFormField from '~/modules/common/form-fields/select-parent';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
+import { addMenuItem } from '~/modules/common/nav-sheet/helpers/add-menu-item';
 import UnsavedBadge from '~/modules/common/unsaved-badge';
 import CreateOrganizationForm from '~/modules/organizations/create-organization-form';
 import { Alert, AlertDescription, AlertTitle } from '~/modules/ui/alert';
@@ -25,13 +25,14 @@ import { Form } from '~/modules/ui/form';
 import { useNavigationStore } from '~/store/navigation';
 import type { Workspace } from '~/types/app';
 import type { Organization, UserMenuItem } from '~/types/common';
+import { idSchema } from '#/utils/schema/common-schemas';
 
 interface CreateWorkspaceFormProps {
   callback?: (workspace: Workspace) => void;
   dialog?: boolean;
 }
 
-const formSchema = createWorkspaceBodySchema;
+const formSchema = createWorkspaceBodySchema.setKey('organizationId', idSchema);
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -70,8 +71,8 @@ const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({ callback, dia
         menu: addMenuItem(createdWorkspace as UserMenuItem, 'workspaces'),
       });
       navigate({
-        to: '/workspaces/$idOrSlug/board',
-        params: { idOrSlug: createdWorkspace.slug },
+        to: '/$orgIdOrSlug/workspaces/$idOrSlug/board',
+        params: { idOrSlug: createdWorkspace.slug, orgIdOrSlug: createdWorkspace.organizationId },
       });
       callback?.(createdWorkspace);
     },

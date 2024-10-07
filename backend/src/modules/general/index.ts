@@ -1,4 +1,4 @@
-import { type SQL, and, count, eq, ilike, inArray, or } from 'drizzle-orm';
+import { and, eq, ilike, inArray, or } from 'drizzle-orm';
 import { emailSender } from '#/lib/mailer';
 import { InviteSystemEmail } from '../../../emails/system-invite';
 
@@ -11,23 +11,20 @@ import { TimeSpan, createDate, isWithinExpirationDate } from 'oslo';
 import { env } from '../../../env';
 
 import { db } from '#/db/db';
-import { getContextUser } from '#/lib/context';
+import { getContextUser, getMemberships } from '#/lib/context';
 
 import { EventName, Paddle } from '@paddle/paddle-node-sdk';
-import { type MembershipModel, membershipSelect, membershipsTable } from '#/db/schema/memberships';
+import { type MembershipModel, membershipsTable } from '#/db/schema/memberships';
 import { organizationsTable } from '#/db/schema/organizations';
 import { type TokenModel, tokensTable } from '#/db/schema/tokens';
-import { safeUserSelect, usersTable } from '#/db/schema/users';
+import { usersTable } from '#/db/schema/users';
 import { getUserBy } from '#/db/util';
-import { entityTables } from '#/entity-config';
-import { memberCountsQuery } from '#/lib/counts';
-import { resolveEntity } from '#/lib/entity';
+import { entityIdFields, entityTables } from '#/entity-config';
 import { errorResponse } from '#/lib/errors';
 import { i18n } from '#/lib/i18n';
-import { getOrderColumn } from '#/lib/order-column';
-import { verifyUnsubscribeToken } from '#/lib/unsubscribe-token';
 import { isAuthenticated } from '#/middlewares/guard';
 import { logEvent } from '#/middlewares/logger/log-event';
+import { verifyUnsubscribeToken } from '#/modules/users/helpers/unsubscribe-token';
 import { type ContextEntity, CustomHono } from '#/types/common';
 import { insertMembership } from '../memberships/helpers/insert-membership';
 import { checkSlugAvailable } from './helpers/check-slug';
@@ -262,9 +259,7 @@ const generalRoutes = app
   .openapi(generalRouteConfig.getSuggestionsConfig, async (ctx) => {
     const { q, type } = ctx.req.valid('query');
     const user = getContextUser();
-
-    // Retrieve user memberships to filter suggestions by relevant organization,  admin users see everything
-    const memberships = await db.select().from(membershipsTable).where(eq(membershipsTable.userId, user.id));
+    const memberships = getMemberships();
 
     // Retrieve organizationIds for non-admin users and check if the user has at least one organization membership
     let organizationIds: string[] = [];
@@ -283,6 +278,7 @@ const generalRoutes = app
     for (const entityType of entityTypes) {
       const table = entityTables[entityType];
       if (!table) continue;
+      const entityIdField = entityIdFields[entityType];
 
       // Basic selection setup
       const baseSelect = {
@@ -292,7 +288,6 @@ const generalRoutes = app
         entity: table.entity,
         ...('email' in table && { email: table.email }),
         ...('thumbnailUrl' in table && { thumbnailUrl: table.thumbnailUrl }),
-        ...('parentId' in table && { parentId: table.parentId }),
       };
 
       // Build search filters
@@ -315,7 +310,7 @@ const generalRoutes = app
         const uniqueValuesSet = new Set<string>();
 
         for (const member of memberships) {
-          const id = member[`${entityType}Id`];
+          const id = member[entityIdField];
           if (id) uniqueValuesSet.add(id);
         }
 
@@ -334,73 +329,6 @@ const generalRoutes = app
     const items = results.flat();
 
     return ctx.json({ success: true, data: { items, total: items.length } }, 200);
-  })
-  /*
-   * Get members by entity id and type
-   */
-  .openapi(generalRouteConfig.getMembers, async (ctx) => {
-    const { idOrSlug, entityType, q, sort, order, offset, limit, role } = ctx.req.valid('query');
-    const entity = await resolveEntity(entityType, idOrSlug);
-
-    if (!entity) return errorResponse(ctx, 404, 'not_found', 'warn', entityType);
-
-    // TODO use filter query helper to avoid code duplication. Also, this specific filter is missing name search?
-    const filter: SQL | undefined = q ? ilike(usersTable.email, `%${q}%`) : undefined;
-
-    const usersQuery = db.select().from(usersTable).where(filter).as('users');
-
-    const membersFilters = [eq(membershipsTable[`${entityType}Id`], entity.id), eq(membershipsTable.type, entityType)];
-
-    if (role) membersFilters.push(eq(membershipsTable.role, role));
-
-    const memberships = db
-      .select()
-      .from(membershipsTable)
-      .where(and(...membersFilters))
-      .as('memberships');
-
-    const membershipCount = memberCountsQuery(null, 'userId');
-
-    const orderColumn = getOrderColumn(
-      {
-        id: usersTable.id,
-        name: usersTable.name,
-        email: usersTable.email,
-        createdAt: usersTable.createdAt,
-        lastSeenAt: usersTable.lastSeenAt,
-        role: memberships.role,
-      },
-      sort,
-      usersTable.id,
-      order,
-    );
-
-    const membersQuery = db
-      .select({
-        user: safeUserSelect,
-        membership: membershipSelect,
-        counts: {
-          memberships: membershipCount.members,
-        },
-      })
-      .from(usersQuery)
-      .innerJoin(memberships, eq(usersTable.id, memberships.userId))
-      .leftJoin(membershipCount, eq(usersTable.id, membershipCount.id))
-      .orderBy(orderColumn);
-
-    const [{ total }] = await db.select({ total: count() }).from(membersQuery.as('memberships'));
-
-    const result = await membersQuery.limit(Number(limit)).offset(Number(offset));
-
-    const members = await Promise.all(
-      result.map(async ({ user, membership, counts }) => ({
-        ...user,
-        membership,
-        counts,
-      })),
-    );
-
-    return ctx.json({ success: true, data: { items: members, total } }, 200);
   })
   /*
    * Unsubscribe a user by token

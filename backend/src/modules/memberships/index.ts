@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, or } from 'drizzle-orm';
+import { type SQL, and, count, desc, eq, ilike, inArray, or } from 'drizzle-orm';
 import { db } from '#/db/db';
-import { type MembershipModel, membershipsTable } from '#/db/schema/memberships';
+import { type MembershipModel, membershipSelect, membershipsTable } from '#/db/schema/memberships';
 
 import { config } from 'config';
 import { render } from 'jsx-email';
@@ -10,9 +10,10 @@ import { emailSender } from '#/lib/mailer';
 import { InviteMemberEmail } from '../../../emails/member-invite';
 
 import { tokensTable } from '#/db/schema/tokens';
-import { type UserModel, usersTable } from '#/db/schema/users';
+import { type UserModel, safeUserSelect, usersTable } from '#/db/schema/users';
 import { getUsersByConditions } from '#/db/util';
-import { getContextUser } from '#/lib/context';
+import { entityIdFields } from '#/entity-config';
+import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
 import { resolveEntity } from '#/lib/entity';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
 import { i18n } from '#/lib/i18n';
@@ -20,6 +21,8 @@ import permissionManager from '#/lib/permission-manager';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
+import { memberCountsQuery } from '#/utils/counts';
+import { getOrderColumn } from '#/utils/order-column';
 import { insertMembership } from './helpers/insert-membership';
 import membershipRouteConfig from './routes';
 
@@ -31,28 +34,29 @@ const membershipsRoutes = app
    * Invite members to an entity such as an organization
    */
   .openapi(membershipRouteConfig.createMembership, async (ctx) => {
-    const { idOrSlug, entityType, organizationId } = ctx.req.valid('query');
+    // TODO get full organization here from context
+    const { idOrSlug, entityType } = ctx.req.valid('query');
     const { emails, role } = ctx.req.valid('json');
+
+    const organization = getOrganization();
     const user = getContextUser();
+    const memberships = getMemberships();
 
     // Check params
-    if (!organizationId || !entityType || !config.contextEntityTypes.includes(entityType) || !idOrSlug) {
+    if (!entityType || !config.contextEntityTypes.includes(entityType) || !idOrSlug) {
       return errorResponse(ctx, 403, 'forbidden', 'warn');
     }
 
     // Fetch organization, user memberships, and context from the database
-    const [organization, memberships, context] = await Promise.all([
-      resolveEntity('organization', organizationId),
-      db.select().from(membershipsTable).where(eq(membershipsTable.userId, user.id)),
-      resolveEntity(entityType, idOrSlug),
-    ]);
+    const context = await resolveEntity(entityType, idOrSlug);
 
     // Check if the user is allowed to perform an update action in the organization
-    const isAllowed = permissionManager.isPermissionAllowed(memberships, 'update', organization);
+    const isAllowed = permissionManager.isPermissionAllowed(memberships, 'update', context);
 
     if (!context || !organization || (!isAllowed && user.role !== 'admin')) {
       return errorResponse(ctx, 403, 'forbidden', 'warn');
     }
+    const contextEntityIdField = entityIdFields[context.entity];
 
     // Normalize emails for consistent comparison
     const normalizedEmails = emails.map((email) => email.toLowerCase());
@@ -68,7 +72,7 @@ const membershipsRoutes = app
       // Prepare conditions for fetching existing memberships
       const $where = [
         and(
-          eq(membershipsTable[`${context.entity}Id`], context.id),
+          eq(membershipsTable[contextEntityIdField], context.id),
           eq(membershipsTable.type, context.entity),
           inArray(
             membershipsTable.userId,
@@ -81,7 +85,7 @@ const membershipsRoutes = app
       if (context.entity !== 'organization') {
         $where.push(
           and(
-            eq(membershipsTable.organizationId, organizationId),
+            // eq(membershipsTable.organizationId, organizationId),
             eq(membershipsTable.type, 'organization'),
             inArray(
               membershipsTable.userId,
@@ -219,17 +223,17 @@ const membershipsRoutes = app
   .openapi(membershipRouteConfig.deleteMemberships, async (ctx) => {
     const { idOrSlug, entityType, ids } = ctx.req.valid('query');
     const user = getContextUser();
+    const memberships = getMemberships();
+    const entityIdField = entityIdFields[entityType];
 
     if (!config.contextEntityTypes.includes(entityType)) return errorResponse(ctx, 404, 'not_found', 'warn');
-    // Convert the member ids to an array
+    // Convert ids to an array
     const memberToDeleteIds = Array.isArray(ids) ? ids : [ids];
 
     // Check if the user has permission to delete the memberships
     const membershipContext = await resolveEntity(entityType, idOrSlug);
 
     if (!membershipContext) return errorResponse(ctx, 404, 'not_found', 'warn', entityType);
-
-    const memberships = await db.select().from(membershipsTable).where(eq(membershipsTable.userId, user.id));
 
     const isAllowed = permissionManager.isPermissionAllowed(memberships, 'update', membershipContext);
 
@@ -239,29 +243,29 @@ const membershipsRoutes = app
 
     const errors: ErrorType[] = [];
 
-    const filters = and(eq(membershipsTable.type, entityType), or(eq(membershipsTable[`${entityType}Id`], membershipContext.id)));
+    const filters = and(eq(membershipsTable.type, entityType), or(eq(membershipsTable[entityIdField], membershipContext.id)));
 
-    // Get the user membership
+    // Get user membership
     const [currentUserMembership]: (MembershipModel | undefined)[] = await db
       .select()
       .from(membershipsTable)
       .where(and(filters, eq(membershipsTable.userId, user.id)))
       .limit(1);
 
-    // Get the memberships
+    // Get target memberships
     const targets = await db
       .select()
       .from(membershipsTable)
       .where(and(inArray(membershipsTable.userId, memberToDeleteIds), filters));
 
-    // Check if the memberships exist
+    // Check if membership exist
     for (const id of memberToDeleteIds) {
       if (!targets.some((target) => target.userId === id)) {
         errors.push(createError(ctx, 404, 'not_found', 'warn', entityType, { user: id }));
       }
     }
 
-    // Filter out memberships that the user doesn't have permission to delete
+    // Filter out what user doesn't have permission to delete
     const allowedTargets = targets.filter((target) => {
       if (user.role !== 'admin' && currentUserMembership?.role !== 'admin') {
         errors.push(
@@ -306,14 +310,18 @@ const membershipsRoutes = app
   .openapi(membershipRouteConfig.updateMembership, async (ctx) => {
     const { id: membershipId } = ctx.req.valid('param');
     const { role, archived, muted, order } = ctx.req.valid('json');
+
     const user = getContextUser();
+    const memberships = getMemberships();
 
     let orderToUpdate = order;
+
     // Get the membership
-    const [membershipToUpdate] = await db.select().from(membershipsTable).where(eq(membershipsTable.id, membershipId));
+    const membershipToUpdate = memberships.find((membership) => membership.id === membershipId);
     if (!membershipToUpdate) return errorResponse(ctx, 404, 'not_found', 'warn', 'user', { membership: membershipId });
 
     const updatedType = membershipToUpdate.type;
+    const updatedEntityIdField = entityIdFields[updatedType];
 
     // on restore item set last order in memberships
     if (archived === false) {
@@ -327,7 +335,11 @@ const membershipsRoutes = app
       orderToUpdate = lastOrderMembership.order === ceilOrder ? ceilOrder + 1 : ceilOrder;
     }
 
-    const membershipContext = await resolveEntity(updatedType, membershipToUpdate[`${updatedType}Id`] || '');
+    const membershipContextId = membershipToUpdate[updatedEntityIdField];
+
+    if (!membershipContextId) return errorResponse(ctx, 404, 'not_found', 'warn', updatedType);
+
+    const membershipContext = await resolveEntity(updatedType, membershipContextId);
 
     if (!membershipContext) return errorResponse(ctx, 404, 'not_found', 'warn', updatedType);
 
@@ -370,6 +382,74 @@ const membershipsRoutes = app
       },
       200,
     );
+  })
+  /*
+   * Get members by entity id and type
+   */
+  .openapi(membershipRouteConfig.getMembers, async (ctx) => {
+    const { idOrSlug, entityType, q, sort, order, offset, limit, role } = ctx.req.valid('query');
+    const entity = await resolveEntity(entityType, idOrSlug);
+
+    if (!entity) return errorResponse(ctx, 404, 'not_found', 'warn', entityType);
+
+    const entityIdField = entityIdFields[entity.entity];
+
+    // TODO use filter query helper to avoid code duplication. Also, this specific filter is missing name search?
+    const filter: SQL | undefined = q ? ilike(usersTable.email, `%${q}%`) : undefined;
+
+    const usersQuery = db.select().from(usersTable).where(filter).as('users');
+    const membersFilters = [eq(membershipsTable[entityIdField], entity.id), eq(membershipsTable.type, entityType)];
+
+    if (role) membersFilters.push(eq(membershipsTable.role, role));
+
+    const memberships = db
+      .select()
+      .from(membershipsTable)
+      .where(and(...membersFilters))
+      .as('memberships');
+
+    const membershipCount = memberCountsQuery(null, 'userId');
+
+    const orderColumn = getOrderColumn(
+      {
+        id: usersTable.id,
+        name: usersTable.name,
+        email: usersTable.email,
+        createdAt: usersTable.createdAt,
+        lastSeenAt: usersTable.lastSeenAt,
+        role: memberships.role,
+      },
+      sort,
+      usersTable.id,
+      order,
+    );
+
+    const membersQuery = db
+      .select({
+        user: safeUserSelect,
+        membership: membershipSelect,
+        counts: {
+          memberships: membershipCount.members,
+        },
+      })
+      .from(usersQuery)
+      .innerJoin(memberships, eq(usersTable.id, memberships.userId))
+      .leftJoin(membershipCount, eq(usersTable.id, membershipCount.id))
+      .orderBy(orderColumn);
+
+    const [{ total }] = await db.select({ total: count() }).from(membersQuery.as('memberships'));
+
+    const result = await membersQuery.limit(Number(limit)).offset(Number(offset));
+
+    const members = await Promise.all(
+      result.map(async ({ user, membership, counts }) => ({
+        ...user,
+        membership,
+        counts,
+      })),
+    );
+
+    return ctx.json({ success: true, data: { items: members, total } }, 200);
   });
 
 export default membershipsRoutes;

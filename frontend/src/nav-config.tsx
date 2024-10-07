@@ -1,4 +1,4 @@
-import { ArrowLeftCircle, Home, Menu, PlusCircle, Search, User } from 'lucide-react';
+import { Home, Menu, Plus, Search, User } from 'lucide-react';
 
 import { SheetAccount } from '~/modules/common/nav-sheet/sheet-account';
 import { SheetMenu } from '~/modules/common/nav-sheet/sheet-menu';
@@ -6,34 +6,32 @@ import { SheetMenu } from '~/modules/common/nav-sheet/sheet-menu';
 import CreateOrganizationForm from '~/modules/organizations/create-organization-form';
 import CreateWorkspaceForm from '~/modules/workspaces/create-workspace-form';
 
-import type { FooterLinkProps } from '~/modules/common/app-footer';
-import type { NavItem } from '~/modules/common/app-nav';
-import type { SuggestionSection } from '~/modules/common/app-search';
+import type { FooterLinkProps } from '~/modules/common/main-footer';
+import type { NavItem } from '~/modules/common/main-nav';
+import { MainSearch, type SuggestionSection } from '~/modules/common/main-search';
 import type { SectionItem } from '~/modules/common/nav-sheet/sheet-menu';
 
 // Set entities paths
 export const baseEntityRoutes = {
   user: '/user/$idOrSlug',
+  userInOrg: '/$orgIdOrSlug/user/$idOrSlug',
   organization: '/$idOrSlug',
-  workspace: '/workspaces/$idOrSlug',
-  project: '/workspaces/$idOrSlug/board',
+  workspace: '/$orgIdOrSlug/workspaces/$idOrSlug',
+  project: '/$orgIdOrSlug/workspaces/$idOrSlug/board',
 } as const;
 
-// Here you declare main navigation items
+export type NavItemId = 'menu' | 'home' | 'search' | 'account' | 'workspace-menu' | 'workspace-add-task' | 'stop_impersonation';
+
+// Here you declare your base shown main navigation items
+export const baseNavItems: NavItemId[] = ['menu', 'home', 'search', 'account'];
+
+// Here you declare all of your main navigation items
 export const navItems: NavItem[] = [
-  { id: 'menu', sheet: <SheetMenu />, icon: Menu, hiddenOn: ['/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
-  { id: 'home', icon: Home, href: '/', hiddenOn: ['/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
-  { id: 'search', icon: Search, hiddenOn: ['/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
-  {
-    id: 'account',
-    sheet: <SheetAccount />,
-    hiddenOn: ['/workspaces/$idOrSlug/board'],
-    icon: User,
-    mirrorOnMobile: true,
-    visibilityMobileOnly: true,
-  },
-  { id: 'return', icon: ArrowLeftCircle, visibleOn: ['/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
-  { id: '+task', icon: PlusCircle, visibleOn: ['/workspaces/$idOrSlug/board'], visibilityMobileOnly: true },
+  { id: 'menu', icon: Menu, sheet: <SheetMenu /> },
+  { id: 'home', icon: Home, href: '/home' },
+  { id: 'search', icon: Search, dialog: <MainSearch /> },
+  { id: 'account', icon: User, sheet: <SheetAccount />, mirrorOnMobile: true },
+  { id: 'workspace-add-task', icon: Plus },
 ];
 
 // Here you declare the menu sections(same need in BE with storageType, type & isSubmenu )

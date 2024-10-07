@@ -11,22 +11,20 @@ import { createProject } from '~/api/projects';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { useMutateWorkSpaceQueryData } from '~/hooks/use-mutate-query-data';
 import { useMutation } from '~/hooks/use-mutations';
-import { addMenuItem } from '~/lib/utils';
 import { isDialog as checkDialog, dialog } from '~/modules/common/dialoger/state';
 import InputFormField from '~/modules/common/form-fields/input';
 import SelectParentFormField from '~/modules/common/form-fields/select-parent';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
+import { addMenuItem } from '~/modules/common/nav-sheet/helpers/add-menu-item';
 import UnsavedBadge from '~/modules/common/unsaved-badge';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/form';
 import { useNavigationStore } from '~/store/navigation';
 import { useUserStore } from '~/store/user';
 import { useWorkspaceStore } from '~/store/workspace';
-import type { Workspace } from '~/types/app';
 import type { UserMenuItem } from '~/types/common';
 
 interface CreateProjectFormProps {
-  workspace: Workspace;
   callback?: () => void;
   dialog?: boolean;
 }
@@ -35,10 +33,10 @@ const formSchema = createProjectBodySchema;
 
 type FormValues = z.infer<typeof formSchema>;
 
-export const CreateProjectForm: React.FC<CreateProjectFormProps> = ({ workspace, dialog: isDialog }) => {
+export const CreateProjectForm: React.FC<CreateProjectFormProps> = ({ dialog: isDialog }) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
-  const { setWorkspace, projects } = useWorkspaceStore();
+  const { setWorkspace, projects, workspace } = useWorkspaceStore();
   const type = 'project';
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
@@ -47,7 +45,6 @@ export const CreateProjectForm: React.FC<CreateProjectFormProps> = ({ workspace,
         name: '',
         slug: '',
         workspaceId: workspace.id,
-        organizationId: workspace.organizationId,
       },
     }),
     [],
@@ -61,7 +58,7 @@ export const CreateProjectForm: React.FC<CreateProjectFormProps> = ({ workspace,
   const callback = useMutateWorkSpaceQueryData(['workspaces', workspace.slug]);
   const { mutate: create, isPending } = useMutation({
     mutationFn: (values: FormValues) => {
-      return createProject(workspace.id, values);
+      return createProject({ ...values, workspaceId: workspace.id, organizationId: workspace.organizationId });
     },
     onSuccess: (createdProject) => {
       form.reset();

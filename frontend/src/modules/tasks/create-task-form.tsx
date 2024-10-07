@@ -12,7 +12,6 @@ import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { useHotkeys } from '~/hooks/use-hot-keys.ts';
 import { useMeasure } from '~/hooks/use-measure';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { cn, nanoid } from '~/lib/utils.ts';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { dialog } from '~/modules/common/dialoger/state.ts';
 import { dropdowner } from '~/modules/common/dropdowner/state.ts';
@@ -34,15 +33,15 @@ import { useUserStore } from '~/store/user.ts';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Label, Task } from '~/types/app';
 import type { Member } from '~/types/common';
+import { cn } from '~/utils/cn';
+import { nanoid } from '~/utils/nanoid';
 
 export type TaskType = 'feature' | 'chore' | 'bug';
 export type TaskImpact = 0 | 1 | 2 | 3 | null;
 
 interface CreateTaskFormProps {
-  tasks: Task[];
-  labels: Label[];
-  projectId: string;
-  organizationId: string;
+  projectIdOrSlug: string;
+  tasks?: Task[];
   dialog?: boolean;
   onCloseForm?: () => void;
   onFormSubmit?: (task: Task, isNew?: boolean, toStatus?: TaskStatus) => void;
@@ -78,11 +77,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ tasks, projectId, organizationId, dialog: isDialog, onCloseForm }) => {
+const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks = [], dialog: isDialog, onCloseForm }) => {
   const { t } = useTranslation();
   const { mode } = useThemeStore();
   const { user } = useUserStore();
-  const { focusedTaskId } = useWorkspaceStore();
+  const { focusedTaskId, projects } = useWorkspaceStore();
+  const { id: projectId, organizationId } = projects.find((p) => p.id === projectIdOrSlug || p.slug === projectIdOrSlug) ?? projects[0];
 
   const defaultId = nanoid();
   const { ref, bounds } = useMeasure();
@@ -120,7 +120,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ tasks, projectId, organ
   const form = useFormWithDraft<FormValues>(`create-task-${projectId}`, formOptions);
 
   const onSubmit = (values: FormValues) => {
-    const projectTasks = tasks.filter((task) => task.projectId === projectId);
     // Extract text from summary HTML
     const parser = new DOMParser();
     const doc = parser.parseFromString(values.summary, 'text/html');
@@ -143,7 +142,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ tasks, projectId, organ
       projectId: projectId,
       createdBy: user.id,
       slug: slug,
-      order: getNewTaskOrder(values.status, projectTasks),
+      order: getNewTaskOrder(values.status, tasks),
     };
 
     createTask(newTask)
@@ -203,6 +202,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ tasks, projectId, organ
                     id={defaultId}
                     className="min-h-16 [&>.bn-editor]:min-h-16"
                     projectId={projectId}
+                    orgIdOrSlug={organizationId}
                     html={value}
                     onChange={(description, summary) => {
                       onChange(description);

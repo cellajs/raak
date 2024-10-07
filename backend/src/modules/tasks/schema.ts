@@ -1,15 +1,19 @@
 import { z } from 'zod';
 
-import { createSelectSchema } from 'drizzle-zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { tasksTable } from '#/db/schema/tasks';
-import { paginationQuerySchema } from '#/lib/common-schemas';
+import { objectKeys } from '#/lib/object';
+import { paginationQuerySchema } from '#/utils/schema/common-schemas';
+import { constructZodLiteralUnionType } from '#/utils/zod';
 import { labelSchema } from '../labels/schema';
 import { userSchema } from '../users/schema';
 
 export const createTaskSchema = z.object({
-  ...createSelectSchema(tasksTable).omit({
+  ...createInsertSchema(tasksTable).omit({
+    id: true,
     labels: true,
     entity: true,
+    organizationId: true,
     assignedTo: true,
     modifiedAt: true,
     modifiedBy: true,
@@ -22,23 +26,27 @@ export const createTaskSchema = z.object({
 });
 
 export const updateTaskSchema = z.object({
-  key: z.string(),
+  key: constructZodLiteralUnionType(
+    objectKeys(
+      createSelectSchema(tasksTable).omit({
+        expandable: true,
+        summary: true,
+      }).shape,
+    ).map((key) => z.literal(key)),
+  ),
   data: z.union([z.array(z.string()), z.string(), z.number(), z.boolean()]).nullable(),
   order: z.number().nullable(),
 });
 
-export const simpleTaskSchema = z.object({
-  ...createSelectSchema(tasksTable).omit({
-    labels: true,
-    assignedTo: true,
-    modifiedAt: true,
-    createdAt: true,
-  }).shape,
-  labels: z.array(z.string()).optional(),
-  assignedTo: z.array(z.string()).optional(),
-  createdAt: z.string(),
-  modifiedAt: z.string().nullable(),
-});
+export enum TaskStatus {
+  Iced = 0,
+  Unstarted = 1,
+  Started = 2,
+  Finished = 3,
+  Delivered = 4,
+  Reviewed = 5,
+  Accepted = 6,
+}
 
 const taskSchema = z.object({
   ...createSelectSchema(tasksTable).omit({
@@ -51,6 +59,7 @@ const taskSchema = z.object({
     createdAt: true,
   }).shape,
   labels: z.array(labelSchema),
+  status: z.nativeEnum(TaskStatus),
   assignedTo: z.array(userSchema.omit({ counts: true })),
   createdAt: z.string(),
   parentId: z.string().nullable(),
@@ -71,11 +80,12 @@ export const subTaskSchema = z.array(
       projectId: true,
       parentId: true,
       entity: true,
+      organizationId: true,
     }).shape,
   }),
 );
 
-export const fullTaskSchema = z.object({
+export const taskWithSubTasksSchema = z.object({
   ...taskSchema.shape,
   subTasks: subTaskSchema,
 });

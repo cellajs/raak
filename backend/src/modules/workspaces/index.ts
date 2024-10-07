@@ -6,10 +6,13 @@ import { workspacesTable } from '#/db/schema/workspaces';
 import { labelsTable } from '#/db/schema/labels';
 import { projectsTable } from '#/db/schema/projects';
 import { safeUserSelect, usersTable } from '#/db/schema/users';
+import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
+import { resolveEntity } from '#/lib/entity';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
+import { splitByAllowance } from '#/utils/split-by-allowance';
 import { checkSlugAvailable } from '../general/helpers/check-slug';
 import { insertMembership } from '../memberships/helpers/insert-membership';
 import { transformDatabaseUserWithCount } from '../users/helpers/transform-database-user';
@@ -23,8 +26,9 @@ const workspacesRoutes = app
    * Create workspace
    */
   .openapi(workspaceRoutesConfig.createWorkspace, async (ctx) => {
-    const { name, slug, organizationId } = ctx.req.valid('json');
-    const user = ctx.get('user');
+    const { name, slug } = ctx.req.valid('json');
+    const organization = getOrganization();
+    const user = getContextUser();
 
     const slugAvailable = await checkSlugAvailable(slug);
 
@@ -35,7 +39,7 @@ const workspacesRoutes = app
     const [workspace] = await db
       .insert(workspacesTable)
       .values({
-        organizationId,
+        organizationId: organization.id,
         name,
         slug,
       })
@@ -61,9 +65,17 @@ const workspacesRoutes = app
    * Get workspace by id or slug with related projects, members and labels
    */
   .openapi(workspaceRoutesConfig.getWorkspace, async (ctx) => {
-    const workspace = ctx.get('workspace');
-    const memberships = ctx.get('memberships');
-    const user = ctx.get('user');
+    const { idOrSlug } = ctx.req.valid('param');
+
+    const memberships = getMemberships();
+    const user = getContextUser();
+
+    const workspace = await resolveEntity('workspace', idOrSlug);
+
+    if (!workspace) {
+      return errorResponse(ctx, 404, 'not_found', 'warn', 'workspace', { id: idOrSlug });
+    }
+
     const membership = memberships.find((m) => m.workspaceId === workspace.id && m.type === 'workspace');
     const projectsWithMembership = await db
       .select({
@@ -148,13 +160,19 @@ const workspacesRoutes = app
     );
   })
   /*
-   * Update workspace
+   * Update workspace by id or slug
    */
   .openapi(workspaceRoutesConfig.updateWorkspace, async (ctx) => {
-    const user = ctx.get('user');
-    const workspace = ctx.get('workspace');
-
+    const { idOrSlug } = ctx.req.valid('param');
     const { name, slug, thumbnailUrl, bannerUrl } = ctx.req.valid('json');
+
+    const user = getContextUser();
+
+    const workspace = await resolveEntity('workspace', idOrSlug);
+
+    if (!workspace) {
+      return errorResponse(ctx, 404, 'not_found', 'warn', 'workspace', { id: idOrSlug });
+    }
 
     if (slug && slug !== workspace.slug) {
       const slugAvailable = await checkSlugAvailable(slug);
@@ -209,9 +227,22 @@ const workspacesRoutes = app
    * Delete workspaces
    */
   .openapi(workspaceRoutesConfig.deleteWorkspaces, async (ctx) => {
-    // Extract allowed and disallowed ids
-    const allowedIds = ctx.get('allowedIds');
-    const disallowedIds = ctx.get('disallowedIds');
+    const { ids } = ctx.req.valid('query');
+
+    const memberships = getMemberships();
+
+    // Convert the ids to an array
+    const toDeleteIds = Array.isArray(ids) ? ids : [ids];
+
+    if (!toDeleteIds.length) {
+      return errorResponse(ctx, 400, 'invalid_request', 'warn', 'workspace');
+    }
+
+    const { allowedIds, disallowedIds } = await splitByAllowance('delete', 'workspace', toDeleteIds, memberships);
+
+    if (!allowedIds.length) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn', 'project');
+    }
 
     // Map errors of workspaces user is not allowed to delete
     const errors: ErrorType[] = disallowedIds.map((id) => createError(ctx, 404, 'not_found', 'warn', 'workspace', { workspace: id }));
@@ -227,17 +258,16 @@ const workspacesRoutes = app
 
     // Send SSE events for the workspaces that were deleted
     for (const id of allowedIds) {
-      // Send the event to the user if they are a member of the workspace
-      if (workspaceMembers.length > 0) {
-        const membersId = workspaceMembers
-          .filter(({ workspaceId }) => workspaceId === id)
-          .map((member) => member.id)
-          .filter(Boolean) as string[];
-        sendSSEToUsers(membersId, 'remove_entity', { id, entity: 'workspace' });
-      }
+      if (!workspaceMembers.length) continue;
 
-      logEvent('Workspace deleted', { workspace: id });
+      const membersId = workspaceMembers
+        .filter(({ workspaceId }) => workspaceId === id)
+        .map((member) => member.id)
+        .filter(Boolean) as string[];
+      sendSSEToUsers(membersId, 'remove_entity', { id, entity: 'workspace' });
     }
+
+    logEvent('Workspaces deleted', { ids: allowedIds.join() });
 
     return ctx.json({ success: true, errors: errors }, 200);
   });

@@ -3,7 +3,6 @@ import { Bolt, Bug, Check, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { cn } from '~/lib/utils';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { Kbd } from '~/modules/common/kbd';
 import type { TaskType } from '~/modules/tasks/create-task-form';
@@ -12,6 +11,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
+import { cn } from '~/utils/cn';
 
 type Type = {
   value: (typeof taskTypes)[number]['value'];
@@ -33,8 +33,7 @@ export interface SelectTaskTypeProps {
 
 const SelectTaskType = ({ projectId, currentType, className = '' }: SelectTaskTypeProps) => {
   const { t } = useTranslation();
-  // const { pathname } = useLocation();
-  const { focusedTaskId } = useWorkspaceStore();
+  const { focusedTaskId, workspace } = useWorkspaceStore();
   const [selectedType, setSelectedType] = useState<Type | undefined>(taskTypes[taskTypes.findIndex((type) => type.value === currentType)]);
   const [searchValue, setSearchValue] = useState('');
   const isSearching = searchValue.length > 0;
@@ -51,9 +50,8 @@ const SelectTaskType = ({ projectId, currentType, className = '' }: SelectTaskTy
         key: 'type',
         data: newType,
         projectId,
+        orgIdOrSlug: workspace.organizationId,
       });
-      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }

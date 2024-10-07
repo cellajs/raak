@@ -1,11 +1,11 @@
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { QueryClientProvider as BaseQueryClientProvider, type UseInfiniteQueryOptions, type UseQueryOptions } from '@tanstack/react-query';
+import type { UseInfiniteQueryOptions, UseQueryOptions } from '@tanstack/react-query';
+import { QueryClientProvider as BaseQueryClientProvider } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { config } from 'config';
 import { useEffect } from 'react';
-import { queryClient } from '~/lib/router';
+import { persister, queryClient } from '~/lib/router';
 import type { GetTasksParams } from './api/tasks';
 import * as tasksApi from './api/tasks';
+import { offlineFetch, offlineFetchInfinite } from './lib/query-client';
 import { membersQueryOptions } from './modules/organizations/members-table/helpers/query-options';
 import { organizationQueryOptions } from './modules/organizations/organization-page';
 import { tasksQueryOptions } from './modules/projects/board/board-column';
@@ -16,10 +16,6 @@ import type { SubTask, Task } from './types/app';
 import type { ContextEntity } from './types/common';
 
 const GC_TIME = 24 * 60 * 60 * 1000; // 24 hours
-
-const localStoragePersister = createSyncStoragePersister({
-  storage: config.mode === 'production' ? window.localStorage : window.sessionStorage,
-});
 
 export type TasksMutationQueryFnVariables = Parameters<typeof tasksApi.updateTask>[0] & {
   projectId?: string;
@@ -54,8 +50,8 @@ const updateSubtasks = (subTasks: SubTask[], taskId: string, variables: TasksMut
 queryClient.setMutationDefaults(taskKeys.update(), {
   mutationFn: (variables: TasksMutationQueryFnVariables) => tasksApi.updateTask(variables),
   onMutate: async (variables) => {
-    const { id: taskId, projectId } = variables;
-    const listParams = projectId ? { projectId } : undefined;
+    const { id: taskId, projectId, orgIdOrSlug } = variables;
+    const listParams = projectId ? { projectId, orgIdOrSlug } : undefined;
     // Cancel any outgoing refetches
     // (so they don't overwrite our optimistic update)
     await queryClient.cancelQueries({ queryKey: taskKeys.list(listParams) });
@@ -100,8 +96,8 @@ queryClient.setMutationDefaults(taskKeys.update(), {
     // Return a context object with the snapshotted value
     return { previousTasks };
   },
-  onSuccess: (updatedTask, { id: taskId, projectId }) => {
-    const listParams = projectId ? { projectId } : undefined;
+  onSuccess: (updatedTask, { id: taskId, projectId, orgIdOrSlug }) => {
+    const listParams = projectId ? { projectId, orgIdOrSlug } : undefined;
     queryClient.setQueryData<InfiniteQueryFnData>(taskKeys.list(listParams), (oldData) => {
       if (!oldData) {
         return {
@@ -132,9 +128,9 @@ queryClient.setMutationDefaults(taskKeys.update(), {
       };
     });
   },
-  onError: (_, { projectId }, context) => {
+  onError: (_, { projectId, orgIdOrSlug }, context) => {
     if (context?.previousTasks) {
-      const listParams = projectId ? { projectId } : undefined;
+      const listParams = projectId ? { projectId, orgIdOrSlug } : undefined;
       queryClient.setQueryData(taskKeys.list(listParams), context.previousTasks);
     }
   },
@@ -146,26 +142,20 @@ async function prefetchQuery<T extends UseQueryOptions<any, any, any, any>>(opti
 // biome-ignore lint/suspicious/noExplicitAny: any is used to infer the type of the options
 async function prefetchQuery<T extends UseInfiniteQueryOptions<any, any, any, any>>(options: T): Promise<InferType<T>>;
 async function prefetchQuery(options: UseQueryOptions | UseInfiniteQueryOptions) {
-  await queryClient.invalidateQueries({
-    queryKey: options.queryKey,
-  });
   if ('getNextPageParam' in options) {
-    return queryClient.fetchInfiniteQuery({
-      ...options,
-      gcTime: GC_TIME,
-    });
+    return offlineFetchInfinite(options);
   }
-  return queryClient.fetchQuery({
-    ...options,
-    gcTime: GC_TIME,
-  });
+  return offlineFetch(options);
 }
 
-const prefetchMembers = async (item: {
-  slug: string;
-  entity: ContextEntity;
-}) => {
-  const membersOptions = membersQueryOptions({ idOrSlug: item.slug, entityType: item.entity, limit: 40 });
+const prefetchMembers = async (
+  item: {
+    slug: string;
+    entity: ContextEntity;
+  },
+  orgIdOrSlug: string,
+) => {
+  const membersOptions = membersQueryOptions({ idOrSlug: item.slug, orgIdOrSlug, entityType: item.entity, limit: 40 });
   prefetchQuery(membersOptions);
 };
 
@@ -173,47 +163,51 @@ export const QueryClientProvider = ({ children }: { children: React.ReactNode })
   const { networkMode } = useGeneralStore();
 
   useEffect(() => {
-    if (networkMode === 'offline') {
-      (async () => {
-        // Invalidate and prefetch me and menu
-        const meQueryOptions: UseQueryOptions = {
-          queryKey: ['me'],
-          queryFn: getAndSetMe,
-          gcTime: GC_TIME,
-        };
-        prefetchQuery(meQueryOptions);
-        const menuQueryOptions = {
-          queryKey: ['menu'],
-          queryFn: getAndSetMenu,
-          gcTime: GC_TIME,
-        } satisfies UseQueryOptions;
-        const menu = await prefetchQuery(menuQueryOptions);
+    if (networkMode === 'online') return;
 
-        for (const section of Object.values(menu)) {
-          for (const item of section) {
-            if (item.entity === 'organization') {
-              const options = organizationQueryOptions(item.slug);
-              prefetchQuery(options);
-              prefetchMembers(item);
-              continue;
-            }
+    (async () => {
+      // Invalidate and prefetch me and menu
+      const meQueryOptions: UseQueryOptions = {
+        queryKey: ['me'],
+        queryFn: getAndSetMe,
+        gcTime: GC_TIME,
+      };
+      prefetchQuery(meQueryOptions);
+      const menuQueryOptions = {
+        queryKey: ['menu'],
+        queryFn: getAndSetMenu,
+        gcTime: GC_TIME,
+      } satisfies UseQueryOptions;
+      const menu = await prefetchQuery(menuQueryOptions);
 
-            if (item.entity === 'workspace') {
-              const options = workspaceQueryOptions(item.slug);
-              prefetchQuery(options);
-              prefetchMembers(item);
+      // TODO can we make this dynamic by adding more props in an entity map?
+      for (const section of Object.values(menu)) {
+        for (const item of section) {
+          if (item.entity === 'organization') {
+            const options = organizationQueryOptions(item.slug);
+            prefetchQuery(options);
+            prefetchMembers(item, item.slug);
+            continue;
+          }
 
-              for (const subItem of item.submenu ?? []) {
-                if (subItem.entity === 'project') {
-                  const options = tasksQueryOptions({ projectId: subItem.id });
-                  prefetchQuery(options);
-                }
+          if (item.entity === 'workspace' && item.organizationId) {
+            const options = workspaceQueryOptions(item.slug, item.organizationId);
+            prefetchQuery(options);
+            prefetchMembers(item, item.organizationId);
+
+            for (const subItem of item.submenu ?? []) {
+              if (subItem.entity === 'project') {
+                const options = tasksQueryOptions({
+                  projectId: subItem.id,
+                  orgIdOrSlug: item.organizationId,
+                });
+                prefetchQuery(options);
               }
             }
           }
         }
-      })();
-    }
+      }
+    })();
   }, [networkMode]);
 
   if (networkMode === 'online') {
@@ -223,7 +217,7 @@ export const QueryClientProvider = ({ children }: { children: React.ReactNode })
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister: localStoragePersister }}
+      persistOptions={{ persister }}
       onSuccess={() => {
         // resume mutations after initial restore from localStorage was successful
         queryClient.resumePausedMutations().then(() => {

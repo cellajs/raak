@@ -1,13 +1,13 @@
+import { createRouteConfig } from '#/lib/route-config';
+import { isAuthenticated, isSystemAdmin } from '#/middlewares/guard';
 import {
   errorResponses,
   successWithDataSchema,
   successWithErrorsSchema,
   successWithPaginationSchema,
   successWithoutDataSchema,
-} from '#/lib/common-responses';
-import { entityParamSchema, idsQuerySchema } from '#/lib/common-schemas';
-import { createRouteConfig } from '#/lib/route-config';
-import { isAllowedTo, isAuthenticated, isSystemAdmin, splitByAllowance } from '#/middlewares/guard';
+} from '#/utils/schema/common-responses';
+import { entityParamSchema, idsQuerySchema } from '#/utils/schema/common-schemas';
 import {
   createOrganizationBodySchema,
   getOrganizationsQuerySchema,
@@ -22,7 +22,7 @@ class OrganizationRoutesConfig {
     path: '/',
     guard: isAuthenticated,
     tags: ['organizations'],
-    summary: 'Create new organization',
+    summary: 'Create organization',
     description: 'Create a new organization.',
     request: {
       body: {
@@ -73,7 +73,7 @@ class OrganizationRoutesConfig {
   public updateOrganization = createRouteConfig({
     method: 'put',
     path: '/{idOrSlug}',
-    guard: [isAuthenticated, isAllowedTo('update', 'organization')],
+    guard: [isAuthenticated],
     tags: ['organizations'],
     summary: 'Update organization',
     description: 'Update organization by id or slug.',
@@ -103,7 +103,7 @@ class OrganizationRoutesConfig {
   public getOrganization = createRouteConfig({
     method: 'get',
     path: '/{idOrSlug}',
-    guard: [isAuthenticated, isAllowedTo('read', 'organization')],
+    guard: [isAuthenticated],
     tags: ['organizations'],
     summary: 'Get organization',
     description: 'Get an organization by id or slug.',
@@ -156,7 +156,7 @@ class OrganizationRoutesConfig {
   public deleteOrganizations = createRouteConfig({
     method: 'delete',
     path: '/',
-    guard: [isAuthenticated, splitByAllowance('delete', 'organization')],
+    guard: [isAuthenticated],
     tags: ['organizations'],
     summary: 'Delete organizations',
     description: 'Delete organizations by ids.',

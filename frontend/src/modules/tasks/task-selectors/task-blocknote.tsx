@@ -1,7 +1,7 @@
-import { FilePanelController, useCreateBlockNote } from '@blocknote/react';
+import { FilePanelController, GridSuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { useLocation } from '@tanstack/react-router';
-import { type KeyboardEventHandler, Suspense, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { type KeyboardEventHandler, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import router from '~/lib/router';
 import type { Mode } from '~/store/theme';
@@ -11,12 +11,15 @@ import DOMPurify from 'dompurify';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-import { customSchema } from '~/modules/common/blocknote/blackbote-config';
-import { BlockNoteForTaskContent } from '~/modules/common/blocknote/blocknote-content';
-import { triggerFocus } from '~/modules/common/blocknote/helpers';
+import type { Block } from '@blocknote/core';
+import { customFormattingToolBarConfig, customSchema } from '~/modules/common/blocknote/blocknote-config';
+import { Mention } from '~/modules/common/blocknote/custom-elements/mention';
+import { CustomFormattingToolbar } from '~/modules/common/blocknote/custom-formatting-toolbar';
+import { CustomSideMenu } from '~/modules/common/blocknote/custom-side-menu';
+import { CustomSlashMenu } from '~/modules/common/blocknote/custom-slash-menu';
+import { getContentAsString } from '~/modules/common/blocknote/helpers';
 import '~/modules/common/blocknote/styles.css';
 import { useMutation } from '@tanstack/react-query';
-import { taskExpandable } from '~/modules/tasks/helpers';
 import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-provider';
 import type { Task } from '~/types/app';
 import UppyFilePanel from './uppy-file-panel';
@@ -26,6 +29,7 @@ interface TaskBlockNoteProps {
   mode: Mode;
   html: string;
   projectId: string;
+  orgIdOrSlug: string;
   className?: string;
   onChange?: (newContent: string, newSummary: string) => void;
   taskToClose?: string | null;
@@ -37,6 +41,7 @@ export const TaskBlockNote = ({
   id,
   html,
   projectId,
+  orgIdOrSlug,
   mode,
   onChange,
   callback,
@@ -46,7 +51,8 @@ export const TaskBlockNote = ({
 }: TaskBlockNoteProps) => {
   const { t } = useTranslation();
   const editor = useCreateBlockNote({ schema: customSchema, trailingBlock: false });
-  const wasInitial = useRef(false);
+
+  const canChangeState = useRef(false);
 
   const updateTask = useMutation<Task, Error, TasksMutationQueryFnVariables>({
     mutationKey: taskKeys.update(),
@@ -55,35 +61,18 @@ export const TaskBlockNote = ({
   const { pathname } = useLocation();
   const { members } = useWorkspaceStore();
 
+  const filePanel = useMemo(() => UppyFilePanel(id), [id]);
+
   const handleUpdateHTML = useCallback(
-    async (newContent: string, newSummary: string) => {
+    async (newContent: string) => {
       try {
         await updateTask.mutateAsync({
-          id,
-          key: 'summary',
-          data: newSummary,
-          projectId,
-        });
-        const updatedTask = await updateTask.mutateAsync({
           id,
           key: 'description',
           data: newContent,
           projectId,
+          orgIdOrSlug,
         });
-        const expandable = taskExpandable(newSummary, newContent);
-
-        if (updatedTask.expandable !== expandable) {
-          updateTask.mutate({
-            id,
-            key: 'expandable',
-            data: expandable,
-            projectId,
-          });
-        }
-
-        // const action = updatedTask.parentId ? 'updateSubTask' : 'update';
-        // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-        // dispatchCustomEvent(eventName, { array: [{ ...updatedTask, expandable }], action, projectId: updatedTask.projectId });
       } catch (err) {
         toast.error(t('common:error.update_resource', { resource: t('app:todo') }));
       }
@@ -109,9 +98,12 @@ export const TaskBlockNote = ({
     const cleanSummary = DOMPurify.sanitize(summaryHTML);
     const cleanDescription = DOMPurify.sanitize(descriptionHtml);
     if (onChange) onChange(cleanDescription, cleanSummary);
-    else handleUpdateHTML(cleanDescription, cleanSummary);
-    const event = subTask ? 'changeSubTaskState' : 'changeTaskState';
-    dispatchCustomEvent(event, { taskId: id, state: 'editing' });
+    else {
+      handleUpdateHTML(cleanDescription);
+      const event = subTask ? 'changeSubTaskState' : 'changeTaskState';
+      dispatchCustomEvent(event, { taskId: id, state: 'editing' });
+    }
+    canChangeState.current = false;
   };
 
   const handleKeyDown: KeyboardEventHandler = async (event) => {
@@ -144,15 +136,19 @@ export const TaskBlockNote = ({
   useLayoutEffect(() => {
     const blockUpdate = async (html: string) => {
       const blocks = await editor.tryParseHTMLToBlocks(html);
-      const currentBlocks = editor.document.map((block) => block.content?.toString()).join('');
-      const newBlocksContent = blocks.map((block) => block.content?.toString()).join('');
+      const currentBlocks = getContentAsString(editor.document as Block[]);
+      const newBlocksContent = getContentAsString(blocks as Block[]);
+
+      const subTaskCreation = subTask && onChange;
 
       // Only replace blocks if the content actually changes
-      if (currentBlocks !== newBlocksContent || html === '') {
+      if (currentBlocks !== newBlocksContent || html === '' || subTaskCreation) {
         editor.replaceBlocks(editor.document, blocks);
-        triggerFocus(subTask ? `blocknote-${id}` : `blocknote-subtask-${id}`);
-        if (!wasInitial.current) wasInitial.current = true;
+        const lastBlock = editor.document[editor.document.length - 1];
+        editor.focus();
+        editor.setTextCursorPosition(lastBlock.id, 'end');
       }
+      if (!canChangeState.current) canChangeState.current = true;
     };
     blockUpdate(html);
   }, [html]);
@@ -165,10 +161,10 @@ export const TaskBlockNote = ({
   return (
     <Suspense>
       <BlockNoteView
-        id={subTask ? `blocknote-${id}` : `blocknote-subtask-${id}`}
+        id={subTask ? `blocknote-subtask-${id}` : `blocknote-${id}`}
         // Defer onChange, onFocus and onBlur  to run after rendering
         onChange={() => {
-          if (!onChange && wasInitial.current) {
+          if (!onChange && canChangeState.current) {
             const event = subTask ? 'changeSubTaskState' : 'changeTaskState';
             dispatchCustomEvent(event, { taskId: id, state: 'unsaved' });
           }
@@ -189,9 +185,25 @@ export const TaskBlockNote = ({
         slashMenu={false}
         filePanel={false}
       >
-        <BlockNoteForTaskContent editor={editor} members={members.filter((m) => m.membership.projectId === projectId)} subTask={subTask} />
+        <CustomSlashMenu editor={editor} />
+
+        <div className="fixed">
+          <CustomFormattingToolbar config={customFormattingToolBarConfig} />
+        </div>
+
+        {!subTask && <CustomSideMenu />}
+
+        <Mention members={members.filter((m) => m.membership.projectId === projectId)} editor={editor} />
+
+        <GridSuggestionMenuController
+          triggerCharacter={':'}
+          // Changes the Emoji Picker to only have 5 columns & min length of 0.
+          columns={5}
+          minQueryLength={0}
+        />
+
         {/* Replaces default file panel with Uppy one. */}
-        <FilePanelController filePanel={UppyFilePanel} />
+        <FilePanelController filePanel={filePanel} />
       </BlockNoteView>
     </Suspense>
   );

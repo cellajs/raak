@@ -1,6 +1,6 @@
 import { type FullSearchSchema, type RegisteredRouter, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useEffect } from 'react';
-import { objectKeys } from '~/lib/object';
+import { objectKeys } from '~/utils/object';
 
 type SearchParams = Pick<FullSearchSchema<RegisteredRouter['routeTree']>, 'sort' | 'order' | 'q' | 'role'>;
 
@@ -26,7 +26,8 @@ const useSaveInSearchParams = (values: SearchParams, defaultValues?: SearchParam
             [key]: defaultValue,
           };
         } else {
-          delete searchParams[key];
+          // Remove from searchParams in url
+          searchParams[key] = undefined;
         }
       }
       if (currentSearchParams[key] === searchParams[key]) {

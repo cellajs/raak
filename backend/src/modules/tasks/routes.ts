@@ -1,20 +1,22 @@
-import { errorResponses, successWithDataSchema, successWithPaginationSchema, successWithoutDataSchema } from '#/lib/common-responses';
-import { idsQuerySchema, productParamSchema } from '#/lib/common-schemas';
+import { errorResponses, successWithDataSchema, successWithErrorsSchema, successWithPaginationSchema } from '#/utils/schema/common-responses';
+import { idOrSlugSchema, idsQuerySchema, productParamSchema } from '#/utils/schema/common-schemas';
 
 import { createRouteConfig } from '#/lib/route-config';
-import { isAllowedTo, isAuthenticated } from '#/middlewares/guard';
+import { hasOrgAccess, isAuthenticated } from '#/middlewares/guard';
 
-import { createTaskSchema, fullTaskSchema, getTasksQuerySchema, simpleTaskSchema, updateTaskSchema } from './schema';
+import { z } from 'zod';
+import { createTaskSchema, getTasksQuerySchema, taskWithSubTasksSchema, updateTaskSchema } from './schema';
 
 class TaskRoutesConfig {
   public createTask = createRouteConfig({
     method: 'post',
     path: '/',
-    guard: [isAuthenticated, isAllowedTo('create', 'task')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['tasks'],
     summary: 'Create new task',
     description: 'Create a new task in a project.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       body: {
         required: true,
         content: {
@@ -29,7 +31,7 @@ class TaskRoutesConfig {
         description: 'Task',
         content: {
           'application/json': {
-            schema: successWithDataSchema(fullTaskSchema),
+            schema: successWithDataSchema(taskWithSubTasksSchema),
           },
         },
       },
@@ -40,11 +42,12 @@ class TaskRoutesConfig {
   public getTasks = createRouteConfig({
     method: 'get',
     path: '/',
-    guard: [isAuthenticated],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['tasks'],
     summary: 'Get list of tasks',
     description: 'Get list of tasks for specific projects.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: getTasksQuerySchema,
     },
     responses: {
@@ -52,30 +55,7 @@ class TaskRoutesConfig {
         description: 'Tasks',
         content: {
           'application/json': {
-            schema: successWithPaginationSchema(fullTaskSchema),
-          },
-        },
-      },
-      ...errorResponses,
-    },
-  });
-
-  public getTask = createRouteConfig({
-    method: 'get',
-    path: '/{id}',
-    guard: [isAuthenticated, isAllowedTo('read', 'task')],
-    tags: ['tasks'],
-    summary: 'Get task',
-    description: 'Get a task by id.',
-    request: {
-      params: productParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'Task',
-        content: {
-          'application/json': {
-            schema: successWithDataSchema(simpleTaskSchema),
+            schema: successWithPaginationSchema(taskWithSubTasksSchema),
           },
         },
       },
@@ -86,7 +66,7 @@ class TaskRoutesConfig {
   public updateTask = createRouteConfig({
     method: 'put',
     path: '/{id}',
-    guard: [isAuthenticated, isAllowedTo('update', 'task')],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['tasks'],
     summary: 'Update task',
     description: 'Update task by id.',
@@ -105,7 +85,7 @@ class TaskRoutesConfig {
         description: 'Task updated',
         content: {
           'application/json': {
-            schema: successWithDataSchema(fullTaskSchema),
+            schema: successWithDataSchema(taskWithSubTasksSchema),
           },
         },
       },
@@ -116,11 +96,12 @@ class TaskRoutesConfig {
   public deleteTasks = createRouteConfig({
     method: 'delete',
     path: '/',
-    guard: [isAuthenticated],
+    guard: [isAuthenticated, hasOrgAccess],
     tags: ['tasks'],
     summary: 'Delete tasks',
     description: 'Delete tasks by ids.',
     request: {
+      params: z.object({ orgIdOrSlug: idOrSlugSchema }),
       query: idsQuerySchema,
     },
     responses: {
@@ -128,7 +109,7 @@ class TaskRoutesConfig {
         description: 'Success',
         content: {
           'application/json': {
-            schema: successWithoutDataSchema,
+            schema: successWithErrorsSchema(),
           },
         },
       },

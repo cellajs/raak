@@ -58,11 +58,10 @@ export const MenuSectionSticky = ({
             </motion.button>
           </Button>
           <AnimatePresence mode="popLayout">
-            {isSectionVisible && (
+            {isSectionVisible && data.length && (
               <TooltipButton toolTipContent={t('common:manage_content')} side="bottom" sideOffset={10}>
                 <Button
-                  disabled={!data.length}
-                  className="w-12 px-3"
+                  className="w-12 px-3 max-sm:hidden"
                   variant={optionsView ? 'plain' : 'secondary'}
                   size="icon"
                   onClick={() => toggleOptionsView()}

@@ -1,8 +1,8 @@
 import { cva } from 'class-variance-authority';
 import { useEffect, useRef, useState } from 'react';
 
-import { cn } from '~/lib/utils.ts';
 import { Card, CardContent } from '~/modules/ui/card';
+import { cn } from '~/utils/cn';
 
 import { type Edge, attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
@@ -11,10 +11,9 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import { motion } from 'framer-motion';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { getDraggableItemData } from '~/lib/drag-drop';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { type DropDownToRemove, dropdownerState } from '~/modules/common/dropdowner/state';
-import { isTaskData } from '~/modules/projects/board/board';
+import { isTaskData } from '~/modules/projects/board/helpers';
 import TaskDescription from '~/modules/tasks/task-content.tsx';
 import { TaskFooter } from '~/modules/tasks/task-footer';
 import { TaskHeader } from '~/modules/tasks/task-header';
@@ -24,6 +23,7 @@ import { taskTypes } from '~/modules/tasks/task-selectors/select-task-type';
 import { Button } from '~/modules/ui/button';
 import type { Mode } from '~/store/theme.ts';
 import type { Task } from '~/types/app';
+import { getDraggableItemData } from '~/utils/drag-drop';
 import type { TaskStates } from './types';
 
 const variants = cva('task-card', {
@@ -101,7 +101,13 @@ export function TaskCard({ style, task, tasks, mode, isSelected, isFocused, stat
         getInitialData: () => data,
         onDragStart: () => setDragging(true),
         onDrop: () => setDragging(false),
-        canDrag: () => state === 'folded' || state === 'expanded',
+        canDrag: () => {
+          if (!taskDragRef.current) return false;
+          // Check if there are any sub taskEditing in current task
+          const subTasksEditing = taskDragRef.current.querySelectorAll(`[id^="blocknote-subtask-"]`);
+
+          return state === 'folded' || (state === 'expanded' && !subTasksEditing.length);
+        },
       }),
       dropTargetForExternal({
         element,
@@ -129,7 +135,7 @@ export function TaskCard({ style, task, tasks, mode, isSelected, isFocused, stat
   }, [task, state]);
 
   return (
-    <motion.div layout transition={{ duration: 0.3 }}>
+    <motion.div layout transition={{ duration: state === 'editing' || !isFocused ? 0 : 0.3 }}>
       <Card
         id={task.id}
         onClick={handleCardClick}

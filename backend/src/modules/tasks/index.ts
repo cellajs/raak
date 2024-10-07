@@ -1,16 +1,19 @@
 import { type SQL, and, eq, ilike, inArray } from 'drizzle-orm';
 import { db } from '#/db/db';
 
+import { parse as parseHtml } from 'node-html-parser';
 import type { z } from 'zod';
 import { labelsTable } from '#/db/schema/labels';
-import { tasksTable } from '#/db/schema/tasks';
+import { type InsertTaskModel, tasksTable } from '#/db/schema/tasks';
 import { usersTable } from '#/db/schema/users';
 import { getUsersByConditions } from '#/db/util';
-import { errorResponse } from '#/lib/errors';
-import { getOrderColumn } from '#/lib/order-column';
+import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
+import { type ErrorType, createError, errorResponse } from '#/lib/errors';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
-import { transformDatabaseUser } from '../users/helpers/transform-database-user';
+import { getOrderColumn } from '#/utils/order-column';
+import { splitByAllowance } from '#/utils/split-by-allowance';
+import { extractKeywords } from './helpers';
 import taskRoutesConfig from './routes';
 import type { subTaskSchema } from './schema';
 
@@ -23,10 +26,14 @@ const tasksRoutes = app
    */
   .openapi(taskRoutesConfig.createTask, async (ctx) => {
     const newTask = ctx.req.valid('json');
-    const user = ctx.get('user');
-    const [createdTask] = await db.insert(tasksTable).values(newTask).returning();
+    const organization = getOrganization();
+    const user = getContextUser();
+    const [createdTask] = await db
+      .insert(tasksTable)
+      .values({ ...newTask, organizationId: organization.id })
+      .returning();
 
-    logEvent('Task created', { task: newTask.id });
+    logEvent('Task created', { task: createdTask.id });
 
     const uniqueAssignedUserIds = [...new Set(createdTask.assignedTo)];
     const assignedTo = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)]);
@@ -35,7 +42,7 @@ const tasksRoutes = app
     const finalTask = {
       ...createdTask,
       subTasks: [] as z.infer<typeof subTaskSchema>,
-      createdBy: transformDatabaseUser(user),
+      createdBy: user,
       modifiedBy: null,
       assignedTo: assignedTo.filter((m) => createdTask.assignedTo.includes(m.id)),
       labels: labels.filter((m) => createdTask.labels.includes(m.id)),
@@ -114,41 +121,44 @@ const tasksRoutes = app
     );
   })
   /*
-   * Get task by id
-   */
-  .openapi(taskRoutesConfig.getTask, async (ctx) => {
-    const id = ctx.req.param('id');
-    if (!id) return errorResponse(ctx, 404, 'not_found', 'warn');
-
-    const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
-
-    return ctx.json(
-      {
-        success: true,
-        data: task,
-      },
-      200,
-    );
-  })
-  /*
    * Update task
    */
   .openapi(taskRoutesConfig.updateTask, async (ctx) => {
     const id = ctx.req.param('id');
     if (!id) return errorResponse(ctx, 404, 'not_found', 'warn');
-    const user = ctx.get('user');
+    const user = getContextUser();
     const { key, data, order } = ctx.req.valid('json');
 
-    const [updatedTask] = await db
-      .update(tasksTable)
-      .set({
-        [key]: data,
-        modifiedAt: new Date(),
-        modifiedBy: user.id,
-        ...(order && { order: order }),
-      })
-      .where(eq(tasksTable.id, id))
-      .returning();
+    const updateValues: Partial<InsertTaskModel> = {
+      [key]: data,
+      modifiedAt: new Date(),
+      modifiedBy: user.id,
+      ...(order && { order: order }),
+    };
+
+    if (key === 'description' && data) {
+      const descriptionText = String(data);
+      updateValues.keywords = extractKeywords(descriptionText);
+      const rootElement = parseHtml(descriptionText);
+      const groupElement = rootElement.querySelector('.bn-block-group');
+      if (groupElement) {
+        // Remove all child element except the first one
+        const children = groupElement.childNodes;
+        for (let i = 1; i < children.length; i++) {
+          groupElement.removeChild(children[i]);
+        }
+        const summaryText = rootElement.toString();
+        updateValues.summary = summaryText;
+
+        if (descriptionText.length === summaryText.length) {
+          updateValues.expandable = summaryText !== descriptionText;
+        } else {
+          updateValues.expandable = true;
+        }
+      }
+    }
+
+    const [updatedTask] = await db.update(tasksTable).set(updateValues).where(eq(tasksTable.id, id)).returning();
 
     const subTasks = await db.select().from(tasksTable).where(eq(tasksTable.parentId, updatedTask.id));
 
@@ -179,12 +189,23 @@ const tasksRoutes = app
    */
   .openapi(taskRoutesConfig.deleteTasks, async (ctx) => {
     const { ids } = ctx.req.valid('query');
-    const idsArray = Array.isArray(ids) ? ids : [ids];
-    // Delete subTasks at first then delete the tasks
-    await db.delete(tasksTable).where(inArray(tasksTable.parentId, idsArray));
-    await db.delete(tasksTable).where(inArray(tasksTable.id, idsArray));
+    const memberships = getMemberships();
+    const toDeleteIds = Array.isArray(ids) ? ids : [ids];
 
-    return ctx.json({ success: true }, 200);
+    if (!toDeleteIds.length) return errorResponse(ctx, 400, 'invalid_request', 'warn', 'task');
+
+    const { allowedIds, disallowedIds } = await splitByAllowance('delete', 'task', toDeleteIds, memberships);
+
+    if (!allowedIds.length) return errorResponse(ctx, 403, 'forbidden', 'warn', 'task');
+
+    // Map errors of tasks user is not allowed to delete
+    const errors: ErrorType[] = disallowedIds.map((id) => createError(ctx, 404, 'not_found', 'warn', 'task', { project: id }));
+
+    // Delete subTasks at first then delete the tasks
+    await db.delete(tasksTable).where(inArray(tasksTable.parentId, allowedIds));
+    await db.delete(tasksTable).where(inArray(tasksTable.id, allowedIds));
+
+    return ctx.json({ success: true, errors: errors }, 200);
   });
 
 export default tasksRoutes;

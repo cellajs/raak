@@ -3,13 +3,14 @@ import { and, count, eq, ilike, inArray, or } from 'drizzle-orm';
 import { coalesce, db } from '#/db/db';
 import { auth } from '#/db/lucia';
 import { membershipsTable } from '#/db/schema/memberships';
+import { organizationsTable } from '#/db/schema/organizations';
 import { safeUserSelect, usersTable } from '#/db/schema/users';
 import { getUsersByConditions } from '#/db/util';
 import { getContextUser } from '#/lib/context';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
-import { getOrderColumn } from '#/lib/order-column';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
+import { getOrderColumn } from '#/utils/order-column';
 import { removeSessionCookie } from '../auth/helpers/cookies';
 import { checkSlugAvailable } from '../general/helpers/check-slug';
 import { transformDatabaseUserWithCount } from './helpers/transform-database-user';
@@ -165,6 +166,18 @@ const usersRoutes = app
       return errorResponse(ctx, 403, 'forbidden', 'warn', 'user', { user: targetUser.id });
     }
 
+    const userOrganizations = await db
+      .select({
+        id: organizationsTable.id,
+        slug: organizationsTable.slug,
+        name: organizationsTable.name,
+        entity: organizationsTable.entity,
+        thumbnailUrl: organizationsTable.thumbnailUrl,
+      })
+      .from(organizationsTable)
+      .innerJoin(membershipsTable, and(eq(membershipsTable.userId, targetUser.id), eq(membershipsTable.type, 'organization')))
+      .where(eq(organizationsTable.id, membershipsTable.organizationId));
+
     const [{ memberships }] = await db
       .select({
         memberships: count(),
@@ -175,7 +188,7 @@ const usersRoutes = app
     return ctx.json(
       {
         success: true,
-        data: transformDatabaseUserWithCount(targetUser, memberships),
+        data: { ...transformDatabaseUserWithCount(targetUser, memberships), ...{ organizations: userOrganizations } },
       },
       200,
     );

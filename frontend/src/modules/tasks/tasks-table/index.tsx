@@ -22,7 +22,7 @@ import { getInitialSortColumns } from '~/modules/common/data-table/sort-columns'
 import { openUserPreviewSheet } from '~/modules/common/data-table/util';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { sheet } from '~/modules/common/sheeter/state';
-import { isSubTaskData } from '~/modules/projects/board/board';
+import { isSubTaskData } from '~/modules/projects/board/helpers';
 import { configureForExport, getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
 import { TaskCard } from '~/modules/tasks/task';
 import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
@@ -45,6 +45,7 @@ const tasksQueryOptions = ({
   projectId,
   status,
   rowsLength = 0,
+  orgIdOrSlug,
 }: GetTasksParams & {
   rowsLength?: number;
 }) => {
@@ -69,6 +70,7 @@ const tasksQueryOptions = ({
           offset: rowsLength - page * limit > 0 ? undefined : rowsLength,
           projectId,
           status,
+          orgIdOrSlug,
         },
         signal,
       ),
@@ -80,7 +82,7 @@ export default function TasksTable() {
   const { t } = useTranslation();
   const { mode } = useThemeStore();
   const search = useSearch({ from: WorkspaceTableRoute.id });
-  const { focusedTaskId, searchQuery, selectedTasks, setSelectedTasks, setSearchQuery, projects, setFocusedTaskId } = useWorkspaceStore();
+  const { focusedTaskId, searchQuery, selectedTasks, setSelectedTasks, setSearchQuery, projects, setFocusedTaskId, workspace } = useWorkspaceStore();
 
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(getInitialSortColumns(search, 'createdAt'));
   const [selectedStatuses] = useState<number[]>(typeof search.status === 'number' ? [search.status] : search.status?.split('_').map(Number) || []);
@@ -113,6 +115,7 @@ export default function TasksTable() {
       order,
       projectId: search.projectId ? search.projectId : projects.map((p) => p.id).join('_'),
       status: selectedStatuses.join('_'),
+      orgIdOrSlug: workspace.organizationId,
     }),
   );
 
@@ -150,7 +153,7 @@ export default function TasksTable() {
     const [currentTask] = relativeTasks.filter((t) => t.id === taskId);
     sheet.create(<TaskCard mode={mode} task={currentTask} tasks={rows} state="editing" isSelected={false} isFocused={true} isSheet />, {
       className: 'max-w-full lg:max-w-4xl',
-      title: <span className="pl-4">{t('app:task')}</span>,
+      title: t('app:task'),
       id: `task-preview-${taskId}`,
     });
     setFocusedTaskId(taskId);
@@ -227,10 +230,10 @@ export default function TasksTable() {
               id: sourceData.item.id,
               key: 'order',
               data: newOrder,
+              orgIdOrSlug: workspace.organizationId,
             });
-            // callback([updatedTask], 'updateSubTask');
           } catch (err) {
-            toast.error(t('common:error.reorder_resources', { resources: t('app:todo') }));
+            toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
           }
         },
       }),

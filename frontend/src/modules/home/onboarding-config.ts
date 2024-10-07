@@ -2,7 +2,7 @@ import { config } from 'config';
 import { t } from 'i18next';
 import { createProject } from '~/api/projects';
 import { createWorkspace } from '~/api/workspaces';
-import { addMenuItem } from '~/lib/utils';
+import { addMenuItem } from '~/modules/common/nav-sheet/helpers/add-menu-item';
 import type { StepItem } from '~/modules/common/stepper/types';
 import { useNavigationStore } from '~/store/navigation';
 import { useUserStore } from '~/store/user';
@@ -38,10 +38,11 @@ export const onBoardingFinishCallback = () => {
     useNavigationStore.setState({ menu: addMenuItem(createdWorkspace as UserMenuItem, 'workspaces') });
     for (let i = 3; i !== 0; i--) {
       const namingArr = ['one', 'two', 'three'];
-      createProject(createdWorkspace.id, {
+      createProject({
         name: `Demo project ${namingArr[i - 1]}`,
         slug: `${lastCreatedOrganization.slug}-project-${i}`,
         organizationId: lastCreatedOrganization.id,
+        workspaceId: createdWorkspace.id,
       }).then((createdProject) => {
         useNavigationStore.setState({
           menu: addMenuItem({ ...createdProject, ...({ parentId: createdProject.workspaceId } as UserMenuItem) }, 'workspaces'),

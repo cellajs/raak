@@ -1,9 +1,8 @@
-import { config } from 'config';
 import { motion } from 'framer-motion';
 import { ChevronUp, Maximize2, Trash } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { dateShort, dateTwitterFormat } from '~/lib/utils';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import StickyBox from '~/modules/common/sticky-box';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -12,6 +11,8 @@ import { taskTypes } from '~/modules/tasks/task-selectors/select-task-type';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/store/user';
 import type { Task } from '~/types/app';
+import { dateMini } from '~/utils/date-mini';
+import { dateShort } from '~/utils/date-short';
 import HeaderInfo from './header-info';
 import type { TaskStates } from './types';
 
@@ -28,11 +29,15 @@ export const TaskHeader = ({
 }) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
+  const [isHovered, setIsHovered] = useState(false);
   const isSubTask = task.parentId !== null;
-  const initialAndExitParams = { opacity: isSubTask ? 1 : 0, y: isSubTask ? 0 : -10 };
   const isEditing = state === 'editing' || state === 'unsaved';
 
-  const buttonText = isEditing ? t(`app:${state}`) : t('common:edit');
+  const getButtonText = () => {
+    if (isHovered && state === 'unsaved') return t('common:save');
+    return isEditing ? t(`app:${state}`) : t('common:edit');
+  };
+
   return (
     <StickyBox enabled={false} className="flex flex-row z-100 w-full justify-between">
       {!isSubTask && task.createdBy && (
@@ -49,20 +54,18 @@ export const TaskHeader = ({
       )}
       <motion.div
         className="flex flex-row gap-1 w-full items-center ml-1"
-        initial={initialAndExitParams}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={initialAndExitParams}
+        exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.3 }}
       >
         {!isSubTask && task.createdBy && (
           <>
-            <AvatarWrap type="user" id={task.createdBy.id} name={task.createdBy.name} url={task.createdBy.thumbnailUrl} className="h-6 w-6 text-xs" />
+            <AvatarWrap type="user" id={task.createdBy.id} name={task.createdBy.name} url={task.createdBy.thumbnailUrl} className="h-5 w-5 text-xs" />
             <TooltipButton toolTipContent={dateShort(task.createdAt)} side="bottom" sideOffset={5} hideWhenDetached>
-              <span className="ml-1 opacity-50 text-sm text-center font-light">{dateTwitterFormat(task.createdAt, user.language, 'ago')}</span>
+              <span className="ml-1 opacity-50 text-sm text-center font-light">{dateMini(task.createdAt, user.language, 'ago')}</span>
             </TooltipButton>
             <HeaderInfo task={task} />
-            {/*  in development: show subtask order number to debug drag */}
-            {config.mode === 'development' && isSubTask && <span className="ml-1 opacity-50 text-sm text-center font-light">{task.order}</span>}
           </>
         )}
 
@@ -76,13 +79,19 @@ export const TaskHeader = ({
             hideWhenDetached
           >
             <Button
-              onClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: isEditing ? 'expanded' : 'editing' })}
+              id="edit-toggle"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              onClick={() => {
+                const event = isSubTask ? 'changeSubTaskState' : 'changeTaskState';
+                dispatchCustomEvent(event, { taskId: task.id, state: isEditing ? 'expanded' : 'editing' });
+              }}
               aria-label="Edit"
               variant="ghost"
-              className="flex flex-row items-center gap-1 font-light"
+              className={`flex  min-w-20 flex-row items-center gap-1 font-light ${state === 'unsaved' ? 'hover:text-green-500' : ''}`}
               size="xs"
             >
-              {isEditing ? <span className="italic">{buttonText}</span> : buttonText}
+              <span className={isEditing ? 'italic' : ''}>{getButtonText()}</span>
             </Button>
           </TooltipButton>
         )}
@@ -116,7 +125,10 @@ export const TaskHeader = ({
         {(!isSheet || isSubTask) && (
           <TooltipButton toolTipContent={t('common:close')} side="bottom" sideOffset={5} hideWhenDetached>
             <Button
-              onClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'folded' })}
+              onClick={() => {
+                const event = isSubTask ? 'changeSubTaskState' : 'changeTaskState';
+                dispatchCustomEvent(event, { taskId: task.id, state: 'folded' });
+              }}
               aria-label="Collapse"
               variant="ghost"
               size="xs"

@@ -1,18 +1,18 @@
 import type React from 'react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { showToast } from '~/lib/taosts-show';
+import { showToast } from '~/lib/toasts';
 import { dialog } from '~/modules/common/dialoger/state';
 import { MenuArchiveToggle } from '~/modules/common/nav-sheet/menu-archive-toggle';
 import { MenuSectionSticky } from '~/modules/common/nav-sheet/menu-section-sticky';
 import { SheetMenuItems } from '~/modules/common/nav-sheet/sheet-menu-items';
 import { SheetMenuItemsOptions } from '~/modules/common/nav-sheet/sheet-menu-options';
 import { useNavigationStore } from '~/store/navigation';
-import type { ContextEntity, UserMenuItem } from '~/types/common';
+import type { ContextEntity, UserMenu, UserMenuItem } from '~/types/common';
 
 interface MenuSectionProps {
   data: UserMenuItem[];
-  sectionType: 'workspaces' | 'organizations';
+  sectionType: keyof UserMenu;
   sectionLabel: string;
   entityType: ContextEntity;
   createForm: ReactNode;

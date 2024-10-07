@@ -4,10 +4,10 @@ import { Suspense, memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lazyWithPreload } from 'react-lazy-with-preload';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { getColorClass } from '~/lib/utils';
 import { dialog } from '~/modules/common/dialoger/state';
 import { Button } from '~/modules/ui/button';
 import { UploadType } from '~/types/common';
+import { numberToColorClass } from '~/utils/number-to-color-class';
 
 // Lazy load the upload component
 const UploadUppy = lazyWithPreload(() => import('~/modules/common/upload/upload-uppy'));
@@ -25,7 +25,7 @@ const PageCover = memo(({ type, id, canUpdate, url }: PageCoverProps) => {
   const [coverUrl, setCoverUrl] = useState(url);
 
   const bannerHeight = url ? 'h-[20vw] min-h-40 sm:min-w-52' : 'h-32'; // : 'h-14';
-  const bannerClass = url ? 'bg-background' : getColorClass(id);
+  const bannerClass = url ? 'bg-background' : numberToColorClass(id);
 
   const setUrl = (bannerUrl: string) => {
     setCoverUrl(bannerUrl);

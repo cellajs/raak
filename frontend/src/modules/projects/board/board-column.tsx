@@ -1,44 +1,49 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { ChevronDown, Palmtree, Plus, Search, Undo } from 'lucide-react';
-import { type MutableRefObject, lazy, useMemo, useRef, useState } from 'react';
+import { type MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type GetTasksParams, getTasksList } from '~/api/tasks';
 import { useEventListener } from '~/hooks/use-event-listener';
 
-import { cn } from '~/lib/utils';
+import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
+import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { toast } from 'sonner';
+import { updateTask } from '~/api/tasks';
+import { useMutateTasksQueryData } from '~/hooks/use-mutate-query-data';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { type DialogT, dialog } from '~/modules/common/dialoger/state';
 import FocusTrap from '~/modules/common/focus-trap';
-import { SheetNav } from '~/modules/common/sheet-nav';
 import { sheet } from '~/modules/common/sheeter/state';
 import { BoardColumnHeader } from '~/modules/projects/board/board-column-header';
 import { ColumnSkeleton } from '~/modules/projects/board/column-skeleton';
-import { ProjectSettings } from '~/modules/projects/project-settings';
+import { isSubTaskData, isTaskData } from '~/modules/projects/board/helpers';
 import CreateTaskForm from '~/modules/tasks/create-task-form';
-import { sortAndGetCounts } from '~/modules/tasks/helpers';
+import { getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
 import { TaskCard } from '~/modules/tasks/task';
 import type { CustomEventDetailId, TaskChangeEvent, TaskStates } from '~/modules/tasks/types';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
 import { taskKeys } from '~/query-client-provider';
+import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
 import type { Project } from '~/types/app';
-
-const MembersTable = lazy(() => import('~/modules/organizations/members-table'));
+import { cn } from '~/utils/cn';
 
 interface BoardColumnProps {
   tasksState: Record<string, TaskStates>;
   project: Project;
 }
 
-export const tasksQueryOptions = ({ projectId }: GetTasksParams) => {
+export const tasksQueryOptions = ({ projectId, orgIdOrSlug }: GetTasksParams) => {
   return queryOptions({
-    queryKey: taskKeys.list({ projectId }),
+    queryKey: taskKeys.list({ projectId, orgIdOrSlug }),
     queryFn: async () =>
       await getTasksList({
+        orgIdOrSlug,
         projectId,
       }),
   });
@@ -55,15 +60,15 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   const defaultTaskFormRef = useRef<HTMLDivElement | null>(null);
   const afterRef = useRef<HTMLDivElement | null>(null);
   const beforeRef = useRef<HTMLDivElement | null>(null);
-
   const columnRef = useRef<HTMLDivElement | null>(null);
   const cardListRef = useRef<HTMLDivElement | null>(null);
+
+  const { menu } = useNavigationStore();
   const { mode } = useThemeStore();
-  const { workspace, searchQuery, selectedTasks, projects, focusedTaskId, setFocusedTaskId, labels } = useWorkspaceStore();
+  const { workspace, searchQuery, selectedTasks, projects, focusedTaskId, setFocusedTaskId } = useWorkspaceStore();
   const { workspaces, changeColumn } = useWorkspaceUIStore();
 
-  const projectLabels = labels.filter((l) => l.projectId === project.id);
-  const currentProjectSettings = workspaces[workspace.id]?.columns.find((el) => el.columnId === project.id);
+  const currentProjectSettings = workspaces[workspace.id]?.[project.id];
   const [showIced, setShowIced] = useState(currentProjectSettings?.expandIced || false);
   const [showAccepted, setShowAccepted] = useState(currentProjectSettings?.expandAccepted || false);
   const [mouseX, setMouseX] = useState(0);
@@ -71,13 +76,13 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   const [isMouseNearBottom, setIsMouseNearBottom] = useState(false);
 
   // Query tasks
-  const tasksQuery = useSuspenseQuery(tasksQueryOptions({ projectId: project.id }));
+  const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
 
   const tasks = useMemo(() => {
-    const respTasks = tasksQuery.data?.items || [];
+    const respTasks = data?.items || [];
     if (!searchQuery.length) return respTasks;
     return respTasks.filter((t) => t.keywords.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [tasksQuery.data, searchQuery]);
+  }, [data, searchQuery]);
 
   const {
     sortedTasks: showingTasks,
@@ -119,38 +124,12 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   };
 
   const openCreateTaskDialog = (ref: MutableRefObject<HTMLDivElement | null>) => {
-    dialog(<CreateTaskForm projectId={project.id} organizationId={project.organizationId} tasks={showingTasks} labels={projectLabels} dialog />, {
+    dialog(<CreateTaskForm projectIdOrSlug={project.id} tasks={showingTasks} dialog />, {
       id: `create-task-form-${project.id}`,
       drawerOnMobile: false,
-      className: 'w-auto shadow-none relative z-[250] p-0 rounded-none mt-1 max-w-4xl',
+      className: 'w-auto shadow-none relative z-[50] p-0 rounded-none border-y-0 mt-0 max-w-4xl',
       container: ref.current,
-    });
-  };
-
-  const openConfigSheet = () => {
-    const isAdmin = project.membership?.role === 'admin';
-    const projectTabs = [
-      ...(isAdmin
-        ? [
-            {
-              id: 'general',
-              label: 'common:general',
-              element: <ProjectSettings project={project as unknown as Project} sheet />,
-            },
-          ]
-        : []),
-      {
-        id: 'members',
-        label: 'common:members',
-        element: <MembersTable entity={project as unknown as Project} isSheet />,
-      },
-    ];
-
-    sheet.create(<SheetNav tabs={projectTabs} />, {
-      className: 'max-w-full lg:max-w-4xl',
-      id: isAdmin ? 'edit-project' : 'project-members',
-      title: isAdmin ? t('common:resource_settings', { resource: t('app:project') }) : t('app:project_members'),
-      text: isAdmin ? t('common:resource_settings.text', { resource: t('app:project').toLowerCase() }) : '',
+      containerBackdrop: false,
     });
   };
 
@@ -189,15 +168,80 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   // 4rem refers to the header height
   const stickyBackground = <div className="sm:hidden left-0 right-0 h-4 bg-background sticky top-0 z-30 -mt-4" />;
 
+  useEffect(() => {
+    return combine(
+      monitorForElements({
+        canMonitor({ source }) {
+          return (isTaskData(source.data) || isSubTaskData(source.data)) && !sheet.getAll().length;
+        },
+        async onDrop({ location, source }) {
+          const target = location.current.dropTargets[0];
+          if (!target) return;
+
+          const sourceData = source.data;
+          const targetData = target.data;
+          const isTask = isTaskData(sourceData) && isTaskData(targetData);
+          const isSubTask = isSubTaskData(sourceData) && isSubTaskData(targetData);
+          if (!isTask && !isSubTask) return;
+
+          const { item: sourceItem } = sourceData;
+          const { item: targetItem } = targetData;
+          if (sourceItem.projectId !== project.id) return;
+
+          const edge: Edge | null = extractClosestEdge(targetData);
+          if (!edge) return;
+
+          const mainCallback = useMutateTasksQueryData(['boardTasks', project.id]);
+          if (isTask) {
+            const newOrder: number = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, undefined, sourceItem.status);
+            try {
+              if (project.id !== targetItem.projectId) {
+                const updatedTask = await updateTask({
+                  id: sourceItem.id,
+                  orgIdOrSlug: workspace.organizationId,
+                  key: 'projectId',
+                  data: targetItem.projectId,
+                  order: newOrder,
+                });
+                const targetProjectCallback = useMutateTasksQueryData(['boardTasks', targetItem.projectId]);
+                mainCallback([updatedTask], 'delete');
+                targetProjectCallback([updatedTask], 'create');
+              } else {
+                const updatedTask = await updateTask({
+                  id: sourceItem.id,
+                  orgIdOrSlug: workspace.organizationId,
+                  key: 'order',
+                  data: newOrder,
+                });
+                mainCallback([updatedTask], 'update');
+              }
+            } catch (err) {
+              toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
+            }
+          }
+
+          if (isSubTask) {
+            const newOrder = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, targetItem.parentId ?? undefined);
+            try {
+              const updatedTask = await updateTask({
+                id: sourceItem.id,
+                orgIdOrSlug: workspace.organizationId,
+                key: 'order',
+                data: newOrder,
+              });
+              mainCallback([updatedTask], 'updateSubTask');
+            } catch (err) {
+              toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
+            }
+          }
+        },
+      }),
+    );
+  }, [menu, data]);
+
   return (
     <div ref={columnRef} className="flex flex-col h-full">
-      <BoardColumnHeader
-        id={project.id}
-        role={project.membership?.role || 'member'}
-        thumbnailUrl={project.thumbnailUrl}
-        name={project.name}
-        openConfig={openConfigSheet}
-      />
+      <BoardColumnHeader project={project} />
       <div
         className={cn(
           'flex-1 sm:h-[calc(100vh-146px)] relative rounded-b-none max-w-full bg-transparent group/column flex flex-col flex-shrink-0 snap-center border-b opacity-100',
@@ -207,7 +251,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
         {stickyBackground}
 
         <div className="h-full border-l border-r">
-          {tasksQuery.isLoading ? (
+          {isLoading ? (
             <ColumnSkeleton />
           ) : (
             <ScrollArea id={project.id} className="h-full mx-[-.07rem]">
@@ -224,7 +268,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
                       size="sm"
                       className="flex relative justify-start w-full rounded-none gap-1 border-b border-b-green-500/10 ring-inset bg-green-500/5 hover:bg-green-500/10 text-green-500 text-xs -mt-[.07rem]"
                     >
-                      <span className="w-6 mr-1 text-center">{acceptedCount}</span>
+                      <span className="w-6 mr-1.5 text-center">{acceptedCount}</span>
                       <span>{t('app:accepted').toLowerCase()}</span>
                       {!!acceptedCount && (
                         <ChevronDown
@@ -283,7 +327,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
                       size="sm"
                       className="flex relative justify-start w-full rounded-none gap-1 ring-inset text-sky-500 bg-sky-500/5 hover:bg-sky-500/10 text-xs -mt-[.07rem]"
                     >
-                      <span className="w-6 mr-1 text-center">{icedCount}</span>
+                      <span className="w-6 mr-1.5 text-center">{icedCount}</span>
                       <span> {t('app:iced').toLowerCase()}</span>
                       {!!icedCount && (
                         <ChevronDown

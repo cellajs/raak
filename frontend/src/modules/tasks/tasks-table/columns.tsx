@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { dateShort } from '~/lib/utils';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import CheckboxColumn from '~/modules/common/data-table/checkbox-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/columns-view';
@@ -19,6 +18,7 @@ import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules
 import { Button } from '~/modules/ui/button';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
+import { dateShort } from '~/utils/date-short';
 
 export const useColumns = () => {
   const { t } = useTranslation();
@@ -199,7 +199,7 @@ export const useColumns = () => {
         if (!project) return row.projectId;
         return (
           <Link
-            to={`/workspaces/${workspace.slug}/board?project=${project.slug}`}
+            to={`/${workspace.organizationId}/workspaces/${workspace.slug}/board?project=${project.slug}`}
             tabIndex={tabIndex}
             disabled={!project.workspaceId}
             className="flex space-x-2 items-center outline-0 ring-0 group truncate"

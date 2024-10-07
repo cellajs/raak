@@ -4,10 +4,9 @@ import { Check, Dot, History, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { type CreateLabelParams, createLabel, updateLabel } from '~/api/labels.ts';
+import { createLabel, updateLabel } from '~/api/labels.ts';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
-import { nanoid, recentlyUsed } from '~/lib/utils.ts';
 import { Kbd } from '~/modules/common/kbd.tsx';
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Badge } from '~/modules/ui/badge.tsx';
@@ -16,6 +15,7 @@ import { type TasksMutationQueryFnVariables, taskKeys } from '~/query-client-pro
 import { useWorkspaceUIStore } from '~/store/workspace-ui.ts';
 import { useWorkspaceStore } from '~/store/workspace.ts';
 import type { Label, Task } from '~/types/app';
+import { dateIsRecent } from '~/utils/date-is-recent';
 
 export const badgeStyle = (color?: string | null) => {
   if (!color) return {};
@@ -30,7 +30,7 @@ interface SetLabelsProps {
   creationValueChange?: (labels: Label[]) => void;
 }
 
-const SetLabels = ({ value, projectId, organizationId, creationValueChange, triggerWidth = 280 }: SetLabelsProps) => {
+const SetLabels = ({ value, projectId, creationValueChange, triggerWidth = 280 }: SetLabelsProps) => {
   const { t } = useTranslation();
   // const { pathname } = useLocation();
   const isMobile = useBreakpoints('max', 'sm');
@@ -59,7 +59,7 @@ const SetLabels = ({ value, projectId, organizationId, creationValueChange, trig
     if (!isRecent) return selectedLabels;
     // save to recent labels all labels that used in past 3 days
     changeColumn(workspace.id, projectId, {
-      recentLabels: orderedLabels.filter((l) => recentlyUsed(l.lastUsed, 3)),
+      recentLabels: orderedLabels.filter((l) => dateIsRecent(l.lastUsed, 3)),
     });
     return orderedLabels.slice(0, 8);
   }, [isRecent, searchValue, orderedLabels, selectedLabels]);
@@ -73,9 +73,8 @@ const SetLabels = ({ value, projectId, organizationId, creationValueChange, trig
         key: 'labels',
         data: labelIds,
         projectId,
+        orgIdOrSlug: workspace.organizationId,
       });
-      // const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      // dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
       return;
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
@@ -91,7 +90,7 @@ const SetLabels = ({ value, projectId, organizationId, creationValueChange, trig
       setSelectedLabels(updatedLabels);
       if (creationValueChange) return creationValueChange(updatedLabels);
       await updateTaskLabels(updatedLabels);
-      await updateLabel(existingLabel.id, existingLabel.useCount + 1);
+      await updateLabel(existingLabel.id, workspace.organizationId, existingLabel.useCount + 1);
       return;
     }
     const newLabel = labels.find((label) => label.name === value);
@@ -99,7 +98,7 @@ const SetLabels = ({ value, projectId, organizationId, creationValueChange, trig
       const updatedLabels = [...selectedLabels, newLabel];
       setSelectedLabels(updatedLabels);
       if (creationValueChange) return creationValueChange(updatedLabels);
-      await updateLabel(newLabel.id, newLabel.useCount + 1);
+      await updateLabel(newLabel.id, workspace.organizationId, newLabel.useCount + 1);
       await updateTaskLabels(updatedLabels);
       return;
     }
@@ -109,23 +108,27 @@ const SetLabels = ({ value, projectId, organizationId, creationValueChange, trig
     setSearchValue('');
     if (labels.find((l) => l.name === value)) return handleSelectClick(value);
 
-    const newLabel: CreateLabelParams = {
-      id: nanoid(),
-      name: value,
-      color: '#FFA9BA',
-      organizationId: organizationId,
-      projectId: projectId,
-      lastUsed: new Date().toString(),
-      useCount: 1,
-    };
-
-    await createLabel(newLabel);
-    const updatedLabels = [...selectedLabels, newLabel];
+    const createdLabel = await createLabel(
+      {
+        name: value,
+        color: '#FFA9BA',
+        projectId: projectId,
+        useCount: 1,
+      },
+      workspace.organizationId,
+    );
+    const updatedLabels = [...selectedLabels, createdLabel];
     setSelectedLabels(updatedLabels);
-    callback([newLabel], 'create');
+    callback([createdLabel], 'create');
     if (creationValueChange) return creationValueChange(updatedLabels);
     await updateTaskLabels(updatedLabels);
   };
+
+  //when removing selectedLabels, switch to recent labels mode
+  useEffect(() => {
+    if (selectedLabels.length) return;
+    setIsRecent(true);
+  }, [selectedLabels]);
 
   useEffect(() => {
     setSelectedLabels(value);
