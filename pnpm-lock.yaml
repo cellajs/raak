@@ -308,6 +308,12 @@ importers:
       '@blocknote/shadcn':
         specifier: ^0.15.11
         version: 0.15.11(@tiptap/pm@2.8.0)(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26)(@types/node@22.7.4)(typescript@5.6.2))
+      '@electric-sql/client':
+        specifier: ^0.6.0
+        version: 0.6.0
+      '@electric-sql/react':
+        specifier: ^0.4.2
+        version: 0.4.2(react@18.3.1)
       '@github/mini-throttle':
         specifier: ^2.1.1
         version: 2.1.1
@@ -1839,8 +1845,19 @@ packages:
   '@drizzle-team/brocli@0.10.1':
     resolution: {integrity: sha512-AHy0vjc+n/4w/8Mif+w86qpppHuF3AyXbcWW+R/W7GNA3F5/p2nuhlkCJaTXSLZheB4l1rtHzOfr9A7NwoR/Zg==}
 
+  '@electric-sql/client@0.6.0':
+    resolution: {integrity: sha512-azAnhA6MlYnlammL6GIZKiD5AYgk6/Il4HTHYfk8WUDMoLWeqit35Pm95WnzJ6suFkAyeLhCFM2LaaBzPBBIIQ==}
+
   '@electric-sql/pglite@0.2.10':
     resolution: {integrity: sha512-0TJF/1ouBweCtyZC4oHwx+dHGn/lP16KfEO/3q22RDuZUsV2saTuYAwb6eK3gBLzVdXG4dj4xZilvmBYEM/WQg==}
+
+  '@electric-sql/react@0.4.2':
+    resolution: {integrity: sha512-7w3EpkNUh3wirGMBLsBhuRMWv1jtq57b6vGTbg6QQVCmmAB5Te9rZf3fYVxU481oiMSz+JT2TdHtMbuA+1YZmQ==}
+    peerDependencies:
+      react: ^18.3.1
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@emnapi/core@0.45.0':
     resolution: {integrity: sha512-DPWjcUDQkCeEM4VnljEOEcXdAD7pp8zSZsgOujk/LGIwCXWbXJngin+MO4zbH429lzeC3WbYLGjE2MaUOwzpyw==}
@@ -2561,6 +2578,7 @@ packages:
 
   '@evilmartians/lefthook@1.7.18':
     resolution: {integrity: sha512-BIJBQtC7xKOedxESlB0wVG6M32ftjK+5vnID9I5CjRDE/6KcCpcK366AyG0eHGdPK1TVty81QalxZqSTxWRXPw==}
+    cpu: [x64, arm64, ia32]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -9351,6 +9369,9 @@ packages:
   tailwind-merge@2.5.2:
     resolution: {integrity: sha512-kjEBm+pvD+6eAwzJL2Bi+02/9LFLal1Gs61+QB7HvTfQQ0aXwC5LGT8PEt1gS0CWKktKe6ysPTAy3cBC5MeiIg==}
 
+  tailwind-merge@2.5.3:
+    resolution: {integrity: sha512-d9ZolCAIzom1nf/5p4LdD5zvjmgSxY0BGgdSvmXIoMYAiPdAW/dSpP7joCDYFY7r/HkEa2qmPtkgsu0xjQeQtw==}
+
   tailwindcss-animate@1.0.7:
     resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
     peerDependencies:
@@ -11894,7 +11915,18 @@ snapshots:
 
   '@drizzle-team/brocli@0.10.1': {}
 
+  '@electric-sql/client@0.6.0':
+    optionalDependencies:
+      '@rollup/rollup-darwin-arm64': 4.24.0
+
   '@electric-sql/pglite@0.2.10': {}
+
+  '@electric-sql/react@0.4.2(react@18.3.1)':
+    dependencies:
+      '@electric-sql/client': 0.6.0
+      use-sync-external-store: 1.2.2(react@18.3.1)
+    optionalDependencies:
+      react: 18.3.1
 
   '@emnapi/core@0.45.0':
     dependencies:
@@ -16684,7 +16716,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-easy-sort: 1.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      tailwind-merge: 2.5.2
+      tailwind-merge: 2.5.3
       tsup: 6.7.0(@swc/core@1.7.26)(postcss@8.4.47)(ts-node@10.9.2(@swc/core@1.7.26)(@types/node@22.7.4)(typescript@5.6.2))(typescript@5.6.2)
     transitivePeerDependencies:
       - '@swc/core'
@@ -20518,6 +20550,8 @@ snapshots:
   tabbable@6.2.0: {}
 
   tailwind-merge@2.5.2: {}
+
+  tailwind-merge@2.5.3: {}
 
   tailwindcss-animate@1.0.7(tailwindcss@3.4.13(ts-node@10.9.2(@swc/core@1.7.26)(@types/node@22.7.4)(typescript@5.6.2))):
     dependencies:

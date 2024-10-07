@@ -1,4 +1,5 @@
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
+import { useShape } from '@electric-sql/react';
+import { queryOptions, useMutationState } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { ChevronDown, Palmtree, Plus, Search, Undo } from 'lucide-react';
 import { type MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
@@ -30,7 +31,8 @@ import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
-import type { Project } from '~/types/app';
+import type { Label, Project, Task } from '~/types/app';
+import type { Member } from '~/types/common';
 import { cn } from '~/utils/cn';
 
 interface BoardColumnProps {
@@ -55,6 +57,36 @@ const taskVariants = {
   exit: { opacity: 0, height: 0 },
 };
 
+const baseUrl = import.meta.env.ELECTRIC_URL ?? 'http://localhost:3000';
+
+type UseShapeOptions = Parameters<typeof useShape<RawTask>>[0];
+export const taskShape = (projectId?: string): UseShapeOptions => ({
+  url: new URL('/v1/shape/tasks', baseUrl).href,
+  where: projectId ? `project_id = '${projectId}'` : undefined,
+});
+
+type RawTask = {
+  id: string;
+  description: string;
+  keywords: string;
+  expandable: boolean;
+  entity: 'task';
+  summary: string;
+  type: 'bug' | 'feature' | 'chore';
+  impact: number;
+  sort_order: number;
+  status: number;
+  parent_id: string;
+  labels: string[];
+  assigned_to: string[];
+  organization_id: string;
+  project_id: string;
+  created_at: string;
+  created_by: string;
+  modified_at: string;
+  modified_by: string;
+};
+
 export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   const { t } = useTranslation();
   const defaultTaskFormRef = useRef<HTMLDivElement | null>(null);
@@ -65,7 +97,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
 
   const { menu } = useNavigationStore();
   const { mode } = useThemeStore();
-  const { workspace, searchQuery, selectedTasks, projects, focusedTaskId, setFocusedTaskId } = useWorkspaceStore();
+  const { workspace, searchQuery, selectedTasks, projects, focusedTaskId, setFocusedTaskId, members, labels } = useWorkspaceStore();
   const { workspaces, changeColumn } = useWorkspaceUIStore();
 
   const currentProjectSettings = workspaces[workspace.id]?.[project.id];
@@ -76,19 +108,60 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   const [isMouseNearBottom, setIsMouseNearBottom] = useState(false);
 
   // Query tasks
-  const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
+  // const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
+
+  const { data: items, isLoading } = useShape<RawTask>(taskShape(project.id));
+  const submissions: Task[] = useMutationState({
+    filters: { status: 'pending' },
+    select: (mutation) => mutation.state.context as Task,
+  }).filter((item) => item !== undefined);
 
   const tasks = useMemo(() => {
-    const respTasks = data?.items || [];
+    // map raw tasks to tasks
+    const respTasks = items.reduce((acc, item) => {
+      const createdBy = members.find((m) => m.id === item.created_by) ?? null;
+      const assignedTo = item.assigned_to.map((id) => members.find((m) => m.id === id)).filter(Boolean) as Member[];
+      const modifiedBy = members.find((m) => m.id === item.modified_by) ?? null;
+      const taskLabels = item.labels.map((id) => labels.find((l) => l.id === id)).filter(Boolean) as Label[];
+      const task: Task = {
+        ...item,
+        createdAt: item.created_at,
+        createdBy,
+        assignedTo,
+        modifiedAt: item.modified_at,
+        modifiedBy,
+        order: item.sort_order,
+        organizationId: item.organization_id,
+        parentId: item.parent_id,
+        projectId: item.project_id,
+        labels: taskLabels,
+        subTasks: [],
+      };
+      if (item.parent_id) {
+        const parentTask = acc.find((t) => t.id === item.parent_id);
+        if (parentTask) {
+          parentTask.subTasks.push(task);
+        }
+        return acc;
+      }
+
+      acc.push(task);
+      return acc;
+    }, [] as Task[]);
     if (!searchQuery.length) return respTasks;
     return respTasks.filter((t) => t.keywords.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [data, searchQuery]);
+  }, [items, searchQuery]);
+
+  const itemsMap = new Map<string, Task>();
+  for (const item of tasks.concat(submissions)) {
+    itemsMap.set(item.id, { ...itemsMap.get(item.id), ...item });
+  }
 
   const {
     sortedTasks: showingTasks,
     acceptedCount,
     icedCount,
-  } = useMemo(() => sortAndGetCounts(tasks, showAccepted, showIced), [tasks, showAccepted, showIced]);
+  } = useMemo(() => sortAndGetCounts([...itemsMap.values()], showAccepted, showIced), [itemsMap, showAccepted, showIced]);
 
   const firstUpstartedIndex = useMemo(() => showingTasks.findIndex((t) => t.status === 1), [showingTasks]);
   const lastUpstartedIndex = useMemo(() => showingTasks.findLastIndex((t) => t.status === 1), [showingTasks]);
@@ -237,7 +310,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
         },
       }),
     );
-  }, [menu, data]);
+  }, [menu, items]);
 
   return (
     <div ref={columnRef} className="flex flex-col h-full">

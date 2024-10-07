@@ -5,7 +5,7 @@ import { clientConfig, handleResponse } from '.';
 // Create Hono clients to make requests to the backend
 export const client = tasksHc(config.backendUrl, clientConfig);
 
-type CreateTaskParams = Parameters<(typeof client.index)['$post']>['0']['json'] & {
+export type CreateTaskParams = Parameters<(typeof client.index)['$post']>['0']['json'] & {
   organizationId: string;
 };
 

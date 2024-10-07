@@ -4,14 +4,15 @@ import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
+import { getShapeStream } from '@electric-sql/react';
+import { useMutation } from '@tanstack/react-query';
 import { ChevronDown, Tag, UserX, X } from 'lucide-react';
 import { type LegacyRef, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { createTask } from '~/api/tasks.ts';
+import { type CreateTaskParams, createTask as baseCreateTask } from '~/api/tasks.ts';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { useHotkeys } from '~/hooks/use-hot-keys.ts';
 import { useMeasure } from '~/hooks/use-measure';
-import { dispatchCustomEvent } from '~/lib/custom-events';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { dialog } from '~/modules/common/dialoger/state.ts';
 import { dropdowner } from '~/modules/common/dropdowner/state.ts';
@@ -35,6 +36,8 @@ import type { Label, Task } from '~/types/app';
 import type { Member } from '~/types/common';
 import { cn } from '~/utils/cn';
 import { nanoid } from '~/utils/nanoid';
+import { taskShape } from '../projects/board/board-column';
+import { matchStream } from './match-stream';
 
 export type TaskType = 'feature' | 'chore' | 'bug';
 export type TaskImpact = 0 | 1 | 2 | 3 | null;
@@ -51,7 +54,7 @@ const formSchema = z.object({
   id: z.string(),
   summary: z.string(),
   description: z.string(),
-  type: z.string(),
+  type: z.union([z.literal('feature'), z.literal('chore'), z.literal('bug')]),
   impact: z.number().nullable(),
   assignedTo: z.array(
     z.object({
@@ -77,6 +80,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type CreateTask = CreateTaskParams & {
+  id: string;
+};
+
 const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks = [], dialog: isDialog, onCloseForm }) => {
   const { t } = useTranslation();
   const { mode } = useThemeStore();
@@ -86,6 +93,63 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks 
 
   const defaultId = nanoid();
   const { ref, bounds } = useMeasure();
+
+  const createTask = async (task: CreateTask) => {
+    const tasksStream = getShapeStream<Task>(taskShape());
+
+    // Match the insert
+    const findUpdatePromise = matchStream({
+      stream: tasksStream,
+      operations: ['insert'],
+      matchFn: ({ message }) => message.value.id === task.id,
+    });
+
+    const createPromise = baseCreateTask(task);
+
+    return await Promise.all([findUpdatePromise, createPromise]);
+  };
+
+  const { mutateAsync: addTaskMut } = useMutation({
+    scope: { id: 'tasks' },
+    mutationKey: ['add-item'],
+    mutationFn: createTask,
+    onMutate: (task) => {
+      form.reset();
+      toast.success(t('common:success.create_resource', { resource: t('app:task') }));
+      handleCloseForm();
+      return task;
+    },
+  });
+
+  const onSubmit = (values: FormValues) => {
+    // Extract text from summary HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(values.summary, 'text/html');
+    const summaryText = doc.body.textContent || `subtask${values.id}`;
+
+    const slug = summaryText.toLowerCase().replace(/ /g, '-');
+
+    const newTask = {
+      id: values.id,
+      description: values.description,
+      summary: values.summary,
+      expandable: taskExpandable(values.summary, values.description),
+      keywords: extractUniqueWordsFromHTML(values.description),
+      type: values.type as TaskType,
+      impact: values.impact as TaskImpact,
+      labels: values.labels.map((label) => label.id),
+      assignedTo: values.assignedTo.map((user) => user.id),
+      status: values.status,
+      organizationId: organizationId,
+      projectId: projectId,
+      createdBy: user.id,
+      slug: slug,
+      order: getNewTaskOrder(values.status, tasks),
+      subTasks: [],
+    };
+
+    addTaskMut(newTask);
+  };
 
   const handleCloseForm = () => {
     if (isDialog) dialog.remove();
@@ -118,47 +182,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks 
 
   // Form with draft in local storage
   const form = useFormWithDraft<FormValues>(`create-task-${projectId}`, formOptions);
-
-  const onSubmit = (values: FormValues) => {
-    // Extract text from summary HTML
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(values.summary, 'text/html');
-    const summaryText = doc.body.textContent || `subtask${values.id}`;
-
-    const slug = summaryText.toLowerCase().replace(/ /g, '-');
-
-    const newTask = {
-      id: values.id,
-      description: values.description,
-      summary: values.summary,
-      expandable: taskExpandable(values.summary, values.description),
-      keywords: extractUniqueWordsFromHTML(values.description),
-      type: values.type as TaskType,
-      impact: values.impact as TaskImpact,
-      labels: values.labels.map((label) => label.id),
-      assignedTo: values.assignedTo.map((user) => user.id),
-      status: values.status,
-      organizationId: organizationId,
-      projectId: projectId,
-      createdBy: user.id,
-      slug: slug,
-      order: getNewTaskOrder(values.status, tasks),
-    };
-
-    createTask(newTask)
-      .then((resp) => {
-        if (!resp) toast.error(t('common:error.create_resource', { resource: t('app:task') }));
-        form.reset();
-        toast.success(t('common:success.create_resource', { resource: t('app:task') }));
-        handleCloseForm();
-        dispatchCustomEvent('taskOperation', {
-          array: [resp],
-          action: 'create',
-          projectId: projectId,
-        });
-      })
-      .catch(() => toast.error(t('common:error.create_resource', { resource: t('app:task') })));
-  };
 
   // default value in blocknote <p class="bn-inline-content"></p> so check if there it's only one
   const isDirty = () => {
