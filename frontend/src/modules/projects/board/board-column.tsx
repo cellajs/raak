@@ -64,10 +64,9 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
 
   const { menu } = useNavigationStore();
   const { mode } = useThemeStore();
-  const { workspace, searchQuery, selectedTasks, projects, focusedTaskId, setFocusedTaskId, labels } = useWorkspaceStore();
+  const { workspace, searchQuery, selectedTasks, projects, focusedTaskId, setFocusedTaskId } = useWorkspaceStore();
   const { workspaces, changeColumn } = useWorkspaceUIStore();
 
-  const projectLabels = labels.filter((l) => l.projectId === project.id);
   const currentProjectSettings = workspaces[workspace.id]?.[project.id];
   const [showIced, setShowIced] = useState(currentProjectSettings?.expandIced || false);
   const [showAccepted, setShowAccepted] = useState(currentProjectSettings?.expandAccepted || false);
@@ -76,13 +75,13 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   const [isMouseNearBottom, setIsMouseNearBottom] = useState(false);
 
   // Query tasks
-  const tasksQuery = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
+  const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
 
   const tasks = useMemo(() => {
-    const respTasks = tasksQuery.data?.items || [];
+    const respTasks = data?.items || [];
     if (!searchQuery.length) return respTasks;
     return respTasks.filter((t) => t.keywords.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [tasksQuery.data, searchQuery]);
+  }, [data, searchQuery]);
 
   const {
     sortedTasks: showingTasks,
@@ -124,7 +123,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
   };
 
   const openCreateTaskDialog = (ref: MutableRefObject<HTMLDivElement | null>) => {
-    dialog(<CreateTaskForm projectId={project.id} organizationId={project.organizationId} tasks={showingTasks} labels={projectLabels} dialog />, {
+    dialog(<CreateTaskForm projectIdOrSlug={project.id} tasks={showingTasks} dialog />, {
       id: `create-task-form-${project.id}`,
       drawerOnMobile: false,
       className: 'w-auto shadow-none relative z-[50] p-0 rounded-none border-y-0 mt-0 max-w-4xl',
@@ -221,21 +220,21 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
         },
       }),
     );
-  }, [menu]);
+  }, [menu, data]);
 
   return (
-    <div ref={columnRef} className="flex flex-col h-full">
+    <div ref={columnRef} className="flex flex-col h-full max-sm:-mx-1.5 max-sm:pb-28">
       <BoardColumnHeader project={project} />
       <div
         className={cn(
-          'flex-1 sm:h-[calc(100vh-146px)] relative rounded-b-none max-w-full bg-transparent group/column flex flex-col flex-shrink-0 snap-center border-b opacity-100',
+          'flex-1 sm:h-[calc(100vh-146px)] relative rounded-b-none max-w-full bg-transparent group/column flex flex-col flex-shrink-0 snap-center sm:border-b opacity-100',
           selectedTasks.length && 'is-selected',
         )}
       >
         {stickyBackground}
 
-        <div className="h-full border-l border-r">
-          {tasksQuery.isLoading ? (
+        <div className="h-full sm:border-l sm:border-r">
+          {isLoading ? (
             <ColumnSkeleton />
           ) : (
             <ScrollArea id={project.id} className="h-full mx-[-.07rem]">
@@ -334,9 +333,10 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
                           strokeWidth={0.2}
                           className="max-md:hidden absolute scale-x-0 scale-y-75 rotate-180 text-primary top-4 right-4 translate-y-20 opacity-0 duration-500 delay-500 transition-all group-hover/column:opacity-100 group-hover/column:scale-x-100 group-hover/column:translate-y-0 group-hover/column:rotate-[130deg]"
                         />
-                        <p className="inline-flex gap-1 opacity-0 duration-500 transition-opacity group-hover/column:opacity-100">
+                        <p className="inline-flex gap-1 sm:opacity-0 duration-500 transition-opacity group-hover/column:opacity-100">
                           <span>{t('common:click')}</span>
-                          <span className="text-primary">{`+ ${t('app:task')}`}</span>
+                          <span className="text-primary">+</span>
+                          <span className="max-sm:hidden text-primary">{t('app:task')}</span>
                           <span>{t('app:no_tasks.text')}</span>
                         </p>
                       </>
