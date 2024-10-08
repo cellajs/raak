@@ -5,6 +5,7 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import { useMutation } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
+import { config } from 'config';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -229,6 +230,7 @@ const SummaryButtons = ({ task, setState }: { task: BaseSubTask; setState: (stat
           ...
         </Button>
       )}
+      {config.mode === 'development' && <span className="ml-2 opacity-15 text-sm text-center font-light">#{task.order}</span>}
     </>
   );
 };

@@ -12,11 +12,9 @@ import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { toast } from 'sonner';
 import { updateTask } from '~/api/tasks';
-import { useMutateTasksQueryData } from '~/hooks/use-mutate-query-data';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { type DialogT, dialog } from '~/modules/common/dialoger/state';
 import FocusTrap from '~/modules/common/focus-trap';
-import { sheet } from '~/modules/common/sheeter/state';
 import { BoardColumnHeader } from '~/modules/projects/board/board-column-header';
 import { ColumnSkeleton } from '~/modules/projects/board/column-skeleton';
 import { isSubTaskData, isTaskData } from '~/modules/projects/board/helpers';
@@ -200,7 +198,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
     dialog(<CreateTaskForm projectIdOrSlug={project.id} tasks={showingTasks} dialog />, {
       id: `create-task-form-${project.id}`,
       drawerOnMobile: false,
-      className: 'w-auto shadow-none relative z-[50] p-0 rounded-none border-y-0 mt-0 max-w-4xl',
+      className: 'w-auto shadow-none relative z-[50] p-0 rounded-none border-y-0 mt-0 max-w-none',
       container: ref.current,
       containerBackdrop: false,
     });
@@ -245,7 +243,7 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
     return combine(
       monitorForElements({
         canMonitor({ source }) {
-          return (isTaskData(source.data) || isSubTaskData(source.data)) && !sheet.getAll().length;
+          return isTaskData(source.data) || isSubTaskData(source.data);
         },
         async onDrop({ location, source }) {
           const target = location.current.dropTargets[0];
@@ -264,29 +262,24 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
           const edge: Edge | null = extractClosestEdge(targetData);
           if (!edge) return;
 
-          const mainCallback = useMutateTasksQueryData(['boardTasks', project.id]);
           if (isTask) {
             const newOrder: number = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, undefined, sourceItem.status);
             try {
               if (project.id !== targetItem.projectId) {
-                const updatedTask = await updateTask({
+                await updateTask({
                   id: sourceItem.id,
                   orgIdOrSlug: workspace.organizationId,
                   key: 'projectId',
                   data: targetItem.projectId,
                   order: newOrder,
                 });
-                const targetProjectCallback = useMutateTasksQueryData(['boardTasks', targetItem.projectId]);
-                mainCallback([updatedTask], 'delete');
-                targetProjectCallback([updatedTask], 'create');
               } else {
-                const updatedTask = await updateTask({
+                await updateTask({
                   id: sourceItem.id,
                   orgIdOrSlug: workspace.organizationId,
                   key: 'order',
                   data: newOrder,
                 });
-                mainCallback([updatedTask], 'update');
               }
             } catch (err) {
               toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
@@ -296,13 +289,12 @@ export function BoardColumn({ project, tasksState }: BoardColumnProps) {
           if (isSubTask) {
             const newOrder = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, targetItem.parentId ?? undefined);
             try {
-              const updatedTask = await updateTask({
+              await updateTask({
                 id: sourceItem.id,
                 orgIdOrSlug: workspace.organizationId,
                 key: 'order',
                 data: newOrder,
               });
-              mainCallback([updatedTask], 'updateSubTask');
             } catch (err) {
               toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
             }
