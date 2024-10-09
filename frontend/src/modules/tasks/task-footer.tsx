@@ -1,8 +1,6 @@
-import { useLocation } from '@tanstack/react-router';
 import { ChevronDown, Tag, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { updateTask } from '~/api/tasks';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { queryClient } from '~/lib/router';
@@ -18,6 +16,7 @@ import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import type { Task } from '~/types/app';
 import { cn } from '~/utils/cn';
+import { taskKeys, useTaskMutation } from '../common/query-client-provider/tasks';
 
 interface TasksFooterProps {
   task: Task;
@@ -28,18 +27,26 @@ interface TasksFooterProps {
 
 export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = false }: TasksFooterProps) => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
   const isMobile = useBreakpoints('max', 'sm');
+
+  const taskMutation = useTaskMutation();
 
   const selectedImpact = task.impact !== null ? impacts[task.impact] : null;
 
   const updateStatus = async (newStatus: number) => {
     try {
-      const query = queryClient.getQueryData<{ items: Task[] }>(['boardTasks', task.projectId]);
+      const queryKey = taskKeys.list({ projectId: task.projectId, orgIdOrSlug: task.organizationId });
+      const query = queryClient.getQueryData<{ items: Task[] }>(queryKey);
       const newOrder = getNewStatusTaskOrder(task.status, newStatus, query?.items ?? []);
-      const updatedTask = await updateTask(task.id, task.organizationId, 'status', newStatus, newOrder);
-      const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: task.projectId });
+      const updatedTask = await taskMutation.mutateAsync({
+        id: task.id,
+        orgIdOrSlug: task.organizationId,
+        key: 'status',
+        data: newStatus,
+        order: newOrder,
+        projectId: task.projectId,
+      });
+      dispatchCustomEvent('taskOperation', { array: [updatedTask], action: 'update', projectId: task.projectId });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }
@@ -55,7 +62,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = f
       )}
       {task.type !== 'bug' && (
         <Button
-          id="impact"
+          id={`impact-${task.id}`}
           onClick={(event) => handleTaskDropDownClick(task, 'impact', event.currentTarget)}
           aria-label="Set impact"
           variant="ghost"
@@ -71,7 +78,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = f
       )}
 
       <Button
-        id="labels"
+        id={`labels-${task.id}`}
         onClick={(event) => handleTaskDropDownClick(task, 'labels', event.currentTarget)}
         aria-label="Set labels"
         variant="ghost"
@@ -117,7 +124,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = f
       </Button>
       <div className="flex gap-1 ml-auto">
         <Button
-          id="assignedTo"
+          id={`assignedTo-${task.id}`}
           onClick={(event) => handleTaskDropDownClick(task, 'assignedTo', event.currentTarget)}
           aria-label="Assign"
           variant="ghost"

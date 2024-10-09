@@ -8,6 +8,7 @@ export const config = {
   backendUrl: 'https://api.raak.io',
   backendAuthUrl: 'https://api.raak.io/auth',
   tusUrl: 'https://tus.raak.io',
+  electricUrl: 'https://electric.raak.io',
 
   defaultRedirectPath: '/home',
   firstSignInRedirectPath: '/welcome',
@@ -154,6 +155,9 @@ export const config = {
       lng: 4.47421039909924,
     },
   },
+
+  // UI settings
+  navLogoAnimation: 'animate-spin-slow',
 
   // Common countries
   common: {

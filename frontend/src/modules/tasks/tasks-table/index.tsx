@@ -9,7 +9,7 @@ import type { SortColumn } from 'react-data-grid';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { z } from 'zod';
-import { type GetTasksParams, getTasksList, updateTask } from '~/api/tasks';
+import { type GetTasksParams, getTasksList } from '~/api/tasks';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import { useMutateInfiniteTaskQueryData } from '~/hooks/use-mutate-query-data';
@@ -22,6 +22,7 @@ import { getInitialSortColumns } from '~/modules/common/data-table/sort-columns'
 
 import { openUserPreviewSheet } from '~/modules/common/data-table/util';
 import { dropdowner } from '~/modules/common/dropdowner/state';
+import { taskKeys, useTaskMutation } from '~/modules/common/query-client-provider/tasks';
 import { sheet } from '~/modules/common/sheeter/state';
 import { isSubTaskData } from '~/modules/projects/board/helpers';
 import { configureForExport, getRelativeTaskOrder } from '~/modules/tasks/helpers';
@@ -30,13 +31,13 @@ import TaskCard from '~/modules/tasks/task';
 import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
 import TableHeader from '~/modules/tasks/tasks-display-header/header';
 import { useColumns } from '~/modules/tasks/tasks-table/columns';
+import type { TaskOperationEvent } from '~/modules/tasks/types';
 import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
 import { dateIsRecent } from '~/utils/date-is-recent';
-import type { TaskTableOperationEvent } from '../types';
 
 type TasksSearch = z.infer<typeof tasksSearchSchema>;
 
@@ -56,7 +57,7 @@ const tasksQueryOptions = ({
   const order = initialOrder || 'desc';
 
   return infiniteQueryOptions({
-    queryKey: ['tasks', projectId, status, q, sort, order],
+    queryKey: taskKeys.list({ orgIdOrSlug, projectId, status, q, sort, order }),
     initialPageParam: 0,
     retry: 1,
     refetchOnWindowFocus: false,
@@ -91,6 +92,8 @@ export default function TasksTable() {
   const {
     data: { workspace, projects },
   } = useWorkspaceQuery();
+
+  const taskMutation = useTaskMutation();
 
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(getInitialSortColumns(search, 'createdAt'));
   const [selectedStatuses] = useState<number[]>(typeof search.status === 'number' ? [search.status] : search.status?.split('_').map(Number) || []);
@@ -127,14 +130,16 @@ export default function TasksTable() {
     }),
   );
 
-  const callback = useMutateInfiniteTaskQueryData([
-    'tasks',
-    search.projectId ? search.projectId : projects.map((p) => p.id).join('_'),
-    selectedStatuses.join('_'),
-    searchQuery,
-    sort,
-    order,
-  ]);
+  const callback = useMutateInfiniteTaskQueryData(
+    taskKeys.list({
+      orgIdOrSlug: workspace.organizationId,
+      projectId: search.projectId ? search.projectId : projects.map((p) => p.id).join('_'),
+      status: selectedStatuses.join('_'),
+      q: searchQuery,
+      sort,
+      order,
+    }),
+  );
 
   // hide accepted > then 30 days ago
   const rows = useMemo(() => {
@@ -155,13 +160,14 @@ export default function TasksTable() {
   //   setSelectedStatuses([]);
   // };
 
-  const handleTaskOperations = (event: TaskTableOperationEvent) => {
+  const handleTaskOperations = (event: TaskOperationEvent) => {
     const { array, action } = event.detail;
     callback(array, action);
   };
 
   // Open on key press
   const hotKeyPress = (field: string) => {
+    console.log(22);
     const focusedTask = rows.find((t) => t.id === focusedTaskId);
     if (!focusedTask) return;
     const taskCard = document.getElementById(focusedTask.id);
@@ -173,14 +179,14 @@ export default function TasksTable() {
   };
 
   useHotkeys([
-    ['A', () => hotKeyPress('assignedTo')],
-    ['I', () => hotKeyPress('impact')],
-    ['L', () => hotKeyPress('labels')],
+    ['A', () => hotKeyPress(`assignedTo-${focusedTaskId}`)],
+    ['I', () => hotKeyPress(`impact-${focusedTaskId}`)],
+    ['L', () => hotKeyPress(`labels-${focusedTaskId}`)],
     ['S', () => hotKeyPress(`status-${focusedTaskId}`)],
-    ['T', () => hotKeyPress('type')],
+    ['T', () => hotKeyPress(`type-${focusedTaskId}`)],
   ]);
 
-  useEventListener('taskTableOperation', handleTaskOperations);
+  useEventListener('taskOperation', handleTaskOperations);
 
   useEffect(() => {
     if (!rows.length || !sheet.get(`task-preview-${focusedTaskId}`)) return;
@@ -227,7 +233,13 @@ export default function TasksTable() {
           if (!edge || !isSubTask) return;
           const newOrder: number = getRelativeTaskOrder(edge, rows, targetData.order, sourceData.item.id, targetData.item.parentId ?? undefined);
           try {
-            const updatedTask = await updateTask(sourceData.item.id, workspace.organizationId, 'order', newOrder);
+            const updatedTask = await taskMutation.mutateAsync({
+              id: sourceData.item.id,
+              orgIdOrSlug: workspace.organizationId,
+              key: 'order',
+              data: newOrder,
+              projectId: sourceData.item.projectId,
+            });
             callback([updatedTask], 'updateSubTask');
           } catch (err) {
             toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));

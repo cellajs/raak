@@ -5,12 +5,12 @@ import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import router from '~/lib/router';
 import { dialog } from '~/modules/common/dialoger/state';
+import BarNav from '~/modules/common/main-nav/bar-nav';
+import FloatNav from '~/modules/common/main-nav/float-nav';
 import { sheet } from '~/modules/common/sheeter/state';
 import CreateTaskForm from '~/modules/tasks/create-task-form';
 import { type NavItemId, baseNavItems, navItems } from '~/nav-config';
 import { useNavigationStore } from '~/store/navigation';
-import BarNav from './bar-nav';
-import FloatNav from './float-nav';
 
 export type NavItem = {
   id: NavItemId;
@@ -63,8 +63,13 @@ const MainNav = () => {
     }
 
     // If its a route, navigate to it
-    if (navItem.href) return navigate({ to: navItem.href });
-
+    if (navItem.href) {
+      if (!useNavigationStore.getState().keepMenuOpen) {
+        setNavSheetOpen(null);
+        sheet.update('nav-sheet', { open: false });
+      }
+      return navigate({ to: navItem.href });
+    }
     // Set nav sheet
     const sheetSide = isMobile ? (navItem.mirrorOnMobile ? 'right' : 'left') : 'left';
 
@@ -75,7 +80,7 @@ const MainNav = () => {
       id: 'nav-sheet',
       side: sheetSide,
       modal: isMobile,
-      className: 'fixed sm:z-[80] p-0 sm:inset-0 xs:max-w-80 sm:left-16',
+      className: `fixed sm:z-[80] p-0 sm:inset-0 xs:max-w-80 sm:left-16 ${navItem.id === 'menu' && 'group-[.keep-menu-open]/body:xl:shadow-none'}`,
       removeCallback: () => {
         setNavSheetOpen(null);
       },
@@ -105,9 +110,15 @@ const MainNav = () => {
 
   useEffect(() => {
     router.subscribe('onBeforeLoad', ({ pathChanged, toLocation, fromLocation }) => {
+      const sheetOpen = useNavigationStore.getState().navSheetOpen;
       if (toLocation.pathname !== fromLocation.pathname) {
-        setFocusView(false); // Disable focus view
-        setNavSheetOpen(null);
+        if (useNavigationStore.getState().focusView) setFocusView(false);
+
+        // Remove sheets in content
+        if (sheetOpen && (sheetOpen !== 'menu' || !useNavigationStore.getState().keepMenuOpen)) {
+          setNavSheetOpen(null);
+          sheet.remove('nav-sheet');
+        }
       }
       pathChanged && setLoading(true);
     });

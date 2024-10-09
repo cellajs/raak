@@ -1,15 +1,14 @@
-import { useLocation } from '@tanstack/react-router';
 import { CommandEmpty } from 'cmdk';
 import { Check, Dot, History, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { createLabel, updateLabel } from '~/api/labels.ts';
-import { updateTask } from '~/api/tasks.ts';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { Kbd } from '~/modules/common/kbd.tsx';
+import { useTaskMutation } from '~/modules/common/query-client-provider/tasks';
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Badge } from '~/modules/ui/badge.tsx';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandLoading } from '~/modules/ui/command.tsx';
@@ -34,7 +33,6 @@ interface SetLabelsProps {
 
 const SetLabels = ({ value, projectId, creationValueChange, triggerWidth = 280 }: SetLabelsProps) => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
   const isMobile = useBreakpoints('max', 'sm');
   const { changeColumn } = useWorkspaceUIStore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +41,7 @@ const SetLabels = ({ value, projectId, creationValueChange, triggerWidth = 280 }
     data: { workspace, projects, labels },
   } = useWorkspaceQuery();
   const callback = useMutateQueryData(['labels', projects.map((p) => p.id).join('_')]);
+  const taskMutation = useTaskMutation();
 
   const [selectedLabels, setSelectedLabels] = useState<Label[]>(value);
   const [searchValue, setSearchValue] = useState('');
@@ -69,9 +68,14 @@ const SetLabels = ({ value, projectId, creationValueChange, triggerWidth = 280 }
     if (!focusedTaskId) return;
     try {
       const labelIds = labels.map((l) => l.id);
-      const updatedTask = await updateTask(focusedTaskId, workspace.organizationId, 'labels', labelIds);
-      const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
-      dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
+      const updatedTask = await taskMutation.mutateAsync({
+        id: focusedTaskId,
+        orgIdOrSlug: workspace.organizationId,
+        key: 'labels',
+        data: labelIds,
+        projectId,
+      });
+      dispatchCustomEvent('taskOperation', { array: [updatedTask], action: 'update', projectId: updatedTask.projectId });
       return;
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));

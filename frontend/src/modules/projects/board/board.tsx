@@ -20,6 +20,7 @@ import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { useMutateTasksQueryData, useMutateWorkSpaceQueryData } from '~/hooks/use-mutate-query-data';
 import { queryClient } from '~/lib/router';
 import { dropdowner } from '~/modules/common/dropdowner/state';
+import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import { sheet } from '~/modules/common/sheeter/state';
 import WorkspaceActions from '~/modules/projects/board/workspace-actions';
 import { sortAndGetCounts } from '~/modules/tasks/helpers';
@@ -29,7 +30,8 @@ import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-dow
 import type { TaskCardFocusEvent, TaskCardToggleSelectEvent, TaskOperationEvent, TaskStates, TaskStatesChangeEvent } from '~/modules/tasks/types';
 import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
 import { useThemeStore } from '~/store/theme';
-import { useWorkspaceUIStore } from '~/store/workspace-ui';
+import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
+import { setTaskCardFocus } from './helpers';
 
 // TODO empty space width should be dynamic based on window width and amount of projects and width of each project?
 const PANEL_MIN_WIDTH = 400;
@@ -141,7 +143,7 @@ export default function Board() {
     return projects[0];
   }, [project, projects]);
 
-  const queries = queryClient.getQueriesData({ queryKey: ['boardTasks'] });
+  const queries = queryClient.getQueriesData({ queryKey: taskKeys.lists() });
 
   const tasks = useMemo(() => {
     return queries.flatMap((el) => {
@@ -156,47 +158,52 @@ export default function Board() {
   }, [tasks, focusedTaskId, taskIdPreview]);
 
   const handleVerticalArrowKeyDown = async (event: KeyboardEvent) => {
-    if (!projects.length || (focusedTaskId && (tasksState[focusedTaskId] === 'editing' || tasksState[focusedTaskId] === 'unsaved'))) return;
+    if (!projects.length || !tasks.length) return;
+    if (focusedTaskId && (tasksState[focusedTaskId] === 'editing' || tasksState[focusedTaskId] === 'unsaved')) return;
 
-    const projectSettings = workspaces[workspace.id]?.[projects[0].id];
-    let newFocusedTask: { projectId: string; id: string } | undefined;
-    if (focusedTaskId) {
-      newFocusedTask = tasks.find((t) => t.id === focusedTaskId);
-    } else {
-      const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
-      const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
-      newFocusedTask = sortedTasks[0];
-    }
-    if (!newFocusedTask) return;
-    const direction = event.key === 'ArrowDown' ? 1 : -1;
+    const direction = focusedTaskId ? (event.key === 'ArrowDown' ? 1 : -1) : 0;
 
-    dispatchCustomEvent('focusedTaskChange', {
-      taskId: newFocusedTask.id,
-      projectId: newFocusedTask.projectId,
-      direction: focusedTaskId ? direction : 0,
-    });
+    // Get currently focused task and project
+    const currentFocused = tasks.find((t) => t.id === focusedTaskId);
+    const currentProject = projects.find((p) => p.id === currentFocused?.projectId) ?? projects[0];
+
+    // Extract project settings
+    const { expandAccepted, expandIced } = (workspaces[workspace.id] && workspaces[workspace.id][currentProject.id]) || defaultColumnValues;
+
+    // Filter and sort tasks for the current project
+    const filteredTasks = tasks.filter((t) => t.projectId === currentProject.id);
+    const { sortedTasks } = sortAndGetCounts(filteredTasks, expandAccepted, expandIced);
+
+    const taskIndex = focusedTaskId ? sortedTasks.findIndex((t) => t.id === focusedTaskId) : 0;
+    // Ensure the next task in the direction exists
+    const nextTask = sortedTasks[taskIndex + direction];
+    if (!nextTask) return;
+
+    setTaskCardFocus(nextTask.id);
   };
 
   const handleHorizontalArrowKeyDown = async (event: KeyboardEvent) => {
     if (!projects.length) return;
-    const projectSettings = workspaces[workspace.id]?.[projects[0].id];
-    let newFocusedTask: { projectId: string } | undefined;
-    if (focusedTaskId) {
-      newFocusedTask = tasks.find((t) => t.id === focusedTaskId);
-    } else {
-      const { items: tasks } = queryClient.getQueryData(['boardTasks', projects[0].id]) as { items: Task[] };
-      const { sortedTasks } = sortAndGetCounts(tasks, projectSettings?.expandAccepted || false, false);
-      newFocusedTask = sortedTasks[0];
-    }
 
-    if (!newFocusedTask) return;
-    const currentProjectIndex = projects.findIndex((p) => p.id === newFocusedTask.projectId);
+    // Get the currently focused task and project index
+    const currentFocused = tasks.find((t) => t.id === focusedTaskId);
+    const currentProjectIndex = projects.findIndex((p) => p.id === currentFocused?.projectId);
 
+    // Determine the next project based on the arrow key pressed
     const nextProjectIndex = event.key === 'ArrowRight' ? currentProjectIndex + 1 : currentProjectIndex - 1;
     const nextProject = projects[nextProjectIndex];
 
     if (!nextProject) return;
-    dispatchCustomEvent('focusedProjectChange', nextProject.id);
+
+    // Get project info and filter tasks
+    const { expandAccepted } = (workspaces[workspace.id] && workspaces[workspace.id][nextProject.id]) || defaultColumnValues;
+    const filteredTasks = tasks.filter((t) => t.projectId === nextProject.id);
+
+    const [firstTask] = sortAndGetCounts(filteredTasks, expandAccepted, false).sortedTasks;
+    if (!firstTask) return;
+
+    // Set focus on the first task of the project
+    setTaskCardFocus(firstTask.id);
   };
 
   const setTaskState = (taskId: string, state: TaskStates) => {
@@ -259,11 +266,11 @@ export default function Board() {
     ['Escape', handleEscKeyPress],
     ['Enter', handleEnterKeyPress],
     ['N', handleNKeyDown],
-    ['A', () => hotKeyPress('assignedTo')],
-    ['I', () => hotKeyPress('impact')],
-    ['L', () => hotKeyPress('labels')],
+    ['A', () => hotKeyPress(`assignedTo-${focusedTaskId}`)],
+    ['I', () => hotKeyPress(`impact-${focusedTaskId}`)],
+    ['L', () => hotKeyPress(`labels-${focusedTaskId}`)],
     ['S', () => hotKeyPress(`status-${focusedTaskId}`)],
-    ['T', () => hotKeyPress('type')],
+    ['T', () => hotKeyPress(`type-${focusedTaskId}`)],
   ]);
 
   const handleTaskClick = (event: TaskCardFocusEvent) => {
@@ -277,10 +284,8 @@ export default function Board() {
         // Set the state of the previously focused task after edit button clicked
         setTaskState(currentFocused, tasksState[currentFocused] === 'folded' || !tasksState[currentFocused] ? 'folded' : 'expanded');
       }
-
       return setFocusedTaskId(newFocused);
     }
-
     // If the task clicked is already focused
     if (currentFocused === newFocused) return setTaskState(currentFocused, 'expanded');
 
@@ -288,20 +293,16 @@ export default function Board() {
     if (currentFocused && currentFocused !== newFocused) {
       //change the state of previously focused subtasks
       dispatchCustomEvent('changeSubTaskState', { taskId: currentFocused, state: 'folded' });
-
       // Set the state of the previously focused task
       setTaskState(currentFocused, tasksState[currentFocused] === 'folded' || !tasksState[currentFocused] ? 'folded' : 'expanded');
       // Set the state of the newly focused task
       setTaskState(newFocused, 'expanded');
     }
-
     // If there's no currently focused task, expand the newly focused task
     if (!currentFocused) setTaskState(newFocused, 'expanded');
-
     // ensure newly focused task receives focus
     const taskCard = document.getElementById(newFocused);
     if (taskCard && document.activeElement !== taskCard) taskCard.focus();
-    // Set the new focused task ID
     setFocusedTaskId(newFocused);
   };
 
@@ -311,23 +312,28 @@ export default function Board() {
     return setSelectedTasks(selectedTasks.filter((id) => id !== taskId));
   };
 
+  const projectCallback = (projectId: string) => useMutateTasksQueryData(taskKeys.list({ projectId, orgIdOrSlug: workspace.organizationId }));
+
   const handleTaskOperations = (event: TaskOperationEvent) => {
     const { array, action, projectId } = event.detail;
-    const callback = useMutateTasksQueryData(['boardTasks', projectId]);
-    callback(array, action);
-    const { items: tasks } = queryClient.getQueryData(['boardTasks', projectId]) as { items: Task[] };
+    if (!projectId) return;
+    // Trigger the mutation callback for the specific project
+    projectCallback(projectId)(array, action);
+
+    // If no tasks exist or if the focused task sheet does not exist, return early
     if (!tasks.length || !sheet.get(`task-preview-${focusedTaskId}`)) return;
     const [sheetTask] = tasks.filter((t) => t.id === focusedTaskId);
+    // If a focused task is found, update the corresponding sheet with new content
     sheet.update(`task-preview-${sheetTask.id}`, {
-      content: <TaskCard mode={mode} task={sheetTask} state={'editing'} isSelected={false} isFocused={true} isSheet />,
+      content: <TaskCard mode={mode} task={sheetTask} state="editing" isSelected={false} isFocused={true} isSheet />,
     });
   };
 
-  const callback = useMutateWorkSpaceQueryData(['workspaces', workspace.slug]);
+  const workspaceCallback = useMutateWorkSpaceQueryData(['workspaces', workspace.slug]);
   const handleEntityUpdate = (event: { detail: { membership: Membership; entity: ContextEntity } }) => {
     const { entity, membership } = event.detail;
     if (entity !== 'workspace' && entity !== 'project') return;
-    callback([membership], entity === 'project' ? 'updateProjectMembership' : 'updateWorkspaceMembership');
+    workspaceCallback([membership], entity === 'project' ? 'updateProjectMembership' : 'updateWorkspaceMembership');
   };
 
   const handleTaskState = (event: TaskStatesChangeEvent) => {
@@ -335,8 +341,8 @@ export default function Board() {
     setTaskState(taskId, state);
   };
 
-  useEventListener('changeTaskState', handleTaskState);
   useEventListener('menuEntityChange', handleEntityUpdate);
+  useEventListener('changeTaskState', handleTaskState);
   useEventListener('taskOperation', handleTaskOperations);
   useEventListener('toggleTaskCard', handleTaskClick);
   useEventListener('toggleSelectTask', handleToggleTaskSelect);

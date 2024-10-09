@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { deleteTasks } from '~/api/tasks';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { queryClient } from '~/lib/router';
+import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
@@ -22,7 +23,7 @@ const TaskSelectedButtons = ({ workspace, selectedTasks, setSelectedTasks }: Tas
 
   const removeSelect = () => setSelectedTasks([]);
 
-  const queries = queryClient.getQueriesData({ queryKey: ['boardTasks'] });
+  const queries = queryClient.getQueriesData({ queryKey: taskKeys.lists() });
 
   const onRemove = () => {
     deleteTasks(selectedTasks, workspace.organizationId)
@@ -36,7 +37,7 @@ const TaskSelectedButtons = ({ workspace, selectedTasks, setSelectedTasks }: Tas
           const selectedIds = selectedTasks.map((id) => ({ id }));
           const projectIds = [...new Set(tasks.filter((t) => selectedTasks.includes(t.id)).map((t) => t.projectId))];
           if (!pathname.includes('/board')) {
-            dispatchCustomEvent('taskTableOperation', { array: selectedIds, action: 'delete' });
+            dispatchCustomEvent('taskOperation', { array: selectedIds, action: 'delete' });
           } else {
             projectIds.map((projectId) => {
               dispatchCustomEvent('taskOperation', { array: selectedIds, action: 'delete', projectId });

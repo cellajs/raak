@@ -3,7 +3,6 @@ import { config } from 'config';
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { sheet } from '~/modules/common/sheeter/state';
 import { menuSections } from '~/nav-config';
 
 import type { UserMenu, UserMenuItem } from '~/types/common';
@@ -19,7 +18,9 @@ interface NavigationState {
   navSheetOpen: string | null;
   setNavSheetOpen: (sheet: string | null) => void;
   keepMenuOpen: boolean;
-  toggleKeepMenu: (status: boolean) => void;
+  setKeepMenuOpen: (status: boolean) => void;
+  keepOpenPreference: boolean;
+  toggleKeepOpenPreference: (status: boolean) => void;
   hideSubmenu: boolean;
   toggleHideSubmenu: (status: boolean) => void;
   activeSections: Record<string, boolean> | null;
@@ -28,7 +29,7 @@ interface NavigationState {
   navLoading: boolean;
   setLoading: (status: boolean) => void;
   focusView: boolean;
-  setFocusView: (status: boolean, triggerRemoveSheet?: boolean) => void;
+  setFocusView: (status: boolean) => void;
   archiveStateToggle: (item: UserMenuItem, active: boolean, parentId?: string | null) => void;
   finishedOnboarding: boolean;
   setFinishedOnboarding: () => void;
@@ -38,7 +39,16 @@ interface NavigationState {
 interface InitStore
   extends Pick<
     NavigationState,
-    'recentSearches' | 'keepMenuOpen' | 'hideSubmenu' | 'navLoading' | 'focusView' | 'menu' | 'activeSections' | 'finishedOnboarding' | 'navSheetOpen'
+    | 'recentSearches'
+    | 'keepMenuOpen'
+    | 'hideSubmenu'
+    | 'navLoading'
+    | 'focusView'
+    | 'menu'
+    | 'activeSections'
+    | 'finishedOnboarding'
+    | 'navSheetOpen'
+    | 'keepOpenPreference'
   > {}
 
 const initialMenuState: UserMenu = menuSections
@@ -51,7 +61,8 @@ const initialMenuState: UserMenu = menuSections
 const initStore: InitStore = {
   recentSearches: [],
   navSheetOpen: null,
-  keepMenuOpen: false,
+  keepMenuOpen: window.innerWidth > 1280,
+  keepOpenPreference: false,
   hideSubmenu: false,
   navLoading: false,
   focusView: false,
@@ -76,9 +87,14 @@ export const useNavigationStore = create<NavigationState>()(
               state.recentSearches = searchValues;
             });
           },
-          toggleKeepMenu: (status) => {
+          setKeepMenuOpen: (status) => {
             set((state) => {
               state.keepMenuOpen = status;
+            });
+          },
+          toggleKeepOpenPreference: (status) => {
+            set((state) => {
+              state.keepOpenPreference = status;
             });
           },
           toggleHideSubmenu: (status) => {
@@ -91,10 +107,9 @@ export const useNavigationStore = create<NavigationState>()(
               state.navLoading = status;
             });
           },
-          setFocusView: (status, triggerRemoveSheet = true) => {
+          setFocusView: (status) => {
             set((state) => {
               state.focusView = status;
-              if (triggerRemoveSheet) sheet.remove();
             });
           },
           toggleSection: (section) => {
@@ -141,11 +156,11 @@ export const useNavigationStore = create<NavigationState>()(
             })),
         }),
         {
-          version: 5,
+          version: 6,
           name: `${config.slug}-navigation`,
           partialize: (state) => ({
             menu: state.menu,
-            keepMenuOpen: state.keepMenuOpen,
+            keepOpenPreference: state.keepOpenPreference,
             hideSubmenu: state.hideSubmenu,
             activeSections: state.activeSections,
             recentSearches: state.recentSearches,

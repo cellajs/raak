@@ -4,28 +4,31 @@ import { ChevronDown, Palmtree, Plus, Search, Undo } from 'lucide-react';
 import { type MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type GetTasksParams, getTasksList } from '~/api/tasks';
-import { useEventListener } from '~/hooks/use-event-listener';
 
 import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { type ChangeMessage, ShapeStream, type ShapeStreamOptions } from '@electric-sql/client';
+import { config } from 'config';
 import { toast } from 'sonner';
-import { updateTask } from '~/api/tasks';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { dispatchCustomEvent } from '~/lib/custom-events';
+import { queryClient } from '~/lib/router';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { type DialogT, dialog } from '~/modules/common/dialoger/state';
 import FocusTrap from '~/modules/common/focus-trap';
+import { taskKeys, useTaskMutation } from '~/modules/common/query-client-provider/tasks';
 import { BoardColumnHeader } from '~/modules/projects/board/board-column-header';
 import { ColumnSkeleton } from '~/modules/projects/board/column-skeleton';
 import { isSubTaskData, isTaskData } from '~/modules/projects/board/helpers';
 import CreateTaskForm from '~/modules/tasks/create-task-form';
 import { getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
 import TaskCard from '~/modules/tasks/task';
-import type { CustomEventDetailId, TaskChangeEvent, TaskStates } from '~/modules/tasks/types';
+import type { TaskStates } from '~/modules/tasks/types';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
 import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
+import { useGeneralStore } from '~/store/general';
 import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
@@ -33,6 +36,7 @@ import type { Column } from '~/store/workspace-ui';
 import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
 import type { Project } from '~/types/app';
 import { cn } from '~/utils/cn';
+import { objectKeys } from '~/utils/object';
 
 interface BoardColumnProps {
   tasksState: Record<string, TaskStates>;
@@ -40,9 +44,36 @@ interface BoardColumnProps {
   settings?: Column;
 }
 
+type RawTask = {
+  id: string;
+  description: string;
+  keywords: string;
+  expandable: boolean;
+  entity: 'task';
+  summary: string;
+  type: 'bug' | 'feature' | 'chore';
+  impact: number;
+  sort_order: number;
+  status: number;
+  parent_id: string;
+  labels: string[];
+  assigned_to: string[];
+  organization_id: string;
+  project_id: string;
+  created_at: string;
+  created_by: string;
+  modified_at: string;
+  modified_by: string;
+};
+
+const taskShape = (projectId?: string): ShapeStreamOptions => ({
+  url: new URL('/v1/shape/tasks', config.electricUrl).href,
+  where: projectId ? `project_id = '${projectId}'` : undefined,
+});
+
 export const tasksQueryOptions = ({ projectId, orgIdOrSlug }: GetTasksParams) => {
   return queryOptions({
-    queryKey: ['boardTasks', projectId],
+    queryKey: taskKeys.list({ projectId, orgIdOrSlug }),
     queryFn: async () =>
       await getTasksList({
         orgIdOrSlug,
@@ -68,12 +99,12 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
   const { menu } = useNavigationStore();
   const { mode } = useThemeStore();
   const isMobile = useBreakpoints('max', 'sm');
-  const { searchQuery, selectedTasks, focusedTaskId, setFocusedTaskId } = useWorkspaceStore();
+  const { searchQuery, selectedTasks, focusedTaskId } = useWorkspaceStore();
   const {
-    data: { workspace },
+    data: { workspace, labels, members },
   } = useWorkspaceQuery();
   const { changeColumn } = useWorkspaceUIStore();
-
+  const { networkMode } = useGeneralStore();
   const {
     expandIced: showIced,
     expandAccepted: showAccepted,
@@ -87,6 +118,66 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
 
   // Query tasks
   const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
+
+  const taskMutation = useTaskMutation();
+
+  // Subscribe to task updates
+  useEffect(() => {
+    if (networkMode !== 'online') return;
+
+    const shapeStream = new ShapeStream<RawTask>(taskShape(project.id));
+    const unsubscribe = shapeStream.subscribe((messages) => {
+      const updateMessage = messages.find((m) => m.headers.operation === 'update') as ChangeMessage<RawTask> | undefined;
+      if (updateMessage) {
+        const value = updateMessage.value;
+        queryClient.setQueryData(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }).queryKey, (data) => {
+          if (!data) return;
+          return {
+            ...data,
+            items: data.items.map((task) => {
+              if (task.id === value.id) {
+                const updatedTask = {
+                  ...task,
+                };
+                // TODO: Refactor
+                for (const key of objectKeys(value)) {
+                  if (key === 'sort_order') {
+                    updatedTask.order = value[key];
+                  } else if (key === 'organization_id') {
+                    updatedTask.organizationId = value[key];
+                  } else if (key === 'created_at') {
+                    updatedTask.createdAt = value[key];
+                  } else if (key === 'created_by') {
+                    updatedTask.createdBy = members.find((m) => m.id === value[key]) ?? null;
+                  } else if (key === 'parent_id') {
+                    updatedTask.parentId = value[key];
+                  } else if (key === 'assigned_to') {
+                    updatedTask.assignedTo = members.filter((m) => value[key].includes(m.id));
+                  } else if (key === 'modified_at') {
+                    updatedTask.modifiedAt = value[key];
+                  } else if (key === 'modified_by') {
+                    updatedTask.modifiedBy = members.find((m) => m.id === value[key]) ?? null;
+                  } else if (key === 'project_id') {
+                    updatedTask.projectId = value[key];
+                  } else if (key === 'labels') {
+                    updatedTask.labels = labels.filter((l) => value[key].includes(l.id));
+                  } else {
+                    updatedTask[key] = value[key] as never;
+                  }
+                }
+                return updatedTask;
+              }
+
+              return task;
+            }),
+          };
+        });
+      }
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [networkMode]);
 
   const tasks = useMemo(() => {
     const respTasks = data?.items || [];
@@ -165,29 +256,6 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
     if (ref.current) ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleTaskChangeEventListener = (event: TaskChangeEvent) => {
-    const { taskId, direction, projectId } = event.detail;
-    if (projectId !== project.id) return;
-    const currentFocusedIndex = showingTasks.findIndex((t) => t.id === taskId);
-    if (!showingTasks[currentFocusedIndex + direction]) return;
-    const { id } = showingTasks[currentFocusedIndex + direction];
-    const taskCard = document.getElementById(id);
-    if (taskCard && document.activeElement !== taskCard) taskCard.focus();
-
-    setFocusedTaskId(id);
-  };
-
-  const handleProjectChangeEventListener = (event: CustomEventDetailId) => {
-    if (event.detail !== project.id) return;
-    const { id } = showingTasks[0];
-    const taskCard = document.getElementById(id);
-    if (taskCard && document.activeElement !== taskCard) taskCard.focus();
-    setFocusedTaskId(id);
-  };
-
-  useEventListener('focusedTaskChange', handleTaskChangeEventListener);
-  useEventListener('focusedProjectChange', handleProjectChangeEventListener);
-
   // Hides underscroll elements
   // 4rem refers to the header height
   const stickyBackground = <div className="sm:hidden left-0 right-0 h-4 bg-background sticky top-0 z-30 -mt-4" />;
@@ -231,11 +299,24 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
             const newOrder: number = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, undefined, sourceItem.status);
             try {
               if (project.id !== targetItem.projectId) {
-                const updatedTask = await updateTask(sourceItem.id, workspace.organizationId, 'projectId', targetItem.projectId, newOrder);
+                const updatedTask = await taskMutation.mutateAsync({
+                  id: sourceItem.id,
+                  orgIdOrSlug: workspace.organizationId,
+                  key: 'projectId',
+                  data: targetItem.projectId,
+                  order: newOrder,
+                  projectId: project.id,
+                });
                 dispatchCustomEvent('taskOperation', { array: [updatedTask], action: 'delete', projectId: project.id });
                 dispatchCustomEvent('taskOperation', { array: [updatedTask], action: 'create', projectId: targetItem.projectId });
               } else {
-                const updatedTask = await updateTask(sourceItem.id, workspace.organizationId, 'order', newOrder);
+                const updatedTask = await taskMutation.mutateAsync({
+                  id: sourceItem.id,
+                  orgIdOrSlug: workspace.organizationId,
+                  key: 'order',
+                  data: newOrder,
+                  projectId: project.id,
+                });
                 dispatchCustomEvent('taskOperation', { array: [updatedTask], action: 'update', projectId: project.id });
               }
             } catch (err) {
@@ -246,7 +327,12 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
           if (isSubTask) {
             const newOrder = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, targetItem.parentId ?? undefined);
             try {
-              const updatedTask = await updateTask(sourceItem.id, workspace.organizationId, 'order', newOrder);
+              const updatedTask = await taskMutation.mutateAsync({
+                id: sourceItem.id,
+                orgIdOrSlug: workspace.organizationId,
+                key: 'order',
+                data: newOrder,
+              });
               dispatchCustomEvent('taskOperation', { array: [updatedTask], action: 'updateSubTask', projectId: project.id });
             } catch (err) {
               toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
@@ -330,7 +416,6 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                               {/* Conditionally render "+ Task" button for first and last task */}
                               {((index === firstUpstartedIndex && isMouseNearTop) || (index === lastUpstartedIndex && isMouseNearBottom)) && (
                                 <Button
-                                  id="iced-task-creation"
                                   variant="plain"
                                   size="xs"
                                   style={{ left: `${mouseX}px` }}
