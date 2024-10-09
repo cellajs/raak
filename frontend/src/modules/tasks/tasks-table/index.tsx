@@ -2,7 +2,7 @@ import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { infiniteQueryOptions, useInfiniteQuery } from '@tanstack/react-query';
-import { useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Bird } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { SortColumn } from 'react-data-grid';
@@ -24,17 +24,19 @@ import { openUserPreviewSheet } from '~/modules/common/data-table/util';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { sheet } from '~/modules/common/sheeter/state';
 import { isSubTaskData } from '~/modules/projects/board/helpers';
-import { configureForExport, getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
-import { TaskCard } from '~/modules/tasks/task';
+import { configureForExport, getRelativeTaskOrder } from '~/modules/tasks/helpers';
+import { openTaskPreviewSheet } from '~/modules/tasks/helpers/helper';
+import TaskCard from '~/modules/tasks/task';
 import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
+import TableHeader from '~/modules/tasks/tasks-display-header/header';
 import { useColumns } from '~/modules/tasks/tasks-table/columns';
-import TableHeader from '~/modules/tasks/tasks-table/header/table-header';
-import { TaskTableSearch } from '~/modules/tasks/tasks-table/header/table-search';
-import type { TaskTableOperationEvent } from '~/modules/tasks/types';
+import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
+import { dateIsRecent } from '~/utils/date-is-recent';
+import type { TaskTableOperationEvent } from '../types';
 
 type TasksSearch = z.infer<typeof tasksSearchSchema>;
 
@@ -82,8 +84,13 @@ const tasksQueryOptions = ({
 export default function TasksTable() {
   const { t } = useTranslation();
   const { mode } = useThemeStore();
+  const navigate = useNavigate();
+
   const search = useSearch({ from: WorkspaceTableRoute.id });
-  const { focusedTaskId, searchQuery, selectedTasks, setSelectedTasks, setSearchQuery, projects, setFocusedTaskId, workspace } = useWorkspaceStore();
+  const { focusedTaskId, searchQuery, selectedTasks, setSelectedTasks, setSearchQuery, setFocusedTaskId } = useWorkspaceStore();
+  const {
+    data: { workspace, projects },
+  } = useWorkspaceQuery();
 
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(getInitialSortColumns(search, 'createdAt'));
   const [selectedStatuses] = useState<number[]>(typeof search.status === 'number' ? [search.status] : search.status?.split('_').map(Number) || []);
@@ -129,10 +136,13 @@ export default function TasksTable() {
     order,
   ]);
 
-  const tasks = useMemo(() => tasksQuery.data?.pages[0].items || [], [tasksQuery.data]);
-
-  const { sortedTasks: rows } = useMemo(() => sortAndGetCounts(tasks, true, true), [tasks]);
-
+  // hide accepted > then 30 days ago
+  const rows = useMemo(() => {
+    const tasks = tasksQuery.data?.pages[0].items || [];
+    return tasks.filter((t) => {
+      return t.status !== 6 || dateIsRecent(t.modifiedAt, 30);
+    });
+  }, [tasksQuery.data]);
   const totalCount = rows.length;
 
   const handleSelectedRowsChange = (selectedRows: Set<string>) => {
@@ -145,18 +155,7 @@ export default function TasksTable() {
   //   setSelectedStatuses([]);
   // };
 
-  const handleOpenPreview = (taskId: string) => {
-    const relativeTasks = rows.filter((t) => t.id === taskId || t.parentId === taskId);
-    const [currentTask] = relativeTasks.filter((t) => t.id === taskId);
-    sheet.create(<TaskCard mode={mode} task={currentTask} tasks={rows} state="editing" isSelected={false} isFocused={true} isSheet />, {
-      className: 'max-w-full lg:max-w-4xl',
-      title: t('app:task'),
-      id: `task-preview-${taskId}`,
-    });
-    setFocusedTaskId(taskId);
-  };
-
-  const handleCRUD = (event: TaskTableOperationEvent) => {
+  const handleTaskOperations = (event: TaskTableOperationEvent) => {
     const { array, action } = event.detail;
     callback(array, action);
   };
@@ -180,24 +179,29 @@ export default function TasksTable() {
     ['S', () => hotKeyPress(`status-${focusedTaskId}`)],
     ['T', () => hotKeyPress('type')],
   ]);
-  useEventListener('openTaskCardPreview', (event) => handleOpenPreview(event.detail));
-  useEventListener('taskTableOperation', handleCRUD);
+
+  useEventListener('taskTableOperation', handleTaskOperations);
 
   useEffect(() => {
     if (!rows.length || !sheet.get(`task-preview-${focusedTaskId}`)) return;
     const relativeTasks = rows.filter((t) => t.id === focusedTaskId || t.parentId === focusedTaskId);
     const [currentTask] = relativeTasks.filter((t) => t.id === focusedTaskId);
     sheet.update(`task-preview-${currentTask.id}`, {
-      content: <TaskCard mode={mode} task={currentTask} tasks={rows} state="editing" isSelected={false} isFocused={true} isSheet />,
+      content: <TaskCard mode={mode} task={currentTask} state="editing" isSelected={false} isFocused={true} isSheet />,
     });
   }, [rows, focusedTaskId]);
 
   useEffect(() => {
     if (!rows.length) return;
-    if (search.taskIdPreview) return handleOpenPreview(search.taskIdPreview);
+    if (search.taskIdPreview) {
+      const [task] = rows.filter((t) => t.id === search.taskIdPreview);
+      setFocusedTaskId(search.taskIdPreview);
+      openTaskPreviewSheet(task, mode, navigate);
+      return;
+    }
     if (search.userIdPreview) {
       const [{ createdBy }] = rows.filter((t) => t.createdBy?.id === search.userIdPreview);
-      if (createdBy) openUserPreviewSheet(createdBy);
+      if (createdBy) openUserPreviewSheet(createdBy, navigate);
     }
   }, [rows]);
 
@@ -210,7 +214,7 @@ export default function TasksTable() {
     return combine(
       monitorForElements({
         canMonitor({ source }) {
-          return isSubTaskData(source.data) && sheet.getAll().length;
+          return isSubTaskData(source.data);
         },
         async onDrop({ location, source }) {
           const target = location.current.dropTargets[0];
@@ -236,7 +240,6 @@ export default function TasksTable() {
   return (
     <>
       <TableHeader>
-        <TaskTableSearch />
         <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns} />
         <Export
           className="max-lg:hidden"

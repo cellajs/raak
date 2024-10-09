@@ -3,12 +3,12 @@ import { Dot } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
-import { dispatchCustomEvent } from '~/lib/custom-events';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import CheckboxColumn from '~/modules/common/data-table/checkbox-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/columns-view';
 import HeaderCell from '~/modules/common/data-table/header-cell';
 import { openUserPreviewSheet } from '~/modules/common/data-table/util';
+import { openTaskPreviewSheet } from '~/modules/tasks/helpers/helper';
 import { NotSelected } from '~/modules/tasks/task-selectors/impact-icons/not-selected';
 import { impacts } from '~/modules/tasks/task-selectors/select-impact';
 import { badgeStyle } from '~/modules/tasks/task-selectors/select-labels';
@@ -16,6 +16,8 @@ import { type TaskStatus, statusFillColors, statusTextColors, taskStatuses } fro
 import { taskTypes } from '~/modules/tasks/task-selectors/select-task-type';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button } from '~/modules/ui/button';
+import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
+import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
 import { dateShort } from '~/utils/date-short';
@@ -24,19 +26,12 @@ export const useColumns = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useBreakpoints('max', 'sm');
-  const { projects, workspace } = useWorkspaceStore();
+  const { setFocusedTaskId } = useWorkspaceStore();
+  const { mode } = useThemeStore();
+  const {
+    data: { workspace, projects },
+  } = useWorkspaceQuery();
 
-  const setPreviewSearch = (id: string, key: string) => {
-    navigate({
-      to: '.',
-      replace: true,
-      resetScroll: false,
-      search: (prev) => ({
-        ...prev,
-        ...{ [`${key}Preview`]: id },
-      }),
-    });
-  };
   const columns: ColumnOrColumnGroup<Task>[] = [
     CheckboxColumn,
     {
@@ -52,8 +47,8 @@ export const useColumns = () => {
           tabIndex={tabIndex}
           className="inline-flex justify-start h-auto text-left flex-wrap w-full outline-0 ring-0 focus-visible:ring-0 group px-0"
           onClick={() => {
-            setPreviewSearch(row.id, 'taskId');
-            dispatchCustomEvent('openTaskCardPreview', row.id);
+            setFocusedTaskId(row.id);
+            openTaskPreviewSheet(row, mode, navigate, true);
           }}
         >
           <span className="font-light whitespace-pre-wrap leading-5 py-1">
@@ -238,8 +233,7 @@ export const useColumns = () => {
             onClick={(e) => {
               if (e.metaKey || e.ctrlKey) return;
               e.preventDefault();
-              setPreviewSearch(user.id, 'userId');
-              openUserPreviewSheet(user);
+              openUserPreviewSheet(user, navigate, true);
             }}
           >
             <AvatarWrap type="user" className="h-6 w-6" id={user.id} name={user.name} url={user.thumbnailUrl} />
@@ -276,8 +270,7 @@ export const useColumns = () => {
             onClick={(e) => {
               if (e.metaKey || e.ctrlKey) return;
               e.preventDefault();
-              setPreviewSearch(user.id, 'userId');
-              openUserPreviewSheet(user);
+              openUserPreviewSheet(user, navigate, true);
             }}
           >
             <AvatarWrap type="user" className="h-6 w-6" id={user.id} name={user.name} url={user.thumbnailUrl} />

@@ -35,14 +35,17 @@ import type { Label, Task } from '~/types/app';
 import type { Member } from '~/types/common';
 import { cn } from '~/utils/cn';
 import { nanoid } from '~/utils/nanoid';
+import { useWorkspaceQuery } from '../workspaces/use-workspace';
 
 export type TaskType = 'feature' | 'chore' | 'bug';
 export type TaskImpact = 0 | 1 | 2 | 3 | null;
 
 interface CreateTaskFormProps {
   projectIdOrSlug: string;
+  className?: string;
   tasks?: Task[];
   dialog?: boolean;
+  defaultValues?: Partial<FormValues>;
   onCloseForm?: () => void;
   onFormSubmit?: (task: Task, isNew?: boolean, toStatus?: TaskStatus) => void;
 }
@@ -77,11 +80,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks = [], dialog: isDialog, onCloseForm }) => {
+const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks = [], defaultValues, className, dialog: isDialog, onCloseForm }) => {
   const { t } = useTranslation();
   const { mode } = useThemeStore();
   const { user } = useUserStore();
-  const { focusedTaskId, projects } = useWorkspaceStore();
+  const { focusedTaskId } = useWorkspaceStore();
+  const {
+    data: { projects },
+  } = useWorkspaceQuery();
   const { id: projectId, organizationId } = projects.find((p) => p.id === projectIdOrSlug || p.slug === projectIdOrSlug) ?? projects[0];
 
   const defaultId = nanoid();
@@ -101,16 +107,19 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks 
     () => ({
       resolver: zodResolver(formSchema),
       defaultValues: {
-        id: defaultId,
-        description: '',
-        summary: '',
-        type: 'feature',
-        impact: null,
-        assignedTo: [],
-        labels: [],
-        status: 1,
-        expandable: false,
-        keywords: '',
+        ...{
+          id: defaultId,
+          description: '',
+          summary: '',
+          type: 'feature',
+          impact: null,
+          assignedTo: [],
+          labels: [],
+          status: 1,
+          expandable: false,
+          keywords: '',
+        },
+        ...defaultValues,
       },
     }),
     [],
@@ -189,7 +198,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks 
         ref={ref as LegacyRef<HTMLFormElement>}
         id="create-task"
         onSubmit={form.handleSubmit(onSubmit)}
-        className="p-3 xs:pl-11 border-b flex gap-2 flex-col shadow-inner"
+        className={cn(className, `p-3 sm:pl-11 ${isDialog ? '' : 'border-b'} flex gap-2 flex-col shadow-inner`)}
       >
         <FormField
           control={form.control}
@@ -382,7 +391,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks 
                       );
                     }}
                   >
-                    <div className="flex truncate flex-wrap gap-[.07rem]">
+                    <div className="flex truncate items-center flex-wrap gap-[.07rem]">
                       {value.length > 0 ? (
                         (value as Label[]).map(({ name, id }) => {
                           return (
@@ -423,57 +432,57 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, tasks 
         />
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <div className="inline-flex gap-2">
-            <div className="flex [&:not(.absolute)]:active:translate-y-[.07rem] ">
-              <Button
-                size={'xs'}
-                type="submit"
-                disabled={!isDirty()}
-                className={`grow ${isDirty() ? 'rounded-none rounded-l' : 'rounded'} [&:not(.absolute)]:active:translate-y-0`}
-              >
-                <span>
-                  {t('common:create')} {form.getValues('status') === 1 ? '' : ` & ${taskStatuses[form.getValues('status')].status}`}
-                </span>
-              </Button>
-              {isDirty() && (
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field: { onChange } }) => {
-                    return (
-                      <FormItem className="gap-0 w-8">
-                        <FormControl>
-                          <Button
-                            type="button"
-                            aria-label="Set status"
-                            variant={'default'}
-                            size="xs"
-                            className="relative rounded-none rounded-r border-l border-l-background/25 [&:not(.absolute)]:active:translate-y-0"
-                            onClick={(event) => {
-                              dropdowner(
-                                <SelectStatus
-                                  taskStatus={form.getValues('status') as TaskStatus}
-                                  projectId={projectId}
-                                  creationValueChange={onChange}
-                                />,
-                                {
-                                  id: `status-${defaultId}`,
-                                  trigger: event.currentTarget,
-                                },
-                              );
-                            }}
-                          >
-                            <ChevronDown size={16} />
-                          </Button>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-              )}
-            </div>
+          <div className="flex [&:not(.absolute)]:active:translate-y-[.07rem] ">
+            <Button
+              size={'xs'}
+              type="submit"
+              disabled={!isDirty()}
+              className={`grow ${isDirty() ? 'rounded-none rounded-l' : 'rounded'} [&:not(.absolute)]:active:translate-y-0`}
+            >
+              <span>
+                {t('common:create')} {form.getValues('status') === 1 ? '' : ` & ${taskStatuses[form.getValues('status')].status}`}
+              </span>
+            </Button>
+            {isDirty() && (
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field: { onChange } }) => {
+                  return (
+                    <FormItem className="gap-0 w-8">
+                      <FormControl>
+                        <Button
+                          type="button"
+                          aria-label="Set status"
+                          variant={'default'}
+                          size="xs"
+                          className="relative rounded-none rounded-r border-l border-l-background/25 [&:not(.absolute)]:active:translate-y-0"
+                          onClick={(event) => {
+                            dropdowner(
+                              <SelectStatus
+                                taskStatus={form.getValues('status') as TaskStatus}
+                                projectId={projectId}
+                                creationValueChange={onChange}
+                              />,
+                              {
+                                id: `status-${defaultId}`,
+                                trigger: event.currentTarget,
+                              },
+                            );
+                          }}
+                        >
+                          <ChevronDown size={16} />
+                        </Button>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            )}
+          </div>
 
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
             <Button
               size={'xs'}
               type="reset"

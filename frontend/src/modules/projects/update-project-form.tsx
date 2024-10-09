@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { z } from 'zod';
 
 import { updateProjectBodySchema } from 'backend/modules/projects/schema';
-import { useEffect } from 'react';
+import { isValidElement, useEffect } from 'react';
 import type { UseFormProps } from 'react-hook-form';
 import { toast } from 'sonner';
 import { type UpdateProjectParams, updateProject } from '~/api/projects';
@@ -20,9 +20,9 @@ import { sheet } from '~/modules/common/sheeter/state';
 import UnsavedBadge from '~/modules/common/unsaved-badge';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/form';
-import { useWorkspaceStore } from '~/store/workspace';
 import type { Project } from '~/types/app';
 import { cleanUrl } from '~/utils/clean-url';
+import { useWorkspaceQuery } from '../workspaces/use-workspace';
 
 interface Props {
   project: Project;
@@ -51,7 +51,7 @@ export const useUpdateProjectMutation = (idOrSlug: string, orgIdOrSlug: string) 
 
 const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet }: Props) => {
   const { t } = useTranslation();
-  const { setWorkspace, workspace, projects } = useWorkspaceStore();
+  const { updateProject } = useWorkspaceQuery();
   const { mutate, isPending } = useUpdateProjectMutation(project.id, project.organizationId);
 
   const formOptions: UseFormProps<FormValues> = {
@@ -77,17 +77,10 @@ const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet
     mutate(values, {
       onSuccess: (updatedProject) => {
         if (isDialog) dialog.remove();
-        if (isSheet) sheet.remove();
+        if (isSheet) sheet.remove('edit-project');
         form.reset(updatedProject);
         toast.success(t('common:success.update_resource', { resource: t('app:project') }));
-        setWorkspace(
-          workspace,
-          [...projects.filter((p) => p.id !== updatedProject.id), updatedProject].sort((a, b) => {
-            const orderA = a.membership ? a.membership.order : 0; // Default value if membership is null
-            const orderB = b.membership ? b.membership.order : 0;
-            return orderA - orderB;
-          }),
-        );
+        updateProject(updatedProject);
         callback?.(updatedProject as Project);
       },
     });
@@ -97,13 +90,16 @@ const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet
   useEffect(() => {
     if (!isSheet) return;
     if (form.unsavedChanges) {
-      const targetSheet = sheet.get('edit-project');
-      if (targetSheet && targetSheet.title?.type?.name !== 'UnsavedBadge') {
-        sheet.update('edit-project', {
-          title: <UnsavedBadge title={targetSheet?.title} />,
-        });
-        return;
-      }
+      const targetSheet = sheet.get('update-user');
+
+      if (!targetSheet || !isValidElement(targetSheet.title)) return;
+      // Check if the title's type is a function (React component) and not a string
+      const { type: tittleType } = targetSheet.title;
+
+      if (typeof tittleType !== 'function' || tittleType.name === 'UnsavedBadge') return;
+      sheet.update('update-user', {
+        title: <UnsavedBadge title={targetSheet.title} />,
+      });
     }
   }, [form.unsavedChanges]);
 

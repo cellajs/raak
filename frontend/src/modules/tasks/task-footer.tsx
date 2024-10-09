@@ -22,12 +22,11 @@ import { cn } from '~/utils/cn';
 interface TasksFooterProps {
   task: Task;
   isSelected: boolean;
-  tasks?: Task[];
   isSheet?: boolean;
   isStatusDropdownOpen: boolean;
 }
 
-export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSheet = false }: TasksFooterProps) => {
+export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = false }: TasksFooterProps) => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const isMobile = useBreakpoints('max', 'sm');
@@ -37,7 +36,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
   const updateStatus = async (newStatus: number) => {
     try {
       const query = queryClient.getQueryData<{ items: Task[] }>(['boardTasks', task.projectId]);
-      const newOrder = getNewStatusTaskOrder(task.status, newStatus, isSheet ? (tasks ?? []) : (query?.items ?? []));
+      const newOrder = getNewStatusTaskOrder(task.status, newStatus, query?.items ?? []);
       const updatedTask = await updateTask(task.id, task.organizationId, 'status', newStatus, newOrder);
       const eventName = pathname.includes('/board') ? 'taskOperation' : 'taskTableOperation';
       dispatchCustomEvent(eventName, { array: [updatedTask], action: 'update', projectId: task.projectId });
@@ -49,7 +48,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
     <div className="flex flex-row items-center gap-1 pl-1">
       {!isSheet && (
         <Checkbox
-          className="group-hover/task:opacity-100 border-foreground/40 data-[state=checked]:border-primary group-[.is-focused]/task:opacity-100 opacity-80"
+          className="group-hover/task:opacity-100 border-foreground/40 mr-1 data-[state=checked]:border-primary group-[.is-focused]/task:opacity-100 opacity-80"
           checked={isSelected}
           onCheckedChange={(checked) => dispatchCustomEvent('toggleSelectTask', { selected: !!checked, taskId: task.id })}
         />
@@ -85,12 +84,12 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
               <Badge
                 variant="outline"
                 key={task.labels[0].id}
-                className="inline-block bg-border px-2 max-w-24 h-5 border-0 last:mr-0 font-normal leading-4 truncate"
+                className="inline-block bg-transparent px-1 py-0 max-w-24 h-4 border-0 last:mr-0 font-normal leading-4 truncate"
               >
                 {task.labels[0].name}
               </Badge>
               {task.labels.length > 1 && (
-                <Badge variant="outline" className="px-1 h-5 flex bg-border border-0 font-normal justify-center">
+                <Badge variant="outline" className="px-1 h-4 py-0 flex bg-transparent border-0 font-normal justify-center">
                   +{task.labels.length - 1}
                 </Badge>
               )}
@@ -103,7 +102,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
                     <Badge
                       variant="outline"
                       key={id}
-                      className="inline-block border-0 max-w-32 opacity-75 truncate font-normal text-[.75rem] h-5 bg-transparent last:mr-0 leading-4"
+                      className="inline-block border-0 max-w-32 opacity-75 py-0 px-1 truncate font-normal text-[.75rem] h-4 bg-transparent last:mr-0 leading-4"
                     >
                       {name}
                     </Badge>
@@ -146,7 +145,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
           variant="outlineGhost"
           size="xs"
           className={cn(
-            'relative border-r-0 rounded-r-none font-normal [&:not(.absolute)]:active:translate-y-0 disabled:opacity-100 mr-1',
+            'relative sm:border-r-0 sm:rounded-r-none font-normal [&:not(.absolute)]:active:translate-y-0 disabled:opacity-100 mr-1',
             statusVariants({ status: task.status }),
           )}
         >
@@ -158,7 +157,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, tasks, isSh
           variant="outlineGhost"
           size="xs"
           className={cn(
-            'relative rounded-none rounded-r -ml-2 px-2 [&:not(.absolute)]:active:translate-y-0',
+            'max-sm:hidden relative rounded-none rounded-r -ml-2 px-2 [&:not(.absolute)]:active:translate-y-0',
             statusVariants({ status: task.status }),
           )}
         >

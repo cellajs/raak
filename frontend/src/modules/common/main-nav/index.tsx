@@ -44,8 +44,9 @@ const MainNav = () => {
     if (navItem.id === 'workspace-add-task') {
       return dialog(<CreateTaskForm projectIdOrSlug={router.state.location.search.project ?? ''} dialog />, {
         drawerOnMobile: false,
+        title: 'Create task',
+        className: 'px-0',
         refocus: false,
-        hideClose: true,
         autoFocus: !isMobile,
       });
     }
@@ -71,7 +72,7 @@ const MainNav = () => {
 
     // Create a sheet
     sheet.create(navItem.sheet, {
-      id: `${navItem.id}-nav`,
+      id: 'nav-sheet',
       side: sheetSide,
       modal: isMobile,
       className: 'fixed sm:z-[80] p-0 sm:inset-0 xs:max-w-80 sm:left-16',
@@ -81,11 +82,13 @@ const MainNav = () => {
     });
   };
 
-  const clickNavItem = (id: NavItemId, index: number) => {
+  const clickNavItem = (index: number) => {
     // If the nav item is already open, close it
-    if (id === navSheetOpen) {
-      sheet.remove();
-      return setNavSheetOpen(null);
+    const id = renderedItems[index].id;
+    if (id === navSheetOpen && sheet.get('nav-sheet')?.open) {
+      setNavSheetOpen(null);
+      sheet.update('nav-sheet', { open: false });
+      return;
     }
 
     if (dialog.haveOpenDialogs()) return;
@@ -94,19 +97,16 @@ const MainNav = () => {
   };
 
   useHotkeys([
-    ['Shift + A', () => clickNavItem('account', 3)],
-    ['Shift + F', () => clickNavItem('search', 2)],
-    ['Shift + H', () => clickNavItem('home', 1)],
-    ['Shift + M', () => clickNavItem('menu', 0)],
+    ['Shift + A', () => clickNavItem(3)],
+    ['Shift + F', () => clickNavItem(2)],
+    ['Shift + H', () => clickNavItem(1)],
+    ['Shift + M', () => clickNavItem(0)],
   ]);
 
   useEffect(() => {
     router.subscribe('onBeforeLoad', ({ pathChanged, toLocation, fromLocation }) => {
       if (toLocation.pathname !== fromLocation.pathname) {
-        // Disable focus view
-        setFocusView(false);
-        // Remove sheets in content
-        sheet.remove(`${navSheetOpen}-nav`);
+        setFocusView(false); // Disable focus view
         setNavSheetOpen(null);
       }
       pathChanged && setLoading(true);

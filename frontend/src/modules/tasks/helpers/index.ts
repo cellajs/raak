@@ -15,10 +15,15 @@ const orderDecrease = (order: number) => {
 };
 
 export const getRelativeTaskOrder = (edge: Edge, tasks: Task[], order: number, id: string, parentId?: string, status?: number) => {
-  let filteredTasks: Task[] | SubTask[] = [];
+  let filteredTasks: Task[] | SubTask[] = tasks; // If no parentId or status, consider all tasks
 
+  // Filter tasks based on parentId or status
   if (parentId) filteredTasks = tasks.find((t) => t.id === parentId)?.subTasks || [];
-  if (status) filteredTasks = tasks.filter((t) => t.status === status).sort((a, b) => b.order - a.order);
+  if (status) filteredTasks = tasks.filter((t) => t.status === status);
+
+  // Sort tasks based on their order
+  filteredTasks.sort((a, b) => sortTaskOrder(a, b, parentId ? edge !== 'top' : edge === 'top'));
+
   // Find the relative task based on the order
   const relativeTask = filteredTasks.find((t) =>
     parentId ? (edge === 'top' ? t.order < order : t.order > order) : edge === 'top' ? t.order > order : t.order < order,
@@ -57,7 +62,7 @@ export const getNewStatusTaskOrder = (oldStatus: number, newStatus: number, task
   const [task] = tasks
     .filter((t) => t.status === newStatus && (t.status !== 6 || dateIsRecent(t.modifiedAt, 30)))
     .sort((a, b) => sortTaskOrder(a, b, direction > 0));
-  return task ? (direction > 0 ? task.order / 2 : task.order + 1) : 1;
+  return task ? (direction > 0 ? orderDecrease(task.order) : orderIncrease(task.order)) : 0.1;
 };
 
 // return task order for new created Tasks

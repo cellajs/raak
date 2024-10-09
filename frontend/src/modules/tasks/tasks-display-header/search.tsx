@@ -7,7 +7,7 @@ import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-
 import { Input } from '~/modules/ui/input';
 import { useWorkspaceStore } from '~/store/workspace';
 
-const BoardSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
+const TasksSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
   const { t } = useTranslation();
   // Reference with `useRef` to persist the same ref object during re-renders
   const inputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +60,7 @@ const BoardSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
       {!!searchQuery.length && (
         <XCircle
           size={16}
-          className="absolute right-4 top-1/2 opacity-70 hover:opacity-100 -translate-y-1/2 cursor-pointer"
+          className="absolute right-3 top-1/2 opacity-70 hover:opacity-100 -translate-y-1/2 cursor-pointer"
           onMouseDown={(e) => {
             preventInputBlur(e);
             setSearchQuery('');
@@ -71,4 +71,4 @@ const BoardSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
   );
 };
 
-export default BoardSearch;
+export default TasksSearch;

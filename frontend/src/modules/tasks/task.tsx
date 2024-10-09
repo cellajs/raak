@@ -50,12 +50,11 @@ interface TaskProps {
   state: TaskStates;
   isSelected: boolean;
   isFocused: boolean;
-  tasks?: Task[];
   isSheet?: boolean;
   style?: React.CSSProperties;
 }
 
-export function TaskCard({ style, task, tasks, mode, isSelected, isFocused, state, isSheet }: TaskProps) {
+export default function TaskCard({ style, task, mode, isSelected, isFocused, state, isSheet }: TaskProps) {
   const taskRef = useRef<HTMLDivElement>(null);
   const taskDragRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -143,7 +142,7 @@ export function TaskCard({ style, task, tasks, mode, isSelected, isFocused, stat
         tabIndex={0}
         ref={taskRef}
         className={cn(
-          `group/task relative rounded-none border-0 border-b bg-transparent hover:bg-card/20 bg-gradient-to-br from-transparent focus:outline-none 
+          `group/task rounded-none border-0 border-b bg-transparent hover:bg-card/20 bg-gradient-to-br from-transparent focus:outline-none 
         focus-visible:none border-l-2 via-transparent via-60% to-100% opacity-${dragging ? '30' : '100'} 
         ${dragOver ? 'bg-card/20' : ''} 
         ${isFocused && !isSheet ? 'border-l-primary is-focused' : 'border-l-transparent'}
@@ -153,10 +152,10 @@ export function TaskCard({ style, task, tasks, mode, isSelected, isFocused, stat
           }),
         )}
       >
-        <CardContent id={`${task.id}-content`} ref={taskDragRef} className="p-2 pr-3 space-between flex flex-col relative">
+        <CardContent id={`${task.id}-content`} ref={taskDragRef} className="p-2 sm:pr-3 space-between flex flex-col relative">
           {/* To prevent on expand animation */}
           <motion.div className="flex flex-col" layout transition={{ duration: 0 }}>
-            {state !== 'folded' && <TaskHeader task={task} state={state} isSheet={isSheet} />}
+            {state !== 'folded' && <TaskHeader task={task} state={state} mode={mode} isSheet={isSheet} />}
             <div className="flex flex-row gap-1 w-full">
               {state === 'folded' && (
                 <Button
@@ -172,7 +171,7 @@ export function TaskCard({ style, task, tasks, mode, isSelected, isFocused, stat
               )}
               <TaskDescription mode={mode} task={task} state={state} />
             </div>
-            <TaskFooter task={task} tasks={tasks} isSheet={isSheet} isSelected={isSelected} isStatusDropdownOpen={isStatusDropdownOpen} />
+            <TaskFooter task={task} isSheet={isSheet} isSelected={isSelected} isStatusDropdownOpen={isStatusDropdownOpen} />
           </motion.div>
         </CardContent>
         {closestEdge && <DropIndicator className="h-0.5" edge={closestEdge} gap={0.2} />}
