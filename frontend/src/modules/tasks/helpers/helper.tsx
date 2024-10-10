@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Suspense, lazy } from 'react';
 import { sheet } from '~/modules/common/sheeter/state';
 import type { Mode } from '~/store/theme';
+import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
 
 const TaskCard = lazy(() => import('~/modules/tasks/task'));
@@ -21,7 +22,7 @@ export const openTaskPreviewSheet = (task: Task, mode: Mode, navigate: NavigateF
   }
   sheet.create(
     <Suspense>
-      <TaskCard mode={mode} task={task} state={'editing'} isSelected={false} isFocused={true} isSheet />
+      <TaskCard mode={mode} task={task} state="editing" isSelected={false} isFocused={true} isSheet />
     </Suspense>,
     {
       className: 'max-w-full lg:max-w-4xl px-0',
@@ -41,4 +42,13 @@ export const openTaskPreviewSheet = (task: Task, mode: Mode, navigate: NavigateF
       },
     },
   );
+  setTaskCardFocus(`sheet-card-${task.id}`);
+};
+
+export const setTaskCardFocus = (id: string) => {
+  const taskCard = document.getElementById(id);
+  if (taskCard && document.activeElement !== taskCard) taskCard.focus();
+  useWorkspaceStore.setState((state) => {
+    state.focusedTaskId = id;
+  });
 };
