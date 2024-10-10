@@ -69,6 +69,11 @@ type RawTask = {
 const taskShape = (projectId?: string): ShapeStreamOptions => ({
   url: new URL('/v1/shape/tasks', config.electricUrl).href,
   where: projectId ? `project_id = '${projectId}'` : undefined,
+  backoffOptions: {
+    initialDelay: 500,
+    maxDelay: 32000,
+    multiplier: 2,
+  },
 });
 
 export const tasksQueryOptions = ({ projectId, orgIdOrSlug }: GetTasksParams) => {
@@ -245,11 +250,10 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
       {
         id: `create-task-form-${project.id}`,
         drawerOnMobile: false,
-        ...(mode === 'embed' && { title: 'Create Iced task' }),
-        className: `${mode === 'embed' ? 'p-2' : 'p-0'} w-auto shadow-none relative z-[50] rounded-none border-t-0 border-r-0  mt-0 mr-2 max-w-none`,
+        className: 'p-0 w-auto shadow-none relative z-[50] rounded-none border-t-0 m-0 max-w-none',
         container: ref.current,
         containerBackdrop: false,
-        hideClose: mode === 'top',
+        hideClose: true,
       },
     );
     // Scroll to the element inside the ref when the dialog opens

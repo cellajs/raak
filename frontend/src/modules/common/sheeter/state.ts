@@ -36,7 +36,7 @@ class SheetsStateObserver {
 
   get = (id: string) => this.sheets.find((sheet) => sheet.id === id); // Retrieve a sheet by its ID
 
-  haveOpenSheets = () => this.sheets.some((s) => s.open);
+  haveOpenSheets = () => this.sheets.filter((s) => s.open);
 
   // Add or update a sheet and notify subscribers
   set = (sheet: SheetT) => {
@@ -44,15 +44,16 @@ class SheetsStateObserver {
     this.notifySubscribers(sheet);
   };
 
-  // Remove a sheet by its ID or clear all sheets and notify subscribers
-  remove = (id?: string) => {
+  // Remove a sheet by its ID or clear all sheets (with optionally an exluded) and notify subscribers
+  remove = (id?: string, excludeId?: string) => {
     if (id) {
       this.sheets = this.sheets.filter((sheet) => sheet.id !== id);
       this.notifySubscribers({ id, remove: true });
       return;
     }
-    for (const sheet of this.sheets) this.notifySubscribers({ id: sheet.id, remove: true });
-    this.sheets = [];
+    const sheetstoRemove = this.sheets.filter((sheet) => sheet.id !== excludeId);
+    for (const sheet of sheetstoRemove) this.notifySubscribers({ id: sheet.id, remove: true });
+    this.sheets = excludeId ? this.sheets.filter((sheet) => sheet.id === excludeId) : [];
   };
 
   // Update an existing sheet or create a new one with the provided updates
