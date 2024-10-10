@@ -46,7 +46,7 @@ export const TaskHeader = ({
 
   return (
     <StickyBox enabled={false} className="flex flex-row z-100 w-full justify-between">
-      {!isSubTask && task.createdBy && (
+      {!isSubTask && (
         <Button
           id={`type-${task.id}`}
           onClick={(event) => handleTaskDropDownClick(task, 'type', event.currentTarget)}
@@ -112,7 +112,6 @@ export const TaskHeader = ({
           <TooltipButton toolTipContent={t('common:expand')} side="bottom" sideOffset={5} hideWhenDetached>
             <Button
               onClick={() => {
-                if (isEditing) dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' });
                 openTaskPreviewSheet(task, mode ?? 'dark', navigate, true);
               }}
               aria-label="OpenTaskSheet"

@@ -17,10 +17,8 @@ import { IcedIcon } from '~/modules/tasks/task-selectors/status-icons/iced';
 import { ReviewedIcon } from '~/modules/tasks/task-selectors/status-icons/reviewed';
 import { StartedIcon } from '~/modules/tasks/task-selectors/status-icons/started';
 import { UnstartedIcon } from '~/modules/tasks/task-selectors/status-icons/unstarted';
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '~/modules/ui/command';
-import { Input } from '~/modules/ui/input';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/modules/ui/command';
 import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
-import { WorkspaceTableRoute } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
 
@@ -92,7 +90,7 @@ const SelectStatus = ({
 }: { taskStatus: TaskStatus; projectId: string; creationValueChange?: (newValue: number) => void }) => {
   const { t } = useTranslation();
 
-  const tableSearch = useSearch({ from: WorkspaceTableRoute.id });
+  const tableSearch = useSearch({ strict: false });
   const { pathname } = useLocation();
   const { focusedTaskId } = useWorkspaceStore();
   const {
@@ -112,6 +110,8 @@ const SelectStatus = ({
     if (creationValueChange) creationValueChange(newStatus);
     if (!focusedTaskId) return;
     try {
+      const cleanTaskId = focusedTaskId.replace('sheet-card-', '');
+
       const isTable = pathname.includes('/table');
       const queryKeys = !isTable
         ? taskKeys.list({ projectId, orgIdOrSlug: workspace.organizationId })
@@ -128,7 +128,7 @@ const SelectStatus = ({
       const tasks: Task[] = query ? (isTable ? query.pages?.[0]?.items || [] : query.items || []) : [];
       const newOrder = getNewStatusTaskOrder(taskStatus, newStatus, tasks);
       const updatedTask = await taskMutation.mutateAsync({
-        id: focusedTaskId,
+        id: cleanTaskId,
         orgIdOrSlug: workspace.organizationId,
         key: 'status',
         data: newStatus,
@@ -160,13 +160,12 @@ const SelectStatus = ({
 
   return (
     <Command className="relative rounded-lg w-60">
-      <Input
+      <CommandInput
         className="leading-normal focus-visible:ring-transparent border-t-0 border-x-0 border-b-1 rounded-none max-sm:hidden"
         placeholder={t('app:placeholder.set_status')}
         value={searchValue}
         autoFocus={true}
-        onChange={(e) => {
-          const searchValue = e.target.value;
+        onValueChange={(searchValue) => {
           // If the user types a number, select status like useHotkeys
           if (inNumbersArray(7, searchValue)) return handleStatusChangeClick(Number.parseInt(searchValue) - 1);
           setSearchValue(searchValue);
@@ -187,7 +186,7 @@ const SelectStatus = ({
       )}
       <CommandList>
         {!!searchValue.length && (
-          <CommandEmpty className="flex justify-center items-center p-2 text-sm">
+          <CommandEmpty className="flex text-muted justify-center items-center p-2 text-sm">
             {t('common:no_resource_found', { resource: t('app:status').toLowerCase() })}
           </CommandEmpty>
         )}
@@ -197,16 +196,14 @@ const SelectStatus = ({
               key={status.value}
               value={status.status}
               onSelect={() => handleStatusChangeClick(status.value)}
-              className="group rounded-md flex justify-between items-center w-full leading-normal"
+              className="group rounded-md flex gap-2 justify-between items-center w-full leading-normal"
             >
-              <div className="flex items-center">
-                <status.icon className={`size-4 mr-2 fill-current ${statusFillColors[status.value] || ''}`} />
-                <span className={`${selectedStatus.value === status.value ? statusTextColors[status.value] : ''}`}>{t(`app:${status.status}`)}</span>
-              </div>
-              <div className="flex items-center">
-                <Check size={16} className={`text-success ${selectedStatus.value !== status.value && 'invisible'}`} />
-                {!searchValue && <span className="max-sm:hidden text-xs opacity-50 ml-3 mr-1">{index + 1}</span>}
-              </div>
+              <status.icon
+                className={`size-4 mr-2 fill-current ${selectedStatus.value === status.value ? 'opacity-100' : 'opacity-50'} group-hover:opacity-100 ${statusFillColors[status.value] || ''}`}
+              />
+              <div className="grow">{t(`app:${status.status}`)}</div>
+              <Check size={16} className={`text-success ${selectedStatus.value !== status.value && 'invisible'}`} />
+              {!searchValue && <span className="max-sm:hidden text-xs opacity-50 mx-1">{index + 1}</span>}
             </CommandItem>
           ))}
         </CommandGroup>
