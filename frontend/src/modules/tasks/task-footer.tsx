@@ -6,7 +6,7 @@ import { dispatchCustomEvent } from '~/lib/custom-events';
 import { queryClient } from '~/lib/router';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { getNewStatusTaskOrder } from '~/modules/tasks/helpers';
-import { handleTaskDropDownClick } from '~/modules/tasks/task-selectors/drop-down-trigger';
+import { handleTaskDropDownClick } from '~/modules/tasks/helpers/helper';
 import { NotSelected } from '~/modules/tasks/task-selectors/impact-icons/not-selected';
 import { impacts } from '~/modules/tasks/task-selectors/select-impact';
 import { statusVariants, taskStatuses } from '~/modules/tasks/task-selectors/select-status';
@@ -38,7 +38,7 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = f
       const queryKey = taskKeys.list({ projectId: task.projectId, orgIdOrSlug: task.organizationId });
       const query = queryClient.getQueryData<{ items: Task[] }>(queryKey);
       const newOrder = getNewStatusTaskOrder(task.status, newStatus, query?.items ?? []);
-      const updatedTask = await taskMutation.mutateAsync({
+      await taskMutation.mutateAsync({
         id: task.id,
         orgIdOrSlug: task.organizationId,
         key: 'status',
@@ -46,7 +46,11 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = f
         order: newOrder,
         projectId: task.projectId,
       });
-      dispatchCustomEvent('taskOperation', { array: [updatedTask], action: 'update', projectId: task.projectId });
+      if (isSheet) {
+        await queryClient.invalidateQueries({
+          refetchType: 'active',
+        });
+      }
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }
