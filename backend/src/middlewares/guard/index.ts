@@ -1,7 +1,6 @@
 import type { Context, Next } from 'hono';
-import { getContextUser, getMemberships } from '#/lib/context';
-import { resolveEntity } from '#/lib/entity';
-import permissionManager from '#/lib/permission-manager';
+import { getContextUser } from '#/lib/context';
+import { isAllowedTo } from '#/lib/permission-manager';
 export { isAuthenticated } from './is-authenticated';
 
 import { getConnInfo } from '@hono/node-server/conninfo';
@@ -38,22 +37,15 @@ export async function isPublicAccess(_: Context, next: Next): Promise<void> {
 
 // Organization access is a hard check for accessing organization-scoped routes.
 export async function hasOrgAccess(ctx: Context, next: Next): Promise<Response | undefined> {
-  const memberships = getMemberships();
   const orgIdOrSlug = ctx.req.param('orgIdOrSlug');
 
   if (!orgIdOrSlug) return errorResponse(ctx, 400, 'organization_missing', 'warn');
 
-  // Find the organization by id or slug
-  const organization = await resolveEntity('organization', orgIdOrSlug);
-
-  if (!organization) return errorResponse(ctx, 404, 'not_found', 'warn', 'organization', { orgIdOrSlug });
-
-  // Check if user is allowed to read organization
-  const canReadOrg = permissionManager.isPermissionAllowed(memberships, 'read', organization);
-  if (!canReadOrg) return errorResponse(ctx, 403, 'forbidden', 'warn', 'organization', { orgIdOrSlug });
+  const { error, entity } = await isAllowedTo(ctx, 'organization', 'read', orgIdOrSlug);
+  if (error) return error;
 
   // Set organization with membership in context
-  ctx.set('organization', organization);
+  ctx.set('organization', entity);
 
   await next();
 }

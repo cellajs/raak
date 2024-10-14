@@ -1,7 +1,7 @@
 // Import required modules from '@cellajs/permission-manager'
 import {
   type AccessPolicyConfiguration,
-  Context,
+  Context as EntityContext,
   HierarchicalEntity,
   type Membership,
   MembershipAdapter,
@@ -10,13 +10,20 @@ import {
   type Subject,
   SubjectAdapter,
 } from '@cellajs/permission-manager';
+import { config } from 'config';
+import type { Context } from 'hono';
+import type { MembershipModel } from '#/db/schema/memberships';
+import type { ContextEntity } from '#/types/common';
+import { getContextUser, getMemberships } from './context';
+import { type EntityModel, resolveEntity } from './entity';
+import { errorResponse } from './errors';
 
 /**
  * Define hierarchical structure for contexts with roles, and for products without roles.
  */
-const organization = new Context('organization', ['admin', 'member']);
-new Context('workspace', ['admin', 'member'], new Set([organization]));
-const project = new Context('project', ['admin', 'member'], new Set([organization]));
+const organization = new EntityContext('organization', ['admin', 'member']);
+new EntityContext('workspace', ['admin', 'member'], new Set([organization]));
+const project = new EntityContext('project', ['admin', 'member'], new Set([organization]));
 
 new Product('task', new Set([project]));
 
@@ -102,6 +109,64 @@ class AdaptedSubjectAdapter extends SubjectAdapter {
 // Instantiate adapters to be used in the system
 new AdaptedSubjectAdapter();
 new AdaptedMembershipAdapter();
+
+export const isAllowedTo = async <T extends ContextEntity>(
+  ctx: Context,
+  entityType: T,
+  action: 'read' | 'update' | 'delete',
+  idOrSlug: string,
+): Promise<
+  | {
+      error: ReturnType<typeof errorResponse>;
+      entity: null;
+      membership: null;
+    }
+  | {
+      error: null;
+      entity: EntityModel<T>;
+      membership: MembershipModel;
+    }
+> => {
+  if (!config.contextEntityTypes.includes(entityType)) {
+    return {
+      error: errorResponse(ctx, 403, 'forbidden', 'warn'),
+      entity: null,
+      membership: null,
+    };
+  }
+
+  const entity = await resolveEntity(entityType, idOrSlug);
+
+  const user = getContextUser();
+  const memberships = getMemberships();
+
+  // Check if the user is allowed to perform an update action in the organization
+  const isAllowed = permissionManager.isPermissionAllowed(memberships, action, entity);
+
+  if (!entity || (!isAllowed && user.role !== 'admin')) {
+    return {
+      error: errorResponse(ctx, 403, 'forbidden', 'warn'),
+      entity: null,
+      membership: null,
+    };
+  }
+
+  const entityMembership = memberships.find((m) => [m.organizationId, m.workspaceId, m.projectId].includes(entity.id) && m.type === entityType);
+
+  if (!entityMembership) {
+    return {
+      error: errorResponse(ctx, 403, 'forbidden', 'warn'),
+      entity: null,
+      membership: null,
+    };
+  }
+
+  return {
+    error: null,
+    entity,
+    membership: entityMembership,
+  };
+};
 
 // Export the configured PermissionManager instance
 export default permissionManager;

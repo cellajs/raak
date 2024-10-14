@@ -4,9 +4,8 @@ import { membershipSelect, membershipsTable } from '#/db/schema/memberships';
 import { projectsTable } from '#/db/schema/projects';
 
 import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
-import { resolveEntity } from '#/lib/entity';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
-import permissionManager from '#/lib/permission-manager';
+import { isAllowedTo } from '#/lib/permission-manager';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
@@ -66,20 +65,8 @@ const projectsRoutes = app
    */
   .openapi(projectRoutesConfig.getProject, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
-
-    const user = getContextUser();
-    const memberships = getMemberships();
-
-    const project = await resolveEntity('project', idOrSlug);
-    if (!project) return errorResponse(ctx, 404, 'not_found', 'warn', 'project', { id: idOrSlug });
-
-    // TODO remove this and use permission manager once it returns membership
-    const membership = memberships.find((m) => m.projectId === project.id && m.type === 'project');
-    if (!membership) return errorResponse(ctx, 403, 'forbidden', 'warn', 'project');
-
-    // If not allowed and not admin, return forbidden
-    const canRead = permissionManager.isPermissionAllowed(memberships, 'read', project);
-    if (!canRead && user.role !== 'admin') return errorResponse(ctx, 403, 'forbidden', 'warn', 'project');
+    const { error, entity: project, membership } = await isAllowedTo(ctx, 'project', 'update', idOrSlug);
+    if (error) return error;
 
     return ctx.json({ success: true, data: { ...project, membership } }, 200);
   })
@@ -149,21 +136,12 @@ const projectsRoutes = app
    */
   .openapi(projectRoutesConfig.updateProject, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
+    const { error, entity: project, membership } = await isAllowedTo(ctx, 'project', 'update', idOrSlug);
+    if (error) return error;
+
     const { name, thumbnailUrl, slug } = ctx.req.valid('json');
 
-    const memberships = getMemberships();
     const user = getContextUser();
-
-    const project = await resolveEntity('project', idOrSlug);
-    if (!project) return errorResponse(ctx, 404, 'not_found', 'warn', 'project', { id: idOrSlug });
-
-    // TODO remove this and user permission manager once it returns membership
-    const userMembership = memberships.find((m) => m.projectId === project.id && m.type === 'project');
-    if (!userMembership) return errorResponse(ctx, 403, 'forbidden', 'warn', 'project');
-
-    // If not allowed and not admin, return forbidden
-    const canUpdate = permissionManager.isPermissionAllowed(memberships, 'update', project);
-    if (!canUpdate && user.role !== 'admin') return errorResponse(ctx, 403, 'forbidden', 'warn', 'organization');
 
     if (slug && slug !== project.slug) {
       const slugAvailable = await checkSlugAvailable(slug);
@@ -194,7 +172,7 @@ const projectsRoutes = app
 
     logEvent('Project updated', { project: updatedProject.id });
 
-    return ctx.json({ success: true, data: { ...updatedProject, membership: userMembership } }, 200);
+    return ctx.json({ success: true, data: { ...updatedProject, membership } }, 200);
   })
 
   /*
