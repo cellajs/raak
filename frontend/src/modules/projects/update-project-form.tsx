@@ -14,7 +14,6 @@ import { queryClient } from '~/lib/router';
 import { dialog } from '~/modules/common/dialoger/state';
 import AvatarFormField from '~/modules/common/form-fields/avatar';
 import InputFormField from '~/modules/common/form-fields/input';
-import SelectParentFormField from '~/modules/common/form-fields/select-parent';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { sheet } from '~/modules/common/sheeter/state';
 import UnsavedBadge from '~/modules/common/unsaved-badge';
@@ -22,7 +21,7 @@ import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/form';
 import type { Project } from '~/types/app';
 import { cleanUrl } from '~/utils/clean-url';
-import { useWorkspaceQuery } from '../workspaces/use-workspace';
+import { useWorkspaceQuery } from '../workspaces/helpers/use-workspace';
 
 interface Props {
   project: Project;
@@ -60,7 +59,6 @@ const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet
       slug: project.slug,
       name: project.name,
       thumbnailUrl: cleanUrl(project.thumbnailUrl),
-      parentId: project.parentId,
     },
   };
 
@@ -123,7 +121,6 @@ const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet
           description={t('common:resource_handle.text', { resource: t('app:project').toLowerCase() })}
           previousSlug={project.slug}
         />
-        <SelectParentFormField collection="workspaces" type="workspace" control={form.control} label={t('app:workspace')} name="parentId" disabled />
         <div className="flex flex-col sm:flex-row gap-2">
           <Button type="submit" disabled={!form.formState.isDirty} loading={isPending}>
             {t('common:save_changes')}

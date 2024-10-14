@@ -6,7 +6,7 @@ import type { ColumnOrColumnGroup } from '~/modules/common/data-table/columns-vi
 import HeaderCell from '~/modules/common/data-table/header-cell';
 import type { Label } from '~/types/app';
 import { dateShort } from '~/utils/date-short';
-import { badgeStyle } from '../task-selectors/select-labels';
+import { badgeStyle } from '../task-dropdowns/select-labels';
 
 export const useColumns = () => {
   const { t } = useTranslation();
@@ -46,12 +46,12 @@ export const useColumns = () => {
       ),
     },
     {
-      key: 'lastUsed',
+      key: 'lastUsedAt',
       name: t('app:last_used'),
       sortable: true,
       visible: true,
       renderHeaderCell: HeaderCell,
-      renderCell: ({ row }) => dateShort(row.lastUsed.toString()),
+      renderCell: ({ row }) => dateShort(row.lastUsedAt.toString()),
     },
   ];
 

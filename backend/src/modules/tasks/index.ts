@@ -15,7 +15,7 @@ import { getOrderColumn } from '#/utils/order-column';
 import { splitByAllowance } from '#/utils/split-by-allowance';
 import { extractKeywords } from './helpers';
 import taskRoutesConfig from './routes';
-import type { subTaskSchema } from './schema';
+import type { subtaskSchema } from './schema';
 
 const app = new CustomHono();
 
@@ -26,9 +26,11 @@ const tasksRoutes = app
    */
   .openapi(taskRoutesConfig.createTask, async (ctx) => {
     const newTaskInfo = ctx.req.valid('json');
+
     const organization = getOrganization();
     const user = getContextUser();
 
+    // Use body data to create a new task, add valid organization id
     const newTask: InsertTaskModel = {
       ...newTaskInfo,
       organizationId: organization.id,
@@ -37,6 +39,7 @@ const tasksRoutes = app
     const descriptionText = String(newTask.description);
     const rootElement = parseHtml(descriptionText);
     const groupElement = rootElement.querySelector('.bn-block-group');
+
     if (groupElement) {
       // Remove all child element except the first one
       const children = groupElement.childNodes;
@@ -59,7 +62,7 @@ const tasksRoutes = app
 
     const finalTask = {
       ...createdTask,
-      subTasks: [] as z.infer<typeof subTaskSchema>,
+      subtasks: [] as z.infer<typeof subtaskSchema>,
       createdBy: user,
       modifiedBy: null,
       assignedTo: assignedTo.filter((m) => createdTask.assignedTo.includes(m.id)),
@@ -74,7 +77,12 @@ const tasksRoutes = app
   .openapi(taskRoutesConfig.getTasks, async (ctx) => {
     const { q, sort, order, offset, limit, projectId, status } = ctx.req.valid('query');
 
-    const tasksFilters: SQL[] = [];
+    const organization = getOrganization();
+
+    // Filter tasks at least by valid organization
+    const tasksFilters: SQL[] = [eq(tasksTable.organizationId, organization.id)];
+
+    // Add other filters
     if (projectId) tasksFilters.push(inArray(tasksTable.projectId, projectId.split('_')));
     if (q) tasksFilters.push(ilike(tasksTable.keywords, `%${q}%`));
     if (status) tasksFilters.push(inArray(tasksTable.status, status.split('_').map(Number)));
@@ -100,6 +108,7 @@ const tasksRoutes = app
 
     const tasks = await db.select().from(tasksQuery.as('tasks')).orderBy(orderColumn).limit(Number(limit)).offset(Number(offset));
 
+    // TODO what hapens here? Add comments and consider a helper for this to reuse?
     const uniqueAssignedUserIds = Array.from(
       new Set([
         ...tasks.flatMap((t) => t.assignedTo),
@@ -120,7 +129,7 @@ const tasksRoutes = app
 
         return {
           ...task,
-          subTasks: subtasks,
+          subtasks: subtasks,
           createdBy: task.createdBy ? userMap.get(task.createdBy) || null : null,
           modifiedBy: userMap.get(task.modifiedBy || '') || null,
           assignedTo: users.filter((m) => task.assignedTo.includes(m.id)),
@@ -129,25 +138,20 @@ const tasksRoutes = app
       })
       .filter((task) => !task.parentId); // Filter out subtasks
 
-    return ctx.json(
-      {
-        success: true,
-        data: {
-          items: finalTasks,
-          total: tasks.length,
-        },
-      },
-      200,
-    );
+    return ctx.json({ success: true, data: { items: finalTasks, total: tasks.length } }, 200);
   })
   /*
    * Update task
    */
   .openapi(taskRoutesConfig.updateTask, async (ctx) => {
     const id = ctx.req.param('id');
-    if (!id) return errorResponse(ctx, 404, 'not_found', 'warn');
-    const user = getContextUser();
     const { key, data, order } = ctx.req.valid('json');
+
+    if (!id) return errorResponse(ctx, 404, 'not_found', 'warn');
+
+    const user = getContextUser();
+    
+    // TODO add permission check for project using memberships
 
     const updateValues: Partial<InsertTaskModel> = {
       [key]: data,
@@ -156,6 +160,7 @@ const tasksRoutes = app
       ...(order && { order: order }),
     };
 
+    // TODO a helper for this? And shouldnt this be in create task too?
     if (key === 'description' && data) {
       const descriptionText = String(data);
       updateValues.keywords = extractKeywords(descriptionText);
@@ -180,16 +185,20 @@ const tasksRoutes = app
 
     const [updatedTask] = await db.update(tasksTable).set(updateValues).where(eq(tasksTable.id, id)).returning();
 
-    const subTasks = await db.select().from(tasksTable).where(eq(tasksTable.parentId, updatedTask.id));
+    const subtasks = await db.select().from(tasksTable).where(eq(tasksTable.parentId, updatedTask.id));
 
     const uniqueAssignedUserIds = [...updatedTask.assignedTo];
     if (updatedTask.createdBy) uniqueAssignedUserIds.push(updatedTask.createdBy);
     if (updatedTask.modifiedBy) uniqueAssignedUserIds.push(updatedTask.modifiedBy);
+
     const users = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)]);
     const labels = await db.select().from(labelsTable).where(inArray(labelsTable.id, updatedTask.labels));
 
+    // TODO this looks weird, createdBy and modiefiedBy are perphaps not in the assignedTo array?
+    // TODO2: do we actually need to send back the task, since it is a granular PUT anyways?
+    // Modified is for update simply user?
     const finalTask = {
-      subTasks,
+      subtasks,
       ...updatedTask,
       createdBy: users.find((m) => m.id === updatedTask.createdBy) || null,
       modifiedBy: users.find((m) => m.id === updatedTask.modifiedBy) || null,
@@ -197,13 +206,7 @@ const tasksRoutes = app
       labels: labels.filter((m) => updatedTask.labels.includes(m.id)),
     };
 
-    return ctx.json(
-      {
-        success: true,
-        data: finalTask,
-      },
-      200,
-    );
+    return ctx.json({ success: true, data: finalTask }, 200);
   })
   /*
    * Delete tasks
@@ -211,18 +214,19 @@ const tasksRoutes = app
   .openapi(taskRoutesConfig.deleteTasks, async (ctx) => {
     const { ids } = ctx.req.valid('query');
     const memberships = getMemberships();
+
+    // Convert the ids to an array
     const toDeleteIds = Array.isArray(ids) ? ids : [ids];
 
     if (!toDeleteIds.length) return errorResponse(ctx, 400, 'invalid_request', 'warn', 'task');
 
     const { allowedIds, disallowedIds } = await splitByAllowance('delete', 'task', toDeleteIds, memberships);
-
     if (!allowedIds.length) return errorResponse(ctx, 403, 'forbidden', 'warn', 'task');
 
     // Map errors of tasks user is not allowed to delete
     const errors: ErrorType[] = disallowedIds.map((id) => createError(ctx, 404, 'not_found', 'warn', 'task', { project: id }));
 
-    // Delete subTasks at first then delete the tasks
+    // Delete subtasks at first then delete the tasks
     await db.delete(tasksTable).where(inArray(tasksTable.parentId, allowedIds));
     await db.delete(tasksTable).where(inArray(tasksTable.id, allowedIds));
 

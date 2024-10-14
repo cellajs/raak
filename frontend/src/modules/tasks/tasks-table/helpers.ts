@@ -1,11 +1,11 @@
-import { impacts } from '~/modules/tasks/task-selectors/select-impact';
-import { taskStatuses } from '~/modules/tasks/task-selectors/select-status';
+import { impacts } from '~/modules/tasks/task-dropdowns/select-impact';
+import { taskStatuses } from '~/modules/tasks/task-dropdowns/select-status';
 import type { Project, Task } from '~/types/app';
 
 export const configureForExport = (tasks: Task[], projects: Omit<Project, 'counts'>[]) => {
   return tasks.map((task) => {
     const project = projects.find((p) => p.id === task.projectId);
-    const subTaskCount = `${task.subTasks.filter((st) => st.status === 6).length} of ${task.subTasks.length}`;
+    const subtaskCount = `${task.subtasks.filter((st) => st.status === 6).length} of ${task.subtasks.length}`;
     const impact = impacts[task.impact ?? 0];
     return {
       ...task,
@@ -13,7 +13,7 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
       labels: task.labels.map((label) => label.name),
       status: taskStatuses[task.status].status,
       impact: impact.value,
-      subTasks: task.subTasks.length ? subTaskCount : '-',
+      subtasks: task.subtasks.length ? subtaskCount : '-',
       projectId: project?.name ?? '-',
       createdBy: task.createdBy?.name ?? '-',
       modifiedBy: task.modifiedBy?.name ?? '-',

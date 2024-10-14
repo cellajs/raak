@@ -17,13 +17,13 @@ import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { dialog } from '~/modules/common/dialoger/state.ts';
 import { dropdowner } from '~/modules/common/dropdowner/state.ts';
 import { extractUniqueWordsFromHTML, getNewTaskOrder } from '~/modules/tasks/helpers';
-import { NotSelected } from '~/modules/tasks/task-selectors/impact-icons/not-selected';
-import SelectImpact, { impacts } from '~/modules/tasks/task-selectors/select-impact';
-import SetLabels from '~/modules/tasks/task-selectors/select-labels';
-import AssignMembers from '~/modules/tasks/task-selectors/select-members';
-import SelectStatus, { type TaskStatus, taskStatuses } from '~/modules/tasks/task-selectors/select-status';
-import { taskTypes } from '~/modules/tasks/task-selectors/select-task-type';
-import { TaskBlockNote } from '~/modules/tasks/task-selectors/task-blocknote';
+import { NotSelected } from '~/modules/tasks/task-dropdowns/impact-icons/not-selected';
+import SelectImpact, { impacts } from '~/modules/tasks/task-dropdowns/select-impact';
+import SetLabels from '~/modules/tasks/task-dropdowns/select-labels';
+import AssignMembers from '~/modules/tasks/task-dropdowns/select-members';
+import SelectStatus, { type TaskStatus, taskStatuses } from '~/modules/tasks/task-dropdowns/select-status';
+import { taskTypes } from '~/modules/tasks/task-dropdowns/select-task-type';
+import { TaskBlockNote } from '~/modules/tasks/task-dropdowns/task-blocknote';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
@@ -38,7 +38,7 @@ import type { Member } from '~/types/common';
 import { cn } from '~/utils/cn';
 import { nanoid } from '~/utils/nanoid';
 import { createTaskSchema } from '#/modules/tasks/schema';
-import { useWorkspaceQuery } from '../workspaces/use-workspace';
+import { useWorkspaceQuery } from '../workspaces/helpers/use-workspace';
 
 export type TaskType = 'feature' | 'chore' | 'bug';
 export type TaskImpact = 0 | 1 | 2 | 3 | null;
@@ -74,7 +74,7 @@ const formSchema = z.object({
       projectId: z.string(),
       organizationId: z.string(),
       useCount: z.number(),
-      lastUsed: z.string(),
+      lastUsedAt: z.string(),
     }),
   ),
 });
@@ -200,7 +200,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
         ref={ref as LegacyRef<HTMLFormElement>}
         id={`create-task-${projectIdOrSlug}`}
         onSubmit={form.handleSubmit(onSubmit)}
-        className={cn(className, `p-3 sm:pl-11 ${isDialog ? '' : 'border-b'} flex gap-2 flex-col shadow-inner`)}
+        className={cn(className, `sm:p-3 sm:pl-11 ${isDialog ? '' : 'border-b'} flex gap-2 flex-col shadow-inner`)}
       >
         <FormField
           control={form.control}

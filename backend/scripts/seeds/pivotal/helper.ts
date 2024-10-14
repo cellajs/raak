@@ -3,7 +3,7 @@ import type { InsertTaskModel } from '#/db/schema/tasks';
 import { extractKeywords } from '#/modules/tasks/helpers';
 import type { Labels, PivotalTask } from './type';
 
-export const getSubTask = (task: PivotalTask, taskId: string, organizationId: string, projectId: string) => {
+export const getSubtask = (task: PivotalTask, taskId: string, organizationId: string, projectId: string) => {
   const subtasks: InsertTaskModel[] = [];
   for (let i = 0; i <= 27; i++) {
     const taskKey = `Task_${i}` as keyof PivotalTask;
@@ -45,7 +45,7 @@ export const getLabels = (tasks: PivotalTask[], organizationId: string, projectI
     color: '#FFA9BA',
     organizationId: organizationId,
     projectId: projectId,
-    lastUsed: new Date(),
+    lastUsedAt: new Date(),
     useCount: value,
   }));
   return labelsToInsert;

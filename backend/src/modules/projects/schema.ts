@@ -10,7 +10,6 @@ export const projectSchema = z.object({
   createdAt: z.string(),
   modifiedAt: z.string().nullable(),
   membership: membershipInfoSchema.nullable(),
-  workspaceId: z.string().nullish(),
 });
 
 export const createProjectBodySchema = z.object({
@@ -33,14 +32,8 @@ export const updateProjectBodySchema = createInsertSchema(projectsTable, {
   slug: validSlugSchema,
   name: nameSchema,
   thumbnailUrl: imageUrlSchema,
-})
-  .pick({
-    slug: true,
-    name: true,
-    thumbnailUrl: true,
-  })
-  .merge(
-    z.object({
-      parentId: idSchema.nullable(),
-    }),
-  );
+}).pick({
+  slug: true,
+  name: true,
+  thumbnailUrl: true,
+});

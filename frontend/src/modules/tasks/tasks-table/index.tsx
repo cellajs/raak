@@ -19,17 +19,17 @@ import ColumnsView from '~/modules/common/data-table/columns-view';
 import Export from '~/modules/common/data-table/export.tsx';
 import { getInitialSortColumns } from '~/modules/common/data-table/sort-columns';
 
+import TableHeader from '~/modules/app/board-header';
+import { isSubtaskData } from '~/modules/app/board/helpers';
 import { openUserPreviewSheet } from '~/modules/common/data-table/util';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { taskKeys, useTaskMutation } from '~/modules/common/query-client-provider/tasks';
 import { sheet } from '~/modules/common/sheeter/state';
-import { isSubTaskData } from '~/modules/projects/board/helpers';
 import { configureForExport, getRelativeTaskOrder } from '~/modules/tasks/helpers';
-import { handleTaskDropDownClick, openTaskPreviewSheet } from '~/modules/tasks/helpers/helper';
+import { handleTaskDropDownClick, openTaskPreviewSheet } from '~/modules/tasks/helpers';
 import TaskCard from '~/modules/tasks/task';
-import TableHeader from '~/modules/tasks/tasks-display-header/header';
 import { useColumns } from '~/modules/tasks/tasks-table/columns';
-import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
+import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
@@ -195,7 +195,7 @@ export default function TasksTable() {
     return combine(
       monitorForElements({
         canMonitor({ source }) {
-          return isSubTaskData(source.data);
+          return isSubtaskData(source.data);
         },
         async onDrop({ location, source }) {
           const target = location.current.dropTargets[0];
@@ -204,8 +204,8 @@ export default function TasksTable() {
           const targetData = target.data;
 
           const edge: Edge | null = extractClosestEdge(targetData);
-          const isSubTask = isSubTaskData(sourceData) && isSubTaskData(targetData);
-          if (!edge || !isSubTask) return;
+          const isSubtask = isSubtaskData(sourceData) && isSubtaskData(targetData);
+          if (!edge || !isSubtask) return;
           const newOrder: number = getRelativeTaskOrder(edge, rows, targetData.order, sourceData.item.id, targetData.item.parentId ?? undefined);
           try {
             await taskMutation.mutateAsync({

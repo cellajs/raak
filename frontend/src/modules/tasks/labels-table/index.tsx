@@ -17,7 +17,7 @@ import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useColumns } from '~/modules/tasks/labels-table/columns';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
-import { useWorkspaceQuery } from '~/modules/workspaces/use-workspace';
+import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import type { labelsSearchSchema } from '~/routes/workspaces';
 import type { Label } from '~/types/app';
 
@@ -32,7 +32,7 @@ export const labelsQueryOptions = ({
 }: GetLabelsParams & {
   rowsLength?: number;
 }) => {
-  const sort = initialSort || 'lastUsed';
+  const sort = initialSort || 'lastUsedAt';
   const order = initialOrder || 'desc';
 
   return infiniteQueryOptions({
@@ -71,7 +71,7 @@ const LabelsTable = () => {
   const [rows, setRows] = useState<Label[]>([]);
   const [query, setQuery] = useState<LabelsSearch['q']>('');
   const [selectedRows, setSelectedRows] = useState(new Set<string>());
-  const [sortColumns, setSortColumns] = useState<SortColumn[]>([{ columnKey: 'lastUsed', direction: 'DESC' }]);
+  const [sortColumns, setSortColumns] = useState<SortColumn[]>([{ columnKey: 'lastUsedAt', direction: 'DESC' }]);
 
   // Search query options
   const q = useDebounce(query, 200);
