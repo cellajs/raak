@@ -162,9 +162,9 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
             projectId: project.id,
             role: faker.helpers.arrayElement(['admin', 'member']),
             createdAt: faker.date.past(),
-            order: adminProjectsMembershipsOrder > 2 ? 1 : adminProjectsMembershipsOrder,
+            order: adminProjectsMembershipsOrder,
           });
-          adminProjectsMembershipsOrder = adminProjectsMembershipsOrder > 2 ? 1 : adminProjectsMembershipsOrder + 1;
+          adminProjectsMembershipsOrder = adminProjectsMembershipsOrder >= 2 ? 1 : adminProjectsMembershipsOrder + 1;
         }
 
         membershipsCount += projectMemberships.length;
@@ -212,7 +212,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
                 id: nanoid(),
                 organizationId: organization.id,
                 projectId: project.id,
-                summary: `<div class="bn-block-content"><p class="bn-inline-content">${subtaskName}</p></div>`,
+                summary: `<p class="bn-inline-content inline">${subtaskName}</p>`,
                 keywords: extractKeywords(subtaskName + subtaskDescription),
                 expandable: true,
                 parentId: mainTaskId,
@@ -232,7 +232,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
             id: mainTaskId,
             organizationId: organization.id,
             projectId: project.id,
-            summary: `<div class="bn-block-content"><p class="bn-inline-content">${name}</p></div>`,
+            summary: `<p class="bn-inline-content inline">${name}</p>`,
             keywords: extractKeywords(name + taskDescription),
             expandable: true,
             // Selection 1-2 random members

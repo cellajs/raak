@@ -1,7 +1,6 @@
-import { type SQL, and, eq, ilike, inArray } from 'drizzle-orm';
+import { type SQL, and, eq, gte, ilike, inArray, lte, or } from 'drizzle-orm';
 import { db } from '#/db/db';
 
-import { parse as parseHtml } from 'node-html-parser';
 import type { z } from 'zod';
 import { labelsTable } from '#/db/schema/labels';
 import { type InsertTaskModel, tasksTable } from '#/db/schema/tasks';
@@ -13,7 +12,7 @@ import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
 import { getOrderColumn } from '#/utils/order-column';
 import { splitByAllowance } from '#/utils/split-by-allowance';
-import { extractKeywords } from './helpers';
+import { getDateFromToday, scanTaskDescription } from './helpers';
 import taskRoutesConfig from './routes';
 import type { subtaskSchema } from './schema';
 
@@ -30,27 +29,18 @@ const tasksRoutes = app
     const organization = getOrganization();
     const user = getContextUser();
 
+    // TODO add permission check for project using memberships
+
     // Use body data to create a new task, add valid organization id
-    const newTask: InsertTaskModel = {
-      ...newTaskInfo,
-      organizationId: organization.id,
-    };
+    const newTask: InsertTaskModel = { ...newTaskInfo, organizationId: organization.id };
 
     const descriptionText = String(newTask.description);
-    const rootElement = parseHtml(descriptionText);
-    const groupElement = rootElement.querySelector('.bn-block-group');
 
-    if (groupElement) {
-      // Remove all child element except the first one
-      const children = groupElement.childNodes;
-      for (let i = 1; i < children.length; i++) {
-        groupElement.removeChild(children[i]);
-      }
-      const summaryText = rootElement.toString();
-      newTask.summary = summaryText;
-      if (descriptionText.length === summaryText.length) newTask.expandable = summaryText !== descriptionText;
-      else newTask.expandable = true;
-    }
+    // Create summary, expandable and keywords from description
+    const { summary, expandable, keywords } = scanTaskDescription(descriptionText);
+    newTask.summary = summary;
+    newTask.expandable = expandable;
+    newTask.keywords = keywords;
 
     const [createdTask] = await db.insert(tasksTable).values(newTask).returning();
 
@@ -106,21 +96,32 @@ const tasksRoutes = app
       order,
     );
 
-    const tasks = await db.select().from(tasksQuery.as('tasks')).orderBy(orderColumn).limit(Number(limit)).offset(Number(offset));
+    const tasks = await db
+      .select()
+      .from(tasksQuery.as('tasks'))
+      .orderBy(orderColumn)
+      .limit(Number(limit))
+      .offset(Number(offset))
+      // all tasks with status under 6 and with status 6 modified within the last 30 days
+      .where(or(lte(tasksTable.status, 5), and(eq(tasksTable.status, 6), gte(tasksTable.modifiedAt, getDateFromToday(30)))));
 
-    // TODO what hapens here? Add comments and consider a helper for this to reuse?
+    // Create a set of unique user IDs from the tasks, so we can retrieve them from the database
     const uniqueAssignedUserIds = Array.from(
       new Set([
+        // Get all assigned user IDs by flattening the array of assignedTo properties & filtering null values
         ...tasks.flatMap((t) => t.assignedTo),
         ...tasks.map((t) => t.createdBy).filter((id) => id !== null),
         ...tasks.map((t) => t.modifiedBy).filter((id) => id !== null),
       ]),
     );
+
+    // Create a set of unique label IDs from the tasks
     const uniqueLabelIds = Array.from(new Set([...tasks.flatMap((t) => t.labels)]));
 
     const users = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)]);
     const labels = await db.select().from(labelsTable).where(inArray(labelsTable.id, uniqueLabelIds));
 
+    // Create a map for quick access to users by their ID
     const userMap = new Map(users.map((user) => [user.id, user]));
 
     const finalTasks = tasks
@@ -138,7 +139,7 @@ const tasksRoutes = app
       })
       .filter((task) => !task.parentId); // Filter out subtasks
 
-    return ctx.json({ success: true, data: { items: finalTasks, total: tasks.length } }, 200);
+    return ctx.json({ success: true, data: { items: finalTasks, total: finalTasks.length } }, 200);
   })
   /*
    * Update task
@@ -147,10 +148,14 @@ const tasksRoutes = app
     const id = ctx.req.param('id');
     const { key, data, order } = ctx.req.valid('json');
 
+    const allowedKeys = ['labels', 'assignedTo', 'type', 'status', 'description', 'impact'];
+
+    // Validate request
     if (!id) return errorResponse(ctx, 404, 'not_found', 'warn');
+    if (!allowedKeys.includes(key)) return errorResponse(ctx, 400, 'invalid_request', 'warn', 'task');
 
     const user = getContextUser();
-    
+
     // TODO add permission check for project using memberships
 
     const updateValues: Partial<InsertTaskModel> = {
@@ -160,53 +165,24 @@ const tasksRoutes = app
       ...(order && { order: order }),
     };
 
-    // TODO a helper for this? And shouldnt this be in create task too?
+    // If updating description, also update keywords, summary and expandable
     if (key === 'description' && data) {
       const descriptionText = String(data);
-      updateValues.keywords = extractKeywords(descriptionText);
-      const rootElement = parseHtml(descriptionText);
-      const groupElement = rootElement.querySelector('.bn-block-group');
-      if (groupElement) {
-        // Remove all child element except the first one
-        const children = groupElement.childNodes;
-        for (let i = 1; i < children.length; i++) {
-          groupElement.removeChild(children[i]);
-        }
-        const summaryText = rootElement.toString();
-        updateValues.summary = summaryText;
 
-        if (descriptionText.length === summaryText.length) {
-          updateValues.expandable = summaryText !== descriptionText;
-        } else {
-          updateValues.expandable = true;
-        }
-      }
+      const { summary, expandable, keywords } = scanTaskDescription(descriptionText);
+      updateValues.summary = summary;
+      updateValues.expandable = expandable;
+      updateValues.keywords = keywords;
     }
 
-    const [updatedTask] = await db.update(tasksTable).set(updateValues).where(eq(tasksTable.id, id)).returning();
+    const [updatedTask] = await db.update(tasksTable).set(updateValues).where(eq(tasksTable.id, id)).returning({
+      summary: tasksTable.summary,
+      description: tasksTable.description,
+      expandable: tasksTable.expandable,
+      order: tasksTable.order,
+    });
 
-    const subtasks = await db.select().from(tasksTable).where(eq(tasksTable.parentId, updatedTask.id));
-
-    const uniqueAssignedUserIds = [...updatedTask.assignedTo];
-    if (updatedTask.createdBy) uniqueAssignedUserIds.push(updatedTask.createdBy);
-    if (updatedTask.modifiedBy) uniqueAssignedUserIds.push(updatedTask.modifiedBy);
-
-    const users = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)]);
-    const labels = await db.select().from(labelsTable).where(inArray(labelsTable.id, updatedTask.labels));
-
-    // TODO this looks weird, createdBy and modiefiedBy are perphaps not in the assignedTo array?
-    // TODO2: do we actually need to send back the task, since it is a granular PUT anyways?
-    // Modified is for update simply user?
-    const finalTask = {
-      subtasks,
-      ...updatedTask,
-      createdBy: users.find((m) => m.id === updatedTask.createdBy) || null,
-      modifiedBy: users.find((m) => m.id === updatedTask.modifiedBy) || null,
-      assignedTo: users.filter((m) => updatedTask.assignedTo.includes(m.id)),
-      labels: labels.filter((m) => updatedTask.labels.includes(m.id)),
-    };
-
-    return ctx.json({ success: true, data: finalTask }, 200);
+    return ctx.json({ success: true, data: updatedTask }, 200);
   })
   /*
    * Delete tasks
