@@ -1,7 +1,7 @@
 import { FilePanelController, GridSuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { useLocation } from '@tanstack/react-router';
-import { type KeyboardEventHandler, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { type KeyboardEventHandler, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import router from '~/lib/router';
 import type { Mode } from '~/store/theme';
@@ -10,15 +10,29 @@ import DOMPurify from 'dompurify';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
+import type { Block } from '@blocknote/core';
 import { customFormattingToolBarConfig, customSchema } from '~/modules/common/blocknote/blocknote-config';
 import { Mention } from '~/modules/common/blocknote/custom-elements/mention';
 import { CustomFormattingToolbar } from '~/modules/common/blocknote/custom-formatting-toolbar';
 import { CustomSideMenu } from '~/modules/common/blocknote/custom-side-menu';
 import { CustomSlashMenu } from '~/modules/common/blocknote/custom-slash-menu';
-import { focusEditor, handleSubmitOnEnter } from '~/modules/common/blocknote/helpers';
+import { focusEditor, getContentAsString, handleSubmitOnEnter } from '~/modules/common/blocknote/helpers';
 import '~/modules/common/blocknote/styles.css';
+import { FloatingPortal } from '@floating-ui/react';
 import { useTaskMutation } from '~/modules/common/query-client-provider/tasks';
+import * as Badge from '~/modules/ui/badge';
+import * as Button from '~/modules/ui/button';
+import * as Card from '~/modules/ui/card';
+import * as DropdownMenu from '~/modules/ui/dropdown-menu';
+import * as Input from '~/modules/ui/input';
+import * as Label from '~/modules/ui/label';
+import * as Popover from '~/modules/ui/popover';
+import * as Select from '~/modules/ui/select';
+import * as Tabs from '~/modules/ui/tabs';
+import * as Toggle from '~/modules/ui/toggle';
+import * as Tooltip from '~/modules/ui/tooltip';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
+import { handleEditorFocus, trimInlineContentText } from '../helpers';
 import UppyFilePanel from './uppy-file-panel';
 
 interface TaskBlockNoteProps {
@@ -47,13 +61,13 @@ export const TaskBlockNote = ({
   className = '',
 }: TaskBlockNoteProps) => {
   const { t } = useTranslation();
-  const editor = useCreateBlockNote({ schema: customSchema, trailingBlock: false });
-  const canChangeState = useRef(false);
-  const wasInitial = useRef(false);
-
   const { search } = useLocation();
-
+  const editor = useCreateBlockNote({ schema: customSchema, trailingBlock: false });
+  const wasInitial = useRef(false);
   const isCreationMode = !!onChange;
+
+  const [text, setText] = useState<string>('');
+
   const stateEvent = subtask ? 'changeSubtaskState' : 'changeTaskState';
   const isSheet = !!search.taskIdPreview;
 
@@ -68,13 +82,13 @@ export const TaskBlockNote = ({
   const handleUpdateHTML = useCallback(
     async (newContent: string) => {
       try {
+        const contentToUpdate = trimInlineContentText(newContent);
         if (!isSheet) dispatchCustomEvent(stateEvent, { taskId: id, state: 'editing' });
-        canChangeState.current = false;
         await taskMutation.mutateAsync({
           id,
           orgIdOrSlug: workspace.organizationId,
           key: 'description',
-          data: newContent,
+          data: contentToUpdate,
           projectId,
         });
       } catch (err) {
@@ -84,26 +98,28 @@ export const TaskBlockNote = ({
     [search.taskIdPreview],
   );
 
-  const handleEditorFocus = () => {
-    // Remove subtask editing state
-    dispatchCustomEvent('changeSubtaskState', { taskId: id, state: 'removeEditing' });
-    // Remove Task editing state if focused not task itself
-    if (taskToClose) dispatchCustomEvent('changeTaskState', { taskId: taskToClose, state: 'currentState' });
-  };
   const updateData = async () => {
     // if user in Formatting Toolbar does not update
     if (editor.getSelection()) return;
+    await handleUpdateHTML(text);
+  };
 
+  const onTextChange = useCallback(async () => {
+    // Converts the editor's contents from Block objects to Markdown and store to state.
     const descriptionHtml = await editor.blocksToFullHTML(editor.document);
     const cleanDescription = DOMPurify.sanitize(descriptionHtml);
 
+    const newHtml = getContentAsString(editor.document as Block[]);
+    const oldHtml = getContentAsString((await editor.tryParseHTMLToBlocks(html)) as Block[]);
+
     if (isCreationMode) onChange(cleanDescription);
-    else await handleUpdateHTML(cleanDescription);
-  };
+
+    if (!isSheet && oldHtml !== newHtml) dispatchCustomEvent(stateEvent, { taskId: id, state: 'unsaved' });
+    setText(cleanDescription);
+  }, []);
 
   const handleKeyDown: KeyboardEventHandler = async (event) => {
     if (event.key === 'Escape') onEscapeClick?.();
-
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
       event.preventDefault();
       // to ensure that blocknote have description
@@ -115,28 +131,33 @@ export const TaskBlockNote = ({
       ) {
         const blocksToUpdate = handleSubmitOnEnter(editor);
         if (blocksToUpdate) editor.replaceBlocks(editor.document, blocksToUpdate);
+
         updateData();
         onEnterClick?.();
       }
     }
   };
 
-  useLayoutEffect(() => {
-    if (html === '' && !isCreationMode) return;
+  const blockUpdate = async (html: string) => {
+    const blocks = await editor.tryParseHTMLToBlocks(html);
+    if (html === '' || wasInitial.current) return;
+    editor.replaceBlocks(editor.document, blocks);
+    const descriptionHtml = await editor.blocksToFullHTML(editor.document);
+    setText(descriptionHtml);
+    focusEditor(editor);
+    wasInitial.current = true;
+  };
+  const blockCreationUpdate = async (html: string) => {
+    const blocks = await editor.tryParseHTMLToBlocks(html);
+    const innerText = getContentAsString(blocks as Block[]);
+    if (innerText === '' && html === '' && text === '') return;
+    editor.replaceBlocks(editor.document, blocks);
+    focusEditor(editor);
+  };
 
-    const blockUpdate = async (html: string) => {
-      const blocks = await editor.tryParseHTMLToBlocks(html);
-      // If the current content is the same as the new content or if this is the initial update, exit early.
-      if (wasInitial.current && !isCreationMode) return;
-      editor.replaceBlocks(editor.document, blocks);
-      // Replace the existing blocks in the editor with the new blocks.
-      focusEditor(editor);
-      // Set the initial state flag to true to indicate that the first update has occurred.
-      wasInitial.current = true;
-      // If state change is not allowed yet, allow it now.
-      if (!canChangeState.current) canChangeState.current = true;
-    };
-    blockUpdate(html);
+  useEffect(() => {
+    if (isCreationMode) blockCreationUpdate(html);
+    else blockUpdate(html);
   }, [html]);
 
   useEffect(() => {
@@ -148,17 +169,11 @@ export const TaskBlockNote = ({
     <Suspense>
       <BlockNoteView
         id={subtask ? `blocknote-subtask-${id}` : `blocknote-${id}`}
-        // Defer onChange, onFocus and onBlur  to run after rendering
-        onChange={() => {
-          if (!isCreationMode && canChangeState.current && !isSheet) dispatchCustomEvent(stateEvent, { taskId: id, state: 'unsaved' });
-
-          // to avoid update if content empty, so from draft shown
-          if (!isCreationMode || (html === '' && !subtask)) return;
-          queueMicrotask(() => updateData());
-        }}
-        onFocus={() => queueMicrotask(() => handleEditorFocus())}
-        onBlur={() => queueMicrotask(() => updateData())}
+        onChange={onTextChange}
+        onFocus={() => handleEditorFocus(id, taskToClose)}
+        onBlur={updateData}
         onKeyDown={handleKeyDown}
+        shadCNComponents={{ Button, DropdownMenu, Popover, Tooltip, Select, Label, Input, Card, Badge, Toggle, Tabs }}
         editor={editor}
         data-color-scheme={mode}
         theme={mode}
@@ -169,22 +184,31 @@ export const TaskBlockNote = ({
         slashMenu={false}
         filePanel={false}
       >
-        <CustomSlashMenu editor={editor} />
+        <FloatingPortal>
+          <div className="bn-ui-container">
+            <CustomSlashMenu editor={editor} />
+          </div>
+        </FloatingPortal>
 
-        <div className="fixed">
-          <CustomFormattingToolbar config={customFormattingToolBarConfig} />
-        </div>
+        <FloatingPortal>
+          <div className="bn-ui-container">
+            <CustomFormattingToolbar config={customFormattingToolBarConfig} />
+          </div>
+        </FloatingPortal>
 
         {!subtask && <CustomSideMenu />}
 
-        <Mention members={members.filter((m) => m.membership.projectId === projectId)} editor={editor} />
+        <FloatingPortal>
+          <div className="bn-ui-container">
+            <Mention members={members.filter((m) => m.membership.projectId === projectId)} editor={editor} />
+          </div>
+        </FloatingPortal>
 
-        <GridSuggestionMenuController
-          triggerCharacter={':'}
-          // Changes the Emoji Picker to only have 5 columns & min length of 0.
-          columns={5}
-          minQueryLength={0}
-        />
+        <FloatingPortal>
+          <div className="bn-ui-container">
+            <GridSuggestionMenuController triggerCharacter={':'} columns={5} minQueryLength={0} />
+          </div>
+        </FloatingPortal>
 
         {/* Replaces default file panel with Uppy one. */}
         <FilePanelController filePanel={filePanel} />
