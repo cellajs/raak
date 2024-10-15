@@ -60,7 +60,7 @@ const workspacesRoutes = app
       return errorResponse(ctx, 403, 'forbidden', 'warn');
     }
 
-    const { entity: workspace, membership, isAllowed } = await getValidEntity('workspace', 'update', idOrSlug);
+    const { entity: workspace, membership, isAllowed } = await getValidEntity('workspace', 'read', idOrSlug);
 
     if (!workspace || !isAllowed || !membership) {
       return errorResponse(ctx, 403, 'forbidden', 'warn');

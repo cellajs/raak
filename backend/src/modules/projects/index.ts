@@ -71,7 +71,7 @@ const projectsRoutes = app
       return errorResponse(ctx, 403, 'forbidden', 'warn');
     }
 
-    const { entity: project, isAllowed, membership } = await getValidEntity('project', 'update', idOrSlug);
+    const { entity: project, isAllowed, membership } = await getValidEntity('project', 'read', idOrSlug);
 
     if (!project || !isAllowed || !membership) {
       return errorResponse(ctx, 403, 'forbidden', 'warn');

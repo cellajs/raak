@@ -109,7 +109,7 @@ new AdaptedMembershipAdapter();
 
 export const getValidEntity = async <T extends ContextEntity>(
   entityType: T,
-  action: 'read' | 'update' | 'delete',
+  action: 'create' | 'read' | 'update' | 'delete',
   idOrSlug: string,
 ): Promise<{
   entity: EntityModel<T> | null;

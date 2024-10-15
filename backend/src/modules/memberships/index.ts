@@ -40,7 +40,7 @@ const membershipsRoutes = app
       return errorResponse(ctx, 403, 'forbidden', 'warn');
     }
 
-    const { entity, isAllowed } = await getValidEntity(entityType, 'update', idOrSlug);
+    const { entity, isAllowed } = await getValidEntity(entityType, 'create', idOrSlug);
 
     if (!entity || !isAllowed) {
       return errorResponse(ctx, 403, 'forbidden', 'warn');
