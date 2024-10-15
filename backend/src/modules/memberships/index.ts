@@ -17,7 +17,7 @@ import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
 import { resolveEntity } from '#/lib/entity';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
 import { i18n } from '#/lib/i18n';
-import { isAllowedTo } from '#/lib/permission-manager';
+import { getValidEntity } from '#/lib/permission-manager';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
@@ -35,8 +35,16 @@ const membershipsRoutes = app
    */
   .openapi(membershipRouteConfig.createMembership, async (ctx) => {
     const { idOrSlug, entityType } = ctx.req.valid('query');
-    const { error, entity } = await isAllowedTo(ctx, entityType, 'update', idOrSlug);
-    if (error) return error;
+
+    if (!config.contextEntityTypes.includes(entityType)) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity, isAllowed } = await getValidEntity(entityType, 'update', idOrSlug);
+
+    if (!entity || !isAllowed) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     const { emails, role } = ctx.req.valid('json');
 
@@ -209,8 +217,16 @@ const membershipsRoutes = app
    */
   .openapi(membershipRouteConfig.deleteMemberships, async (ctx) => {
     const { entityType, ids, idOrSlug } = ctx.req.valid('query');
-    const { error, entity } = await isAllowedTo(ctx, entityType, 'delete', idOrSlug);
-    if (error) return error;
+
+    if (!config.contextEntityTypes.includes(entityType)) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity, isAllowed } = await getValidEntity(entityType, 'delete', idOrSlug);
+
+    if (!entity || !isAllowed) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     const user = getContextUser();
     const entityIdField = entityIdFields[entityType];
@@ -321,8 +337,15 @@ const membershipsRoutes = app
 
     // Check if user has permission to someone elses membership
     if (user.id !== membershipToUpdate.userId) {
-      const { error } = await isAllowedTo(ctx, updatedType, 'update', membershipContextId);
-      if (error) return error;
+      if (!config.contextEntityTypes.includes(updatedType)) {
+        return errorResponse(ctx, 403, 'forbidden', 'warn');
+      }
+
+      const { entity, isAllowed } = await getValidEntity(updatedType, 'update', membershipContextId);
+
+      if (!entity || !isAllowed) {
+        return errorResponse(ctx, 403, 'forbidden', 'warn');
+      }
     }
 
     const [updatedMembership] = await db

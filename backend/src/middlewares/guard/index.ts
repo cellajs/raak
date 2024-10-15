@@ -1,6 +1,6 @@
 import type { Context, Next } from 'hono';
 import { getContextUser } from '#/lib/context';
-import { isAllowedTo } from '#/lib/permission-manager';
+import { getValidEntity } from '#/lib/permission-manager';
 export { isAuthenticated } from './is-authenticated';
 
 import { getConnInfo } from '@hono/node-server/conninfo';
@@ -8,6 +8,7 @@ import { every } from 'hono/combine';
 import { ipRestriction } from 'hono/ip-restriction';
 import { errorResponse } from '#/lib/errors';
 
+import { config } from 'config';
 import { env } from './../../../env';
 
 const allowList = env.REMOTE_SYSTEM_ACCESS_IP.split(',') || [];
@@ -41,8 +42,15 @@ export async function hasOrgAccess(ctx: Context, next: Next): Promise<Response |
 
   if (!orgIdOrSlug) return errorResponse(ctx, 400, 'organization_missing', 'warn');
 
-  const { error, entity } = await isAllowedTo(ctx, 'organization', 'read', orgIdOrSlug);
-  if (error) return error;
+  if (!config.contextEntityTypes.includes('organization')) {
+    return errorResponse(ctx, 403, 'forbidden', 'warn');
+  }
+
+  const { entity, isAllowed } = await getValidEntity('organization', 'read', orgIdOrSlug);
+
+  if (!entity || !isAllowed) {
+    return errorResponse(ctx, 403, 'forbidden', 'warn');
+  }
 
   // Set organization with membership in context
   ctx.set('organization', entity);

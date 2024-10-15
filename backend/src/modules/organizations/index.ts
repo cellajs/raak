@@ -10,7 +10,7 @@ import { getUserBy } from '#/db/util';
 import { getContextUser, getMemberships } from '#/lib/context';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
 import { emailSender } from '#/lib/mailer';
-import { isAllowedTo } from '#/lib/permission-manager';
+import { getValidEntity } from '#/lib/permission-manager';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
@@ -123,8 +123,15 @@ const organizationsRoutes = app
   .openapi(organizationRoutesConfig.updateOrganization, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
 
-    const { error, entity: organization, membership } = await isAllowedTo(ctx, 'organization', 'update', idOrSlug);
-    if (error) return error;
+    if (!config.contextEntityTypes.includes('organization')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: organization, isAllowed, membership } = await getValidEntity('organization', 'update', idOrSlug);
+
+    if (!organization || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     const user = getContextUser();
 
@@ -177,8 +184,15 @@ const organizationsRoutes = app
   .openapi(organizationRoutesConfig.getOrganization, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
 
-    const { error, entity: organization, membership } = await isAllowedTo(ctx, 'organization', 'read', idOrSlug);
-    if (error) return error;
+    if (!config.contextEntityTypes.includes('organization')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: organization, membership, isAllowed } = await getValidEntity('organization', 'read', idOrSlug);
+
+    if (!organization || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     const memberCounts = await memberCountsQuery('organization', 'organizationId', organization.id);
 

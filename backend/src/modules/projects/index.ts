@@ -3,9 +3,10 @@ import { db } from '#/db/db';
 import { membershipSelect, membershipsTable } from '#/db/schema/memberships';
 import { projectsTable } from '#/db/schema/projects';
 
+import { config } from 'config';
 import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
-import { isAllowedTo } from '#/lib/permission-manager';
+import { getValidEntity } from '#/lib/permission-manager';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
@@ -65,8 +66,16 @@ const projectsRoutes = app
    */
   .openapi(projectRoutesConfig.getProject, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
-    const { error, entity: project, membership } = await isAllowedTo(ctx, 'project', 'update', idOrSlug);
-    if (error) return error;
+
+    if (!config.contextEntityTypes.includes('project')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: project, isAllowed, membership } = await getValidEntity('project', 'update', idOrSlug);
+
+    if (!project || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     return ctx.json({ success: true, data: { ...project, membership } }, 200);
   })
@@ -136,8 +145,16 @@ const projectsRoutes = app
    */
   .openapi(projectRoutesConfig.updateProject, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
-    const { error, entity: project, membership } = await isAllowedTo(ctx, 'project', 'update', idOrSlug);
-    if (error) return error;
+
+    if (!config.contextEntityTypes.includes('project')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: project, membership, isAllowed } = await getValidEntity('project', 'update', idOrSlug);
+
+    if (!project || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     const { name, thumbnailUrl, slug } = ctx.req.valid('json');
 

@@ -3,12 +3,13 @@ import { db } from '#/db/db';
 import { membershipSelect, membershipsTable } from '#/db/schema/memberships';
 import { workspacesTable } from '#/db/schema/workspaces';
 
+import { config } from 'config';
 import { labelsTable } from '#/db/schema/labels';
 import { projectsTable } from '#/db/schema/projects';
 import { safeUserSelect, usersTable } from '#/db/schema/users';
 import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
-import { isAllowedTo } from '#/lib/permission-manager';
+import { getValidEntity } from '#/lib/permission-manager';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
@@ -54,8 +55,16 @@ const workspacesRoutes = app
    */
   .openapi(workspaceRoutesConfig.getWorkspace, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
-    const { error, entity: workspace, membership } = await isAllowedTo(ctx, 'workspace', 'update', idOrSlug);
-    if (error) return error;
+
+    if (!config.contextEntityTypes.includes('workspace')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: workspace, membership, isAllowed } = await getValidEntity('workspace', 'update', idOrSlug);
+
+    if (!workspace || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     const user = getContextUser();
 
@@ -149,8 +158,16 @@ const workspacesRoutes = app
    */
   .openapi(workspaceRoutesConfig.updateWorkspace, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
-    const { error, entity: workspace, membership } = await isAllowedTo(ctx, 'workspace', 'update', idOrSlug);
-    if (error) return error;
+
+    if (!config.contextEntityTypes.includes('workspace')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: workspace, membership, isAllowed } = await getValidEntity('workspace', 'update', idOrSlug);
+
+    if (!workspace || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
 
     const { name, slug, thumbnailUrl, bannerUrl } = ctx.req.valid('json');
 
