@@ -2,17 +2,24 @@ import '@blocknote/shadcn/style.css';
 import { config } from 'config';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
+import { dispatchCustomEvent } from '~/lib/custom-events';
+import { BlockNote } from '~/modules/common/blocknote';
+import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import CreateSubtaskForm from '~/modules/tasks/create-subtask-form';
 import Subtask from '~/modules/tasks/subtask';
-import { TaskBlockNote } from '~/modules/tasks/task-dropdowns/task-blocknote';
+import UppyFilePanel from '~/modules/tasks/task-dropdowns/uppy-file-panel';
+import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import type { Mode } from '~/store/theme';
 import type { Task } from '~/types/app';
+import { handleEditorFocus, updateImageSourcesFromDataUrl, useHandleUpdateHTML } from './helpers';
 import type { TaskStates } from './types';
 
 interface Props {
   task: Task;
   mode: Mode;
   state: TaskStates;
+  isSheet?: boolean;
 }
 
 const TaskContent = ({ task, mode, state }: Props) => {
@@ -20,21 +27,26 @@ const TaskContent = ({ task, mode, state }: Props) => {
   const [createSubtask, setCreateSubtask] = useState(false);
 
   const expandedStyle = 'min-h-16 [&>.bn-editor]:min-h-16 w-full bg-transparent border-none pl-9';
+  const callback = useMutateQueryData(taskKeys.list({ projectId: task.projectId, orgIdOrSlug: task.organizationId }));
 
-  // TODO put this in a helper folder?
+  const subTaskDeleteCallback = (subtaskId: string) => {
+    const { subtasks } = task;
+    // Filter out the subtask to be removed
+    const updatedSubtasks = subtasks.filter((st) => st.id !== subtaskId);
+    const updatedTask = { ...task, subtasks: updatedSubtasks };
+    callback([updatedTask], 'update');
+  };
+
+  const {
+    data: { members },
+  } = useWorkspaceQuery();
+
+  const { handleUpdateHTML } = useHandleUpdateHTML();
+  const updateDescription = (html: string) => handleUpdateHTML(task, html);
+
   useEffect(() => {
     if (state !== 'expanded') return;
-    // All elements with a data-url attribute
-    const blocks = document.querySelectorAll('[data-url]');
-    if (blocks.length < 1) return;
-
-    for (const block of blocks) {
-      const url = block.getAttribute('data-url');
-      const img = block.querySelector('img');
-
-      //set img src attribute if is inside the block
-      if (img && url) img.setAttribute('src', url);
-    }
+    updateImageSourcesFromDataUrl();
   }, [task.description, state]);
 
   return (
@@ -52,7 +64,19 @@ const TaskContent = ({ task, mode, state }: Props) => {
       ) : (
         <motion.div initial={{ y: -10 }} animate={{ y: 0 }} exit={{ y: -10 }} transition={{ duration: 0.3 }}>
           {state === 'editing' || state === 'unsaved' ? (
-            <TaskBlockNote id={task.id} projectId={task.projectId} html={task.description || ''} mode={mode} className={expandedStyle} />
+            <BlockNote
+              id={`blocknote-${task.id}`}
+              members={members}
+              defaultValue={task.description}
+              className={expandedStyle}
+              onFocus={() => handleEditorFocus(task.id)}
+              updateData={updateDescription}
+              onEnterClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' })}
+              onTextDifference={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'unsaved' })}
+              filePanel={UppyFilePanel(task.id)}
+              trailingBlock={false}
+              updateDataOnBeforeLoad
+            />
           ) : (
             <div ref={taskContentRef} className={`${expandedStyle} bn-container bn-shadcn`} data-color-scheme={mode}>
               <div
@@ -65,7 +89,7 @@ const TaskContent = ({ task, mode, state }: Props) => {
           <div id={`subtask-container-${task.id}`} className="-mx-2 mt-2 w-[calc(100%+1.25rem)]">
             <div className="flex flex-col">
               {task.subtasks.map((task) => (
-                <Subtask mode={mode} key={task.id} task={task} />
+                <Subtask mode={mode} key={task.id} task={task} members={members} removeCallback={subTaskDeleteCallback} />
               ))}
             </div>
 

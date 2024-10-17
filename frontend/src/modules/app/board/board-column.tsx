@@ -9,6 +9,7 @@ import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { type ChangeMessage, ShapeStream, type ShapeStreamOptions } from '@electric-sql/client';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { config } from 'config';
 import { toast } from 'sonner';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
@@ -20,21 +21,23 @@ import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { dialog } from '~/modules/common/dialoger/state';
 import FocusTrap from '~/modules/common/focus-trap';
-import { taskKeys, useTaskMutation } from '~/modules/common/query-client-provider/tasks';
+import { taskKeys, useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
+import { sheet } from '~/modules/common/sheeter/state';
 import CreateTaskForm from '~/modules/tasks/create-task-form';
-import { getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
+import { getRelativeTaskOrder, openTaskPreviewSheet, sortAndGetCounts } from '~/modules/tasks/helpers';
 import TaskCard from '~/modules/tasks/task';
 import type { TaskStates } from '~/modules/tasks/types';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
+import { WorkspaceBoardRoute } from '~/routes/workspaces';
 import { useGeneralStore } from '~/store/general';
 import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Column } from '~/store/workspace-ui';
 import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
-import type { Project } from '~/types/app';
+import type { Project, Task } from '~/types/app';
 import { cn } from '~/utils/cn';
 import { objectKeys } from '~/utils/object';
 import ProjectActions from './project-actions';
@@ -96,6 +99,11 @@ const taskVariants = {
 
 export function BoardColumn({ project, tasksState, settings }: BoardColumnProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { taskIdPreview } = useSearch({
+    from: WorkspaceBoardRoute.id,
+  });
+
   const defaultTaskFormRef = useRef<HTMLDivElement | null>(null);
   const afterRef = useRef<HTMLDivElement | null>(null);
   const beforeRef = useRef<HTMLDivElement | null>(null);
@@ -120,7 +128,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
   // Query tasks
   const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
 
-  const taskMutation = useTaskMutation();
+  const taskMutation = useTaskUpdateMutation();
 
   // Subscribe to task updates
   useEffect(() => {
@@ -128,6 +136,47 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
 
     const shapeStream = new ShapeStream<RawTask>(taskShape(project.id));
     const unsubscribe = shapeStream.subscribe((messages) => {
+      const createMessage = messages.find((m) => m.headers.operation === 'insert') as ChangeMessage<RawTask> | undefined;
+      if (createMessage) {
+        const value = createMessage.value;
+        queryClient.setQueryData(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }).queryKey, (data) => {
+          if (!data) return;
+          const createdTask = {
+            subtasks: [],
+          } as unknown as Task;
+          // TODO: Refactor
+          for (const key of objectKeys(value)) {
+            if (key === 'sort_order') {
+              createdTask.order = value[key];
+            } else if (key === 'organization_id') {
+              createdTask.organizationId = value[key];
+            } else if (key === 'created_at') {
+              createdTask.createdAt = value[key];
+            } else if (key === 'created_by') {
+              createdTask.createdBy = members.find((m) => m.id === value[key]) ?? null;
+            } else if (key === 'parent_id') {
+              createdTask.parentId = value[key];
+            } else if (key === 'assigned_to') {
+              createdTask.assignedTo = members.filter((m) => value[key].includes(m.id));
+            } else if (key === 'modified_at') {
+              createdTask.modifiedAt = value[key];
+            } else if (key === 'modified_by') {
+              createdTask.modifiedBy = members.find((m) => m.id === value[key]) ?? null;
+            } else if (key === 'project_id') {
+              createdTask.projectId = value[key];
+            } else if (key === 'labels') {
+              createdTask.labels = labels.filter((l) => value[key].includes(l.id));
+            } else {
+              createdTask[key] = value[key] as never;
+            }
+          }
+          return {
+            ...data,
+            items: [createdTask, ...data.items],
+          };
+        });
+      }
+
       const updateMessage = messages.find((m) => m.headers.operation === 'update') as ChangeMessage<RawTask> | undefined;
       if (updateMessage) {
         const value = updateMessage.value;
@@ -230,7 +279,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
         id: `create-task-form-${project.id}`,
         drawerOnMobile: false,
         preventEscPress: true,
-        className: 'p-0 w-auto shadow-none relative z-[50] rounded-none border-t-0 m-0 max-w-none',
+        className: 'p-0 w-auto shadow-none relative z-[104] rounded-none border-t-0 m-0 max-w-none',
         container: ref.current,
         containerBackdrop: false,
         hideClose: true,
@@ -243,6 +292,20 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
   // Hides underscroll elements
   // 4rem refers to the header height
   const stickyBackground = <div className="sm:hidden left-0 right-0 h-4 bg-background sticky top-0 z-30 -mt-4" />;
+
+  useEffect(() => {
+    if (!taskIdPreview) return;
+    const focusedTask = tasks.find((t) => t.id === taskIdPreview);
+    if (!focusedTask) return;
+    // to open sheet after initial sheet.remove triggers
+    if (taskIdPreview) {
+      if (sheet.get(`task-preview-${taskIdPreview}`)) {
+        sheet.update(`task-preview-${taskIdPreview}`, {
+          content: <TaskCard mode={mode} task={focusedTask} state="editing" isSelected={false} isFocused={true} isSheet />,
+        });
+      } else setTimeout(() => openTaskPreviewSheet(focusedTask, mode, navigate), 0);
+    }
+  }, [tasks, taskIdPreview]);
 
   useEffect(() => {
     if (isMobile && minimized) handleExpand();
@@ -337,9 +400,15 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
           ) : (
             <ScrollArea id={project.id} className="h-full mx-[-.07rem]">
               <ScrollBar />
-              <div className="z-[250]" ref={defaultTaskFormRef} />
+              <div className="z-[104]" ref={defaultTaskFormRef} />
 
-              <div className="h-full flex flex-col" id={`tasks-list-${project.id}`} ref={cardListRef}>
+              <div
+                data-show-iced={showIced}
+                data-show-accepted={showAccepted}
+                className="h-full flex flex-col group"
+                id={`tasks-list-${project.id}`}
+                ref={cardListRef}
+              >
                 {!!tasks.length && (
                   <div className="flex flex-col flex-grow">
                     <Button
@@ -347,21 +416,21 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                       variant="ghost"
                       disabled={!acceptedCount}
                       size="sm"
-                      className="flex relative justify-start w-full rounded-none gap-1 border-b border-b-green-500/10 border-t border-t-transparent ring-inset bg-green-500/5 hover:bg-green-500/10 text-green-500 text-xs -mt-[.07rem]"
+                      className="flex relative justify-start w-full rounded-none gap-1 border-b border-b-green-500/10 border-t border-t-transparent ring-inset focus-visible:ring-offset-0 bg-green-500/5 hover:bg-green-500/10 text-green-500 text-xs -mt-[.07rem]"
                     >
                       <span className="w-6 mr-1.5 text-center">{acceptedCount}</span>
                       <span>{t('app:accepted').toLowerCase()}</span>
                       {!!acceptedCount && (
                         <ChevronDown
                           size={16}
-                          className={`transition-transform absolute right-5 opacity-50 ${showAccepted ? 'rotate-180' : 'rotate-0'}`}
+                          className="transition-transform absolute right-5 opacity-50 group-data-[show-accepted=true]:rotate-180"
                         />
                       )}
                     </Button>
                     {showingTasks.map((task, index) => {
                       return (
                         <div key={task.id}>
-                          {index === firstUpstartedIndex && <div className="z-[250]" ref={beforeRef} />}
+                          {index === firstUpstartedIndex && <div className="z-[104]" ref={beforeRef} />}
                           <motion.div
                             variants={taskVariants}
                             initial={task.status === 6 || task.status === 0 ? 'hidden' : 'visible'}
@@ -392,7 +461,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                               )} */}
                             </FocusTrap>
                           </motion.div>
-                          {index === lastUpstartedIndex && <div className="z-[250]" ref={afterRef} />}
+                          {index === lastUpstartedIndex && <div className="z-[104]" ref={afterRef} />}
                         </div>
                       );
                     })}
@@ -401,15 +470,12 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                       variant="ghost"
                       disabled={!icedCount}
                       size="sm"
-                      className="flex relative justify-start w-full rounded-none gap-1 ring-inset text-sky-500 max-sm:border-b border-b-sky-500/10 bg-sky-500/5 hover:bg-sky-500/10 text-xs -mt-[.07rem]"
+                      className="flex relative justify-start w-full rounded-none gap-1 ring-inset focus-visible:ring-offset-0 text-sky-500 max-sm:border-b border-b-sky-500/10 bg-sky-500/5 hover:bg-sky-500/10 text-xs -mt-[.07rem]"
                     >
                       <span className="w-6 mr-1.5 text-center">{icedCount}</span>
                       <span> {t('app:iced').toLowerCase()}</span>
                       {!!icedCount && (
-                        <ChevronDown
-                          size={16}
-                          className={`transition-transform absolute right-5 opacity-50 ${showIced ? 'rotate-180' : 'rotate-0'}`}
-                        />
+                        <ChevronDown size={16} className="transition-transform absolute right-5 opacity-50 group-data-[show-iced=true]:rotate-180" />
                       )}
                     </Button>
                   </div>

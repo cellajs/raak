@@ -2,9 +2,11 @@ import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import type { NavigateFn } from '@tanstack/react-router';
 import { t } from 'i18next';
 import { Suspense, lazy } from 'react';
+import { toast } from 'sonner';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { orderChange } from '~/modules/common/nav-sheet/helpers';
+import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
 import { sheet } from '~/modules/common/sheeter/state';
 import type { TaskImpact, TaskType } from '~/modules/tasks/create-task-form';
 import SelectImpact, { impacts } from '~/modules/tasks/task-dropdowns/select-impact';
@@ -209,18 +211,19 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
   });
 };
 
-export const trimInlineContentText = (descriptionHtml: string) => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(descriptionHtml, 'text/html');
+export const updateImageSourcesFromDataUrl = () => {
+  // Select all elements that have a 'data-url' attribute
+  const elementsWithDataUrl = document.querySelectorAll('[data-url]');
+  // Exit early if no matching elements are found
+  if (elementsWithDataUrl.length === 0) return;
 
-  // Select all elements with the class 'bn-inline-content'
-  const inlineContents = doc.querySelectorAll('.bn-inline-content');
+  for (const element of elementsWithDataUrl) {
+    const imageUrl = element.getAttribute('data-url');
+    const imageElement = element.querySelector('img');
 
-  for (const element of inlineContents) {
-    // Trim the text and update the element's content
-    if (element.textContent) element.textContent = element.textContent.trim();
+    // Update the 'src' attribute of the image if both the URL and image exist
+    if (imageElement && imageUrl) imageElement.setAttribute('src', imageUrl);
   }
-  return doc.body.innerHTML;
 };
 
 export const handleEditorFocus = (id: string, taskToClose?: string | null) => {
@@ -228,4 +231,27 @@ export const handleEditorFocus = (id: string, taskToClose?: string | null) => {
   dispatchCustomEvent('changeSubtaskState', { taskId: id, state: 'removeEditing' });
   // Remove Task editing state if focused not task itself
   if (taskToClose) dispatchCustomEvent('changeTaskState', { taskId: taskToClose, state: 'currentState' });
+};
+
+export const useHandleUpdateHTML = () => {
+  const taskMutation = useTaskUpdateMutation();
+
+  const handleUpdateHTML = async (task: Task | Subtask, newContent: string, isSheet = false) => {
+    try {
+      // after update change task unsaved state to editing
+      const stateEvent = task.parentId ? 'changeSubtaskState' : 'changeTaskState';
+      if (!isSheet) dispatchCustomEvent(stateEvent, { taskId: task.id, state: 'editing' });
+      await taskMutation.mutateAsync({
+        id: task.id,
+        orgIdOrSlug: task.organizationId,
+        key: 'description',
+        data: newContent,
+        projectId: task.projectId,
+      });
+    } catch (err) {
+      toast.error(t('common:error.update_resource', { resource: t('app:todo') }));
+    }
+  };
+
+  return { handleUpdateHTML };
 };
