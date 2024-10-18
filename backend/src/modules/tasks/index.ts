@@ -1,5 +1,5 @@
-import { type SQL, and, eq, gte, ilike, inArray, lte, or } from 'drizzle-orm';
-import { db } from '#/db/db';
+import { type SQL, and, desc, eq, ilike, inArray } from 'drizzle-orm';
+import { coalesce, db } from '#/db/db';
 
 import type { z } from 'zod';
 import { labelsTable } from '#/db/schema/labels';
@@ -34,20 +34,20 @@ const tasksRoutes = app
     // Use body data to create a new task, add valid organization id
     const newTask: InsertTaskModel = { ...newTaskInfo, organizationId: organization.id };
 
-    const descriptionText = String(newTask.description);
+    // const descriptionText = String(newTask.description);
 
     // Create summary, expandable and keywords from description
-    const { summary, expandable, keywords } = scanTaskDescription(descriptionText);
-    newTask.summary = summary;
-    newTask.expandable = expandable;
-    newTask.keywords = keywords;
+    // const { summary, expandable, keywords } = scanTaskDescription(descriptionText);
+    // newTask.summary = summary;
+    // newTask.expandable = expandable;
+    // newTask.keywords = keywords;
 
     const [createdTask] = await db.insert(tasksTable).values(newTask).returning();
 
     logEvent('Task created', { task: createdTask.id });
 
     const uniqueAssignedUserIds = [...new Set(createdTask.assignedTo)];
-    const assignedTo = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)]);
+    const assignedTo = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)], 'limited');
     const labels = await db.select().from(labelsTable).where(inArray(labelsTable.id, createdTask.labels));
 
     const finalTask = {
@@ -92,18 +92,21 @@ const tasksRoutes = app
         modifiedAt: tasksTable.modifiedAt,
       },
       sort,
-      tasksTable.createdAt,
+      tasksTable.status,
       order,
     );
 
     const tasks = await db
       .select()
       .from(tasksQuery.as('tasks'))
-      .orderBy(orderColumn)
+      .orderBy(
+        // Sort default by status first, higher status comes first
+        orderColumn,
+        // Then sort by order, with null values handled
+        desc(coalesce(tasksTable.order, 0)),
+      )
       .limit(Number(limit))
-      .offset(Number(offset))
-      // all tasks with status under 6 and with status 6 modified within the last 30 days
-      .where(or(lte(tasksTable.status, 5), and(eq(tasksTable.status, 6), gte(tasksTable.modifiedAt, getDateFromToday(30)))));
+      .offset(Number(offset));
 
     // Create a set of unique user IDs from the tasks, so we can retrieve them from the database
     const uniqueAssignedUserIds = Array.from(
@@ -118,7 +121,7 @@ const tasksRoutes = app
     // Create a set of unique label IDs from the tasks
     const uniqueLabelIds = Array.from(new Set([...tasks.flatMap((t) => t.labels)]));
 
-    const users = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)]);
+    const users = await getUsersByConditions([inArray(usersTable.id, uniqueAssignedUserIds)], 'limited');
     const labels = await db.select().from(labelsTable).where(inArray(labelsTable.id, uniqueLabelIds));
 
     // Create a map for quick access to users by their ID
@@ -137,9 +140,20 @@ const tasksRoutes = app
           labels: labels.filter((m) => task.labels.includes(m.id)),
         };
       })
-      .filter((task) => !task.parentId); // Filter out subtasks
+      .filter((t) => {
+        if (t.parentId) return false;
+        return !(t.status === 6 && t.modifiedAt && t.modifiedAt >= getDateFromToday(30));
+      }); // Filter out subtasks and tasks accepted over 30 days ago
+    // TODO in future, add a query param to tell what should be cut off date
 
-    return ctx.json({ success: true, data: { items: finalTasks, total: finalTasks.length } }, 200);
+    const counts = {
+      iced: finalTasks.filter((t) => t.status === 0).length,
+      accepted: tasks.filter((t) => t.status === 6).length,
+      acceptedRecent: finalTasks.filter((t) => t.status === 6).length,
+      tasks: tasks.length,
+    };
+
+    return ctx.json({ success: true, data: { items: finalTasks, total: finalTasks.length, counts } }, 200);
   })
   /*
    * Update task
@@ -148,7 +162,7 @@ const tasksRoutes = app
     const id = ctx.req.param('id');
     const { key, data, order } = ctx.req.valid('json');
 
-    const allowedKeys = ['labels', 'assignedTo', 'type', 'status', 'description', 'impact'];
+    const allowedKeys = ['labels', 'assignedTo', 'type', 'status', 'description', 'impact', 'order'];
 
     // Validate request
     if (!id) return errorResponse(ctx, 404, 'not_found', 'warn');

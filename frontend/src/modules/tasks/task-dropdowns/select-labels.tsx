@@ -7,9 +7,8 @@ import { toast } from 'sonner';
 import { createLabel, updateLabel } from '~/api/labels.ts';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
-import { queryClient } from '~/lib/router';
 import { Kbd } from '~/modules/common/kbd.tsx';
-import { useTaskMutation } from '~/modules/common/query-client-provider/tasks';
+import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Badge } from '~/modules/ui/badge.tsx';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandLoading } from '~/modules/ui/command.tsx';
@@ -47,12 +46,12 @@ const SetLabels = ({ value, projectId, creationValueChange, triggerWidth = 320 }
     data: { workspace, projects, labels },
   } = useWorkspaceQuery();
   const callback = useMutateQueryData(['labels', projects.map((p) => p.id).join('_')]);
-  const taskMutation = useTaskMutation();
+  const taskMutation = useTaskUpdateMutation();
   const focusedTaskId = useMemo(() => (taskIdPreview ? taskIdPreview : storeFocusedId), [storeFocusedId, taskIdPreview]);
 
   const [selectedLabels, setSelectedLabels] = useState<Label[]>(value);
   const [searchValue, setSearchValue] = useState('');
-  const [isRecent, setIsRecent] = useState(!isMobile);
+  const [isRecent, setIsRecent] = useState(!!creationValueChange || !isMobile);
 
   const orderedLabels = useMemo(
     () => labels.filter((l) => l.projectId === projectId).sort((a, b) => new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime()),
@@ -75,16 +74,13 @@ const SetLabels = ({ value, projectId, creationValueChange, triggerWidth = 320 }
     if (!focusedTaskId) return;
 
     try {
-      const labelIds = labels.map((l) => l.id);
       await taskMutation.mutateAsync({
         id: focusedTaskId,
         orgIdOrSlug: workspace.organizationId,
         key: 'labels',
-        data: labelIds,
+        data: labels,
         projectId,
       });
-      if (taskIdPreview) await queryClient.invalidateQueries({ refetchType: 'active' });
-
       return;
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));

@@ -1,5 +1,5 @@
 import { cva } from 'class-variance-authority';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
@@ -55,7 +55,19 @@ interface TaskProps {
   style?: React.CSSProperties;
 }
 
-export default function TaskCard({ style, task, mode, isSelected, isFocused, state, isSheet }: TaskProps) {
+function areEqual(prevProps: TaskProps, nextProps: TaskProps) {
+  // Compare to decide if component should rerender
+  return (
+    prevProps.task === nextProps.task &&
+    prevProps.mode === nextProps.mode &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isFocused === nextProps.isFocused &&
+    prevProps.state === nextProps.state &&
+    prevProps.isSheet === nextProps.isSheet
+  );
+}
+
+const TaskCard = memo(function TaskCard({ style, task, mode, isSelected, isFocused, state, isSheet }: TaskProps) {
   const taskRef = useRef<HTMLDivElement>(null);
   const taskDragRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -169,7 +181,7 @@ export default function TaskCard({ style, task, mode, isSelected, isFocused, sta
         <CardContent id={`${task.id}-content`} ref={taskDragRef} className="p-2 sm:pr-3 space-between flex flex-col relative">
           {/* To prevent on expand animation */}
           <motion.div className="flex flex-col" layout transition={{ duration: 0 }}>
-            {state !== 'folded' && <TaskHeader task={task} state={state} mode={mode} isSheet={isSheet} />}
+            {state !== 'folded' && <TaskHeader task={task} state={state} isSheet={isSheet} />}
             <div className="flex flex-row gap-1 w-full">
               {state === 'folded' && (
                 <Button
@@ -183,7 +195,7 @@ export default function TaskCard({ style, task, mode, isSelected, isFocused, sta
                   {taskTypes[taskTypes.findIndex((t) => t.value === task.type)]?.icon() || ''}
                 </Button>
               )}
-              <TaskDescription mode={mode} task={task} state={state} />
+              <TaskDescription mode={mode} task={task} state={state} isSheet={isSheet} />
             </div>
             <TaskFooter task={task} isSheet={isSheet} isSelected={isSelected} isStatusDropdownOpen={isStatusDropdownOpen} />
           </motion.div>
@@ -192,4 +204,6 @@ export default function TaskCard({ style, task, mode, isSelected, isFocused, sta
       </Card>
     </motion.div>
   );
-}
+}, areEqual);
+
+export default TaskCard;
