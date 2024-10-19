@@ -1,10 +1,11 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
-import type { NavigateFn } from '@tanstack/react-router';
 import { t } from 'i18next';
 import { Suspense, lazy } from 'react';
+import { toast } from 'sonner';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { orderChange } from '~/modules/common/nav-sheet/helpers';
+import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
 import { sheet } from '~/modules/common/sheeter/state';
 import type { TaskImpact, TaskType } from '~/modules/tasks/create-task-form';
 import SelectImpact, { impacts } from '~/modules/tasks/task-dropdowns/select-impact';
@@ -12,28 +13,16 @@ import SetLabels from '~/modules/tasks/task-dropdowns/select-labels';
 import AssignMembers from '~/modules/tasks/task-dropdowns/select-members';
 import SelectStatus, { taskStatuses, type TaskStatus } from '~/modules/tasks/task-dropdowns/select-status';
 import SelectTaskType from '~/modules/tasks/task-dropdowns/select-task-type';
-import type { Mode } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Project, Subtask, Task } from '~/types/app';
 import { dateIsRecent } from '~/utils/date-is-recent';
 
-const TaskCard = lazy(() => import('~/modules/tasks/task'));
+const TaskSheet = lazy(() => import('~/modules/tasks/task-sheet'));
 
-export const openTaskPreviewSheet = (task: Task, mode: Mode, navigate: NavigateFn, addSearch = false) => {
-  if (addSearch) {
-    navigate({
-      to: '.',
-      replace: true,
-      resetScroll: false,
-      search: (prev) => ({
-        ...prev,
-        ...{ taskIdPreview: task.id },
-      }),
-    });
-  }
+export const openTaskPreviewSheet = (task: Task) => {
   sheet.create(
     <Suspense>
-      <TaskCard mode={mode} task={task} state="editing" isSelected={false} isFocused={true} isSheet />
+      <TaskSheet task={task} />
     </Suspense>,
     {
       className: 'max-w-full lg:max-w-4xl px-0',
@@ -41,21 +30,9 @@ export const openTaskPreviewSheet = (task: Task, mode: Mode, navigate: NavigateF
       id: `task-preview-${task.id}`,
       hideClose: false,
       side: 'right',
-      removeCallback: () => {
-        navigate({
-          to: '.',
-          replace: true,
-          resetScroll: false,
-          search: (prev) => {
-            const { taskIdPreview: _, ...nextSearch } = prev;
-            return nextSearch;
-          },
-        });
-        sheet.remove(`task-preview-${task.id}`);
-      },
+      removeCallback: () => sheet.remove(`task-preview-${task.id}`),
     },
   );
-  setTaskCardFocus(`sheet-card-${task.id}`);
 };
 
 export const setTaskCardFocus = (id: string) => {
@@ -107,7 +84,7 @@ export const getRelativeTaskOrder = (edge: Edge, tasks: Task[], order: number, i
 };
 
 // To sort Subtasks by its order
-const sortSubtaskOrder = (task1: Pick<Task, 'order'>, task2: Pick<Task, 'order'>, reverse?: boolean) => {
+export const sortSubtaskOrder = (task1: Pick<Task, 'order'>, task2: Pick<Task, 'order'>, reverse?: boolean) => {
   if (task1.order !== null && task2.order !== null) return reverse ? task2.order - task1.order : task1.order - task2.order;
   // order is null
   return 0;
@@ -167,7 +144,7 @@ export const sortAndGetCounts = (tasks: Task[], showAccepted: boolean, showIced:
   let acceptedCount = 0;
   let icedCount = 0;
 
-  const filteredTasks = tasks.filter((task) => {
+  const splitTasks = tasks.filter((task) => {
     // Count accepted in past 30 days and iced tasks
     if (task.status === 6) acceptedCount += 1;
     if (task.status === 0) icedCount += 1;
@@ -178,9 +155,9 @@ export const sortAndGetCounts = (tasks: Task[], showAccepted: boolean, showIced:
   });
 
   // Sort the main tasks
-  const sortedTasks = filteredTasks.sort((a, b) => sortTaskOrder(a, b));
+  const filteredTasks = splitTasks.sort((a, b) => sortTaskOrder(a, b));
 
-  return { sortedTasks, acceptedCount, icedCount };
+  return { filteredTasks, acceptedCount, icedCount };
 };
 
 export const configureForExport = (tasks: Task[], projects: Omit<Project, 'counts'>[]): Task[] => {
@@ -209,18 +186,19 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
   });
 };
 
-export const trimInlineContentText = (descriptionHtml: string) => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(descriptionHtml, 'text/html');
+export const updateImageSourcesFromDataUrl = () => {
+  // Select all elements that have a 'data-url' attribute
+  const elementsWithDataUrl = document.querySelectorAll('[data-url]');
+  // Exit early if no matching elements are found
+  if (elementsWithDataUrl.length === 0) return;
 
-  // Select all elements with the class 'bn-inline-content'
-  const inlineContents = doc.querySelectorAll('.bn-inline-content');
+  for (const element of elementsWithDataUrl) {
+    const imageUrl = element.getAttribute('data-url');
+    const imageElement = element.querySelector('img');
 
-  for (const element of inlineContents) {
-    // Trim the text and update the element's content
-    if (element.textContent) element.textContent = element.textContent.trim();
+    // Update the 'src' attribute of the image if both the URL and image exist
+    if (imageElement && imageUrl) imageElement.setAttribute('src', imageUrl);
   }
-  return doc.body.innerHTML;
 };
 
 export const handleEditorFocus = (id: string, taskToClose?: string | null) => {
@@ -228,4 +206,27 @@ export const handleEditorFocus = (id: string, taskToClose?: string | null) => {
   dispatchCustomEvent('changeSubtaskState', { taskId: id, state: 'removeEditing' });
   // Remove Task editing state if focused not task itself
   if (taskToClose) dispatchCustomEvent('changeTaskState', { taskId: taskToClose, state: 'currentState' });
+};
+
+export const useHandleUpdateHTML = () => {
+  const taskMutation = useTaskUpdateMutation();
+
+  const handleUpdateHTML = async (task: Task | Subtask, newContent: string, isSheet = false) => {
+    try {
+      // after update change task unsaved state to editing
+      const stateEvent = task.parentId ? 'changeSubtaskState' : 'changeTaskState';
+      if (!isSheet) dispatchCustomEvent(stateEvent, { taskId: task.id, state: 'editing' });
+      await taskMutation.mutateAsync({
+        id: task.id,
+        orgIdOrSlug: task.organizationId,
+        key: 'description',
+        data: newContent,
+        projectId: task.projectId,
+      });
+    } catch (err) {
+      toast.error(t('common:error.update_resource', { resource: t('app:todo') }));
+    }
+  };
+
+  return { handleUpdateHTML };
 };

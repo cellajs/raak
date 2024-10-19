@@ -1,5 +1,3 @@
-import { useNavigate } from '@tanstack/react-router';
-import { motion } from 'framer-motion';
 import { ChevronUp, Maximize2, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +19,6 @@ import type { TaskStates } from './types';
 export const TaskHeader = ({
   task,
   state,
-  mode,
   isSheet,
   onRemove,
 }: {
@@ -33,7 +30,6 @@ export const TaskHeader = ({
 }) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
-  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [saveClicked, setSaveClicked] = useState(false);
 
@@ -59,13 +55,7 @@ export const TaskHeader = ({
           {taskTypes[taskTypes.findIndex((t) => t.value === task.type)]?.icon() || ''}
         </Button>
       )}
-      <motion.div
-        className="flex flex-row gap-1 w-full items-center ml-1"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="flex flex-row gap-1 w-full items-center ml-1">
         {!isSubtask && task.createdBy && (
           <>
             <AvatarWrap
@@ -118,15 +108,7 @@ export const TaskHeader = ({
 
         {!isSubtask && !isSheet && (
           <TooltipButton toolTipContent={t('common:expand')} side="bottom" sideOffset={5} hideWhenDetached>
-            <Button
-              onClick={() => {
-                openTaskPreviewSheet(task, mode ?? 'dark', navigate, true);
-              }}
-              aria-label="OpenTaskSheet"
-              variant="ghost"
-              size="xs"
-              className="w-8 h-8"
-            >
+            <Button onClick={() => openTaskPreviewSheet(task)} aria-label="OpenTaskSheet" variant="ghost" size="xs" className="w-8 h-8">
               <Maximize2 size={14} />
             </Button>
           </TooltipButton>
@@ -157,7 +139,7 @@ export const TaskHeader = ({
             </Button>
           </TooltipButton>
         )}
-      </motion.div>
+      </div>
     </StickyBox>
   );
 };

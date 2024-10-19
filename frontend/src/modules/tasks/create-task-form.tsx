@@ -7,37 +7,36 @@ import { z } from 'zod';
 import { useSearch } from '@tanstack/react-router';
 import { ChevronDown, Tag, UserX, X } from 'lucide-react';
 import { type LegacyRef, useMemo } from 'react';
-import { toast } from 'sonner';
-import { createTask } from '~/api/tasks.ts';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { useMeasure } from '~/hooks/use-measure';
-import { queryClient } from '~/lib/router';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
+import { BlockNote } from '~/modules/common/blocknote';
 import { dialog } from '~/modules/common/dialoger/state.ts';
 import { dropdowner } from '~/modules/common/dropdowner/state.ts';
-import { extractUniqueWordsFromHTML, getNewTaskOrder } from '~/modules/tasks/helpers';
+import { useTaskCreateMutation } from '~/modules/common/query-client-provider/tasks';
+import { getNewTaskOrder, handleEditorFocus } from '~/modules/tasks/helpers';
 import { NotSelected } from '~/modules/tasks/task-dropdowns/impact-icons/not-selected';
 import SelectImpact, { impacts } from '~/modules/tasks/task-dropdowns/select-impact';
 import SetLabels from '~/modules/tasks/task-dropdowns/select-labels';
 import AssignMembers from '~/modules/tasks/task-dropdowns/select-members';
 import SelectStatus, { type TaskStatus, taskStatuses } from '~/modules/tasks/task-dropdowns/select-status';
 import { taskTypes } from '~/modules/tasks/task-dropdowns/select-task-type';
-import { TaskBlockNote } from '~/modules/tasks/task-dropdowns/task-blocknote';
+import UppyFilePanel from '~/modules/tasks/task-dropdowns/uppy-file-panel';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/form';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
+import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceRoute } from '~/routes/workspaces';
-import { useThemeStore } from '~/store/theme.ts';
 import { useUserStore } from '~/store/user.ts';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Label, Task } from '~/types/app';
 import type { Member } from '~/types/common';
 import { cn } from '~/utils/cn';
 import { nanoid } from '~/utils/nanoid';
+import { scanTaskDescription } from '#/modules/tasks/helpers';
 import { createTaskSchema } from '#/modules/tasks/schema';
-import { useWorkspaceQuery } from '../workspaces/helpers/use-workspace';
 
 export type TaskType = 'feature' | 'chore' | 'bug';
 export type TaskImpact = 0 | 1 | 2 | 3 | null;
@@ -57,6 +56,7 @@ const formSchema = z.object({
     labels: true,
     assignedTo: true,
   }).shape,
+  id: z.string(),
   assignedTo: z.array(
     z.object({
       id: z.string(),
@@ -89,7 +89,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   onCloseForm,
 }) => {
   const { t } = useTranslation();
-  const { mode } = useThemeStore();
   const { user } = useUserStore();
   const { focusedTaskId } = useWorkspaceStore();
   const { project } = useSearch({ from: WorkspaceRoute.id });
@@ -97,15 +96,19 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   const projectIdOrSlug = useMemo(() => project ?? passedProjectIdOrSlug, [project, passedProjectIdOrSlug]);
 
   const {
-    data: { projects },
+    data: { projects, members },
   } = useWorkspaceQuery();
   const { id: projectId, organizationId } = projects.find((p) => p.id === projectIdOrSlug || p.slug === projectIdOrSlug) ?? projects[0];
 
   const defaultId = nanoid();
   const { ref, bounds } = useMeasure();
+  const taskMutation = useTaskCreateMutation();
 
   const handleCloseForm = () => {
-    if (isDialog) dialog.remove(false, `create-task-form-${projectId}`);
+    if (isDialog) {
+      if (passedProjectIdOrSlug === '') dialog.remove(false, 'workspace-add-task');
+      else dialog.remove(false, `create-task-form-${projectId}`);
+    }
     onCloseForm?.();
   };
 
@@ -136,13 +139,15 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   // Form with draft in local storage
   const form = useFormWithDraft<FormValues>(`create-task-${projectId}`, formOptions);
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
+    const { summary, keywords, expandable } = scanTaskDescription(values.description);
+
     const newTask = {
       id: values.id,
       description: values.description,
-      summary: values.summary,
-      expandable: values.expandable,
-      keywords: extractUniqueWordsFromHTML(values.description),
+      summary: values.summary || summary,
+      expandable: values.expandable || expandable,
+      keywords: values.keywords || keywords,
       type: values.type as TaskType,
       impact: values.impact as TaskImpact,
       labels: values.labels.map((label) => label.id),
@@ -154,15 +159,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
       order: getNewTaskOrder(values.status, tasks),
     };
 
-    createTask(newTask)
-      .then(async (resp) => {
-        if (!resp) toast.error(t('common:error.create_resource', { resource: t('app:task') }));
-        form.reset();
-        toast.success(t('common:success.create_resource', { resource: t('app:task') }));
-        handleCloseForm();
-        await queryClient.invalidateQueries({ refetchType: 'active' });
-      })
-      .catch(() => toast.error(t('common:error.create_resource', { resource: t('app:task') })));
+    taskMutation.mutate(newTask);
+    form.reset();
+    handleCloseForm();
   };
 
   // default value in blocknote <p class="bn-inline-content"></p> so check if there it's only one
@@ -188,6 +187,8 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     return true;
   };
 
+  if (form.loading) return null;
+
   return (
     <Form {...form}>
       <form
@@ -203,16 +204,18 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
             return (
               <FormItem>
                 <FormControl>
-                  <TaskBlockNote
-                    id={defaultId}
+                  <BlockNote
+                    id={`blocknote-${defaultId}`}
+                    members={members}
+                    defaultValue={value}
                     className="min-h-16 [&>.bn-editor]:min-h-16"
-                    projectId={projectId}
-                    html={value}
+                    onFocus={() => handleEditorFocus(defaultId, focusedTaskId)}
+                    updateData={onChange}
                     onChange={onChange}
-                    taskToClose={focusedTaskId}
+                    filePanel={UppyFilePanel(defaultId)}
+                    trailingBlock={false}
                     onEnterClick={form.handleSubmit(onSubmit)}
                     onEscapeClick={handleCloseForm}
-                    mode={mode}
                   />
                 </FormControl>
                 <FormMessage />
@@ -389,7 +392,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                           organizationId={organizationId}
                           creationValueChange={onChange}
                         />,
-                        { id: `labels-${defaultId}`, trigger: event.currentTarget },
+                        { id: `labels-${defaultId}`, trigger: event.currentTarget, modal: false },
                       );
                     }}
                   >
@@ -407,8 +410,20 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                                   'opacity-70 hover:opacity-100 rounded-full w-5 h-5 focus-visible:ring-offset-0 active:translate-y-0',
                                 )}
                                 onClick={(e) => {
+                                  e.stopPropagation();
                                   e.preventDefault();
                                   onChange(value.filter((l) => l.name !== name));
+                                  dropdowner.updateOpenDropDown({
+                                    content: (
+                                      <SetLabels
+                                        value={value.filter((l) => l.name !== name) as Label[]}
+                                        triggerWidth={bounds.width - 3}
+                                        projectId={projectId}
+                                        organizationId={organizationId}
+                                        creationValueChange={onChange}
+                                      />
+                                    ),
+                                  });
                                 }}
                                 onKeyDown={() => {}}
                               >

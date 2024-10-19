@@ -4,25 +4,22 @@ import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
-import { queryClient } from '~/lib/router';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { Kbd } from '~/modules/common/kbd';
-import { useTaskMutation } from '~/modules/common/query-client-provider/tasks';
+import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/modules/ui/command';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceRoute } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
-import type { User } from '~/types/common';
-
-type AssignableMember = Omit<User, 'counts'>;
+import type { LimitedUser } from '~/types/common';
 
 interface AssignMembersProps {
-  value: AssignableMember[];
+  value: LimitedUser[];
   projectId: string;
   triggerWidth?: number;
-  creationValueChange?: (users: AssignableMember[]) => void;
+  creationValueChange?: (users: LimitedUser[]) => void;
 }
 
 const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 320 }: AssignMembersProps) => {
@@ -35,12 +32,12 @@ const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 3
   const {
     data: { workspace, members },
   } = useWorkspaceQuery();
-  const [selectedMembers, setSelectedMembers] = useState<AssignableMember[]>(value);
+  const [selectedMembers, setSelectedMembers] = useState<LimitedUser[]>(value);
   const [searchValue, setSearchValue] = useState('');
   const [showAll, setShowAll] = useState(false);
   const isMobile = useBreakpoints('max', 'sm');
   const inputRef = useRef<HTMLInputElement>(null);
-  const taskMutation = useTaskMutation();
+  const taskMutation = useTaskUpdateMutation();
   const focusedTaskId = useMemo(() => (taskIdPreview ? taskIdPreview : storeFocusedId), [storeFocusedId, taskIdPreview]);
 
   const projectMembers = members.filter((m) => m.membership.projectId === projectId);
@@ -57,7 +54,7 @@ const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 3
     return sortedMembers.slice(0, 6);
   }, [showAll, searchValue, sortedMembers]);
 
-  const changeAssignedTo = async (members: AssignableMember[]) => {
+  const changeAssignedTo = async (members: LimitedUser[]) => {
     if (!focusedTaskId) return;
 
     try {
@@ -65,10 +62,9 @@ const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 3
         id: focusedTaskId,
         orgIdOrSlug: workspace.organizationId,
         key: 'assignedTo',
-        data: members.map((user) => user.id),
+        data: members,
         projectId,
       });
-      if (taskIdPreview) await queryClient.invalidateQueries({ refetchType: 'active' });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
     }
@@ -99,7 +95,8 @@ const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 3
     <Command className="relative rounded-lg max-h-[44vh] overflow-y-auto" style={{ width: `${triggerWidth}px` }}>
       <CommandInput
         ref={inputRef}
-        className="leading-normal focus-visible:ring-transparent border-t-0 border-x-0 border-b-1 rounded-none max-sm:hidden min-h-10"
+        wrapClassName="max-sm:hidden"
+        className="leading-normal focus-visible:ring-transparent border-t-0 border-x-0 border-b-1 rounded-none min-h-10"
         placeholder={t('app:placeholder.assign')}
         value={searchValue}
         autoFocus={true}
@@ -137,7 +134,6 @@ const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 3
                 value={user.id}
                 onSelect={(id) => {
                   handleSelectClick(id);
-                  dropdowner.remove();
                   setSearchValue('');
                 }}
                 className="group rounded-md flex gap-2 justify-between items-center w-full leading-normal"

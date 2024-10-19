@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useSearch } from '@tanstack/react-router';
 import { Bird, Redo } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,12 +22,9 @@ import { queryClient } from '~/lib/router';
 import WorkspaceActions from '~/modules/app/board/workspace-actions';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { taskKeys } from '~/modules/common/query-client-provider/tasks';
-import { sheet } from '~/modules/common/sheeter/state';
-import { handleTaskDropDownClick, openTaskPreviewSheet, setTaskCardFocus, sortAndGetCounts } from '~/modules/tasks/helpers';
-import TaskCard from '~/modules/tasks/task';
+import { handleTaskDropDownClick, setTaskCardFocus, sortAndGetCounts } from '~/modules/tasks/helpers';
 import type { TaskCardToggleSelectEvent, TaskStates, TaskStatesChangeEvent } from '~/modules/tasks/types';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
-import { useThemeStore } from '~/store/theme';
 import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
 
 // TODO empty space width should be dynamic based on window width and amount of projects and width of each project?
@@ -119,8 +116,6 @@ function BoardDesktop({
 
 export default function Board() {
   const { t } = useTranslation();
-  const { mode } = useThemeStore();
-  const navigate = useNavigate();
   const { focusedTaskId, selectedTasks, setSearchQuery, setSelectedTasks } = useWorkspaceStore();
   const prevFocusedRef = useRef<string | null>(focusedTaskId);
   const {
@@ -132,7 +127,7 @@ export default function Board() {
 
   const [tasksState, setTasksState] = useState<Record<string, TaskStates>>({});
 
-  const { project, q, taskIdPreview } = useSearch({
+  const { project, q } = useSearch({
     from: WorkspaceBoardRoute.id,
   });
 
@@ -151,10 +146,8 @@ export default function Board() {
     });
   }, [queries]);
 
-  const [currentTask] = useMemo(() => {
-    const taskId = taskIdPreview ? taskIdPreview : focusedTaskId;
-    return tasks.filter((t) => t.id === taskId);
-  }, [tasks, focusedTaskId, taskIdPreview]);
+  // TODO perhaps move this out of the component together with all hotkeys?
+  const [currentTask] = useMemo(() => tasks.filter((t) => t.id === focusedTaskId), [tasks, focusedTaskId]);
 
   const handleVerticalArrowKeyDown = async (event: KeyboardEvent) => {
     if (!projects.length || !tasks.length) return;
@@ -170,12 +163,12 @@ export default function Board() {
     const { expandAccepted, expandIced } = (workspaces[workspace.id] && workspaces[workspace.id][currentProject.id]) || defaultColumnValues;
 
     // Filter and sort tasks for the current project
-    const filteredTasks = tasks.filter((t) => t.projectId === currentProject.id);
-    const { sortedTasks } = sortAndGetCounts(filteredTasks, expandAccepted, expandIced);
+    const projectTasks = tasks.filter((t) => t.projectId === currentProject.id);
+    const { filteredTasks } = sortAndGetCounts(projectTasks, expandAccepted, expandIced);
 
-    const taskIndex = focusedTaskId ? sortedTasks.findIndex((t) => t.id === focusedTaskId) : 0;
+    const taskIndex = focusedTaskId ? filteredTasks.findIndex((t) => t.id === focusedTaskId) : 0;
     // Ensure the next task in the direction exists
-    const nextTask = sortedTasks[taskIndex + direction];
+    const nextTask = filteredTasks[taskIndex + direction];
     if (!nextTask) return;
 
     setTaskCardFocus(nextTask.id);
@@ -198,7 +191,7 @@ export default function Board() {
     const { expandAccepted } = (workspaces[workspace.id] && workspaces[workspace.id][nextProject.id]) || defaultColumnValues;
     const filteredTasks = tasks.filter((t) => t.projectId === nextProject.id);
 
-    const [firstTask] = sortAndGetCounts(filteredTasks, expandAccepted, false).sortedTasks;
+    const [firstTask] = sortAndGetCounts(filteredTasks, expandAccepted, false).filteredTasks;
     if (!firstTask) return;
 
     // Set focus on the first task of the project
@@ -326,17 +319,8 @@ export default function Board() {
   }, [focusedTaskId, tasksState, setTaskState]);
 
   useEffect(() => {
-    if (!currentTask) return;
     if (q?.length) setSearchQuery(q);
-    // to open sheet after initial sheet.remove triggers
-    if (taskIdPreview) {
-      if (sheet.get(`task-preview-${taskIdPreview}`)) {
-        sheet.update(`task-preview-${taskIdPreview}`, {
-          content: <TaskCard mode={mode} task={currentTask} state="editing" isSelected={false} isFocused={true} isSheet />,
-        });
-      } else setTimeout(() => openTaskPreviewSheet(currentTask, mode, navigate), 0);
-    }
-  }, [currentTask]);
+  }, []);
 
   return (
     <>

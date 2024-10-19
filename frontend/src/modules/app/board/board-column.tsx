@@ -1,5 +1,5 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { Reorder } from 'framer-motion';
 import { ChevronDown, Palmtree, Search, Undo } from 'lucide-react';
 import { type MutableRefObject, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { type ChangeMessage, ShapeStream, type ShapeStreamOptions } from '@electric-sql/client';
+import { useSearch } from '@tanstack/react-router';
 import { config } from 'config';
 import { toast } from 'sonner';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
@@ -20,21 +21,24 @@ import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { dialog } from '~/modules/common/dialoger/state';
 import FocusTrap from '~/modules/common/focus-trap';
-import { taskKeys, useTaskMutation } from '~/modules/common/query-client-provider/tasks';
+import { taskKeys, useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
+import { sheet } from '~/modules/common/sheeter/state';
 import CreateTaskForm from '~/modules/tasks/create-task-form';
-import { getRelativeTaskOrder, sortAndGetCounts } from '~/modules/tasks/helpers';
+import { getRelativeTaskOrder, openTaskPreviewSheet, sortAndGetCounts } from '~/modules/tasks/helpers';
 import TaskCard from '~/modules/tasks/task';
+import TaskSheet from '~/modules/tasks/task-sheet';
 import type { TaskStates } from '~/modules/tasks/types';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
+import { WorkspaceBoardRoute } from '~/routes/workspaces';
 import { useGeneralStore } from '~/store/general';
 import { useNavigationStore } from '~/store/navigation';
 import { useThemeStore } from '~/store/theme';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Column } from '~/store/workspace-ui';
 import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
-import type { Project } from '~/types/app';
+import type { Project, Task } from '~/types/app';
 import { cn } from '~/utils/cn';
 import { objectKeys } from '~/utils/object';
 import ProjectActions from './project-actions';
@@ -88,17 +92,13 @@ export const tasksQueryOptions = ({ projectId, orgIdOrSlug }: GetTasksParams) =>
   });
 };
 
-const taskVariants = {
-  hidden: { opacity: 0, height: 0 },
-  visible: { opacity: 1, height: 'auto' },
-  exit: { opacity: 0, height: 0 },
-};
-
 export function BoardColumn({ project, tasksState, settings }: BoardColumnProps) {
   const { t } = useTranslation();
+  const { taskIdPreview } = useSearch({
+    from: WorkspaceBoardRoute.id,
+  });
+
   const defaultTaskFormRef = useRef<HTMLDivElement | null>(null);
-  const afterRef = useRef<HTMLDivElement | null>(null);
-  const beforeRef = useRef<HTMLDivElement | null>(null);
   const columnRef = useRef<HTMLDivElement | null>(null);
   const cardListRef = useRef<HTMLDivElement | null>(null);
 
@@ -120,7 +120,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
   // Query tasks
   const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
 
-  const taskMutation = useTaskMutation();
+  const taskMutation = useTaskUpdateMutation();
 
   // Subscribe to task updates
   useEffect(() => {
@@ -128,6 +128,47 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
 
     const shapeStream = new ShapeStream<RawTask>(taskShape(project.id));
     const unsubscribe = shapeStream.subscribe((messages) => {
+      const createMessage = messages.find((m) => m.headers.operation === 'insert') as ChangeMessage<RawTask> | undefined;
+      if (createMessage) {
+        const value = createMessage.value;
+        queryClient.setQueryData(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }).queryKey, (data) => {
+          if (!data) return;
+          const createdTask = {
+            subtasks: [],
+          } as unknown as Task;
+          // TODO: Refactor
+          for (const key of objectKeys(value)) {
+            if (key === 'sort_order') {
+              createdTask.order = value[key];
+            } else if (key === 'organization_id') {
+              createdTask.organizationId = value[key];
+            } else if (key === 'created_at') {
+              createdTask.createdAt = value[key];
+            } else if (key === 'created_by') {
+              createdTask.createdBy = members.find((m) => m.id === value[key]) ?? null;
+            } else if (key === 'parent_id') {
+              createdTask.parentId = value[key];
+            } else if (key === 'assigned_to') {
+              createdTask.assignedTo = members.filter((m) => value[key].includes(m.id));
+            } else if (key === 'modified_at') {
+              createdTask.modifiedAt = value[key];
+            } else if (key === 'modified_by') {
+              createdTask.modifiedBy = members.find((m) => m.id === value[key]) ?? null;
+            } else if (key === 'project_id') {
+              createdTask.projectId = value[key];
+            } else if (key === 'labels') {
+              createdTask.labels = labels.filter((l) => value[key].includes(l.id));
+            } else {
+              createdTask[key] = value[key] as never;
+            }
+          }
+          return {
+            ...data,
+            items: [createdTask, ...data.items],
+          };
+        });
+      }
+
       const updateMessage = messages.find((m) => m.headers.operation === 'update') as ChangeMessage<RawTask> | undefined;
       if (updateMessage) {
         const value = updateMessage.value;
@@ -180,20 +221,16 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
     };
   }, [networkMode]);
 
-  const tasks = useMemo(() => {
+  const { filteredTasks, acceptedCount, icedCount } = useMemo(() => {
+    // Get the tasks from the data or default to an empty array
     const respTasks = data?.items || [];
-    if (!searchQuery.length) return respTasks;
-    return respTasks.filter((t) => t.keywords.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [data, searchQuery]);
 
-  const {
-    sortedTasks: showingTasks,
-    acceptedCount,
-    icedCount,
-  } = useMemo(() => sortAndGetCounts(tasks, showAccepted, showIced), [tasks, showAccepted, showIced]);
+    // Filter tasks based on the search query
+    const filteredTasks = searchQuery.length ? respTasks.filter((t) => t.keywords.toLowerCase().includes(searchQuery.toLowerCase())) : respTasks;
 
-  const firstUpstartedIndex = useMemo(() => showingTasks.findIndex((t) => t.status === 1), [showingTasks]);
-  const lastUpstartedIndex = useMemo(() => showingTasks.findLastIndex((t) => t.status === 1), [showingTasks]);
+    // Sort the filtered tasks and get the counts
+    return sortAndGetCounts(filteredTasks, showAccepted, showIced);
+  }, [data, searchQuery, showAccepted, showIced]);
 
   const handleIcedClick = () => {
     changeColumn(workspace.id, project.id, {
@@ -217,7 +254,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
     dialog(
       <CreateTaskForm
         projectIdOrSlug={project.id}
-        tasks={showingTasks}
+        tasks={filteredTasks}
         dialog
         onCloseForm={() =>
           changeColumn(workspace.id, project.id, {
@@ -230,7 +267,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
         id: `create-task-form-${project.id}`,
         drawerOnMobile: false,
         preventEscPress: true,
-        className: 'p-0 w-auto shadow-none relative z-[50] rounded-none border-t-0 m-0 max-w-none',
+        className: 'p-0 w-auto shadow-none relative z-[104] rounded-none border-t-0 m-0 max-w-none',
         container: ref.current,
         containerBackdrop: false,
         hideClose: true,
@@ -245,14 +282,30 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
   const stickyBackground = <div className="sm:hidden left-0 right-0 h-4 bg-background sticky top-0 z-30 -mt-4" />;
 
   useEffect(() => {
+    if (!taskIdPreview) return;
+    const focusedTask = filteredTasks.find((t) => t.id === taskIdPreview);
+    if (!focusedTask) return;
+    // to open sheet after initial sheet.remove triggers
+    if (taskIdPreview) {
+      if (sheet.get(`task-preview-${taskIdPreview}`)) {
+        sheet.update(`task-preview-${taskIdPreview}`, { content: <TaskSheet task={focusedTask} /> });
+      } else setTimeout(() => openTaskPreviewSheet(focusedTask), 0);
+    }
+  }, [filteredTasks, taskIdPreview]);
+
+  useEffect(() => {
     if (isMobile && minimized) handleExpand();
   }, [minimized, isMobile]);
+
+  const onReorder = async () => {
+    console.info('reorder');
+  };
 
   useEffect(() => {
     return combine(
       monitorForElements({
         canMonitor({ source }) {
-          return isTaskData(source.data) || isSubtaskData(source.data);
+          return (isTaskData(source.data) || isSubtaskData(source.data)) && !taskIdPreview;
         },
         async onDrop({ location, source }) {
           const target = location.current.dropTargets[0];
@@ -272,7 +325,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
           if (!edge) return;
 
           if (isTask) {
-            const newOrder: number = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, undefined, sourceItem.status);
+            const newOrder: number = getRelativeTaskOrder(edge, filteredTasks, targetData.order, sourceItem.id, undefined, sourceItem.status);
             try {
               await taskMutation.mutateAsync({
                 id: sourceItem.id,
@@ -283,24 +336,24 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                 projectId: project.id,
               });
             } catch (err) {
-              return toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
+              return toast.error(t('common:error.reorder_resource', { resource: t('app:task') }));
             }
           }
 
           if (isSubtask) {
-            const newOrder = getRelativeTaskOrder(edge, showingTasks, targetData.order, sourceItem.id, targetItem.parentId ?? undefined);
+            const newOrder = getRelativeTaskOrder(edge, filteredTasks, targetData.order, sourceItem.id, targetItem.parentId ?? undefined);
             try {
               await taskMutation.mutateAsync({
                 id: sourceItem.id,
                 orgIdOrSlug: workspace.organizationId,
                 key: 'order',
                 data: newOrder,
+                projectId: sourceItem.projectId,
               });
             } catch (err) {
               return toast.error(t('common:error.reorder_resource', { resource: t('app:todo') }));
             }
           }
-          await queryClient.invalidateQueries({ refetchType: 'active' });
         },
       }),
     );
@@ -337,37 +390,43 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
           ) : (
             <ScrollArea id={project.id} className="h-full mx-[-.07rem]">
               <ScrollBar />
-              <div className="z-[250]" ref={defaultTaskFormRef} />
+              <div className="z-[104]" ref={defaultTaskFormRef} />
 
-              <div className="h-full flex flex-col" id={`tasks-list-${project.id}`} ref={cardListRef}>
-                {!!tasks.length && (
+              <div
+                data-show-iced={showIced}
+                data-show-accepted={showAccepted}
+                className="h-full flex flex-col group"
+                id={`tasks-list-${project.id}`}
+                ref={cardListRef}
+              >
+                {!!filteredTasks.length && (
                   <div className="flex flex-col flex-grow">
                     <Button
                       onClick={handleAcceptedClick}
                       variant="ghost"
                       disabled={!acceptedCount}
                       size="sm"
-                      className="flex relative justify-start w-full rounded-none gap-1 border-b border-b-green-500/10 border-t border-t-transparent ring-inset bg-green-500/5 hover:bg-green-500/10 text-green-500 text-xs -mt-[.07rem]"
+                      className="flex relative justify-start w-full rounded-none gap-1 border-b border-b-green-500/10 border-t border-t-transparent ring-inset focus-visible:ring-offset-0 bg-green-500/5 hover:bg-green-500/10 text-green-500 text-xs -mt-[.07rem]"
                     >
                       <span className="w-6 mr-1.5 text-center">{acceptedCount}</span>
                       <span>{t('app:accepted').toLowerCase()}</span>
                       {!!acceptedCount && (
                         <ChevronDown
                           size={16}
-                          className={`transition-transform absolute right-5 opacity-50 ${showAccepted ? 'rotate-180' : 'rotate-0'}`}
+                          className="transition-transform absolute right-5 opacity-50 group-data-[show-accepted=true]:rotate-180"
                         />
                       )}
                     </Button>
-                    {showingTasks.map((task, index) => {
-                      return (
-                        <div key={task.id}>
-                          {index === firstUpstartedIndex && <div className="z-[250]" ref={beforeRef} />}
-                          <motion.div
-                            variants={taskVariants}
-                            initial={task.status === 6 || task.status === 0 ? 'hidden' : 'visible'}
-                            animate="visible"
-                            exit="exit"
-                            className={cn((index === firstUpstartedIndex || index === lastUpstartedIndex) && 'group relative')}
+                    <Reorder.Group values={filteredTasks} onReorder={onReorder}>
+                      {filteredTasks.map((task) => {
+                        return (
+                          <Reorder.Item
+                            key={task.id}
+                            value={task}
+                            layout="position"
+                            transition={{
+                              duration: 0.3,
+                            }}
                           >
                             <FocusTrap mainElementId={task.id} active={task.id === focusedTaskId}>
                               <TaskCard
@@ -377,45 +436,28 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                                 isFocused={task.id === focusedTaskId}
                                 mode={mode}
                               />
-                              {/* Conditionally render "+ Task" button for first and last task */}
-                              {/* {((index === firstUpstartedIndex && isMouseNearTop) || (index === lastUpstartedIndex && isMouseNearBottom)) && (
-                                <Button
-                                  variant="plain"
-                                  size="xs"
-                                  style={{ left: `${mouseX}px` }}
-                                  className={`absolute bg-background hover:bg-background transform -translate-y-1/2 opacity-1 rounded hidden sm:inline-flex ${isMouseNearTop ? 'top' : 'bottom'}-2`}
-                                  onClick={() => openCreateTaskDialog(isMouseNearTop ? beforeRef : afterRef, 'embed')}
-                                >
-                                  <Plus size={16} />
-                                  <span className="ml-1">{t('app:task')}</span>
-                                </Button>
-                              )} */}
                             </FocusTrap>
-                          </motion.div>
-                          {index === lastUpstartedIndex && <div className="z-[250]" ref={afterRef} />}
-                        </div>
-                      );
-                    })}
+                          </Reorder.Item>
+                        );
+                      })}
+                    </Reorder.Group>
                     <Button
                       onClick={handleIcedClick}
                       variant="ghost"
                       disabled={!icedCount}
                       size="sm"
-                      className="flex relative justify-start w-full rounded-none gap-1 ring-inset text-sky-500 max-sm:border-b border-b-sky-500/10 bg-sky-500/5 hover:bg-sky-500/10 text-xs -mt-[.07rem]"
+                      className="flex relative justify-start w-full rounded-none gap-1 ring-inset focus-visible:ring-offset-0 text-sky-500 max-sm:border-b border-b-sky-500/10 bg-sky-500/5 hover:bg-sky-500/10 text-xs -mt-[.07rem]"
                     >
                       <span className="w-6 mr-1.5 text-center">{icedCount}</span>
                       <span> {t('app:iced').toLowerCase()}</span>
                       {!!icedCount && (
-                        <ChevronDown
-                          size={16}
-                          className={`transition-transform absolute right-5 opacity-50 ${showIced ? 'rotate-180' : 'rotate-0'}`}
-                        />
+                        <ChevronDown size={16} className="transition-transform absolute right-5 opacity-50 group-data-[show-iced=true]:rotate-180" />
                       )}
                     </Button>
                   </div>
                 )}
 
-                {!tasks.length && !searchQuery && (
+                {!filteredTasks.length && !searchQuery && (
                   <ContentPlaceholder
                     Icon={Palmtree}
                     title={t('common:no_resource_yet', { resource: t('app:tasks').toLowerCase() })}
@@ -436,7 +478,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                     }
                   />
                 )}
-                {!tasks.length && searchQuery && (
+                {!filteredTasks.length && searchQuery && (
                   <ContentPlaceholder Icon={Search} title={t('common:no_resource_found', { resource: t('app:tasks').toLowerCase() })} />
                 )}
               </div>
