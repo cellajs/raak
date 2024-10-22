@@ -57,7 +57,7 @@ const UppyFilePanel = (taskId: string) => (props: FilePanelProps) => {
             },
           }}
           plugins={blockTypes[type].plugins}
-          imageMode="cover"
+          imageMode="attachment"
           callback={async (result) => {
             for (const res of result) {
               mutate({

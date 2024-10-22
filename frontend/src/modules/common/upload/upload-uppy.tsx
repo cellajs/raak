@@ -22,7 +22,7 @@ interface UploadUppyProps {
   isPublic: boolean;
   plugins?: ('webcam' | 'image-editor' | 'audio' | 'screen-capture' | string)[];
   uppyOptions: UppyOptions<UppyMeta, UppyBody>;
-  imageMode?: 'cover' | 'avatar';
+  imageMode?: 'cover' | 'avatar' | 'attachment';
   organizationId?: string;
   callback?: (
     result: {
