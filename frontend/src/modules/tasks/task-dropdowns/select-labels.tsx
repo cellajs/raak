@@ -149,7 +149,7 @@ const SetLabels = ({ task, creationValueChange, triggerWidth = 320 }: SetLabelsP
           if (inNumbersArray(6, searchValue)) return handleSelectClick(labels[Number.parseInt(searchValue) - 1]?.name);
           setSearchValue(searchValue.toLowerCase());
         }}
-        wrapClassName={`${isMobile && !isRecent && 'hidden'}`}
+        wrapClassName={`${!isRecent && 'max-sm:hidden'}`}
         clearValue={setSearchValue}
         className="leading-normal min-h-10"
         placeholder={showedLabels.length ? t('app:placeholder.search_labels') : t('app:create_label.text')}
