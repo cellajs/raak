@@ -1,10 +1,10 @@
 import type { PartialBlock } from '@blocknote/core';
 import { type FilePanelProps, useBlockNoteEditor } from '@blocknote/react';
-import { DialogDescription } from '@radix-ui/react-dialog';
+import { useTranslation } from 'react-i18next';
 import { createAttachment } from '~/api/attachments';
 import { useMutation } from '~/hooks/use-mutations';
 import UploadUppy from '~/modules/common/upload/upload-uppy';
-import { Dialog, DialogContent, DialogTitle } from '~/modules/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/modules/ui/dialog';
 import { UploadType } from '~/types/common';
 
 const blockTypes = {
@@ -27,6 +27,7 @@ const blockTypes = {
 };
 
 const UppyFilePanel = (taskId: string) => (props: FilePanelProps) => {
+  const { t } = useTranslation();
   const { block } = props;
   const editor = useBlockNoteEditor();
   const type = (block.type as keyof typeof blockTypes) || 'file';
@@ -38,10 +39,10 @@ const UppyFilePanel = (taskId: string) => (props: FilePanelProps) => {
 
   return (
     <Dialog defaultOpen onOpenChange={() => editor.filePanel?.closeMenu()}>
-      {/* For accessibility */}
-      <DialogTitle className="hidden" />
-      <DialogDescription className="hidden" />
       <DialogContent className="md:max-w-xl p-10">
+        <DialogHeader>
+          <DialogTitle className="h-6">{t(`common:upload_${type}`)}</DialogTitle>
+        </DialogHeader>
         <UploadUppy
           isPublic={true}
           uploadType={UploadType.Personal}
