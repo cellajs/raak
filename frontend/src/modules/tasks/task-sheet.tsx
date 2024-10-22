@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { toast } from 'sonner';
+import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import { isSubtaskData } from '~/modules/app/board/helpers';
@@ -26,12 +27,14 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { mode } = useThemeStore();
+  const isMobile = useBreakpoints('max', 'sm');
+
   const taskMutation = useTaskUpdateMutation();
   const {
     data: { workspace },
   } = useWorkspaceQuery();
 
-  const [state, setState] = useState<TaskStates>('editing');
+  const [state, setState] = useState<TaskStates>(isMobile ? 'expanded' : 'editing');
 
   // Open on key press
   const hotKeyPress = (field: string) => {
