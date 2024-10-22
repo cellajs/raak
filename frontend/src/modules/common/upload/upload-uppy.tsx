@@ -20,7 +20,7 @@ import { getImageEditorOptions } from './image-editor-options';
 interface UploadUppyProps {
   uploadType: UploadType;
   isPublic: boolean;
-  plugins?: ('webcam' | 'image-editor' | 'audio' | 'screen-capture')[];
+  plugins?: ('webcam' | 'image-editor' | 'audio' | 'screen-capture' | string)[];
   uppyOptions: UppyOptions<UppyMeta, UppyBody>;
   imageMode?: 'cover' | 'avatar';
   organizationId?: string;

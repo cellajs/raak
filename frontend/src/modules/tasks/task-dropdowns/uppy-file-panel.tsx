@@ -7,9 +7,29 @@ import UploadUppy from '~/modules/common/upload/upload-uppy';
 import { Dialog, DialogContent, DialogTitle } from '~/modules/ui/dialog';
 import { UploadType } from '~/types/common';
 
+const blockTypes = {
+  image: {
+    allowedFileTypes: ['image/*'],
+    plugins: ['image-editor', 'screen-capture', 'webcam'],
+  },
+  video: {
+    allowedFileTypes: ['video/*'],
+    plugins: ['screen-capture', 'webcam'],
+  },
+  audio: {
+    allowedFileTypes: ['audio/*'],
+    plugins: ['audio', 'screen-capture', 'webcam'],
+  },
+  file: {
+    allowedFileTypes: ['*/*'],
+    plugins: ['screen-capture', 'webcam'],
+  },
+};
+
 const UppyFilePanel = (taskId: string) => (props: FilePanelProps) => {
   const { block } = props;
   const editor = useBlockNoteEditor();
+  const type = (block.type as keyof typeof blockTypes) || 'file';
 
   const { mutate } = useMutation({
     mutationKey: ['attachments', 'create'],
@@ -29,14 +49,14 @@ const UppyFilePanel = (taskId: string) => (props: FilePanelProps) => {
             restrictions: {
               maxFileSize: 10 * 1024 * 1024, // 10MB
               maxNumberOfFiles: 1,
-              allowedFileTypes: ['image/*', 'video/*', 'audio/*', 'application/*'],
+              allowedFileTypes: blockTypes[type].allowedFileTypes,
               minFileSize: null,
               maxTotalFileSize: 10 * 1024 * 1024, // 100MB
               minNumberOfFiles: null,
               requiredMetaFields: [],
             },
           }}
-          plugins={['image-editor', 'screen-capture', 'webcam']}
+          plugins={blockTypes[type].plugins}
           imageMode="cover"
           callback={async (result) => {
             for (const res of result) {
