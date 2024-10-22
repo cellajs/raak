@@ -12,7 +12,6 @@ import { type ChangeMessage, ShapeStream, type ShapeStreamOptions } from '@elect
 import { useSearch } from '@tanstack/react-router';
 import { config } from 'config';
 import { toast } from 'sonner';
-import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { queryClient } from '~/lib/router';
 import { BoardColumnHeader } from '~/modules/app/board/board-column-header';
 import { ColumnSkeleton } from '~/modules/app/board/column-skeleton';
@@ -104,18 +103,16 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
 
   const { menu } = useNavigationStore();
   const { mode } = useThemeStore();
-  const isMobile = useBreakpoints('max', 'sm');
   const { searchQuery, selectedTasks, focusedTaskId } = useWorkspaceStore();
   const {
     data: { workspace, labels, members },
   } = useWorkspaceQuery();
   const { changeColumn } = useWorkspaceUIStore();
   const { networkMode } = useGeneralStore();
-  const {
-    expandIced: showIced,
-    expandAccepted: showAccepted,
-    minimized,
-  } = useMemo(() => settings || defaultColumnValues, [settings?.expandIced, settings?.expandAccepted, settings?.minimized]);
+  const { expandIced: showIced, expandAccepted: showAccepted } = useMemo(
+    () => settings || defaultColumnValues,
+    [settings?.expandIced, settings?.expandAccepted],
+  );
 
   // Query tasks
   const { data, isLoading } = useSuspenseQuery(tasksQueryOptions({ projectId: project.id, orgIdOrSlug: project.organizationId }));
@@ -238,12 +235,6 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
     });
   };
 
-  const handleExpand = () => {
-    changeColumn(workspace.id, project.id, {
-      minimized: false,
-    });
-  };
-
   const handleAcceptedClick = () => {
     changeColumn(workspace.id, project.id, {
       expandAccepted: !showAccepted,
@@ -291,10 +282,6 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
       } else setTimeout(() => openTaskPreviewSheet(focusedTask), 0);
     }
   }, [filteredTasks, taskIdPreview]);
-
-  useEffect(() => {
-    if (isMobile && minimized) handleExpand();
-  }, [minimized, isMobile]);
 
   useEffect(() => {
     return combine(
@@ -356,16 +343,6 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
       }),
     );
   }, [menu, data]);
-
-  if (minimized)
-    return (
-      <div ref={columnRef} onClick={handleExpand} onKeyDown={() => {}} className="flex flex-col h-full max-sm:-mx-1.5 max-sm:pb-28">
-        <BoardColumnHeader projectId={project.id} className="sm:p-2">
-          <AvatarWrap className="max-sm:hidden h-6 w-6 text-xs" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
-        </BoardColumnHeader>
-        <div className="border h-full" />
-      </div>
-    );
 
   return (
     <div ref={columnRef} className="flex flex-col h-full max-sm:-mx-1.5 max-sm:pb-28">

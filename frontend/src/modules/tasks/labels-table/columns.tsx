@@ -44,7 +44,7 @@ export const useColumns = () => {
         const color = (isMobile && row.color) || undefined;
         return (
           <>
-            <StickyNote color={color} className="mr-2 opacity-50" size={16} />
+            <StickyNote color={color} className="mr-2 max-sm:fill-current sm:opacity-50" size={16} />
             {row.useCount.toString()}
           </>
         );

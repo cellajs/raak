@@ -6,7 +6,6 @@ import type { Label } from '~/types/app';
 
 export type Column = {
   columnId: string;
-  minimized: boolean;
   createTaskForm: boolean;
   expandAccepted: boolean;
   expandIced: boolean;
@@ -23,7 +22,6 @@ type workspacesPanels = {
 
 export const defaultColumnValues = {
   createTaskForm: false,
-  minimized: false,
   expandAccepted: false,
   expandIced: false,
   recentLabels: [] as Label[],

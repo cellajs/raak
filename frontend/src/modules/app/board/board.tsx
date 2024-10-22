@@ -62,18 +62,18 @@ function BoardDesktop({
     }));
   }, [projects, workspaces, workspaceId]);
 
-  const scrollerWidth = getScrollerWidth(bounds.width, projectSettingsMap.filter((p) => !p.settings?.minimized).length);
+  const scrollerWidth = getScrollerWidth(bounds.width, projectSettingsMap.length);
   const panelMinSize = useMemo(() => {
     if (typeof scrollerWidth === 'number') return (PANEL_MIN_WIDTH / scrollerWidth) * 100;
 
-    const projectsLength = projectSettingsMap.filter((p) => !p.settings?.minimized).length;
+    const projectsLength = projectSettingsMap.length;
     return 100 / (projectsLength + 1); // + 1 to allow resizing
   }, [scrollerWidth, projectSettingsMap]);
 
   useEffect(() => {
-    for (const { project, settings } of projectSettingsMap) {
+    for (const { project } of projectSettingsMap) {
       const panel = panelRefs.current[project.id];
-      if (panel) settings?.minimized ? panel.collapse() : panel.expand();
+      if (panel) panel.expand();
     }
   }, [projectSettingsMap]);
 
