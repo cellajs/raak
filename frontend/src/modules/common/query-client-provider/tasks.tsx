@@ -220,7 +220,8 @@ queryClient.setMutationDefaults(taskKeys.create(), {
         items: updatedTasks,
       };
     });
-    toast.success(t('common:success.create_resource', { resource: t('app:task') }));
+
+    toast.success(t('common:success.create_resource', { resource: t(createdTask.parentId ? 'app:todo' : 'app:task') }));
   },
   onError,
 });
