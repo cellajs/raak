@@ -34,7 +34,7 @@ export const updateTaskSchema = z.object({
     ).map((key) => z.literal(key)),
   ),
   data: z.union([z.array(z.string()), z.string(), z.number(), z.boolean()]).nullable(),
-  order: z.number().nullable(),
+  order: z.number().nullish(),
 });
 
 export enum TaskStatus {
@@ -47,6 +47,12 @@ export enum TaskStatus {
   Accepted = 6,
 }
 
+export enum TaskType {
+  feature = 1,
+  chore = 2,
+  bug = 3,
+}
+
 const taskSchema = z.object({
   ...createSelectSchema(tasksTable).omit({
     labels: true,
@@ -56,9 +62,11 @@ const taskSchema = z.object({
     modifiedBy: true,
     parentId: true,
     createdAt: true,
+    type: true,
   }).shape,
   labels: z.array(labelSchema),
   status: z.nativeEnum(TaskStatus),
+  type: z.nativeEnum(TaskType),
   assignedTo: z.array(limitedUserSchema),
   createdAt: z.string(),
   parentId: z.string().nullable(),

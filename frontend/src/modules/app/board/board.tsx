@@ -17,7 +17,6 @@ import type { Project, Task } from '~/types/app';
 import type { ContextEntity, Membership } from '~/types/common';
 
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { useMutateWorkSpaceQueryData } from '~/hooks/use-mutate-query-data';
 import { queryClient } from '~/lib/router';
 import WorkspaceActions from '~/modules/app/board/workspace-actions';
 import { dropdowner } from '~/modules/common/dropdowner/state';
@@ -50,14 +49,6 @@ function BoardDesktop({
   const panelRefs = useRef<Record<string, ImperativePanelHandle | null>>({});
   const { changePanels, workspacesPanels, workspaces } = useWorkspaceUIStore();
 
-  const scrollerWidth = getScrollerWidth(bounds.width, projects.length);
-  const panelMinSize = useMemo(() => {
-    if (typeof scrollerWidth === 'number') {
-      return (PANEL_MIN_WIDTH / scrollerWidth) * 100;
-    }
-    return 100 / (projects.length + 1); // + 1 to allow resizing
-  }, [scrollerWidth, projects.length]);
-
   const panelStorage = useMemo(
     () => ({
       getItem: (_: string) => workspacesPanels[workspaceId] ?? null,
@@ -72,6 +63,14 @@ function BoardDesktop({
       settings: workspaces[workspaceId]?.[project.id],
     }));
   }, [projects, workspaces, workspaceId]);
+
+  const scrollerWidth = getScrollerWidth(bounds.width, projectSettingsMap.filter((p) => !p.settings?.minimized).length);
+  const panelMinSize = useMemo(() => {
+    if (typeof scrollerWidth === 'number') return (PANEL_MIN_WIDTH / scrollerWidth) * 100;
+
+    const projectsLength = projectSettingsMap.filter((p) => !p.settings?.minimized).length;
+    return 100 / (projectsLength + 1); // + 1 to allow resizing
+  }, [scrollerWidth, projectSettingsMap]);
 
   useEffect(() => {
     for (const { project, settings } of projectSettingsMap) {
@@ -97,7 +96,7 @@ function BoardDesktop({
                 ref={(el) => (panelRefs.current[project.id] = el)}
                 id={project.id}
                 order={project.membership?.order || index}
-                collapsedSize={5}
+                collapsedSize={panelMinSize * 0.1}
                 minSize={panelMinSize}
                 collapsible
               >
@@ -119,8 +118,11 @@ export default function Board() {
   const { focusedTaskId, selectedTasks, setSearchQuery, setSelectedTasks } = useWorkspaceStore();
   const prevFocusedRef = useRef<string | null>(focusedTaskId);
   const {
-    data: { workspace, projects },
+    data: { workspace, projects: queryProjects },
+    updateProjectMembership,
+    updateWorkspaceMembership,
   } = useWorkspaceQuery();
+
   const isMobile = useBreakpoints('max', 'sm');
 
   const { workspaces, changeColumn } = useWorkspaceUIStore();
@@ -130,6 +132,12 @@ export default function Board() {
   const { project, q } = useSearch({
     from: WorkspaceBoardRoute.id,
   });
+
+  // TODO maybe find other way
+  const projects = useMemo(
+    () => queryProjects.filter((p) => !p.membership?.archived).sort((a, b) => (a.membership?.order ?? 0) - (b.membership?.order ?? 0)),
+    [queryProjects],
+  );
 
   // Finding the project based on the query parameter or defaulting to the first project
   const mobileDeviceProject = useMemo(() => {
@@ -281,15 +289,15 @@ export default function Board() {
     return setSelectedTasks(selectedTasks.filter((id) => id !== taskId));
   };
 
-  const workspaceCallback = useMutateWorkSpaceQueryData(['workspaces', workspace.slug]);
   const handleEntityUpdate = (event: { detail: { membership: Membership; entity: ContextEntity } }) => {
     const { entity, membership } = event.detail;
-    if (entity !== 'workspace' && entity !== 'project') return;
-    workspaceCallback([membership], entity === 'project' ? 'updateProjectMembership' : 'updateWorkspaceMembership');
+    if (entity === 'project') updateProjectMembership(membership);
+    if (entity === 'workspace') updateWorkspaceMembership(membership);
   };
 
   const handleTaskState = (event: TaskStatesChangeEvent) => {
-    const { taskId, state } = event.detail;
+    const { taskId, state, sheet } = event.detail;
+    if (sheet) return;
     if (state === 'currentState') return setTaskState(taskId, tasksState[taskId] === 'folded' ? 'folded' : 'expanded');
     setTaskState(taskId, state);
   };

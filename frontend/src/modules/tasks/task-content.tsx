@@ -1,5 +1,5 @@
 import '@blocknote/shadcn/style.css';
-import { config } from 'config';
+import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,13 +8,14 @@ import { dispatchCustomEvent } from '~/lib/custom-events';
 import { BlockNote } from '~/modules/common/blocknote';
 import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import CreateSubtaskForm from '~/modules/tasks/create-subtask-form';
+import { handleEditorFocus, updateImageSourcesFromDataUrl, useHandleUpdateHTML } from '~/modules/tasks/helpers';
 import Subtask from '~/modules/tasks/subtask';
 import UppyFilePanel from '~/modules/tasks/task-dropdowns/uppy-file-panel';
+import { Button } from '~/modules/ui/button';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import type { Mode } from '~/store/theme';
 import type { Task } from '~/types/app';
-import { Button } from '../ui/button';
-import { handleEditorFocus, updateImageSourcesFromDataUrl, useHandleUpdateHTML } from './helpers';
+import { env } from '../../../env';
 import type { TaskStates } from './types';
 
 interface TaskContentProps {
@@ -56,7 +57,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
   return (
     <div className="flex flex-col grow gap-2">
       {state === 'folded' ? (
-        <div className="mt-2 ml-1 leading-none inline items-center">
+        <div className="mt-1.5 ml-1 leading-none inline items-center">
           <div
             // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
             dangerouslySetInnerHTML={{ __html: task.summary }}
@@ -77,7 +78,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
               updateData={updateDescription}
               onEnterClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' })}
               onTextDifference={() => {
-                if (!isSheet) dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'unsaved' });
+                dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'unsaved', sheet: isSheet });
               }}
               filePanel={UppyFilePanel(task.id)}
               trailingBlock={false}
@@ -93,11 +94,13 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
           )}
 
           <div id={`subtask-container-${task.id}`} className="-mx-2 mt-2 w-[calc(100%+1.25rem)]">
-            <div className="flex flex-col">
+            <motion.div>
               {task.subtasks.map((task) => (
-                <Subtask mode={mode} key={task.id} task={task} members={members} removeCallback={subTaskDeleteCallback} />
+                <motion.div key={task.id} layout="position" transition={{ duration: 0.3 }}>
+                  <Subtask mode={mode} key={task.id} task={task} members={members} removeCallback={subTaskDeleteCallback} />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {createSubtask ? (
               <CreateSubtaskForm setFormState={(value) => setCreateSubtask(value)} parentTask={task} />
@@ -136,7 +139,7 @@ const SummaryButtons = ({ task }: { task: Task }) => {
         </div>
       )}
       {/*  in debug mode: show order number to debug drag */}
-      {config.debug && <span className="ml-2 opacity-15 text-sm text-center font-light">#{task.order}</span>}
+      {env.VITE_DEBUG_UI && <span className="ml-2 opacity-15 text-sm text-center font-light">#{task.order}</span>}
     </>
   );
 };

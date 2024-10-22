@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/u
 import { useUserStore } from '~/store/user.ts';
 import type { Task } from '~/types/app';
 import { scanTaskDescription } from '#/modules/tasks/helpers';
-import { createTaskSchema } from '#/modules/tasks/schema';
+import { TaskType, createTaskSchema } from '#/modules/tasks/schema';
 import { nanoid } from '#/utils/nanoid';
 import { useTaskCreateMutation } from '../common/query-client-provider/tasks';
 import { useWorkspaceQuery } from '../workspaces/helpers/use-workspace';
@@ -46,14 +46,14 @@ export const CreateSubtaskForm = ({
         id: defaultId,
         description: '',
         summary: '',
-        type: 'chore',
+        type: TaskType.chore,
         impact: null,
         status: 1,
         parentId: parentTask.id,
         expandable: false,
         keywords: '',
         projectId: parentTask.projectId,
-        order: getNewTaskOrder(1, parentTask.subtasks),
+        order: 0,
       },
     }),
     [],
@@ -71,7 +71,7 @@ export const CreateSubtaskForm = ({
       summary: values.summary || summary,
       expandable: values.expandable || expandable,
       keywords: values.keywords || keywords,
-      type: 'chore' as const,
+      type: values.type,
       impact: null,
       status: 1,
       parentId: parentTask.id,
@@ -80,7 +80,7 @@ export const CreateSubtaskForm = ({
       labels: [],
       projectId: parentTask.projectId,
       createdBy: user.id,
-      order: getNewTaskOrder(values.status, parentTask.subtasks),
+      order: getNewTaskOrder(values.status, parentTask.subtasks, true),
     };
 
     taskMutation.mutate(newSubtask);

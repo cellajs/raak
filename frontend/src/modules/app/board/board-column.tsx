@@ -1,5 +1,5 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
-import { Reorder } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronDown, Palmtree, Search, Undo } from 'lucide-react';
 import { type MutableRefObject, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -254,7 +254,6 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
     dialog(
       <CreateTaskForm
         projectIdOrSlug={project.id}
-        tasks={filteredTasks}
         dialog
         onCloseForm={() =>
           changeColumn(workspace.id, project.id, {
@@ -297,10 +296,6 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
     if (isMobile && minimized) handleExpand();
   }, [minimized, isMobile]);
 
-  const onReorder = async () => {
-    console.info('reorder');
-  };
-
   useEffect(() => {
     return combine(
       monitorForElements({
@@ -325,7 +320,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
           if (!edge) return;
 
           if (isTask) {
-            const newOrder: number = getRelativeTaskOrder(edge, filteredTasks, targetData.order, sourceItem.id, undefined, sourceItem.status);
+            const newOrder: number = getRelativeTaskOrder(edge, filteredTasks, targetData.order, sourceItem.id, sourceItem.status);
             try {
               await taskMutation.mutateAsync({
                 id: sourceItem.id,
@@ -341,7 +336,10 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
           }
 
           if (isSubtask) {
-            const newOrder = getRelativeTaskOrder(edge, filteredTasks, targetData.order, sourceItem.id, targetItem.parentId ?? undefined);
+            // If parentId exists, filter for subtasks and sort accordingly
+            const subtasks = filteredTasks.find((t) => t.id === targetItem.parentId)?.subtasks || [];
+
+            const newOrder = getRelativeTaskOrder(edge, subtasks, targetData.order, sourceItem.id);
             try {
               await taskMutation.mutateAsync({
                 id: sourceItem.id,
@@ -362,7 +360,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
   if (minimized)
     return (
       <div ref={columnRef} onClick={handleExpand} onKeyDown={() => {}} className="flex flex-col h-full max-sm:-mx-1.5 max-sm:pb-28">
-        <BoardColumnHeader projectId={project.id}>
+        <BoardColumnHeader projectId={project.id} className="sm:p-2">
           <AvatarWrap className="max-sm:hidden h-6 w-6 text-xs" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
         </BoardColumnHeader>
         <div className="border h-full" />
@@ -417,17 +415,10 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                         />
                       )}
                     </Button>
-                    <Reorder.Group values={filteredTasks} onReorder={onReorder}>
+                    <motion.div>
                       {filteredTasks.map((task) => {
                         return (
-                          <Reorder.Item
-                            key={task.id}
-                            value={task}
-                            layout="position"
-                            transition={{
-                              duration: 0.3,
-                            }}
-                          >
+                          <motion.div key={task.id} layout="position" transition={{ duration: 0.3 }}>
                             <FocusTrap mainElementId={task.id} active={task.id === focusedTaskId}>
                               <TaskCard
                                 task={task}
@@ -437,10 +428,10 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
                                 mode={mode}
                               />
                             </FocusTrap>
-                          </Reorder.Item>
+                          </motion.div>
                         );
                       })}
-                    </Reorder.Group>
+                    </motion.div>
                     <Button
                       onClick={handleIcedClick}
                       variant="ghost"

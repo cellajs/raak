@@ -14,6 +14,7 @@ import { and, eq } from 'drizzle-orm';
 import { UniqueEnforcer } from 'enforce-unique';
 import slugify from 'slugify';
 import { extractKeywords } from '#/modules/tasks/helpers';
+import { TaskType } from '#/modules/tasks/schema';
 import type { Status } from '../progress';
 import { adminUser } from '../user/seed';
 
@@ -94,7 +95,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
           workspaceId: workspace.id,
           role: faker.helpers.arrayElement(['admin', 'member']),
           createdAt: faker.date.past(),
-          order: workspacesCount + 1,
+          order: workspacesCount * 10,
         };
       });
 
@@ -115,7 +116,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
           createdAt: faker.date.past(),
           order: adminWorkspacesMembershipsOrder,
         });
-        adminWorkspacesMembershipsOrder++;
+        adminWorkspacesMembershipsOrder = adminWorkspacesMembershipsOrder + 10;
       }
       await db.insert(membershipsTable).values(workspaceMemberships).onConflictDoNothing();
 
@@ -147,7 +148,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
             projectId: project.id,
             role: faker.helpers.arrayElement(['admin', 'member']),
             createdAt: faker.date.past(),
-            order: projectsCount + 1,
+            order: projectsCount * 10,
           };
         });
 
@@ -164,7 +165,7 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
             createdAt: faker.date.past(),
             order: adminProjectsMembershipsOrder,
           });
-          adminProjectsMembershipsOrder = adminProjectsMembershipsOrder >= 2 ? 1 : adminProjectsMembershipsOrder + 1;
+          adminProjectsMembershipsOrder = adminProjectsMembershipsOrder >= 2 ? 10 : adminProjectsMembershipsOrder + 10;
         }
 
         membershipsCount += projectMemberships.length;
@@ -217,11 +218,11 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
                 expandable: true,
                 parentId: mainTaskId,
                 slug: slugify(subtaskName, { lower: true }),
-                order: subIndex + 1,
+                order: subIndex * 10,
                 // status in sub tasks only 1 or 6
                 status: Math.random() < 0.5 ? 1 : 6,
                 impact: 0,
-                type: 'chore',
+                type: TaskType.chore,
                 description: `<div class="bn-block-content"><p class="bn-inline-content">${subtaskName}</p></div><div class="bn-block-content"><p class="bn-inline-content">${subtaskDescription}</p></div>`,
                 ...createModifiedBlock,
               };
@@ -245,10 +246,10 @@ export const dataSeed = async (progressCallback?: (stage: string, count: number,
               .sort(() => 0.5 - Math.random())
               .slice(0, Math.floor(Math.random() * 3) + 2)
               .map((l) => l.id),
-            order: index + 1,
+            order: index * 10,
             // random integer between 0 and 6
             status: Math.floor(Math.random() * 7),
-            type: faker.helpers.arrayElement(['bug', 'feature', 'chore']),
+            type: faker.helpers.arrayElement([1, 2, 3]),
             // random integer between 0 and 3
             impact: Math.floor(Math.random() * 4),
             description: `<div class="bn-block-content"><p class="bn-inline-content">${name}</p></div><div class="bn-block-content"><p class="bn-inline-content">${taskDescription}</p></div>`,

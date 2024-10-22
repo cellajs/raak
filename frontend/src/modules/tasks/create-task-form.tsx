@@ -4,16 +4,16 @@ import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
-import { useSearch } from '@tanstack/react-router';
+import { useParams } from '@tanstack/react-router';
 import { ChevronDown, Tag, UserX, X } from 'lucide-react';
-import { type LegacyRef, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
-import { useMeasure } from '~/hooks/use-measure';
+import { queryClient } from '~/lib/router';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { BlockNote } from '~/modules/common/blocknote';
 import { dialog } from '~/modules/common/dialoger/state.ts';
 import { dropdowner } from '~/modules/common/dropdowner/state.ts';
-import { useTaskCreateMutation } from '~/modules/common/query-client-provider/tasks';
+import { taskKeys, useTaskCreateMutation } from '~/modules/common/query-client-provider/tasks';
 import { getNewTaskOrder, handleEditorFocus } from '~/modules/tasks/helpers';
 import { NotSelected } from '~/modules/tasks/task-dropdowns/impact-icons/not-selected';
 import SelectImpact, { impacts } from '~/modules/tasks/task-dropdowns/select-impact';
@@ -36,15 +36,13 @@ import type { Member } from '~/types/common';
 import { cn } from '~/utils/cn';
 import { nanoid } from '~/utils/nanoid';
 import { scanTaskDescription } from '#/modules/tasks/helpers';
-import { createTaskSchema } from '#/modules/tasks/schema';
+import { TaskType, createTaskSchema } from '#/modules/tasks/schema';
 
-export type TaskType = 'feature' | 'chore' | 'bug';
 export type TaskImpact = 0 | 1 | 2 | 3 | null;
 
 interface CreateTaskFormProps {
-  projectIdOrSlug: string;
+  projectIdOrSlug?: string;
   className?: string;
-  tasks?: Task[];
   dialog?: boolean;
   defaultValues?: Partial<FormValues>;
   onCloseForm?: () => void;
@@ -80,33 +78,31 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
-  projectIdOrSlug: passedProjectIdOrSlug,
-  tasks = [],
-  defaultValues,
-  className,
-  dialog: isDialog,
-  onCloseForm,
-}) => {
+const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaultValues, className, dialog: isDialog, onCloseForm }) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
   const { focusedTaskId } = useWorkspaceStore();
-  const { project } = useSearch({ from: WorkspaceRoute.id });
-
-  const projectIdOrSlug = useMemo(() => project ?? passedProjectIdOrSlug, [project, passedProjectIdOrSlug]);
+  const { orgIdOrSlug } = useParams({ from: WorkspaceRoute.id });
 
   const {
-    data: { projects, members },
+    data: { members, workspace, projects },
   } = useWorkspaceQuery();
-  const { id: projectId, organizationId } = projects.find((p) => p.id === projectIdOrSlug || p.slug === projectIdOrSlug) ?? projects[0];
 
   const defaultId = nanoid();
-  const { ref, bounds } = useMeasure();
+
   const taskMutation = useTaskCreateMutation();
+
+  // Project id is required
+  const projectId = projectIdOrSlug || projects[0]?.id;
+  if (!projectId) return <>No project id found, please contact support</>;
+
+  // Get  cached tasks
+  const queryKey = taskKeys.list({ projectId, orgIdOrSlug });
+  const tasks = queryClient.getQueryData<{ items: Task[] }>(queryKey)?.items ?? [];
 
   const handleCloseForm = () => {
     if (isDialog) {
-      if (passedProjectIdOrSlug === '') dialog.remove(false, 'workspace-add-task');
+      if (projectId === '') dialog.remove(false, 'workspace-add-task');
       else dialog.remove(false, `create-task-form-${projectId}`);
     }
     onCloseForm?.();
@@ -120,15 +116,15 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
           id: defaultId,
           description: '',
           summary: '',
-          type: 'feature',
+          type: TaskType.feature,
           impact: null,
           assignedTo: [],
           labels: [],
           status: 1,
-          projectId: projectId,
+          projectId,
           expandable: false,
           keywords: '',
-          order: getNewTaskOrder(1, tasks),
+          order: 0,
         },
         ...defaultValues,
       },
@@ -148,12 +144,12 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
       summary: values.summary || summary,
       expandable: values.expandable || expandable,
       keywords: values.keywords || keywords,
-      type: values.type as TaskType,
+      type: values.type,
       impact: values.impact as TaskImpact,
       labels: values.labels.map((label) => label.id),
       assignedTo: values.assignedTo.map((user) => user.id),
       status: values.status,
-      organizationId: organizationId,
+      organizationId: workspace.organizationId,
       projectId: values.projectId,
       createdBy: user.id,
       order: getNewTaskOrder(values.status, tasks),
@@ -164,6 +160,13 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     handleCloseForm();
   };
 
+  const getFieldWidth = () => {
+    const element = document.getElementById(`create-task-${projectIdOrSlug}`);
+    if (!element) return;
+    const styles = getComputedStyle(element);
+    return element.clientWidth - Number.parseFloat(styles.paddingLeft) - Number.parseFloat(styles.paddingRight) - 3;
+  };
+
   // default value in blocknote <p class="bn-inline-content"></p> so check if there it's only one
   const isDirty = () => {
     const type = form.getValues('type');
@@ -171,7 +174,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     const status = form.getValues('status');
     const labels = form.getValues('labels');
     const impact = form.getValues('impact');
-    if (assignedTo.length || labels.length || status !== 1 || impact || type !== 'feature') return true;
+    if (assignedTo.length || labels.length || status !== 1 || impact || type !== TaskType.feature) return true;
     const { dirtyFields } = form.formState;
     const fieldsKeys = Object.keys(dirtyFields);
     if (!fieldsKeys.length) return false;
@@ -192,10 +195,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   return (
     <Form {...form}>
       <form
-        ref={ref as LegacyRef<HTMLFormElement>}
         id={`create-task-${projectIdOrSlug}`}
         onSubmit={form.handleSubmit(onSubmit)}
-        className={cn(className, `sm:p-3 sm:pl-11 ${isDialog ? '' : 'border-b'} flex gap-2 flex-col shadow-inner`)}
+        className={cn(className, `sm:p-3 sm:pl-11 ${isDialog ? '' : 'border-b'} flex gap-2 flex-col sm:shadow-inner`)}
       >
         <FormField
           control={form.control}
@@ -235,15 +237,16 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                     type="single"
                     variant="merged"
                     className="gap-0 w-full"
-                    value={value}
+                    value={taskTypes[value - 1].type}
                     onValueChange={(newValue) => {
-                      if (newValue.length > 0) onChange(newValue);
+                      const taskTypeValue = TaskType[newValue as keyof typeof TaskType];
+                      if (taskTypeValue !== undefined) onChange(taskTypeValue);
                     }}
                   >
                     {taskTypes.map((type) => (
-                      <ToggleGroupItem size="sm" value={type.value} className="w-full" key={type.label}>
+                      <ToggleGroupItem size="sm" value={type.type} className="w-full" key={type.label}>
                         {type.icon()}
-                        <span className="ml-2 font-light">{t(`app:${type.value}`)}</span>
+                        <span className="ml-2 font-light">{t(`app:${type.type}`)}</span>
                       </ToggleGroupItem>
                     ))}
                   </ToggleGroup>
@@ -254,7 +257,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
           }}
         />
 
-        {form.getValues('type') !== 'bug' && (
+        {form.getValues('type') !== TaskType.bug && (
           <FormField
             control={form.control}
             name="impact"
@@ -275,7 +278,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                           <SelectImpact
                             value={selectedImpactValue}
                             projectId={projectId}
-                            triggerWidth={bounds.width - 3}
+                            triggerWidth={getFieldWidth()}
                             creationValueChange={onChange}
                           />,
                           {
@@ -323,7 +326,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                       dropdowner(
                         <AssignMembers
                           value={value as Member[]}
-                          triggerWidth={bounds.width - 3}
+                          triggerWidth={getFieldWidth()}
                           projectId={projectId}
                           creationValueChange={onChange}
                         />,
@@ -387,9 +390,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                       dropdowner(
                         <SetLabels
                           value={value as Label[]}
-                          triggerWidth={bounds.width - 3}
+                          triggerWidth={getFieldWidth()}
                           projectId={projectId}
-                          organizationId={organizationId}
+                          organizationId={workspace.organizationId}
                           creationValueChange={onChange}
                         />,
                         { id: `labels-${defaultId}`, trigger: event.currentTarget, modal: false },
@@ -417,9 +420,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                                     content: (
                                       <SetLabels
                                         value={value.filter((l) => l.name !== name) as Label[]}
-                                        triggerWidth={bounds.width - 3}
+                                        triggerWidth={getFieldWidth()}
                                         projectId={projectId}
-                                        organizationId={organizationId}
+                                        organizationId={workspace.organizationId}
                                         creationValueChange={onChange}
                                       />
                                     ),
@@ -463,7 +466,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
               <FormField
                 control={form.control}
                 name="status"
-                render={({ field: { onChange } }) => {
+                render={({ field: { value, onChange } }) => {
                   return (
                     <FormItem className="gap-0 w-8">
                       <FormControl>
@@ -474,17 +477,10 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                           size="xs"
                           className="relative rounded-none rounded-r border-l border-l-background/25 [&:not(.absolute)]:active:translate-y-0"
                           onClick={(event) => {
-                            dropdowner(
-                              <SelectStatus
-                                taskStatus={form.getValues('status') as TaskStatus}
-                                projectId={projectId}
-                                creationValueChange={onChange}
-                              />,
-                              {
-                                id: `status-${defaultId}`,
-                                trigger: event.currentTarget,
-                              },
-                            );
+                            dropdowner(<SelectStatus taskStatus={value as TaskStatus} projectId={projectId} creationValueChange={onChange} />, {
+                              id: `status-${defaultId}`,
+                              trigger: event.currentTarget,
+                            });
                           }}
                         >
                           <ChevronDown size={16} />

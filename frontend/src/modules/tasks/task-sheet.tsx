@@ -2,10 +2,11 @@ import { type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { toast } from 'sonner';
+import { useEventListener } from '~/hooks/use-event-listener';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import { isSubtaskData } from '~/modules/app/board/helpers';
 import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
@@ -15,13 +16,13 @@ import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useThemeStore } from '~/store/theme';
 import type { Task } from '~/types/app';
 import { dropdowner } from '../common/dropdowner/state';
+import type { TaskStates, TaskStatesChangeEvent } from './types';
 
 interface TasksSheetProps {
   task: Task;
 }
 
 const TaskSheet = ({ task }: TasksSheetProps) => {
-  console.log('🚀 ~ TaskSheet ~ task:', task);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { mode } = useThemeStore();
@@ -29,6 +30,8 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
   const {
     data: { workspace },
   } = useWorkspaceQuery();
+
+  const [state, setState] = useState<TaskStates>('editing');
 
   // Open on key press
   const hotKeyPress = (field: string) => {
@@ -40,7 +43,14 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
     handleTaskDropDownClick(task, field, trigger as HTMLElement);
   };
 
-  console.log(231);
+  const handleTaskState = (event: TaskStatesChangeEvent) => {
+    const { taskId, state, sheet } = event.detail;
+    if (!sheet || taskId !== task.id || state === 'currentState') return;
+    setState(state);
+  };
+
+  useEventListener('changeTaskState', handleTaskState);
+
   useHotkeys([
     ['A', () => hotKeyPress(`assignedTo-${task.id}`)],
     ['I', () => hotKeyPress(`impact-${task.id}`)],
@@ -91,7 +101,7 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
           const edge: Edge | null = extractClosestEdge(targetData);
           const isSubtask = isSubtaskData(sourceData) && isSubtaskData(targetData);
           if (!edge || !isSubtask) return;
-          const newOrder: number = getRelativeTaskOrder(edge, [], targetData.order, sourceData.item.id, targetData.item.parentId ?? undefined);
+          const newOrder: number = getRelativeTaskOrder(edge, [], targetData.order, sourceData.item.id);
           try {
             await taskMutation.mutateAsync({
               id: sourceData.item.id,
@@ -108,7 +118,7 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
     );
   }, [task]);
 
-  return <TaskCard mode={mode} task={task} state="editing" isSelected={false} isFocused={true} isSheet />;
+  return <TaskCard mode={mode} task={task} state={state} isSelected={false} isFocused={true} isSheet />;
 };
 
 export default TaskSheet;
