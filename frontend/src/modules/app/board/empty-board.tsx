@@ -21,10 +21,10 @@ export function EmptyBoard() {
 
   return (
     <ContentPlaceholder
-      className=" h-[calc(100vh-4rem-4rem)] sm:h-[calc(100vh-4.88rem)]"
+      className="h-[calc(100vh-4rem-4rem)] md:h-[calc(100vh-4.88rem)]"
       Icon={Bird}
       title={t('common:no_resource_yet', { resource: t('app:projects').toLowerCase() })}
-      textClassName="max-sm:mt-4"
+      textClassName="max-md:mt-4"
       text={
         isTablet ? (
           <Button variant="plain" onClick={createNewProject}>
