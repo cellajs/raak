@@ -4,9 +4,9 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { useEffect } from 'react';
 import { offlineFetch, offlineFetchInfinite } from '~/lib/query-client';
 import { persister, queryClient } from '~/lib/router';
-import { tasksQueryOptions } from '~/modules/app/board/board-column';
 import { membersQueryOptions } from '~/modules/organizations/members-table/helpers/query-options';
 import { organizationQueryOptions } from '~/modules/organizations/organization-page';
+import { tasksQueryOptions } from '~/modules/tasks/board/board-column';
 import { getAndSetMe, getAndSetMenu } from '~/modules/users/helpers';
 import { workspaceQueryOptions } from '~/modules/workspaces/helpers/query-options';
 import { useGeneralStore } from '~/store/general';

@@ -11,9 +11,9 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import useDoubleClick from '~/hooks/use-double-click';
 import { dispatchCustomEvent } from '~/lib/custom-events';
-import { isTaskData } from '~/modules/app/board/helpers';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { type DropDownToRemove, dropdownerState } from '~/modules/common/dropdowner/state';
+import { isTaskData } from '~/modules/tasks/board/helpers';
 import { handleTaskDropDownClick, setTaskCardFocus } from '~/modules/tasks/helpers';
 import TaskDescription from '~/modules/tasks/task-content.tsx';
 import type { TaskStatus } from '~/modules/tasks/task-dropdowns/select-status';

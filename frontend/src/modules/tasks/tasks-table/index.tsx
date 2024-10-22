@@ -13,10 +13,10 @@ import ColumnsView from '~/modules/common/data-table/columns-view';
 import Export from '~/modules/common/data-table/export.tsx';
 import { getInitialSortColumns } from '~/modules/common/data-table/sort-columns';
 
-import TableHeader from '~/modules/app/board-header';
 import { openUserPreviewSheet } from '~/modules/common/data-table/util';
 import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import { sheet } from '~/modules/common/sheeter/state';
+import TableHeader from '~/modules/tasks/board-header';
 import { configureForExport, openTaskPreviewSheet } from '~/modules/tasks/helpers';
 import TaskSheet from '~/modules/tasks/task-sheet';
 import { useColumns } from '~/modules/tasks/tasks-table/columns';

@@ -2,8 +2,8 @@ import { Bird, Plus, Redo } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
-import { createNewProject } from '~/modules/app/board/helpers';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
+import { createNewProject } from '~/modules/tasks/board/helpers';
 import { Button } from '~/modules/ui/button';
 
 export function EmptyBoard() {

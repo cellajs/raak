@@ -1,6 +1,6 @@
 import { config } from 'config';
 import { Home } from 'lucide-react';
-import Logo from '~/modules/app/logo';
+import Logo from '~/modules/common/logo';
 
 import { useIsFetching } from '@tanstack/react-query';
 import useMounted from '~/hooks/use-mounted';
