@@ -1,15 +1,17 @@
 import { Dot, StickyNote } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useBreakpoints } from '~/hooks/use-breakpoints';
 import CheckboxColumn from '~/modules/common/data-table/checkbox-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/columns-view';
 import HeaderCell from '~/modules/common/data-table/header-cell';
+import { badgeStyle } from '~/modules/tasks/task-dropdowns/select-labels';
 import type { Label } from '~/types/app';
 import { dateShort } from '~/utils/date-short';
-import { badgeStyle } from '../task-dropdowns/select-labels';
 
 export const useColumns = () => {
   const { t } = useTranslation();
+  const isMobile = useBreakpoints('max', 'sm');
 
   const columns: ColumnOrColumnGroup<Label>[] = [
     CheckboxColumn,
@@ -25,7 +27,7 @@ export const useColumns = () => {
     {
       key: 'color',
       name: t('common:color'),
-      visible: true,
+      visible: !isMobile,
       width: 100,
       sortable: false,
       renderHeaderCell: HeaderCell,
@@ -38,18 +40,21 @@ export const useColumns = () => {
       width: 100,
       sortable: true,
       renderHeaderCell: HeaderCell,
-      renderCell: ({ row }) => (
-        <>
-          <StickyNote className="mr-2 opacity-50" size={16} />
-          {row.useCount.toString()}
-        </>
-      ),
+      renderCell: ({ row }) => {
+        const color = (isMobile && row.color) || undefined;
+        return (
+          <>
+            <StickyNote color={color} className="mr-2 opacity-50" size={16} />
+            {row.useCount.toString()}
+          </>
+        );
+      },
     },
     {
       key: 'lastUsedAt',
       name: t('app:last_used'),
       sortable: true,
-      visible: true,
+      visible: !isMobile,
       renderHeaderCell: HeaderCell,
       renderCell: ({ row }) => dateShort(row.lastUsedAt.toString()),
     },
