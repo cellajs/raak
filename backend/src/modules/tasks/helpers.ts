@@ -1,7 +1,10 @@
 import { parse as parseHtml } from 'node-html-parser';
 
 export const extractKeywords = (description: string) => {
-  const words = description
+  const descriptionElement = parseHtml(description);
+  const descriptionText = descriptionElement.textContent || '';
+
+  const words = descriptionText
     .split(/\s+/) // Split by any whitespace
     .map((word) => word.toLowerCase()) // Convert to lowercase
     .map((word) => word.replace(/[^a-z0-9]/g, '')) // Remove non-alphanumeric chars

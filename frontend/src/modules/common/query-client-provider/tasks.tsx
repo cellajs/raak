@@ -80,6 +80,7 @@ const updateSubtasks = (subtasks: Subtask[], taskId: string, variables: TasksUpd
   });
 };
 
+// TODO refactor to handle it by table query
 const newGetPreviousTasks = async (queryKey: QueryKey) => {
   // Snapshot the previous value
   const { activeKey, queryData } = getQueries(queryKey);
@@ -91,9 +92,15 @@ const newGetPreviousTasks = async (queryKey: QueryKey) => {
 };
 
 const getQueries = (queryKey: QueryKey) => {
-  // Snapshot the previous value
-  const [[activeKey, queryData]] = queryClient.getQueriesData<InfiniteQueryFnData | QueryFnData>({ type: 'active', queryKey });
+  const boardQuery = queryClient.getQueryData<QueryFnData>(queryKey);
 
+  if (boardQuery) return { activeKey: queryKey, queryData: boardQuery };
+
+  // Snapshot the previous value
+  const activeQueries = queryClient.getQueriesData<InfiniteQueryFnData | QueryFnData>({ type: 'active' });
+
+  const tableQuery = activeQueries.filter(([keys, _]) => keys.includes('tasks') && keys.includes('list'));
+  const [[activeKey, queryData]] = tableQuery;
   return { activeKey, queryData };
 };
 
@@ -222,6 +229,7 @@ queryClient.setMutationDefaults(taskKeys.update(), {
   mutationFn: (variables) => updateTask(transformUpdateData(variables)),
   onMutate: async (variables: TasksUpdateMutationQueryFnVariables) => {
     const { id: taskId, orgIdOrSlug, projectId } = variables;
+
     const { queryKey, previousTasks } = await newGetPreviousTasks(taskKeys.list({ orgIdOrSlug, projectId }));
 
     // Optimistically update to the new value
@@ -328,7 +336,7 @@ queryClient.setMutationDefaults(taskKeys.update(), {
       };
     });
   },
-  onError,
+  onError: (e) => console.log(e),
 });
 
 // queryClient.setMutationDefaults(taskKeys.delete(), {
