@@ -9,6 +9,7 @@ import { ChevronDown, Tag, UserX, X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { queryClient } from '~/lib/router';
+import { showToast } from '~/lib/toasts';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { BlockNote } from '~/modules/common/blocknote';
 import { dialog } from '~/modules/common/dialoger/state.ts';
@@ -94,7 +95,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   // Project id is required
   const projectId = projectIdOrSlug || projects[0]?.id;
-  if (!projectId) return <>No project id found, please contact support</>;
 
   // Get  cached tasks
   const queryKey = taskKeys.list({ projectId, orgIdOrSlug });
@@ -102,11 +102,18 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   const handleCloseForm = () => {
     if (isDialog) {
-      if (projectId === '') dialog.remove(false, 'workspace-add-task');
+      if (!projectId) dialog.remove(false, 'workspace-add-task');
       else dialog.remove(false, `create-task-form-${projectId}`);
     }
     onCloseForm?.();
   };
+
+  // If somehow no project id, close the form
+  if (!projectId) {
+    handleCloseForm();
+    showToast(t('app:create_project_first'), 'warning');
+    return <></>;
+  }
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({

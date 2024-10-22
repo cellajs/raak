@@ -57,5 +57,6 @@
   "todos": "Todos",
   "type": "Type",
   "workspace": "Workspace",
-  "workspaces": "Workspaces"
+  "workspaces": "Workspaces",
+  "create_project_first": "Create project first."
 }
