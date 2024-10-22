@@ -1,8 +1,7 @@
-import { EllipsisVertical, Minimize2, Plus, Settings, Users } from 'lucide-react';
+import { EllipsisVertical, Plus, Settings, Users } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import router from '~/lib/router';
-import { showToast } from '~/lib/toasts';
 import { dialog } from '~/modules/common/dialoger/state';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
@@ -18,27 +17,13 @@ const ProjectActions = ({ project, openDialog }: { project: Project; openDialog:
   const { setFocusedTaskId } = useWorkspaceStore();
 
   const {
-    data: { workspace, projects },
+    data: { workspace },
   } = useWorkspaceQuery();
 
-  const { minimized, createTaskForm } = workspaces[workspace.id]?.[project.id] || { minimized: false, createTaskForm: false };
+  const { createTaskForm } = workspaces[workspace.id]?.[project.id] || { createTaskForm: false };
 
   // TODO: this doesnt look ok
   const role = project.membership?.role || 'member';
-
-  const minimizeClick = () => {
-    // Check if all other projects are minimized
-    const allOtherMinimized = projects.every((p) => {
-      return p.id === project.id || workspaces[workspace.id]?.[p.id]?.minimized;
-    });
-
-    if (allOtherMinimized) return showToast(t('app:no_minimize_last'), 'error');
-
-    // Proceed with minimizing the current project
-    changeColumn(workspace.id, project.id, {
-      minimized: true,
-    });
-  };
 
   const createTaskClick = () => {
     if (createTaskForm) setFocusedTaskId(null);
@@ -46,8 +31,6 @@ const ProjectActions = ({ project, openDialog }: { project: Project; openDialog:
       createTaskForm: !createTaskForm,
     });
   };
-
-  if (minimized) return null;
 
   useEffect(() => {
     const unsubscribe = router.subscribe('onBeforeLoad', () => dialog.remove(false, `create-task-form-${project.id}`));
@@ -72,10 +55,6 @@ const ProjectActions = ({ project, openDialog }: { project: Project; openDialog:
           <DropdownMenuItem onClick={() => openProjectConfigSheet(project)} className="flex items-center gap-2">
             {role === 'admin' ? <Settings size={16} /> : <Users size={16} />}
             <span>{role === 'admin' ? t('common:resource_settings', { resource: t('app:project') }) : t('app:project_members')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={minimizeClick} className="hidden  sm:flex items-center gap-2">
-            <Minimize2 size={16} />
-            <span>{t('common:minimize')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

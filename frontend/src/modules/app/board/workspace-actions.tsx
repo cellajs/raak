@@ -1,10 +1,8 @@
 import { EllipsisVertical, Plus, Settings, Tag, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { openProjectConfigSheet } from '~/modules/app/board/helpers';
-import { dialog } from '~/modules/common/dialoger/state';
+import { createNewProject, openProjectConfigSheet } from '~/modules/app/board/helpers';
 import { sheet } from '~/modules/common/sheeter/state';
 import { TooltipButton } from '~/modules/common/tooltip-button';
-import AddProjects from '~/modules/projects/add-project';
 import LabelsTable from '~/modules/tasks/labels-table';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
@@ -34,15 +32,6 @@ const WorkspaceActions = ({ project }: WorkspaceActionsProps) => {
       title: t('app:manage_labels'),
       id: 'workspace-preview-labels',
       side: 'right',
-    });
-  };
-
-  const createNewProject = () => {
-    // TODO: change mode when add projects without workspace
-    dialog(<AddProjects dialog mode="create" />, {
-      className: 'md:max-w-4xl',
-      id: 'add-projects',
-      title: t('common:add_resource', { resource: t('app:projects').toLowerCase() }),
     });
   };
 

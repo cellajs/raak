@@ -1,7 +1,9 @@
 import { t } from 'i18next';
+import { dialog } from '~/modules/common/dialoger/state';
 import { SheetNav } from '~/modules/common/sheet-nav';
 import { sheet } from '~/modules/common/sheeter/state';
 import MembersTable from '~/modules/organizations/members-table';
+import AddProjects from '~/modules/projects/add-project';
 import { ProjectSettings } from '~/modules/projects/project-settings';
 import type { Project, Subtask, Task } from '~/types/app';
 import type { DraggableItemData } from '~/types/common';
@@ -41,5 +43,14 @@ export const openProjectConfigSheet = (project: Project) => {
     id: isAdmin ? 'edit-project' : 'project-members',
     title: isAdmin ? t('common:resource_settings', { resource: t('app:project') }) : t('app:project_members'),
     description: isAdmin ? t('common:resource_settings.text', { resource: t('app:project').toLowerCase() }) : '',
+  });
+};
+
+export const createNewProject = () => {
+  // TODO: change mode when add projects without workspace
+  dialog(<AddProjects dialog mode="create" />, {
+    className: 'md:max-w-4xl',
+    id: 'add-projects',
+    title: t('common:add_resource', { resource: t('app:projects').toLowerCase() }),
   });
 };

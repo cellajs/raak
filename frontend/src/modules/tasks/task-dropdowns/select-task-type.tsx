@@ -1,6 +1,5 @@
-import { useSearch } from '@tanstack/react-router';
 import { Bolt, Bug, Check, Star } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { dropdowner } from '~/modules/common/dropdowner/state';
@@ -9,8 +8,7 @@ import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/ta
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/modules/ui/command';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
-import { WorkspaceRoute } from '~/routes/workspaces';
-import { useWorkspaceStore } from '~/store/workspace';
+import type { Task } from '~/types/app';
 import { cn } from '~/utils/cn';
 import { TaskType } from '#/modules/tasks/schema';
 
@@ -27,38 +25,29 @@ export const taskTypes = [
 ] as const;
 
 export interface SelectTaskTypeProps {
-  currentType: TaskType;
-  projectId: string;
+  task: Task;
   className?: string;
 }
 
-const SelectTaskType = ({ currentType, projectId, className = '' }: SelectTaskTypeProps) => {
+const SelectTaskType = ({ task, className = '' }: SelectTaskTypeProps) => {
   const { t } = useTranslation();
-  const { focusedTaskId: storeFocusedId } = useWorkspaceStore();
+
   const {
     data: { workspace },
   } = useWorkspaceQuery();
-  const [selectedType, setSelectedType] = useState<Type | undefined>(taskTypes[taskTypes.findIndex((type) => type.value === currentType)]);
+  const [selectedType, setSelectedType] = useState<Type | undefined>(taskTypes[taskTypes.findIndex((type) => type.value === task.type)]);
   const [searchValue, setSearchValue] = useState('');
   const isSearching = searchValue.length > 0;
   const taskMutation = useTaskUpdateMutation();
 
-  const { taskIdPreview } = useSearch({
-    from: WorkspaceRoute.id,
-  });
-
-  const focusedTaskId = useMemo(() => (taskIdPreview ? taskIdPreview : storeFocusedId), [storeFocusedId, taskIdPreview]);
-
   const changeTaskType = async (newType: TaskType) => {
-    if (!focusedTaskId) return;
-
     try {
       await taskMutation.mutateAsync({
-        id: focusedTaskId,
+        id: task.id,
         orgIdOrSlug: workspace.organizationId,
         key: 'type',
         data: newType,
-        projectId,
+        projectId: task.projectId,
       });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
@@ -66,8 +55,8 @@ const SelectTaskType = ({ currentType, projectId, className = '' }: SelectTaskTy
   };
 
   useEffect(() => {
-    setSelectedType(taskTypes[taskTypes.findIndex((type) => type.value === currentType)]);
-  }, [currentType]);
+    setSelectedType(taskTypes[taskTypes.findIndex((type) => type.value === task.type)]);
+  }, [task.type]);
 
   return (
     <Command className={cn(className, 'relative w-48 p-0 rounded-lg')}>

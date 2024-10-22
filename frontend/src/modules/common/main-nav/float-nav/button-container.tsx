@@ -4,15 +4,17 @@ import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
 interface MobileNavButtonProps {
+  id: string;
   Icon: React.ElementType<LucideProps>;
   onClick: () => void;
   className?: string;
   direction?: 'left' | 'right';
 }
 
-const MobileNavButton: React.FC<MobileNavButtonProps> = ({ Icon, onClick, className, direction = 'right' }) => {
+const MobileNavButton: React.FC<MobileNavButtonProps> = ({ id, Icon, onClick, className, direction = 'right' }) => {
   return (
     <Button
+      id={id}
       size="icon"
       data-direction={direction}
       variant="secondary"

@@ -1,4 +1,3 @@
-import { useSearch } from '@tanstack/react-router';
 import { Check, XCircle } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,36 +10,29 @@ import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/ta
 import { inNumbersArray } from '~/modules/tasks/helpers';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/modules/ui/command';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
-import { WorkspaceRoute } from '~/routes/workspaces';
-import { useWorkspaceStore } from '~/store/workspace';
+import type { Task } from '~/types/app';
 import type { LimitedUser } from '~/types/common';
 
 interface AssignMembersProps {
-  value: LimitedUser[];
-  projectId: string;
+  task: Task;
   triggerWidth?: number;
   creationValueChange?: (users: LimitedUser[]) => void;
 }
 
-const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 320 }: AssignMembersProps) => {
+const AssignMembers = ({ task, creationValueChange, triggerWidth = 320 }: AssignMembersProps) => {
   const { t } = useTranslation();
-  const { focusedTaskId: storeFocusedId } = useWorkspaceStore();
-  const { taskIdPreview } = useSearch({
-    from: WorkspaceRoute.id,
-  });
 
   const {
     data: { workspace, members },
   } = useWorkspaceQuery();
-  const [selectedMembers, setSelectedMembers] = useState<LimitedUser[]>(value);
+  const [selectedMembers, setSelectedMembers] = useState<LimitedUser[]>(task.assignedTo);
   const [searchValue, setSearchValue] = useState('');
   const [showAll, setShowAll] = useState(false);
   const isMobile = useBreakpoints('max', 'sm');
   const inputRef = useRef<HTMLInputElement>(null);
   const taskMutation = useTaskUpdateMutation();
-  const focusedTaskId = useMemo(() => (taskIdPreview ? taskIdPreview : storeFocusedId), [storeFocusedId, taskIdPreview]);
 
-  const projectMembers = members.filter((m) => m.membership.projectId === projectId);
+  const projectMembers = members.filter((m) => m.membership.projectId === task.projectId);
 
   const sortedMembers = [...projectMembers].sort((a, b) => {
     const aSelected = selectedMembers.some((user) => user.id === a.id) ? 1 : 0;
@@ -55,15 +47,13 @@ const AssignMembers = ({ projectId, value, creationValueChange, triggerWidth = 3
   }, [showAll, searchValue, sortedMembers]);
 
   const changeAssignedTo = async (members: LimitedUser[]) => {
-    if (!focusedTaskId) return;
-
     try {
       await taskMutation.mutateAsync({
-        id: focusedTaskId,
+        id: task.id,
         orgIdOrSlug: workspace.organizationId,
         key: 'assignedTo',
         data: members,
-        projectId,
+        projectId: task.projectId,
       });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));

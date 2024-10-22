@@ -74,7 +74,11 @@ const tasksRoutes = app
 
     // Add other filters
     if (projectId) tasksFilters.push(inArray(tasksTable.projectId, projectId.split('_')));
-    if (q) tasksFilters.push(ilike(tasksTable.keywords, `%${q}%`));
+    //TODO rework search by key words itself
+    if (q) {
+      const sanitizedQ = q.split(' ').map((el) => `%${el.trim()}%`);
+      for (const word of sanitizedQ) tasksFilters.push(ilike(tasksTable.keywords, word));
+    }
     if (status) tasksFilters.push(inArray(tasksTable.status, status.split('_').map(Number)));
 
     const tasksQuery = db

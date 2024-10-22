@@ -1,7 +1,5 @@
 import { useSearch } from '@tanstack/react-router';
-import { Bird, Redo } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { useHotkeys } from '~/hooks/use-hot-keys';
@@ -9,7 +7,6 @@ import { useMeasure } from '~/hooks/use-measure';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import BoardHeader from '~/modules/app/board-header';
 import { BoardColumn } from '~/modules/app/board/board-column';
-import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/modules/ui/resizable';
 import { WorkspaceBoardRoute } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
@@ -18,6 +15,7 @@ import type { ContextEntity, Membership } from '~/types/common';
 
 import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { queryClient } from '~/lib/router';
+import { EmptyBoard } from '~/modules/app/board/empty-board';
 import WorkspaceActions from '~/modules/app/board/workspace-actions';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { taskKeys } from '~/modules/common/query-client-provider/tasks';
@@ -64,18 +62,18 @@ function BoardDesktop({
     }));
   }, [projects, workspaces, workspaceId]);
 
-  const scrollerWidth = getScrollerWidth(bounds.width, projectSettingsMap.filter((p) => !p.settings?.minimized).length);
+  const scrollerWidth = getScrollerWidth(bounds.width, projectSettingsMap.length);
   const panelMinSize = useMemo(() => {
     if (typeof scrollerWidth === 'number') return (PANEL_MIN_WIDTH / scrollerWidth) * 100;
 
-    const projectsLength = projectSettingsMap.filter((p) => !p.settings?.minimized).length;
+    const projectsLength = projectSettingsMap.length;
     return 100 / (projectsLength + 1); // + 1 to allow resizing
   }, [scrollerWidth, projectSettingsMap]);
 
   useEffect(() => {
-    for (const { project, settings } of projectSettingsMap) {
+    for (const { project } of projectSettingsMap) {
       const panel = panelRefs.current[project.id];
-      if (panel) settings?.minimized ? panel.collapse() : panel.expand();
+      if (panel) panel.expand();
     }
   }, [projectSettingsMap]);
 
@@ -114,7 +112,6 @@ function BoardDesktop({
 }
 
 export default function Board() {
-  const { t } = useTranslation();
   const { focusedTaskId, selectedTasks, setSearchQuery, setSelectedTasks } = useWorkspaceStore();
   const prevFocusedRef = useRef<string | null>(focusedTaskId);
   const {
@@ -336,25 +333,7 @@ export default function Board() {
         <WorkspaceActions project={mobileDeviceProject} />
       </BoardHeader>
       {!projects.length ? (
-        <ContentPlaceholder
-          className=" h-[calc(100vh-4rem-4rem)] sm:h-[calc(100vh-4.88rem)]"
-          Icon={Bird}
-          title={t('common:no_resource_yet', { resource: t('app:projects').toLowerCase() })}
-          text={
-            <>
-              <Redo
-                size={200}
-                strokeWidth={0.2}
-                className="max-md:hidden absolute scale-x-0 scale-y-75 -rotate-180 text-primary top-4 right-20 lg:right-36 translate-y-20 opacity-0 duration-500 delay-500 transition-all group-hover/workspace:opacity-100 group-hover/workspace:scale-x-100 group-hover/workspace:translate-y-0 group-hover/workspace:rotate-[-130deg]"
-              />
-              <p className="inline-flex gap-1 opacity-0 duration-500 transition-opacity group-hover/workspace:opacity-100">
-                <span>{t('common:click')}</span>
-                <span className="text-primary">{`+ ${t('common:add')}`}</span>
-                <span>{t('app:no_projects.text')}</span>
-              </p>
-            </>
-          }
-        />
+        <EmptyBoard />
       ) : (
         <>
           {isMobile ? (

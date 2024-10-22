@@ -9,6 +9,7 @@ import { ChevronDown, Tag, UserX, X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormWithDraft } from '~/hooks/use-draft-form';
 import { queryClient } from '~/lib/router';
+import { showToast } from '~/lib/toasts';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import { BlockNote } from '~/modules/common/blocknote';
 import { dialog } from '~/modules/common/dialoger/state.ts';
@@ -32,7 +33,7 @@ import { WorkspaceRoute } from '~/routes/workspaces';
 import { useUserStore } from '~/store/user.ts';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Label, Task } from '~/types/app';
-import type { Member } from '~/types/common';
+import type { LimitedUser } from '~/types/common';
 import { cn } from '~/utils/cn';
 import { nanoid } from '~/utils/nanoid';
 import { scanTaskDescription } from '#/modules/tasks/helpers';
@@ -94,7 +95,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   // Project id is required
   const projectId = projectIdOrSlug || projects[0]?.id;
-  if (!projectId) return <>No project id found, please contact support</>;
 
   // Get  cached tasks
   const queryKey = taskKeys.list({ projectId, orgIdOrSlug });
@@ -102,11 +102,18 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   const handleCloseForm = () => {
     if (isDialog) {
-      if (projectId === '') dialog.remove(false, 'workspace-add-task');
+      if (!projectId) dialog.remove(false, 'workspace-add-task');
       else dialog.remove(false, `create-task-form-${projectId}`);
     }
     onCloseForm?.();
   };
+
+  // If somehow no project id, close the form
+  if (!projectId) {
+    handleCloseForm();
+    showToast(t('app:create_project_first'), 'warning');
+    return <></>;
+  }
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
@@ -114,12 +121,13 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
       defaultValues: {
         ...{
           id: defaultId,
+          entity: 'task',
           description: '',
           summary: '',
           type: TaskType.feature,
           impact: null,
-          assignedTo: [],
-          labels: [],
+          assignedTo: [] as LimitedUser[],
+          labels: [] as Label[],
           status: 1,
           projectId,
           expandable: false,
@@ -137,7 +145,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   const onSubmit = async (values: FormValues) => {
     const { summary, keywords, expandable } = scanTaskDescription(values.description);
-
     const newTask = {
       id: values.id,
       description: values.description,
@@ -192,6 +199,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   if (form.loading) return null;
 
+  // TODO fix types
   return (
     <Form {...form}>
       <form
@@ -275,12 +283,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
                       type="button"
                       onClick={(event) => {
                         dropdowner(
-                          <SelectImpact
-                            value={selectedImpactValue}
-                            projectId={projectId}
-                            triggerWidth={getFieldWidth()}
-                            creationValueChange={onChange}
-                          />,
+                          <SelectImpact task={form.getValues() as unknown as Task} triggerWidth={getFieldWidth()} creationValueChange={onChange} />,
                           {
                             id: `impact-${defaultId}`,
                             trigger: event.currentTarget,
@@ -324,12 +327,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
                     type="button"
                     onClick={(event) => {
                       dropdowner(
-                        <AssignMembers
-                          value={value as Member[]}
-                          triggerWidth={getFieldWidth()}
-                          projectId={projectId}
-                          creationValueChange={onChange}
-                        />,
+                        <AssignMembers task={form.getValues() as unknown as Task} triggerWidth={getFieldWidth()} creationValueChange={onChange} />,
                         {
                           id: `assignTo-${defaultId}`,
                           trigger: event.currentTarget,
@@ -388,14 +386,12 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
                     className="relative flex h-auto justify-start font-light min-h-9 py-1 hover:bg-accent/20"
                     onClick={(event) => {
                       dropdowner(
-                        <SetLabels
-                          value={value as Label[]}
-                          triggerWidth={getFieldWidth()}
-                          projectId={projectId}
-                          organizationId={workspace.organizationId}
-                          creationValueChange={onChange}
-                        />,
-                        { id: `labels-${defaultId}`, trigger: event.currentTarget, modal: false },
+                        <SetLabels task={form.getValues() as unknown as Task} triggerWidth={getFieldWidth()} creationValueChange={onChange} />,
+                        {
+                          id: `labels-${defaultId}`,
+                          trigger: event.currentTarget,
+                          modal: false,
+                        },
                       );
                     }}
                   >
@@ -419,10 +415,8 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
                                   dropdowner.updateOpenDropDown({
                                     content: (
                                       <SetLabels
-                                        value={value.filter((l) => l.name !== name) as Label[]}
+                                        task={form.getValues() as unknown as Task}
                                         triggerWidth={getFieldWidth()}
-                                        projectId={projectId}
-                                        organizationId={workspace.organizationId}
                                         creationValueChange={onChange}
                                       />
                                     ),
@@ -466,7 +460,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
               <FormField
                 control={form.control}
                 name="status"
-                render={({ field: { value, onChange } }) => {
+                render={({ field: { onChange } }) => {
                   return (
                     <FormItem className="gap-0 w-8">
                       <FormControl>
@@ -477,7 +471,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
                           size="xs"
                           className="relative rounded-none rounded-r border-l border-l-background/25 [&:not(.absolute)]:active:translate-y-0"
                           onClick={(event) => {
-                            dropdowner(<SelectStatus taskStatus={value as TaskStatus} projectId={projectId} creationValueChange={onChange} />, {
+                            dropdowner(<SelectStatus task={form.getValues() as unknown as Task} creationValueChange={onChange} />, {
                               id: `status-${defaultId}`,
                               trigger: event.currentTarget,
                             });
