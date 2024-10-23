@@ -106,7 +106,7 @@ export const SheetMenuItems = ({ data, type, shownOption, createDialog, classNam
         {filteredItems.map((item) => (
           <div key={item.id}>
             <SheetMenuItem item={item} className={className} />
-            {!item.membership.archived && item.submenu && !!item.submenu.length && !hideSubmenu && (
+            {!item.membership.archived && !!item.submenu?.length && !hideSubmenu && (
               <SheetMenuItems type={item.submenu[0].entity} data={item.submenu} shownOption="unarchive" />
             )}
           </div>

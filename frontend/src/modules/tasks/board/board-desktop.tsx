@@ -3,15 +3,12 @@ import { useMeasure } from '~/hooks/use-measure';
 import { BoardColumn } from '~/modules/tasks/board/board-column';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/modules/ui/resizable';
 import type { Project } from '~/types/app';
-import type { ContextEntity, Membership } from '~/types/common';
 
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { useEventListener } from '~/hooks/use-event-listener';
 import BoardHeader from '~/modules/tasks/board-header';
 import WorkspaceActions from '~/modules/tasks/board/workspace-actions';
 import TasksHotkeysManager from '~/modules/tasks/tasks-hotkeys';
 import type { TaskStates } from '~/modules/tasks/types';
-import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
 
 // TODO empty space width should be dynamic based on window width and amount of projects and width of each project?
@@ -36,7 +33,6 @@ export default function BoardDesktop({
   const { ref, bounds } = useMeasure();
   const panelRefs = useRef<Record<string, ImperativePanelHandle | null>>({});
   const { changePanels, workspacesPanels, workspaces } = useWorkspaceUIStore();
-  const { updateProjectMembership, updateWorkspaceMembership } = useWorkspaceQuery();
 
   const panelStorage = useMemo(
     () => ({
@@ -59,14 +55,6 @@ export default function BoardDesktop({
 
     return 100 / (projects.length + 1); // + 1 to allow resizing
   }, [scrollerWidth, projects.length]);
-
-  const handleEntityUpdate = (event: { detail: { membership: Membership; entity: ContextEntity } }) => {
-    const { entity, membership } = event.detail;
-    if (entity === 'project') updateProjectMembership(membership);
-    if (entity === 'workspace') updateWorkspaceMembership(membership);
-  };
-
-  useEventListener('menuEntityChange', handleEntityUpdate);
 
   return (
     <>

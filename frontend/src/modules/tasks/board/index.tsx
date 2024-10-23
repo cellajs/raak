@@ -10,6 +10,7 @@ import BoardDesktop from '~/modules/tasks/board/board-desktop';
 import { BoardEmpty } from '~/modules/tasks/board/board-empty';
 import type { TaskCardToggleSelectEvent, TaskStates, TaskStatesChangeEvent } from '~/modules/tasks/types';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
+import type { ContextEntity, Membership } from '~/types/common';
 import { BoardMobile } from './board-mobile';
 
 export default function Board() {
@@ -19,6 +20,8 @@ export default function Board() {
 
   const {
     data: { workspace, projects: queryProjects },
+    updateProjectMembership,
+    updateWorkspaceMembership,
   } = useWorkspaceQuery();
 
   const prevFocusedRef = useRef<string | null>(focusedTaskId);
@@ -50,6 +53,13 @@ export default function Board() {
     setTaskState(taskId, state);
   };
 
+  const handleEntityUpdate = (event: { detail: { membership: Membership; entity: ContextEntity } }) => {
+    const { entity, membership } = event.detail;
+    if (entity === 'project') updateProjectMembership(membership);
+    if (entity === 'workspace') updateWorkspaceMembership(membership);
+  };
+
+  useEventListener('menuEntityChange', handleEntityUpdate);
   useEventListener('changeTaskState', handleTaskState);
   useEventListener('toggleSelectTask', handleToggleTaskSelect);
 
