@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { FocusView } from '~/modules/common/focus-view';
 
-import DisplayOptions from '~/modules/app/board-header/display-options';
-import PageView from '~/modules/app/board-header/page-view';
-import TasksSearch from '~/modules/app/board-header/search';
-import TaskSelectedButtons from '~/modules/app/board-header/selected-buttons';
+import DisplayOptions from '~/modules/tasks/board-header/display-options';
+import PageView from '~/modules/tasks/board-header/page-view';
+import TasksSearch from '~/modules/tasks/board-header/search';
+import TaskSelectedButtons from '~/modules/tasks/board-header/selected-buttons';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useNavigationStore } from '~/store/navigation';
 import { useWorkspaceStore } from '~/store/workspace';

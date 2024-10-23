@@ -13,12 +13,13 @@ import ColumnsView from '~/modules/common/data-table/columns-view';
 import Export from '~/modules/common/data-table/export.tsx';
 import { getInitialSortColumns } from '~/modules/common/data-table/sort-columns';
 
-import TableHeader from '~/modules/app/board-header';
 import { openUserPreviewSheet } from '~/modules/common/data-table/util';
 import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import { sheet } from '~/modules/common/sheeter/state';
+import TableHeader from '~/modules/tasks/board-header';
 import { configureForExport, openTaskPreviewSheet } from '~/modules/tasks/helpers';
 import TaskSheet from '~/modules/tasks/task-sheet';
+import TasksHotkeysManager from '~/modules/tasks/tasks-hotkeys';
 import { useColumns } from '~/modules/tasks/tasks-table/columns';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
@@ -151,6 +152,7 @@ export default function TasksTable() {
 
   return (
     <>
+      <TasksHotkeysManager workspaceId={workspace.id} projects={projects} mode={'default'} />
       <TableHeader>
         <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns} />
         <Export

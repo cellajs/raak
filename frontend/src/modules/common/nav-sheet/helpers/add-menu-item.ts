@@ -17,7 +17,7 @@ export const addMenuItem = (newEntity: UserMenuItem, sectionName: keyof UserMenu
     });
   };
 
-  const updatedMenuSection = parentSlug ? add(menu[sectionName]) : [...menu[sectionName], newEntity];
+  const updatedMenuSection = parentSlug ? add(menu[sectionName]) : [...menu[sectionName], { ...newEntity, submenu: [] }];
 
   return {
     ...menu,

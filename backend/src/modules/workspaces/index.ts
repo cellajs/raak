@@ -3,12 +3,13 @@ import { db } from '#/db/db';
 import { membershipSelect, membershipsTable } from '#/db/schema/memberships';
 import { workspacesTable } from '#/db/schema/workspaces';
 
+import { config } from 'config';
 import { labelsTable } from '#/db/schema/labels';
 import { projectsTable } from '#/db/schema/projects';
 import { safeUserSelect, usersTable } from '#/db/schema/users';
 import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
-import { resolveEntity } from '#/lib/entity';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
+import { getValidEntity } from '#/lib/permission-manager';
 import { sendSSEToUsers } from '#/lib/sse';
 import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
@@ -17,7 +18,6 @@ import { checkSlugAvailable } from '../general/helpers/check-slug';
 import { insertMembership } from '../memberships/helpers/insert-membership';
 import { transformDatabaseUserWithCount } from '../users/helpers/transform-database-user';
 import workspaceRoutesConfig from './routes';
-import permissionManager from '#/lib/permission-manager';
 
 const app = new CustomHono();
 
@@ -56,19 +56,17 @@ const workspacesRoutes = app
   .openapi(workspaceRoutesConfig.getWorkspace, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
 
-    const memberships = getMemberships();
+    if (!config.contextEntityTypes.includes('workspace')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: workspace, membership, isAllowed } = await getValidEntity('workspace', 'read', idOrSlug);
+
+    if (!workspace || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
     const user = getContextUser();
-
-    const workspace = await resolveEntity('workspace', idOrSlug);
-    if (!workspace) return errorResponse(ctx, 404, 'not_found', 'warn', 'workspace', { id: idOrSlug });
-
-    // TODO remove this and use permission manager once it returns membership
-    const workspaceMembership = memberships.find((m) => m.workspaceId === workspace.id && m.type === 'workspace');
-    if (!workspaceMembership) return errorResponse(ctx, 403, 'forbidden', 'warn', 'workspace');
-
-    // If not allowed and not admin, return forbidden
-    const canRead = permissionManager.isPermissionAllowed(memberships, 'read', workspace);
-    if (!canRead && user.role !== 'admin') return errorResponse(ctx, 403, 'forbidden', 'warn', 'workspace');
 
     // Get projects
     const projectsWithMembership = await db
@@ -80,7 +78,12 @@ const workspacesRoutes = app
       .innerJoin(workspacesTable, eq(workspacesTable.id, workspace.id))
       .innerJoin(
         membershipsTable,
-        and(eq(membershipsTable.projectId, projectsTable.id), eq(membershipsTable.workspaceId, workspace.id), eq(membershipsTable.userId, user.id), eq(membershipsTable.archived, false)),
+        and(
+          eq(membershipsTable.projectId, projectsTable.id),
+          eq(membershipsTable.workspaceId, workspace.id),
+          eq(membershipsTable.userId, user.id),
+          eq(membershipsTable.archived, false),
+        ),
       )
       .where(eq(projectsTable.organizationId, workspace.organizationId))
       .orderBy(asc(membershipsTable.order));
@@ -142,7 +145,7 @@ const workspacesRoutes = app
     const labels = await db.select().from(labelsQuery.as('labels'));
 
     const data = {
-      workspace: { ...workspace, membership: workspaceMembership },
+      workspace: { ...workspace, membership },
       projects,
       members,
       labels,
@@ -155,21 +158,20 @@ const workspacesRoutes = app
    */
   .openapi(workspaceRoutesConfig.updateWorkspace, async (ctx) => {
     const { idOrSlug } = ctx.req.valid('param');
+
+    if (!config.contextEntityTypes.includes('workspace')) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
+    const { entity: workspace, membership, isAllowed } = await getValidEntity('workspace', 'update', idOrSlug);
+
+    if (!workspace || !isAllowed || !membership) {
+      return errorResponse(ctx, 403, 'forbidden', 'warn');
+    }
+
     const { name, slug, thumbnailUrl, bannerUrl } = ctx.req.valid('json');
 
     const user = getContextUser();
-    const memberships = getMemberships();
-
-    const workspace = await resolveEntity('workspace', idOrSlug);
-    if (!workspace) return errorResponse(ctx, 404, 'not_found', 'warn', 'workspace', { id: idOrSlug });
-
-    // TODO remove this and user permission manager once it returns membership
-    const userMembership = memberships.find((m) => m.workspaceId === workspace.id && m.type === 'workspace');
-    if (!userMembership) return errorResponse(ctx, 403, 'forbidden', 'warn', 'project');
-
-    // If not allowed and not admin, return forbidden
-    const canUpdate = permissionManager.isPermissionAllowed(memberships, 'update', workspace);
-    if (!canUpdate && user.role !== 'admin') return errorResponse(ctx, 403, 'forbidden', 'warn', 'organization');
 
     if (slug && slug !== workspace.slug) {
       const slugAvailable = await checkSlugAvailable(slug);
@@ -202,7 +204,7 @@ const workspacesRoutes = app
 
     logEvent('Workspace updated', { workspace: updatedWorkspace.id });
 
-    const data = { ...updatedWorkspace, membership: userMembership };
+    const data = { ...updatedWorkspace, membership };
 
     return ctx.json({ success: true, data }, 200);
   })

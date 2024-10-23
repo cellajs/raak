@@ -1,9 +1,9 @@
 import { Construction } from 'lucide-react';
-import DisplayOptions from '~/modules/app/board-header/display-options';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
 import ContentPlaceholder from '~/modules/common/content-placeholder';
 import { FocusView } from '~/modules/common/focus-view';
 import StickyBox from '~/modules/common/sticky-box';
+import DisplayOptions from '~/modules/tasks/board-header/display-options';
 import { useWorkspaceQuery } from './helpers/use-workspace';
 
 const WorkspaceOverview = () => {

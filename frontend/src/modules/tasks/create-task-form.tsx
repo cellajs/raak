@@ -102,8 +102,8 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   const handleCloseForm = () => {
     if (isDialog) {
-      if (!projectId) dialog.remove(false, 'workspace-add-task');
-      else dialog.remove(false, `create-task-form-${projectId}`);
+      dialog.remove(false, 'workspace-add-task');
+      dialog.remove(false, `create-task-form-${projectId}`);
     }
     onCloseForm?.();
   };
@@ -205,7 +205,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
       <form
         id={`create-task-${projectIdOrSlug}`}
         onSubmit={form.handleSubmit(onSubmit)}
-        className={cn(className, `sm:p-3 sm:pl-11 ${isDialog ? '' : 'border-b'} flex gap-2 flex-col sm:shadow-inner`)}
+        className={cn(className, `sm:p-3 sm:pl-11 ${isDialog ? '' : 'border-b'} flex gap-2 flex-col sm:shadow-inner max-sm:min-h-[90vh]`)}
       >
         <FormField
           control={form.control}

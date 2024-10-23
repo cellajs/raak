@@ -1,8 +1,8 @@
 import { EllipsisVertical, Plus, Settings, Tag, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { createNewProject, openProjectConfigSheet } from '~/modules/app/board/helpers';
 import { sheet } from '~/modules/common/sheeter/state';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { createNewProject, openProjectConfigSheet } from '~/modules/tasks/board/helpers';
 import LabelsTable from '~/modules/tasks/labels-table';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
