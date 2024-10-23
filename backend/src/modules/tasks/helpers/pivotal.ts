@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import type { InsertTaskModel } from '#/db/schema/tasks';
-import { extractKeywords } from '#/modules/tasks/helpers';
-import type { Labels, PivotalTask } from './type';
+import { extractKeywords } from '#/modules/tasks/helpers/utils';
+import type { Labels, PivotalTask } from './pivotal-type';
 
 export enum PivotalTaskTypes {
   feature = 1,
@@ -17,7 +17,7 @@ export const getSubtask = (task: PivotalTask, taskId: string, organizationId: st
     if (task[taskKey] && task[statusKey]) {
       subtasks.push({
         id: nanoid(),
-        summary: `<div class="bn-block-content"><p class="bn-inline-content">${task[taskKey]}</p></div>`,
+        summary: `<p class="bn-inline-content">${task[taskKey]}</p>`,
         type: PivotalTaskTypes.chore,
         keywords: extractKeywords(task[taskKey]),
         parentId: taskId,

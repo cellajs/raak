@@ -58,5 +58,6 @@
   "type": "Type",
   "workspace": "Workspace",
   "workspaces": "Workspaces",
-  "create_project_first": "Create project first."
+  "create_project_first": "Create project first.",
+  "import_tasks.text": "Currently we can only import zip files (max. 5MB) from Pivotal Tracker. Contact support if you want other import methods."
 }

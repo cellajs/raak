@@ -12,9 +12,16 @@ import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
 import { getOrderColumn } from '#/utils/order-column';
 import { splitByAllowance } from '#/utils/split-by-allowance';
-import { getDateFromToday, scanTaskDescription } from './helpers';
+import { extractKeywords, getDateFromToday, scanTaskDescription } from './helpers/utils';
 import taskRoutesConfig from './routes';
 import type { subtaskSchema } from './schema';
+
+import JSZip from 'jszip';
+import { nanoid } from 'nanoid';
+import papaparse from 'papaparse';
+import { projectsTable } from '#/db/schema/projects';
+import { PivotalTaskTypes, getLabels, getSubtask, getTaskLabels } from './helpers/pivotal';
+import type { PivotalTask } from './helpers/pivotal-type';
 
 const app = new CustomHono();
 
@@ -227,6 +234,105 @@ const tasksRoutes = app
     await db.delete(tasksTable).where(inArray(tasksTable.id, allowedIds));
 
     return ctx.json({ success: true, errors: errors }, 200);
+  })
+  /*
+   * Import tasks
+   */
+  .openapi(taskRoutesConfig.importTasks, async (ctx) => {
+    const { file: zipFile } = await ctx.req.parseBody();
+    const { projectId } = ctx.req.param();
+
+    if (!zipFile || typeof zipFile !== 'object' || !('arrayBuffer' in zipFile)) {
+      return errorResponse(ctx, 400, 'invalid_request', 'warn');
+    }
+
+    if (!projectId) {
+      return errorResponse(ctx, 400, 'invalid_request', 'warn');
+    }
+
+    if (!zipFile || typeof zipFile === 'string') {
+      return errorResponse(ctx, 400, 'invalid_request', 'warn');
+    }
+
+    if (!projectId) {
+      console.error('Please provide a project id');
+      process.exit(1);
+    }
+
+    const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, projectId));
+
+    if (!project) {
+      console.error('Project not found');
+      process.exit(1);
+    }
+
+    const buffer = await zipFile.arrayBuffer();
+    const zip = new JSZip();
+    await zip.loadAsync(buffer);
+
+    const promises: Promise<unknown>[] = [];
+    zip.forEach((relativePath, zipEntry) => {
+      if (!relativePath.endsWith('.csv') || relativePath.includes('project_history')) {
+        return;
+      }
+      const promise = new Promise((resolve) => {
+        zipEntry.async('nodebuffer').then((content) => {
+          const csv = content.toString();
+          const result = papaparse.parse(csv, { header: true });
+          resolve(result.data);
+        });
+      });
+      promises.push(promise);
+    });
+    const [tasks] = await Promise.all<
+      [PivotalTask[]]
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    >(promises as any);
+
+    const labelsToInsert = getLabels(tasks, project.organizationId, project.id);
+    const subtasksToInsert: InsertTaskModel[] = [];
+    const tasksToInsert = tasks
+      // Filter out accepted tasks
+      .filter((task) => task['Current State'] !== 'accepted')
+      .map((task, index) => {
+        const taskId = nanoid();
+        const labelsIds = getTaskLabels(task, labelsToInsert);
+        const subtasks = getSubtask(task, taskId, project.organizationId, project.id);
+        if (subtasks.length) subtasksToInsert.push(...subtasks);
+        return {
+          id: taskId,
+          summary: `<p class="bn-inline-content">${task.Title}</p>`,
+          type: PivotalTaskTypes[task.Type as keyof typeof PivotalTaskTypes] || PivotalTaskTypes.chore,
+          organizationId: project.organizationId,
+          projectId: project.id,
+          expandable: true,
+          keywords: task.Description || task.Title ? extractKeywords(task.Description + task.Title) : '',
+          impact: ['0', '1', '2', '3'].includes(task.Estimate) ? +task.Estimate : 0,
+          description: `<div class="bn-block-content"><p class="bn-inline-content">${task.Title}</p></div><div class="bn-block-content"><p class="bn-inline-content">${task.Description}</p></div>`,
+          labels: labelsIds,
+          status:
+            task['Current State'] === 'accepted'
+              ? 6
+              : task['Current State'] === 'reviewed'
+                ? 5
+                : task['Current State'] === 'delivered'
+                  ? 4
+                  : task['Current State'] === 'finished'
+                    ? 3
+                    : task['Current State'] === 'started'
+                      ? 2
+                      : task['Current State'] === 'unstarted'
+                        ? 1
+                        : 0,
+          order: index,
+          createdAt: new Date(),
+        } satisfies InsertTaskModel;
+      });
+    await db.insert(labelsTable).values(labelsToInsert);
+    await db.insert(tasksTable).values(tasksToInsert).onConflictDoNothing();
+    if (subtasksToInsert.length) await db.insert(tasksTable).values(subtasksToInsert);
+
+    return ctx.json({ success: true }, 200);
   });
 
 export default tasksRoutes;
