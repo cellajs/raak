@@ -8,11 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useEventListener } from '~/hooks/use-event-listener';
-import { useHotkeys } from '~/hooks/use-hot-keys';
-import { dropdowner } from '~/modules/common/dropdowner/state';
 import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
 import { isSubtaskData } from '~/modules/tasks/board/helpers';
-import { getRelativeTaskOrder, handleTaskDropDownClick, setTaskCardFocus } from '~/modules/tasks/helpers';
+import { getRelativeTaskOrder, setTaskCardFocus } from '~/modules/tasks/helpers';
 import TaskCard from '~/modules/tasks/task';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useThemeStore } from '~/store/theme';
@@ -37,16 +35,6 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
 
   const [state, setState] = useState<TaskStates>(isMobile ? 'expanded' : 'editing');
 
-  // Open on key press
-  const hotKeyPress = (field: string) => {
-    const taskCard = document.getElementById(`sheet-card-${task.id}`);
-    if (!taskCard) return;
-    if (taskCard && document.activeElement !== taskCard) taskCard.focus();
-    const trigger = taskCard.querySelector(`#${field}`);
-    if (!trigger) return dropdowner.remove();
-    handleTaskDropDownClick(task, field, trigger as HTMLElement);
-  };
-
   const handleTaskState = (event: TaskStatesChangeEvent) => {
     const { taskId, state, sheet } = event.detail;
     if (!sheet || taskId !== task.id || state === 'currentState') return;
@@ -54,14 +42,6 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
   };
 
   useEventListener('changeTaskState', handleTaskState);
-
-  useHotkeys([
-    ['A', () => hotKeyPress(`assignedTo-${task.id}`)],
-    ['I', () => hotKeyPress(`impact-${task.id}`)],
-    ['L', () => hotKeyPress(`labels-${task.id}`)],
-    ['S', () => hotKeyPress(`status-${task.id}`)],
-    ['T', () => hotKeyPress(`type-${task.id}`)],
-  ]);
 
   useEffect(() => {
     setTaskCardFocus(`sheet-card-${task.id}`);

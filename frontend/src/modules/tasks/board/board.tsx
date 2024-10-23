@@ -13,12 +13,12 @@ import type { Project } from '~/types/app';
 import type { ContextEntity, Membership } from '~/types/common';
 
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import BoardHotkeysManager from '~/modules/tasks/board/board-hotkeys';
 import { EmptyBoard } from '~/modules/tasks/board/empty-board';
 import WorkspaceActions from '~/modules/tasks/board/workspace-actions';
 import type { TaskCardToggleSelectEvent, TaskStates, TaskStatesChangeEvent } from '~/modules/tasks/types';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useWorkspaceUIStore } from '~/store/workspace-ui';
+import TasksHotkeysManager from './tasks-hotkeys';
 
 // TODO empty space width should be dynamic based on window width and amount of projects and width of each project?
 const PANEL_MIN_WIDTH = 400;
@@ -74,36 +74,39 @@ function BoardDesktop({
   }, [projectSettingsMap]);
 
   return (
-    <div className="transition sm:h-[calc(100vh-4rem)] md:h-[calc(100vh-4.88rem)] overflow-x-auto" ref={ref as React.Ref<HTMLDivElement>}>
-      <div className="h-[inherit]" style={{ width: scrollerWidth }}>
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="flex gap-2 group/board"
-          id="project-panels"
-          storage={panelStorage}
-          autoSaveId={workspaceId}
-        >
-          {projectSettingsMap.map(({ project, settings }, index) => (
-            <Fragment key={project.id}>
-              <ResizablePanel
-                // biome-ignore lint/suspicious/noAssignInExpressions: need to minimize
-                ref={(el) => (panelRefs.current[project.id] = el)}
-                id={project.id}
-                order={project.membership?.order || index}
-                collapsedSize={panelMinSize * 0.1}
-                minSize={panelMinSize}
-                collapsible
-              >
-                <BoardColumn tasksState={tasksState} project={project} settings={settings} />
-              </ResizablePanel>
-              {index < projects.length - 1 && (
-                <ResizableHandle className="w-1.5 rounded border border-background -mx-2 bg-transparent hover:bg-primary/50 data-[resize-handle-state=drag]:bg-primary transition-all" />
-              )}
-            </Fragment>
-          ))}
-        </ResizablePanelGroup>
+    <>
+      <TasksHotkeysManager workspaceId={workspaceId} projects={projects} mode={'board'} />
+      <div className="transition sm:h-[calc(100vh-4rem)] md:h-[calc(100vh-4.88rem)] overflow-x-auto" ref={ref as React.Ref<HTMLDivElement>}>
+        <div className="h-[inherit]" style={{ width: scrollerWidth }}>
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="flex gap-2 group/board"
+            id="project-panels"
+            storage={panelStorage}
+            autoSaveId={workspaceId}
+          >
+            {projectSettingsMap.map(({ project, settings }, index) => (
+              <Fragment key={project.id}>
+                <ResizablePanel
+                  // biome-ignore lint/suspicious/noAssignInExpressions: need to minimize
+                  ref={(el) => (panelRefs.current[project.id] = el)}
+                  id={project.id}
+                  order={project.membership?.order || index}
+                  collapsedSize={panelMinSize * 0.1}
+                  minSize={panelMinSize}
+                  collapsible
+                >
+                  <BoardColumn tasksState={tasksState} project={project} settings={settings} />
+                </ResizablePanel>
+                {index < projects.length - 1 && (
+                  <ResizableHandle className="w-1.5 rounded border border-background -mx-2 bg-transparent hover:bg-primary/50 data-[resize-handle-state=drag]:bg-primary transition-all" />
+                )}
+              </Fragment>
+            ))}
+          </ResizablePanelGroup>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -197,7 +200,6 @@ export default function Board() {
       <BoardHeader>
         <WorkspaceActions project={mobileDeviceProject} />
       </BoardHeader>
-      <BoardHotkeysManager workspaceId={workspace.id} projects={projects} tasksState={tasksState} setTaskState={setTaskState} />
       {!projects.length ? (
         <EmptyBoard />
       ) : (

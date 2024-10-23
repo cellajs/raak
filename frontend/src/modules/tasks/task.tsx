@@ -162,6 +162,7 @@ const TaskCard = memo(function TaskCard({ style, task, mode, isSelected, isFocus
     <Card
       id={isSheet ? `sheet-card-${task.id}` : task.id}
       onClick={handleCardClick}
+      data-state={state}
       style={style}
       tabIndex={0}
       ref={taskRef}

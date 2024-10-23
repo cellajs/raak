@@ -24,6 +24,7 @@ import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
+import TasksHotkeysManager from '../board/tasks-hotkeys';
 
 type TasksSearch = z.infer<typeof tasksSearchSchema>;
 
@@ -151,6 +152,7 @@ export default function TasksTable() {
 
   return (
     <>
+      <TasksHotkeysManager workspaceId={workspace.id} projects={projects} mode={'default'} />
       <TableHeader>
         <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns} />
         <Export

@@ -1,13 +1,13 @@
 import { useSearch } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { useHotkeys } from '~/hooks/use-hot-keys';
+import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { queryClient } from '~/lib/router';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import { handleTaskDropDownClick, setTaskCardFocus, sortAndGetCounts } from '~/modules/tasks/helpers';
-import type { TaskStates } from '~/modules/tasks/types';
-import { WorkspaceBoardRoute } from '~/routes/workspaces';
+import { WorkspaceRoute } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
 import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
 import type { Project, Task } from '~/types/app';
@@ -15,13 +15,13 @@ import type { Project, Task } from '~/types/app';
 interface HotkeysManagerProps {
   workspaceId: string;
   projects: Project[];
-  tasksState: Record<string, TaskStates>;
-  setTaskState: (taskId: string, state: TaskStates) => void;
+  mode: 'default' | 'board';
 }
 
-export default function BoardHotkeysManager({ workspaceId, projects, tasksState, setTaskState }: HotkeysManagerProps) {
+export default function TasksHotkeysManager({ workspaceId, projects, mode = 'default' }: HotkeysManagerProps) {
   const { focusedTaskId: storeFocused } = useWorkspaceStore();
-  const { taskIdPreview } = useSearch({ from: WorkspaceBoardRoute.id });
+  const { taskIdPreview } = useSearch({ from: WorkspaceRoute.id });
+
   const { workspaces, changeColumn } = useWorkspaceUIStore();
 
   // Retrieve all tasks
@@ -35,9 +35,11 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
 
   const currentTask = useMemo(() => tasks.find((t) => t.id === (taskIdPreview || storeFocused)), [taskIdPreview, storeFocused, tasks]);
 
-  const handleVerticalArrowKeyDown = async (event: KeyboardEvent) => {
+  const handleVerticalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length) return;
-    if (currentTask && (tasksState[currentTask.id] === 'editing' || tasksState[currentTask.id] === 'unsaved')) return;
+    const taskCard = document.getElementById(currentTask?.id || '');
+    const state = taskCard?.dataset.state;
+    if (state === 'editing' || state === 'unsaved') return;
 
     const direction = currentTask?.id ? (event.key === 'ArrowDown' ? 1 : -1) : 0;
 
@@ -59,7 +61,7 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
     setTaskCardFocus(nextTask.id);
   };
 
-  const handleHorizontalArrowKeyDown = async (event: KeyboardEvent) => {
+  const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length || !currentTask) return;
 
     // Get the currently project index
@@ -93,26 +95,26 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
     const subtasksEditing = document.querySelectorAll(`[id^="blocknote-subtask-"]`);
     if (subtasksEditing.length) return dispatchCustomEvent('changeSubtaskState', { taskId: currentTask.id, state: 'removeEditing' });
 
-    const taskState = tasksState[currentTask.id];
-    if (!taskState || taskState === 'folded') {
+    const taskCard = document.getElementById(currentTask.id);
+    const state = taskCard?.dataset.state;
+    if (state === 'folded') {
       // check if creation of task open
       const taskCreation = document.getElementById(`create-task-${currentTask.projectId}`);
-      if (taskCreation) {
-        changeColumn(workspaceId, currentTask.projectId, {
-          createTaskForm: false,
-        });
-        return;
-      }
+      if (taskCreation) return changeColumn(workspaceId, currentTask.projectId, { createTaskForm: false });
     }
-    if (taskState === 'editing' || taskState === 'unsaved') return setTaskState(currentTask.id, 'expanded');
-    if (taskState === 'expanded') return setTaskState(currentTask.id, 'folded');
+
+    if (state === 'editing' || state === 'unsaved') return dispatchCustomEvent('changeTaskState', { taskId: currentTask.id, state: 'expanded' });
+
+    if (state === 'expanded') return dispatchCustomEvent('changeTaskState', { taskId: currentTask.id, state: 'folded' });
   };
 
   const handleEnterKeyPress = () => {
     if (!currentTask) return;
-    const taskState = tasksState[currentTask.id];
-    if (!taskState || taskState === 'folded') setTaskState(currentTask.id, 'expanded');
-    if (taskState === 'expanded') setTaskState(currentTask.id, 'editing');
+    const taskCard = document.getElementById(currentTask.id);
+    const state = taskCard?.dataset.state;
+
+    if (state === 'folded') dispatchCustomEvent('changeTaskState', { taskId: currentTask.id, state: 'expanded' });
+    if (state === 'expanded') dispatchCustomEvent('changeTaskState', { taskId: currentTask.id, state: 'editing' });
   };
 
   const handleNKeyDown = () => {
@@ -125,8 +127,10 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
 
   // Open on key press
   const hotKeyPress = (field: string) => {
-    if (!currentTask || taskIdPreview) return;
-    const taskCard = document.getElementById(currentTask.id);
+    console.log('🚀 ~ hotKeyPress ~ currentTask:', currentTask);
+
+    if (!currentTask) return;
+    const taskCard = document.getElementById(taskIdPreview ? `sheet-card-${currentTask.id}` : currentTask.id);
     if (!taskCard) return;
     if (document.activeElement !== taskCard) taskCard.focus();
 
@@ -136,8 +140,14 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
     handleTaskDropDownClick(currentTask, field, trigger as HTMLElement);
   };
 
-  // Register hotkeys using useHotkeys
-  useHotkeys([
+  const defaultHotKeys: HotkeyItem[] = [
+    ['A', () => hotKeyPress('assignedTo')],
+    ['I', () => hotKeyPress('impact')],
+    ['L', () => hotKeyPress('labels')],
+    ['S', () => hotKeyPress('status')],
+    ['T', () => hotKeyPress('type')],
+  ];
+  const boardHotKeys: HotkeyItem[] = [
     ['ArrowRight', handleHorizontalArrowKeyDown],
     ['ArrowLeft', handleHorizontalArrowKeyDown],
     ['ArrowDown', handleVerticalArrowKeyDown],
@@ -145,12 +155,10 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
     ['Escape', handleEscKeyPress],
     ['Enter', handleEnterKeyPress],
     ['N', handleNKeyDown],
-    ['A', () => hotKeyPress('assignedTo')],
-    ['I', () => hotKeyPress('impact')],
-    ['L', () => hotKeyPress('labels')],
-    ['S', () => hotKeyPress('status')],
-    ['T', () => hotKeyPress('type')],
-  ]);
+  ];
+  // Register hotkeys based on mode
+  const hotkeysToUse = mode === 'board' ? [...boardHotKeys, ...defaultHotKeys] : defaultHotKeys;
+  useHotkeys(hotkeysToUse);
 
   return null; // No UI, this component only handles hotkeys
 }
