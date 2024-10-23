@@ -69,16 +69,38 @@ export async function pullUpstream({
     try {
       // Get the list of tracked files and filter them
       const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n');
-      const uniqueFiles = [...new Set(files)];
-      const filteredFiles = applyIgnorePatterns(uniqueFiles, ignorePatterns);
+      const unrackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files --others --exclude-standard' })).split('\n');
+
+      const ignoredFiles = applyIgnorePatterns(files, ignorePatterns);
+      
+      const trackedFiles = [];
+      const untrackedFiles = [];
+
+      for (const ignoredFile of ignoredFiles) {
+        if (unrackedFiles.find((file) => ignoredFile.startsWith(ignoredFile))) {
+          untrackedFiles.push(ignoredFile);
+        } else {
+          trackedFiles.push(ignoredFile);
+        }
+      }
 
       // Join the list of files into a space-separated string
-      const filesToReset = filteredFiles.join(' ');
+      const filesToReset = ignoredFiles.join(' ');
+      const filesToCheckout = trackedFiles.join(' ');
 
-      // Run the reset and checkout commands with all files at once
+      console.log('filesToReset: ', filesToReset)
+      console.log('filesToCheckout: ', filesToCheckout)
+      console.log('untrackedFiles: ', untrackedFiles)
+
+      // Run the reset commands with all files at once
       if (filesToReset.length > 0) {
         await runGitCommand({ targetFolder, command: `reset ${filesToReset}` });
-        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToReset}` });
+
+      }
+
+      // Run the checkout commands with all files at once
+      if (filesToCheckout.length > 0) {
+        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout}` });
       }
 
       applyIgnoreSpinner.success('Successfully applied reset/checkout for ignored files.');
