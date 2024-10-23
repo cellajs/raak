@@ -6,13 +6,12 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { deleteTasks } from '~/api/tasks';
 import useDoubleClick from '~/hooks/use-double-click';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { BlockNote } from '~/modules/common/blocknote';
 import { DropIndicator } from '~/modules/common/drop-indicator';
-import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
+import { useTaskDeleteMutation, useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
 import { isSubtaskData } from '~/modules/tasks/board/helpers';
 import { TaskHeader } from '~/modules/tasks/task-header';
 import { Checkbox } from '~/modules/ui/checkbox';
@@ -25,12 +24,7 @@ import { env } from '../../../env';
 import { handleEditorFocus, useHandleUpdateHTML } from './helpers';
 import type { TaskStates } from './types';
 
-const Subtask = ({
-  task,
-  mode,
-  members,
-  removeCallback,
-}: { task: BaseSubtask; mode: Mode; members: Member[]; removeCallback: (id: string) => void }) => {
+const Subtask = ({ task, mode, members, isSheet = false }: { task: BaseSubtask; mode: Mode; members: Member[]; isSheet?: boolean }) => {
   const { t } = useTranslation();
 
   const { handleUpdateHTML } = useHandleUpdateHTML();
@@ -39,15 +33,20 @@ const Subtask = ({
   const [dragging, setDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 
-  const taskMutation = useTaskUpdateMutation();
+  const taskUpdateMutation = useTaskUpdateMutation();
+  const taskDeleteMutation = useTaskDeleteMutation();
 
   const onRemove = (subtaskId: string) => {
-    deleteTasks([subtaskId], task.organizationId).then(async (resp) => {
-      if (resp) {
-        toast.success(t('common:success.delete_resources', { resources: t('app:todos') }));
-        removeCallback(subtaskId);
-      } else toast.error(t('common:error.delete_resources', { resources: t('app:todos') }));
-    });
+    try {
+      taskDeleteMutation.mutateAsync({
+        ids: [subtaskId],
+        orgIdOrSlug: task.organizationId,
+        projectIds: [task.projectId],
+      });
+      toast.success(t('common:success.delete_resources', { resources: t('app:todos') }));
+    } catch (err) {
+      toast.error(t('common:error.delete_resources', { resources: t('app:todos') }));
+    }
   };
 
   const setEdge = ({ self, source }: { source: ElementDragPayload; self: DropTargetRecord }) => {
@@ -57,7 +56,7 @@ const Subtask = ({
 
   const handleUpdateStatus = async (newStatus: number) => {
     try {
-      await taskMutation.mutateAsync({
+      await taskUpdateMutation.mutateAsync({
         id: task.id,
         orgIdOrSlug: task.organizationId,
         key: 'status',
@@ -198,7 +197,7 @@ const Subtask = ({
                   members={members}
                   defaultValue={task.description}
                   className="w-full pr-2 bg-transparent border-none"
-                  onFocus={() => handleEditorFocus(task.id, task.parentId)}
+                  onFocus={() => handleEditorFocus(task.id, task.parentId, isSheet)}
                   onEnterClick={() => dispatchCustomEvent('changeSubtaskState', { taskId: task.id, state: 'expanded' })}
                   onTextDifference={() => dispatchCustomEvent('changeSubtaskState', { taskId: task.id, state: 'unsaved' })}
                   updateData={updateDescription}

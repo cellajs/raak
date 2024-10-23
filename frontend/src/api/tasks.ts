@@ -80,8 +80,10 @@ export const updateTask = async ({ id, orgIdOrSlug, key, data, order }: UpdateTa
   return json.data;
 };
 
+export type DeleteTaskParams = Parameters<(typeof client.index)['$delete']>['0']['param'] & { ids: string[] };
+
 // Delete tasks
-export const deleteTasks = async (ids: string[], orgIdOrSlug: string) => {
+export const deleteTasks = async ({ ids, orgIdOrSlug }: DeleteTaskParams) => {
   const response = await client.index.$delete({
     param: { orgIdOrSlug },
     query: { ids },

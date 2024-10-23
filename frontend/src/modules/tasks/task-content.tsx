@@ -3,10 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { BlockNote } from '~/modules/common/blocknote';
-import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import CreateSubtaskForm from '~/modules/tasks/create-subtask-form';
 import { handleEditorFocus, updateImageSourcesFromDataUrl, useHandleUpdateHTML } from '~/modules/tasks/helpers';
 import Subtask from '~/modules/tasks/subtask';
@@ -32,15 +30,6 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
   const [createSubtask, setCreateSubtask] = useState(false);
 
   const expandedStyle = 'min-h-16 [&>.bn-editor]:min-h-16 w-full bg-transparent border-none pl-9';
-  const callback = useMutateQueryData(taskKeys.list({ projectId: task.projectId, orgIdOrSlug: task.organizationId }));
-
-  const subTaskDeleteCallback = (subtaskId: string) => {
-    const { subtasks } = task;
-    // Filter out the subtask to be removed
-    const updatedSubtasks = subtasks.filter((st) => st.id !== subtaskId);
-    const updatedTask = { ...task, subtasks: updatedSubtasks };
-    callback([updatedTask], 'update');
-  };
 
   const {
     data: { members },
@@ -88,7 +77,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
               className={expandedStyle}
               onFocus={() => handleEditorFocus(task.id)}
               updateData={updateDescription}
-              onEnterClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' })}
+              onEnterClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded', sheet: isSheet })}
               onTextDifference={() => {
                 dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'unsaved', sheet: isSheet });
               }}
@@ -115,7 +104,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
             <motion.div>
               {task.subtasks.map((task) => (
                 <motion.div key={task.id} layout="position" transition={{ duration: 0.3 }}>
-                  <Subtask mode={mode} key={task.id} task={task} members={members} removeCallback={subTaskDeleteCallback} />
+                  <Subtask mode={mode} key={task.id} task={task} members={members} />
                 </motion.div>
               ))}
             </motion.div>

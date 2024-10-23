@@ -1,20 +1,21 @@
 import { type QueryKey, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
-import { type GetTasksParams, createTask, updateTask } from '~/api/tasks';
+import { type GetTasksParams, createTask, deleteTasks, updateTask } from '~/api/tasks';
 import { queryClient } from '~/lib/router';
 import type { Subtask, Task } from '~/types/app';
 import { nanoid } from '~/utils/nanoid';
 
 export type TasksCreateMutationQueryFnVariables = Parameters<typeof createTask>[0];
+
 type TasksUpdateParams = Parameters<typeof updateTask>[0];
 export type TasksUpdateMutationQueryFnVariables = Omit<TasksUpdateParams, 'data'> & {
   projectId?: string;
   data: TasksUpdateParams['data'] | { id: string }[];
 };
-// export type TasksDeleteMutationQueryFnVariables = Parameters<typeof deleteTasks>[0] & {
-//   projectId?: string;
-// };
+export type TasksDeleteMutationQueryFnVariables = Parameters<typeof deleteTasks>[0] & {
+  projectIds: string[];
+};
 
 type QueryFnData = {
   items: Task[];
@@ -29,7 +30,7 @@ type InfiniteQueryFnData = {
 export const taskKeys = {
   all: () => ['tasks'] as const,
   lists: () => [...taskKeys.all(), 'list'] as const,
-  list: (filters?: GetTasksParams) => [...taskKeys.lists(), filters] as const,
+  list: (filters?: GetTasksParams) => [...taskKeys.lists(), 'table', filters] as const,
   create: () => [...taskKeys.all(), 'create'] as const,
   update: () => [...taskKeys.all(), 'update'] as const,
   delete: () => [...taskKeys.all(), 'delete'] as const,
@@ -58,12 +59,12 @@ export const useTaskUpdateMutation = () => {
   });
 };
 
-// export const useTaskDeleteMutation = () => {
-//   return useMutation<boolean, Error, TasksDeleteMutationQueryFnVariables>({
-//     mutationKey: taskKeys.delete(),
-//     mutationFn: deleteTasks,
-//   });
-// };
+export const useTaskDeleteMutation = () => {
+  return useMutation<boolean, Error, TasksDeleteMutationQueryFnVariables>({
+    mutationKey: taskKeys.delete(),
+    mutationFn: deleteTasks,
+  });
+};
 
 // Helper function to update a task property
 const updateTaskProperty = <T extends Task | Subtask>(task: T, variables: TasksUpdateMutationQueryFnVariables): T => {
@@ -80,8 +81,7 @@ const updateSubtasks = (subtasks: Subtask[], taskId: string, variables: TasksUpd
   });
 };
 
-// TODO refactor to handle it by table query
-const newGetPreviousTasks = async (queryKey: QueryKey) => {
+const getPreviousTasks = async (queryKey: QueryKey) => {
   // Snapshot the previous value
   const { activeKey, queryData } = getQueries(queryKey);
 
@@ -91,33 +91,25 @@ const newGetPreviousTasks = async (queryKey: QueryKey) => {
   return { queryKey: activeKey, previousTasks: queryData };
 };
 
+// TODO refactor to handle also table query(better way for it)
 const getQueries = (queryKey: QueryKey) => {
-  const boardQuery = queryClient.getQueryData<QueryFnData>(queryKey);
-
-  if (boardQuery) return { activeKey: queryKey, queryData: boardQuery };
-
-  // Snapshot the previous value
   const activeQueries = queryClient.getQueriesData<InfiniteQueryFnData | QueryFnData>({ type: 'active' });
 
-  const tableQuery = activeQueries.filter(([keys, _]) => keys.includes('tasks') && keys.includes('list'));
-  const [[activeKey, queryData]] = tableQuery;
-  return { activeKey, queryData };
+  const tableQuery = activeQueries.filter(([keys, _]) => keys.includes('tasks') && keys.includes('list') && keys.includes('table'));
+  if (tableQuery.length) {
+    const [[activeKey, queryData]] = tableQuery;
+    return { activeKey, queryData };
+  }
+
+  const boardQuery = queryClient.getQueryData<QueryFnData>(queryKey);
+
+  return { activeKey: queryKey, queryData: boardQuery };
 };
 
 // Type guard to determine if the data is QueryFnData
 function isQueryFnData(data: unknown): data is QueryFnData {
   return typeof data === 'object' && data !== null && 'items' in data && 'total' in data;
 }
-
-const getPreviousTasks = async (queryKey: QueryKey) => {
-  // Cancel any outgoing refetches
-  // (so they don't overwrite our optimistic update)
-  await queryClient.cancelQueries({ queryKey });
-  // Snapshot the previous value
-  const previousTasks = queryClient.getQueryData<QueryFnData>(queryKey);
-
-  return previousTasks;
-};
 
 const onError = (
   _: Error,
@@ -153,26 +145,31 @@ queryClient.setMutationDefaults(taskKeys.create(), {
       modifiedBy: null,
     };
 
-    const queryKey = taskKeys.list({ orgIdOrSlug: organizationId, projectId });
-    const previousTasks = await getPreviousTasks(queryKey);
-
-    // Optimistically update to the new value
+    const { queryKey, previousTasks } = await getPreviousTasks(taskKeys.list({ orgIdOrSlug: organizationId, projectId }));
     if (previousTasks) {
-      queryClient.setQueryData<QueryFnData>(queryKey, (old) => {
+      queryClient.setQueryData<InfiniteQueryFnData | QueryFnData>(queryKey, (old) => {
         if (!old) {
-          return {
+          const pages = {
             items: [],
             total: 0,
           };
+          if (isQueryFnData(previousTasks)) return pages;
+          return { pageParams: [0], pages: [pages] };
         }
 
-        const updatedTasks = old.items.map((task) => {
+        let tasks: Task[];
+
+        // If old is QueryFnData
+        if (isQueryFnData(old)) tasks = old.items;
+        // If old is InfiniteQueryFnData
+        else tasks = old.pages.flatMap((page) => page.items); // Flatten the items from all pages
+
+        const updatedTasks = tasks.map((task) => {
           // Update the parent task
           if (task.id === parentId) {
             const t = { ...task, subtasks: [...task.subtasks, newTask] };
             return t;
           }
-
           // No changes, return task as-is
           return task;
         });
@@ -180,9 +177,11 @@ queryClient.setMutationDefaults(taskKeys.create(), {
         // Add the new task to the list
         updatedTasks.push(newTask);
 
+        if (isQueryFnData(old)) return { total: updatedTasks.length, items: updatedTasks };
+
         return {
           ...old,
-          items: updatedTasks,
+          pages: [{ total: updatedTasks.length, items: updatedTasks }],
         };
       });
     }
@@ -191,15 +190,26 @@ queryClient.setMutationDefaults(taskKeys.create(), {
     return { previousTasks, optimisticId };
   },
   onSuccess: (createdTask, { organizationId, projectId }, { optimisticId }) => {
-    queryClient.setQueryData<QueryFnData>(taskKeys.list({ orgIdOrSlug: organizationId, projectId }), (oldData) => {
+    const { activeKey } = getQueries(taskKeys.list({ orgIdOrSlug: organizationId, projectId }));
+
+    queryClient.setQueryData<InfiniteQueryFnData | QueryFnData>(activeKey, (oldData) => {
       if (!oldData) {
-        return {
+        const pages = {
           items: [],
           total: 0,
         };
+        if (isQueryFnData(oldData)) return pages;
+        return { pageParams: [0], pages: [pages] };
       }
 
-      const updatedTasks = oldData.items.map((task) => {
+      let tasks: Task[];
+
+      // If oldData is QueryFnData
+      if (isQueryFnData(oldData)) tasks = oldData.items;
+      // If oldData is InfiniteQueryFnData
+      else tasks = oldData.pages.flatMap((page) => page.items); // Flatten the items from all pages
+
+      const updatedTasks = tasks.map((task) => {
         // Update the task itself
         if (task.id === optimisticId) {
           return createdTask;
@@ -215,9 +225,11 @@ queryClient.setMutationDefaults(taskKeys.create(), {
         return task;
       });
 
+      if (isQueryFnData(oldData)) return { total: updatedTasks.length, items: updatedTasks };
+
       return {
         ...oldData,
-        items: updatedTasks,
+        pages: [{ total: updatedTasks.length, items: updatedTasks }],
       };
     });
 
@@ -231,7 +243,7 @@ queryClient.setMutationDefaults(taskKeys.update(), {
   onMutate: async (variables: TasksUpdateMutationQueryFnVariables) => {
     const { id: taskId, orgIdOrSlug, projectId } = variables;
 
-    const { queryKey, previousTasks } = await newGetPreviousTasks(taskKeys.list({ orgIdOrSlug, projectId }));
+    const { queryKey, previousTasks } = await getPreviousTasks(taskKeys.list({ orgIdOrSlug, projectId }));
 
     // Optimistically update to the new value
     if (previousTasks) {
@@ -337,61 +349,77 @@ queryClient.setMutationDefaults(taskKeys.update(), {
       };
     });
   },
-  onError: (e) => console.log(e),
+  onError,
 });
 
-// queryClient.setMutationDefaults(taskKeys.delete(), {
-//   mutationFn: (variables: TasksDeleteMutationQueryFnVariables) => deleteTasks(variables),
-//   onMutate: async (variables) => {
-//     const { ids, projectId, orgIdOrSlug } = variables;
+queryClient.setMutationDefaults(taskKeys.delete(), {
+  mutationFn: ({ ids, orgIdOrSlug }: TasksDeleteMutationQueryFnVariables) => deleteTasks({ ids, orgIdOrSlug }),
+  onMutate: async (variables) => {
+    const { ids, projectIds, orgIdOrSlug } = variables;
 
-//     // Cancel any outgoing refetches
-//     // (so they don't overwrite our optimistic update)
-//     await queryClient.cancelQueries({ queryKey: taskKeys.list({ orgIdOrSlug, projectId }) });
-//     // Snapshot the previous value
-//     const previousTasks = queryClient.getQueryData<QueryFnData>(taskKeys.list({ orgIdOrSlug, projectId }));
+    const contexts: Record<string, { previousTasks?: QueryFnData | InfiniteQueryFnData }> = {}; // Store the previous state for each project
 
-//     // Optimistically update to the new value
-//     if (previousTasks) {
-//       queryClient.setQueryData<QueryFnData>(taskKeys.list({ orgIdOrSlug, projectId }), (old) => {
-//         if (!old) {
-//           return {
-//             items: [],
-//             total: 0,
-//           };
-//         }
+    // Iterate over each projectId to update each project separately
+    for (const projectId of projectIds) {
+      const { queryKey, previousTasks } = await getPreviousTasks(taskKeys.list({ orgIdOrSlug, projectId }));
 
-//         const updatedTasks = old.items
-//           .map((task) => {
-//             // Update the task itself
-//             if (ids.includes(task.id)) {
-//               return null;
-//             }
+      // Optimistically update to the new value
+      if (previousTasks) {
+        queryClient.setQueryData<InfiniteQueryFnData | QueryFnData>(queryKey, (old) => {
+          if (!old) {
+            const pages = {
+              items: [],
+              total: 0,
+            };
+            if (isQueryFnData(previousTasks)) return pages;
+            return { pageParams: [0], pages: [pages] };
+          }
 
-//             // If the task is the parent, update its subtasks
-//             if (task.subtasks) {
-//               const updatedSubtasks = task.subtasks.filter((subtask) => !ids.includes(subtask.id));
-//               return { ...task, subtasks: updatedSubtasks }; // Return parent with updated subtasks
-//             }
+          let tasks: Task[];
 
-//             // No changes, return task as-is
-//             return task;
-//           })
-//           .filter(Boolean) as Task[];
+          // If old is QueryFnData
+          if (isQueryFnData(old)) tasks = old.items;
+          // If old is InfiniteQueryFnData
+          else tasks = old.pages.flatMap((page) => page.items); // Flatten the items from all pages
 
-//         return {
-//           ...old,
-//           items: updatedTasks,
-//         };
-//       });
-//     }
+          const updatedTasks = tasks
+            .map((task) => {
+              // Update the task itself
+              if (ids.includes(task.id)) return null;
 
-//     // Return a context object with the snapshotted value
-//     return { previousTasks };
-//   },
-//   onError: (_, { orgIdOrSlug, projectId }, context) => {
-//     if (context?.previousTasks) {
-//       queryClient.setQueryData(taskKeys.list({ orgIdOrSlug, projectId }), context.previousTasks);
-//     }
-//   },
-// });
+              // If the task is the parent, update its subtasks
+              if (task.subtasks) {
+                const updatedSubtasks = task.subtasks.filter((subtask) => !ids.includes(subtask.id));
+                return { ...task, subtasks: updatedSubtasks }; // Return parent with updated subtasks
+              }
+
+              // No changes, return task as-is
+              return task;
+            })
+            .filter(Boolean) as Task[];
+
+          if (isQueryFnData(old)) return { total: updatedTasks.length, items: updatedTasks };
+
+          return {
+            ...old,
+            pages: [{ total: updatedTasks.length, items: updatedTasks }],
+          };
+        });
+      }
+
+      // Store the previous tasks for this project in the context
+      contexts[projectId] = { previousTasks };
+    }
+
+    // Return a context object for all projects
+    return contexts;
+  },
+  onError: async (_, { orgIdOrSlug, projectIds }, context) => {
+    if (context) {
+      for (const projectId of projectIds) {
+        const { queryKey } = await getPreviousTasks(taskKeys.list({ orgIdOrSlug, projectId }));
+        if (context[projectId]?.previousTasks) queryClient.setQueryData(queryKey, context[projectId].previousTasks);
+      }
+    }
+  },
+});
