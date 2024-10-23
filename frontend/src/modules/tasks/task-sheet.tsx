@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useBreakpoints } from '~/hooks/use-breakpoints';
 import { useEventListener } from '~/hooks/use-event-listener';
 import { useHotkeys } from '~/hooks/use-hot-keys';
+import { dropdowner } from '~/modules/common/dropdowner/state';
 import { useTaskUpdateMutation } from '~/modules/common/query-client-provider/tasks';
 import { isSubtaskData } from '~/modules/tasks/board/helpers';
 import { getRelativeTaskOrder, handleTaskDropDownClick, setTaskCardFocus } from '~/modules/tasks/helpers';
@@ -16,7 +17,7 @@ import TaskCard from '~/modules/tasks/task';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useThemeStore } from '~/store/theme';
 import type { Task } from '~/types/app';
-import { dropdowner } from '../common/dropdowner/state';
+
 import type { TaskStates, TaskStatesChangeEvent } from './types';
 
 interface TasksSheetProps {
