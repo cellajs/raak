@@ -80,7 +80,11 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
               onTextDifference={() => {
                 dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'unsaved', sheet: isSheet });
               }}
-              filePanel={UppyFilePanel(task.id)}
+              filePanel={UppyFilePanel({
+                taskId: task.id,
+                organizationId: task.organizationId,
+                projectId: task.projectId,
+              })}
               trailingBlock={false}
               updateDataOnBeforeLoad
             />
