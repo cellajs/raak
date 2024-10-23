@@ -79,6 +79,7 @@ export async function pullUpstream({
         await runGitCommand({ targetFolder, command: `reset ${filesToReset}` });
       }
 
+      // @TODO: Rerun 'ls-files' to remove files that were reset
       const untrackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files --others --exclude-standard' })).split('\n').filter(Boolean);
       const ignoredTrackedFiles = [];
       const ignoredUntrackedFiles = [];
