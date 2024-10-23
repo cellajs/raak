@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-export async function runGitCommand({ targetFolder, command }) {
+export async function runGitCommand({ targetFolder, command, rejectOnStderr }) {
     return new Promise((resolve, reject) => {
       const child = spawn(`git ${command}`, [], { cwd: targetFolder, shell: true, timeout: 60000 });
   
@@ -13,6 +13,8 @@ export async function runGitCommand({ targetFolder, command }) {
   
       child.on("exit", (code) => {
         if (code === 0) {
+          resolve(output.trim());
+        } else if (rejectOnStderr && !errOutput) {
           resolve(output.trim());
         } else {
           reject(`Command failed with exit code "${code}", stderr "${errOutput}" and output "${output}"`);
