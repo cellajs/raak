@@ -3,10 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { BlockNote } from '~/modules/common/blocknote';
-import { taskKeys } from '~/modules/common/query-client-provider/tasks';
 import CreateSubtaskForm from '~/modules/tasks/create-subtask-form';
 import { handleEditorFocus, updateImageSourcesFromDataUrl, useHandleUpdateHTML } from '~/modules/tasks/helpers';
 import Subtask from '~/modules/tasks/subtask';
@@ -32,15 +30,6 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
   const [createSubtask, setCreateSubtask] = useState(false);
 
   const expandedStyle = 'min-h-16 [&>.bn-editor]:min-h-16 w-full bg-transparent border-none pl-9';
-  const callback = useMutateQueryData(taskKeys.list({ projectId: task.projectId, orgIdOrSlug: task.organizationId }));
-
-  const subTaskDeleteCallback = (subtaskId: string) => {
-    const { subtasks } = task;
-    // Filter out the subtask to be removed
-    const updatedSubtasks = subtasks.filter((st) => st.id !== subtaskId);
-    const updatedTask = { ...task, subtasks: updatedSubtasks };
-    callback([updatedTask], 'update');
-  };
 
   const {
     data: { members },
@@ -48,6 +37,18 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
 
   const { handleUpdateHTML } = useHandleUpdateHTML();
   const updateDescription = (html: string) => handleUpdateHTML(task, html, isSheet);
+
+  const onClickOnTask = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const target = e.target;
+    if (target instanceof HTMLImageElement) {
+      const allImages = Array.from(taskContentRef.current?.querySelectorAll('img') || []);
+      const index = allImages.findIndex((img) => img.src === target.src);
+      dispatchCustomEvent('openCarousel', {
+        slide: index,
+        slides: allImages.map((img) => ({ src: img.src })),
+      });
+    }
+  };
 
   useEffect(() => {
     if (state !== 'expanded') return;
@@ -57,7 +58,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
   return (
     <div className="flex flex-col grow gap-2">
       {state === 'folded' ? (
-        <div className="mt-1.5 ml-1 leading-none inline items-center">
+        <div className="mt-1.5 mb-1 ml-1 leading-none inline items-center">
           <div
             // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
             dangerouslySetInnerHTML={{ __html: task.summary }}
@@ -76,11 +77,15 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
               className={expandedStyle}
               onFocus={() => handleEditorFocus(task.id)}
               updateData={updateDescription}
-              onEnterClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded' })}
+              onEnterClick={() => dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'expanded', sheet: isSheet })}
               onTextDifference={() => {
                 dispatchCustomEvent('changeTaskState', { taskId: task.id, state: 'unsaved', sheet: isSheet });
               }}
-              filePanel={UppyFilePanel(task.id)}
+              filePanel={UppyFilePanel({
+                taskId: task.id,
+                organizationId: task.organizationId,
+                projectId: task.projectId,
+              })}
               trailingBlock={false}
               updateDataOnBeforeLoad
             />
@@ -89,15 +94,17 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
               <div
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
                 dangerouslySetInnerHTML={{ __html: task.description }}
+                onKeyDown={() => {}}
+                onClick={onClickOnTask}
               />
             </div>
           )}
 
-          <div id={`subtask-container-${task.id}`} className="-mx-2 mt-2 w-[calc(100%+1.25rem)]">
+          <div id={`subtask-container-${task.id}`} className="-mx-2 my-1 w-[calc(100%+1.25rem)]">
             <motion.div>
               {task.subtasks.map((task) => (
                 <motion.div key={task.id} layout="position" transition={{ duration: 0.3 }}>
-                  <Subtask mode={mode} key={task.id} task={task} members={members} removeCallback={subTaskDeleteCallback} />
+                  <Subtask mode={mode} key={task.id} task={task} members={members} />
                 </motion.div>
               ))}
             </motion.div>
@@ -109,7 +116,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
                 </motion.div>
               ) : (
                 <motion.div key="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-                  <Button variant="ghost" size="sm" className="w-full mb-1 pl-11 justify-start rounded-none" onClick={() => setCreateSubtask(true)}>
+                  <Button variant="ghost" size="sm" className="w-full pl-11 justify-start rounded-none" onClick={() => setCreateSubtask(true)}>
                     <Plus size={16} />
                     <span className="ml-1 font-normal">{t('app:todo')}</span>
                   </Button>
@@ -129,7 +136,7 @@ const SummaryButtons = ({ task }: { task: Task }) => {
   return (
     <>
       {(task.expandable || task.subtasks.length > 0) && (
-        <div className="inline-flex gap-1 items-center opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 -mt-[0.15rem]">
+        <div className="inline gap-1 items-center opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 -mt-[0.15rem]">
           {task.expandable && <div className="inline-flex px-1 text-sm cursor-pointer py-0 h-5">...</div>}
           {task.subtasks.length > 0 && (
             <div className="inline-flex py-0.5 text-xs h-5 ml-2 gap-[.1rem] cursor-pointer">

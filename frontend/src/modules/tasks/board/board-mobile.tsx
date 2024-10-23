@@ -33,7 +33,7 @@ export function BoardMobile({
       <BoardHeader>
         <WorkspaceActions project={currentProject} />
       </BoardHeader>
-      <BoardColumn tasksState={tasksState} project={currentProject} settings={workspaces[workspaceId]?.[currentProject.id]} />
+      <BoardColumn tasksState={tasksState} project={currentProject} settings={workspaces[workspaceId]?.columns[currentProject.id]} />
     </>
   );
 }

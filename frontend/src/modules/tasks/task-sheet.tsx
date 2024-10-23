@@ -16,6 +16,7 @@ import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useThemeStore } from '~/store/theme';
 import type { Task } from '~/types/app';
 
+import TasksHotkeysManager from '~/modules/tasks/tasks-hotkeys';
 import type { TaskStates, TaskStatesChangeEvent } from './types';
 
 interface TasksSheetProps {
@@ -29,6 +30,7 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
   const isMobile = useBreakpoints('max', 'sm');
 
   const taskMutation = useTaskUpdateMutation();
+
   const {
     data: { workspace },
   } = useWorkspaceQuery();
@@ -37,7 +39,9 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
 
   const handleTaskState = (event: TaskStatesChangeEvent) => {
     const { taskId, state, sheet } = event.detail;
-    if (!sheet || taskId !== task.id || state === 'currentState') return;
+
+    if (!sheet || taskId !== task.id) return;
+    if (state === 'currentState') return setState('expanded');
     setState(state);
   };
 
@@ -102,7 +106,12 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
     );
   }, [task]);
 
-  return <TaskCard mode={mode} task={task} state={state} isSelected={false} isFocused={true} isSheet />;
+  return (
+    <>
+      <TasksHotkeysManager mode={'sheet'} />
+      <TaskCard mode={mode} task={task} state={state} isSelected={false} isFocused={true} isSheet />
+    </>
+  );
 };
 
 export default TaskSheet;

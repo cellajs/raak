@@ -19,7 +19,6 @@ import { sheet } from '~/modules/common/sheeter/state';
 import TableHeader from '~/modules/tasks/board-header';
 import { configureForExport, openTaskPreviewSheet } from '~/modules/tasks/helpers';
 import TaskSheet from '~/modules/tasks/task-sheet';
-import TasksHotkeysManager from '~/modules/tasks/tasks-hotkeys';
 import { useColumns } from '~/modules/tasks/tasks-table/columns';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
@@ -44,7 +43,7 @@ const tasksQueryOptions = ({
   const order = initialOrder || 'desc';
 
   return infiniteQueryOptions({
-    queryKey: taskKeys.list({ orgIdOrSlug, projectId, status, q, sort, order }),
+    queryKey: taskKeys.table({ orgIdOrSlug, projectId, status, q, sort, order }),
     initialPageParam: 0,
     retry: 1,
     refetchOnWindowFocus: false,
@@ -152,7 +151,6 @@ export default function TasksTable() {
 
   return (
     <>
-      <TasksHotkeysManager workspaceId={workspace.id} projects={projects} mode={'default'} />
       <TableHeader>
         <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns} />
         <Export

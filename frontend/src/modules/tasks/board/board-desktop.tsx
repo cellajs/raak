@@ -32,20 +32,20 @@ export default function BoardDesktop({
 }) {
   const { ref, bounds } = useMeasure();
   const panelRefs = useRef<Record<string, ImperativePanelHandle | null>>({});
-  const { changePanels, workspacesPanels, workspaces } = useWorkspaceUIStore();
+  const { changePanels, workspaces } = useWorkspaceUIStore();
 
   const panelStorage = useMemo(
     () => ({
-      getItem: (_: string) => workspacesPanels[workspaceId] ?? null,
+      getItem: (_: string) => workspaces[workspaceId].panel ?? null,
       setItem: (_: string, value: string) => changePanels(workspaceId, value),
     }),
-    [workspacesPanels, workspaceId],
+    [workspaces, workspaceId],
   );
 
   const projectSettingsMap = useMemo(() => {
     return projects.map((project) => ({
       project,
-      settings: workspaces[workspaceId]?.[project.id],
+      settings: workspaces[workspaceId]?.columns[project.id],
     }));
   }, [projects, workspaces, workspaceId]);
 
@@ -61,7 +61,7 @@ export default function BoardDesktop({
       <BoardHeader>
         <WorkspaceActions />
       </BoardHeader>
-      <TasksHotkeysManager workspaceId={workspaceId} projects={projects} mode={'board'} />
+      <TasksHotkeysManager mode={'board'} />
       <div className="transition sm:h-[calc(100vh-4rem)] md:h-[calc(100vh-4.88rem)] overflow-x-auto" ref={ref as React.Ref<HTMLDivElement>}>
         <div className="h-[inherit]" style={{ width: scrollerWidth }}>
           <ResizablePanelGroup

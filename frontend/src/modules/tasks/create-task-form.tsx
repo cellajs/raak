@@ -220,7 +220,11 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
                     onFocus={() => handleEditorFocus(defaultId, focusedTaskId)}
                     updateData={onChange}
                     onChange={onChange}
-                    filePanel={UppyFilePanel(defaultId)}
+                    filePanel={UppyFilePanel({
+                      taskId: defaultId,
+                      organizationId: workspace.organizationId,
+                      projectId,
+                    })}
                     trailingBlock={false}
                     onEnterClick={form.handleSubmit(onSubmit)}
                     onEscapeClick={handleCloseForm}

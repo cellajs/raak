@@ -1,9 +1,7 @@
 import { Trash, XSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { deleteTasks } from '~/api/tasks';
-import { useMutateQueryData } from '~/hooks/use-mutate-query-data';
-import { taskKeys } from '~/modules/common/query-client-provider/tasks';
+import { useTaskDeleteMutation } from '~/modules/common/query-client-provider/tasks';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
@@ -21,25 +19,21 @@ const TaskSelectedButtons = ({ workspace, projects, selectedTasks, setSelectedTa
 
   const removeSelect = () => setSelectedTasks([]);
 
+  const taskMutation = useTaskDeleteMutation();
+
   const onRemove = () => {
-    deleteTasks(selectedTasks, workspace.organizationId)
-      .then(async (resp) => {
-        if (resp) {
-          toast.success(t('common:success.delete_resources', { resources: t('app:tasks') }));
-
-          for (const project of projects) {
-            const callback = useMutateQueryData(taskKeys.list({ projectId: project.id, orgIdOrSlug: workspace.organizationId }));
-            const newTasks = selectedTasks.map((el) => ({ id: el })) ?? [];
-            callback(newTasks, 'delete');
-          }
-
-          removeSelect();
-        }
-        if (!resp) toast.error(t('common:error.delete_resources', { resources: t('app:tasks') }));
-      })
-      .catch(() => {
-        toast.error(t('common:error.delete_resources', { resources: t('app:tasks') }));
+    const deletionData = { ids: selectedTasks, orgIdOrSlug: workspace.organizationId };
+    try {
+      taskMutation.mutateAsync({
+        ...deletionData,
+        projectIds: projects.map((p) => p.id),
       });
+      removeSelect();
+
+      toast.success(t('common:success.delete_resources', { resources: t('app:tasks') }));
+    } catch (err) {
+      toast.error(t('common:error.delete_resources', { resources: t('app:tasks') }));
+    }
   };
 
   return (

@@ -10,12 +10,11 @@ import { handleTaskDropDownClick, setTaskCardFocus, sortAndGetCounts } from '~/m
 import { WorkspaceRoute } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
 import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
-import type { Project, Task } from '~/types/app';
+import type { Task } from '~/types/app';
+import { useWorkspaceQuery } from '../workspaces/helpers/use-workspace';
 
 interface HotkeysManagerProps {
-  workspaceId: string;
-  projects: Project[];
-  mode: 'default' | 'board';
+  mode: 'sheet' | 'board';
 }
 
 type QueryData = {
@@ -28,7 +27,17 @@ type InfiniteQueryData = {
   pages: QueryData[];
 };
 
-export default function TasksHotkeysManager({ workspaceId, projects, mode = 'default' }: HotkeysManagerProps) {
+export default function TasksHotkeysManager({ mode }: HotkeysManagerProps) {
+  const {
+    data: { workspace, projects: queryProjects },
+  } = useWorkspaceQuery();
+
+  // TODO maybe find other way
+  const projects = useMemo(
+    () => queryProjects.filter((p) => !p.membership?.archived).sort((a, b) => (a.membership?.order ?? 0) - (b.membership?.order ?? 0)),
+    [queryProjects],
+  );
+
   const { focusedTaskId: storeFocused } = useWorkspaceStore();
   const { taskIdPreview } = useSearch({ from: WorkspaceRoute.id });
 
@@ -42,8 +51,12 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     });
   }, [queries]);
 
-  const currentTask = useMemo(() => tasks.find((t) => t.id === (taskIdPreview || storeFocused)), [taskIdPreview, storeFocused, tasks]);
+  const { currentTask, isSheetOpen } = useMemo(() => {
+    const currentTask = tasks.find((t) => t.id === (taskIdPreview || storeFocused));
+    return { currentTask, isSheetOpen: !!taskIdPreview };
+  }, [taskIdPreview, storeFocused, tasks]);
 
+  //handles Arrow Up/Down to navigate between tasks within a project
   const handleVerticalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length) return;
     const taskCard = document.getElementById(currentTask?.id || '');
@@ -56,7 +69,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     const currentProject = projects.find((p) => p.id === currentTask?.projectId) ?? projects[0];
 
     // Extract project settings
-    const { expandAccepted, expandIced } = workspaces[workspaceId]?.[currentProject.id] || defaultColumnValues;
+    const { expandAccepted, expandIced } = workspaces[workspace.id]?.columns[currentProject.id] || defaultColumnValues;
 
     // Filter and sort tasks for the current project
     const projectTasks = tasks.filter((t) => t.projectId === currentProject.id);
@@ -70,6 +83,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     setTaskCardFocus(nextTask.id);
   };
 
+  //handles Arrow Left/Right to navigate between projects
   const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length || !currentTask) return;
 
@@ -84,7 +98,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
 
     // Get project info and filter tasks
     const projectTasks = tasks.filter((t) => t.projectId === nextProject.id);
-    const { expandAccepted } = workspaces[workspaceId]?.[nextProject.id] || defaultColumnValues;
+    const { expandAccepted } = workspaces[workspace.id]?.columns[nextProject.id] || defaultColumnValues;
 
     const [firstTask] = sortAndGetCounts(projectTasks, expandAccepted, false).filteredTasks;
     if (!firstTask) return;
@@ -93,6 +107,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     setTaskCardFocus(firstTask.id);
   };
 
+  // handles fold or stop editing tasks, subtasks, and hide of creation todo
   const handleEscKeyPress = () => {
     if (!currentTask) return;
 
@@ -109,7 +124,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     if (state === 'folded') {
       // check if creation of task open
       const taskCreation = document.getElementById(`create-task-${currentTask.projectId}`);
-      if (taskCreation) return changeColumn(workspaceId, currentTask.projectId, { createTaskForm: false });
+      if (taskCreation) return changeColumn(workspace.id, currentTask.projectId, { createTaskForm: false });
     }
 
     if (state === 'editing' || state === 'unsaved') return dispatchCustomEvent('changeTaskState', { taskId: currentTask.id, state: 'expanded' });
@@ -117,6 +132,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     if (state === 'expanded') return dispatchCustomEvent('changeTaskState', { taskId: currentTask.id, state: 'folded' });
   };
 
+  //handles expand or start editing a task
   const handleEnterKeyPress = () => {
     if (!currentTask) return;
     const taskCard = document.getElementById(currentTask.id);
@@ -126,19 +142,20 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     if (state === 'expanded') dispatchCustomEvent('changeTaskState', { taskId: currentTask.id, state: 'editing' });
   };
 
+  // handles toggling task creation form for the current project or the first project in the array if no current project
   const handleNKeyDown = () => {
-    if (!projects.length || !currentTask) return;
+    if (!projects.length) return;
 
     const project = projects.find((p) => p.id === currentTask?.projectId) || projects[0];
-    const projectSettings = workspaces[workspaceId]?.[project.id] || defaultColumnValues;
-    changeColumn(workspaceId, project.id, { createTaskForm: !projectSettings.createTaskForm });
+    const projectSettings = workspaces[workspace.id]?.columns[project.id] || defaultColumnValues;
+    changeColumn(workspace.id, project.id, { createTaskForm: !projectSettings.createTaskForm });
   };
 
-  // Open on key press
+  // handles hotkey press events to trigger a dropdown for a specific task field
   const hotKeyPress = (field: string) => {
     if (!currentTask) return;
 
-    const taskCard = document.getElementById(taskIdPreview ? `sheet-card-${currentTask.id}` : currentTask.id);
+    const taskCard = document.getElementById(isSheetOpen ? `sheet-card-${currentTask.id}` : currentTask.id);
     if (!taskCard) return;
 
     if (document.activeElement !== taskCard) taskCard.focus();
@@ -165,8 +182,9 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     ['Enter', handleEnterKeyPress],
     ['N', handleNKeyDown],
   ];
+
   // Register hotkeys based on mode
-  const hotkeysToUse = mode === 'board' ? [...boardHotKeys, ...defaultHotKeys] : defaultHotKeys;
+  const hotkeysToUse = mode === 'board' ? (isSheetOpen ? boardHotKeys : [...boardHotKeys, ...defaultHotKeys]) : defaultHotKeys;
   useHotkeys(hotkeysToUse);
 
   return null; // No UI, this component only handles hotkeys

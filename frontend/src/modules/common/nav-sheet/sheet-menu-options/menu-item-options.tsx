@@ -8,11 +8,11 @@ import { useMutation } from '~/hooks/use-mutations';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { showToast } from '~/lib/toasts';
 import { AvatarWrap } from '~/modules/common/avatar-wrap';
+import { updateMenuItem } from '~/modules/common/nav-sheet/helpers/menu-operations';
+import Spinner from '~/modules/common/spinner';
 import { Button } from '~/modules/ui/button';
 import type { UserMenuItem } from '~/types/common';
 import { env } from '../../../../../env';
-import Spinner from '../../spinner';
-import { updateMenuItem } from '../helpers/update-menu-item';
 
 interface MenuItemOptionsProps {
   item: UserMenuItem;
