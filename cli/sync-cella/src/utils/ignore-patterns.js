@@ -50,9 +50,9 @@ export function applyIgnorePatterns(files, ignorePatterns) {
       for (const pattern of ignorePatterns) {
         const regex = patternToRegex(pattern);
         if (regex.test(file)) {
-          return false; // Ignore the file if the pattern matches
+          return true; // Ignore the file if the pattern matches
         }
       }
-      return true; // Keep the file if no pattern matches
+      return false; // Keep the file if no pattern matches
     });
   }
