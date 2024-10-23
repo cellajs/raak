@@ -1,5 +1,6 @@
 import yoctoSpinner from 'yocto-spinner';
 import colors from 'picocolors';
+import { rm, writeFile } from 'node:fs/promises';
 
 import { fetchUpstream } from './fetch-upstream.js'
 import { runGitCommand } from './utils/run-git-command.js'
@@ -67,6 +68,8 @@ export async function pullUpstream({
     }).start();
 
     try {
+      await writeFile('ignore-patterns.txt', ignorePatterns.join("\n"), "utf-8");
+
       // Get the list of tracked files and filter them
       const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n');
       const filteredFiles = applyIgnorePatterns(files, ignorePatterns);
