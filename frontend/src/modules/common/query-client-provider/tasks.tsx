@@ -30,7 +30,8 @@ type InfiniteQueryFnData = {
 export const taskKeys = {
   all: () => ['tasks'] as const,
   lists: () => [...taskKeys.all(), 'list'] as const,
-  list: (filters?: GetTasksParams) => [...taskKeys.lists(), 'table', filters] as const,
+  list: (filters?: GetTasksParams) => [...taskKeys.lists(), filters] as const,
+  table: (filters?: GetTasksParams) => [...taskKeys.all(), 'table', filters] as const,
   create: () => [...taskKeys.all(), 'create'] as const,
   update: () => [...taskKeys.all(), 'update'] as const,
   delete: () => [...taskKeys.all(), 'delete'] as const,
@@ -95,12 +96,12 @@ const getPreviousTasks = async (queryKey: QueryKey) => {
 const getQueries = (queryKey: QueryKey) => {
   const activeQueries = queryClient.getQueriesData<InfiniteQueryFnData | QueryFnData>({ type: 'active' });
 
-  const tableQuery = activeQueries.filter(([keys, _]) => keys.includes('tasks') && keys.includes('list') && keys.includes('table'));
+  const tableQuery = activeQueries.filter(([keys, _]) => keys.includes('tasks') && keys.includes('table'));
+
   if (tableQuery.length) {
     const [[activeKey, queryData]] = tableQuery;
     return { activeKey, queryData };
   }
-
   const boardQuery = queryClient.getQueryData<QueryFnData>(queryKey);
 
   return { activeKey: queryKey, queryData: boardQuery };

@@ -43,7 +43,7 @@ const tasksQueryOptions = ({
   const order = initialOrder || 'desc';
 
   return infiniteQueryOptions({
-    queryKey: taskKeys.list({ orgIdOrSlug, projectId, status, q, sort, order }),
+    queryKey: taskKeys.table({ orgIdOrSlug, projectId, status, q, sort, order }),
     initialPageParam: 0,
     retry: 1,
     refetchOnWindowFocus: false,
