@@ -124,7 +124,11 @@ export const CreateSubtaskForm = ({
                     onFocus={() => handleEditorFocus(parentTask.id, parentTask.id)}
                     updateData={onChange}
                     onChange={onChange}
-                    filePanel={UppyFilePanel(defaultId)}
+                    filePanel={UppyFilePanel({
+                      taskId: defaultId,
+                      organizationId: parentTask.organizationId,
+                      projectId: parentTask.projectId,
+                    })}
                     trailingBlock={false}
                     onEnterClick={form.handleSubmit(onSubmit)}
                   />

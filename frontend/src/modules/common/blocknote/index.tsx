@@ -33,6 +33,7 @@ import { FloatingPortal } from '@floating-ui/react';
 import router from '~/lib/router';
 import { focusEditor, getContentAsString, handleSubmitOnEnter, trimInlineContentText } from '~/modules/common/blocknote/helpers';
 import './styles.css';
+import { dispatchCustomEvent } from '~/lib/custom-events';
 
 type BlockNoteProps = {
   id: string;
@@ -149,6 +150,23 @@ export const BlockNote = ({
       if (!isCreationMode && currentBlocks === newBlocksContent) return;
 
       editor.replaceBlocks(editor.document, blocks);
+
+      // Add double-click event listener to images
+      const imageBlocks = blocks.filter((block) => block.type === 'image');
+      const slides = imageBlocks.map((block) => ({ src: block.props.url }));
+      for (const block of blocks) {
+        if (block.type === 'image') {
+          const index = imageBlocks.findIndex((b) => b.id === block.id);
+          const element = document.querySelector(`[data-id="${block.id}"]`);
+          (element as HTMLDivElement).ondblclick = () => {
+            dispatchCustomEvent('openCarousel', {
+              slide: index,
+              slides,
+            });
+          };
+        }
+      }
+
       // Handle focus:
       // 1. In creation mode, focus the editor only if it hasn't been initialized before.
       // 2. Outside creation mode, focus the editor every time.
