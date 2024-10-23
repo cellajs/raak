@@ -68,13 +68,7 @@ export async function pullUpstream({
 
     try {
       // Get the list of tracked files and filter them
-      const files = (await runGitCommand({ 
-        targetFolder, 
-        command: 'ls-files -u' 
-      }))
-        .split('\n')
-        .filter(line => line.trim()) // Filter out empty lines
-        .map(line => line.split(/\s+/)[3]); // Extract the filename (4th column)
+      const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n');
       const uniqueFiles = [...new Set(files)];
       const filteredFiles = applyIgnorePatterns(uniqueFiles, ignorePatterns);
 
