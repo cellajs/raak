@@ -69,10 +69,16 @@ export async function pullUpstream({
 
     try {
       await writeFile('ignore-patterns.txt', ignorePatterns.join("\n"), "utf-8");
+      await writeFile('ignore-regexes.txt', ignorePatterns.map(patternToRegex).join("\n"), "utf-8");
 
       // Get the list of tracked files and filter them
       const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n');
       const filteredFiles = applyIgnorePatterns(files, ignorePatterns);
+
+
+      await writeFile('files.txt', files.join("\n"), "utf-8");
+      await writeFile('filtered-files.txt', filteredFiles.join("\n"), "utf-8");
+
 
       // Join the list of files into a space-separated string
       const filesToReset = filteredFiles.join(' ');
@@ -137,4 +143,14 @@ export async function pullUpstream({
 
   console.info(`${colors.green('Success')} Merged upstream changes into local branch ${localBranch}.`);
   console.info()
+}
+
+function patternToRegex(pattern) {
+  // Escape special regex characters and convert wildcards
+  const escapedPattern = pattern
+    .replace(/([.*+?^${}()|[\]\\])/g, '\\$1') // Escape special characters
+    .replace(/\\\*/g, '.*')                   // Convert '*' to '.*'
+    .replace(/\\\?/g, '.');                   // Convert '?' to '.'
+  
+  return new RegExp(`^${escapedPattern}$`);
 }
