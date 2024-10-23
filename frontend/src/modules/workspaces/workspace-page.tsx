@@ -1,7 +1,7 @@
 import { type ChangeMessage, ShapeStream, type ShapeStreamOptions } from '@electric-sql/client';
 import { Outlet, useLocation } from '@tanstack/react-router';
 import { config } from 'config';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { getOrganization } from '~/api/organizations';
@@ -14,6 +14,7 @@ import { useGeneralStore } from '~/store/general';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Label } from '~/types/app';
 import { objectKeys } from '~/utils/object';
+import CarouselDialog from '../common/carousel-dialog';
 import { workspaceQueryOptions } from './helpers/query-options';
 import { useWorkspaceQuery } from './helpers/use-workspace';
 
@@ -46,6 +47,17 @@ const WorkspacePage = () => {
   const { t } = useTranslation();
   const { networkMode } = useGeneralStore();
   const { showPageHeader, setSelectedTasks, setSearchQuery } = useWorkspaceStore();
+
+  const [isOpen, setOpen] = useState(false);
+  const [slides, setSlides] = useState<{ src: string }[]>([]);
+  const [carouselSlide, setCarouselSlide] = useState(0);
+
+  useEventListener('openCarousel', (e) => {
+    const { slides, slide } = e.detail;
+    setSlides(slides);
+    setCarouselSlide(slide);
+    setOpen(true);
+  });
 
   const {
     data: { workspace, projects },
@@ -163,6 +175,7 @@ const WorkspacePage = () => {
       <div className="flex flex-col gap-2 md:gap-3 p-2 md:p-3 group/workspace">
         <Outlet />
       </div>
+      <CarouselDialog title={t('common:view_attachment')} isOpen={isOpen} onOpenChange={setOpen} slides={slides} carouselSlide={carouselSlide} />
     </FocusViewContainer>
   );
 };

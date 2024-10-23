@@ -49,6 +49,18 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
   const { handleUpdateHTML } = useHandleUpdateHTML();
   const updateDescription = (html: string) => handleUpdateHTML(task, html, isSheet);
 
+  const onClickOnTask = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const target = e.target;
+    if (target instanceof HTMLImageElement) {
+      const allImages = Array.from(taskContentRef.current?.querySelectorAll('img') || []);
+      const index = allImages.findIndex((img) => img.src === target.src);
+      dispatchCustomEvent('openCarousel', {
+        slide: index,
+        slides: allImages.map((img) => ({ src: img.src })),
+      });
+    }
+  };
+
   useEffect(() => {
     if (state !== 'expanded') return;
     updateImageSourcesFromDataUrl();
@@ -93,6 +105,8 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
               <div
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
                 dangerouslySetInnerHTML={{ __html: task.description }}
+                onKeyDown={() => {}}
+                onClick={onClickOnTask}
               />
             </div>
           )}
