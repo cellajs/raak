@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
+import { config } from 'config';
 import { useMutateWorkSpaceQueryData } from '~/hooks/use-mutate-query-data';
 import { dialog } from '~/modules/common/dialoger/state';
 import { sheet } from '~/modules/common/sheeter/state';
@@ -32,7 +33,7 @@ export const WorkspaceSettings = ({ sheet: isSheet }: { sheet?: boolean }) => {
         callback={() => {
           if (isSheet) sheet.remove('edit-workspace');
           toast.success(t('success.delete_resource', { resource: t('app:workspace') }));
-          navigate({ to: '.', replace: true });
+          navigate({ to: config.defaultRedirectPath, replace: true });
         }}
       />,
       {

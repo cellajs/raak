@@ -4,6 +4,7 @@ import { useMutation } from '~/hooks/use-mutations';
 import { queryClient } from '~/lib/router';
 import { DeleteForm } from '~/modules/common/delete-form';
 import { dialog } from '~/modules/common/dialoger/state';
+import { deleteMenuItem } from '~/modules/common/nav-sheet/helpers/menu-operations';
 import type { Workspace } from '~/types/app';
 
 interface Props {
@@ -20,6 +21,7 @@ const DeleteWorkspaces = ({ workspaces, callback, dialog: isDialog }: Props) => 
         queryClient.invalidateQueries({
           queryKey: ['workspaces', workspace.id],
         });
+        deleteMenuItem(workspace.id);
       }
 
       if (isDialog) dialog.remove();

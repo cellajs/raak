@@ -2,7 +2,7 @@ import { config } from 'config';
 import { t } from 'i18next';
 import { createProject } from '~/api/projects';
 import { createWorkspace } from '~/api/workspaces';
-import { addMenuItem } from '~/modules/common/nav-sheet/helpers/add-menu-item';
+import { addMenuItem } from '~/modules/common/nav-sheet/helpers/menu-operations';
 import type { StepItem } from '~/modules/common/stepper/types';
 import { useNavigationStore } from '~/store/navigation';
 import { useUserStore } from '~/store/user';
