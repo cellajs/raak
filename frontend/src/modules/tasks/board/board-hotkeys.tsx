@@ -36,13 +36,13 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
   const currentTask = useMemo(() => tasks.find((t) => t.id === (taskIdPreview || storeFocused)), [taskIdPreview, storeFocused, tasks]);
 
   const handleVerticalArrowKeyDown = async (event: KeyboardEvent) => {
-    if (!projects.length || !currentTask) return;
-    if (currentTask.id && (tasksState[currentTask.id] === 'editing' || tasksState[currentTask.id] === 'unsaved')) return;
+    if (!projects.length) return;
+    if (currentTask && (tasksState[currentTask.id] === 'editing' || tasksState[currentTask.id] === 'unsaved')) return;
 
-    const direction = currentTask.id ? (event.key === 'ArrowDown' ? 1 : -1) : 0;
+    const direction = currentTask?.id ? (event.key === 'ArrowDown' ? 1 : -1) : 0;
 
     // Get currently focused project
-    const currentProject = projects.find((p) => p.id === currentTask.projectId) ?? projects[0];
+    const currentProject = projects.find((p) => p.id === currentTask?.projectId) ?? projects[0];
 
     // Extract project settings
     const { expandAccepted, expandIced } = workspaces[workspaceId]?.[currentProject.id] || defaultColumnValues;
@@ -51,7 +51,7 @@ export default function BoardHotkeysManager({ workspaceId, projects, tasksState,
     const projectTasks = tasks.filter((t) => t.projectId === currentProject.id);
     const { filteredTasks } = sortAndGetCounts(projectTasks, expandAccepted, expandIced);
 
-    const taskIndex = currentTask.id ? filteredTasks.findIndex((t) => t.id === currentTask.id) : 0;
+    const taskIndex = currentTask?.id ? filteredTasks.findIndex((t) => t.id === currentTask?.id) : 0;
     // Ensure the next task in the direction exists
     const nextTask = filteredTasks[taskIndex + direction];
     if (!nextTask) return;
