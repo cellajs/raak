@@ -57,7 +57,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
   return (
     <div className="flex flex-col grow gap-2">
       {state === 'folded' ? (
-        <div className="mt-1.5 ml-1 leading-none inline items-center">
+        <div className="mt-1.5 mb-1 ml-1 leading-none inline items-center">
           <div
             // biome-ignore lint/security/noDangerouslySetInnerHtml: is sanitized by backend
             dangerouslySetInnerHTML={{ __html: task.summary }}
@@ -93,7 +93,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
             </div>
           )}
 
-          <div id={`subtask-container-${task.id}`} className="-mx-2 mt-2 w-[calc(100%+1.25rem)]">
+          <div id={`subtask-container-${task.id}`} className="-mx-2 my-1 w-[calc(100%+1.25rem)]">
             <motion.div>
               {task.subtasks.map((task) => (
                 <motion.div key={task.id} layout="position" transition={{ duration: 0.3 }}>
@@ -109,7 +109,7 @@ const TaskDescription = ({ task, mode, state, isSheet }: TaskContentProps) => {
                 </motion.div>
               ) : (
                 <motion.div key="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-                  <Button variant="ghost" size="sm" className="w-full mb-1 pl-11 justify-start rounded-none" onClick={() => setCreateSubtask(true)}>
+                  <Button variant="ghost" size="sm" className="w-full pl-11 justify-start rounded-none" onClick={() => setCreateSubtask(true)}>
                     <Plus size={16} />
                     <span className="ml-1 font-normal">{t('app:todo')}</span>
                   </Button>
@@ -129,7 +129,7 @@ const SummaryButtons = ({ task }: { task: Task }) => {
   return (
     <>
       {(task.expandable || task.subtasks.length > 0) && (
-        <div className="inline-flex gap-1 items-center opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 -mt-[0.15rem]">
+        <div className="inline gap-1 items-center opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 -mt-[0.15rem]">
           {task.expandable && <div className="inline-flex px-1 text-sm cursor-pointer py-0 h-5">...</div>}
           {task.subtasks.length > 0 && (
             <div className="inline-flex py-0.5 text-xs h-5 ml-2 gap-[.1rem] cursor-pointer">

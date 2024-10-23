@@ -108,7 +108,7 @@ export const CreateSubtaskForm = ({
 
   return (
     <Form {...form}>
-      <form id="create-subtask" onSubmit={form.handleSubmit(onSubmit)} className="p-3 mb-2 flex gap-2 flex-col bg-secondary/50">
+      <form id="create-subtask" onSubmit={form.handleSubmit(onSubmit)} className="p-3 flex gap-2 flex-col bg-secondary/50">
         <FormField
           control={form.control}
           name="description"
