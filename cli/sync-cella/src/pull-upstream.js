@@ -84,7 +84,7 @@ export async function pullUpstream({
       const ignoredUntrackedFiles = [];
 
       for (const ignoredFile of ignoredFiles) {
-        if (untrackedFiles.find((file) => ignoredFile.startsWith(file))) {
+        if (untrackedFiles.includes(ignoredFile)) {
           ignoredUntrackedFiles.push(ignoredFile);
         } else {
           ignoredTrackedFiles.push(ignoredFile);
@@ -100,6 +100,7 @@ export async function pullUpstream({
 
       // Run the checkout commands with all files at once
       if (filesToCheckout.length > 0) {
+
         await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout}` });
       }
 
