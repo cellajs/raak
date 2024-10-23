@@ -56,7 +56,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     const currentProject = projects.find((p) => p.id === currentTask?.projectId) ?? projects[0];
 
     // Extract project settings
-    const { expandAccepted, expandIced } = workspaces[workspaceId]?.[currentProject.id] || defaultColumnValues;
+    const { expandAccepted, expandIced } = workspaces[workspaceId]?.columns[currentProject.id] || defaultColumnValues;
 
     // Filter and sort tasks for the current project
     const projectTasks = tasks.filter((t) => t.projectId === currentProject.id);
@@ -84,7 +84,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
 
     // Get project info and filter tasks
     const projectTasks = tasks.filter((t) => t.projectId === nextProject.id);
-    const { expandAccepted } = workspaces[workspaceId]?.[nextProject.id] || defaultColumnValues;
+    const { expandAccepted } = workspaces[workspaceId]?.columns[nextProject.id] || defaultColumnValues;
 
     const [firstTask] = sortAndGetCounts(projectTasks, expandAccepted, false).filteredTasks;
     if (!firstTask) return;
@@ -130,7 +130,7 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
     if (!projects.length || !currentTask) return;
 
     const project = projects.find((p) => p.id === currentTask?.projectId) || projects[0];
-    const projectSettings = workspaces[workspaceId]?.[project.id] || defaultColumnValues;
+    const projectSettings = workspaces[workspaceId]?.columns[project.id] || defaultColumnValues;
     changeColumn(workspaceId, project.id, { createTaskForm: !projectSettings.createTaskForm });
   };
 

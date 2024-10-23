@@ -7,7 +7,7 @@ import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useWorkspaceStore } from '~/store/workspace';
-import { useWorkspaceUIStore } from '~/store/workspace-ui';
+import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
 import type { Project } from '~/types/app';
 import { openProjectConfigSheet } from './helpers';
 
@@ -20,7 +20,7 @@ const ProjectActions = ({ project, openDialog }: { project: Project; openDialog:
     data: { workspace },
   } = useWorkspaceQuery();
 
-  const { createTaskForm } = workspaces[workspace.id]?.[project.id] || { createTaskForm: false };
+  const { createTaskForm } = workspaces[workspace.id]?.columns[project.id] || defaultColumnValues;
 
   // TODO: this doesnt look ok
   const role = project.membership?.role || 'member';

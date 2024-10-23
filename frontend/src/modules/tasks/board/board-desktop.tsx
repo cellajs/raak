@@ -32,20 +32,20 @@ export default function BoardDesktop({
 }) {
   const { ref, bounds } = useMeasure();
   const panelRefs = useRef<Record<string, ImperativePanelHandle | null>>({});
-  const { changePanels, workspacesPanels, workspaces } = useWorkspaceUIStore();
+  const { changePanels, workspaces } = useWorkspaceUIStore();
 
   const panelStorage = useMemo(
     () => ({
-      getItem: (_: string) => workspacesPanels[workspaceId] ?? null,
+      getItem: (_: string) => workspaces[workspaceId].panel ?? null,
       setItem: (_: string, value: string) => changePanels(workspaceId, value),
     }),
-    [workspacesPanels, workspaceId],
+    [workspaces, workspaceId],
   );
 
   const projectSettingsMap = useMemo(() => {
     return projects.map((project) => ({
       project,
-      settings: workspaces[workspaceId]?.[project.id],
+      settings: workspaces[workspaceId]?.columns[project.id],
     }));
   }, [projects, workspaces, workspaceId]);
 
