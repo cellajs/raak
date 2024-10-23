@@ -12,7 +12,7 @@ import { AppRoute } from './general';
 
 // Lazy-loaded components
 const WorkspacePage = lazy(() => import('~/modules/workspaces/workspace-page'));
-const Board = lazy(() => import('~/modules/tasks/board/board'));
+const Board = lazy(() => import('~/modules/tasks/board'));
 const TasksTable = lazy(() => import('~/modules/tasks/tasks-table'));
 
 export const tasksSearchSchema = z.object({

@@ -19,12 +19,12 @@ import { sheet } from '~/modules/common/sheeter/state';
 import TableHeader from '~/modules/tasks/board-header';
 import { configureForExport, openTaskPreviewSheet } from '~/modules/tasks/helpers';
 import TaskSheet from '~/modules/tasks/task-sheet';
+import TasksHotkeysManager from '~/modules/tasks/tasks-hotkeys';
 import { useColumns } from '~/modules/tasks/tasks-table/columns';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceTableRoute, type tasksSearchSchema } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Task } from '~/types/app';
-import TasksHotkeysManager from '../board/tasks-hotkeys';
 
 type TasksSearch = z.infer<typeof tasksSearchSchema>;
 

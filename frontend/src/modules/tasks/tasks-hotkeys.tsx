@@ -18,20 +18,29 @@ interface HotkeysManagerProps {
   mode: 'default' | 'board';
 }
 
+type QueryData = {
+  items: Task[];
+  total: number;
+};
+
+type InfiniteQueryData = {
+  pageParams: number[];
+  pages: QueryData[];
+};
+
 export default function TasksHotkeysManager({ workspaceId, projects, mode = 'default' }: HotkeysManagerProps) {
   const { focusedTaskId: storeFocused } = useWorkspaceStore();
   const { taskIdPreview } = useSearch({ from: WorkspaceRoute.id });
 
   const { workspaces, changeColumn } = useWorkspaceUIStore();
 
+  const queries = queryClient.getQueriesData<QueryData | InfiniteQueryData>({ queryKey: taskKeys.lists() });
   // Retrieve all tasks
   const tasks = useMemo(() => {
-    const queries = queryClient.getQueriesData({ queryKey: taskKeys.lists() });
-    return queries.flatMap((el) => {
-      const [, data] = el as [string[], undefined | { items: Task[] }];
-      return data?.items ?? [];
+    return queries.flatMap(([_, data]) => {
+      return (data && 'pages' in data ? data?.pages[0].items : data?.items) ?? [];
     });
-  }, [queryClient]);
+  }, [queries]);
 
   const currentTask = useMemo(() => tasks.find((t) => t.id === (taskIdPreview || storeFocused)), [taskIdPreview, storeFocused, tasks]);
 
@@ -127,11 +136,11 @@ export default function TasksHotkeysManager({ workspaceId, projects, mode = 'def
 
   // Open on key press
   const hotKeyPress = (field: string) => {
-    console.log('🚀 ~ hotKeyPress ~ currentTask:', currentTask);
-
     if (!currentTask) return;
+
     const taskCard = document.getElementById(taskIdPreview ? `sheet-card-${currentTask.id}` : currentTask.id);
     if (!taskCard) return;
+
     if (document.activeElement !== taskCard) taskCard.focus();
 
     const trigger = taskCard?.querySelector(`#${field}-${currentTask.id}`);
