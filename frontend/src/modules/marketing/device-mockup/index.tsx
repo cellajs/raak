@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useInView } from 'react-intersection-observer';
 import { useThemeStore } from '~/store/theme';
 import { cn } from '~/utils/cn';
@@ -17,6 +18,7 @@ interface DeviceMockupProps {
 
 const DeviceMockup = ({ lightSlides, darkSlides, type, className }: DeviceMockupProps) => {
   const { mode } = useThemeStore();
+  const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
   const [carouselSlide, setCarouselSlide] = useState(0);
 
@@ -40,7 +42,7 @@ const DeviceMockup = ({ lightSlides, darkSlides, type, className }: DeviceMockup
         inView={inView}
         renderCarousel={(isDialog) => <Carousel slides={slides} onOpenChange={onOpenChange} isDialog={isDialog} />}
       />
-      <CarouselDialog isOpen={isOpen} onOpenChange={setOpen} slides={slides} carouselSlide={carouselSlide} />
+      <CarouselDialog title={t('common:view_screenshot')} isOpen={isOpen} onOpenChange={setOpen} slides={slides} carouselSlide={carouselSlide} />
     </div>
   );
 };

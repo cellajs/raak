@@ -35,6 +35,7 @@ import router from '~/lib/router';
 import { focusEditor, getContentAsString, handleSubmitOnEnter, trimInlineContentText } from '~/modules/common/blocknote/helpers';
 import CarouselDialog from '~/modules/common/carousel-dialog';
 import './styles.css';
+import { useTranslation } from 'react-i18next';
 
 type BlockNoteProps = {
   id: string;
@@ -76,6 +77,7 @@ export const BlockNote = ({
   onTextDifference,
 }: BlockNoteProps) => {
   const { mode } = useThemeStore();
+  const { t } = useTranslation();
   const wasInitial = useRef(false);
   const editor = useCreateBlockNote({ schema: customSchema, trailingBlock });
   const [isOpen, setOpen] = useState(false);
@@ -156,14 +158,17 @@ export const BlockNote = ({
 
       editor.replaceBlocks(editor.document, blocks);
 
+      // Add double-click event listener to images
+      const imageBlocks = blocks.filter((block) => block.type === 'image');
+      const slides = imageBlocks.map((block) => ({ src: block.props.url }));
       for (const block of blocks) {
         if (block.type === 'image') {
-          console.log('block', block);
+          const index = imageBlocks.findIndex((b) => b.id === block.id);
           const element = document.querySelector(`[data-id="${block.id}"]`);
           (element as HTMLDivElement).ondblclick = () => {
-            setSlides([{ src: block.props.url }]);
+            setSlides(slides);
+            setCarouselSlide(index);
             setOpen(true);
-            setCarouselSlide(0);
           };
         }
       }
@@ -254,7 +259,7 @@ export const BlockNote = ({
 
         {filePanel && <FilePanelController filePanel={filePanel} />}
       </BlockNoteView>
-      <CarouselDialog isOpen={isOpen} onOpenChange={setOpen} slides={slides} carouselSlide={carouselSlide} />
+      <CarouselDialog title={t('common:view_attachment')} isOpen={isOpen} onOpenChange={setOpen} slides={slides} carouselSlide={carouselSlide} />
     </>
   );
 };
