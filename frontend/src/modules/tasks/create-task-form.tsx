@@ -102,8 +102,8 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
 
   const handleCloseForm = () => {
     if (isDialog) {
-      if (!projectId) dialog.remove(false, 'workspace-add-task');
-      else dialog.remove(false, `create-task-form-${projectId}`);
+      dialog.remove(false, 'workspace-add-task');
+      dialog.remove(false, `create-task-form-${projectId}`);
     }
     onCloseForm?.();
   };
