@@ -1,3 +1,5 @@
+import createDOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
 import { parse as parseHtml } from 'node-html-parser';
 
 export const extractKeywords = (description: string) => {
@@ -23,12 +25,18 @@ export const getDateFromToday = (days: number): Date => {
 };
 
 export const scanTaskDescription = (descriptionText: string) => {
-  const keywords = extractKeywords(descriptionText);
+  const window = new JSDOM('').window;
+  const DOMPurify = createDOMPurify(window);
 
-  const rootElement = parseHtml(descriptionText);
+  //Sanitizing task description
+  const cleanDescription = DOMPurify.sanitize(descriptionText);
+
+  const keywords = extractKeywords(cleanDescription);
+
+  const rootElement = parseHtml(cleanDescription);
   const paragraphElement = rootElement.querySelector('.bn-inline-content');
 
-  let summary = descriptionText;
+  let summary = cleanDescription;
   let expandable = false;
 
   if (paragraphElement) {
@@ -38,5 +46,5 @@ export const scanTaskDescription = (descriptionText: string) => {
     expandable = bnBlockElements.length > 1;
   }
 
-  return { summary, expandable, keywords };
+  return { description: cleanDescription, summary, expandable, keywords };
 };

@@ -121,7 +121,7 @@ queryClient.setMutationDefaults(labelKeys.create(), {
         labels: updatedLabels,
       };
     });
-    toast.success(t('common:success.create_resource', { resource: t('app:task') }));
+    toast.success(t('common:success.create_resource', { resource: t('app:label') }));
   },
   onError,
 });
