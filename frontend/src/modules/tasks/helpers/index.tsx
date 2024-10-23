@@ -1,6 +1,5 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import { t } from 'i18next';
-import { Suspense, lazy } from 'react';
 import { toast } from 'sonner';
 import { dispatchCustomEvent } from '~/lib/custom-events';
 import { dropdowner } from '~/modules/common/dropdowner/state';
@@ -13,23 +12,17 @@ import SelectStatus, { taskStatuses } from '~/modules/tasks/task-dropdowns/selec
 import SelectTaskType from '~/modules/tasks/task-dropdowns/select-task-type';
 import { useWorkspaceStore } from '~/store/workspace';
 import type { Project, Subtask, Task } from '~/types/app';
-
-const TaskSheet = lazy(() => import('~/modules/tasks/task-sheet'));
+import TaskSheet from '../task-sheet';
 
 export const openTaskPreviewSheet = (task: Task) => {
-  sheet.create(
-    <Suspense>
-      <TaskSheet task={task} />
-    </Suspense>,
-    {
-      className: 'max-w-full lg:max-w-4xl px-0',
-      title: <span className="px-4">{t('app:task')}</span>,
-      id: `task-preview-${task.id}`,
-      hideClose: false,
-      side: 'right',
-      removeCallback: () => sheet.remove(`task-preview-${task.id}`),
-    },
-  );
+  sheet.create(<TaskSheet task={task} />, {
+    className: 'max-w-full lg:max-w-4xl px-0',
+    title: <span className="px-4">{t('app:task')}</span>,
+    id: `task-preview-${task.id}`,
+    hideClose: false,
+    side: 'right',
+    removeCallback: () => sheet.remove(`task-preview-${task.id}`),
+  });
 };
 
 export const setTaskCardFocus = (id: string) => {
@@ -41,12 +34,20 @@ export const setTaskCardFocus = (id: string) => {
 };
 
 export const handleTaskDropDownClick = (task: Task, field: string, trigger: HTMLElement) => {
+  // Set dropdown options
+  const options: { id: string; trigger: HTMLElement; align?: 'start' | 'end' } = { id: field, trigger, align: 'start' };
+
+  // If field is status or assignedTo, align dropdown from end
+  if (field.startsWith('status') || field.startsWith('assignedTo')) options.align = 'end';
+
+  // Set dropdown component based on field
   let component = <SelectTaskType task={task} />;
   if (field.includes('impact')) component = <SelectImpact task={task} />;
   else if (field.includes('labels')) component = <SetLabels task={task} />;
   else if (field.includes('assignedTo')) component = <AssignMembers task={task} />;
   else if (field.includes('status')) component = <SelectStatus task={task} />;
-  return dropdowner(component, { id: field, trigger, align: field.startsWith('status') || field.startsWith('assignedTo') ? 'end' : 'start' });
+
+  return dropdowner(component, options);
 };
 
 export const getRelativeTaskOrder = (edge: Edge, tasks: Task[] | Subtask[], order: number, id: string, status?: number) => {

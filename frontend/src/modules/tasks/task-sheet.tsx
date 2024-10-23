@@ -29,6 +29,7 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
   const isMobile = useBreakpoints('max', 'sm');
 
   const taskMutation = useTaskUpdateMutation();
+
   const {
     data: { workspace },
   } = useWorkspaceQuery();
