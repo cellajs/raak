@@ -71,6 +71,9 @@ export async function pullUpstream({
       const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n');
       const filteredFiles = applyIgnorePatterns(files, ignorePatterns);
 
+      console.log('\n FILES: ', files.filter((file) => file.includes('frontend/src/modules/common/nav-sheet/helpers')))
+      console.log('\n FILTEREDFILES', files.filter((file) => file.includes('frontend/src/modules/common/nav-sheet/helpers')))
+
       // Join the list of files into a space-separated string
       const filesToReset = filteredFiles.join(' ');
 
