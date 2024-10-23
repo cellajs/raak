@@ -1,16 +1,16 @@
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader } from '~/modules/ui/dialog';
-import DeviceCarousel from './carousel';
+import Carousel from './carousel';
 
-interface DeviceDialogProps {
+interface CarouselDialogProps {
   isOpen: boolean;
   carouselSlide: number;
   slides?: { src: string }[];
   onOpenChange: (open: boolean) => void;
 }
 
-const DeviceDialog = ({ isOpen, onOpenChange, slides, carouselSlide }: DeviceDialogProps) => {
+const CarouselDialog = ({ isOpen, onOpenChange, slides, carouselSlide }: CarouselDialogProps) => {
   const { t } = useTranslation();
 
   return (
@@ -20,11 +20,11 @@ const DeviceDialog = ({ isOpen, onOpenChange, slides, carouselSlide }: DeviceDia
           <DialogTitle className="text-center font-semibold text-lg">{t('common:view_screenshot')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-wrap relative -z-[1] h-screen justify-center p-2 grow">
-          <DeviceCarousel slides={slides} onOpenChange={onOpenChange} isDialog slide={carouselSlide} />
+          <Carousel slides={slides} onOpenChange={onOpenChange} isDialog slide={carouselSlide} />
         </div>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default DeviceDialog;
+export default CarouselDialog;

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useThemeStore } from '~/store/theme';
 import { cn } from '~/utils/cn';
-import DeviceCarousel from './carousel';
-import DeviceDialog from './dialog';
+import Carousel from '../../common/carousel';
+import CarouselDialog from '../../common/carousel-dialog';
 import DeviceFrame from './frame';
 
 type DeviceType = 'mobile' | 'tablet' | 'pc';
@@ -38,9 +38,9 @@ const DeviceMockup = ({ lightSlides, darkSlides, type, className }: DeviceMockup
       <DeviceFrame
         type={type}
         inView={inView}
-        renderCarousel={(isDialog) => <DeviceCarousel slides={slides} onOpenChange={onOpenChange} isDialog={isDialog} />}
+        renderCarousel={(isDialog) => <Carousel slides={slides} onOpenChange={onOpenChange} isDialog={isDialog} />}
       />
-      <DeviceDialog isOpen={isOpen} onOpenChange={setOpen} slides={slides} carouselSlide={carouselSlide} />
+      <CarouselDialog isOpen={isOpen} onOpenChange={setOpen} slides={slides} carouselSlide={carouselSlide} />
     </div>
   );
 };
