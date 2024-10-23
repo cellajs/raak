@@ -39,7 +39,9 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
 
   const handleTaskState = (event: TaskStatesChangeEvent) => {
     const { taskId, state, sheet } = event.detail;
-    if (!sheet || taskId !== task.id || state === 'currentState') return;
+
+    if (!sheet || taskId !== task.id) return;
+    if (state === 'currentState') return setState('expanded');
     setState(state);
   };
 

@@ -210,11 +210,11 @@ export const updateImageSourcesFromDataUrl = () => {
   }
 };
 
-export const handleEditorFocus = (id: string, taskToClose?: string | null) => {
+export const handleEditorFocus = (id: string, taskToInteract?: string | null, isSheet?: boolean) => {
   // Remove subtask editing state
   dispatchCustomEvent('changeSubtaskState', { taskId: id, state: 'removeEditing' });
   // Remove Task editing state if focused not task itself
-  if (taskToClose) dispatchCustomEvent('changeTaskState', { taskId: taskToClose, state: 'currentState' });
+  if (taskToInteract) dispatchCustomEvent('changeTaskState', { taskId: taskToInteract, state: 'currentState', sheet: isSheet });
 };
 
 export const useHandleUpdateHTML = () => {
