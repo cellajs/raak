@@ -75,11 +75,12 @@ export async function pullUpstream({
       // Join the list of files into a space-separated string
       const filesToReset = filteredFiles.join(' ');
 
-      console.log('filesToReset: ', filesToReset)
+      console.log('filteredFiles: ', filteredFiles)
 
       // Run the reset and checkout commands with all files at once
       if (filesToReset.length > 0) {
         await runGitCommand({ targetFolder, command: `reset ${filesToReset}` });
+        console.log('reset works!')
         await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToReset}` });
       }
 
