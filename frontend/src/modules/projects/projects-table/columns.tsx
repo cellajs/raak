@@ -31,7 +31,7 @@ export const useColumns = (sheet?: boolean) => {
           );
         return (
           <Link
-            to={`/workspaces/${row.membership.workspaceId}/board?project=${row.slug}`}
+            to={`/${row.membership.organizationId}/workspaces/${row.membership.workspaceId}/board?project=${row.slug}`}
             tabIndex={tabIndex}
             className="flex space-x-2 items-center outline-0 ring-0 group"
           >
