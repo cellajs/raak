@@ -36,7 +36,6 @@ import type { Label, Task } from '~/types/app';
 import type { LimitedUser } from '~/types/common';
 import { cn } from '~/utils/cn';
 import { nanoid } from '~/utils/nanoid';
-import { scanTaskDescription } from '#/modules/tasks/helpers';
 import { TaskType, createTaskSchema } from '#/modules/tasks/schema';
 
 export type TaskImpact = 0 | 1 | 2 | 3 | null;
@@ -144,13 +143,12 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
   const form = useFormWithDraft<FormValues>(`create-task-${projectId}`, formOptions);
 
   const onSubmit = async (values: FormValues) => {
-    const { summary, keywords, expandable } = scanTaskDescription(values.description);
     const newTask = {
       id: values.id,
       description: values.description,
-      summary: values.summary || summary,
-      expandable: values.expandable || expandable,
-      keywords: values.keywords || keywords,
+      summary: values.summary,
+      expandable: values.expandable,
+      keywords: values.keywords,
       type: values.type,
       impact: values.impact as TaskImpact,
       labels: values.labels.map((label) => label.id),

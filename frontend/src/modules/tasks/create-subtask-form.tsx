@@ -13,7 +13,6 @@ import { Button } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/form';
 import { useUserStore } from '~/store/user.ts';
 import type { Task } from '~/types/app';
-import { scanTaskDescription } from '#/modules/tasks/helpers';
 import { TaskType, createTaskSchema } from '#/modules/tasks/schema';
 import { nanoid } from '#/utils/nanoid';
 import { useTaskCreateMutation } from '../common/query-client-provider/tasks';
@@ -63,14 +62,12 @@ export const CreateSubtaskForm = ({
   const form = useFormWithDraft<FormValues>(`create-subtask-${parentTask.id}`, formOptions);
 
   const onSubmit = async (values: FormValues) => {
-    const { summary, keywords, expandable } = scanTaskDescription(values.description);
-
     const newSubtask = {
       id: defaultId,
       description: values.description,
-      summary: values.summary || summary,
-      expandable: values.expandable || expandable,
-      keywords: values.keywords || keywords,
+      summary: values.summary,
+      expandable: values.expandable,
+      keywords: values.keywords,
       type: values.type,
       impact: null,
       status: 1,

@@ -34,13 +34,14 @@ const tasksRoutes = app
     // Use body data to create a new task, add valid organization id
     const newTask: InsertTaskModel = { ...newTaskInfo, organizationId: organization.id };
 
-    // const descriptionText = String(newTask.description);
+    const descriptionText = String(newTask.description);
 
-    // Create summary, expandable and keywords from description
-    // const { summary, expandable, keywords } = scanTaskDescription(descriptionText);
-    // newTask.summary = summary;
-    // newTask.expandable = expandable;
-    // newTask.keywords = keywords;
+    // Sanitize description create summary, expandable and keywords from description
+    const { description, summary, expandable, keywords } = scanTaskDescription(descriptionText);
+    newTask.description = description;
+    newTask.summary = summary;
+    newTask.expandable = expandable;
+    newTask.keywords = keywords;
 
     const [createdTask] = await db.insert(tasksTable).values(newTask).returning();
 
@@ -183,11 +184,12 @@ const tasksRoutes = app
       ...(order && { order: order }),
     };
 
-    // If updating description, also update keywords, summary and expandable
+    // If updating description, sanitize description and update keywords, summary and expandable
     if (key === 'description' && data) {
       const descriptionText = String(data);
 
-      const { summary, expandable, keywords } = scanTaskDescription(descriptionText);
+      const { description, summary, expandable, keywords } = scanTaskDescription(descriptionText);
+      updateValues.description = description;
       updateValues.summary = summary;
       updateValues.expandable = expandable;
       updateValues.keywords = keywords;

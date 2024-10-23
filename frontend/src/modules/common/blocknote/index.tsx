@@ -1,7 +1,6 @@
 import { FilePanelController, type FilePanelProps, GridSuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
-import DOMPurify from 'dompurify';
 import { type KeyboardEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import * as Badge from '~/modules/ui/badge';
 import * as Button from '~/modules/ui/button';
@@ -97,7 +96,6 @@ export const BlockNote = ({
 
     // Converts the editor's contents from Block objects to HTML and sanitizes it
     const descriptionHtml = await editor.blocksToFullHTML(editor.document);
-    const cleanDescription = DOMPurify.sanitize(descriptionHtml);
 
     // Get the current and old block content as strings for comparison
     const newHtml = getContentAsString(editor.document as Block[]);
@@ -108,7 +106,7 @@ export const BlockNote = ({
     if (oldHtml !== newHtml) onTextDifference?.();
 
     // Prepare the content for further updates (trims and sanitizes)
-    const contentToUpdate = trimInlineContentText(cleanDescription);
+    const contentToUpdate = trimInlineContentText(descriptionHtml);
     // Update the state or trigger the onChange callback in creation mode
     if (isCreationMode) onChange?.(contentToUpdate);
     setText(contentToUpdate);
@@ -168,9 +166,8 @@ export const BlockNote = ({
   const onBeforeLoadHandle = useCallback(async () => {
     // Converts the editor's contents from Block objects to HTML and sanitizes it
     const descriptionHtml = await editor.blocksToFullHTML(editor.document);
-    const cleanDescription = DOMPurify.sanitize(descriptionHtml);
     if (!wasInitial.current) return;
-    updateData(cleanDescription);
+    updateData(descriptionHtml);
   }, [editor, wasInitial]);
 
   useEffect(() => {
