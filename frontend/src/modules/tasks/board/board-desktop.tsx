@@ -61,7 +61,7 @@ export default function BoardDesktop({
       <BoardHeader>
         <WorkspaceActions />
       </BoardHeader>
-      <TasksHotkeysManager workspaceId={workspaceId} projects={projects} mode={'board'} />
+      <TasksHotkeysManager mode={'board'} />
       <div className="transition sm:h-[calc(100vh-4rem)] md:h-[calc(100vh-4.88rem)] overflow-x-auto" ref={ref as React.Ref<HTMLDivElement>}>
         <div className="h-[inherit]" style={{ width: scrollerWidth }}>
           <ResizablePanelGroup

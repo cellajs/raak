@@ -16,6 +16,7 @@ import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { useThemeStore } from '~/store/theme';
 import type { Task } from '~/types/app';
 
+import TasksHotkeysManager from '~/modules/tasks/tasks-hotkeys';
 import type { TaskStates, TaskStatesChangeEvent } from './types';
 
 interface TasksSheetProps {
@@ -103,7 +104,12 @@ const TaskSheet = ({ task }: TasksSheetProps) => {
     );
   }, [task]);
 
-  return <TaskCard mode={mode} task={task} state={state} isSelected={false} isFocused={true} isSheet />;
+  return (
+    <>
+      <TasksHotkeysManager mode={'sheet'} />
+      <TaskCard mode={mode} task={task} state={state} isSelected={false} isFocused={true} isSheet />
+    </>
+  );
 };
 
 export default TaskSheet;
