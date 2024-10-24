@@ -106,6 +106,9 @@ export async function pullUpstream({
         await runGitCommand({ targetFolder, command: `clean -f -x -- ${filesToRemove}` });
       }
 
+      console.log('\n ignoredUntrackedFiles: ', ignoredUntrackedFiles)
+      console.log('\n filesToRemove: ', filesToRemove)
+
       applyIgnoreSpinner.success('Successfully cleaned ignored files.');
     } catch (e) {
       console.error(e);
