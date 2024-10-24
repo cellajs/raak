@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid';
 import type { InsertTaskModel } from '#/db/schema/tasks';
 import type { UserModel } from '#/db/schema/users';
 import { extractKeywords } from '#/modules/tasks/helpers/utils';
-import type { Labels, PivotalTask } from './pivotal-type';
+import type { PivotalTask } from './pivotal-type';
 
 export enum PivotalTaskTypes {
   feature = 1,
@@ -36,29 +36,53 @@ export const getSubtask = (task: PivotalTask, taskId: string, organizationId: st
   return subtasks;
 };
 
-export const getLabels = (tasks: PivotalTask[], organizationId: string, projectId: string) => {
+export const getLabels = (
+  tasks: PivotalTask[],
+  organizationId: string,
+  projectId: string,
+  existingLabels: { id: string; name: string; useCount: number }[],
+) => {
+  // Flatten the labels from tasks and filter out empty ones
   const labels = tasks.flatMap((t) => t.Labels?.split(', ') || []).filter((l) => l?.length);
+
+  // Count occurrences of each label
   const labelCounts = labels.reduce(
     (acc, label) => {
-      if (label in acc) acc[label] += 1;
-      else acc[label] = 1;
+      acc[label] = (acc[label] || 0) + 1;
       return acc;
     },
     {} as Record<string, number>,
   );
-  const labelsToInsert = Object.entries(labelCounts).map(([key, value]) => ({
-    id: nanoid(),
-    name: key,
-    color: '#FFA9BA',
-    organizationId: organizationId,
-    projectId: projectId,
-    lastUsedAt: new Date(),
-    useCount: value,
-  }));
-  return labelsToInsert;
+
+  const labelsToInsert = [];
+  const labelsToUpdate = [];
+
+  for (const [key, value] of Object.entries(labelCounts)) {
+    const existingLabel = existingLabels.find((label) => label.name === key);
+
+    if (existingLabel) {
+      labelsToUpdate.push({
+        id: existingLabel.id,
+        name: key,
+        useCount: value + existingLabel.useCount,
+      });
+    } else {
+      labelsToInsert.push({
+        id: nanoid(),
+        name: key,
+        color: '#FFA9BA',
+        organizationId: organizationId,
+        projectId: projectId,
+        lastUsedAt: new Date(),
+        useCount: value,
+      });
+    }
+  }
+
+  return { labelsToInsert, labelsToUpdate };
 };
 
-export const getTaskLabels = (task: PivotalTask, labelsToInsert: Labels[]) => {
+export const getTaskLabels = (task: PivotalTask, labelsToInsert: { id: string; name: string }[]) => {
   const taskLabels = task.Labels?.split(', ').filter((l) => l?.length) || [];
   const labelsIds = taskLabels
     .map((taskLabel) => labelsToInsert.find((label) => label.name === taskLabel)?.id)

@@ -263,6 +263,11 @@ const tasksRoutes = app
       .innerJoin(membershipsTable, and(eq(membershipsTable.projectId, project.id), eq(membershipsTable.type, 'project')))
       .where(eq(usersTable.id, membershipsTable.userId));
 
+    const labels = await db
+      .select({ id: labelsTable.id, name: labelsTable.name, useCount: labelsTable.useCount })
+      .from(labelsTable)
+      .where(and(eq(labelsTable.projectId, projectId), eq(labelsTable.organizationId, organization.id)));
+
     if (!project) return errorResponse(ctx, 404, 'not_found', 'warn', 'project');
 
     const buffer = await zipFile.arrayBuffer();
@@ -288,7 +293,8 @@ const tasksRoutes = app
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     >(promises as any);
 
-    const labelsToInsert = getLabels(tasks, project.organizationId, project.id);
+    const { labelsToInsert, labelsToUpdate } = getLabels(tasks, project.organizationId, project.id, labels);
+
     const subtasksToInsert: InsertTaskModel[] = [];
     const tasksToInsert = tasks
       // Filter out accepted tasks
@@ -299,7 +305,7 @@ const tasksRoutes = app
           task,
           members.map((el) => el.user),
         );
-        const labelsIds = getTaskLabels(task, labelsToInsert);
+        const labelsIds = getTaskLabels(task, [...labelsToInsert, ...labelsToUpdate]);
         const subtasks = getSubtask(task, taskId, project.organizationId, project.id);
         if (subtasks.length) subtasksToInsert.push(...subtasks);
         return {
@@ -335,7 +341,12 @@ const tasksRoutes = app
           createdBy: creatorId ?? user.id,
         } satisfies InsertTaskModel;
       });
-    await db.insert(labelsTable).values(labelsToInsert);
+
+    for (const labelToUpdate of labelsToUpdate) {
+      await db.update(labelsTable).set({ useCount: labelToUpdate.useCount, lastUsedAt: new Date() }).where(eq(labelsTable.id, labelToUpdate.id));
+    }
+
+    if (labelsToInsert.length) await db.insert(labelsTable).values(labelsToInsert);
     await db.insert(tasksTable).values(tasksToInsert).onConflictDoNothing();
     if (subtasksToInsert.length) await db.insert(tasksTable).values(subtasksToInsert);
 
