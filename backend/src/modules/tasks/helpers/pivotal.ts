@@ -18,7 +18,7 @@ export const getSubtask = (task: PivotalTask, taskId: string, organizationId: st
     if (task[taskKey] && task[statusKey]) {
       subtasks.push({
         id: nanoid(),
-        summary: `<p class="bn-inline-content">${task[taskKey]}</p>`,
+        summary: `<p class="bn-inline-content inline">${task[taskKey]}</p>`,
         type: PivotalTaskTypes.chore,
         keywords: extractKeywords(task[taskKey]),
         parentId: taskId,

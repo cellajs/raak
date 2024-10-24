@@ -304,7 +304,7 @@ const tasksRoutes = app
         if (subtasks.length) subtasksToInsert.push(...subtasks);
         return {
           id: taskId,
-          summary: `<p class="bn-inline-content">${task.Title}</p>`,
+          summary: `<p class="bn-inline-content inline">${task.Title}</p>`,
           type: PivotalTaskTypes[task.Type as keyof typeof PivotalTaskTypes] || PivotalTaskTypes.chore,
           organizationId: project.organizationId,
           projectId: project.id,
