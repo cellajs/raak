@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { importTasks } from '~/api/tasks';
 import router from '~/lib/router';
+import { showToast } from '~/lib/toasts';
 import { dialog } from '~/modules/common/dialoger/state';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
@@ -45,10 +46,10 @@ const ProjectActions = ({ project, openDialog }: { project: Project; openDialog:
         file: formData.get('file') as File,
       });
       dialog.remove(false, 'import-tasks-form');
-      // TODO: Add success notification or refresh task list
+      showToast(t('app:imported_tasks.text'), 'success');
     } catch (error) {
       console.error('Error importing tasks:', error);
-      // TODO: Add error notification
+      showToast(t('app:import_failed.text'), 'error');
     }
   };
 

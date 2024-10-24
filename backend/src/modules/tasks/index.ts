@@ -312,8 +312,8 @@ const tasksRoutes = app
           keywords: task.Description || task.Title ? extractKeywords(task.Description + task.Title) : '',
           impact: ['0', '1', '2', '3'].includes(task.Estimate) ? +task.Estimate : 0,
           description: `<div class="bn-block-content"><p class="bn-inline-content">${task.Title}</p></div><div class="bn-block-content"><p class="bn-inline-content">${task.Description}</p>
-          ${!ownerIds.length ? ownersNames.map((name) => `<p data-owner=${name.toLowerCase()}>Owned by ${name}</p><p data-pivotal-id=${task.Id}>Pivotal id: ${task.Id}</p>`) : ''}
-          </div>`,
+          ${ownersNames.length ? ownersNames.map((name) => `<div data-content-type="paragraph" class="bn-block-content"><p class="bn-inline-content" data-owner="${name.toLowerCase()}">Owned by ${name}</p></div>`) : ''}
+          <div data-content-type="paragraph" class="bn-block-content"><p class="bn-inline-content" data-pivotal-id="${task.Id}">Pivotal id: ${task.Id}</p></div>`,
           labels: labelsIds,
           status:
             task['Current State'] === 'accepted'
