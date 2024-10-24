@@ -106,6 +106,7 @@ export async function pullUpstream({
         await runGitCommand({ targetFolder, command: `clean -f -x -- ${filesToRemove}` });
       }
 
+      console.log('\n untrackedFiles: ', untrackedFiles)
       console.log('\n ignoredUntrackedFiles: ', ignoredUntrackedFiles)
       console.log('\n filesToRemove: ', filesToRemove)
 
