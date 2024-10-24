@@ -67,24 +67,26 @@ export async function pullUpstream({
     }).start();
 
     try {
-      // Get the list of tracked files and filter them
+      // Get the list of tracked files and filter them on ignored ones
       const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
       const ignoredFiles = applyIgnorePatterns(files, ignorePatterns);
 
-      // Join the list of files into a space-separated string
+      // Join the list of files into a space-separated string and run the reset commands with all files at once
       const filesToReset = ignoredFiles.join(' ');
-
-      // Run the reset commands with all files at once
       if (filesToReset.length > 0) {
         await runGitCommand({ targetFolder, command: `reset ${filesToReset}` });
       }
 
-      // @TODO: Rerun 'ls-files' to remove files that were reset
+      // Rerun 'ls-files' to remove files that were reset
+      const filesAfterReset = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
+      const ignoredFilesAfterReset = applyIgnorePatterns(filesAfterReset, ignorePatterns);
+
+      // Get the list of untracked files and split them on tracked and untracked ignored files
       const untrackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files --others --exclude-standard' })).split('\n').filter(Boolean);
       const ignoredTrackedFiles = [];
       const ignoredUntrackedFiles = [];
 
-      for (const ignoredFile of ignoredFiles) {
+      for (const ignoredFile of ignoredFilesAfterReset) {
         if (untrackedFiles.includes(ignoredFile)) {
           ignoredUntrackedFiles.push(ignoredFile);
         } else {
@@ -92,18 +94,16 @@ export async function pullUpstream({
         }
       }
 
+      // Run the checkout commands with all tracked files at once
+      const filesToCheckout = ignoredTrackedFiles.join(' ');
+      if (filesToCheckout.length > 0) {
+        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout}` });
+      }
+
       console.log('\nfilesToReset: ', ignoredFiles)
       console.log('\nfilesToCheckout: ', ignoredTrackedFiles)
       console.log('\nuntrackedFiles: ', untrackedFiles)
       console.log('\nignoredUntrackedFiles: ', ignoredUntrackedFiles)
-      
-      const filesToCheckout = ignoredTrackedFiles.join(' ');
-
-      // Run the checkout commands with all files at once
-      if (filesToCheckout.length > 0) {
-
-        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout}` });
-      }
 
       applyIgnoreSpinner.success('Successfully applied reset/checkout for ignored files.');
     } catch (e) {
