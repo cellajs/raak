@@ -1,5 +1,5 @@
 import { Search, XCircle } from 'lucide-react';
-import { type MouseEventHandler, useContext, useEffect, useMemo, useRef } from 'react';
+import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSaveInSearchParams from '~/hooks/use-save-in-search-params';
 import { dispatchCustomEvent } from '~/lib/custom-events';
@@ -35,13 +35,18 @@ const TasksSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
     e.stopPropagation();
   };
 
+  const handleKeyDown: KeyboardEventHandler = (e) => {
+    if (e.key !== 'Escape' || searchQuery.length) return;
+    inputRef.current?.blur();
+  };
+
   // Focus input when filter button clicked(mobile)
   useEffect(() => {
     if (isFilterActive) inputRef.current?.focus();
   }, [isFilterActive]);
 
   return (
-    <div className="relative flex w-full sm:min-w-44 items-center" onClick={handleClick} onFocus={toggleFocus} onKeyDown={undefined}>
+    <div className="relative flex w-full sm:min-w-44 items-center" onClick={handleClick} onFocus={toggleFocus} onKeyDown={handleKeyDown}>
       <Search size={16} onMouseDown={preventInputBlur} className="absolute left-3" style={{ opacity: `${searchQuery.length ? 1 : 0.5}` }} />
       <Input
         onFocus={toggleFocus}
@@ -57,16 +62,15 @@ const TasksSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
           setSearchQuery(searchValue);
         }}
       />
-      {!!searchQuery.length && (
-        <XCircle
-          size={16}
-          className="absolute right-3 top-1/2 opacity-70 hover:opacity-100 -translate-y-1/2 cursor-pointer"
-          onMouseDown={(e) => {
-            preventInputBlur(e);
-            setSearchQuery('');
-          }}
-        />
-      )}
+
+      <XCircle
+        size={16}
+        className="group-data-[search-focused=false]/tasksHeader:hidden absolute right-3 top-1/2 opacity-70 hover:opacity-100 -translate-y-1/2 cursor-pointer"
+        onMouseDown={(e) => {
+          if (searchQuery.length) preventInputBlur(e);
+          setSearchQuery('');
+        }}
+      />
     </div>
   );
 };
