@@ -28,13 +28,15 @@ const BoardHeader = ({
   };
 
   return (
-    <div className="flex items-center max-sm:justify-between gap-2 z-[60] bg-background p-2 -m-2 md:p-3 md:-m-3">
+    <div
+      data-search-focused={searchFocused}
+      className="group/tasksHeader flex items-center max-sm:justify-between gap-2 z-[60] bg-background p-2 -m-2 md:p-3 md:-m-3"
+    >
       {!searchFocused && !selectedTasks.length && (
         <PageView workspace={workspace} showPageHeader={showPageHeader} toggleFocus={handleTogglePageHeader} />
       )}
-      {!!selectedTasks.length && (
-        <TaskSelectedButtons workspace={workspace} projects={projects} selectedTasks={selectedTasks} setSelectedTasks={setSelectedTasks} />
-      )}
+
+      <TaskSelectedButtons workspace={workspace} projects={projects} selectedTasks={selectedTasks} setSelectedTasks={setSelectedTasks} />
       <TasksSearch toggleFocus={() => setSearchFocused(!searchFocused)} />
       {!searchFocused && children}
       <DisplayOptions className="max-sm:hidden" />

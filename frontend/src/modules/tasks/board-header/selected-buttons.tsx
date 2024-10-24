@@ -15,6 +15,9 @@ interface TaskSelectedButtonsProps {
 }
 
 const TaskSelectedButtons = ({ workspace, projects, selectedTasks, setSelectedTasks }: TaskSelectedButtonsProps) => {
+  // Return null if no tasks are selected
+  if (!selectedTasks.length) return null;
+
   const { t } = useTranslation();
 
   const removeSelect = () => setSelectedTasks([]);
