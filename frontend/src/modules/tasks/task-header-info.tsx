@@ -1,4 +1,3 @@
-import { useLocation } from '@tanstack/react-router';
 import { config } from 'config';
 import { Check, Copy, Info, Link, Pencil } from 'lucide-react';
 import { useState } from 'react';
@@ -12,7 +11,6 @@ import { AvatarWrap } from '../common/avatar-wrap';
 
 const TaskHeaderInfo = ({ task }: { task: Task }) => {
   const { t } = useTranslation();
-  const location = useLocation();
   const { copyToClipboard } = useCopyToClipboard();
 
   const [open, setOpen] = useState(false);
@@ -24,7 +22,7 @@ const TaskHeaderInfo = ({ task }: { task: Task }) => {
     setTimeout(() => setCopyClicked(false), 2000);
   };
   const user = task.modifiedBy;
-  const shareLink = `${config.frontendUrl}${location.pathname}?taskIdPreview=${task.id}`;
+  const shareLink = `${config.backendUrl}/${task.organizationId}/tasks/${task.id}/link`;
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

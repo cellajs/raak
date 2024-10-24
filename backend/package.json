@@ -57,6 +57,7 @@
     "@sentry/cli": "^2.37.0",
     "@t3-oss/env-core": "^0.11.1",
     "arctic": "^2.0.1",
+    "canvas": "^2.11.2",
     "config": "workspace:*",
     "dompurify": "^3.1.7",
     "dotenv": "^16.4.5",
