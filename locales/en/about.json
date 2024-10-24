@@ -1,7 +1,7 @@
 {
   "faq.answer_1": "If you are very eager to try out Raak while it is in alpha, <Link>let us know</Link>. We advice most of you to wait for the private beta around Nov/Dec 2024. A more detailed roadmap will also be released by then.",
   "faq.answer_2": "If you are also building open-source software, you can use Raak Pro for free! Please <Link>reach out to us</Link> with a repository link to get started quickly.",
-  "faq.answer_3": "Linear is amazing: their design and sync engine are aspirations for Raak. That said, Raak is focused on small companies with a single, product-oriented team. A simple page view captures all tasks and issues, even if you manage multiple apps.",
+  "faq.answer_3": "Linear is amazing: their design and sync engine are aspirations for Raak. That said, Raak is focused on small companies with a single team, working on multiple apps. Our intuitive yet high density workspaces capture all tasks without the need to switch pages.",
   "faq.answer_4": "Though Pivotal Tracker (2006) is <Link>shutting down</Link>, it still is a very effective way to communicate tasks. Raak is heavily inspired by Pivotal Tracker. Yet, we also do many things different: no comments nor notifications (only inline mentioning if enabled). A modern UI, more granular editing, a table view and dark mode.",
   "faq.answer_5": "At its core, Raak is just an issue tracking board. There will be no chat or comments in Raak itself. Rather, we will research how to best embed Raak into your existing workflow with tools such as Slack, Discord and/or Github.",
   "faq.answer_6": "For fans of Pivotal Tracker we have good news. An import script for Pivotal Tracker - including attachments - is already in the works. If you have very large projects in Pivotal Tracker, please <Link>contact us</Link> to see if we can collaborate on more advanced migration options.",
@@ -46,7 +46,7 @@
   "why": "Read why we built Raak",
   "why.text_1": "Raak has a clear goal: to make the managing of tasks in small development teams super efficient and fun.",
   "why.text_2": "Ship new features and fixes faster. Leverage automation around label management, code references and edited screenshots.",
-  "why.text_3": "All tasks are stored locally for instant search and fast updates. Changes are synced as you get back online.",
+  "why.text_3": "Tasks are stored locally for instant search and fast updates. Changes are synced as you get back online.",
   "why.title_1": "Focus → simplicity",
   "why.title_2": "Screenshot to shipped, faster",
   "why.title_3": "Instant & offline access"

@@ -1,11 +1,17 @@
-import { errorResponses, successWithDataSchema, successWithErrorsSchema, successWithPaginationSchema } from '#/utils/schema/common-responses';
-import { idOrSlugSchema, idsQuerySchema, productParamSchema } from '#/utils/schema/common-schemas';
+import {
+  errorResponses,
+  successWithDataSchema,
+  successWithErrorsSchema,
+  successWithPaginationSchema,
+  successWithoutDataSchema,
+} from '#/utils/schema/common-responses';
+import { idOrSlugSchema, idSchema, idsQuerySchema, productParamSchema } from '#/utils/schema/common-schemas';
 
 import { createRouteConfig } from '#/lib/route-config';
 import { hasOrgAccess, isAuthenticated } from '#/middlewares/guard';
 
 import { z } from 'zod';
-import { createTaskSchema, getTasksQuerySchema, taskWithSubtasksSchema, updateTaskSchema, updatedTaskSchema } from './schema';
+import { createTaskSchema, getTasksQuerySchema, importTasksBodySchema, taskWithSubtasksSchema, updateTaskSchema, updatedTaskSchema } from './schema';
 
 class TaskRoutesConfig {
   public createTask = createRouteConfig({
@@ -110,6 +116,37 @@ class TaskRoutesConfig {
         content: {
           'application/json': {
             schema: successWithErrorsSchema(),
+          },
+        },
+      },
+      ...errorResponses,
+    },
+  });
+
+  public importTasks = createRouteConfig({
+    method: 'post',
+    path: '/import/:projectId',
+    // TODO: Stricter rate limiting
+    guard: [isAuthenticated, hasOrgAccess],
+    tags: ['tasks'],
+    summary: 'Import tasks',
+    description: 'Import tasks from a Zip file for a specific project. Currently only supports Pivotal format.',
+    request: {
+      params: z.object({ projectId: idSchema, orgIdOrSlug: idOrSlugSchema }),
+      body: {
+        content: {
+          'multipart/form-data': {
+            schema: importTasksBodySchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Tasks imported',
+        content: {
+          'application/json': {
+            schema: successWithoutDataSchema,
           },
         },
       },

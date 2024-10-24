@@ -1,6 +1,5 @@
 import yoctoSpinner from 'yocto-spinner';
 import colors from 'picocolors';
-import { rm, writeFile } from 'node:fs/promises';
 
 import { fetchUpstream } from './fetch-upstream.js'
 import { runGitCommand } from './utils/run-git-command.js'
@@ -45,7 +44,7 @@ export async function pullUpstream({
   }).start()
 
   try {
-    await runGitCommand({ targetFolder, command: `merge --no-commit upstream/${upstreamBranch}`, rejectOnStderr: true });
+    await runGitCommand({ targetFolder, command: `merge --no-commit upstream/${upstreamBranch}` });
     mergeSpinner.success(`Successfully merged upstream/${upstreamBranch} into ${localBranch} without committing.`);
   }catch(e) {
     console.error(e)
@@ -64,40 +63,58 @@ export async function pullUpstream({
     ignoreSpinner.success('Successfully created ignore patterns.');
 
     const applyIgnoreSpinner = yoctoSpinner({
-      text: 'Applying reset/checkout based on ignoreList or ignoreFile',
+      text: 'Clean files based on ignoreList or ignoreFile',
     }).start();
 
     try {
-      await writeFile('ignore-patterns.txt', ignorePatterns.join("\n"), "utf-8");
-      await writeFile('ignore-regexes.txt', ignorePatterns.map(patternToRegex).join("\n"), "utf-8");
+      // Get the list of files and filter them on ignored ones
+      const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
+      const ignoredFiles = applyIgnorePatterns(files, ignorePatterns);
 
-      // Get the list of tracked files and filter them
-      const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n');
-      const filteredFiles = applyIgnorePatterns(files, ignorePatterns);
-
-
-      await writeFile('files.txt', files.join("\n"), "utf-8");
-      await writeFile('filtered-files.txt', filteredFiles.join("\n"), "utf-8");
-
-
-      // Join the list of files into a space-separated string
-      const filesToReset = filteredFiles.join(' ');
-
-      // Run the reset and checkout commands with all files at once
+      // Join the list of files into a space-separated string and run the reset commands with all files at once
+      const filesToReset = ignoredFiles.join(' ');
       if (filesToReset.length > 0) {
         await runGitCommand({ targetFolder, command: `reset ${filesToReset}` });
-        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToReset}` });
       }
 
-      applyIgnoreSpinner.success('Successfully applied reset/checkout for ignored files.');
+      // Rerun 'ls-files' to remove files that were reset
+      const filesAfterReset = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
+      const ignoredFilesAfterReset = applyIgnorePatterns(filesAfterReset, ignorePatterns);
+
+      // Get the list of untracked files and split them on tracked and untracked ignored files
+      const untrackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files --others --exclude-standard' })).split('\n').filter(Boolean);
+      const ignoredTrackedFiles = [];
+      const ignoredUntrackedFiles = [];
+
+      for (const ignoredFile of ignoredFilesAfterReset) {
+        if (untrackedFiles.includes(ignoredFile)) {
+          ignoredUntrackedFiles.push(ignoredFile);
+        } else {
+          ignoredTrackedFiles.push(ignoredFile);
+        }
+      }
+
+      // Run the checkout commands with all tracked files at once
+      const filesToCheckout = ignoredTrackedFiles.join(' ');
+      if (filesToCheckout.length > 0) {
+        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout}` });
+      }
+
+      // Remove the untracked ignored files
+      const filesToRemove = ignoredUntrackedFiles.join(' ');
+      if (filesToRemove.length > 0) {
+        await runGitCommand({ targetFolder, command: `clean -f -x -- ${filesToRemove}` });
+      }
+
+      applyIgnoreSpinner.success('Successfully cleaned ignored files.');
     } catch (e) {
       console.error(e);
-      applyIgnoreSpinner.error('Failed to apply reset/checkout.');
+      applyIgnoreSpinner.error('Failed to clean ignored files.');
       process.exit(1);
     }
   } else {
     ignoreSpinner.warning('No ignore list or ignore file found. Proceeding without ignoring files.');
-    console.info(`${colors.yellow('Skipped')} reset/checkout as no files are ignored.`);
+    console.info(`${colors.yellow('Skipped')} Clean ignored files because none where ignored.`);
   }
 
   // Check for merge conflicts
@@ -143,14 +160,4 @@ export async function pullUpstream({
 
   console.info(`${colors.green('Success')} Merged upstream changes into local branch ${localBranch}.`);
   console.info()
-}
-
-function patternToRegex(pattern) {
-  // Escape special regex characters and convert wildcards
-  const escapedPattern = pattern
-    .replace(/([.*+?^${}()|[\]\\])/g, '\\$1') // Escape special characters
-    .replace(/\\\*/g, '.*')                   // Convert '*' to '.*'
-    .replace(/\\\?/g, '.');                   // Convert '?' to '.'
-  
-  return new RegExp(`^${escapedPattern}$`);
 }

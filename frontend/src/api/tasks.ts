@@ -91,3 +91,13 @@ export const deleteTasks = async ({ ids, orgIdOrSlug }: DeleteTaskParams) => {
   const json = await handleResponse(response);
   return json.success;
 };
+
+// Import tasks
+export const importTasks = async ({ organizationId, projectId, file }: { organizationId: string; projectId: string; file: File }) => {
+  const response = await client.import[':projectId'].$post({
+    param: { orgIdOrSlug: organizationId, projectId },
+    form: { file },
+  });
+  const json = await handleResponse(response);
+  return json.success;
+};

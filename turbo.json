@@ -18,6 +18,7 @@
       "cache": false,
       "persistent": true
     },
+    "seed": {},
     "check:types": {},
     "push": {
       "persistent": true

@@ -432,5 +432,7 @@
   "without_color": "Without color",
   "year": "year",
   "your_role": "Your role",
-  "status_page": "Status page"
+  "status_page": "Status page",
+  "import": "Import",
+  "submit": "Submit"
 }

@@ -96,7 +96,7 @@ export const config = {
   ],
 
   // Allowed oauth strategies providers
-  enabledAuthenticationStrategies: ['password'] as const,
+  enabledAuthenticationStrategies: ['password', 'passkey', 'oauth'] as const,
 
   // OAuth providers
   enabledOauthProviders: ['github'] as const,
@@ -106,7 +106,7 @@ export const config = {
     pwa: true, // Progressive Web App support for preloading static assets and offline support
     sync: false, // Realtime updates and sync using Electric Sync
     registrationEnabled: false, // Allow users to sign up. If disabled, the app is by invitation only
-    waitList: false, // Suggest a waitlist for unknown emails when sign up is disabled
+    waitList: true, // Suggest a waitlist for unknown emails when sign up is disabled
   },
 
   // Languages
