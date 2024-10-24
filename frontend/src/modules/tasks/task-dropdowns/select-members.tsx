@@ -91,8 +91,10 @@ const AssignMembers = ({ task, creationValueChange, triggerWidth = 320 }: Assign
         value={searchValue}
         autoFocus={true}
         onValueChange={(searchValue) => {
+          const membersNum = projectMembers.length;
           // If the user types a number, select status like useHotkeys
-          if (!showAll && inNumbersArray(6, searchValue)) return handleSelectClick(projectMembers[Number.parseInt(searchValue) - 1]?.id);
+          if (!showAll && inNumbersArray(membersNum < 6 ? membersNum : 6, searchValue))
+            return handleSelectClick(projectMembers[Number.parseInt(searchValue) - 1]?.id);
           setSearchValue(searchValue);
         }}
       />

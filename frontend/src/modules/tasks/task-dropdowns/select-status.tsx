@@ -19,6 +19,7 @@ import { UnstartedIcon } from '~/modules/tasks/task-dropdowns/status-icons/unsta
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/modules/ui/command';
 import { useWorkspaceQuery } from '~/modules/workspaces/helpers/use-workspace';
 import { WorkspaceRoute } from '~/routes/workspaces';
+import { useUserStore } from '~/store/user';
 import type { Task } from '~/types/app';
 
 export const taskStatuses = [
@@ -84,6 +85,7 @@ export const statusVariants = cva('', {
 
 const SelectStatus = ({ task, creationValueChange }: { task: Task; creationValueChange?: (newValue: number) => void }) => {
   const { t } = useTranslation();
+  const { user } = useUserStore();
 
   const { pathname } = useLocation();
   const tableSearch = useSearch({
@@ -120,13 +122,20 @@ const SelectStatus = ({ task, creationValueChange }: { task: Task; creationValue
       const query: Query | undefined = queryClient.getQueryData(queryKeys);
       const tasks: Task[] = query ? (isTable ? query.pages?.[0]?.items || [] : query.items || []) : [];
       const newOrder = getNewStatusTaskOrder(task.status, newStatus, tasks);
+      const baseTaskInfo = { id: task.id, projectId: task.projectId, orgIdOrSlug: workspace.organizationId };
+      // assign to self if start task
+      if (newStatus === 2) {
+        await taskMutation.mutateAsync({
+          ...baseTaskInfo,
+          key: 'assignedTo',
+          data: [user],
+        });
+      }
       await taskMutation.mutateAsync({
-        id: task.id,
-        orgIdOrSlug: workspace.organizationId,
+        ...baseTaskInfo,
         key: 'status',
         data: newStatus,
         order: newOrder,
-        projectId: task.projectId,
       });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));

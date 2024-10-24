@@ -61,13 +61,13 @@ const SetLabels = ({ task, creationValueChange, triggerWidth = 320 }: SetLabelsP
     return orderedLabels.slice(0, 8);
   }, [isRecent, searchValue, orderedLabels, selectedLabels]);
 
-  const updateTaskLabels = async (labels: Label[]) => {
+  const updateTaskLabels = async (selectedLabels: Label[]) => {
     try {
       await taskMutation.mutateAsync({
         id: task.id,
         orgIdOrSlug: workspace.organizationId,
         key: 'labels',
-        data: labels,
+        data: selectedLabels,
         projectId: task.projectId,
       });
       return;
@@ -93,7 +93,7 @@ const SetLabels = ({ task, creationValueChange, triggerWidth = 320 }: SetLabelsP
       updateTaskLabels(updatedLabels);
       return;
     }
-    const newLabel = labels.find((label) => label.name === value);
+    const newLabel = orderedLabels.find((label) => label.name === value);
     if (newLabel) {
       const updatedLabels = [...selectedLabels, newLabel];
       setSelectedLabels(updatedLabels);
@@ -111,7 +111,7 @@ const SetLabels = ({ task, creationValueChange, triggerWidth = 320 }: SetLabelsP
 
   const handleCreateClick = async (value: string) => {
     setSearchValue('');
-    if (labels.find((l) => l.name === value)) return handleSelectClick(value);
+    if (orderedLabels.find((l) => l.name === value)) return handleSelectClick(value);
 
     const createdLabel = await labelCreateMutation.mutateAsync({
       workspaceSlug: workspace.slug,
@@ -145,8 +145,10 @@ const SetLabels = ({ task, creationValueChange, triggerWidth = 320 }: SetLabelsP
         autoFocus={!isMobile}
         value={searchValue}
         onValueChange={(searchValue) => {
+          const labelsNum = showedLabels.length;
           // If the label types a number, select the label like useHotkeys
-          if (inNumbersArray(6, searchValue)) return handleSelectClick(labels[Number.parseInt(searchValue) - 1]?.name);
+          if (inNumbersArray(labelsNum < 8 ? labelsNum : 8, searchValue))
+            return handleSelectClick(showedLabels[Number.parseInt(searchValue) - 1]?.name);
           setSearchValue(searchValue.toLowerCase());
         }}
         wrapClassName={`${!isRecent && 'max-sm:hidden'}`}
@@ -157,7 +159,7 @@ const SetLabels = ({ task, creationValueChange, triggerWidth = 320 }: SetLabelsP
       {!isSearching && <Kbd value="L" className="max-sm:hidden absolute top-3 right-2.5" />}
       <CommandList>
         <CommandGroup>
-          {!labels && (
+          {!orderedLabels && (
             <CommandLoading>
               <Loader2 className="text-muted-foreground h-6 w-6 mx-auto mt-2 animate-spin" />
             </CommandLoading>
@@ -201,7 +203,7 @@ const SetLabels = ({ task, creationValueChange, triggerWidth = 320 }: SetLabelsP
             {t(`app:${isRecent ? 'show_selected_labels' : 'more_labels'}`)}
           </CommandItem>
         ) : (
-          <CommandItemCreate onSelect={() => handleCreateClick(searchValue)} searchValue={searchValue} labels={labels} />
+          <CommandItemCreate onSelect={() => handleCreateClick(searchValue)} searchValue={searchValue} labels={orderedLabels} />
         )}
       </CommandList>
     </Command>
