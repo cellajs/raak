@@ -49,7 +49,7 @@ const UppyFilePanel =
 
     return (
       <Dialog defaultOpen onOpenChange={() => editor.filePanel?.closeMenu()}>
-        <DialogContent className="md:max-w-xl p-10">
+        <DialogContent className="md:max-w-xl">
           <DialogHeader>
             <DialogTitle className="h-6">{t(`common:upload_${type}`)}</DialogTitle>
           </DialogHeader>
