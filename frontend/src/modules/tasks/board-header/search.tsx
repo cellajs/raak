@@ -31,7 +31,6 @@ const TasksSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
   useSaveInSearchParams(filters);
 
   const preventInputBlur: MouseEventHandler = (e) => {
-    if (!searchQuery.length) return;
     e.preventDefault();
     e.stopPropagation();
   };
@@ -68,7 +67,7 @@ const TasksSearch = ({ toggleFocus }: { toggleFocus: () => void }) => {
         size={16}
         className="group-data-[search-focused=false]/tasksHeader:hidden absolute right-3 top-1/2 opacity-70 hover:opacity-100 -translate-y-1/2 cursor-pointer"
         onMouseDown={(e) => {
-          preventInputBlur(e);
+          if (searchQuery.length) preventInputBlur(e);
           setSearchQuery('');
         }}
       />
