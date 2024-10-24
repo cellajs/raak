@@ -101,7 +101,7 @@ queryClient.setMutationDefaults(taskKeys.create(), {
       modifiedBy: null,
     };
 
-    const projectQueries = await getPreviousTasks(taskKeys.list({ orgIdOrSlug: organizationId, projectId }));
+    const projectQueries = await getPreviousTasks(projectId, organizationId);
     const contexts: Record<string, { previousTasks?: QueryFnData | InfiniteQueryFnData; optimisticId: string }> = {};
 
     for (const [queryKey, previousTasks] of projectQueries) {
@@ -122,7 +122,7 @@ queryClient.setMutationDefaults(taskKeys.create(), {
     return contexts;
   },
   onSuccess: (createdTask, { organizationId, projectId }, contexts) => {
-    const queries = getQueries(taskKeys.list({ orgIdOrSlug: organizationId, projectId }));
+    const queries = getQueries(projectId, organizationId);
     for (const query of queries) {
       const [activeKey, _] = query;
 
@@ -159,7 +159,7 @@ queryClient.setMutationDefaults(taskKeys.update(), {
     const { orgIdOrSlug, projectId } = variables;
     const contexts: Record<string, { previousTasks?: QueryFnData | InfiniteQueryFnData }> = {};
 
-    const projectQueries = await getPreviousTasks(taskKeys.list({ orgIdOrSlug, projectId }));
+    const projectQueries = await getPreviousTasks(projectId, orgIdOrSlug);
 
     for (const [queryKey, previousTasks] of projectQueries) {
       const { projectId } = queryKey.find(isProjectAndOrgObject) || { projectId: '' };
@@ -179,7 +179,7 @@ queryClient.setMutationDefaults(taskKeys.update(), {
     return contexts;
   },
   onSuccess: async (updatedTask, { id: taskId, orgIdOrSlug, projectId }) => {
-    const queries = getQueries(taskKeys.list({ orgIdOrSlug, projectId }));
+    const queries = getQueries(projectId, orgIdOrSlug);
 
     for (const query of queries) {
       const [activeKey] = query;
@@ -213,7 +213,7 @@ queryClient.setMutationDefaults(taskKeys.delete(), {
     const contexts: Record<string, { previousTasks?: QueryFnData | InfiniteQueryFnData }> = {}; // Store the previous state for each project
 
     for (const projectId of projectIds) {
-      const projectQueries = await getPreviousTasks(taskKeys.list({ orgIdOrSlug, projectId }));
+      const projectQueries = await getPreviousTasks(projectId, orgIdOrSlug);
 
       for (const [queryKey, previousTasks] of projectQueries) {
         // Optimistically update to the new value
@@ -235,7 +235,7 @@ queryClient.setMutationDefaults(taskKeys.delete(), {
   onError: async (_, { orgIdOrSlug, projectIds }, context) => {
     if (context) {
       for (const projectId of projectIds) {
-        const queries = getQueries(taskKeys.list({ orgIdOrSlug, projectId }));
+        const queries = getQueries(projectId, orgIdOrSlug);
 
         for (const query of queries) {
           const [queryKey, _] = query;
@@ -337,9 +337,9 @@ function isQueryFnData(data: unknown): data is QueryFnData {
   return typeof data === 'object' && data !== null && 'items' in data && 'total' in data;
 }
 
-const getPreviousTasks = async (passedKey: QueryKey) => {
+const getPreviousTasks = async (projectId: string | undefined, orgIdOrSlug: string) => {
   // Snapshot the previous value
-  const queries = getQueries(passedKey);
+  const queries = getQueries(projectId, orgIdOrSlug);
 
   for (const query of queries) {
     const [queryKey, _] = query;
@@ -347,24 +347,20 @@ const getPreviousTasks = async (passedKey: QueryKey) => {
     // (so they don't overwrite our optimistic update)
     await queryClient.cancelQueries({ queryKey });
   }
-
   return queries;
 };
 
-// TODO refactor to handle also table query(better way for it)
-const getQueries = (queryKey: QueryKey) => {
-  const activeQueries = queryClient.getQueriesData<InfiniteQueryFnData | QueryFnData>({ fetchStatus: 'idle' });
+const getTableQueries = (orgIdOrSlug: string) => {
+  return queryClient.getQueriesData<InfiniteQueryFnData>({ queryKey: taskKeys.table({ orgIdOrSlug }) });
+};
+const getBoardQueries = (projectId: string | undefined, orgIdOrSlug: string): [QueryKey, QueryFnData | undefined][] => {
+  const queryKey = taskKeys.list({ orgIdOrSlug, projectId });
+  return [[queryKey, queryClient.getQueryData<QueryFnData>(queryKey)]];
+};
 
-  const { projectId, orgIdOrSlug } = queryKey.find(isProjectAndOrgObject) || { projectId: '' };
+const getQueries = (projectId: string | undefined, orgIdOrSlug: string): [QueryKey, InfiniteQueryFnData | QueryFnData | undefined][] => {
+  const tableQueries = getTableQueries(orgIdOrSlug);
+  const boardQueries = getBoardQueries(projectId, orgIdOrSlug);
 
-  const projectQueries = activeQueries.filter(([keys, _]) => {
-    // Find the projectId in each queryKey and compare it
-    const { projectId: queryProjectId, orgIdOrSlug: queryOrgIdentifier } = keys.find(isProjectAndOrgObject) || {};
-    return (
-      (keys.includes('tasks') && keys.includes('list') && queryProjectId === projectId) ||
-      (keys.includes('table') && queryOrgIdentifier === orgIdOrSlug)
-    );
-  });
-
-  return projectQueries;
+  return [...tableQueries, ...boardQueries];
 };
