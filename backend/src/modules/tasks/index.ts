@@ -242,29 +242,19 @@ const tasksRoutes = app
     const { file: zipFile } = await ctx.req.parseBody();
     const { projectId } = ctx.req.param();
 
-    if (!zipFile || typeof zipFile !== 'object' || !('arrayBuffer' in zipFile)) {
-      return errorResponse(ctx, 400, 'invalid_request', 'warn');
-    }
+    const organization = getOrganization();
 
-    if (!projectId) {
-      return errorResponse(ctx, 400, 'invalid_request', 'warn');
-    }
+    const isZipFile = zipFile && typeof zipFile === 'object' && 'arrayBuffer' in zipFile;
 
-    if (!zipFile || typeof zipFile === 'string') {
-      return errorResponse(ctx, 400, 'invalid_request', 'warn');
-    }
+    if (!isZipFile) return errorResponse(ctx, 400, 'invalid_request', 'warn');
+    if (!projectId) return errorResponse(ctx, 400, 'invalid_request', 'warn');
 
-    if (!projectId) {
-      console.error('Please provide a project id');
-      process.exit(1);
-    }
+    const [project] = await db
+      .select()
+      .from(projectsTable)
+      .where(and(eq(projectsTable.id, projectId), eq(projectsTable.organizationId, organization.id)));
 
-    const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, projectId));
-
-    if (!project) {
-      console.error('Project not found');
-      process.exit(1);
-    }
+    if (!project) return errorResponse(ctx, 404, 'not_found', 'warn', 'project');
 
     const buffer = await zipFile.arrayBuffer();
     const zip = new JSZip();
