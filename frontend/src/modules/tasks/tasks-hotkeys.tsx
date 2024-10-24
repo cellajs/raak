@@ -6,7 +6,7 @@ import { dispatchCustomEvent } from '~/lib/custom-events';
 import { queryClient } from '~/lib/router';
 import { dropdowner } from '~/modules/common/dropdowner/state';
 import { taskKeys } from '~/modules/common/query-client-provider/tasks';
-import { handleTaskDropDownClick, setTaskCardFocus, sortAndGetCounts } from '~/modules/tasks/helpers';
+import { handleTaskDropDownClick, setTaskCardFocus, sortTaskOrder } from '~/modules/tasks/helpers';
 import { WorkspaceRoute } from '~/routes/workspaces';
 import { useWorkspaceStore } from '~/store/workspace';
 import { defaultColumnValues, useWorkspaceUIStore } from '~/store/workspace-ui';
@@ -27,6 +27,11 @@ type InfiniteQueryData = {
   pages: QueryData[];
 };
 
+const getSortedColumnTasks = (tasks: Task[], showAccepted: boolean, showIced: boolean) => {
+  return tasks
+    .filter((t) => (showAccepted && t.status === 6) || (showIced && t.status === 0) || (t.status !== 0 && t.status !== 6))
+    .sort((a, b) => sortTaskOrder(a, b));
+};
 export default function TasksHotkeysManager({ mode }: HotkeysManagerProps) {
   const {
     data: { workspace, projects: queryProjects },
@@ -73,7 +78,7 @@ export default function TasksHotkeysManager({ mode }: HotkeysManagerProps) {
 
     // Filter and sort tasks for the current project
     const projectTasks = tasks.filter((t) => t.projectId === currentProject.id);
-    const { filteredTasks } = sortAndGetCounts(projectTasks, expandAccepted, expandIced);
+    const filteredTasks = getSortedColumnTasks(projectTasks, expandAccepted, expandIced);
 
     const taskIndex = currentTask?.id ? filteredTasks.findIndex((t) => t.id === currentTask?.id) : 0;
     // Ensure the next task in the direction exists
@@ -100,7 +105,7 @@ export default function TasksHotkeysManager({ mode }: HotkeysManagerProps) {
     const projectTasks = tasks.filter((t) => t.projectId === nextProject.id);
     const { expandAccepted } = workspaces[workspace.id]?.columns[nextProject.id] || defaultColumnValues;
 
-    const [firstTask] = sortAndGetCounts(projectTasks, expandAccepted, false).filteredTasks;
+    const [firstTask] = getSortedColumnTasks(projectTasks, expandAccepted, false);
     if (!firstTask) return;
 
     // Set focus on the first task of the project

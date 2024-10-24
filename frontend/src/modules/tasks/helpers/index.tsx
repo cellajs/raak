@@ -149,26 +149,6 @@ export const inNumbersArray = (arrayLen: number, number: string) => {
   return array.includes(Number.parseInt(number));
 };
 
-export const sortAndGetCounts = (tasks: Task[], showAccepted: boolean, showIced: boolean) => {
-  let acceptedCount = 0;
-  let icedCount = 0;
-
-  const splitTasks = tasks.filter((task) => {
-    // Count accepted in past 30 days and iced tasks
-    if (task.status === 6) acceptedCount += 1;
-    if (task.status === 0) icedCount += 1;
-    // Filter based on showAccepted in past 30 days and showIced
-    if (showAccepted && task.status === 6) return true;
-    if (showIced && task.status === 0) return true;
-    return task.status !== 0 && task.status !== 6;
-  });
-
-  // Sort the main tasks
-  const filteredTasks = splitTasks.sort((a, b) => sortTaskOrder(a, b));
-
-  return { filteredTasks, acceptedCount, icedCount };
-};
-
 export const configureForExport = (tasks: Task[], projects: Omit<Project, 'counts'>[]): Task[] => {
   const parser = new DOMParser();
 
