@@ -143,6 +143,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
   const form = useFormWithDraft<FormValues>(`create-task-${projectId}`, formOptions);
 
   const onSubmit = async (values: FormValues) => {
+    const baseAssignedTo = values.assignedTo.map((user) => user.id);
     const newTask = {
       id: values.id,
       description: values.description,
@@ -152,7 +153,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ projectIdOrSlug, defaul
       type: values.type,
       impact: values.impact as TaskImpact,
       labels: values.labels.map((label) => label.id),
-      assignedTo: values.assignedTo.map((user) => user.id),
+      assignedTo: values.status === 2 ? [user.id, ...baseAssignedTo] : baseAssignedTo,
       status: values.status,
       organizationId: workspace.organizationId,
       projectId: values.projectId,

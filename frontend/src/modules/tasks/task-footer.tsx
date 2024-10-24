@@ -13,6 +13,7 @@ import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
+import { useUserStore } from '~/store/user';
 import type { Task } from '~/types/app';
 import { cn } from '~/utils/cn';
 import { TaskType } from '#/modules/tasks/schema';
@@ -28,6 +29,7 @@ interface TasksFooterProps {
 export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = false }: TasksFooterProps) => {
   const { t } = useTranslation();
   const isMobile = useBreakpoints('max', 'sm');
+  const { user } = useUserStore();
 
   const taskMutation = useTaskUpdateMutation();
 
@@ -38,13 +40,20 @@ export const TaskFooter = ({ task, isSelected, isStatusDropdownOpen, isSheet = f
       const queryKey = taskKeys.list({ projectId: task.projectId, orgIdOrSlug: task.organizationId });
       const query = queryClient.getQueryData<{ items: Task[] }>(queryKey);
       const newOrder = getNewStatusTaskOrder(task.status, newStatus, query?.items ?? []);
+      const baseTaskInfo = { id: task.id, orgIdOrSlug: task.organizationId, projectId: task.projectId };
+      // assign to self if start task
+      if (newStatus === 2) {
+        await taskMutation.mutateAsync({
+          ...baseTaskInfo,
+          key: 'assignedTo',
+          data: [user],
+        });
+      }
       await taskMutation.mutateAsync({
-        id: task.id,
-        orgIdOrSlug: task.organizationId,
+        ...baseTaskInfo,
         key: 'status',
         data: newStatus,
         order: newOrder,
-        projectId: task.projectId,
       });
     } catch (err) {
       toast.error(t('common:error.update_resource', { resource: t('app:task') }));
