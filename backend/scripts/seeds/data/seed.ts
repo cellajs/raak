@@ -13,7 +13,7 @@ import { type InsertWorkspaceModel, workspacesTable } from '#/db/schema/workspac
 import { and, eq } from 'drizzle-orm';
 import { UniqueEnforcer } from 'enforce-unique';
 import slugify from 'slugify';
-import { extractKeywords } from '#/modules/tasks/helpers';
+import { extractKeywords } from '#/modules/tasks/helpers/utils';
 import { TaskType } from '#/modules/tasks/schema';
 import type { Status } from '../progress';
 import { adminUser } from '../user/seed';

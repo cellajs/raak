@@ -1,10 +1,9 @@
 import { type SQL, and, desc, eq, ilike, inArray } from 'drizzle-orm';
-import { coalesce, db } from '#/db/db';
-
 import type { z } from 'zod';
+import { coalesce, db } from '#/db/db';
 import { labelsTable } from '#/db/schema/labels';
 import { type InsertTaskModel, tasksTable } from '#/db/schema/tasks';
-import { usersTable } from '#/db/schema/users';
+import { safeUserSelect, usersTable } from '#/db/schema/users';
 import { getUsersByConditions } from '#/db/util';
 import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
@@ -12,9 +11,17 @@ import { logEvent } from '#/middlewares/logger/log-event';
 import { CustomHono } from '#/types/common';
 import { getOrderColumn } from '#/utils/order-column';
 import { splitByAllowance } from '#/utils/split-by-allowance';
-import { getDateFromToday, scanTaskDescription } from './helpers';
+import { extractKeywords, getDateFromToday, scanTaskDescription } from './helpers/utils';
 import taskRoutesConfig from './routes';
 import type { subtaskSchema } from './schema';
+
+import JSZip from 'jszip';
+import { nanoid } from 'nanoid';
+import papaparse from 'papaparse';
+import { membershipsTable } from '#/db/schema/memberships';
+import { projectsTable } from '#/db/schema/projects';
+import { PivotalTaskTypes, getLabels, getSubtask, getTaskLabels, getTaskUsers } from './helpers/pivotal';
+import type { PivotalTask } from './helpers/pivotal-type';
 
 const app = new CustomHono();
 
@@ -227,6 +234,112 @@ const tasksRoutes = app
     await db.delete(tasksTable).where(inArray(tasksTable.id, allowedIds));
 
     return ctx.json({ success: true, errors: errors }, 200);
+  })
+  /*
+   * Import tasks
+   */
+  .openapi(taskRoutesConfig.importTasks, async (ctx) => {
+    const { file: zipFile } = await ctx.req.parseBody();
+    const { projectId } = ctx.req.param();
+
+    const user = getContextUser();
+    const organization = getOrganization();
+
+    const isZipFile = zipFile && typeof zipFile === 'object' && 'arrayBuffer' in zipFile;
+
+    if (!isZipFile) return errorResponse(ctx, 400, 'invalid_request', 'warn');
+    if (!projectId) return errorResponse(ctx, 400, 'invalid_request', 'warn');
+
+    const [project] = await db
+      .select()
+      .from(projectsTable)
+      .where(and(eq(projectsTable.id, projectId), eq(projectsTable.organizationId, organization.id)));
+
+    const members = await db
+      .select({
+        user: safeUserSelect,
+      })
+      .from(usersTable)
+      .innerJoin(membershipsTable, and(eq(membershipsTable.projectId, project.id), eq(membershipsTable.type, 'project')))
+      .where(eq(usersTable.id, membershipsTable.userId));
+
+    if (!project) return errorResponse(ctx, 404, 'not_found', 'warn', 'project');
+
+    const buffer = await zipFile.arrayBuffer();
+    const zip = new JSZip();
+    await zip.loadAsync(buffer);
+
+    const promises: Promise<unknown>[] = [];
+    zip.forEach((relativePath, zipEntry) => {
+      if (!relativePath.endsWith('.csv') || relativePath.includes('project_history')) {
+        return;
+      }
+      const promise = new Promise((resolve) => {
+        zipEntry.async('nodebuffer').then((content) => {
+          const csv = content.toString();
+          const result = papaparse.parse(csv, { header: true });
+          resolve(result.data);
+        });
+      });
+      promises.push(promise);
+    });
+    const [tasks] = await Promise.all<
+      [PivotalTask[]]
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    >(promises as any);
+
+    const labelsToInsert = getLabels(tasks, project.organizationId, project.id);
+    const subtasksToInsert: InsertTaskModel[] = [];
+    const tasksToInsert = tasks
+      // Filter out accepted tasks
+      .filter((task) => task['Current State'] !== 'accepted' && task.Id !== '')
+      .map((task, index) => {
+        const taskId = nanoid();
+        const { ownerIds, creatorId, ownersNames } = getTaskUsers(
+          task,
+          members.map((el) => el.user),
+        );
+        const labelsIds = getTaskLabels(task, labelsToInsert);
+        const subtasks = getSubtask(task, taskId, project.organizationId, project.id);
+        if (subtasks.length) subtasksToInsert.push(...subtasks);
+        return {
+          id: taskId,
+          summary: `<p class="bn-inline-content inline">${task.Title}</p>`,
+          type: PivotalTaskTypes[task.Type as keyof typeof PivotalTaskTypes] || PivotalTaskTypes.chore,
+          organizationId: project.organizationId,
+          projectId: project.id,
+          expandable: task.Description !== '',
+          keywords: task.Description || task.Title ? extractKeywords(task.Description + task.Title) : '',
+          impact: ['0', '1', '2', '3'].includes(task.Estimate) ? +task.Estimate : 0,
+          description: `<div class="bn-block-content"><p class="bn-inline-content">${task.Title}</p></div><div class="bn-block-content"><p class="bn-inline-content">${task.Description}</p>
+          ${!ownerIds.length ? ownersNames.map((name) => `<p data-owner=${name.toLowerCase()}>Owned by ${name}</p><p data-pivotal-id=${task.Id}>Pivotal id: ${task.Id}</p>`) : ''}
+          </div>`,
+          labels: labelsIds,
+          status:
+            task['Current State'] === 'accepted'
+              ? 6
+              : task['Current State'] === 'reviewed'
+                ? 5
+                : task['Current State'] === 'delivered'
+                  ? 4
+                  : task['Current State'] === 'finished'
+                    ? 3
+                    : task['Current State'] === 'started'
+                      ? 2
+                      : task['Current State'] === 'unstarted'
+                        ? 1
+                        : 0,
+          order: index,
+          assignedTo: ownerIds,
+          createdAt: task['Created at'] ? new Date(task['Created at']) : new Date(),
+          createdBy: creatorId ?? user.id,
+        } satisfies InsertTaskModel;
+      });
+    await db.insert(labelsTable).values(labelsToInsert);
+    await db.insert(tasksTable).values(tasksToInsert).onConflictDoNothing();
+    if (subtasksToInsert.length) await db.insert(tasksTable).values(subtasksToInsert);
+
+    return ctx.json({ success: true }, 200);
   });
 
 export default tasksRoutes;

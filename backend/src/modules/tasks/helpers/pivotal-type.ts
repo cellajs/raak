@@ -7,6 +7,16 @@ export interface PivotalTask {
   Description: string;
   Labels: string;
   'Current State': string;
+  'Owned By': string;
+  'Owned By_1': string;
+  'Owned By_2': string;
+  'Owned By_3': string;
+  'Owned By_4': string;
+  'Owned By_5': string;
+  'Owned By_6': string;
+  'Owned By_7': string;
+  'Owned By_8': string;
+  'Requested By': string;
   // Jan 7, 2024
   'Created at': string;
   Task: string;

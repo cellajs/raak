@@ -23,7 +23,7 @@ import { BoardColumnHeader } from '~/modules/tasks/board/board-column-header';
 import { ColumnSkeleton } from '~/modules/tasks/board/column-skeleton';
 import { isSubtaskData, isTaskData } from '~/modules/tasks/board/helpers';
 import CreateTaskForm from '~/modules/tasks/create-task-form';
-import { getRelativeTaskOrder, openTaskPreviewSheet, sortAndGetCounts } from '~/modules/tasks/helpers';
+import { getRelativeTaskOrder, openTaskPreviewSheet, sortTaskOrder } from '~/modules/tasks/helpers';
 import TaskCard from '~/modules/tasks/task';
 import TaskSheet from '~/modules/tasks/task-sheet';
 import type { TaskStates } from '~/modules/tasks/types';
@@ -89,6 +89,28 @@ export const tasksQueryOptions = ({ projectId, orgIdOrSlug }: GetTasksParams) =>
         projectId,
       }),
   });
+};
+
+const getColumnTasksAndCounts = (tasks: Task[], showAccepted: boolean, showIced: boolean) => {
+  // Use reduce to filter tasks and count accepted/iced
+  const { filteredTasks, acceptedCount, icedCount } = tasks.reduce(
+    (acc, task) => {
+      const { status } = task;
+      if (status === 6) acc.acceptedCount += 1;
+      if (status === 0) acc.icedCount += 1;
+      // filter by showAccepted & showIced
+      if ((showAccepted && status === 6) || (showIced && status === 0) || (status !== 0 && status !== 6)) {
+        acc.filteredTasks.push(task);
+      }
+      return acc;
+    },
+    { filteredTasks: [] as Task[], acceptedCount: 0, icedCount: 0 },
+  );
+
+  // Sort the filtered tasks
+  filteredTasks.sort((a, b) => sortTaskOrder(a, b));
+
+  return { filteredTasks, acceptedCount, icedCount };
 };
 
 export function BoardColumn({ project, tasksState, settings }: BoardColumnProps) {
@@ -226,7 +248,7 @@ export function BoardColumn({ project, tasksState, settings }: BoardColumnProps)
     const filteredTasks = searchQuery.length ? respTasks.filter((t) => t.keywords.toLowerCase().includes(searchQuery.toLowerCase())) : respTasks;
 
     // Sort the filtered tasks and get the counts
-    return sortAndGetCounts(filteredTasks, showAccepted, showIced);
+    return getColumnTasksAndCounts(filteredTasks, showAccepted, showIced);
   }, [data, searchQuery, showAccepted, showIced]);
 
   const handleIcedClick = () => {

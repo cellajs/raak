@@ -113,3 +113,7 @@ export const getTasksQuerySchema = paginationQuerySchema.merge(
     status: z.string().optional(),
   }),
 );
+
+export const importTasksBodySchema = z.object({
+  file: z.custom<File>((file) => file instanceof File).refine((file) => file.size <= 5 * 1024 * 1024, 'File size should be less than 5MB'),
+});

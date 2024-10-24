@@ -1,7 +1,8 @@
 import { nanoid } from 'nanoid';
 import type { InsertTaskModel } from '#/db/schema/tasks';
-import { extractKeywords } from '#/modules/tasks/helpers';
-import type { Labels, PivotalTask } from './type';
+import type { UserModel } from '#/db/schema/users';
+import { extractKeywords } from '#/modules/tasks/helpers/utils';
+import type { Labels, PivotalTask } from './pivotal-type';
 
 export enum PivotalTaskTypes {
   feature = 1,
@@ -17,7 +18,7 @@ export const getSubtask = (task: PivotalTask, taskId: string, organizationId: st
     if (task[taskKey] && task[statusKey]) {
       subtasks.push({
         id: nanoid(),
-        summary: `<div class="bn-block-content"><p class="bn-inline-content">${task[taskKey]}</p></div>`,
+        summary: `<p class="bn-inline-content inline">${task[taskKey]}</p>`,
         type: PivotalTaskTypes.chore,
         keywords: extractKeywords(task[taskKey]),
         parentId: taskId,
@@ -63,4 +64,30 @@ export const getTaskLabels = (task: PivotalTask, labelsToInsert: Labels[]) => {
     .map((taskLabel) => labelsToInsert.find((label) => label.name === taskLabel)?.id)
     .filter((id) => typeof id === 'string');
   return labelsIds;
+};
+
+export const getTaskUsers = (task: PivotalTask, taskMembers: UserModel[]) => {
+  const ownersNames = Object.keys(task)
+    .filter((key) => key.includes('Owned By')) // Find keys that include 'Owned By'
+    .map((key) => task[key as keyof PivotalTask]) // Get the corresponding values
+    .filter(Boolean);
+
+  const creatorName = task['Requested By'];
+  const creator = taskMembers.find((u) => checkNames(u, [creatorName]));
+  const ownerIds = taskMembers.filter((u) => checkNames(u, ownersNames)).map((u) => u.id);
+  return { ownerIds, creatorId: creator?.id, ownersNames };
+};
+
+// Check if it matches name or firstName or firstName + lastName
+const checkNames = (user: UserModel, names: (string | undefined)[]) => {
+  const { name, firstName, lastName } = user;
+  const fullName = `${firstName || ''}${lastName || ''}`.trim().toLowerCase().replace(/\s+/g, '');
+  return names.some((n) => {
+    const lowerName = n?.toLowerCase().replace(/\s+/g, ''); // Convert to lowercase and remove spaces
+    return (
+      lowerName === name.toLowerCase().replace(/\s+/g, '') ||
+      (firstName && lowerName === firstName.toLowerCase().replace(/\s+/g, '')) ||
+      lowerName === fullName
+    );
+  });
 };
