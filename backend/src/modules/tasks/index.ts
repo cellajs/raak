@@ -1,10 +1,9 @@
 import { type SQL, and, desc, eq, ilike, inArray } from 'drizzle-orm';
-import { coalesce, db } from '#/db/db';
-
 import type { z } from 'zod';
+import { coalesce, db } from '#/db/db';
 import { labelsTable } from '#/db/schema/labels';
 import { type InsertTaskModel, tasksTable } from '#/db/schema/tasks';
-import { usersTable } from '#/db/schema/users';
+import { safeUserSelect, usersTable } from '#/db/schema/users';
 import { getUsersByConditions } from '#/db/util';
 import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
@@ -19,8 +18,9 @@ import type { subtaskSchema } from './schema';
 import JSZip from 'jszip';
 import { nanoid } from 'nanoid';
 import papaparse from 'papaparse';
+import { membershipsTable } from '#/db/schema/memberships';
 import { projectsTable } from '#/db/schema/projects';
-import { PivotalTaskTypes, getLabels, getSubtask, getTaskLabels } from './helpers/pivotal';
+import { PivotalTaskTypes, getLabels, getSubtask, getTaskLabels, getTaskUsers } from './helpers/pivotal';
 import type { PivotalTask } from './helpers/pivotal-type';
 
 const app = new CustomHono();
@@ -242,6 +242,7 @@ const tasksRoutes = app
     const { file: zipFile } = await ctx.req.parseBody();
     const { projectId } = ctx.req.param();
 
+    const user = getContextUser();
     const organization = getOrganization();
 
     const isZipFile = zipFile && typeof zipFile === 'object' && 'arrayBuffer' in zipFile;
@@ -253,6 +254,14 @@ const tasksRoutes = app
       .select()
       .from(projectsTable)
       .where(and(eq(projectsTable.id, projectId), eq(projectsTable.organizationId, organization.id)));
+
+    const members = await db
+      .select({
+        user: safeUserSelect,
+      })
+      .from(usersTable)
+      .innerJoin(membershipsTable, and(eq(membershipsTable.projectId, project.id), eq(membershipsTable.type, 'project')))
+      .where(eq(usersTable.id, membershipsTable.userId));
 
     if (!project) return errorResponse(ctx, 404, 'not_found', 'warn', 'project');
 
@@ -283,9 +292,13 @@ const tasksRoutes = app
     const subtasksToInsert: InsertTaskModel[] = [];
     const tasksToInsert = tasks
       // Filter out accepted tasks
-      .filter((task) => task['Current State'] !== 'accepted')
+      .filter((task) => task['Current State'] !== 'accepted' && task.Id !== '')
       .map((task, index) => {
         const taskId = nanoid();
+        const { ownerIds, creatorId, ownersNames } = getTaskUsers(
+          task,
+          members.map((el) => el.user),
+        );
         const labelsIds = getTaskLabels(task, labelsToInsert);
         const subtasks = getSubtask(task, taskId, project.organizationId, project.id);
         if (subtasks.length) subtasksToInsert.push(...subtasks);
@@ -295,10 +308,12 @@ const tasksRoutes = app
           type: PivotalTaskTypes[task.Type as keyof typeof PivotalTaskTypes] || PivotalTaskTypes.chore,
           organizationId: project.organizationId,
           projectId: project.id,
-          expandable: true,
+          expandable: task.Description !== '',
           keywords: task.Description || task.Title ? extractKeywords(task.Description + task.Title) : '',
           impact: ['0', '1', '2', '3'].includes(task.Estimate) ? +task.Estimate : 0,
-          description: `<div class="bn-block-content"><p class="bn-inline-content">${task.Title}</p></div><div class="bn-block-content"><p class="bn-inline-content">${task.Description}</p></div>`,
+          description: `<div class="bn-block-content"><p class="bn-inline-content">${task.Title}</p></div><div class="bn-block-content"><p class="bn-inline-content">${task.Description}</p>
+          ${!ownerIds.length ? ownersNames.map((name) => `<p data-owner=${name.toLowerCase()}>Owned by ${name}</p><p data-pivotal-id=${task.Id}>Pivotal id: ${task.Id}</p>`) : ''}
+          </div>`,
           labels: labelsIds,
           status:
             task['Current State'] === 'accepted'
@@ -315,7 +330,9 @@ const tasksRoutes = app
                         ? 1
                         : 0,
           order: index,
-          createdAt: new Date(),
+          assignedTo: ownerIds,
+          createdAt: task['Created at'] ? new Date(task['Created at']) : new Date(),
+          createdBy: creatorId ?? user.id,
         } satisfies InsertTaskModel;
       });
     await db.insert(labelsTable).values(labelsToInsert);
