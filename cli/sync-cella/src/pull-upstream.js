@@ -17,12 +17,11 @@ export async function pullUpstream({
   // Fetch upstream changes and checkout local branch
   await fetchUpstream({ localBranch });
 
-  // Check if there are local changes
+  // Check for local changes
   const statusSpinner = yoctoSpinner({
     text: 'Checking for local changes that might be overridden by the merge',
   }).start()
 
-  // Check for local changes
   try {
     const statusOutput = await runGitCommand({ targetFolder, command: 'status --porcelain' });
   
@@ -46,7 +45,7 @@ export async function pullUpstream({
   try {
     await runGitCommand({ targetFolder, command: `merge --no-commit upstream/${upstreamBranch}` });
     mergeSpinner.success(`Successfully merged upstream/${upstreamBranch} into ${localBranch} without committing.`);
-  }catch(e) {
+  } catch(e) {
     console.error(e)
     mergeSpinner.error('Failed to merge upstream changes without committing.');
     process.exit(1)
@@ -67,40 +66,29 @@ export async function pullUpstream({
     }).start();
 
     try {
-      // Get the list of files and filter them on ignored ones
-      const files = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
-      const ignoredFiles = applyIgnorePatterns(files, ignorePatterns);
+      // Get, filter and reset tracked files
+      const trackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
+      const ignoredTrackedFiles = applyIgnorePatterns(trackedFiles, ignorePatterns);
 
-      // Join the list of files into a space-separated string and run the reset commands with all files at once
-      const filesToReset = ignoredFiles.join(' ');
-      if (filesToReset.length > 0) {
-        await runGitCommand({ targetFolder, command: `reset ${filesToReset}` });
+      if (ignoredTrackedFiles.length > 0) {
+        await runGitCommand({ targetFolder, command: `reset ${ignoredTrackedFiles.join(' ')}` });
       }
 
-      // Rerun 'ls-files' to remove files that were reset
+      // Get, filter and checkout tracked files after reset
       const filesAfterReset = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
-      const ignoredTrackedFiles = applyIgnorePatterns(filesAfterReset, ignorePatterns);
+      const filesToCheckout = applyIgnorePatterns(filesAfterReset, ignorePatterns);
 
-      // Run the checkout commands with all tracked files at once
-      const filesToCheckout = ignoredTrackedFiles.join(' ');
       if (filesToCheckout.length > 0) {
-        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout}` });
+        await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout.join(' ')}` });
       }
 
-      // Get the list of untracked files and split them on tracked and untracked ignored files
+      // Get, filter and remove untracked files
       const untrackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files --others --exclude-standard' })).split('\n').filter(Boolean);
       const ignoredUntrackedFiles = applyIgnorePatterns(untrackedFiles, ignorePatterns);
-      
-      // Remove the untracked ignored files
-      const filesToRemove = ignoredUntrackedFiles.join(' ');
-      if (filesToRemove.length > 0) {
-        await runGitCommand({ targetFolder, command: `clean -f -x -- ${filesToRemove}` });
-      }
 
-      console.log('\n ignoredTrackedFiles: ', ignoredTrackedFiles); 
-      console.log('\n ignoredUntrackedFiles: ', ignoredUntrackedFiles)
-      console.log('\n untrackedFiles: ', untrackedFiles)
-      console.log('\n filesToRemove: ', filesToRemove)
+      if (ignoredUntrackedFiles.length > 0) {
+        await runGitCommand({ targetFolder, command: `clean -f -x -- ${ignoredUntrackedFiles.join(' ')}` });
+      }
 
       applyIgnoreSpinner.success('Successfully cleaned ignored files.');
     } catch (e) {

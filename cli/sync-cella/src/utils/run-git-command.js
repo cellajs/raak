@@ -1,48 +1,38 @@
 import { spawn } from "node:child_process";
 
+// Helper to determine the type of Git command for custom handling
+function getGitCommandType(command) {
+  if (command.startsWith('merge')) return 'merge';
+  if (command.startsWith('diff')) return 'diff';
+  return 'other';
+}
+
+// Helper to check if a Git command is successful
+function isGitCommandSuccess(gitCommand, code, errOutput) {
+  if (gitCommand === 'merge') return (code === 0 || (code === 1 && !errOutput));
+  if (gitCommand === 'diff') return (code === 0 || (code === 2 && !errOutput));
+  return code === 0;
+}
+
 export async function runGitCommand({ targetFolder, command }) {
     return new Promise((resolve, reject) => {
+      const gitCommand = getGitCommandType(command);
       const child = spawn(`git ${command}`, [], { cwd: targetFolder, shell: true, timeout: 60000 });
   
       let output = '';
       let errOutput = '';
-
-      // If the command fails, reject with the error message
-      let gitCommand = 'other';
-      if (command.startsWith('merge')) {
-        gitCommand = 'merge';
-      } else if (command.startsWith('diff')) {
-        gitCommand = 'diff';
-      }
 
       child.on("error", (error) => {
         reject(error);
       });
   
       child.on("exit", (code) => {
-        switch (gitCommand) {
-          case 'merge':
-            if (code === 0 || (code === 1 && !errOutput)) {
-              resolve(output.trim());
-            } else {
-              reject(`Merge failed with exit code "${code}", stderr "${errOutput}" and output "${output}"`);
-            }
-            break;
-
-          case 'diff':
-            if (code === 0 || (code === 2 && !errOutput)) {
-              resolve(output.trim());
-            } else {
-              reject(`Diff failed with exit code "${code}", stderr "${errOutput}" and output "${output}"`);
-            }
-            break;
-
-          default:
-            if (code === 0) {
-              resolve(output.trim());
-            } else {
-              reject(`Command failed with exit code "${code}", stderr "${errOutput}" and output "${output}"`);
-            }
+        if (isGitCommandSuccess(gitCommand, code, errOutput)) {
+          resolve(output.trim());
+        } else {
+          reject(
+            `Git ${gitCommand} command failed with exit code ${code}, stderr: "${errOutput.trim()}", stdout: "${output.trim()}"`
+          );
         }
       });
       
