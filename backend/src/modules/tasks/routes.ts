@@ -8,7 +8,7 @@ import {
 import { idOrSlugSchema, idSchema, idsQuerySchema, productParamSchema } from '#/utils/schema/common-schemas';
 
 import { createRouteConfig } from '#/lib/route-config';
-import { hasOrgAccess, isAuthenticated } from '#/middlewares/guard';
+import { hasOrgAccess, isAuthenticated, isPublicAccess } from '#/middlewares/guard';
 
 import { z } from 'zod';
 import { createTaskSchema, getTasksQuerySchema, importTasksBodySchema, taskWithSubtasksSchema, updateTaskSchema, updatedTaskSchema } from './schema';
@@ -149,6 +149,46 @@ class TaskRoutesConfig {
             schema: successWithoutDataSchema,
           },
         },
+      },
+      ...errorResponses,
+    },
+  });
+
+  public redirectToTask = createRouteConfig({
+    method: 'get',
+    path: '/{id}/link',
+    tags: ['tasks'],
+    guard: [isPublicAccess],
+    summary: 'Redirect to task',
+    description: 'Redirect to task by id.',
+    request: {
+      params: z.object({
+        id: idSchema,
+      }),
+    },
+    responses: {
+      200: {
+        description: 'Success',
+      },
+      ...errorResponses,
+    },
+  });
+
+  public getTaskCover = createRouteConfig({
+    method: 'get',
+    path: '/{id}/cover',
+    guard: [isPublicAccess],
+    tags: ['tasks'],
+    summary: 'Get task cover',
+    description: 'Get task cover image by id.',
+    request: {
+      params: z.object({
+        id: idSchema,
+      }),
+    },
+    responses: {
+      200: {
+        description: 'Success',
       },
       ...errorResponses,
     },

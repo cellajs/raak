@@ -1,9 +1,11 @@
 import { type SQL, and, desc, eq, ilike, inArray } from 'drizzle-orm';
+import { html } from 'hono/html';
+import { stream } from 'hono/streaming';
 import type { z } from 'zod';
 import { coalesce, db } from '#/db/db';
 import { labelsTable } from '#/db/schema/labels';
 import { type InsertTaskModel, tasksTable } from '#/db/schema/tasks';
-import { safeUserSelect, usersTable } from '#/db/schema/users';
+import { type UserModel, safeUserSelect, usersTable } from '#/db/schema/users';
 import { getUsersByConditions } from '#/db/util';
 import { getContextUser, getMemberships, getOrganization } from '#/lib/context';
 import { type ErrorType, createError, errorResponse } from '#/lib/errors';
@@ -15,11 +17,14 @@ import { extractKeywords, getDateFromToday, scanTaskDescription } from './helper
 import taskRoutesConfig from './routes';
 import type { subtaskSchema } from './schema';
 
+import { config } from 'config';
 import JSZip from 'jszip';
 import { nanoid } from 'nanoid';
 import papaparse from 'papaparse';
 import { membershipsTable } from '#/db/schema/memberships';
 import { projectsTable } from '#/db/schema/projects';
+import { workspacesTable } from '#/db/schema/workspaces';
+import { generateCover, nodeStreamToWebStream } from './helpers/canvas';
 import { PivotalTaskTypes, getLabels, getSubtask, getTaskLabels, getTaskUsers } from './helpers/pivotal';
 import type { PivotalTask } from './helpers/pivotal-type';
 
@@ -351,6 +356,78 @@ const tasksRoutes = app
     if (subtasksToInsert.length) await db.insert(tasksTable).values(subtasksToInsert);
 
     return ctx.json({ success: true }, 200);
+  })
+  .openapi(taskRoutesConfig.getTaskCover, async (ctx) => {
+    const { id } = ctx.req.valid('param');
+
+    const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+
+    if (!task) return errorResponse(ctx, 404, 'not_found', 'warn', 'task');
+
+    let createdByUser: UserModel | undefined;
+
+    if (task.createdBy) {
+      [createdByUser] = await db.select().from(usersTable).where(eq(usersTable.id, task.createdBy));
+    }
+
+    const coverStream = await generateCover({
+      title: task.summary,
+      avatarUrl: createdByUser?.thumbnailUrl || '',
+      name: createdByUser?.name || '',
+      position: createdByUser?.role || '',
+    });
+
+    return stream(ctx, async (stream) => {
+      const coverStreamWeb = nodeStreamToWebStream(coverStream);
+      await stream.pipe(coverStreamWeb);
+    });
+  })
+  .openapi(taskRoutesConfig.redirectToTask, async (ctx) => {
+    const { id } = ctx.req.valid('param');
+
+    const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+
+    if (!task) return errorResponse(ctx, 404, 'not_found', 'warn', 'task');
+
+    const [{ workspace }] = await db
+      .select({
+        project: projectsTable,
+        workspace: workspacesTable,
+      })
+      .from(projectsTable)
+      .innerJoin(membershipsTable, and(eq(membershipsTable.projectId, projectsTable.id), eq(membershipsTable.archived, false)))
+      .innerJoin(workspacesTable, eq(workspacesTable.id, membershipsTable.workspaceId))
+      .where(eq(projectsTable.id, task.projectId));
+
+    if (!workspace) return errorResponse(ctx, 404, 'not_found', 'warn', 'workspace');
+
+    const redirectUrl = `${config.frontendUrl}/${task.organizationId}/workspaces/${workspace.slug}/board?taskIdPreview=${id}`;
+
+    // <title>${task.summary}</title>
+    // <meta name="twitter:title" content="${task.summary}"/>
+    // <meta property="og:title" content="${task.summary}"/>
+    // <meta property="og:image" content="${config.backendUrl}/${task.organizationId}/tasks/${id}/cover"/>
+    // <meta name="twitter:image" content="${config.backendUrl}/${task.organizationId}/tasks/${id}/cover"/>
+    return ctx.html(html`
+      <!doctype html>
+      <html lang="en">
+        <head>
+          <meta charSet="utf-8"/>
+          <title>Task ${task.id}</title>
+          <meta property="og:image" content="${config.frontendUrl}/static/images/thumbnail.png"/>
+          <meta name="twitter:image" content="${config.frontendUrl}/static/images/thumbnail.png"/>
+          <meta name="twitter:card" content="summary_large_image"/>
+          <meta name="twitter:site" content="@Raak"/>
+          <meta name="twitter:creator" content="@Raak"/>
+          <meta property="og:url" content="${redirectUrl}"/>
+          <meta property="og:type" content="website"/>
+          <meta property="og:site_name" content="Raak"/>
+          <meta property="og:locale" content="en_US"/>
+          <meta name="robots" content="index,follow"/>
+        </head>
+        <script>window.location.href = '${redirectUrl}';</script>
+      </html>
+    `);
   });
 
 export default tasksRoutes;
