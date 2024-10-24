@@ -79,20 +79,7 @@ export async function pullUpstream({
 
       // Rerun 'ls-files' to remove files that were reset
       const filesAfterReset = (await runGitCommand({ targetFolder, command: 'ls-files' })).split('\n').filter(Boolean);
-      const ignoredFilesAfterReset = applyIgnorePatterns(filesAfterReset, ignorePatterns);
-
-      // Get the list of untracked files and split them on tracked and untracked ignored files
-      const untrackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files --others --exclude-standard' })).split('\n').filter(Boolean);
-      const ignoredTrackedFiles = [];
-      const ignoredUntrackedFiles = [];
-
-      for (const ignoredFile of ignoredFilesAfterReset) {
-        if (untrackedFiles.includes(ignoredFile)) {
-          ignoredUntrackedFiles.push(ignoredFile);
-        } else {
-          ignoredTrackedFiles.push(ignoredFile);
-        }
-      }
+      const ignoredTrackedFiles = applyIgnorePatterns(filesAfterReset, ignorePatterns);
 
       // Run the checkout commands with all tracked files at once
       const filesToCheckout = ignoredTrackedFiles.join(' ');
@@ -100,6 +87,10 @@ export async function pullUpstream({
         await runGitCommand({ targetFolder, command: `checkout --ours -- ${filesToCheckout}` });
       }
 
+      // Get the list of untracked files and split them on tracked and untracked ignored files
+      const untrackedFiles = (await runGitCommand({ targetFolder, command: 'ls-files --others --exclude-standard' })).split('\n').filter(Boolean);
+      const ignoredUntrackedFiles = applyIgnorePatterns(untrackedFiles, ignorePatterns);
+      
       // Remove the untracked ignored files
       const filesToRemove = ignoredUntrackedFiles.join(' ');
       if (filesToRemove.length > 0) {
@@ -107,8 +98,8 @@ export async function pullUpstream({
       }
 
       console.log('\n ignoredTrackedFiles: ', ignoredTrackedFiles); 
-      console.log('\n untrackedFiles: ', untrackedFiles)
       console.log('\n ignoredUntrackedFiles: ', ignoredUntrackedFiles)
+      console.log('\n untrackedFiles: ', untrackedFiles)
       console.log('\n filesToRemove: ', filesToRemove)
 
       applyIgnoreSpinner.success('Successfully cleaned ignored files.');
