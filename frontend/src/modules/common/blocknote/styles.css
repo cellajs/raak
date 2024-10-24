@@ -17,6 +17,14 @@ p.bn-inline-content code {
   border: 0.25rem solid hsl(var(--muted));
 }
 
+.bn-add-file-button {
+  visibility: hidden;
+}
+
+.bn-editor .bn-add-file-button {
+  visibility: visible;
+}
+
 .bn-grid-suggestion-menu {
   background-color: hsl(var(--popover));
   border: 1px solid hsl(var(--border));
