@@ -1,0 +1,50 @@
+---
+allowBuilds:
+  '@evilmartians/lefthook': true
+  '@parcel/watcher': false
+  '@playwright/browser-chromium': false
+  core-js: false
+  esbuild: true
+  msgpackr-extract: false
+  protobufjs: false
+  unix-dgram: false
+allowUnusedPatches: true
+blockExoticSubdeps: true
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - '@opentelemetry/core@2.8.0'
+overrides:
+  # protobufjs 8.0.0–8.4.0 carries multiple high-severity advisories (code
+  # injection GHSA-66ff-xgx4-vchm, prototype-pollution code-gen, and DoS
+  # GHSA-wcpc-wj8m-hjx6), all patched by 8.4.1. It's pulled in transitively via
+  # backend > pino-opentelemetry-transport > @opentelemetry/*. Pin the 8.x line
+  # to the latest stable; the separate 7.x line is left untouched.
+  'protobufjs@>=8.0.0 <8.4.1': 8.6.5
+packages:
+  - ai
+  - backend
+  - cdc
+  - shared
+  - cli/cella
+  - frontend
+  - infra
+  - locales
+  - sdk
+  - studio
+  - yjs
+  - bench
+peerDependencyRules:
+  allowedVersions:
+    '@opentelemetry/api': '>=1'
+    '@types/react': '>=19'
+    '@uppy/core': '5'
+    babel-plugin-react-compiler: '>=19'
+    react: '19'
+    react-dom: '19'
+    typescript: '6'
+    vite: '8'
+  ignoreMissing:
+    - canvas
+    - '@floating-ui/dom'
+publicHoistPattern:
+  - pdfjs-dist
