@@ -32,6 +32,7 @@ import {
   countCommitsBetween,
   createWorktree,
   ensureRemote,
+  ensureSyncBase,
   fetch,
   fetchUpstreamTags,
   fileExistsAtRef,
@@ -48,7 +49,6 @@ import {
   merge,
   mergeAbort,
   removeFileFromWorktree,
-  removeMergeHead,
   resolveLatestReleaseTag,
   restoreToHead,
   storeLastSyncRef,
@@ -151,9 +151,8 @@ async function applyDirectMerge(
     }
   }
 
-  // Phase 3: Start real merge in fork (always real merge, never --squash).
-  // Squash strategy is handled post-merge by removing MERGE_HEAD before auto-commit,
-  // which preserves correct 3-way merge behavior and merge-base ancestry.
+  // Phase 3: Start real merge in fork. Left staged with MERGE_HEAD intact so the
+  // commit the user creates is a two-parent merge commit with true upstream ancestry.
   onProgress?.('starting merge in fork...');
   await merge(forkPath, upstreamRef, { noCommit: true, noEdit: true });
 
@@ -429,6 +428,12 @@ export async function runMergeEngine(
     config.upstreamRef = upstreamRef;
     onStep?.('remote configured', `${releaseTag ?? upstreamRef} → ${config.settings.upstreamUrl}`);
 
+    // Bootstrap sync ancestry for forks with unrelated history (create-cella scaffold or an
+    // upstream history squash). No-op once a native merge-base exists. Runs after fetch so the
+    // base commit object is present, and after upstreamRef is finalized so release tags resolve.
+    onProgress?.('checking sync base...');
+    await ensureSyncBase(forkPath, 'HEAD', upstreamRef);
+
     // Get GitHub base URLs for commit links
     const upstreamGitHubUrl = getGitHubBaseUrl(config.settings.upstreamUrl);
     const forkOriginUrl = await getRemoteUrl(forkPath, 'origin');
@@ -473,9 +478,6 @@ export async function runMergeEngine(
 
       const summary = calculateSummary(analyzedFiles);
       const synced = summary.behind + summary.diverged + summary.renamed;
-      // Default to squash: forks on the release-please flow squash-merge the sync PR
-      // into a linear-history `main` anyway, so single-parent sync commits are the norm.
-      const isSquash = (config.settings.mergeStrategy ?? 'squash') === 'squash';
 
       // Count total resolved changes (includes ignored/pinned resolutions)
       const totalResolved = synced + summary.ignored + summary.pinned;
@@ -504,10 +506,9 @@ export async function runMergeEngine(
         );
       } else if (totalResolved > 0) {
         const label = synced > 0 ? `${synced} files from upstream` : 'upstream changes';
-        if (isSquash) {
-          // Remove MERGE_HEAD so commit becomes single-parent (squash-style)
-          await removeMergeHead(forkPath);
-        }
+        // Keep MERGE_HEAD so the commit the user creates is a two-parent merge commit
+        // with full upstream ancestry (native git merge-base). The sync branch is a
+        // dedicated integration branch; PRs into `main` are squash-merged separately.
         await storeLastSyncRef(forkPath, upstreamCommit.hash);
         onStep?.('synced', `${label} (staged, commit to finish)`);
       } else {

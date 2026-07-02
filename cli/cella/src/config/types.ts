@@ -22,9 +22,6 @@ export type PackageJsonSyncKey =
   | 'overrides'
   | 'pnpm';
 
-/** Merge strategy for syncing upstream changes */
-type MergeStrategy = 'merge' | 'squash';
-
 /**
  * Sync settings - all configurable options for the sync CLI.
  * Hover over each property for documentation.
@@ -66,23 +63,6 @@ export interface SyncSettings {
 
   /** Which package.json keys to sync (default: ['dependencies', 'devDependencies']) */
   packageJsonSync?: PackageJsonSyncKey[];
-
-  /**
-   * Merge strategy for syncing upstream changes. Both use a real git 3-way merge
-   * internally and leave the result staged for you to commit (neither auto-commits).
-   * The difference is the ancestry of the commit you create:
-   * - 'squash' (default): drops `MERGE_HEAD` on a clean sync so your commit is
-   *   single-parent. Keeps linear history — the right choice under release-please,
-   *   where the sync PR is squash-merged into `main` anyway. Relies on the stored
-   *   `refs/cella/last-sync` ref for the next merge-base.
-   * - 'merge': keeps `MERGE_HEAD` so your commit is a two-parent merge commit with
-   *   full upstream ancestry (native git merge-base). Useful on a dedicated
-   *   integration branch where you want true ancestry; not compatible with a
-   *   linear-history `main`.
-   * Conflicts always fall back to a merge commit (with IDE 3-way support) regardless
-   * of strategy.
-   */
-  mergeStrategy?: MergeStrategy;
 
   /**
    * Automatically run packages sync after the sync service completes.
@@ -203,7 +183,6 @@ export const cellaConfigSchema = z
             ]),
           )
           .optional(),
-        mergeStrategy: z.enum(['merge', 'squash']).optional(),
         syncWithPackages: z.boolean().optional(),
         fileLinkMode: z.enum(['commit', 'file', 'local']).optional(),
       })

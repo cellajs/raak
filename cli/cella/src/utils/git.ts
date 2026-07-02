@@ -6,7 +6,7 @@
 
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, rmdir, unlink } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rmdir, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { promisify } from 'node:util';
@@ -357,10 +357,9 @@ export async function listWorktrees(cwd: string): Promise<string[]> {
 export async function merge(
   cwd: string,
   ref: string,
-  options: { noCommit?: boolean; noEdit?: boolean; squash?: boolean } = {},
+  options: { noCommit?: boolean; noEdit?: boolean } = {},
 ): Promise<{ success: boolean; conflicts: string[] }> {
   const args = ['merge', '--no-ff', ref];
-  if (options.squash) args.push('--squash');
   if (options.noCommit) args.push('--no-commit');
   if (options.noEdit) args.push('--no-edit');
 
@@ -669,6 +668,94 @@ export async function getStoredSyncHead(cwd: string): Promise<string | null> {
 }
 
 /**
+ * Check whether a commit object is present in the local object store.
+ */
+async function commitObjectExists(cwd: string, sha: string): Promise<boolean> {
+  try {
+    await git(['cat-file', '-e', `${sha}^{commit}`], cwd);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Read the upstream base commit recorded by create-cella at scaffold time.
+ *
+ * create-cella scaffolds a fork from a template with no shared git history, so there is
+ * no natural merge-base for the first sync. It records the exact upstream commit the
+ * scaffold was created from in `.cella/base` (a committed file) so sync can bootstrap a
+ * merge-base. Returns the 40-char SHA, or null when the file is absent or malformed.
+ */
+export async function readScaffoldBase(cwd: string): Promise<string | null> {
+  try {
+    const raw = await readFile(join(cwd, '.cella', 'base'), 'utf8');
+    const match = raw.match(/[0-9a-f]{40}/i);
+    return match ? match[0].toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the root (parentless) commit of a ref's history. A create-cella scaffold has a
+ * single rootless "Initial commit". Returns null when no root is found.
+ */
+async function getRootCommit(cwd: string, ref: string): Promise<string | null> {
+  const out = await git(['rev-list', '--max-parents=0', ref], cwd, { ignoreErrors: true });
+  const roots = out.split('\n').filter(Boolean);
+  return roots.length > 0 ? roots[roots.length - 1] : null;
+}
+
+/**
+ * Ensure a native git merge-base exists between the fork and upstream.
+ *
+ * A create-cella scaffold — or a fork whose upstream squashed its history — has unrelated
+ * histories, so `git merge-base` finds nothing and every sync fails at the very first step.
+ * This bootstraps ancestry non-destructively:
+ *   1. If a native merge-base already exists, do nothing (the common case).
+ *   2. Otherwise resolve the logical base commit: the stored `refs/cella/last-sync` ref, else
+ *      the `.cella/base` provenance written by create-cella.
+ *   3. Graft the fork's root commit onto that base with `git replace --graft`, so every native
+ *      git operation (merge-base and the 3-way merge itself) sees correct ancestry. The replace
+ *      ref is local-only and never pushed, so the fork's own published history stays clean.
+ *
+ * Throws an actionable error when no base can be determined or the recorded base is missing.
+ */
+export async function ensureSyncBase(cwd: string, headRef: string, upstreamRef: string): Promise<void> {
+  // Native ancestry already present — nothing to bootstrap.
+  const nativeBase = await git(['merge-base', headRef, upstreamRef], cwd, { ignoreErrors: true });
+  if (nativeBase) return;
+
+  const baseSha = (await getStoredSyncRef(cwd)) ?? (await readScaffoldBase(cwd));
+  if (!baseSha) {
+    throw new Error(
+      `no common ancestor between the fork and '${upstreamRef}', and no sync base recorded.\n\n` +
+        'This fork has unrelated history with upstream — typical for a create-cella scaffold, or after\n' +
+        'upstream squashed its history. Seed the base with the upstream commit the fork was created from,\n' +
+        'then re-run sync:\n\n' +
+        '  git update-ref refs/cella/last-sync <upstream-sha>\n',
+    );
+  }
+
+  if (!(await commitObjectExists(cwd, baseSha))) {
+    throw new Error(
+      `recorded sync base ${baseSha.slice(0, 12)} is not present after fetching '${upstreamRef}'.\n` +
+        'It may belong to a different upstream, or have been dropped by an upstream history rewrite.',
+    );
+  }
+
+  const root = await getRootCommit(cwd, headRef);
+  if (!root) throw new Error("could not determine the fork's root commit to bootstrap sync ancestry");
+
+  // Graft the fork root onto the base (idempotent via -f) so native git sees the ancestry.
+  await git(['replace', '-f', '--graft', root, baseSha], cwd);
+
+  // Record the base as the last-sync ref so future runs and the squash strategy stay consistent.
+  await git(['update-ref', 'refs/cella/last-sync', baseSha], cwd);
+}
+
+/**
  * Check if one commit is an ancestor of another.
  */
 export async function isAncestor(cwd: string, ancestor: string, descendant: string): Promise<boolean> {
@@ -719,17 +806,4 @@ export async function getEffectiveMergeBase(
   }
 
   return { base: gitBase, isStale: false, storedRef };
-}
-
-/**
- * Remove .git/MERGE_HEAD to convert a pending merge into a regular commit.
- * Used by squash strategy to create single-parent commits while preserving
- * correct 3-way merge behavior internally.
- */
-export async function removeMergeHead(cwd: string): Promise<void> {
-  try {
-    await unlink(join(cwd, '.git', 'MERGE_HEAD'));
-  } catch {
-    // MERGE_HEAD doesn't exist - that's fine
-  }
 }

@@ -170,30 +170,21 @@ packageJsonSync: ['dependencies', 'devDependencies', 'scripts']
 
 This allows your fork to have extra dependencies or scripts without them being removed on each sync.
 
-## Merge Strategy
+## Merge strategy
 
-The `mergeStrategy` setting controls the ancestry of the commit a sync produces:
+A sync always uses a real git 3-way merge and leaves the result **staged for you to
+commit** (it never auto-commits). The commit you create keeps `MERGE_HEAD`, so it is a
+two-parent merge commit with full upstream ancestry (native git merge-base). Conflicts
+are surfaced with IDE 3-way support and also resolve to a merge commit.
 
-```typescript
-mergeStrategy: 'squash' // default
-```
+This is why sync runs on a dedicated long-lived integration branch (`cella-sync`): the
+merge commits bake durable upstream ancestry into the branch, so `git merge-base` keeps
+working across syncs without re-bootstrapping. `refs/cella/last-sync` is still tracked as
+a fallback for when upstream squashes its own history.
 
-Both strategies use a real git 3-way merge and leave the result **staged for you to commit** (neither auto-commits). They differ only in the commit you then create:
-
-| Strategy | Clean-sync commit | History | IDE 3-way on conflicts |
-|----------|-------------------|---------|------------------------|
-| `squash` (default) | single-parent | linear | yes (falls back to a merge commit) |
-| `merge` | two-parent merge commit, full upstream ancestry | non-linear | yes |
-
-**Use `squash` (default)** for:
-- Linear history — required when you squash-merge the sync PR into a release-please `main`
-- One clean commit per sync (`refs/cella/last-sync` tracks the merge-base)
-
-**Use `merge`** for:
-- A dedicated long-lived integration branch where you want native git upstream ancestry
-- Not compatible with a linear-history `main`
-
-> Under release-please, sync on a dedicated branch (e.g. `cella-sync`) and squash-merge the PR into `main` with a conventional commit. See [info/RELEASES.md](../../info/RELEASES.md).
+> Under release-please, sync on the dedicated `cella-sync` branch, then open a PR and
+> **squash-merge** it into `main` with a conventional commit — keeping `main` linear while
+> `cella-sync` retains true ancestry. See [info/RELEASES.md](../../info/RELEASES.md).
 
 
 ## Contributions (pull from forks)
