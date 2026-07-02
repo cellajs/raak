@@ -4,8 +4,8 @@ import type { Workspace } from 'sdk';
 import {
   type CreateWorkspacesData,
   createWorkspaces,
-  type DeleteWorkspaceData,
-  deleteWorkspace,
+  type DeleteWorkspacesData,
+  deleteWorkspaces,
   type GetWorkspacesData,
   getWorkspace,
   getWorkspaces,
@@ -162,10 +162,10 @@ export const useWorkspaceDeleteMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
-  return useMutation<void, ApiError, MutationData<DeleteWorkspaceData> & { workspaces: Workspace[] }>({
+  return useMutation<void, ApiError, MutationData<DeleteWorkspacesData> & { workspaces: Workspace[] }>({
     mutationKey: keys.delete,
     mutationFn: async ({ path, body }) => {
-      await deleteWorkspace({ path, body });
+      await deleteWorkspaces({ path, body });
     },
     onSuccess: (_, { workspaces }) => {
       const message =

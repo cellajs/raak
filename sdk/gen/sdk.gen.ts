@@ -11,6 +11,9 @@ import type {
 } from './client';
 import { client } from './client.gen';
 import type {
+  AssignProjectWorkspaceData,
+  AssignProjectWorkspaceErrors,
+  AssignProjectWorkspaceResponses,
   CheckEmailData,
   CheckEmailErrors,
   CheckEmailResponses,
@@ -104,9 +107,9 @@ import type {
   DeleteUsersData,
   DeleteUsersErrors,
   DeleteUsersResponses,
-  DeleteWorkspaceData,
-  DeleteWorkspaceErrors,
-  DeleteWorkspaceResponses,
+  DeleteWorkspacesData,
+  DeleteWorkspacesErrors,
+  DeleteWorkspacesResponses,
   GeneratePasskeyChallengeData,
   GeneratePasskeyChallengeErrors,
   GeneratePasskeyChallengeResponses,
@@ -262,18 +265,15 @@ import type {
   MicrosoftCallbackErrors,
   MicrosoftData,
   MicrosoftErrors,
-  MoveProjectData,
-  MoveProjectErrors,
-  MoveProjectResponses,
+  MoveProjectToWorkspaceData,
+  MoveProjectToWorkspaceErrors,
+  MoveProjectToWorkspaceResponses,
   PostAppCatchupData,
   PostAppCatchupErrors,
   PostAppCatchupResponses,
   PostPublicCatchupData,
   PostPublicCatchupErrors,
   PostPublicCatchupResponses,
-  ReassignProjectData,
-  ReassignProjectErrors,
-  ReassignProjectResponses,
   RedirectToTaskData,
   RedirectToTaskErrors,
   RedirectToTaskResponses,
@@ -362,6 +362,9 @@ import type {
   VerifyDomainResponses,
 } from './types.gen';
 import {
+  zAssignProjectWorkspacePath,
+  zAssignProjectWorkspaceQuery,
+  zAssignProjectWorkspaceResponse,
   zCheckEmailBody,
   zCheckEmailResponse,
   zCheckSlugBody,
@@ -439,9 +442,9 @@ import {
   zDeleteTotpResponse,
   zDeleteUsersBody,
   zDeleteUsersResponse,
-  zDeleteWorkspaceBody,
-  zDeleteWorkspacePath,
-  zDeleteWorkspaceResponse,
+  zDeleteWorkspacesBody,
+  zDeleteWorkspacesPath,
+  zDeleteWorkspacesResponse,
   zGeneratePasskeyChallengeBody,
   zGeneratePasskeyChallengeResponse,
   zGenerateTotpKeyResponse,
@@ -546,16 +549,13 @@ import {
   zMembershipInviteResponse,
   zMicrosoftCallbackQuery,
   zMicrosoftQuery,
-  zMoveProjectPath,
-  zMoveProjectQuery,
-  zMoveProjectResponse,
+  zMoveProjectToWorkspacePath,
+  zMoveProjectToWorkspaceQuery,
+  zMoveProjectToWorkspaceResponse,
   zPostAppCatchupBody,
   zPostAppCatchupResponse,
   zPostPublicCatchupBody,
   zPostPublicCatchupResponse,
-  zReassignProjectPath,
-  zReassignProjectQuery,
-  zReassignProjectResponse,
   zRedirectToTaskPath,
   zRemoveProjectWorkspacePath,
   zRemoveProjectWorkspaceResponse,
@@ -4757,27 +4757,27 @@ export const markSeen = <ThrowOnError extends boolean = true>(
  *
  * Deletes one or more workspaces by ID.
  *
- * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
+ * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
  *
- * @param {deleteWorkspaceData} options
+ * @param {deleteWorkspacesData} options
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
  * @param {any[]=} options.body.ids - `any[]` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
-export const deleteWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<DeleteWorkspaceData, ThrowOnError>,
-): RequestResult<DeleteWorkspaceResponses, DeleteWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<DeleteWorkspaceResponses, DeleteWorkspaceErrors, ThrowOnError, 'data'>({
+export const deleteWorkspaces = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteWorkspacesData, ThrowOnError>,
+): RequestResult<DeleteWorkspacesResponses, DeleteWorkspacesErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteWorkspacesResponses, DeleteWorkspacesErrors, ThrowOnError, 'data'>({
     requestValidator: async (data) =>
       await z
         .object({
-          body: zDeleteWorkspaceBody.optional(),
-          path: zDeleteWorkspacePath,
+          body: zDeleteWorkspacesBody.optional(),
+          path: zDeleteWorkspacesPath,
           query: z.never().optional(),
         })
         .parseAsync(data),
-    responseValidator: async (data) => await zDeleteWorkspaceResponse.parseAsync(data),
+    responseValidator: async (data) => await zDeleteWorkspacesResponse.parseAsync(data),
     responseStyle: 'data',
     security: [
       {
@@ -4887,7 +4887,6 @@ export const getWorkspace = <ThrowOnError extends boolean = true>(
  * @param {string} options.path.organizationid - `string`
  * @param {string} options.path.id - `string`
  * @param {string=} options.body.name - `string` (optional)
- * @param {string=} options.body.organizationId - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const updateWorkspace = <ThrowOnError extends boolean = true>(
@@ -4988,6 +4987,13 @@ export const createProjects = <ThrowOnError extends boolean = true>(
         .parseAsync(data),
     responseValidator: async (data) => await zCreateProjectsResponse.parseAsync(data),
     responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
     url: '/{tenantId}/{organizationId}/projects',
     ...options,
     headers: {
@@ -5088,28 +5094,28 @@ export const updateProject = <ThrowOnError extends boolean = true>(
  *
  * Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.
  *
- * **PUT /{tenantId}/{organizationId}/projects/{id}/assign-workspace** ·· [reassignProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [reassignProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [reassignProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· _projects_app_context_
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/assign-workspace** ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· _projects_app_context_
  *
- * @param {reassignProjectData} options
+ * @param {assignProjectWorkspaceData} options
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
  * @param {string} options.path.id - `string`
  * @param {string} options.query.workspaceid - `string`
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
-export const reassignProject = <ThrowOnError extends boolean = true>(
-  options: Options<ReassignProjectData, ThrowOnError>,
-): RequestResult<ReassignProjectResponses, ReassignProjectErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<ReassignProjectResponses, ReassignProjectErrors, ThrowOnError, 'data'>({
+export const assignProjectWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<AssignProjectWorkspaceData, ThrowOnError>,
+): RequestResult<AssignProjectWorkspaceResponses, AssignProjectWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<AssignProjectWorkspaceResponses, AssignProjectWorkspaceErrors, ThrowOnError, 'data'>({
     requestValidator: async (data) =>
       await z
         .object({
           body: z.never().optional(),
-          path: zReassignProjectPath,
-          query: zReassignProjectQuery,
+          path: zAssignProjectWorkspacePath,
+          query: zAssignProjectWorkspaceQuery,
         })
         .parseAsync(data),
-    responseValidator: async (data) => await zReassignProjectResponse.parseAsync(data),
+    responseValidator: async (data) => await zAssignProjectWorkspaceResponse.parseAsync(data),
     responseStyle: 'data',
     security: [
       {
@@ -5170,28 +5176,28 @@ export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
  *
  * Moves a project from one workspace to another.
  *
- * **PUT /{tenantId}/{organizationId}/projects/{id}/move** ·· [moveProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· _projects_app_context_
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/move** ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· _projects_app_context_
  *
- * @param {moveProjectData} options
+ * @param {moveProjectToWorkspaceData} options
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
  * @param {string} options.path.id - `string`
  * @param {string} options.query.workspaceid - `string`
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
-export const moveProject = <ThrowOnError extends boolean = true>(
-  options: Options<MoveProjectData, ThrowOnError>,
-): RequestResult<MoveProjectResponses, MoveProjectErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<MoveProjectResponses, MoveProjectErrors, ThrowOnError, 'data'>({
+export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<MoveProjectToWorkspaceData, ThrowOnError>,
+): RequestResult<MoveProjectToWorkspaceResponses, MoveProjectToWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<MoveProjectToWorkspaceResponses, MoveProjectToWorkspaceErrors, ThrowOnError, 'data'>({
     requestValidator: async (data) =>
       await z
         .object({
           body: z.never().optional(),
-          path: zMoveProjectPath,
-          query: zMoveProjectQuery,
+          path: zMoveProjectToWorkspacePath,
+          query: zMoveProjectToWorkspaceQuery,
         })
         .parseAsync(data),
-    responseValidator: async (data) => await zMoveProjectResponse.parseAsync(data),
+    responseValidator: async (data) => await zMoveProjectToWorkspaceResponse.parseAsync(data),
     responseStyle: 'data',
     security: [
       {

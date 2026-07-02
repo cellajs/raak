@@ -2551,7 +2551,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["insertEntityLock"],
+      "xRateLimiter": ["insertEntityLock", "pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2562,7 +2562,7 @@
     "entityType": "workspace"
   },
   {
-    "id": "deleteWorkspace",
+    "id": "deleteWorkspaces",
     "hash": "tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces",
     "method": "delete",
     "path": "/{tenantId}/{organizationId}/workspaces",
@@ -2576,7 +2576,7 @@
     "hasExample": false,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2626,7 +2626,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2651,7 +2651,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["insertEntityLock"],
+      "xRateLimiter": ["insertEntityLock", "pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2676,7 +2676,7 @@
     "hasExample": false,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2726,7 +2726,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2737,7 +2737,7 @@
     "entityType": "project"
   },
   {
-    "id": "reassignProject",
+    "id": "assignProjectWorkspace",
     "hash": "tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace",
     "method": "put",
     "path": "/{tenantId}/{organizationId}/projects/{id}/assign-workspace",
@@ -2751,7 +2751,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2776,7 +2776,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2787,7 +2787,7 @@
     "entityType": "project"
   },
   {
-    "id": "moveProject",
+    "id": "moveProjectToWorkspace",
     "hash": "tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move",
     "method": "put",
     "path": "/{tenantId}/{organizationId}/projects/{id}/move",
@@ -2801,7 +2801,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {

@@ -1,6 +1,7 @@
 import { createXRoute } from '#/core/x-routes';
 import { authGuard, crossTenantGuard, orgGuard, relatableGuard, tenantGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
+import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import {
   mockBatchProjectsResponse,
   mockPaginatedProjectsResponse,
@@ -26,17 +27,19 @@ import {
 } from '#/schemas';
 
 const projectRoutes = {
+  /**
+   * Create one or more projects within an organization
+   */
   createProjects: createXRoute({
     method: 'post',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
-    xRateLimiter: [insertEntityLock],
+    xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     tags: ['projects', 'app', 'context'],
     operationId: 'createProjects',
     summary: 'Create projects',
     description:
       'Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.',
-    security: [{ bearerAuth: [] }],
     request: {
       params: tenantOrgParamSchema,
       query: workspaceIdQuery,
@@ -55,6 +58,9 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get list of projects where the current user has a membership (cross-tenant)
+   */
   getProjects: createXRoute({
     method: 'get',
     path: '/',
@@ -83,6 +89,9 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get a project (tenant + org scoped)
+   */
   getProject: createXRoute({
     method: 'get',
     path: '/{id}',
@@ -104,10 +113,14 @@ const projectRoutes = {
     },
   }),
 
+  /**
+   * Update a project
+   */
   updateProject: createXRoute({
     method: 'put',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
     operationId: 'updateProject',
     summary: 'Update project',
@@ -126,12 +139,16 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Assign a project to a workspace
+   */
   assignProjectWorkspace: createXRoute({
     method: 'put',
     path: '/{id}/assign-workspace',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
-    operationId: 'reassignProject',
+    operationId: 'assignProjectWorkspace',
     summary: 'Assign project to workspace',
     description:
       "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
@@ -152,10 +169,14 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Remove a project from its assigned workspace
+   */
   removeProjectWorkspace: createXRoute({
     method: 'delete',
     path: '/{id}/workspace',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
     operationId: 'removeProjectWorkspace',
     summary: 'Remove project from workspace',
@@ -177,12 +198,16 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Move a project between workspaces
+   */
   moveProjectToWorkspace: createXRoute({
     method: 'put',
     path: '/{id}/move',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
-    operationId: 'moveProject',
+    operationId: 'moveProjectToWorkspace',
     summary: 'Move project between workspaces',
     description: 'Moves a project from one workspace to another.',
     request: { params: idInTenantOrgParamSchema, query: workspaceIdQuery },
@@ -199,10 +224,14 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Delete one or more projects
+   */
   deleteProjects: createXRoute({
     method: 'delete',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [bulkPointsLimiter],
     tags: ['projects', 'app', 'context'],
     operationId: 'deleteProjects',
     summary: 'Delete projects',

@@ -2526,11 +2526,11 @@ export const zMarkSeenResponse = z.object({
   newCount: z.int().gte(0),
 });
 
-export const zDeleteWorkspaceBody = z.object({
+export const zDeleteWorkspacesBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
 });
 
-export const zDeleteWorkspacePath = z.object({
+export const zDeleteWorkspacesPath = z.object({
   tenantId: z.string().max(50),
   organizationId: z.string().max(50),
 });
@@ -2538,7 +2538,7 @@ export const zDeleteWorkspacePath = z.object({
 /**
  * Success
  */
-export const zDeleteWorkspaceResponse = z.object({
+export const zDeleteWorkspacesResponse = z.object({
   data: z.array(z.unknown()),
   rejectedIds: z.array(z.string()),
   rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
@@ -2618,8 +2618,8 @@ export const zUpdateWorkspaceBody = z.object({
     .string()
     .min(2)
     .max(255)
-    .regex(/^[\p{L}\d\-., '&()]+$/u),
-  organizationId: z.string().max(50).optional(),
+    .regex(/^[\p{L}\d\-., '&()]+$/u)
+    .optional(),
 });
 
 export const zUpdateWorkspacePath = z.object({
@@ -2774,20 +2774,20 @@ export const zUpdateProjectPath = z.object({
  */
 export const zUpdateProjectResponse = zProject;
 
-export const zReassignProjectPath = z.object({
+export const zAssignProjectWorkspacePath = z.object({
   tenantId: z.string().max(50),
   organizationId: z.string().max(50),
   id: z.string().max(50),
 });
 
-export const zReassignProjectQuery = z.object({
+export const zAssignProjectWorkspaceQuery = z.object({
   workspaceId: z.string().max(50),
 });
 
 /**
  * A project that organizes tasks and members within an organization.
  */
-export const zReassignProjectResponse = zProject.and(
+export const zAssignProjectWorkspaceResponse = zProject.and(
   z.object({
     included: z
       .object({
@@ -2870,20 +2870,20 @@ export const zRemoveProjectWorkspaceResponse = zProject.and(
   }),
 );
 
-export const zMoveProjectPath = z.object({
+export const zMoveProjectToWorkspacePath = z.object({
   tenantId: z.string().max(50),
   organizationId: z.string().max(50),
   id: z.string().max(50),
 });
 
-export const zMoveProjectQuery = z.object({
+export const zMoveProjectToWorkspaceQuery = z.object({
   workspaceId: z.string().max(50),
 });
 
 /**
  * A project that organizes tasks and members within an organization.
  */
-export const zMoveProjectResponse = zProject.and(
+export const zMoveProjectToWorkspaceResponse = zProject.and(
   z.object({
     included: z
       .object({

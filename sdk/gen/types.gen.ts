@@ -6729,7 +6729,7 @@ export type MarkSeenResponses = {
 
 export type MarkSeenResponse = MarkSeenResponses[keyof MarkSeenResponses];
 
-export type DeleteWorkspaceData = {
+export type DeleteWorkspacesData = {
   body?: {
     ids: Array<string>;
   };
@@ -6741,7 +6741,7 @@ export type DeleteWorkspaceData = {
   url: '/{tenantId}/{organizationId}/workspaces';
 };
 
-export type DeleteWorkspaceErrors = {
+export type DeleteWorkspacesErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -6768,9 +6768,9 @@ export type DeleteWorkspaceErrors = {
   429: TooManyRequestsError;
 };
 
-export type DeleteWorkspaceError = DeleteWorkspaceErrors[keyof DeleteWorkspaceErrors];
+export type DeleteWorkspacesError = DeleteWorkspacesErrors[keyof DeleteWorkspacesErrors];
 
-export type DeleteWorkspaceResponses = {
+export type DeleteWorkspacesResponses = {
   /**
    * Success
    */
@@ -6789,7 +6789,7 @@ export type DeleteWorkspaceResponses = {
   };
 };
 
-export type DeleteWorkspaceResponse = DeleteWorkspaceResponses[keyof DeleteWorkspaceResponses];
+export type DeleteWorkspacesResponse = DeleteWorkspacesResponses[keyof DeleteWorkspacesResponses];
 
 export type CreateWorkspacesData = {
   body: Array<{
@@ -6929,8 +6929,7 @@ export type GetWorkspaceResponse = GetWorkspaceResponses[keyof GetWorkspaceRespo
 
 export type UpdateWorkspaceData = {
   body?: {
-    name: string;
-    organizationId?: string;
+    name?: string;
   };
   path: {
     tenantId: string;
@@ -7247,7 +7246,7 @@ export type UpdateProjectResponses = {
 
 export type UpdateProjectResponse = UpdateProjectResponses[keyof UpdateProjectResponses];
 
-export type ReassignProjectData = {
+export type AssignProjectWorkspaceData = {
   body?: never;
   path: {
     tenantId: string;
@@ -7260,7 +7259,7 @@ export type ReassignProjectData = {
   url: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace';
 };
 
-export type ReassignProjectErrors = {
+export type AssignProjectWorkspaceErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -7287,9 +7286,9 @@ export type ReassignProjectErrors = {
   429: TooManyRequestsError;
 };
 
-export type ReassignProjectError = ReassignProjectErrors[keyof ReassignProjectErrors];
+export type AssignProjectWorkspaceError = AssignProjectWorkspaceErrors[keyof AssignProjectWorkspaceErrors];
 
-export type ReassignProjectResponses = {
+export type AssignProjectWorkspaceResponses = {
   /**
    * A project that organizes tasks and members within an organization.
    */
@@ -7323,7 +7322,7 @@ export type ReassignProjectResponses = {
   };
 };
 
-export type ReassignProjectResponse = ReassignProjectResponses[keyof ReassignProjectResponses];
+export type AssignProjectWorkspaceResponse = AssignProjectWorkspaceResponses[keyof AssignProjectWorkspaceResponses];
 
 export type RemoveProjectWorkspaceData = {
   body?: never;
@@ -7401,7 +7400,7 @@ export type RemoveProjectWorkspaceResponses = {
 
 export type RemoveProjectWorkspaceResponse = RemoveProjectWorkspaceResponses[keyof RemoveProjectWorkspaceResponses];
 
-export type MoveProjectData = {
+export type MoveProjectToWorkspaceData = {
   body?: never;
   path: {
     tenantId: string;
@@ -7414,7 +7413,7 @@ export type MoveProjectData = {
   url: '/{tenantId}/{organizationId}/projects/{id}/move';
 };
 
-export type MoveProjectErrors = {
+export type MoveProjectToWorkspaceErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -7441,9 +7440,9 @@ export type MoveProjectErrors = {
   429: TooManyRequestsError;
 };
 
-export type MoveProjectError = MoveProjectErrors[keyof MoveProjectErrors];
+export type MoveProjectToWorkspaceError = MoveProjectToWorkspaceErrors[keyof MoveProjectToWorkspaceErrors];
 
-export type MoveProjectResponses = {
+export type MoveProjectToWorkspaceResponses = {
   /**
    * A project that organizes tasks and members within an organization.
    */
@@ -7477,7 +7476,7 @@ export type MoveProjectResponses = {
   };
 };
 
-export type MoveProjectResponse = MoveProjectResponses[keyof MoveProjectResponses];
+export type MoveProjectToWorkspaceResponse = MoveProjectToWorkspaceResponses[keyof MoveProjectToWorkspaceResponses];
 
 export type GetYjsTokenData = {
   body?: never;

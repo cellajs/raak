@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Project, Workspace } from 'sdk';
-import { zMoveProjectPath, zMoveProjectQuery } from 'sdk/zod.gen';
+import { zMoveProjectToWorkspacePath, zMoveProjectToWorkspaceQuery } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
@@ -17,8 +17,8 @@ import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { flattenInfiniteData } from '~/query/basic';
 
 const formSchema = z.object({
-  ...zMoveProjectPath.shape,
-  ...zMoveProjectQuery.shape,
+  ...zMoveProjectToWorkspacePath.shape,
+  ...zMoveProjectToWorkspaceQuery.shape,
 });
 type FormValues = z.infer<typeof formSchema>;
 

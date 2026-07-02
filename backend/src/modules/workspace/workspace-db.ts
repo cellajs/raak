@@ -2,6 +2,11 @@ import { foreignKey, index, snakeCase, unique, uuid } from 'drizzle-orm/pg-core'
 import { contextEntityColumns } from '#/db/utils/context-entity-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
+/**
+ * Workspaces table is a personal context entity table.
+ * Each workspace belongs to exactly one organization and inherits its tenant (RLS isolation boundary),
+ * and is owned by a single user (not shared with others).
+ */
 export const workspacesTable = snakeCase.table(
   'workspaces',
   {
@@ -9,8 +14,8 @@ export const workspacesTable = snakeCase.table(
     organizationId: uuid().notNull(),
   },
   (table) => [
-    index('workspace_name_index').on(table.name.desc()),
-    index('workspace_created_at_index').on(table.createdAt.desc()),
+    index('workspaces_name_index').on(table.name.desc()),
+    index('workspaces_created_at_index').on(table.createdAt.desc()),
     index('workspaces_tenant_id_index').on(table.tenantId),
     index('workspaces_organization_id_index').on(table.organizationId),
     index('workspaces_created_by_index').on(table.createdBy),

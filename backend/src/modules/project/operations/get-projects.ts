@@ -1,4 +1,5 @@
 import type { AuthContext } from '#/core/context';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { getProjectsList } from '#/modules/project/project-queries';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
 
@@ -35,8 +36,8 @@ export async function getProjectsOp(ctx: AuthContext, input: GetProjectsInput) {
   // Build response with included wrapper for optional data
   const items = coalesceAuditUsers(projectResults).map((row) => {
     const { membership, counts, ...project } = row;
-    const included: { membership?: typeof membership; counts?: typeof counts } = {};
-    if (includeMembership && membership) included.membership = membership;
+    const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts } = {};
+    if (includeMembership && membership) included.membership = toMembershipBase(membership);
     if (includeCounts && counts) included.counts = counts;
     return { ...project, included };
   });

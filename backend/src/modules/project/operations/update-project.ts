@@ -2,6 +2,7 @@ import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
 import { getEntityCounts } from '#/modules/entities/helpers/get-entity-counts';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { updateProject } from '#/modules/project/project-queries';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
@@ -33,7 +34,10 @@ export async function updateProjectOp(ctx: AuthContext, id: string, input: Recor
   ]);
 
   const projectWithAudit = await withAuditUser(ctx, updatedProjectRecord, user);
-  const included = { ...(membership && { membership }), counts: { ...counts, taskStatusCounts } };
+  const included = {
+    ...(membership && { membership: toMembershipBase(membership) }),
+    counts: { ...counts, taskStatusCounts },
+  };
 
   return { ...projectWithAudit, included };
 }

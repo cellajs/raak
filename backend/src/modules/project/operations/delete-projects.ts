@@ -1,4 +1,5 @@
 import type { AuthContext } from '#/core/context';
+import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { deleteProjectsByIds } from '#/modules/project/project-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { logEvent } from '#/utils/logger';
@@ -11,6 +12,9 @@ export async function deleteProjectsOp(ctx: AuthContext, ids: string[]) {
 
   // Delete the projects
   await deleteProjectsByIds(ctx, { ids: allowedIds });
+
+  // Invalidate membership cache so the current user no longer sees deleted memberships
+  invalidateCache.user(ctx.var.user.id);
 
   logEvent(ctx, 'info', 'Projects deleted', { count: allowedIds.length, ids: allowedIds });
 

@@ -1,4 +1,5 @@
 import type { AuthContext } from '#/core/context';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import {
   resolveProjectWorkspaceId,
   upsertCurrentUserProjectMembershipWorkspace,
@@ -19,5 +20,5 @@ export async function assignProjectWorkspaceOp(ctx: AuthContext, id: string, wor
 
   const projectWithAudit = await withAuditUser(ctx, project);
 
-  return { ...projectWithAudit, included: { membership: updatedMembership } };
+  return { ...projectWithAudit, included: { membership: toMembershipBase(updatedMembership) } };
 }

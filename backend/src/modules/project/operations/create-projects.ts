@@ -1,9 +1,11 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
+import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/helpers/check-slug';
 import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertProjects } from '#/modules/project/project-queries';
 import type { projectCreateBodySchema } from '#/modules/project/project-schema';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
@@ -91,6 +93,9 @@ export async function createProjectsOp(ctx: AuthContext, items: CreateProjectIte
 
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts, logCtx: ctx });
 
+  // Invalidate membership cache so subsequent requests see the new membership
+  invalidateCache.user(user.id);
+
   // Build counts for response
   const counts = buildZeroCounts('project');
   // Map memberships by projectId
@@ -102,7 +107,10 @@ export async function createProjectsOp(ctx: AuthContext, items: CreateProjectIte
     const membership = membershipByProjectId.get(project.id)!;
     return {
       ...project,
-      included: { membership, counts: { ...counts, taskStatusCounts: defaultTaskStatusCounts } },
+      included: {
+        membership: toMembershipBase(membership),
+        counts: { ...counts, taskStatusCounts: defaultTaskStatusCounts },
+      },
     };
   });
 

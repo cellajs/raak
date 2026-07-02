@@ -1,4 +1,5 @@
 import type { AuthContext } from '#/core/context';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
 import { getWorkspacesList } from '#/modules/workspace/workspace-queries';
 
@@ -29,8 +30,8 @@ export async function getWorkspacesOp(ctx: AuthContext, input: GetWorkspacesInpu
 
   const items = coalesceAuditUsers(workspaceResults).map((ws) => {
     const { membership, counts, ...workspace } = ws;
-    const included: { membership?: typeof membership; counts?: typeof counts } = {};
-    if (includeMembership && membership) included.membership = membership;
+    const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts } = {};
+    if (includeMembership && membership) included.membership = toMembershipBase(membership);
     if (includeCounts && counts) included.counts = counts;
     return { ...workspace, included };
   });

@@ -1,5 +1,6 @@
 import type { AuthContext } from '#/core/context';
 import { getEntityCounts } from '#/modules/entities/helpers/get-entity-counts';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions/get-context-entity';
 
@@ -22,9 +23,9 @@ export async function getWorkspaceOp(ctx: AuthContext, id: string, opts: GetWork
     withAuditUser(ctx, workspace, user),
   ]);
 
-  const included: { counts?: typeof counts; membership?: NonNullable<typeof membership> } = {};
+  const included: { counts?: typeof counts; membership?: ReturnType<typeof toMembershipBase> } = {};
   if (counts) included.counts = counts;
-  if (includeMembership && membership) included.membership = membership;
+  if (includeMembership && membership) included.membership = toMembershipBase(membership);
 
   return { ...workspaceWithAudit, included };
 }

@@ -2,6 +2,10 @@ import { foreignKey, index, snakeCase, timestamp, unique, uuid } from 'drizzle-o
 import { contextEntityColumns } from '#/db/utils/context-entity-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
+/**
+ * Projects table is a context entity table.
+ * Each project belongs to exactly one organization and inherits its tenant (RLS isolation boundary).
+ */
 export const projectsTable = snakeCase.table(
   'projects',
   {

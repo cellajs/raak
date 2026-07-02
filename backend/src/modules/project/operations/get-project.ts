@@ -1,5 +1,6 @@
 import type { AuthContext } from '#/core/context';
 import { getEntityCounts } from '#/modules/entities/helpers/get-entity-counts';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions';
@@ -21,13 +22,13 @@ export async function getProjectOp(ctx: AuthContext, id: string, opts: { bySlug?
 
   const included: {
     counts?: typeof counts & { taskStatusCounts: typeof taskStatusCounts };
-    membership?: NonNullable<typeof membership>;
+    membership?: ReturnType<typeof toMembershipBase>;
   } = {};
 
   if (counts) included.counts = { ...counts, taskStatusCounts };
 
   if (includeMembership && membership) {
-    included.membership = membership;
+    included.membership = toMembershipBase(membership);
   }
 
   return { ...projectWithAudit, included };

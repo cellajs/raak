@@ -1,4 +1,5 @@
 import type { AuthContext } from '#/core/context';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import {
   requireCurrentUserProjectMembership,
   setCurrentUserProjectMembershipWorkspace,
@@ -19,5 +20,5 @@ export async function removeProjectWorkspaceOp(ctx: AuthContext, id: string) {
 
   const projectWithAudit = await withAuditUser(ctx, project);
 
-  return { ...projectWithAudit, included: { membership: updatedMembership } };
+  return { ...projectWithAudit, included: { membership: toMembershipBase(updatedMembership) } };
 }

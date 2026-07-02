@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { t } from 'i18next';
 import { roles } from 'shared';
 import { schemaTags } from '#/core/openapi-helpers';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
@@ -7,6 +8,7 @@ import { projectsTable } from '#/modules/project/project-db';
 import { mockProjectResponse } from '#/modules/project/project-mocks';
 import {
   batchResponseSchema,
+  excludeArchivedQuerySchema,
   includeQuerySchema,
   maxLength,
   noDuplicateSlugsRefine,
@@ -66,7 +68,7 @@ export const projectCreateBodySchema = projectCreateItemSchema
   .array()
   .min(1)
   .max(10)
-  .refine(noDuplicateSlugsRefine, 'Duplicate slugs in batch');
+  .refine(noDuplicateSlugsRefine, t('error:duplicate_slugs'));
 
 export const projectCreateResponseSchema = batchResponseSchema(projectWithMembershipSchema);
 
@@ -94,9 +96,6 @@ export const projectListQuerySchema = paginationQuerySchema.extend({
   workspaceId: z.string().max(maxLength.id).optional(),
   relatableUserId: z.string().max(maxLength.id).optional(),
   role: z.enum(roles.all).optional(),
-  excludeArchived: z
-    .enum(['true', 'false'])
-    .optional()
-    .transform((val) => val === 'true'),
+  excludeArchived: excludeArchivedQuerySchema,
   include: includeQuerySchema,
 });

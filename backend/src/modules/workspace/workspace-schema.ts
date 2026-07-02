@@ -1,12 +1,13 @@
 import { z } from '@hono/zod-openapi';
 import { roles } from 'shared';
 import { schemaTags } from '#/core/openapi-helpers';
-import { createSelectSchema } from '#/db/utils/drizzle-schema';
+import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { membershipBaseSchema } from '#/modules/memberships/memberships-schema';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
 import { mockWorkspaceResponse } from '#/modules/workspace/workspace-mocks';
 import {
   batchResponseSchema,
+  excludeArchivedQuerySchema,
   includeQuerySchema,
   maxLength,
   paginationQuerySchema,
@@ -33,7 +34,7 @@ export const workspaceSchema = z
     'x-tags': schemaTags('data', 'workspaces', 'app'),
   });
 
-const workspaceWithMembershipSchema = workspaceSchema.extend({
+export const workspaceWithMembershipSchema = workspaceSchema.extend({
   included: workspaceIncludedSchema.extend({ membership: membershipBaseSchema }),
 });
 
@@ -47,18 +48,16 @@ export const workspaceCreateBodySchema = workspaceCreateItemSchema.array().min(1
 
 export const workspaceCreateResponseSchema = batchResponseSchema(workspaceWithMembershipSchema);
 
-export const workspaceUpdateBodySchema = z.object({
+export const workspaceUpdateBodySchema = createInsertSchema(workspacesTable, {
   name: validNameSchema,
-  organizationId: z.string().max(maxLength.id).optional(),
-});
+})
+  .pick({ name: true })
+  .partial();
 
 export const workspaceListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder').optional(),
   organizationId: z.string().max(maxLength.id).optional(),
   role: z.enum(roles.all).optional(),
-  excludeArchived: z
-    .enum(['true', 'false'])
-    .optional()
-    .transform((val) => val === 'true'),
+  excludeArchived: excludeArchivedQuerySchema,
   include: includeQuerySchema,
 });

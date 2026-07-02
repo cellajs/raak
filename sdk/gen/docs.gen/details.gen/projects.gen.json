@@ -1562,7 +1562,7 @@
     }
   },
   {
-    "operationId": "reassignProject",
+    "operationId": "assignProjectWorkspace",
     "responses": [
       {
         "status": 200,
@@ -2079,7 +2079,7 @@
     }
   },
   {
-    "operationId": "moveProject",
+    "operationId": "moveProjectToWorkspace",
     "responses": [
       {
         "status": 200,

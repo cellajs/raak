@@ -15912,7 +15912,7 @@
         "summary": "Create workspaces",
         "description": "Creates one or more personal workspaces owned by the current user.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["insertEntityLock"],
+        "x-rate-limiter": ["insertEntityLock", "pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -16183,11 +16183,11 @@
           }
         ],
         "tags": ["workspaces", "app", "context"],
-        "operationId": "deleteWorkspace",
+        "operationId": "deleteWorkspaces",
         "summary": "Delete workspaces",
         "description": "Deletes one or more workspaces by ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -16444,7 +16444,7 @@
         "summary": "Update workspace",
         "description": "Updates a workspace by ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -16486,13 +16486,8 @@
                     "minLength": 2,
                     "maxLength": 255,
                     "pattern": "^[\\p{L}\\d\\-., '&()]+$"
-                  },
-                  "organizationId": {
-                    "type": "string",
-                    "maxLength": 50
                   }
-                },
-                "required": ["name"]
+                }
               }
             }
           }
@@ -16583,7 +16578,7 @@
       "post": {
         "security": [
           {
-            "bearerAuth": []
+            "cookieAuth": []
           }
         ],
         "tags": ["projects", "app", "context"],
@@ -16591,7 +16586,7 @@
         "summary": "Create projects",
         "description": "Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": ["insertEntityLock"],
+        "x-rate-limiter": ["insertEntityLock", "pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -16894,7 +16889,7 @@
         "summary": "Delete projects",
         "description": "Deletes one or more projects by ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -17133,7 +17128,7 @@
         "summary": "Update project",
         "description": "Updates a project by ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -17270,11 +17265,11 @@
           }
         ],
         "tags": ["projects", "app", "context"],
-        "operationId": "reassignProject",
+        "operationId": "assignProjectWorkspace",
         "summary": "Assign project to workspace",
         "description": "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -17519,7 +17514,7 @@
         "summary": "Remove project from workspace",
         "description": "Removes the current user's project membership from its assigned workspace without leaving the project.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -17751,11 +17746,11 @@
           }
         ],
         "tags": ["projects", "app", "context"],
-        "operationId": "moveProject",
+        "operationId": "moveProjectToWorkspace",
         "summary": "Move project between workspaces",
         "description": "Moves a project from one workspace to another.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {

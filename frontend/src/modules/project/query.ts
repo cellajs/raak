@@ -2,6 +2,9 @@ import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from 
 import { t } from 'i18next';
 import type { Project } from 'sdk';
 import {
+  type AssignProjectWorkspaceData,
+  type AssignProjectWorkspaceResponse,
+  assignProjectWorkspace,
   type CreateProjectsData,
   createProjects,
   type DeleteProjectsData,
@@ -10,12 +13,9 @@ import {
   getProject,
   getProjects,
   getPublicProject,
-  type MoveProjectData,
-  type MoveProjectResponse,
-  moveProject,
-  type ReassignProjectData,
-  type ReassignProjectResponse,
-  reassignProject,
+  type MoveProjectToWorkspaceData,
+  type MoveProjectToWorkspaceResponse,
+  moveProjectToWorkspace,
   type UpdateProjectData,
   type UpdateProjectResponse,
   updateProject,
@@ -235,9 +235,13 @@ export const useAssignProjectMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
-  return useMutation<ReassignProjectResponse, ApiError, MutationData<ReassignProjectData> & { workspaceName: string }>({
+  return useMutation<
+    AssignProjectWorkspaceResponse,
+    ApiError,
+    MutationData<AssignProjectWorkspaceData> & { workspaceName: string }
+  >({
     mutationKey: keys.update,
-    mutationFn: ({ path, query }) => reassignProject({ path, query }),
+    mutationFn: ({ path, query }) => assignProjectWorkspace({ path, query }),
     onSuccess: (newProject, { path: { organizationId }, query: { workspaceId }, workspaceName }) => {
       toast.success(
         t('c:success.assign_resource', {
@@ -275,9 +279,13 @@ export const useProjectMoveMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
-  return useMutation<MoveProjectResponse, ApiError, MutationData<MoveProjectData> & { currentWorkspaceId: string }>({
+  return useMutation<
+    MoveProjectToWorkspaceResponse,
+    ApiError,
+    MutationData<MoveProjectToWorkspaceData> & { currentWorkspaceId: string }
+  >({
     mutationKey: keys.update,
-    mutationFn: ({ path, query }) => moveProject({ path, query }),
+    mutationFn: ({ path, query }) => moveProjectToWorkspace({ path, query }),
     onSuccess: (movedProject, { path: { organizationId }, query: { workspaceId }, currentWorkspaceId }) => {
       toaster(t('c:success.project_moved'), 'success');
 

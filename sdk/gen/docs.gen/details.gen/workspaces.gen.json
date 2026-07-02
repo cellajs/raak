@@ -643,7 +643,7 @@
     }
   },
   {
-    "operationId": "deleteWorkspace",
+    "operationId": "deleteWorkspaces",
     "responses": [
       {
         "status": 200,
@@ -1257,11 +1257,10 @@
         "properties": {
           "name": {
             "type": "string",
-            "required": true,
+            "required": false,
             "minLength": 2,
             "maxLength": 255
-          },
-          "organizationId": { "type": "string", "required": false, "maxLength": 50 }
+          }
         },
         "required": false,
         "contentType": "application/json"

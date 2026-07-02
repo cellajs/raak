@@ -1,8 +1,10 @@
 import type { AuthContext } from '#/core/context';
+import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { generateUniqueSlug } from '#/modules/entities/helpers/generate-slug';
 import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
+import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
 import { insertWorkspaces } from '#/modules/workspace/workspace-queries';
 import { buildSubject } from '#/permissions/build-subject';
@@ -61,13 +63,16 @@ export async function createWorkspacesOp(ctx: AuthContext, items: CreateWorkspac
 
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts, logCtx: ctx });
 
+  // Invalidate membership cache so subsequent requests see the new membership
+  invalidateCache.user(user.id);
+
   const counts = buildZeroCounts('workspace');
   const membershipByWsId = new Map(createdMemberships.map((m) => [m.workspaceId, m]));
   const workspacesWithAudit = await withAuditUsers(ctx, workspaceRecords, user);
 
   const workspaceResponses = workspacesWithAudit.map((ws) => {
     const membership = membershipByWsId.get(ws.id)!;
-    return { ...ws, included: { membership, counts } };
+    return { ...ws, included: { membership: toMembershipBase(membership), counts } };
   });
 
   return { data: workspaceResponses, ...rejectionState };

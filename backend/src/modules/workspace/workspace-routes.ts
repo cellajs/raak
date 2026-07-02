@@ -1,6 +1,7 @@
 import { createXRoute } from '#/core/x-routes';
 import { authGuard, crossTenantGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
+import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import {
   mockBatchWorkspacesResponse,
   mockPaginatedWorkspacesResponse,
@@ -24,11 +25,14 @@ import {
 } from '#/schemas';
 
 const workspaceRoutes = {
+  /**
+   * Create one or more personal workspaces
+   */
   createWorkspaces: createXRoute({
     method: 'post',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
-    xRateLimiter: [insertEntityLock],
+    xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     tags: ['workspaces', 'app', 'context'],
     operationId: 'createWorkspaces',
     summary: 'Create workspaces',
@@ -57,6 +61,9 @@ const workspaceRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get list of workspaces where the current user has a membership (cross-tenant)
+   */
   getWorkspaces: createXRoute({
     method: 'get',
     path: '/',
@@ -84,6 +91,9 @@ const workspaceRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get a workspace (tenant + org scoped)
+   */
   getWorkspace: createXRoute({
     method: 'get',
     path: '/{id}',
@@ -104,10 +114,14 @@ const workspaceRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Update a workspace
+   */
   updateWorkspace: createXRoute({
     method: 'put',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [singlePointsLimiter],
     tags: ['workspaces', 'app', 'context'],
     operationId: 'updateWorkspace',
     summary: 'Update workspace',
@@ -135,12 +149,16 @@ const workspaceRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Delete one or more workspaces
+   */
   deleteWorkspaces: createXRoute({
     method: 'delete',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [bulkPointsLimiter],
     tags: ['workspaces', 'app', 'context'],
-    operationId: 'deleteWorkspace',
+    operationId: 'deleteWorkspaces',
     summary: 'Delete workspaces',
     description: 'Deletes one or more workspaces by ID.',
     request: {
