@@ -2,7 +2,7 @@
 
 <h1><b>Raak</b></h1>
 <p>
-    <b>Raak is an issue tracker designed for teams working on multiple projects.</b>
+    <b>A fast, high-density issue tracker designed for small teams that manage multiple projects simultaneously.</b>
     <br />
     <br />
     <a href="https://raak.dev">Website</a>

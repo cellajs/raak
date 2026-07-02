@@ -26,12 +26,45 @@ export const DEFAULT_BRANCH = 'main';
 export const DEFAULT_SYNC_BRANCH = 'cella-sync';
 
 /**
+ * Default trunk branch that `cella release` cuts from and opens PRs into.
+ */
+export const DEFAULT_RELEASE_BASE = 'main';
+
+/**
  * Resolve the branch a fork must be on to receive upstream syncs.
  *
  * The fork's own `cella.config.ts` (`settings.syncBranch`) is the source of truth.
  */
 export function resolveSyncBranch(settings: SyncSettings): string {
   return settings.syncBranch ?? DEFAULT_SYNC_BRANCH;
+}
+
+/**
+ * Whether a branch counts as a sync branch: either the exact sync branch or an
+ * ephemeral child of it (`<syncBranch>/<...>`, as created by `cella release`).
+ */
+export function isSyncBranch(branch: string, settings: SyncSettings): boolean {
+  const syncBranch = resolveSyncBranch(settings);
+  return branch === syncBranch || branch.startsWith(`${syncBranch}/`);
+}
+
+/**
+ * Resolve the trunk branch `cella release` cuts the ephemeral branch from and PRs into.
+ */
+export function resolveReleaseBase(settings: SyncSettings): string {
+  return settings.releaseBase ?? DEFAULT_RELEASE_BASE;
+}
+
+/**
+ * Build a unique ephemeral integration branch name for a release cycle, e.g.
+ * `cella-sync/20260702-1430-c5a1970`. Cutting a fresh branch per cycle keeps each PR
+ * scoped to that sync's upstream delta.
+ */
+export function buildEphemeralSyncBranch(settings: SyncSettings, shortSha: string): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  return `${resolveSyncBranch(settings)}/${stamp}-${shortSha}`;
 }
 
 /**
