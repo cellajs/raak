@@ -2,20 +2,14 @@
  * Sync service for the cella CLI.
  *
  * Runs the merge engine directly in the fork (no worktree) so conflicts surface in the IDE, on
- * a fresh ephemeral branch cut from the trunk. The command is idempotent: if a run stops at
+ * a fresh temporary branch cut from the trunk. The command is idempotent: if a run stops at
  * conflicts, resolve them and run `cella sync` again to finish the same merge.
  */
 
 import { spawnSync } from 'node:child_process';
 import type { MergeResult, RuntimeConfig } from '../config/types';
 import pc from '../utils/colors';
-import {
-  buildEphemeralSyncBranch,
-  DEFAULT_UPSTREAM_REMOTE,
-  isEphemeralSyncBranch,
-  resolveReleaseBase,
-  resolveUpstream,
-} from '../utils/config';
+import { buildTemporarySyncBranch, isTemporarySyncBranch, resolveReleaseBase } from '../utils/config';
 import {
   createSpinner,
   printFlagWarnings,
@@ -34,7 +28,8 @@ import {
   getConflictedFiles,
   getCurrentBranch,
   getShortSha,
-  fetch as gitFetch,
+  getUpstreamStatus,
+  isClean,
   mergeInProgress,
   pullFastForward,
   pushBranch,
@@ -44,10 +39,10 @@ import {
 import { runMergeEngine } from './merge-engine';
 import { runPackages } from './packages';
 
-/** Context for the ephemeral branch a sync cycle runs on. */
-interface EphemeralSyncBranch {
-  /** The freshly cut ephemeral branch, e.g. `cella/sync/20260702-1430-c5a1970`. */
-  ephemeral: string;
+/** Context for the temporary branch a sync cycle runs on. */
+interface TemporarySyncBranch {
+  /** The freshly cut temporary branch, e.g. `cella/sync/20260702-1430`. */
+  temporaryBranch: string;
   /** The trunk the branch was cut from and PRs land into (`releaseBase`, default `main`). */
   base: string;
   /** The branch the user was on before the cycle started (for cleanup on no-op). */
@@ -55,31 +50,62 @@ interface EphemeralSyncBranch {
 }
 
 /**
- * Cut a fresh ephemeral sync branch from the trunk.
+ * Make sure the trunk is current with its remote before a sync cycle cuts a branch from it.
  *
- * Switches to `releaseBase`, fast-forwards it, fetches upstream (so the branch can be named
- * after the upstream commit), then creates `<syncBranchPrefix>/<stamp>-<sha>` so the merge
- * lands on an isolated throwaway branch rather than a long-lived integration branch.
+ * Fetches the trunk's upstream and reacts to how local compares:
+ * - behind (fast-forwardable): fast-forward it so the branch is cut from the latest trunk.
+ * - diverged (local commits the remote lacks *and* vice versa): abort with guidance, since
+ *   syncing onto a stale/diverged trunk produces a PR against an out-of-date base and avoidable
+ *   conflicts.
+ * - ahead-only / up to date / no upstream (local-only repo): fine, just note it and continue.
  */
-async function setupEphemeralSyncBranch(config: RuntimeConfig): Promise<EphemeralSyncBranch> {
+async function ensureBaseUpToDate(forkPath: string, base: string): Promise<void> {
+  const { upstream, ahead, behind } = await getUpstreamStatus(forkPath);
+
+  if (!upstream) {
+    console.info(pc.dim(`'${base}' has no upstream — skipping the up-to-date check.`));
+    return;
+  }
+
+  if (ahead > 0 && behind > 0) {
+    throw new Error(
+      `'${base}' has diverged from '${upstream}' (${ahead} ahead, ${behind} behind).\n` +
+        `Reconcile '${base}' with '${upstream}' first (e.g. rebase or reset it), then re-run sync.`,
+    );
+  }
+
+  if (behind > 0) {
+    console.info(pc.dim(`fast-forwarding '${base}' to '${upstream}' (${behind} behind)...`));
+    await pullFastForward(forkPath);
+    return;
+  }
+
+  if (ahead > 0) {
+    console.info(pc.dim(`'${base}' is ${ahead} commit(s) ahead of '${upstream}' (unpushed) — continuing.`));
+  }
+}
+
+/**
+ * Cut a fresh temporary sync branch from the trunk.
+ *
+ * Switches to `releaseBase`, fast-forwards it, then creates `<syncBranchPrefix>/<stamp>` so the
+ * merge lands on an isolated throwaway branch rather than a long-lived integration branch.
+ */
+async function setupTemporarySyncBranch(config: RuntimeConfig): Promise<TemporarySyncBranch> {
   const { forkPath, settings } = config;
   const base = resolveReleaseBase(settings);
   const startBranch = await getCurrentBranch(forkPath);
 
   console.info(pc.dim(`switching to '${base}' and updating...`));
   await switchBranch(forkPath, base);
-  await pullFastForward(forkPath);
+  await ensureBaseUpToDate(forkPath, base);
 
-  // Fetch upstream so the ephemeral branch can be named after the upstream commit.
-  const { branchRef } = resolveUpstream(settings);
-  await gitFetch(forkPath, DEFAULT_UPSTREAM_REMOTE);
-  const shortSha = await getShortSha(forkPath, branchRef);
-  const ephemeral = buildEphemeralSyncBranch(settings, shortSha);
+  const temporaryBranch = buildTemporarySyncBranch(settings);
 
-  console.info(pc.dim(`creating ephemeral sync branch '${ephemeral}' from '${base}'...`));
-  await createBranchFrom(forkPath, ephemeral, base);
+  console.info(pc.dim(`creating temporary sync branch '${temporaryBranch}' from '${base}'...`));
+  await createBranchFrom(forkPath, temporaryBranch, base);
 
-  return { ephemeral, base, startBranch };
+  return { temporaryBranch, base, startBranch };
 }
 
 /**
@@ -127,9 +153,9 @@ export async function runSync(config: RuntimeConfig): Promise<MergeResult> {
 }
 
 /** Print the "push + open a PR" steps for a sync branch whose merge is already committed. */
-function printShipSteps(ephemeral: string, base: string): void {
-  console.info(pc.dim(`  git push -u origin ${ephemeral}`));
-  console.info(pc.dim(`  gh pr create --base ${base} --head ${ephemeral} --fill`));
+function printShipSteps(temporaryBranch: string, base: string): void {
+  console.info(pc.dim(`  git push -u origin ${temporaryBranch}`));
+  console.info(pc.dim(`  gh pr create --base ${base} --head ${temporaryBranch} --fill`));
 }
 
 /** Guidance shown after a fresh cycle stages a merge: re-run to finish and ship it. */
@@ -202,14 +228,14 @@ function finalizeWorkspace(forkPath: string): boolean {
   return true;
 }
 
-/** Outcome of a sync cycle run on a fresh ephemeral branch. */
+/** Outcome of a sync cycle run on a fresh temporary branch. */
 type SyncCycleOutcome =
-  | { status: 'conflicts'; branch: EphemeralSyncBranch }
-  | { status: 'staged'; branch: EphemeralSyncBranch }
+  | { status: 'conflicts'; branch: TemporarySyncBranch }
+  | { status: 'staged'; branch: TemporarySyncBranch }
   | { status: 'noop' };
 
 /**
- * Run one sync cycle on a fresh ephemeral branch: cut the branch, merge upstream (+ packages),
+ * Run one sync cycle on a fresh temporary branch: cut the branch, merge upstream (+ packages),
  * and report the resulting state.
  *
  * - `conflicts`: merge staged with unresolved conflicts, left for IDE resolution.
@@ -219,7 +245,7 @@ type SyncCycleOutcome =
  */
 async function runSyncCycle(config: RuntimeConfig): Promise<SyncCycleOutcome> {
   const { forkPath } = config;
-  const branch = await setupEphemeralSyncBranch(config);
+  const branch = await setupTemporarySyncBranch(config);
 
   const result = await runSync(config);
 
@@ -233,8 +259,8 @@ async function runSyncCycle(config: RuntimeConfig): Promise<SyncCycleOutcome> {
 
   // Nothing staged: already up to date. Clean up the throwaway branch.
   if (!mergeInProgress(forkPath)) {
-    await switchBranch(forkPath, branch.startBranch === branch.ephemeral ? branch.base : branch.startBranch);
-    await deleteBranch(forkPath, branch.ephemeral);
+    await switchBranch(forkPath, branch.startBranch === branch.temporaryBranch ? branch.base : branch.startBranch);
+    await deleteBranch(forkPath, branch.temporaryBranch);
     return { status: 'noop' };
   }
 
@@ -242,7 +268,7 @@ async function runSyncCycle(config: RuntimeConfig): Promise<SyncCycleOutcome> {
 }
 
 /**
- * Finish an in-progress merge left by an earlier `cella sync` run on the same ephemeral branch.
+ * Finish an in-progress merge left by an earlier `cella sync` run on the same temporary branch.
  *
  * This is what makes the command idempotent: after a run stops at conflicts, resolve and stage
  * them, then run `cella sync` again. If conflicts remain we point them out and stop; once none
@@ -262,9 +288,13 @@ async function resumeSyncMerge(config: RuntimeConfig, branch: string): Promise<v
     return;
   }
 
-  // Reconcile deps + regenerate derived files, then stage everything so the merge commit is
-  // complete (package.json key-sync and the merge both touch package.json, leaving the lockfile
-  // and generated files stale/unstaged).
+  // Stage everything up front (resolved conflicts + any manual edits) before running tooling that
+  // may fail: `finalizeWorkspace` returns early on a failing `pnpm check`, so staging afterwards
+  // would never happen and the edits would never be recorded in the merge.
+  await stageAll(forkPath);
+
+  // Reconcile deps + regenerate derived files (package.json key-sync and the merge both touch
+  // package.json, leaving the lockfile and generated files stale/unstaged).
   if (!finalizeWorkspace(forkPath)) {
     console.info();
     console.info(
@@ -273,9 +303,10 @@ async function resumeSyncMerge(config: RuntimeConfig, branch: string): Promise<v
     return;
   }
 
-  // Read the merged upstream sha before squashing (commitSquash clears MERGE_HEAD), then commit
-  // the staged delta as a single-parent commit so the PR shows one clean commit instead of the
-  // whole upstream history (the merge's upstream ancestry isn't shared on the remote).
+  // Read the merged upstream sha before squashing (commitSquash clears MERGE_HEAD), re-stage (the
+  // install/check step may have touched files), then commit the staged delta as a single-parent
+  // commit so the PR shows one clean commit instead of the whole upstream history (the merge's
+  // upstream ancestry isn't shared on the remote).
   const upstreamSha = await getShortSha(forkPath, 'MERGE_HEAD').catch(() => '');
   await stageAll(forkPath);
   const message = upstreamSha ? `chore: sync upstream cella ${upstreamSha}` : 'chore: sync upstream cella';
@@ -293,14 +324,14 @@ async function resumeSyncMerge(config: RuntimeConfig, branch: string): Promise<v
  *   push and open the PR.
  * - On a sync branch with the merge already committed: push and open the PR (e.g. a previous
  *   push failed), then switch back to the trunk.
- * - Anywhere else: require a clean tree, then cut a fresh ephemeral branch and merge upstream.
+ * - Anywhere else: require a clean tree, then cut a fresh temporary branch and merge upstream.
  */
 export async function runSyncCommand(config: RuntimeConfig): Promise<void> {
   const { forkPath, settings } = config;
   const currentBranch = await getCurrentBranch(forkPath);
-  const onSyncBranch = isEphemeralSyncBranch(settings, currentBranch);
+  const onSyncBranch = isTemporarySyncBranch(settings, currentBranch);
 
-  // Resume path: an earlier run left a merge staged on this ephemeral branch (e.g. after
+  // Resume path: an earlier run left a merge staged on this temporary branch (e.g. after
   // conflicts). Re-running finishes it instead of starting over.
   if (onSyncBranch && mergeInProgress(forkPath)) {
     await resumeSyncMerge(config, currentBranch);
@@ -309,13 +340,25 @@ export async function runSyncCommand(config: RuntimeConfig): Promise<void> {
 
   // On a sync branch with the merge already committed: ship it (push + PR + back to trunk).
   if (onSyncBranch) {
+    // shipSyncBranch only pushes HEAD, so any edits made after the squash commit would be silently
+    // left out of the pushed branch/PR. Refuse to ship over a dirty tree and make them commit.
+    if (!(await isClean(forkPath))) {
+      console.info();
+      console.info(
+        pc.yellow(
+          `sync branch '${currentBranch}' has uncommitted changes that would not be shipped.\n` +
+            'commit them (`git commit --amend --no-edit` or a new commit), then re-run `pnpm cella sync`.',
+        ),
+      );
+      return;
+    }
     console.info();
     console.info(pc.green(`sync branch '${currentBranch}' is already committed.`));
     await shipSyncBranch(config, currentBranch);
     return;
   }
 
-  // Fresh cycle: only ever cut the ephemeral branch from a clean tree.
+  // Fresh cycle: only ever cut the temporary branch from a clean tree.
   await assertClean(forkPath);
   const outcome = await runSyncCycle(config);
   console.info();
@@ -325,11 +368,11 @@ export async function runSyncCommand(config: RuntimeConfig): Promise<void> {
     return;
   }
 
-  const { ephemeral } = outcome.branch;
+  const { temporaryBranch } = outcome.branch;
   if (outcome.status === 'conflicts') {
-    console.info(pc.yellow(`conflicts on '${ephemeral}'. resolve them in your editor and stage them, then:`));
+    console.info(pc.yellow(`conflicts on '${temporaryBranch}'. resolve them in your editor and stage them, then:`));
   } else {
-    console.info(pc.green(`sync merge staged on '${ephemeral}'. review, then:`));
+    console.info(pc.green(`sync merge staged on '${temporaryBranch}'. review, then:`));
   }
   printFinishSteps();
 }
