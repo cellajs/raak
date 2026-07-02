@@ -34,8 +34,6 @@ type CliOptionState = Pick<
   | 'force'
   | 'checkOverrides'
   | 'coverage'
-  | 'releasePush'
-  | 'releaseAutoMerge'
 >;
 
 type MenuContext = {
@@ -70,8 +68,6 @@ const defaultOptions: CliOptionState = {
   force: false,
   checkOverrides: false,
   coverage: false,
-  releasePush: true,
-  releaseAutoMerge: false,
 };
 
 function readOptions(opts: Record<string, unknown>): CliOptionState {
@@ -94,8 +90,6 @@ function readOptions(opts: Record<string, unknown>): CliOptionState {
     force: opts.force === true,
     checkOverrides: opts.checkOverrides === true,
     coverage: opts.coverage === true,
-    releasePush: opts.push !== false,
-    releaseAutoMerge: opts.merge === true,
   };
 }
 
@@ -123,16 +117,6 @@ const serviceDefinitions: ServiceDefinition[] = [
       { flags: '--track <mode>', description: 'override upstream tracking for this run: release|branch' },
     ],
     menuDescription: () => 'merge upstream changes + sync package.json',
-  },
-  {
-    name: 'release',
-    description: 'sync upstream on a fresh branch and open a squash-merge PR',
-    options: [
-      { flags: '--merge', description: 'auto squash-merge the PR and realign trunk (needs gh + permissions)' },
-      { flags: '--no-push', description: 'leave the branch local; skip pushing and opening a PR' },
-      { flags: '--track <mode>', description: 'override upstream tracking for this run: release|branch' },
-    ],
-    menuDescription: () => 'sync on an ephemeral branch + open a PR into main',
   },
   {
     name: 'audit',
