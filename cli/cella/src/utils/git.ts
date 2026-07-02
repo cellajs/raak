@@ -6,10 +6,11 @@
 
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, rmdir, unlink } from 'node:fs/promises';
+import { mkdir, readdir, rmdir, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { promisify } from 'node:util';
+import { readManifestBase } from './manifest';
 
 const execFileAsync = promisify(execFile);
 
@@ -86,6 +87,64 @@ export async function localBranchExists(cwd: string, branch: string): Promise<bo
  */
 export async function createBranch(cwd: string, branch: string): Promise<void> {
   await git(['switch', '-c', branch], cwd);
+}
+
+/**
+ * Switch to an existing branch.
+ */
+export async function switchBranch(cwd: string, branch: string): Promise<void> {
+  await git(['switch', branch], cwd);
+}
+
+/**
+ * Create and check out a new branch from a specific start point (branch/ref).
+ */
+export async function createBranchFrom(cwd: string, branch: string, startPoint: string): Promise<void> {
+  await git(['switch', '-c', branch, startPoint], cwd);
+}
+
+/**
+ * Delete a local branch (force). No-op if it doesn't exist.
+ */
+export async function deleteBranch(cwd: string, branch: string): Promise<void> {
+  await git(['branch', '-D', branch], cwd, { ignoreErrors: true });
+}
+
+/**
+ * Fast-forward the current branch from its upstream tracking branch.
+ * Best-effort: ignores errors (e.g. no origin, offline, or nothing to pull).
+ */
+export async function pullFastForward(cwd: string): Promise<void> {
+  await git(['pull', '--ff-only'], cwd, { ignoreErrors: true, skipEditor: true });
+}
+
+/**
+ * Push a branch to a remote, setting upstream tracking.
+ */
+export async function pushBranch(cwd: string, remote: string, branch: string): Promise<void> {
+  await git(['push', '-u', remote, branch], cwd);
+}
+
+/**
+ * Commit staged changes without opening an editor (keeps the default/merge message).
+ * With a merge in progress this produces a two-parent merge commit.
+ */
+export async function commitNoEdit(cwd: string): Promise<void> {
+  await git(['commit', '--no-edit'], cwd, { skipEditor: true });
+}
+
+/**
+ * Whether a merge is currently in progress (MERGE_HEAD present).
+ */
+export function mergeInProgress(cwd: string): boolean {
+  return existsSync(join(cwd, '.git', 'MERGE_HEAD'));
+}
+
+/**
+ * Get the abbreviated (short) SHA for a ref.
+ */
+export async function getShortSha(cwd: string, ref: string): Promise<string> {
+  return git(['rev-parse', '--short', ref], cwd);
 }
 
 /**
@@ -649,6 +708,11 @@ export async function storeLastSyncRef(cwd: string, upstreamHash: string): Promi
   }
 }
 
+/** Stage a single path (git add). Best-effort — never throws. */
+export async function stagePath(cwd: string, path: string): Promise<void> {
+  await git(['add', '--', path], cwd, { ignoreErrors: true });
+}
+
 /**
  * Get the stored last-sync upstream ref.
  * Returns null if no previous sync has been recorded.
@@ -680,24 +744,6 @@ async function commitObjectExists(cwd: string, sha: string): Promise<boolean> {
 }
 
 /**
- * Read the upstream base commit recorded by create-cella at scaffold time.
- *
- * create-cella scaffolds a fork from a template with no shared git history, so there is
- * no natural merge-base for the first sync. It records the exact upstream commit the
- * scaffold was created from in `.cella/base` (a committed file) so sync can bootstrap a
- * merge-base. Returns the 40-char SHA, or null when the file is absent or malformed.
- */
-export async function readScaffoldBase(cwd: string): Promise<string | null> {
-  try {
-    const raw = await readFile(join(cwd, '.cella', 'base'), 'utf8');
-    const match = raw.match(/[0-9a-f]{40}/i);
-    return match ? match[0].toLowerCase() : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Get the root (parentless) commit of a ref's history. A create-cella scaffold has a
  * single rootless "Initial commit". Returns null when no root is found.
  */
@@ -715,7 +761,7 @@ async function getRootCommit(cwd: string, ref: string): Promise<string | null> {
  * This bootstraps ancestry non-destructively:
  *   1. If a native merge-base already exists, do nothing (the common case).
  *   2. Otherwise resolve the logical base commit: the stored `refs/cella/last-sync` ref, else
- *      the `.cella/base` provenance written by create-cella.
+ *      the `cella.manifest.json` provenance committed by the last sync (or create-cella scaffold).
  *   3. Graft the fork's root commit onto that base with `git replace --graft`, so every native
  *      git operation (merge-base and the 3-way merge itself) sees correct ancestry. The replace
  *      ref is local-only and never pushed, so the fork's own published history stays clean.
@@ -727,7 +773,7 @@ export async function ensureSyncBase(cwd: string, headRef: string, upstreamRef: 
   const nativeBase = await git(['merge-base', headRef, upstreamRef], cwd, { ignoreErrors: true });
   if (nativeBase) return;
 
-  const baseSha = (await getStoredSyncRef(cwd)) ?? (await readScaffoldBase(cwd));
+  const baseSha = (await getStoredSyncRef(cwd)) ?? (await readManifestBase(cwd));
   if (!baseSha) {
     throw new Error(
       `no common ancestor between the fork and '${upstreamRef}', and no sync base recorded.\n\n` +

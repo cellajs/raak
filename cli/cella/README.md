@@ -29,6 +29,7 @@ pnpm cella contributions --fork raak --json
 |---------|-------------|
 | `analyze` | Dry run to see what would change on sync |
 | `sync` | Merge upstream changes into your app |
+| `release` | Sync upstream on a fresh branch and open a squash-merge PR into `main` |
 | `audit` | Check for outdated packages & vulnerabilities |
 | `stats` | Count files by category and workspace package |
 | `forks` * | Sync downstream to local fork repositories |
@@ -48,6 +49,7 @@ Service-specific help is available via `pnpm cella <service> --help`.
 |---------|----------------|
 | analyze | `--log`, `--list`, `--json`, `--scope <all\|risk\|protected>`, `--diff <path>`, `--open-diff <path>` |
 | sync | `--log`, `--hard`, `--unpinned`, `--track <release\|branch>` |
+| release | `--merge`, `--no-push`, `--track <release\|branch>` |
 | audit | `--list`, `--force`, `--check-overrides` |
 | forks | `--fork <name>`, `--log`, `--hard`, `-V, --verbose` |
 | contributions | `--fork <name>`, `--list`, `--json`, `--diff <path>` |
@@ -93,6 +95,30 @@ sync branch from your current branch; you then open a PR into `main` and squash-
 When cella (upstream) pushes to a fork via the **forks** service, it reads that fork's own
 `settings.syncBranch` as the source of truth — there's no per-fork branch to configure on
 the cella side.
+
+### `cella release` (recommended cycle)
+
+`pnpm cella release` automates the full cycle on a **throwaway, uniquely named** branch cut
+fresh from the trunk (`settings.releaseBase`, default `main`):
+
+```
+main ──▶ cella-sync/<stamp>-<sha> ──(sync merge + commit)──▶ push ──▶ PR ──(squash)──▶ main
+```
+
+Cutting a fresh branch each cycle keeps every PR scoped to just that sync's upstream delta —
+no accumulation of previously squash-merged commits — while `main` stays linear. Upstream
+ancestry for the merge-base is carried by `refs/cella/last-sync` (and the committed
+`cella.manifest.json` for fresh clones), so the ephemeral branch is safe to delete after each cycle.
+
+```bash
+pnpm cella release            # sync on a fresh branch, push, open a PR (you squash-merge)
+pnpm cella release --merge    # also auto squash-merge and realign trunk (needs gh + perms)
+pnpm cella release --no-push   # leave the branch local; push + open the PR yourself
+```
+
+On conflicts it stops after staging so you resolve in the IDE, then finish with
+`git commit --no-edit` + push + `gh pr create`. Only `main` needs branch protection;
+ephemeral `cella-sync/*` branches are auto-deleted on merge.
 
 ## Merge Strategy
 

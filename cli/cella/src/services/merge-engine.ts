@@ -51,8 +51,10 @@ import {
   removeFileFromWorktree,
   resolveLatestReleaseTag,
   restoreToHead,
+  stagePath,
   storeLastSyncRef,
 } from '../utils/git';
+import { MANIFEST_FILE, type SyncManifest, writeSyncManifest } from '../utils/manifest';
 import { isIgnored, isPinnedForSync } from '../utils/overrides';
 import { type AnalyzePredicates, analyzeRefs, enrichChangeInfo } from './analyze-core';
 
@@ -482,10 +484,34 @@ export async function runMergeEngine(
       // Count total resolved changes (includes ignored/pinned resolutions)
       const totalResolved = synced + summary.ignored + summary.pinned;
 
+      // Record the upstream sync point in lockstep: the local `refs/cella/last-sync` ref plus
+      // the committed `cella.manifest.json` (staged so it rides in the sync commit and travels
+      // with the repo for fresh-clone bootstrap).
+      const upstreamRepo = upstreamGitHubUrl ? upstreamGitHubUrl.replace('https://github.com/', '') : undefined;
+      const syncManifest: SyncManifest = {
+        upstream: {
+          repo: upstreamRepo,
+          track: releaseTag ? 'release' : 'branch',
+          commit: upstreamCommit.hash,
+          release: releaseTag ?? null,
+          url: upstreamGitHubUrl
+            ? releaseTag
+              ? `${upstreamGitHubUrl}/releases/tag/${releaseTag}`
+              : `${upstreamGitHubUrl}/commit/${upstreamCommit.hash}`
+            : undefined,
+          syncedAt: new Date().toISOString(),
+        },
+      };
+      const recordSyncPoint = async () => {
+        await storeLastSyncRef(forkPath, upstreamCommit.hash);
+        await writeSyncManifest(forkPath, syncManifest);
+        await stagePath(forkPath, MANIFEST_FILE);
+      };
+
       if (remainingConflicts.length > 0) {
         // Conflicts: leave MERGE_HEAD intact for IDE 3-way merge resolution.
         // When user commits, it becomes a merge commit (self-healing ancestry).
-        await storeLastSyncRef(forkPath, upstreamCommit.hash);
+        await recordSyncPoint();
         // Materialize the upstream view worktree so auto-merged files get exact
         // `code --diff` commands (byte-consistent with the fetched upstream ref).
         const upstreamViewPath = await refreshViewWorktree(forkPath, upstreamRef);
@@ -509,7 +535,7 @@ export async function runMergeEngine(
         // Keep MERGE_HEAD so the commit the user creates is a two-parent merge commit
         // with full upstream ancestry (native git merge-base). The sync branch is a
         // dedicated integration branch; PRs into `main` are squash-merged separately.
-        await storeLastSyncRef(forkPath, upstreamCommit.hash);
+        await recordSyncPoint();
         onStep?.('synced', `${label} (staged, commit to finish)`);
       } else {
         // Truly nothing changed - clean up merge state

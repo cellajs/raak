@@ -5,13 +5,9 @@ import { appConfig } from 'shared';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
 import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
-// import Counters from '~/modules/marketing/about/counters';
 import { FAQ } from '~/modules/marketing/about/faq';
-// import Features from '~/modules/marketing/about/features';
 import { Hero } from '~/modules/marketing/about/hero';
-// import { Pricing } from '~/modules/marketing/about/pricing';
 import { AboutSection } from '~/modules/marketing/about/section';
-// import Integrations from '~/modules/marketing/about/integrations';
 import '~/modules/marketing/about/glow-button.css';
 import { Why } from '~/modules/marketing/about/why';
 import { MarketingFooter } from '~/modules/marketing/footer';
@@ -72,40 +68,10 @@ function AboutPage() {
             <Why />
           </AboutSection>
 
-          {/* Showcase */}
-          {/* <AboutSection key={'showcase'} sectionId="showcase" title="about:showcase" text="about:showcase.text">
-            <Showcase />
-          </AboutSection> */}
-
-          {/* Call to Action */}
-          {/* <AboutSection key={'call-to-action'} sectionId="call-to-action" alternate={true}>
-            <CallToAction />
-          </AboutSection> */}
-
-          {/* Features */}
-          {/* <AboutSection key={'features'} sectionId="features" title="about:title_3" text="about:text_3" alternate={true}>
-            <Features />
-          </AboutSection> */}
-
-          {/* Integrations */}
-          {/* <AboutSection key={'integrations'} sectionId="integrations" title="about:title_4" text="about:text_4">
-            <Integrations />
-          </AboutSection> */}
-
-          {/* Pricing - hidden for now */}
-          {/* <AboutSection key={'pricing'} sectionId="pricing" title="about:title_6" text="about:text_6">
-            <Pricing />
-          </AboutSection> */}
-
           {/* FAQs */}
-          <AboutSection key={'faqs'} sectionId="faqs" title="about:title_7" text="about:text_7" alternate={true}>
+          <AboutSection key={'faqs'} sectionId="faqs" title="about:title_7" alternate={true}>
             <FAQ />
           </AboutSection>
-
-          {/* Public counters */}
-          {/* <AboutSection key={'counters'} sectionId="counters" title="about:title_5" text="about:text_5">
-            <Counters />
-          </AboutSection> */}
         </div>
       </div>
       <MarketingFooter />

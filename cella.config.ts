@@ -18,6 +18,7 @@ export default defineConfig({
     // Paths the fork fully owns — never synced (existing or new)
     ignored: [
       'README.md',
+      'cella.manifest.json',
       'infra/compose.gen.yml',
       'infra/Pulumi.production.yaml',
       'infra/Pulumi.staging.yaml',
@@ -43,6 +44,7 @@ export default defineConfig({
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',
       'frontend/public/favicon.svg',
+      'frontend/public/thumbnail.png',
       'frontend/src/nav-config.tsx',
       'frontend/src/routes-config.tsx',
       'frontend/src/menu-config.tsx',
