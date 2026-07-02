@@ -2,7 +2,7 @@
 
 <h1><b>Raak</b></h1>
 <p>
-    <b>Linear meets Pivotal tracker. Raak is an issue tracker designed for teams working on multiple projects.</b>
+    <b>Raak is an issue tracker designed for teams working on multiple projects.</b>
     <br />
     <br />
     <a href="https://raak.dev">Website</a>
@@ -14,8 +14,7 @@
 
 </div>
 
-> [!CAUTION]
-> Raak is an implementation project based upon the template [Cella](https://github/com/cellajs/cella) (prerelease).
+> Raak is created with [Cella](https://github/com/cellajs/cella) as its template.
 
 ## Installation
 
