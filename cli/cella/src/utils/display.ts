@@ -110,11 +110,6 @@ export function setJsonMode(enabled: boolean): void {
   console.warn = toStderr;
 }
 
-/** Whether JSON mode is active. */
-export function isJsonMode(): boolean {
-  return jsonMode;
-}
-
 /** Write a machine-readable payload to stdout (bypasses the stderr routing of JSON mode). */
 export function writeStdout(text: string): void {
   process.stdout.write(text.endsWith('\n') ? text : `${text}\n`);
@@ -240,10 +235,6 @@ function hyperlink(label: string, url?: string): string {
   return `\x1b]8;;${url}\x07${label}\x1b]8;;\x07`;
 }
 
-function quoteShellArg(value: string): string {
-  return `'${value.split("'").join("'\\''")}'`;
-}
-
 /**
  * Build a VS Code deep link that opens a file from the fork workspace.
  */
@@ -354,29 +345,6 @@ function formatFileDateInfo(
 }
 
 /**
- * Build a copyable `code --diff` command for this file.
- * `command:` URIs only execute inside trusted VS Code markdown/webviews, while
- * terminal OSC 8 links are opened as external URLs and cannot run them.
- */
-function getVsCodeDiffLink(filePath: string, options: LinkOptions): string {
-  const showTerminalDiffCommands = false;
-  // TODO: Re-enable rendered diff commands once we have a terminal UX that is
-  // clearly actionable without implying click support that VS Code cannot honor.
-  if (!showTerminalDiffCommands) return '';
-
-  const { upstreamViewPath, forkPath } = options;
-  if (!upstreamViewPath || !forkPath) return '';
-
-  const upstreamAbsolute = resolve(upstreamViewPath, filePath);
-  // Skip the diff link for files absent upstream (e.g. local-only or newly deleted upstream).
-  if (!existsSync(upstreamAbsolute)) return '';
-
-  const forkAbsolute = resolve(forkPath, filePath);
-
-  return ` ${pc.dim('·')} ${pc.dim(`code --diff ${quoteShellArg(upstreamAbsolute)} ${quoteShellArg(forkAbsolute)}`)}`;
-}
-
-/**
  * Format merge-in-progress detail with conflicts and auto-merged file links.
  */
 export function formatMergeInProgressDetail(
@@ -397,8 +365,7 @@ export function formatMergeInProgressDetail(
   const shown = autoMergedFiles.slice(0, maxFiles);
   for (const filePath of shown) {
     const fileLink = getVsCodeOpenFileLink(filePath, linkOptions);
-    const diffInfo = getVsCodeDiffLink(filePath, linkOptions);
-    lines.push(`  - ${fileLink}${diffInfo}`);
+    lines.push(`  - ${fileLink}`);
   }
 
   if (autoMergedFiles.length > shown.length) {
@@ -506,8 +473,7 @@ function printFileGroup(
     const commit = useUpstream ? file.upstreamCommit : file.changedCommit;
     const date = useUpstream ? file.upstreamChangedAt : file.changedAt;
     const dateInfo = formatFileDateInfo(file.path, commit, date, linkOptions);
-    const diffInfo = getVsCodeDiffLink(file.path, linkOptions);
-    console.info(`  ${config.icon} ${file.path}${dateInfo}${diffInfo}`);
+    console.info(`  ${config.icon} ${file.path}${dateInfo}`);
   }
 
   if (filtered.length > maxLines) {

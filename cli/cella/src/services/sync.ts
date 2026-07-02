@@ -28,7 +28,7 @@ import {
 } from '../utils/display';
 import {
   assertClean,
-  commitNoEdit,
+  commitSquash,
   createBranchFrom,
   deleteBranch,
   getConflictedFiles,
@@ -37,6 +37,7 @@ import {
   fetch as gitFetch,
   mergeInProgress,
   pullFastForward,
+  pushBranch,
   stageAll,
   switchBranch,
 } from '../utils/git';
@@ -131,10 +132,57 @@ function printShipSteps(ephemeral: string, base: string): void {
   console.info(pc.dim(`  gh pr create --base ${base} --head ${ephemeral} --fill`));
 }
 
-/** Print the "commit + push + open a PR" steps for a sync branch with a staged (uncommitted) merge. */
-function printFinishSteps(ephemeral: string, base: string): void {
-  console.info(pc.dim('  pnpm cella sync            # re-run to reconcile deps, regenerate files, and commit'));
-  printShipSteps(ephemeral, base);
+/** Guidance shown after a fresh cycle stages a merge: re-run to finish and ship it. */
+function printFinishSteps(): void {
+  console.info(pc.dim('  pnpm cella sync            # re-run to commit, push, and open the PR'));
+}
+
+/** Whether the GitHub CLI is available on PATH. */
+function ghAvailable(): boolean {
+  return spawnSync('gh', ['--version'], { stdio: 'ignore' }).status === 0;
+}
+
+/**
+ * Push the finished sync branch to `origin`, open a PR into the trunk, and switch back to the
+ * trunk. Runs automatically once a rerun completes the merge cleanly.
+ *
+ * Every step degrades gracefully: a failed push (no `origin`, auth) prints the manual steps and
+ * leaves you on the branch; a missing/failed `gh` (or an existing PR) prints the `gh` command but
+ * still returns you to the trunk since the branch is already pushed.
+ */
+async function shipSyncBranch(config: RuntimeConfig, branch: string): Promise<void> {
+  const { forkPath, settings } = config;
+  const base = resolveReleaseBase(settings);
+
+  console.info(pc.dim(`pushing '${branch}' to origin...`));
+  try {
+    await pushBranch(forkPath, 'origin', branch);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.info(pc.yellow(`push failed (${detail.split('\n')[0]}). finish manually:`));
+    printShipSteps(branch, base);
+    return;
+  }
+
+  if (ghAvailable()) {
+    console.info(pc.dim('opening a pull request...'));
+    const pr = spawnSync('gh', ['pr', 'create', '--base', base, '--head', branch, '--fill'], {
+      cwd: forkPath,
+      stdio: 'inherit',
+    });
+    if (pr.status !== 0) {
+      console.info(pc.yellow('could not open the PR automatically (it may already exist). open it with:'));
+      console.info(pc.dim(`  gh pr create --base ${base} --head ${branch} --fill`));
+    }
+  } else {
+    console.info(pc.yellow('`gh` not found — open the PR manually:'));
+    console.info(pc.dim(`  gh pr create --base ${base} --head ${branch} --fill`));
+  }
+
+  console.info(pc.dim(`switching back to '${base}'...`));
+  await switchBranch(forkPath, base);
+  await pullFastForward(forkPath).catch(() => {});
+  console.info(pc.green(`done — '${branch}' is pushed and you're back on '${base}'.`));
 }
 
 /**
@@ -199,11 +247,11 @@ async function runSyncCycle(config: RuntimeConfig): Promise<SyncCycleOutcome> {
  * This is what makes the command idempotent: after a run stops at conflicts, resolve and stage
  * them, then run `cella sync` again. If conflicts remain we point them out and stop; once none
  * remain we reconcile dependencies (`pnpm install` + `pnpm check`), stage everything, commit the
- * merge, and print the ship steps.
+ * staged delta as a single squashed commit (see `commitSquash`), then push the branch and open
+ * the PR (see `shipSyncBranch`).
  */
 async function resumeSyncMerge(config: RuntimeConfig, branch: string): Promise<void> {
-  const { forkPath, settings } = config;
-  const base = resolveReleaseBase(settings);
+  const { forkPath } = config;
   const conflicts = await getConflictedFiles(forkPath);
 
   console.info();
@@ -224,26 +272,33 @@ async function resumeSyncMerge(config: RuntimeConfig, branch: string): Promise<v
     );
     return;
   }
+
+  // Read the merged upstream sha before squashing (commitSquash clears MERGE_HEAD), then commit
+  // the staged delta as a single-parent commit so the PR shows one clean commit instead of the
+  // whole upstream history (the merge's upstream ancestry isn't shared on the remote).
+  const upstreamSha = await getShortSha(forkPath, 'MERGE_HEAD').catch(() => '');
   await stageAll(forkPath);
-  await commitNoEdit(forkPath);
+  const message = upstreamSha ? `chore: sync upstream cella ${upstreamSha}` : 'chore: sync upstream cella';
+  await commitSquash(forkPath, message);
   console.info();
-  console.info(pc.green(`committed the sync merge on '${branch}'. ship it:`));
-  printShipSteps(branch, base);
+  console.info(pc.green(`committed the sync on '${branch}' as '${message}'.`));
+  await shipSyncBranch(config, branch);
 }
 
 /**
  * Run the standalone `cella sync` command.
  *
  * Idempotent. Behaviour depends on where you are:
- * - On a sync branch with a merge in progress: finish that merge (resume after conflicts).
- * - On a sync branch with the merge already committed: nothing to merge; print the ship steps.
+ * - On a sync branch with a merge in progress: finish that merge (resume after conflicts), then
+ *   push and open the PR.
+ * - On a sync branch with the merge already committed: push and open the PR (e.g. a previous
+ *   push failed), then switch back to the trunk.
  * - Anywhere else: require a clean tree, then cut a fresh ephemeral branch and merge upstream.
  */
 export async function runSyncCommand(config: RuntimeConfig): Promise<void> {
   const { forkPath, settings } = config;
   const currentBranch = await getCurrentBranch(forkPath);
   const onSyncBranch = isEphemeralSyncBranch(settings, currentBranch);
-  const base = resolveReleaseBase(settings);
 
   // Resume path: an earlier run left a merge staged on this ephemeral branch (e.g. after
   // conflicts). Re-running finishes it instead of starting over.
@@ -252,13 +307,11 @@ export async function runSyncCommand(config: RuntimeConfig): Promise<void> {
     return;
   }
 
-  // On a sync branch with the merge already committed: nothing to merge, just ship it. Start a
-  // new sync from the trunk instead of stacking cycles on a stale branch.
+  // On a sync branch with the merge already committed: ship it (push + PR + back to trunk).
   if (onSyncBranch) {
     console.info();
-    console.info(pc.green(`sync branch '${currentBranch}' is ready to ship:`));
-    printShipSteps(currentBranch, base);
-    console.info(pc.dim(`  (switch to '${base}' first to start a new sync)`));
+    console.info(pc.green(`sync branch '${currentBranch}' is already committed.`));
+    await shipSyncBranch(config, currentBranch);
     return;
   }
 
@@ -278,5 +331,5 @@ export async function runSyncCommand(config: RuntimeConfig): Promise<void> {
   } else {
     console.info(pc.green(`sync merge staged on '${ephemeral}'. review, then:`));
   }
-  printFinishSteps(ephemeral, base);
+  printFinishSteps();
 }
