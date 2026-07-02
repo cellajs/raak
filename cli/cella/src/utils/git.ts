@@ -134,6 +134,13 @@ export async function commitNoEdit(cwd: string): Promise<void> {
 }
 
 /**
+ * Stage every change in the working tree (`git add -A`), including untracked and deleted files.
+ */
+export async function stageAll(cwd: string): Promise<void> {
+  await git(['add', '-A'], cwd);
+}
+
+/**
  * Whether a merge is currently in progress (MERGE_HEAD present).
  */
 export function mergeInProgress(cwd: string): boolean {

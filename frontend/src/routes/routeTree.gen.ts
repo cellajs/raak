@@ -24,7 +24,10 @@ import { Route as PublicAuthSignOutRouteImport } from './_public/auth/sign-out'
 import { Route as PublicAuthMfaRouteImport } from './_public/auth/mfa'
 import { Route as PublicAuthErrorRouteImport } from './_public/auth/error'
 import { Route as PublicAuthAuthenticateRouteImport } from './_public/auth/authenticate'
+import { Route as PublicMarketingSyncEngineRouteImport } from './_public/_marketing/sync-engine'
+import { Route as PublicMarketingFeaturesRouteImport } from './_public/_marketing/features'
 import { Route as PublicMarketingContactRouteImport } from './_public/_marketing/contact'
+import { Route as PublicMarketingAccessibilityRouteImport } from './_public/_marketing/accessibility'
 import { Route as PublicMarketingAboutRouteImport } from './_public/_marketing/about'
 import { Route as AppSystemUsersRouteImport } from './_app/system/users'
 import { Route as AppSystemTenantsRouteImport } from './_app/system/tenants'
@@ -124,11 +127,28 @@ const PublicAuthAuthenticateRoute = PublicAuthAuthenticateRouteImport.update({
   path: '/authenticate',
   getParentRoute: () => PublicAuthRouteRoute,
 } as any)
+const PublicMarketingSyncEngineRoute =
+  PublicMarketingSyncEngineRouteImport.update({
+    id: '/_marketing/sync-engine',
+    path: '/sync-engine',
+    getParentRoute: () => PublicRouteRoute,
+  } as any)
+const PublicMarketingFeaturesRoute = PublicMarketingFeaturesRouteImport.update({
+  id: '/_marketing/features',
+  path: '/features',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
 const PublicMarketingContactRoute = PublicMarketingContactRouteImport.update({
   id: '/_marketing/contact',
   path: '/contact',
   getParentRoute: () => PublicRouteRoute,
 } as any)
+const PublicMarketingAccessibilityRoute =
+  PublicMarketingAccessibilityRouteImport.update({
+    id: '/_marketing/accessibility',
+    path: '/accessibility',
+    getParentRoute: () => PublicRouteRoute,
+  } as any)
 const PublicMarketingAboutRoute = PublicMarketingAboutRouteImport.update({
   id: '/_marketing/about',
   path: '/about',
@@ -291,7 +311,10 @@ export interface FileRoutesByFullPath {
   '/system/tenants': typeof AppSystemTenantsRoute
   '/system/users': typeof AppSystemUsersRoute
   '/about': typeof PublicMarketingAboutRoute
+  '/accessibility': typeof PublicMarketingAccessibilityRoute
   '/contact': typeof PublicMarketingContactRoute
+  '/features': typeof PublicMarketingFeaturesRoute
+  '/sync-engine': typeof PublicMarketingSyncEngineRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
@@ -331,7 +354,10 @@ export interface FileRoutesByTo {
   '/system/tenants': typeof AppSystemTenantsRoute
   '/system/users': typeof AppSystemUsersRoute
   '/about': typeof PublicMarketingAboutRoute
+  '/accessibility': typeof PublicMarketingAccessibilityRoute
   '/contact': typeof PublicMarketingContactRoute
+  '/features': typeof PublicMarketingFeaturesRoute
+  '/sync-engine': typeof PublicMarketingSyncEngineRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
@@ -376,7 +402,10 @@ export interface FileRoutesById {
   '/_app/system/tenants': typeof AppSystemTenantsRoute
   '/_app/system/users': typeof AppSystemUsersRoute
   '/_public/_marketing/about': typeof PublicMarketingAboutRoute
+  '/_public/_marketing/accessibility': typeof PublicMarketingAccessibilityRoute
   '/_public/_marketing/contact': typeof PublicMarketingContactRoute
+  '/_public/_marketing/features': typeof PublicMarketingFeaturesRoute
+  '/_public/_marketing/sync-engine': typeof PublicMarketingSyncEngineRoute
   '/_public/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/_public/auth/error': typeof PublicAuthErrorRoute
   '/_public/auth/mfa': typeof PublicAuthMfaRoute
@@ -419,7 +448,10 @@ export interface FileRouteTypes {
     | '/system/tenants'
     | '/system/users'
     | '/about'
+    | '/accessibility'
     | '/contact'
+    | '/features'
+    | '/sync-engine'
     | '/auth/authenticate'
     | '/auth/error'
     | '/auth/mfa'
@@ -459,7 +491,10 @@ export interface FileRouteTypes {
     | '/system/tenants'
     | '/system/users'
     | '/about'
+    | '/accessibility'
     | '/contact'
+    | '/features'
+    | '/sync-engine'
     | '/auth/authenticate'
     | '/auth/error'
     | '/auth/mfa'
@@ -503,7 +538,10 @@ export interface FileRouteTypes {
     | '/_app/system/tenants'
     | '/_app/system/users'
     | '/_public/_marketing/about'
+    | '/_public/_marketing/accessibility'
     | '/_public/_marketing/contact'
+    | '/_public/_marketing/features'
+    | '/_public/_marketing/sync-engine'
     | '/_public/auth/authenticate'
     | '/_public/auth/error'
     | '/_public/auth/mfa'
@@ -642,11 +680,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAuthAuthenticateRouteImport
       parentRoute: typeof PublicAuthRouteRoute
     }
+    '/_public/_marketing/sync-engine': {
+      id: '/_public/_marketing/sync-engine'
+      path: '/sync-engine'
+      fullPath: '/sync-engine'
+      preLoaderRoute: typeof PublicMarketingSyncEngineRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/_marketing/features': {
+      id: '/_public/_marketing/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof PublicMarketingFeaturesRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
     '/_public/_marketing/contact': {
       id: '/_public/_marketing/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof PublicMarketingContactRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/_marketing/accessibility': {
+      id: '/_public/_marketing/accessibility'
+      path: '/accessibility'
+      fullPath: '/accessibility'
+      preLoaderRoute: typeof PublicMarketingAccessibilityRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/_marketing/about': {
@@ -990,7 +1049,10 @@ interface PublicRouteRouteChildren {
   PublicAuthRouteRoute: typeof PublicAuthRouteRouteWithChildren
   PublicErrorRoute: typeof PublicErrorRoute
   PublicMarketingAboutRoute: typeof PublicMarketingAboutRoute
+  PublicMarketingAccessibilityRoute: typeof PublicMarketingAccessibilityRoute
   PublicMarketingContactRoute: typeof PublicMarketingContactRoute
+  PublicMarketingFeaturesRoute: typeof PublicMarketingFeaturesRoute
+  PublicMarketingSyncEngineRoute: typeof PublicMarketingSyncEngineRoute
   PublicMarketingLegalSubjectRoute: typeof PublicMarketingLegalSubjectRoute
   PublicMarketingLegalIndexRoute: typeof PublicMarketingLegalIndexRoute
 }
@@ -1000,7 +1062,10 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicAuthRouteRoute: PublicAuthRouteRouteWithChildren,
   PublicErrorRoute: PublicErrorRoute,
   PublicMarketingAboutRoute: PublicMarketingAboutRoute,
+  PublicMarketingAccessibilityRoute: PublicMarketingAccessibilityRoute,
   PublicMarketingContactRoute: PublicMarketingContactRoute,
+  PublicMarketingFeaturesRoute: PublicMarketingFeaturesRoute,
+  PublicMarketingSyncEngineRoute: PublicMarketingSyncEngineRoute,
   PublicMarketingLegalSubjectRoute: PublicMarketingLegalSubjectRoute,
   PublicMarketingLegalIndexRoute: PublicMarketingLegalIndexRoute,
 }

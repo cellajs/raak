@@ -58,9 +58,9 @@
     "session": "bash session.sh"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.1",
-    "@commitlint/cli": "^21.1.0",
-    "@commitlint/config-conventional": "^21.1.0",
+    "@biomejs/biome": "^2.5.2",
+    "@commitlint/cli": "^21.2.0",
+    "@commitlint/config-conventional": "^21.2.0",
     "@evilmartians/lefthook": "^2.1.9",
     "@typescript/native-preview": "7.0.0-dev.20260628.1",
     "cross-env": "^10.1.0",

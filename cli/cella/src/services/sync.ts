@@ -6,6 +6,7 @@
  * conflicts, resolve them and run `cella sync` again to finish the same merge.
  */
 
+import { spawnSync } from 'node:child_process';
 import type { MergeResult, RuntimeConfig } from '../config/types';
 import pc from '../utils/colors';
 import {
@@ -36,6 +37,7 @@ import {
   fetch as gitFetch,
   mergeInProgress,
   pullFastForward,
+  stageAll,
   switchBranch,
 } from '../utils/git';
 import { runMergeEngine } from './merge-engine';
@@ -131,9 +133,25 @@ function printShipSteps(ephemeral: string, base: string): void {
 
 /** Print the "commit + push + open a PR" steps for a sync branch with a staged (uncommitted) merge. */
 function printFinishSteps(ephemeral: string, base: string): void {
-  console.info(pc.dim('  pnpm cella sync            # re-run to commit the merge, or:'));
-  console.info(pc.dim('  git commit --no-edit'));
+  console.info(pc.dim('  pnpm cella sync            # re-run to reconcile deps, regenerate files, and commit'));
   printShipSteps(ephemeral, base);
+}
+
+/**
+ * Reconcile dependencies and regenerate derived files before committing a resumed merge.
+ *
+ * A sync merge (plus package.json key-sync) changes `package.json`, which leaves the lockfile
+ * and generated files (SDK, etc.) stale and often unstaged. Mirroring what lefthook would do —
+ * but up front — we run `pnpm install` then `pnpm check`, so the merge commit is complete and
+ * consistent. Returns false if a step fails (the merge is left in progress to retry).
+ */
+function finalizeWorkspace(forkPath: string): boolean {
+  for (const args of [['install'], ['check']]) {
+    console.info(pc.dim(`running pnpm ${args.join(' ')}...`));
+    const result = spawnSync('pnpm', args, { cwd: forkPath, stdio: 'inherit' });
+    if (result.status !== 0) return false;
+  }
+  return true;
 }
 
 /** Outcome of a sync cycle run on a fresh ephemeral branch. */
@@ -180,7 +198,8 @@ async function runSyncCycle(config: RuntimeConfig): Promise<SyncCycleOutcome> {
  *
  * This is what makes the command idempotent: after a run stops at conflicts, resolve and stage
  * them, then run `cella sync` again. If conflicts remain we point them out and stop; once none
- * remain we commit the merge and print the ship steps.
+ * remain we reconcile dependencies (`pnpm install` + `pnpm check`), stage everything, commit the
+ * merge, and print the ship steps.
  */
 async function resumeSyncMerge(config: RuntimeConfig, branch: string): Promise<void> {
   const { forkPath, settings } = config;
@@ -191,13 +210,23 @@ async function resumeSyncMerge(config: RuntimeConfig, branch: string): Promise<v
   if (conflicts.length > 0) {
     console.info(pc.yellow(`${conflicts.length} file(s) still conflict on '${branch}':`));
     for (const file of conflicts) console.info(pc.dim(`  ${file}`));
-    console.info(
-      pc.dim('resolve and stage them, then re-run `pnpm cella sync` to finish (or `git commit --no-edit`).'),
-    );
+    console.info(pc.dim('resolve and stage them, then re-run `pnpm cella sync` to finish.'));
     return;
   }
 
+  // Reconcile deps + regenerate derived files, then stage everything so the merge commit is
+  // complete (package.json key-sync and the merge both touch package.json, leaving the lockfile
+  // and generated files stale/unstaged).
+  if (!finalizeWorkspace(forkPath)) {
+    console.info();
+    console.info(
+      pc.yellow('`pnpm install`/`pnpm check` failed. fix the issues, then re-run `pnpm cella sync` to finish.'),
+    );
+    return;
+  }
+  await stageAll(forkPath);
   await commitNoEdit(forkPath);
+  console.info();
   console.info(pc.green(`committed the sync merge on '${branch}'. ship it:`));
   printShipSteps(branch, base);
 }
