@@ -38,6 +38,8 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     convertedContentType: true,
     convertedKey: true,
     thumbnailKey: true,
+    // cella addition: attachments have project as their parent context, so they require a projectId
+    projectId: true,
   })
   .extend({
     id: validUuidSchema,
@@ -62,6 +64,8 @@ const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'crea
 
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
   sort: attachmentSortKeys.default('createdAt').optional(),
+  // cella addition: filter by projectID
+  projectId: z.string().max(maxLength.id).optional(),
 });
 
 /** Query schema for presigned URL endpoint - requires the file key to sign */

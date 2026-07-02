@@ -8,6 +8,8 @@ import { createOptimisticEntity } from '~/query/basic';
 export const parseUploadedAttachments = (
   result: UploadedUppyFile<'attachment'>,
   organizationId: string,
+  // cella addition: attachments have project as their parent context, so they require a projectId
+  projectId?: string,
 ): Attachment[] => {
   // Process original files
   const originalFiles = result[':original'] ?? [];
@@ -39,6 +41,7 @@ export const parseUploadedAttachments = (
       originalKey: url ?? '',
       groupId,
       organizationId,
+      projectId,
     });
 
     attachments.push(attachment as Attachment);

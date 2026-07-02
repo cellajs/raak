@@ -1,27 +1,7 @@
-/**
- * Fork config template — consumed by `create-cella`, NOT by Cella at runtime.
- *
- * Cella itself always runs from `config.default.ts`. This file is a parallel copy
- * whose fork-sensitive values (branding, URLs, secrets, company details) are
- * reduced to placeholders and `Raak` / `raak` tokens.
- *
- * It is a real, compiled module: `satisfies RequiredConfig` means Cella's own
- * `pnpm ts` typechecks it. If the shared config types gain a required field, this
- * file fails to compile alongside `config.default.ts`, so template drift is caught
- * at compile time instead of by a scaffolding job.
- *
- * At fork creation `create-cella` interpolates the tokens, writes the result over
- * `config.default.ts`, then deletes this file. Nothing imports it, so it is inert
- * for Cella (see the knip ignore entry) and never loaded as an environment config.
- */
 import type { ConfigMode, RequiredConfig, S3ConfigInput } from '../src/config-builder/types';
 
 // Re-export for external consumers
 export { roles, hierarchy } from './hierarchy-config';
-
-// Set these early for reuse
-const entityTypes = ['user', 'organization', 'attachment', 'page'] as const;
-const productEntityTypes = ['attachment', 'page'] as const;
 
 export const config = {
 
@@ -30,26 +10,33 @@ export const config = {
    ******************************************************************************/
 
   /** All entity types in the app - must match hierarchy.allTypes. */
-  entityTypes,
+  entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment', 'page', 'chat', 'message'] as const,
 
   /** Context entities with memberships - must match hierarchy.contextTypes. */
-  contextEntityTypes: ['organization'] as const,
+  contextEntityTypes: ['organization', 'workspace', 'project'] as const,
 
   /** Product/content entities - must match hierarchy.productTypes. */
-  productEntityTypes,
+  productEntityTypes: ['task', 'label', 'attachment', 'page', 'chat', 'message'] as const,
 
   /**
    * Product entity types tracked for seen/unseen counts.
-   * Unseen counts are grouped by the parent context entity of each tracked type.
+   * Unseen counts are grouped by the parent context entity of each tracked type
+   * (e.g., tasks grouped by projectId). Badges appear on that parent context in the menu.
    */
-  seenTrackedEntityTypes: ['attachment'] as const,
+  seenTrackedEntityTypes: ['task'] as const,
 
   /** Maps entity types to their ID column names - must match entityTypes */
   entityIdColumnKeys: {
     user: 'userId',
     organization: 'organizationId',
+    workspace: 'workspaceId',
+    project: 'projectId',
+    task: 'taskId',
+    label: 'labelId',
     attachment: 'attachmentId',
     page: 'pageId',
+    chat: 'chatId',
+    message: 'messageId',
   } as const,
 
   /** Available CRUD actions for permission checks */
@@ -60,13 +47,16 @@ export const config = {
 
   /**
    * Entity embeddings: declares which entities are embedded as ID arrays inside
-   * other entities. Forks extend when adding new embedding relationships.
+   * other entities. Each entry maps an embedded entity to the host entity + column
+   * that references it via an ID array.
+   *
+   * Used for: ref-count recalculation, CDC soft-cascade suppression,
+   * SSE propagation hints, and client-side cache patching.
+   * Forks extend when adding new embedding relationships.
    */
-  entityEmbeddings: [] as readonly {
-    readonly embeddedEntity: (typeof productEntityTypes)[number];
-    readonly hostEntity: (typeof productEntityTypes)[number];
-    readonly hostColumn: string;
-  }[],
+  entityEmbeddings: [
+    { embeddedEntity: 'label', hostEntity: 'task', hostColumn: 'labels' },
+  ] as const,
 
   /**
    * User menu structure of context entities with optional nested subentities.
@@ -74,6 +64,7 @@ export const config = {
    */
   menuStructure: [
     { entityType: 'organization', subentityType: null } as const,
+    { entityType: 'workspace', subentityType: 'project' } as const,
   ],
 
   /** Default restrictions for tenants (entity quotas and rate limits) */
@@ -92,6 +83,10 @@ export const config = {
    * SYSTEM ROLES
    ******************************************************************************/
 
+  /**
+   * System-wide roles stored in DB.
+   * Must include 'admin' for system administration access.
+   */
   systemRoles: ['admin'] as const,
 
   /******************************************************************************
@@ -103,37 +98,37 @@ export const config = {
   /** URL-safe identifier used in paths and storage */
   slug: 'raak',
   /** Primary domain for the app */
-  domain: 'raak.example.com',
+  domain: 'raak.dev',
   /** App description for SEO and meta tags */
-  description: 'Raak — powered by Cella.',
+  description: 'A TypeScript template to build collaborative web apps with sync engine. MIT licensed.',
   /** SEO keywords for search engines */
   keywords:
-    'starter kit, fullstack, monorepo, typescript, hono, honojs, drizzle, baseui, react, postgres, pwa, offline, instant updates, realtime data, sync engine',
+    'starter kit, fullstack, monorepo, typescript, hono, honojs, drizzle, shadcn, react, postgres, pwa, offline, instant§ updates, realtime data, sync engine',
 
   /******************************************************************************
    * URLS & ENDPOINTS
    ******************************************************************************/
 
   /** Frontend SPA base URL */
-  frontendUrl: 'https://raak.example.com',
-  /** Backend API base URL */
-  backendUrl: 'https://api.raak.example.com',
-  /** OAuth callback base URL */
-  backendAuthUrl: 'https://api.raak.example.com/auth',
-  /** Yjs realtime relay URL */
-  yjsUrl: 'wss://yjs.raak.example.com',
-  /** AI service base URL */
-  aiUrl: 'https://ai.raak.example.com',
+  frontendUrl: 'https://www.raak.dev',
+  backendUrl: 'https://api.raak.dev',
+  backendAuthUrl: 'https://api.raak.dev/auth',
+  yjsUrl: 'https://yjs.raak.dev',
+  aiUrl: 'https://ai.raak.dev',
+
   /**
-   * Per-service toggles and public URLs. `enabled` controls whether the service
-   * is wired up; `publicUrl` is the externally reachable endpoint.
+   * Deployable services. Each entry gates a service (and/or its route surface)
+   * plus its public endpoint. Services are enabled by default; opt out with
+   * `{ enabled: false }`. `publicUrl` is derived from the matching URL fields
+   * above in app-config, so set enablement here. Distinct from `has` (in-app UX
+   * toggles).
    */
   services: {
-    frontend: { enabled: true as boolean, publicUrl: 'https://raak.example.com' },
-    backend: { enabled: true as boolean, publicUrl: 'https://api.raak.example.com' },
+    frontend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev' },
+    backend: { enabled: true as boolean, publicUrl: 'https://api.raak.dev' },
     cdc: { enabled: true as boolean },
-    yjs: { enabled: false as boolean, publicUrl: 'wss://yjs.raak.example.com' },
-    ai: { enabled: false as boolean, publicUrl: 'https://ai.raak.example.com' },
+    yjs: { enabled: true as boolean, publicUrl: 'https://yjs.raak.dev' },
+    ai: { enabled: true as boolean, publicUrl: 'https://ai.raak.dev' },
   },
 
   // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
@@ -141,12 +136,13 @@ export const config = {
   // split (one service per process). cdc co-hosting forfeits API blue-green.
   singleVM: false as boolean,
 
+
   /** About page URL */
   aboutUrl: '/about',
   /** Status page URL for uptime monitoring */
-  statusUrl: 'https://status.raak.example.com',
+  statusUrl: '',
   /** Canonical production URL */
-  productionUrl: 'https://raak.example.com',
+  productionUrl: 'https://www.raak.dev',
 
   /** Default redirect path after login */
   defaultRedirectPath: '/home',
@@ -158,23 +154,23 @@ export const config = {
    ******************************************************************************/
 
   /** From address for system notifications */
-  senderEmail: 'notifications@raak.example.com',
+  senderEmail: 'notifications@shareworks.nl',
   /** Email address for user support inquiries */
-  supportEmail: 'support@raak.example.com',
-  /** Receive security warnings */
-  securityEmail: 'security@raak.example.com',
+  supportEmail: 'info@cellajs.com',
+  /** Email address for security alerts (sysadmin failures, etc.) */
+  securityEmail: 'info@cellajs.com',
 
   /******************************************************************************
    * MODE & FLAGS
    ******************************************************************************/
-
+  
   /** Runtime mode - overridden per environment file */
   mode: 'development' as ConfigMode,
   /** Enable maintenance mode (blocks all requests) */
   maintenance: false,
   /** Cookie version - increment when changing cookie structure to invalidate old cookies */
   cookieVersion: 'v1',
-  /** Persisted client query-cache shape - bump on a breaking change to a cached entity so clients wipe stale cache. See info/SCHEMA_EVOLUTION.md */
+  /** Persisted client query-cache shape - bump on breaking cached entity changes */
   clientCacheVersion: 'v1',
 
   /******************************************************************************
@@ -191,10 +187,10 @@ export const config = {
     /** Allow users to sign up. If false, the app is by invitation only */
     selfRegistration: false as boolean,
     /** Suggest a waitlist for unknown emails when sign up is disabled */
-    waitlist: false as boolean,
+    waitlist: true as boolean,
     /** S3 fully configured - if false, files will be stored in local browser (IndexedDB) */
-    uploadEnabled: false as boolean,
-    /** Customer support chat widget (Gleap). Unrelated to the AI module. */
+    uploadEnabled: true as boolean,
+    /** Customer support chat widget (Gleap) */
     chatSupport: false as boolean,
   },
 
@@ -228,8 +224,11 @@ export const config = {
   /** API version prefix for endpoints */
   apiVersion: 'v1',
   /** API documentation description shown in Scalar */
-  apiDescription: `⚠️ ATTENTION: PRERELEASE!
-                  This API is organized into modules based on logical domains.`,
+  apiDescription: `⚠️ ATTENTION: PRERELEASE!  
+                  This API is organized into modules based on logical domains (e.g. \`auth\`, \`organizations\`, \`memberships\`).
+                  Each module includes a set of endpoints that expose functionality related to a specific resource or cross resource logic.
+
+                  The documentation is generated from source code using \`zod\` schemas, converted into OpenAPI via \`zod-openapi\` and served through the \`hono\` framework.`,
 
   /******************************************************************************
    * REQUEST LIMITS
@@ -245,9 +244,16 @@ export const config = {
     members: 40,
     organizations: 40,
     requests: 40,
+    labels: 1000,
     attachments: 40,
+    projects: 40,
     pages: 100,
+    tasks: 1000,
+    // TODO, tasksTable looks lke hack
+    tasksTable: 80,
     pendingMemberships: 20,
+    chats: 50,
+    messages: 200,
   },
 
   /** Max JSON body size in bytes */
@@ -261,10 +267,12 @@ export const config = {
    * STORAGE & UPLOADS (S3)
    ******************************************************************************/
 
-  /** S3-compatible storage configuration. Only region and host are required; the rest is derived from the slug. */
+  /** S3-compatible storage configuration */
   s3: {
-    region: '',
-    host: '',
+    /** S3 region identifier */
+    region: 'nl-ams',
+    /** S3 host endpoint */
+    host: 's3.nl-ams.scw.cloud',
   } as S3ConfigInput,
 
   /** Upload template IDs for Transloadit processing pipelines */
@@ -288,14 +296,14 @@ export const config = {
    * Controls which attachments are cached locally for offline access.
    */
   localBlobStorage: {
-    enabled: true,
-    maxFileSize: 10 * 1024 * 1024,
-    maxTotalSize: 100 * 1024 * 1024,
-    allowedContentTypes: [] as string[],
-    excludedContentTypes: ['video/*'] as string[],
-    downloadConcurrency: 2,
-    uploadRetryAttempts: 3,
-    uploadRetryDelays: [60000, 300000, 900000] as const,
+    enabled: true, // Enable local blob caching
+    maxFileSize: 10 * 1024 * 1024, // 10MB - files larger than this are not cached locally
+    maxTotalSize: 100 * 1024 * 1024, // 100MB - total cache size, LRU eviction when exceeded
+    allowedContentTypes: [] as string[], // Empty = all types allowed
+    excludedContentTypes: ['video/*'] as string[], // Excluded types (takes precedence over allowed)
+    downloadConcurrency: 2, // Max concurrent background downloads
+    uploadRetryAttempts: 3, // Max retry attempts for failed uploads
+    uploadRetryDelays: [60000, 300000, 900000] as const, // Retry delays in ms (1min, 5min, 15min)
   },
 
   /******************************************************************************
@@ -303,13 +311,12 @@ export const config = {
    ******************************************************************************/
 
   /** Gleap token for customer support widget */
-  gleapToken: '',
+  gleapToken: '1ZoAxCRA83h5pj7qtRSvuz7rNNN9iXDd',
   /** Google Maps API key */
-  googleMapsKey: '',
+  googleMapsKey: 'AIzaSyDMjCpQusdoPWLeD7jxkqAxVgJ8s5xJ3Co',
   /** Matrix homeserver URL for chat integration */
   matrixURL: 'https://matrix-client.matrix.org',
-  /** Maple.dev public ingest key, safe to embed in the frontend bundle (empty disables frontend export) */
-  maplePublicIngestKey: '',
+  maplePublicIngestKey: 'maple_pk_LnUSK6-_5j3orVrlZ1Hv6I1pxzDh3SJ5',
 
   /******************************************************************************
    * THEMING & UI
@@ -325,7 +332,8 @@ export const config = {
       sidebarWidthCollapsed: '4rem',
       sheetPanelWidth: '20rem',
     },
-    colors: {},
+    colors: {
+    },
     strokeWidth: 1.5,
     screenSizes: {
       xs: '420px',
@@ -370,27 +378,27 @@ export const config = {
 
   /** Company/organization details for footer, legal pages, and contact info */
   company: {
-    name: 'Raak',
-    shortName: 'Raak',
-    email: 'info@raak.example.com',
-    supportEmail: 'support@raak.example.com',
-    tel: '',
-    streetAddress: '',
-    postcode: '',
-    city: '',
-    country: '',
-    registration: '',
-    bankAccount: '',
-    googleMapsUrl: '',
-    scheduleCallUrl: '',
-    socialUrl: '',
-    blueskyHandle: '',
-    element: '',
-    githubUrl: '',
+    name: 'CellaJS',
+    shortName: 'Cella',
+    email: 'info@cellajs.com',
+    supportEmail: 'info@cellajs.com',
+    tel: '+31 6 12345678',
+    streetAddress: 'Drizzle Road 42',
+    postcode: '90210 JS',
+    city: 'Hono City',
+    country: 'TypeScript Rock',
+    registration: 'Chamber of Commerce (KvK): 578 25 920',
+    bankAccount: 'NL07 RABO 0309 4430 24',
+    googleMapsUrl: 'https://goo.gl/maps/SQlrh',
+    scheduleCallUrl: 'https://cal.com/flip-van-haaren',
+    socialUrl: 'https://bsky.app/profile/flipvh.bsky.social',
+    blueskyHandle: '@flipvh.bsky.social',
+    element: 'https://matrix.to/#/!fvwljIbZIqzhNvjKvk:matrix.org',
+    githubUrl: 'https://github.com/cellajs/cella',
     mapZoom: 4,
     coordinates: {
-      lat: 0,
-      lng: 0,
+      lat: 51.92760809717153,
+      lng: 4.47421039909924,
     },
   },
 

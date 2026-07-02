@@ -1,0 +1,45 @@
+import { BirdIcon, PlusIcon, RedoIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import { ContentPlaceholder } from '~/modules/common/content-placeholder';
+import { createNewProject } from '~/modules/task/helpers/project-actions';
+import { Button } from '~/modules/ui/button';
+
+export function BoardEmpty() {
+  const { t } = useTranslation();
+  const isTablet = useBreakpointBelow('md');
+
+  return (
+    <div data-board-empty>
+      <ContentPlaceholder
+        className="h-[calc(100vh-4rem-4rem)] md:h-[calc(100vh-4.88rem)]"
+        icon={BirdIcon}
+        title="c:no_resource_yet"
+        titleProps={{ resource: t('c:projects').toLowerCase() }}
+      >
+        <div className="max-md:mt-4">
+          {isTablet ? (
+            <Button variant="plain" onClick={createNewProject}>
+              <PlusIcon size={16} />
+              <span>{`${t('c:add')} ${t('c:project').toLowerCase()}`}</span>
+            </Button>
+          ) : (
+            <>
+              <RedoIcon
+                size={200}
+                strokeWidth={0.2}
+                className="absolute top-4 right-20 translate-y-20 -rotate-180 scale-x-0 scale-y-75 text-primary opacity-0 transition-all delay-500 duration-500 group-hover/workspace:translate-y-0 group-hover/workspace:rotate-[-130deg] group-hover/workspace:scale-x-100 group-hover/workspace:opacity-100 lg:right-36"
+              />
+              <p className="inline-flex gap-1 opacity-0 transition-opacity duration-500 group-hover/workspace:opacity-100">
+                <span>{t('c:click')}</span>
+                <span className="text-primary max-md:hidden xl:hidden">{`+ ${t('c:add')}`}</span>
+                <span className="text-primary max-xl:hidden">{`+ ${t('c:add_resource', { resource: t('c:project').toLowerCase() })}`}</span>
+                <span>{t('c:no_projects.text')}</span>
+              </p>
+            </>
+          )}
+        </div>
+      </ContentPlaceholder>
+    </div>
+  );
+}

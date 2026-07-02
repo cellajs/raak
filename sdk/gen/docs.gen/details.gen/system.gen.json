@@ -451,7 +451,7 @@
             "required": true,
             "minItems": 1,
             "itemType": "string",
-            "enum": ["admin", "member"]
+            "enum": ["admin", "member", "guest"]
           },
           "subject": { "type": "string", "required": true, "maxLength": 255 },
           "content": { "type": "string", "required": true, "maxLength": 1000000 }

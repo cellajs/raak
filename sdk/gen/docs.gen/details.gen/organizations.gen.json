@@ -154,14 +154,14 @@
                           "contextType": {
                             "type": "string",
                             "required": true,
-                            "enum": ["organization"]
+                            "enum": ["organization", "workspace", "project"]
                           },
                           "contextId": { "type": "string", "required": true, "format": "uuid" },
                           "userId": { "type": "string", "required": true, "format": "uuid" },
                           "role": {
                             "type": "string",
                             "required": true,
-                            "enum": ["admin", "member"]
+                            "enum": ["admin", "member", "guest"]
                           },
                           "archived": { "type": "boolean", "required": true },
                           "muted": { "type": "boolean", "required": true },
@@ -171,7 +171,17 @@
                             "minimum": -140737488355328,
                             "maximum": 140737488355327
                           },
-                          "organizationId": { "type": "string", "required": true, "format": "uuid" }
+                          "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                          "workspaceId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          },
+                          "projectId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          }
                         },
                         "ref": "#/components/schemas/MembershipBase"
                       },
@@ -185,6 +195,7 @@
                             "properties": {
                               "admin": { "type": "number", "required": true },
                               "member": { "type": "number", "required": true },
+                              "guest": { "type": "number", "required": true },
                               "pending": { "type": "number", "required": true },
                               "total": { "type": "number", "required": true }
                             }
@@ -193,6 +204,12 @@
                             "type": "object",
                             "required": true,
                             "properties": {
+                              "workspace": { "type": "number", "required": true },
+                              "project": { "type": "number", "required": true },
+                              "chat": { "type": "number", "required": true },
+                              "message": { "type": "number", "required": true },
+                              "task": { "type": "number", "required": true },
+                              "label": { "type": "number", "required": true },
                               "attachment": { "type": "number", "required": true }
                             }
                           }
@@ -253,8 +270,10 @@
                   "contextId": "b5c28e6f-552e-42e4-940d-66f5ab0174ab",
                   "userId": "8ed7182a-e09f-41c6-9302-0e59a26ff7ac",
                   "organizationId": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
-                  "role": "admin",
-                  "displayOrder": 98,
+                  "workspaceId": "0fe88d20-ed47-4cd6-aea6-575d1255c1f5",
+                  "projectId": "e58d6d29-bb39-4ec0-ba90-09959141d96f",
+                  "role": "guest",
+                  "displayOrder": 68,
                   "muted": false,
                   "archived": false
                 },
@@ -262,10 +281,20 @@
                   "membership": {
                     "admin": 43,
                     "member": 58,
-                    "pending": 47,
-                    "total": 101
+                    "guest": 186,
+                    "pending": 49,
+                    "total": 287
                   },
-                  "entities": { "attachment": 294, "page": 327 }
+                  "entities": {
+                    "workspace": 294,
+                    "project": 327,
+                    "task": 491,
+                    "label": 182,
+                    "attachment": 106,
+                    "page": 232,
+                    "chat": 251,
+                    "message": 442
+                  }
                 }
               }
             },
@@ -301,8 +330,10 @@
                   "contextId": "a22457ca-c90f-46f6-aa80-2cd0efd36e4f",
                   "userId": "ddfd40e3-e143-4676-8a93-314d23d2d92f",
                   "organizationId": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
+                  "workspaceId": "7d6bf233-16b5-44b1-a885-a37d352d4cc5",
+                  "projectId": "1c5b625c-4853-4499-9a14-6c7813bc9acd",
                   "role": "admin",
-                  "displayOrder": 83,
+                  "displayOrder": 81,
                   "muted": false,
                   "archived": false
                 },
@@ -310,10 +341,20 @@
                   "membership": {
                     "admin": 22,
                     "member": 122,
-                    "pending": 44,
-                    "total": 144
+                    "guest": 174,
+                    "pending": 19,
+                    "total": 318
                   },
-                  "entities": { "attachment": 321, "page": 94 }
+                  "entities": {
+                    "workspace": 321,
+                    "project": 94,
+                    "task": 122,
+                    "label": 493,
+                    "attachment": 383,
+                    "page": 162,
+                    "chat": 318,
+                    "message": 354
+                  }
                 }
               }
             }
@@ -647,14 +688,14 @@
                           "contextType": {
                             "type": "string",
                             "required": true,
-                            "enum": ["organization"]
+                            "enum": ["organization", "workspace", "project"]
                           },
                           "contextId": { "type": "string", "required": true, "format": "uuid" },
                           "userId": { "type": "string", "required": true, "format": "uuid" },
                           "role": {
                             "type": "string",
                             "required": true,
-                            "enum": ["admin", "member"]
+                            "enum": ["admin", "member", "guest"]
                           },
                           "archived": { "type": "boolean", "required": true },
                           "muted": { "type": "boolean", "required": true },
@@ -664,7 +705,17 @@
                             "minimum": -140737488355328,
                             "maximum": 140737488355327
                           },
-                          "organizationId": { "type": "string", "required": true, "format": "uuid" }
+                          "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                          "workspaceId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          },
+                          "projectId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          }
                         },
                         "ref": "#/components/schemas/MembershipBase"
                       },
@@ -678,6 +729,7 @@
                             "properties": {
                               "admin": { "type": "number", "required": true },
                               "member": { "type": "number", "required": true },
+                              "guest": { "type": "number", "required": true },
                               "pending": { "type": "number", "required": true },
                               "total": { "type": "number", "required": true }
                             }
@@ -686,6 +738,12 @@
                             "type": "object",
                             "required": true,
                             "properties": {
+                              "workspace": { "type": "number", "required": true },
+                              "project": { "type": "number", "required": true },
+                              "chat": { "type": "number", "required": true },
+                              "message": { "type": "number", "required": true },
+                              "task": { "type": "number", "required": true },
+                              "label": { "type": "number", "required": true },
                               "attachment": { "type": "number", "required": true }
                             }
                           }
@@ -735,8 +793,10 @@
                   "contextId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
                   "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
                   "organizationId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
-                  "role": "admin",
-                  "displayOrder": 83,
+                  "workspaceId": "1d13baee-938d-4a51-81c9-6f214148469f",
+                  "projectId": "0a981093-3a7d-43f1-9c6e-b31fa361d13c",
+                  "role": "member",
+                  "displayOrder": 45,
                   "muted": false,
                   "archived": false
                 },
@@ -744,10 +804,20 @@
                   "membership": {
                     "admin": 30,
                     "member": 20,
-                    "pending": 27,
-                    "total": 50
+                    "guest": 109,
+                    "pending": 21,
+                    "total": 159
                   },
-                  "entities": { "attachment": 188, "page": 390 }
+                  "entities": {
+                    "workspace": 188,
+                    "project": 390,
+                    "task": 423,
+                    "label": 413,
+                    "attachment": 435,
+                    "page": 298,
+                    "chat": 210,
+                    "message": 432
+                  }
                 }
               }
             },
@@ -783,8 +853,10 @@
                   "contextId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
                   "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
                   "organizationId": "772a771f-c150-465e-9635-46594859fc3d",
+                  "workspaceId": "8bb48f50-f5ac-45ed-a8f4-71af3e3099da",
+                  "projectId": "df2537a5-a4fb-431f-b142-7dc7188dc589",
                   "role": "member",
-                  "displayOrder": 73,
+                  "displayOrder": 94,
                   "muted": false,
                   "archived": false
                 },
@@ -792,10 +864,20 @@
                   "membership": {
                     "admin": 7,
                     "member": 150,
-                    "pending": 18,
-                    "total": 157
+                    "guest": 72,
+                    "pending": 36,
+                    "total": 229
                   },
-                  "entities": { "attachment": 1, "page": 272 }
+                  "entities": {
+                    "workspace": 1,
+                    "project": 272,
+                    "task": 153,
+                    "label": 264,
+                    "attachment": 40,
+                    "page": 116,
+                    "chat": 159,
+                    "message": 426
+                  }
                 }
               }
             }
@@ -867,7 +949,7 @@
           "role": {
             "type": "string",
             "required": false,
-            "enum": ["admin", "member"]
+            "enum": ["admin", "member", "guest"]
           },
           "excludeArchived": {
             "type": "string",
@@ -1029,14 +1111,14 @@
                     "contextType": {
                       "type": "string",
                       "required": true,
-                      "enum": ["organization"]
+                      "enum": ["organization", "workspace", "project"]
                     },
                     "contextId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
                       "required": true,
-                      "enum": ["admin", "member"]
+                      "enum": ["admin", "member", "guest"]
                     },
                     "archived": { "type": "boolean", "required": true },
                     "muted": { "type": "boolean", "required": true },
@@ -1046,7 +1128,17 @@
                       "minimum": -140737488355328,
                       "maximum": 140737488355327
                     },
-                    "organizationId": { "type": "string", "required": true, "format": "uuid" }
+                    "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                    "workspaceId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    },
+                    "projectId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    }
                   },
                   "ref": "#/components/schemas/MembershipBase"
                 },
@@ -1060,6 +1152,7 @@
                       "properties": {
                         "admin": { "type": "number", "required": true },
                         "member": { "type": "number", "required": true },
+                        "guest": { "type": "number", "required": true },
                         "pending": { "type": "number", "required": true },
                         "total": { "type": "number", "required": true }
                       }
@@ -1068,6 +1161,12 @@
                       "type": "object",
                       "required": true,
                       "properties": {
+                        "workspace": { "type": "number", "required": true },
+                        "project": { "type": "number", "required": true },
+                        "chat": { "type": "number", "required": true },
+                        "message": { "type": "number", "required": true },
+                        "task": { "type": "number", "required": true },
+                        "label": { "type": "number", "required": true },
                         "attachment": { "type": "number", "required": true }
                       }
                     }
@@ -1111,8 +1210,10 @@
               "contextId": "cfd2bd5e-6bcd-421d-8e08-509c329c26d9",
               "userId": "511cb6b8-226a-403e-9b93-c625939bbefa",
               "organizationId": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
-              "role": "admin",
-              "displayOrder": 2,
+              "workspaceId": "60eb184c-3194-4b70-a954-6d7149170337",
+              "projectId": "267a1a1a-9b2d-47a3-8120-a36f51f8f32c",
+              "role": "guest",
+              "displayOrder": 58,
               "muted": false,
               "archived": false
             },
@@ -1120,10 +1221,20 @@
               "membership": {
                 "admin": 30,
                 "member": 63,
-                "pending": 13,
-                "total": 93
+                "guest": 53,
+                "pending": 16,
+                "total": 146
               },
-              "entities": { "attachment": 178, "page": 257 }
+              "entities": {
+                "workspace": 178,
+                "project": 257,
+                "task": 47,
+                "label": 21,
+                "attachment": 451,
+                "page": 303,
+                "chat": 30,
+                "message": 439
+              }
             }
           }
         }
@@ -1339,14 +1450,14 @@
                     "contextType": {
                       "type": "string",
                       "required": true,
-                      "enum": ["organization"]
+                      "enum": ["organization", "workspace", "project"]
                     },
                     "contextId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
                       "required": true,
-                      "enum": ["admin", "member"]
+                      "enum": ["admin", "member", "guest"]
                     },
                     "archived": { "type": "boolean", "required": true },
                     "muted": { "type": "boolean", "required": true },
@@ -1356,7 +1467,17 @@
                       "minimum": -140737488355328,
                       "maximum": 140737488355327
                     },
-                    "organizationId": { "type": "string", "required": true, "format": "uuid" }
+                    "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                    "workspaceId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    },
+                    "projectId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    }
                   },
                   "ref": "#/components/schemas/MembershipBase"
                 },
@@ -1370,6 +1491,7 @@
                       "properties": {
                         "admin": { "type": "number", "required": true },
                         "member": { "type": "number", "required": true },
+                        "guest": { "type": "number", "required": true },
                         "pending": { "type": "number", "required": true },
                         "total": { "type": "number", "required": true }
                       }
@@ -1378,6 +1500,12 @@
                       "type": "object",
                       "required": true,
                       "properties": {
+                        "workspace": { "type": "number", "required": true },
+                        "project": { "type": "number", "required": true },
+                        "chat": { "type": "number", "required": true },
+                        "message": { "type": "number", "required": true },
+                        "task": { "type": "number", "required": true },
+                        "label": { "type": "number", "required": true },
                         "attachment": { "type": "number", "required": true }
                       }
                     }
@@ -1421,8 +1549,10 @@
               "contextId": "cfd2bd5e-6bcd-421d-8e08-509c329c26d9",
               "userId": "511cb6b8-226a-403e-9b93-c625939bbefa",
               "organizationId": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
-              "role": "admin",
-              "displayOrder": 2,
+              "workspaceId": "60eb184c-3194-4b70-a954-6d7149170337",
+              "projectId": "267a1a1a-9b2d-47a3-8120-a36f51f8f32c",
+              "role": "guest",
+              "displayOrder": 58,
               "muted": false,
               "archived": false
             },
@@ -1430,10 +1560,20 @@
               "membership": {
                 "admin": 30,
                 "member": 63,
-                "pending": 13,
-                "total": 93
+                "guest": 53,
+                "pending": 16,
+                "total": 146
               },
-              "entities": { "attachment": 178, "page": 257 }
+              "entities": {
+                "workspace": 178,
+                "project": 257,
+                "task": 47,
+                "label": 21,
+                "attachment": 451,
+                "page": 303,
+                "chat": 30,
+                "message": 439
+              }
             }
           }
         }

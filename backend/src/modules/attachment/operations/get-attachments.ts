@@ -1,12 +1,15 @@
 import type { z } from '@hono/zod-openapi';
-import { and, count, eq, getColumns, ilike, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, getColumns, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
+import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import type { attachmentListQuerySchema } from '#/modules/attachment/attachment-schema';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
+import { findProjectById } from '#/modules/task/task-queries';
 import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
+import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { getOrderColumn } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 import { prepareStringForILikeFilter } from '#/utils/sql';
@@ -15,9 +18,31 @@ type GetAttachmentsInput = z.infer<typeof attachmentListQuerySchema>;
 
 export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsInput) {
   const organizationId = ctx.var.organization.id;
-  const { q, sort, order, limit, offset, seqCursor } = input;
+  const { q, sort, order, limit, offset, seqCursor, projectId } = input;
+
+  // cella change: Validate an explicitly requested project exists before scoping the read to it.
+  if (projectId) {
+    const project = await tenantRead(ctx, (readCtx) => findProjectById(readCtx, { projectId }));
+    if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
+  }
+
+  // cella change: Resolve which projects the caller may read; undefined means org-wide based on memberships.
+  const { subContextIds: projectIds } = resolveCollectionReadFilter(
+    ctx.var.memberships,
+    'attachment',
+    organizationId,
+    projectId ? { subContextId: projectId } : undefined,
+  );
+
+  if (projectIds?.length === 0) {
+    const data = { items: [], total: 0 };
+    return { success: true, data } as OperationResult<typeof data>;
+  }
 
   const filters: SQL[] = [eq(attachmentsTable.organizationId, organizationId)];
+
+  // Restrict to the caller's readable projects unless org-wide (projectIds === undefined).
+  if (projectIds) filters.push(inArray(attachmentsTable.projectId, projectIds));
 
   if (!seqCursor) {
     filters.push(isNull(attachmentsTable.deletedAt));

@@ -1,71 +1,33 @@
-# Quickstart
+<div align="center">
 
-This document gives some quick tips to get started with building your own web app using cella. We assume you already used `pnpm create @cellajs/cella` to install the template. Also make sure to read the [architecture](./ARCHITECTURE.md) info.
+<h1><b>Raak</b></h1>
+<p>
+    <b>Linear meets Pivotal tracker. Raak is an issue tracker designed for teams working on multiple projects.</b>
+    <br />
+    <br />
+    <a href="https://raak.dev">Website</a>
+    ·
+    MIT license
+  </p>
+  <br />
+</p>
 
-When you finished installing cella, use:
+</div>
 
-```bash
-pnpm install
-pnpm generate
-pnpm docker
-pnpm seed
-pnpm dev
-```
+> [!CAUTION]
+> Raak is an implementation project based upon the template [Cella](https://github/com/cellajs/cella) (prerelease).
 
-## Update openapi & sdk + checks types + format/fix code style
+## Installation
 
-```bash
-pnpm check
-```
-
-## Run tests
-
-See [TESTING.md](./TESTING.md) for full documentation on writing and running tests.
-
-```bash
-pnpm test # Run tests (excluding ui stories)
-pnpm story # Start storybook
-```
-
-
-
-## Customize & contribute
-
-1. Customize your config in `shared/config/config.default.ts`, `shared/config/hierarchy-config.ts`, `shared/config/permissions-config.ts`
-2. Update package.json with your own metadata
-3. Look at your `.env` file to understand what is required, for example to send emails.
-4. Explore readmes and config files that start with `-config.ts`.
-5. Cella uses Transloadit with S3-compatible Scaleway Object Storage with local-only fallback.
-6. Changes in db schema? Use `pnpm generate` for a new db migration using drizzle.
-7. Many things can be improved or are missing. Contact us to get involved!
-
-## Cella CLI
-
-Keep your app in sync with the Cella template - pull upstream bug fixes, features and dependency updates while preserving your customizations. It also covers auditing outdated/vulnerable packages, file stats, and (for template maintainers) syncing downstream forks.
-
-See [cli/cella/README.md](../cli/cella/README.md) for full documentation, services, and configuration.
+- You need node and pnpm v11. Check with `node -v`. Install Node 24.x. (ie. using [Volta](https://docs.volta.sh/guide/)).
+- You need [Docker](https://docs.docker.com/get-started/get-docker/) running for the database.
+- Use [git over ssh](https://docs.github.com/en/authentication/connecting-to-github-with-ssh).
+  <br></br>
 
 ```bash
-pnpm cella
+git clone git@github.com:cellajs/raak.git && cd raak
 ```
-
-## Infra CLI
-
-Deploy your app to [Scaleway](https://www.scaleway.com/) using Pulumi + GitHub Actions. CI handles routine zero-downtime deploys on push to `main`. The CLI generates the Docker Compose synth and drives the Pulumi infrastructure tasks.
-
-See [infra/README.md](../infra/README.md) for full documentation and configuration.
 
 ```bash
-pnpm infra
+pnpm install && pnpm docker && pnpm seed && pnpm dev
 ```
-
-## Bench CLI
-
-Artillery load testing to keep services such as backend, cdc and yjs performant. It seeds deterministic test data, runs declarative scenarios against your dev DB, and saves every run as a baseline to compare against the previous one.
-
-See [bench/README.md](../bench/README.md) for full documentation and scenarios.
-
-```bash
-pnpm bench
-```
-

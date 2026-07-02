@@ -7,16 +7,11 @@ export default defineConfig({
   settings: {
     upstreamUrl: 'git@github.com:cellajs/cella.git',
     upstreamBranch: 'main',
-    // upstreamTrack: 'release',
+    upstreamTrack: 'branch',
     syncWithPackages: true,
     packageJsonSync: ['dependencies', 'devDependencies', 'scripts', 'overrides'],
     fileLinkMode: 'file',
   },
-
-  // Top-down interaction with forks.
-  forks: [
-    { name: 'raak', localPath: '../raak', remoteUrl: 'git@github.com:cellajs/raak.git', pullBranch: 'main' },
-  ],
 
   // File overrides
   overrides: {

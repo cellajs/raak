@@ -35,9 +35,50 @@ export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ 
       contexts.organization.admin({ read: 1, update: 1, delete: 1 });
       contexts.organization.member({ read: 1, update: 0, delete: 0 });
       break;
-    case 'attachment':
+    case 'workspace':
+      // elevation (parent org) — create grants the right to make a workspace inside the org
       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
       contexts.organization.member({ create: 1, read: 1, update: 0, delete: 0 });
+      // self (this workspace) — create omitted: you can't create a workspace from inside itself
+      contexts.workspace.admin({ read: 1, update: 1, delete: 1 });
+      contexts.workspace.member({ read: 1, update: 0, delete: 0 });
+      break;
+    case 'project':
+      // elevation (parent org) — create grants the right to make a project inside the org
+      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.organization.member({ create: 1, read: 1, update: 0, delete: 0 });
+      // self (this project) — create omitted: you can't create a project from inside itself
+      contexts.project.admin({ read: 1, update: 1, delete: 1 });
+      contexts.project.member({ read: 1, update: 0, delete: 0 });
+      contexts.project.guest({ read: 1, update: 0, delete: 0 });
+      break;
+    case 'attachment':
+      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.organization.member({ create: 1, read: 0, update: 0, delete: 0 });
+      contexts.project.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.project.member({ create: 1, read: 1, update: 0, delete: 1 });
+      contexts.project.guest({ create: 0, read: 1, update: 0, delete: 0 });
+      break;
+    case 'label':
+      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.organization.member({ create: 0, read: 0, update: 0, delete: 0 });
+      contexts.project.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.project.member({ create: 1, read: 1, update: 1, delete: 1 });
+      break;
+    case 'task':
+      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.organization.member({ create: 0, read: 0, update: 0, delete: 0 });
+      contexts.project.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.project.member({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.project.guest({ create: 0, read: 1, update: 0, delete: 0 });
+      break;
+    case 'chat':
+      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.organization.member({ create: 1, read: 1, update: 1, delete: 1 });
+      break;
+    case 'message':
+      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
+      contexts.organization.member({ create: 1, read: 1, update: 1, delete: 1 });
       break;
   }
 });

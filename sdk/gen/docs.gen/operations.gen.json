@@ -581,7 +581,7 @@
     "path": "/me",
     "tags": ["me"],
     "summary": "Delete self",
-    "description": "Deletes the current user. This also removes the user's memberships (cascade) and sets references to the user to `null` where applicable.",
+    "description": "Deletes the current user. This also removes the user's memberships (cascade) and sets references to the user to null where applicable.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": false,
@@ -949,7 +949,7 @@
     "path": "/system",
     "tags": ["system"],
     "summary": "Delete users",
-    "description": "Deletes one or more *users* from the system based on a list of IDs. This also removes the user's memberships (cascade) and sets references to the user to `null` where applicable.",
+    "description": "Deletes one or more users from the system based on a list of IDs. This also removes the user's memberships (cascade) and sets references to the user to null where applicable.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": true,
@@ -972,7 +972,7 @@
     "path": "/system/{id}",
     "tags": ["system"],
     "summary": "Update user",
-    "description": "Updates a *user* identified by ID.",
+    "description": "Updates a user identified by ID.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": true,
@@ -1294,7 +1294,7 @@
     "path": "/metrics/public",
     "tags": ["metrics"],
     "summary": "Get public counts",
-    "description": "Returns basic count metrics for entity types such as `users` and `organizations`.\n      This endpoint is public and uses a 1 minute in memory cache for performance.",
+    "description": "Returns basic count metrics for entity types such as users and organizations.\n      This endpoint is public and uses a 1 minute in memory cache for performance.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": false,
@@ -1392,7 +1392,7 @@
     "path": "/{tenantId}/organizations/{id}",
     "tags": ["organizations"],
     "summary": "Get organization",
-    "description": "Retrieves an organization by ID within a tenant. Pass `?slug=true` to resolve by slug instead.",
+    "description": "Retrieves an organization by ID within a tenant. Pass ?slug=true to resolve by slug instead.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": false,
@@ -1567,7 +1567,7 @@
     "path": "/users/users",
     "tags": ["users"],
     "summary": "Get list of users",
-    "description": "Returns a list of *users*.",
+    "description": "Returns a list of users.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": false,
@@ -1591,7 +1591,7 @@
     "path": "/users/users/{relatableUserId}",
     "tags": ["users"],
     "summary": "Get user",
-    "description": "Retrieves a *user* by ID. The requesting user must share at least one organization membership. Pass `?slug=true` to resolve by slug instead.",
+    "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": false,
@@ -1607,6 +1607,373 @@
       "owner": ["cella"]
     },
     "entityType": "user"
+  },
+  {
+    "id": "getPublicProject",
+    "hash": "tag/projects/GET/public/projects/{id}",
+    "method": "get",
+    "path": "/public/projects/{id}",
+    "tags": ["projects"],
+    "summary": "Fetch public project by ID",
+    "description": "Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "getPublicTask",
+    "hash": "tag/tasks/GET/public/tasks/{id}",
+    "method": "get",
+    "path": "/public/tasks/{id}",
+    "tags": ["tasks"],
+    "summary": "Get public task",
+    "description": "Retrieves a task by its ID. For publicly shared.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "getPublicTasks",
+    "hash": "tag/tasks/GET/public/tasks",
+    "method": "get",
+    "path": "/public/tasks",
+    "tags": ["tasks"],
+    "summary": "Get public tasks",
+    "description": "Returns a list of public tasks associated with a specific project. For publicly shared boards.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "resolveTaskLink",
+    "hash": "tag/tasks/GET/t/{id}/resolve",
+    "method": "get",
+    "path": "/t/{id}/resolve",
+    "tags": ["tasks"],
+    "summary": "Resolve task link",
+    "description": "Returns routing metadata for a task link so the frontend can decide where to redirect the user.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "getTaskCover",
+    "hash": "tag/tasks/GET/t/{id}/cover",
+    "method": "get",
+    "path": "/t/{id}/cover",
+    "tags": ["tasks"],
+    "summary": "Get task cover",
+    "description": "Retrieves the cover image for a task by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": false,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "redirectToTask",
+    "hash": "tag/tasks/GET/t/{id}",
+    "method": "get",
+    "path": "/t/{id}",
+    "tags": ["tasks"],
+    "summary": "Redirect to task",
+    "description": "Redirects to the canonical route for a task by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": false,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "getWorkspaces",
+    "hash": "tag/workspaces/GET/workspaces",
+    "method": "get",
+    "path": "/workspaces",
+    "tags": ["workspaces"],
+    "summary": "Get list of workspaces",
+    "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "getProjects",
+    "hash": "tag/projects/GET/projects",
+    "method": "get",
+    "path": "/projects",
+    "tags": ["projects"],
+    "summary": "Get list of projects",
+    "description": "Returns a paginated list of projects where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, workspaceId to scope to a specific workspace, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by project name.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "getChats",
+    "hash": "tag/agent/GET/{tenantId}/{organizationId}/chats",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/chats",
+    "tags": ["agent"],
+    "summary": "Get chats",
+    "description": "Returns a paginated list of chat sessions for the current user.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["agent"],
+      "owner": ["app"],
+      "entity": ["product"]
+    }
+  },
+  {
+    "id": "createChat",
+    "hash": "tag/agent/POST/{tenantId}/{organizationId}/chats",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/chats",
+    "tags": ["agent"],
+    "summary": "Create chat",
+    "description": "Creates a new chat session with an initial user message and returns the chat. The assistant response is streamed separately via the AI worker streamChat endpoint.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["agent"],
+      "owner": ["app"],
+      "entity": ["product"]
+    }
+  },
+  {
+    "id": "deleteChats",
+    "hash": "tag/agent/DELETE/{tenantId}/{organizationId}/chats",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/chats",
+    "tags": ["agent"],
+    "summary": "Delete chats",
+    "description": "Deletes one or more chat sessions and their messages.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["agent"],
+      "owner": ["app"],
+      "entity": ["product"]
+    }
+  },
+  {
+    "id": "getMessages",
+    "hash": "tag/agent/GET/{tenantId}/{organizationId}/chats/{id}/messages",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/chats/{id}/messages",
+    "tags": ["agent"],
+    "summary": "Get messages",
+    "description": "Returns a paginated list of messages for a chat session.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["agent"],
+      "owner": ["app"],
+      "entity": ["product"]
+    }
+  },
+  {
+    "id": "sendMessage",
+    "hash": "tag/agent/POST/{tenantId}/{organizationId}/chats/{id}/messages",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/chats/{id}/messages",
+    "tags": ["agent"],
+    "summary": "Send message",
+    "description": "Persists a user message and returns it. The assistant response is streamed separately via the AI worker streamChat endpoint.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["agent"],
+      "owner": ["app"],
+      "entity": ["product"]
+    }
+  },
+  {
+    "id": "updateChat",
+    "hash": "tag/agent/PUT/{tenantId}/{organizationId}/chats/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/chats/{id}",
+    "tags": ["agent"],
+    "summary": "Update chat",
+    "description": "Updates a chat session (rename or archive).",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["agent"],
+      "owner": ["app"],
+      "entity": ["product"]
+    }
+  },
+  {
+    "id": "handleMcp",
+    "hash": "tag/ai/POST/{tenantId}/{organizationId}/mcp",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/mcp",
+    "tags": ["ai"],
+    "summary": "MCP endpoint",
+    "description": "Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["ai"],
+      "owner": ["cella"]
+    }
   },
   {
     "id": "getAttachments",
@@ -1811,7 +2178,7 @@
     "path": "/{tenantId}/{organizationId}/memberships/{id}",
     "tags": ["memberships"],
     "summary": "Update membership",
-    "description": "Updates the membership metadata, such as role, `muted`, or `archived` status.",
+    "description": "Updates the membership metadata, such as role, muted, or archived status.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": true,
@@ -1897,6 +2264,256 @@
     }
   },
   {
+    "id": "getTasks",
+    "hash": "tag/tasks/GET/{tenantId}/{organizationId}/tasks",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/tasks",
+    "tags": ["tasks"],
+    "summary": "Get list of tasks",
+    "description": "Returns a list of tasks within one or more specified projects.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "createTasks",
+    "hash": "tag/tasks/POST/{tenantId}/{organizationId}/tasks",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/tasks",
+    "tags": ["tasks"],
+    "summary": "Create tasks",
+    "description": "Creates one or more tasks within a project.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "deleteTasks",
+    "hash": "tag/tasks/DELETE/{tenantId}/{organizationId}/tasks",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/tasks",
+    "tags": ["tasks"],
+    "summary": "Delete tasks",
+    "description": "Deletes one or more tasks by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "getTask",
+    "hash": "tag/tasks/GET/{tenantId}/{organizationId}/tasks/{id}",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/tasks/{id}",
+    "tags": ["tasks"],
+    "summary": "Get task",
+    "description": "Retrieves a task by its ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": ["appCache"]
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "updateTask",
+    "hash": "tag/tasks/PUT/{tenantId}/{organizationId}/tasks/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/tasks/{id}",
+    "tags": ["tasks"],
+    "summary": "Update task",
+    "description": "Updates a task by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tasks"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "task"
+  },
+  {
+    "id": "getLabels",
+    "hash": "tag/labels/GET/{tenantId}/{organizationId}/labels",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/labels",
+    "tags": ["labels"],
+    "summary": "Get list of labels",
+    "description": "Returns a list of labels for a given project or workspace.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "createLabels",
+    "hash": "tag/labels/POST/{tenantId}/{organizationId}/labels",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/labels",
+    "tags": ["labels"],
+    "summary": "Create labels",
+    "description": "Creates one or more labels within a project.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "deleteLabels",
+    "hash": "tag/labels/DELETE/{tenantId}/{organizationId}/labels",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/labels",
+    "tags": ["labels"],
+    "summary": "Delete labels",
+    "description": "Deletes one or more labels by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "getLabel",
+    "hash": "tag/labels/GET/{tenantId}/{organizationId}/labels/{id}",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/labels/{id}",
+    "tags": ["labels"],
+    "summary": "Get label",
+    "description": "Retrieves a label by its ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": ["appCache"]
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "updateLabel",
+    "hash": "tag/labels/PUT/{tenantId}/{organizationId}/labels/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/labels/{id}",
+    "tags": ["labels"],
+    "summary": "Update label",
+    "description": "Updates a label by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
     "id": "markSeen",
     "hash": "tag/seen/POST/{tenantId}/{organizationId}/seen",
     "method": "post",
@@ -1916,6 +2533,304 @@
     },
     "tagsByKind": {
       "module": ["seen"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "createWorkspaces",
+    "hash": "tag/workspaces/POST/{tenantId}/{organizationId}/workspaces",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/workspaces",
+    "tags": ["workspaces"],
+    "summary": "Create workspaces",
+    "description": "Creates one or more personal workspaces owned by the current user.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["insertEntityLock"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "deleteWorkspace",
+    "hash": "tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/workspaces",
+    "tags": ["workspaces"],
+    "summary": "Delete workspaces",
+    "description": "Deletes one or more workspaces by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "getWorkspace",
+    "hash": "tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/workspaces/{id}",
+    "tags": ["workspaces"],
+    "summary": "Get workspace",
+    "description": "Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "updateWorkspace",
+    "hash": "tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/workspaces/{id}",
+    "tags": ["workspaces"],
+    "summary": "Update workspace",
+    "description": "Updates a workspace by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "createProjects",
+    "hash": "tag/projects/POST/{tenantId}/{organizationId}/projects",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/projects",
+    "tags": ["projects"],
+    "summary": "Create projects",
+    "description": "Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["insertEntityLock"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "deleteProjects",
+    "hash": "tag/projects/DELETE/{tenantId}/{organizationId}/projects",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/projects",
+    "tags": ["projects"],
+    "summary": "Delete projects",
+    "description": "Deletes one or more projects by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "getProject",
+    "hash": "tag/projects/GET/{tenantId}/{organizationId}/projects/{id}",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/projects/{id}",
+    "tags": ["projects"],
+    "summary": "Get project",
+    "description": "Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "updateProject",
+    "hash": "tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/projects/{id}",
+    "tags": ["projects"],
+    "summary": "Update project",
+    "description": "Updates a project by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "reassignProject",
+    "hash": "tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/projects/{id}/assign-workspace",
+    "tags": ["projects"],
+    "summary": "Assign project to workspace",
+    "description": "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "removeProjectWorkspace",
+    "hash": "tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/projects/{id}/workspace",
+    "tags": ["projects"],
+    "summary": "Remove project from workspace",
+    "description": "Removes the current user's project membership from its assigned workspace without leaving the project.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "moveProject",
+    "hash": "tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/projects/{id}/move",
+    "tags": ["projects"],
+    "summary": "Move project between workspaces",
+    "description": "Moves a project from one workspace to another.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["context"]
+    },
+    "entityType": "project"
+  },
+  {
+    "id": "getYjsToken",
+    "hash": "tag/yjs/GET/yjs/token",
+    "method": "get",
+    "path": "/yjs/token",
+    "tags": ["yjs"],
+    "summary": "Get Yjs token",
+    "description": "Returns a context-scoped HMAC-signed token for a specific entity type. The token proves the user has update permission and can be verified by the Yjs relay worker without a backend callback.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["yjs"],
       "owner": ["cella"]
     }
   }

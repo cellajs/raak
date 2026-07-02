@@ -1,19 +1,18 @@
 {
-  "name": "cella",
-  "version": "0.1.1",
+  "name": "raak",
+  "version": "0.0.1",
   "private": false,
   "license": "MIT",
-  "repository": "https://github.com/cellajs/cella",
-  "description": "Cella is a TypeScript template to build collaborative web apps with sync engine. MIT licensed.",
+  "repository": "https://github.com/cellajs/raak",
+  "description": "Issue tracker for teams that work on multiple projects. High density. Fast. Fun.",
   "keywords": [
-    "starter kit",
-    "fullstack",
-    "monorepo",
-    "typescript",
+    "issue tracker",
+    "project management",
+    "open-source",
     "cellajs"
   ],
   "author": "CellaJS <info@cellajs.com>",
-  "homepage": "https://cellajs.com",
+  "homepage": "https://raak.dev",
   "type": "module",
   "engines": {
     "node": "24.x"

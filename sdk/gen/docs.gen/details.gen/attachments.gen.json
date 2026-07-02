@@ -144,6 +144,7 @@
                     "required": true,
                     "maxLength": 2048
                   },
+                  "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "viewCount": { "type": "integer", "required": false, "minimum": 0 }
                 },
@@ -185,7 +186,8 @@
                 "sourceId": "db238d10-af2a-44b7-a00b-63f20bc295d2",
                 "fieldTimestamps": {}
               },
-              "organizationId": "966a04b5-5092-46e5-aef7-3b6c996a20eb"
+              "projectId": "966a04b5-5092-46e5-aef7-3b6c996a20eb",
+              "organizationId": "35a6c4c4-758e-4db9-acca-e3cbd585b198"
             },
             {
               "id": "65b1a01e-b422-4db6-8339-b813cf84d752",
@@ -216,7 +218,8 @@
                 "sourceId": "d9017e5b-49fb-41c3-acc0-f3df8449a148",
                 "fieldTimestamps": {}
               },
-              "organizationId": "c7c8981c-d73a-47bf-9e99-126641d43cb8"
+              "projectId": "c7c8981c-d73a-47bf-9e99-126641d43cb8",
+              "organizationId": "0ceb952b-e06e-4d0d-afda-9dd600bbd33d"
             }
           ],
           "total": 2
@@ -287,7 +290,8 @@
           },
           "offset": { "type": "string", "required": false },
           "limit": { "type": "string", "required": false },
-          "seqCursor": { "type": "string", "required": false }
+          "seqCursor": { "type": "string", "required": false },
+          "projectId": { "type": "string", "required": false, "maxLength": 50 }
         }
       }
     }
@@ -437,6 +441,7 @@
                     "required": true,
                     "maxLength": 2048
                   },
+                  "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "viewCount": { "type": "integer", "required": false, "minimum": 0 }
                 },
@@ -489,7 +494,8 @@
                 "sourceId": "25f82c13-8ca8-4877-b51a-dbdbf08b9af3",
                 "fieldTimestamps": {}
               },
-              "organizationId": "691ea12d-93d0-4a05-89eb-59fada054211"
+              "projectId": "691ea12d-93d0-4a05-89eb-59fada054211",
+              "organizationId": "7456cc6e-e256-4c3c-b2d5-a11957ca425b"
             },
             {
               "id": "7a21be26-ba4e-4e7e-b27d-369703e5ea44",
@@ -520,7 +526,8 @@
                 "sourceId": "c5fd1fb3-1ba5-42c2-9db0-9b47a24f941b",
                 "fieldTimestamps": {}
               },
-              "organizationId": "1cc76d33-0afc-40f8-b565-ad527c313a69"
+              "projectId": "1cc76d33-0afc-40f8-b565-ad527c313a69",
+              "organizationId": "63770865-6d93-4313-ae10-3be7d699b0a6"
             }
           ],
           "rejectedIds": []
@@ -668,6 +675,7 @@
                     "required": true,
                     "maxLength": 2048
                   },
+                  "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "viewCount": { "type": "integer", "required": false, "minimum": 0 }
                 },
@@ -720,7 +728,8 @@
                 "sourceId": "25f82c13-8ca8-4877-b51a-dbdbf08b9af3",
                 "fieldTimestamps": {}
               },
-              "organizationId": "691ea12d-93d0-4a05-89eb-59fada054211"
+              "projectId": "691ea12d-93d0-4a05-89eb-59fada054211",
+              "organizationId": "7456cc6e-e256-4c3c-b2d5-a11957ca425b"
             },
             {
               "id": "7a21be26-ba4e-4e7e-b27d-369703e5ea44",
@@ -751,7 +760,8 @@
                 "sourceId": "c5fd1fb3-1ba5-42c2-9db0-9b47a24f941b",
                 "fieldTimestamps": {}
               },
-              "organizationId": "1cc76d33-0afc-40f8-b565-ad527c313a69"
+              "projectId": "1cc76d33-0afc-40f8-b565-ad527c313a69",
+              "organizationId": "63770865-6d93-4313-ae10-3be7d699b0a6"
             }
           ],
           "rejectedIds": []
@@ -842,6 +852,7 @@
               "required": false,
               "maxLength": 2048
             },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
               "type": "object",
               "required": true,
@@ -1183,6 +1194,7 @@
               "required": true,
               "maxLength": 2048
             },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "viewCount": { "type": "integer", "required": false, "minimum": 0 }
           },
@@ -1218,7 +1230,8 @@
             "sourceId": "e036cee3-625c-452e-ab1a-be9390460217",
             "fieldTimestamps": {}
           },
-          "organizationId": "0841e0bb-2810-4252-8874-9789e1db3e97"
+          "projectId": "0841e0bb-2810-4252-8874-9789e1db3e97",
+          "organizationId": "e911b782-3199-4195-9377-499bdcbbdc07"
         }
       },
       {
@@ -1413,6 +1426,7 @@
               "required": true,
               "maxLength": 2048
             },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "viewCount": { "type": "integer", "required": false, "minimum": 0 }
           },
@@ -1448,7 +1462,8 @@
             "sourceId": "e036cee3-625c-452e-ab1a-be9390460217",
             "fieldTimestamps": {}
           },
-          "organizationId": "0841e0bb-2810-4252-8874-9789e1db3e97"
+          "projectId": "0841e0bb-2810-4252-8874-9789e1db3e97",
+          "organizationId": "e911b782-3199-4195-9377-499bdcbbdc07"
         }
       },
       {

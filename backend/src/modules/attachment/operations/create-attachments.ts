@@ -50,7 +50,11 @@ export async function createAttachmentsOp(ctx: AuthContext, input: CreateAttachm
       stx: buildStx(stx),
     };
 
-    canCreateEntity(ctx, { entityType: 'attachment', contextIds: { organization: organization.id } });
+    canCreateEntity(ctx, {
+      entityType: 'attachment',
+      // cella change: projectID is required
+      contextIds: { organization: organization.id, project: att.projectId },
+    });
     return attachment;
   });
 

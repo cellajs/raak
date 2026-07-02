@@ -1,0 +1,41 @@
+# CDC Throughput — measures CDC pipeline lag under increasing write load.
+#
+# Same task edit payloads as task-edit, but a heavier sustained profile to push
+# the CDC pipeline. The CDC health poller runs automatically for every scenario,
+# so replication lag is captured in the run summary.
+# Each VU loops 10 times. Steps up: 25 → 50 → 75 → 100 arrivals/s.
+config:
+  target: "{{ $processEnvironment.BASE_URL }}"
+  processor: "../src/processors/task-edit.ts"
+  phases:
+    - duration: 10
+      arrivalRate: 25
+      name: "hold 25"
+    - duration: 10
+      arrivalRate: 50
+      name: "hold 50"
+    - duration: 10
+      arrivalRate: 75
+      name: "hold 75"
+    - duration: 10
+      arrivalRate: 100
+      name: "hold 100"
+  plugins:
+    ensure:
+      maxErrorRate: 1
+      thresholds:
+        - http.response_time.p95: 3000
+
+scenarios:
+  - beforeScenario: "authenticate"
+    flow:
+      - loop:
+          - function: "buildTaskEditPayload"
+          - put:
+              url: "/{{ tenantId }}/{{ orgId }}/tasks/{{ taskId }}"
+              headers:
+                Content-Type: "application/json"
+                cookie: "{{ cookie }}"
+              json: "{{ payload }}"
+          - think: "50ms"
+        count: 10

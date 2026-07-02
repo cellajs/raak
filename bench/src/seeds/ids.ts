@@ -27,6 +27,8 @@ export const CORE_ID_VARIANTS = {
   attachment: 'a005',
   membership: 'a006',
   session: 'a007',
+  task: 'b008',
+  project: 'b009',
 } as const;
 
 export const TENANT_ID = BENCH_TENANT_ID;
@@ -38,3 +40,5 @@ export const emailId = (i: number) => benchUuid(CORE_ID_VARIANTS.email, i);
 export const attachmentId = (i: number) => benchUuid(CORE_ID_VARIANTS.attachment, i);
 export const membershipId = (i: number) => benchUuid(CORE_ID_VARIANTS.membership, i);
 export const sessionId = (i: number) => benchUuid(CORE_ID_VARIANTS.session, i);
+export const taskId = (i: number) => benchUuid(CORE_ID_VARIANTS.task, i);
+export const projectId = (i: number) => benchUuid(CORE_ID_VARIANTS.project, i);

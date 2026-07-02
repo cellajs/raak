@@ -1,7 +1,11 @@
 import type { ContextEntityType } from 'shared';
 import { attachmentsCanonicalOptions } from '~/modules/attachment/query';
+import { labelsCanonicalOptions } from '~/modules/label/query';
 import { membersListQueryOptions } from '~/modules/memberships/query';
 import { organizationsListQueryOptions } from '~/modules/organization/query';
+import { projectsListQueryOptions } from '~/modules/project/query';
+import { tasksCanonicalOptions } from '~/modules/task/query';
+import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import type { BuildEntitySyncQueriesParams, ContextEntityListQueryMap, EntitySyncQueryOptions } from '~/query/types';
 
 /**
@@ -14,6 +18,8 @@ import type { BuildEntitySyncQueriesParams, ContextEntityListQueryMap, EntitySyn
  */
 export const contextEntityListQueriesByType = {
   organization: (params) => organizationsListQueryOptions(params),
+  workspace: (params) => workspacesListQueryOptions(params),
+  project: (params) => projectsListQueryOptions(params),
 } satisfies ContextEntityListQueryMap;
 
 /** Returns query options to sync for a given entity. Pure mapping — staleness is handled by React Query. */
@@ -47,6 +53,20 @@ export const buildEntitySyncQueries = ({
     case 'organization': {
       addMembersQuery('organization');
       syncQueries.push(attachmentsCanonicalOptions({ tenantId, organizationId: targetEntityId }));
+      syncQueries.push(labelsCanonicalOptions({ tenantId, organizationId: targetEntityId }));
+      break;
+    }
+
+    case 'workspace': {
+      addMembersQuery('workspace');
+      break;
+    }
+
+    case 'project': {
+      addMembersQuery('project');
+      syncQueries.push(
+        tasksCanonicalOptions({ organizationId: currentOrganizationId, tenantId, projectId: targetEntityId }),
+      );
       break;
     }
 

@@ -5,6 +5,7 @@ import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
 import { seedDb } from '#/db/db';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { mockStx, mockUuid, setMockContext, withFakerSeed } from '#/mocks';
 import { defaultAdminUser } from '../fixtures';
 
@@ -16,7 +17,7 @@ setMockContext('script');
 
 /**
  * Known S3 files that should exist in the dev bucket under the `seed/` prefix.
- * Each seeded organization gets one attachment per file.
+ * Each seeded organization gets one attachment per file, assigned to one of its projects.
  */
 const SEED_FILES = [
   { filename: 'sample-image.webp', contentType: 'image/webp', size: '24500', originalKey: 'seed/sample-image.webp', public: true },
@@ -45,15 +46,32 @@ export const attachmentsSeed = async () => {
 
   // Fetch all seeded organizations (need tenantId + id for FK constraints)
   const organizations = await db.select({ id: organizationsTable.id, tenantId: organizationsTable.tenantId }).from(organizationsTable);
+  const projects = await db.select({ id: projectsTable.id, organizationId: projectsTable.organizationId }).from(projectsTable);
 
   if (!organizations.length) {
     spinner.fail('No organizations found → run organization seed first');
     return;
   }
 
+  const projectIdsByOrganization = new Map<string, string[]>();
+
+  for (const project of projects) {
+    const projectIds = projectIdsByOrganization.get(project.organizationId);
+    if (projectIds) projectIds.push(project.id);
+    else projectIdsByOrganization.set(project.organizationId, [project.id]);
+  }
+
   let totalCreated = 0;
+  let skippedOrganizations = 0;
 
   for (const org of organizations) {
+    const projectIds = projectIdsByOrganization.get(org.id);
+
+    if (!projectIds?.length) {
+      skippedOrganizations++;
+      continue;
+    }
+
     const records = SEED_FILES.map((file, i) =>
       withFakerSeed(`attachment:seed:${org.id}:${i}`, () => {
         const createdAt = faker.date.past({ refDate: new Date('2025-01-01') }).toISOString();
@@ -62,6 +80,7 @@ export const attachmentsSeed = async () => {
           entityType: 'attachment' as const,
           tenantId: org.tenantId,
           organizationId: org.id,
+          projectId: projectIds[i % projectIds.length],
           createdAt,
           updatedAt: createdAt,
           createdBy: defaultAdminUser.id,
@@ -82,6 +101,10 @@ export const attachmentsSeed = async () => {
 
     await db.insert(attachmentsTable).values(records).onConflictDoNothing();
     totalCreated += records.length;
+  }
+
+  if (skippedOrganizations > 0) {
+    warnSpinner(`Skipped ${skippedOrganizations} organizations with no projects`);
   }
 
   succeedSpinner(`Created ${totalCreated} attachments across ${organizations.length} organizations`);

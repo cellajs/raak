@@ -1,0 +1,69 @@
+import { faker } from '@faker-js/faker';
+import {
+  generateMockContextIdColumns,
+  MOCK_REF_DATE,
+  mockBatchResponse,
+  mockPaginated,
+  mockStx,
+  mockTenantId,
+  mockUuid,
+  withFakerSeed,
+} from '#/mocks';
+import type { LabelModel } from '#/modules/label/label-db';
+
+/**
+ * Generates a mock label with all fields populated.
+ * Uses deterministic seeding - same key produces same data.
+ * Context entity ID columns are generated dynamically based on appConfig.contextEntityTypes.
+ * @param key - Seed key for deterministic output
+ * @param suffix - Optional suffix to append to name for uniqueness in seeding
+ */
+export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
+  withFakerSeed(key, () => {
+    const refDate = MOCK_REF_DATE;
+    const createdAt = faker.date.past({ refDate }).toISOString();
+    const userId = mockUuid();
+    const baseName = faker.helpers.arrayElement([
+      'bug',
+      'feature',
+      'enhancement',
+      'documentation',
+      'urgent',
+      'low priority',
+    ]);
+
+    return {
+      id: mockUuid(),
+      entityType: 'label' as const,
+      name: suffix ? `${baseName}-${suffix}` : baseName,
+      description: faker.lorem.sentence(),
+      keywords: faker.lorem.words(3),
+      // Specific columns
+      color: faker.color.rgb().toLowerCase(),
+      // Context entity columns
+      tenantId: mockTenantId(),
+      ...generateMockContextIdColumns('relatable'),
+      // Audit fields
+      createdAt,
+      createdBy: userId,
+      updatedAt: createdAt,
+      updatedBy: userId,
+      deletedAt: null,
+      deletedBy: null,
+      seq: faker.number.int({ min: 1, max: 500 }),
+      stx: mockStx(),
+    };
+  });
+
+/** Alias for API response examples (label schema matches DB schema) */
+export const mockLabelResponse = mockLabel;
+
+/**
+ * Generates a batch mock label response for createLabels endpoint.
+ */
+export const mockBatchLabelsResponse = (count = 2) => mockBatchResponse(mockLabelResponse, count);
+
+/**
+ * Generates a paginated mock label list response for getLabels endpoint.
+ */
+export const mockPaginatedLabelsResponse = (count = 2) => mockPaginated(mockLabelResponse, count);

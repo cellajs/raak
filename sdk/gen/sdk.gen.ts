@@ -20,9 +20,15 @@ import type {
   CreateAttachmentsData,
   CreateAttachmentsErrors,
   CreateAttachmentsResponses,
+  CreateChatData,
+  CreateChatErrors,
+  CreateChatResponses,
   CreateDomainData,
   CreateDomainErrors,
   CreateDomainResponses,
+  CreateLabelsData,
+  CreateLabelsErrors,
+  CreateLabelsResponses,
   CreateOrganizationsData,
   CreateOrganizationsErrors,
   CreateOrganizationsResponses,
@@ -32,21 +38,36 @@ import type {
   CreatePasskeyData,
   CreatePasskeyErrors,
   CreatePasskeyResponses,
+  CreateProjectsData,
+  CreateProjectsErrors,
+  CreateProjectsResponses,
   CreateRequestData,
   CreateRequestErrors,
   CreateRequestResponses,
+  CreateTasksData,
+  CreateTasksErrors,
+  CreateTasksResponses,
   CreateTenantData,
   CreateTenantErrors,
   CreateTenantResponses,
   CreateTotpData,
   CreateTotpErrors,
   CreateTotpResponses,
+  CreateWorkspacesData,
+  CreateWorkspacesErrors,
+  CreateWorkspacesResponses,
   DeleteAttachmentsData,
   DeleteAttachmentsErrors,
   DeleteAttachmentsResponses,
+  DeleteChatsData,
+  DeleteChatsErrors,
+  DeleteChatsResponses,
   DeleteDomainData,
   DeleteDomainErrors,
   DeleteDomainResponses,
+  DeleteLabelsData,
+  DeleteLabelsErrors,
+  DeleteLabelsResponses,
   DeleteMeData,
   DeleteMeErrors,
   DeleteMembershipsData,
@@ -68,15 +89,24 @@ import type {
   DeletePasskeyData,
   DeletePasskeyErrors,
   DeletePasskeyResponses,
+  DeleteProjectsData,
+  DeleteProjectsErrors,
+  DeleteProjectsResponses,
   DeleteRequestsData,
   DeleteRequestsErrors,
   DeleteRequestsResponses,
+  DeleteTasksData,
+  DeleteTasksErrors,
+  DeleteTasksResponses,
   DeleteTotpData,
   DeleteTotpErrors,
   DeleteTotpResponses,
   DeleteUsersData,
   DeleteUsersErrors,
   DeleteUsersResponses,
+  DeleteWorkspaceData,
+  DeleteWorkspaceErrors,
+  DeleteWorkspaceResponses,
   GeneratePasskeyChallengeData,
   GeneratePasskeyChallengeErrors,
   GeneratePasskeyChallengeResponses,
@@ -95,18 +125,30 @@ import type {
   GetAuthHealthData,
   GetAuthHealthErrors,
   GetAuthHealthResponses,
+  GetChatsData,
+  GetChatsErrors,
+  GetChatsResponses,
   GetDomainData,
   GetDomainErrors,
   GetDomainResponses,
   GetDomainsData,
   GetDomainsErrors,
   GetDomainsResponses,
+  GetLabelData,
+  GetLabelErrors,
+  GetLabelResponses,
+  GetLabelsData,
+  GetLabelsErrors,
+  GetLabelsResponses,
   GetMeData,
   GetMeErrors,
   GetMembersData,
   GetMembersErrors,
   GetMembersResponses,
   GetMeResponses,
+  GetMessagesData,
+  GetMessagesErrors,
+  GetMessagesResponses,
   GetMyAuthData,
   GetMyAuthErrors,
   GetMyAuthResponses,
@@ -134,15 +176,39 @@ import type {
   GetPresignedUrlData,
   GetPresignedUrlErrors,
   GetPresignedUrlResponses,
+  GetProjectData,
+  GetProjectErrors,
+  GetProjectResponses,
+  GetProjectsData,
+  GetProjectsErrors,
+  GetProjectsResponses,
   GetPublicCountsData,
   GetPublicCountsErrors,
   GetPublicCountsResponses,
+  GetPublicProjectData,
+  GetPublicProjectErrors,
+  GetPublicProjectResponses,
   GetPublicStreamData,
   GetPublicStreamErrors,
   GetPublicStreamResponses,
+  GetPublicTaskData,
+  GetPublicTaskErrors,
+  GetPublicTaskResponses,
+  GetPublicTasksData,
+  GetPublicTasksErrors,
+  GetPublicTasksResponses,
   GetRequestsData,
   GetRequestsErrors,
   GetRequestsResponses,
+  GetTaskCoverData,
+  GetTaskCoverErrors,
+  GetTaskCoverResponses,
+  GetTaskData,
+  GetTaskErrors,
+  GetTaskResponses,
+  GetTasksData,
+  GetTasksErrors,
+  GetTasksResponses,
   GetTenantsData,
   GetTenantsErrors,
   GetTenantsResponses,
@@ -161,6 +227,12 @@ import type {
   GetUsersData,
   GetUsersErrors,
   GetUsersResponses,
+  GetWorkspaceData,
+  GetWorkspaceErrors,
+  GetWorkspaceResponses,
+  GetWorkspacesData,
+  GetWorkspacesErrors,
+  GetWorkspacesResponses,
   GetYjsTokenData,
   GetYjsTokenErrors,
   GetYjsTokenResponses,
@@ -190,21 +262,39 @@ import type {
   MicrosoftCallbackErrors,
   MicrosoftData,
   MicrosoftErrors,
+  MoveProjectData,
+  MoveProjectErrors,
+  MoveProjectResponses,
   PostAppCatchupData,
   PostAppCatchupErrors,
   PostAppCatchupResponses,
   PostPublicCatchupData,
   PostPublicCatchupErrors,
   PostPublicCatchupResponses,
+  ReassignProjectData,
+  ReassignProjectErrors,
+  ReassignProjectResponses,
+  RedirectToTaskData,
+  RedirectToTaskErrors,
+  RedirectToTaskResponses,
+  RemoveProjectWorkspaceData,
+  RemoveProjectWorkspaceErrors,
+  RemoveProjectWorkspaceResponses,
   ResendInvitationWithTokenData,
   ResendInvitationWithTokenErrors,
   ResendInvitationWithTokenResponses,
+  ResolveTaskLinkData,
+  ResolveTaskLinkErrors,
+  ResolveTaskLinkResponses,
   SelfCreateTenantData,
   SelfCreateTenantErrors,
   SelfCreateTenantResponses,
   SendMagicLinkData,
   SendMagicLinkErrors,
   SendMagicLinkResponses,
+  SendMessageData,
+  SendMessageErrors,
+  SendMessageResponses,
   SendNewsletterData,
   SendNewsletterErrors,
   SendNewsletterResponses,
@@ -234,6 +324,12 @@ import type {
   UpdateAttachmentData,
   UpdateAttachmentErrors,
   UpdateAttachmentResponses,
+  UpdateChatData,
+  UpdateChatErrors,
+  UpdateChatResponses,
+  UpdateLabelData,
+  UpdateLabelErrors,
+  UpdateLabelResponses,
   UpdateMeData,
   UpdateMeErrors,
   UpdateMembershipData,
@@ -246,12 +342,21 @@ import type {
   UpdatePageData,
   UpdatePageErrors,
   UpdatePageResponses,
+  UpdateProjectData,
+  UpdateProjectErrors,
+  UpdateProjectResponses,
+  UpdateTaskData,
+  UpdateTaskErrors,
+  UpdateTaskResponses,
   UpdateTenantData,
   UpdateTenantErrors,
   UpdateTenantResponses,
   UpdateUserData,
   UpdateUserErrors,
   UpdateUserResponses,
+  UpdateWorkspaceData,
+  UpdateWorkspaceErrors,
+  UpdateWorkspaceResponses,
   VerifyDomainData,
   VerifyDomainErrors,
   VerifyDomainResponses,
@@ -265,9 +370,15 @@ import {
   zCreateAttachmentsBody,
   zCreateAttachmentsPath,
   zCreateAttachmentsResponse,
+  zCreateChatBody,
+  zCreateChatPath,
+  zCreateChatResponse,
   zCreateDomainBody,
   zCreateDomainPath,
   zCreateDomainResponse,
+  zCreateLabelsBody,
+  zCreateLabelsPath,
+  zCreateLabelsResponse,
   zCreateOrganizationsBody,
   zCreateOrganizationsPath,
   zCreateOrganizationsResponse,
@@ -275,16 +386,32 @@ import {
   zCreatePagesResponse,
   zCreatePasskeyBody,
   zCreatePasskeyResponse,
+  zCreateProjectsBody,
+  zCreateProjectsPath,
+  zCreateProjectsQuery,
+  zCreateProjectsResponse,
   zCreateRequestBody,
   zCreateRequestResponse,
+  zCreateTasksBody,
+  zCreateTasksPath,
+  zCreateTasksResponse,
   zCreateTenantBody,
   zCreateTenantResponse,
   zCreateTotpBody,
+  zCreateWorkspacesBody,
+  zCreateWorkspacesPath,
+  zCreateWorkspacesResponse,
   zDeleteAttachmentsBody,
   zDeleteAttachmentsPath,
   zDeleteAttachmentsResponse,
+  zDeleteChatsBody,
+  zDeleteChatsPath,
+  zDeleteChatsResponse,
   zDeleteDomainPath,
   zDeleteDomainResponse,
+  zDeleteLabelsBody,
+  zDeleteLabelsPath,
+  zDeleteLabelsResponse,
   zDeleteMembershipsBody,
   zDeleteMembershipsPath,
   zDeleteMembershipsQuery,
@@ -301,11 +428,20 @@ import {
   zDeletePagesResponse,
   zDeletePasskeyPath,
   zDeletePasskeyResponse,
+  zDeleteProjectsBody,
+  zDeleteProjectsPath,
+  zDeleteProjectsResponse,
   zDeleteRequestsBody,
   zDeleteRequestsResponse,
+  zDeleteTasksBody,
+  zDeleteTasksPath,
+  zDeleteTasksResponse,
   zDeleteTotpResponse,
   zDeleteUsersBody,
   zDeleteUsersResponse,
+  zDeleteWorkspaceBody,
+  zDeleteWorkspacePath,
+  zDeleteWorkspaceResponse,
   zGeneratePasskeyChallengeBody,
   zGeneratePasskeyChallengeResponse,
   zGenerateTotpKeyResponse,
@@ -315,14 +451,25 @@ import {
   zGetAttachmentsQuery,
   zGetAttachmentsResponse,
   zGetAuthHealthResponse,
+  zGetChatsPath,
+  zGetChatsQuery,
+  zGetChatsResponse,
   zGetDomainPath,
   zGetDomainResponse,
   zGetDomainsPath,
   zGetDomainsResponse,
+  zGetLabelPath,
+  zGetLabelResponse,
+  zGetLabelsPath,
+  zGetLabelsQuery,
+  zGetLabelsResponse,
   zGetMembersPath,
   zGetMembersQuery,
   zGetMembersResponse,
   zGetMeResponse,
+  zGetMessagesPath,
+  zGetMessagesQuery,
+  zGetMessagesResponse,
   zGetMyAuthResponse,
   zGetMyInvitationsResponse,
   zGetMyMembershipsResponse,
@@ -341,9 +488,27 @@ import {
   zGetPresignedUrlPath,
   zGetPresignedUrlQuery,
   zGetPresignedUrlResponse,
+  zGetProjectPath,
+  zGetProjectQuery,
+  zGetProjectResponse,
+  zGetProjectsQuery,
+  zGetProjectsResponse,
   zGetPublicCountsResponse,
+  zGetPublicProjectPath,
+  zGetPublicProjectQuery,
+  zGetPublicProjectResponse,
+  zGetPublicTaskPath,
+  zGetPublicTaskResponse,
+  zGetPublicTasksQuery,
+  zGetPublicTasksResponse,
   zGetRequestsQuery,
   zGetRequestsResponse,
+  zGetTaskCoverPath,
+  zGetTaskPath,
+  zGetTaskResponse,
+  zGetTasksPath,
+  zGetTasksQuery,
+  zGetTasksResponse,
   zGetTenantsQuery,
   zGetTenantsResponse,
   zGetTokenDataPath,
@@ -356,6 +521,11 @@ import {
   zGetUserResponse,
   zGetUsersQuery,
   zGetUsersResponse,
+  zGetWorkspacePath,
+  zGetWorkspaceQuery,
+  zGetWorkspaceResponse,
+  zGetWorkspacesQuery,
+  zGetWorkspacesResponse,
   zGetYjsTokenQuery,
   zGetYjsTokenResponse,
   zGithubCallbackQuery,
@@ -376,16 +546,30 @@ import {
   zMembershipInviteResponse,
   zMicrosoftCallbackQuery,
   zMicrosoftQuery,
+  zMoveProjectPath,
+  zMoveProjectQuery,
+  zMoveProjectResponse,
   zPostAppCatchupBody,
   zPostAppCatchupResponse,
   zPostPublicCatchupBody,
   zPostPublicCatchupResponse,
+  zReassignProjectPath,
+  zReassignProjectQuery,
+  zReassignProjectResponse,
+  zRedirectToTaskPath,
+  zRemoveProjectWorkspacePath,
+  zRemoveProjectWorkspaceResponse,
   zResendInvitationWithTokenBody,
   zResendInvitationWithTokenResponse,
+  zResolveTaskLinkPath,
+  zResolveTaskLinkResponse,
   zSelfCreateTenantBody,
   zSelfCreateTenantResponse,
   zSendMagicLinkBody,
   zSendMagicLinkResponse,
+  zSendMessageBody,
+  zSendMessagePath,
+  zSendMessageResponse,
   zSendNewsletterBody,
   zSendNewsletterQuery,
   zSendNewsletterResponse,
@@ -406,6 +590,12 @@ import {
   zUpdateAttachmentPath,
   zUpdateAttachmentQuery,
   zUpdateAttachmentResponse,
+  zUpdateChatBody,
+  zUpdateChatPath,
+  zUpdateChatResponse,
+  zUpdateLabelBody,
+  zUpdateLabelPath,
+  zUpdateLabelResponse,
   zUpdateMeBody,
   zUpdateMembershipBody,
   zUpdateMembershipPath,
@@ -418,12 +608,22 @@ import {
   zUpdatePagePath,
   zUpdatePageQuery,
   zUpdatePageResponse,
+  zUpdateProjectBody,
+  zUpdateProjectPath,
+  zUpdateProjectResponse,
+  zUpdateTaskBody,
+  zUpdateTaskPath,
+  zUpdateTaskQuery,
+  zUpdateTaskResponse,
   zUpdateTenantBody,
   zUpdateTenantPath,
   zUpdateTenantResponse,
   zUpdateUserBody,
   zUpdateUserPath,
   zUpdateUserResponse,
+  zUpdateWorkspaceBody,
+  zUpdateWorkspacePath,
+  zUpdateWorkspaceResponse,
   zVerifyDomainPath,
   zVerifyDomainResponse,
 } from './zod.gen';
@@ -451,7 +651,7 @@ export type Options<
  *
  * Returns auth health status including whether the client IP is rate-limited for email enumeration protection.
  *
- * **GET /auth/health** ·· [getAuthHealth](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/health) ·· [getAuthHealth](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/health) ·· _auth_cella_
+ * **GET /auth/health** ·· [getAuthHealth](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/health) ·· [getAuthHealth](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/health) ·· _auth_cella_
  *
  * @param {getAuthHealthData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -479,7 +679,7 @@ export const getAuthHealth = <ThrowOnError extends boolean = true>(
  *
  * Checks if a user with the specified email address exists in the system.
  *
- * **POST /auth/check-email** ·· [checkEmail](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/check-email) ·· [checkEmail](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/check-email) ·· _auth_cella_
+ * **POST /auth/check-email** ·· [checkEmail](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/check-email) ·· [checkEmail](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/check-email) ·· _auth_cella_
  *
  * @param {checkEmailData} options
  * @param {string=} options.body.email - `string` (optional)
@@ -512,7 +712,7 @@ export const checkEmail = <ThrowOnError extends boolean = true>(
  *
  * Validates and invokes a token (for email verification, invitations, mfa) and redirects user to backend with a one-purpose, single-use token session in a cookie.
  *
- * **GET /auth/invoke-token/{type}/{token}** ·· [invokeToken](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/invoke-token/{type}/{token}) ·· [invokeToken](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/invoke-token/{type}/{token}) ·· _auth_cella_
+ * **GET /auth/invoke-token/{type}/{token}** ·· [invokeToken](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/invoke-token/{type}/{token}) ·· [invokeToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/invoke-token/{type}/{token}) ·· _auth_cella_
  *
  * @param {invokeTokenData} options
  * @param {enum} options.path.type - `enum`
@@ -541,7 +741,7 @@ export const invokeToken = <ThrowOnError extends boolean = true>(
  *
  * Get basic token data from single-use token session, It returns basic data if the session is still valid.
  *
- * **GET /auth/token/{type}/{id}** ·· [getTokenData](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/token/{type}/{id}) ·· [getTokenData](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/token/{type}/{id}) ·· _auth_cella_
+ * **GET /auth/token/{type}/{id}** ·· [getTokenData](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/token/{type}/{id}) ·· [getTokenData](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/token/{type}/{id}) ·· _auth_cella_
  *
  * @param {getTokenDataData} options
  * @param {enum} options.path.type - `enum`
@@ -571,7 +771,7 @@ export const getTokenData = <ThrowOnError extends boolean = true>(
  *
  * Allows a system admin to impersonate a specific user by ID, returning a temporary impersonation session.
  *
- * **GET /auth/impersonation/start** ·· [startImpersonation](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/impersonation/start) ·· [startImpersonation](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/impersonation/start) ·· _auth_cella_
+ * **GET /auth/impersonation/start** ·· [startImpersonation](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/impersonation/start) ·· [startImpersonation](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/impersonation/start) ·· _auth_cella_
  *
  * @param {startImpersonationData} options
  * @param {string} options.query.targetuserid - `string`
@@ -594,7 +794,7 @@ export const startImpersonation = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -607,7 +807,7 @@ export const startImpersonation = <ThrowOnError extends boolean = true>(
  *
  * Ends impersonation by clearing the current impersonation session and restoring the admin context.
  *
- * **GET /auth/impersonation/stop** ·· [stopImpersonation](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/impersonation/stop) ·· [stopImpersonation](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/impersonation/stop) ·· _auth_cella_
+ * **GET /auth/impersonation/stop** ·· [stopImpersonation](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/impersonation/stop) ·· [stopImpersonation](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/impersonation/stop) ·· _auth_cella_
  *
  * @param {stopImpersonationData} options
  * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
@@ -629,7 +829,7 @@ export const stopImpersonation = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -642,7 +842,7 @@ export const stopImpersonation = <ThrowOnError extends boolean = true>(
  *
  * Resends an invitation email with token to a new user using the provided email address and token ID.
  *
- * **POST /auth/resend-invitation** ·· [resendInvitationWithToken](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/resend-invitation) ·· [resendInvitationWithToken](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/resend-invitation) ·· _auth_cella_
+ * **POST /auth/resend-invitation** ·· [resendInvitationWithToken](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/resend-invitation) ·· [resendInvitationWithToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/resend-invitation) ·· _auth_cella_
  *
  * @param {resendInvitationWithTokenData} options
  * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
@@ -679,7 +879,7 @@ export const resendInvitationWithToken = <ThrowOnError extends boolean = true>(
  *
  * Signs out the current user and clears the active session.
  *
- * **POST /auth/sign-out** ·· [signOut](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/sign-out) ·· [signOut](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/sign-out) ·· _auth_cella_
+ * **POST /auth/sign-out** ·· [signOut](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/sign-out) ·· [signOut](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/sign-out) ·· _auth_cella_
  *
  * @param {signOutData} options
  * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
@@ -707,7 +907,7 @@ export const signOut = <ThrowOnError extends boolean = true>(
  *
  * Sends a magic link sign-in email to the specified address. Always returns 204 to prevent email enumeration.
  *
- * **POST /auth/magic/send** ·· [sendMagicLink](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/magic/send) ·· [sendMagicLink](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/magic/send) ·· _auth_cella_
+ * **POST /auth/magic/send** ·· [sendMagicLink](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/magic/send) ·· [sendMagicLink](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/magic/send) ·· _auth_cella_
  *
  * @param {sendMagicLinkData} options
  * @param {string=} options.body.email - `string` (optional)
@@ -740,7 +940,7 @@ export const sendMagicLink = <ThrowOnError extends boolean = true>(
  *
  * Generates a new TOTP key for current user and returns a provisioning URI and Base32 manual key.
  *
- * **POST /auth/totp/generate-key** ·· [generateTotpKey](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/totp/generate-key) ·· [generateTotpKey](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/totp/generate-key) ·· _auth_cella_
+ * **POST /auth/totp/generate-key** ·· [generateTotpKey](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/totp/generate-key) ·· [generateTotpKey](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/totp/generate-key) ·· _auth_cella_
  *
  * @param {generateTotpKeyData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -762,7 +962,7 @@ export const generateTotpKey = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -775,7 +975,7 @@ export const generateTotpKey = <ThrowOnError extends boolean = true>(
  *
  * Delete TOTP credential for current user.
  *
- * **DELETE /auth/totp** ·· [deleteTotp](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/DELETE/auth/totp) ·· [deleteTotp](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/auth/totp) ·· _auth_cella_
+ * **DELETE /auth/totp** ·· [deleteTotp](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/DELETE/auth/totp) ·· [deleteTotp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/auth/totp) ·· _auth_cella_
  *
  * @param {deleteTotpData} options
  * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
@@ -797,7 +997,7 @@ export const deleteTotp = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -810,7 +1010,7 @@ export const deleteTotp = <ThrowOnError extends boolean = true>(
  *
  * Confirms TOTP setup by verifying a code from the authenticator app for the first time. On success, TOTP is registered for current user.
  *
- * **POST /auth/totp** ·· [createTotp](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/totp) ·· [createTotp](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/totp) ·· _auth_cella_
+ * **POST /auth/totp** ·· [createTotp](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/totp) ·· [createTotp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/totp) ·· _auth_cella_
  *
  * @param {createTotpData} options
  * @param {string=} options.body.code - `string` (optional)
@@ -832,7 +1032,7 @@ export const createTotp = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -849,7 +1049,7 @@ export const createTotp = <ThrowOnError extends boolean = true>(
  *
  * Validates the TOTP code and completes TOTP based authentication.
  *
- * **POST /auth/totp-verification** ·· [signInWithTotp](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/totp-verification) ·· [signInWithTotp](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/totp-verification) ·· _auth_cella_
+ * **POST /auth/totp-verification** ·· [signInWithTotp](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/totp-verification) ·· [signInWithTotp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/totp-verification) ·· _auth_cella_
  *
  * @param {signInWithTotpData} options
  * @param {string=} options.body.code - `string` (optional)
@@ -882,7 +1082,7 @@ export const signInWithTotp = <ThrowOnError extends boolean = true>(
  *
  * Register a passkey for passwordless authentication by verifying a signed challenge and linking it to the current user. Multiple passkeys can be created for different devices/browsers.
  *
- * **POST /auth/passkey** ·· [createPasskey](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/passkey) ·· [createPasskey](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/passkey) ·· _auth_cella_
+ * **POST /auth/passkey** ·· [createPasskey](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/passkey) ·· [createPasskey](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/passkey) ·· _auth_cella_
  *
  * @param {createPasskeyData} options
  * @param {string=} options.body.attestationObject - `string` (optional)
@@ -907,7 +1107,7 @@ export const createPasskey = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -924,7 +1124,7 @@ export const createPasskey = <ThrowOnError extends boolean = true>(
  *
  * Delete a passkey by id from the current user.
  *
- * **DELETE /auth/passkey/{id}** ·· [deletePasskey](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/DELETE/auth/passkey/{id}) ·· [deletePasskey](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/auth/passkey/{id}) ·· _auth_cella_
+ * **DELETE /auth/passkey/{id}** ·· [deletePasskey](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/DELETE/auth/passkey/{id}) ·· [deletePasskey](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/auth/passkey/{id}) ·· _auth_cella_
  *
  * @param {deletePasskeyData} options
  * @param {string} options.path.id - `string`
@@ -947,7 +1147,7 @@ export const deletePasskey = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -960,7 +1160,7 @@ export const deletePasskey = <ThrowOnError extends boolean = true>(
  *
  * Initiates the passkey registration or authentication flow by generating a device bound challenge.
  *
- * **POST /auth/passkey/generate-challenge** ·· [generatePasskeyChallenge](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/passkey/generate-challenge) ·· [generatePasskeyChallenge](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/passkey/generate-challenge) ·· _auth_cella_
+ * **POST /auth/passkey/generate-challenge** ·· [generatePasskeyChallenge](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/passkey/generate-challenge) ·· [generatePasskeyChallenge](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/passkey/generate-challenge) ·· _auth_cella_
  *
  * @param {generatePasskeyChallengeData} options
  * @param {enum=} options.body.type - `enum` (optional)
@@ -999,7 +1199,7 @@ export const generatePasskeyChallenge = <ThrowOnError extends boolean = true>(
  *
  * Validates the signed challenge and completes passkey based authentication.
  *
- * **POST /auth/passkey-verification** ·· [signInWithPasskey](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/POST/auth/passkey-verification) ·· [signInWithPasskey](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/auth/passkey-verification) ·· _auth_cella_
+ * **POST /auth/passkey-verification** ·· [signInWithPasskey](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/passkey-verification) ·· [signInWithPasskey](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/passkey-verification) ·· _auth_cella_
  *
  * @param {signInWithPasskeyData} options
  * @param {string=} options.body.credentialId - `string` (optional)
@@ -1037,7 +1237,7 @@ export const signInWithPasskey = <ThrowOnError extends boolean = true>(
  *
  * Starts OAuth authentication with GitHub. Can be used for account connection, email verification, invitation process, defaults to authentication.
  *
- * **GET /auth/github** ·· [github](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/github) ·· [github](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/github) ·· _auth_cella_
+ * **GET /auth/github** ·· [github](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/github) ·· [github](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/github) ·· _auth_cella_
  *
  * @param {githubData} options
  * @param {enum=} options.query.type - `enum` (optional)
@@ -1066,7 +1266,7 @@ export const github = <ThrowOnError extends boolean = true>(
  *
  * Starts OAuth authentication with Google. Can be used for account connection, email verification, invitation process, defaults to authentication.
  *
- * **GET /auth/google** ·· [google](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/google) ·· [google](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/google) ·· _auth_cella_
+ * **GET /auth/google** ·· [google](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/google) ·· [google](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/google) ·· _auth_cella_
  *
  * @param {googleData} options
  * @param {enum=} options.query.type - `enum` (optional)
@@ -1095,7 +1295,7 @@ export const google = <ThrowOnError extends boolean = true>(
  *
  * Starts OAuth authentication with Microsoft. Can be used for account connection, email verification, invitation process, defaults to authentication.
  *
- * **GET /auth/microsoft** ·· [microsoft](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/microsoft) ·· [microsoft](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/microsoft) ·· _auth_cella_
+ * **GET /auth/microsoft** ·· [microsoft](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/microsoft) ·· [microsoft](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/microsoft) ·· _auth_cella_
  *
  * @param {microsoftData} options
  * @param {enum=} options.query.type - `enum` (optional)
@@ -1124,7 +1324,7 @@ export const microsoft = <ThrowOnError extends boolean = true>(
  *
  * Handles GitHub OAuth callback, retrieves user identity, and establishes a session or links account.
  *
- * **GET /auth/github/callback** ·· [githubCallback](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/github/callback) ·· [githubCallback](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/github/callback) ·· _auth_cella_
+ * **GET /auth/github/callback** ·· [githubCallback](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/github/callback) ·· [githubCallback](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/github/callback) ·· _auth_cella_
  *
  * @param {githubCallbackData} options
  * @param {string} options.query.code - `string`
@@ -1156,7 +1356,7 @@ export const githubCallback = <ThrowOnError extends boolean = true>(
  *
  * Handles Google OAuth callback, retrieves user identity, and establishes a session or links account.
  *
- * **GET /auth/google/callback** ·· [googleCallback](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/google/callback) ·· [googleCallback](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/google/callback) ·· _auth_cella_
+ * **GET /auth/google/callback** ·· [googleCallback](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/google/callback) ·· [googleCallback](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/google/callback) ·· _auth_cella_
  *
  * @param {googleCallbackData} options
  * @param {string} options.query.code - `string`
@@ -1185,7 +1385,7 @@ export const googleCallback = <ThrowOnError extends boolean = true>(
  *
  * Handles Microsoft OAuth callback, retrieves user identity, and establishes a session or links account.
  *
- * **GET /auth/microsoft/callback** ·· [microsoftCallback](https://www.cellajs.com/docs/operations?operationTag=auth#tag/auth/GET/auth/microsoft/callback) ·· [microsoftCallback](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/auth/microsoft/callback) ·· _auth_cella_
+ * **GET /auth/microsoft/callback** ·· [microsoftCallback](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/GET/auth/microsoft/callback) ·· [microsoftCallback](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/auth/microsoft/callback) ·· _auth_cella_
  *
  * @param {microsoftCallbackData} options
  * @param {string} options.query.code - `string`
@@ -1212,9 +1412,9 @@ export const microsoftCallback = <ThrowOnError extends boolean = true>(
 /**
  * Delete self
  *
- * Deletes the current user. This also removes the user's memberships (cascade) and sets references to the user to `null` where applicable.
+ * Deletes the current user. This also removes the user's memberships (cascade) and sets references to the user to null where applicable.
  *
- * **DELETE /me** ·· [deleteMe](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/DELETE/me) ·· [deleteMe](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/me) ·· _me_cella_
+ * **DELETE /me** ·· [deleteMe](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me) ·· [deleteMe](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/me) ·· _me_cella_
  *
  * @param {deleteMeData} options
  * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
@@ -1236,7 +1436,7 @@ export const deleteMe = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1249,7 +1449,7 @@ export const deleteMe = <ThrowOnError extends boolean = true>(
  *
  * Returns the current user.
  *
- * **GET /me** ·· [getMe](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/GET/me) ·· [getMe](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/me) ·· _me_cella_
+ * **GET /me** ·· [getMe](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me) ·· [getMe](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me) ·· _me_cella_
  *
  * @param {getMeData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -1271,7 +1471,7 @@ export const getMe = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1284,7 +1484,7 @@ export const getMe = <ThrowOnError extends boolean = true>(
  *
  * Updates the current user.
  *
- * **PUT /me** ·· [updateMe](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/PUT/me) ·· [updateMe](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/me) ·· _me_cella_
+ * **PUT /me** ·· [updateMe](https://www.raak.dev/docs/operations?operationTag=me#tag/me/PUT/me) ·· [updateMe](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/me) ·· _me_cella_
  *
  * @param {updateMeData} options
  * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
@@ -1314,7 +1514,7 @@ export const updateMe = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1331,7 +1531,7 @@ export const updateMe = <ThrowOnError extends boolean = true>(
  *
  * Enable or disable multifactor authentication for the current user. Always requires passkey or TOTP reauthentication.
  *
- * **PUT /me/mfa** ·· [toggleMfa](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/PUT/me/mfa) ·· [toggleMfa](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/me/mfa) ·· _me_cella_
+ * **PUT /me/mfa** ·· [toggleMfa](https://www.raak.dev/docs/operations?operationTag=me#tag/me/PUT/me/mfa) ·· [toggleMfa](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/me/mfa) ·· _me_cella_
  *
  * @param {toggleMfaData} options
  * @param {object} options.body.passkeyData - `object`
@@ -1356,7 +1556,7 @@ export const toggleMfa = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1373,7 +1573,7 @@ export const toggleMfa = <ThrowOnError extends boolean = true>(
  *
  * Returns authentication related data of current user, including sessions, OAuth accounts, and sign in options.
  *
- * **GET /me/auth** ·· [getMyAuth](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/GET/me/auth) ·· [getMyAuth](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/me/auth) ·· _me_cella_
+ * **GET /me/auth** ·· [getMyAuth](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/auth) ·· [getMyAuth](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/auth) ·· _me_cella_
  *
  * @param {getMyAuthData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -1395,7 +1595,7 @@ export const getMyAuth = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1408,7 +1608,7 @@ export const getMyAuth = <ThrowOnError extends boolean = true>(
  *
  * Returns a list of pending memberships with entity data.
  *
- * **GET /me/invitations** ·· [getMyInvitations](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/GET/me/invitations) ·· [getMyInvitations](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/me/invitations) ·· _me_cella_
+ * **GET /me/invitations** ·· [getMyInvitations](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/invitations) ·· [getMyInvitations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/invitations) ·· _me_cella_
  *
  * @param {getMyInvitationsData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -1430,7 +1630,7 @@ export const getMyInvitations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1443,7 +1643,7 @@ export const getMyInvitations = <ThrowOnError extends boolean = true>(
  *
  * Ends one or more sessions for the current user based on provided session IDs.
  *
- * **DELETE /me/sessions** ·· [deleteMySessions](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/DELETE/me/sessions) ·· [deleteMySessions](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/me/sessions) ·· _me_cella_
+ * **DELETE /me/sessions** ·· [deleteMySessions](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me/sessions) ·· [deleteMySessions](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/me/sessions) ·· _me_cella_
  *
  * @param {deleteMySessionsData} options
  * @param {any[]=} options.body.ids - `any[]` (optional)
@@ -1466,7 +1666,7 @@ export const deleteMySessions = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1483,7 +1683,7 @@ export const deleteMySessions = <ThrowOnError extends boolean = true>(
  *
  * Removes the current user from an entity they are a member of.
  *
- * **DELETE /me/leave** ·· [deleteMyMembership](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/DELETE/me/leave) ·· [deleteMyMembership](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/me/leave) ·· _me_cella_
+ * **DELETE /me/leave** ·· [deleteMyMembership](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me/leave) ·· [deleteMyMembership](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/me/leave) ·· _me_cella_
  *
  * @param {deleteMyMembershipData} options
  * @param {string} options.query.entityid - `string`
@@ -1507,7 +1707,7 @@ export const deleteMyMembership = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1520,7 +1720,7 @@ export const deleteMyMembership = <ThrowOnError extends boolean = true>(
  *
  * Generates and returns an upload token for uploading files or images to a private S3 bucket, scoped to the current user and organization
  *
- * **GET /me/upload-token** ·· [getUploadToken](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/GET/me/upload-token) ·· [getUploadToken](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/me/upload-token) ·· _me_cella_
+ * **GET /me/upload-token** ·· [getUploadToken](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/upload-token) ·· [getUploadToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/upload-token) ·· _me_cella_
  *
  * @param {getUploadTokenData} options
  * @param {string | boolean=} options.query.public - `string | boolean` (optional)
@@ -1545,7 +1745,7 @@ export const getUploadToken = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1558,7 +1758,7 @@ export const getUploadToken = <ThrowOnError extends boolean = true>(
  *
  * Unsubscribes the user from email notifications using a personal unsubscribe token. No authentication is required, as the token implicitly identifies the current user.
  *
- * **GET /me/unsubscribe** ·· [unsubscribeMe](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/GET/me/unsubscribe) ·· [unsubscribeMe](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/me/unsubscribe) ·· _me_cella_
+ * **GET /me/unsubscribe** ·· [unsubscribeMe](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/unsubscribe) ·· [unsubscribeMe](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/unsubscribe) ·· _me_cella_
  *
  * @param {unsubscribeMeData} options
  * @param {string} options.query.token - `string`
@@ -1586,7 +1786,7 @@ export const unsubscribeMe = <ThrowOnError extends boolean = true>(
  *
  * Returns all memberships for the current user across all context entities.
  *
- * **GET /me/memberships** ·· [getMyMemberships](https://www.cellajs.com/docs/operations?operationTag=me#tag/me/GET/me/memberships) ·· [getMyMemberships](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/me/memberships) ·· _me_cella_
+ * **GET /me/memberships** ·· [getMyMemberships](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/memberships) ·· [getMyMemberships](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/memberships) ·· _me_cella_
  *
  * @param {getMyMembershipsData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -1608,7 +1808,7 @@ export const getMyMemberships = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1621,7 +1821,7 @@ export const getMyMemberships = <ThrowOnError extends boolean = true>(
  *
  * Returns the number of unseen product entities per parent context entity (e.g., project) and entity type for the current user. Computed as total (from context_counters) minus seen (from seen_by).
  *
- * **GET /unseen/counts** ·· [getUnseenCounts](https://www.cellajs.com/docs/operations?operationTag=seen#tag/seen/GET/unseen/counts) ·· [getUnseenCounts](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/unseen/counts) ·· _seen_cella_
+ * **GET /unseen/counts** ·· [getUnseenCounts](https://www.raak.dev/docs/operations?operationTag=seen#tag/seen/GET/unseen/counts) ·· [getUnseenCounts](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/unseen/counts) ·· _seen_cella_
  *
  * @param {getUnseenCountsData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -1643,7 +1843,7 @@ export const getUnseenCounts = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1657,7 +1857,7 @@ export const getUnseenCounts = <ThrowOnError extends boolean = true>(
  * Checks whether a given slug is available within a tenant for the specified entity type.
  * Primarily used to prevent slug collisions before creating or updating an entity.
  *
- * **POST /entities/{tenantId}/check-slug** ·· [checkSlug](https://www.cellajs.com/docs/operations?operationTag=entities#tag/entities/POST/entities/{tenantId}/check-slug) ·· [checkSlug](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/entities/{tenantId}/check-slug) ·· _entities_cella_
+ * **POST /entities/{tenantId}/check-slug** ·· [checkSlug](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/{tenantId}/check-slug) ·· [checkSlug](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/entities/{tenantId}/check-slug) ·· _entities_cella_
  *
  * @param {checkSlugData} options
  * @param {string} options.path.tenantid - `string`
@@ -1682,7 +1882,7 @@ export const checkSlug = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1699,7 +1899,7 @@ export const checkSlug = <ThrowOnError extends boolean = true>(
  *
  * SSE stream for real-time public entity changes. No authentication required.
  *
- * **GET /entities/public/stream** ·· [getPublicStream](https://www.cellajs.com/docs/operations?operationTag=entities#tag/entities/GET/entities/public/stream) ·· [getPublicStream](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/entities/public/stream) ·· _entities_cella_
+ * **GET /entities/public/stream** ·· [getPublicStream](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/GET/entities/public/stream) ·· [getPublicStream](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/entities/public/stream) ·· _entities_cella_
  *
  * @param {getPublicStreamData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -1726,7 +1926,7 @@ export const getPublicStream = <ThrowOnError extends boolean = true>(
  *
  * Fetch missed public entity changes since last sync. Send cursor and per-scope seqs in the body.
  *
- * **POST /entities/public/stream** ·· [postPublicCatchup](https://www.cellajs.com/docs/operations?operationTag=entities#tag/entities/POST/entities/public/stream) ·· [postPublicCatchup](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/entities/public/stream) ·· _entities_cella_
+ * **POST /entities/public/stream** ·· [postPublicCatchup](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/public/stream) ·· [postPublicCatchup](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/entities/public/stream) ·· _entities_cella_
  *
  * @param {postPublicCatchupData} options
  * @param {string=} options.body.cursor - `string` (optional)
@@ -1760,7 +1960,7 @@ export const postPublicCatchup = <ThrowOnError extends boolean = true>(
  *
  * SSE stream for membership and entity notifications affecting the current user. Sends lightweight notifications.
  *
- * **GET /entities/app/stream** ·· [getAppStream](https://www.cellajs.com/docs/operations?operationTag=entities#tag/entities/GET/entities/app/stream) ·· [getAppStream](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/entities/app/stream) ·· _entities_cella_
+ * **GET /entities/app/stream** ·· [getAppStream](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/GET/entities/app/stream) ·· [getAppStream](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/entities/app/stream) ·· _entities_cella_
  *
  * @param {getAppStreamData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -1781,7 +1981,7 @@ export const getAppStream = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1794,7 +1994,7 @@ export const getAppStream = <ThrowOnError extends boolean = true>(
  *
  * Fetch missed entity and membership changes since last sync. Send cursor and per-scope seqs in the body.
  *
- * **POST /entities/app/stream** ·· [postAppCatchup](https://www.cellajs.com/docs/operations?operationTag=entities#tag/entities/POST/entities/app/stream) ·· [postAppCatchup](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/entities/app/stream) ·· _entities_cella_
+ * **POST /entities/app/stream** ·· [postAppCatchup](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/app/stream) ·· [postAppCatchup](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/entities/app/stream) ·· _entities_cella_
  *
  * @param {postAppCatchupData} options
  * @param {string=} options.body.cursor - `string` (optional)
@@ -1818,7 +2018,7 @@ export const postAppCatchup = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1835,7 +2035,7 @@ export const postAppCatchup = <ThrowOnError extends boolean = true>(
  *
  * Invites one or more users to the system via email. Can be used to onboard system level users or admins.
  *
- * **POST /system/invite** ·· [systemInvite](https://www.cellajs.com/docs/operations?operationTag=system#tag/system/POST/system/invite) ·· [systemInvite](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/system/invite) ·· _system_cella_
+ * **POST /system/invite** ·· [systemInvite](https://www.raak.dev/docs/operations?operationTag=system#tag/system/POST/system/invite) ·· [systemInvite](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/system/invite) ·· _system_cella_
  *
  * @param {systemInviteData} options
  * @param {any[]=} options.body.emails - `any[]` (optional)
@@ -1858,7 +2058,7 @@ export const systemInvite = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1873,9 +2073,9 @@ export const systemInvite = <ThrowOnError extends boolean = true>(
 /**
  * Delete users
  *
- * Deletes one or more *users* from the system based on a list of IDs. This also removes the user's memberships (cascade) and sets references to the user to `null` where applicable.
+ * Deletes one or more users from the system based on a list of IDs. This also removes the user's memberships (cascade) and sets references to the user to null where applicable.
  *
- * **DELETE /system** ·· [deleteUsers](https://www.cellajs.com/docs/operations?operationTag=system#tag/system/DELETE/system) ·· [deleteUsers](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/system) ·· _system_cella_
+ * **DELETE /system** ·· [deleteUsers](https://www.raak.dev/docs/operations?operationTag=system#tag/system/DELETE/system) ·· [deleteUsers](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/system) ·· _system_cella_
  *
  * @param {deleteUsersData} options
  * @param {any[]=} options.body.ids - `any[]` (optional)
@@ -1898,7 +2098,7 @@ export const deleteUsers = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1913,9 +2113,9 @@ export const deleteUsers = <ThrowOnError extends boolean = true>(
 /**
  * Update user
  *
- * Updates a *user* identified by ID.
+ * Updates a user identified by ID.
  *
- * **PUT /system/{id}** ·· [updateUser](https://www.cellajs.com/docs/operations?operationTag=system#tag/system/PUT/system/{id}) ·· [updateUser](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/system/{id}) ·· _system_cella_
+ * **PUT /system/{id}** ·· [updateUser](https://www.raak.dev/docs/operations?operationTag=system#tag/system/PUT/system/{id}) ·· [updateUser](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/system/{id}) ·· _system_cella_
  *
  * @param {updateUserData} options
  * @param {string} options.path.id - `string`
@@ -1945,7 +2145,7 @@ export const updateUser = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -1962,7 +2162,7 @@ export const updateUser = <ThrowOnError extends boolean = true>(
  *
  * Sends a newsletter to members of one or more specified organizations.
  *
- * **POST /system/newsletter** ·· [sendNewsletter](https://www.cellajs.com/docs/operations?operationTag=system#tag/system/POST/system/newsletter) ·· [sendNewsletter](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/system/newsletter) ·· _system_cella_
+ * **POST /system/newsletter** ·· [sendNewsletter](https://www.raak.dev/docs/operations?operationTag=system#tag/system/POST/system/newsletter) ·· [sendNewsletter](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/system/newsletter) ·· _system_cella_
  *
  * @param {sendNewsletterData} options
  * @param {string | boolean=} options.query.toself - `string | boolean` (optional)
@@ -1989,7 +2189,7 @@ export const sendNewsletter = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2006,7 +2206,7 @@ export const sendNewsletter = <ThrowOnError extends boolean = true>(
  *
  * Returns a paginated list of tenants. System admin access required.
  *
- * **GET /tenants** ·· [getTenants](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/GET/tenants) ·· [getTenants](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/tenants) ·· _tenants_cella_
+ * **GET /tenants** ·· [getTenants](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/GET/tenants) ·· [getTenants](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/tenants) ·· _tenants_cella_
  *
  * @param {getTenantsData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -2035,7 +2235,7 @@ export const getTenants = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2048,7 +2248,7 @@ export const getTenants = <ThrowOnError extends boolean = true>(
  *
  * Creates a new tenant. System admin access required.
  *
- * **POST /tenants** ·· [createTenant](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/POST/tenants) ·· [createTenant](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/tenants) ·· _tenants_cella_
+ * **POST /tenants** ·· [createTenant](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/POST/tenants) ·· [createTenant](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/tenants) ·· _tenants_cella_
  *
  * @param {createTenantData} options
  * @param {string=} options.body.name - `string` (optional)
@@ -2072,7 +2272,7 @@ export const createTenant = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2089,7 +2289,7 @@ export const createTenant = <ThrowOnError extends boolean = true>(
  *
  * Creates a new tenant for the authenticated user. Only allowed if the user has no existing tenant memberships.
  *
- * **POST /tenants/self** ·· [selfCreateTenant](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/self) ·· [selfCreateTenant](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/tenants/self) ·· _tenants_cella_
+ * **POST /tenants/self** ·· [selfCreateTenant](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/self) ·· [selfCreateTenant](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/tenants/self) ·· _tenants_cella_
  *
  * @param {selfCreateTenantData} options
  * @param {string=} options.body.name - `string` (optional)
@@ -2112,7 +2312,7 @@ export const selfCreateTenant = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2129,7 +2329,7 @@ export const selfCreateTenant = <ThrowOnError extends boolean = true>(
  *
  * Updates a tenant by ID. System admin access required.
  *
- * **PUT /tenants/{tenantId}** ·· [updateTenant](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/PUT/tenants/{tenantId}) ·· [updateTenant](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/tenants/{tenantId}) ·· _tenants_cella_
+ * **PUT /tenants/{tenantId}** ·· [updateTenant](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/PUT/tenants/{tenantId}) ·· [updateTenant](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/tenants/{tenantId}) ·· _tenants_cella_
  *
  * @param {updateTenantData} options
  * @param {string} options.path.tenantid - `string`
@@ -2158,7 +2358,7 @@ export const updateTenant = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2175,7 +2375,7 @@ export const updateTenant = <ThrowOnError extends boolean = true>(
  *
  * Returns all domains belonging to a tenant, including verification tokens. System admin access required.
  *
- * **GET /tenants/{tenantId}/domains** ·· [getDomains](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/GET/tenants/{tenantId}/domains) ·· [getDomains](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/tenants/{tenantId}/domains) ·· _tenants_cella_
+ * **GET /tenants/{tenantId}/domains** ·· [getDomains](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/GET/tenants/{tenantId}/domains) ·· [getDomains](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/tenants/{tenantId}/domains) ·· _tenants_cella_
  *
  * @param {getDomainsData} options
  * @param {string} options.path.tenantid - `string`
@@ -2198,7 +2398,7 @@ export const getDomains = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2211,7 +2411,7 @@ export const getDomains = <ThrowOnError extends boolean = true>(
  *
  * Adds a new domain to a tenant. The domain starts unverified. System admin access required.
  *
- * **POST /tenants/{tenantId}/domains** ·· [createDomain](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/{tenantId}/domains) ·· [createDomain](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/tenants/{tenantId}/domains) ·· _tenants_cella_
+ * **POST /tenants/{tenantId}/domains** ·· [createDomain](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/{tenantId}/domains) ·· [createDomain](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/tenants/{tenantId}/domains) ·· _tenants_cella_
  *
  * @param {createDomainData} options
  * @param {string} options.path.tenantid - `string`
@@ -2235,7 +2435,7 @@ export const createDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2252,7 +2452,7 @@ export const createDomain = <ThrowOnError extends boolean = true>(
  *
  * Removes a domain from a tenant. System admin access required.
  *
- * **DELETE /tenants/{tenantId}/domains/{id}** ·· [deleteDomain](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/DELETE/tenants/{tenantId}/domains/{id}) ·· [deleteDomain](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/tenants/{tenantId}/domains/{id}) ·· _tenants_cella_
+ * **DELETE /tenants/{tenantId}/domains/{id}** ·· [deleteDomain](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/DELETE/tenants/{tenantId}/domains/{id}) ·· [deleteDomain](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/tenants/{tenantId}/domains/{id}) ·· _tenants_cella_
  *
  * @param {deleteDomainData} options
  * @param {string} options.path.tenantid - `string`
@@ -2276,7 +2476,7 @@ export const deleteDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2289,7 +2489,7 @@ export const deleteDomain = <ThrowOnError extends boolean = true>(
  *
  * Returns a single domain including its verification token for DNS TXT setup. System admin access required.
  *
- * **GET /tenants/{tenantId}/domains/{id}** ·· [getDomain](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/GET/tenants/{tenantId}/domains/{id}) ·· [getDomain](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/tenants/{tenantId}/domains/{id}) ·· _tenants_cella_
+ * **GET /tenants/{tenantId}/domains/{id}** ·· [getDomain](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/GET/tenants/{tenantId}/domains/{id}) ·· [getDomain](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/tenants/{tenantId}/domains/{id}) ·· _tenants_cella_
  *
  * @param {getDomainData} options
  * @param {string} options.path.tenantid - `string`
@@ -2313,7 +2513,7 @@ export const getDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2326,7 +2526,7 @@ export const getDomain = <ThrowOnError extends boolean = true>(
  *
  * Looks up DNS TXT records for the domain to verify ownership. Checks for a _cella-verification.<domain> TXT record matching the verification token.
  *
- * **POST /tenants/{tenantId}/domains/{id}/verify** ·· [verifyDomain](https://www.cellajs.com/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/{tenantId}/domains/{id}/verify) ·· [verifyDomain](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/tenants/{tenantId}/domains/{id}/verify) ·· _tenants_cella_
+ * **POST /tenants/{tenantId}/domains/{id}/verify** ·· [verifyDomain](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/{tenantId}/domains/{id}/verify) ·· [verifyDomain](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/tenants/{tenantId}/domains/{id}/verify) ·· _tenants_cella_
  *
  * @param {verifyDomainData} options
  * @param {string} options.path.tenantid - `string`
@@ -2350,7 +2550,7 @@ export const verifyDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2363,7 +2563,7 @@ export const verifyDomain = <ThrowOnError extends boolean = true>(
  *
  * Deletes one or more requests from the system by their IDs.
  *
- * **DELETE /requests** ·· [deleteRequests](https://www.cellajs.com/docs/operations?operationTag=requests#tag/requests/DELETE/requests) ·· [deleteRequests](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/requests) ·· _requests_cella_
+ * **DELETE /requests** ·· [deleteRequests](https://www.raak.dev/docs/operations?operationTag=requests#tag/requests/DELETE/requests) ·· [deleteRequests](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/requests) ·· _requests_cella_
  *
  * @param {deleteRequestsData} options
  * @param {any[]=} options.body.ids - `any[]` (optional)
@@ -2386,7 +2586,7 @@ export const deleteRequests = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2403,7 +2603,7 @@ export const deleteRequests = <ThrowOnError extends boolean = true>(
  *
  * Returns a list of submitted requests across all types: contact form, newsletter, and waitlist.
  *
- * **GET /requests** ·· [getRequests](https://www.cellajs.com/docs/operations?operationTag=requests#tag/requests/GET/requests) ·· [getRequests](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/requests) ·· _requests_cella_
+ * **GET /requests** ·· [getRequests](https://www.raak.dev/docs/operations?operationTag=requests#tag/requests/GET/requests) ·· [getRequests](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/requests) ·· _requests_cella_
  *
  * @param {getRequestsData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -2431,7 +2631,7 @@ export const getRequests = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2444,7 +2644,7 @@ export const getRequests = <ThrowOnError extends boolean = true>(
  *
  * Submits a new request to the system. Supported types include contact form, newsletter signup, and waitlist entry.
  *
- * **POST /requests** ·· [createRequest](https://www.cellajs.com/docs/operations?operationTag=requests#tag/requests/POST/requests) ·· [createRequest](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/requests) ·· _requests_cella_
+ * **POST /requests** ·· [createRequest](https://www.raak.dev/docs/operations?operationTag=requests#tag/requests/POST/requests) ·· [createRequest](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/requests) ·· _requests_cella_
  *
  * @param {createRequestData} options
  * @param {string=} options.body.email - `string` (optional)
@@ -2477,10 +2677,10 @@ export const createRequest = <ThrowOnError extends boolean = true>(
 /**
  * Get public counts
  *
- * Returns basic count metrics for entity types such as `users` and `organizations`.
+ * Returns basic count metrics for entity types such as users and organizations.
  * This endpoint is public and uses a 1 minute in memory cache for performance.
  *
- * **GET /metrics/public** ·· [getPublicCounts](https://www.cellajs.com/docs/operations?operationTag=metrics#tag/metrics/GET/metrics/public) ·· [getPublicCounts](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/metrics/public) ·· _metrics_cella_
+ * **GET /metrics/public** ·· [getPublicCounts](https://www.raak.dev/docs/operations?operationTag=metrics#tag/metrics/GET/metrics/public) ·· [getPublicCounts](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/metrics/public) ·· _metrics_cella_
  *
  * @param {getPublicCountsData} options
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -2508,7 +2708,7 @@ export const getPublicCounts = <ThrowOnError extends boolean = true>(
  *
  * Deletes one or more organizations by ID within a tenant.
  *
- * **DELETE /{tenantId}/organizations** ·· [deleteOrganizations](https://www.cellajs.com/docs/operations?operationTag=organizations#tag/organizations/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.cellajs.com/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/organizations) ·· _organizations_cella_context_
+ * **DELETE /{tenantId}/organizations** ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/organizations) ·· _organizations_cella_context_
  *
  * @param {deleteOrganizationsData} options
  * @param {string} options.path.tenantid - `string`
@@ -2532,7 +2732,7 @@ export const deleteOrganizations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2549,7 +2749,7 @@ export const deleteOrganizations = <ThrowOnError extends boolean = true>(
  *
  * Creates one or more new organizations within a tenant.
  *
- * **POST /{tenantId}/organizations** ·· [createOrganizations](https://www.cellajs.com/docs/operations?operationTag=organizations#tag/organizations/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.cellajs.com/docs/operations?operationTag=context#tag/context/POST/{tenantId}/organizations) ·· _organizations_cella_context_
+ * **POST /{tenantId}/organizations** ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/organizations) ·· _organizations_cella_context_
  *
  * @param {createOrganizationsData} options
  * @param {string} options.path.tenantid - `string`
@@ -2572,7 +2772,7 @@ export const createOrganizations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2589,7 +2789,7 @@ export const createOrganizations = <ThrowOnError extends boolean = true>(
  *
  * Returns a list of organizations.
  *
- * **GET /organizations** ·· [getOrganizations](https://www.cellajs.com/docs/operations?operationTag=organizations#tag/organizations/GET/organizations) ·· [getOrganizations](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/organizations) ·· [getOrganizations](https://www.cellajs.com/docs/operations?operationTag=context#tag/context/GET/organizations) ·· _organizations_cella_context_
+ * **GET /organizations** ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/organizations) ·· _organizations_cella_context_
  *
  * @param {getOrganizationsData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -2621,7 +2821,7 @@ export const getOrganizations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2632,9 +2832,9 @@ export const getOrganizations = <ThrowOnError extends boolean = true>(
 /**
  * Get organization
  *
- * Retrieves an organization by ID within a tenant. Pass `?slug=true` to resolve by slug instead.
+ * Retrieves an organization by ID within a tenant. Pass ?slug=true to resolve by slug instead.
  *
- * **GET /{tenantId}/organizations/{id}** ·· [getOrganization](https://www.cellajs.com/docs/operations?operationTag=organizations#tag/organizations/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.cellajs.com/docs/operations?operationTag=context#tag/context/GET/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
+ * **GET /{tenantId}/organizations/{id}** ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
  *
  * @param {getOrganizationData} options
  * @param {string} options.path.tenantid - `string`
@@ -2660,7 +2860,7 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2673,7 +2873,7 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
  *
  * Updates an organization within a tenant.
  *
- * **PUT /{tenantId}/organizations/{id}** ·· [updateOrganization](https://www.cellajs.com/docs/operations?operationTag=organizations#tag/organizations/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.cellajs.com/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
+ * **PUT /{tenantId}/organizations/{id}** ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
  *
  * @param {updateOrganizationData} options
  * @param {string} options.path.tenantid - `string`
@@ -2713,7 +2913,7 @@ export const updateOrganization = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2730,7 +2930,7 @@ export const updateOrganization = <ThrowOnError extends boolean = true>(
  *
  * Delete one or more pages by ID.
  *
- * **DELETE /pages** ·· [deletePages](https://www.cellajs.com/docs/operations?operationTag=pages#tag/pages/DELETE/pages) ·· [deletePages](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/pages) ·· [deletePages](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/DELETE/pages) ·· _pages_cella_product_
+ * **DELETE /pages** ·· [deletePages](https://www.raak.dev/docs/operations?operationTag=pages#tag/pages/DELETE/pages) ·· [deletePages](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/pages) ·· [deletePages](https://www.raak.dev/docs/operations?operationTag=product#tag/product/DELETE/pages) ·· _pages_cella_product_
  *
  * @param {deletePagesData} options
  * @param {any[]=} options.body.ids - `any[]` (optional)
@@ -2754,7 +2954,7 @@ export const deletePages = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2771,7 +2971,7 @@ export const deletePages = <ThrowOnError extends boolean = true>(
  *
  * Get all matching pages.
  *
- * **GET /pages** ·· [getPages](https://www.cellajs.com/docs/operations?operationTag=pages#tag/pages/GET/pages) ·· [getPages](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/pages) ·· [getPages](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/GET/pages) ·· _pages_cella_product_
+ * **GET /pages** ·· [getPages](https://www.raak.dev/docs/operations?operationTag=pages#tag/pages/GET/pages) ·· [getPages](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/pages) ·· [getPages](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/pages) ·· _pages_cella_product_
  *
  * @param {getPagesData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -2805,7 +3005,7 @@ export const getPages = <ThrowOnError extends boolean = true>(
  *
  * Insert one or more new pages. Returns created pages and any rejected items.
  *
- * **POST /pages** ·· [createPages](https://www.cellajs.com/docs/operations?operationTag=pages#tag/pages/POST/pages) ·· [createPages](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/pages) ·· [createPages](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/POST/pages) ·· _pages_cella_product_
+ * **POST /pages** ·· [createPages](https://www.raak.dev/docs/operations?operationTag=pages#tag/pages/POST/pages) ·· [createPages](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/pages) ·· [createPages](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/pages) ·· _pages_cella_product_
  *
  * @param {createPagesData} options
  * @returns Possible status codes: 200, 201, 400, 401, 403, 404, 409, 429
@@ -2827,7 +3027,7 @@ export const createPages = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2844,7 +3044,7 @@ export const createPages = <ThrowOnError extends boolean = true>(
  *
  * Get a single page by ID. Cached using LRU - first request warms cache.
  *
- * **GET /pages/{id}** ·· [getPage](https://www.cellajs.com/docs/operations?operationTag=pages#tag/pages/GET/pages/{id}) ·· [getPage](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/pages/{id}) ·· [getPage](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/GET/pages/{id}) ·· _pages_cella_product_
+ * **GET /pages/{id}** ·· [getPage](https://www.raak.dev/docs/operations?operationTag=pages#tag/pages/GET/pages/{id}) ·· [getPage](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/pages/{id}) ·· [getPage](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/pages/{id}) ·· _pages_cella_product_
  *
  * @param {getPageData} options
  * @param {string} options.path.id - `string`
@@ -2873,7 +3073,7 @@ export const getPage = <ThrowOnError extends boolean = true>(
  *
  * Update a single page by ID.
  *
- * **PUT /pages/{id}** ·· [updatePage](https://www.cellajs.com/docs/operations?operationTag=pages#tag/pages/PUT/pages/{id}) ·· [updatePage](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/pages/{id}) ·· [updatePage](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/PUT/pages/{id}) ·· _pages_cella_product_
+ * **PUT /pages/{id}** ·· [updatePage](https://www.raak.dev/docs/operations?operationTag=pages#tag/pages/PUT/pages/{id}) ·· [updatePage](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/pages/{id}) ·· [updatePage](https://www.raak.dev/docs/operations?operationTag=product#tag/product/PUT/pages/{id}) ·· _pages_cella_product_
  *
  * @param {updatePageData} options
  * @param {string} options.path.id - `string`
@@ -2899,7 +3099,7 @@ export const updatePage = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2914,9 +3114,9 @@ export const updatePage = <ThrowOnError extends boolean = true>(
 /**
  * Get list of users
  *
- * Returns a list of *users*.
+ * Returns a list of users.
  *
- * **GET /users/users** ·· [getUsers](https://www.cellajs.com/docs/operations?operationTag=users#tag/users/GET/users/users) ·· [getUsers](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/users/users) ·· _users_cella_
+ * **GET /users/users** ·· [getUsers](https://www.raak.dev/docs/operations?operationTag=users#tag/users/GET/users/users) ·· [getUsers](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/users/users) ·· _users_cella_
  *
  * @param {getUsersData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -2945,7 +3145,7 @@ export const getUsers = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2956,9 +3156,9 @@ export const getUsers = <ThrowOnError extends boolean = true>(
 /**
  * Get user
  *
- * Retrieves a *user* by ID. The requesting user must share at least one organization membership. Pass `?slug=true` to resolve by slug instead.
+ * Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.
  *
- * **GET /users/users/{relatableUserId}** ·· [getUser](https://www.cellajs.com/docs/operations?operationTag=users#tag/users/GET/users/users/{relatableUserId}) ·· [getUser](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/users/users/{relatableUserId}) ·· _users_cella_
+ * **GET /users/users/{relatableUserId}** ·· [getUser](https://www.raak.dev/docs/operations?operationTag=users#tag/users/GET/users/users/{relatableUserId}) ·· [getUser](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/users/users/{relatableUserId}) ·· _users_cella_
  *
  * @param {getUserData} options
  * @param {string} options.path.relatableuserid - `string`
@@ -2982,7 +3182,7 @@ export const getUser = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -2991,11 +3191,587 @@ export const getUser = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Fetch public project by ID
+ *
+ * Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.
+ *
+ * **GET /public/projects/{id}** ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/public/projects/{id}) ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/public/projects/{id}) ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/public/projects/{id}) ·· _projects_app_context_
+ *
+ * @param {getPublicProjectData} options
+ * @param {string} options.path.id - `string`
+ * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getPublicProject = <ThrowOnError extends boolean = true>(
+  options: Options<GetPublicProjectData, ThrowOnError>,
+): RequestResult<GetPublicProjectResponses, GetPublicProjectErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetPublicProjectResponses, GetPublicProjectErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetPublicProjectPath,
+          query: zGetPublicProjectQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetPublicProjectResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/public/projects/{id}',
+    ...options,
+  });
+
+/**
+ * Get public task
+ *
+ * Retrieves a task by its ID. For publicly shared.
+ *
+ * **GET /public/tasks/{id}** ·· [getPublicTask](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/public/tasks/{id}) ·· [getPublicTask](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/public/tasks/{id}) ·· [getPublicTask](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/public/tasks/{id}) ·· _tasks_app_product_
+ *
+ * @param {getPublicTaskData} options
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getPublicTask = <ThrowOnError extends boolean = true>(
+  options: Options<GetPublicTaskData, ThrowOnError>,
+): RequestResult<GetPublicTaskResponses, GetPublicTaskErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetPublicTaskResponses, GetPublicTaskErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetPublicTaskPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetPublicTaskResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/public/tasks/{id}',
+    ...options,
+  });
+
+/**
+ * Get public tasks
+ *
+ * Returns a list of public tasks associated with a specific project. For publicly shared boards.
+ *
+ * **GET /public/tasks** ·· [getPublicTasks](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/public/tasks) ·· [getPublicTasks](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/public/tasks) ·· [getPublicTasks](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/public/tasks) ·· _tasks_app_product_
+ *
+ * @param {getPublicTasksData} options
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.matchmode - `enum` (optional)
+ * @param {number=} options.query.acceptedcutoff - `number` (optional)
+ * @param {string} options.query.projectid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getPublicTasks = <ThrowOnError extends boolean = true>(
+  options: Options<GetPublicTasksData, ThrowOnError>,
+): RequestResult<GetPublicTasksResponses, GetPublicTasksErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetPublicTasksResponses, GetPublicTasksErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zGetPublicTasksQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetPublicTasksResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/public/tasks',
+    ...options,
+  });
+
+/**
+ * Resolve task link
+ *
+ * Returns routing metadata for a task link so the frontend can decide where to redirect the user.
+ *
+ * **GET /t/{id}/resolve** ·· [resolveTaskLink](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{id}/resolve) ·· [resolveTaskLink](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/t/{id}/resolve) ·· [resolveTaskLink](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/t/{id}/resolve) ·· _tasks_app_product_
+ *
+ * @param {resolveTaskLinkData} options
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const resolveTaskLink = <ThrowOnError extends boolean = true>(
+  options: Options<ResolveTaskLinkData, ThrowOnError>,
+): RequestResult<ResolveTaskLinkResponses, ResolveTaskLinkErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<ResolveTaskLinkResponses, ResolveTaskLinkErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zResolveTaskLinkPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zResolveTaskLinkResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/t/{id}/resolve',
+    ...options,
+  });
+
+/**
+ * Get task cover
+ *
+ * Retrieves the cover image for a task by ID.
+ *
+ * **GET /t/{id}/cover** ·· [getTaskCover](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{id}/cover) ·· [getTaskCover](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/t/{id}/cover) ·· [getTaskCover](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/t/{id}/cover) ·· _tasks_app_product_
+ *
+ * @param {getTaskCoverData} options
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getTaskCover = <ThrowOnError extends boolean = true>(
+  options: Options<GetTaskCoverData, ThrowOnError>,
+): RequestResult<GetTaskCoverResponses, GetTaskCoverErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetTaskCoverResponses, GetTaskCoverErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetTaskCoverPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseStyle: 'data',
+    url: '/t/{id}/cover',
+    ...options,
+  });
+
+/**
+ * Redirect to task
+ *
+ * Redirects to the canonical route for a task by ID.
+ *
+ * **GET /t/{id}** ·· [redirectToTask](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/t/{id}) ·· [redirectToTask](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/t/{id}) ·· [redirectToTask](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/t/{id}) ·· _tasks_app_product_
+ *
+ * @param {redirectToTaskData} options
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const redirectToTask = <ThrowOnError extends boolean = true>(
+  options: Options<RedirectToTaskData, ThrowOnError>,
+): RequestResult<RedirectToTaskResponses, RedirectToTaskErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<RedirectToTaskResponses, RedirectToTaskErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zRedirectToTaskPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseStyle: 'data',
+    url: '/t/{id}',
+    ...options,
+  });
+
+/**
+ * Get list of workspaces
+ *
+ * Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.
+ *
+ * **GET /workspaces** ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/workspaces) ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/workspaces) ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/workspaces) ·· _workspaces_app_context_
+ *
+ * @param {getWorkspacesData} options
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {string=} options.query.organizationid - `string` (optional)
+ * @param {enum=} options.query.role - `enum` (optional)
+ * @param {enum=} options.query.excludearchived - `enum` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getWorkspaces = <ThrowOnError extends boolean = true>(
+  options?: Options<GetWorkspacesData, ThrowOnError>,
+): RequestResult<GetWorkspacesResponses, GetWorkspacesErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetWorkspacesResponses, GetWorkspacesErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zGetWorkspacesQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetWorkspacesResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/workspaces',
+    ...options,
+  });
+
+/**
+ * Get list of projects
+ *
+ * Returns a paginated list of projects where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, workspaceId to scope to a specific workspace, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by project name.
+ *
+ * **GET /projects** ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/projects) ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/projects) ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/projects) ·· _projects_app_context_
+ *
+ * @param {getProjectsData} options
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {string=} options.query.organizationid - `string` (optional)
+ * @param {string=} options.query.workspaceid - `string` (optional)
+ * @param {string=} options.query.relatableuserid - `string` (optional)
+ * @param {enum=} options.query.role - `enum` (optional)
+ * @param {enum=} options.query.excludearchived - `enum` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getProjects = <ThrowOnError extends boolean = true>(
+  options?: Options<GetProjectsData, ThrowOnError>,
+): RequestResult<GetProjectsResponses, GetProjectsErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetProjectsResponses, GetProjectsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zGetProjectsQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetProjectsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/projects',
+    ...options,
+  });
+
+/**
+ * Delete chats
+ *
+ * Deletes one or more chat sessions and their messages.
+ *
+ * **DELETE /{tenantId}/{organizationId}/chats** ·· [deleteChats](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/DELETE/{tenantId}/{organizationId}/chats) ·· [deleteChats](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/chats) ·· [deleteChats](https://www.raak.dev/docs/operations?operationTag=product#tag/product/DELETE/{tenantId}/{organizationId}/chats) ·· _agent_app_product_
+ *
+ * @param {deleteChatsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteChats = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteChatsData, ThrowOnError>,
+): RequestResult<DeleteChatsResponses, DeleteChatsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteChatsResponses, DeleteChatsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteChatsBody.optional(),
+          path: zDeleteChatsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteChatsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/chats',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get chats
+ *
+ * Returns a paginated list of chat sessions for the current user.
+ *
+ * **GET /{tenantId}/{organizationId}/chats** ·· [getChats](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/GET/{tenantId}/{organizationId}/chats) ·· [getChats](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/chats) ·· [getChats](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/chats) ·· _agent_app_product_
+ *
+ * @param {getChatsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.archived - `enum` (optional)
+ * @param {string=} options.query.projectid - `string` (optional)
+ * @param {string=} options.query.workspaceid - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getChats = <ThrowOnError extends boolean = true>(
+  options: Options<GetChatsData, ThrowOnError>,
+): RequestResult<GetChatsResponses, GetChatsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetChatsResponses, GetChatsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetChatsPath,
+          query: zGetChatsQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetChatsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/chats',
+    ...options,
+  });
+
+/**
+ * Create chat
+ *
+ * Creates a new chat session with an initial user message and returns the chat. The assistant response is streamed separately via the AI worker streamChat endpoint.
+ *
+ * **POST /{tenantId}/{organizationId}/chats** ·· [createChat](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/POST/{tenantId}/{organizationId}/chats) ·· [createChat](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/chats) ·· [createChat](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/chats) ·· _agent_app_product_
+ *
+ * @param {createChatData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string=} options.body.content - `string` (optional)
+ * @param {string=} options.body.projectId - `string` (optional)
+ * @param {string=} options.body.workspaceId - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const createChat = <ThrowOnError extends boolean = true>(
+  options: Options<CreateChatData, ThrowOnError>,
+): RequestResult<CreateChatResponses, CreateChatErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateChatResponses, CreateChatErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateChatBody,
+          path: zCreateChatPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateChatResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/chats',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get messages
+ *
+ * Returns a paginated list of messages for a chat session.
+ *
+ * **GET /{tenantId}/{organizationId}/chats/{id}/messages** ·· [getMessages](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/GET/{tenantId}/{organizationId}/chats/{id}/messages) ·· [getMessages](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/chats/{id}/messages) ·· [getMessages](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/chats/{id}/messages) ·· _agent_app_product_
+ *
+ * @param {getMessagesData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getMessages = <ThrowOnError extends boolean = true>(
+  options: Options<GetMessagesData, ThrowOnError>,
+): RequestResult<GetMessagesResponses, GetMessagesErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetMessagesResponses, GetMessagesErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetMessagesPath,
+          query: zGetMessagesQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetMessagesResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/chats/{id}/messages',
+    ...options,
+  });
+
+/**
+ * Send message
+ *
+ * Persists a user message and returns it. The assistant response is streamed separately via the AI worker streamChat endpoint.
+ *
+ * **POST /{tenantId}/{organizationId}/chats/{id}/messages** ·· [sendMessage](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/POST/{tenantId}/{organizationId}/chats/{id}/messages) ·· [sendMessage](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/chats/{id}/messages) ·· [sendMessage](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/chats/{id}/messages) ·· _agent_app_product_
+ *
+ * @param {sendMessageData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.content - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const sendMessage = <ThrowOnError extends boolean = true>(
+  options: Options<SendMessageData, ThrowOnError>,
+): RequestResult<SendMessageResponses, SendMessageErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<SendMessageResponses, SendMessageErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zSendMessageBody,
+          path: zSendMessagePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zSendMessageResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/chats/{id}/messages',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Update chat
+ *
+ * Updates a chat session (rename or archive).
+ *
+ * **PUT /{tenantId}/{organizationId}/chats/{id}** ·· [updateChat](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/PUT/{tenantId}/{organizationId}/chats/{id}) ·· [updateChat](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/chats/{id}) ·· [updateChat](https://www.raak.dev/docs/operations?operationTag=product#tag/product/PUT/{tenantId}/{organizationId}/chats/{id}) ·· _agent_app_product_
+ *
+ * @param {updateChatData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {boolean=} options.body.archived - `boolean` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateChat = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateChatData, ThrowOnError>,
+): RequestResult<UpdateChatResponses, UpdateChatErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateChatResponses, UpdateChatErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateChatBody,
+          path: zUpdateChatPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateChatResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/chats/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * MCP endpoint
+ *
+ * Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).
+ *
+ * **POST /{tenantId}/{organizationId}/mcp** ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=ai#tag/ai/POST/{tenantId}/{organizationId}/mcp) ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/mcp) ·· _ai_cella_
+ *
+ * @param {handleMcpData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const handleMcp = <ThrowOnError extends boolean = true>(
+  options: Options<HandleMcpData, ThrowOnError>,
+): RequestResult<HandleMcpResponses, HandleMcpErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<HandleMcpResponses, HandleMcpErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zHandleMcpBody,
+          path: zHandleMcpPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/mcp',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Delete attachments
  *
  * Deletes one or more attachment records by ID. This does not delete the underlying file in storage.
  *
- * **DELETE /{tenantId}/{organizationId}/attachments** ·· [deleteAttachments](https://www.cellajs.com/docs/operations?operationTag=attachments#tag/attachments/DELETE/{tenantId}/{organizationId}/attachments) ·· [deleteAttachments](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/{organizationId}/attachments) ·· [deleteAttachments](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/DELETE/{tenantId}/{organizationId}/attachments) ·· _attachments_cella_product_
+ * **DELETE /{tenantId}/{organizationId}/attachments** ·· [deleteAttachments](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/DELETE/{tenantId}/{organizationId}/attachments) ·· [deleteAttachments](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/{organizationId}/attachments) ·· [deleteAttachments](https://www.raak.dev/docs/operations?operationTag=product#tag/product/DELETE/{tenantId}/{organizationId}/attachments) ·· _attachments_cella_product_
  *
  * @param {deleteAttachmentsData} options
  * @param {string} options.path.tenantid - `string`
@@ -3021,7 +3797,7 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3038,7 +3814,7 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
  *
  * Returns a paginated list of attachments for the organization.
  *
- * **GET /{tenantId}/{organizationId}/attachments** ·· [getAttachments](https://www.cellajs.com/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments) ·· [getAttachments](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/attachments) ·· [getAttachments](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/attachments) ·· _attachments_cella_product_
+ * **GET /{tenantId}/{organizationId}/attachments** ·· [getAttachments](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments) ·· [getAttachments](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/attachments) ·· [getAttachments](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/attachments) ·· _attachments_cella_product_
  *
  * @param {getAttachmentsData} options
  * @param {string} options.path.tenantid - `string`
@@ -3049,6 +3825,7 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {string=} options.query.projectid - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getAttachments = <ThrowOnError extends boolean = true>(
@@ -3068,7 +3845,7 @@ export const getAttachments = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3081,7 +3858,7 @@ export const getAttachments = <ThrowOnError extends boolean = true>(
  *
  * Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity.
  *
- * **POST /{tenantId}/{organizationId}/attachments** ·· [createAttachments](https://www.cellajs.com/docs/operations?operationTag=attachments#tag/attachments/POST/{tenantId}/{organizationId}/attachments) ·· [createAttachments](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/attachments) ·· [createAttachments](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/attachments) ·· _attachments_cella_product_
+ * **POST /{tenantId}/{organizationId}/attachments** ·· [createAttachments](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/POST/{tenantId}/{organizationId}/attachments) ·· [createAttachments](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/attachments) ·· [createAttachments](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/attachments) ·· _attachments_cella_product_
  *
  * @param {createAttachmentsData} options
  * @param {string} options.path.tenantid - `string`
@@ -3105,7 +3882,7 @@ export const createAttachments = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3122,7 +3899,7 @@ export const createAttachments = <ThrowOnError extends boolean = true>(
  *
  * Generates and returns a presigned URL for accessing a private attachment file in S3. Public files should use the public CDN URL directly. Requires organization context.
  *
- * **GET /{tenantId}/{organizationId}/attachments/presigned-url** ·· [getPresignedUrl](https://www.cellajs.com/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments/presigned-url) ·· [getPresignedUrl](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/attachments/presigned-url) ·· [getPresignedUrl](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/attachments/presigned-url) ·· _attachments_cella_product_
+ * **GET /{tenantId}/{organizationId}/attachments/presigned-url** ·· [getPresignedUrl](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments/presigned-url) ·· [getPresignedUrl](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/attachments/presigned-url) ·· [getPresignedUrl](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/attachments/presigned-url) ·· _attachments_cella_product_
  *
  * @param {getPresignedUrlData} options
  * @param {string} options.path.tenantid - `string`
@@ -3147,7 +3924,7 @@ export const getPresignedUrl = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3160,7 +3937,7 @@ export const getPresignedUrl = <ThrowOnError extends boolean = true>(
  *
  * Returns a single attachment by ID. Supports CDC cache via X-Cache-Token header.
  *
- * **GET /{tenantId}/{organizationId}/attachments/{id}** ·· [getAttachment](https://www.cellajs.com/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments/{id}) ·· [getAttachment](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/attachments/{id}) ·· [getAttachment](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/attachments/{id}) ·· _attachments_cella_product_
+ * **GET /{tenantId}/{organizationId}/attachments/{id}** ·· [getAttachment](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments/{id}) ·· [getAttachment](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/attachments/{id}) ·· [getAttachment](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/attachments/{id}) ·· _attachments_cella_product_
  *
  * @param {getAttachmentData} options
  * @param {string} options.path.tenantid - `string`
@@ -3185,7 +3962,7 @@ export const getAttachment = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3198,7 +3975,7 @@ export const getAttachment = <ThrowOnError extends boolean = true>(
  *
  * Updates metadata of an attachment, such as its name or associated entity.
  *
- * **PUT /{tenantId}/{organizationId}/attachments/{id}** ·· [updateAttachment](https://www.cellajs.com/docs/operations?operationTag=attachments#tag/attachments/PUT/{tenantId}/{organizationId}/attachments/{id}) ·· [updateAttachment](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/{organizationId}/attachments/{id}) ·· [updateAttachment](https://www.cellajs.com/docs/operations?operationTag=product#tag/product/PUT/{tenantId}/{organizationId}/attachments/{id}) ·· _attachments_cella_product_
+ * **PUT /{tenantId}/{organizationId}/attachments/{id}** ·· [updateAttachment](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/PUT/{tenantId}/{organizationId}/attachments/{id}) ·· [updateAttachment](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/{organizationId}/attachments/{id}) ·· [updateAttachment](https://www.raak.dev/docs/operations?operationTag=product#tag/product/PUT/{tenantId}/{organizationId}/attachments/{id}) ·· _attachments_cella_product_
  *
  * @param {updateAttachmentData} options
  * @param {string} options.path.tenantid - `string`
@@ -3226,7 +4003,7 @@ export const updateAttachment = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3243,7 +4020,7 @@ export const updateAttachment = <ThrowOnError extends boolean = true>(
  *
  * Deletes one or more memberships by ID. This removes the membership but does not delete the associated user(s).
  *
- * **DELETE /{tenantId}/{organizationId}/memberships** ·· [deleteMemberships](https://www.cellajs.com/docs/operations?operationTag=memberships#tag/memberships/DELETE/{tenantId}/{organizationId}/memberships) ·· [deleteMemberships](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/{organizationId}/memberships) ·· _memberships_cella_
+ * **DELETE /{tenantId}/{organizationId}/memberships** ·· [deleteMemberships](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/DELETE/{tenantId}/{organizationId}/memberships) ·· [deleteMemberships](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/{organizationId}/memberships) ·· _memberships_cella_
  *
  * @param {deleteMembershipsData} options
  * @param {string} options.path.tenantid - `string`
@@ -3270,7 +4047,7 @@ export const deleteMemberships = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3287,7 +4064,7 @@ export const deleteMemberships = <ThrowOnError extends boolean = true>(
  *
  * Creates one or more memberships, inviting users (existing or new) to a context entity such as an organization.
  *
- * **POST /{tenantId}/{organizationId}/memberships** ·· [membershipInvite](https://www.cellajs.com/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships) ·· [membershipInvite](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/memberships) ·· _memberships_cella_
+ * **POST /{tenantId}/{organizationId}/memberships** ·· [membershipInvite](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships) ·· [membershipInvite](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/memberships) ·· _memberships_cella_
  *
  * @param {membershipInviteData} options
  * @param {string} options.path.tenantid - `string`
@@ -3315,7 +4092,7 @@ export const membershipInvite = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3330,9 +4107,9 @@ export const membershipInvite = <ThrowOnError extends boolean = true>(
 /**
  * Update membership
  *
- * Updates the membership metadata, such as role, `muted`, or `archived` status.
+ * Updates the membership metadata, such as role, muted, or archived status.
  *
- * **PUT /{tenantId}/{organizationId}/memberships/{id}** ·· [updateMembership](https://www.cellajs.com/docs/operations?operationTag=memberships#tag/memberships/PUT/{tenantId}/{organizationId}/memberships/{id}) ·· [updateMembership](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/{organizationId}/memberships/{id}) ·· _memberships_cella_
+ * **PUT /{tenantId}/{organizationId}/memberships/{id}** ·· [updateMembership](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/PUT/{tenantId}/{organizationId}/memberships/{id}) ·· [updateMembership](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/{organizationId}/memberships/{id}) ·· _memberships_cella_
  *
  * @param {updateMembershipData} options
  * @param {string} options.path.tenantid - `string`
@@ -3361,7 +4138,7 @@ export const updateMembership = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3378,7 +4155,7 @@ export const updateMembership = <ThrowOnError extends boolean = true>(
  *
  * Accepting activates the associated membership. Rejecting simply removes the invitation token.
  *
- * **POST /{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}** ·· [handleMembershipInvitation](https://www.cellajs.com/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}) ·· [handleMembershipInvitation](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}) ·· _memberships_cella_
+ * **POST /{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}** ·· [handleMembershipInvitation](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}) ·· [handleMembershipInvitation](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/memberships/{id}/{acceptOrReject}) ·· _memberships_cella_
  *
  * @param {handleMembershipInvitationData} options
  * @param {string} options.path.id - `string`
@@ -3407,7 +4184,7 @@ export const handleMembershipInvitation = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3420,7 +4197,7 @@ export const handleMembershipInvitation = <ThrowOnError extends boolean = true>(
  *
  * Retrieves members (users) of a context entity by ID, including their associated membership data.
  *
- * **GET /{tenantId}/{organizationId}/memberships/members** ·· [getMembers](https://www.cellajs.com/docs/operations?operationTag=memberships#tag/memberships/GET/{tenantId}/{organizationId}/memberships/members) ·· [getMembers](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/memberships/members) ·· _memberships_cella_
+ * **GET /{tenantId}/{organizationId}/memberships/members** ·· [getMembers](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/GET/{tenantId}/{organizationId}/memberships/members) ·· [getMembers](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/memberships/members) ·· _memberships_cella_
  *
  * @param {getMembersData} options
  * @param {string} options.path.tenantid - `string`
@@ -3454,7 +4231,7 @@ export const getMembers = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3467,7 +4244,7 @@ export const getMembers = <ThrowOnError extends boolean = true>(
  *
  * Returns pending memberships for a context entity, identified by ID. This does not include pending invitations for non-existing users.
  *
- * **GET /{tenantId}/{organizationId}/memberships/pending** ·· [getPendingMemberships](https://www.cellajs.com/docs/operations?operationTag=memberships#tag/memberships/GET/{tenantId}/{organizationId}/memberships/pending) ·· [getPendingMemberships](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/memberships/pending) ·· _memberships_cella_
+ * **GET /{tenantId}/{organizationId}/memberships/pending** ·· [getPendingMemberships](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/GET/{tenantId}/{organizationId}/memberships/pending) ·· [getPendingMemberships](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/memberships/pending) ·· _memberships_cella_
  *
  * @param {getPendingMembershipsData} options
  * @param {string} options.path.tenantid - `string`
@@ -3499,7 +4276,7 @@ export const getPendingMemberships = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3508,11 +4285,436 @@ export const getPendingMemberships = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Delete tasks
+ *
+ * Deletes one or more tasks by ID.
+ *
+ * **DELETE /{tenantId}/{organizationId}/tasks** ·· [deleteTasks](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/DELETE/{tenantId}/{organizationId}/tasks) ·· [deleteTasks](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/tasks) ·· [deleteTasks](https://www.raak.dev/docs/operations?operationTag=product#tag/product/DELETE/{tenantId}/{organizationId}/tasks) ·· _tasks_app_product_
+ *
+ * @param {deleteTasksData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @param {object} options.body.stx - `object`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteTasks = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteTasksData, ThrowOnError>,
+): RequestResult<DeleteTasksResponses, DeleteTasksErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteTasksResponses, DeleteTasksErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteTasksBody.optional(),
+          path: zDeleteTasksPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteTasksResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/tasks',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get list of tasks
+ *
+ * Returns a list of tasks within one or more specified projects.
+ *
+ * **GET /{tenantId}/{organizationId}/tasks** ·· [getTasks](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/{tenantId}/{organizationId}/tasks) ·· [getTasks](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/tasks) ·· [getTasks](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/tasks) ·· _tasks_app_product_
+ *
+ * @param {getTasksData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.matchmode - `enum` (optional)
+ * @param {number=} options.query.acceptedcutoff - `number` (optional)
+ * @param {string=} options.query.projectid - `string` (optional)
+ * @param {string=} options.query.workspaceid - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getTasks = <ThrowOnError extends boolean = true>(
+  options: Options<GetTasksData, ThrowOnError>,
+): RequestResult<GetTasksResponses, GetTasksErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetTasksResponses, GetTasksErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetTasksPath,
+          query: zGetTasksQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetTasksResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/tasks',
+    ...options,
+  });
+
+/**
+ * Create tasks
+ *
+ * Creates one or more tasks within a project.
+ *
+ * **POST /{tenantId}/{organizationId}/tasks** ·· [createTasks](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/POST/{tenantId}/{organizationId}/tasks) ·· [createTasks](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/tasks) ·· [createTasks](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/tasks) ·· _tasks_app_product_
+ *
+ * @param {createTasksData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @returns Possible status codes: 200, 201, 400, 401, 403, 404, 409, 429
+ */
+export const createTasks = <ThrowOnError extends boolean = true>(
+  options: Options<CreateTasksData, ThrowOnError>,
+): RequestResult<CreateTasksResponses, CreateTasksErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateTasksResponses, CreateTasksErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateTasksBody,
+          path: zCreateTasksPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateTasksResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/tasks',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get task
+ *
+ * Retrieves a task by its ID.
+ *
+ * **GET /{tenantId}/{organizationId}/tasks/{id}** ·· [getTask](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/GET/{tenantId}/{organizationId}/tasks/{id}) ·· [getTask](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/tasks/{id}) ·· [getTask](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/tasks/{id}) ·· _tasks_app_product_
+ *
+ * @param {getTaskData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getTask = <ThrowOnError extends boolean = true>(
+  options: Options<GetTaskData, ThrowOnError>,
+): RequestResult<GetTaskResponses, GetTaskErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetTaskResponses, GetTaskErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetTaskPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetTaskResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/tasks/{id}',
+    ...options,
+  });
+
+/**
+ * Update task
+ *
+ * Updates a task by ID.
+ *
+ * **PUT /{tenantId}/{organizationId}/tasks/{id}** ·· [updateTask](https://www.raak.dev/docs/operations?operationTag=tasks#tag/tasks/PUT/{tenantId}/{organizationId}/tasks/{id}) ·· [updateTask](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/tasks/{id}) ·· [updateTask](https://www.raak.dev/docs/operations?operationTag=product#tag/product/PUT/{tenantId}/{organizationId}/tasks/{id}) ·· _tasks_app_product_
+ *
+ * @param {updateTaskData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string | boolean=} options.query.fullresponse - `string | boolean` (optional)
+ * @param {object=} options.body.ops - `object` (optional)
+ * @param {any=} options.body.stx - `any` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateTask = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateTaskData, ThrowOnError>,
+): RequestResult<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateTaskBody.optional(),
+          path: zUpdateTaskPath,
+          query: zUpdateTaskQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateTaskResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/tasks/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete labels
+ *
+ * Deletes one or more labels by ID.
+ *
+ * **DELETE /{tenantId}/{organizationId}/labels** ·· [deleteLabels](https://www.raak.dev/docs/operations?operationTag=labels#tag/labels/DELETE/{tenantId}/{organizationId}/labels) ·· [deleteLabels](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/labels) ·· [deleteLabels](https://www.raak.dev/docs/operations?operationTag=product#tag/product/DELETE/{tenantId}/{organizationId}/labels) ·· _labels_app_product_
+ *
+ * @param {deleteLabelsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @param {object} options.body.stx - `object`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteLabels = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteLabelsData, ThrowOnError>,
+): RequestResult<DeleteLabelsResponses, DeleteLabelsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteLabelsResponses, DeleteLabelsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteLabelsBody.optional(),
+          path: zDeleteLabelsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteLabelsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/labels',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get list of labels
+ *
+ * Returns a list of labels for a given project or workspace.
+ *
+ * **GET /{tenantId}/{organizationId}/labels** ·· [getLabels](https://www.raak.dev/docs/operations?operationTag=labels#tag/labels/GET/{tenantId}/{organizationId}/labels) ·· [getLabels](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/labels) ·· [getLabels](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/labels) ·· _labels_app_product_
+ *
+ * @param {getLabelsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {string=} options.query.projectid - `string` (optional)
+ * @param {string=} options.query.workspaceid - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getLabels = <ThrowOnError extends boolean = true>(
+  options: Options<GetLabelsData, ThrowOnError>,
+): RequestResult<GetLabelsResponses, GetLabelsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetLabelsResponses, GetLabelsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetLabelsPath,
+          query: zGetLabelsQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetLabelsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/labels',
+    ...options,
+  });
+
+/**
+ * Create labels
+ *
+ * Creates one or more labels within a project.
+ *
+ * **POST /{tenantId}/{organizationId}/labels** ·· [createLabels](https://www.raak.dev/docs/operations?operationTag=labels#tag/labels/POST/{tenantId}/{organizationId}/labels) ·· [createLabels](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/labels) ·· [createLabels](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/labels) ·· _labels_app_product_
+ *
+ * @param {createLabelsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @returns Possible status codes: 200, 201, 400, 401, 403, 404, 409, 429
+ */
+export const createLabels = <ThrowOnError extends boolean = true>(
+  options: Options<CreateLabelsData, ThrowOnError>,
+): RequestResult<CreateLabelsResponses, CreateLabelsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateLabelsResponses, CreateLabelsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateLabelsBody,
+          path: zCreateLabelsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateLabelsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/labels',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get label
+ *
+ * Retrieves a label by its ID.
+ *
+ * **GET /{tenantId}/{organizationId}/labels/{id}** ·· [getLabel](https://www.raak.dev/docs/operations?operationTag=labels#tag/labels/GET/{tenantId}/{organizationId}/labels/{id}) ·· [getLabel](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/labels/{id}) ·· [getLabel](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/labels/{id}) ·· _labels_app_product_
+ *
+ * @param {getLabelData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getLabel = <ThrowOnError extends boolean = true>(
+  options: Options<GetLabelData, ThrowOnError>,
+): RequestResult<GetLabelResponses, GetLabelErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetLabelResponses, GetLabelErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetLabelPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetLabelResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/labels/{id}',
+    ...options,
+  });
+
+/**
+ * Update label
+ *
+ * Updates a label by ID.
+ *
+ * **PUT /{tenantId}/{organizationId}/labels/{id}** ·· [updateLabel](https://www.raak.dev/docs/operations?operationTag=labels#tag/labels/PUT/{tenantId}/{organizationId}/labels/{id}) ·· [updateLabel](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/labels/{id}) ·· [updateLabel](https://www.raak.dev/docs/operations?operationTag=product#tag/product/PUT/{tenantId}/{organizationId}/labels/{id}) ·· _labels_app_product_
+ *
+ * @param {updateLabelData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {object=} options.body.ops - `object` (optional)
+ * @param {any=} options.body.stx - `any` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateLabel = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateLabelData, ThrowOnError>,
+): RequestResult<UpdateLabelResponses, UpdateLabelErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateLabelResponses, UpdateLabelErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateLabelBody.optional(),
+          path: zUpdateLabelPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateLabelResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/labels/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Mark entities as seen
  *
  * Records that the current user has viewed one or more product entities. Deduplicates against existing records. Updates entity view counts for newly seen entities.
  *
- * **POST /{tenantId}/{organizationId}/seen** ·· [markSeen](https://www.cellajs.com/docs/operations?operationTag=seen#tag/seen/POST/{tenantId}/{organizationId}/seen) ·· [markSeen](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/seen) ·· _seen_cella_
+ * **POST /{tenantId}/{organizationId}/seen** ·· [markSeen](https://www.raak.dev/docs/operations?operationTag=seen#tag/seen/POST/{tenantId}/{organizationId}/seen) ·· [markSeen](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/seen) ·· _seen_cella_
  *
  * @param {markSeenData} options
  * @param {string} options.path.tenantid - `string`
@@ -3538,7 +4740,7 @@ export const markSeen = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
@@ -3551,11 +4753,463 @@ export const markSeen = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Delete workspaces
+ *
+ * Deletes one or more workspaces by ID.
+ *
+ * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
+ *
+ * @param {deleteWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteWorkspaceData, ThrowOnError>,
+): RequestResult<DeleteWorkspaceResponses, DeleteWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteWorkspaceResponses, DeleteWorkspaceErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteWorkspaceBody.optional(),
+          path: zDeleteWorkspacePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create workspaces
+ *
+ * Creates one or more personal workspaces owned by the current user.
+ *
+ * **POST /{tenantId}/{organizationId}/workspaces** ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
+ *
+ * @param {createWorkspacesData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
+ */
+export const createWorkspaces = <ThrowOnError extends boolean = true>(
+  options: Options<CreateWorkspacesData, ThrowOnError>,
+): RequestResult<CreateWorkspacesResponses, CreateWorkspacesErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateWorkspacesResponses, CreateWorkspacesErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateWorkspacesBody,
+          path: zCreateWorkspacesPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateWorkspacesResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get workspace
+ *
+ * Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.
+ *
+ * **GET /{tenantId}/{organizationId}/workspaces/{id}** ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
+ *
+ * @param {getWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<GetWorkspaceData, ThrowOnError>,
+): RequestResult<GetWorkspaceResponses, GetWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetWorkspaceResponses, GetWorkspaceErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetWorkspacePath,
+          query: zGetWorkspaceQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces/{id}',
+    ...options,
+  });
+
+/**
+ * Update workspace
+ *
+ * Updates a workspace by ID.
+ *
+ * **PUT /{tenantId}/{organizationId}/workspaces/{id}** ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
+ *
+ * @param {updateWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {string=} options.body.organizationId - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateWorkspaceData, ThrowOnError>,
+): RequestResult<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateWorkspaceBody.optional(),
+          path: zUpdateWorkspacePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete projects
+ *
+ * Deletes one or more projects by ID.
+ *
+ * **DELETE /{tenantId}/{organizationId}/projects** ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
+ *
+ * @param {deleteProjectsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteProjects = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteProjectsData, ThrowOnError>,
+): RequestResult<DeleteProjectsResponses, DeleteProjectsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteProjectsResponses, DeleteProjectsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteProjectsBody.optional(),
+          path: zDeleteProjectsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteProjectsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create projects
+ *
+ * Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.
+ *
+ * **POST /{tenantId}/{organizationId}/projects** ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
+ *
+ * @param {createProjectsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.query.workspaceid - `string`
+ * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
+ */
+export const createProjects = <ThrowOnError extends boolean = true>(
+  options: Options<CreateProjectsData, ThrowOnError>,
+): RequestResult<CreateProjectsResponses, CreateProjectsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateProjectsResponses, CreateProjectsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateProjectsBody,
+          path: zCreateProjectsPath,
+          query: zCreateProjectsQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateProjectsResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/projects',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get project
+ *
+ * Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.
+ *
+ * **GET /{tenantId}/{organizationId}/projects/{id}** ·· [getProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
+ *
+ * @param {getProjectData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getProject = <ThrowOnError extends boolean = true>(
+  options: Options<GetProjectData, ThrowOnError>,
+): RequestResult<GetProjectResponses, GetProjectErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetProjectResponses, GetProjectErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetProjectPath,
+          query: zGetProjectQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetProjectResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}',
+    ...options,
+  });
+
+/**
+ * Update project
+ *
+ * Updates a project by ID.
+ *
+ * **PUT /{tenantId}/{organizationId}/projects/{id}** ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
+ *
+ * @param {updateProjectData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.slug - `string` (optional)
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {string | null=} options.body.thumbnailUrl - `string | null` (optional)
+ * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
+ * @param {string | null=} options.body.publicAt - `string | null` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateProject = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateProjectData, ThrowOnError>,
+): RequestResult<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateProjectBody.optional(),
+          path: zUpdateProjectPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateProjectResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Assign project to workspace
+ *
+ * Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.
+ *
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/assign-workspace** ·· [reassignProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [reassignProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [reassignProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· _projects_app_context_
+ *
+ * @param {reassignProjectData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string} options.query.workspaceid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const reassignProject = <ThrowOnError extends boolean = true>(
+  options: Options<ReassignProjectData, ThrowOnError>,
+): RequestResult<ReassignProjectResponses, ReassignProjectErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<ReassignProjectResponses, ReassignProjectErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zReassignProjectPath,
+          query: zReassignProjectQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zReassignProjectResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace',
+    ...options,
+  });
+
+/**
+ * Remove project from workspace
+ *
+ * Removes the current user's project membership from its assigned workspace without leaving the project.
+ *
+ * **DELETE /{tenantId}/{organizationId}/projects/{id}/workspace** ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· _projects_app_context_
+ *
+ * @param {removeProjectWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<RemoveProjectWorkspaceData, ThrowOnError>,
+): RequestResult<RemoveProjectWorkspaceResponses, RemoveProjectWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<
+    RemoveProjectWorkspaceResponses,
+    RemoveProjectWorkspaceErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zRemoveProjectWorkspacePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zRemoveProjectWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}/workspace',
+    ...options,
+  });
+
+/**
+ * Move project between workspaces
+ *
+ * Moves a project from one workspace to another.
+ *
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/move** ·· [moveProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· _projects_app_context_
+ *
+ * @param {moveProjectData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string} options.query.workspaceid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const moveProject = <ThrowOnError extends boolean = true>(
+  options: Options<MoveProjectData, ThrowOnError>,
+): RequestResult<MoveProjectResponses, MoveProjectErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<MoveProjectResponses, MoveProjectErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zMoveProjectPath,
+          query: zMoveProjectQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zMoveProjectResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}/move',
+    ...options,
+  });
+
+/**
  * Get Yjs token
  *
  * Returns a context-scoped HMAC-signed token for a specific entity type. The token proves the user has update permission and can be verified by the Yjs relay worker without a backend callback.
  *
- * **GET /yjs/token** ·· [getYjsToken](https://www.cellajs.com/docs/operations?operationTag=yjs#tag/yjs/GET/yjs/token) ·· [getYjsToken](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/GET/yjs/token) ·· _yjs_cella_
+ * **GET /yjs/token** ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=yjs#tag/yjs/GET/yjs/token) ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/yjs/token) ·· _yjs_cella_
  *
  * @param {getYjsTokenData} options
  * @param {string} options.query.entitytype - `string`
@@ -3580,50 +5234,10 @@ export const getYjsToken = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'cella-development-session-v1',
+        name: 'raak-development-session-v1',
         type: 'apiKey',
       },
     ],
     url: '/yjs/token',
     ...options,
-  });
-
-/**
- * MCP endpoint
- *
- * Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).
- *
- * **POST /{tenantId}/{organizationId}/mcp** ·· [handleMcp](https://www.cellajs.com/docs/operations?operationTag=ai#tag/ai/POST/{tenantId}/{organizationId}/mcp) ·· [handleMcp](https://www.cellajs.com/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/mcp) ·· _ai_cella_
- *
- * @param {handleMcpData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const handleMcp = <ThrowOnError extends boolean = true>(
-  options: Options<HandleMcpData, ThrowOnError>,
-): RequestResult<HandleMcpResponses, HandleMcpErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<HandleMcpResponses, HandleMcpErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zHandleMcpBody,
-          path: zHandleMcpPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'cella-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/mcp',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
   });

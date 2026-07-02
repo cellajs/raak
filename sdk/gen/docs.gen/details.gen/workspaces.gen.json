@@ -1,0 +1,1271 @@
+[
+  {
+    "operationId": "getWorkspaces",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Workspaces",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/Workspace",
+              "items": {
+                "type": "object",
+                "description": "A personal workspace that groups projects and tasks within an organization.",
+                "properties": {
+                  "createdAt": { "type": "string", "required": true },
+                  "id": { "type": "string", "required": true, "format": "uuid" },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["workspace"]
+                  },
+                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                  "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "updatedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "slug": { "type": "string", "required": true, "maxLength": 255 },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 2048
+                  },
+                  "bannerUrl": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 2048
+                  },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                  },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "included": {
+                    "type": "object",
+                    "required": true,
+                    "properties": {
+                      "membership": {
+                        "type": "object",
+                        "required": false,
+                        "description": "Core membership fields shared across active and inactive memberships.",
+                        "properties": {
+                          "id": { "type": "string", "required": true, "format": "uuid" },
+                          "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                          "contextType": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["organization", "workspace", "project"]
+                          },
+                          "contextId": { "type": "string", "required": true, "format": "uuid" },
+                          "userId": { "type": "string", "required": true, "format": "uuid" },
+                          "role": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["admin", "member", "guest"]
+                          },
+                          "archived": { "type": "boolean", "required": true },
+                          "muted": { "type": "boolean", "required": true },
+                          "displayOrder": {
+                            "type": "number",
+                            "required": true,
+                            "minimum": -140737488355328,
+                            "maximum": 140737488355327
+                          },
+                          "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                          "workspaceId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          },
+                          "projectId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          }
+                        },
+                        "ref": "#/components/schemas/MembershipBase"
+                      },
+                      "counts": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "membership": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "admin": { "type": "number", "required": true },
+                              "member": { "type": "number", "required": true },
+                              "guest": { "type": "number", "required": true },
+                              "pending": { "type": "number", "required": true },
+                              "total": { "type": "number", "required": true }
+                            }
+                          },
+                          "entities": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {}
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "ref": "#/components/schemas/Workspace"
+              }
+            },
+            "total": { "type": "number", "required": true }
+          },
+          "contentType": "application/json"
+        },
+        "example": {
+          "items": [
+            {
+              "id": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
+              "entityType": "workspace",
+              "name": "users",
+              "slug": "users",
+              "description": "Deduco occaecati cubicularis.",
+              "thumbnailUrl": null,
+              "bannerUrl": null,
+              "tenantId": "x645yb",
+              "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
+              "createdAt": "2024-11-21T01:19:53.533Z",
+              "createdBy": null,
+              "updatedAt": "2024-11-21T01:19:53.533Z",
+              "updatedBy": null,
+              "included": {
+                "membership": {
+                  "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
+                  "tenantId": "u87zf2",
+                  "contextType": "organization",
+                  "contextId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
+                  "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
+                  "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
+                  "workspaceId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
+                  "projectId": "0a981093-3a7d-43f1-9c6e-b31fa361d13c",
+                  "role": "member",
+                  "displayOrder": 45,
+                  "muted": false,
+                  "archived": false
+                },
+                "counts": {
+                  "membership": {
+                    "admin": 30,
+                    "member": 20,
+                    "guest": 109,
+                    "pending": 21,
+                    "total": 159
+                  },
+                  "entities": {
+                    "workspace": 188,
+                    "project": 390,
+                    "task": 423,
+                    "label": 413,
+                    "attachment": 435,
+                    "page": 298,
+                    "chat": 210,
+                    "message": 432
+                  }
+                }
+              }
+            },
+            {
+              "id": "772a771f-c150-465e-9635-46594859fc3d",
+              "entityType": "workspace",
+              "name": "partnerships",
+              "slug": "partnerships",
+              "description": "Auxilium non sui desino.",
+              "thumbnailUrl": null,
+              "bannerUrl": null,
+              "tenantId": "a56tpd",
+              "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
+              "createdAt": "2024-10-29T04:35:17.725Z",
+              "createdBy": null,
+              "updatedAt": "2024-10-29T04:35:17.725Z",
+              "updatedBy": null,
+              "included": {
+                "membership": {
+                  "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
+                  "tenantId": "lwj64z",
+                  "contextType": "organization",
+                  "contextId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
+                  "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
+                  "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
+                  "workspaceId": "772a771f-c150-465e-9635-46594859fc3d",
+                  "projectId": "df2537a5-a4fb-431f-b142-7dc7188dc589",
+                  "role": "member",
+                  "displayOrder": 94,
+                  "muted": false,
+                  "archived": false
+                },
+                "counts": {
+                  "membership": {
+                    "admin": 7,
+                    "member": 150,
+                    "guest": 72,
+                    "pending": 36,
+                    "total": 229
+                  },
+                  "entities": {
+                    "workspace": 1,
+                    "project": 272,
+                    "task": 153,
+                    "label": 264,
+                    "attachment": 40,
+                    "page": 116,
+                    "chat": 159,
+                    "message": 426
+                  }
+                }
+              }
+            }
+          ],
+          "total": 2
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "query": {
+        "properties": {
+          "q": { "type": "string", "required": false, "maxLength": 255 },
+          "sort": {
+            "type": "string",
+            "required": false,
+            "enum": ["id", "name", "createdAt", "displayOrder"]
+          },
+          "order": {
+            "type": "string",
+            "required": false,
+            "enum": ["asc", "desc"]
+          },
+          "offset": { "type": "string", "required": false },
+          "limit": { "type": "string", "required": false },
+          "seqCursor": { "type": "string", "required": false },
+          "organizationId": { "type": "string", "required": false, "maxLength": 50 },
+          "role": {
+            "type": "string",
+            "required": false,
+            "enum": ["admin", "member", "guest"]
+          },
+          "excludeArchived": {
+            "type": "string",
+            "required": false,
+            "enum": ["true", "false"]
+          },
+          "include": { "type": "string", "required": false }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "createWorkspaces",
+    "responses": [
+      {
+        "status": 201,
+        "description": "Workspaces created",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "items": {
+                "type": "object",
+                "description": "A personal workspace that groups projects and tasks within an organization.",
+                "properties": {
+                  "createdAt": { "type": "string", "required": true },
+                  "id": { "type": "string", "required": true, "format": "uuid" },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["workspace"]
+                  },
+                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                  "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "updatedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "slug": { "type": "string", "required": true, "maxLength": 255 },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 2048
+                  },
+                  "bannerUrl": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 2048
+                  },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                  },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "included": {
+                    "type": "object",
+                    "required": true,
+                    "properties": {
+                      "membership": {
+                        "type": "object",
+                        "required": true,
+                        "description": "Core membership fields shared across active and inactive memberships.",
+                        "properties": {
+                          "id": { "type": "string", "required": true, "format": "uuid" },
+                          "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                          "contextType": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["organization", "workspace", "project"]
+                          },
+                          "contextId": { "type": "string", "required": true, "format": "uuid" },
+                          "userId": { "type": "string", "required": true, "format": "uuid" },
+                          "role": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["admin", "member", "guest"]
+                          },
+                          "archived": { "type": "boolean", "required": true },
+                          "muted": { "type": "boolean", "required": true },
+                          "displayOrder": {
+                            "type": "number",
+                            "required": true,
+                            "minimum": -140737488355328,
+                            "maximum": 140737488355327
+                          },
+                          "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                          "workspaceId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          },
+                          "projectId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          }
+                        },
+                        "ref": "#/components/schemas/MembershipBase"
+                      },
+                      "counts": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "membership": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "admin": { "type": "number", "required": true },
+                              "member": { "type": "number", "required": true },
+                              "guest": { "type": "number", "required": true },
+                              "pending": { "type": "number", "required": true },
+                              "total": { "type": "number", "required": true }
+                            }
+                          },
+                          "entities": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {}
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "extendsRef": "#/components/schemas/Workspace"
+              }
+            },
+            "rejectedIds": {
+              "type": "array",
+              "required": true,
+              "description": "Identifiers of items that could not be processed",
+              "itemType": "string"
+            },
+            "rejectionReasons": {
+              "type": "object",
+              "required": false,
+              "description": "Map of reason code to rejected item IDs",
+              "additionalProperties": { "type": "array", "required": false, "itemType": "string" }
+            }
+          },
+          "contentType": "application/json"
+        },
+        "example": {
+          "data": [
+            {
+              "id": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+              "entityType": "workspace",
+              "name": "markets",
+              "slug": "markets",
+              "description": "Suadeo colo benigne id abduco supplanto asporto nam curatio.",
+              "thumbnailUrl": null,
+              "bannerUrl": null,
+              "tenantId": "oiny6r",
+              "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
+              "createdAt": "2024-04-18T21:12:59.543Z",
+              "createdBy": null,
+              "updatedAt": "2024-04-18T21:12:59.543Z",
+              "updatedBy": null,
+              "included": {
+                "membership": {
+                  "id": "1f366272-953c-486d-81dc-ee61f43478a1",
+                  "tenantId": "t4n7co",
+                  "contextType": "organization",
+                  "contextId": "b5c28e6f-552e-42e4-940d-66f5ab0174ab",
+                  "userId": "8ed7182a-e09f-41c6-9302-0e59a26ff7ac",
+                  "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
+                  "workspaceId": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+                  "projectId": "e58d6d29-bb39-4ec0-ba90-09959141d96f",
+                  "role": "guest",
+                  "displayOrder": 68,
+                  "muted": false,
+                  "archived": false
+                },
+                "counts": {
+                  "membership": {
+                    "admin": 43,
+                    "member": 58,
+                    "guest": 186,
+                    "pending": 49,
+                    "total": 287
+                  },
+                  "entities": {
+                    "workspace": 294,
+                    "project": 327,
+                    "task": 491,
+                    "label": 182,
+                    "attachment": 106,
+                    "page": 232,
+                    "chat": 251,
+                    "message": 442
+                  }
+                }
+              }
+            }
+          ],
+          "rejectedIds": []
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "body": {
+        "type": "array",
+        "itemType": "object",
+        "items": {
+          "type": "object",
+          "required": true,
+          "properties": {
+            "id": { "type": "string", "required": true, "maxLength": 50 },
+            "name": {
+              "type": "string",
+              "required": true,
+              "minLength": 2,
+              "maxLength": 255
+            }
+          }
+        },
+        "minItems": 1,
+        "maxItems": 10,
+        "required": true,
+        "contentType": "application/json"
+      }
+    }
+  },
+  {
+    "operationId": "deleteWorkspace",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Success",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "data": { "type": "array", "required": true },
+            "rejectedIds": {
+              "type": "array",
+              "required": true,
+              "description": "Identifiers of items that could not be processed",
+              "itemType": "string"
+            },
+            "rejectionReasons": {
+              "type": "object",
+              "required": false,
+              "description": "Map of reason code to rejected item IDs",
+              "additionalProperties": { "type": "array", "required": false, "itemType": "string" }
+            }
+          },
+          "contentType": "application/json"
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "body": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "required": true,
+            "minItems": 1,
+            "maxItems": 50,
+            "itemType": "string"
+          }
+        },
+        "required": false,
+        "contentType": "application/json"
+      }
+    }
+  },
+  {
+    "operationId": "getWorkspace",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Workspace",
+        "name": "Workspace",
+        "ref": "#/components/schemas/Workspace",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "description": "A personal workspace that groups projects and tasks within an organization.",
+          "properties": {
+            "createdAt": { "type": "string", "required": true },
+            "id": { "type": "string", "required": true, "format": "uuid" },
+            "entityType": {
+              "type": "string",
+              "required": true,
+              "enum": ["workspace"]
+            },
+            "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+            "name": { "type": "string", "required": true, "maxLength": 255 },
+            "updatedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "slug": { "type": "string", "required": true, "maxLength": 255 },
+            "thumbnailUrl": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 2048
+            },
+            "bannerUrl": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 2048
+            },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "description": "Minimal user data for references.",
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              },
+              "extendsRef": "#/components/schemas/UserMinimalBase"
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "description": "Minimal user data for references.",
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              },
+              "extendsRef": "#/components/schemas/UserMinimalBase"
+            },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
+            "included": {
+              "type": "object",
+              "required": true,
+              "properties": {
+                "membership": {
+                  "type": "object",
+                  "required": false,
+                  "description": "Core membership fields shared across active and inactive memberships.",
+                  "properties": {
+                    "id": { "type": "string", "required": true, "format": "uuid" },
+                    "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                    "contextType": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["organization", "workspace", "project"]
+                    },
+                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "userId": { "type": "string", "required": true, "format": "uuid" },
+                    "role": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["admin", "member", "guest"]
+                    },
+                    "archived": { "type": "boolean", "required": true },
+                    "muted": { "type": "boolean", "required": true },
+                    "displayOrder": {
+                      "type": "number",
+                      "required": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
+                    "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                    "workspaceId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    },
+                    "projectId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    }
+                  },
+                  "ref": "#/components/schemas/MembershipBase"
+                },
+                "counts": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "membership": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "admin": { "type": "number", "required": true },
+                        "member": { "type": "number", "required": true },
+                        "guest": { "type": "number", "required": true },
+                        "pending": { "type": "number", "required": true },
+                        "total": { "type": "number", "required": true }
+                      }
+                    },
+                    "entities": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "ref": "#/components/schemas/Workspace",
+          "contentType": "application/json"
+        },
+        "example": {
+          "id": "37b34924-612e-454b-9d73-98fa9290dee1",
+          "entityType": "workspace",
+          "name": "systems",
+          "slug": "systems",
+          "description": "Cena armarium strues sopor decimus aeneus.",
+          "thumbnailUrl": null,
+          "bannerUrl": null,
+          "tenantId": "a0h3yt",
+          "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+          "createdAt": "2024-03-18T14:19:46.053Z",
+          "createdBy": null,
+          "updatedAt": "2024-03-18T14:19:46.053Z",
+          "updatedBy": null,
+          "included": {
+            "membership": {
+              "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
+              "tenantId": "ecya0r",
+              "contextType": "organization",
+              "contextId": "61543dc3-4ff9-4b4a-b374-26052338523b",
+              "userId": "c808c467-cf5d-4669-8838-4b717284ce03",
+              "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+              "workspaceId": "37b34924-612e-454b-9d73-98fa9290dee1",
+              "projectId": "d1cde593-a0b4-4c2c-8fb9-787cfc9ece2a",
+              "role": "guest",
+              "displayOrder": 94,
+              "muted": false,
+              "archived": false
+            },
+            "counts": {
+              "membership": {
+                "admin": 20,
+                "member": 180,
+                "guest": 124,
+                "pending": 11,
+                "total": 324
+              },
+              "entities": {
+                "workspace": 153,
+                "project": 417,
+                "task": 65,
+                "label": 122,
+                "attachment": 365,
+                "page": 174,
+                "chat": 315,
+                "message": 435
+              }
+            }
+          }
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 },
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "query": {
+        "properties": {
+          "slug": {
+            "required": false,
+            "anyOf": [{ "type": "string", "required": false }, { "type": "boolean", "required": false }]
+          },
+          "include": { "type": "string", "required": false }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "updateWorkspace",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Workspace updated",
+        "name": "Workspace",
+        "ref": "#/components/schemas/Workspace",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "description": "A personal workspace that groups projects and tasks within an organization.",
+          "properties": {
+            "createdAt": { "type": "string", "required": true },
+            "id": { "type": "string", "required": true, "format": "uuid" },
+            "entityType": {
+              "type": "string",
+              "required": true,
+              "enum": ["workspace"]
+            },
+            "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+            "name": { "type": "string", "required": true, "maxLength": 255 },
+            "updatedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "slug": { "type": "string", "required": true, "maxLength": 255 },
+            "thumbnailUrl": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 2048
+            },
+            "bannerUrl": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 2048
+            },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "description": "Minimal user data for references.",
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              },
+              "extendsRef": "#/components/schemas/UserMinimalBase"
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "description": "Minimal user data for references.",
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              },
+              "extendsRef": "#/components/schemas/UserMinimalBase"
+            },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
+            "included": {
+              "type": "object",
+              "required": true,
+              "properties": {
+                "membership": {
+                  "type": "object",
+                  "required": false,
+                  "description": "Core membership fields shared across active and inactive memberships.",
+                  "properties": {
+                    "id": { "type": "string", "required": true, "format": "uuid" },
+                    "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                    "contextType": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["organization", "workspace", "project"]
+                    },
+                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "userId": { "type": "string", "required": true, "format": "uuid" },
+                    "role": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["admin", "member", "guest"]
+                    },
+                    "archived": { "type": "boolean", "required": true },
+                    "muted": { "type": "boolean", "required": true },
+                    "displayOrder": {
+                      "type": "number",
+                      "required": true,
+                      "minimum": -140737488355328,
+                      "maximum": 140737488355327
+                    },
+                    "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                    "workspaceId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    },
+                    "projectId": {
+                      "type": ["string", "null"],
+                      "required": true,
+                      "format": "uuid"
+                    }
+                  },
+                  "ref": "#/components/schemas/MembershipBase"
+                },
+                "counts": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "membership": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "admin": { "type": "number", "required": true },
+                        "member": { "type": "number", "required": true },
+                        "guest": { "type": "number", "required": true },
+                        "pending": { "type": "number", "required": true },
+                        "total": { "type": "number", "required": true }
+                      }
+                    },
+                    "entities": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "ref": "#/components/schemas/Workspace",
+          "contentType": "application/json"
+        },
+        "example": {
+          "id": "37b34924-612e-454b-9d73-98fa9290dee1",
+          "entityType": "workspace",
+          "name": "systems",
+          "slug": "systems",
+          "description": "Cena armarium strues sopor decimus aeneus.",
+          "thumbnailUrl": null,
+          "bannerUrl": null,
+          "tenantId": "a0h3yt",
+          "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+          "createdAt": "2024-03-18T14:19:46.053Z",
+          "createdBy": null,
+          "updatedAt": "2024-03-18T14:19:46.053Z",
+          "updatedBy": null,
+          "included": {
+            "membership": {
+              "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
+              "tenantId": "ecya0r",
+              "contextType": "organization",
+              "contextId": "61543dc3-4ff9-4b4a-b374-26052338523b",
+              "userId": "c808c467-cf5d-4669-8838-4b717284ce03",
+              "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+              "workspaceId": "37b34924-612e-454b-9d73-98fa9290dee1",
+              "projectId": "d1cde593-a0b4-4c2c-8fb9-787cfc9ece2a",
+              "role": "guest",
+              "displayOrder": 94,
+              "muted": false,
+              "archived": false
+            },
+            "counts": {
+              "membership": {
+                "admin": 20,
+                "member": 180,
+                "guest": 124,
+                "pending": 11,
+                "total": 324
+              },
+              "entities": {
+                "workspace": 153,
+                "project": 417,
+                "task": 65,
+                "label": 122,
+                "attachment": 365,
+                "page": 174,
+                "chat": 315,
+                "message": 435
+              }
+            }
+          }
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 },
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "body": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "required": true,
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "organizationId": { "type": "string", "required": false, "maxLength": 50 }
+        },
+        "required": false,
+        "contentType": "application/json"
+      }
+    }
+  }
+]

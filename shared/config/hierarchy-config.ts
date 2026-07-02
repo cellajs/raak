@@ -11,7 +11,7 @@ import { createEntityHierarchy, createRoleRegistry } from '../src/config-builder
 /**
  * Single source of truth for all entity roles used in memberships and permissions.
  */
-export const roles = createRoleRegistry(['admin', 'member'] as const);
+export const roles = createRoleRegistry(['admin', 'member', 'guest'] as const);
 
 /******************************************************************************
  * ENTITY HIERARCHY
@@ -20,6 +20,8 @@ export const roles = createRoleRegistry(['admin', 'member'] as const);
 /**
  * Entity relationships with single-parent inheritance.
  * Parents are defined before children. Order determines ancestor chain.
+ * 
+ * Optional `relatedContexts` on products declare non-ancestor context references (nullable id columns).
  *
  * publicRead declares how an entity becomes publicly readable:
  * - 'always': Always publicly readable, no runtime check needed (e.g., published pages)
@@ -30,7 +32,13 @@ export const roles = createRoleRegistry(['admin', 'member'] as const);
  */
 export const hierarchy = createEntityHierarchy(roles)
   .user()
-  .context('organization', { parent: null, roles: roles.all })
-  .product('attachment', { parent: 'organization' })
+  .context('organization', { parent: null, roles: ['admin', 'member'], })
+  .context('workspace', { parent: 'organization', roles: roles.all })
+  .context('project', { parent: 'organization', roles: roles.all, publicRead: 'publicSelf' })
+  .product('task', { parent: 'project', publicRead: 'publicParent' })
+  .product('label', { parent: 'project' })
+  .product('attachment', { parent: 'project', publicRead: 'publicParent' })
   .product('page', { parent: null, publicRead: 'always' })
+  .product('chat', { parent: 'organization', relatedContexts: ['project', 'workspace'] })
+  .product('message', { parent: 'organization', relatedContexts: ['project', 'workspace'] })
   .build();

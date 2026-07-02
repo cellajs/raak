@@ -21,8 +21,6 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "cella",
-      "component": "cella",
       "include-component-in-tag": false,
       "changelog-path": "CHANGELOG.md"
     }

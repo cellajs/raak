@@ -1,0 +1,1 @@
+DROP INDEX "attachments_project_seq_index";

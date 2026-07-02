@@ -1,4 +1,5 @@
 import { appConfig } from 'shared';
+import { agentHandlers } from '#/modules/agent/agent-handlers';
 import { mcpHandlers } from '#/modules/ai/mcp/mcp-handlers';
 import { attachmentHandlers } from '#/modules/attachment/attachment-handlers';
 import { authGeneralHandlers } from '#/modules/auth/general/general-handlers';
@@ -8,16 +9,23 @@ import { authPasskeysHandlers } from '#/modules/auth/passkeys/passkeys-handlers'
 import { authTotpHandlers } from '#/modules/auth/totps/totps-handlers';
 import { domainHandlers } from '#/modules/domains/domains-handlers';
 import { entityHandlers } from '#/modules/entities/entities-handlers';
+import { labelHandlers } from '#/modules/label/label-handlers';
 import { meHandlers } from '#/modules/me/me-handlers';
 import { membershipHandlers } from '#/modules/memberships/memberships-handlers';
 import { metricHandlers } from '#/modules/metrics/metrics-handlers';
 import { organizationHandlers } from '#/modules/organization/organization-handlers';
 import { pageHandlers } from '#/modules/page/page-handlers';
+import { projectHandlers, projectListHandlers } from '#/modules/project/project-handlers';
+import { publicProjectHandlers } from '#/modules/project/public-handlers';
 import { requestHandlers } from '#/modules/requests/requests-handlers';
 import { seenHandlers, unseenHandlers } from '#/modules/seen/seen-handlers';
 import { systemHandlers } from '#/modules/system/system-handlers';
+import { publicTaskHandlers } from '#/modules/task/public-handlers';
+import { taskRedirectHandlers } from '#/modules/task/redirect-handlers';
+import { taskHandlers } from '#/modules/task/task-handlers';
 import { tenantHandlers } from '#/modules/tenants/tenants-handlers';
 import { userHandlers } from '#/modules/user/user-handlers';
+import { workspaceHandlers, workspaceListHandlers } from '#/modules/workspace/workspace-handlers';
 import { yjsHandlers } from '#/modules/yjs/yjs-handlers';
 import baseApp from '#/server';
 import { emailPreviewHandlers } from '../emails/preview-route';
@@ -39,16 +47,25 @@ baseApp.route('/metrics', metricHandlers);
 baseApp.route('/', organizationHandlers);
 baseApp.route('/', pageHandlers);
 baseApp.route('/users', userHandlers);
+baseApp.route('/public/projects', publicProjectHandlers);
+baseApp.route('/public/tasks', publicTaskHandlers);
+baseApp.route('/t', taskRedirectHandlers);
 // Cross-tenant list routes
+baseApp.route('/workspaces', workspaceListHandlers);
+baseApp.route('/projects', projectListHandlers);
 // Tenant-scoped routes: /:tenantId/:organizationId/...
+// Chat/message CRUD lives on the main API (CDC/sync + entity-cache run here).
+// LLM streaming for chats is served by the AI worker (see modules/ai/worker).
+if (appConfig.services.ai.enabled !== false) baseApp.route('/:tenantId/:organizationId/chats', agentHandlers);
+if (appConfig.services.ai.enabled !== false) baseApp.route('/:tenantId/:organizationId/mcp', mcpHandlers);
 baseApp.route('/:tenantId/:organizationId/attachments', attachmentHandlers);
 baseApp.route('/:tenantId/:organizationId/memberships', membershipHandlers);
+baseApp.route('/:tenantId/:organizationId/tasks', taskHandlers);
+baseApp.route('/:tenantId/:organizationId/labels', labelHandlers);
 baseApp.route('/:tenantId/:organizationId/seen', seenHandlers);
-
-// Optional service routers are always mounted so OpenAPI/SDK generation stays stable;
-// the `x-service` route prop 404s them at runtime when the service is disabled.
+baseApp.route('/:tenantId/:organizationId/workspaces', workspaceHandlers);
+baseApp.route('/:tenantId/:organizationId/projects', projectHandlers);
 baseApp.route('/yjs', yjsHandlers);
-baseApp.route('/:tenantId/:organizationId/mcp', mcpHandlers);
 
 // Dev-only email preview (local authoring + Storybook email stories)
 if (appConfig.mode !== 'production') baseApp.route('/dev/emails', emailPreviewHandlers);

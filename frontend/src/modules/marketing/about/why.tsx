@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { lazy, Suspense } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Spinner } from '~/modules/common/spinner';
@@ -25,18 +24,7 @@ export function Why() {
                   <div className="w-full">
                     <h3 className="mb-2 font-medium text-xl 2xl:text-[1.38rem]">{t(title)}</h3>
                     <p className="leading-relaxed">
-                      <Trans
-                        t={t}
-                        i18nKey={text}
-                        components={{
-                          featuresLink: (
-                            <Link to="/features" className="underline underline-offset-4 hover:text-primary" />
-                          ),
-                          syncEngineLink: (
-                            <Link to="/sync-engine" className="underline underline-offset-4 hover:text-primary" />
-                          ),
-                        }}
-                      />
+                      <Trans t={t} i18nKey={text} />
                     </p>
                   </div>
                 </div>

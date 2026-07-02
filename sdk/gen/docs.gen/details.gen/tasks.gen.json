@@ -1,0 +1,2750 @@
+[
+  {
+    "operationId": "getPublicTask",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Task",
+        "name": "Task",
+        "ref": "#/components/schemas/Task",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
+          "properties": {
+            "createdAt": { "type": "string", "required": true },
+            "id": { "type": "string", "required": true, "format": "uuid" },
+            "entityType": {
+              "type": "string",
+              "required": true,
+              "enum": ["task"]
+            },
+            "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+            "name": { "type": "string", "required": true, "maxLength": 255 },
+            "updatedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "description": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 1000000
+            },
+            "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
+            "deletedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "deletedBy": {
+              "type": ["string", "null"],
+              "required": true,
+              "format": "uuid"
+            },
+            "seq": {
+              "type": "integer",
+              "required": true,
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "expandable": { "type": "boolean", "required": true },
+            "summary": { "type": "string", "required": true, "maxLength": 1000000 },
+            "summaryLength": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "points": {
+              "type": ["integer", "null"],
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "displayOrder": {
+              "type": "number",
+              "required": true,
+              "minimum": -140737488355328,
+              "maximum": 140737488355327
+            },
+            "status": {
+              "type": "integer",
+              "required": true,
+              "enum": [6, 5, 4, 3, 2, 1, 0]
+            },
+            "statusChangedAt": { "type": "string", "required": true },
+            "checkboxCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "checkedCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "attachmentCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "labels": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "color": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "projectId": { "type": "string", "required": true }
+                }
+              }
+            },
+            "variant": {
+              "type": "integer",
+              "required": true,
+              "enum": [1, 2, 3]
+            },
+            "assignedTo": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/UserMinimalBase",
+              "items": {
+                "type": "object",
+                "description": "Minimal user data for references.",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["user"]
+                  }
+                },
+                "ref": "#/components/schemas/UserMinimalBase"
+              }
+            },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              }
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              }
+            },
+            "stx": {
+              "type": "object",
+              "required": true,
+              "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+              "properties": {
+                "mutationId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Unique mutation ID",
+                  "maxLength": 36
+                },
+                "sourceId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Tab/instance identifier for echo prevention",
+                  "maxLength": 64
+                },
+                "fieldTimestamps": {
+                  "type": "object",
+                  "required": true,
+                  "description": "Per-field HLC timestamps for scalar fields being changed",
+                  "additionalProperties": { "type": "string", "required": false }
+                }
+              },
+              "ref": "#/components/schemas/StxBase"
+            }
+          },
+          "ref": "#/components/schemas/Task",
+          "contentType": "application/json"
+        },
+        "example": {
+          "id": "46c222d9-8561-4f60-a76a-97e8fd23e552",
+          "entityType": "task",
+          "name": "Censura cubicularis desino arbustum adstringo consequatur cornu abutor.",
+          "description": "Totam tandem vester ipsam considero. Amicitia defessus utroque crux. Volutabrum vereor vesica creator spero volo articulus molestiae vilicus circumvenio.",
+          "keywords": "commodi crapula tamdiu",
+          "expandable": false,
+          "summary": "Desipio valetudo cupressus viridis venio sollicito arto esse decens ea.",
+          "summaryLength": 244,
+          "variant": 3,
+          "points": 9,
+          "displayOrder": 139.68,
+          "status": 2,
+          "statusChangedAt": "2024-02-04T01:33:42.885Z",
+          "checkboxCount": 4,
+          "checkedCount": 4,
+          "attachmentCount": 2,
+          "labels": ["37a330fe-a07a-4e1e-a221-dd882eadd4ec", "a9337905-0b08-412d-9b19-a54314736788"],
+          "assignedTo": ["5846a17c-3d59-49e7-8096-c0d27dd6201a"],
+          "publicAt": null,
+          "tenantId": "iein65",
+          "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
+          "organizationId": "ba114933-4ba0-4957-8a4c-6237f3b08a14",
+          "createdAt": "2024-02-04T01:33:42.885Z",
+          "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
+          "updatedAt": "2024-02-04T01:33:42.885Z",
+          "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
+          "deletedAt": null,
+          "deletedBy": null,
+          "seq": 339,
+          "stx": {
+            "mutationId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
+            "sourceId": "c0d11f39-3576-4dce-b1bd-9b59d920fefc",
+            "fieldTimestamps": {}
+          }
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "getPublicTasks",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Tasks",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/Task",
+              "items": {
+                "type": "object",
+                "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
+                "properties": {
+                  "createdAt": { "type": "string", "required": true },
+                  "id": { "type": "string", "required": true, "format": "uuid" },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["task"]
+                  },
+                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                  "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "updatedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "description": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 1000000
+                  },
+                  "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "deletedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "deletedBy": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
+                  },
+                  "seq": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "expandable": { "type": "boolean", "required": true },
+                  "summary": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "summaryLength": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "points": {
+                    "type": ["integer", "null"],
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "displayOrder": {
+                    "type": "number",
+                    "required": true,
+                    "minimum": -140737488355328,
+                    "maximum": 140737488355327
+                  },
+                  "status": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [6, 5, 4, 3, 2, 1, 0]
+                  },
+                  "statusChangedAt": { "type": "string", "required": true },
+                  "checkboxCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "checkedCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "attachmentCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "labels": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "color": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "projectId": { "type": "string", "required": true }
+                      }
+                    }
+                  },
+                  "variant": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 3]
+                  },
+                  "assignedTo": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "items": {
+                      "type": "object",
+                      "description": "Minimal user data for references.",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
+                        "thumbnailUrl": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "entityType": {
+                          "type": "string",
+                          "required": true,
+                          "enum": ["user"]
+                        }
+                      },
+                      "ref": "#/components/schemas/UserMinimalBase"
+                    }
+                  },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "stx": {
+                    "type": "object",
+                    "required": true,
+                    "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+                    "properties": {
+                      "mutationId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Unique mutation ID",
+                        "maxLength": 36
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Tab/instance identifier for echo prevention",
+                        "maxLength": 64
+                      },
+                      "fieldTimestamps": {
+                        "type": "object",
+                        "required": true,
+                        "description": "Per-field HLC timestamps for scalar fields being changed",
+                        "additionalProperties": { "type": "string", "required": false }
+                      }
+                    },
+                    "ref": "#/components/schemas/StxBase"
+                  }
+                },
+                "ref": "#/components/schemas/Task"
+              }
+            },
+            "total": { "type": "number", "required": true }
+          },
+          "contentType": "application/json"
+        },
+        "example": {
+          "items": [
+            {
+              "id": "61dd2177-453d-4850-b5cb-9d8405cf3826",
+              "entityType": "task",
+              "name": "Cum clibanus capillus depromo trepide delicate commemoro itaque.",
+              "description": "Defetiscor solio taedium compello consuasor tamen anser virgo minus. Amor volaticus apud veritatis. Vestrum ars tumultus caveo aliqua delego socius vorago dolorum.",
+              "keywords": "tersus abeo bestia",
+              "expandable": false,
+              "summary": "Ubi ustilo brevis attonbitus sursum.",
+              "summaryLength": 464,
+              "variant": 0,
+              "points": null,
+              "displayOrder": 303.15,
+              "status": 0,
+              "statusChangedAt": "2024-04-22T02:37:53.965Z",
+              "checkboxCount": 0,
+              "checkedCount": 1,
+              "attachmentCount": 4,
+              "labels": [
+                "0428e30e-75a3-4cc6-8e77-a31310a2c620",
+                "3c5c1f02-022b-4375-a859-b53a2bedfc7d",
+                "83b808f2-8786-4aca-a2f7-c845b65f5a88"
+              ],
+              "assignedTo": [],
+              "publicAt": null,
+              "tenantId": "htznsq",
+              "projectId": "48d47e03-630a-4d45-bbb8-38d5f36ef1ce",
+              "organizationId": "1ae93f2d-3461-4a14-845d-1f4e25ff0294",
+              "createdAt": "2024-04-22T02:37:53.965Z",
+              "createdBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
+              "updatedAt": "2024-04-22T02:37:53.965Z",
+              "updatedBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 448,
+              "stx": {
+                "mutationId": "b6418b3b-08d9-43e4-bbc7-8afdcc382de9",
+                "sourceId": "0d23b110-64da-4350-a5aa-279a8503f5dc",
+                "fieldTimestamps": {}
+              }
+            },
+            {
+              "id": "524b9d48-480a-498d-8e57-e5a9d564e857",
+              "entityType": "task",
+              "name": "Adeo aro patruus.",
+              "description": "Demitto approbo aegrus. Comis beneficium statim vigor. Succurro degusto vigilo victoria ultra.",
+              "keywords": "celo ater alter",
+              "expandable": false,
+              "summary": "Desino tunc tener demonstro synagoga sophismata tutamen bestia vilitas asper.",
+              "summaryLength": 355,
+              "variant": 2,
+              "points": null,
+              "displayOrder": 941.22,
+              "status": 5,
+              "statusChangedAt": "2024-12-08T07:02:10.789Z",
+              "checkboxCount": 5,
+              "checkedCount": 5,
+              "attachmentCount": 5,
+              "labels": ["6f9818a2-070d-4249-8350-8f9a777a0997", "62e58527-c3db-4315-b3eb-736391bb402c"],
+              "assignedTo": ["69297598-5876-42ea-ad0e-49bb9fa138ca", "b61706f8-553f-4267-8731-655acfe94186"],
+              "publicAt": null,
+              "tenantId": "9bsfwc",
+              "projectId": "ca01004b-f6f7-4300-ab3c-569921660e16",
+              "organizationId": "f3e4aa72-5ebb-42ef-b208-aec0e083050a",
+              "createdAt": "2024-12-08T07:02:10.789Z",
+              "createdBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
+              "updatedAt": "2024-12-08T07:02:10.789Z",
+              "updatedBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 35,
+              "stx": {
+                "mutationId": "033030b1-d930-4a47-a64f-5f3286a0b1bc",
+                "sourceId": "2c407398-d1c3-4f2c-b8e4-30199e9103d0",
+                "fieldTimestamps": {}
+              }
+            }
+          ],
+          "total": 25
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "query": {
+        "properties": {
+          "q": { "type": "string", "required": false, "maxLength": 255 },
+          "sort": {
+            "type": "string",
+            "required": false,
+            "enum": ["projectId", "status", "createdBy", "variant", "updatedAt", "createdAt"]
+          },
+          "order": {
+            "type": "string",
+            "required": false,
+            "enum": ["asc", "desc"]
+          },
+          "offset": { "type": "string", "required": false },
+          "limit": { "type": "string", "required": false },
+          "seqCursor": { "type": "string", "required": false },
+          "matchMode": {
+            "type": "string",
+            "required": false,
+            "enum": ["all", "any"]
+          },
+          "acceptedCutOff": { "type": "number", "required": false },
+          "projectId": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "resolveTaskLink",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Task link resolution data",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "taskId": { "type": "string", "required": true },
+            "projectId": { "type": "string", "required": true },
+            "projectSlug": { "type": "string", "required": true },
+            "organizationId": { "type": "string", "required": true },
+            "organizationSlug": { "type": "string", "required": true },
+            "tenantId": { "type": "string", "required": true },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            }
+          },
+          "contentType": "application/json"
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "getTaskCover",
+    "responses": [
+      { "status": 200, "description": "Success" },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "redirectToTask",
+    "responses": [
+      { "status": 200, "description": "Success" },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "getTasks",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Tasks",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/Task",
+              "items": {
+                "type": "object",
+                "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
+                "properties": {
+                  "createdAt": { "type": "string", "required": true },
+                  "id": { "type": "string", "required": true, "format": "uuid" },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["task"]
+                  },
+                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                  "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "updatedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "description": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 1000000
+                  },
+                  "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "deletedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "deletedBy": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
+                  },
+                  "seq": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "expandable": { "type": "boolean", "required": true },
+                  "summary": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "summaryLength": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "points": {
+                    "type": ["integer", "null"],
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "displayOrder": {
+                    "type": "number",
+                    "required": true,
+                    "minimum": -140737488355328,
+                    "maximum": 140737488355327
+                  },
+                  "status": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [6, 5, 4, 3, 2, 1, 0]
+                  },
+                  "statusChangedAt": { "type": "string", "required": true },
+                  "checkboxCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "checkedCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "attachmentCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "labels": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "color": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "projectId": { "type": "string", "required": true }
+                      }
+                    }
+                  },
+                  "variant": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 3]
+                  },
+                  "assignedTo": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "items": {
+                      "type": "object",
+                      "description": "Minimal user data for references.",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
+                        "thumbnailUrl": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "entityType": {
+                          "type": "string",
+                          "required": true,
+                          "enum": ["user"]
+                        }
+                      },
+                      "ref": "#/components/schemas/UserMinimalBase"
+                    }
+                  },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "stx": {
+                    "type": "object",
+                    "required": true,
+                    "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+                    "properties": {
+                      "mutationId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Unique mutation ID",
+                        "maxLength": 36
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Tab/instance identifier for echo prevention",
+                        "maxLength": 64
+                      },
+                      "fieldTimestamps": {
+                        "type": "object",
+                        "required": true,
+                        "description": "Per-field HLC timestamps for scalar fields being changed",
+                        "additionalProperties": { "type": "string", "required": false }
+                      }
+                    },
+                    "ref": "#/components/schemas/StxBase"
+                  }
+                },
+                "ref": "#/components/schemas/Task"
+              }
+            },
+            "total": { "type": "number", "required": true }
+          },
+          "contentType": "application/json"
+        },
+        "example": {
+          "items": [
+            {
+              "id": "61dd2177-453d-4850-b5cb-9d8405cf3826",
+              "entityType": "task",
+              "name": "Cum clibanus capillus depromo trepide delicate commemoro itaque.",
+              "description": "Defetiscor solio taedium compello consuasor tamen anser virgo minus. Amor volaticus apud veritatis. Vestrum ars tumultus caveo aliqua delego socius vorago dolorum.",
+              "keywords": "tersus abeo bestia",
+              "expandable": false,
+              "summary": "Ubi ustilo brevis attonbitus sursum.",
+              "summaryLength": 464,
+              "variant": 0,
+              "points": null,
+              "displayOrder": 303.15,
+              "status": 0,
+              "statusChangedAt": "2024-04-22T02:37:53.965Z",
+              "checkboxCount": 0,
+              "checkedCount": 1,
+              "attachmentCount": 4,
+              "labels": [
+                "0428e30e-75a3-4cc6-8e77-a31310a2c620",
+                "3c5c1f02-022b-4375-a859-b53a2bedfc7d",
+                "83b808f2-8786-4aca-a2f7-c845b65f5a88"
+              ],
+              "assignedTo": [],
+              "publicAt": null,
+              "tenantId": "htznsq",
+              "projectId": "48d47e03-630a-4d45-bbb8-38d5f36ef1ce",
+              "organizationId": "1ae93f2d-3461-4a14-845d-1f4e25ff0294",
+              "createdAt": "2024-04-22T02:37:53.965Z",
+              "createdBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
+              "updatedAt": "2024-04-22T02:37:53.965Z",
+              "updatedBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 448,
+              "stx": {
+                "mutationId": "b6418b3b-08d9-43e4-bbc7-8afdcc382de9",
+                "sourceId": "0d23b110-64da-4350-a5aa-279a8503f5dc",
+                "fieldTimestamps": {}
+              }
+            },
+            {
+              "id": "524b9d48-480a-498d-8e57-e5a9d564e857",
+              "entityType": "task",
+              "name": "Adeo aro patruus.",
+              "description": "Demitto approbo aegrus. Comis beneficium statim vigor. Succurro degusto vigilo victoria ultra.",
+              "keywords": "celo ater alter",
+              "expandable": false,
+              "summary": "Desino tunc tener demonstro synagoga sophismata tutamen bestia vilitas asper.",
+              "summaryLength": 355,
+              "variant": 2,
+              "points": null,
+              "displayOrder": 941.22,
+              "status": 5,
+              "statusChangedAt": "2024-12-08T07:02:10.789Z",
+              "checkboxCount": 5,
+              "checkedCount": 5,
+              "attachmentCount": 5,
+              "labels": ["6f9818a2-070d-4249-8350-8f9a777a0997", "62e58527-c3db-4315-b3eb-736391bb402c"],
+              "assignedTo": ["69297598-5876-42ea-ad0e-49bb9fa138ca", "b61706f8-553f-4267-8731-655acfe94186"],
+              "publicAt": null,
+              "tenantId": "9bsfwc",
+              "projectId": "ca01004b-f6f7-4300-ab3c-569921660e16",
+              "organizationId": "f3e4aa72-5ebb-42ef-b208-aec0e083050a",
+              "createdAt": "2024-12-08T07:02:10.789Z",
+              "createdBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
+              "updatedAt": "2024-12-08T07:02:10.789Z",
+              "updatedBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 35,
+              "stx": {
+                "mutationId": "033030b1-d930-4a47-a64f-5f3286a0b1bc",
+                "sourceId": "2c407398-d1c3-4f2c-b8e4-30199e9103d0",
+                "fieldTimestamps": {}
+              }
+            }
+          ],
+          "total": 25
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "query": {
+        "properties": {
+          "q": { "type": "string", "required": false, "maxLength": 255 },
+          "sort": {
+            "type": "string",
+            "required": false,
+            "enum": ["projectId", "status", "createdBy", "variant", "updatedAt", "createdAt"]
+          },
+          "order": {
+            "type": "string",
+            "required": false,
+            "enum": ["asc", "desc"]
+          },
+          "offset": { "type": "string", "required": false },
+          "limit": { "type": "string", "required": false },
+          "seqCursor": { "type": "string", "required": false },
+          "matchMode": {
+            "type": "string",
+            "required": false,
+            "enum": ["all", "any"]
+          },
+          "acceptedCutOff": { "type": "number", "required": false },
+          "projectId": { "type": "string", "required": false, "maxLength": 50 },
+          "workspaceId": { "type": "string", "required": false, "maxLength": 50 }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "createTasks",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Tasks already created (idempotent)",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/Task",
+              "items": {
+                "type": "object",
+                "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
+                "properties": {
+                  "createdAt": { "type": "string", "required": true },
+                  "id": { "type": "string", "required": true, "format": "uuid" },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["task"]
+                  },
+                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                  "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "updatedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "description": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 1000000
+                  },
+                  "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "deletedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "deletedBy": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
+                  },
+                  "seq": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "expandable": { "type": "boolean", "required": true },
+                  "summary": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "summaryLength": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "points": {
+                    "type": ["integer", "null"],
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "displayOrder": {
+                    "type": "number",
+                    "required": true,
+                    "minimum": -140737488355328,
+                    "maximum": 140737488355327
+                  },
+                  "status": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [6, 5, 4, 3, 2, 1, 0]
+                  },
+                  "statusChangedAt": { "type": "string", "required": true },
+                  "checkboxCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "checkedCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "attachmentCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "labels": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "color": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "projectId": { "type": "string", "required": true }
+                      }
+                    }
+                  },
+                  "variant": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 3]
+                  },
+                  "assignedTo": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "items": {
+                      "type": "object",
+                      "description": "Minimal user data for references.",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
+                        "thumbnailUrl": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "entityType": {
+                          "type": "string",
+                          "required": true,
+                          "enum": ["user"]
+                        }
+                      },
+                      "ref": "#/components/schemas/UserMinimalBase"
+                    }
+                  },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "stx": {
+                    "type": "object",
+                    "required": true,
+                    "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+                    "properties": {
+                      "mutationId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Unique mutation ID",
+                        "maxLength": 36
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Tab/instance identifier for echo prevention",
+                        "maxLength": 64
+                      },
+                      "fieldTimestamps": {
+                        "type": "object",
+                        "required": true,
+                        "description": "Per-field HLC timestamps for scalar fields being changed",
+                        "additionalProperties": { "type": "string", "required": false }
+                      }
+                    },
+                    "ref": "#/components/schemas/StxBase"
+                  }
+                },
+                "ref": "#/components/schemas/Task"
+              }
+            },
+            "rejectedIds": {
+              "type": "array",
+              "required": true,
+              "description": "Identifiers of items that could not be processed",
+              "itemType": "string"
+            },
+            "rejectionReasons": {
+              "type": "object",
+              "required": false,
+              "description": "Map of reason code to rejected item IDs",
+              "additionalProperties": { "type": "array", "required": false, "itemType": "string" }
+            }
+          },
+          "contentType": "application/json"
+        },
+        "example": {
+          "data": [
+            {
+              "id": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
+              "entityType": "task",
+              "name": "Sponte dolor somnus vobis atavus.",
+              "description": "Tersus suadeo colo benigne id abduco supplanto asporto nam. Xiphias auxilium teneo claudeo unde vulgo. Atavus vorax vergo deputo deprimo statim eos vulnero subito eligendi.",
+              "keywords": "sophismata exercitationem somnus",
+              "expandable": true,
+              "summary": "Textilis cervus alo tactus confido colligo audio substantia.",
+              "summaryLength": 149,
+              "variant": 2,
+              "points": 2,
+              "displayOrder": 694.04,
+              "status": 5,
+              "statusChangedAt": "2024-04-18T21:12:59.543Z",
+              "checkboxCount": 10,
+              "checkedCount": 3,
+              "attachmentCount": 0,
+              "labels": ["61722978-1062-41a4-84be-44424ddc25f8", "c138ca88-7751-4adb-adbf-08b9af3e691e"],
+              "assignedTo": [],
+              "publicAt": "2024-11-02T17:45:55.874Z",
+              "tenantId": "m7v2n0",
+              "projectId": "59eb59fa-da05-4421-8137-456cc6ee256c",
+              "organizationId": "c2d5a119-57ca-4425-9bc1-ddcecd065676",
+              "createdAt": "2024-04-18T21:12:59.543Z",
+              "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+              "updatedAt": "2024-04-18T21:12:59.543Z",
+              "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 378,
+              "stx": {
+                "mutationId": "7644024d-1a2d-4f88-ac75-bedf7a5e9543",
+                "sourceId": "04d8b648-77e7-4af9-83a5-51398c6e0a54",
+                "fieldTimestamps": {}
+              }
+            },
+            {
+              "id": "6ebef5b6-6832-410f-bb7a-21be26ba4ee7",
+              "entityType": "task",
+              "name": "Denique tum candidus.",
+              "description": "Perspiciatis defendo adinventitias carpo verecundia cometes. Sortitus colligo ceno terra cado temptatio carmen arx sequi cicuta. Attollo autem adipisci vinitor comminor odit.",
+              "keywords": "audacia virga aptus",
+              "expandable": true,
+              "summary": "Vulnus subseco vomica auxilium ascit cuppedia abbas amo patior credo tenus aestus degero cicuta.",
+              "summaryLength": 71,
+              "variant": 0,
+              "points": 8,
+              "displayOrder": 274.95,
+              "status": 0,
+              "statusChangedAt": "2024-02-24T16:36:46.247Z",
+              "checkboxCount": 10,
+              "checkedCount": 5,
+              "attachmentCount": 4,
+              "labels": [],
+              "assignedTo": ["08db54ef-dd45-4f10-ab01-ab3092c5fd1f", "31ba52c2-db09-4b47-8a24-f941b71cc76d"],
+              "publicAt": "2024-01-02T20:25:49.165Z",
+              "tenantId": "ozr0yj",
+              "projectId": "565ad527-c313-4a69-8d63-7708656d9331",
+              "organizationId": "e103be7d-699b-40a6-9b4d-210ffbada306",
+              "createdAt": "2024-02-24T16:36:46.247Z",
+              "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
+              "updatedAt": "2024-02-24T16:36:46.247Z",
+              "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 459,
+              "stx": {
+                "mutationId": "a097b106-7735-4b3b-9434-d64d94bd33c3",
+                "sourceId": "93f8f02f-435e-4525-8b66-09c341083518",
+                "fieldTimestamps": {}
+              }
+            }
+          ],
+          "rejectedIds": []
+        }
+      },
+      {
+        "status": 201,
+        "description": "Tasks created",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/Task",
+              "items": {
+                "type": "object",
+                "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
+                "properties": {
+                  "createdAt": { "type": "string", "required": true },
+                  "id": { "type": "string", "required": true, "format": "uuid" },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["task"]
+                  },
+                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                  "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "updatedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "description": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 1000000
+                  },
+                  "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "deletedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "deletedBy": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
+                  },
+                  "seq": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "expandable": { "type": "boolean", "required": true },
+                  "summary": { "type": "string", "required": true, "maxLength": 1000000 },
+                  "summaryLength": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "points": {
+                    "type": ["integer", "null"],
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "displayOrder": {
+                    "type": "number",
+                    "required": true,
+                    "minimum": -140737488355328,
+                    "maximum": 140737488355327
+                  },
+                  "status": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [6, 5, 4, 3, 2, 1, 0]
+                  },
+                  "statusChangedAt": { "type": "string", "required": true },
+                  "checkboxCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "checkedCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "attachmentCount": {
+                    "type": "integer",
+                    "required": true,
+                    "minimum": -2147483648,
+                    "maximum": 2147483647
+                  },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "labels": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "color": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "projectId": { "type": "string", "required": true }
+                      }
+                    }
+                  },
+                  "variant": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 3]
+                  },
+                  "assignedTo": {
+                    "type": "array",
+                    "required": true,
+                    "itemType": "object",
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "items": {
+                      "type": "object",
+                      "description": "Minimal user data for references.",
+                      "properties": {
+                        "id": { "type": "string", "required": true },
+                        "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
+                        "thumbnailUrl": {
+                          "type": ["string", "null"],
+                          "required": true
+                        },
+                        "entityType": {
+                          "type": "string",
+                          "required": true,
+                          "enum": ["user"]
+                        }
+                      },
+                      "ref": "#/components/schemas/UserMinimalBase"
+                    }
+                  },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    }
+                  },
+                  "stx": {
+                    "type": "object",
+                    "required": true,
+                    "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+                    "properties": {
+                      "mutationId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Unique mutation ID",
+                        "maxLength": 36
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Tab/instance identifier for echo prevention",
+                        "maxLength": 64
+                      },
+                      "fieldTimestamps": {
+                        "type": "object",
+                        "required": true,
+                        "description": "Per-field HLC timestamps for scalar fields being changed",
+                        "additionalProperties": { "type": "string", "required": false }
+                      }
+                    },
+                    "ref": "#/components/schemas/StxBase"
+                  }
+                },
+                "ref": "#/components/schemas/Task"
+              }
+            },
+            "rejectedIds": {
+              "type": "array",
+              "required": true,
+              "description": "Identifiers of items that could not be processed",
+              "itemType": "string"
+            },
+            "rejectionReasons": {
+              "type": "object",
+              "required": false,
+              "description": "Map of reason code to rejected item IDs",
+              "additionalProperties": { "type": "array", "required": false, "itemType": "string" }
+            }
+          },
+          "contentType": "application/json"
+        },
+        "example": {
+          "data": [
+            {
+              "id": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
+              "entityType": "task",
+              "name": "Sponte dolor somnus vobis atavus.",
+              "description": "Tersus suadeo colo benigne id abduco supplanto asporto nam. Xiphias auxilium teneo claudeo unde vulgo. Atavus vorax vergo deputo deprimo statim eos vulnero subito eligendi.",
+              "keywords": "sophismata exercitationem somnus",
+              "expandable": true,
+              "summary": "Textilis cervus alo tactus confido colligo audio substantia.",
+              "summaryLength": 149,
+              "variant": 2,
+              "points": 2,
+              "displayOrder": 694.04,
+              "status": 5,
+              "statusChangedAt": "2024-04-18T21:12:59.543Z",
+              "checkboxCount": 10,
+              "checkedCount": 3,
+              "attachmentCount": 0,
+              "labels": ["61722978-1062-41a4-84be-44424ddc25f8", "c138ca88-7751-4adb-adbf-08b9af3e691e"],
+              "assignedTo": [],
+              "publicAt": "2024-11-02T17:45:55.874Z",
+              "tenantId": "m7v2n0",
+              "projectId": "59eb59fa-da05-4421-8137-456cc6ee256c",
+              "organizationId": "c2d5a119-57ca-4425-9bc1-ddcecd065676",
+              "createdAt": "2024-04-18T21:12:59.543Z",
+              "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+              "updatedAt": "2024-04-18T21:12:59.543Z",
+              "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 378,
+              "stx": {
+                "mutationId": "7644024d-1a2d-4f88-ac75-bedf7a5e9543",
+                "sourceId": "04d8b648-77e7-4af9-83a5-51398c6e0a54",
+                "fieldTimestamps": {}
+              }
+            },
+            {
+              "id": "6ebef5b6-6832-410f-bb7a-21be26ba4ee7",
+              "entityType": "task",
+              "name": "Denique tum candidus.",
+              "description": "Perspiciatis defendo adinventitias carpo verecundia cometes. Sortitus colligo ceno terra cado temptatio carmen arx sequi cicuta. Attollo autem adipisci vinitor comminor odit.",
+              "keywords": "audacia virga aptus",
+              "expandable": true,
+              "summary": "Vulnus subseco vomica auxilium ascit cuppedia abbas amo patior credo tenus aestus degero cicuta.",
+              "summaryLength": 71,
+              "variant": 0,
+              "points": 8,
+              "displayOrder": 274.95,
+              "status": 0,
+              "statusChangedAt": "2024-02-24T16:36:46.247Z",
+              "checkboxCount": 10,
+              "checkedCount": 5,
+              "attachmentCount": 4,
+              "labels": [],
+              "assignedTo": ["08db54ef-dd45-4f10-ab01-ab3092c5fd1f", "31ba52c2-db09-4b47-8a24-f941b71cc76d"],
+              "publicAt": "2024-01-02T20:25:49.165Z",
+              "tenantId": "ozr0yj",
+              "projectId": "565ad527-c313-4a69-8d63-7708656d9331",
+              "organizationId": "e103be7d-699b-40a6-9b4d-210ffbada306",
+              "createdAt": "2024-02-24T16:36:46.247Z",
+              "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
+              "updatedAt": "2024-02-24T16:36:46.247Z",
+              "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
+              "deletedAt": null,
+              "deletedBy": null,
+              "seq": 459,
+              "stx": {
+                "mutationId": "a097b106-7735-4b3b-9434-d64d94bd33c3",
+                "sourceId": "93f8f02f-435e-4525-8b66-09c341083518",
+                "fieldTimestamps": {}
+              }
+            }
+          ],
+          "rejectedIds": []
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "body": {
+        "type": "array",
+        "itemType": "object",
+        "items": {
+          "type": "object",
+          "required": true,
+          "properties": {
+            "name": { "type": "string", "required": false, "maxLength": 255 },
+            "description": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 1000000
+            },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "points": {
+              "type": ["integer", "null"],
+              "required": false,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "id": { "type": "string", "required": true, "format": "uuid" },
+            "status": {
+              "type": "integer",
+              "required": true,
+              "enum": [6, 5, 4, 3, 2, 1, 0]
+            },
+            "variant": {
+              "type": "integer",
+              "required": true,
+              "enum": [1, 2, 3]
+            },
+            "displayOrder": { "type": "number", "required": false },
+            "labels": { "type": "array", "required": false, "itemType": "string" },
+            "assignedTo": { "type": "array", "required": false, "itemType": "string" },
+            "stx": {
+              "type": "object",
+              "required": true,
+              "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+              "properties": {
+                "mutationId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Unique mutation ID",
+                  "maxLength": 36
+                },
+                "sourceId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Tab/instance identifier for echo prevention",
+                  "maxLength": 64
+                },
+                "fieldTimestamps": {
+                  "type": "object",
+                  "required": true,
+                  "description": "Per-field HLC timestamps for scalar fields being changed",
+                  "additionalProperties": { "type": "string", "required": false }
+                }
+              },
+              "ref": "#/components/schemas/StxBase"
+            }
+          }
+        },
+        "minItems": 1,
+        "maxItems": 50,
+        "required": true,
+        "contentType": "application/json"
+      }
+    }
+  },
+  {
+    "operationId": "deleteTasks",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Success",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "data": { "type": "array", "required": true },
+            "rejectedIds": {
+              "type": "array",
+              "required": true,
+              "description": "Identifiers of items that could not be processed",
+              "itemType": "string"
+            },
+            "rejectionReasons": {
+              "type": "object",
+              "required": false,
+              "description": "Map of reason code to rejected item IDs",
+              "additionalProperties": { "type": "array", "required": false, "itemType": "string" }
+            }
+          },
+          "contentType": "application/json"
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "body": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "required": true,
+            "minItems": 1,
+            "maxItems": 100,
+            "itemType": "string"
+          },
+          "stx": {
+            "type": "object",
+            "required": false,
+            "properties": {
+              "mutationId": { "type": "string", "required": true },
+              "sourceId": { "type": "string", "required": true }
+            }
+          }
+        },
+        "required": false,
+        "contentType": "application/json"
+      }
+    }
+  },
+  {
+    "operationId": "getTask",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Tasks",
+        "name": "Task",
+        "ref": "#/components/schemas/Task",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
+          "properties": {
+            "createdAt": { "type": "string", "required": true },
+            "id": { "type": "string", "required": true, "format": "uuid" },
+            "entityType": {
+              "type": "string",
+              "required": true,
+              "enum": ["task"]
+            },
+            "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+            "name": { "type": "string", "required": true, "maxLength": 255 },
+            "updatedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "description": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 1000000
+            },
+            "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
+            "deletedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "deletedBy": {
+              "type": ["string", "null"],
+              "required": true,
+              "format": "uuid"
+            },
+            "seq": {
+              "type": "integer",
+              "required": true,
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "expandable": { "type": "boolean", "required": true },
+            "summary": { "type": "string", "required": true, "maxLength": 1000000 },
+            "summaryLength": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "points": {
+              "type": ["integer", "null"],
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "displayOrder": {
+              "type": "number",
+              "required": true,
+              "minimum": -140737488355328,
+              "maximum": 140737488355327
+            },
+            "status": {
+              "type": "integer",
+              "required": true,
+              "enum": [6, 5, 4, 3, 2, 1, 0]
+            },
+            "statusChangedAt": { "type": "string", "required": true },
+            "checkboxCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "checkedCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "attachmentCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "labels": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "color": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "projectId": { "type": "string", "required": true }
+                }
+              }
+            },
+            "variant": {
+              "type": "integer",
+              "required": true,
+              "enum": [1, 2, 3]
+            },
+            "assignedTo": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/UserMinimalBase",
+              "items": {
+                "type": "object",
+                "description": "Minimal user data for references.",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["user"]
+                  }
+                },
+                "ref": "#/components/schemas/UserMinimalBase"
+              }
+            },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              }
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              }
+            },
+            "stx": {
+              "type": "object",
+              "required": true,
+              "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+              "properties": {
+                "mutationId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Unique mutation ID",
+                  "maxLength": 36
+                },
+                "sourceId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Tab/instance identifier for echo prevention",
+                  "maxLength": 64
+                },
+                "fieldTimestamps": {
+                  "type": "object",
+                  "required": true,
+                  "description": "Per-field HLC timestamps for scalar fields being changed",
+                  "additionalProperties": { "type": "string", "required": false }
+                }
+              },
+              "ref": "#/components/schemas/StxBase"
+            }
+          },
+          "ref": "#/components/schemas/Task",
+          "contentType": "application/json"
+        },
+        "example": {
+          "id": "46c222d9-8561-4f60-a76a-97e8fd23e552",
+          "entityType": "task",
+          "name": "Censura cubicularis desino arbustum adstringo consequatur cornu abutor.",
+          "description": "Totam tandem vester ipsam considero. Amicitia defessus utroque crux. Volutabrum vereor vesica creator spero volo articulus molestiae vilicus circumvenio.",
+          "keywords": "commodi crapula tamdiu",
+          "expandable": false,
+          "summary": "Desipio valetudo cupressus viridis venio sollicito arto esse decens ea.",
+          "summaryLength": 244,
+          "variant": 3,
+          "points": 9,
+          "displayOrder": 139.68,
+          "status": 2,
+          "statusChangedAt": "2024-02-04T01:33:42.885Z",
+          "checkboxCount": 4,
+          "checkedCount": 4,
+          "attachmentCount": 2,
+          "labels": ["37a330fe-a07a-4e1e-a221-dd882eadd4ec", "a9337905-0b08-412d-9b19-a54314736788"],
+          "assignedTo": ["5846a17c-3d59-49e7-8096-c0d27dd6201a"],
+          "publicAt": null,
+          "tenantId": "iein65",
+          "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
+          "organizationId": "ba114933-4ba0-4957-8a4c-6237f3b08a14",
+          "createdAt": "2024-02-04T01:33:42.885Z",
+          "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
+          "updatedAt": "2024-02-04T01:33:42.885Z",
+          "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
+          "deletedAt": null,
+          "deletedBy": null,
+          "seq": 339,
+          "stx": {
+            "mutationId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
+            "sourceId": "c0d11f39-3576-4dce-b1bd-9b59d920fefc",
+            "fieldTimestamps": {}
+          }
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 },
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      }
+    }
+  },
+  {
+    "operationId": "updateTask",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Task updated",
+        "name": "Task",
+        "ref": "#/components/schemas/Task",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
+          "properties": {
+            "createdAt": { "type": "string", "required": true },
+            "id": { "type": "string", "required": true, "format": "uuid" },
+            "entityType": {
+              "type": "string",
+              "required": true,
+              "enum": ["task"]
+            },
+            "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+            "name": { "type": "string", "required": true, "maxLength": 255 },
+            "updatedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "description": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 1000000
+            },
+            "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
+            "deletedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "deletedBy": {
+              "type": ["string", "null"],
+              "required": true,
+              "format": "uuid"
+            },
+            "seq": {
+              "type": "integer",
+              "required": true,
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "expandable": { "type": "boolean", "required": true },
+            "summary": { "type": "string", "required": true, "maxLength": 1000000 },
+            "summaryLength": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "points": {
+              "type": ["integer", "null"],
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "displayOrder": {
+              "type": "number",
+              "required": true,
+              "minimum": -140737488355328,
+              "maximum": 140737488355327
+            },
+            "status": {
+              "type": "integer",
+              "required": true,
+              "enum": [6, 5, 4, 3, 2, 1, 0]
+            },
+            "statusChangedAt": { "type": "string", "required": true },
+            "checkboxCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "checkedCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "attachmentCount": {
+              "type": "integer",
+              "required": true,
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "labels": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "color": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "projectId": { "type": "string", "required": true }
+                }
+              }
+            },
+            "variant": {
+              "type": "integer",
+              "required": true,
+              "enum": [1, 2, 3]
+            },
+            "assignedTo": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/UserMinimalBase",
+              "items": {
+                "type": "object",
+                "description": "Minimal user data for references.",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["user"]
+                  }
+                },
+                "ref": "#/components/schemas/UserMinimalBase"
+              }
+            },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              }
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "thumbnailUrl": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "entityType": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["user"]
+                }
+              }
+            },
+            "stx": {
+              "type": "object",
+              "required": true,
+              "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+              "properties": {
+                "mutationId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Unique mutation ID",
+                  "maxLength": 36
+                },
+                "sourceId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Tab/instance identifier for echo prevention",
+                  "maxLength": 64
+                },
+                "fieldTimestamps": {
+                  "type": "object",
+                  "required": true,
+                  "description": "Per-field HLC timestamps for scalar fields being changed",
+                  "additionalProperties": { "type": "string", "required": false }
+                }
+              },
+              "ref": "#/components/schemas/StxBase"
+            }
+          },
+          "ref": "#/components/schemas/Task",
+          "contentType": "application/json"
+        },
+        "example": {
+          "id": "46c222d9-8561-4f60-a76a-97e8fd23e552",
+          "entityType": "task",
+          "name": "Censura cubicularis desino arbustum adstringo consequatur cornu abutor.",
+          "description": "Totam tandem vester ipsam considero. Amicitia defessus utroque crux. Volutabrum vereor vesica creator spero volo articulus molestiae vilicus circumvenio.",
+          "keywords": "commodi crapula tamdiu",
+          "expandable": false,
+          "summary": "Desipio valetudo cupressus viridis venio sollicito arto esse decens ea.",
+          "summaryLength": 244,
+          "variant": 3,
+          "points": 9,
+          "displayOrder": 139.68,
+          "status": 2,
+          "statusChangedAt": "2024-02-04T01:33:42.885Z",
+          "checkboxCount": 4,
+          "checkedCount": 4,
+          "attachmentCount": 2,
+          "labels": ["37a330fe-a07a-4e1e-a221-dd882eadd4ec", "a9337905-0b08-412d-9b19-a54314736788"],
+          "assignedTo": ["5846a17c-3d59-49e7-8096-c0d27dd6201a"],
+          "publicAt": null,
+          "tenantId": "iein65",
+          "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
+          "organizationId": "ba114933-4ba0-4957-8a4c-6237f3b08a14",
+          "createdAt": "2024-02-04T01:33:42.885Z",
+          "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
+          "updatedAt": "2024-02-04T01:33:42.885Z",
+          "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
+          "deletedAt": null,
+          "deletedBy": null,
+          "seq": 339,
+          "stx": {
+            "mutationId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
+            "sourceId": "c0d11f39-3576-4dce-b1bd-9b59d920fefc",
+            "fieldTimestamps": {}
+          }
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "path": {
+        "properties": {
+          "tenantId": { "type": "string", "required": true, "maxLength": 50 },
+          "organizationId": { "type": "string", "required": true, "maxLength": 50 },
+          "id": { "type": "string", "required": true, "maxLength": 50 }
+        }
+      },
+      "query": {
+        "properties": {
+          "fullResponse": {
+            "required": false,
+            "anyOf": [{ "type": "string", "required": false }, { "type": "boolean", "required": false }]
+          }
+        }
+      },
+      "body": {
+        "type": "object",
+        "properties": {
+          "ops": {
+            "type": "object",
+            "required": true,
+            "properties": {
+              "name": { "type": "string", "required": false, "maxLength": 255 },
+              "description": {
+                "type": ["string", "null"],
+                "required": false,
+                "maxLength": 1000000
+              },
+              "status": { "type": "integer", "required": false },
+              "variant": { "type": "integer", "required": false },
+              "points": {
+                "type": ["integer", "null"],
+                "required": false
+              },
+              "displayOrder": { "type": "number", "required": false },
+              "labels": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "add": { "type": "array", "required": false, "itemType": "string" },
+                  "remove": { "type": "array", "required": false, "itemType": "string" }
+                }
+              },
+              "assignedTo": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "add": { "type": "array", "required": false, "itemType": "string" },
+                  "remove": { "type": "array", "required": false, "itemType": "string" }
+                }
+              },
+              "projectId": { "type": "string", "required": false, "maxLength": 50 }
+            }
+          },
+          "stx": {
+            "type": "object",
+            "required": true,
+            "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+            "properties": {
+              "mutationId": {
+                "type": "string",
+                "required": true,
+                "description": "Unique mutation ID",
+                "maxLength": 36
+              },
+              "sourceId": {
+                "type": "string",
+                "required": true,
+                "description": "Tab/instance identifier for echo prevention",
+                "maxLength": 64
+              },
+              "fieldTimestamps": {
+                "type": "object",
+                "required": true,
+                "description": "Per-field HLC timestamps for scalar fields being changed",
+                "additionalProperties": { "type": "string", "required": false }
+              }
+            },
+            "ref": "#/components/schemas/StxBase"
+          }
+        },
+        "required": false,
+        "contentType": "application/json"
+      }
+    }
+  }
+]

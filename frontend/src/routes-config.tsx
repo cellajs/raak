@@ -14,21 +14,20 @@ export type EntityRouteEntry = {
  *
  * Each entity declares its route path, its param name, and optional subitem behavior.
  * The param name is used both when the entity is the target AND when it appears as an
- * ancestor in another entity's route.
+ * ancestor in another entity's route (e.g. organization's 'organizationSlug' appears in workspace routes).
  */
 export const entityRouteConfig = {
   organization: {
     path: '/$tenantId/$organizationSlug/organization',
     paramName: 'organizationSlug',
   },
+  workspace: {
+    path: '/$tenantId/$organizationSlug/workspace/$slug',
+    paramName: 'slug',
+  },
+  project: {
+    path: '/$tenantId/$organizationSlug/project/$slug',
+    paramName: 'slug',
+    subitemOf: { entityType: 'workspace', searchParam: 'projectSlug' },
+  },
 } as const satisfies Record<ContextEntityType, EntityRouteEntry>;
-
-/** Legacy alias retained for backwards compatibility — prefer `entityRouteConfig`. */
-export const baseEntityRoutes = {
-  organization: entityRouteConfig.organization.path,
-} as const;
-
-/** Map entity types to their route param names. */
-export const routeParamMap: Record<string, string> = {
-  organization: entityRouteConfig.organization.paramName,
-};

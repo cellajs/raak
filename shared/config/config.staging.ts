@@ -5,8 +5,9 @@ export default {
   mode: 'staging',
   name: 'Raak STAGING',
   slug: 'raak-staging',
-  domain: 'raak.example.com',
-  frontendUrl: 'https://staging.raak.example.com',
-  backendUrl: 'https://api-staging.raak.example.com',
-  backendAuthUrl: 'https://api-staging.raak.example.com/auth',
+
+  domain: 'raak.dev',
+  frontendUrl: 'https://staging.raak.dev',
+  backendUrl: 'https://api-staging.raak.dev',
+  backendAuthUrl: 'https://api-staging.raak.dev/auth',
 } satisfies DeepPartial<typeof _default>;

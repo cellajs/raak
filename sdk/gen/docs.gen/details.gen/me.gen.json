@@ -819,7 +819,7 @@
                       "entityType": {
                         "type": "string",
                         "required": true,
-                        "enum": ["organization"]
+                        "enum": ["organization", "workspace", "project"]
                       },
                       "slug": { "type": "string", "required": true },
                       "thumbnailUrl": {
@@ -844,7 +844,7 @@
                       "contextType": {
                         "type": "string",
                         "required": true,
-                        "enum": ["organization"]
+                        "enum": ["organization", "workspace", "project"]
                       },
                       "contextId": { "type": "string", "required": true, "format": "uuid" },
                       "email": { "type": "string", "required": true, "maxLength": 255 },
@@ -861,7 +861,7 @@
                       "role": {
                         "type": "string",
                         "required": true,
-                        "enum": ["admin", "member"]
+                        "enum": ["admin", "member", "guest"]
                       },
                       "rejectedAt": {
                         "type": ["string", "null"],
@@ -887,7 +887,17 @@
                         },
                         "extendsRef": "#/components/schemas/UserMinimalBase"
                       },
-                      "organizationId": { "type": "string", "required": true, "format": "uuid" }
+                      "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                      "workspaceId": {
+                        "type": ["string", "null"],
+                        "required": true,
+                        "format": "uuid"
+                      },
+                      "projectId": {
+                        "type": ["string", "null"],
+                        "required": true,
+                        "format": "uuid"
+                      }
                     },
                     "ref": "#/components/schemas/InactiveMembership"
                   }
@@ -913,17 +923,19 @@
                 "bannerUrl": null
               },
               "inactiveMembership": {
-                "id": "3f5e59d4-e502-4132-8e0d-915e1951a439",
+                "id": "2a1c2b30-5fd0-40a8-a60e-842d5fdb0c04",
                 "contextType": "organization",
-                "contextId": "dc3036bd-bd6a-4ea8-8385-228db2dcc869",
-                "email": "preston36@gmail.com",
+                "contextId": "8664dbe2-7b90-429b-a8d6-05c4e745f502",
+                "email": "wilfred.halvorson44@hotmail.com",
                 "userId": "6fd95285-52d9-45de-b10d-8a4e316d3ad2",
-                "tokenId": "825afcfd-ad27-4c12-81b8-610c7358603f",
-                "role": "member",
+                "tokenId": "dc3036bd-bd6a-4ea8-8385-228db2dcc869",
+                "role": "guest",
                 "rejectedAt": null,
                 "createdAt": "2024-11-13T15:29:06.546Z",
-                "createdBy": "00a860e8-42d5-4fdb-a0c0-498664dbe27b",
+                "createdBy": "3c595dbd-7273-4cf3-8035-df6a8e52c42b",
                 "organizationId": "33bb76f4-56ce-4cd0-9331-f680165d54a9",
+                "workspaceId": "825afcfd-ad27-4c12-81b8-610c7358603f",
+                "projectId": "3f5e59d4-e502-4132-8e0d-915e1951a439",
                 "tenantId": "test01"
               }
             },
@@ -940,17 +952,19 @@
                 "bannerUrl": null
               },
               "inactiveMembership": {
-                "id": "40302515-5a0c-4427-9dd4-7dee4eb2c5eb",
+                "id": "0f2bc924-4327-49ee-ab9f-cd1b1f1e8741",
                 "contextType": "organization",
-                "contextId": "221aad91-1de2-4e38-93b7-dcc8a33619bf",
-                "email": "mitchell.cummerata29@gmail.com",
+                "contextId": "513f16c2-bcb0-4324-943e-d19331643c06",
+                "email": "marquis_wyman-senger41@hotmail.com",
                 "userId": "745044ce-0a11-4cc4-84d6-fece04b9aca9",
-                "tokenId": "7ef9bfca-0c17-4be8-8d73-0a05e99f5949",
+                "tokenId": "221aad91-1de2-4e38-93b7-dcc8a33619bf",
                 "role": "admin",
                 "rejectedAt": null,
                 "createdAt": "2024-04-11T17:15:50.993Z",
-                "createdBy": "79eeb9fc-d1b1-4f1e-a874-19513f16c2bc",
+                "createdBy": "2cff0319-02f4-4691-97de-0e52a19930c6",
                 "organizationId": "c2a25f30-823d-40d7-af0c-f6c90c7756a6",
+                "workspaceId": "7ef9bfca-0c17-4be8-8d73-0a05e99f5949",
+                "projectId": "40302515-5a0c-4427-9dd4-7dee4eb2c5eb",
                 "tenantId": "test01"
               }
             }
@@ -1143,7 +1157,7 @@
           "entityType": {
             "type": "string",
             "required": true,
-            "enum": ["organization"]
+            "enum": ["organization", "workspace", "project"]
           }
         }
       }
@@ -1343,14 +1357,14 @@
                   "contextType": {
                     "type": "string",
                     "required": true,
-                    "enum": ["organization"]
+                    "enum": ["organization", "workspace", "project"]
                   },
                   "contextId": { "type": "string", "required": true, "format": "uuid" },
                   "userId": { "type": "string", "required": true, "format": "uuid" },
                   "role": {
                     "type": "string",
                     "required": true,
-                    "enum": ["admin", "member"]
+                    "enum": ["admin", "member", "guest"]
                   },
                   "archived": { "type": "boolean", "required": true },
                   "muted": { "type": "boolean", "required": true },
@@ -1360,7 +1374,17 @@
                     "minimum": -140737488355328,
                     "maximum": 140737488355327
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" }
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "workspaceId": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
+                  },
+                  "projectId": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
+                  }
                 },
                 "ref": "#/components/schemas/MembershipBase"
               }

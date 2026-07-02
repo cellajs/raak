@@ -64,7 +64,7 @@
           "entityType": {
             "type": "string",
             "required": true,
-            "enum": ["organization"]
+            "enum": ["organization", "workspace", "project"]
           }
         },
         "required": true,

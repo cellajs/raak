@@ -1,13 +1,19 @@
 import { getTableName } from 'drizzle-orm';
 import type { AnyPgTable, PgColumn } from 'drizzle-orm/pg-core';
+import { chatsTable } from '#/modules/agent/chats-db';
+import { messagesTable } from '#/modules/agent/messages-db';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
+import { labelsTable } from '#/modules/label/label-db';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { pagesTable } from '#/modules/page/page-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { requestsTable } from '#/modules/requests/requests-db';
+import { tasksTable } from '#/modules/task/task-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { usersTable } from '#/modules/user/user-db';
+import { workspacesTable } from '#/modules/workspace/workspace-db';
 
 // Base table shape constraints for generic resolvers
 export type TableWithId = AnyPgTable & { id: PgColumn };
@@ -20,6 +26,12 @@ export const entityTables = {
   organization: organizationsTable,
   attachment: attachmentsTable,
   page: pagesTable,
+  project: projectsTable,
+  workspace: workspacesTable,
+  task: tasksTable,
+  label: labelsTable,
+  chat: chatsTable,
+  message: messagesTable,
 } as const satisfies Record<string, ResolvableTable>;
 
 /** Resource types that are not entities but have activities logged. */

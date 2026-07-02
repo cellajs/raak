@@ -4,8 +4,10 @@ import { generateId } from 'shared/entity-id';
 import { tenantIdLength } from '#/db/utils/constraints';
 import { timestampColumns } from '#/db/utils/timestamp-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
+import { projectsTable } from '#/modules/project/project-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { usersTable } from '#/modules/user/user-db';
+import { workspacesTable } from '#/modules/workspace/workspace-db';
 
 const roleEnum = roles.all;
 
@@ -15,7 +17,10 @@ const roleEnum = roles.all;
  * forks add e.g. `workspaceId`/`projectId` here (with their foreign keys). Returns fresh
  * column builders on each call so the two tables don't share builder instances.
  */
-export const membershipContextColumns = () => ({});
+export const membershipContextColumns = () => ({
+  workspaceId: uuid().references(() => workspacesTable.id, { onDelete: 'cascade' }),
+  projectId: uuid().references(() => projectsTable.id, { onDelete: 'cascade' }),
+});
 
 /**
  * Memberships table to track active memberships of users in organizations and other context entities.
@@ -52,6 +57,7 @@ export const membershipsTable = snakeCase.table(
     index('memberships_updated_by_idx').on(table.updatedBy),
     index('memberships_tenant_id_idx').on(table.tenantId),
     index('memberships_context_org_role_idx').on(table.contextType, table.organizationId, table.role),
+    index('memberships_project_user_archived_idx').on(table.projectId, table.userId, table.archived),
     // Composite index for application-layer membership lookups (orgGuard, permission checks)
     index('memberships_org_user_tenant_idx').on(table.organizationId, table.userId, table.tenantId),
     // One membership per user per entity

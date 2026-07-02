@@ -24,10 +24,7 @@ import { Route as PublicAuthSignOutRouteImport } from './_public/auth/sign-out'
 import { Route as PublicAuthMfaRouteImport } from './_public/auth/mfa'
 import { Route as PublicAuthErrorRouteImport } from './_public/auth/error'
 import { Route as PublicAuthAuthenticateRouteImport } from './_public/auth/authenticate'
-import { Route as PublicMarketingSyncEngineRouteImport } from './_public/_marketing/sync-engine'
-import { Route as PublicMarketingFeaturesRouteImport } from './_public/_marketing/features'
 import { Route as PublicMarketingContactRouteImport } from './_public/_marketing/contact'
-import { Route as PublicMarketingAccessibilityRouteImport } from './_public/_marketing/accessibility'
 import { Route as PublicMarketingAboutRouteImport } from './_public/_marketing/about'
 import { Route as AppSystemUsersRouteImport } from './_app/system/users'
 import { Route as AppSystemTenantsRouteImport } from './_app/system/tenants'
@@ -39,6 +36,7 @@ import { Route as PublicMarketingLegalIndexRouteImport } from './_public/_market
 import { Route as PublicContentDocsIndexRouteImport } from './_public/_content/docs/index'
 import { Route as PublicAuthEmailVerificationReasonRouteImport } from './_public/auth/email-verification.$reason'
 import { Route as PublicMarketingLegalSubjectRouteImport } from './_public/_marketing/legal.$subject'
+import { Route as PublicContentTIdRouteImport } from './_public/_content/t.$id'
 import { Route as PublicContentDocsSchemasRouteImport } from './_public/_content/docs/schemas'
 import { Route as PublicContentDocsPagesRouteImport } from './_public/_content/docs/pages'
 import { Route as PublicContentDocsOverviewRouteImport } from './_public/_content/docs/overview'
@@ -46,10 +44,13 @@ import { Route as PublicContentDocsOperationsRouteImport } from './_public/_cont
 import { Route as AppTenantIdOrganizationSlugOrganizationRouteRouteImport } from './_app/$tenantId.$organizationSlug/organization/route'
 import { Route as PublicContentDocsPageIdRouteImport } from './_public/_content/docs/page.$id'
 import { Route as PublicContentDocsOperationsTableRouteImport } from './_public/_content/docs/operations_.table'
+import { Route as AppTenantIdOrganizationSlugWorkspaceSlugRouteImport } from './_app/$tenantId.$organizationSlug/workspace.$slug'
+import { Route as AppTenantIdOrganizationSlugProjectSlugRouteImport } from './_app/$tenantId.$organizationSlug/project.$slug'
 import { Route as AppTenantIdOrganizationSlugOrganizationSettingsRouteImport } from './_app/$tenantId.$organizationSlug/organization/settings'
 import { Route as AppTenantIdOrganizationSlugOrganizationMembersRouteImport } from './_app/$tenantId.$organizationSlug/organization/members'
 import { Route as AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport } from './_app/$tenantId.$organizationSlug/organization/attachments'
 import { Route as PublicContentDocsPageIdEditRouteImport } from './_public/_content/docs/page_.$id.edit'
+import { Route as PublicContentTenantIdOrganizationSlugPublicProjectSlugRouteImport } from './_public/_content/$tenantId.$organizationSlug.public.project.$slug'
 
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
@@ -123,28 +124,11 @@ const PublicAuthAuthenticateRoute = PublicAuthAuthenticateRouteImport.update({
   path: '/authenticate',
   getParentRoute: () => PublicAuthRouteRoute,
 } as any)
-const PublicMarketingSyncEngineRoute =
-  PublicMarketingSyncEngineRouteImport.update({
-    id: '/_marketing/sync-engine',
-    path: '/sync-engine',
-    getParentRoute: () => PublicRouteRoute,
-  } as any)
-const PublicMarketingFeaturesRoute = PublicMarketingFeaturesRouteImport.update({
-  id: '/_marketing/features',
-  path: '/features',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
 const PublicMarketingContactRoute = PublicMarketingContactRouteImport.update({
   id: '/_marketing/contact',
   path: '/contact',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const PublicMarketingAccessibilityRoute =
-  PublicMarketingAccessibilityRouteImport.update({
-    id: '/_marketing/accessibility',
-    path: '/accessibility',
-    getParentRoute: () => PublicRouteRoute,
-  } as any)
 const PublicMarketingAboutRoute = PublicMarketingAboutRouteImport.update({
   id: '/_marketing/about',
   path: '/about',
@@ -204,6 +188,11 @@ const PublicMarketingLegalSubjectRoute =
     path: '/legal/$subject',
     getParentRoute: () => PublicRouteRoute,
   } as any)
+const PublicContentTIdRoute = PublicContentTIdRouteImport.update({
+  id: '/t/$id',
+  path: '/t/$id',
+  getParentRoute: () => PublicContentRouteRoute,
+} as any)
 const PublicContentDocsSchemasRoute =
   PublicContentDocsSchemasRouteImport.update({
     id: '/schemas',
@@ -244,6 +233,18 @@ const PublicContentDocsOperationsTableRoute =
     path: '/operations/table',
     getParentRoute: () => PublicContentDocsRouteRoute,
   } as any)
+const AppTenantIdOrganizationSlugWorkspaceSlugRoute =
+  AppTenantIdOrganizationSlugWorkspaceSlugRouteImport.update({
+    id: '/workspace/$slug',
+    path: '/workspace/$slug',
+    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
+  } as any)
+const AppTenantIdOrganizationSlugProjectSlugRoute =
+  AppTenantIdOrganizationSlugProjectSlugRouteImport.update({
+    id: '/project/$slug',
+    path: '/project/$slug',
+    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
+  } as any)
 const AppTenantIdOrganizationSlugOrganizationSettingsRoute =
   AppTenantIdOrganizationSlugOrganizationSettingsRouteImport.update({
     id: '/settings',
@@ -268,6 +269,12 @@ const PublicContentDocsPageIdEditRoute =
     path: '/page/$id/edit',
     getParentRoute: () => PublicContentDocsRouteRoute,
   } as any)
+const PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute =
+  PublicContentTenantIdOrganizationSlugPublicProjectSlugRouteImport.update({
+    id: '/$tenantId/$organizationSlug/public/project/$slug',
+    path: '/$tenantId/$organizationSlug/public/project/$slug',
+    getParentRoute: () => PublicContentRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -284,10 +291,7 @@ export interface FileRoutesByFullPath {
   '/system/tenants': typeof AppSystemTenantsRoute
   '/system/users': typeof AppSystemUsersRoute
   '/about': typeof PublicMarketingAboutRoute
-  '/accessibility': typeof PublicMarketingAccessibilityRoute
   '/contact': typeof PublicMarketingContactRoute
-  '/features': typeof PublicMarketingFeaturesRoute
-  '/sync-engine': typeof PublicMarketingSyncEngineRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
@@ -298,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/docs/overview': typeof PublicContentDocsOverviewRoute
   '/docs/pages': typeof PublicContentDocsPagesRoute
   '/docs/schemas': typeof PublicContentDocsSchemasRoute
+  '/t/$id': typeof PublicContentTIdRoute
   '/legal/$subject': typeof PublicMarketingLegalSubjectRoute
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/docs/': typeof PublicContentDocsIndexRoute
@@ -305,9 +310,12 @@ export interface FileRoutesByFullPath {
   '/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
   '/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
+  '/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
+  '/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
   '/docs/operations/table': typeof PublicContentDocsOperationsTableRoute
   '/docs/page/$id': typeof PublicContentDocsPageIdRoute
   '/docs/page/$id/edit': typeof PublicContentDocsPageIdEditRoute
+  '/$tenantId/$organizationSlug/public/project/$slug': typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
@@ -323,10 +331,7 @@ export interface FileRoutesByTo {
   '/system/tenants': typeof AppSystemTenantsRoute
   '/system/users': typeof AppSystemUsersRoute
   '/about': typeof PublicMarketingAboutRoute
-  '/accessibility': typeof PublicMarketingAccessibilityRoute
   '/contact': typeof PublicMarketingContactRoute
-  '/features': typeof PublicMarketingFeaturesRoute
-  '/sync-engine': typeof PublicMarketingSyncEngineRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
@@ -337,6 +342,7 @@ export interface FileRoutesByTo {
   '/docs/overview': typeof PublicContentDocsOverviewRoute
   '/docs/pages': typeof PublicContentDocsPagesRoute
   '/docs/schemas': typeof PublicContentDocsSchemasRoute
+  '/t/$id': typeof PublicContentTIdRoute
   '/legal/$subject': typeof PublicMarketingLegalSubjectRoute
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/docs': typeof PublicContentDocsIndexRoute
@@ -344,9 +350,12 @@ export interface FileRoutesByTo {
   '/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
   '/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
+  '/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
+  '/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
   '/docs/operations/table': typeof PublicContentDocsOperationsTableRoute
   '/docs/page/$id': typeof PublicContentDocsPageIdRoute
   '/docs/page/$id/edit': typeof PublicContentDocsPageIdEditRoute
+  '/$tenantId/$organizationSlug/public/project/$slug': typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -367,10 +376,7 @@ export interface FileRoutesById {
   '/_app/system/tenants': typeof AppSystemTenantsRoute
   '/_app/system/users': typeof AppSystemUsersRoute
   '/_public/_marketing/about': typeof PublicMarketingAboutRoute
-  '/_public/_marketing/accessibility': typeof PublicMarketingAccessibilityRoute
   '/_public/_marketing/contact': typeof PublicMarketingContactRoute
-  '/_public/_marketing/features': typeof PublicMarketingFeaturesRoute
-  '/_public/_marketing/sync-engine': typeof PublicMarketingSyncEngineRoute
   '/_public/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/_public/auth/error': typeof PublicAuthErrorRoute
   '/_public/auth/mfa': typeof PublicAuthMfaRoute
@@ -381,6 +387,7 @@ export interface FileRoutesById {
   '/_public/_content/docs/overview': typeof PublicContentDocsOverviewRoute
   '/_public/_content/docs/pages': typeof PublicContentDocsPagesRoute
   '/_public/_content/docs/schemas': typeof PublicContentDocsSchemasRoute
+  '/_public/_content/t/$id': typeof PublicContentTIdRoute
   '/_public/_marketing/legal/$subject': typeof PublicMarketingLegalSubjectRoute
   '/_public/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/_public/_content/docs/': typeof PublicContentDocsIndexRoute
@@ -388,9 +395,12 @@ export interface FileRoutesById {
   '/_app/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/_app/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
   '/_app/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
+  '/_app/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
+  '/_app/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
   '/_public/_content/docs/operations_/table': typeof PublicContentDocsOperationsTableRoute
   '/_public/_content/docs/page/$id': typeof PublicContentDocsPageIdRoute
   '/_public/_content/docs/page_/$id/edit': typeof PublicContentDocsPageIdEditRoute
+  '/_public/_content/$tenantId/$organizationSlug/public/project/$slug': typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -409,10 +419,7 @@ export interface FileRouteTypes {
     | '/system/tenants'
     | '/system/users'
     | '/about'
-    | '/accessibility'
     | '/contact'
-    | '/features'
-    | '/sync-engine'
     | '/auth/authenticate'
     | '/auth/error'
     | '/auth/mfa'
@@ -423,6 +430,7 @@ export interface FileRouteTypes {
     | '/docs/overview'
     | '/docs/pages'
     | '/docs/schemas'
+    | '/t/$id'
     | '/legal/$subject'
     | '/auth/email-verification/$reason'
     | '/docs/'
@@ -430,9 +438,12 @@ export interface FileRouteTypes {
     | '/$tenantId/$organizationSlug/organization/attachments'
     | '/$tenantId/$organizationSlug/organization/members'
     | '/$tenantId/$organizationSlug/organization/settings'
+    | '/$tenantId/$organizationSlug/project/$slug'
+    | '/$tenantId/$organizationSlug/workspace/$slug'
     | '/docs/operations/table'
     | '/docs/page/$id'
     | '/docs/page/$id/edit'
+    | '/$tenantId/$organizationSlug/public/project/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -448,10 +459,7 @@ export interface FileRouteTypes {
     | '/system/tenants'
     | '/system/users'
     | '/about'
-    | '/accessibility'
     | '/contact'
-    | '/features'
-    | '/sync-engine'
     | '/auth/authenticate'
     | '/auth/error'
     | '/auth/mfa'
@@ -462,6 +470,7 @@ export interface FileRouteTypes {
     | '/docs/overview'
     | '/docs/pages'
     | '/docs/schemas'
+    | '/t/$id'
     | '/legal/$subject'
     | '/auth/email-verification/$reason'
     | '/docs'
@@ -469,9 +478,12 @@ export interface FileRouteTypes {
     | '/$tenantId/$organizationSlug/organization/attachments'
     | '/$tenantId/$organizationSlug/organization/members'
     | '/$tenantId/$organizationSlug/organization/settings'
+    | '/$tenantId/$organizationSlug/project/$slug'
+    | '/$tenantId/$organizationSlug/workspace/$slug'
     | '/docs/operations/table'
     | '/docs/page/$id'
     | '/docs/page/$id/edit'
+    | '/$tenantId/$organizationSlug/public/project/$slug'
   id:
     | '__root__'
     | '/_app'
@@ -491,10 +503,7 @@ export interface FileRouteTypes {
     | '/_app/system/tenants'
     | '/_app/system/users'
     | '/_public/_marketing/about'
-    | '/_public/_marketing/accessibility'
     | '/_public/_marketing/contact'
-    | '/_public/_marketing/features'
-    | '/_public/_marketing/sync-engine'
     | '/_public/auth/authenticate'
     | '/_public/auth/error'
     | '/_public/auth/mfa'
@@ -505,6 +514,7 @@ export interface FileRouteTypes {
     | '/_public/_content/docs/overview'
     | '/_public/_content/docs/pages'
     | '/_public/_content/docs/schemas'
+    | '/_public/_content/t/$id'
     | '/_public/_marketing/legal/$subject'
     | '/_public/auth/email-verification/$reason'
     | '/_public/_content/docs/'
@@ -512,9 +522,12 @@ export interface FileRouteTypes {
     | '/_app/$tenantId/$organizationSlug/organization/attachments'
     | '/_app/$tenantId/$organizationSlug/organization/members'
     | '/_app/$tenantId/$organizationSlug/organization/settings'
+    | '/_app/$tenantId/$organizationSlug/project/$slug'
+    | '/_app/$tenantId/$organizationSlug/workspace/$slug'
     | '/_public/_content/docs/operations_/table'
     | '/_public/_content/docs/page/$id'
     | '/_public/_content/docs/page_/$id/edit'
+    | '/_public/_content/$tenantId/$organizationSlug/public/project/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -629,32 +642,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAuthAuthenticateRouteImport
       parentRoute: typeof PublicAuthRouteRoute
     }
-    '/_public/_marketing/sync-engine': {
-      id: '/_public/_marketing/sync-engine'
-      path: '/sync-engine'
-      fullPath: '/sync-engine'
-      preLoaderRoute: typeof PublicMarketingSyncEngineRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/_marketing/features': {
-      id: '/_public/_marketing/features'
-      path: '/features'
-      fullPath: '/features'
-      preLoaderRoute: typeof PublicMarketingFeaturesRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
     '/_public/_marketing/contact': {
       id: '/_public/_marketing/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof PublicMarketingContactRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/_marketing/accessibility': {
-      id: '/_public/_marketing/accessibility'
-      path: '/accessibility'
-      fullPath: '/accessibility'
-      preLoaderRoute: typeof PublicMarketingAccessibilityRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/_marketing/about': {
@@ -734,6 +726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicMarketingLegalSubjectRouteImport
       parentRoute: typeof PublicRouteRoute
     }
+    '/_public/_content/t/$id': {
+      id: '/_public/_content/t/$id'
+      path: '/t/$id'
+      fullPath: '/t/$id'
+      preLoaderRoute: typeof PublicContentTIdRouteImport
+      parentRoute: typeof PublicContentRouteRoute
+    }
     '/_public/_content/docs/schemas': {
       id: '/_public/_content/docs/schemas'
       path: '/schemas'
@@ -783,6 +782,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicContentDocsOperationsTableRouteImport
       parentRoute: typeof PublicContentDocsRouteRoute
     }
+    '/_app/$tenantId/$organizationSlug/workspace/$slug': {
+      id: '/_app/$tenantId/$organizationSlug/workspace/$slug'
+      path: '/workspace/$slug'
+      fullPath: '/$tenantId/$organizationSlug/workspace/$slug'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugWorkspaceSlugRouteImport
+      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
+    }
+    '/_app/$tenantId/$organizationSlug/project/$slug': {
+      id: '/_app/$tenantId/$organizationSlug/project/$slug'
+      path: '/project/$slug'
+      fullPath: '/$tenantId/$organizationSlug/project/$slug'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugProjectSlugRouteImport
+      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
+    }
     '/_app/$tenantId/$organizationSlug/organization/settings': {
       id: '/_app/$tenantId/$organizationSlug/organization/settings'
       path: '/settings'
@@ -810,6 +823,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/docs/page/$id/edit'
       preLoaderRoute: typeof PublicContentDocsPageIdEditRouteImport
       parentRoute: typeof PublicContentDocsRouteRoute
+    }
+    '/_public/_content/$tenantId/$organizationSlug/public/project/$slug': {
+      id: '/_public/_content/$tenantId/$organizationSlug/public/project/$slug'
+      path: '/$tenantId/$organizationSlug/public/project/$slug'
+      fullPath: '/$tenantId/$organizationSlug/public/project/$slug'
+      preLoaderRoute: typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRouteImport
+      parentRoute: typeof PublicContentRouteRoute
     }
   }
 }
@@ -855,12 +875,18 @@ const AppTenantIdOrganizationSlugOrganizationRouteRouteWithChildren =
 
 interface AppTenantIdOrganizationSlugRouteRouteChildren {
   AppTenantIdOrganizationSlugOrganizationRouteRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRouteWithChildren
+  AppTenantIdOrganizationSlugProjectSlugRoute: typeof AppTenantIdOrganizationSlugProjectSlugRoute
+  AppTenantIdOrganizationSlugWorkspaceSlugRoute: typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
 }
 
 const AppTenantIdOrganizationSlugRouteRouteChildren: AppTenantIdOrganizationSlugRouteRouteChildren =
   {
     AppTenantIdOrganizationSlugOrganizationRouteRoute:
       AppTenantIdOrganizationSlugOrganizationRouteRouteWithChildren,
+    AppTenantIdOrganizationSlugProjectSlugRoute:
+      AppTenantIdOrganizationSlugProjectSlugRoute,
+    AppTenantIdOrganizationSlugWorkspaceSlugRoute:
+      AppTenantIdOrganizationSlugWorkspaceSlugRoute,
   }
 
 const AppTenantIdOrganizationSlugRouteRouteWithChildren =
@@ -922,10 +948,15 @@ const PublicContentDocsRouteRouteWithChildren =
 
 interface PublicContentRouteRouteChildren {
   PublicContentDocsRouteRoute: typeof PublicContentDocsRouteRouteWithChildren
+  PublicContentTIdRoute: typeof PublicContentTIdRoute
+  PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute: typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute
 }
 
 const PublicContentRouteRouteChildren: PublicContentRouteRouteChildren = {
   PublicContentDocsRouteRoute: PublicContentDocsRouteRouteWithChildren,
+  PublicContentTIdRoute: PublicContentTIdRoute,
+  PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute:
+    PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute,
 }
 
 const PublicContentRouteRouteWithChildren =
@@ -959,10 +990,7 @@ interface PublicRouteRouteChildren {
   PublicAuthRouteRoute: typeof PublicAuthRouteRouteWithChildren
   PublicErrorRoute: typeof PublicErrorRoute
   PublicMarketingAboutRoute: typeof PublicMarketingAboutRoute
-  PublicMarketingAccessibilityRoute: typeof PublicMarketingAccessibilityRoute
   PublicMarketingContactRoute: typeof PublicMarketingContactRoute
-  PublicMarketingFeaturesRoute: typeof PublicMarketingFeaturesRoute
-  PublicMarketingSyncEngineRoute: typeof PublicMarketingSyncEngineRoute
   PublicMarketingLegalSubjectRoute: typeof PublicMarketingLegalSubjectRoute
   PublicMarketingLegalIndexRoute: typeof PublicMarketingLegalIndexRoute
 }
@@ -972,10 +1000,7 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicAuthRouteRoute: PublicAuthRouteRouteWithChildren,
   PublicErrorRoute: PublicErrorRoute,
   PublicMarketingAboutRoute: PublicMarketingAboutRoute,
-  PublicMarketingAccessibilityRoute: PublicMarketingAccessibilityRoute,
   PublicMarketingContactRoute: PublicMarketingContactRoute,
-  PublicMarketingFeaturesRoute: PublicMarketingFeaturesRoute,
-  PublicMarketingSyncEngineRoute: PublicMarketingSyncEngineRoute,
   PublicMarketingLegalSubjectRoute: PublicMarketingLegalSubjectRoute,
   PublicMarketingLegalIndexRoute: PublicMarketingLegalIndexRoute,
 }
