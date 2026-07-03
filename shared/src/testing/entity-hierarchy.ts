@@ -49,12 +49,15 @@ export const buildTestEntityHierarchyPlan = ({
 
   const ancestors = hierarchy.getOrderedAncestors(entityType) as ContextEntityType[];
   const contextIdsByType: Partial<Record<ContextEntityType, string>> = {};
+  const setContextId = (contextType: ContextEntityType, id: string) => {
+    contextIdsByType[contextType] = id;
+  };
   const seedContextRows: TestEntityContextRow[] = [];
   let generatedIndex = 0;
 
   for (const contextType of [...ancestors].reverse()) {
     if (contextType === rootContextType) {
-      contextIdsByType[contextType] = rootContextId;
+      setContextId(contextType, rootContextId);
       continue;
     }
 
@@ -72,7 +75,7 @@ export const buildTestEntityHierarchyPlan = ({
     }
 
     const id = makeContextId(contextType, generatedIndex++);
-    contextIdsByType[contextType] = id;
+    setContextId(contextType, id);
 
     const parentIdKey = appConfig.entityIdColumnKeys[parentContextType];
     seedContextRows.push({

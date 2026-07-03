@@ -270,6 +270,29 @@ describe('sync e2e', () => {
       expect(fileExists(env.forkPath, 'temp.ts')).toBe(false);
     });
 
+    it('should keep fork-deleted files deleted when upstream leaves them unchanged', async () => {
+      // README.md exists in the shared base. The fork deliberately removes it.
+      deleteFileAndCommit(env.forkPath, 'README.md', 'chore: remove readme in fork');
+      expect(fileExists(env.forkPath, 'README.md')).toBe(false);
+
+      // Upstream leaves README.md untouched, so its absence in the fork is a fork-owned deletion.
+      fetchUpstream(env.forkPath);
+
+      // Analyze: the fork's deletion must be classified as 'deleted', not 'behind' — otherwise it
+      // would be re-added as if upstream introduced a new file, resurfacing on every sync.
+      const analyzeConfig = buildRuntimeConfig(env, { service: 'analyze' });
+      const analysis = await runAnalyze(analyzeConfig);
+      const deletedFile = analysis.files.find((f) => f.path === 'README.md');
+      expect(deletedFile).toBeDefined();
+      expect(deletedFile?.status).toBe('deleted');
+
+      // Sync: the deletion is respected — README.md stays gone.
+      const syncConfig = buildRuntimeConfig(env, { service: 'sync' });
+      const result = await runSync(syncConfig);
+      expect(result.success).toBe(true);
+      expect(fileExists(env.forkPath, 'README.md')).toBe(false);
+    });
+
     it('should handle file renames from upstream with git mv', async () => {
       // Add a file in a subdirectory to upstream first
       makeCommit(env.upstreamPath, {
@@ -474,11 +497,9 @@ describe('sync e2e', () => {
       expect(content).toContain('>>>>>>>');
     });
 
-    it('materializes a view worktree and emits diff links for auto-merged files', async () => {
+    it('emits file links for auto-merged files without materializing a view worktree', async () => {
       const fs = await import('node:fs');
-      const path = await import('node:path');
       const { execSync } = await import('node:child_process');
-      const { getViewWorktreePath } = await import('../../src/utils/cleanup');
 
       // Shared multi-line file present at the merge base in BOTH repos.
       const baseLines = `${Array.from({ length: 9 }, (_, i) => `line ${i + 1}`).join('\n')}\n`;
@@ -513,6 +534,12 @@ describe('sync e2e', () => {
 
       fetchUpstream(env.forkPath);
 
+      // Clear any leftover view worktree (persists in tmpdir across runs by design)
+      // so we can assert sync does not create one.
+      const { getViewWorktreePath } = await import('../../src/utils/cleanup');
+      const viewPath = getViewWorktreePath(env.forkPath);
+      fs.rmSync(viewPath, { recursive: true, force: true });
+
       // Capture human-facing output to assert the diff link is rendered.
       const logs: string[] = [];
       const spy = vi.spyOn(console, 'info').mockImplementation((...args: unknown[]) => {
@@ -530,16 +557,11 @@ describe('sync e2e', () => {
       expect(result.conflicts).toContain('README.md');
       expect(result.autoMergedFiles).toContain('shared.ts');
 
-      // The view worktree persists (outside the fork) and holds the upstream version.
-      const viewPath = getViewWorktreePath(env.forkPath);
-      expect(fs.existsSync(viewPath)).toBe(true);
-      expect(fs.existsSync(path.join(viewPath, 'shared.ts'))).toBe(true);
-
-      // The merge-in-progress detail emitted a clickable VS Code file link.
+      // The merge-in-progress detail emitted a clickable VS Code file link (into the fork).
       expect(logs.join('\n')).toContain('vscode://file');
 
-      // Clean up the persistent view worktree (lives in tmpdir, outside testDir).
-      fs.rmSync(viewPath, { recursive: true, force: true });
+      // Sync no longer materializes the upstream view worktree (only analyze does).
+      expect(fs.existsSync(viewPath)).toBe(false);
     });
   });
 

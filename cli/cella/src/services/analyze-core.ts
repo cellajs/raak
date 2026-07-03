@@ -76,6 +76,9 @@ export async function analyzeRefs(
   // Files that actually need analysis (changed somewhere)
   const changedFiles = new Set([...upstreamChanges.keys(), ...forkChanges.keys(), ...upstreamRenames.keys()]);
 
+  // Content hashes present anywhere in incoming — O(1) rename-source lookups below.
+  const upstreamHashSet = new Set(upstreamHashes.values());
+
   onProgress?.(
     `analyzing ${changedFiles.size} changed files (${allFiles.size - changedFiles.size} identical skipped)...`,
   );
@@ -186,29 +189,28 @@ export async function analyzeRefs(
     if (fileIsIgnored) {
       status = 'ignored';
     } else if (!inFork && inUpstream) {
-      // Incoming added a new file
-      status = fileIsPinned ? 'deleted' : 'behind';
+      // File is missing locally but present in incoming. Distinguish a genuinely new
+      // incoming file from a file the local side deliberately deleted, by consulting
+      // the merge-base (the symmetric `inFork && !inUpstream` branch does the same):
+      // - pinned: local owns the path, keep it removed.
+      // - existed at base and incoming hasn't touched it since (upstreamHash === baseHash):
+      //   the absence is a deliberate local deletion — keep it deleted instead of
+      //   re-adding it as if incoming introduced a new file (which resurfaces every sync).
+      // - otherwise (never in base = truly new, or incoming modified a file the local side
+      //   deleted = delete/modify): surface incoming's version.
+      const locallyDeleted = baseHash !== null && upstreamHash === baseHash;
+      status = fileIsPinned || locallyDeleted ? 'deleted' : 'behind';
     } else if (inFork && !inUpstream) {
       // File exists locally but not in incoming
       if (baseHash !== null) {
         // File was in base, incoming deleted it - sync deletion unless pinned
         status = fileIsPinned ? 'ahead' : 'behind';
       } else {
-        // Local file (never existed in merge-base)
-        // Check if this file's content exists at a different path in incoming
-        // (indicates a rename that we couldn't detect due to squash merge-base)
-        const forkFileHash = forkHash;
-        let isRenamedSource = false;
-        if (forkFileHash) {
-          for (const [upPath, upHash] of upstreamHashes) {
-            if (upHash === forkFileHash && upPath !== filePath) {
-              // Same content at different path - this is likely a rename source
-              isRenamedSource = true;
-              break;
-            }
-          }
-        }
-        status = isRenamedSource ? 'behind' : 'local';
+        // Local file (never existed in merge-base). If its exact content exists at a
+        // different path in incoming, it is likely the source of a rename we couldn't
+        // detect due to a squash merge-base — treat as behind so the rename applies.
+        // (This file is absent from incoming, so any hash match is at another path.)
+        status = forkHash && upstreamHashSet.has(forkHash) ? 'behind' : 'local';
       }
     } else if (forkHash === upstreamHash) {
       // Identical

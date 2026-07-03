@@ -4,6 +4,8 @@
  * Parses command line arguments and routes to appropriate service.
  */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import process from 'node:process';
 import { select } from '@inquirer/prompts';
 import { Command } from 'commander';
@@ -38,6 +40,7 @@ type CliOptionState = Pick<
 
 type MenuContext = {
   hasForks: boolean;
+  isUpstreamRepo: boolean;
 };
 
 type ServiceOptionDefinition = {
@@ -53,27 +56,12 @@ type ServiceDefinition = {
   menuDescription?: (context: MenuContext) => string;
 };
 
-const defaultOptions: CliOptionState = {
-  logFile: false,
-  verbose: false,
-  list: false,
-  json: false,
-  diff: undefined,
-  openDiff: undefined,
-  scope: undefined,
-  fork: undefined,
-  hard: false,
-  unpinned: false,
-  track: undefined,
-  force: false,
-  checkOverrides: false,
-  coverage: false,
-};
-
 function readOptions(opts: Record<string, unknown>): CliOptionState {
   const scope = typeof opts.scope === 'string' ? opts.scope : undefined;
-  const normalizedScope: AnalyzeScope | undefined =
-    scope === 'all' || scope === 'risk' || scope === 'protected' ? scope : undefined;
+  if (scope && scope !== 'all' && scope !== 'risk' && scope !== 'protected') {
+    throw new Error(`invalid --scope '${scope}'. expected one of: all, risk, protected`);
+  }
+  const normalizedScope = scope as AnalyzeScope | undefined;
 
   return {
     logFile: opts.log === true,
@@ -106,6 +94,7 @@ const serviceDefinitions: ServiceDefinition[] = [
       { flags: '--diff <path>', description: 'print unified diff for one file, then exit' },
       { flags: '--open-diff <path>', description: 'open VS Code side-by-side diff for one file, then exit' },
     ],
+    includeInMenu: (context) => !context.isUpstreamRepo,
   },
   {
     name: 'sync',
@@ -116,6 +105,7 @@ const serviceDefinitions: ServiceDefinition[] = [
       { flags: '--unpinned', description: 'ignore pinned files (except package.json) to resurface upstream changes' },
       { flags: '--track <mode>', description: 'override upstream tracking for this run: release|branch' },
     ],
+    includeInMenu: (context) => !context.isUpstreamRepo,
     menuDescription: () => 'merge upstream changes + sync package.json',
   },
   {
@@ -159,9 +149,10 @@ const serviceDefinitions: ServiceDefinition[] = [
   },
 ];
 
-function getMenuContext(userConfig: CellaCliConfig): MenuContext {
+async function getMenuContext(userConfig: CellaCliConfig, forkPath: string): Promise<MenuContext> {
   return {
     hasForks: (userConfig.forks?.length ?? 0) > 0,
+    isUpstreamRepo: JSON.parse(readFileSync(join(forkPath, 'package.json'), 'utf8')).name === 'cella',
   };
 }
 
@@ -236,10 +227,10 @@ function buildProgram(setSelection: (selection: CliServiceSelection) => void): C
 
 function parseCommandLine(argv: string[]): CliServiceSelection {
   if (argv.length <= 2) {
-    return { options: { ...defaultOptions } };
+    return { options: readOptions({}) };
   }
 
-  let selection: CliServiceSelection = { options: { ...defaultOptions } };
+  let selection: CliServiceSelection = { options: readOptions({}) };
   const program = buildProgram((nextSelection) => {
     selection = nextSelection;
   });
@@ -248,10 +239,10 @@ function parseCommandLine(argv: string[]): CliServiceSelection {
   return selection;
 }
 
-async function promptForService(userConfig: CellaCliConfig): Promise<SyncService> {
+async function promptForService(userConfig: CellaCliConfig, forkPath: string): Promise<SyncService> {
   const selected = await select<SyncService | 'exit'>({
     message: 'choose a service:',
-    choices: buildServiceChoices(getMenuContext(userConfig)),
+    choices: buildServiceChoices(await getMenuContext(userConfig, forkPath)),
     loop: false,
   });
 
@@ -305,7 +296,7 @@ export async function parseCli(userConfig: CellaCliConfig, forkPath: string): Pr
 
   // If no service provided, prompt for it
   if (!selection.service) {
-    selection.service = await promptForService(userConfig);
+    selection.service = await promptForService(userConfig, forkPath);
   }
 
   return buildRuntimeConfig(userConfig, forkPath, selection);
