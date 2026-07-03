@@ -33,7 +33,7 @@ app.openapi(labelRoutes.getLabel, async (ctx) => {
 });
 
 app.openapi(labelRoutes.updateLabel, async (ctx) => {
-  const id = ctx.req.param('id');
+  const { id } = ctx.req.valid('param');
   const result = await updateLabelOp(ctx, id, ctx.req.valid('json'));
   assertSuccess(result, 'label');
   return ctx.json(result.data, 200);

@@ -1,8 +1,6 @@
 import { useSearch } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { appConfig } from 'shared';
 import { getOrderBetween } from 'shared/display-order';
-import { ChatBoardPanel } from '~/modules/agent/chat-board-panel';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
@@ -18,15 +16,12 @@ export default function WorkspaceBoard({ boardId, projects, workspace }: Resolve
 
   const { alertsSeen } = useAlertStore();
   const showExplainer = !!workspace && !alertsSeen.includes('welcome-text');
-  // TODO: Re-enable the AI panel once its board experience is improved.
-  const showAiChat = false && projects.length > 0 && !!appConfig.aiUrl;
 
   const extraPanels = useMemo(() => {
     const panels: { panelId: string }[] = [];
     if (showExplainer) panels.push({ panelId: 'explainer' });
-    if (showAiChat) panels.push({ panelId: 'ai-chat' });
     return panels.length > 0 ? panels : undefined;
-  }, [showExplainer, showAiChat]);
+  }, [showExplainer]);
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
@@ -104,7 +99,6 @@ export default function WorkspaceBoard({ boardId, projects, workspace }: Resolve
     >
       {(panelId) => {
         const panel = panels.find((c) => c.panelId === panelId);
-        if (panelId === 'ai-chat') return <ChatBoardPanel />;
         if (!panel?.project) return <ExplainerPanel />;
         return <ProjectBoardPanel project={panel.project} sectionFilters={panel.sectionFilters} />;
       }}

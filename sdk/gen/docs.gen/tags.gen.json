@@ -1,17 +1,5 @@
 [
   {
-    "name": "agent",
-    "description": "Endpoints for managing AI agent chat sessions and messages, which are scoped to a workspace\n    (organization). Chat and message CRUD runs on the main API with sync support, while the streamed assistant\n    responses are handled separately by the AI worker. Built on top of the Cella AI capability layer.",
-    "count": 6,
-    "kind": "module"
-  },
-  {
-    "name": "ai",
-    "description": "Endpoints exposing the AI capability layer, which is a server-side tool registry surfaced to\n    external clients through a Model Context Protocol (MCP) endpoint. It ships no LLM transport or agent of its\n    own; forks build AI features and agent products (such as chat) on top, reusing the same tool registry.",
-    "count": 1,
-    "kind": "module"
-  },
-  {
     "name": "attachments",
     "description": "Endpoints for managing file based attachments (such as images, PDFs, and documents) linked to\n    entities such as organizations or users. Files are uploaded directly by the client, while the API handles\n    metadata registration, linking, access, and preview utilities.",
     "count": 6,
@@ -33,6 +21,12 @@
     "name": "labels",
     "description": "Endpoints for managing labels, which are lightweight, user defined tags assigned to tasks.\n    Labels help categorize and filter tasks (for example client, api, or backend). They exist at the\n    project level and are available to all members of the project.",
     "count": 5,
+    "kind": "module"
+  },
+  {
+    "name": "mcp",
+    "description": "Endpoints exposing the AI capability layer, which is a server-side tool registry surfaced to\n    external clients through a Model Context Protocol (MCP) endpoint. It ships no LLM transport or agent of its\n    own; forks build AI features and agent products (such as chat) on top, reusing the same tool registry.",
+    "count": 1,
     "kind": "module"
   },
   {

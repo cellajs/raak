@@ -167,18 +167,6 @@
       "kind": "entity"
     },
     {
-      "name": "agent",
-      "description": "Endpoints for managing AI agent chat sessions and messages, which are scoped to a workspace\n    (organization). Chat and message CRUD runs on the main API with sync support, while the streamed assistant\n    responses are handled separately by the AI worker. Built on top of the Cella AI capability layer.",
-      "parent": "app",
-      "kind": "module"
-    },
-    {
-      "name": "ai",
-      "description": "Endpoints exposing the AI capability layer, which is a server-side tool registry surfaced to\n    external clients through a Model Context Protocol (MCP) endpoint. It ships no LLM transport or agent of its\n    own; forks build AI features and agent products (such as chat) on top, reusing the same tool registry.",
-      "parent": "cella",
-      "kind": "module"
-    },
-    {
       "name": "attachments",
       "description": "Endpoints for managing file based attachments (such as images, PDFs, and documents) linked to\n    entities such as organizations or users. Files are uploaded directly by the client, while the API handles\n    metadata registration, linking, access, and preview utilities.",
       "parent": "cella",
@@ -200,6 +188,12 @@
       "name": "labels",
       "description": "Endpoints for managing labels, which are lightweight, user defined tags assigned to tasks.\n    Labels help categorize and filter tasks (for example client, api, or backend). They exist at the\n    project level and are available to all members of the project.",
       "parent": "app",
+      "kind": "module"
+    },
+    {
+      "name": "mcp",
+      "description": "Endpoints exposing the AI capability layer, which is a server-side tool registry surfaced to\n    external clients through a Model Context Protocol (MCP) endpoint. It ships no LLM transport or agent of its\n    own; forks build AI features and agent products (such as chat) on top, reusing the same tool registry.",
+      "parent": "cella",
       "kind": "module"
     },
     {
@@ -550,7 +544,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["task", "label", "attachment", "page", "chat", "message"]
+            "enum": ["task", "label", "attachment", "page"]
           },
           "keywords": {
             "type": "string"
@@ -714,7 +708,7 @@
           },
           "entityType": {
             "type": ["string", "null"],
-            "enum": ["task", "label", "attachment", "page", "chat", "message", null]
+            "enum": ["task", "label", "attachment", "page", null]
           },
           "resourceType": {
             "type": ["string", "null"],
@@ -881,18 +875,7 @@
           },
           "entityType": {
             "type": "string",
-            "enum": [
-              "user",
-              "organization",
-              "workspace",
-              "project",
-              "task",
-              "label",
-              "attachment",
-              "page",
-              "chat",
-              "message"
-            ]
+            "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment", "page"]
           },
           "logId": {
             "type": "string"
@@ -1850,12 +1833,6 @@
                       "project": {
                         "type": "number"
                       },
-                      "chat": {
-                        "type": "number"
-                      },
-                      "message": {
-                        "type": "number"
-                      },
                       "task": {
                         "type": "number"
                       },
@@ -1866,7 +1843,7 @@
                         "type": "number"
                       }
                     },
-                    "required": ["workspace", "project", "chat", "message", "task", "label", "attachment"]
+                    "required": ["workspace", "project", "task", "label", "attachment"]
                   }
                 },
                 "required": ["membership", "entities"]
@@ -1954,9 +1931,7 @@
                 "task": 47,
                 "label": 21,
                 "attachment": 451,
-                "page": 303,
-                "chat": 30,
-                "message": 439
+                "page": 303
               }
             }
           }
@@ -2522,17 +2497,16 @@
           "publicAt": null,
           "tenantId": "iein65",
           "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
-          "organizationId": "ba114933-4ba0-4957-8a4c-6237f3b08a14",
           "createdAt": "2024-02-04T01:33:42.885Z",
           "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
           "updatedAt": "2024-02-04T01:33:42.885Z",
           "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
           "deletedAt": null,
           "deletedBy": null,
-          "seq": 339,
+          "seq": 364,
           "stx": {
-            "mutationId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
-            "sourceId": "c0d11f39-3576-4dce-b1bd-9b59d920fefc",
+            "mutationId": "a1149334-ba09-457a-a4c6-237f3b08a140",
+            "sourceId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
             "fieldTimestamps": {}
           }
         },
@@ -2698,269 +2672,12 @@
                 "task": 65,
                 "label": 122,
                 "attachment": 365,
-                "page": 174,
-                "chat": 315,
-                "message": 435
+                "page": 174
               }
             }
           }
         },
         "x-tags": ["data", "workspaces", "app"]
-      },
-      "Chat": {
-        "type": "object",
-        "properties": {
-          "createdAt": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "entityType": {
-            "type": "string",
-            "enum": ["chat"]
-          },
-          "tenantId": {
-            "type": "string",
-            "maxLength": 24
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "updatedAt": {
-            "type": ["string", "null"]
-          },
-          "description": {
-            "type": ["string", "null"],
-            "maxLength": 1000000
-          },
-          "keywords": {
-            "type": "string",
-            "maxLength": 1000000
-          },
-          "deletedAt": {
-            "type": ["string", "null"]
-          },
-          "deletedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "seq": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "organizationId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "projectId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "userId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "model": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "archivedAt": {
-            "type": ["string", "null"]
-          },
-          "stx": {
-            "$ref": "#/components/schemas/StxBase"
-          }
-        },
-        "required": [
-          "createdAt",
-          "id",
-          "entityType",
-          "tenantId",
-          "name",
-          "updatedAt",
-          "description",
-          "keywords",
-          "deletedAt",
-          "deletedBy",
-          "seq",
-          "organizationId",
-          "projectId",
-          "workspaceId",
-          "userId",
-          "model",
-          "archivedAt",
-          "stx"
-        ],
-        "description": "An AI chat session scoped to a user within an organization.",
-        "x-tags": ["data", "agent", "app"]
-      },
-      "Message": {
-        "type": "object",
-        "properties": {
-          "createdAt": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "entityType": {
-            "type": "string",
-            "enum": ["message"]
-          },
-          "tenantId": {
-            "type": "string",
-            "maxLength": 24
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "updatedAt": {
-            "type": ["string", "null"]
-          },
-          "description": {
-            "type": ["string", "null"],
-            "maxLength": 1000000
-          },
-          "keywords": {
-            "type": "string",
-            "maxLength": 1000000
-          },
-          "deletedAt": {
-            "type": ["string", "null"]
-          },
-          "deletedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "seq": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "organizationId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "projectId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "chatId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "role": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "parts": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "object",
-                "additionalProperties": {}
-              },
-              {
-                "type": "array",
-                "items": {}
-              }
-            ]
-          },
-          "model": {
-            "type": ["string", "null"],
-            "maxLength": 255
-          },
-          "status": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "usage": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "object",
-                "additionalProperties": {}
-              },
-              {
-                "type": "array",
-                "items": {}
-              }
-            ]
-          },
-          "error": {
-            "type": ["string", "null"]
-          },
-          "stx": {
-            "$ref": "#/components/schemas/StxBase"
-          }
-        },
-        "required": [
-          "createdAt",
-          "id",
-          "entityType",
-          "tenantId",
-          "name",
-          "updatedAt",
-          "description",
-          "keywords",
-          "deletedAt",
-          "deletedBy",
-          "seq",
-          "organizationId",
-          "projectId",
-          "workspaceId",
-          "chatId",
-          "userId",
-          "role",
-          "parts",
-          "model",
-          "status",
-          "usage",
-          "error",
-          "stx"
-        ],
-        "description": "A single message within a chat session.",
-        "x-tags": ["data", "agent", "app"]
       },
       "Attachment": {
         "type": "object",
@@ -3341,17 +3058,16 @@
           "color": "#b4aef5",
           "tenantId": "nk9bo5",
           "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
-          "organizationId": "64735a9a-da05-48dd-b159-9cf1d4b09243",
           "createdAt": "2024-11-19T06:50:38.211Z",
           "createdBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
           "updatedAt": "2024-11-19T06:50:38.211Z",
           "updatedBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
           "deletedAt": null,
           "deletedBy": null,
-          "seq": 355,
+          "seq": 217,
           "stx": {
-            "mutationId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
-            "sourceId": "9cf3dafa-1a54-4554-81d1-61f06c1cbcec",
+            "mutationId": "4735a9ad-a058-4dd1-a599-cf1d4b09243f",
+            "sourceId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
             "fieldTimestamps": {}
           }
         },
@@ -7844,26 +7560,9 @@
                     },
                     "page": {
                       "type": "number"
-                    },
-                    "chat": {
-                      "type": "number"
-                    },
-                    "message": {
-                      "type": "number"
                     }
                   },
-                  "required": [
-                    "user",
-                    "organization",
-                    "workspace",
-                    "project",
-                    "task",
-                    "label",
-                    "attachment",
-                    "page",
-                    "chat",
-                    "message"
-                  ]
+                  "required": ["user", "organization", "workspace", "project", "task", "label", "attachment", "page"]
                 },
                 "example": {
                   "user": 150,
@@ -8010,12 +7709,6 @@
                                           "project": {
                                             "type": "number"
                                           },
-                                          "chat": {
-                                            "type": "number"
-                                          },
-                                          "message": {
-                                            "type": "number"
-                                          },
                                           "task": {
                                             "type": "number"
                                           },
@@ -8026,15 +7719,7 @@
                                             "type": "number"
                                           }
                                         },
-                                        "required": [
-                                          "workspace",
-                                          "project",
-                                          "chat",
-                                          "message",
-                                          "task",
-                                          "label",
-                                          "attachment"
-                                        ]
+                                        "required": ["workspace", "project", "task", "label", "attachment"]
                                       }
                                     },
                                     "required": ["membership", "entities"]
@@ -8099,9 +7784,7 @@
                                 "task": 47,
                                 "label": 21,
                                 "attachment": 451,
-                                "page": 303,
-                                "chat": 30,
-                                "message": 439
+                                "page": 303
                               }
                             }
                           }
@@ -8184,9 +7867,7 @@
                             "task": 491,
                             "label": 182,
                             "attachment": 106,
-                            "page": 232,
-                            "chat": 251,
-                            "message": 442
+                            "page": 232
                           }
                         }
                       }
@@ -8244,9 +7925,7 @@
                             "task": 122,
                             "label": 493,
                             "attachment": 383,
-                            "page": 162,
-                            "chat": 318,
-                            "message": 354
+                            "page": 162
                           }
                         }
                       }
@@ -8557,9 +8236,7 @@
                             "task": 423,
                             "label": 413,
                             "attachment": 435,
-                            "page": 298,
-                            "chat": 210,
-                            "message": 432
+                            "page": 298
                           }
                         }
                       }
@@ -8617,9 +8294,7 @@
                             "task": 153,
                             "label": 264,
                             "attachment": 40,
-                            "page": 116,
-                            "chat": 159,
-                            "message": 426
+                            "page": 116
                           }
                         }
                       }
@@ -8770,9 +8445,7 @@
                         "task": 47,
                         "label": 21,
                         "attachment": 451,
-                        "page": 303,
-                        "chat": 30,
-                        "message": 439
+                        "page": 303
                       }
                     }
                   }
@@ -8981,9 +8654,7 @@
                         "task": 47,
                         "label": 21,
                         "attachment": 451,
-                        "page": 303,
-                        "chat": 30,
-                        "message": 439
+                        "page": 303
                       }
                     }
                   }
@@ -10295,17 +9966,16 @@
                   "publicAt": null,
                   "tenantId": "iein65",
                   "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
-                  "organizationId": "ba114933-4ba0-4957-8a4c-6237f3b08a14",
                   "createdAt": "2024-02-04T01:33:42.885Z",
                   "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "updatedAt": "2024-02-04T01:33:42.885Z",
                   "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 339,
+                  "seq": 364,
                   "stx": {
-                    "mutationId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
-                    "sourceId": "c0d11f39-3576-4dce-b1bd-9b59d920fefc",
+                    "mutationId": "a1149334-ba09-457a-a4c6-237f3b08a140",
+                    "sourceId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
                     "fieldTimestamps": {}
                   }
                 }
@@ -10474,17 +10144,16 @@
                       "publicAt": null,
                       "tenantId": "htznsq",
                       "projectId": "48d47e03-630a-4d45-bbb8-38d5f36ef1ce",
-                      "organizationId": "1ae93f2d-3461-4a14-845d-1f4e25ff0294",
                       "createdAt": "2024-04-22T02:37:53.965Z",
                       "createdBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
                       "updatedAt": "2024-04-22T02:37:53.965Z",
                       "updatedBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 448,
+                      "seq": 36,
                       "stx": {
-                        "mutationId": "b6418b3b-08d9-43e4-bbc7-8afdcc382de9",
-                        "sourceId": "0d23b110-64da-4350-a5aa-279a8503f5dc",
+                        "mutationId": "ae93f2d3-461a-4144-b5d1-f4e25ff02941",
+                        "sourceId": "b6418b3b-08d9-43e4-bbc7-8afdcc382de9",
                         "fieldTimestamps": {}
                       }
                     },
@@ -10510,17 +10179,16 @@
                       "publicAt": null,
                       "tenantId": "9bsfwc",
                       "projectId": "ca01004b-f6f7-4300-ab3c-569921660e16",
-                      "organizationId": "f3e4aa72-5ebb-42ef-b208-aec0e083050a",
                       "createdAt": "2024-12-08T07:02:10.789Z",
                       "createdBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
                       "updatedAt": "2024-12-08T07:02:10.789Z",
                       "updatedBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 35,
+                      "seq": 499,
                       "stx": {
-                        "mutationId": "033030b1-d930-4a47-a64f-5f3286a0b1bc",
-                        "sourceId": "2c407398-d1c3-4f2c-b8e4-30199e9103d0",
+                        "mutationId": "3e4aa725-ebb2-4ef2-808a-ec0e083050ad",
+                        "sourceId": "033030b1-d930-4a47-a64f-5f3286a0b1bc",
                         "fieldTimestamps": {}
                       }
                     }
@@ -10897,9 +10565,7 @@
                             "task": 423,
                             "label": 413,
                             "attachment": 435,
-                            "page": 298,
-                            "chat": 210,
-                            "message": 432
+                            "page": 298
                           }
                         }
                       }
@@ -10947,9 +10613,7 @@
                             "task": 153,
                             "label": 264,
                             "attachment": 40,
-                            "page": 116,
-                            "chat": 159,
-                            "message": 426
+                            "page": 116
                           }
                         }
                       }
@@ -11216,688 +10880,6 @@
         }
       }
     },
-    "/{tenantId}/{organizationId}/chats": {
-      "post": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "createChat",
-        "tags": ["agent", "app", "product"],
-        "summary": "Create chat",
-        "description": "Creates a new chat session with an initial user message and returns the chat. The assistant response is streamed separately via the AI worker streamChat endpoint.",
-        "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "organizationId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "content": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 1000000
-                  },
-                  "projectId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "workspaceId": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                },
-                "required": ["content"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Chat created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Chat"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      },
-      "get": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "getChats",
-        "tags": ["agent", "app", "product"],
-        "summary": "Get chats",
-        "description": "Returns a paginated list of chat sessions for the current user.",
-        "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "organizationId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "required": false,
-            "name": "q",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["createdAt", "updatedAt"],
-              "default": "createdAt"
-            },
-            "required": false,
-            "name": "sort",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["asc", "desc"],
-              "default": "desc"
-            },
-            "required": false,
-            "name": "order",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "name": "offset",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "name": "seqCursor",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["true", "false"],
-              "default": "false"
-            },
-            "required": false,
-            "name": "archived",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "projectId",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "workspaceId",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Chats",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Chat"
-                      }
-                    },
-                    "total": {
-                      "type": "number"
-                    }
-                  },
-                  "required": ["items", "total"]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      },
-      "delete": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "deleteChats",
-        "tags": ["agent", "app", "product"],
-        "summary": "Delete chats",
-        "description": "Deletes one or more chat sessions and their messages.",
-        "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "organizationId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "ids": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "maxItems": 50
-                  }
-                },
-                "required": ["ids"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "prefixItems": []
-                    },
-                    "rejectedIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "description": "Identifiers of items that could not be processed"
-                    },
-                    "rejectionReasons": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "description": "Map of reason code to rejected item IDs"
-                    }
-                  },
-                  "required": ["data", "rejectedIds"]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
-    "/{tenantId}/{organizationId}/chats/{id}/messages": {
-      "get": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "getMessages",
-        "tags": ["agent", "app", "product"],
-        "summary": "Get messages",
-        "description": "Returns a paginated list of messages for a chat session.",
-        "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "organizationId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "required": false,
-            "name": "q",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["createdAt"],
-              "default": "createdAt"
-            },
-            "required": false,
-            "name": "sort",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["asc", "desc"],
-              "default": "asc"
-            },
-            "required": false,
-            "name": "order",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "name": "offset",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "name": "seqCursor",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Messages",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Message"
-                      }
-                    },
-                    "total": {
-                      "type": "number"
-                    }
-                  },
-                  "required": ["items", "total"]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      },
-      "post": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "sendMessage",
-        "tags": ["agent", "app", "product"],
-        "summary": "Send message",
-        "description": "Persists a user message and returns it. The assistant response is streamed separately via the AI worker streamChat endpoint.",
-        "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "organizationId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "content": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 1000000
-                  }
-                },
-                "required": ["content"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Message created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Message"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
-    "/{tenantId}/{organizationId}/chats/{id}": {
-      "put": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "updateChat",
-        "tags": ["agent", "app", "product"],
-        "summary": "Update chat",
-        "description": "Updates a chat session (rename or archive).",
-        "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "organizationId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "archived": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Chat updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Chat"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
     "/{tenantId}/{organizationId}/mcp": {
       "post": {
         "security": [
@@ -11905,9 +10887,9 @@
             "cookieAuth": []
           }
         ],
-        "x-service": "ai",
+        "x-service": "mcp",
         "operationId": "handleMcp",
-        "tags": ["ai", "cella"],
+        "tags": ["mcp", "cella"],
         "summary": "MCP endpoint",
         "description": "Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
@@ -13942,8 +12924,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["tasks", "app", "product"],
         "operationId": "createTasks",
+        "tags": ["tasks", "app", "product"],
         "summary": "Create tasks",
         "description": "Creates one or more tasks within a project.",
         "x-tool": {
@@ -13953,7 +12935,7 @@
           "category": "tasks"
         },
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -14098,17 +13080,16 @@
                       "publicAt": "2024-11-02T17:45:55.874Z",
                       "tenantId": "m7v2n0",
                       "projectId": "59eb59fa-da05-4421-8137-456cc6ee256c",
-                      "organizationId": "c2d5a119-57ca-4425-9bc1-ddcecd065676",
                       "createdAt": "2024-04-18T21:12:59.543Z",
                       "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "updatedAt": "2024-04-18T21:12:59.543Z",
                       "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 378,
+                      "seq": 399,
                       "stx": {
-                        "mutationId": "7644024d-1a2d-4f88-ac75-bedf7a5e9543",
-                        "sourceId": "04d8b648-77e7-4af9-83a5-51398c6e0a54",
+                        "mutationId": "2d5a1195-7ca4-425b-bc1d-dcecd0656766",
+                        "sourceId": "7644024d-1a2d-4f88-ac75-bedf7a5e9543",
                         "fieldTimestamps": {}
                       }
                     },
@@ -14134,17 +13115,16 @@
                       "publicAt": "2024-01-02T20:25:49.165Z",
                       "tenantId": "ozr0yj",
                       "projectId": "565ad527-c313-4a69-8d63-7708656d9331",
-                      "organizationId": "e103be7d-699b-40a6-9b4d-210ffbada306",
                       "createdAt": "2024-02-24T16:36:46.247Z",
                       "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "updatedAt": "2024-02-24T16:36:46.247Z",
                       "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 459,
+                      "seq": 456,
                       "stx": {
-                        "mutationId": "a097b106-7735-4b3b-9434-d64d94bd33c3",
-                        "sourceId": "93f8f02f-435e-4525-8b66-09c341083518",
+                        "mutationId": "103be7d6-99b0-4a6b-b4d2-10ffbada3066",
+                        "sourceId": "a097b106-7735-4b3b-9434-d64d94bd33c3",
                         "fieldTimestamps": {}
                       }
                     }
@@ -14211,17 +13191,16 @@
                       "publicAt": "2024-11-02T17:45:55.874Z",
                       "tenantId": "m7v2n0",
                       "projectId": "59eb59fa-da05-4421-8137-456cc6ee256c",
-                      "organizationId": "c2d5a119-57ca-4425-9bc1-ddcecd065676",
                       "createdAt": "2024-04-18T21:12:59.543Z",
                       "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "updatedAt": "2024-04-18T21:12:59.543Z",
                       "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 378,
+                      "seq": 399,
                       "stx": {
-                        "mutationId": "7644024d-1a2d-4f88-ac75-bedf7a5e9543",
-                        "sourceId": "04d8b648-77e7-4af9-83a5-51398c6e0a54",
+                        "mutationId": "2d5a1195-7ca4-425b-bc1d-dcecd0656766",
+                        "sourceId": "7644024d-1a2d-4f88-ac75-bedf7a5e9543",
                         "fieldTimestamps": {}
                       }
                     },
@@ -14247,17 +13226,16 @@
                       "publicAt": "2024-01-02T20:25:49.165Z",
                       "tenantId": "ozr0yj",
                       "projectId": "565ad527-c313-4a69-8d63-7708656d9331",
-                      "organizationId": "e103be7d-699b-40a6-9b4d-210ffbada306",
                       "createdAt": "2024-02-24T16:36:46.247Z",
                       "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "updatedAt": "2024-02-24T16:36:46.247Z",
                       "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 459,
+                      "seq": 456,
                       "stx": {
-                        "mutationId": "a097b106-7735-4b3b-9434-d64d94bd33c3",
-                        "sourceId": "93f8f02f-435e-4525-8b66-09c341083518",
+                        "mutationId": "103be7d6-99b0-4a6b-b4d2-10ffbada3066",
+                        "sourceId": "a097b106-7735-4b3b-9434-d64d94bd33c3",
                         "fieldTimestamps": {}
                       }
                     }
@@ -14293,8 +13271,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["tasks", "app", "product"],
         "operationId": "getTasks",
+        "tags": ["tasks", "app", "product"],
         "summary": "Get list of tasks",
         "description": "Returns a list of tasks within one or more specified projects.",
         "x-tool": {
@@ -14464,17 +13442,16 @@
                       "publicAt": null,
                       "tenantId": "htznsq",
                       "projectId": "48d47e03-630a-4d45-bbb8-38d5f36ef1ce",
-                      "organizationId": "1ae93f2d-3461-4a14-845d-1f4e25ff0294",
                       "createdAt": "2024-04-22T02:37:53.965Z",
                       "createdBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
                       "updatedAt": "2024-04-22T02:37:53.965Z",
                       "updatedBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 448,
+                      "seq": 36,
                       "stx": {
-                        "mutationId": "b6418b3b-08d9-43e4-bbc7-8afdcc382de9",
-                        "sourceId": "0d23b110-64da-4350-a5aa-279a8503f5dc",
+                        "mutationId": "ae93f2d3-461a-4144-b5d1-f4e25ff02941",
+                        "sourceId": "b6418b3b-08d9-43e4-bbc7-8afdcc382de9",
                         "fieldTimestamps": {}
                       }
                     },
@@ -14500,17 +13477,16 @@
                       "publicAt": null,
                       "tenantId": "9bsfwc",
                       "projectId": "ca01004b-f6f7-4300-ab3c-569921660e16",
-                      "organizationId": "f3e4aa72-5ebb-42ef-b208-aec0e083050a",
                       "createdAt": "2024-12-08T07:02:10.789Z",
                       "createdBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
                       "updatedAt": "2024-12-08T07:02:10.789Z",
                       "updatedBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 35,
+                      "seq": 499,
                       "stx": {
-                        "mutationId": "033030b1-d930-4a47-a64f-5f3286a0b1bc",
-                        "sourceId": "2c407398-d1c3-4f2c-b8e4-30199e9103d0",
+                        "mutationId": "3e4aa725-ebb2-4ef2-808a-ec0e083050ad",
+                        "sourceId": "033030b1-d930-4a47-a64f-5f3286a0b1bc",
                         "fieldTimestamps": {}
                       }
                     }
@@ -14546,12 +13522,12 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["tasks", "app", "product"],
         "operationId": "deleteTasks",
+        "tags": ["tasks", "app", "product"],
         "summary": "Delete tasks",
         "description": "Deletes one or more tasks by ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -14668,8 +13644,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["tasks", "app", "product"],
         "operationId": "getTask",
+        "tags": ["tasks", "app", "product"],
         "summary": "Get task",
         "description": "Retrieves a task by its ID.",
         "x-tool": {
@@ -14740,17 +13716,16 @@
                   "publicAt": null,
                   "tenantId": "iein65",
                   "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
-                  "organizationId": "ba114933-4ba0-4957-8a4c-6237f3b08a14",
                   "createdAt": "2024-02-04T01:33:42.885Z",
                   "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "updatedAt": "2024-02-04T01:33:42.885Z",
                   "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 339,
+                  "seq": 364,
                   "stx": {
-                    "mutationId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
-                    "sourceId": "c0d11f39-3576-4dce-b1bd-9b59d920fefc",
+                    "mutationId": "a1149334-ba09-457a-a4c6-237f3b08a140",
+                    "sourceId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
                     "fieldTimestamps": {}
                   }
                 }
@@ -14783,8 +13758,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["tasks", "app", "product"],
         "operationId": "updateTask",
+        "tags": ["tasks", "app", "product"],
         "summary": "Update task",
         "description": "Updates a task by ID.",
         "x-tool": {
@@ -14794,7 +13769,7 @@
           "category": "tasks"
         },
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -14953,17 +13928,16 @@
                   "publicAt": null,
                   "tenantId": "iein65",
                   "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
-                  "organizationId": "ba114933-4ba0-4957-8a4c-6237f3b08a14",
                   "createdAt": "2024-02-04T01:33:42.885Z",
                   "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "updatedAt": "2024-02-04T01:33:42.885Z",
                   "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 339,
+                  "seq": 364,
                   "stx": {
-                    "mutationId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
-                    "sourceId": "c0d11f39-3576-4dce-b1bd-9b59d920fefc",
+                    "mutationId": "a1149334-ba09-457a-a4c6-237f3b08a140",
+                    "sourceId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
                     "fieldTimestamps": {}
                   }
                 }
@@ -14998,12 +13972,12 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["labels", "app", "product"],
         "operationId": "createLabels",
+        "tags": ["labels", "app", "product"],
         "summary": "Create labels",
         "description": "Creates one or more labels within a project.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -15107,17 +14081,16 @@
                       "color": "#f3c9f4",
                       "tenantId": "rauzy6",
                       "projectId": "fe77a8fb-8a8a-444c-841b-543b4862befa",
-                      "organizationId": "a6172297-8106-421a-a44b-e44424ddc25f",
                       "createdAt": "2024-04-18T21:12:59.543Z",
                       "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "updatedAt": "2024-04-18T21:12:59.543Z",
                       "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 73,
+                      "seq": 325,
                       "stx": {
-                        "mutationId": "c138ca88-7751-4adb-adbf-08b9af3e691e",
-                        "sourceId": "12d93d0a-059e-4b59-bfad-a05421137456",
+                        "mutationId": "61722978-1062-41a4-84be-44424ddc25f8",
+                        "sourceId": "c138ca88-7751-4adb-adbf-08b9af3e691e",
                         "fieldTimestamps": {}
                       }
                     },
@@ -15130,17 +14103,16 @@
                       "color": "#ee65b4",
                       "tenantId": "r85nah",
                       "projectId": "230f592f-25ef-4bf3-8260-196c17422784",
-                      "organizationId": "ffc3e08d-b54e-4fdd-945f-10b01ab3092c",
                       "createdAt": "2024-02-24T16:36:46.247Z",
                       "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "updatedAt": "2024-02-24T16:36:46.247Z",
                       "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 498,
+                      "seq": 484,
                       "stx": {
-                        "mutationId": "d1fb31ba-52c2-4db0-b9b4-7a24f941b71c",
-                        "sourceId": "76d330af-c0f8-4565-9ad5-27c313a69d63",
+                        "mutationId": "fc3e08db-54ef-4dd4-b5f1-0b01ab3092c5",
+                        "sourceId": "d1fb31ba-52c2-4db0-b9b4-7a24f941b71c",
                         "fieldTimestamps": {}
                       }
                     }
@@ -15194,17 +14166,16 @@
                       "color": "#f3c9f4",
                       "tenantId": "rauzy6",
                       "projectId": "fe77a8fb-8a8a-444c-841b-543b4862befa",
-                      "organizationId": "a6172297-8106-421a-a44b-e44424ddc25f",
                       "createdAt": "2024-04-18T21:12:59.543Z",
                       "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "updatedAt": "2024-04-18T21:12:59.543Z",
                       "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 73,
+                      "seq": 325,
                       "stx": {
-                        "mutationId": "c138ca88-7751-4adb-adbf-08b9af3e691e",
-                        "sourceId": "12d93d0a-059e-4b59-bfad-a05421137456",
+                        "mutationId": "61722978-1062-41a4-84be-44424ddc25f8",
+                        "sourceId": "c138ca88-7751-4adb-adbf-08b9af3e691e",
                         "fieldTimestamps": {}
                       }
                     },
@@ -15217,17 +14188,16 @@
                       "color": "#ee65b4",
                       "tenantId": "r85nah",
                       "projectId": "230f592f-25ef-4bf3-8260-196c17422784",
-                      "organizationId": "ffc3e08d-b54e-4fdd-945f-10b01ab3092c",
                       "createdAt": "2024-02-24T16:36:46.247Z",
                       "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "updatedAt": "2024-02-24T16:36:46.247Z",
                       "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 498,
+                      "seq": 484,
                       "stx": {
-                        "mutationId": "d1fb31ba-52c2-4db0-b9b4-7a24f941b71c",
-                        "sourceId": "76d330af-c0f8-4565-9ad5-27c313a69d63",
+                        "mutationId": "fc3e08db-54ef-4dd4-b5f1-0b01ab3092c5",
+                        "sourceId": "d1fb31ba-52c2-4db0-b9b4-7a24f941b71c",
                         "fieldTimestamps": {}
                       }
                     }
@@ -15263,8 +14233,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["labels", "app", "product"],
         "operationId": "getLabels",
+        "tags": ["labels", "app", "product"],
         "summary": "Get list of labels",
         "description": "Returns a list of labels for a given project or workspace.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
@@ -15392,17 +14362,16 @@
                       "color": "#7d3fbd",
                       "tenantId": "eg2q4g",
                       "projectId": "b41ee456-f6f2-49b7-947a-897a617f1449",
-                      "organizationId": "605cc9f5-21e3-4f10-90f6-db238d10af2a",
                       "createdAt": "2024-11-21T01:19:53.533Z",
                       "createdBy": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
                       "updatedAt": "2024-11-21T01:19:53.533Z",
                       "updatedBy": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 372,
+                      "seq": 204,
                       "stx": {
-                        "mutationId": "700b63f2-0bc2-495d-b299-66a04b550926",
-                        "sourceId": "5ef73b6c-996a-420e-abb3-5a6c4c4758ed",
+                        "mutationId": "05cc9f52-1e3f-4100-af6d-b238d10af2a4",
+                        "sourceId": "700b63f2-0bc2-495d-b299-66a04b550926",
                         "fieldTimestamps": {}
                       }
                     },
@@ -15415,17 +14384,16 @@
                       "color": "#fb24bf",
                       "tenantId": "iavgc6",
                       "projectId": "3c2ac382-7d82-4be1-b935-e9d906125ba7",
-                      "organizationId": "f4de5ede-8ccf-4ef4-a53b-f074c2ef77d5",
                       "createdAt": "2024-10-29T04:35:17.725Z",
                       "createdBy": "772a771f-c150-465e-9635-46594859fc3d",
                       "updatedAt": "2024-10-29T04:35:17.725Z",
                       "updatedBy": "772a771f-c150-465e-9635-46594859fc3d",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 13,
+                      "seq": 475,
                       "stx": {
-                        "mutationId": "cc1edd90-17e5-4b49-afb1-c3cc0f3df844",
-                        "sourceId": "a148ac7c-8981-4cd7-93a7-bfe99126641d",
+                        "mutationId": "4de5ede8-ccfe-4f45-83bf-074c2ef77d58",
+                        "sourceId": "cc1edd90-17e5-4b49-afb1-c3cc0f3df844",
                         "fieldTimestamps": {}
                       }
                     }
@@ -15461,12 +14429,12 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["labels", "app", "product"],
         "operationId": "deleteLabels",
+        "tags": ["labels", "app", "product"],
         "summary": "Delete labels",
         "description": "Deletes one or more labels by ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -15583,8 +14551,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["labels", "app", "product"],
         "operationId": "getLabel",
+        "tags": ["labels", "app", "product"],
         "summary": "Get label",
         "description": "Retrieves a label by its ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
@@ -15636,17 +14604,16 @@
                   "color": "#b4aef5",
                   "tenantId": "nk9bo5",
                   "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
-                  "organizationId": "64735a9a-da05-48dd-b159-9cf1d4b09243",
                   "createdAt": "2024-11-19T06:50:38.211Z",
                   "createdBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
                   "updatedAt": "2024-11-19T06:50:38.211Z",
                   "updatedBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 355,
+                  "seq": 217,
                   "stx": {
-                    "mutationId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
-                    "sourceId": "9cf3dafa-1a54-4554-81d1-61f06c1cbcec",
+                    "mutationId": "4735a9ad-a058-4dd1-a599-cf1d4b09243f",
+                    "sourceId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
                     "fieldTimestamps": {}
                   }
                 }
@@ -15679,12 +14646,12 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["labels", "app", "product"],
         "operationId": "updateLabel",
+        "tags": ["labels", "app", "product"],
         "summary": "Update label",
         "description": "Updates a label by ID.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -15760,17 +14727,16 @@
                   "color": "#b4aef5",
                   "tenantId": "nk9bo5",
                   "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
-                  "organizationId": "64735a9a-da05-48dd-b159-9cf1d4b09243",
                   "createdAt": "2024-11-19T06:50:38.211Z",
                   "createdBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
                   "updatedAt": "2024-11-19T06:50:38.211Z",
                   "updatedBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 355,
+                  "seq": 217,
                   "stx": {
-                    "mutationId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
-                    "sourceId": "9cf3dafa-1a54-4554-81d1-61f06c1cbcec",
+                    "mutationId": "4735a9ad-a058-4dd1-a599-cf1d4b09243f",
+                    "sourceId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
                     "fieldTimestamps": {}
                   }
                 }
@@ -15851,7 +14817,7 @@
                   },
                   "entityType": {
                     "type": "string",
-                    "enum": ["task", "label", "attachment", "page", "chat", "message"],
+                    "enum": ["task", "label", "attachment", "page"],
                     "description": "Entity type for all IDs in this batch"
                   }
                 },
@@ -16068,9 +15034,7 @@
                                 "task": 65,
                                 "label": 122,
                                 "attachment": 365,
-                                "page": 174,
-                                "chat": 315,
-                                "message": 435
+                                "page": 174
                               }
                             }
                           }
@@ -16143,9 +15107,7 @@
                             "task": 491,
                             "label": 182,
                             "attachment": 106,
-                            "page": 232,
-                            "chat": 251,
-                            "message": 442
+                            "page": 232
                           }
                         }
                       }
@@ -16403,9 +15365,7 @@
                         "task": 65,
                         "label": 122,
                         "attachment": 365,
-                        "page": 174,
-                        "chat": 315,
-                        "message": 435
+                        "page": 174
                       }
                     }
                   }
@@ -16543,9 +15503,7 @@
                         "task": 65,
                         "label": 122,
                         "attachment": 365,
-                        "page": 174,
-                        "chat": 315,
-                        "message": 435
+                        "page": 174
                       }
                     }
                   }

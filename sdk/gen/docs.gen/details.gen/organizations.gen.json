@@ -206,8 +206,6 @@
                             "properties": {
                               "workspace": { "type": "number", "required": true },
                               "project": { "type": "number", "required": true },
-                              "chat": { "type": "number", "required": true },
-                              "message": { "type": "number", "required": true },
                               "task": { "type": "number", "required": true },
                               "label": { "type": "number", "required": true },
                               "attachment": { "type": "number", "required": true }
@@ -291,9 +289,7 @@
                     "task": 491,
                     "label": 182,
                     "attachment": 106,
-                    "page": 232,
-                    "chat": 251,
-                    "message": 442
+                    "page": 232
                   }
                 }
               }
@@ -351,9 +347,7 @@
                     "task": 122,
                     "label": 493,
                     "attachment": 383,
-                    "page": 162,
-                    "chat": 318,
-                    "message": 354
+                    "page": 162
                   }
                 }
               }
@@ -740,8 +734,6 @@
                             "properties": {
                               "workspace": { "type": "number", "required": true },
                               "project": { "type": "number", "required": true },
-                              "chat": { "type": "number", "required": true },
-                              "message": { "type": "number", "required": true },
                               "task": { "type": "number", "required": true },
                               "label": { "type": "number", "required": true },
                               "attachment": { "type": "number", "required": true }
@@ -814,9 +806,7 @@
                     "task": 423,
                     "label": 413,
                     "attachment": 435,
-                    "page": 298,
-                    "chat": 210,
-                    "message": 432
+                    "page": 298
                   }
                 }
               }
@@ -874,9 +864,7 @@
                     "task": 153,
                     "label": 264,
                     "attachment": 40,
-                    "page": 116,
-                    "chat": 159,
-                    "message": 426
+                    "page": 116
                   }
                 }
               }
@@ -1163,8 +1151,6 @@
                       "properties": {
                         "workspace": { "type": "number", "required": true },
                         "project": { "type": "number", "required": true },
-                        "chat": { "type": "number", "required": true },
-                        "message": { "type": "number", "required": true },
                         "task": { "type": "number", "required": true },
                         "label": { "type": "number", "required": true },
                         "attachment": { "type": "number", "required": true }
@@ -1231,9 +1217,7 @@
                 "task": 47,
                 "label": 21,
                 "attachment": 451,
-                "page": 303,
-                "chat": 30,
-                "message": 439
+                "page": 303
               }
             }
           }
@@ -1502,8 +1486,6 @@
                       "properties": {
                         "workspace": { "type": "number", "required": true },
                         "project": { "type": "number", "required": true },
-                        "chat": { "type": "number", "required": true },
-                        "message": { "type": "number", "required": true },
                         "task": { "type": "number", "required": true },
                         "label": { "type": "number", "required": true },
                         "attachment": { "type": "number", "required": true }
@@ -1570,9 +1552,7 @@
                 "task": 47,
                 "label": 21,
                 "attachment": 451,
-                "page": 303,
-                "chat": 30,
-                "message": 439
+                "page": 303
               }
             }
           }

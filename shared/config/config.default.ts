@@ -10,13 +10,13 @@ export const config = {
    ******************************************************************************/
 
   /** All entity types in the app - must match hierarchy.allTypes. */
-  entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment', 'page', 'chat', 'message'] as const,
+  entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment', 'page'] as const,
 
   /** Context entities with memberships - must match hierarchy.contextTypes. */
   contextEntityTypes: ['organization', 'workspace', 'project'] as const,
 
   /** Product/content entities - must match hierarchy.productTypes. */
-  productEntityTypes: ['task', 'label', 'attachment', 'page', 'chat', 'message'] as const,
+  productEntityTypes: ['task', 'label', 'attachment', 'page'] as const,
 
   /**
    * Product entity types tracked for seen/unseen counts.
@@ -35,8 +35,6 @@ export const config = {
     label: 'labelId',
     attachment: 'attachmentId',
     page: 'pageId',
-    chat: 'chatId',
-    message: 'messageId',
   } as const,
 
   /** Available CRUD actions for permission checks */
@@ -114,7 +112,7 @@ export const config = {
   backendUrl: 'https://api.raak.dev',
   backendAuthUrl: 'https://api.raak.dev/auth',
   yjsUrl: 'https://yjs.raak.dev',
-  aiUrl: 'https://ai.raak.dev',
+  mcpUrl: 'https://mcp.raak.dev',
 
   /**
    * Deployable services. Each entry gates a service (and/or its route surface)
@@ -128,7 +126,7 @@ export const config = {
     backend: { enabled: true as boolean, publicUrl: 'https://api.raak.dev' },
     cdc: { enabled: true as boolean },
     yjs: { enabled: true as boolean, publicUrl: 'https://yjs.raak.dev' },
-    ai: { enabled: true as boolean, publicUrl: 'https://ai.raak.dev' },
+    mcp: { enabled: true as boolean, publicUrl: 'https://mcp.raak.dev' },
   },
 
   // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
@@ -252,8 +250,6 @@ export const config = {
     // TODO, tasksTable looks lke hack
     tasksTable: 80,
     pendingMemberships: 20,
-    chats: 50,
-    messages: 200,
   },
 
   /** Max JSON body size in bytes */

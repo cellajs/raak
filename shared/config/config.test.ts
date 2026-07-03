@@ -15,12 +15,12 @@ export default {
   domain: '',
 
   services: {
-    ai: { enabled: false },
+    mcp: { enabled: false },
   },
 
   frontendUrl: development.frontendUrl,
   backendUrl: development.backendUrl,
   backendAuthUrl: development.backendAuthUrl,
   yjsUrl: development.yjsUrl,
-  aiUrl: development.aiUrl,
+  mcpUrl: development.mcpUrl,
 } satisfies DeepPartial<typeof _default>;

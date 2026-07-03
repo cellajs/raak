@@ -205,9 +205,7 @@
                     "task": 423,
                     "label": 413,
                     "attachment": 435,
-                    "page": 298,
-                    "chat": 210,
-                    "message": 432
+                    "page": 298
                   }
                 }
               }
@@ -255,9 +253,7 @@
                     "task": 153,
                     "label": 264,
                     "attachment": 40,
-                    "page": 116,
-                    "chat": 159,
-                    "message": 426
+                    "page": 116
                   }
                 }
               }
@@ -558,9 +554,7 @@
                     "task": 491,
                     "label": 182,
                     "attachment": 106,
-                    "page": 232,
-                    "chat": 251,
-                    "message": 442
+                    "page": 232
                   }
                 }
               }
@@ -929,9 +923,7 @@
                 "task": 65,
                 "label": 122,
                 "attachment": 365,
-                "page": 174,
-                "chat": 315,
-                "message": 435
+                "page": 174
               }
             }
           }
@@ -1193,9 +1185,7 @@
                 "task": 65,
                 "label": 122,
                 "attachment": 365,
-                "page": 174,
-                "chat": 315,
-                "message": 435
+                "page": 174
               }
             }
           }

@@ -1809,155 +1809,11 @@
     "entityType": "project"
   },
   {
-    "id": "getChats",
-    "hash": "tag/agent/GET/{tenantId}/{organizationId}/chats",
-    "method": "get",
-    "path": "/{tenantId}/{organizationId}/chats",
-    "tags": ["agent"],
-    "summary": "Get chats",
-    "description": "Returns a paginated list of chat sessions for the current user.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["agent"],
-      "owner": ["app"],
-      "entity": ["product"]
-    }
-  },
-  {
-    "id": "createChat",
-    "hash": "tag/agent/POST/{tenantId}/{organizationId}/chats",
-    "method": "post",
-    "path": "/{tenantId}/{organizationId}/chats",
-    "tags": ["agent"],
-    "summary": "Create chat",
-    "description": "Creates a new chat session with an initial user message and returns the chat. The assistant response is streamed separately via the AI worker streamChat endpoint.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["agent"],
-      "owner": ["app"],
-      "entity": ["product"]
-    }
-  },
-  {
-    "id": "deleteChats",
-    "hash": "tag/agent/DELETE/{tenantId}/{organizationId}/chats",
-    "method": "delete",
-    "path": "/{tenantId}/{organizationId}/chats",
-    "tags": ["agent"],
-    "summary": "Delete chats",
-    "description": "Deletes one or more chat sessions and their messages.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["agent"],
-      "owner": ["app"],
-      "entity": ["product"]
-    }
-  },
-  {
-    "id": "getMessages",
-    "hash": "tag/agent/GET/{tenantId}/{organizationId}/chats/{id}/messages",
-    "method": "get",
-    "path": "/{tenantId}/{organizationId}/chats/{id}/messages",
-    "tags": ["agent"],
-    "summary": "Get messages",
-    "description": "Returns a paginated list of messages for a chat session.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["agent"],
-      "owner": ["app"],
-      "entity": ["product"]
-    }
-  },
-  {
-    "id": "sendMessage",
-    "hash": "tag/agent/POST/{tenantId}/{organizationId}/chats/{id}/messages",
-    "method": "post",
-    "path": "/{tenantId}/{organizationId}/chats/{id}/messages",
-    "tags": ["agent"],
-    "summary": "Send message",
-    "description": "Persists a user message and returns it. The assistant response is streamed separately via the AI worker streamChat endpoint.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["agent"],
-      "owner": ["app"],
-      "entity": ["product"]
-    }
-  },
-  {
-    "id": "updateChat",
-    "hash": "tag/agent/PUT/{tenantId}/{organizationId}/chats/{id}",
-    "method": "put",
-    "path": "/{tenantId}/{organizationId}/chats/{id}",
-    "tags": ["agent"],
-    "summary": "Update chat",
-    "description": "Updates a chat session (rename or archive).",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["agent"],
-      "owner": ["app"],
-      "entity": ["product"]
-    }
-  },
-  {
     "id": "handleMcp",
-    "hash": "tag/ai/POST/{tenantId}/{organizationId}/mcp",
+    "hash": "tag/mcp/POST/{tenantId}/{organizationId}/mcp",
     "method": "post",
     "path": "/{tenantId}/{organizationId}/mcp",
-    "tags": ["ai"],
+    "tags": ["mcp"],
     "summary": "MCP endpoint",
     "description": "Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).",
     "deprecated": false,
@@ -1971,7 +1827,7 @@
       "xCache": []
     },
     "tagsByKind": {
-      "module": ["ai"],
+      "module": ["mcp"],
       "owner": ["cella"]
     }
   },
@@ -2303,7 +2159,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2328,7 +2184,7 @@
     "hasExample": false,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2378,7 +2234,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2428,7 +2284,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2453,7 +2309,7 @@
     "hasExample": false,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2503,7 +2359,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {

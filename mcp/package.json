@@ -1,0 +1,29 @@
+{
+  "name": "mcp",
+  "version": "0.0.1",
+  "description": "Standalone MCP worker exposing the server tool registry to external clients",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node dist/main.js",
+    "start:dev": "tsx src/mcp-worker.ts",
+    "dev": "cross-env NODE_ENV=development tsx --watch-path=../backend/src src/mcp-worker.ts",
+    "build": "cross-env NODE_ENV=production tsup",
+    "ts": "cd .. && tsgo -p mcp/tsconfig.json --pretty",
+    "tsperf": "rm -rf tsconfig.tsbuildinfo && tsgo --noEmit --extendedDiagnostics"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.13",
+    "@typescript/native-preview": "7.0.0-dev.20260701.1",
+    "cross-env": "^10.1.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

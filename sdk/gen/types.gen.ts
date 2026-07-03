@@ -63,7 +63,7 @@ export type ProductEntityBase = {
     ({
       [key: string]: unknown;
     } | null);
-  entityType: 'task' | 'label' | 'attachment' | 'page' | 'chat' | 'message';
+  entityType: 'task' | 'label' | 'attachment' | 'page';
   keywords: string;
 };
 
@@ -110,7 +110,7 @@ export type StxBase = {
  */
 export type StreamNotification = {
   action: 'create' | 'update' | 'delete';
-  entityType: 'task' | 'label' | 'attachment' | 'page' | 'chat' | 'message' | null;
+  entityType: 'task' | 'label' | 'attachment' | 'page' | null;
   resourceType: 'request' | 'membership' | 'inactive_membership' | 'tenant' | null;
   subjectId: string | null;
   organizationId: string | null;
@@ -182,17 +182,7 @@ export type ApiError = {
   type: string;
   status: number;
   severity: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
-  entityType?:
-    | 'user'
-    | 'organization'
-    | 'workspace'
-    | 'project'
-    | 'task'
-    | 'label'
-    | 'attachment'
-    | 'page'
-    | 'chat'
-    | 'message';
+  entityType?: 'user' | 'organization' | 'workspace' | 'project' | 'task' | 'label' | 'attachment' | 'page';
   logId?: string;
   path?: string;
   method?: string;
@@ -444,8 +434,6 @@ export type Organization = {
       entities: {
         workspace: number;
         project: number;
-        chat: number;
-        message: number;
         task: number;
         label: number;
         attachment: number;
@@ -625,75 +613,6 @@ export type Workspace = {
       };
     };
   };
-};
-
-/**
- * An AI chat session scoped to a user within an organization.
- */
-export type Chat = {
-  createdAt: string;
-  id: string;
-  entityType: 'chat';
-  tenantId: string;
-  name: string;
-  updatedAt: string | null;
-  description: string | null;
-  keywords: string;
-  deletedAt: string | null;
-  deletedBy: string | null;
-  seq: number;
-  organizationId: string;
-  projectId: string | null;
-  workspaceId: string | null;
-  userId: string | null;
-  model: string;
-  archivedAt: string | null;
-  stx: StxBase;
-};
-
-/**
- * A single message within a chat session.
- */
-export type Message = {
-  createdAt: string;
-  id: string;
-  entityType: 'message';
-  tenantId: string;
-  name: string;
-  updatedAt: string | null;
-  description: string | null;
-  keywords: string;
-  deletedAt: string | null;
-  deletedBy: string | null;
-  seq: number;
-  organizationId: string;
-  projectId: string | null;
-  workspaceId: string | null;
-  chatId: string;
-  userId: string | null;
-  role: string;
-  parts:
-    | string
-    | number
-    | boolean
-    | null
-    | {
-        [key: string]: unknown;
-      }
-    | Array<unknown>;
-  model: string | null;
-  status: string;
-  usage:
-    | string
-    | number
-    | boolean
-    | null
-    | {
-        [key: string]: unknown;
-      }
-    | Array<unknown>;
-  error: string | null;
-  stx: StxBase;
 };
 
 /**
@@ -3717,8 +3636,6 @@ export type GetPublicCountsResponses = {
     label: number;
     attachment: number;
     page: number;
-    chat: number;
-    message: number;
   };
 };
 
@@ -3850,8 +3767,6 @@ export type CreateOrganizationsResponses = {
             entities: {
               workspace: number;
               project: number;
-              chat: number;
-              message: number;
               task: number;
               label: number;
               attachment: number;
@@ -4889,343 +4804,6 @@ export type GetProjectsResponses = {
 };
 
 export type GetProjectsResponse = GetProjectsResponses[keyof GetProjectsResponses];
-
-export type DeleteChatsData = {
-  body?: {
-    ids: Array<string>;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/chats';
-};
-
-export type DeleteChatsErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type DeleteChatsError = DeleteChatsErrors[keyof DeleteChatsErrors];
-
-export type DeleteChatsResponses = {
-  /**
-   * Success
-   */
-  200: {
-    data: Array<unknown>;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type DeleteChatsResponse = DeleteChatsResponses[keyof DeleteChatsResponses];
-
-export type GetChatsData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-  };
-  query?: {
-    q?: string;
-    sort?: 'createdAt' | 'updatedAt';
-    order?: 'asc' | 'desc';
-    offset?: string;
-    limit?: string;
-    seqCursor?: string;
-    archived?: 'true' | 'false';
-    projectId?: string;
-    workspaceId?: string;
-  };
-  url: '/{tenantId}/{organizationId}/chats';
-};
-
-export type GetChatsErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetChatsError = GetChatsErrors[keyof GetChatsErrors];
-
-export type GetChatsResponses = {
-  /**
-   * Chats
-   */
-  200: {
-    items: Array<Chat>;
-    total: number;
-  };
-};
-
-export type GetChatsResponse = GetChatsResponses[keyof GetChatsResponses];
-
-export type CreateChatData = {
-  body: {
-    content: string;
-    projectId?: string;
-    workspaceId?: string;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/chats';
-};
-
-export type CreateChatErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type CreateChatError = CreateChatErrors[keyof CreateChatErrors];
-
-export type CreateChatResponses = {
-  /**
-   * Chat created
-   */
-  200: Chat;
-};
-
-export type CreateChatResponse = CreateChatResponses[keyof CreateChatResponses];
-
-export type GetMessagesData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: {
-    q?: string;
-    sort?: 'createdAt';
-    order?: 'asc' | 'desc';
-    offset?: string;
-    limit?: string;
-    seqCursor?: string;
-  };
-  url: '/{tenantId}/{organizationId}/chats/{id}/messages';
-};
-
-export type GetMessagesErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetMessagesError = GetMessagesErrors[keyof GetMessagesErrors];
-
-export type GetMessagesResponses = {
-  /**
-   * Messages
-   */
-  200: {
-    items: Array<Message>;
-    total: number;
-  };
-};
-
-export type GetMessagesResponse = GetMessagesResponses[keyof GetMessagesResponses];
-
-export type SendMessageData = {
-  body: {
-    content: string;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/chats/{id}/messages';
-};
-
-export type SendMessageErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type SendMessageError = SendMessageErrors[keyof SendMessageErrors];
-
-export type SendMessageResponses = {
-  /**
-   * Message created
-   */
-  200: Message;
-};
-
-export type SendMessageResponse = SendMessageResponses[keyof SendMessageResponses];
-
-export type UpdateChatData = {
-  body: {
-    name?: string;
-    archived?: boolean;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/chats/{id}';
-};
-
-export type UpdateChatErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type UpdateChatError = UpdateChatErrors[keyof UpdateChatErrors];
-
-export type UpdateChatResponses = {
-  /**
-   * Chat updated
-   */
-  200: Chat;
-};
-
-export type UpdateChatResponse = UpdateChatResponses[keyof UpdateChatResponses];
 
 export type HandleMcpData = {
   body: unknown;
@@ -6676,7 +6254,7 @@ export type MarkSeenData = {
     /**
      * Entity type for all IDs in this batch
      */
-    entityType: 'task' | 'label' | 'attachment' | 'page' | 'chat' | 'message';
+    entityType: 'task' | 'label' | 'attachment' | 'page';
   };
   path: {
     tenantId: string;

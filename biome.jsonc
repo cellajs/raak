@@ -362,7 +362,7 @@
         "frontend/vite.config.ts",
         "cdc/src/env.ts",
         "yjs/src/env.ts",
-        "ai/src/ai-worker.ts",
+        "mcp/src/mcp-worker.ts",
         "cli/**"
       ],
       "linter": {

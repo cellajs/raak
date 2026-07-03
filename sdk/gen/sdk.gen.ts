@@ -23,9 +23,6 @@ import type {
   CreateAttachmentsData,
   CreateAttachmentsErrors,
   CreateAttachmentsResponses,
-  CreateChatData,
-  CreateChatErrors,
-  CreateChatResponses,
   CreateDomainData,
   CreateDomainErrors,
   CreateDomainResponses,
@@ -62,9 +59,6 @@ import type {
   DeleteAttachmentsData,
   DeleteAttachmentsErrors,
   DeleteAttachmentsResponses,
-  DeleteChatsData,
-  DeleteChatsErrors,
-  DeleteChatsResponses,
   DeleteDomainData,
   DeleteDomainErrors,
   DeleteDomainResponses,
@@ -128,9 +122,6 @@ import type {
   GetAuthHealthData,
   GetAuthHealthErrors,
   GetAuthHealthResponses,
-  GetChatsData,
-  GetChatsErrors,
-  GetChatsResponses,
   GetDomainData,
   GetDomainErrors,
   GetDomainResponses,
@@ -149,9 +140,6 @@ import type {
   GetMembersErrors,
   GetMembersResponses,
   GetMeResponses,
-  GetMessagesData,
-  GetMessagesErrors,
-  GetMessagesResponses,
   GetMyAuthData,
   GetMyAuthErrors,
   GetMyAuthResponses,
@@ -292,9 +280,6 @@ import type {
   SendMagicLinkData,
   SendMagicLinkErrors,
   SendMagicLinkResponses,
-  SendMessageData,
-  SendMessageErrors,
-  SendMessageResponses,
   SendNewsletterData,
   SendNewsletterErrors,
   SendNewsletterResponses,
@@ -324,9 +309,6 @@ import type {
   UpdateAttachmentData,
   UpdateAttachmentErrors,
   UpdateAttachmentResponses,
-  UpdateChatData,
-  UpdateChatErrors,
-  UpdateChatResponses,
   UpdateLabelData,
   UpdateLabelErrors,
   UpdateLabelResponses,
@@ -373,9 +355,6 @@ import {
   zCreateAttachmentsBody,
   zCreateAttachmentsPath,
   zCreateAttachmentsResponse,
-  zCreateChatBody,
-  zCreateChatPath,
-  zCreateChatResponse,
   zCreateDomainBody,
   zCreateDomainPath,
   zCreateDomainResponse,
@@ -407,9 +386,6 @@ import {
   zDeleteAttachmentsBody,
   zDeleteAttachmentsPath,
   zDeleteAttachmentsResponse,
-  zDeleteChatsBody,
-  zDeleteChatsPath,
-  zDeleteChatsResponse,
   zDeleteDomainPath,
   zDeleteDomainResponse,
   zDeleteLabelsBody,
@@ -454,9 +430,6 @@ import {
   zGetAttachmentsQuery,
   zGetAttachmentsResponse,
   zGetAuthHealthResponse,
-  zGetChatsPath,
-  zGetChatsQuery,
-  zGetChatsResponse,
   zGetDomainPath,
   zGetDomainResponse,
   zGetDomainsPath,
@@ -470,9 +443,6 @@ import {
   zGetMembersQuery,
   zGetMembersResponse,
   zGetMeResponse,
-  zGetMessagesPath,
-  zGetMessagesQuery,
-  zGetMessagesResponse,
   zGetMyAuthResponse,
   zGetMyInvitationsResponse,
   zGetMyMembershipsResponse,
@@ -567,9 +537,6 @@ import {
   zSelfCreateTenantResponse,
   zSendMagicLinkBody,
   zSendMagicLinkResponse,
-  zSendMessageBody,
-  zSendMessagePath,
-  zSendMessageResponse,
   zSendNewsletterBody,
   zSendNewsletterQuery,
   zSendNewsletterResponse,
@@ -590,9 +557,6 @@ import {
   zUpdateAttachmentPath,
   zUpdateAttachmentQuery,
   zUpdateAttachmentResponse,
-  zUpdateChatBody,
-  zUpdateChatPath,
-  zUpdateChatResponse,
   zUpdateLabelBody,
   zUpdateLabelPath,
   zUpdateLabelResponse,
@@ -3464,274 +3428,11 @@ export const getProjects = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Delete chats
- *
- * Deletes one or more chat sessions and their messages.
- *
- * **DELETE /{tenantId}/{organizationId}/chats** ·· [deleteChats](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/DELETE/{tenantId}/{organizationId}/chats) ·· [deleteChats](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/chats) ·· [deleteChats](https://www.raak.dev/docs/operations?operationTag=product#tag/product/DELETE/{tenantId}/{organizationId}/chats) ·· _agent_app_product_
- *
- * @param {deleteChatsData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {any[]=} options.body.ids - `any[]` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const deleteChats = <ThrowOnError extends boolean = true>(
-  options: Options<DeleteChatsData, ThrowOnError>,
-): RequestResult<DeleteChatsResponses, DeleteChatsErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<DeleteChatsResponses, DeleteChatsErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zDeleteChatsBody.optional(),
-          path: zDeleteChatsPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zDeleteChatsResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/chats',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Get chats
- *
- * Returns a paginated list of chat sessions for the current user.
- *
- * **GET /{tenantId}/{organizationId}/chats** ·· [getChats](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/GET/{tenantId}/{organizationId}/chats) ·· [getChats](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/chats) ·· [getChats](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/chats) ·· _agent_app_product_
- *
- * @param {getChatsData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string=} options.query.q - `string` (optional)
- * @param {enum=} options.query.sort - `enum` (optional)
- * @param {enum=} options.query.order - `enum` (optional)
- * @param {string=} options.query.offset - `string` (optional)
- * @param {string=} options.query.limit - `string` (optional)
- * @param {string=} options.query.seqcursor - `string` (optional)
- * @param {enum=} options.query.archived - `enum` (optional)
- * @param {string=} options.query.projectid - `string` (optional)
- * @param {string=} options.query.workspaceid - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getChats = <ThrowOnError extends boolean = true>(
-  options: Options<GetChatsData, ThrowOnError>,
-): RequestResult<GetChatsResponses, GetChatsErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetChatsResponses, GetChatsErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zGetChatsPath,
-          query: zGetChatsQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetChatsResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/chats',
-    ...options,
-  });
-
-/**
- * Create chat
- *
- * Creates a new chat session with an initial user message and returns the chat. The assistant response is streamed separately via the AI worker streamChat endpoint.
- *
- * **POST /{tenantId}/{organizationId}/chats** ·· [createChat](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/POST/{tenantId}/{organizationId}/chats) ·· [createChat](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/chats) ·· [createChat](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/chats) ·· _agent_app_product_
- *
- * @param {createChatData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string=} options.body.content - `string` (optional)
- * @param {string=} options.body.projectId - `string` (optional)
- * @param {string=} options.body.workspaceId - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const createChat = <ThrowOnError extends boolean = true>(
-  options: Options<CreateChatData, ThrowOnError>,
-): RequestResult<CreateChatResponses, CreateChatErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<CreateChatResponses, CreateChatErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zCreateChatBody,
-          path: zCreateChatPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zCreateChatResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/chats',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Get messages
- *
- * Returns a paginated list of messages for a chat session.
- *
- * **GET /{tenantId}/{organizationId}/chats/{id}/messages** ·· [getMessages](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/GET/{tenantId}/{organizationId}/chats/{id}/messages) ·· [getMessages](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/chats/{id}/messages) ·· [getMessages](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/chats/{id}/messages) ·· _agent_app_product_
- *
- * @param {getMessagesData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string=} options.query.q - `string` (optional)
- * @param {enum=} options.query.sort - `enum` (optional)
- * @param {enum=} options.query.order - `enum` (optional)
- * @param {string=} options.query.offset - `string` (optional)
- * @param {string=} options.query.limit - `string` (optional)
- * @param {string=} options.query.seqcursor - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getMessages = <ThrowOnError extends boolean = true>(
-  options: Options<GetMessagesData, ThrowOnError>,
-): RequestResult<GetMessagesResponses, GetMessagesErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetMessagesResponses, GetMessagesErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zGetMessagesPath,
-          query: zGetMessagesQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetMessagesResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/chats/{id}/messages',
-    ...options,
-  });
-
-/**
- * Send message
- *
- * Persists a user message and returns it. The assistant response is streamed separately via the AI worker streamChat endpoint.
- *
- * **POST /{tenantId}/{organizationId}/chats/{id}/messages** ·· [sendMessage](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/POST/{tenantId}/{organizationId}/chats/{id}/messages) ·· [sendMessage](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/chats/{id}/messages) ·· [sendMessage](https://www.raak.dev/docs/operations?operationTag=product#tag/product/POST/{tenantId}/{organizationId}/chats/{id}/messages) ·· _agent_app_product_
- *
- * @param {sendMessageData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string=} options.body.content - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const sendMessage = <ThrowOnError extends boolean = true>(
-  options: Options<SendMessageData, ThrowOnError>,
-): RequestResult<SendMessageResponses, SendMessageErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<SendMessageResponses, SendMessageErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zSendMessageBody,
-          path: zSendMessagePath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zSendMessageResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/chats/{id}/messages',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Update chat
- *
- * Updates a chat session (rename or archive).
- *
- * **PUT /{tenantId}/{organizationId}/chats/{id}** ·· [updateChat](https://www.raak.dev/docs/operations?operationTag=agent#tag/agent/PUT/{tenantId}/{organizationId}/chats/{id}) ·· [updateChat](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/chats/{id}) ·· [updateChat](https://www.raak.dev/docs/operations?operationTag=product#tag/product/PUT/{tenantId}/{organizationId}/chats/{id}) ·· _agent_app_product_
- *
- * @param {updateChatData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string=} options.body.name - `string` (optional)
- * @param {boolean=} options.body.archived - `boolean` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const updateChat = <ThrowOnError extends boolean = true>(
-  options: Options<UpdateChatData, ThrowOnError>,
-): RequestResult<UpdateChatResponses, UpdateChatErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<UpdateChatResponses, UpdateChatErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zUpdateChatBody,
-          path: zUpdateChatPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zUpdateChatResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/chats/{id}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
  * MCP endpoint
  *
  * Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).
  *
- * **POST /{tenantId}/{organizationId}/mcp** ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=ai#tag/ai/POST/{tenantId}/{organizationId}/mcp) ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/mcp) ·· _ai_cella_
+ * **POST /{tenantId}/{organizationId}/mcp** ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=mcp#tag/mcp/POST/{tenantId}/{organizationId}/mcp) ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/mcp) ·· _mcp_cella_
  *
  * @param {handleMcpData} options
  * @param {string} options.path.tenantid - `string`

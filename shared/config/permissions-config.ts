@@ -72,13 +72,5 @@ export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ 
       contexts.project.member({ create: 1, read: 1, update: 1, delete: 1 });
       contexts.project.guest({ create: 0, read: 1, update: 0, delete: 0 });
       break;
-    case 'chat':
-      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
-      contexts.organization.member({ create: 1, read: 1, update: 1, delete: 1 });
-      break;
-    case 'message':
-      contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
-      contexts.organization.member({ create: 1, read: 1, update: 1, delete: 1 });
-      break;
   }
 });

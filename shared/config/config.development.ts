@@ -17,7 +17,7 @@ export default {
   backendUrl: 'http://localhost:4000',
   backendAuthUrl: 'http://localhost:4000/auth',
   yjsUrl: 'http://localhost:4002',
-  aiUrl: 'http://localhost:4003',
+  mcpUrl: 'http://localhost:4003',
 
   s3: {
     publicBucket: 'cella-shared-public',

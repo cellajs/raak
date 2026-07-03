@@ -25,7 +25,7 @@ app.openapi(taskRoutes.getTasks, async (ctx) => {
 });
 
 app.openapi(taskRoutes.getTask, async (ctx) => {
-  const id = ctx.req.param('id');
+  const { id } = ctx.req.valid('param');
   const result = await getTaskOp(ctx, id);
   assertSuccess(result, 'task');
   ctx.set('entityCacheData', result.data);
@@ -33,7 +33,7 @@ app.openapi(taskRoutes.getTask, async (ctx) => {
 });
 
 app.openapi(taskRoutes.updateTask, async (ctx) => {
-  const id = ctx.req.param('id');
+  const { id } = ctx.req.valid('param');
   const { fullResponse } = ctx.req.valid('query');
   const result = await updateTaskOp(ctx, id, ctx.req.valid('json'), { fullResponse });
   assertSuccess(result, 'task');

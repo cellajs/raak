@@ -1,6 +1,7 @@
 import { createXRoute } from '#/core/x-routes';
 import { appCache } from '#/middlewares/entity-cache';
 import { authGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
+import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchTasksResponse, mockTaskResponse, mockTasksResponse } from '#/modules/task/task-mocks';
 import {
   taskCreateManyStxBodySchema,
@@ -20,12 +21,16 @@ import {
 } from '#/schemas';
 
 const taskRoutes = {
+  /**
+   * Create one or more tasks within a project
+   */
   createTasks: createXRoute({
+    operationId: 'createTasks',
     method: 'post',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [bulkPointsLimiter],
     tags: ['tasks', 'app', 'product'],
-    operationId: 'createTasks',
     summary: 'Create tasks',
     description: 'Creates one or more tasks within a project.',
     'x-tool': {
@@ -50,12 +55,15 @@ const taskRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get list of tasks within one or more projects
+   */
   getTasks: createXRoute({
+    operationId: 'getTasks',
     method: 'get',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
     tags: ['tasks', 'app', 'product'],
-    operationId: 'getTasks',
     summary: 'Get list of tasks',
     description: 'Returns a list of tasks within one or more specified projects.',
     'x-tool': {
@@ -82,13 +90,16 @@ const taskRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get single task by ID
+   */
   getTask: createXRoute({
+    operationId: 'getTask',
     method: 'get',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xCache: [appCache()],
     tags: ['tasks', 'app', 'product'],
-    operationId: 'getTask',
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',
     'x-tool': {
@@ -106,12 +117,16 @@ const taskRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Update a task
+   */
   updateTask: createXRoute({
+    operationId: 'updateTask',
     method: 'put',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [singlePointsLimiter],
     tags: ['tasks', 'app', 'product'],
-    operationId: 'updateTask',
     summary: 'Update task',
     description: 'Updates a task by ID.',
     'x-tool': {
@@ -135,12 +150,16 @@ const taskRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Delete one or more tasks
+   */
   deleteTasks: createXRoute({
+    operationId: 'deleteTasks',
     method: 'delete',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [bulkPointsLimiter],
     tags: ['tasks', 'app', 'product'],
-    operationId: 'deleteTasks',
     summary: 'Delete tasks',
     description: 'Deletes one or more tasks by ID.',
     request: {

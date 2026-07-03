@@ -17,6 +17,10 @@ import { productEntityColumns } from '#/db/utils/product-entity-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 
+/**
+ * Tasks table is a product entity table.
+ * Each task belongs to exactly one project and inherits its organization + tenant (RLS isolation boundary).
+ */
 export const tasksTable = snakeCase.table(
   'tasks',
   {

@@ -1,5 +1,6 @@
 import { z } from '@hono/zod-openapi';
 import { schemaTags } from '#/core/openapi-helpers';
+import { createUpdateSchema } from '#/core/stx';
 import { arrayDeltaSchema } from '#/core/stx/array-delta';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelEmbeddedSchema } from '#/modules/label/label-schema';
@@ -54,20 +55,17 @@ const taskCreateSchema = taskInsertSchema
     assignedTo: z.array(z.string()).optional(),
   });
 
-const taskUpdateSchema = z.object({
-  ops: z
-    .object({
-      name: z.string().max(maxLength.field),
-      description: z.string().max(maxLength.html).nullable(),
-      status: z.number().int(),
-      variant: z.number().int(),
-      points: z.number().int().nullable(),
-      displayOrder: z.number(),
-      labels: arrayDeltaSchema,
-      assignedTo: arrayDeltaSchema,
-      projectId: z.string().max(maxLength.id),
-    })
-    .partial(),
+/** Update body using fields pattern for single or multi-field updates with conflict detection */
+export const taskUpdateStxBodySchema = createUpdateSchema({
+  name: z.string().max(maxLength.field),
+  description: z.string().max(maxLength.html).nullable(),
+  status: z.number().int(),
+  variant: z.number().int(),
+  points: z.number().int().nullable(),
+  displayOrder: z.number(),
+  labels: arrayDeltaSchema,
+  assignedTo: arrayDeltaSchema,
+  projectId: z.string().max(maxLength.id),
 });
 
 /** Base schema without refinement - use this when you need .omit()/.pick() */
@@ -91,4 +89,3 @@ export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !dat
 const taskCreateStxBodySchema = taskCreateSchema.extend({ stx: stxBaseSchema });
 export const taskCreateManyStxBodySchema = taskCreateStxBodySchema.array().min(1).max(50);
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);
-export const taskUpdateStxBodySchema = taskUpdateSchema.extend({ stx: stxBaseSchema });

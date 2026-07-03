@@ -1,6 +1,7 @@
 import { createXRoute } from '#/core/x-routes';
 import { appCache } from '#/middlewares/entity-cache';
 import { authGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
+import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchLabelsResponse, mockLabelResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
 import {
   labelCreateManyStxBodySchema,
@@ -19,12 +20,16 @@ import {
 } from '#/schemas';
 
 const labelsRoutes = {
+  /**
+   * Create one or more labels within a project
+   */
   createLabels: createXRoute({
+    operationId: 'createLabels',
     method: 'post',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [bulkPointsLimiter],
     tags: ['labels', 'app', 'product'],
-    operationId: 'createLabels',
     summary: 'Create labels',
     description: 'Creates one or more labels within a project.',
     request: {
@@ -43,12 +48,15 @@ const labelsRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get list of labels for a project
+   */
   getLabels: createXRoute({
+    operationId: 'getLabels',
     method: 'get',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
     tags: ['labels', 'app', 'product'],
-    operationId: 'getLabels',
     summary: 'Get list of labels',
     description: 'Returns a list of labels for a given project or workspace.',
     request: {
@@ -68,13 +76,16 @@ const labelsRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Get single label by ID
+   */
   getLabel: createXRoute({
+    operationId: 'getLabel',
     method: 'get',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xCache: [appCache()],
     tags: ['labels', 'app', 'product'],
-    operationId: 'getLabel',
     summary: 'Get label',
     description: 'Retrieves a label by its ID.',
     request: {
@@ -88,12 +99,16 @@ const labelsRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Update a label
+   */
   updateLabel: createXRoute({
+    operationId: 'updateLabel',
     method: 'put',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [singlePointsLimiter],
     tags: ['labels', 'app', 'product'],
-    operationId: 'updateLabel',
     summary: 'Update label',
     description: 'Updates a label by ID.',
     request: {
@@ -114,12 +129,16 @@ const labelsRoutes = {
       ...errorResponseRefs,
     },
   }),
+  /**
+   * Delete one or more labels
+   */
   deleteLabels: createXRoute({
+    operationId: 'deleteLabels',
     method: 'delete',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    xRateLimiter: [bulkPointsLimiter],
     tags: ['labels', 'app', 'product'],
-    operationId: 'deleteLabels',
     summary: 'Delete labels',
     description: 'Deletes one or more labels by ID.',
     request: {
