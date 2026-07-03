@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { buildTestEntityHierarchyPlan, type TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
-import { testDatabaseUrl } from '../../../../test-db-config';
+import { testDatabaseUrl } from 'shared/test-db';
 import type { DocContext } from '../../constants';
 import { canEditEntity } from '../../data/permissions';
 

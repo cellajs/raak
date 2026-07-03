@@ -26,12 +26,12 @@ import { getTableName, type SQL, sql } from 'drizzle-orm';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { appConfig, hierarchy } from 'shared';
 import { nanoidTenant } from 'shared/nanoid';
+import { testAdminRoleDatabaseUrl, testRuntimeDatabaseUrl } from 'shared/test-db';
 import { buildTestEntityHierarchyPlan, type TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { baseDb as adminDb, type Tx } from '#/db/db';
 import { membershipImmutableColumns } from '#/db/immutability-triggers';
 import { entityTables } from '#/tables';
-import { testAdminRoleDatabaseUrl, testRuntimeDatabaseUrl } from '../../../test-db-config';
 
 /** Local read-only tenant context helper — mirrors tenantRead without importing it. */
 async function tenantReadTest<T>(tenantId: string, userId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {

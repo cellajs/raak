@@ -7,7 +7,7 @@
  */
 
 import pg from 'pg';
-import { testDatabaseUrl } from '../../../../test-db-config';
+import { testDatabaseUrl } from 'shared/test-db';
 
 // Always target the dedicated test DB (no external override) so integration tests have a single, predictable DB source.
 const DATABASE_URL = testDatabaseUrl;
