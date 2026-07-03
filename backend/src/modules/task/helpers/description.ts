@@ -1,7 +1,7 @@
 import type { Block } from '@blocknote/core';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import { and, inArray, isNull } from 'drizzle-orm';
-import { getTextFromBlock, mediaBlockTypes } from 'shared/blocknote';
+import { getSearchableTextFromBlocks, mediaBlockTypes } from 'shared/blocknote';
 import type { DbContext } from '#/core/context';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { findAttachmentKeysByGroupId } from '#/modules/attachment/attachment-queries';
@@ -72,7 +72,7 @@ export const deriveDescriptionProps = async (
   walk(blocks);
 
   // Keywords — extract from already-parsed blocks (no re-parse)
-  const fullText = (blocks as unknown as Block[]).map(getTextFromBlock).join(' ').trim();
+  const fullText = getSearchableTextFromBlocks(blocks as unknown as Block[]);
   result.keywords = extractKeywords(fullText);
   result.expandable = blocks.length > 1;
 

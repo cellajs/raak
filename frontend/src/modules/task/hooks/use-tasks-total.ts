@@ -5,11 +5,13 @@ import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import {
   type BaseTasksQueryParam,
   type TasksInfiniteQueryData,
-  type TasksQueryData,
   taskKeys,
   tasksTableQueryOptions,
 } from '~/modules/task/query';
+import type { Task } from '~/modules/task/types';
+import { isQueryData } from '~/query/basic/mutate-query';
 import { queryClient } from '~/query/query-client';
+import type { QueryData } from '~/query/types';
 
 export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQueryParam) => {
   const { search } = useSearchParams<{ q?: string }>({});
@@ -37,12 +39,12 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
         const queryKey = !isPublicView
           ? taskKeys.list.org(organizationId)
           : taskKeys.publicList.filtered({ ...scopeFilters, publicAt: true as const });
-        const queries = queryClient.getQueriesData<TasksQueryData>({ queryKey, type: 'active' });
+        const queries = queryClient.getQueriesData<QueryData<Task>>({ queryKey, type: 'active' });
 
         if (!queries.length) return null;
 
         return queries.reduce((total, [, data]) => {
-          if (!data) return total;
+          if (!isQueryData<Task>(data)) return total;
           if (searchQuery?.length)
             return total + data.items.filter((task) => searchFilterFunction(search, task)).length;
           return total + data.total;

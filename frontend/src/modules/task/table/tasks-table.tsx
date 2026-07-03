@@ -85,7 +85,7 @@ export default function TasksTable({
     ? undefined
     : isOnline
       ? fetchedRows
-      : fetchedRows.filter((row) => searchFilterFunction({ q }, row));
+      : fetchedRows.filter((row) => searchFilterFunction(search, row));
 
   // isFetching already includes next page fetch scenario
   const fetchMore = useCallback(async () => {

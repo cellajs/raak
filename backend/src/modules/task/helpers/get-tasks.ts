@@ -31,23 +31,28 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
   tasksSearchFilters.push(...seqCursorFilters(tasksTable.seq, seqCursor));
 
   if (trimmedQuery) {
-    const searchKeywords = trimmedQuery.split(/\s+/).filter(Boolean);
+    const normalizedQuery = trimmedQuery.startsWith('=') ? trimmedQuery.slice(1).trim() : trimmedQuery;
+    const searchKeywords = normalizedQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
     if (searchKeywords.length > 0) {
-      const filterFn = (item: string) =>
-        matchMode === 'all' ? item.includes(trimmedQuery) : searchKeywords.some((w) => item.includes(w));
+      const filtersByKeyword = searchKeywords.map((word) => {
+        const wordFilters: SQL[] = [ilike(tasksTable.keywords, `%${word}%`)];
 
-      const filteredLabels = tasksLabels.filter(({ name }) => filterFn(name)).map(({ id }) => id);
-      if (filteredLabels.length > 0) tasksSearchFilters.push(arrayOverlaps(tasksTable.labels, filteredLabels));
+        const filteredLabels = tasksLabels
+          .filter(({ name }) => name.toLowerCase().includes(word))
+          .map(({ id }) => id);
+        if (filteredLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, filteredLabels));
 
-      const filteredUsers = tasksUsers.filter(({ name }) => filterFn(name)).map(({ id }) => id);
-      if (filteredUsers.length > 0) tasksSearchFilters.push(arrayOverlaps(tasksTable.assignedTo, filteredUsers));
+        const filteredUsers = tasksUsers
+          .filter(({ name }) => name.toLowerCase().includes(word))
+          .map(({ id }) => id);
+        if (filteredUsers.length > 0) wordFilters.push(arrayOverlaps(tasksTable.assignedTo, filteredUsers));
 
-      if (matchMode === 'all') {
-        tasksSearchFilters.push(ilike(tasksTable.description, `%${trimmedQuery}%`));
-      } else {
-        for (const word of searchKeywords) tasksSearchFilters.push(ilike(tasksTable.keywords, `%${word}%`));
-      }
+        return or(...wordFilters);
+      });
+
+      const searchFilter = matchMode === 'all' ? and(...filtersByKeyword) : or(...filtersByKeyword);
+      if (searchFilter) tasksSearchFilters.push(searchFilter);
     }
   }
 

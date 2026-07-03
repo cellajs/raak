@@ -65,7 +65,7 @@ export const BoardPanel = memo(function BoardPanel({
           matchedTasks.some(({ id }) => id === task.id) ? { ...task, isMatchingSearch: true } : task,
         )
       : matchedTasks;
-  }, [fetchedTasks, search.q]);
+  }, [fetchedTasks, search.q, search.matchMode]);
 
   // Sort tasks and filter out accepted and iced based of config
   const tasks = useMemo(

@@ -14,7 +14,7 @@ export const tasksTableSearchSchema = zGetTasksQuery
   .pick({ q: true, sort: true, order: true, matchMode: true })
   .extend({ ...baseTaskViewSchema.shape });
 
-export const tasksBoardSearchSchema = zGetTasksQuery.pick({ q: true }).extend({
+export const tasksBoardSearchSchema = zGetTasksQuery.pick({ q: true, matchMode: true }).extend({
   projectSlug: z.string().optional(),
   ...baseTaskViewSchema.shape,
 });
