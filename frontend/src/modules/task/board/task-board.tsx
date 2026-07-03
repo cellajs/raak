@@ -6,7 +6,6 @@ import { usePreloadLazyComponents } from '~/hooks/use-preload-lazy-components';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { projectsListQueryOptions } from '~/modules/project/query';
-import { AvailableProjectsAlert } from '~/modules/task/board/available-projects-alert';
 import { BoardEmpty } from '~/modules/task/board/board-empty';
 import { BoardHeader } from '~/modules/task/board/board-header';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
@@ -50,7 +49,7 @@ export default function Board({ boardId, projects: projectsProp, workspace, publ
 
   const BoardView = (() => {
     if (isLoadingProjects) return <BoardSkeleton boardId={boardId} />;
-    if (!projects.length) return <BoardEmpty />;
+    if (!projects.length) return <BoardEmpty workspace={workspace} publicView={publicView} />;
     if (isMobile) return <WorkspaceBoardTabs projects={projects} workspace={workspace} publicView={publicView} />;
     if (!workspace)
       return <ProjectBoard boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />;
@@ -60,7 +59,6 @@ export default function Board({ boardId, projects: projectsProp, workspace, publ
   return (
     <>
       <BoardHeader projects={projects} workspace={workspace} publicView={publicView} />
-      {workspace && !publicView && !projects.length && <AvailableProjectsAlert workspace={workspace} />}
       {BoardView}
     </>
   );

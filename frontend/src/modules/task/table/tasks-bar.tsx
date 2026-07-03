@@ -91,7 +91,7 @@ export const TasksTableBar = ({
       </ColumnsView>
       <Export
         className="max-lg:hidden"
-        filename={t('c:tasks')}
+        filename={t('c:task_other')}
         columns={columns}
         selectedRows={configureForExport(selected, projects)}
         fetchRows={fetchExport}

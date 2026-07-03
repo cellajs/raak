@@ -65,10 +65,10 @@ const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>) 
  * Configuration to set menu sections with options for different context entities.
  */
 export const menuSectionsSchema: Partial<Record<ContextEntityType, MenuSectionOptions>> = {
-  organization: { createAction: createOrganizationAction, label: 'c:organizations', entityType: 'organization' },
+  organization: { createAction: createOrganizationAction, label: 'c:organization_other', entityType: 'organization' },
   workspace: {
     createAction: createWorkspaceAction,
-    label: 'c:workspaces',
+    label: 'c:workspace_other',
     icon: FolderIcon,
     entityType: 'workspace',
   },

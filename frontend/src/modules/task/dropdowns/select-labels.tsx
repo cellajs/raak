@@ -276,7 +276,7 @@ export const SelectLabels = ({
           className="min-h-10 leading-normal"
           placeholder={
             visibleLabels.length
-              ? t('c:placeholder.search_labels')
+              ? t('c:select_or_create_resource', { resource: t('c:label').toLowerCase() })
               : projectLabels.length
                 ? t('c:create_label.text')
                 : t('c:create_first_label.text')
@@ -334,7 +334,7 @@ export const SelectLabels = ({
           </ComboboxList>
           {visibleLabels.length === 0 && searchValue.trim() === '' && (
             <div className="flex items-center justify-center p-1.5 text-muted-foreground/50 text-sm">
-              {t('c:no_resource_yet', { resource: t('c:labels').toLowerCase() })}
+              {t('c:no_resource_yet', { resource: t('c:label_other').toLowerCase() })}
             </div>
           )}
         </ScrollArea>

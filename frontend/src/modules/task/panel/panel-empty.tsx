@@ -17,7 +17,7 @@ export const TaskPanelEmpty = ({ projectId }: { projectId?: string }) => {
         className="group/empty min-h-[60vh] group-data-[search=true]/panel:hidden"
         icon={PalmtreeIcon}
         title="c:no_resource_yet"
-        titleProps={{ resource: t('c:tasks').toLowerCase() }}
+        titleProps={{ resource: t('c:task_other').toLowerCase() }}
       >
         {isInWorkspace && (
           <>
@@ -42,7 +42,7 @@ export const TaskPanelEmpty = ({ projectId }: { projectId?: string }) => {
         className="group-data-[search=false]/panel:hidden"
         icon={SearchIcon}
         title="c:no_resource_found"
-        titleProps={{ resource: t('c:tasks').toLowerCase() }}
+        titleProps={{ resource: t('c:task_other').toLowerCase() }}
       />
     </>
   );

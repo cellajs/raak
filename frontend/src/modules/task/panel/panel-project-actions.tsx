@@ -6,11 +6,9 @@ import {
   ArrowRightIcon,
   EllipsisVerticalIcon,
   MergeIcon,
-  ReplaceIcon,
   SettingsIcon,
   SplitIcon,
   SquareSplitHorizontalIcon,
-  UserRoundXIcon,
   UsersIcon,
 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
@@ -18,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { MoveProjectForm } from '~/modules/project/move-project-form';
 import { SplitProjectPanelDialog } from '~/modules/project/split-project-panel';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
@@ -26,12 +23,9 @@ import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/tas
 import { TaskStatus } from '~/modules/task/task-properties';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
-import { workspaceQueryKeys } from '~/modules/workspace/query';
-import { flattenInfiniteData } from '~/query/basic';
-import { queryClient } from '~/query/query-client';
+import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import router from '~/routes/router';
 import { cn } from '~/utils/cn';
-import { useProjectMembershipActions } from './use-project-membership-actions';
 
 const PanelProjectActions = ({ project, className }: { project: EnrichedProject; className?: string }) => {
   const { t } = useTranslation();
@@ -48,27 +42,10 @@ const PanelProjectActions = ({ project, className }: { project: EnrichedProject;
 
   const projectButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  // Check if projects can be moved — count workspaces from menu cache
-  const cachedQueries = queryClient.getQueriesData({ queryKey: workspaceQueryKeys.list.base });
-  // biome-ignore lint/suspicious/noExplicitAny: cache data is untyped
-  const canMoveProjects = cachedQueries.some(([, data]) => flattenInfiniteData(data as any).length > 1);
-
-  const { openRemoveDialog, projectMembership, projectWorkspace } = useProjectMembershipActions({
-    boardType,
-    project,
-    tenantId,
-    projectButtonRef,
-  });
-
-  const moveProject = () => {
-    useDialoger.getState().create(<MoveProjectForm project={project} dialog />, {
-      id: 'move-project-form',
-      triggerRef: { current: null },
-      title: t('c:move_project'),
-      description: t('c:move_project.text'),
-      className: 'max-w-2xl',
-    });
-  };
+  const projectMembership = project.membership;
+  const projectWorkspace = projectMembership?.workspaceId
+    ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId)
+    : undefined;
 
   const splitProjectPanels = () => {
     useDialoger
@@ -138,19 +115,13 @@ const PanelProjectActions = ({ project, className }: { project: EnrichedProject;
             <span>{t('c:project_members')}</span>
           </DropdownMenuItem>
         )}
-        {projectMembership?.role === 'admin' && (
+        {projectMembership && (
           <DropdownMenuItem
             onClick={() => openProjectSettingsSheet(project, projectButtonRef)}
             className="flex items-center gap-2"
           >
             <SettingsIcon size={16} />
             <span>{t('c:resource_settings', { resource: t('c:project') })}</span>
-          </DropdownMenuItem>
-        )}
-        {canMoveProjects && (
-          <DropdownMenuItem onClick={moveProject} className="flex items-center gap-2">
-            <ReplaceIcon size={16} />
-            <span>{t('c:move_project')}</span>
           </DropdownMenuItem>
         )}
 
@@ -194,13 +165,6 @@ const PanelProjectActions = ({ project, className }: { project: EnrichedProject;
           >
             <SquareSplitHorizontalIcon size={16} />
             {panelsSectionView ? <span>{t('c:merge')}</span> : <span>{t('c:split')}</span>}
-          </DropdownMenuItem>
-        )}
-
-        {projectMembership && (
-          <DropdownMenuItem onClick={openRemoveDialog} className="flex items-center gap-2">
-            <UserRoundXIcon size={16} />
-            <span>{t('c:remove')}</span>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

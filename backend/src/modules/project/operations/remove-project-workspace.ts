@@ -12,7 +12,7 @@ export async function removeProjectWorkspaceOp(ctx: AuthContext, id: string) {
   const { entity: project } = await getValidContextEntity(ctx, id, 'project', 'read');
   const membership = requireCurrentUserProjectMembership(ctx, project);
   const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, {
-    membershipId: membership.id,
+    membership,
     workspaceId: null,
   });
 

@@ -1,7 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '#/core/context';
 import '#/modules/project/project-module';
-import '#/modules/project/project-listeners';
 import { assignProjectWorkspaceOp } from '#/modules/project/operations/assign-project-workspace';
 import { createProjectsOp } from '#/modules/project/operations/create-projects';
 import { deleteProjectsOp } from '#/modules/project/operations/delete-projects';

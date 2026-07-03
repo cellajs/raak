@@ -38,14 +38,10 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
       const filtersByKeyword = searchKeywords.map((word) => {
         const wordFilters: SQL[] = [ilike(tasksTable.keywords, `%${word}%`)];
 
-        const filteredLabels = tasksLabels
-          .filter(({ name }) => name.toLowerCase().includes(word))
-          .map(({ id }) => id);
+        const filteredLabels = tasksLabels.filter(({ name }) => name.toLowerCase().includes(word)).map(({ id }) => id);
         if (filteredLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, filteredLabels));
 
-        const filteredUsers = tasksUsers
-          .filter(({ name }) => name.toLowerCase().includes(word))
-          .map(({ id }) => id);
+        const filteredUsers = tasksUsers.filter(({ name }) => name.toLowerCase().includes(word)).map(({ id }) => id);
         if (filteredUsers.length > 0) wordFilters.push(arrayOverlaps(tasksTable.assignedTo, filteredUsers));
 
         return or(...wordFilters);

@@ -4,7 +4,7 @@ import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { Spinner } from '~/modules/common/spinner';
 import type { Task } from '~/modules/task/types';
 
-const expandedStyle = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none pl-1 sm:pl-9 pb-4';
+const expandedStyle = '[&>.bn-static-editor]:min-h-8 w-full bg-transparent border-none pl-1 sm:pl-9 pb-4';
 
 interface TaskCardContentExpandedProps {
   task: Task;

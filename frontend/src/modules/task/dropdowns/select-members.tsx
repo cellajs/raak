@@ -157,7 +157,7 @@ export const SelectMembers = ({
           value={searchValue}
           wrapClassName="max-sm:hidden"
           className="min-h-10 rounded-none leading-normal focus-visible:ring-transparent"
-          placeholder={t('c:placeholder.assign')}
+          placeholder={t('c:assign_to')}
           showClear={false}
         />
         {!searchValue.length && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">A</Kbd>}
@@ -187,7 +187,7 @@ export const SelectMembers = ({
               );
             }}
           </ComboboxList>
-          <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:members').toLowerCase() })}</ComboboxEmpty>
+          <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:member_other').toLowerCase() })}</ComboboxEmpty>
           {projectMembers.length > 5 && !searchValue.length && (
             <button
               type="button"

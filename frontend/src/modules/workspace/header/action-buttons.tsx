@@ -87,7 +87,7 @@ export const WorkspaceActionButtons = () => {
         triggerRef: refs.labels,
         side: 'right',
         className: 'max-w-full lg:max-w-4xl',
-        title: t('c:manage_labels'),
+        title: t('c:manage_resource', { resource: t('c:label_other').toLowerCase() }),
       },
     );
 
@@ -103,7 +103,7 @@ export const WorkspaceActionButtons = () => {
     {
       key: 'labels',
       icon: <TagIcon size={16} />,
-      label: t('c:manage_labels'),
+      label: t('c:manage_resource', { resource: t('c:label_other').toLowerCase() }),
       onClick: openLabelsSheet,
       ref: refs.labels,
       variant: 'outline',
@@ -152,13 +152,13 @@ export const WorkspaceActionButtons = () => {
           ))}
           {projectMembership && <DropdownMenuSeparator />}
 
-          {projectMembership && (
+          {project && projectMembership && (
             <DropdownMenuItem onClick={() => openProjectMembersSheet(project)} className="flex items-center gap-2">
               <UsersIcon size={16} />
               <span>{t('c:project_members')}</span>
             </DropdownMenuItem>
           )}
-          {projectMembership?.role === 'admin' && (
+          {project && projectMembership && (
             <DropdownMenuItem onClick={() => openProjectSettingsSheet(project)} className="flex items-center gap-2">
               <SettingsIcon size={16} />
               <span>{t('c:resource_settings', { resource: t('c:project') })}</span>

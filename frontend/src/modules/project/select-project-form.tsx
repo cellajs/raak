@@ -95,7 +95,7 @@ export const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ dialog: is
           render={({ field: { value, onChange } }) => (
             <FormItem name={'id'}>
               <FormLabel>
-                {t('c:projects')}
+                {t('c:project_other')}
                 <span className="ml-1 opacity-50">*</span>
               </FormLabel>
               <ProjectSuggestionCombobox
@@ -122,7 +122,7 @@ export const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ dialog: is
           <SubmitButton disabled={selectedCount === 0} loading={isPending || pendingCount > 0}>
             {selectedCount > 0
               ? t('c:add_resource', {
-                  resource: `${selectedCount} ${t(selectedCount === 1 ? 'c:project' : 'c:projects').toLowerCase()}`,
+                  resource: `${selectedCount} ${t('c:project', { count: selectedCount }).toLowerCase()}`,
                 })
               : t('c:select')}
           </SubmitButton>

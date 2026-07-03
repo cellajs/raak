@@ -7,6 +7,7 @@ import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import MembersTable from '~/modules/memberships/members-table/members-table';
 import AddProjects from '~/modules/project/add-project';
 import { ProjectSettings } from '~/modules/project/project-settings';
+import type { EnrichedProject } from '~/modules/project/types';
 import { fallbackContentRef } from '~/utils/fallback-content-ref';
 
 /**
@@ -34,7 +35,10 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
 /**
  * Opens the project settings sheet.
  */
-export const openProjectSettingsSheet = (project: Project, triggerRef?: RefObject<HTMLButtonElement | null>) => {
+export const openProjectSettingsSheet = (
+  project: EnrichedProject,
+  triggerRef?: RefObject<HTMLButtonElement | null>,
+) => {
   useSheeter.getState().create(
     <div className="container w-full">
       <ProjectSettings project={project} sheet />

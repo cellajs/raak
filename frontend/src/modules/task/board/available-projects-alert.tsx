@@ -1,27 +1,25 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { PlusIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
-import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { selectExistingProjects } from '~/modules/task/helpers/project-actions';
-import { Alert, AlertDescription } from '~/modules/ui/alert';
 import { Button } from '~/modules/ui/button';
 import { flattenInfiniteData } from '~/query/basic';
 
 interface Props {
   workspace: Workspace;
+  fallback: ReactNode;
 }
 
 /**
- * Alert shown on a workspace board when the user has access to organization projects
- * that are not yet assigned to any of their workspaces, inviting them to add the projects here.
+ * Empty-board action shown when the user can add existing organization projects
+ * that are not assigned to a workspace yet.
  */
-export const AvailableProjectsAlert = ({ workspace }: Props) => {
+export const AvailableProjectsEmptyAction = ({ workspace, fallback }: Props) => {
   const { t } = useTranslation();
-
-  const alertId = `available-projects-${workspace.id}`;
-  const { alertsSeen, setAlertSeen } = useAlertStore();
 
   const { data, isPending } = useInfiniteQuery(
     projectsListQueryOptions({
@@ -33,16 +31,18 @@ export const AvailableProjectsAlert = ({ workspace }: Props) => {
   const projects = flattenInfiniteData<EnrichedProject>(data);
   const availableCount = projects.filter((project) => !project.membership?.workspaceId).length;
 
-  if (isPending || availableCount === 0 || alertsSeen.includes(alertId)) return null;
+  if (isPending) return null;
+  if (availableCount === 0) return <>{fallback}</>;
 
   return (
-    <Alert variant="brand" soft onClose={() => setAlertSeen(alertId)} className="mb-2">
-      <AlertDescription className="flex flex-wrap items-center justify-between gap-2 pr-6">
-        <span>{t('c:available_projects.text', { count: availableCount })}</span>
-        <Button type="button" size="sm" onClick={selectExistingProjects}>
-          {t('c:add_resource', { resource: t('c:projects').toLowerCase() })}
-        </Button>
-      </AlertDescription>
-    </Alert>
+    <div className="flex max-w-lg flex-col items-center gap-3">
+      <p className="text-balance text-muted-foreground text-sm">
+        {t('c:unassigned_projects', { count: availableCount })}
+      </p>
+      <Button type="button" variant="plain" onClick={selectExistingProjects}>
+        <PlusIcon size={16} />
+        <span>{t('c:unassigned_projects_action')}</span>
+      </Button>
+    </div>
   );
 };

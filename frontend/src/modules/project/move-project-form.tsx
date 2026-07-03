@@ -1,20 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import type { Project, Workspace } from 'sdk';
+import type { Workspace } from 'sdk';
 import { zMoveProjectToWorkspacePath, zMoveProjectToWorkspaceQuery } from 'sdk/zod.gen';
 import { z } from 'zod';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { useProjectMoveMutation } from '~/modules/project/query';
+import type { EnrichedProject } from '~/modules/project/types';
 import { Button, SubmitButton } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
-import { workspacesListQueryOptions } from '~/modules/workspace/query';
-import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
-import { flattenInfiniteData } from '~/query/basic';
 
 const formSchema = z.object({
   ...zMoveProjectToWorkspacePath.shape,
@@ -23,23 +19,15 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface MoveProjectFormProps {
-  project: Project;
-  dialog?: boolean;
+  project: EnrichedProject;
+  workspaces: Workspace[];
+  onSuccess?: () => void;
 }
 
-export const MoveProjectForm = ({ project, dialog: isDialog }: MoveProjectFormProps) => {
+export const MoveProjectForm = ({ project, workspaces, onSuccess }: MoveProjectFormProps) => {
   const { t } = useTranslation();
 
-  const { workspace } = useWorkspaceContext();
-
-  // Get workspaces for this organization from cache (populated by menu)
-  const { data: workspacesData } = useInfiniteQuery({
-    ...workspacesListQueryOptions({ organizationId: project.organizationId }),
-    refetchOnMount: false,
-  });
-  const workspaces = flattenInfiniteData<Workspace>(workspacesData);
-
-  const options = workspaces.map(({ name: label, thumbnailUrl: url, slug: value }) => ({ value, label, url })) || [];
+  const options = workspaces.map(({ id: value, name: label, thumbnailUrl: url }) => ({ value, label, url })) || [];
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
@@ -47,8 +35,8 @@ export const MoveProjectForm = ({ project, dialog: isDialog }: MoveProjectFormPr
       defaultValues: {
         id: project.id,
         organizationId: project.organizationId,
-        tenantId: workspace.tenantId,
-        workspaceId: workspace.id,
+        tenantId: project.tenantId,
+        workspaceId: project.membership?.workspaceId ?? '',
       },
     }),
     [],
@@ -63,12 +51,12 @@ export const MoveProjectForm = ({ project, dialog: isDialog }: MoveProjectFormPr
       {
         path: { id: values.id, organizationId: values.organizationId, tenantId: values.tenantId },
         query: { workspaceId: values.workspaceId },
-        currentWorkspaceId: workspace.id,
+        currentWorkspaceId: project.membership?.workspaceId ?? values.workspaceId,
       },
       {
         onSuccess: () => {
           form.reset();
-          if (isDialog) useDialoger.getState().remove();
+          onSuccess?.();
         },
       },
     );

@@ -14,7 +14,7 @@ export async function moveProjectToWorkspaceOp(ctx: AuthContext, id: string, wor
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
   const membership = requireCurrentUserProjectMembership(ctx, project);
   const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, {
-    membershipId: membership.id,
+    membership,
     workspaceId: resolvedWorkspaceId,
   });
 

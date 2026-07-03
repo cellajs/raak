@@ -62,7 +62,7 @@ export const WorkspaceTile = ({ entity }: { entity: Workspace }) => {
                     {idx < projects.length - 1 && ', '}
                   </span>
                 ))}
-                {projects.length === 0 && t('c:no_resource_yet', { resource: t('c:projects').toLowerCase() })}
+                {projects.length === 0 && t('c:no_resource_yet', { resource: t('c:project_other').toLowerCase() })}
               </div>
             </div>
           </div>

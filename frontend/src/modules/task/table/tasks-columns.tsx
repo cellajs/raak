@@ -194,7 +194,7 @@ export const useColumns = (
       },
       {
         key: 'labels',
-        name: t('c:labels'),
+        name: t('c:label_other'),
         hidden: true,
         width: 190,
         placeholderValue: '-',
@@ -252,7 +252,7 @@ export const useColumns = (
       },
       {
         key: 'todos',
-        name: t('c:todos'),
+        name: t('c:todo_other'),
         minBreakpoint: 'sm',
         width: 80,
         placeholderValue: '-',
@@ -270,7 +270,7 @@ export const useColumns = (
       },
       {
         key: 'attachments',
-        name: t('c:attachments'),
+        name: t('c:attachment_other'),
         minBreakpoint: 'sm',
         width: 100,
         placeholderValue: '-',

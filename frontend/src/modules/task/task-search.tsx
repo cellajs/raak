@@ -87,7 +87,11 @@ export const TaskSearch = ({ children, clearSelection, toggleFocus }: Props) => 
         name="tasksSearch"
         onFocus={toggleFocus}
         onBlur={toggleFocus}
-        placeholder={isInWorkspace ? t('c:placeholder.search_in_workpace') : t('c:placeholder.search_in_project')}
+        placeholder={t('c:search_in_resource', {
+          resource: isInWorkspace
+            ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() })
+            : t('c:project').toLowerCase(),
+        })}
         className={'h-10 w-full border-0 pl-0! shadow-none'}
         value={inputValue}
         onChange={(e) => {

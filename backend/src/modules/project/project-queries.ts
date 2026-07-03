@@ -1,4 +1,5 @@
 import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from 'drizzle-orm';
+import type { ContextEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
 import { contextCountersTable } from '#/modules/entities/context-counters-db';
 import { getEntityCountsSelect } from '#/modules/entities/helpers/get-entity-counts';
@@ -46,41 +47,18 @@ export const deleteProjectsByIds = async (ctx: AuthContext, { ids }: DeleteProje
     .where(and(inArray(projectsTable.id, ids), eq(projectsTable.organizationId, organizationId)));
 };
 
-interface UpdateMembershipWorkspaceOpts {
-  membershipId: string;
-  workspaceId: string | null;
-  updatedBy: string;
-  updatedAt: string;
-  role?: string;
-}
-
-/** Update a membership's workspace assignment. */
-export const updateMembershipWorkspace = async (
-  ctx: DbContext,
-  { membershipId, workspaceId, updatedBy, updatedAt, role }: UpdateMembershipWorkspaceOpts,
-) => {
-  const { db } = ctx.var;
-  const [updated] = await db
-    .update(membershipsTable)
-    .set({
-      workspaceId,
-      updatedBy,
-      updatedAt,
-      ...(role && { role: role as typeof membershipsTable.$inferInsert.role }),
-    })
-    .where(eq(membershipsTable.id, membershipId))
-    .returning(membershipBaseSelect);
-  return updated;
-};
-
 interface FindMaxDisplayOrderOpts {
-  contextType: 'organization' | 'workspace' | 'project';
+  userId: string;
+  contextType: ContextEntityType;
   workspaceId: string;
 }
 
 /** Find the max displayOrder for a user's memberships in a workspace. */
-export const findMaxDisplayOrder = async (ctx: AuthContext, { contextType, workspaceId }: FindMaxDisplayOrderOpts) => {
-  const { db, userId } = ctx.var;
+export const findMaxDisplayOrder = async (
+  ctx: DbContext,
+  { userId, contextType, workspaceId }: FindMaxDisplayOrderOpts,
+) => {
+  const { db } = ctx.var;
   const [{ maxOrder }] = await db
     .select({ maxOrder: max(membershipsTable.displayOrder) })
     .from(membershipsTable)
@@ -92,6 +70,32 @@ export const findMaxDisplayOrder = async (ctx: AuthContext, { contextType, works
       ),
     );
   return maxOrder;
+};
+
+interface DeleteProjectMembershipOpts {
+  membershipId: string;
+  userId: string;
+  contextId: string;
+  projectId: string;
+}
+
+/** Delete a project membership by its project identity. */
+export const deleteProjectMembership = async (
+  ctx: DbContext,
+  { membershipId, userId, contextId, projectId }: DeleteProjectMembershipOpts,
+) => {
+  const { db } = ctx.var;
+  return db
+    .delete(membershipsTable)
+    .where(
+      and(
+        eq(membershipsTable.id, membershipId),
+        eq(membershipsTable.userId, userId),
+        eq(membershipsTable.contextType, 'project'),
+        eq(membershipsTable.contextId, contextId),
+        eq(membershipsTable.projectId, projectId),
+      ),
+    );
 };
 
 interface InsertProjectMembershipOpts {
@@ -115,7 +119,7 @@ interface GetProjectsListOpts {
   organizationId?: string;
   workspaceId?: string;
   excludeArchived?: boolean;
-  role?: 'admin' | 'member' | 'guest';
+  role?: EntityRole;
   includeCounts: boolean;
 }
 

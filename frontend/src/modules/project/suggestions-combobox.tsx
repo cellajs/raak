@@ -104,14 +104,20 @@ export const ProjectSuggestionCombobox = ({
             ))}
           </div>
         ) : (
-          <span className="ml-1 text-sm">{t('c:select_resource', { resource: t('c:projects').toLowerCase() })}</span>
+          <span className="ml-1 text-sm">
+            {t('c:select_resource', { resource: t('c:project_other').toLowerCase() })}
+          </span>
         )}
 
         <ChevronsUpDownIcon className="absolute right-0 mx-2 h-4 w-4 shrink-0 opacity-50" />
       </ComboboxPrimitive.Trigger>
 
       <ComboboxContent className="p-0">
-        <ComboboxSearchInput value={searchQuery} isSearching={isFetching} placeholder={t('c:placeholder.type_name')} />
+        <ComboboxSearchInput
+          value={searchQuery}
+          isSearching={isFetching}
+          placeholder={t('c:placeholder.type_input', { inputLabel: t('c:project').toLowerCase() })}
+        />
         <ScrollArea>
           <ComboboxList className="h-full px-1">
             <AnimatePresence mode="wait">

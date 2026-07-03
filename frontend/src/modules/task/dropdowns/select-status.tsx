@@ -68,7 +68,7 @@ export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWi
           value={searchValue}
           wrapClassName="max-sm:hidden"
           className="rounded-none leading-normal focus-visible:ring-transparent"
-          placeholder={t('c:placeholder.set_status')}
+          placeholder={t('c:select_resource', { resource: t('c:status').toLowerCase() })}
           showClear={false}
         />
         {!searchValue.length && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">S</Kbd>}

@@ -59,14 +59,21 @@ export const variantOptions = [
   {
     value: TaskVariant.Feature,
     type: 'Feature',
+    labelKey: 'feature',
     icon: () => <StarIcon size={16} className="shrink-0 fill-amber-400 text-amber-500" />,
   },
   {
     value: TaskVariant.Chore,
     type: 'Chore',
+    labelKey: 'chore',
     icon: () => <BoltIcon size={16} className="shrink-0 fill-slate-400 text-slate-500" />,
   },
-  { value: TaskVariant.Bug, type: 'Bug', icon: () => <BugIcon size={16} className="fill-red-400 text-red-500" /> },
+  {
+    value: TaskVariant.Bug,
+    type: 'Bug',
+    labelKey: 'bug',
+    icon: () => <BugIcon size={16} className="fill-red-400 text-red-500" />,
+  },
 ] as const;
 
 /**

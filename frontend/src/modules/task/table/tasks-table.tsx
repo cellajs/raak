@@ -140,7 +140,7 @@ export default function TasksTable({
             <ContentPlaceholder
               icon={BirdIcon}
               title="c:no_resource_yet"
-              titleProps={{ resource: t('c:tasks').toLowerCase() }}
+              titleProps={{ resource: t('c:task_other').toLowerCase() }}
             />
           ),
         }}

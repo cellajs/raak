@@ -26,7 +26,11 @@ import { ApiError } from '~/lib/api';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { labelQueryKeys } from '~/modules/label/query';
 import { meKeys } from '~/modules/me/query';
-import { addMyMembershipCache, upsertMyMembershipCache } from '~/modules/memberships/query-mutations';
+import {
+  addMyMembershipCache,
+  getApiIncludedMembership,
+  upsertMyMembershipCache,
+} from '~/modules/memberships/query-mutations';
 import type { EnrichedProject } from '~/modules/project/types';
 import { workspaceQueryKeys } from '~/modules/workspace/query';
 import {
@@ -156,7 +160,8 @@ export const useProjectCreateMutation = () => {
     },
     onSuccess: (createdProject) => {
       toaster(t('c:success.create_resource', { resource: t('c:project') }), 'success');
-      if (createdProject.included?.membership) addMyMembershipCache(createdProject.included.membership);
+      const membership = getApiIncludedMembership(createdProject);
+      if (membership) addMyMembershipCache(membership);
       cacheCreate(listKey, [createdProject]);
     },
     onSettled: () => {
@@ -214,7 +219,7 @@ export const useProjectDeleteMutation = () => {
           ? t('c:success.delete_resource', { resource: t('c:project') })
           : t('c:success.delete_counted_resources', {
               count: projects.length,
-              resources: t('c:projects').toLowerCase(),
+              resources: t('c:project_other').toLowerCase(),
             });
       toaster(deleteText, 'success');
 
@@ -263,7 +268,8 @@ export const useAssignProjectMutation = () => {
         queryClient.invalidateQueries({ queryKey, refetchType: 'all' });
       }
 
-      if (newProject.included?.membership) upsertMyMembershipCache(newProject.included.membership);
+      const membership = getApiIncludedMembership(newProject);
+      if (membership) upsertMyMembershipCache(membership);
 
       cacheUpdate(listKey, [newProject]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
@@ -299,8 +305,12 @@ export const useProjectMoveMutation = () => {
       const labelsQueries = getSimilarQueries([...labelQueryKeys.list.base, { organizationId }]);
       for (const [queryKey] of labelsQueries) queryClient.invalidateQueries({ queryKey });
 
+      const membership = getApiIncludedMembership(movedProject);
+      if (membership) upsertMyMembershipCache(membership);
+
       cacheUpdate(listKey, [movedProject]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
+      queryClient.invalidateQueries({ queryKey: meKeys.memberships });
     },
     onSettled: () => {
       invalidateIfLastMutation(queryClient, keys.all, listKey);

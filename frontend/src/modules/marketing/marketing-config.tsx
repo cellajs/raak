@@ -91,10 +91,10 @@ export const faqsData = [
  ************************************************************************************************/
 
 export const counts = [
-  { id: 'user', title: 'c:users', icon: UsersIcon },
-  { id: 'organization', title: 'c:organizations', icon: Building2Icon },
-  { id: 'project', title: 'c:projects', icon: FolderIcon },
-  { id: 'task', title: 'c:tasks', icon: StickyNoteIcon },
+  { id: 'user', title: 'c:user_other', icon: UsersIcon },
+  { id: 'organization', title: 'c:organization_other', icon: Building2Icon },
+  { id: 'project', title: 'c:project_other', icon: FolderIcon },
+  { id: 'task', title: 'c:task_other', icon: StickyNoteIcon },
 ] as const;
 
 /*************************************************************************************************

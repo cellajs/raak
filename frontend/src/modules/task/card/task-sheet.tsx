@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { FlameKindlingIcon, ServerCrashIcon, WifiOffIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
@@ -12,6 +13,7 @@ import { taskQueryOptions } from '~/modules/task/query';
 const TaskSheet = ({ id, organizationId }: { id: string; organizationId: string | undefined }) => {
   const isOnline = useOnlineManager();
   const { tenantId } = useParams({ strict: false });
+  const { t } = useTranslation();
 
   // Query task
   const {
@@ -42,7 +44,8 @@ const TaskSheet = ({ id, organizationId }: { id: string; organizationId: string 
     return (
       <ContentPlaceholder
         icon={isOnline ? FlameKindlingIcon : WifiOffIcon}
-        title={`${isOnline ? 'c:no_task_found' : 'c:offline.text'}`}
+        title={isOnline ? 'c:no_resource_found' : 'c:offline.text'}
+        titleProps={isOnline ? { resource: t('c:task').toLowerCase() } : undefined}
       />
     );
 

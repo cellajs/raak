@@ -43,7 +43,7 @@ export const useColumns = () => {
       },
       {
         key: 'usedCount',
-        name: t('c:tasks'),
+        name: t('c:task_other'),
         minWidth: 50,
         sortable: true,
         renderCell: ({ row }) => (
@@ -55,7 +55,7 @@ export const useColumns = () => {
       },
       {
         key: 'projects',
-        name: t('c:projects'),
+        name: t('c:project_other'),
 
         minBreakpoint: 'sm',
         width: 120,

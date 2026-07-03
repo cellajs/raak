@@ -3,7 +3,7 @@ import { findMembership } from '~/query/enrichment/helpers';
 import type { EnrichableEntity } from '~/query/enrichment/types';
 
 /** Fields that affect enrichment — update when MembershipBase gains new meaningful fields */
-const comparedKeys: (keyof MembershipBase)[] = ['archived', 'muted', 'displayOrder', 'role'];
+const comparedKeys: (keyof MembershipBase)[] = ['archived', 'muted', 'displayOrder', 'role', 'workspaceId'];
 
 /** Check if two memberships differ on meaningful fields */
 function hasMembershipChanged(a: MembershipBase | null, b: MembershipBase | null): boolean {
@@ -18,10 +18,7 @@ function hasMembershipChanged(a: MembershipBase | null, b: MembershipBase | null
  */
 export function enrichWithMembership(item: EnrichableEntity, memberships: MembershipBase[]): EnrichableEntity {
   const existing = item.membership ?? null;
-
-  // Resolve: memberships array → included fallback → keep existing
-  // biome-ignore lint/suspicious/noExplicitAny: included is an optional API response field not on the type
-  const resolved = findMembership(memberships, item.id) ?? (item as any).included?.membership ?? null;
+  const resolved = findMembership(memberships, item.id) ?? existing;
 
   if (resolved === null || !hasMembershipChanged(existing, resolved)) return item;
 

@@ -35,7 +35,7 @@ export const SelectVariant = ({ value: currentVariant, onChange, taskId, classNa
       inline
       openOnInputClick={false}
       items={variantOptions}
-      itemToStringLabel={(item) => t(`c:${item.type}`)}
+      itemToStringLabel={(item) => t(`c:${item.labelKey}`)}
       itemToStringValue={(item) => item.type}
       value={selectedType ?? null}
       onValueChange={(item) => {
@@ -58,7 +58,7 @@ export const SelectVariant = ({ value: currentVariant, onChange, taskId, classNa
           value={searchValue}
           wrapClassName="max-sm:hidden"
           className="leading-normal"
-          placeholder={t('c:placeholder.type')}
+          placeholder={t('c:select_resource', { resource: t('c:type').toLowerCase() })}
           showClear={false}
         />
         {!isSearching && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">T</Kbd>}
@@ -72,7 +72,7 @@ export const SelectVariant = ({ value: currentVariant, onChange, taskId, classNa
                 className="group flex w-full items-center gap-2 rounded-md leading-normal"
               >
                 <div>{variant.icon()}</div>
-                <div className="grow">{t(`c:${variant.type}`)}</div>
+                <div className="grow">{t(`c:${variant.labelKey}`)}</div>
                 {!isSearching && <span className="mx-1 text-xs opacity-50 max-sm:hidden">{index + 1}</span>}
               </ComboboxItem>
             );

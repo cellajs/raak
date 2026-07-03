@@ -71,7 +71,7 @@ export const SelectPoints = ({ value: currentPoints, onChange, taskId, triggerWi
           value={searchValue}
           wrapClassName="max-sm:hidden"
           className="leading-normal"
-          placeholder={t('c:placeholder.points')}
+          placeholder={t('c:select_resource', { resource: t('c:points').toLowerCase() })}
           showClear={false}
         />
         {!isSearching && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">I</Kbd>}

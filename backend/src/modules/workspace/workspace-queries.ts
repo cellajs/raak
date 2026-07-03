@@ -1,4 +1,4 @@
-import { and, count, desc, eq, getColumns, ilike, inArray, isNotNull, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { contextCountersTable } from '#/modules/entities/context-counters-db';
 import { getEntityCountsSelect } from '#/modules/entities/helpers/get-entity-counts';
@@ -132,34 +132,4 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
     .offset(offset);
 
   return { workspaces, total };
-};
-
-interface FindLatestUserWorkspaceOpts {
-  userId: string;
-  organizationId: string;
-}
-
-/**
- * Return the most recently created workspaceId from the user's workspace memberships
- * within the given organization, or null if the user has no workspace there.
- */
-export const findLatestUserWorkspaceId = async (
-  { var: { db } }: DbContext,
-  { userId, organizationId }: FindLatestUserWorkspaceOpts,
-): Promise<string | null> => {
-  const [row] = await db
-    .select({ workspaceId: membershipsTable.workspaceId })
-    .from(membershipsTable)
-    .where(
-      and(
-        eq(membershipsTable.userId, userId),
-        eq(membershipsTable.organizationId, organizationId),
-        eq(membershipsTable.contextType, 'workspace'),
-        isNotNull(membershipsTable.workspaceId),
-      ),
-    )
-    .orderBy(desc(membershipsTable.createdAt))
-    .limit(1);
-
-  return row?.workspaceId ?? null;
 };

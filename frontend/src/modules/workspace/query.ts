@@ -15,7 +15,7 @@ import {
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { addMyMembershipCache } from '~/modules/memberships/query-mutations';
+import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
 import {
   baseInfiniteQueryOptions,
   createCacheFinder,
@@ -115,7 +115,8 @@ export const useWorkspaceCreateMutation = () => {
     },
     onSuccess: (createdWorkspace) => {
       toaster(t('c:success.create_resource', { resource: t('c:workspace') }), 'success');
-      if (createdWorkspace.included?.membership) addMyMembershipCache(createdWorkspace.included.membership);
+      const membership = getApiIncludedMembership(createdWorkspace);
+      if (membership) addMyMembershipCache(membership);
       cacheCreate(listKey, [createdWorkspace]);
     },
     onSettled: () => {
@@ -172,7 +173,7 @@ export const useWorkspaceDeleteMutation = () => {
         workspaces.length > 1
           ? t('c:success.delete_counted_resources', {
               count: workspaces.length,
-              resources: t('c:workspaces').toLowerCase(),
+              resources: t('c:workspace_other').toLowerCase(),
             })
           : t('c:success.delete_resource', { resource: t('c:workspace') });
 

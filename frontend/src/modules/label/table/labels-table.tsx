@@ -205,7 +205,7 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
             <ContentPlaceholder
               icon={BirdIcon}
               title="c:no_resource_yet"
-              titleProps={{ resource: t('c:labels').toLowerCase() }}
+              titleProps={{ resource: t('c:label_other').toLowerCase() }}
             />
           ),
         }}

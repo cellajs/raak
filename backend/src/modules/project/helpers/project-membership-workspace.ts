@@ -1,22 +1,31 @@
-import type { AuthContext } from '#/core/context';
+import type { AuthContext, DbContext } from '#/core/context';
 import { AppError } from '#/core/error';
+import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import {
+  deleteProjectMembership,
   findMaxDisplayOrder,
   insertProjectMembership,
-  updateMembershipWorkspace,
 } from '#/modules/project/project-queries';
 import { getValidContextEntity } from '#/permissions';
-import { getIsoDate } from '#/utils/iso-date';
 
 type ProjectMembershipTarget = {
   id: string;
   entityType: 'project';
 };
 
+type ProjectMembership = AuthContext['var']['memberships'][number] & {
+  contextType: 'project';
+  projectId: string;
+};
+
 type SetProjectMembershipWorkspaceInput = {
-  membershipId: string;
+  membership: ProjectMembership;
   workspaceId: string | null;
-  role?: string;
+  role?: ProjectMembership['role'];
+};
+
+type ReplaceProjectMembershipWorkspaceInput = SetProjectMembershipWorkspaceInput & {
+  createdBy: string;
 };
 
 type UpsertProjectMembershipWorkspaceInput = {
@@ -27,7 +36,7 @@ type UpsertProjectMembershipWorkspaceInput = {
 function isProjectMembershipTarget(
   membership: AuthContext['var']['memberships'][number],
   project: ProjectMembershipTarget,
-) {
+): membership is ProjectMembership {
   return membership.projectId === project.id && membership.contextType === project.entityType;
 }
 
@@ -53,17 +62,65 @@ export function requireCurrentUserProjectMembership(ctx: AuthContext, project: P
   return membership;
 }
 
+/** Replace a project membership with a new workspace assignment. */
+export async function replaceProjectMembershipWorkspace(
+  ctx: DbContext,
+  { membership, workspaceId, createdBy, role }: ReplaceProjectMembershipWorkspaceInput,
+) {
+  const { db } = ctx.var;
+
+  return db.transaction(async (tx) => {
+    const txCtx: DbContext = { var: { db: tx } };
+    const maxOrder = workspaceId
+      ? await findMaxDisplayOrder(txCtx, {
+          userId: membership.userId,
+          contextType: membership.contextType,
+          workspaceId,
+        })
+      : null;
+
+    const displayOrder = workspaceId ? (maxOrder ? maxOrder + 1 : 1) : membership.displayOrder;
+
+    await deleteProjectMembership(txCtx, {
+      membershipId: membership.id,
+      userId: membership.userId,
+      contextId: membership.contextId,
+      projectId: membership.projectId,
+    });
+
+    return insertProjectMembership(txCtx, {
+      values: {
+        tenantId: membership.tenantId,
+        userId: membership.userId,
+        contextType: membership.contextType,
+        contextId: membership.contextId,
+        organizationId: membership.organizationId,
+        workspaceId,
+        projectId: membership.projectId,
+        role: role ?? membership.role,
+        archived: membership.archived,
+        muted: membership.muted,
+        displayOrder,
+        createdBy,
+      },
+    });
+  });
+}
+
 export async function setCurrentUserProjectMembershipWorkspace(
   ctx: AuthContext,
-  { membershipId, workspaceId, role }: SetProjectMembershipWorkspaceInput,
+  { membership, workspaceId, role }: SetProjectMembershipWorkspaceInput,
 ) {
-  return updateMembershipWorkspace(ctx, {
-    membershipId,
+  const updatedMembership = await replaceProjectMembershipWorkspace(ctx, {
+    membership,
     workspaceId,
-    updatedBy: ctx.var.user.id,
-    updatedAt: getIsoDate(),
+    createdBy: ctx.var.user.id,
     role,
   });
+
+  invalidateCache.user(updatedMembership.userId);
+
+  return updatedMembership;
 }
 
 async function createCurrentUserProjectMembershipInWorkspace(
@@ -79,11 +136,12 @@ async function createCurrentUserProjectMembershipInWorkspace(
   const { user, organization } = ctx.var;
 
   const maxOrder = await findMaxDisplayOrder(ctx, {
+    userId: user.id,
     contextType: project.entityType,
     workspaceId,
   });
 
-  return insertProjectMembership(ctx, {
+  const membership = await insertProjectMembership(ctx, {
     values: {
       tenantId: organization.tenantId,
       userId: user.id,
@@ -97,6 +155,10 @@ async function createCurrentUserProjectMembershipInWorkspace(
       displayOrder: maxOrder ? maxOrder + 1 : 1,
     },
   });
+
+  invalidateCache.user(membership.userId);
+
+  return membership;
 }
 
 export async function upsertCurrentUserProjectMembershipWorkspace(
@@ -116,7 +178,7 @@ export async function upsertCurrentUserProjectMembershipWorkspace(
   }
 
   return setCurrentUserProjectMembershipWorkspace(ctx, {
-    membershipId: existingMembership.id,
+    membership: existingMembership,
     workspaceId,
     role:
       existingMembership.role === 'guest'

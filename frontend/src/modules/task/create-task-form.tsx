@@ -297,7 +297,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                         >
                           {variant.icon()}
                           <span className="ml-2 opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
-                            {t(`c:${variant.type}`)}
+                            {t(`c:${variant.labelKey}`)}
                           </span>
                         </ToggleGroupItem>
                       ))}
@@ -345,7 +345,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                         ) : (
                           <>
                             <NotSelected className="size-4" aria-hidden="true" />
-                            <span className="font-normal opacity-75">{t('c:set_points')}</span>
+                            <span className="font-normal opacity-75">
+                              {t('c:set_resource', { resource: t('c:points').toLowerCase() })}
+                            </span>
                           </>
                         )}
                       </Button>
@@ -418,7 +420,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                         ) : (
                           <>
                             <TagIcon size={16} className="opacity-75" />
-                            <span className="ml-2 font-normal opacity-75">{t('c:choose_labels')}</span>
+                            <span className="ml-2 font-normal opacity-75">
+                              {t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}
+                            </span>
                           </>
                         )}
                       </div>
