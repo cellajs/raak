@@ -18,7 +18,7 @@ const TaskLinkSpinner = () => <SpinnerPage />;
 
 /**
  * Task link resolver route.
- * TODO: review
+ * TODO [#16]: review
  *
  * When a user visits /t/:id (redirected from the backend OG/redirect handler),
  * this route resolves the task's context and decides where to send them:
