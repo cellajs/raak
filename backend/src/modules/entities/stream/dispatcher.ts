@@ -28,7 +28,7 @@ export function createStreamDispatcher<T extends CursoredSubscriber, E extends A
     const eligible = subscribers.filter((s) => shouldReceive(s, event));
     if (eligible.length === 0) return;
 
-    // TODO We have perhaps too many trace logs for every stream event? review and consolidate perhaps
+    // TODO [#09] We have perhaps too many trace logs for every stream event? review and consolidate perhaps
     logEvent(null, 'trace', 'Dispatching stream event', {
       activityId: event.id,
       action: event.action,
@@ -45,7 +45,7 @@ export function createStreamDispatcher<T extends CursoredSubscriber, E extends A
 
     await Promise.allSettled(
       eligible.map((subscriber) =>
-        // TODO does this use a weaker type then necessary? Can it use the generic type we pass per dispatch config?
+        // TODO [#10] does this use a weaker type then necessary? Can it use the generic type we pass per dispatch config?
         sendNotificationToSubscriber(subscriber, event, notification, transformNotification, preSerialized).catch(
           (error) => {
             logEvent(null, 'error', 'Failed to dispatch stream event', {

@@ -3,7 +3,7 @@ import { nanoid } from 'shared/nanoid';
 import { env } from '#/env';
 import { logError, logEvent } from '#/utils/logger';
 
-// TODO-032(IMPROVEMENT) handle all matrix/element message types
+// TODO-032(IMPROVEMENT) [#06] handle all matrix/element message types
 // export type matrixMsgTypes = 'm.text', 'm.notice', 'm.emote', 'm.image', 'm.audio', 'm.video', 'm.file', 'm.location', 'm.sticker'
 
 type MatrixMsgTypes = 'm.text' | 'm.notice';

@@ -91,7 +91,7 @@ export async function ensureReplicationSlot(): Promise<void> {
       logEvent('info', `Replication slot '${CDC_SLOT_NAME}' created`);
     }
   } catch (error) {
-    // TODO shouldnt we use logError here? perahps it should accept a message and error?
+    // TODO [#01] shouldnt we use logError here? perahps it should accept a message and error?
     // And can both logEvent and logError prevent fast duplication of the same error message in a short time window? 
     logEvent('warn', `Could not verify/create replication slot: ${getErrorMessage(error)}`);
   }

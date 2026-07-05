@@ -221,7 +221,7 @@ jobs:
           cp "$SPEC" /tmp/head-openapi.json
 
           # Classify breaking changes (oasdiff exits non-zero on breaking errors).
-          # TODO: pin tufin/oasdiff by digest once chosen.
+          # TODO [#19]: pin tufin/oasdiff by digest once chosen.
           set +e
           docker run --rm -v /tmp:/specs tufin/oasdiff:v1.20.0 \
             breaking /specs/base-openapi.json /specs/head-openapi.json --fail-on ERR
