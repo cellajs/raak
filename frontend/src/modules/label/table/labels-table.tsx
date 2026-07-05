@@ -164,8 +164,6 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
     return result;
   }, [rows, selectedIds]);
 
-  const visibleColumns = useMemo(() => columns.filter((column) => !column.hidden), [columns]);
-
   const clearSelection = () => setSelectedIds([]);
 
   return (
@@ -188,7 +186,7 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
           rowHeight: 52,
           onRowsChange,
           rowKeyGetter,
-          columns: visibleColumns,
+          columns,
           enableVirtualization: false,
           limit,
           error,

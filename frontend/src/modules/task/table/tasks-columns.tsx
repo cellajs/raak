@@ -99,7 +99,11 @@ export const useColumns = (
           );
         },
         width: 140,
-        compact: { width: 50 },
+        modes: {
+          compact: { width: 50 },
+          // On mobile the type icon merges into the summary cell (icon-only via the slot's data-is-compact)
+          mobile: { merge: { into: 'summary', side: 'left' } },
+        },
       },
       {
         key: 'status',
@@ -163,7 +167,7 @@ export const useColumns = (
             </>
           );
         },
-        compact: { width: 50 },
+        modes: { compact: { width: 50 } },
       },
       {
         key: 'assignedTo',
@@ -248,7 +252,7 @@ export const useColumns = (
             </Link>
           );
         },
-        compact: { width: 50 },
+        modes: { compact: { width: 50 } },
       },
       {
         key: 'todos',
@@ -298,7 +302,8 @@ export const useColumns = (
           const user = result.data;
           return <UserCell compactable user={user} tabIndex={tabIndex} />;
         },
-        compact: { width: 50 },
+        // Compact toggle: creator avatar merges inline before the created date
+        modes: { compact: { merge: { into: 'createdAt', side: 'left' } } },
       },
       {
         key: 'createdAt',
@@ -320,7 +325,7 @@ export const useColumns = (
           const user = result.data;
           return <UserCell compactable user={user} tabIndex={tabIndex} />;
         },
-        compact: { width: 50 },
+        modes: { compact: { width: 50 } },
       },
       {
         key: 'updatedAt',
