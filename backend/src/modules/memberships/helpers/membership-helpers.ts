@@ -9,7 +9,7 @@ import {
   type MembershipModel,
   membershipsTable,
 } from '#/modules/memberships/memberships-db';
-import { type LogContext, logEvent } from '#/utils/logger';
+import { type LogContext, log } from '#/utils/logger';
 
 /**
  * The root context entity type — the parentless context entity (e.g. 'organization').
@@ -202,7 +202,7 @@ export const insertMemberships = async <T extends BaseEntityModel>(
   ]);
 
   if (insertedTarget.length && logCtx) {
-    logEvent(logCtx, 'info', 'Memberships created', { count: insertedTarget.length });
+    log.info(logCtx, 'Memberships created', { count: insertedTarget.length });
   }
 
   return insertedTarget;

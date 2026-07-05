@@ -22,7 +22,7 @@ import { hashIpForUser, hashSubnet } from '#/utils/hash-pii';
 import { toSubnet } from '#/utils/ip-subnet';
 import { isExpiredDate } from '#/utils/is-expired-date';
 import { getIsoDate } from '#/utils/iso-date';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 import { encodeLowerCased } from '#/utils/oslo';
 import { isSystemAccessAllowed } from '#/utils/system-access';
 import { createDate, TimeSpan } from '#/utils/time-span';
@@ -111,7 +111,7 @@ export const setUserSession = async (
     target: userCountersTable.userId,
     set: { lastSignInAt },
   });
-  logEvent(ctx, 'info', 'User signed in', { strategy });
+  log.info(ctx, 'User signed in', { strategy });
 };
 
 /**

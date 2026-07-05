@@ -4,7 +4,7 @@ import { tenantContextIncludingDeleted } from '#/db/tenant-context';
 import { deleteAttachmentsByGroupIds, deleteTasksByIds } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { getIsoDate } from '#/utils/iso-date';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 
 export async function deleteTasksOp(
   ctx: AuthContext,
@@ -26,7 +26,7 @@ export async function deleteTasksOp(
         deletedBy,
       });
       if (deletedAttachments.length > 0) {
-        logEvent(ctx, 'info', 'Task attachments deleted', { count: deletedAttachments.length });
+        log.info(ctx, 'Task attachments deleted', { count: deletedAttachments.length });
       }
     }
   });

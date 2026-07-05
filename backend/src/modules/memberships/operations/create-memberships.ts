@@ -14,7 +14,7 @@ import {
   insertTokens,
 } from '#/modules/memberships/memberships-queries';
 import { getValidContextEntity } from '#/permissions/get-context-entity';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 import { encodeLowerCased } from '#/utils/oslo';
 import { slugFromEmail } from '#/utils/slug-from-email';
 import { createDate, TimeSpan } from '#/utils/time-span';
@@ -252,7 +252,7 @@ export async function createMembershipsOp(ctx: AuthContext, input: CreateMembers
 
   const invitesSentCount = insertedInactiveMemberships.length;
 
-  logEvent(ctx, 'info', 'Users invited on entity level', {
+  log.info(ctx, 'Users invited on entity level', {
     count: invitesSentCount,
     entityType,
     entityId,

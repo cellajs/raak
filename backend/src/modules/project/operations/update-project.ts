@@ -8,7 +8,7 @@ import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-coun
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions';
 import { getIsoDate } from '#/utils/iso-date';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 
 export async function updateProjectOp(ctx: AuthContext, id: string, input: Record<string, unknown>) {
   const user = ctx.var.user;
@@ -25,7 +25,7 @@ export async function updateProjectOp(ctx: AuthContext, id: string, input: Recor
   const values = { ...input, updatedAt: getIsoDate(), updatedBy: user.id };
   const updatedProjectRecord = await updateProject(ctx, { id: project.id, values });
 
-  logEvent(ctx, 'info', 'Project updated', { projectId: updatedProjectRecord.id });
+  log.info(ctx, 'Project updated', { projectId: updatedProjectRecord.id });
 
   // Get updated counts
   const [counts, taskStatusCounts] = await Promise.all([

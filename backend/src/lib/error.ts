@@ -4,8 +4,8 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { appConfig } from 'shared';
 import type { Env } from '#/core/context';
 import { AppError, type ErrorKey } from '#/core/error';
-import { eventLogger } from '#/lib/pino';
 import { getIsoDate } from '#/utils/iso-date';
+import { log } from '#/utils/logger';
 
 const isProduction = appConfig.mode === 'production';
 const severitiesRequiringDetails = new Set(['warn', 'error', 'fatal']);
@@ -63,7 +63,7 @@ function isPoolTimeoutError(err: unknown): boolean {
 export const appErrorHandler: ErrorHandler<Env> = (err, ctx) => {
   // Handle pool exhaustion as 503 Service Unavailable
   if (isPoolTimeoutError(err)) {
-    eventLogger.error({ msg: 'Database pool exhausted', path: ctx.req.path, method: ctx.req.method });
+    log.error(ctx, 'Database pool exhausted', { err, path: ctx.req.path, method: ctx.req.method });
     return ctx.json(
       {
         message: 'Service temporarily unavailable, please retry',
@@ -81,7 +81,7 @@ export const appErrorHandler: ErrorHandler<Env> = (err, ctx) => {
   // Handle Hono's built-in HTTPException (e.g. from CSRF middleware)
   if (err instanceof HTTPException) {
     const status = err.status as ContentfulStatusCode;
-    eventLogger.warn({ msg: `HTTPException ${status}`, path: ctx.req.path, method: ctx.req.method });
+    log.warn(ctx, `HTTPException ${status}`, { err, path: ctx.req.path, method: ctx.req.method });
     return ctx.json(
       {
         message: err.message || 'Request rejected',
@@ -120,33 +120,28 @@ export const appErrorHandler: ErrorHandler<Env> = (err, ctx) => {
   const logId = ctx.get('requestId');
   const timestamp = getIsoDate();
 
-  // Full error details for server-side logging only (never sent to client)
-  const serverError = {
-    message,
-    name,
-    status,
-    type,
-    severity,
-    entityType,
-    cause: err.cause,
-    logId,
-    stack: err.stack,
-    path: ctx.req.path,
-    method: ctx.req.method,
-    userId: user?.id,
-    organizationId: organization?.id,
-    timestamp,
-    meta,
-    ...(pgError && { pgCode: pgError.code, pgDetail: pgError.detail, pgConstraint: pgError.constraint }),
-  };
-
-  // Log with full details for warn/error/fatal, minimal for info
-  const logPayload = detailsRequired
-    ? { msg: serverError.name, error: serverError, ...(isProduction && meta) }
-    : { msg: serverError.name };
-
-  // Log through event logger
-  eventLogger[severity](logPayload);
+  // Message carries name + type so dedup keys on the error kind, not just the class name
+  // (`AppError: forbidden` and `AppError: invalid_request` suppress independently).
+  // Full details (err with stack/cause, request context) for warn/error/fatal, minimal for info.
+  // tenantId/userId/organizationId/requestId are bound from ctx by the log facade; requestId is the client-facing logId.
+  log[severity](
+    ctx,
+    `${name}: ${type}`,
+    detailsRequired
+      ? {
+          err,
+          status,
+          type,
+          entityType,
+          path: ctx.req.path,
+          method: ctx.req.method,
+          ...(user && { userId: user.id }),
+          ...(organization && { organizationId: organization.id }),
+          ...(pgError && { pgCode: pgError.code, pgDetail: pgError.detail, pgConstraint: pgError.constraint }),
+          ...(meta && { meta }),
+        }
+      : undefined,
+  );
 
   // Handle redirect if needed
   if (willRedirect) {

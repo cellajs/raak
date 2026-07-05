@@ -9,7 +9,7 @@ import { withAuditUsers } from '#/modules/user/helpers/audit-user';
 import { insertWorkspaces } from '#/modules/workspace/workspace-queries';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 import { createRejectionState, takeWithRestriction } from '#/utils/rejection-utils';
 
 type CreateWorkspaceItem = { id: string; name: string };
@@ -49,7 +49,7 @@ export async function createWorkspacesOp(ctx: AuthContext, items: CreateWorkspac
 
   const workspaceRecords = await insertWorkspaces(ctx, { workspaces: workspaceValues });
 
-  logEvent(ctx, 'info', 'Workspaces created', {
+  log.info(ctx, 'Workspaces created', {
     count: workspaceRecords.length,
     ids: workspaceRecords.map((ws) => ws.id),
   });

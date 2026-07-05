@@ -6,7 +6,7 @@ import {
 } from '#/modules/project/helpers/project-membership-workspace';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 
 export async function removeProjectWorkspaceOp(ctx: AuthContext, id: string) {
   const { entity: project } = await getValidContextEntity(ctx, id, 'project', 'read');
@@ -16,7 +16,7 @@ export async function removeProjectWorkspaceOp(ctx: AuthContext, id: string) {
     workspaceId: null,
   });
 
-  logEvent(ctx, 'info', 'Project workspace removed', { projectId: project.id });
+  log.info(ctx, 'Project workspace removed', { projectId: project.id });
 
   const projectWithAudit = await withAuditUser(ctx, project);
 

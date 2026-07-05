@@ -4,7 +4,7 @@ import type { DbOrTx } from '#/db/db';
 import { sendAccountSecurityEmail } from '#/modules/auth/general/helpers/send-account-security-email';
 import { domainsTable } from '#/modules/domains/domains-db';
 import { type TenantModel, tenantsTable } from '#/modules/tenants/tenants-db';
-import { type LogContext, logEvent } from '#/utils/logger';
+import { type LogContext, log } from '#/utils/logger';
 
 /**
  * Shared utility for creating a tenant with associated domain.
@@ -27,7 +27,7 @@ export async function createTenantForUser(
     }
   }
 
-  logEvent(logCtx, 'info', 'Tenant auto-created', { tenantId: tenant.id, name, createdBy });
+  log.info(logCtx, 'Tenant auto-created', { tenantId: tenant.id, name, createdBy });
 
   // Fire-and-forget security notification to sysadmin
   sendAccountSecurityEmail(logCtx, { email: appConfig.securityEmail, name: 'Security' }, 'tenant-created', {

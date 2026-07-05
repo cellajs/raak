@@ -8,7 +8,7 @@ import { insertMemberships } from '#/modules/memberships/helpers/membership-help
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { findInactiveMembershipForUser } from '#/modules/memberships/memberships-queries';
 import { getIsoDate } from '#/utils/iso-date';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 
 const rootContextType = hierarchy.contextTypes.find((t) => hierarchy.getParent(t) === null)!;
 
@@ -41,7 +41,7 @@ export async function handleMembershipInvitationOp(
 
       await tx.delete(inactiveMembershipsTable).where(eq(inactiveMembershipsTable.id, inactiveMembership.id));
 
-      logEvent(ctx, 'info', 'Membership accepted', { ids: activatedMemberships.map((m) => m.id) });
+      log.info(ctx, 'Membership accepted', { ids: activatedMemberships.map((m) => m.id) });
     }
 
     if (acceptOrReject === 'reject') {

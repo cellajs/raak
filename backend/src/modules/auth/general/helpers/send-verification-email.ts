@@ -8,7 +8,7 @@ import { tokensTable } from '#/modules/auth/tokens-db';
 import { type EmailModel, emailsTable } from '#/modules/user/emails-db';
 import { userSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
-import { type LogContext, logEvent } from '#/utils/logger';
+import { type LogContext, log } from '#/utils/logger';
 import { encodeLowerCased } from '#/utils/oslo';
 import { createDate, TimeSpan } from '#/utils/time-span';
 import { emailVerificationEmail } from '../../../../../emails';
@@ -84,7 +84,7 @@ export const sendVerificationEmail = async ({ userId, redirectPath }: Props, log
     console.info(`[verification-link] ${email} ${verificationURL.toString()}`);
   }
 
-  logEvent(logCtx, 'info', 'Verification email sent', { userId: user.id });
+  log.info(logCtx, 'Verification email sent', { userId: user.id });
 };
 
 export const deleteVerificationTokens = async (

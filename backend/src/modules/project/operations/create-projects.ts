@@ -12,7 +12,7 @@ import { withAuditUsers } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 import { filterWithRejection, takeWithRestriction } from '#/utils/rejection-utils';
 
 const defaultTaskStatusCounts = {
@@ -80,7 +80,7 @@ export async function createProjectsOp(ctx: AuthContext, items: CreateProjectIte
 
   const projectIds = projectRecords.map((p) => p.id);
 
-  logEvent(ctx, 'info', 'Projects created', { count: projectRecords.length, ids: projectIds });
+  log.info(ctx, 'Projects created', { count: projectRecords.length, ids: projectIds });
 
   // Insert memberships for each project
   const membershipInserts = projectRecords.map((project) => ({

@@ -1,5 +1,5 @@
 import type { ActivityEvent } from '#/lib/activity-bus';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 import { buildStreamNotification } from './build-message';
 import { sendNotificationToSubscriber } from './send-to-subscriber';
 import { streamSubscriberManager } from './subscriber-manager';
@@ -29,7 +29,7 @@ export function createStreamDispatcher<T extends CursoredSubscriber, E extends A
     if (eligible.length === 0) return;
 
     // TODO [#09] We have perhaps too many trace logs for every stream event? review and consolidate perhaps
-    logEvent(null, 'trace', 'Dispatching stream event', {
+    log.trace(null, 'Dispatching stream event', {
       activityId: event.id,
       action: event.action,
       subjectId: event.subjectId,
@@ -48,7 +48,7 @@ export function createStreamDispatcher<T extends CursoredSubscriber, E extends A
         // TODO [#10] does this use a weaker type then necessary? Can it use the generic type we pass per dispatch config?
         sendNotificationToSubscriber(subscriber, event, notification, transformNotification, preSerialized).catch(
           (error) => {
-            logEvent(null, 'error', 'Failed to dispatch stream event', {
+            log.error(null, 'Failed to dispatch stream event', {
               subscriberId: subscriber.id,
               activityId: event.id,
               channel,

@@ -1,6 +1,6 @@
 import { appConfig } from 'shared';
 import { mailer } from '#/lib/mailer';
-import { type LogContext, logEvent } from '#/utils/logger';
+import { type LogContext, log } from '#/utils/logger';
 import { accountSecurityEmail } from '../../../../../emails';
 
 type AccountSecurityType = Parameters<typeof accountSecurityEmail.translate>[1]['type'];
@@ -17,11 +17,11 @@ export const sendAccountSecurityEmail = (
 ) => {
   const lng = recipient.language ?? appConfig.defaultLanguage;
 
-  logEvent(logCtx, 'warn', `Security email: ${type}`, { email: recipient.email, ...details });
+  log.warn(logCtx, `Security email: ${type}`, { email: recipient.email, ...details });
 
   mailer
     .prepareEmails(accountSecurityEmail, { name: recipient.name ?? '', type, details }, [
       { email: recipient.email, lng },
     ])
-    .catch((err) => logEvent(logCtx, 'error', 'Failed to send security email', { type, error: String(err) }));
+    .catch((err) => log.error(logCtx, 'Failed to send security email', { type, err }));
 };
