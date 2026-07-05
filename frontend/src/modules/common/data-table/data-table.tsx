@@ -1,6 +1,5 @@
 import { type Key, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import {
   type CellMouseArgs,
   type CellMouseEvent,
@@ -119,7 +118,6 @@ export const DataTable = <TData,>({
   resetWidthsKey,
 }: DataTableProps<TData>) => {
   const { t } = useTranslation();
-  const isMobile = useBreakpointBelow('sm', false);
 
   const gridRef = useRef<HTMLDivElement | null>(null);
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(() => new Map());
@@ -192,7 +190,7 @@ export const DataTable = <TData,>({
       ) : (
         <div className="relative grid" ref={gridRef}>
           <DataGrid
-            rowHeight={isMobile ? rowHeight * 1.2 : rowHeight}
+            rowHeight={rowHeight}
             enableVirtualization={enableVirtualization}
             enableStickyHeader={enableStickyHeader}
             enableDragAutoScroll={enableDragAutoScroll}

@@ -507,20 +507,23 @@ export function DataGrid<R, SR = unknown, K extends Key = Key>(props: DataGridPr
   // when any column has wrapText enabled. This turns a fixed height into a per-row
   // function that accounts for multi-line content. Merged host cells with occupied
   // top/bottom slot rows additionally need constant extra height (virtualization
-  // needs heights without rendering).
+  // needs heights without rendering). On the mobile breakpoint rows are scaled up
+  // for easier touch targets — the single source for this (previously duplicated
+  // in DataTable via a second breakpoint read).
   const rowHeight = useMemo(() => {
     const slotExtra = computeMergedSlotExtraHeight(columns);
+    const mobileScale = isMobileBreakpoint ? 1.2 : 1;
     if (typeof baseRowHeight === 'function') {
-      if (slotExtra === 0) return baseRowHeight;
-      return (row: R) => baseRowHeight(row) + slotExtra;
+      if (mobileScale === 1 && slotExtra === 0) return baseRowHeight;
+      return (row: R) => baseRowHeight(row) * mobileScale + slotExtra;
     }
+    const scaledBase = baseRowHeight * mobileScale;
     if (!hasWrapTextColumns(columns)) {
-      if (slotExtra === 0) return baseRowHeight;
-      return () => baseRowHeight + slotExtra;
+      return slotExtra === 0 ? scaledBase : () => scaledBase + slotExtra;
     }
     return (row: R) =>
-      computeWrapTextRowHeight(baseRowHeight, columns as readonly CalculatedColumn<R, unknown>[], row) + slotExtra;
-  }, [baseRowHeight, columns]);
+      computeWrapTextRowHeight(scaledBase, columns as readonly CalculatedColumn<R, unknown>[], row) + slotExtra;
+  }, [baseRowHeight, columns, isMobileBreakpoint]);
 
   const groupedColumnHeaderRowsCount = headerRowsCount - 1;
   const minRowIdx = -headerRowsCount;
