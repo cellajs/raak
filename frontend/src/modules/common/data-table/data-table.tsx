@@ -175,7 +175,7 @@ export const DataTable = <TData,>({
   const renderers = useMemo(() => ({ renderRow, renderCell }), [renderRow, renderCell]);
 
   return (
-    <div className={cn('mb-4 h-full w-full max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] md:mb-8', className)}>
+    <div className={cn('mb-4 h-full w-full md:mb-8', className)}>
       {isLoading || !rows ? (
         // Render skeleton only on initial load
         <DataTableSkeleton
