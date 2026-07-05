@@ -283,7 +283,11 @@ export interface DataGridProps<R, SR = unknown, K extends Key = Key> extends Sha
 }
 
 /**
- * Main API Component to render a data grid of rows and columns
+ * Low-level grid engine: virtualization, cell/row selection, editing, keyboard
+ * navigation, copy/paste, column widths & layout, sticky header, drag-reorder,
+ * and per-mode column merging. For query-backed tables (loading skeleton, error
+ * and empty states, infinite scroll) use the `DataTable` wrapper, which forwards
+ * engine props here untouched.
  *
  * @example
  *
