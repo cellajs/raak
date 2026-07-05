@@ -53,14 +53,18 @@ const provider = new WebTracerProvider({
 
 provider.register();
 
-registerInstrumentations({
-  instrumentations: [
-    new FetchInstrumentation({
-      propagateTraceHeaderCorsUrls: [
-        new RegExp(`^${appConfig.backendUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(/|$)`),
-      ],
-    }),
-  ],
-});
+// Guarded so the module is import-safe in test environments where appConfig
+// is partially mocked (no backendUrl → nothing to propagate headers to).
+if (appConfig.backendUrl) {
+  registerInstrumentations({
+    instrumentations: [
+      new FetchInstrumentation({
+        propagateTraceHeaderCorsUrls: [
+          new RegExp(`^${appConfig.backendUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(/|$)`),
+        ],
+      }),
+    ],
+  });
+}
 
 export const tracer = trace.getTracer(`${appConfig.slug}-frontend`);

@@ -4,11 +4,14 @@ import { Themer } from '~/modules/common/themer';
 import './styling/tailwind.css';
 import '~/lib/dayjs';
 import '~/lib/i18n';
-
+// Observability: eager init so early-load errors are traced/captured.
+// otel first (registers the global tracer provider), then the Maple SDK.
+import '~/lib/otel';
 import { client } from 'sdk/client.gen';
 import { appConfig } from 'shared';
 import { renderAscii } from 'shared/ascii';
 import { createClientConfig } from '~/lib/api-client';
+import { reportReactError } from '~/lib/maple';
 import { AppRouter } from '~/modules/common/app/app-router';
 import { QueryClientProvider } from '~/query/provider';
 import { initFaviconBadge } from '~/utils/init-favicon-badge';
@@ -40,7 +43,10 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
   });
 }
 
-ReactDOM.createRoot(root).render(
+ReactDOM.createRoot(root, {
+  onUncaughtError: (error, errorInfo) => reportReactError('uncaught', error, errorInfo.componentStack),
+  onCaughtError: (error, errorInfo) => reportReactError('boundary', error, errorInfo.componentStack),
+}).render(
   <StrictMode>
     <Themer />
     <QueryClientProvider>
