@@ -38,7 +38,6 @@ interface DataTableProps<TData> {
   renderRow?: (key: Key, props: RenderRowProps<TData, unknown>) => ReactNode;
   renderCell?: (key: Key, props: CellRendererProps<TData, unknown>) => ReactNode;
   NoRowsComponent?: React.ReactNode;
-  overflowNoRows?: boolean;
   onCellClick?: (args: CellMouseArgs<TData, unknown>, event: CellMouseEvent) => void;
   selectedRows?: Set<string>;
   onSelectedRowsChange?: (selectedRows: Set<string>) => void;

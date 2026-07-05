@@ -110,8 +110,6 @@ export interface Column<TRow, TSummaryRow = unknown> {
   /** Render function to render the content of the header cell */
   readonly renderHeaderCell?: Maybe<(props: RenderHeaderCellProps<TRow, TSummaryRow>) => ReactNode>;
 
-  /** Render function to render the content of group cells */
-  readonly renderGroupCell?: Maybe<(props: RenderGroupCellProps<TRow, TSummaryRow>) => ReactNode>;
   /** Render function to render the content of edit cells. When set, the column is automatically set to be editable */
   readonly renderEditCell?: Maybe<(props: RenderEditCellProps<TRow, TSummaryRow>) => ReactNode>;
   /** Enables cell editing. If set and no editor property specified, then a textinput will be used as the cell editor */
@@ -264,16 +262,6 @@ export interface RenderCellProps<TRow, TSummaryRow = unknown> {
   onRowChange: (row: TRow) => void;
 }
 
-export interface RenderGroupCellProps<TRow, TSummaryRow = unknown> {
-  groupKey: unknown;
-  column: CalculatedColumn<TRow, TSummaryRow>;
-  row: GroupRow<TRow>;
-  childRows: readonly TRow[];
-  isExpanded: boolean;
-  tabIndex: number;
-  toggleGroup: () => void;
-}
-
 export interface RenderEditCellProps<TRow, TSummaryRow = unknown> {
   column: CalculatedColumn<TRow, TSummaryRow>;
   row: TRow;
@@ -418,18 +406,6 @@ export interface CellPasteArgs<TRow, TSummaryRow = unknown> extends CellCopyPast
   pastedValue: string;
 }
 
-export interface GroupRow<TRow> {
-  readonly childRows: readonly TRow[];
-  readonly id: string;
-  readonly parentId: unknown;
-  readonly groupKey: unknown;
-  readonly isExpanded: boolean;
-  readonly level: number;
-  readonly posInSet: number;
-  readonly setSize: number;
-  readonly startRowIndex: number;
-}
-
 export interface SortColumn {
   readonly columnKey: string;
   readonly direction: SortDirection;
@@ -442,8 +418,6 @@ export type ColSpanArgs<TRow, TSummaryRow> =
   | { type: 'HEADER' }
   | { type: 'ROW'; row: TRow }
   | { type: 'SUMMARY'; row: TSummaryRow };
-
-export type RowHeightArgs<TRow> = { type: 'ROW'; row: TRow } | { type: 'GROUP'; row: GroupRow<TRow> };
 
 export interface RenderSortIconProps {
   sortDirection: SortDirection | undefined;
