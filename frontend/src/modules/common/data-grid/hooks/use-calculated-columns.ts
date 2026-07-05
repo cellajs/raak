@@ -97,6 +97,7 @@ export function useCalculatedColumns<R, SR>({
       const candidates = new Map<string, ColumnMergeRule>();
       const visitLeaves = (cols: readonly ColumnOrColumnGroup<R, SR>[]) => {
         for (const col of cols) {
+          if (col.hidden) continue;
           if ('children' in col) {
             visitLeaves(col.children);
             continue;
@@ -121,6 +122,9 @@ export function useCalculatedColumns<R, SR>({
       parent?: MutableCalculatedColumnParent<R, SR>,
     ) {
       for (const rawColumn of rawColumns) {
+        // Reactive hide flag (column-visibility toggle etc.) — hard exclude, same as a failing breakpoint.
+        if (rawColumn.hidden) continue;
+
         if ('children' in rawColumn) {
           const calculatedColumnParent: MutableCalculatedColumnParent<R, SR> = {
             name: rawColumn.name,

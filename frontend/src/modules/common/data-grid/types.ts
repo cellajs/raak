@@ -89,6 +89,13 @@ export interface Column<TRow, TSummaryRow = unknown> {
   /** A unique key to distinguish each column */
   readonly key: string;
   /**
+   * Reactive hide flag for non-breakpoint conditions (e.g. a user column-visibility
+   * toggle, or `isSheet`). When true the column is excluded from the grid, same as
+   * a failing `minBreakpoint`/`maxBreakpoint`. Filtered inside the grid — consumers
+   * pass the full column list and toggle this flag.
+   */
+  readonly hidden?: boolean;
+  /**
    * Column width. If not specified, it will be determined automatically based on grid width and specified widths of other columns
    * @default 'auto'
    */
@@ -238,6 +245,8 @@ export interface ColumnGroup<R, SR = unknown> {
   readonly name: string | ReactElement;
   readonly headerCellClass?: Maybe<string>;
   readonly children: readonly ColumnOrColumnGroup<R, SR>[];
+  /** Reactive hide flag — see {@link Column.hidden}. When true the whole group is excluded. */
+  readonly hidden?: boolean;
 }
 
 export interface CalculatedColumnParent<R, SR> {

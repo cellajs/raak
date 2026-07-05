@@ -1,4 +1,6 @@
 import { type Key, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import {
   type CellMouseArgs,
   type CellMouseEvent,
@@ -11,9 +13,6 @@ import {
   type RowsChangeData,
   type SortColumn,
 } from '~/modules/common/data-grid';
-import '~/modules/common/data-grid/style/data-grid.css';
-import { useTranslation } from 'react-i18next';
-import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { InfiniteLoader } from '~/modules/common/data-table/infinite-loader';
 import { NoRows } from '~/modules/common/data-table/no-rows';
 import { DataTableSkeleton } from '~/modules/common/data-table/table-skeleton';
@@ -180,7 +179,9 @@ export const DataTable = <TData,>({
         <DataTableSkeleton
           cellsWidths={['3rem', '10rem', '4rem']}
           cellHeight={Number(rowHeight)}
-          columnCount={columns.length}
+          // Consumers pass the full column list (the grid filters `hidden`); match the
+          // rendered column count so the skeleton doesn't over-draw then collapse.
+          columnCount={columns.filter((column) => !column.hidden).length}
         />
       ) : error && rows.length === 0 ? (
         <div className="flex h-full w-full flex-col items-center justify-center bg-background text-muted-foreground">

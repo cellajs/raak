@@ -54,7 +54,6 @@ export default function TasksTable({
 
   // Build columns
   const [columns, setColumns] = useColumns(projects, { hideProject: !workspace, organization, tenantId });
-  const visibleColumns = useMemo(() => columns.filter((column) => !column.hidden), [columns]);
   const [selected, setSelected] = useState<Task[]>([]);
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
@@ -120,7 +119,7 @@ export default function TasksTable({
           rows,
           rowHeight: 52,
           rowKeyGetter: (row) => row.id,
-          columns: visibleColumns,
+          columns,
           enableVirtualization: true,
           enableStickyHeader: true,
           limit,
