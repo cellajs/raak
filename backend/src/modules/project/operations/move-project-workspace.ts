@@ -7,7 +7,7 @@ import {
 } from '#/modules/project/helpers/project-membership-workspace';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 
 export async function moveProjectToWorkspaceOp(ctx: AuthContext, id: string, workspaceId: string) {
   const { entity: project } = await getValidContextEntity(ctx, id, 'project', 'read');
@@ -18,7 +18,7 @@ export async function moveProjectToWorkspaceOp(ctx: AuthContext, id: string, wor
     workspaceId: resolvedWorkspaceId,
   });
 
-  logEvent(ctx, 'info', 'Project workspace moved', { projectId: project.id, workspaceId: resolvedWorkspaceId });
+  log.info('Project workspace moved', { projectId: project.id, workspaceId: resolvedWorkspaceId });
 
   const projectWithAudit = await withAuditUser(ctx, project);
 

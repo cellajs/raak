@@ -12,7 +12,7 @@ import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 
 type CreateTasksInput = z.infer<typeof taskCreateManyStxBodySchema>;
 type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
@@ -80,7 +80,7 @@ export async function createTasksOp(
 
   const taskResponses = hydrateTasks(createdTasks, users, labels);
 
-  logEvent(ctx, 'info', 'Tasks created', { count: createdTasks.length });
+  log.info('Tasks created', { count: createdTasks.length });
 
   return { success: true, data: { data: taskResponses, rejectedIds: [] } };
 }

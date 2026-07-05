@@ -11,7 +11,7 @@ import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
-import { logEvent } from '#/utils/logger';
+import { log } from '#/utils/logger';
 
 type CreateLabelsInput = z.infer<typeof labelCreateManyStxBodySchema>;
 
@@ -65,7 +65,7 @@ export async function createLabelsOp(
 
   const labelRecords = await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: labelsToInsert }));
 
-  logEvent(ctx, 'info', 'Labels created', { count: labelRecords.length });
+  log.info('Labels created', { count: labelRecords.length });
 
   return { success: true, data: { data: labelRecords, rejectedIds: [] } };
 }
