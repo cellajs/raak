@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import type { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
@@ -117,13 +118,18 @@ export const appErrorHandler: ErrorHandler<Env> = (err, ctx) => {
   const organization = ctx.get('organization');
   const detailsRequired = severitiesRequiringDetails.has(severity);
 
-  const logId = ctx.get('requestId');
+  // Client-facing correlation id: the active OTel trace id. One id now joins the
+  // browser trace (frontend injects traceparent), the server span, every log line
+  // (pino mixin stamps trace_id), and the Maple session timeline. Falls back to
+  // the request id when no span is recording (tracing disabled/misconfigured).
+  const logId = trace.getActiveSpan()?.spanContext().traceId ?? ctx.get('requestId');
   const timestamp = getIsoDate();
 
   // Message carries name + type so dedup keys on the error kind, not just the class name
   // (`AppError: forbidden` and `AppError: invalid_request` suppress independently).
   // Full details (err with stack/cause, request context) for warn/error/fatal, minimal for info.
-  // tenantId/userId/organizationId/requestId are bound from the ambient log context; requestId is the client-facing logId.
+  // tenantId/userId/organizationId/requestId are bound from the ambient log context;
+  // trace_id (stamped on every log line by the pino mixin) is the client-facing logId.
   log[severity](
     `${name}: ${type}`,
     detailsRequired
