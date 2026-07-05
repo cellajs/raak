@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { appConfig, type Severity } from 'shared';
 import { BENCH_TENANT_ID, BENCH_UUID_PREFIX } from 'shared/bench-identity';
 import type { LogMeta } from 'shared/pino';
@@ -12,10 +13,22 @@ export const isBenchTraffic = (userId?: string, tenantId?: string) => {
   return tenantId === BENCH_TENANT_ID || userId?.startsWith(BENCH_UUID_PREFIX);
 };
 
-/** Narrow context type for logging — accepts full Hono ctx or any object with matching .var shape. */
+/** Ambient log context — the live Hono ctx, or a synthetic { var } for worker jobs. */
 export type LogContext = {
   var: Partial<Pick<Env['Variables'], 'tenantId' | 'userId' | 'organizationId' | 'requestId'>>;
 } | null;
+
+const logContextStorage = new AsyncLocalStorage<LogContext>();
+
+/**
+ * Run `fn` with ambient log context: the log facade binds tenant/user/org/request ids
+ * from it without call sites passing ctx. Installed per-request by contextMiddleware;
+ * worker jobs can wrap their execution with a synthetic context.
+ *
+ * Ambient context follows await chains, NOT event emitters or timers — code invoked
+ * from detached callbacks logs without ids, same as code outside any request.
+ */
+export const runWithLogContext = <T>(ctx: LogContext, fn: () => T): T => logContextStorage.run(ctx, fn);
 
 const extractBase = (ctx: LogContext) => {
   if (!ctx?.var) return {};
@@ -30,7 +43,11 @@ const extractBase = (ctx: LogContext) => {
 
 const logAt =
   (severity: Severity) =>
-  (ctx: LogContext, msg: string, meta?: LogMeta): void => {
+  (msg: string, meta?: LogMeta): void => {
+    // Reads the LIVE ctx at log time, so vars set by guards after the context
+    // middleware (userId, tenantId, organizationId) are picked up.
+    const ctx = logContextStorage.getStore() ?? null;
+
     // Always log errors; for everything else, suppress bench traffic.
     const isError = severity === 'error' || severity === 'fatal';
     if (!isError && ctx?.var && isBenchTraffic(ctx.var.userId, ctx.var.tenantId)) return;
@@ -38,7 +55,7 @@ const logAt =
     baseLog[severity](msg, { ...extractBase(ctx), ...meta });
   };
 
-/** Request-aware log facade: `log.warn(ctx, 'msg', { err, ...meta })` — binds tenant/user/request ids from ctx. */
+/** Log facade: `log.warn('msg', { err, ...meta })` — binds ids from the ambient request/job context. */
 export const log = {
   trace: logAt('trace'),
   debug: logAt('debug'),

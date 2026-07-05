@@ -90,7 +90,7 @@ export const handleOAuthInitiation = async (
 
   await setAuthCookie(ctx, `oauth-state-${state}`, stringifiedContent, new TimeSpan(5, 'm'));
 
-  log.info(ctx, 'User redirected to OAuth provider', { strategy: 'oauth', provider, type });
+  log.info('User redirected to OAuth provider', { strategy: 'oauth', provider, type });
 
   return ctx.redirect(url.toString(), 302);
 };

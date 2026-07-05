@@ -21,7 +21,7 @@ activityBus.on('inactive_membership.created', async (event: ActivityEvent) => {
   try {
     await linkWaitlistRequest({ var: { db: baseDb } }, { email: membership.email, tokenId: membership.tokenId });
   } catch (error) {
-    log.error(null, 'Failed to link waitlist request to token', { error, email: membership.email });
+    log.error('Failed to link waitlist request to token', { error, email: membership.email });
   }
 });
 

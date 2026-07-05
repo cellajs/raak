@@ -45,7 +45,7 @@ export async function updatePageOp(
     stx: resolved.stx,
   };
   const updatedPageRecord = await updatePage(ctx, { id, values });
-  log.info(ctx, 'Page updated', { pageId: updatedPageRecord.id });
+  log.info('Page updated', { pageId: updatedPageRecord.id });
 
   const pageResponse = fullResponse
     ? await withAuditUser(ctx, updatedPageRecord, user)

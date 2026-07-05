@@ -28,7 +28,7 @@ export async function verifyDomainOp(ctx: AuthContext, id: string) {
     // ENOTFOUND / ENODATA means no TXT records exist — not an error
     const code = err instanceof Error && 'code' in err ? (err as NodeJS.ErrnoException).code : undefined;
     if (code !== 'ENOTFOUND' && code !== 'ENODATA') {
-      log.warn(ctx, 'DNS lookup failed', { domain: domain.domain, err });
+      log.warn('DNS lookup failed', { domain: domain.domain, err });
     }
   }
 
@@ -38,7 +38,7 @@ export async function verifyDomainOp(ctx: AuthContext, id: string) {
   const values = { lastCheckedAt: now, ...(verified ? { verified: true, verifiedAt: now } : {}) };
   const updated = await updateDomain(ctx, { id, values });
 
-  log.info(ctx, `Domain verification ${verified ? 'succeeded' : 'failed'}`, {
+  log.info(`Domain verification ${verified ? 'succeeded' : 'failed'}`, {
     tenantId,
     domain: domain.domain,
     verified,

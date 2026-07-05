@@ -18,7 +18,7 @@ export async function deleteAttachmentsOp(
     deleteAttachmentsByIds(txCtx, { ids: allowedIds, deletedAt, deletedBy }),
   );
 
-  log.info(ctx, 'Attachments deleted', { ids: allowedIds });
+  log.info('Attachments deleted', { ids: allowedIds });
 
   return { success: true, data: { data: [], rejectedIds } };
 }

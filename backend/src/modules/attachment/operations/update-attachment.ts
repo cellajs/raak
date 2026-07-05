@@ -41,7 +41,7 @@ export async function updateAttachmentOp(
     return updateAttachment(txCtx, { id, values });
   });
 
-  log.info(ctx, 'Attachment updated', { attachmentId: updatedAttachmentRecord.id });
+  log.info('Attachment updated', { attachmentId: updatedAttachmentRecord.id });
 
   const attachmentResponse = fullResponse
     ? await withAuditUser(ctx, updatedAttachmentRecord, user)

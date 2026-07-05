@@ -18,7 +18,7 @@ export async function moveProjectToWorkspaceOp(ctx: AuthContext, id: string, wor
     workspaceId: resolvedWorkspaceId,
   });
 
-  log.info(ctx, 'Project workspace moved', { projectId: project.id, workspaceId: resolvedWorkspaceId });
+  log.info('Project workspace moved', { projectId: project.id, workspaceId: resolvedWorkspaceId });
 
   const projectWithAudit = await withAuditUser(ctx, project);
 

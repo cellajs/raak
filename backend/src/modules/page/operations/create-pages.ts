@@ -42,7 +42,7 @@ export async function createPagesOp(ctx: AuthContext, input: CreatePagesInput) {
   }));
 
   const pageRecords = await insertPages(ctx, { pages: pagesToInsert });
-  log.info(ctx, 'Pages created', { count: pageRecords.length });
+  log.info('Pages created', { count: pageRecords.length });
   const pageResponses = await withAuditUsers(ctx, pageRecords, user);
 
   return { success: true as const, data: { data: pageResponses, rejectedIds: [] as string[] } };

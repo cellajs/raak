@@ -100,7 +100,7 @@ export async function createInviteOp(ctx: AuthContext, emails: string[]) {
   const staticProps = { senderName, senderThumbnailUrl };
   await mailer.prepareEmails(systemInviteEmail, staticProps, recipients, user.email);
 
-  log.info(ctx, 'Users invited on system level', { count: recipients.length });
+  log.info('Users invited on system level', { count: recipients.length });
 
   return { data: [] as never[], rejectedIds, invitesSentCount: recipients.length };
 }

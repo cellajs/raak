@@ -26,7 +26,7 @@ function handleActivityEvent(event: ActivityEvent): void {
   const invalidated = entityCache.invalidateByEntity(entityType, subjectId);
 
   if (invalidated) {
-    log.debug(null, 'Entity cache invalidated', {
+    log.debug('Entity cache invalidated', {
       entityType,
       subjectId,
       action,
@@ -48,14 +48,14 @@ function handleActivityEvent(event: ActivityEvent): void {
  */
 export function registerCacheInvalidation(): void {
   if (isRegistered) {
-    log.warn(null, 'Cache hook already registered');
+    log.warn('Cache hook already registered');
     return;
   }
 
   activityBus.onAny(handleActivityEvent);
   isRegistered = true;
 
-  log.info(null, 'Entity cache hook registered');
+  log.info('Entity cache hook registered');
 }
 
 /**
@@ -68,5 +68,5 @@ export function unregisterCacheInvalidation(): void {
   activityBus.offAny(handleActivityEvent);
   isRegistered = false;
 
-  log.info(null, 'Entity cache hook unregistered');
+  log.info('Entity cache hook unregistered');
 }

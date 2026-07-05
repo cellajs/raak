@@ -7,7 +7,7 @@ import { render } from '../../emails/renderer/render';
 import type { EmailRecipient, EmailTemplateDef } from '../../emails/types';
 
 const brevoClient = env.BREVO_API_KEY ? new BrevoClient({ apiKey: env.BREVO_API_KEY }) : undefined;
-if (!brevoClient && appConfig.mode !== 'test') log.info(null, 'Email sending disabled: BREVO_API_KEY missing');
+if (!brevoClient && appConfig.mode !== 'test') log.info('Email sending disabled: BREVO_API_KEY missing');
 
 /* -------------------------------- Constants ------------------------------- */
 
@@ -108,7 +108,7 @@ export const mailer: Mailer = {
         messageVersions: versions,
       });
     } catch (err) {
-      log.warn(null, 'Failed to send email batch', { err });
+      log.warn('Failed to send email batch', { err });
     }
   },
 };

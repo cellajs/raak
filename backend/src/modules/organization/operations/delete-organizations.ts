@@ -14,7 +14,7 @@ export async function deleteOrganizationsOp(ctx: AuthContext, ids: string[], ten
 
   for (const id of allowedIds) invalidateCache.org(tenantId, id);
 
-  log.info(ctx, 'Organizations deleted', { count: allowedIds.length, ids: allowedIds });
+  log.info('Organizations deleted', { count: allowedIds.length, ids: allowedIds });
 
   return { data: [], rejectedIds };
 }

@@ -26,7 +26,7 @@ export async function deleteTasksOp(
         deletedBy,
       });
       if (deletedAttachments.length > 0) {
-        log.info(ctx, 'Task attachments deleted', { count: deletedAttachments.length });
+        log.info('Task attachments deleted', { count: deletedAttachments.length });
       }
     }
   });

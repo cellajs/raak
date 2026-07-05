@@ -16,7 +16,7 @@ export async function removeProjectWorkspaceOp(ctx: AuthContext, id: string) {
     workspaceId: null,
   });
 
-  log.info(ctx, 'Project workspace removed', { projectId: project.id });
+  log.info('Project workspace removed', { projectId: project.id });
 
   const projectWithAudit = await withAuditUser(ctx, project);
 

@@ -51,7 +51,7 @@ export const setUserSession = async (
   // Notify security email when a system admin signs in (skip in development)
   if (isSystemAdmin && appConfig.mode !== 'development') {
     const ip = getIp(ctx) ?? 'unknown';
-    sendAccountSecurityEmail(ctx, { email: appConfig.securityEmail, name: 'Security' }, 'sysadmin-signin', {
+    sendAccountSecurityEmail({ email: appConfig.securityEmail, name: 'Security' }, 'sysadmin-signin', {
       email: user.email,
       ip,
       timestamp: new Date().toISOString(),
@@ -111,7 +111,7 @@ export const setUserSession = async (
     target: userCountersTable.userId,
     set: { lastSignInAt },
   });
-  log.info(ctx, 'User signed in', { strategy });
+  log.info('User signed in', { strategy });
 };
 
 /**

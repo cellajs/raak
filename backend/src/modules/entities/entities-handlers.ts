@@ -37,11 +37,11 @@ app.openapi(entityRoutes.publicStream, async (ctx) => {
     const channels = hierarchy.publicStreamTypes.map((t) => `public:${t}`);
     const subscriber = { id: crypto.randomUUID(), channel: channels[0] ?? 'public:default', stream, cursor };
     streamSubscriberManager.register(subscriber, channels.slice(1));
-    log.debug(ctx, 'Public stream subscriber registered', { subscriberId: subscriber.id });
+    log.debug('Public stream subscriber registered', { subscriberId: subscriber.id });
 
     stream.onAbort(() => {
       streamSubscriberManager.unregister(subscriber.id);
-      log.debug(ctx, 'Public stream subscriber disconnected', { subscriberId: subscriber.id });
+      log.debug('Public stream subscriber disconnected', { subscriberId: subscriber.id });
     });
 
     await keepAlive(stream);
@@ -81,14 +81,14 @@ app.openapi(entityRoutes.appStream, async (ctx) => {
     // NOTE: If user is added to new org while connected, they won't receive events for that
     // org until reconnect. Frontend should reconnect stream when membership.created is received.
     streamSubscriberManager.register(subscriber, orgChannels.slice(1));
-    log.debug(ctx, 'App stream subscriber registered', {
+    log.debug('App stream subscriber registered', {
       subscriberId: subscriber.id,
       orgCount: organizationIds.size,
     });
 
     stream.onAbort(() => {
       streamSubscriberManager.unregister(subscriber.id);
-      log.debug(ctx, 'App stream subscriber disconnected', { subscriberId: subscriber.id });
+      log.debug('App stream subscriber disconnected', { subscriberId: subscriber.id });
     });
 
     await keepAlive(stream);

@@ -24,7 +24,7 @@ export async function sendNotificationToSubscriber<T extends CursoredSubscriber>
     await writeChange(subscriber.stream, event.id, final);
   }
 
-  log.debug(null, 'SSE notification sent', {
+  log.debug('SSE notification sent', {
     subscriberId: subscriber.id,
     activityId: event.id,
     entityType: event.entityType,

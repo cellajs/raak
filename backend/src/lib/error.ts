@@ -63,7 +63,7 @@ function isPoolTimeoutError(err: unknown): boolean {
 export const appErrorHandler: ErrorHandler<Env> = (err, ctx) => {
   // Handle pool exhaustion as 503 Service Unavailable
   if (isPoolTimeoutError(err)) {
-    log.error(ctx, 'Database pool exhausted', { err, path: ctx.req.path, method: ctx.req.method });
+    log.error('Database pool exhausted', { err, path: ctx.req.path, method: ctx.req.method });
     return ctx.json(
       {
         message: 'Service temporarily unavailable, please retry',
@@ -81,7 +81,7 @@ export const appErrorHandler: ErrorHandler<Env> = (err, ctx) => {
   // Handle Hono's built-in HTTPException (e.g. from CSRF middleware)
   if (err instanceof HTTPException) {
     const status = err.status as ContentfulStatusCode;
-    log.warn(ctx, `HTTPException ${status}`, { err, path: ctx.req.path, method: ctx.req.method });
+    log.warn(`HTTPException ${status}`, { err, path: ctx.req.path, method: ctx.req.method });
     return ctx.json(
       {
         message: err.message || 'Request rejected',
@@ -123,9 +123,8 @@ export const appErrorHandler: ErrorHandler<Env> = (err, ctx) => {
   // Message carries name + type so dedup keys on the error kind, not just the class name
   // (`AppError: forbidden` and `AppError: invalid_request` suppress independently).
   // Full details (err with stack/cause, request context) for warn/error/fatal, minimal for info.
-  // tenantId/userId/organizationId/requestId are bound from ctx by the log facade; requestId is the client-facing logId.
+  // tenantId/userId/organizationId/requestId are bound from the ambient log context; requestId is the client-facing logId.
   log[severity](
-    ctx,
     `${name}: ${type}`,
     detailsRequired
       ? {

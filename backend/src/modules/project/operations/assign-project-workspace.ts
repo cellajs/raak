@@ -16,7 +16,7 @@ export async function assignProjectWorkspaceOp(ctx: AuthContext, id: string, wor
     workspaceId: resolvedWorkspaceId,
   });
 
-  log.info(ctx, 'Project workspace assigned', { projectId: project.id, workspaceId: resolvedWorkspaceId });
+  log.info('Project workspace assigned', { projectId: project.id, workspaceId: resolvedWorkspaceId });
 
   const projectWithAudit = await withAuditUser(ctx, project);
 

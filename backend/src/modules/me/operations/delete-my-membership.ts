@@ -16,5 +16,5 @@ export async function deleteMyMembershipOp(ctx: AuthContext, entityType: Context
   await deleteMyMembership({ var: { ...ctx.var, db: baseDb } }, { contextId: entity.id });
 
   invalidateCache.user(user.id);
-  log.info(ctx, 'User left entity');
+  log.info('User left entity');
 }

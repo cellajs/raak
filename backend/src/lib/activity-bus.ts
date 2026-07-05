@@ -108,7 +108,7 @@ class ActivityBus {
    */
   emit(event: ActivityEvent): void {
     if (!isValidEventType(event.type)) {
-      log.warn(null, 'Unknown activity event type from CDC message', { type: event.type });
+      log.warn('Unknown activity event type from CDC message', { type: event.type });
       return;
     }
 
@@ -119,7 +119,7 @@ class ActivityBus {
     recordMessageReceived(event.entityType || 'unknown');
 
     this.emitter.emit(event.type, event);
-    log.trace(null, 'ActivityBus emitted event', { type: event.type, subjectId: event.subjectId });
+    log.trace('ActivityBus emitted event', { type: event.type, subjectId: event.subjectId });
 
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();

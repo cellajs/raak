@@ -51,5 +51,5 @@ export async function sendNewsletterOp(ctx: AuthContext, input: SendNewsletterIn
   const staticProps = { content: newContent, subject, testEmail: toSelf };
   await mailer.prepareEmails(newsletterEmail, staticProps, recipients, user.email);
 
-  log.info(ctx, 'Newsletter sent', { count: recipients.length });
+  log.info('Newsletter sent', { count: recipients.length });
 }

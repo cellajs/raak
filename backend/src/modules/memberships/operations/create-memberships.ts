@@ -147,7 +147,7 @@ export async function createMembershipsOp(ctx: AuthContext, input: CreateMembers
       createdBy: user.id,
     }));
 
-    createdMemberships = await insertMemberships({ var: { db } }, { items: membershipsToInsert, logCtx: ctx });
+    createdMemberships = await insertMemberships({ var: { db } }, { items: membershipsToInsert });
     for (const { userId } of existingUsersToDirectAdd) invalidateCache.user(userId);
   }
 
@@ -252,7 +252,7 @@ export async function createMembershipsOp(ctx: AuthContext, input: CreateMembers
 
   const invitesSentCount = insertedInactiveMemberships.length;
 
-  log.info(ctx, 'Users invited on entity level', {
+  log.info('Users invited on entity level', {
     count: invitesSentCount,
     entityType,
     entityId,

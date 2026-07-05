@@ -16,7 +16,7 @@ export async function deleteProjectsOp(ctx: AuthContext, ids: string[]) {
   // Invalidate membership cache so the current user no longer sees deleted memberships
   invalidateCache.user(ctx.var.user.id);
 
-  log.info(ctx, 'Projects deleted', { count: allowedIds.length, ids: allowedIds });
+  log.info('Projects deleted', { count: allowedIds.length, ids: allowedIds });
 
   return { data: [], rejectedIds };
 }

@@ -69,7 +69,7 @@ export async function createOrganizationsOp(ctx: AuthContext, items: CreateOrgan
     })),
   });
 
-  log.info(ctx, 'Organizations created', {
+  log.info('Organizations created', {
     count: organizationRecords.length,
     ids: organizationRecords.map((org) => org.id),
   });
@@ -82,7 +82,7 @@ export async function createOrganizationsOp(ctx: AuthContext, items: CreateOrgan
     entity: org,
   }));
 
-  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts, logCtx: ctx });
+  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
 
   // Invalidate membership cache so subsequent requests see the new membership
   invalidateCache.user(user.id);

@@ -55,7 +55,7 @@ export async function updateMembershipOp(ctx: AuthContext, membershipId: string,
 
   invalidateCache.user(updatedMembership.userId);
 
-  log.info(ctx, 'Membership updated', { userId: updatedMembership.userId, membershipId: updatedMembership.id });
+  log.info('Membership updated', { userId: updatedMembership.userId, membershipId: updatedMembership.id });
 
   return updatedMembership;
 }

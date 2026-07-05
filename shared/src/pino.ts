@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import pino from 'pino';
 import { appConfig } from './config-builder/app-config';
 import type { Severity } from '../types';
@@ -88,6 +89,12 @@ export const createLogger = ({
       // with nested `cause` chains preserved (Drizzle wraps pg errors as cause).
       // pino-pretty renders `err` with its stack in dev; the OTel transport ships it structured.
       serializers: { err: pino.stdSerializers.errWithCause },
+      // Correlate every log line with the active OTel span so Maple can join
+      // logs to traces (including traces originated by the frontend's traceparent).
+      mixin() {
+        const spanContext = trace.getActiveSpan()?.spanContext();
+        return spanContext?.traceId ? { trace_id: spanContext.traceId, span_id: spanContext.spanId } : {};
+      },
       formatters: {
         // Keep `level` numeric (10–60) when exporting to OTel so pino-opentelemetry-transport can
         // map it to an OTel severity; otherwise stringify it for nicer human-facing JSON.

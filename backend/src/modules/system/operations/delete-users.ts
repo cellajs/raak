@@ -20,7 +20,7 @@ export async function deleteUsersOp(ctx: AuthContext, ids: string[]) {
   await deleteUsersByIds(ctx, { ids: foundIds });
 
   for (const id of foundIds) invalidateCache.user(id);
-  log.info(ctx, 'Users deleted', { count: foundIds.length, ids: foundIds });
+  log.info('Users deleted', { count: foundIds.length, ids: foundIds });
 
   return { data: [] as never[], rejectedIds };
 }

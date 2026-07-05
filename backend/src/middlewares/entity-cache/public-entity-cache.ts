@@ -50,7 +50,7 @@ const cache = new LRUCache<Record<string, unknown>>({
   onDispose: (key, _value, reason) => {
     if (reason === 'evict') {
       const parsed = parseKey(key);
-      log.debug(null, 'Public entity cache evicted', { ...parsed, reason });
+      log.debug('Public entity cache evicted', { ...parsed, reason });
     }
   },
 });
@@ -109,7 +109,7 @@ export const publicEntityCache = {
     const stats = cache.stats;
     if (stats.size > 0) {
       cache.clear();
-      log.debug(null, 'Public entity cache cleared by type', { entityType });
+      log.debug('Public entity cache cleared by type', { entityType });
     }
   },
 

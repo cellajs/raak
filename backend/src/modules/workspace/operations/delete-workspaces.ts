@@ -12,6 +12,6 @@ export async function deleteWorkspacesOp(ctx: AuthContext, ids: string[]) {
   // Invalidate membership cache so the current user no longer sees deleted memberships
   invalidateCache.user(ctx.var.user.id);
 
-  log.info(ctx, 'Workspaces deleted', { count: allowedIds.length, ids: allowedIds });
+  log.info('Workspaces deleted', { count: allowedIds.length, ids: allowedIds });
   return { data: [], rejectedIds };
 }

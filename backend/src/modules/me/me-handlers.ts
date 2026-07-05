@@ -73,7 +73,7 @@ app.openapi(meRoutes.toggleMfa, async (ctx) => {
   }
 
   // Notify user about MFA status change
-  sendAccountSecurityEmail(ctx, user, mfaRequired ? 'mfa-enabled' : 'mfa-disabled');
+  sendAccountSecurityEmail(user, mfaRequired ? 'mfa-enabled' : 'mfa-disabled');
 
   // Re-select with userSelect to include activity timestamps (subqueries from user_counters table)
   const userWithActivity = await findUserById(ctx);
@@ -134,7 +134,7 @@ app.openapi(meRoutes.deleteMe, async (ctx) => {
 
   invalidateCache.user(user.id);
   deleteAuthCookie(ctx, 'session');
-  log.info(ctx, 'User deleted');
+  log.info('User deleted');
 
   return ctx.body(null, 204);
 });

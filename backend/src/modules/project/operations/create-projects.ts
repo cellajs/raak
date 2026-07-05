@@ -80,7 +80,7 @@ export async function createProjectsOp(ctx: AuthContext, items: CreateProjectIte
 
   const projectIds = projectRecords.map((p) => p.id);
 
-  log.info(ctx, 'Projects created', { count: projectRecords.length, ids: projectIds });
+  log.info('Projects created', { count: projectRecords.length, ids: projectIds });
 
   // Insert memberships for each project
   const membershipInserts = projectRecords.map((project) => ({
@@ -91,7 +91,7 @@ export async function createProjectsOp(ctx: AuthContext, items: CreateProjectIte
     extraFields: { workspaceId: workspace.id },
   }));
 
-  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts, logCtx: ctx });
+  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
 
   // Invalidate membership cache so subsequent requests see the new membership
   invalidateCache.user(user.id);

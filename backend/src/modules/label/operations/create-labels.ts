@@ -65,7 +65,7 @@ export async function createLabelsOp(
 
   const labelRecords = await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: labelsToInsert }));
 
-  log.info(ctx, 'Labels created', { count: labelRecords.length });
+  log.info('Labels created', { count: labelRecords.length });
 
   return { success: true, data: { data: labelRecords, rejectedIds: [] } };
 }

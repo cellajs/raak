@@ -62,7 +62,7 @@ export async function createAttachmentsOp(ctx: AuthContext, input: CreateAttachm
     insertAttachments(txCtx, { attachments: attachmentsToInsert }),
   );
 
-  log.info(ctx, 'Attachments created', { count: createdAttachments.length });
+  log.info('Attachments created', { count: createdAttachments.length });
 
   const attachmentResponses = await withAuditUsers(ctx, createdAttachments, ctx.var.user);
 

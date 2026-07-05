@@ -41,7 +41,7 @@ export async function updateOrganizationOp(
 
   invalidateCache.org(tenantId, organization.id);
 
-  log.info(ctx, 'Organization updated', { organizationId: updatedOrganizationRecord.id });
+  log.info('Organization updated', { organizationId: updatedOrganizationRecord.id });
 
   const counts = await getEntityCounts(ctx, organization.entityType, organization.id);
 

@@ -49,7 +49,7 @@ export async function createWorkspacesOp(ctx: AuthContext, items: CreateWorkspac
 
   const workspaceRecords = await insertWorkspaces(ctx, { workspaces: workspaceValues });
 
-  log.info(ctx, 'Workspaces created', {
+  log.info('Workspaces created', {
     count: workspaceRecords.length,
     ids: workspaceRecords.map((ws) => ws.id),
   });
@@ -61,7 +61,7 @@ export async function createWorkspacesOp(ctx: AuthContext, items: CreateWorkspac
     entity: { ...ws, tenantId: organization.tenantId },
   }));
 
-  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts, logCtx: ctx });
+  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
 
   // Invalidate membership cache so subsequent requests see the new membership
   invalidateCache.user(user.id);

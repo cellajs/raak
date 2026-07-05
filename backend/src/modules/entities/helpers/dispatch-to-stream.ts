@@ -47,7 +47,7 @@ export const dispatchToAppStream = createStreamDispatcher<AppStreamSubscriber, A
       return checkPermission(subscriber.memberships, 'read', subject, { isSystemAdmin: subscriber.isSystemAdmin })
         .isAllowed;
     } catch {
-      log.error(null, 'Malformed stream event: missing ancestor scope', {
+      log.error('Malformed stream event: missing ancestor scope', {
         entityType: event.entityType,
         subjectId: event.subjectId,
       });

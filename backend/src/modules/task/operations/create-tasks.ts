@@ -80,7 +80,7 @@ export async function createTasksOp(
 
   const taskResponses = hydrateTasks(createdTasks, users, labels);
 
-  log.info(ctx, 'Tasks created', { count: createdTasks.length });
+  log.info('Tasks created', { count: createdTasks.length });
 
   return { success: true, data: { data: taskResponses, rejectedIds: [] } };
 }

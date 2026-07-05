@@ -34,13 +34,12 @@ export async function markSeenOp(ctx: AuthContext, entityIds: string[], entityTy
   const organization = ctx.var.organization;
 
   log.debug(
-    ctx,
     `markSeen: ${entityType} x${entityIds.length} for org ${organization.id.slice(0, 8)} by ${user.id.slice(0, 8)}`,
   );
 
   // Only configured tracked entity types are accepted
   if (!isTrackedEntityType(entityType)) {
-    log.debug(ctx, `markSeen: skipping non-tracked type "${entityType}"`);
+    log.debug(`markSeen: skipping non-tracked type "${entityType}"`);
     return { newCount: 0 };
   }
 
@@ -81,7 +80,7 @@ export async function markSeenOp(ctx: AuthContext, entityIds: string[], entityTy
       return { validIds: vIds, entityContextIdMap: ctxIdMap, newCount: 0 };
     }
 
-    log.debug(ctx, `markSeen: ${vIds.length}/${entityIds.length} valid entities`);
+    log.debug(`markSeen: ${vIds.length}/${entityIds.length} valid entities`);
 
     // Single-roundtrip CTE that:
     // 1. Bulk-inserts seen_by rows, skipping duplicates (ON CONFLICT DO NOTHING)
@@ -118,10 +117,10 @@ export async function markSeenOp(ctx: AuthContext, entityIds: string[], entityTy
   });
 
   if (validIds.length === 0) {
-    log.debug(ctx, `markSeen: 0 valid entities out of ${entityIds.length} submitted`);
+    log.debug(`markSeen: 0 valid entities out of ${entityIds.length} submitted`);
     return { newCount: 0 };
   }
 
-  log.debug(ctx, `markSeen: ${newCount} newly seen, ${validIds.length - newCount} already seen`);
+  log.debug(`markSeen: ${newCount} newly seen, ${validIds.length - newCount} already seen`);
   return { newCount };
 }

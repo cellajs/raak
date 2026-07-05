@@ -20,7 +20,7 @@ export async function createDomainOp(ctx: AuthContext, domain: string) {
 
   const created = await insertDomain(ctx, { domain });
 
-  log.info(ctx, 'Domain added', { tenantId, domain });
+  log.info('Domain added', { tenantId, domain });
 
   return created;
 }

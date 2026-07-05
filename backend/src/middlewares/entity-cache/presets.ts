@@ -111,7 +111,7 @@ export const appCache = (): MiddlewareHandler<Env> =>
       if (sessionToken) {
         baseToken = validateSignedCacheToken(signedToken, sessionToken);
         if (!baseToken) {
-          log.debug(ctx, 'Cache token signature validation failed', {
+          log.debug('Cache token signature validation failed', {
             signedTokenPrefix: signedToken.slice(0, 8),
           });
         }

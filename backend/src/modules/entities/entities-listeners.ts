@@ -21,7 +21,7 @@ for (const entityType of appConfig.productEntityTypes) {
       try {
         await dispatchToAppStream(event as AppStreamEvent);
       } catch (error) {
-        log.error(null, 'Failed to dispatch entity change event', { error, activityId: event.id });
+        log.error('Failed to dispatch entity change event', { error, activityId: event.id });
       }
     });
   }
@@ -34,7 +34,7 @@ for (const action of ['created', 'updated', 'deleted'] as const) {
     try {
       await dispatchToAppStream(event as AppStreamEvent);
     } catch (error) {
-      log.error(null, 'Failed to dispatch entity change event', { error, activityId: event.id });
+      log.error('Failed to dispatch entity change event', { error, activityId: event.id });
     }
   });
 }
@@ -48,7 +48,7 @@ for (const entityType of hierarchy.publicStreamTypes) {
       try {
         await dispatchToPublicStream(event as PublicStreamEvent);
       } catch (error) {
-        log.error(null, 'Failed to dispatch public entity event', { error, activityId: event.id });
+        log.error('Failed to dispatch public entity event', { error, activityId: event.id });
       }
     });
   }

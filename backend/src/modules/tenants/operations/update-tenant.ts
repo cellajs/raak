@@ -32,7 +32,7 @@ export async function updateTenantOp(ctx: AuthContext, tenantId: string, updates
 
   invalidateCache.tenant(tenantId);
 
-  log.info(ctx, 'Tenant updated', { tenantId, updates });
+  log.info('Tenant updated', { tenantId, updates });
 
   const domainsCount = await countDomainsByTenant(ctx, { targetTenantId: tenantId });
   return { ...tenant, domainsCount };

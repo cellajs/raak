@@ -39,7 +39,7 @@ const cache = new TTLCache<CacheValue>({
   defaultTtl: cacheConfig.defaultTtl,
   onDispose: (key, _value, reason) => {
     if (reason === 'stale' || reason === 'evict') {
-      log.trace(null, 'Entity cache disposed', { key, reason });
+      log.trace('Entity cache disposed', { key, reason });
     }
   },
 });

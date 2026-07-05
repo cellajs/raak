@@ -37,7 +37,7 @@ export async function deleteMembershipsOp(ctx: AuthContext, input: DeleteMembers
 
   for (const target of targets) invalidateCache.user(target.userId);
 
-  log.info(ctx, 'Memberships deleted', { count: targets.length, ids: targets.map((t) => t.userId) });
+  log.info('Memberships deleted', { count: targets.length, ids: targets.map((t) => t.userId) });
 
   return { data: [] as never[], rejectedIds };
 }

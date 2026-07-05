@@ -25,7 +25,7 @@ export async function updateProjectOp(ctx: AuthContext, id: string, input: Recor
   const values = { ...input, updatedAt: getIsoDate(), updatedBy: user.id };
   const updatedProjectRecord = await updateProject(ctx, { id: project.id, values });
 
-  log.info(ctx, 'Project updated', { projectId: updatedProjectRecord.id });
+  log.info('Project updated', { projectId: updatedProjectRecord.id });
 
   // Get updated counts
   const [counts, taskStatusCounts] = await Promise.all([

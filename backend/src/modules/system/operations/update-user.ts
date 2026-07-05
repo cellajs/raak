@@ -39,7 +39,7 @@ export async function updateUserOp(ctx: AuthContext, id: string, input: UpdateUs
   const updatedUser = await updateUser(ctx, { id: targetUser.id, values });
 
   invalidateCache.user(updatedUser.id);
-  log.info(ctx, 'User updated', { userId: updatedUser.id });
+  log.info('User updated', { userId: updatedUser.id });
 
   // Re-select with userSelect to include timestamps (subqueries from user_counters table)
   const userWithActivity = await findUserById(ctx, { id: updatedUser.id });

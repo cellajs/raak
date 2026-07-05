@@ -12,7 +12,7 @@ export async function deleteDomainOp(ctx: AuthContext, id: string) {
     throw new AppError(404, 'not_found', 'warn', { meta: { resource: 'domain' } });
   }
 
-  log.info(ctx, 'Domain removed', { tenantId, domain: deleted.domain });
+  log.info('Domain removed', { tenantId, domain: deleted.domain });
 
   return deleted;
 }
