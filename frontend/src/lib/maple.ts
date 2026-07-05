@@ -1,17 +1,21 @@
 /**
- * Maple.dev browser observability (errors + session replay + trace correlation).
+ * Maple.dev browser observability (errors + session replay + tracing).
+ *
+ * All-in on the Maple SDK: it OWNS tracing here — its provider registers
+ * globally, its fetch instrumentation creates network spans, and every span
+ * carries the replay session id, so trace↔replay linking is bidirectional.
+ * The dev-only local tracer in lib/otel.ts registers only when this module
+ * is inactive (see lib/maple-enabled.ts); exactly one provider per env.
+ *
+ * ⚠ Trial gate #1 (.todos/21): verify the SDK's fetch instrumentation
+ * propagates the W3C traceparent header to the backend origin — the
+ * browser→backend trace join (and the trace_id-as-logId story) depends on it.
+ * Fallback if it doesn't: tracing.instrumentFetch: false + register OTel's
+ * stock FetchInstrumentation against the SDK's (global) provider.
  *
  * Captures uncaught errors, unhandled rejections, console output, network
- * failures and rrweb session replay, all tagged with a shared session id and
- * the active trace id. Ships to Maple with the browser-safe *public* ingest
- * key — same key/CSP surface as the existing OTLP trace export in lib/otel.ts.
- *
- * Tracing ownership: our WebTracerProvider (lib/otel.ts) registers first and
- * stays the global tracer (it feeds the devtools SpanStore and exports to
- * Maple). The SDK's fetch auto-instrumentation is disabled to avoid duplicate
- * network spans — the SDK's docs bless exactly this setup when another tracer
- * already instruments requests. Revisit letting the SDK own tracing (spans
- * then carry session.id) after the trial (.todos/21).
+ * failures and rrweb session replay. Ships with the browser-safe *public*
+ * ingest key (same CSP origin as before).
  *
  * Privacy: inputs AND rendered text are masked before anything leaves the
  * browser (multi-tenant content must not end up in replays by default).
@@ -19,18 +23,15 @@
  */
 import { MapleBrowser } from '@maple-dev/browser';
 import { appConfig } from 'shared';
-import { isDebugMode } from '~/env';
 import { useUserStore } from '~/modules/user/user-store';
+import { mapleEnabled } from './maple-enabled';
 
-const enabled = !!appConfig.maplePublicIngestKey && (appConfig.mode !== 'development' || isDebugMode);
-
-if (enabled) {
+if (mapleEnabled) {
   MapleBrowser.init({
     ingestKey: appConfig.maplePublicIngestKey,
     serviceName: `${appConfig.slug}-frontend`,
     environment: appConfig.mode,
     serviceVersion: __APP_VERSION__,
-    tracing: { instrumentFetch: false },
     replay: { sampleRate: 1 },
     privacy: { maskAllInputs: true, maskAllText: true },
   });

@@ -5,7 +5,8 @@ import './styling/tailwind.css';
 import '~/lib/dayjs';
 import '~/lib/i18n';
 // Observability: eager init so early-load errors are traced/captured.
-// otel first (registers the global tracer provider), then the Maple SDK.
+// Exactly one tracer provider registers per env: the Maple SDK (staging/prod,
+// via ~/lib/maple below) or the dev-only local tracer in ~/lib/otel.
 import '~/lib/otel';
 import { client } from 'sdk/client.gen';
 import { appConfig } from 'shared';
