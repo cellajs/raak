@@ -17,7 +17,7 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
 export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo: QueryInfo) => {
-  const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor, includeDeleted } = queryInfo;
+  const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
   const trimmedQuery = q?.trim();
 
   // Get users and labels data in parallel
@@ -78,9 +78,8 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
     eq(tasksTable.organizationId, ctx.var.organizationId),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
-    // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor);
-    // they flow through there so client caches can drop soft-deleted rows.
-    seqCursor && includeDeleted ? undefined : isNull(tasksTable.deletedAt),
+    // Hide tombstones for normal reads; on seqCursor delta sync they flow through so caches can drop them
+    seqCursor ? undefined : isNull(tasksTable.deletedAt),
   );
 
   // Parallel count + data fetch

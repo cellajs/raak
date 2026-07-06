@@ -24,7 +24,7 @@ import {
   createCacheFinder,
   createEntityKeys,
   createOptimisticEntity,
-  fetchAllBySeq,
+  fetchAllPages,
   invalidateIfLastMutation,
   registerEntityQueryKeys,
   removePendingMutations,
@@ -66,11 +66,10 @@ const keys = {
       ['attachment', 'list', organizationId, filters] as const,
   },
 };
-// Delta fetch: one seq-keyset chunk; cache-ops pages through chunks (see fetchRangeAndPatch)
 registerEntityQueryKeys('attachment', keys, (organizationId, tenantId, seqCursor, options) => {
   return getAttachments({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, includeDeleted: 'true', limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
     headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
@@ -135,15 +134,14 @@ export const attachmentsCanonicalOptions = ({
   return queryOptions({
     queryKey: keys.list.org(organizationId),
     queryFn: async () => {
-      // Seq-keyset hydration (see fetchAllBySeq): complete, immune to offset drift.
-      // No cursor baseline write — attachment seq counters are per context, this read is org-wide.
-      const { items, total } = await fetchAllBySeq(({ seqCursor, limit }) =>
-        getAttachments({
-          path: { tenantId, organizationId },
-          query: { seqCursor, limit },
-        }),
+      return fetchAllPages(
+        ({ limit, offset }) =>
+          getAttachments({
+            path: { tenantId, organizationId },
+            query: { limit, offset },
+          }),
+        1000,
       );
-      return { items, total };
     },
     staleTime: syncStaleTime,
   });

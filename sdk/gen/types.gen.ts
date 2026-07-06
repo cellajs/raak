@@ -4038,7 +4038,6 @@ export type GetPagesData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    includeDeleted?: 'true' | 'false';
   };
   url: '/pages';
 };
@@ -4493,7 +4492,6 @@ export type GetPublicTasksData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    includeDeleted?: 'true' | 'false';
     matchMode?: 'all' | 'any';
     acceptedCutOff?: number;
     projectId: string;
@@ -4932,7 +4930,6 @@ export type GetAttachmentsData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    includeDeleted?: 'true' | 'false';
     projectId?: string;
   };
   url: '/{tenantId}/{organizationId}/attachments';
@@ -5680,7 +5677,6 @@ export type GetTasksData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    includeDeleted?: 'true' | 'false';
     matchMode?: 'all' | 'any';
     acceptedCutOff?: number;
     projectId?: string;
@@ -6016,7 +6012,6 @@ export type GetLabelsData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    includeDeleted?: 'true' | 'false';
     projectId?: string;
     workspaceId?: string;
   };

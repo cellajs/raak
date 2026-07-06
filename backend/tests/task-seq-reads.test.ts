@@ -1,12 +1,12 @@
 /**
  * Task seq-read contract integration tests.
  *
- * Pins the seq-keyset read contract that canonical hydration + delta sync rely on:
+ * Pins the seq-read contract that delta sync relies on:
  * - B1: `seqCursor` reads return seq-ascending order regardless of sort/order params,
- *   so a limit-capped page is a clean prefix the client can resume from.
- * - B2: tombstones require explicit `includeDeleted` opt-in (with seqCursor); hydration
- *   reads (seqCursor alone) exclude soft-deleted rows.
- * - B3: `limit` above 1000 is rejected (400), not clamped.
+ *   so a limit-capped response is a clean, deterministic prefix.
+ * - B2: `seqCursor` reads include soft-deleted rows (tombstones, so caches can drop them);
+ *   normal reads never see them.
+ * - B3: `limit` above 1000 is rejected, not clamped.
  * - B4: bounded `seqCursor` ("a,b") respects BOTH bounds — regression for the bug where
  *   seq filters joined the OR'd search group and "a,b" degenerated to all rows.
  * - B5: `seqCursor` composes with `acceptedCutOff` (delta window AND cutoff).
@@ -106,29 +106,25 @@ describe('Task seq reads', async () => {
     await clearSecurityTestData();
   });
 
-  it('B1: seqCursor reads are seq-ascending; a capped page is a clean prefix', async () => {
+  it('B1: seqCursor reads are seq-ascending; a capped response is a clean prefix', async () => {
     // sort/order params must NOT override seq ordering on seq reads
     const result = await listTasks({ seqCursor: '1', limit: '2', sort: 'createdAt', order: 'desc' });
 
     expect(result.status).toBe(200);
-    // Live rows in seq order are 10, 20, 40, 50 (30 is a tombstone) — the capped
-    // page must be exactly the two lowest seqs, nothing skipped below the cap.
+    // Rows in seq order are 10, 20, 30 (tombstone), 40, 50 — the capped response
+    // must be exactly the two lowest seqs, nothing skipped below the cap.
     expect(result.items.map((t) => t.seq)).toEqual([10, 20]);
   });
 
-  it('B2: tombstones flow only with seqCursor + includeDeleted', async () => {
-    // Hydration read: seqCursor alone excludes soft-deleted rows
-    const hydration = await listTasks({ seqCursor: '1', limit: '100' });
-    expect(hydration.items.map((t) => t.seq)).toEqual([10, 20, 40, 50]);
-
-    // Delta read: includeDeleted opts tombstones in
-    const delta = await listTasks({ seqCursor: '1', includeDeleted: 'true', limit: '100' });
+  it('B2: seqCursor reads include tombstones; normal reads never do', async () => {
+    // Delta read: tombstones flow through so client caches can drop soft-deleted rows
+    const delta = await listTasks({ seqCursor: '1', limit: '100' });
     expect(delta.items.map((t) => t.seq)).toEqual([10, 20, 30, 40, 50]);
     const tombstone = delta.items.find((t) => t.seq === 30);
     expect(tombstone?.deletedAt).not.toBeNull();
 
-    // includeDeleted without seqCursor is ignored — normal reads never see tombstones
-    const normal = await listTasks({ includeDeleted: 'true', limit: '100' });
+    // Normal read: no tombstones
+    const normal = await listTasks({ limit: '100' });
     expect(normal.items.some((t) => t.id === taskIds.seq30Deleted)).toBe(false);
   });
 
@@ -140,7 +136,7 @@ describe('Task seq reads', async () => {
   });
 
   it('B4: bounded seqCursor respects both bounds (seq-filter OR-group regression)', async () => {
-    const result = await listTasks({ seqCursor: '20,40', includeDeleted: 'true', limit: '100' });
+    const result = await listTasks({ seqCursor: '20,40', limit: '100' });
 
     expect(result.status).toBe(200);
     // Before the fix, "20,40" joined the OR'd search group as (seq >= 20 OR seq <= 40) = all rows
@@ -152,7 +148,8 @@ describe('Task seq reads', async () => {
     const result = await listTasks({ seqCursor: '1', acceptedCutOff: 14, limit: '100' });
 
     expect(result.status).toBe(200);
-    // seq 40 is Accepted with updatedAt 30 days ago — outside the 14-day window
-    expect(result.items.map((t) => t.seq)).toEqual([10, 20, 50]);
+    // seq 40 is Accepted with updatedAt 30 days ago — outside the 14-day window.
+    // The tombstone (30) still flows: seqCursor implies tombstone mode.
+    expect(result.items.map((t) => t.seq)).toEqual([10, 20, 30, 50]);
   });
 });

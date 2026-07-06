@@ -20,7 +20,7 @@ export async function getLabelsOp(
   input: GetLabelsInput,
 ): Promise<OperationResult<{ items: (LabelModel & { usedCount: number })[]; total: number }>> {
   const { projectId, workspaceId, ...queryInfo } = input;
-  const { q, sort, order, offset, limit, seqCursor, includeDeleted } = queryInfo;
+  const { q, sort, order, offset, limit, seqCursor } = queryInfo;
   const organizationId = ctx.var.organization.id;
 
   // Resolve the explicit sub-context narrowing (if any) from the request.
@@ -49,17 +49,16 @@ export async function getLabelsOp(
     return { success: true, data: { items: [], total: 0 } };
   }
 
-  // Delta sync (seqCursor + includeDeleted) must see tombstones so the client can remove
-  // soft-deleted labels. Hydration reads (seqCursor alone) stay on the live-rows read path.
-  const read = seqCursor && includeDeleted ? tenantReadIncludingDeleted : tenantRead;
+  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted labels
+  const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
   const result = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;
 
     const labelsFilters: SQL[] = [];
 
-    // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor)
-    if (!(seqCursor && includeDeleted)) labelsFilters.push(isNull(labelsTable.deletedAt));
+    // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
+    if (!seqCursor) labelsFilters.push(isNull(labelsTable.deletedAt));
 
     // Sequence-based delta sync filter
     labelsFilters.push(...seqCursorFilters(labelsTable.seq, seqCursor));

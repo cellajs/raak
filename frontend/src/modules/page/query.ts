@@ -25,7 +25,7 @@ import {
   createCacheFinder,
   createEntityKeys,
   createOptimisticEntity,
-  fetchAllBySeq,
+  fetchAllPages,
   invalidateIfLastMutation,
   registerEntityQueryKeys,
   removePendingMutations,
@@ -56,10 +56,9 @@ export const pagesLimit = appConfig.requestLimits.pages;
 type PageFilters = Omit<GetPagesData['query'], 'limit' | 'offset'>;
 
 const keys = createEntityKeys<PageFilters>('page');
-// Delta fetch: one seq-keyset chunk; cache-ops pages through chunks (see fetchRangeAndPatch)
 registerEntityQueryKeys('page', keys, (_organizationId, _tenantId, seqCursor, options) =>
   getPages({
-    query: { seqCursor, includeDeleted: 'true', limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
     headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   }),
 );
@@ -96,14 +95,13 @@ export const pagesCanonicalOptions = () => {
   return queryOptions({
     queryKey: keys.list.base,
     queryFn: async () => {
-      // Seq-keyset hydration (see fetchAllBySeq): complete, immune to offset drift.
-      // No cursor baseline write — the public-stream seq baseline is owned by catchup.
-      const { items, total } = await fetchAllBySeq(({ seqCursor, limit }) =>
-        getPages({
-          query: { seqCursor, limit },
-        }),
+      return fetchAllPages(
+        ({ limit, offset }) =>
+          getPages({
+            query: { limit, offset },
+          }),
+        pagesLimit,
       );
-      return { items, total };
     },
     staleTime: syncStaleTime,
   });

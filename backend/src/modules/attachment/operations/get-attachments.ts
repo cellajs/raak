@@ -18,7 +18,7 @@ type GetAttachmentsInput = z.infer<typeof attachmentListQuerySchema>;
 
 export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsInput) {
   const organizationId = ctx.var.organization.id;
-  const { q, sort, order, limit, offset, seqCursor, includeDeleted, projectId } = input;
+  const { q, sort, order, limit, offset, seqCursor, projectId } = input;
 
   // cella change: Validate an explicitly requested project exists before scoping the read to it.
   if (projectId) {
@@ -44,8 +44,8 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   // Restrict to the caller's readable projects unless org-wide (projectIds === undefined).
   if (projectIds) filters.push(inArray(attachmentsTable.projectId, projectIds));
 
-  // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor)
-  if (!(seqCursor && includeDeleted)) {
+  // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
+  if (!seqCursor) {
     filters.push(isNull(attachmentsTable.deletedAt));
   }
 
@@ -74,8 +74,8 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
         }),
       ];
 
-  // Delta sync (seqCursor + includeDeleted) must see tombstones; hydration reads stay live-rows
-  const read = seqCursor && includeDeleted ? tenantReadIncludingDeleted : tenantRead;
+  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted attachments
+  const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
   const { rawItems, total } = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;

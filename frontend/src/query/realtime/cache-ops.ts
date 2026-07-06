@@ -6,8 +6,8 @@ import {
   getEntityDeltaFetch,
   getEntityQueryKeys,
   hasEntityQueryKeys,
+  SYNC_CHUNK_SIZE,
 } from '~/query/basic/entity-query-registry';
-import { SYNC_CHUNK_SIZE } from '~/query/basic/fetch-all-by-seq';
 import { changeInfiniteQueryData, changeQueryData } from '~/query/basic/helpers';
 import { isInfiniteQueryData, isQueryData } from '~/query/basic/mutate-query';
 import type { EntityQueryData, InfiniteEntityQueryData, ItemData } from '~/query/basic/types';
@@ -361,10 +361,10 @@ function patchFetchedEntity(
 
 /**
  * Fetch changed entities by seq range and patch them into list + detail caches.
- * Uses the registered deltaFetch function to call the list endpoint with `seqCursor`,
- * paging through seq-ordered chunks until the range is drained — success means the FULL
- * range was ingested, so callers may advance their sync cursor.
- * Returns true if fetch succeeded, false if not available (caller should fall back to full invalidation).
+ * Uses the registered deltaFetch function to call the list endpoint with `seqCursor`.
+ * Returns true only when the FULL range was ingested (callers may then advance their sync
+ * cursor); false when unavailable, failed, or the window overflows one response — callers
+ * fall back to full list invalidation and react-query owns recovery.
  *
  * seqCursor formats:
  * - "51" — open-ended (seq >= 51), used by catchup
@@ -389,49 +389,24 @@ export async function fetchRangeAndPatch(
   const deltaFetch = getEntityDeltaFetch(entityType);
   if (!deltaFetch) return false;
 
-  // Parse "gte" / "gte,lte" bounds for chunked keyset paging
-  const [gteRaw, lteRaw] = seqCursor.split(',');
-  const gte = Number(gteRaw);
-  const lte = lteRaw === undefined ? undefined : Number(lteRaw);
-  if (!Number.isFinite(gte) || (lte !== undefined && !Number.isFinite(lte))) {
-    console.warn(`[CacheOps] Invalid seqCursor "${seqCursor}" for ${entityType} delta fetch`);
-    return false;
-  }
-
   try {
-    // Chunked seq-keyset loop: the backend orders seq reads by (seq, id) and registrars cap
-    // each chunk at SYNC_CHUNK_SIZE, so a full chunk means more changes remain. The cursor
-    // advance is inclusive — seq counters are per context, so org-wide reads can hold duplicate
-    // seqs at chunk boundaries; re-fetched boundary rows re-patch idempotently.
-    const seen = new Set<string>();
-    let cursor = gte;
-    while (true) {
-      const chunkCursor = lte === undefined ? String(cursor) : `${cursor},${lte}`;
-      const { items } = await deltaFetch(
-        organizationId,
-        tenantId,
-        chunkCursor,
-        cacheToken ? { cacheToken } : undefined,
-      );
+    const { items } = await deltaFetch(organizationId, tenantId, seqCursor, cacheToken ? { cacheToken } : undefined);
 
-      let maxSeq = cursor;
-      let newIds = 0;
-      for (const entity of items) {
-        if (!seen.has(entity.id)) {
-          seen.add(entity.id);
-          newIds++;
-        }
-        if (typeof entity.seq === 'number' && entity.seq > maxSeq) maxSeq = entity.seq;
-        patchFetchedEntity(entityType, entity, keys, organizationId);
-      }
-
-      if (items.length < SYNC_CHUNK_SIZE) break;
-      // Guarantee progress when a full chunk brought nothing new (pathological all-ties chunk)
-      cursor = maxSeq > cursor ? maxSeq : cursor + (newIds === 0 ? 1 : 0);
+    // Overflow guard: registrars request SYNC_CHUNK_SIZE, so a full response means the seq
+    // window may exceed what one fetch returns. Patching a truncated window would silently
+    // drop the remainder (the backend orders seq reads by seq, but the caller advances its
+    // cursor to the window end) — treat as "delta too large" and let the caller invalidate.
+    if (items.length >= SYNC_CHUNK_SIZE) {
+      console.debug(`[CacheOps] Delta fetch: ${entityType} window overflow (seqCursor=${seqCursor}) → invalidation`);
+      return false;
     }
 
-    if (seen.size > 0) {
-      console.debug(`[CacheOps] Delta fetch: ${entityType} patched ${seen.size} entities (seqCursor=${seqCursor})`);
+    for (const entity of items) {
+      patchFetchedEntity(entityType, entity, keys, organizationId);
+    }
+
+    if (items.length > 0) {
+      console.debug(`[CacheOps] Delta fetch: ${entityType} patched ${items.length} entities (seqCursor=${seqCursor})`);
     }
     return true;
   } catch (error) {

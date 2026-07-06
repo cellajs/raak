@@ -14,19 +14,18 @@ interface GetPagesOpts {
   limit: number;
   offset: number;
   seqCursor?: string;
-  includeDeleted?: boolean;
 }
 
 export const getPages = async (opts: GetPagesOpts) => {
-  const { q, sort, order, limit, offset, seqCursor, includeDeleted } = opts;
+  const { q, sort, order, limit, offset, seqCursor } = opts;
 
   const db = baseDb;
   const matchMode = 'all';
 
   const filters: SQL[] = [];
 
-  // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor)
-  if (!(seqCursor && includeDeleted)) {
+  // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
+  if (!seqCursor) {
     filters.push(isNull(pagesTable.deletedAt));
   }
 

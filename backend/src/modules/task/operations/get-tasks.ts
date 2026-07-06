@@ -45,9 +45,8 @@ export async function getTasksOp(
   }
   const scopedProjectIds = projectIds;
 
-  // Delta sync (seqCursor + includeDeleted) must see tombstones so the client can remove
-  // soft-deleted tasks. Hydration reads (seqCursor alone) stay on the live-rows read path.
-  const read = queryInfo.seqCursor && queryInfo.includeDeleted ? tenantReadIncludingDeleted : tenantRead;
+  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted tasks
+  const read = queryInfo.seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
   const response = await read(ctx, async (readCtx) => {
     return getTasks(readCtx, scopedProjectIds, queryInfo);

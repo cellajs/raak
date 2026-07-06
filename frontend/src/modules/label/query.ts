@@ -23,7 +23,7 @@ import {
   createCacheFinder,
   createEntityKeys,
   createOptimisticEntity,
-  fetchAllBySeq,
+  fetchAllPages,
   invalidateIfLastMutation,
   registerEntityQueryKeys,
   removePendingMutations,
@@ -65,11 +65,10 @@ const keys = {
     filtered: (organizationId: string, filters: LabelFilters) => ['label', 'list', organizationId, filters] as const,
   },
 };
-// Delta fetch: one seq-keyset chunk; cache-ops pages through chunks (see fetchRangeAndPatch)
 registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, options) => {
   return getLabels({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, includeDeleted: 'true', limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
     headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
@@ -108,15 +107,14 @@ export const labelsCanonicalOptions = ({ organizationId, tenantId }: { organizat
   return queryOptions({
     queryKey: keys.list.org(organizationId),
     queryFn: async () => {
-      // Seq-keyset hydration (see fetchAllBySeq): complete, immune to offset drift.
-      // No cursor baseline write — label seq counters are per project, this read is org-wide.
-      const { items, total } = await fetchAllBySeq(({ seqCursor, limit }) =>
-        getLabels({
-          path: { organizationId, tenantId },
-          query: { seqCursor, limit },
-        }),
+      return fetchAllPages(
+        ({ limit, offset }) =>
+          getLabels({
+            path: { organizationId, tenantId },
+            query: { limit, offset },
+          }),
+        labelsLimit,
       );
-      return { items, total };
     },
     staleTime: syncStaleTime,
   });
