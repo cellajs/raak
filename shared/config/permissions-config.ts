@@ -54,7 +54,9 @@ export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ 
       break;
     case 'attachment':
       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
-      contexts.organization.member({ create: 1, read: 0, update: 0, delete: 0 });
+      // read: 'own' — org members may read/list attachments they created anywhere in the
+      // org (row condition), even in projects they are not a member of.
+      contexts.organization.member({ create: 1, read: 'own', update: 0, delete: 0 });
       contexts.project.admin({ create: 1, read: 1, update: 1, delete: 1 });
       contexts.project.member({ create: 1, read: 1, update: 0, delete: 1 });
       contexts.project.guest({ create: 0, read: 1, update: 0, delete: 0 });
