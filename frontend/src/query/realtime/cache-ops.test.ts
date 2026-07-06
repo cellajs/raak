@@ -64,4 +64,41 @@ describe('realtime cache ops', () => {
     expect(queryClient.getQueryData(keys.detail.byId('attachment-1'))).toBeUndefined();
     expect(queryClient.getQueryData(keys.list.org('org-1'))).toEqual({ items: [], total: 0 });
   });
+
+  it('pages through seq chunks until the range is drained — no silent 1000-row delta cap', async () => {
+    const keys = createEntityKeys<Record<string, never>>('attachment');
+    const total = 1500;
+    const all = Array.from({ length: total }, (_, i) => ({
+      id: `att-${i + 1}`,
+      organizationId: 'org-1',
+      seq: i + 1,
+    }));
+    // Emulates the backend seq-read contract: filter by cursor bounds, seq order, cap at limit
+    const deltaFetch = vi.fn(async (_org: string | null, _tenant: string | null, seqCursor: string) => {
+      const [gteRaw, lteRaw] = seqCursor.split(',');
+      const gte = Number(gteRaw);
+      const lte = lteRaw === undefined ? Number.POSITIVE_INFINITY : Number(lteRaw);
+      const matching = all.filter((r) => r.seq >= gte && r.seq <= lte);
+      return { items: matching.slice(0, 1000), total: matching.length };
+    });
+    registerEntityQueryKeys('attachment', keys, deltaFetch);
+
+    const patched = await fetchRangeAndPatch('attachment', 'org-1', 'tenant-1', '1', keys);
+
+    expect(patched).toBe(true);
+    expect(deltaFetch).toHaveBeenCalledTimes(2);
+    // Rows beyond the first chunk were ingested, not dropped
+    expect(queryClient.getQueryData(keys.detail.byId('att-1500'))).toMatchObject({ seq: 1500 });
+  });
+
+  it('returns false on a rejected delta fetch so callers fall back to invalidation', async () => {
+    const keys = createEntityKeys<Record<string, never>>('attachment');
+    registerEntityQueryKeys('attachment', keys, async () => {
+      throw new Error('network down');
+    });
+
+    const patched = await fetchRangeAndPatch('attachment', 'org-1', 'tenant-1', '5', keys);
+
+    expect(patched).toBe(false);
+  });
 });

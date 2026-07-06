@@ -2944,6 +2944,7 @@ export const deletePages = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.includedeleted - `enum` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getPages = <ThrowOnError extends boolean = true>(
@@ -3227,6 +3228,7 @@ export const getPublicTask = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.includedeleted - `enum` (optional)
  * @param {enum=} options.query.matchmode - `enum` (optional)
  * @param {number=} options.query.acceptedcutoff - `number` (optional)
  * @param {string} options.query.projectid - `string`
@@ -3526,6 +3528,7 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.includedeleted - `enum` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -4044,6 +4047,7 @@ export const deleteTasks = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.includedeleted - `enum` (optional)
  * @param {enum=} options.query.matchmode - `enum` (optional)
  * @param {number=} options.query.acceptedcutoff - `number` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
@@ -4258,6 +4262,7 @@ export const deleteLabels = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.includedeleted - `enum` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @param {string=} options.query.workspaceid - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429

@@ -263,7 +263,12 @@
           },
           "offset": { "type": "string", "required": false },
           "limit": { "type": "string", "required": false },
-          "seqCursor": { "type": "string", "required": false }
+          "seqCursor": { "type": "string", "required": false },
+          "includeDeleted": {
+            "type": "string",
+            "required": false,
+            "enum": ["true", "false"]
+          }
         }
       }
     }

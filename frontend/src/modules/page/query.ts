@@ -25,10 +25,11 @@ import {
   createCacheFinder,
   createEntityKeys,
   createOptimisticEntity,
-  fetchAllPages,
+  fetchAllBySeq,
   invalidateIfLastMutation,
   registerEntityQueryKeys,
   removePendingMutations,
+  SYNC_CHUNK_SIZE,
 } from '~/query/basic';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
@@ -55,9 +56,10 @@ export const pagesLimit = appConfig.requestLimits.pages;
 type PageFilters = Omit<GetPagesData['query'], 'limit' | 'offset'>;
 
 const keys = createEntityKeys<PageFilters>('page');
+// Delta fetch: one seq-keyset chunk; cache-ops pages through chunks (see fetchRangeAndPatch)
 registerEntityQueryKeys('page', keys, (_organizationId, _tenantId, seqCursor, options) =>
   getPages({
-    query: { seqCursor, limit: '1000' },
+    query: { seqCursor, includeDeleted: 'true', limit: String(SYNC_CHUNK_SIZE) },
     headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   }),
 );
@@ -94,13 +96,14 @@ export const pagesCanonicalOptions = () => {
   return queryOptions({
     queryKey: keys.list.base,
     queryFn: async () => {
-      return fetchAllPages(
-        ({ limit, offset }) =>
-          getPages({
-            query: { limit, offset },
-          }),
-        pagesLimit,
+      // Seq-keyset hydration (see fetchAllBySeq): complete, immune to offset drift.
+      // No cursor baseline write — the public-stream seq baseline is owned by catchup.
+      const { items, total } = await fetchAllBySeq(({ seqCursor, limit }) =>
+        getPages({
+          query: { seqCursor, limit },
+        }),
       );
+      return { items, total };
     },
     staleTime: syncStaleTime,
   });
@@ -307,8 +310,8 @@ addMutationRegistrar((queryClient: QueryClient) => {
 });
 
 /** Fetch pages for table export. Bypasses cache; returns flat items. */
-export const fetchPagesForExport = async (params: { limit: number; q?: string }) => {
-  const { limit, q = '' } = params;
-  const response = await getPages({ query: { limit: String(limit), q, offset: '0' } });
+export const fetchPagesForExport = async (params: { limit: number; offset?: number; q?: string }) => {
+  const { limit, offset = 0, q = '' } = params;
+  const response = await getPages({ query: { limit: String(limit), q, offset: String(offset) } });
   return response.items;
 };

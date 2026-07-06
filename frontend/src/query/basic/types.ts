@@ -4,6 +4,8 @@ import type { InfiniteQueryData, QueryData } from '~/query/types';
 export interface ItemData {
   id: string;
   membership?: { id: string } | null;
+  /** Delta-sync sequence (product entities); used by seq-keyset paging in cache-ops */
+  seq?: number | null;
 }
 
 /** Mapped type for all context entity ID columns (e.g., organizationId, workspaceId, projectId) */

@@ -140,6 +140,20 @@ export const paginationQuerySchema = z.object({
   seqCursor: z.string().optional(),
 });
 
+/**
+ * Tombstone opt-in for seq delta sync (product entity list endpoints only): when true,
+ * soft-deleted rows flow through so client caches can drop them. Only honored together with
+ * `seqCursor` (ignored otherwise). Hydration reads (seqCursor without includeDeleted) exclude
+ * tombstones. Kept out of `paginationQuerySchema` on purpose — context entities have no
+ * seq-based delta sync, so the flag would be a phantom param there.
+ */
+export const includeDeletedQuerySchema = z.object({
+  includeDeleted: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((val) => val === 'true'),
+});
+
 /** Schema for optional excludeArchived query param (transforms to boolean) */
 export const excludeArchivedQuerySchema = z
   .enum(['true', 'false'])

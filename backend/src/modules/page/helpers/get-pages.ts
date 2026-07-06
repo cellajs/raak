@@ -1,4 +1,4 @@
-import { count, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import { asc, count, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
 import { baseDb } from '#/db/db';
 import { pagesTable } from '#/modules/page/page-db';
 import { buildPagesListQuery } from '#/modules/page/page-queries';
@@ -14,17 +14,19 @@ interface GetPagesOpts {
   limit: number;
   offset: number;
   seqCursor?: string;
+  includeDeleted?: boolean;
 }
 
 export const getPages = async (opts: GetPagesOpts) => {
-  const { q, sort, order, limit, offset, seqCursor } = opts;
+  const { q, sort, order, limit, offset, seqCursor, includeDeleted } = opts;
 
   const db = baseDb;
   const matchMode = 'all';
 
   const filters: SQL[] = [];
 
-  if (!seqCursor) {
+  // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor)
+  if (!(seqCursor && includeDeleted)) {
     filters.push(isNull(pagesTable.deletedAt));
   }
 
@@ -55,17 +57,25 @@ export const getPages = async (opts: GetPagesOpts) => {
     filters.push(or(...qFilters) as SQL);
   }
 
-  const orderColumn = getOrderColumn(sort, pagesTable.status, order, {
-    status: pagesTable.status,
-    createdAt: pagesTable.createdAt,
-    name: pagesTable.name,
-    displayOrder: pagesTable.displayOrder,
-  });
+  // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
+  const orderBy = seqCursor
+    ? [asc(pagesTable.seq), asc(pagesTable.id)]
+    : [
+        getOrderColumn(sort, pagesTable.status, order, {
+          status: pagesTable.status,
+          createdAt: pagesTable.createdAt,
+          name: pagesTable.name,
+          displayOrder: pagesTable.displayOrder,
+        }),
+      ];
 
   const pagesQuery = buildPagesListQuery({ var: { db } }, { filters });
 
   const [items, total] = await Promise.all([
-    pagesQuery.orderBy(orderColumn).limit(limit).offset(offset),
+    pagesQuery
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset),
     db
       .select({ total: count() })
       .from(pagesQuery.as('pages'))

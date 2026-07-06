@@ -3,7 +3,14 @@ import { schemaTags } from '#/core/openapi-helpers';
 import { createUpdateSchema } from '#/core/stx';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  includeDeletedQuerySchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 import { mockAttachmentResponse } from './attachment-mocks';
 
@@ -63,6 +70,7 @@ export const attachmentCreateResponseSchema = batchResponseSchema(attachmentSche
 const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'createdAt', 'contentType']);
 
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
+  ...includeDeletedQuerySchema.shape,
   sort: attachmentSortKeys.default('createdAt').optional(),
   // cella addition: filter by projectID
   projectId: z.string().max(maxLength.id).optional(),

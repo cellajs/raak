@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { and, count, eq, getColumns, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, getColumns, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -18,7 +18,7 @@ type GetAttachmentsInput = z.infer<typeof attachmentListQuerySchema>;
 
 export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsInput) {
   const organizationId = ctx.var.organization.id;
-  const { q, sort, order, limit, offset, seqCursor, projectId } = input;
+  const { q, sort, order, limit, offset, seqCursor, includeDeleted, projectId } = input;
 
   // cella change: Validate an explicitly requested project exists before scoping the read to it.
   if (projectId) {
@@ -44,7 +44,8 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   // Restrict to the caller's readable projects unless org-wide (projectIds === undefined).
   if (projectIds) filters.push(inArray(attachmentsTable.projectId, projectIds));
 
-  if (!seqCursor) {
+  // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor)
+  if (!(seqCursor && includeDeleted)) {
     filters.push(isNull(attachmentsTable.deletedAt));
   }
 
@@ -62,13 +63,19 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     );
   }
 
-  const orderColumn = getOrderColumn(sort, attachmentsTable.createdAt, order, {
-    name: attachmentsTable.name,
-    createdAt: attachmentsTable.createdAt,
-    contentType: attachmentsTable.contentType,
-  });
+  // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
+  const orderBy = seqCursor
+    ? [asc(attachmentsTable.seq), asc(attachmentsTable.id)]
+    : [
+        getOrderColumn(sort, attachmentsTable.createdAt, order, {
+          name: attachmentsTable.name,
+          createdAt: attachmentsTable.createdAt,
+          contentType: attachmentsTable.contentType,
+        }),
+      ];
 
-  const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
+  // Delta sync (seqCursor + includeDeleted) must see tombstones; hydration reads stay live-rows
+  const read = seqCursor && includeDeleted ? tenantReadIncludingDeleted : tenantRead;
 
   const { rawItems, total } = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;
@@ -88,7 +95,7 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
         .leftJoin(createdByUser, eq(createdByUser.id, attachmentsTable.createdBy))
         .leftJoin(updatedByUser, eq(updatedByUser.id, attachmentsTable.updatedBy))
         .where(whereClause)
-        .orderBy(orderColumn)
+        .orderBy(...orderBy)
         .limit(limit)
         .offset(offset),
       db.select({ total: count() }).from(attachmentsTable).where(whereClause),

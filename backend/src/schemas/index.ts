@@ -16,6 +16,7 @@ export {
   idInTenantOrgParamSchema,
   idsBodySchema,
   idsWithStxBodySchema,
+  includeDeletedQuerySchema,
   includeOptions,
   includeQuerySchema,
   inOrgParamSchema,

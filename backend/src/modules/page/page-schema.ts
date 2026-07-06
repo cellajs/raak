@@ -3,7 +3,14 @@ import { schemaTags } from '#/core/openapi-helpers';
 import { createUpdateSchema } from '#/core/stx';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { pagesTable } from '#/modules/page/page-db';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  includeDeletedQuerySchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 import { mockPageResponse } from './page-mocks';
 
@@ -73,5 +80,6 @@ export const pageCreateResponseSchema = batchResponseSchema(pageSchema);
 const pageSortKeys = pageSelectSchema.keyof().extract(['name', 'status', 'createdAt', 'displayOrder']);
 
 export const pageListQuerySchema = paginationQuerySchema.extend({
+  ...includeDeletedQuerySchema.shape,
   sort: pageSortKeys.default('createdAt').optional(),
 });

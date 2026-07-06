@@ -20,7 +20,7 @@ export async function getLabelsOp(
   input: GetLabelsInput,
 ): Promise<OperationResult<{ items: (LabelModel & { usedCount: number })[]; total: number }>> {
   const { projectId, workspaceId, ...queryInfo } = input;
-  const { q, sort, order, offset, limit, seqCursor } = queryInfo;
+  const { q, sort, order, offset, limit, seqCursor, includeDeleted } = queryInfo;
   const organizationId = ctx.var.organization.id;
 
   // Resolve the explicit sub-context narrowing (if any) from the request.
@@ -49,16 +49,17 @@ export async function getLabelsOp(
     return { success: true, data: { items: [], total: 0 } };
   }
 
-  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted labels
-  const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
+  // Delta sync (seqCursor + includeDeleted) must see tombstones so the client can remove
+  // soft-deleted labels. Hydration reads (seqCursor alone) stay on the live-rows read path.
+  const read = seqCursor && includeDeleted ? tenantReadIncludingDeleted : tenantRead;
 
   const result = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;
 
     const labelsFilters: SQL[] = [];
 
-    // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
-    if (!seqCursor) labelsFilters.push(isNull(labelsTable.deletedAt));
+    // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor)
+    if (!(seqCursor && includeDeleted)) labelsFilters.push(isNull(labelsTable.deletedAt));
 
     // Sequence-based delta sync filter
     labelsFilters.push(...seqCursorFilters(labelsTable.seq, seqCursor));
@@ -70,13 +71,23 @@ export async function getLabelsOp(
 
     const labelsSubquery = buildLabelsListQuery(readCtx, { filters: labelsFilters }).as('labels');
 
-    const orderColumn = getOrderColumn(sort, sql`name`, order, {
-      name: sql`name`,
-      usedCount: sql`used_count`,
-    });
+    // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
+    const orderBy = seqCursor
+      ? [sql`seq asc`, sql`id asc`]
+      : [
+          getOrderColumn(sort, sql`name`, order, {
+            name: sql`name`,
+            usedCount: sql`used_count`,
+          }),
+        ];
 
     const [items, [{ total }]] = await Promise.all([
-      db.select().from(labelsSubquery).orderBy(orderColumn).limit(limit).offset(offset),
+      db
+        .select()
+        .from(labelsSubquery)
+        .orderBy(...orderBy)
+        .limit(limit)
+        .offset(offset),
       db.select({ total: count() }).from(labelsSubquery),
     ]);
 

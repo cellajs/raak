@@ -7,7 +7,14 @@ import { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import { tasksTable } from '#/modules/task/task-db';
 import { mockTaskResponse } from '#/modules/task/task-mocks';
 import { TaskStatus, TaskVariant } from '#/modules/task/task-properties';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  includeDeletedQuerySchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
 const taskInsertSchema = createInsertSchema(tasksTable, {
@@ -70,6 +77,7 @@ export const taskUpdateStxBodySchema = createUpdateSchema({
 
 /** Base schema without refinement - use this when you need .omit()/.pick() */
 export const taskListQueryBaseSchema = paginationQuerySchema.extend({
+  ...includeDeletedQuerySchema.shape,
   matchMode: z.enum(['all', 'any']).default('all').optional(),
   sort: z
     .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])

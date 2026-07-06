@@ -1,4 +1,4 @@
-import { and, arrayOverlaps, eq, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, eq, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import type { AuthContext } from '#/core/context';
 import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
@@ -17,7 +17,7 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
 export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo: QueryInfo) => {
-  const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
+  const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor, includeDeleted } = queryInfo;
   const trimmedQuery = q?.trim();
 
   // Get users and labels data in parallel
@@ -28,7 +28,6 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
 
   // Build search filters
   const tasksSearchFilters: SQL[] = [];
-  tasksSearchFilters.push(...seqCursorFilters(tasksTable.seq, seqCursor));
 
   if (trimmedQuery) {
     const normalizedQuery = trimmedQuery.startsWith('=') ? trimmedQuery.slice(1).trim() : trimmedQuery;
@@ -52,33 +51,43 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
     }
   }
 
-  // Sorting
-  const orderColumn = getOrderColumn(sort, tasksTable.status, order, {
-    variant: tasksTable.variant,
-    status: tasksTable.status,
-    projectId: tasksTable.projectId,
-    createdAt: tasksTable.createdAt,
-    createdBy: tasksTable.createdBy,
-    updatedAt: tasksTable.updatedAt,
-  });
+  // Sorting. Seq reads (hydration + delta sync) are keyset-paged: seq order makes a
+  // limit-capped page a clean prefix, so the client can resume from the last seq received.
+  // Id tiebreak keeps ordering stable when per-context counters collide across projects.
+  const orderColumn = seqCursor
+    ? asc(tasksTable.seq)
+    : getOrderColumn(sort, tasksTable.status, order, {
+        variant: tasksTable.variant,
+        status: tasksTable.status,
+        projectId: tasksTable.projectId,
+        createdAt: tasksTable.createdAt,
+        createdBy: tasksTable.createdBy,
+        updatedAt: tasksTable.updatedAt,
+      });
 
   // Exclude accepted tasks older than cutoff directly in WHERE (avoids separate query + notInArray)
   const acceptedCutOffFilter = acceptedCutOff
     ? sql`NOT (${tasksTable.status} = ${TaskStatus.Accepted} AND coalesce(${tasksTable.updatedAt}, ${tasksTable.createdAt}) <= ${getDateFromToday(acceptedCutOff)})`
     : undefined;
 
-  // Shared WHERE filters
+  // Shared WHERE filters. Seq range filters must be AND-combined — inside the OR'd search
+  // group a bounded cursor ("51,150") would degenerate to `seq >= 51 OR seq <= 150` (= all rows).
   const filters = and(
-    or(...tasksSearchFilters),
+    ...seqCursorFilters(tasksTable.seq, seqCursor),
+    tasksSearchFilters.length ? or(...tasksSearchFilters) : undefined,
     eq(tasksTable.organizationId, ctx.var.organizationId),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
-    // Hide tombstones for normal reads; on seqCursor delta sync they flow through so caches can drop them
-    seqCursor ? undefined : isNull(tasksTable.deletedAt),
+    // Hide tombstones unless a delta-sync read opts in via includeDeleted (with seqCursor);
+    // they flow through there so client caches can drop soft-deleted rows.
+    seqCursor && includeDeleted ? undefined : isNull(tasksTable.deletedAt),
   );
 
   // Parallel count + data fetch
-  const [tasks, [{ total }]] = await findTasksPaginated(ctx, { filters, orderColumn, limit, offset });
+  const orderBy = seqCursor
+    ? [orderColumn, asc(tasksTable.id)]
+    : [orderColumn, desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number))];
+  const [tasks, [{ total }]] = await findTasksPaginated(ctx, { filters, orderBy, limit, offset });
 
   const items = hydrateTasks(tasks, tasksUsers, tasksLabels);
 

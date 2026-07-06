@@ -15,10 +15,11 @@ import {
   createCacheFinder,
   createEntityKeys,
   createOptimisticEntity,
-  fetchAllPages,
+  fetchAllBySeq,
   invalidateIfLastMutation,
   registerEntityQueryKeys,
   removePendingMutations,
+  SYNC_CHUNK_SIZE,
 } from '~/query/basic';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
@@ -34,6 +35,7 @@ import {
 } from '~/query/offline';
 import { getCacheToken } from '~/query/realtime';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
+import { useSyncStore } from '~/query/realtime/sync-store';
 import type { InfiniteQueryData, PageParams, QueryData, QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
@@ -128,10 +130,12 @@ export const taskKeys = {
   },
 };
 
+// Delta fetch: one seq-keyset chunk. cache-ops pages through chunks (see fetchRangeAndPatch);
+// includeDeleted lets tombstones flow through so caches can drop soft-deleted tasks.
 registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, options) => {
   return getTasks({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, limit: '1000' },
+    query: { seqCursor, includeDeleted: 'true', limit: String(SYNC_CHUNK_SIZE) },
     headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
@@ -202,6 +206,11 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
  * Fetches all tasks for a project, stored at taskKeys.list.scope(organizationId, projectId).
  * Board/table derive views via select() or client-side filtering.
  * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.
+ *
+ * Hydration is a seq-keyset read from zero — the same mechanism delta sync continues from.
+ * On success the project's sync cursor is reset to the max seq actually ingested, so the
+ * stored cursor is by construction exactly what this cache contains (a stale durable cursor
+ * from a wiped session cache self-corrects here).
  */
 export const tasksCanonicalOptions = ({
   organizationId,
@@ -212,19 +221,19 @@ export const tasksCanonicalOptions = ({
   tenantId: string;
   projectId: string;
 }) => {
-  const limit = appConfig.requestLimits.tasks;
-
   return queryOptions({
     queryKey: taskKeys.list.scope(organizationId, projectId),
     queryFn: async () => {
-      return fetchAllPages(
-        ({ limit, offset }) =>
-          getTasks({
-            path: { organizationId, tenantId },
-            query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOff },
-          }),
-        limit,
+      const { items, total, maxSeq } = await fetchAllBySeq(({ seqCursor, limit }) =>
+        getTasks({
+          path: { organizationId, tenantId },
+          query: { projectId, seqCursor, limit, acceptedCutOff: boardAcceptedCutOff },
+        }),
       );
+      // Task seq counters are per project, so this canonical per-project read is the
+      // authoritative baseline for the project's delta-sync cursor.
+      if (maxSeq > 0) useSyncStore.getState().setContextSeq(organizationId, projectId, 'task', maxSeq);
+      return { items, total };
     },
     staleTime: syncStaleTime,
   });
@@ -553,13 +562,14 @@ addMutationRegistrar((qc: QueryClient) => {
 /** Fetch tasks for table export. Bypasses cache; returns flat items. */
 export const fetchTasksForExport = async (params: {
   limit: number;
+  offset?: number;
   organizationId: string;
   tenantId: string;
   query: Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
 }) => {
-  const { limit, organizationId, tenantId, query } = params;
+  const { limit, offset = 0, organizationId, tenantId, query } = params;
   const { items } = await getTasks({
-    query: { ...query, limit: String(limit), offset: '0' },
+    query: { ...query, limit: String(limit), offset: String(offset) },
     path: { organizationId, tenantId },
   });
   return items;

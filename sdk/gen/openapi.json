@@ -8746,6 +8746,15 @@
             "required": false,
             "name": "seqCursor",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "includeDeleted",
+            "in": "query"
           }
         ],
         "responses": {
@@ -10070,6 +10079,15 @@
           {
             "schema": {
               "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "includeDeleted",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "enum": ["all", "any"],
               "default": "all"
             },
@@ -11037,6 +11055,15 @@
             },
             "required": false,
             "name": "seqCursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "includeDeleted",
             "in": "query"
           },
           {
@@ -13359,6 +13386,15 @@
           {
             "schema": {
               "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "includeDeleted",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "enum": ["all", "any"],
               "default": "all"
             },
@@ -14310,6 +14346,15 @@
             },
             "required": false,
             "name": "seqCursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "includeDeleted",
             "in": "query"
           },
           {

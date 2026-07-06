@@ -7,6 +7,7 @@ import {
   getEntityQueryKeys,
   hasEntityQueryKeys,
 } from '~/query/basic/entity-query-registry';
+import { SYNC_CHUNK_SIZE } from '~/query/basic/fetch-all-by-seq';
 import { changeInfiniteQueryData, changeQueryData } from '~/query/basic/helpers';
 import { isInfiniteQueryData, isQueryData } from '~/query/basic/mutate-query';
 import type { EntityQueryData, InfiniteEntityQueryData, ItemData } from '~/query/basic/types';
@@ -295,9 +296,74 @@ export async function fetchEntityAndUpdateList(
   }
 }
 
+/** Upsert one delta-fetched entity into detail + matching list caches (tombstones remove). */
+function patchFetchedEntity(
+  entityType: string,
+  entity: ItemData,
+  keys: EntityQueryKeys,
+  organizationId: string | null,
+): void {
+  if (isSoftDeleted(entity)) {
+    removeEntity(entityType, entity.id, organizationId ?? undefined);
+    return;
+  }
+
+  // Skip entities with pending mutations to preserve optimistic state
+  if (hasPendingMutationForEntity(entityType, entity.id)) {
+    console.debug(`[CacheOps] Delta fetch: skipping ${entityType}:${entity.id} — has pending mutation`);
+    return;
+  }
+
+  // If a Yjs editor is active for this entity, strip Yjs-owned fields to avoid
+  // overwriting the local Y.Doc state with a slightly stale server snapshot
+  let filtered = entity;
+  const yjsStore = useYjsEditorStore.getState();
+  if (yjsStore.isActive(entityType as ProductEntityType, entity.id)) {
+    const ownedFields = yjsStore.getOwnedFields(entityType as ProductEntityType);
+    const existing = queryClient.getQueryData<ItemData>(keys.detail.byId(entity.id));
+    if (existing) {
+      filtered = { ...entity };
+      const target: Record<string, unknown> = filtered as never;
+      const source: Record<string, unknown> = existing as never;
+      for (const field of ownedFields) {
+        if (field in source) target[field] = source[field];
+      }
+    }
+  }
+
+  // Update detail cache
+  queryClient.setQueryData(keys.detail.byId(entity.id), (old: ItemData | undefined) => {
+    if (!old) return filtered;
+    return { ...old, ...filtered };
+  });
+
+  // Upsert into matching list caches (scoped to org when available)
+  const listPrefix = organizationId ? keys.list.org(organizationId) : keys.list.base;
+  for (const [queryKey, queryData] of queryClient.getQueriesData({ queryKey: listPrefix })) {
+    if (isInfiniteQueryData<ItemData>(queryData)) {
+      // Remove from caches where entity no longer belongs (e.g. parent context changed)
+      const cachedItem = queryData.pages.flatMap((p) => p.items).find((item) => item.id === entity.id);
+      if (cachedItem && hasParentContextChanged(cachedItem, filtered)) {
+        changeInfiniteQueryData(queryKey, [filtered], 'remove');
+        continue;
+      }
+      changeInfiniteQueryData(queryKey, [filtered], 'update');
+    } else if (isQueryData<ItemData>(queryData)) {
+      const cachedItem = queryData.items.find((item) => item.id === entity.id);
+      if (cachedItem && hasParentContextChanged(cachedItem, filtered)) {
+        changeQueryData(queryKey, [filtered], 'remove');
+        continue;
+      }
+      changeQueryData(queryKey, [filtered], 'update');
+    }
+  }
+}
+
 /**
  * Fetch changed entities by seq range and patch them into list + detail caches.
- * Uses the registered deltaFetch function to call the list endpoint with `seqCursor`.
+ * Uses the registered deltaFetch function to call the list endpoint with `seqCursor`,
+ * paging through seq-ordered chunks until the range is drained — success means the FULL
+ * range was ingested, so callers may advance their sync cursor.
  * Returns true if fetch succeeded, false if not available (caller should fall back to full invalidation).
  *
  * seqCursor formats:
@@ -323,69 +389,50 @@ export async function fetchRangeAndPatch(
   const deltaFetch = getEntityDeltaFetch(entityType);
   if (!deltaFetch) return false;
 
+  // Parse "gte" / "gte,lte" bounds for chunked keyset paging
+  const [gteRaw, lteRaw] = seqCursor.split(',');
+  const gte = Number(gteRaw);
+  const lte = lteRaw === undefined ? undefined : Number(lteRaw);
+  if (!Number.isFinite(gte) || (lte !== undefined && !Number.isFinite(lte))) {
+    console.warn(`[CacheOps] Invalid seqCursor "${seqCursor}" for ${entityType} delta fetch`);
+    return false;
+  }
+
   try {
-    const { items } = await deltaFetch(organizationId, tenantId, seqCursor, cacheToken ? { cacheToken } : undefined);
-    if (items.length === 0) return true;
+    // Chunked seq-keyset loop: the backend orders seq reads by (seq, id) and registrars cap
+    // each chunk at SYNC_CHUNK_SIZE, so a full chunk means more changes remain. The cursor
+    // advance is inclusive — seq counters are per context, so org-wide reads can hold duplicate
+    // seqs at chunk boundaries; re-fetched boundary rows re-patch idempotently.
+    const seen = new Set<string>();
+    let cursor = gte;
+    while (true) {
+      const chunkCursor = lte === undefined ? String(cursor) : `${cursor},${lte}`;
+      const { items } = await deltaFetch(
+        organizationId,
+        tenantId,
+        chunkCursor,
+        cacheToken ? { cacheToken } : undefined,
+      );
 
-    // Upsert each entity into list caches and detail cache
-    for (const entity of items) {
-      if (isSoftDeleted(entity)) {
-        removeEntity(entityType, entity.id, organizationId ?? undefined);
-        continue;
-      }
-
-      // Skip entities with pending mutations to preserve optimistic state
-      if (hasPendingMutationForEntity(entityType, entity.id)) {
-        console.debug(`[CacheOps] Delta fetch: skipping ${entityType}:${entity.id} — has pending mutation`);
-        continue;
-      }
-
-      // If a Yjs editor is active for this entity, strip Yjs-owned fields to avoid
-      // overwriting the local Y.Doc state with a slightly stale server snapshot
-      let filtered = entity;
-      const yjsStore = useYjsEditorStore.getState();
-      if (yjsStore.isActive(entityType as ProductEntityType, entity.id)) {
-        const ownedFields = yjsStore.getOwnedFields(entityType as ProductEntityType);
-        const existing = queryClient.getQueryData<ItemData>(keys.detail.byId(entity.id));
-        if (existing) {
-          filtered = { ...entity };
-          const target: Record<string, unknown> = filtered as never;
-          const source: Record<string, unknown> = existing as never;
-          for (const field of ownedFields) {
-            if (field in source) target[field] = source[field];
-          }
+      let maxSeq = cursor;
+      let newIds = 0;
+      for (const entity of items) {
+        if (!seen.has(entity.id)) {
+          seen.add(entity.id);
+          newIds++;
         }
+        if (typeof entity.seq === 'number' && entity.seq > maxSeq) maxSeq = entity.seq;
+        patchFetchedEntity(entityType, entity, keys, organizationId);
       }
 
-      // Update detail cache
-      queryClient.setQueryData(keys.detail.byId(entity.id), (old: ItemData | undefined) => {
-        if (!old) return filtered;
-        return { ...old, ...filtered };
-      });
-
-      // Upsert into matching list caches (scoped to org when available)
-      const listPrefix = organizationId ? keys.list.org(organizationId) : keys.list.base;
-      for (const [queryKey, queryData] of queryClient.getQueriesData({ queryKey: listPrefix })) {
-        if (isInfiniteQueryData<ItemData>(queryData)) {
-          // Remove from caches where entity no longer belongs (e.g. parent context changed)
-          const cachedItem = queryData.pages.flatMap((p) => p.items).find((item) => item.id === entity.id);
-          if (cachedItem && hasParentContextChanged(cachedItem, filtered)) {
-            changeInfiniteQueryData(queryKey, [filtered], 'remove');
-            continue;
-          }
-          changeInfiniteQueryData(queryKey, [filtered], 'update');
-        } else if (isQueryData<ItemData>(queryData)) {
-          const cachedItem = queryData.items.find((item) => item.id === entity.id);
-          if (cachedItem && hasParentContextChanged(cachedItem, filtered)) {
-            changeQueryData(queryKey, [filtered], 'remove');
-            continue;
-          }
-          changeQueryData(queryKey, [filtered], 'update');
-        }
-      }
+      if (items.length < SYNC_CHUNK_SIZE) break;
+      // Guarantee progress when a full chunk brought nothing new (pathological all-ties chunk)
+      cursor = maxSeq > cursor ? maxSeq : cursor + (newIds === 0 ? 1 : 0);
     }
 
-    console.debug(`[CacheOps] Delta fetch: ${entityType} patched ${items.length} entities (seqCursor=${seqCursor})`);
+    if (seen.size > 0) {
+      console.debug(`[CacheOps] Delta fetch: ${entityType} patched ${seen.size} entities (seqCursor=${seqCursor})`);
+    }
     return true;
   } catch (error) {
     console.warn(`[CacheOps] Delta fetch failed for ${entityType}, falling back to invalidation`, error);

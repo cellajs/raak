@@ -1560,6 +1560,7 @@ export const zGetPagesQuery = z.object({
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
+  includeDeleted: z.enum(['true', 'false']).optional(),
 });
 
 /**
@@ -1709,6 +1710,7 @@ export const zGetPublicTasksQuery = z.object({
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
+  includeDeleted: z.enum(['true', 'false']).optional(),
   matchMode: z.enum(['all', 'any']).optional().default('all'),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50),
@@ -1834,6 +1836,7 @@ export const zGetAttachmentsQuery = z.object({
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
+  includeDeleted: z.enum(['true', 'false']).optional(),
   projectId: z.string().max(50).optional(),
 });
 
@@ -2114,6 +2117,7 @@ export const zGetTasksQuery = z.object({
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
+  includeDeleted: z.enum(['true', 'false']).optional(),
   matchMode: z.enum(['all', 'any']).optional().default('all'),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50).optional(),
@@ -2260,6 +2264,7 @@ export const zGetLabelsQuery = z.object({
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
+  includeDeleted: z.enum(['true', 'false']).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
 });

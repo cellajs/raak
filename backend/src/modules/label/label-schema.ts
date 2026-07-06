@@ -5,7 +5,14 @@ import { createUpdateSchema } from '#/core/stx';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  includeDeletedQuerySchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { pick } from '#/utils/pick';
 
 const labelInsertSchema = createInsertSchema(labelsTable);
@@ -60,6 +67,7 @@ export const labelUpdateStxBodySchema = createUpdateSchema({
 
 export const labelListQuerySchema = paginationQuerySchema
   .extend({
+    ...includeDeletedQuerySchema.shape,
     sort: z.enum(['name', 'usedCount']).default('name').optional(),
     order: z.enum(['asc', 'desc']).default('asc').optional(),
     projectId: z.string().max(maxLength.id).optional(),

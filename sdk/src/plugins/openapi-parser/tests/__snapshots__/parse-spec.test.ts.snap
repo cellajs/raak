@@ -2,7 +2,7 @@
 
 exports[`parseOpenApiSpec > parses backend spec correctly 1`] = `
 {
-  "inputHash": "3253f9803d9879cb",
+  "inputHash": "cfbc38a6aa18632e",
   "output": {
     "info": {
       "description": "⚠️ ATTENTION: PRERELEASE!  
@@ -9191,6 +9191,14 @@ exports[`parseOpenApiSpec > parses backend spec correctly 1`] = `
             },
             "query": {
               "properties": {
+                "includeDeleted": {
+                  "enum": [
+                    "true",
+                    "false",
+                  ],
+                  "required": false,
+                  "type": "string",
+                },
                 "limit": {
                   "required": false,
                   "type": "string",
@@ -13764,6 +13772,14 @@ exports[`parseOpenApiSpec > parses backend spec correctly 1`] = `
             },
             "query": {
               "properties": {
+                "includeDeleted": {
+                  "enum": [
+                    "true",
+                    "false",
+                  ],
+                  "required": false,
+                  "type": "string",
+                },
                 "limit": {
                   "required": false,
                   "type": "string",
@@ -21205,6 +21221,14 @@ exports[`parseOpenApiSpec > parses backend spec correctly 1`] = `
           "request": {
             "query": {
               "properties": {
+                "includeDeleted": {
+                  "enum": [
+                    "true",
+                    "false",
+                  ],
+                  "required": false,
+                  "type": "string",
+                },
                 "limit": {
                   "required": false,
                   "type": "string",
@@ -28494,6 +28518,14 @@ exports[`parseOpenApiSpec > parses backend spec correctly 1`] = `
                   "required": false,
                   "type": "number",
                 },
+                "includeDeleted": {
+                  "enum": [
+                    "true",
+                    "false",
+                  ],
+                  "required": false,
+                  "type": "string",
+                },
                 "limit": {
                   "required": false,
                   "type": "string",
@@ -29276,6 +29308,14 @@ exports[`parseOpenApiSpec > parses backend spec correctly 1`] = `
                 "acceptedCutOff": {
                   "required": false,
                   "type": "number",
+                },
+                "includeDeleted": {
+                  "enum": [
+                    "true",
+                    "false",
+                  ],
+                  "required": false,
+                  "type": "string",
                 },
                 "limit": {
                   "required": false,
