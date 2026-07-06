@@ -36,10 +36,22 @@ interface ContextEntry<R extends string = string> {
 interface ProductEntry {
   kind: 'product';
   parent: string;
+  /** Host product this entity belongs to (product-to-product ownership, e.g. attachment → task). */
+  host?: string;
   /** Non-ancestor context entities referenced as optional denormalized columns. */
   relatedContexts?: readonly string[];
 }
 type EntityEntry = UserEntry | ContextEntry | ProductEntry;
+
+/** A host relationship between two products, with the hosted table's host id column. */
+export interface HostRelation {
+  /** The hosted product (e.g. 'attachment'). */
+  hostedType: string;
+  /** The host product (e.g. 'task'). */
+  hostType: string;
+  /** Generated nullable id column on the hosted table (e.g. 'taskId'). */
+  hostIdColumn: string;
+}
 
 export interface ContextEntityView<R extends string = string> {
   readonly kind: 'context';
@@ -51,6 +63,7 @@ export interface ContextEntityView<R extends string = string> {
 export interface ProductEntityView {
   readonly kind: 'product';
   readonly parent: string;
+  readonly host?: string;
   readonly relatedContexts?: readonly string[];
 }
 
@@ -67,6 +80,7 @@ class EntityHierarchyBuilder<
   TProducts extends string = never,
   TParentMap extends Record<string, string | null> = Record<never, never>,
   TRelatedMap extends Record<string, string> = Record<never, never>,
+  THostMap extends Record<string, string> = Record<never, never>,
 > {
   private readonly entities: Map<string, EntityEntry>;
   private readonly roles: TRoles;
@@ -84,9 +98,9 @@ class EntityHierarchyBuilder<
   }
 
   /** Add user entity (required, once). */
-  user(): EntityHierarchyBuilder<TRoles, TContexts, TProducts, TParentMap, TRelatedMap> {
+  user(): EntityHierarchyBuilder<TRoles, TContexts, TProducts, TParentMap, TRelatedMap, THostMap> {
     if (this.entities.has('user')) throw new Error('EntityHierarchy: user() can only be called once');
-    return new EntityHierarchyBuilder<TRoles, TContexts, TProducts, TParentMap, TRelatedMap>(
+    return new EntityHierarchyBuilder<TRoles, TContexts, TProducts, TParentMap, TRelatedMap, THostMap>(
       this.roles,
       this.withEntity('user', { kind: 'user' }),
     );
@@ -101,7 +115,8 @@ class EntityHierarchyBuilder<
     TContexts | N,
     TProducts,
     TParentMap & { [K in N]: P },
-    TRelatedMap & { [K in N]: RC[number] }
+    TRelatedMap & { [K in N]: RC[number] },
+    THostMap
   > {
     this.validateName(name);
     this.validateParent(name, options.parent, 'context');
@@ -112,7 +127,8 @@ class EntityHierarchyBuilder<
       TContexts | N,
       TProducts,
       TParentMap & { [K in N]: P },
-      TRelatedMap & { [K in N]: RC[number] }
+      TRelatedMap & { [K in N]: RC[number] },
+      THostMap
     >(
       this.roles,
       this.withEntity(name, {
@@ -135,38 +151,53 @@ class EntityHierarchyBuilder<
    *
    * Optional `relatedContexts` declare non-ancestor context references (nullable id columns); they
    * are cross-links, not homes.
+   *
+   * Optional `host` declares product-to-product ownership (e.g. attachment → task): the hosted
+   * product gets a generated nullable `<host>Id` column (see `hostRelationColumns`), host deletes
+   * cascade to hosted rows (API + CDC), and the CDC counter machinery maintains per-host
+   * `e:<hostedType>` counts. The host must be a previously declared product sharing the same home
+   * context, and cannot itself be hosted.
    */
-  product<N extends string, P extends TContexts, const RC extends readonly TContexts[] = []>(
+  product<
+    N extends string,
+    P extends TContexts,
+    const RC extends readonly TContexts[] = [],
+    H extends TProducts = never,
+  >(
     name: N,
-    options: { parent: P; relatedContexts?: RC },
+    options: { parent: P; host?: H; relatedContexts?: RC },
   ): EntityHierarchyBuilder<
     TRoles,
     TContexts,
     TProducts | N,
     TParentMap & { [K in N]: P },
-    TRelatedMap & { [K in N]: RC[number] }
+    TRelatedMap & { [K in N]: RC[number] },
+    THostMap & ([H] extends [never] ? Record<never, never> : { [K in N]: H })
   > {
     this.validateName(name);
     this.validateParent(name, options.parent, 'product');
+    this.validateHost(name, options.parent, options.host);
     this.validateRelatedContexts(name, options.parent, options.relatedContexts);
     return new EntityHierarchyBuilder<
       TRoles,
       TContexts,
       TProducts | N,
       TParentMap & { [K in N]: P },
-      TRelatedMap & { [K in N]: RC[number] }
+      TRelatedMap & { [K in N]: RC[number] },
+      THostMap & ([H] extends [never] ? Record<never, never> : { [K in N]: H })
     >(
       this.roles,
       this.withEntity(name, {
         kind: 'product',
         parent: options.parent,
+        host: options.host,
         relatedContexts: options.relatedContexts,
       }),
     );
   }
 
   /** Build and freeze the hierarchy. */
-  build(): EntityHierarchy<TRoles, TContexts, TProducts, TParentMap, TRelatedMap> {
+  build(): EntityHierarchy<TRoles, TContexts, TProducts, TParentMap, TRelatedMap, THostMap> {
     if (!this.entities.has('user')) throw new Error('EntityHierarchy: user() must be called before build()');
     if (!this.entities.has('organization')) throw new Error('EntityHierarchy: organization context is required');
     return new EntityHierarchy(this.roles, this.entities);
@@ -204,6 +235,36 @@ class EntityHierarchyBuilder<
       throw new Error(
         `EntityHierarchy: ${kind} "${name}" parent "${parent}" must be a context entity, ` +
           `but it is a ${parentEntry.kind} entity.`,
+      );
+    }
+  }
+
+  private validateHost(name: string, parent: string, host?: string): void {
+    if (!host) return;
+
+    const hostEntry = this.entities.get(host);
+    if (!hostEntry) {
+      throw new Error(
+        `EntityHierarchy: product "${name}" references unknown host "${host}". ` +
+          'Hosts must be defined before hosted products.',
+      );
+    }
+    if (hostEntry.kind !== 'product') {
+      throw new Error(
+        `EntityHierarchy: product "${name}" host "${host}" must be a product entity, but it is a ${hostEntry.kind} entity.`,
+      );
+    }
+    if (hostEntry.host) {
+      throw new Error(
+        `EntityHierarchy: product "${name}" host "${host}" is itself hosted — host chains are not supported.`,
+      );
+    }
+    // Hosted rows inherit the host's context scope; sharing the home context is what keeps
+    // the existing ancestor/permission machinery working unchanged.
+    if (hostEntry.parent !== parent) {
+      throw new Error(
+        `EntityHierarchy: product "${name}" (parent "${parent}") and its host "${host}" (parent "${hostEntry.parent}") ` +
+          'must share the same home context.',
       );
     }
   }
@@ -283,17 +344,21 @@ export class EntityHierarchy<
   TProducts extends string = string,
   TParentMap extends Record<string, string | null> = Record<string, string | null>,
   TRelatedMap extends Record<string, string> = Record<string, string>,
+  THostMap extends Record<string, string> = Record<string, string>,
 > {
   /** Phantom type carrier: maps each entity to its strict parent (null = root). Type-only, no runtime value. */
   declare readonly _parentMap: TParentMap;
   /** Phantom type carrier: maps each entity to its related (non-ancestor) context union. Type-only, no runtime value. */
   declare readonly _relatedMap: TRelatedMap;
+  /** Phantom type carrier: maps each hosted product to its host product. Type-only, no runtime value. */
+  declare readonly _hostMap: THostMap;
 
   private readonly entities: ReadonlyMap<string, EntityEntry>;
   private readonly roleRegistry: TRoles;
   private readonly ancestorCache = new Map<string, readonly string[]>();
   private readonly childrenCache = new Map<string, readonly (TContexts | TProducts)[]>();
   private readonly descendantsCache = new Map<string, readonly (TContexts | TProducts)[]>();
+  private readonly hostRelations: readonly HostRelation[];
 
   readonly contextTypes: readonly TContexts[];
   readonly productTypes: readonly TProducts[];
@@ -310,6 +375,8 @@ export class EntityHierarchy<
     const all: ('user' | TContexts | TProducts)[] = [];
     const relatableContexts = new Set<TContexts>();
 
+    const hostRelations: HostRelation[] = [];
+
     for (const [name, entry] of entities) {
       all.push(name as 'user' | TContexts | TProducts);
 
@@ -318,6 +385,9 @@ export class EntityHierarchy<
       } else if (entry.kind === 'product') {
         products.push(name as TProducts);
         relatableContexts.add(entry.parent as TContexts);
+        if (entry.host) {
+          hostRelations.push({ hostedType: name, hostType: entry.host, hostIdColumn: `${entry.host}Id` });
+        }
       }
     }
 
@@ -325,6 +395,7 @@ export class EntityHierarchy<
     this.productTypes = Object.freeze(products);
     this.allTypes = Object.freeze(all);
     this.relatableContextTypes = Object.freeze([...relatableContexts]);
+    this.hostRelations = Object.freeze(hostRelations);
     Object.freeze(this);
   }
 
@@ -389,7 +460,7 @@ export class EntityHierarchy<
     if (entry.kind === 'context') {
       return { kind: 'context', parent: entry.parent, roles: entry.roles, relatedContexts: entry.relatedContexts };
     }
-    return { kind: 'product', parent: entry.parent, relatedContexts: entry.relatedContexts };
+    return { kind: 'product', parent: entry.parent, host: entry.host, relatedContexts: entry.relatedContexts };
   }
 
   /** Get product entity view. */
@@ -449,6 +520,25 @@ export class EntityHierarchy<
     return this.roleRegistry;
   }
 
+  // Host relationships (product-to-product ownership)
+
+  /** The host product this entity belongs to (e.g. attachment → 'task'). Undefined if not hosted. */
+  getHostType(entityType: string): TProducts | undefined {
+    const entry = this.entities.get(entityType);
+    return entry?.kind === 'product' ? (entry.host as TProducts | undefined) : undefined;
+  }
+
+  /** Product types hosted by the given product (e.g. task → ['attachment']). */
+  getHostedTypes(hostType: string): readonly TProducts[] {
+    return this.getHostRelations()
+      .filter((relation) => relation.hostType === hostType)
+      .map((relation) => relation.hostedType as TProducts);
+  }
+
+  /** All host relationships with their generated host id column names. */
+  getHostRelations(): readonly HostRelation[] {
+    return this.hostRelations;
+  }
 }
 
 /** Create a new entity hierarchy builder with a role registry. */
