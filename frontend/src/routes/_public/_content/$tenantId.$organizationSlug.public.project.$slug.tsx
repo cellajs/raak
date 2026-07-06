@@ -4,7 +4,7 @@ import { publicProjectRouteBeforeLoad } from '~/modules/project/public-route-log
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
 import { createErrorComponent } from '~/routes/route-utils';
-import appTitle from '~/utils/app-title';
+import { appTitle } from '~/utils/app-title';
 
 /**
  * Layout route for public project pages.

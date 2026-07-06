@@ -27,7 +27,7 @@ import { TaskSearch } from '~/modules/task/task-search';
 import type { BoardResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
-import DisplayOptions from '~/modules/workspace/header/display-options';
+import { DisplayOptions } from '~/modules/workspace/header/display-options';
 import { cn } from '~/utils/cn';
 
 interface Props {

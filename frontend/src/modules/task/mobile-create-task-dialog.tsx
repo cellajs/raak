@@ -1,7 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Spinner } from '~/modules/common/spinner';
+import { lazyNamed } from '~/utils/lazy-named';
 
-const CreateTaskForm = lazy(() => import('~/modules/task/create-task-form'));
+const CreateTaskForm = lazyNamed(() => import('~/modules/task/create-task-form'), 'CreateTaskForm');
 
 interface MobileCreateTaskDialogProps {
   projectId: string;

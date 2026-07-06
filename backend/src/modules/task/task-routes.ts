@@ -176,4 +176,4 @@ const taskRoutes = {
   }),
 };
 
-export default taskRoutes;
+export { taskRoutes };

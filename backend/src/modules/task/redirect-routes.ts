@@ -64,4 +64,4 @@ const taskRedirectRoutes = {
   }),
 };
 
-export default taskRedirectRoutes;
+export { taskRedirectRoutes };

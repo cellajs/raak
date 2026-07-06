@@ -1,12 +1,13 @@
 import { getRouteApi } from '@tanstack/react-router';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { appConfig } from 'shared';
 import { YjsTokenFetcher } from '~/modules/common/blocknote/yjs-token-fetcher';
 import { Spinner } from '~/modules/common/spinner';
+import { lazyNamed } from '~/utils/lazy-named';
 
-const WorkspacePage = lazy(() => import('~/modules/workspace/workspace-page'));
-const Board = lazy(() => import('~/modules/task/board/task-board'));
-const TasksTable = lazy(() => import('~/modules/task/table/tasks-table'));
+const WorkspacePage = lazyNamed(() => import('~/modules/workspace/workspace-page'), 'WorkspacePage');
+const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
+const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 
 const orgLayoutApi = getRouteApi('/_app/$tenantId/$organizationSlug');
 const workspaceRouteApi = getRouteApi('/_app/$tenantId/$organizationSlug/workspace/$slug');

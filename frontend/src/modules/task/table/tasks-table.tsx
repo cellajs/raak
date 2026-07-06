@@ -31,13 +31,7 @@ export type TaskTableProps = {
 
 export type ResolvedTaskTableProps = Omit<TaskTableProps, 'projects'> & { projects: Project[] };
 
-export default function TasksTable({
-  projects: projectsProp,
-  workspace,
-  publicView,
-  organization,
-  tenantId,
-}: TaskTableProps) {
+export function TasksTable({ projects: projectsProp, workspace, publicView, organization, tenantId }: TaskTableProps) {
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<TaskSearch>({});
 

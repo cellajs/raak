@@ -88,4 +88,4 @@ function PagesTable() {
   );
 }
 
-export default PagesTable;
+export { PagesTable };

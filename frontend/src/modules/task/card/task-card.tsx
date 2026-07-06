@@ -265,4 +265,4 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
   );
 }, areEqual);
 
-export default TaskCard;
+export { TaskCard };

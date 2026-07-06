@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import type { Project } from 'sdk';
 import { FocusTrap } from '~/modules/common/focus-trap';
-import CreateTaskForm from '~/modules/task/create-task-form';
+import { CreateTaskForm } from '~/modules/task/create-task-form';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';

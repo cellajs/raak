@@ -9,8 +9,8 @@ import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
-import DeleteWorkspaces from '~/modules/workspace/delete-workspaces';
-import UpdateWorkspaceForm from '~/modules/workspace/update-workspace-form';
+import { DeleteWorkspaces } from '~/modules/workspace/delete-workspaces';
+import { UpdateWorkspaceForm } from '~/modules/workspace/update-workspace-form';
 import { workspacesListQueryOptions } from './query';
 
 export const WorkspaceSettings = ({ workspace, sheet: isSheet }: { workspace: Workspace; sheet?: boolean }) => {

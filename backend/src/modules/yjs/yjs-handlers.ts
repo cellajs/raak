@@ -2,7 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '#/core/context';
 import '#/modules/yjs/yjs-module';
 import { getYjsTokenOp } from '#/modules/yjs/operations/get-yjs-token';
-import yjsRoutes from '#/modules/yjs/yjs-routes';
+import { yjsRoutes } from '#/modules/yjs/yjs-routes';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });

@@ -8,14 +8,14 @@ import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { handleCreateForm } from '~/modules/task/helpers/create-task';
 import { useReadOnlyHide } from '~/modules/task/hooks/use-read-only';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
-import PanelProjectActions from '~/modules/task/panel/panel-project-actions';
+import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
 import { deriveTasksQueryParams } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskSearch } from '~/modules/task/task-search';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import { Button } from '~/modules/ui/button';
 import { WorkspaceActionButtons } from '~/modules/workspace/header/action-buttons';
-import DisplayOptions from '~/modules/workspace/header/display-options';
+import { DisplayOptions } from '~/modules/workspace/header/display-options';
 import { cn } from '~/utils/cn';
 
 /**

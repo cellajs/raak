@@ -212,4 +212,4 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
   );
 };
 
-export default LabelsTable;
+export { LabelsTable };

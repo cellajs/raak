@@ -176,4 +176,5 @@ const workspaceRoutes = {
     },
   }),
 };
-export default workspaceRoutes;
+
+export { workspaceRoutes };

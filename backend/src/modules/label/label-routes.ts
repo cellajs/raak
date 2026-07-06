@@ -156,4 +156,5 @@ const labelsRoutes = {
     },
   }),
 };
-export default labelsRoutes;
+
+export { labelsRoutes };

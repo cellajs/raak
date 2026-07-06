@@ -13,7 +13,7 @@ import { TaskSearch } from '~/modules/task/task-search';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import type { Task, TaskSearch as TaskSearchType } from '~/modules/task/types';
 import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
-import DisplayOptions from '~/modules/workspace/header/display-options';
+import { DisplayOptions } from '~/modules/workspace/header/display-options';
 
 type TasksTableBarProps = Omit<BaseTableBarProps<Task, TaskSearchType>, 'setSearch' | 'queryKey'> &
   Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & {

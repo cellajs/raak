@@ -32,4 +32,4 @@ const DeleteWorkspaces = ({ workspaces, callback, dialog: isDialog }: Props) => 
   return <DeleteForm onDelete={onDelete} onCancel={removeDialog} pending={isPending} />;
 };
 
-export default DeleteWorkspaces;
+export { DeleteWorkspaces };

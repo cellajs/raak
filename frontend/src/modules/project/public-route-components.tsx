@@ -1,12 +1,13 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { PublicProjectPage } from '~/modules/project/public-project-page';
 import { publicProjectQueryOptions } from '~/modules/project/query';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
+import { lazyNamed } from '~/utils/lazy-named';
 
-const Board = lazy(() => import('~/modules/task/board/task-board'));
-const TasksTable = lazy(() => import('~/modules/task/table/tasks-table'));
+const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
+const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 
 const publicProjectApi = getRouteApi('/_public/_content/$tenantId/$organizationSlug/public/project/$slug');
 

@@ -3,7 +3,7 @@ import { useBoardPanels } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
-export default function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardProps) {
+export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardProps) {
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects);
 
   return (

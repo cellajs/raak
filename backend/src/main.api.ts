@@ -5,7 +5,7 @@ import pc from 'picocolors';
 import { appConfig } from 'shared';
 import { renderAscii } from 'shared/ascii';
 import { setupGracefulShutdown } from 'shared/worker-lifecycle';
-import initDocs from '#/core/init-docs';
+import { initDocs } from '#/core/init-docs';
 import { migrateConfig, migrationDb } from '#/db/db';
 import '#/lib/i18n';
 import process from 'node:process';
@@ -13,7 +13,7 @@ import { cdcWebSocketServer } from '#/lib/cdc-websocket';
 import { scheduleDbMaintenance } from '#/lib/db-maintenance';
 import { otel } from '#/lib/tracing';
 import { registerCacheInvalidation } from '#/middlewares/entity-cache/cache-invalidation';
-import app from '#/routes';
+import { baseApp as app } from '#/routes';
 import { timestamp } from '#/utils/console';
 import { env } from './env';
 
@@ -23,7 +23,7 @@ otel.verifyConnection();
 let server: import('@hono/node-server').ServerType | undefined;
 let stopDbMaintenance: (() => void) | undefined;
 
-const startTunnel = appConfig.mode === 'tunnel' ? (await import('../scripts/start-tunnel')).default : () => null;
+const startTunnel = appConfig.mode === 'tunnel' ? (await import('../scripts/start-tunnel')).startTunnel : () => null;
 
 // Init OpenAPI docs
 await initDocs(app);

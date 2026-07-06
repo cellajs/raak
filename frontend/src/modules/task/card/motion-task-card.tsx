@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { memo } from 'react';
-import TaskCard from '~/modules/task/card/task-card';
+import { TaskCard } from '~/modules/task/card/task-card';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskProps } from '~/modules/task/types';

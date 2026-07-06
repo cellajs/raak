@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { appConfig, isUnconditionalPermission } from 'shared';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import BlockNote from '~/modules/common/blocknote/block-note-editor';
+import { BlockNote } from '~/modules/common/blocknote/block-note-editor';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
 import { useYjsConnection } from '~/modules/common/blocknote/yjs-connections';
 import { toaster } from '~/modules/common/toaster/toaster';

@@ -41,4 +41,4 @@ function DeviceMockup({ lightItems, darkItems, type, className }: DeviceMockupPr
   );
 }
 
-export default DeviceMockup;
+export { DeviceMockup };

@@ -49,4 +49,4 @@ const TaskCardHeaderInfo = ({ task }: { task: Task }) => {
   );
 };
 
-export default TaskCardHeaderInfo;
+export { TaskCardHeaderInfo };

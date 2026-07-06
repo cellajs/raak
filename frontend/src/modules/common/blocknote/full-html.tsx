@@ -177,4 +177,4 @@ function BlockNoteFullHtml({
   );
 }
 
-export default BlockNoteFullHtml;
+export { BlockNoteFullHtml };

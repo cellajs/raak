@@ -13,7 +13,7 @@ import { AppError } from '#/core/error';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { generateCover } from '#/modules/task/helpers/canvas';
-import taskRedirectRoutes from '#/modules/task/redirect-routes';
+import { taskRedirectRoutes } from '#/modules/task/redirect-routes';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskVariant } from '#/modules/task/task-properties';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';

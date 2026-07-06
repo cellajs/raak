@@ -64,4 +64,4 @@ const DisplayOptions = ({ className = '' }: Props) => {
   );
 };
 
-export default DisplayOptions;
+export { DisplayOptions };

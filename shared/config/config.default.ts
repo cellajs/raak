@@ -406,5 +406,3 @@ export const config = {
     finishedOnboarding: false,
   },
 } satisfies RequiredConfig;
-
-export default config;

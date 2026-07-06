@@ -5,7 +5,7 @@ import { unsafeInternalAdminDb } from '#/db/db';
 import { resolveEntity } from '#/modules/entities/entities-queries';
 import { getTasks } from '#/modules/task/helpers/get-tasks';
 import { getTaskRelations, hydrateTask } from '#/modules/task/helpers/hydrate-task';
-import publicTaskRoutes from '#/modules/task/public-routes';
+import { publicTaskRoutes } from '#/modules/task/public-routes';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });

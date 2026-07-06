@@ -31,4 +31,4 @@ const DeleteProjects = ({ projects, callback, dialog: isDialog }: Props) => {
   return <DeleteForm onDelete={onDelete} onCancel={removeDialog} pending={isPending} />;
 };
 
-export default DeleteProjects;
+export { DeleteProjects };

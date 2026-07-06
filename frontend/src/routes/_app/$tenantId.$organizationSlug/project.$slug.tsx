@@ -4,7 +4,7 @@ import { projectRouteBeforeLoad } from '~/modules/project/route-logic';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
 import { createErrorComponent } from '~/routes/route-utils';
-import appTitle from '~/utils/app-title';
+import { appTitle } from '~/utils/app-title';
 
 /**
  * Main project page with details and navigation.
