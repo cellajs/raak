@@ -86,7 +86,7 @@ const main = async () => {
           console.warn(
             `${timestamp()} [startup] singleVM + cdc: API holds the replication slot — deploy must be exclusive (no blue-green)`,
           );
-          await (await import('cdc')).runCdcWorker();
+          await (await import('cdc-worker')).runCdcWorker();
         }
         if (appConfig.services.yjs.enabled) await (await import('yjs-worker')).startYjsWorker();
         if (appConfig.services.mcp.enabled)

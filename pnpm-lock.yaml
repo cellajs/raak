@@ -149,7 +149,7 @@ importers:
       arctic:
         specifier: ^3.7.0
         version: 3.7.0
-      cdc:
+      cdc-worker:
         specifier: workspace:*
         version: link:../cdc
       drizzle-orm:

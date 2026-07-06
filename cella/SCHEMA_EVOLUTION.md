@@ -50,7 +50,6 @@ What exists vs. this plan, audited on the sync branch. Legend: `[x]` verified in
 
 - [ ] ❌ **oasdiff gate lacks the "or a lens module was added" pass condition** — the only escape is a `clientCacheVersion` bump. (AGENTS.md already claims the lens escape exists — doc drift.) Needed before lens #1, or shipping a lens forces a pointless cache bust.
 - [ ] ❌ **The shipping playbook was never written** — see [Shipping a lens: playbook](#shipping-a-lens-playbook). The synced docs point at this file for it.
-- [ ] ❌ **This doc is untracked** — commit it (see header note).
 
 ### Deferred — known and deliberate (⬜)
 

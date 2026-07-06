@@ -163,7 +163,7 @@
               "options": {
                 "paths": {
                   "backend": "Frontend cannot import backend code. Use the SDK or move shared types to `shared/`.",
-                  "cdc": "Frontend cannot import CDC worker code.",
+                  "cdc-worker": "Frontend cannot import CDC worker code.",
                   "infra": "Frontend cannot import infra code."
                 },
                 "patterns": [
@@ -204,7 +204,7 @@
               "options": {
                 "paths": {
                   "backend": "Frontend cannot import backend code. Use the SDK or move shared types to `shared/`.",
-                  "cdc": "Frontend cannot import CDC worker code.",
+                  "cdc-worker": "Frontend cannot import CDC worker code.",
                   "infra": "Frontend cannot import infra code."
                 }
               }
@@ -223,7 +223,7 @@
               "options": {
                 "paths": {
                   "frontend": "Backend cannot import frontend code. Move shared types to `shared/`.",
-                  "cdc": "Backend cannot import CDC worker code. Communicate via the database/CDC stream.",
+                  "cdc-worker": "Backend cannot import CDC worker code. Communicate via the database/CDC stream.",
                   "studio": "Backend cannot import studio (Drizzle Studio) code.",
                   "sdk": "Backend cannot import the generated SDK; the SDK is generated from backend."
                 }
@@ -265,7 +265,7 @@
                 "paths": {
                   "backend": "`shared` must stay a leaf package.",
                   "frontend": "`shared` must stay a leaf package.",
-                  "cdc": "`shared` must stay a leaf package.",
+                  "cdc-worker": "`shared` must stay a leaf package.",
                   "sdk": "`shared` must stay a leaf package.",
                   "infra": "`shared` must stay a leaf package."
                 }
