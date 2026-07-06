@@ -3,6 +3,7 @@ import { hierarchy } from '../../../config/hierarchy-config';
 import type { ContextEntityType, ProductEntityType } from '../../../types';
 import { getContextRoles, isContextEntity } from '../../entity-guards';
 import { allActionsAllowed, createActionRecord } from '../action-helpers';
+import { type PublicReadGrants, publicReadMatches } from '../public-read';
 import { type ConditionActor, isRowCondition, type RowForCondition } from '../row-conditions';
 import type { AccessPolicies, EntityActionPermissions } from '../types';
 import { formatBatchPermissionSummary, formatPermissionDecision } from './format';
@@ -96,6 +97,7 @@ const checkWithIndices = <T extends PermissionMembership>(
   orderedContexts: ContextEntityType[],
   isSystemAdmin: boolean,
   userId?: string,
+  publicGrants?: PublicReadGrants,
   debug?: boolean,
 ): PermissionDecision<T> => {
   // Primary context is always the first (most specific) in the hierarchy.
@@ -206,6 +208,14 @@ const checkWithIndices = <T extends PermissionMembership>(
     }
   }
 
+  // Subject-level public read grant: rows can be readable by ANY actor — anonymous
+  // included — based on row data (see `public-read.ts`). Membership-independent.
+  const publicMode = publicGrants?.[subject.entityType];
+  if (publicMode && publicReadMatches(publicMode, subject)) {
+    actions.read.enabled = true;
+    actions.read.grantedBy.push({ type: 'public', mode: publicMode });
+  }
+
   // Derive simple `can` map from actions table
   const can = createActionRecord((action) => actions[action].enabled);
 
@@ -271,6 +281,7 @@ export function getAllDecisions<T extends PermissionMembership>(
   const subjectArray = isSingle ? [subjects] : subjects;
   const isSystemAdmin = options?.isSystemAdmin === true;
   const userId = options?.userId;
+  const publicGrants = options?.publicGrants;
   const debug = options?.debug === true;
 
   const results = new Map<string, PermissionDecision<T>>();
@@ -308,7 +319,16 @@ export function getAllDecisions<T extends PermissionMembership>(
     const policyIndex = getOrBuildPolicyIndex(policies, subject.entityType, policyIndexCache);
 
     // Perform the permission check using pre-built indices
-    const decision = checkWithIndices(membershipIndex, policyIndex, subject, orderedContexts, isSystemAdmin, userId, debug);
+    const decision = checkWithIndices(
+      membershipIndex,
+      policyIndex,
+      subject,
+      orderedContexts,
+      isSystemAdmin,
+      userId,
+      publicGrants,
+      debug,
+    );
     const key = subject.id ?? `_idx:${subjectArray.indexOf(subject)}`;
     results.set(key, decision);
   }

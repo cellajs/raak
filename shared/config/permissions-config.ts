@@ -1,5 +1,5 @@
 import { appConfig } from '../src/config-builder/app-config';
-import { configureAccessPolicies } from '../src/permissions/access-policies';
+import { configurePermissions } from '../src/permissions/access-policies';
 
 /**
  * Access policies for each entity type.
@@ -28,7 +28,9 @@ import { configureAccessPolicies } from '../src/permissions/access-policies';
  * 4. Create DB schema in `backend/src/db/schema/`
  * 5. Run `pnpm generate` to create migrations
  */
-export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ subject, contexts }) => {
+export const { accessPolicies, publicReadGrants } = configurePermissions(
+  appConfig.entityTypes,
+  ({ subject, contexts, publicRead }) => {
   switch (subject.name) {
     case 'organization':
       // self (this organization) — create is inert here: org creation is gated by tenant quota, not this policy
@@ -44,6 +46,8 @@ export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ 
       contexts.workspace.member({ read: 1, update: 0, delete: 0 });
       break;
     case 'project':
+      // Public read: a project becomes readable by anyone once its own publicAt is set
+      publicRead('publicSelf');
       // elevation (parent org) — create grants the right to make a project inside the org
       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
       contexts.organization.member({ create: 1, read: 1, update: 0, delete: 0 });
@@ -53,6 +57,8 @@ export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ 
       contexts.project.guest({ read: 1, update: 0, delete: 0 });
       break;
     case 'attachment':
+      // Public read: readable by anyone when the parent project's publicAt is set
+      publicRead('publicParent');
       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
       // read: 'own' — org members may read/list attachments they created anywhere in the
       // org (row condition), even in projects they are not a member of.
@@ -68,6 +74,8 @@ export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ 
       contexts.project.member({ create: 1, read: 1, update: 1, delete: 1 });
       break;
     case 'task':
+      // Public read: readable by anyone when the parent project's publicAt is set
+      publicRead('publicParent');
       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
       contexts.organization.member({ create: 0, read: 0, update: 0, delete: 0 });
       contexts.project.admin({ create: 1, read: 1, update: 1, delete: 1 });
@@ -75,4 +83,5 @@ export const accessPolicies = configureAccessPolicies(appConfig.entityTypes, ({ 
       contexts.project.guest({ create: 0, read: 1, update: 0, delete: 0 });
       break;
   }
-});
+  },
+);

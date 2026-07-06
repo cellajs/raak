@@ -1,20 +1,12 @@
 /**
- * Entity hierarchy builder with compile-time validation, parent inheritance, and public read config.
+ * Entity hierarchy builder with compile-time validation and parent inheritance.
+ *
+ * Public readability is a permission concern, declared per subject via `publicRead(mode)`
+ * in the permissions config (`shared/src/permissions/public-read.ts`) — not here.
  *
  * Fork contract: Every tenant-scoped table must have tenant_id. Tables with an organization
  * parent must also have organization_id with a composite FK to organizations(tenant_id, id).
  */
-
-/**
- * Public read mode — declares how an entity becomes publicly readable (via publicGuard REST reads).
- * - 'publicSelf': Public when own publicAt is set (e.g., project with a toggle).
- * - 'publicParent': Public when parent context's publicAt is set (e.g., tasks inherit from project).
- * - 'publicParentOrSelf': Public when either own or parent's publicAt is set.
- */
-export type PublicReadMode = 'publicSelf' | 'publicParent' | 'publicParentOrSelf';
-
-/** Modes allowed on context entities (they cannot inherit from a parent context). */
-export type ContextPublicReadMode = 'publicSelf';
 
 // Role Registry
 function buildRoleMap<T extends readonly string[]>(roleNames: T): { readonly [K in T[number]]: K } {
@@ -38,14 +30,12 @@ interface ContextEntry<R extends string = string> {
   kind: 'context';
   parent: string | null;
   roles: readonly R[];
-  publicRead?: ContextPublicReadMode;
   /** Non-ancestor context entities referenced as optional denormalized columns. */
   relatedContexts?: readonly string[];
 }
 interface ProductEntry {
   kind: 'product';
   parent: string;
-  publicRead?: PublicReadMode;
   /** Non-ancestor context entities referenced as optional denormalized columns. */
   relatedContexts?: readonly string[];
 }
@@ -55,14 +45,12 @@ export interface ContextEntityView<R extends string = string> {
   readonly kind: 'context';
   readonly parent: string | null;
   readonly roles: readonly R[];
-  readonly publicRead?: ContextPublicReadMode;
   readonly relatedContexts?: readonly string[];
 }
 
 export interface ProductEntityView {
   readonly kind: 'product';
   readonly parent: string;
-  readonly publicRead?: PublicReadMode;
   readonly relatedContexts?: readonly string[];
 }
 
@@ -107,7 +95,7 @@ class EntityHierarchyBuilder<
   /** Add a context entity with parent reference and roles. */
   context<N extends string, P extends TContexts | null, const RC extends readonly TContexts[] = []>(
     name: N,
-    options: { parent: P; roles: readonly RoleFromRegistry<TRoles>[]; publicRead?: ContextPublicReadMode; relatedContexts?: RC },
+    options: { parent: P; roles: readonly RoleFromRegistry<TRoles>[]; relatedContexts?: RC },
   ): EntityHierarchyBuilder<
     TRoles,
     TContexts | N,
@@ -131,7 +119,6 @@ class EntityHierarchyBuilder<
         kind: 'context',
         parent: options.parent,
         roles: options.roles,
-        publicRead: options.publicRead,
         relatedContexts: options.relatedContexts,
       }),
     );
@@ -151,7 +138,7 @@ class EntityHierarchyBuilder<
    */
   product<N extends string, P extends TContexts, const RC extends readonly TContexts[] = []>(
     name: N,
-    options: { parent: P; publicRead?: PublicReadMode; relatedContexts?: RC },
+    options: { parent: P; relatedContexts?: RC },
   ): EntityHierarchyBuilder<
     TRoles,
     TContexts,
@@ -161,7 +148,6 @@ class EntityHierarchyBuilder<
   > {
     this.validateName(name);
     this.validateParent(name, options.parent, 'product');
-    this.validatePublicRead(name, options.parent, options.publicRead);
     this.validateRelatedContexts(name, options.parent, options.relatedContexts);
     return new EntityHierarchyBuilder<
       TRoles,
@@ -174,7 +160,6 @@ class EntityHierarchyBuilder<
       this.withEntity(name, {
         kind: 'product',
         parent: options.parent,
-        publicRead: options.publicRead,
         relatedContexts: options.relatedContexts,
       }),
     );
@@ -287,19 +272,6 @@ class EntityHierarchyBuilder<
     }
   }
 
-  private validatePublicRead(name: string, parent: string, publicRead?: PublicReadMode): void {
-    if (!publicRead) return;
-
-    if (publicRead === 'publicParent' || publicRead === 'publicParentOrSelf') {
-      const parentEntry = this.entities.get(parent);
-      if (!parentEntry || parentEntry.kind !== 'context' || parentEntry.publicRead !== 'publicSelf') {
-        throw new Error(
-          `EntityHierarchy: product "${name}" has publicRead '${publicRead}' ` +
-            `but parent "${parent}" doesn't have publicRead 'publicSelf'.`,
-        );
-      }
-    }
-  }
 }
 
 // Entity Hierarchy (Frozen Result)
@@ -415,9 +387,9 @@ export class EntityHierarchy<
     if (!entry) return undefined;
     if (entry.kind === 'user') return { kind: 'user' };
     if (entry.kind === 'context') {
-      return { kind: 'context', parent: entry.parent, roles: entry.roles, publicRead: entry.publicRead, relatedContexts: entry.relatedContexts };
+      return { kind: 'context', parent: entry.parent, roles: entry.roles, relatedContexts: entry.relatedContexts };
     }
-    return { kind: 'product', parent: entry.parent, publicRead: entry.publicRead, relatedContexts: entry.relatedContexts };
+    return { kind: 'product', parent: entry.parent, relatedContexts: entry.relatedContexts };
   }
 
   /** Get product entity view. */
@@ -477,13 +449,6 @@ export class EntityHierarchy<
     return this.roleRegistry;
   }
 
-  // Public Read Methods
-
-  /** Get public read mode. Returns undefined if entity has no public read config. */
-  getPublicReadMode(entityType: string): PublicReadMode | undefined {
-    const entry = this.entities.get(entityType);
-    return entry && entry.kind !== 'user' ? entry.publicRead : undefined;
-  }
 }
 
 /** Create a new entity hierarchy builder with a role registry. */

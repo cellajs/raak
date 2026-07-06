@@ -1,6 +1,8 @@
 import { appConfig } from '../config-builder/app-config';
+import { hierarchy } from '../../config/hierarchy-config';
 import { getContextRoles } from '../entity-guards';
 import type { ContextEntityType, EntityActionType, EntityRole, EntityType, ProductEntityType } from '../../types';
+import type { PublicReadGrants, PublicReadMode } from './public-read';
 import { own } from './row-conditions';
 import type {
   AccessPolicies,
@@ -59,27 +61,35 @@ const createContextBuilders = (entries: AccessPolicyEntry[]): Record<ContextEnti
   return contexts;
 };
 
+/** Result of `configurePermissions`: role×context policies + subject-level public read grants. */
+export interface PermissionsConfigResult {
+  accessPolicies: AccessPolicies;
+  publicReadGrants: PublicReadGrants;
+}
+
 /**
- * Configures access policies for all entity types using a callback pattern.
- * The callback receives subject info and context builders for fluent configuration.
+ * Configures the full permission set for all entity types using a callback pattern.
+ * The callback receives the subject, context builders for role×context grants, and
+ * `publicRead(mode)` for the subject-level public read grant (see `public-read.ts`).
  *
  * @example
  * ```ts
- * const policies = configureAccessPolicies(entityTypes, ({ subject, contexts }) => {
+ * const { accessPolicies, publicReadGrants } = configurePermissions(entityTypes, ({ subject, contexts, publicRead }) => {
  *   switch (subject.name) {
- *     case 'organization':
+ *     case 'project':
+ *       publicRead('publicSelf'); // readable by anyone once its publicAt is set
  *       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
- *       contexts.organization.member({ create: 0, read: 1, update: 0, delete: 0 });
  *       break;
  *   }
  * });
  * ```
  */
-export const configureAccessPolicies = (
+export const configurePermissions = (
   entityTypes: readonly EntityType[],
   callback: AccessPolicyCallback,
-): AccessPolicies => {
+): PermissionsConfigResult => {
   const policies: AccessPolicies = {};
+  const publicReadGrants: PublicReadGrants = {};
 
   const permissionableTypes = entityTypes.filter(
     (type): type is ContextEntityType | ProductEntityType => type !== 'user',
@@ -92,6 +102,12 @@ export const configureAccessPolicies = (
     const config: AccessPolicyConfiguration = {
       subject: { name: entityType },
       contexts,
+      publicRead: (mode: PublicReadMode) => {
+        if (publicReadGrants[entityType]) {
+          throw new Error(`[Permission] publicRead() called twice for "${entityType}"`);
+        }
+        publicReadGrants[entityType] = mode;
+      },
     };
 
     callback(config);
@@ -101,7 +117,40 @@ export const configureAccessPolicies = (
     }
   }
 
-  return policies;
+  validatePublicReadGrants(publicReadGrants);
+
+  return { accessPolicies: policies, publicReadGrants };
+};
+
+/**
+ * A parent-dependent public grant only works if the parent itself can become public:
+ * its own grant must include self-publication. Mirrors the validation the entity
+ * hierarchy performed when `publicRead` lived there.
+ */
+const validatePublicReadGrants = (grants: PublicReadGrants): void => {
+  for (const [entityType, mode] of Object.entries(grants) as [ContextEntityType | ProductEntityType, PublicReadMode][]) {
+    if (mode !== 'publicParent' && mode !== 'publicParentOrSelf') continue;
+
+    const parent = hierarchy.getParent(entityType);
+    const parentMode = parent ? grants[parent as ContextEntityType | ProductEntityType] : undefined;
+    if (parentMode !== 'publicSelf' && parentMode !== 'publicParentOrSelf') {
+      throw new Error(
+        `[Permission] "${entityType}" declares publicRead '${mode}' but its parent "${parent}" has no self-publication grant (publicRead 'publicSelf').`,
+      );
+    }
+  }
+};
+
+/**
+ * Configures access policies only (no public read grants) — kept for tests and callers
+ * that drive the engine with synthetic policies. App configs should use
+ * `configurePermissions`.
+ */
+export const configureAccessPolicies = (
+  entityTypes: readonly EntityType[],
+  callback: AccessPolicyCallback,
+): AccessPolicies => {
+  return configurePermissions(entityTypes, callback).accessPolicies;
 };
 
 /**

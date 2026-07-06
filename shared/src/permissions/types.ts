@@ -1,4 +1,5 @@
 import type { ContextEntityType, EntityActionType, EntityRole, EntityType, ProductEntityType } from '../../types';
+import type { PublicReadMode } from './public-read';
 import type { RowCondition } from './row-conditions';
 
 /**
@@ -61,6 +62,8 @@ export type ContextPolicyBuilder = {
 export interface AccessPolicyConfiguration {
   subject: { name: EntityType };
   contexts: Record<ContextEntityType, ContextPolicyBuilder>;
+  /** Declare the subject-level public read grant for this subject (see `public-read.ts`). */
+  publicRead: (mode: PublicReadMode) => void;
 }
 
 /**

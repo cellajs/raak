@@ -20,8 +20,6 @@ export type {
   ProductEntityView,
   RoleFromRegistry,
   UserEntityView,
-  PublicReadMode,
-  ContextPublicReadMode,
 } from './src/config-builder/entity-hierarchy';
 export {
   createEntityHierarchy,
@@ -84,11 +82,12 @@ export type {
   PermissionValue,
   SubjectAccessPolicies,
 } from './src/permissions';
-export { isRowCondition, own } from './src/permissions';
-export type { ConditionActor, RowCondition, RowConditionSqlForm, RowForCondition } from './src/permissions';
-export { configureAccessPolicies, getPolicyPermissions, getSubjectPolicies } from './src/permissions';
+export { isRowCondition, own, publicReadMatches } from './src/permissions';
+export type { ConditionActor, PublicReadGrants, PublicReadMode, RowCondition, RowConditionSqlForm, RowForCondition } from './src/permissions';
+export { configureAccessPolicies, configurePermissions, getPolicyPermissions, getSubjectPolicies } from './src/permissions';
+export type { PermissionsConfigResult } from './src/permissions';
 export { allActionsAllowed, allActionsDenied, createActionRecord, isUnconditionalPermission, resolvePermission } from './src/permissions';
-export { accessPolicies, computeCan } from './src/permissions';
+export { accessPolicies, computeCan, publicReadGrants } from './src/permissions';
 export type { ActionPermissionState, EntityCanMap } from './src/permissions';
 
 // Permission engine (tier-neutral decision logic, shared by backend + yjs)
