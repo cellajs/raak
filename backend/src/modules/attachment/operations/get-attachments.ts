@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { and, asc, count, eq, getColumns, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, getColumns, ilike, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -10,6 +10,7 @@ import { productCountersTable } from '#/modules/entities/product-counters-db';
 import { findProjectById } from '#/modules/task/task-queries';
 import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
+import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumn } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 import { prepareStringForILikeFilter } from '#/utils/sql';
@@ -26,23 +27,30 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
   }
 
-  // cella change: Resolve which projects the caller may read; undefined means org-wide based on memberships.
-  const { subContextIds: projectIds } = resolveCollectionReadFilter(
+  // cella change: Resolve the caller's readable scope (unconditional projects + row-conditional
+  // slices, e.g. `read: 'own'`) and compile it to a single row predicate.
+  const readFilter = resolveCollectionReadFilter(
     ctx.var.memberships,
     'attachment',
     organizationId,
     projectId ? { subContextId: projectId } : undefined,
   );
+  const scopeWhere = buildCollectionReadWhere(
+    readFilter,
+    attachmentsTable,
+    attachmentsTable.projectId,
+    ctx.var.user.id,
+  );
 
-  if (projectIds?.length === 0) {
+  if (scopeWhere.kind === 'none') {
     const data = { items: [], total: 0 };
     return { success: true, data } as OperationResult<typeof data>;
   }
 
   const filters: SQL[] = [eq(attachmentsTable.organizationId, organizationId)];
 
-  // Restrict to the caller's readable projects unless org-wide (projectIds === undefined).
-  if (projectIds) filters.push(inArray(attachmentsTable.projectId, projectIds));
+  // Restrict to the caller's readable scope unless org-wide (kind 'all').
+  if (scopeWhere.kind === 'where') filters.push(scopeWhere.where);
 
   // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
   if (!seqCursor) {
