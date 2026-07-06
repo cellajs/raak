@@ -24,7 +24,7 @@ import TaskSheetHandler from '~/modules/task/task-sheet-handler';
 import TasksHotkeys from '~/modules/task/tasks-hotkeys';
 import type { DropTarget, PanelDraggableData, TaskDraggableData } from '~/modules/task/types';
 import { workspaceQueryOptions } from '~/modules/workspace/query';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 
 export type WorkspaceSearch = z.infer<typeof combinedTaskSearchSchema>;
 

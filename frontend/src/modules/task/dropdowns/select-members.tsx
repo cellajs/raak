@@ -21,7 +21,7 @@ import {
 } from '~/modules/ui/combobox';
 import { Kbd } from '~/modules/ui/kbd';
 import { ScrollArea } from '~/modules/ui/scroll-area';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 import { inNumbersArray } from '~/utils/in-numbers-array';
 
 export const SelectMembers = ({

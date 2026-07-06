@@ -4,7 +4,7 @@ import { appConfig } from 'shared';
 import type { GetTasksParam } from '~/modules/task/query';
 import { getTasksNextPageParam, taskKeys } from '~/modules/task/query';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
-import { baseInfiniteQueryOptions } from '~/query/basic';
+import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
 
 export const publicTaskQueryOptions = (id: string) =>
   queryOptions({

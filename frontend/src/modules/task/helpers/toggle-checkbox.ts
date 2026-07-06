@@ -6,7 +6,7 @@ import { taskKeys } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { cacheUpdate } from '~/query/basic/cache-mutations';
 import type { ItemData } from '~/query/basic/types';
-import { createStxForUpdate } from '~/query/offline';
+import { createStxForUpdate } from '~/query/offline/stx-utils';
 import { queryClient } from '~/query/query-client';
 
 // biome-ignore lint/suspicious/noExplicitAny: block structure is dynamic

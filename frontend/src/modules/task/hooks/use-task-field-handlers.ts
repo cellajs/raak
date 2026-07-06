@@ -6,9 +6,9 @@ import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskLabel, TaskPointsType, TaskStatusType, TaskVariantType } from '~/modules/task/types';
 import { useUserStore } from '~/modules/user/user-store';
-import { findInCache } from '~/query/basic';
 import { cacheUpdate } from '~/query/basic/cache-mutations';
-import { computeArrayDelta } from '~/query/offline';
+import { findInCache } from '~/query/basic/find-in-list-cache';
+import { computeArrayDelta } from '~/query/offline/array-delta';
 import { queryClient } from '~/query/query-client';
 
 export type TaskFieldHandlers = ReturnType<typeof buildFieldHandlers>;

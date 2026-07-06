@@ -7,7 +7,7 @@ import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus, TaskVariant } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
-import { getSchemaDefaults } from '~/query/basic';
+import { getSchemaDefaults } from '~/query/basic/create-optimistic';
 import { blocknoteFieldIsDirty } from '~/utils/blocknote-field-is-dirty';
 
 export const createTaskFormSchema = z.object({

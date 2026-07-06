@@ -16,7 +16,7 @@ import { useProjectMembershipActions } from '~/modules/project/use-project-membe
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 
 export const ProjectSettings = ({ sheet: isSheet, project }: { sheet?: boolean; project: EnrichedProject }) => {
   const navigate = useNavigate();

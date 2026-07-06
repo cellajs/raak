@@ -4,7 +4,7 @@ import { type CreateAttachmentsData, type CreateAttachmentsResponse, createAttac
 import type { ApiError } from '~/lib/api';
 import { parseUploadedAttachments } from '~/modules/attachment/helpers/parse-uploaded';
 import type { UploadedUppyFile } from '~/modules/common/uploader/types';
-import { createStxForCreate } from '~/query/offline';
+import { createStxForCreate } from '~/query/offline/stx-utils';
 
 export const useUploadAttachments = () => {
   const { mutate } = useMutation<

@@ -5,7 +5,7 @@ import { projectsListQueryOptions } from '~/modules/project/query';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { findWorkspaceByIdOrSlug, workspaceQueryKeys, workspaceQueryOptions } from '~/modules/workspace/query';
-import { fetchSlugCacheId } from '~/query/basic';
+import { fetchSlugCacheId } from '~/query/basic/fetch-slug-cache-id';
 import { queryClient } from '~/query/query-client';
 import { redirectOnMissing } from '~/utils/redirect-on-missing';
 import { rewriteUrlToSlug } from '~/utils/rewrite-url-to-slug';
