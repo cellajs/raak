@@ -24,7 +24,6 @@ export const roles = createRoleRegistry(['admin', 'member', 'guest'] as const);
  * Optional `relatedContexts` on products declare non-ancestor context references (nullable id columns).
  *
  * publicRead declares how an entity becomes publicly readable:
- * - 'always': Always publicly readable, no runtime check needed (e.g., published pages)
  * - 'publicSelf': Public when own publicAt timestamp is set
  * - 'publicParent': Public when parent context's publicAt is set
  * - 'publicParentOrSelf': Public when either own or parent's publicAt is set
@@ -38,5 +37,4 @@ export const hierarchy = createEntityHierarchy(roles)
   .product('task', { parent: 'project', publicRead: 'publicParent' })
   .product('label', { parent: 'project' })
   .product('attachment', { parent: 'project', publicRead: 'publicParent' })
-  .product('page', { parent: null, publicRead: 'always' })
   .build();

@@ -55,7 +55,7 @@ export const zProductEntityBase = z.object({
   description: z.string().nullable(),
   createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  entityType: z.enum(['task', 'label', 'attachment', 'page']),
+  entityType: z.enum(['task', 'label', 'attachment']),
   keywords: z.string(),
 });
 
@@ -91,7 +91,7 @@ export const zStxBase = z.object({
  */
 export const zStreamNotification = z.object({
   action: z.enum(['create', 'update', 'delete']),
-  entityType: z.enum(['task', 'label', 'attachment', 'page']).nullable(),
+  entityType: z.enum(['task', 'label', 'attachment']).nullable(),
   resourceType: z.enum(['request', 'membership', 'inactive_membership', 'tenant']).nullable(),
   subjectId: z.string().nullable(),
   organizationId: z.string().nullable(),
@@ -122,9 +122,7 @@ export const zApiError = z.object({
   type: z.string(),
   status: z.int().gte(400).lte(599),
   severity: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']),
-  entityType: z
-    .enum(['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment', 'page'])
-    .optional(),
+  entityType: z.enum(['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment']).optional(),
   logId: z.string().optional(),
   path: z.string().optional(),
   method: z.string().optional(),
@@ -383,30 +381,6 @@ export const zOrganization = z.object({
       })
       .optional(),
   }),
-});
-
-/**
- * A content page for documentation purposes.
- */
-export const zPage = z.object({
-  createdAt: z.string(),
-  id: z.uuid(),
-  entityType: z.enum(['page']),
-  name: z.string().max(255),
-  updatedAt: z.string().nullable(),
-  stx: zStxBase,
-  description: z.string().max(1000000).nullable(),
-  keywords: z.string().max(1000000),
-  createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  deletedAt: z.string().nullable(),
-  deletedBy: z.uuid().nullable(),
-  seq: z.int().gte(-9007199254740991).lte(9007199254740991),
-  status: z.enum(['unpublished', 'published', 'archived']),
-  renderMode: z.enum(['default', 'overview', 'nodeOnly']),
-  publicAt: z.string().nullable(),
-  parentId: z.uuid().nullable(),
-  displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
 });
 
 /**
@@ -974,45 +948,6 @@ export const zCheckSlugPath = z.object({
  */
 export const zCheckSlugResponse = z.void();
 
-export const zPostPublicCatchupBody = z.object({
-  cursor: z.string().optional(),
-  seqs: z.record(z.string(), z.int()).optional(),
-});
-
-/**
- * Catchup summary
- */
-export const zPostPublicCatchupResponse = z.object({
-  changes: z.record(
-    z.string(),
-    z.object({
-      entitySeqs: z.record(z.string(), z.int()).optional(),
-      entityCounts: z.record(z.string(), z.int()).optional(),
-      childContextChanges: z
-        .record(
-          z.string(),
-          z.object({
-            entitySeqs: z.record(z.string(), z.int()).optional(),
-            entityCounts: z.record(z.string(), z.int()).optional(),
-          }),
-        )
-        .optional(),
-      propagation: z
-        .array(
-          z.object({
-            sourceType: z.string(),
-            targetType: z.string(),
-            field: z.string(),
-            update: z.array(z.string()),
-            remove: z.array(z.string()),
-          }),
-        )
-        .optional(),
-    }),
-  ),
-  cursor: z.string().nullable(),
-});
-
 export const zPostAppCatchupBody = z.object({
   cursor: z.string().optional(),
   seqs: z.record(z.string(), z.int()).optional(),
@@ -1368,7 +1303,6 @@ export const zGetPublicCountsResponse = z.object({
   task: z.number(),
   label: z.number(),
   attachment: z.number(),
-  page: z.number(),
 });
 
 export const zDeleteOrganizationsBody = z.object({
@@ -1533,103 +1467,6 @@ export const zUpdateOrganizationPath = z.object({
  * Organization was updated
  */
 export const zUpdateOrganizationResponse = zOrganization;
-
-export const zDeletePagesBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
-  stx: z
-    .object({
-      mutationId: z.string(),
-      sourceId: z.string(),
-    })
-    .optional(),
-});
-
-/**
- * Success
- */
-export const zDeletePagesResponse = z.object({
-  data: z.array(z.unknown()),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-});
-
-export const zGetPagesQuery = z.object({
-  q: z.string().max(255).optional(),
-  sort: z.enum(['name', 'status', 'createdAt', 'displayOrder']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
-  seqCursor: z.string().optional(),
-});
-
-/**
- * Pages
- */
-export const zGetPagesResponse = z.object({
-  items: z.array(zPage),
-  total: z.number(),
-});
-
-export const zCreatePagesBody = z
-  .array(
-    z.object({
-      name: z.string().max(255).optional(),
-      id: z.uuid(),
-      displayOrder: z.number().optional(),
-      stx: zStxBase,
-    }),
-  )
-  .min(1)
-  .max(50);
-
-export const zCreatePagesResponse = z.union([
-  z.object({
-    data: z.array(zPage),
-    rejectedIds: z.array(z.string()),
-    rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-  }),
-  z.object({
-    data: z.array(zPage),
-    rejectedIds: z.array(z.string()),
-    rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-  }),
-]);
-
-export const zGetPagePath = z.object({
-  id: z.string(),
-});
-
-/**
- * Page
- */
-export const zGetPageResponse = zPage;
-
-export const zUpdatePageBody = z.object({
-  ops: z.object({
-    name: z.string().max(255).optional(),
-    description: z.string().max(1000000).nullish(),
-    keywords: z.string().nullish(),
-    displayOrder: z.number().optional(),
-    status: z.enum(['unpublished', 'published', 'archived']).optional(),
-    renderMode: z.enum(['default', 'overview', 'nodeOnly']).optional(),
-    parentId: z.string().max(50).nullish(),
-    publicAt: z.string().nullish(),
-  }),
-  stx: zStxBase,
-});
-
-export const zUpdatePagePath = z.object({
-  id: z.string(),
-});
-
-export const zUpdatePageQuery = z.object({
-  fullResponse: z.union([z.string(), z.boolean()]).optional().default('false'),
-});
-
-/**
- * Page updated
- */
-export const zUpdatePageResponse = zPage;
 
 export const zGetUsersQuery = z.object({
   q: z.string().max(255).optional(),
@@ -2335,7 +2172,7 @@ export const zUpdateLabelResponse = zLabel;
 
 export const zMarkSeenBody = z.object({
   entityIds: z.array(z.string().max(50)).min(1).max(500),
-  entityType: z.enum(['task', 'label', 'attachment', 'page']),
+  entityType: z.enum(['task', 'label', 'attachment']),
 });
 
 export const zMarkSeenPath = z.object({
