@@ -50,4 +50,4 @@ const publicTaskRoutes = {
   }),
 };
 
-export default publicTaskRoutes;
+export { publicTaskRoutes };

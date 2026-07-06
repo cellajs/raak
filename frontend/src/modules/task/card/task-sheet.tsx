@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
-import TaskCard from '~/modules/task/card/task-card';
+import { TaskCard } from '~/modules/task/card/task-card';
 import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { publicTaskQueryOptions } from '~/modules/task/public-query';
 import { taskQueryOptions } from '~/modules/task/query';
@@ -56,4 +56,4 @@ const TaskSheet = ({ id, organizationId }: { id: string; organizationId: string 
   );
 };
 
-export default TaskSheet;
+export { TaskSheet };

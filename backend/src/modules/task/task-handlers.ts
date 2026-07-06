@@ -6,7 +6,7 @@ import { deleteTasksOp } from '#/modules/task/operations/delete-tasks';
 import { getTaskOp } from '#/modules/task/operations/get-task';
 import { getTasksOp } from '#/modules/task/operations/get-tasks';
 import { updateTaskOp } from '#/modules/task/operations/update-task';
-import taskRoutes from '#/modules/task/task-routes';
+import { taskRoutes } from '#/modules/task/task-routes';
 import '#/modules/task/task-module';
 import { defaultHook } from '#/utils/default-hook';
 

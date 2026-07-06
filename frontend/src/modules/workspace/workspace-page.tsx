@@ -20,8 +20,8 @@ import {
 import { getNewTaskOrder, getRelativeTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
-import TaskSheetHandler from '~/modules/task/task-sheet-handler';
-import TasksHotkeys from '~/modules/task/tasks-hotkeys';
+import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
+import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
 import type { DropTarget, PanelDraggableData, TaskDraggableData } from '~/modules/task/types';
 import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
@@ -236,4 +236,4 @@ const WorkspacePage = ({ workspaceId, organizationId, tenantId, children }: Prop
   );
 };
 
-export default WorkspacePage;
+export { WorkspacePage };

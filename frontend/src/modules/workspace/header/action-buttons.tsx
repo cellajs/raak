@@ -2,7 +2,7 @@ import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-quer
 import { useSearch } from '@tanstack/react-router';
 import type { VariantProps } from 'class-variance-authority';
 import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, TagIcon, UsersIcon } from 'lucide-react';
-import { lazy, Suspense, useRef } from 'react';
+import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
@@ -27,8 +27,9 @@ import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { lazyNamed } from '~/utils/lazy-named';
 
-const LabelsTable = lazy(() => import('~/modules/label/table/labels-table'));
+const LabelsTable = lazyNamed(() => import('~/modules/label/table/labels-table'), 'LabelsTable');
 
 /**
  * Action buttons for the workspace header, including create project, manage labels, and workspace settings.

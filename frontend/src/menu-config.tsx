@@ -9,8 +9,8 @@ import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import type { MenuSectionOptions } from '~/modules/navigation/menu-sheet/section';
 import { CreateOrganizationForm } from '~/modules/organization/create-organization-form';
 import { findOrganizationByIdOrSlug } from '~/modules/organization/query';
-import CreateWorkspaceForm from '~/modules/workspace/create-workspace-form';
-import router from '~/routes/router';
+import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
+import { router } from '~/routes/router';
 
 /**
  * Create new organization from the menu.

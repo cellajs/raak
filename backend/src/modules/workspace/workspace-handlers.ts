@@ -5,7 +5,7 @@ import { deleteWorkspacesOp } from '#/modules/workspace/operations/delete-worksp
 import { getWorkspaceOp } from '#/modules/workspace/operations/get-workspace';
 import { getWorkspacesOp } from '#/modules/workspace/operations/get-workspaces';
 import { updateWorkspaceOp } from '#/modules/workspace/operations/update-workspace';
-import workspaceRoutes from '#/modules/workspace/workspace-routes';
+import { workspaceRoutes } from '#/modules/workspace/workspace-routes';
 import '#/modules/workspace/workspace-module';
 import { defaultHook } from '#/utils/default-hook';
 

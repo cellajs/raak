@@ -9,8 +9,8 @@ import { projectsListQueryOptions } from '~/modules/project/query';
 import { BoardEmpty } from '~/modules/task/board/board-empty';
 import { BoardHeader } from '~/modules/task/board/board-header';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
-import ProjectBoard from '~/modules/task/board/project-board';
-import WorkspaceBoard from '~/modules/task/board/workspace-board';
+import { ProjectBoard } from '~/modules/task/board/project-board';
+import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardTabs } from '~/modules/task/board/workspace-board-tabs';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
@@ -27,7 +27,7 @@ export type ResolvedBoardProps = Omit<BoardProps, 'projects'> & { projects: Proj
 /**
  * Main task board component that conditionally renders desktop or mobile views based on screen size.
  */
-export default function Board({ boardId, projects: projectsProp, workspace, publicView }: BoardProps) {
+export function Board({ boardId, projects: projectsProp, workspace, publicView }: BoardProps) {
   const isMobile = useBreakpointBelow('sm');
   const setActiveBoard = useBoardStore((state) => state.setActiveBoard);
 

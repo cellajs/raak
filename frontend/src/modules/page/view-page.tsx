@@ -128,4 +128,4 @@ function ChildPageCard({ page }: { page: DocPage }) {
   );
 }
 
-export default ViewPage;
+export { ViewPage };

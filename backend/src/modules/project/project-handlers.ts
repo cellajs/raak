@@ -9,7 +9,7 @@ import { getProjectsOp } from '#/modules/project/operations/get-projects';
 import { moveProjectToWorkspaceOp } from '#/modules/project/operations/move-project-workspace';
 import { removeProjectWorkspaceOp } from '#/modules/project/operations/remove-project-workspace';
 import { updateProjectOp } from '#/modules/project/operations/update-project';
-import projectRoutes from '#/modules/project/project-routes';
+import { projectRoutes } from '#/modules/project/project-routes';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });

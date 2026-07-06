@@ -16,4 +16,4 @@ function UserProfileContent({ isSheet, user }: Props) {
   );
 }
 
-export default UserProfileContent;
+export { UserProfileContent };

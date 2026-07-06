@@ -192,4 +192,4 @@ const CreateWorkspaceForm = ({ callback, dialog: isDialog }: CreateWorkspaceForm
   );
 };
 
-export default CreateWorkspaceForm;
+export { CreateWorkspaceForm };

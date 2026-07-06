@@ -127,4 +127,4 @@ const AddProjects = ({ mode: baseMode }: AddProjectsProps) => {
   );
 };
 
-export default AddProjects;
+export { AddProjects };

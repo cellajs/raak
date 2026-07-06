@@ -1,13 +1,14 @@
 import { getRouteApi } from '@tanstack/react-router';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { appConfig } from 'shared';
 import { YjsTokenFetcher } from '~/modules/common/blocknote/yjs-token-fetcher';
 import { Spinner } from '~/modules/common/spinner';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
+import { lazyNamed } from '~/utils/lazy-named';
 
-const ProjectPage = lazy(() => import('~/modules/project/project-page'));
-const Board = lazy(() => import('~/modules/task/board/task-board'));
-const TasksTable = lazy(() => import('~/modules/task/table/tasks-table'));
+const ProjectPage = lazyNamed(() => import('~/modules/project/project-page'), 'ProjectPage');
+const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
+const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 
 const projectApi = getRouteApi('/_app/$tenantId/$organizationSlug/project/$slug');
 

@@ -7,8 +7,8 @@ import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { projectQueryOptions, useProjectUpdateMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
-import TaskSheetHandler from '~/modules/task/task-sheet-handler';
-import TasksHotkeys from '~/modules/task/tasks-hotkeys';
+import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
+import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
 
 interface Props {
   projectId: string;
@@ -21,7 +21,7 @@ interface Props {
 /**
  * Project page with header, hotkeys and nested routes.
  */
-export default function ProjectPage({ projectId, organizationId, organization, tenantId, children }: Props) {
+export function ProjectPage({ projectId, organizationId, organization, tenantId, children }: Props) {
   const { t } = useTranslation();
 
   const { data } = useSuspenseQuery(projectQueryOptions(projectId, organizationId, tenantId));

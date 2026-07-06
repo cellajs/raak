@@ -251,4 +251,5 @@ const projectRoutes = {
     },
   }),
 };
-export default projectRoutes;
+
+export { projectRoutes };

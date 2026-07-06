@@ -77,4 +77,4 @@ const UpdateWorkspaceForm = ({ workspace, callback, sheet: isSheet }: Props) => 
   );
 };
 
-export default UpdateWorkspaceForm;
+export { UpdateWorkspaceForm };

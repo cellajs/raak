@@ -40,7 +40,7 @@ import type {
 } from '~/modules/common/blocknote/types';
 import { useDerivedFieldsSender } from '~/modules/common/blocknote/use-derived-fields-sender';
 import { useUIStore } from '~/modules/ui/ui-store';
-import router from '~/routes/router';
+import { router } from '~/routes/router';
 
 /** Pre-built collaboration config from the connection manager store. */
 interface CollaborationConfig {
@@ -271,4 +271,4 @@ function BlockNote({
   );
 }
 
-export default BlockNote;
+export { BlockNote };

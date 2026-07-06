@@ -3,7 +3,7 @@ import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { unsafeInternalAdminDb } from '#/db/db';
 import { resolveEntity } from '#/modules/entities/entities-queries';
-import publicProjectRoutes from '#/modules/project/public-routes';
+import { publicProjectRoutes } from '#/modules/project/public-routes';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { defaultHook } from '#/utils/default-hook';
 

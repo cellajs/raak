@@ -15,7 +15,7 @@ import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
-import BlockNoteContent from '~/modules/common/form-fields/blocknote';
+import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
 import { Spinner } from '~/modules/common/spinner';
 import type { UploadedUppyFile } from '~/modules/common/uploader/types';
 import { membersListQueryOptions } from '~/modules/memberships/query';
@@ -577,4 +577,4 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   );
 };
 
-export default CreateTaskForm;
+export { CreateTaskForm };

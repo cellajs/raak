@@ -29,7 +29,7 @@ interface Props {
 
 type StrictBoardPanel = Required<Pick<BoardResizablePanel, 'project'>> & Omit<BoardResizablePanel, 'project'>;
 
-export default function TasksHotkeys({ boardId, projects, type }: Props) {
+export function TasksHotkeys({ boardId, projects, type }: Props) {
   const { panelData } = useTaskBoardStore();
   const { tenantId, organization } = useOrganizationLayoutContext();
   const { user } = useUserStore();

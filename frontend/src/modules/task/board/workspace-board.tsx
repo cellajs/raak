@@ -10,7 +10,7 @@ import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ExplainerPanel } from '~/modules/task/panel/explainer-panel';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
-export default function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
+export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
   const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 

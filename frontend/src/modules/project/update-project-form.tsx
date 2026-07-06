@@ -125,4 +125,4 @@ const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet
   );
 };
 
-export default UpdateProjectForm;
+export { UpdateProjectForm };

@@ -1,7 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '#/core/context';
 import { assertSuccess } from '#/core/operation-result';
-import labelRoutes from '#/modules/label/label-routes';
+import { labelsRoutes as labelRoutes } from '#/modules/label/label-routes';
 import '#/modules/label/label-module';
 import { createLabelsOp } from '#/modules/label/operations/create-labels';
 import { deleteLabelsOp } from '#/modules/label/operations/delete-labels';

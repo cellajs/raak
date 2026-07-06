@@ -14,7 +14,7 @@ import { AlertBanner } from '~/modules/common/alerter/alert-banner';
 import { blocksToHTML } from '~/modules/common/blocknote/helpers/blocknote-helpers';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
-import BlockNoteContentFormField from '~/modules/common/form-fields/blocknote';
+import { BlockNoteContentFormField } from '~/modules/common/form-fields/blocknote';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectRoles } from '~/modules/common/form-fields/select-roles';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';

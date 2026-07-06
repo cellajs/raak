@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { GetPublicProjectResponse } from 'sdk';
 import { PageHeader } from '~/modules/common/page/header';
-import TaskSheetHandler from '~/modules/task/task-sheet-handler';
+import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 
 export const PublicProjectPage = ({
   project,

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUrlSheet } from '~/modules/common/sheeter/use-url-sheet';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import TaskSheet from '~/modules/task/card/task-sheet';
+import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -86,4 +86,4 @@ function TaskSheetHandler() {
   return null;
 }
 
-export default TaskSheetHandler;
+export { TaskSheetHandler };

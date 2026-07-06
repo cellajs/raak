@@ -30,4 +30,4 @@ const publicProjectRoutes = {
   }),
 };
 
-export default publicProjectRoutes;
+export { publicProjectRoutes };

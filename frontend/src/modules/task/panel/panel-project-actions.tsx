@@ -24,7 +24,7 @@ import { TaskStatus } from '~/modules/task/task-properties';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
-import router from '~/routes/router';
+import { router } from '~/routes/router';
 import { cn } from '~/utils/cn';
 
 const PanelProjectActions = ({ project, className }: { project: EnrichedProject; className?: string }) => {
@@ -172,4 +172,4 @@ const PanelProjectActions = ({ project, className }: { project: EnrichedProject;
   );
 };
 
-export default PanelProjectActions;
+export { PanelProjectActions };

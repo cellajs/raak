@@ -14,7 +14,7 @@ import { formatSectionLabel, makePanelKey } from '~/modules/task/helpers/board-h
 import { handleCreateForm, type NewTaskFormValues, newTaskFormIsDirty } from '~/modules/task/helpers/create-task';
 import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import PanelProjectActions from '~/modules/task/panel/panel-project-actions';
+import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';

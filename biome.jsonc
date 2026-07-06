@@ -133,6 +133,7 @@
         "**/drizzle.config.ts",
         "cella.config.ts",
         "sdk/openapi-ts.config.ts",
+        "frontend/.storybook/**",
         "frontend/src/content/mdx.d.ts",
         "backend/tests/global-setup.ts",
         "yjs/src/tests/integration/global-setup.ts"
