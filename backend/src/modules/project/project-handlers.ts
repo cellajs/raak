@@ -13,12 +13,16 @@ import { projectRoutes } from '#/modules/project/project-routes';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
-const listApp = new OpenAPIHono<Env>({ defaultHook });
 
 app.openapi(projectRoutes.createProjects, async (ctx) => {
   const { workspaceId } = ctx.req.valid('query');
   const data = await createProjectsOp(ctx, ctx.req.valid('json'), workspaceId);
   return ctx.json(data, 201);
+});
+
+app.openapi(projectRoutes.getProjects, async (ctx) => {
+  const data = await getProjectsOp(ctx, ctx.req.valid('query'));
+  return ctx.json(data, 200);
 });
 
 app.openapi(projectRoutes.getProject, async (ctx) => {
@@ -60,11 +64,4 @@ app.openapi(projectRoutes.deleteProjects, async (ctx) => {
   return ctx.json(data, 200);
 });
 
-export const projectListHandlers = listApp;
-
 export const projectHandlers = app;
-
-listApp.openapi(projectRoutes.getProjects, async (ctx) => {
-  const data = await getProjectsOp(ctx, ctx.req.valid('query'));
-  return ctx.json(data, 200);
-});

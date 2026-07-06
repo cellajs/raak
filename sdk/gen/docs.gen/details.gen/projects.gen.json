@@ -263,336 +263,6 @@
     }
   },
   {
-    "operationId": "getProjects",
-    "responses": [
-      {
-        "status": 200,
-        "description": "Projects",
-        "contentType": "application/json",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "items": {
-              "type": "array",
-              "required": true,
-              "itemType": "object",
-              "ref": "#/components/schemas/Project",
-              "items": {
-                "type": "object",
-                "description": "A project that organizes tasks and members within an organization.",
-                "properties": {
-                  "createdAt": { "type": "string", "required": true },
-                  "id": { "type": "string", "required": true, "format": "uuid" },
-                  "entityType": {
-                    "type": "string",
-                    "required": true,
-                    "enum": ["project"]
-                  },
-                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                  "name": { "type": "string", "required": true, "maxLength": 255 },
-                  "updatedAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
-                  "slug": { "type": "string", "required": true, "maxLength": 255 },
-                  "thumbnailUrl": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "maxLength": 2048
-                  },
-                  "bannerUrl": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "maxLength": 2048
-                  },
-                  "createdBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "description": "Minimal user data for references.",
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    },
-                    "extendsRef": "#/components/schemas/UserMinimalBase"
-                  },
-                  "updatedBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "description": "Minimal user data for references.",
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    },
-                    "extendsRef": "#/components/schemas/UserMinimalBase"
-                  },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
-                  "included": {
-                    "type": "object",
-                    "required": true,
-                    "properties": {
-                      "membership": {
-                        "type": "object",
-                        "required": false,
-                        "description": "Core membership fields shared across active and inactive memberships.",
-                        "properties": {
-                          "id": { "type": "string", "required": true, "format": "uuid" },
-                          "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                          "contextType": {
-                            "type": "string",
-                            "required": true,
-                            "enum": ["organization", "workspace", "project"]
-                          },
-                          "contextId": { "type": "string", "required": true, "format": "uuid" },
-                          "userId": { "type": "string", "required": true, "format": "uuid" },
-                          "role": {
-                            "type": "string",
-                            "required": true,
-                            "enum": ["admin", "member", "guest"]
-                          },
-                          "archived": { "type": "boolean", "required": true },
-                          "muted": { "type": "boolean", "required": true },
-                          "displayOrder": {
-                            "type": "number",
-                            "required": true,
-                            "minimum": -140737488355328,
-                            "maximum": 140737488355327
-                          },
-                          "organizationId": { "type": "string", "required": true, "format": "uuid" },
-                          "workspaceId": {
-                            "type": ["string", "null"],
-                            "required": true,
-                            "format": "uuid"
-                          },
-                          "projectId": {
-                            "type": ["string", "null"],
-                            "required": true,
-                            "format": "uuid"
-                          }
-                        },
-                        "ref": "#/components/schemas/MembershipBase"
-                      },
-                      "counts": {
-                        "type": "object",
-                        "required": false,
-                        "properties": {
-                          "membership": {
-                            "type": "object",
-                            "required": true,
-                            "properties": {
-                              "admin": { "type": "number", "required": true },
-                              "member": { "type": "number", "required": true },
-                              "guest": { "type": "number", "required": true },
-                              "pending": { "type": "number", "required": true },
-                              "total": { "type": "number", "required": true }
-                            }
-                          },
-                          "entities": {
-                            "type": "object",
-                            "required": true,
-                            "properties": {
-                              "task": { "type": "number", "required": true },
-                              "label": { "type": "number", "required": true },
-                              "attachment": { "type": "number", "required": true }
-                            }
-                          },
-                          "taskStatusCounts": {
-                            "type": "object",
-                            "required": false,
-                            "properties": {
-                              "accepted": { "type": "number", "required": true },
-                              "reviewed": { "type": "number", "required": true },
-                              "delivered": { "type": "number", "required": true },
-                              "finished": { "type": "number", "required": true },
-                              "started": { "type": "number", "required": true },
-                              "unstarted": { "type": "number", "required": true },
-                              "iced": { "type": "number", "required": true }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "ref": "#/components/schemas/Project"
-              }
-            },
-            "total": { "type": "number", "required": true }
-          },
-          "contentType": "application/json"
-        },
-        "example": {
-          "items": [
-            {
-              "id": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
-              "entityType": "project",
-              "name": "Recycled Bamboo Hat",
-              "slug": "recycled-bamboo-hat",
-              "description": "Clibanus alioqui valens vester cavus contego debeo volubilis.",
-              "thumbnailUrl": null,
-              "bannerUrl": null,
-              "publicAt": "2024-11-01T13:18:25.076Z",
-              "tenantId": "yx645yb0gleyvjbbm5piweg2",
-              "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
-              "createdAt": "2024-11-21T01:19:53.533Z",
-              "createdBy": null,
-              "updatedAt": "2024-11-21T01:19:53.533Z",
-              "updatedBy": null,
-              "included": {
-                "membership": {
-                  "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
-                  "tenantId": "u87zf2",
-                  "contextType": "organization",
-                  "contextId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
-                  "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
-                  "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
-                  "workspaceId": "1d13baee-938d-4a51-81c9-6f214148469f",
-                  "projectId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
-                  "role": "member",
-                  "displayOrder": 45,
-                  "muted": false,
-                  "archived": false
-                }
-              }
-            },
-            {
-              "id": "772a771f-c150-465e-9635-46594859fc3d",
-              "entityType": "project",
-              "name": "Ergonomic Metal Shirt",
-              "slug": "ergonomic-metal-shirt",
-              "description": "Labore appello depono ultio.",
-              "thumbnailUrl": null,
-              "bannerUrl": null,
-              "publicAt": null,
-              "tenantId": "pa56tpd77kpi37syiavgc67t",
-              "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
-              "createdAt": "2024-10-29T04:35:17.725Z",
-              "createdBy": null,
-              "updatedAt": "2024-10-29T04:35:17.725Z",
-              "updatedBy": null,
-              "included": {
-                "membership": {
-                  "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
-                  "tenantId": "lwj64z",
-                  "contextType": "organization",
-                  "contextId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
-                  "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
-                  "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
-                  "workspaceId": "8bb48f50-f5ac-45ed-a8f4-71af3e3099da",
-                  "projectId": "772a771f-c150-465e-9635-46594859fc3d",
-                  "role": "member",
-                  "displayOrder": 94,
-                  "muted": false,
-                  "archived": false
-                }
-              }
-            }
-          ],
-          "total": 2
-        }
-      },
-      {
-        "status": 400,
-        "description": "Bad request: problem processing request.",
-        "name": "BadRequestError",
-        "ref": "#/components/responses/BadRequestError",
-        "contentType": "application/json"
-      },
-      {
-        "status": 401,
-        "description": "Unauthorized: authentication required.",
-        "name": "UnauthorizedError",
-        "ref": "#/components/responses/UnauthorizedError",
-        "contentType": "application/json"
-      },
-      {
-        "status": 403,
-        "description": "Forbidden: insufficient permissions.",
-        "name": "ForbiddenError",
-        "ref": "#/components/responses/ForbiddenError",
-        "contentType": "application/json"
-      },
-      {
-        "status": 404,
-        "description": "Not found: resource does not exist.",
-        "name": "NotFoundError",
-        "ref": "#/components/responses/NotFoundError",
-        "contentType": "application/json"
-      },
-      {
-        "status": 409,
-        "description": "Conflict: resource state conflict.",
-        "name": "ConflictError",
-        "ref": "#/components/responses/ConflictError",
-        "contentType": "application/json"
-      },
-      {
-        "status": 429,
-        "description": "Rate limit: too many requests.",
-        "name": "TooManyRequestsError",
-        "ref": "#/components/responses/TooManyRequestsError",
-        "contentType": "application/json"
-      }
-    ],
-    "request": {
-      "query": {
-        "properties": {
-          "q": { "type": "string", "required": false, "maxLength": 255 },
-          "sort": {
-            "type": "string",
-            "required": false,
-            "enum": ["id", "name", "createdAt", "displayOrder"]
-          },
-          "order": {
-            "type": "string",
-            "required": false,
-            "enum": ["asc", "desc"]
-          },
-          "offset": { "type": "string", "required": false },
-          "limit": { "type": "string", "required": false },
-          "seqCursor": { "type": "string", "required": false },
-          "organizationId": { "type": "string", "required": false, "maxLength": 50 },
-          "workspaceId": { "type": "string", "required": false, "maxLength": 50 },
-          "relatableUserId": { "type": "string", "required": false, "maxLength": 50 },
-          "role": {
-            "type": "string",
-            "required": false,
-            "enum": ["admin", "member", "guest"]
-          },
-          "excludeArchived": {
-            "type": "string",
-            "required": false,
-            "enum": ["true", "false"]
-          },
-          "include": { "type": "string", "required": false }
-        }
-      }
-    }
-  },
-  {
     "operationId": "createProjects",
     "responses": [
       {
@@ -1000,6 +670,336 @@
         },
         "required": false,
         "contentType": "application/json"
+      }
+    }
+  },
+  {
+    "operationId": "getProjects",
+    "responses": [
+      {
+        "status": 200,
+        "description": "Projects",
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "ref": "#/components/schemas/Project",
+              "items": {
+                "type": "object",
+                "description": "A project that organizes tasks and members within an organization.",
+                "properties": {
+                  "createdAt": { "type": "string", "required": true },
+                  "id": { "type": "string", "required": true, "format": "uuid" },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["project"]
+                  },
+                  "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                  "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "updatedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "slug": { "type": "string", "required": true, "maxLength": 255 },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 2048
+                  },
+                  "bannerUrl": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 2048
+                  },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                  },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                  "included": {
+                    "type": "object",
+                    "required": true,
+                    "properties": {
+                      "membership": {
+                        "type": "object",
+                        "required": false,
+                        "description": "Core membership fields shared across active and inactive memberships.",
+                        "properties": {
+                          "id": { "type": "string", "required": true, "format": "uuid" },
+                          "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+                          "contextType": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["organization", "workspace", "project"]
+                          },
+                          "contextId": { "type": "string", "required": true, "format": "uuid" },
+                          "userId": { "type": "string", "required": true, "format": "uuid" },
+                          "role": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["admin", "member", "guest"]
+                          },
+                          "archived": { "type": "boolean", "required": true },
+                          "muted": { "type": "boolean", "required": true },
+                          "displayOrder": {
+                            "type": "number",
+                            "required": true,
+                            "minimum": -140737488355328,
+                            "maximum": 140737488355327
+                          },
+                          "organizationId": { "type": "string", "required": true, "format": "uuid" },
+                          "workspaceId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          },
+                          "projectId": {
+                            "type": ["string", "null"],
+                            "required": true,
+                            "format": "uuid"
+                          }
+                        },
+                        "ref": "#/components/schemas/MembershipBase"
+                      },
+                      "counts": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "membership": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "admin": { "type": "number", "required": true },
+                              "member": { "type": "number", "required": true },
+                              "guest": { "type": "number", "required": true },
+                              "pending": { "type": "number", "required": true },
+                              "total": { "type": "number", "required": true }
+                            }
+                          },
+                          "entities": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "task": { "type": "number", "required": true },
+                              "label": { "type": "number", "required": true },
+                              "attachment": { "type": "number", "required": true }
+                            }
+                          },
+                          "taskStatusCounts": {
+                            "type": "object",
+                            "required": false,
+                            "properties": {
+                              "accepted": { "type": "number", "required": true },
+                              "reviewed": { "type": "number", "required": true },
+                              "delivered": { "type": "number", "required": true },
+                              "finished": { "type": "number", "required": true },
+                              "started": { "type": "number", "required": true },
+                              "unstarted": { "type": "number", "required": true },
+                              "iced": { "type": "number", "required": true }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "ref": "#/components/schemas/Project"
+              }
+            },
+            "total": { "type": "number", "required": true }
+          },
+          "contentType": "application/json"
+        },
+        "example": {
+          "items": [
+            {
+              "id": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
+              "entityType": "project",
+              "name": "Recycled Bamboo Hat",
+              "slug": "recycled-bamboo-hat",
+              "description": "Clibanus alioqui valens vester cavus contego debeo volubilis.",
+              "thumbnailUrl": null,
+              "bannerUrl": null,
+              "publicAt": "2024-11-01T13:18:25.076Z",
+              "tenantId": "yx645yb0gleyvjbbm5piweg2",
+              "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
+              "createdAt": "2024-11-21T01:19:53.533Z",
+              "createdBy": null,
+              "updatedAt": "2024-11-21T01:19:53.533Z",
+              "updatedBy": null,
+              "included": {
+                "membership": {
+                  "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
+                  "tenantId": "u87zf2",
+                  "contextType": "organization",
+                  "contextId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
+                  "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
+                  "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
+                  "workspaceId": "1d13baee-938d-4a51-81c9-6f214148469f",
+                  "projectId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
+                  "role": "member",
+                  "displayOrder": 45,
+                  "muted": false,
+                  "archived": false
+                }
+              }
+            },
+            {
+              "id": "772a771f-c150-465e-9635-46594859fc3d",
+              "entityType": "project",
+              "name": "Ergonomic Metal Shirt",
+              "slug": "ergonomic-metal-shirt",
+              "description": "Labore appello depono ultio.",
+              "thumbnailUrl": null,
+              "bannerUrl": null,
+              "publicAt": null,
+              "tenantId": "pa56tpd77kpi37syiavgc67t",
+              "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
+              "createdAt": "2024-10-29T04:35:17.725Z",
+              "createdBy": null,
+              "updatedAt": "2024-10-29T04:35:17.725Z",
+              "updatedBy": null,
+              "included": {
+                "membership": {
+                  "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
+                  "tenantId": "lwj64z",
+                  "contextType": "organization",
+                  "contextId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
+                  "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
+                  "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
+                  "workspaceId": "8bb48f50-f5ac-45ed-a8f4-71af3e3099da",
+                  "projectId": "772a771f-c150-465e-9635-46594859fc3d",
+                  "role": "member",
+                  "displayOrder": 94,
+                  "muted": false,
+                  "archived": false
+                }
+              }
+            }
+          ],
+          "total": 2
+        }
+      },
+      {
+        "status": 400,
+        "description": "Bad request: problem processing request.",
+        "name": "BadRequestError",
+        "ref": "#/components/responses/BadRequestError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 401,
+        "description": "Unauthorized: authentication required.",
+        "name": "UnauthorizedError",
+        "ref": "#/components/responses/UnauthorizedError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 403,
+        "description": "Forbidden: insufficient permissions.",
+        "name": "ForbiddenError",
+        "ref": "#/components/responses/ForbiddenError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 404,
+        "description": "Not found: resource does not exist.",
+        "name": "NotFoundError",
+        "ref": "#/components/responses/NotFoundError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 409,
+        "description": "Conflict: resource state conflict.",
+        "name": "ConflictError",
+        "ref": "#/components/responses/ConflictError",
+        "contentType": "application/json"
+      },
+      {
+        "status": 429,
+        "description": "Rate limit: too many requests.",
+        "name": "TooManyRequestsError",
+        "ref": "#/components/responses/TooManyRequestsError",
+        "contentType": "application/json"
+      }
+    ],
+    "request": {
+      "query": {
+        "properties": {
+          "q": { "type": "string", "required": false, "maxLength": 255 },
+          "sort": {
+            "type": "string",
+            "required": false,
+            "enum": ["id", "name", "createdAt", "displayOrder"]
+          },
+          "order": {
+            "type": "string",
+            "required": false,
+            "enum": ["asc", "desc"]
+          },
+          "offset": { "type": "string", "required": false },
+          "limit": { "type": "string", "required": false },
+          "seqCursor": { "type": "string", "required": false },
+          "organizationId": { "type": "string", "required": false, "maxLength": 50 },
+          "workspaceId": { "type": "string", "required": false, "maxLength": 50 },
+          "relatableUserId": { "type": "string", "required": false, "maxLength": 50 },
+          "role": {
+            "type": "string",
+            "required": false,
+            "enum": ["admin", "member", "guest"]
+          },
+          "excludeArchived": {
+            "type": "string",
+            "required": false,
+            "enum": ["true", "false"]
+          },
+          "include": { "type": "string", "required": false }
+        }
       }
     }
   },

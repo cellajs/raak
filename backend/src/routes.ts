@@ -13,7 +13,7 @@ import { meHandlers } from '#/modules/me/me-handlers';
 import { membershipHandlers } from '#/modules/memberships/memberships-handlers';
 import { metricHandlers } from '#/modules/metrics/metrics-handlers';
 import { organizationHandlers } from '#/modules/organization/organization-handlers';
-import { projectHandlers, projectListHandlers } from '#/modules/project/project-handlers';
+import { projectHandlers } from '#/modules/project/project-handlers';
 import { publicProjectHandlers } from '#/modules/project/public-handlers';
 import { requestHandlers } from '#/modules/requests/requests-handlers';
 import { seenHandlers, unseenHandlers } from '#/modules/seen/seen-handlers';
@@ -23,7 +23,7 @@ import { taskRedirectHandlers } from '#/modules/task/redirect-handlers';
 import { taskHandlers } from '#/modules/task/task-handlers';
 import { tenantHandlers } from '#/modules/tenants/tenants-handlers';
 import { userHandlers } from '#/modules/user/user-handlers';
-import { workspaceHandlers, workspaceListHandlers } from '#/modules/workspace/workspace-handlers';
+import { workspaceHandlers } from '#/modules/workspace/workspace-handlers';
 import { yjsHandlers } from '#/modules/yjs/yjs-handlers';
 import { baseApp } from '#/server';
 import { emailPreviewHandlers } from '../emails/preview-route';
@@ -34,31 +34,36 @@ baseApp.route('/auth/', authMagicLinkHandlers);
 baseApp.route('/auth/', authTotpHandlers);
 baseApp.route('/auth/', authPasskeysHandlers);
 baseApp.route('/auth/', authOAuthHandlers);
+
 baseApp.route('/me', meHandlers);
 baseApp.route('/unseen', unseenHandlers);
 baseApp.route('/entities', entityHandlers);
 baseApp.route('/system', systemHandlers);
+
 baseApp.route('/tenants', tenantHandlers);
 baseApp.route('/tenants/:tenantId/domains', domainHandlers);
+
 baseApp.route('/requests', requestHandlers);
 baseApp.route('/metrics', metricHandlers);
-baseApp.route('/', organizationHandlers);
 baseApp.route('/users', userHandlers);
+
 baseApp.route('/public/projects', publicProjectHandlers);
 baseApp.route('/public/tasks', publicTaskHandlers);
 baseApp.route('/t', taskRedirectHandlers);
-// Cross-tenant list routes
-baseApp.route('/workspaces', workspaceListHandlers);
-baseApp.route('/projects', projectListHandlers);
+
+// Modules with absolute route paths: cross-tenant list + tenant-scoped routes in one app.
+// Registered after all static mounts so param segments (/:tenantId/...) cannot shadow static paths.
+baseApp.route('/', organizationHandlers);
+baseApp.route('/', workspaceHandlers);
+baseApp.route('/', projectHandlers);
+
 // Tenant-scoped routes: /:tenantId/:organizationId/...
-if (appConfig.services.mcp.enabled !== false) baseApp.route('/:tenantId/:organizationId/mcp', mcpHandlers);
+baseApp.route('/:tenantId/:organizationId/mcp', mcpHandlers);
 baseApp.route('/:tenantId/:organizationId/attachments', attachmentHandlers);
 baseApp.route('/:tenantId/:organizationId/memberships', membershipHandlers);
 baseApp.route('/:tenantId/:organizationId/tasks', taskHandlers);
 baseApp.route('/:tenantId/:organizationId/labels', labelHandlers);
 baseApp.route('/:tenantId/:organizationId/seen', seenHandlers);
-baseApp.route('/:tenantId/:organizationId/workspaces', workspaceHandlers);
-baseApp.route('/:tenantId/:organizationId/projects', projectHandlers);
 baseApp.route('/yjs', yjsHandlers);
 
 // Dev-only email preview (local authoring + Storybook email stories)

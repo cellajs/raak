@@ -30,7 +30,7 @@ const workspaceRoutes = {
    */
   createWorkspaces: createXRoute({
     method: 'post',
-    path: '/',
+    path: '/{tenantId}/{organizationId}/workspaces',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     tags: ['workspaces', 'app', 'context'],
@@ -66,7 +66,7 @@ const workspaceRoutes = {
    */
   getWorkspaces: createXRoute({
     method: 'get',
-    path: '/',
+    path: '/workspaces',
     xGuard: [authGuard, crossTenantGuard],
     tags: ['workspaces', 'app', 'context'],
     operationId: 'getWorkspaces',
@@ -96,7 +96,7 @@ const workspaceRoutes = {
    */
   getWorkspace: createXRoute({
     method: 'get',
-    path: '/{id}',
+    path: '/{tenantId}/{organizationId}/workspaces/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
     tags: ['workspaces', 'app', 'context'],
     operationId: 'getWorkspace',
@@ -119,7 +119,7 @@ const workspaceRoutes = {
    */
   updateWorkspace: createXRoute({
     method: 'put',
-    path: '/{id}',
+    path: '/{tenantId}/{organizationId}/workspaces/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['workspaces', 'app', 'context'],
@@ -154,7 +154,7 @@ const workspaceRoutes = {
    */
   deleteWorkspaces: createXRoute({
     method: 'delete',
-    path: '/',
+    path: '/{tenantId}/{organizationId}/workspaces',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['workspaces', 'app', 'context'],

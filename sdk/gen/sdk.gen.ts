@@ -2572,228 +2572,6 @@ export const getPublicCounts = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Delete organizations
- *
- * Deletes one or more organizations by ID within a tenant.
- *
- * **DELETE /{tenantId}/organizations** ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/organizations) ·· _organizations_cella_context_
- *
- * @param {deleteOrganizationsData} options
- * @param {string} options.path.tenantid - `string`
- * @param {any[]=} options.body.ids - `any[]` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const deleteOrganizations = <ThrowOnError extends boolean = true>(
-  options: Options<DeleteOrganizationsData, ThrowOnError>,
-): RequestResult<DeleteOrganizationsResponses, DeleteOrganizationsErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<DeleteOrganizationsResponses, DeleteOrganizationsErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zDeleteOrganizationsBody,
-          path: zDeleteOrganizationsPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zDeleteOrganizationsResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/organizations',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Create organizations
- *
- * Creates one or more new organizations within a tenant.
- *
- * **POST /{tenantId}/organizations** ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/organizations) ·· _organizations_cella_context_
- *
- * @param {createOrganizationsData} options
- * @param {string} options.path.tenantid - `string`
- * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
- */
-export const createOrganizations = <ThrowOnError extends boolean = true>(
-  options: Options<CreateOrganizationsData, ThrowOnError>,
-): RequestResult<CreateOrganizationsResponses, CreateOrganizationsErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<CreateOrganizationsResponses, CreateOrganizationsErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zCreateOrganizationsBody,
-          path: zCreateOrganizationsPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zCreateOrganizationsResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/organizations',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Get list of organizations
- *
- * Returns a list of organizations.
- *
- * **GET /organizations** ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/organizations) ·· _organizations_cella_context_
- *
- * @param {getOrganizationsData} options
- * @param {string=} options.query.q - `string` (optional)
- * @param {enum=} options.query.sort - `enum` (optional)
- * @param {enum=} options.query.order - `enum` (optional)
- * @param {string=} options.query.offset - `string` (optional)
- * @param {string=} options.query.limit - `string` (optional)
- * @param {string=} options.query.seqcursor - `string` (optional)
- * @param {string=} options.query.relatableuserid - `string` (optional)
- * @param {enum=} options.query.role - `enum` (optional)
- * @param {enum=} options.query.excludearchived - `enum` (optional)
- * @param {string=} options.query.include - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getOrganizations = <ThrowOnError extends boolean = true>(
-  options?: Options<GetOrganizationsData, ThrowOnError>,
-): RequestResult<GetOrganizationsResponses, GetOrganizationsErrors, ThrowOnError, 'data'> =>
-  (options?.client ?? client).get<GetOrganizationsResponses, GetOrganizationsErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: z.never().optional(),
-          query: zGetOrganizationsQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetOrganizationsResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/organizations',
-    ...options,
-  });
-
-/**
- * Get organization
- *
- * Retrieves an organization by ID within a tenant. Pass ?slug=true to resolve by slug instead.
- *
- * **GET /{tenantId}/organizations/{id}** ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
- *
- * @param {getOrganizationData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
- * @param {string=} options.query.include - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getOrganization = <ThrowOnError extends boolean = true>(
-  options: Options<GetOrganizationData, ThrowOnError>,
-): RequestResult<GetOrganizationResponses, GetOrganizationErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetOrganizationResponses, GetOrganizationErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zGetOrganizationPath,
-          query: zGetOrganizationQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetOrganizationResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/organizations/{id}',
-    ...options,
-  });
-
-/**
- * Update organization
- *
- * Updates an organization within a tenant.
- *
- * **PUT /{tenantId}/organizations/{id}** ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
- *
- * @param {updateOrganizationData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.id - `string`
- * @param {string=} options.body.slug - `string` (optional)
- * @param {string=} options.body.name - `string` (optional)
- * @param {string | null=} options.body.shortName - `string | null` (optional)
- * @param {string | null=} options.body.country - `string | null` (optional)
- * @param {string | null=} options.body.timezone - `string | null` (optional)
- * @param {enum=} options.body.defaultLanguage - `enum` (optional)
- * @param {any[]=} options.body.languages - `any[]` (optional)
- * @param {string | null=} options.body.notificationEmail - `string | null` (optional)
- * @param {string | null=} options.body.color - `string | null` (optional)
- * @param {string | null=} options.body.thumbnailUrl - `string | null` (optional)
- * @param {string | null=} options.body.logoUrl - `string | null` (optional)
- * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
- * @param {string | null=} options.body.websiteUrl - `string | null` (optional)
- * @param {string | null=} options.body.welcomeText - `string | null` (optional)
- * @param {any[]=} options.body.authStrategies - `any[]` (optional)
- * @param {boolean=} options.body.chatSupport - `boolean` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const updateOrganization = <ThrowOnError extends boolean = true>(
-  options: Options<UpdateOrganizationData, ThrowOnError>,
-): RequestResult<UpdateOrganizationResponses, UpdateOrganizationErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<UpdateOrganizationResponses, UpdateOrganizationErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zUpdateOrganizationBody.optional(),
-          path: zUpdateOrganizationPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zUpdateOrganizationResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/organizations/{id}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
  * Get list of users
  *
  * Returns a list of users.
@@ -3054,6 +2832,311 @@ export const redirectToTask = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Delete organizations
+ *
+ * Deletes one or more organizations by ID within a tenant.
+ *
+ * **DELETE /{tenantId}/organizations** ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/organizations) ·· _organizations_cella_context_
+ *
+ * @param {deleteOrganizationsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteOrganizations = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteOrganizationsData, ThrowOnError>,
+): RequestResult<DeleteOrganizationsResponses, DeleteOrganizationsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteOrganizationsResponses, DeleteOrganizationsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteOrganizationsBody,
+          path: zDeleteOrganizationsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteOrganizationsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/organizations',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create organizations
+ *
+ * Creates one or more new organizations within a tenant.
+ *
+ * **POST /{tenantId}/organizations** ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/organizations) ·· _organizations_cella_context_
+ *
+ * @param {createOrganizationsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
+ */
+export const createOrganizations = <ThrowOnError extends boolean = true>(
+  options: Options<CreateOrganizationsData, ThrowOnError>,
+): RequestResult<CreateOrganizationsResponses, CreateOrganizationsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateOrganizationsResponses, CreateOrganizationsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateOrganizationsBody,
+          path: zCreateOrganizationsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateOrganizationsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/organizations',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get list of organizations
+ *
+ * Returns a list of organizations.
+ *
+ * **GET /organizations** ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/organizations) ·· _organizations_cella_context_
+ *
+ * @param {getOrganizationsData} options
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {string=} options.query.relatableuserid - `string` (optional)
+ * @param {enum=} options.query.role - `enum` (optional)
+ * @param {enum=} options.query.excludearchived - `enum` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getOrganizations = <ThrowOnError extends boolean = true>(
+  options?: Options<GetOrganizationsData, ThrowOnError>,
+): RequestResult<GetOrganizationsResponses, GetOrganizationsErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetOrganizationsResponses, GetOrganizationsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zGetOrganizationsQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetOrganizationsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/organizations',
+    ...options,
+  });
+
+/**
+ * Get organization
+ *
+ * Retrieves an organization by ID within a tenant. Pass ?slug=true to resolve by slug instead.
+ *
+ * **GET /{tenantId}/organizations/{id}** ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
+ *
+ * @param {getOrganizationData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getOrganization = <ThrowOnError extends boolean = true>(
+  options: Options<GetOrganizationData, ThrowOnError>,
+): RequestResult<GetOrganizationResponses, GetOrganizationErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetOrganizationResponses, GetOrganizationErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetOrganizationPath,
+          query: zGetOrganizationQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetOrganizationResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/organizations/{id}',
+    ...options,
+  });
+
+/**
+ * Update organization
+ *
+ * Updates an organization within a tenant.
+ *
+ * **PUT /{tenantId}/organizations/{id}** ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
+ *
+ * @param {updateOrganizationData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.slug - `string` (optional)
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {string | null=} options.body.shortName - `string | null` (optional)
+ * @param {string | null=} options.body.country - `string | null` (optional)
+ * @param {string | null=} options.body.timezone - `string | null` (optional)
+ * @param {enum=} options.body.defaultLanguage - `enum` (optional)
+ * @param {any[]=} options.body.languages - `any[]` (optional)
+ * @param {string | null=} options.body.notificationEmail - `string | null` (optional)
+ * @param {string | null=} options.body.color - `string | null` (optional)
+ * @param {string | null=} options.body.thumbnailUrl - `string | null` (optional)
+ * @param {string | null=} options.body.logoUrl - `string | null` (optional)
+ * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
+ * @param {string | null=} options.body.websiteUrl - `string | null` (optional)
+ * @param {string | null=} options.body.welcomeText - `string | null` (optional)
+ * @param {any[]=} options.body.authStrategies - `any[]` (optional)
+ * @param {boolean=} options.body.chatSupport - `boolean` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateOrganization = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateOrganizationData, ThrowOnError>,
+): RequestResult<UpdateOrganizationResponses, UpdateOrganizationErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateOrganizationResponses, UpdateOrganizationErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateOrganizationBody.optional(),
+          path: zUpdateOrganizationPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateOrganizationResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/organizations/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete workspaces
+ *
+ * Deletes one or more workspaces by ID.
+ *
+ * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
+ *
+ * @param {deleteWorkspacesData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteWorkspaces = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteWorkspacesData, ThrowOnError>,
+): RequestResult<DeleteWorkspacesResponses, DeleteWorkspacesErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteWorkspacesResponses, DeleteWorkspacesErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteWorkspacesBody.optional(),
+          path: zDeleteWorkspacesPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteWorkspacesResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create workspaces
+ *
+ * Creates one or more personal workspaces owned by the current user.
+ *
+ * **POST /{tenantId}/{organizationId}/workspaces** ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
+ *
+ * @param {createWorkspacesData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
+ */
+export const createWorkspaces = <ThrowOnError extends boolean = true>(
+  options: Options<CreateWorkspacesData, ThrowOnError>,
+): RequestResult<CreateWorkspacesResponses, CreateWorkspacesErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateWorkspacesResponses, CreateWorkspacesErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateWorkspacesBody,
+          path: zCreateWorkspacesPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateWorkspacesResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Get list of workspaces
  *
  * Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.
@@ -3096,6 +3179,173 @@ export const getWorkspaces = <ThrowOnError extends boolean = true>(
     ],
     url: '/workspaces',
     ...options,
+  });
+
+/**
+ * Get workspace
+ *
+ * Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.
+ *
+ * **GET /{tenantId}/{organizationId}/workspaces/{id}** ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
+ *
+ * @param {getWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<GetWorkspaceData, ThrowOnError>,
+): RequestResult<GetWorkspaceResponses, GetWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetWorkspaceResponses, GetWorkspaceErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetWorkspacePath,
+          query: zGetWorkspaceQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces/{id}',
+    ...options,
+  });
+
+/**
+ * Update workspace
+ *
+ * Updates a workspace by ID.
+ *
+ * **PUT /{tenantId}/{organizationId}/workspaces/{id}** ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
+ *
+ * @param {updateWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.name - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateWorkspaceData, ThrowOnError>,
+): RequestResult<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateWorkspaceBody.optional(),
+          path: zUpdateWorkspacePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/workspaces/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete projects
+ *
+ * Deletes one or more projects by ID.
+ *
+ * **DELETE /{tenantId}/{organizationId}/projects** ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
+ *
+ * @param {deleteProjectsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deleteProjects = <ThrowOnError extends boolean = true>(
+  options: Options<DeleteProjectsData, ThrowOnError>,
+): RequestResult<DeleteProjectsResponses, DeleteProjectsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<DeleteProjectsResponses, DeleteProjectsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zDeleteProjectsBody.optional(),
+          path: zDeleteProjectsPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeleteProjectsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Create projects
+ *
+ * Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.
+ *
+ * **POST /{tenantId}/{organizationId}/projects** ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
+ *
+ * @param {createProjectsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.query.workspaceid - `string`
+ * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
+ */
+export const createProjects = <ThrowOnError extends boolean = true>(
+  options: Options<CreateProjectsData, ThrowOnError>,
+): RequestResult<CreateProjectsResponses, CreateProjectsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateProjectsResponses, CreateProjectsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateProjectsBody,
+          path: zCreateProjectsPath,
+          query: zCreateProjectsQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateProjectsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**
@@ -3142,6 +3392,214 @@ export const getProjects = <ThrowOnError extends boolean = true>(
       },
     ],
     url: '/projects',
+    ...options,
+  });
+
+/**
+ * Get project
+ *
+ * Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.
+ *
+ * **GET /{tenantId}/{organizationId}/projects/{id}** ·· [getProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
+ *
+ * @param {getProjectData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {string=} options.query.include - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getProject = <ThrowOnError extends boolean = true>(
+  options: Options<GetProjectData, ThrowOnError>,
+): RequestResult<GetProjectResponses, GetProjectErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetProjectResponses, GetProjectErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetProjectPath,
+          query: zGetProjectQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetProjectResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}',
+    ...options,
+  });
+
+/**
+ * Update project
+ *
+ * Updates a project by ID.
+ *
+ * **PUT /{tenantId}/{organizationId}/projects/{id}** ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
+ *
+ * @param {updateProjectData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.slug - `string` (optional)
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {string | null=} options.body.thumbnailUrl - `string | null` (optional)
+ * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
+ * @param {string | null=} options.body.publicAt - `string | null` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateProject = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateProjectData, ThrowOnError>,
+): RequestResult<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateProjectBody.optional(),
+          path: zUpdateProjectPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateProjectResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Assign project to workspace
+ *
+ * Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.
+ *
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/assign-workspace** ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· _projects_app_context_
+ *
+ * @param {assignProjectWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string} options.query.workspaceid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const assignProjectWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<AssignProjectWorkspaceData, ThrowOnError>,
+): RequestResult<AssignProjectWorkspaceResponses, AssignProjectWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<AssignProjectWorkspaceResponses, AssignProjectWorkspaceErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zAssignProjectWorkspacePath,
+          query: zAssignProjectWorkspaceQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zAssignProjectWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace',
+    ...options,
+  });
+
+/**
+ * Remove project from workspace
+ *
+ * Removes the current user's project membership from its assigned workspace without leaving the project.
+ *
+ * **DELETE /{tenantId}/{organizationId}/projects/{id}/workspace** ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· _projects_app_context_
+ *
+ * @param {removeProjectWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<RemoveProjectWorkspaceData, ThrowOnError>,
+): RequestResult<RemoveProjectWorkspaceResponses, RemoveProjectWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<
+    RemoveProjectWorkspaceResponses,
+    RemoveProjectWorkspaceErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zRemoveProjectWorkspacePath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zRemoveProjectWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}/workspace',
+    ...options,
+  });
+
+/**
+ * Move project between workspaces
+ *
+ * Moves a project from one workspace to another.
+ *
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/move** ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· _projects_app_context_
+ *
+ * @param {moveProjectToWorkspaceData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string} options.query.workspaceid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
+  options: Options<MoveProjectToWorkspaceData, ThrowOnError>,
+): RequestResult<MoveProjectToWorkspaceResponses, MoveProjectToWorkspaceErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<MoveProjectToWorkspaceResponses, MoveProjectToWorkspaceErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zMoveProjectToWorkspacePath,
+          query: zMoveProjectToWorkspaceQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zMoveProjectToWorkspaceResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/projects/{id}/move',
     ...options,
   });
 
@@ -4169,464 +4627,6 @@ export const markSeen = <ThrowOnError extends boolean = true>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
-  });
-
-/**
- * Delete workspaces
- *
- * Deletes one or more workspaces by ID.
- *
- * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
- *
- * @param {deleteWorkspacesData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {any[]=} options.body.ids - `any[]` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const deleteWorkspaces = <ThrowOnError extends boolean = true>(
-  options: Options<DeleteWorkspacesData, ThrowOnError>,
-): RequestResult<DeleteWorkspacesResponses, DeleteWorkspacesErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<DeleteWorkspacesResponses, DeleteWorkspacesErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zDeleteWorkspacesBody.optional(),
-          path: zDeleteWorkspacesPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zDeleteWorkspacesResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/workspaces',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Create workspaces
- *
- * Creates one or more personal workspaces owned by the current user.
- *
- * **POST /{tenantId}/{organizationId}/workspaces** ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
- *
- * @param {createWorkspacesData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
- */
-export const createWorkspaces = <ThrowOnError extends boolean = true>(
-  options: Options<CreateWorkspacesData, ThrowOnError>,
-): RequestResult<CreateWorkspacesResponses, CreateWorkspacesErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<CreateWorkspacesResponses, CreateWorkspacesErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zCreateWorkspacesBody,
-          path: zCreateWorkspacesPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zCreateWorkspacesResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/workspaces',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Get workspace
- *
- * Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.
- *
- * **GET /{tenantId}/{organizationId}/workspaces/{id}** ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
- *
- * @param {getWorkspaceData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
- * @param {string=} options.query.include - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<GetWorkspaceData, ThrowOnError>,
-): RequestResult<GetWorkspaceResponses, GetWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetWorkspaceResponses, GetWorkspaceErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zGetWorkspacePath,
-          query: zGetWorkspaceQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetWorkspaceResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/workspaces/{id}',
-    ...options,
-  });
-
-/**
- * Update workspace
- *
- * Updates a workspace by ID.
- *
- * **PUT /{tenantId}/{organizationId}/workspaces/{id}** ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
- *
- * @param {updateWorkspaceData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string=} options.body.name - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const updateWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<UpdateWorkspaceData, ThrowOnError>,
-): RequestResult<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zUpdateWorkspaceBody.optional(),
-          path: zUpdateWorkspacePath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zUpdateWorkspaceResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/workspaces/{id}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Delete projects
- *
- * Deletes one or more projects by ID.
- *
- * **DELETE /{tenantId}/{organizationId}/projects** ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
- *
- * @param {deleteProjectsData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {any[]=} options.body.ids - `any[]` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const deleteProjects = <ThrowOnError extends boolean = true>(
-  options: Options<DeleteProjectsData, ThrowOnError>,
-): RequestResult<DeleteProjectsResponses, DeleteProjectsErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<DeleteProjectsResponses, DeleteProjectsErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zDeleteProjectsBody.optional(),
-          path: zDeleteProjectsPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zDeleteProjectsResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/projects',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Create projects
- *
- * Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.
- *
- * **POST /{tenantId}/{organizationId}/projects** ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
- *
- * @param {createProjectsData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.query.workspaceid - `string`
- * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
- */
-export const createProjects = <ThrowOnError extends boolean = true>(
-  options: Options<CreateProjectsData, ThrowOnError>,
-): RequestResult<CreateProjectsResponses, CreateProjectsErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).post<CreateProjectsResponses, CreateProjectsErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zCreateProjectsBody,
-          path: zCreateProjectsPath,
-          query: zCreateProjectsQuery,
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zCreateProjectsResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/projects',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Get project
- *
- * Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.
- *
- * **GET /{tenantId}/{organizationId}/projects/{id}** ·· [getProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
- *
- * @param {getProjectData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
- * @param {string=} options.query.include - `string` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getProject = <ThrowOnError extends boolean = true>(
-  options: Options<GetProjectData, ThrowOnError>,
-): RequestResult<GetProjectResponses, GetProjectErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetProjectResponses, GetProjectErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zGetProjectPath,
-          query: zGetProjectQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetProjectResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/projects/{id}',
-    ...options,
-  });
-
-/**
- * Update project
- *
- * Updates a project by ID.
- *
- * **PUT /{tenantId}/{organizationId}/projects/{id}** ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
- *
- * @param {updateProjectData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string=} options.body.slug - `string` (optional)
- * @param {string=} options.body.name - `string` (optional)
- * @param {string | null=} options.body.thumbnailUrl - `string | null` (optional)
- * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
- * @param {string | null=} options.body.publicAt - `string | null` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const updateProject = <ThrowOnError extends boolean = true>(
-  options: Options<UpdateProjectData, ThrowOnError>,
-): RequestResult<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: zUpdateProjectBody.optional(),
-          path: zUpdateProjectPath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zUpdateProjectResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/projects/{id}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Assign project to workspace
- *
- * Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.
- *
- * **PUT /{tenantId}/{organizationId}/projects/{id}/assign-workspace** ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· _projects_app_context_
- *
- * @param {assignProjectWorkspaceData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string} options.query.workspaceid - `string`
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const assignProjectWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<AssignProjectWorkspaceData, ThrowOnError>,
-): RequestResult<AssignProjectWorkspaceResponses, AssignProjectWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<AssignProjectWorkspaceResponses, AssignProjectWorkspaceErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zAssignProjectWorkspacePath,
-          query: zAssignProjectWorkspaceQuery,
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zAssignProjectWorkspaceResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace',
-    ...options,
-  });
-
-/**
- * Remove project from workspace
- *
- * Removes the current user's project membership from its assigned workspace without leaving the project.
- *
- * **DELETE /{tenantId}/{organizationId}/projects/{id}/workspace** ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· _projects_app_context_
- *
- * @param {removeProjectWorkspaceData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<RemoveProjectWorkspaceData, ThrowOnError>,
-): RequestResult<RemoveProjectWorkspaceResponses, RemoveProjectWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).delete<
-    RemoveProjectWorkspaceResponses,
-    RemoveProjectWorkspaceErrors,
-    ThrowOnError,
-    'data'
-  >({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zRemoveProjectWorkspacePath,
-          query: z.never().optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zRemoveProjectWorkspaceResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/projects/{id}/workspace',
-    ...options,
-  });
-
-/**
- * Move project between workspaces
- *
- * Moves a project from one workspace to another.
- *
- * **PUT /{tenantId}/{organizationId}/projects/{id}/move** ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· _projects_app_context_
- *
- * @param {moveProjectToWorkspaceData} options
- * @param {string} options.path.tenantid - `string`
- * @param {string} options.path.organizationid - `string`
- * @param {string} options.path.id - `string`
- * @param {string} options.query.workspaceid - `string`
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
-  options: Options<MoveProjectToWorkspaceData, ThrowOnError>,
-): RequestResult<MoveProjectToWorkspaceResponses, MoveProjectToWorkspaceErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).put<MoveProjectToWorkspaceResponses, MoveProjectToWorkspaceErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zMoveProjectToWorkspacePath,
-          query: zMoveProjectToWorkspaceQuery,
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zMoveProjectToWorkspaceResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/{tenantId}/{organizationId}/projects/{id}/move',
-    ...options,
   });
 
 /**
