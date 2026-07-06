@@ -10,13 +10,13 @@ export const config = {
    ******************************************************************************/
 
   /** All entity types in the app - must match hierarchy.allTypes. */
-  entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment', 'page'] as const,
+  entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment'] as const,
 
   /** Context entities with memberships - must match hierarchy.contextTypes. */
   contextEntityTypes: ['organization', 'workspace', 'project'] as const,
 
   /** Product/content entities - must match hierarchy.productTypes. */
-  productEntityTypes: ['task', 'label', 'attachment', 'page'] as const,
+  productEntityTypes: ['task', 'label', 'attachment'] as const,
 
   /**
    * Product entity types tracked for seen/unseen counts.
@@ -34,7 +34,6 @@ export const config = {
     task: 'taskId',
     label: 'labelId',
     attachment: 'attachmentId',
-    page: 'pageId',
   } as const,
 
   /** Available CRUD actions for permission checks */

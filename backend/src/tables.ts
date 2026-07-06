@@ -5,7 +5,6 @@ import { labelsTable } from '#/modules/label/label-db';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
-import { pagesTable } from '#/modules/page/page-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { requestsTable } from '#/modules/requests/requests-db';
 import { tasksTable } from '#/modules/task/task-db';
@@ -23,7 +22,6 @@ export const entityTables = {
   user: usersTable,
   organization: organizationsTable,
   attachment: attachmentsTable,
-  page: pagesTable,
   project: projectsTable,
   workspace: workspacesTable,
   task: tasksTable,

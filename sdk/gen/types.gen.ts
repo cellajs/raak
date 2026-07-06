@@ -63,7 +63,7 @@ export type ProductEntityBase = {
     ({
       [key: string]: unknown;
     } | null);
-  entityType: 'task' | 'label' | 'attachment' | 'page';
+  entityType: 'task' | 'label' | 'attachment';
   keywords: string;
 };
 
@@ -110,7 +110,7 @@ export type StxBase = {
  */
 export type StreamNotification = {
   action: 'create' | 'update' | 'delete';
-  entityType: 'task' | 'label' | 'attachment' | 'page' | null;
+  entityType: 'task' | 'label' | 'attachment' | null;
   resourceType: 'request' | 'membership' | 'inactive_membership' | 'tenant' | null;
   subjectId: string | null;
   organizationId: string | null;
@@ -182,7 +182,7 @@ export type ApiError = {
   type: string;
   status: number;
   severity: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
-  entityType?: 'user' | 'organization' | 'workspace' | 'project' | 'task' | 'label' | 'attachment' | 'page';
+  entityType?: 'user' | 'organization' | 'workspace' | 'project' | 'task' | 'label' | 'attachment';
   logId?: string;
   path?: string;
   method?: string;
@@ -440,36 +440,6 @@ export type Organization = {
       };
     };
   };
-};
-
-/**
- * A content page for documentation purposes.
- */
-export type Page = {
-  createdAt: string;
-  id: string;
-  entityType: 'page';
-  name: string;
-  updatedAt: string | null;
-  stx: StxBase;
-  description: string | null;
-  keywords: string;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  deletedAt: string | null;
-  deletedBy: string | null;
-  seq: number;
-  status: 'unpublished' | 'published' | 'archived';
-  renderMode: 'default' | 'overview' | 'nodeOnly';
-  publicAt: string | null;
-  parentId: string | null;
-  displayOrder: number;
 };
 
 /**
@@ -2389,155 +2359,6 @@ export type CheckSlugResponses = {
 
 export type CheckSlugResponse = CheckSlugResponses[keyof CheckSlugResponses];
 
-export type GetPublicStreamData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/entities/public/stream';
-};
-
-export type GetPublicStreamErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetPublicStreamError = GetPublicStreamErrors[keyof GetPublicStreamErrors];
-
-export type GetPublicStreamResponses = {
-  /**
-   * SSE stream started
-   */
-  200: unknown;
-};
-
-export type PostPublicCatchupData = {
-  body: {
-    /**
-     * Last activity cursor received by the client (LSN-based). Omit on first sync.
-     */
-    cursor?: string;
-    /**
-     * Client-side sequence numbers per scope: { "organizationId:s:page": 42 }
-     */
-    seqs?: {
-      [key: string]: number;
-    };
-  };
-  path?: never;
-  query?: never;
-  url: '/entities/public/stream';
-};
-
-export type PostPublicCatchupErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type PostPublicCatchupError = PostPublicCatchupErrors[keyof PostPublicCatchupErrors];
-
-export type PostPublicCatchupResponses = {
-  /**
-   * Catchup summary
-   */
-  200: {
-    /**
-     * Per-entityType change summary: { [entityType]: { entitySeqs? } }
-     */
-    changes: {
-      [key: string]: {
-        entitySeqs?: {
-          [key: string]: number;
-        };
-        entityCounts?: {
-          [key: string]: number;
-        };
-        childContextChanges?: {
-          [key: string]: {
-            entitySeqs?: {
-              [key: string]: number;
-            };
-            entityCounts?: {
-              [key: string]: number;
-            };
-          };
-        };
-        propagation?: Array<{
-          /**
-           * Entity type that triggered the propagation (e.g. label)
-           */
-          sourceType: string;
-          /**
-           * Entity type whose cache should be invalidated (e.g. task)
-           */
-          targetType: string;
-          /**
-           * Field on the target entity that references the source (e.g. labels)
-           */
-          field: string;
-          /**
-           * Target entity IDs that need cache refresh
-           */
-          update: Array<string>;
-          /**
-           * Target entity IDs that need the source reference removed
-           */
-          remove: Array<string>;
-        }>;
-      };
-    };
-    /**
-     * Last activity ID (use as offset for next request)
-     */
-    cursor: string | null;
-  };
-};
-
-export type PostPublicCatchupResponse = PostPublicCatchupResponses[keyof PostPublicCatchupResponses];
-
 export type GetAppStreamData = {
   body?: never;
   path?: never;
@@ -2588,7 +2409,7 @@ export type PostAppCatchupData = {
      */
     cursor?: string;
     /**
-     * Client-side sequence numbers per scope: { "organizationId:s:page": 42 }
+     * Client-side sequence numbers per scope: { "organizationId:s:attachment": 42 }
      */
     seqs?: {
       [key: string]: number;
@@ -3635,7 +3456,6 @@ export type GetPublicCountsResponses = {
     task: number;
     label: number;
     attachment: number;
-    page: number;
   };
 };
 
@@ -3964,310 +3784,6 @@ export type UpdateOrganizationResponses = {
 };
 
 export type UpdateOrganizationResponse = UpdateOrganizationResponses[keyof UpdateOrganizationResponses];
-
-export type DeletePagesData = {
-  body: {
-    ids: Array<string>;
-    stx?: {
-      mutationId: string;
-      sourceId: string;
-    };
-  };
-  path?: never;
-  query?: never;
-  url: '/pages';
-};
-
-export type DeletePagesErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type DeletePagesError = DeletePagesErrors[keyof DeletePagesErrors];
-
-export type DeletePagesResponses = {
-  /**
-   * Success
-   */
-  200: {
-    data: Array<unknown>;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type DeletePagesResponse = DeletePagesResponses[keyof DeletePagesResponses];
-
-export type GetPagesData = {
-  body?: never;
-  path?: never;
-  query?: {
-    q?: string;
-    sort?: 'name' | 'status' | 'createdAt' | 'displayOrder';
-    order?: 'asc' | 'desc';
-    offset?: string;
-    limit?: string;
-    seqCursor?: string;
-  };
-  url: '/pages';
-};
-
-export type GetPagesErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetPagesError = GetPagesErrors[keyof GetPagesErrors];
-
-export type GetPagesResponses = {
-  /**
-   * Pages
-   */
-  200: {
-    items: Array<Page>;
-    total: number;
-  };
-};
-
-export type GetPagesResponse = GetPagesResponses[keyof GetPagesResponses];
-
-export type CreatePagesData = {
-  body: Array<{
-    name?: string;
-    id: string;
-    displayOrder?: number;
-    stx: StxBase;
-  }>;
-  path?: never;
-  query?: never;
-  url: '/pages';
-};
-
-export type CreatePagesErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type CreatePagesError = CreatePagesErrors[keyof CreatePagesErrors];
-
-export type CreatePagesResponses = {
-  /**
-   * Pages already created (idempotent)
-   */
-  200: {
-    data: Array<Page>;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-  /**
-   * Pages created
-   */
-  201: {
-    data: Array<Page>;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type CreatePagesResponse = CreatePagesResponses[keyof CreatePagesResponses];
-
-export type GetPageData = {
-  body?: never;
-  path: {
-    id: string;
-  };
-  query?: never;
-  url: '/pages/{id}';
-};
-
-export type GetPageErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetPageError = GetPageErrors[keyof GetPageErrors];
-
-export type GetPageResponses = {
-  /**
-   * Page
-   */
-  200: Page;
-};
-
-export type GetPageResponse = GetPageResponses[keyof GetPageResponses];
-
-export type UpdatePageData = {
-  body: {
-    ops: {
-      name?: string;
-      description?: string | null;
-      keywords?: string | null;
-      displayOrder?: number;
-      status?: 'unpublished' | 'published' | 'archived';
-      renderMode?: 'default' | 'overview' | 'nodeOnly';
-      parentId?: string | null;
-      publicAt?: string | null;
-    };
-    stx: StxBase;
-  };
-  path: {
-    id: string;
-  };
-  query?: {
-    fullResponse?: string | boolean;
-  };
-  url: '/pages/{id}';
-};
-
-export type UpdatePageErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type UpdatePageError = UpdatePageErrors[keyof UpdatePageErrors];
-
-export type UpdatePageResponses = {
-  /**
-   * Page updated
-   */
-  200: Page;
-};
-
-export type UpdatePageResponse = UpdatePageResponses[keyof UpdatePageResponses];
 
 export type GetUsersData = {
   body?: never;
@@ -6254,7 +5770,7 @@ export type MarkSeenData = {
     /**
      * Entity type for all IDs in this batch
      */
-    entityType: 'task' | 'label' | 'attachment' | 'page';
+    entityType: 'task' | 'label' | 'attachment';
   };
   path: {
     tenantId: string;

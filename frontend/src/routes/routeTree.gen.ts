@@ -43,14 +43,13 @@ import { Route as PublicContentDocsPagesRouteImport } from './_public/_content/d
 import { Route as PublicContentDocsOverviewRouteImport } from './_public/_content/docs/overview'
 import { Route as PublicContentDocsOperationsRouteImport } from './_public/_content/docs/operations'
 import { Route as AppTenantIdOrganizationSlugOrganizationRouteRouteImport } from './_app/$tenantId.$organizationSlug/organization/route'
-import { Route as PublicContentDocsPageIdRouteImport } from './_public/_content/docs/page.$id'
+import { Route as PublicContentDocsPageSplatRouteImport } from './_public/_content/docs/page.$'
 import { Route as PublicContentDocsOperationsTableRouteImport } from './_public/_content/docs/operations_.table'
 import { Route as AppTenantIdOrganizationSlugWorkspaceSlugRouteImport } from './_app/$tenantId.$organizationSlug/workspace.$slug'
 import { Route as AppTenantIdOrganizationSlugProjectSlugRouteImport } from './_app/$tenantId.$organizationSlug/project.$slug'
 import { Route as AppTenantIdOrganizationSlugOrganizationSettingsRouteImport } from './_app/$tenantId.$organizationSlug/organization/settings'
 import { Route as AppTenantIdOrganizationSlugOrganizationMembersRouteImport } from './_app/$tenantId.$organizationSlug/organization/members'
 import { Route as AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport } from './_app/$tenantId.$organizationSlug/organization/attachments'
-import { Route as PublicContentDocsPageIdEditRouteImport } from './_public/_content/docs/page_.$id.edit'
 import { Route as PublicContentTenantIdOrganizationSlugPublicProjectSlugRouteImport } from './_public/_content/$tenantId.$organizationSlug.public.project.$slug'
 
 const PublicRouteRoute = PublicRouteRouteImport.update({
@@ -229,11 +228,12 @@ const AppTenantIdOrganizationSlugOrganizationRouteRoute =
     path: '/organization',
     getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
   } as any)
-const PublicContentDocsPageIdRoute = PublicContentDocsPageIdRouteImport.update({
-  id: '/page/$id',
-  path: '/page/$id',
-  getParentRoute: () => PublicContentDocsRouteRoute,
-} as any)
+const PublicContentDocsPageSplatRoute =
+  PublicContentDocsPageSplatRouteImport.update({
+    id: '/page/$',
+    path: '/page/$',
+    getParentRoute: () => PublicContentDocsRouteRoute,
+  } as any)
 const PublicContentDocsOperationsTableRoute =
   PublicContentDocsOperationsTableRouteImport.update({
     id: '/operations_/table',
@@ -269,12 +269,6 @@ const AppTenantIdOrganizationSlugOrganizationAttachmentsRoute =
     id: '/attachments',
     path: '/attachments',
     getParentRoute: () => AppTenantIdOrganizationSlugOrganizationRouteRoute,
-  } as any)
-const PublicContentDocsPageIdEditRoute =
-  PublicContentDocsPageIdEditRouteImport.update({
-    id: '/page_/$id/edit',
-    path: '/page/$id/edit',
-    getParentRoute: () => PublicContentDocsRouteRoute,
   } as any)
 const PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute =
   PublicContentTenantIdOrganizationSlugPublicProjectSlugRouteImport.update({
@@ -321,8 +315,7 @@ export interface FileRoutesByFullPath {
   '/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
   '/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
   '/docs/operations/table': typeof PublicContentDocsOperationsTableRoute
-  '/docs/page/$id': typeof PublicContentDocsPageIdRoute
-  '/docs/page/$id/edit': typeof PublicContentDocsPageIdEditRoute
+  '/docs/page/$': typeof PublicContentDocsPageSplatRoute
   '/$tenantId/$organizationSlug/public/project/$slug': typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute
 }
 export interface FileRoutesByTo {
@@ -362,8 +355,7 @@ export interface FileRoutesByTo {
   '/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
   '/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
   '/docs/operations/table': typeof PublicContentDocsOperationsTableRoute
-  '/docs/page/$id': typeof PublicContentDocsPageIdRoute
-  '/docs/page/$id/edit': typeof PublicContentDocsPageIdEditRoute
+  '/docs/page/$': typeof PublicContentDocsPageSplatRoute
   '/$tenantId/$organizationSlug/public/project/$slug': typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute
 }
 export interface FileRoutesById {
@@ -408,8 +400,7 @@ export interface FileRoutesById {
   '/_app/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
   '/_app/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
   '/_public/_content/docs/operations_/table': typeof PublicContentDocsOperationsTableRoute
-  '/_public/_content/docs/page/$id': typeof PublicContentDocsPageIdRoute
-  '/_public/_content/docs/page_/$id/edit': typeof PublicContentDocsPageIdEditRoute
+  '/_public/_content/docs/page/$': typeof PublicContentDocsPageSplatRoute
   '/_public/_content/$tenantId/$organizationSlug/public/project/$slug': typeof PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute
 }
 export interface FileRouteTypes {
@@ -452,8 +443,7 @@ export interface FileRouteTypes {
     | '/$tenantId/$organizationSlug/project/$slug'
     | '/$tenantId/$organizationSlug/workspace/$slug'
     | '/docs/operations/table'
-    | '/docs/page/$id'
-    | '/docs/page/$id/edit'
+    | '/docs/page/$'
     | '/$tenantId/$organizationSlug/public/project/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -493,8 +483,7 @@ export interface FileRouteTypes {
     | '/$tenantId/$organizationSlug/project/$slug'
     | '/$tenantId/$organizationSlug/workspace/$slug'
     | '/docs/operations/table'
-    | '/docs/page/$id'
-    | '/docs/page/$id/edit'
+    | '/docs/page/$'
     | '/$tenantId/$organizationSlug/public/project/$slug'
   id:
     | '__root__'
@@ -538,8 +527,7 @@ export interface FileRouteTypes {
     | '/_app/$tenantId/$organizationSlug/project/$slug'
     | '/_app/$tenantId/$organizationSlug/workspace/$slug'
     | '/_public/_content/docs/operations_/table'
-    | '/_public/_content/docs/page/$id'
-    | '/_public/_content/docs/page_/$id/edit'
+    | '/_public/_content/docs/page/$'
     | '/_public/_content/$tenantId/$organizationSlug/public/project/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -788,11 +776,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRouteImport
       parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
     }
-    '/_public/_content/docs/page/$id': {
-      id: '/_public/_content/docs/page/$id'
-      path: '/page/$id'
-      fullPath: '/docs/page/$id'
-      preLoaderRoute: typeof PublicContentDocsPageIdRouteImport
+    '/_public/_content/docs/page/$': {
+      id: '/_public/_content/docs/page/$'
+      path: '/page/$'
+      fullPath: '/docs/page/$'
+      preLoaderRoute: typeof PublicContentDocsPageSplatRouteImport
       parentRoute: typeof PublicContentDocsRouteRoute
     }
     '/_public/_content/docs/operations_/table': {
@@ -836,13 +824,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$tenantId/$organizationSlug/organization/attachments'
       preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport
       parentRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRoute
-    }
-    '/_public/_content/docs/page_/$id/edit': {
-      id: '/_public/_content/docs/page_/$id/edit'
-      path: '/page/$id/edit'
-      fullPath: '/docs/page/$id/edit'
-      preLoaderRoute: typeof PublicContentDocsPageIdEditRouteImport
-      parentRoute: typeof PublicContentDocsRouteRoute
     }
     '/_public/_content/$tenantId/$organizationSlug/public/project/$slug': {
       id: '/_public/_content/$tenantId/$organizationSlug/public/project/$slug'
@@ -944,8 +925,7 @@ interface PublicContentDocsRouteRouteChildren {
   PublicContentDocsSchemasRoute: typeof PublicContentDocsSchemasRoute
   PublicContentDocsIndexRoute: typeof PublicContentDocsIndexRoute
   PublicContentDocsOperationsTableRoute: typeof PublicContentDocsOperationsTableRoute
-  PublicContentDocsPageIdRoute: typeof PublicContentDocsPageIdRoute
-  PublicContentDocsPageIdEditRoute: typeof PublicContentDocsPageIdEditRoute
+  PublicContentDocsPageSplatRoute: typeof PublicContentDocsPageSplatRoute
 }
 
 const PublicContentDocsRouteRouteChildren: PublicContentDocsRouteRouteChildren =
@@ -957,8 +937,7 @@ const PublicContentDocsRouteRouteChildren: PublicContentDocsRouteRouteChildren =
     PublicContentDocsIndexRoute: PublicContentDocsIndexRoute,
     PublicContentDocsOperationsTableRoute:
       PublicContentDocsOperationsTableRoute,
-    PublicContentDocsPageIdRoute: PublicContentDocsPageIdRoute,
-    PublicContentDocsPageIdEditRoute: PublicContentDocsPageIdEditRoute,
+    PublicContentDocsPageSplatRoute: PublicContentDocsPageSplatRoute,
   }
 
 const PublicContentDocsRouteRouteWithChildren =
