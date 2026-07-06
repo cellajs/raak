@@ -253,7 +253,7 @@ Cella is a flat-root monorepo.
 ├── ai                        AI worker entrypoint (delegates to backend)
 ├── backend
 │   ├── drizzle               DB migrations
-│   ├── emails                Email templates with jsx-email
+│   ├── emails                Email templates
 │   ├── scripts               Seed scripts and other dev scripts
 ├── bench                     Artillery load testing
 ├── cdc                       Change Data Capture worker (WAL → activities → SSE)

@@ -45,7 +45,6 @@ export function createStreamDispatcher<T extends CursoredSubscriber, E extends A
 
     await Promise.allSettled(
       eligible.map((subscriber) =>
-        // TODO [#10] does this use a weaker type then necessary? Can it use the generic type we pass per dispatch config?
         sendNotificationToSubscriber(subscriber, event, notification, transformNotification, preSerialized).catch(
           (error) => {
             log.error('Failed to dispatch stream event', {
