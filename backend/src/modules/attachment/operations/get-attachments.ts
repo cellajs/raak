@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { and, count, eq, getColumns, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, getColumns, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -44,6 +44,7 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   // Restrict to the caller's readable projects unless org-wide (projectIds === undefined).
   if (projectIds) filters.push(inArray(attachmentsTable.projectId, projectIds));
 
+  // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
   if (!seqCursor) {
     filters.push(isNull(attachmentsTable.deletedAt));
   }
@@ -62,12 +63,18 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     );
   }
 
-  const orderColumn = getOrderColumn(sort, attachmentsTable.createdAt, order, {
-    name: attachmentsTable.name,
-    createdAt: attachmentsTable.createdAt,
-    contentType: attachmentsTable.contentType,
-  });
+  // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
+  const orderBy = seqCursor
+    ? [asc(attachmentsTable.seq), asc(attachmentsTable.id)]
+    : [
+        getOrderColumn(sort, attachmentsTable.createdAt, order, {
+          name: attachmentsTable.name,
+          createdAt: attachmentsTable.createdAt,
+          contentType: attachmentsTable.contentType,
+        }),
+      ];
 
+  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted attachments
   const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
   const { rawItems, total } = await read(ctx, async (readCtx) => {
@@ -88,7 +95,7 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
         .leftJoin(createdByUser, eq(createdByUser.id, attachmentsTable.createdBy))
         .leftJoin(updatedByUser, eq(updatedByUser.id, attachmentsTable.updatedBy))
         .where(whereClause)
-        .orderBy(orderColumn)
+        .orderBy(...orderBy)
         .limit(limit)
         .offset(offset),
       db.select({ total: count() }).from(attachmentsTable).where(whereClause),

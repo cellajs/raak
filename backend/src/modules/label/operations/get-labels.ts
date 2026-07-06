@@ -70,13 +70,23 @@ export async function getLabelsOp(
 
     const labelsSubquery = buildLabelsListQuery(readCtx, { filters: labelsFilters }).as('labels');
 
-    const orderColumn = getOrderColumn(sort, sql`name`, order, {
-      name: sql`name`,
-      usedCount: sql`used_count`,
-    });
+    // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
+    const orderBy = seqCursor
+      ? [sql`seq asc`, sql`id asc`]
+      : [
+          getOrderColumn(sort, sql`name`, order, {
+            name: sql`name`,
+            usedCount: sql`used_count`,
+          }),
+        ];
 
     const [items, [{ total }]] = await Promise.all([
-      db.select().from(labelsSubquery).orderBy(orderColumn).limit(limit).offset(offset),
+      db
+        .select()
+        .from(labelsSubquery)
+        .orderBy(...orderBy)
+        .limit(limit)
+        .offset(offset),
       db.select({ total: count() }).from(labelsSubquery),
     ]);
 

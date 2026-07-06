@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { labelsTable } from '#/modules/label/label-db';
@@ -210,7 +210,7 @@ export const findTaskRelations = (ctx: AuthContext, { userIds, labelIds }: FindT
 
 interface FindTasksPaginatedOpts {
   filters: SQL | undefined;
-  orderColumn: SQL;
+  orderBy: SQL[];
   limit: number;
   offset: number;
 }
@@ -218,7 +218,7 @@ interface FindTasksPaginatedOpts {
 /** Fetch paginated tasks with count in parallel. */
 export const findTasksPaginated = async (
   ctx: DbContext,
-  { filters, orderColumn, limit, offset }: FindTasksPaginatedOpts,
+  { filters, orderBy, limit, offset }: FindTasksPaginatedOpts,
 ) => {
   const { db } = ctx.var;
   return Promise.all([
@@ -226,7 +226,7 @@ export const findTasksPaginated = async (
       .select()
       .from(tasksTable)
       .where(filters)
-      .orderBy(orderColumn, desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)))
+      .orderBy(...orderBy)
       .limit(limit)
       .offset(offset),
     db.select({ total: count() }).from(tasksTable).where(filters),

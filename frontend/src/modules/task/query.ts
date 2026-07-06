@@ -19,6 +19,7 @@ import {
   invalidateIfLastMutation,
   registerEntityQueryKeys,
   removePendingMutations,
+  SYNC_CHUNK_SIZE,
 } from '~/query/basic';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
@@ -131,7 +132,7 @@ export const taskKeys = {
 registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, options) => {
   return getTasks({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, limit: '1000' },
+    query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
     headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
@@ -553,13 +554,14 @@ addMutationRegistrar((qc: QueryClient) => {
 /** Fetch tasks for table export. Bypasses cache; returns flat items. */
 export const fetchTasksForExport = async (params: {
   limit: number;
+  offset?: number;
   organizationId: string;
   tenantId: string;
   query: Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
 }) => {
-  const { limit, organizationId, tenantId, query } = params;
+  const { limit, offset = 0, organizationId, tenantId, query } = params;
   const { items } = await getTasks({
-    query: { ...query, limit: String(limit), offset: '0' },
+    query: { ...query, limit: String(limit), offset: String(offset) },
     path: { organizationId, tenantId },
   });
   return items;

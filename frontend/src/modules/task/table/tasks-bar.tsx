@@ -39,12 +39,13 @@ export const TasksTableBar = ({
 
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const fetchExport = async (passedLimit: number) => {
+  const fetchExport = async (limit: number, offset: number) => {
     if (!queryParams) return [];
     const { organizationId, tenantId, ...rest } = queryParams;
     const tableQueryParams = { ...searchVars, ...rest };
     const items = await fetchTasksForExport({
-      limit: passedLimit,
+      limit,
+      offset,
       organizationId,
       tenantId,
       query: tableQueryParams,

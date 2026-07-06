@@ -1,4 +1,4 @@
-import { count, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import { asc, count, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
 import { baseDb } from '#/db/db';
 import { pagesTable } from '#/modules/page/page-db';
 import { buildPagesListQuery } from '#/modules/page/page-queries';
@@ -24,6 +24,7 @@ export const getPages = async (opts: GetPagesOpts) => {
 
   const filters: SQL[] = [];
 
+  // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
   if (!seqCursor) {
     filters.push(isNull(pagesTable.deletedAt));
   }
@@ -55,17 +56,25 @@ export const getPages = async (opts: GetPagesOpts) => {
     filters.push(or(...qFilters) as SQL);
   }
 
-  const orderColumn = getOrderColumn(sort, pagesTable.status, order, {
-    status: pagesTable.status,
-    createdAt: pagesTable.createdAt,
-    name: pagesTable.name,
-    displayOrder: pagesTable.displayOrder,
-  });
+  // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
+  const orderBy = seqCursor
+    ? [asc(pagesTable.seq), asc(pagesTable.id)]
+    : [
+        getOrderColumn(sort, pagesTable.status, order, {
+          status: pagesTable.status,
+          createdAt: pagesTable.createdAt,
+          name: pagesTable.name,
+          displayOrder: pagesTable.displayOrder,
+        }),
+      ];
 
   const pagesQuery = buildPagesListQuery({ var: { db } }, { filters });
 
   const [items, total] = await Promise.all([
-    pagesQuery.orderBy(orderColumn).limit(limit).offset(offset),
+    pagesQuery
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset),
     db
       .select({ total: count() })
       .from(pagesQuery.as('pages'))

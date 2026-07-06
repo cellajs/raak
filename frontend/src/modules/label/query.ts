@@ -27,6 +27,7 @@ import {
   invalidateIfLastMutation,
   registerEntityQueryKeys,
   removePendingMutations,
+  SYNC_CHUNK_SIZE,
 } from '~/query/basic';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
@@ -67,7 +68,7 @@ const keys = {
 registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, options) => {
   return getLabels({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, limit: '1000' },
+    query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
     headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
