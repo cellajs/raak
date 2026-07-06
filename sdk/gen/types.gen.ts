@@ -389,60 +389,6 @@ export type Request = {
 };
 
 /**
- * The main context entity is an organization.
- */
-export type Organization = {
-  createdAt: string;
-  id: string;
-  entityType: 'organization';
-  tenantId: string;
-  name: string;
-  updatedAt: string | null;
-  slug: string;
-  thumbnailUrl: string | null;
-  bannerUrl: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  shortName: string | null;
-  country: string | null;
-  timezone: string | null;
-  defaultLanguage: 'en' | 'nl';
-  languages: Array<'en' | 'nl'>;
-  notificationEmail: string | null;
-  color: string | null;
-  logoUrl: string | null;
-  websiteUrl: string | null;
-  welcomeText: string | null;
-  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
-  chatSupport: boolean;
-  included: {
-    membership?: MembershipBase;
-    counts?: {
-      membership: {
-        admin: number;
-        member: number;
-        guest: number;
-        pending: number;
-        total: number;
-      };
-      entities: {
-        workspace: number;
-        project: number;
-        task: number;
-        label: number;
-        attachment: number;
-      };
-    };
-  };
-};
-
-/**
  * A project that organizes tasks and members within an organization.
  */
 export type Project = {
@@ -544,6 +490,60 @@ export type Task = {
     entityType: 'user';
   } | null;
   stx: StxBase;
+};
+
+/**
+ * The main context entity is an organization.
+ */
+export type Organization = {
+  createdAt: string;
+  id: string;
+  entityType: 'organization';
+  tenantId: string;
+  name: string;
+  updatedAt: string | null;
+  slug: string;
+  thumbnailUrl: string | null;
+  bannerUrl: string | null;
+  createdBy: UserMinimalBase &
+    ({
+      [key: string]: unknown;
+    } | null);
+  updatedBy: UserMinimalBase &
+    ({
+      [key: string]: unknown;
+    } | null);
+  shortName: string | null;
+  country: string | null;
+  timezone: string | null;
+  defaultLanguage: 'en' | 'nl';
+  languages: Array<'en' | 'nl'>;
+  notificationEmail: string | null;
+  color: string | null;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  welcomeText: string | null;
+  authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+  chatSupport: boolean;
+  included: {
+    membership?: MembershipBase;
+    counts?: {
+      membership: {
+        admin: number;
+        member: number;
+        guest: number;
+        pending: number;
+        total: number;
+      };
+      entities: {
+        workspace: number;
+        project: number;
+        task: number;
+        label: number;
+        attachment: number;
+      };
+    };
+  };
 };
 
 /**
@@ -3461,330 +3461,6 @@ export type GetPublicCountsResponses = {
 
 export type GetPublicCountsResponse = GetPublicCountsResponses[keyof GetPublicCountsResponses];
 
-export type DeleteOrganizationsData = {
-  body: {
-    ids: Array<string>;
-  };
-  path: {
-    tenantId: string;
-  };
-  query?: never;
-  url: '/{tenantId}/organizations';
-};
-
-export type DeleteOrganizationsErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type DeleteOrganizationsError = DeleteOrganizationsErrors[keyof DeleteOrganizationsErrors];
-
-export type DeleteOrganizationsResponses = {
-  /**
-   * Success
-   */
-  200: {
-    data: Array<unknown>;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type DeleteOrganizationsResponse = DeleteOrganizationsResponses[keyof DeleteOrganizationsResponses];
-
-export type CreateOrganizationsData = {
-  body: Array<{
-    id: string;
-    name: string;
-    slug: string;
-  }>;
-  path: {
-    tenantId: string;
-  };
-  query?: never;
-  url: '/{tenantId}/organizations';
-};
-
-export type CreateOrganizationsErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type CreateOrganizationsError = CreateOrganizationsErrors[keyof CreateOrganizationsErrors];
-
-export type CreateOrganizationsResponses = {
-  /**
-   * Organizations were created
-   */
-  201: {
-    /**
-     * The main context entity is an organization.
-     */
-    data: Array<
-      Organization & {
-        included?: {
-          membership: MembershipBase;
-          counts?: {
-            membership: {
-              admin: number;
-              member: number;
-              guest: number;
-              pending: number;
-              total: number;
-            };
-            entities: {
-              workspace: number;
-              project: number;
-              task: number;
-              label: number;
-              attachment: number;
-            };
-          };
-        };
-      }
-    >;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type CreateOrganizationsResponse = CreateOrganizationsResponses[keyof CreateOrganizationsResponses];
-
-export type GetOrganizationsData = {
-  body?: never;
-  path?: never;
-  query?: {
-    q?: string;
-    sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
-    order?: 'asc' | 'desc';
-    offset?: string;
-    limit?: string;
-    seqCursor?: string;
-    relatableUserId?: string;
-    role?: 'admin' | 'member' | 'guest';
-    excludeArchived?: 'true' | 'false';
-    include?: string;
-  };
-  url: '/organizations';
-};
-
-export type GetOrganizationsErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetOrganizationsError = GetOrganizationsErrors[keyof GetOrganizationsErrors];
-
-export type GetOrganizationsResponses = {
-  /**
-   * Organizations
-   */
-  200: {
-    items: Array<Organization>;
-    total: number;
-  };
-};
-
-export type GetOrganizationsResponse = GetOrganizationsResponses[keyof GetOrganizationsResponses];
-
-export type GetOrganizationData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    id: string;
-  };
-  query?: {
-    slug?: string | boolean;
-    include?: string;
-  };
-  url: '/{tenantId}/organizations/{id}';
-};
-
-export type GetOrganizationErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetOrganizationError = GetOrganizationErrors[keyof GetOrganizationErrors];
-
-export type GetOrganizationResponses = {
-  /**
-   * Organization
-   */
-  200: Organization;
-};
-
-export type GetOrganizationResponse = GetOrganizationResponses[keyof GetOrganizationResponses];
-
-export type UpdateOrganizationData = {
-  body?: {
-    slug?: string;
-    name?: string;
-    shortName?: string | null;
-    country?: string | null;
-    timezone?: string | null;
-    defaultLanguage?: 'en' | 'nl';
-    languages?: Array<'en' | 'nl'>;
-    notificationEmail?: string | null;
-    color?: string | null;
-    thumbnailUrl?: string | null;
-    logoUrl?: string | null;
-    bannerUrl?: string | null;
-    websiteUrl?: string | null;
-    welcomeText?: string | null;
-    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
-    chatSupport?: boolean;
-  };
-  path: {
-    tenantId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/organizations/{id}';
-};
-
-export type UpdateOrganizationErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type UpdateOrganizationError = UpdateOrganizationErrors[keyof UpdateOrganizationErrors];
-
-export type UpdateOrganizationResponses = {
-  /**
-   * Organization was updated
-   */
-  200: Organization;
-};
-
-export type UpdateOrganizationResponse = UpdateOrganizationResponses[keyof UpdateOrganizationResponses];
-
 export type GetUsersData = {
   body?: never;
   path?: never;
@@ -4201,6 +3877,476 @@ export type RedirectToTaskResponses = {
   200: unknown;
 };
 
+export type DeleteOrganizationsData = {
+  body: {
+    ids: Array<string>;
+  };
+  path: {
+    tenantId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/organizations';
+};
+
+export type DeleteOrganizationsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type DeleteOrganizationsError = DeleteOrganizationsErrors[keyof DeleteOrganizationsErrors];
+
+export type DeleteOrganizationsResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<unknown>;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type DeleteOrganizationsResponse = DeleteOrganizationsResponses[keyof DeleteOrganizationsResponses];
+
+export type CreateOrganizationsData = {
+  body: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+  path: {
+    tenantId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/organizations';
+};
+
+export type CreateOrganizationsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type CreateOrganizationsError = CreateOrganizationsErrors[keyof CreateOrganizationsErrors];
+
+export type CreateOrganizationsResponses = {
+  /**
+   * Organizations were created
+   */
+  201: {
+    /**
+     * The main context entity is an organization.
+     */
+    data: Array<
+      Organization & {
+        included?: {
+          membership: MembershipBase;
+          counts?: {
+            membership: {
+              admin: number;
+              member: number;
+              guest: number;
+              pending: number;
+              total: number;
+            };
+            entities: {
+              workspace: number;
+              project: number;
+              task: number;
+              label: number;
+              attachment: number;
+            };
+          };
+        };
+      }
+    >;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type CreateOrganizationsResponse = CreateOrganizationsResponses[keyof CreateOrganizationsResponses];
+
+export type GetOrganizationsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    q?: string;
+    sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
+    order?: 'asc' | 'desc';
+    offset?: string;
+    limit?: string;
+    seqCursor?: string;
+    relatableUserId?: string;
+    role?: 'admin' | 'member' | 'guest';
+    excludeArchived?: 'true' | 'false';
+    include?: string;
+  };
+  url: '/organizations';
+};
+
+export type GetOrganizationsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetOrganizationsError = GetOrganizationsErrors[keyof GetOrganizationsErrors];
+
+export type GetOrganizationsResponses = {
+  /**
+   * Organizations
+   */
+  200: {
+    items: Array<Organization>;
+    total: number;
+  };
+};
+
+export type GetOrganizationsResponse = GetOrganizationsResponses[keyof GetOrganizationsResponses];
+
+export type GetOrganizationData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    id: string;
+  };
+  query?: {
+    slug?: string | boolean;
+    include?: string;
+  };
+  url: '/{tenantId}/organizations/{id}';
+};
+
+export type GetOrganizationErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetOrganizationError = GetOrganizationErrors[keyof GetOrganizationErrors];
+
+export type GetOrganizationResponses = {
+  /**
+   * Organization
+   */
+  200: Organization;
+};
+
+export type GetOrganizationResponse = GetOrganizationResponses[keyof GetOrganizationResponses];
+
+export type UpdateOrganizationData = {
+  body?: {
+    slug?: string;
+    name?: string;
+    shortName?: string | null;
+    country?: string | null;
+    timezone?: string | null;
+    defaultLanguage?: 'en' | 'nl';
+    languages?: Array<'en' | 'nl'>;
+    notificationEmail?: string | null;
+    color?: string | null;
+    thumbnailUrl?: string | null;
+    logoUrl?: string | null;
+    bannerUrl?: string | null;
+    websiteUrl?: string | null;
+    welcomeText?: string | null;
+    authStrategies?: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
+    chatSupport?: boolean;
+  };
+  path: {
+    tenantId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/organizations/{id}';
+};
+
+export type UpdateOrganizationErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type UpdateOrganizationError = UpdateOrganizationErrors[keyof UpdateOrganizationErrors];
+
+export type UpdateOrganizationResponses = {
+  /**
+   * Organization was updated
+   */
+  200: Organization;
+};
+
+export type UpdateOrganizationResponse = UpdateOrganizationResponses[keyof UpdateOrganizationResponses];
+
+export type DeleteWorkspacesData = {
+  body?: {
+    ids: Array<string>;
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/workspaces';
+};
+
+export type DeleteWorkspacesErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type DeleteWorkspacesError = DeleteWorkspacesErrors[keyof DeleteWorkspacesErrors];
+
+export type DeleteWorkspacesResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<unknown>;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type DeleteWorkspacesResponse = DeleteWorkspacesResponses[keyof DeleteWorkspacesResponses];
+
+export type CreateWorkspacesData = {
+  body: Array<{
+    id: string;
+    name: string;
+  }>;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/workspaces';
+};
+
+export type CreateWorkspacesErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type CreateWorkspacesError = CreateWorkspacesErrors[keyof CreateWorkspacesErrors];
+
+export type CreateWorkspacesResponses = {
+  /**
+   * Workspaces created
+   */
+  201: {
+    /**
+     * A personal workspace that groups projects and tasks within an organization.
+     */
+    data: Array<
+      Workspace & {
+        included?: {
+          membership: MembershipBase;
+          counts?: {
+            membership: {
+              admin: number;
+              member: number;
+              guest: number;
+              pending: number;
+              total: number;
+            };
+            entities: {
+              [key: string]: unknown;
+            };
+          };
+        };
+      }
+    >;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type CreateWorkspacesResponse = CreateWorkspacesResponses[keyof CreateWorkspacesResponses];
+
 export type GetWorkspacesData = {
   body?: never;
   path?: never;
@@ -4259,6 +4405,270 @@ export type GetWorkspacesResponses = {
 };
 
 export type GetWorkspacesResponse = GetWorkspacesResponses[keyof GetWorkspacesResponses];
+
+export type GetWorkspaceData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: {
+    slug?: string | boolean;
+    include?: string;
+  };
+  url: '/{tenantId}/{organizationId}/workspaces/{id}';
+};
+
+export type GetWorkspaceErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetWorkspaceError = GetWorkspaceErrors[keyof GetWorkspaceErrors];
+
+export type GetWorkspaceResponses = {
+  /**
+   * Workspace
+   */
+  200: Workspace;
+};
+
+export type GetWorkspaceResponse = GetWorkspaceResponses[keyof GetWorkspaceResponses];
+
+export type UpdateWorkspaceData = {
+  body?: {
+    name?: string;
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/workspaces/{id}';
+};
+
+export type UpdateWorkspaceErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type UpdateWorkspaceError = UpdateWorkspaceErrors[keyof UpdateWorkspaceErrors];
+
+export type UpdateWorkspaceResponses = {
+  /**
+   * Workspace updated
+   */
+  200: Workspace;
+};
+
+export type UpdateWorkspaceResponse = UpdateWorkspaceResponses[keyof UpdateWorkspaceResponses];
+
+export type DeleteProjectsData = {
+  body?: {
+    ids: Array<string>;
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/projects';
+};
+
+export type DeleteProjectsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type DeleteProjectsError = DeleteProjectsErrors[keyof DeleteProjectsErrors];
+
+export type DeleteProjectsResponses = {
+  /**
+   * Success
+   */
+  200: {
+    data: Array<unknown>;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type DeleteProjectsResponse = DeleteProjectsResponses[keyof DeleteProjectsResponses];
+
+export type CreateProjectsData = {
+  body: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    publicAt: string | null;
+  }>;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query: {
+    workspaceId: string;
+  };
+  url: '/{tenantId}/{organizationId}/projects';
+};
+
+export type CreateProjectsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type CreateProjectsError = CreateProjectsErrors[keyof CreateProjectsErrors];
+
+export type CreateProjectsResponses = {
+  /**
+   * Projects created
+   */
+  201: {
+    /**
+     * A project that organizes tasks and members within an organization.
+     */
+    data: Array<
+      Project & {
+        included?: {
+          membership: MembershipBase;
+          counts?: {
+            membership: {
+              admin: number;
+              member: number;
+              guest: number;
+              pending: number;
+              total: number;
+            };
+            entities: {
+              task: number;
+              label: number;
+              attachment: number;
+            };
+            taskStatusCounts?: {
+              accepted: number;
+              reviewed: number;
+              delivered: number;
+              finished: number;
+              started: number;
+              unstarted: number;
+              iced: number;
+            };
+          };
+        };
+      }
+    >;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type CreateProjectsResponse = CreateProjectsResponses[keyof CreateProjectsResponses];
 
 export type GetProjectsData = {
   body?: never;
@@ -4320,6 +4730,345 @@ export type GetProjectsResponses = {
 };
 
 export type GetProjectsResponse = GetProjectsResponses[keyof GetProjectsResponses];
+
+export type GetProjectData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: {
+    slug?: string | boolean;
+    include?: string;
+  };
+  url: '/{tenantId}/{organizationId}/projects/{id}';
+};
+
+export type GetProjectErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetProjectError = GetProjectErrors[keyof GetProjectErrors];
+
+export type GetProjectResponses = {
+  /**
+   * Project
+   */
+  200: Project;
+};
+
+export type GetProjectResponse = GetProjectResponses[keyof GetProjectResponses];
+
+export type UpdateProjectData = {
+  body?: {
+    slug?: string;
+    name?: string;
+    thumbnailUrl?: string | null;
+    bannerUrl?: string | null;
+    publicAt?: string | null;
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/projects/{id}';
+};
+
+export type UpdateProjectErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type UpdateProjectError = UpdateProjectErrors[keyof UpdateProjectErrors];
+
+export type UpdateProjectResponses = {
+  /**
+   * Project updated
+   */
+  200: Project;
+};
+
+export type UpdateProjectResponse = UpdateProjectResponses[keyof UpdateProjectResponses];
+
+export type AssignProjectWorkspaceData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query: {
+    workspaceId: string;
+  };
+  url: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace';
+};
+
+export type AssignProjectWorkspaceErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type AssignProjectWorkspaceError = AssignProjectWorkspaceErrors[keyof AssignProjectWorkspaceErrors];
+
+export type AssignProjectWorkspaceResponses = {
+  /**
+   * A project that organizes tasks and members within an organization.
+   */
+  200: Project & {
+    included?: {
+      membership: MembershipBase;
+      counts?: {
+        membership: {
+          admin: number;
+          member: number;
+          guest: number;
+          pending: number;
+          total: number;
+        };
+        entities: {
+          task: number;
+          label: number;
+          attachment: number;
+        };
+        taskStatusCounts?: {
+          accepted: number;
+          reviewed: number;
+          delivered: number;
+          finished: number;
+          started: number;
+          unstarted: number;
+          iced: number;
+        };
+      };
+    };
+  };
+};
+
+export type AssignProjectWorkspaceResponse = AssignProjectWorkspaceResponses[keyof AssignProjectWorkspaceResponses];
+
+export type RemoveProjectWorkspaceData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/projects/{id}/workspace';
+};
+
+export type RemoveProjectWorkspaceErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type RemoveProjectWorkspaceError = RemoveProjectWorkspaceErrors[keyof RemoveProjectWorkspaceErrors];
+
+export type RemoveProjectWorkspaceResponses = {
+  /**
+   * A project that organizes tasks and members within an organization.
+   */
+  200: Project & {
+    included?: {
+      membership: MembershipBase;
+      counts?: {
+        membership: {
+          admin: number;
+          member: number;
+          guest: number;
+          pending: number;
+          total: number;
+        };
+        entities: {
+          task: number;
+          label: number;
+          attachment: number;
+        };
+        taskStatusCounts?: {
+          accepted: number;
+          reviewed: number;
+          delivered: number;
+          finished: number;
+          started: number;
+          unstarted: number;
+          iced: number;
+        };
+      };
+    };
+  };
+};
+
+export type RemoveProjectWorkspaceResponse = RemoveProjectWorkspaceResponses[keyof RemoveProjectWorkspaceResponses];
+
+export type MoveProjectToWorkspaceData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query: {
+    workspaceId: string;
+  };
+  url: '/{tenantId}/{organizationId}/projects/{id}/move';
+};
+
+export type MoveProjectToWorkspaceErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type MoveProjectToWorkspaceError = MoveProjectToWorkspaceErrors[keyof MoveProjectToWorkspaceErrors];
+
+export type MoveProjectToWorkspaceResponses = {
+  /**
+   * A project that organizes tasks and members within an organization.
+   */
+  200: Project & {
+    included?: {
+      membership: MembershipBase;
+      counts?: {
+        membership: {
+          admin: number;
+          member: number;
+          guest: number;
+          pending: number;
+          total: number;
+        };
+        entities: {
+          task: number;
+          label: number;
+          attachment: number;
+        };
+        taskStatusCounts?: {
+          accepted: number;
+          reviewed: number;
+          delivered: number;
+          finished: number;
+          started: number;
+          unstarted: number;
+          iced: number;
+        };
+      };
+    };
+  };
+};
+
+export type MoveProjectToWorkspaceResponse = MoveProjectToWorkspaceResponses[keyof MoveProjectToWorkspaceResponses];
 
 export type HandleMcpData = {
   body: unknown;
@@ -5822,755 +6571,6 @@ export type MarkSeenResponses = {
 };
 
 export type MarkSeenResponse = MarkSeenResponses[keyof MarkSeenResponses];
-
-export type DeleteWorkspacesData = {
-  body?: {
-    ids: Array<string>;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/workspaces';
-};
-
-export type DeleteWorkspacesErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type DeleteWorkspacesError = DeleteWorkspacesErrors[keyof DeleteWorkspacesErrors];
-
-export type DeleteWorkspacesResponses = {
-  /**
-   * Success
-   */
-  200: {
-    data: Array<unknown>;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type DeleteWorkspacesResponse = DeleteWorkspacesResponses[keyof DeleteWorkspacesResponses];
-
-export type CreateWorkspacesData = {
-  body: Array<{
-    id: string;
-    name: string;
-  }>;
-  path: {
-    tenantId: string;
-    organizationId: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/workspaces';
-};
-
-export type CreateWorkspacesErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type CreateWorkspacesError = CreateWorkspacesErrors[keyof CreateWorkspacesErrors];
-
-export type CreateWorkspacesResponses = {
-  /**
-   * Workspaces created
-   */
-  201: {
-    /**
-     * A personal workspace that groups projects and tasks within an organization.
-     */
-    data: Array<
-      Workspace & {
-        included?: {
-          membership: MembershipBase;
-          counts?: {
-            membership: {
-              admin: number;
-              member: number;
-              guest: number;
-              pending: number;
-              total: number;
-            };
-            entities: {
-              [key: string]: unknown;
-            };
-          };
-        };
-      }
-    >;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type CreateWorkspacesResponse = CreateWorkspacesResponses[keyof CreateWorkspacesResponses];
-
-export type GetWorkspaceData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: {
-    slug?: string | boolean;
-    include?: string;
-  };
-  url: '/{tenantId}/{organizationId}/workspaces/{id}';
-};
-
-export type GetWorkspaceErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetWorkspaceError = GetWorkspaceErrors[keyof GetWorkspaceErrors];
-
-export type GetWorkspaceResponses = {
-  /**
-   * Workspace
-   */
-  200: Workspace;
-};
-
-export type GetWorkspaceResponse = GetWorkspaceResponses[keyof GetWorkspaceResponses];
-
-export type UpdateWorkspaceData = {
-  body?: {
-    name?: string;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/workspaces/{id}';
-};
-
-export type UpdateWorkspaceErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type UpdateWorkspaceError = UpdateWorkspaceErrors[keyof UpdateWorkspaceErrors];
-
-export type UpdateWorkspaceResponses = {
-  /**
-   * Workspace updated
-   */
-  200: Workspace;
-};
-
-export type UpdateWorkspaceResponse = UpdateWorkspaceResponses[keyof UpdateWorkspaceResponses];
-
-export type DeleteProjectsData = {
-  body?: {
-    ids: Array<string>;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/projects';
-};
-
-export type DeleteProjectsErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type DeleteProjectsError = DeleteProjectsErrors[keyof DeleteProjectsErrors];
-
-export type DeleteProjectsResponses = {
-  /**
-   * Success
-   */
-  200: {
-    data: Array<unknown>;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type DeleteProjectsResponse = DeleteProjectsResponses[keyof DeleteProjectsResponses];
-
-export type CreateProjectsData = {
-  body: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    publicAt: string | null;
-  }>;
-  path: {
-    tenantId: string;
-    organizationId: string;
-  };
-  query: {
-    workspaceId: string;
-  };
-  url: '/{tenantId}/{organizationId}/projects';
-};
-
-export type CreateProjectsErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type CreateProjectsError = CreateProjectsErrors[keyof CreateProjectsErrors];
-
-export type CreateProjectsResponses = {
-  /**
-   * Projects created
-   */
-  201: {
-    /**
-     * A project that organizes tasks and members within an organization.
-     */
-    data: Array<
-      Project & {
-        included?: {
-          membership: MembershipBase;
-          counts?: {
-            membership: {
-              admin: number;
-              member: number;
-              guest: number;
-              pending: number;
-              total: number;
-            };
-            entities: {
-              task: number;
-              label: number;
-              attachment: number;
-            };
-            taskStatusCounts?: {
-              accepted: number;
-              reviewed: number;
-              delivered: number;
-              finished: number;
-              started: number;
-              unstarted: number;
-              iced: number;
-            };
-          };
-        };
-      }
-    >;
-    /**
-     * Identifiers of items that could not be processed
-     */
-    rejectedIds: Array<string>;
-    /**
-     * Map of reason code to rejected item IDs
-     */
-    rejectionReasons?: {
-      [key: string]: Array<string>;
-    };
-  };
-};
-
-export type CreateProjectsResponse = CreateProjectsResponses[keyof CreateProjectsResponses];
-
-export type GetProjectData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: {
-    slug?: string | boolean;
-    include?: string;
-  };
-  url: '/{tenantId}/{organizationId}/projects/{id}';
-};
-
-export type GetProjectErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetProjectError = GetProjectErrors[keyof GetProjectErrors];
-
-export type GetProjectResponses = {
-  /**
-   * Project
-   */
-  200: Project;
-};
-
-export type GetProjectResponse = GetProjectResponses[keyof GetProjectResponses];
-
-export type UpdateProjectData = {
-  body?: {
-    slug?: string;
-    name?: string;
-    thumbnailUrl?: string | null;
-    bannerUrl?: string | null;
-    publicAt?: string | null;
-  };
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/projects/{id}';
-};
-
-export type UpdateProjectErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type UpdateProjectError = UpdateProjectErrors[keyof UpdateProjectErrors];
-
-export type UpdateProjectResponses = {
-  /**
-   * Project updated
-   */
-  200: Project;
-};
-
-export type UpdateProjectResponse = UpdateProjectResponses[keyof UpdateProjectResponses];
-
-export type AssignProjectWorkspaceData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query: {
-    workspaceId: string;
-  };
-  url: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace';
-};
-
-export type AssignProjectWorkspaceErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type AssignProjectWorkspaceError = AssignProjectWorkspaceErrors[keyof AssignProjectWorkspaceErrors];
-
-export type AssignProjectWorkspaceResponses = {
-  /**
-   * A project that organizes tasks and members within an organization.
-   */
-  200: Project & {
-    included?: {
-      membership: MembershipBase;
-      counts?: {
-        membership: {
-          admin: number;
-          member: number;
-          guest: number;
-          pending: number;
-          total: number;
-        };
-        entities: {
-          task: number;
-          label: number;
-          attachment: number;
-        };
-        taskStatusCounts?: {
-          accepted: number;
-          reviewed: number;
-          delivered: number;
-          finished: number;
-          started: number;
-          unstarted: number;
-          iced: number;
-        };
-      };
-    };
-  };
-};
-
-export type AssignProjectWorkspaceResponse = AssignProjectWorkspaceResponses[keyof AssignProjectWorkspaceResponses];
-
-export type RemoveProjectWorkspaceData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/{tenantId}/{organizationId}/projects/{id}/workspace';
-};
-
-export type RemoveProjectWorkspaceErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type RemoveProjectWorkspaceError = RemoveProjectWorkspaceErrors[keyof RemoveProjectWorkspaceErrors];
-
-export type RemoveProjectWorkspaceResponses = {
-  /**
-   * A project that organizes tasks and members within an organization.
-   */
-  200: Project & {
-    included?: {
-      membership: MembershipBase;
-      counts?: {
-        membership: {
-          admin: number;
-          member: number;
-          guest: number;
-          pending: number;
-          total: number;
-        };
-        entities: {
-          task: number;
-          label: number;
-          attachment: number;
-        };
-        taskStatusCounts?: {
-          accepted: number;
-          reviewed: number;
-          delivered: number;
-          finished: number;
-          started: number;
-          unstarted: number;
-          iced: number;
-        };
-      };
-    };
-  };
-};
-
-export type RemoveProjectWorkspaceResponse = RemoveProjectWorkspaceResponses[keyof RemoveProjectWorkspaceResponses];
-
-export type MoveProjectToWorkspaceData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    organizationId: string;
-    id: string;
-  };
-  query: {
-    workspaceId: string;
-  };
-  url: '/{tenantId}/{organizationId}/projects/{id}/move';
-};
-
-export type MoveProjectToWorkspaceErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type MoveProjectToWorkspaceError = MoveProjectToWorkspaceErrors[keyof MoveProjectToWorkspaceErrors];
-
-export type MoveProjectToWorkspaceResponses = {
-  /**
-   * A project that organizes tasks and members within an organization.
-   */
-  200: Project & {
-    included?: {
-      membership: MembershipBase;
-      counts?: {
-        membership: {
-          admin: number;
-          member: number;
-          guest: number;
-          pending: number;
-          total: number;
-        };
-        entities: {
-          task: number;
-          label: number;
-          attachment: number;
-        };
-        taskStatusCounts?: {
-          accepted: number;
-          reviewed: number;
-          delivered: number;
-          finished: number;
-          started: number;
-          unstarted: number;
-          iced: number;
-        };
-      };
-    };
-  };
-};
-
-export type MoveProjectToWorkspaceResponse = MoveProjectToWorkspaceResponses[keyof MoveProjectToWorkspaceResponses];
 
 export type GetYjsTokenData = {
   body?: never;

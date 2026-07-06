@@ -10,11 +10,15 @@ import '#/modules/workspace/workspace-module';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
-const listApp = new OpenAPIHono<Env>({ defaultHook });
 
 app.openapi(workspaceRoutes.createWorkspaces, async (ctx) => {
   const data = await createWorkspacesOp(ctx, ctx.req.valid('json'));
   return ctx.json(data, 201);
+});
+
+app.openapi(workspaceRoutes.getWorkspaces, async (ctx) => {
+  const data = await getWorkspacesOp(ctx, ctx.req.valid('query'));
+  return ctx.json(data, 200);
 });
 
 app.openapi(workspaceRoutes.getWorkspace, async (ctx) => {
@@ -35,12 +39,5 @@ app.openapi(workspaceRoutes.deleteWorkspaces, async (ctx) => {
   const data = await deleteWorkspacesOp(ctx, Array.isArray(ids) ? ids : [ids]);
   return ctx.json(data, 200);
 });
-
-listApp.openapi(workspaceRoutes.getWorkspaces, async (ctx) => {
-  const data = await getWorkspacesOp(ctx, ctx.req.valid('query'));
-  return ctx.json(data, 200);
-});
-
-export const workspaceListHandlers = listApp;
 
 export const workspaceHandlers = app;

@@ -32,7 +32,7 @@ const projectRoutes = {
    */
   createProjects: createXRoute({
     method: 'post',
-    path: '/',
+    path: '/{tenantId}/{organizationId}/projects',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     tags: ['projects', 'app', 'context'],
@@ -63,7 +63,7 @@ const projectRoutes = {
    */
   getProjects: createXRoute({
     method: 'get',
-    path: '/',
+    path: '/projects',
     xGuard: [authGuard, crossTenantGuard, relatableGuard],
     tags: ['projects', 'app', 'context'],
     operationId: 'getProjects',
@@ -94,7 +94,7 @@ const projectRoutes = {
    */
   getProject: createXRoute({
     method: 'get',
-    path: '/{id}',
+    path: '/{tenantId}/{organizationId}/projects/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
     tags: ['projects', 'app', 'context'],
     operationId: 'getProject',
@@ -118,7 +118,7 @@ const projectRoutes = {
    */
   updateProject: createXRoute({
     method: 'put',
-    path: '/{id}',
+    path: '/{tenantId}/{organizationId}/projects/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
@@ -144,7 +144,7 @@ const projectRoutes = {
    */
   assignProjectWorkspace: createXRoute({
     method: 'put',
-    path: '/{id}/assign-workspace',
+    path: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
@@ -174,7 +174,7 @@ const projectRoutes = {
    */
   removeProjectWorkspace: createXRoute({
     method: 'delete',
-    path: '/{id}/workspace',
+    path: '/{tenantId}/{organizationId}/projects/{id}/workspace',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
@@ -203,7 +203,7 @@ const projectRoutes = {
    */
   moveProjectToWorkspace: createXRoute({
     method: 'put',
-    path: '/{id}/move',
+    path: '/{tenantId}/{organizationId}/projects/{id}/move',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'context'],
@@ -229,7 +229,7 @@ const projectRoutes = {
    */
   deleteProjects: createXRoute({
     method: 'delete',
-    path: '/',
+    path: '/{tenantId}/{organizationId}/projects',
     xGuard: [authGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['projects', 'app', 'context'],
