@@ -10,6 +10,8 @@ export const parseUploadedAttachments = (
   organizationId: string,
   // cella addition: attachments have project as their parent context, so they require a projectId
   projectId?: string,
+  // host relation: the owning task — uploaded from a task form, the attachment belongs to that task
+  taskId?: string,
 ): Attachment[] => {
   // Process original files
   const originalFiles = result[':original'] ?? [];
@@ -40,6 +42,7 @@ export const parseUploadedAttachments = (
       bucketName: user_meta?.bucketName,
       originalKey: url ?? '',
       groupId,
+      taskId,
       organizationId,
       projectId,
     });

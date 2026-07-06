@@ -6,6 +6,7 @@ import { resolveEntity } from '#/modules/entities/entities-queries';
 import { getTasks } from '#/modules/task/helpers/get-tasks';
 import { getTaskRelations, hydrateTask } from '#/modules/task/helpers/hydrate-task';
 import { publicTaskRoutes } from '#/modules/task/public-routes';
+import { buildSubject, checkPermission } from '#/permissions';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
@@ -23,7 +24,13 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   // REMARK no tenant status check — unlike authenticated routes (which reject suspended/archived tenants in tenantGuard),
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', mainTask.projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-  if (!project.publicAt) throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
+
+  // Anonymous engine check: publicRead('publicParent') — the task is readable when its
+  // parent project's publicAt is set. Parent row resolved here, per the cross-row design.
+  const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask, parentRow: project });
+  if (!checkPermission([], 'read', subject).isAllowed) {
+    throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
+  }
 
   const publicCtx = { var: { db: unsafeInternalAdminDb!, userId: '', organizationId: '' } } as AuthContext;
   const [users, labels] = await getTaskRelations(publicCtx, { tasks: [mainTask] });
@@ -39,7 +46,17 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   // REMARK no tenant status check — unlike authenticated routes (which reject suspended/archived tenants in tenantGuard),
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-  if (!project.publicAt) throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
+
+  // Anonymous engine check with a representative subject: publicRead('publicParent') is
+  // row-independent for tasks (it reads only the parent project), so one check covers the list.
+  const listSubject = buildSubject(
+    'task',
+    { organizationId: project.organizationId, projectId: project.id },
+    { parentRow: project },
+  );
+  if (!checkPermission([], 'read', listSubject).isAllowed) {
+    throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
+  }
 
   const publicCtx = {
     var: { db: unsafeInternalAdminDb!, userId: '', organizationId: project.organizationId },

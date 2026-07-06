@@ -94,12 +94,12 @@ export const findAttachmentByKey = async (ctx: DbContext, { key }: FindAttachmen
   return att;
 };
 
-interface FindAttachmentKeysByGroupIdOpts {
-  groupId: string;
+interface FindAttachmentKeysByTaskIdOpts {
+  taskId: string;
 }
 
-/** Find attachment IDs and S3 keys by group ID (e.g. to check which attachments belong to an entity). */
-export const findAttachmentKeysByGroupId = async (ctx: DbContext, { groupId }: FindAttachmentKeysByGroupIdOpts) => {
+/** Find attachment IDs and S3 keys owned by a task (host relation, e.g. for description sync). */
+export const findAttachmentKeysByTaskId = async (ctx: DbContext, { taskId }: FindAttachmentKeysByTaskIdOpts) => {
   const { db } = ctx.var;
   return db
     .select({
@@ -108,7 +108,7 @@ export const findAttachmentKeysByGroupId = async (ctx: DbContext, { groupId }: F
       originalKey: attachmentsTable.originalKey,
     })
     .from(attachmentsTable)
-    .where(eq(attachmentsTable.groupId, groupId));
+    .where(eq(attachmentsTable.taskId, taskId));
 };
 
 interface FindAttachmentViewCountOpts {

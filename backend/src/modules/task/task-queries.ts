@@ -1,6 +1,5 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
-import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -60,31 +59,6 @@ export const deleteTasksByIds = async (ctx: AuthContext, { ids, deletedAt, delet
       and(inArray(tasksTable.id, ids), eq(tasksTable.organizationId, organizationId), isNull(tasksTable.deletedAt)),
     )
     .returning();
-};
-
-interface DeleteAttachmentsByGroupIdsOpts {
-  groupIds: string[];
-  deletedBy: string;
-  deletedAt: string;
-}
-
-/** Soft-delete attachments by group IDs (used when deleting tasks that own attachments). */
-export const deleteAttachmentsByGroupIds = async (
-  ctx: AuthContext,
-  { groupIds, deletedAt, deletedBy }: DeleteAttachmentsByGroupIdsOpts,
-) => {
-  const { db, organizationId } = ctx.var;
-  return db
-    .update(attachmentsTable)
-    .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
-    .where(
-      and(
-        inArray(attachmentsTable.groupId, groupIds),
-        eq(attachmentsTable.organizationId, organizationId),
-        isNull(attachmentsTable.deletedAt),
-      ),
-    )
-    .returning({ id: attachmentsTable.id });
 };
 
 interface FindProjectsByWorkspaceOpts {

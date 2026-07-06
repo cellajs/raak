@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { count, ilike, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { count, ilike, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -10,6 +10,7 @@ import { buildLabelsListQuery } from '#/modules/label/label-queries';
 import type { labelListQuerySchema } from '#/modules/label/label-schema';
 import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-queries';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
+import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumn } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 
@@ -37,15 +38,12 @@ export async function getLabelsOp(
     requested = { subContextId: projectId };
   }
 
-  // Resolve which projects the caller may read; undefined means org-wide (no project filter).
-  const { subContextIds: projectIds } = resolveCollectionReadFilter(
-    ctx.var.memberships,
-    'label',
-    organizationId,
-    requested,
-  );
+  // Resolve the caller's readable scope (unconditional projects + row-conditional slices,
+  // e.g. `read: 'own'`) and compile it to a single row predicate.
+  const readFilter = resolveCollectionReadFilter(ctx.var.memberships, 'label', organizationId, requested);
+  const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, labelsTable.projectId, ctx.var.user.id);
 
-  if (projectIds?.length === 0) {
+  if (scopeWhere.kind === 'none') {
     return { success: true, data: { items: [], total: 0 } };
   }
 
@@ -63,7 +61,8 @@ export async function getLabelsOp(
     // Sequence-based delta sync filter
     labelsFilters.push(...seqCursorFilters(labelsTable.seq, seqCursor));
 
-    if (projectIds) labelsFilters.push(inArray(labelsTable.projectId, projectIds));
+    // Restrict to the caller's readable scope unless org-wide (kind 'all').
+    if (scopeWhere.kind === 'where') labelsFilters.push(scopeWhere.where);
 
     // Add more filters
     if (q) labelsFilters.push(ilike(labelsTable.name, `%${q}%`));

@@ -2603,6 +2603,10 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "taskId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
           "public": {
             "type": "boolean"
           },
@@ -2670,6 +2674,7 @@
           "deletedAt",
           "deletedBy",
           "seq",
+          "taskId",
           "public",
           "bucketName",
           "groupId",
@@ -2693,6 +2698,7 @@
           "keywords": "vereor strenuus verecundia",
           "public": false,
           "bucketName": "attachments",
+          "taskId": null,
           "groupId": null,
           "filename": "rightfully_lest_noted.mp3",
           "contentType": "video/mp4",
@@ -12078,6 +12084,7 @@
                       "keywords": "concedo quae arca",
                       "public": false,
                       "bucketName": "attachments",
+                      "taskId": null,
                       "groupId": null,
                       "filename": "vice.mar",
                       "contentType": "image/gif",
@@ -12110,6 +12117,7 @@
                       "keywords": "appello depono ultio",
                       "public": false,
                       "bucketName": "attachments",
+                      "taskId": null,
                       "groupId": null,
                       "filename": "bah_oof_truthfully.css",
                       "contentType": "audio/aac",
@@ -12236,6 +12244,10 @@
                       "type": ["string", "null"],
                       "format": "uuid"
                     },
+                    "taskId": {
+                      "type": ["string", "null"],
+                      "format": "uuid"
+                    },
                     "convertedContentType": {
                       "type": ["string", "null"],
                       "maxLength": 255
@@ -12309,6 +12321,7 @@
                       "keywords": "vulgo vinum atavus",
                       "public": false,
                       "bucketName": "attachments",
+                      "taskId": null,
                       "groupId": null,
                       "filename": "ugh_besides.svgz",
                       "contentType": "video/webm",
@@ -12341,6 +12354,7 @@
                       "keywords": "derelinquo attollo autem",
                       "public": false,
                       "bucketName": "attachments",
+                      "taskId": null,
                       "groupId": null,
                       "filename": "instead_volleyball.jpe",
                       "contentType": "application/json",
@@ -12414,6 +12428,7 @@
                       "keywords": "vulgo vinum atavus",
                       "public": false,
                       "bucketName": "attachments",
+                      "taskId": null,
                       "groupId": null,
                       "filename": "ugh_besides.svgz",
                       "contentType": "video/webm",
@@ -12446,6 +12461,7 @@
                       "keywords": "derelinquo attollo autem",
                       "public": false,
                       "bucketName": "attachments",
+                      "taskId": null,
                       "groupId": null,
                       "filename": "instead_volleyball.jpe",
                       "contentType": "application/json",
@@ -12752,6 +12768,7 @@
                   "keywords": "vereor strenuus verecundia",
                   "public": false,
                   "bucketName": "attachments",
+                  "taskId": null,
                   "groupId": null,
                   "filename": "rightfully_lest_noted.mp3",
                   "contentType": "video/mp4",
@@ -12901,6 +12918,7 @@
                   "keywords": "vereor strenuus verecundia",
                   "public": false,
                   "bucketName": "attachments",
+                  "taskId": null,
                   "groupId": null,
                   "filename": "rightfully_lest_noted.mp3",
                   "contentType": "video/mp4",

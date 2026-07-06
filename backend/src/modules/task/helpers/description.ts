@@ -4,7 +4,7 @@ import { and, inArray, isNull } from 'drizzle-orm';
 import { getSearchableTextFromBlocks, mediaBlockTypes } from 'shared/blocknote';
 import type { DbContext } from '#/core/context';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
-import { findAttachmentKeysByGroupId } from '#/modules/attachment/attachment-queries';
+import { findAttachmentKeysByTaskId } from '#/modules/attachment/attachment-queries';
 import { extractKeywords } from '#/utils/extract-keywords';
 import { getIsoDate } from '#/utils/iso-date';
 
@@ -57,6 +57,9 @@ export const deriveDescriptionProps = async (
         result.checkboxCount++;
         if (block.props?.checked) result.checkedCount++;
       }
+      // TODO [#24] review: this counts description media BLOCKS (incl. external URLs with no
+      // attachment row) — since the hostEntity port, the CDC e:attachment counter counts live
+      // hosted ROWS per task. Decide which semantic the UI wants; see .todos/24.
       if (
         mediaBlockTypes.has(block.type) &&
         block.props &&
@@ -104,7 +107,7 @@ export const deriveDescriptionProps = async (
 
 /**
  * Removes attachments that are no longer referenced in the description.
- * Uses groupId on attachments to find all attachments belonging to an entity.
+ * Uses the host relation (attachments.taskId) to find all attachments owned by the task.
  * Accepts pre-parsed blocks to avoid redundant JSON.parse.
  */
 export const removeAttachments = async (
@@ -112,8 +115,8 @@ export const removeAttachments = async (
   { blocks, entityId, deletedBy }: { blocks: ParsedBlock[]; entityId: string; deletedBy: string },
 ) => {
   const { db } = ctx.var;
-  // Get all existing attachments for this entity via groupId
-  const attachments = await findAttachmentKeysByGroupId(ctx, { groupId: entityId });
+  // Get all existing attachments owned by this task via the host relation
+  const attachments = await findAttachmentKeysByTaskId(ctx, { taskId: entityId });
 
   const fileBlocks = blocks.filter(({ type }) => mediaBlockTypes.has(type));
 

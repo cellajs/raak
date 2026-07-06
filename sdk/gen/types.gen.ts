@@ -609,6 +609,7 @@ export type Attachment = {
   deletedAt: string | null;
   deletedBy: string | null;
   seq: number;
+  taskId: string | null;
   public: boolean;
   bucketName: string;
   groupId: string | null;
@@ -5252,6 +5253,7 @@ export type CreateAttachmentsData = {
     bucketName: string;
     public?: boolean;
     groupId?: string | null;
+    taskId?: string | null;
     convertedContentType?: string | null;
     convertedKey?: string | null;
     thumbnailKey?: string | null;
