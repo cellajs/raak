@@ -17,7 +17,7 @@ import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/q
 import { TasksTableBar } from '~/modules/task/table/tasks-bar';
 import { useColumns } from '~/modules/task/table/tasks-columns';
 import type { Task, TaskSearch } from '~/modules/task/types';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 
 const LIMIT = appConfig.requestLimits.tasksTable;
 

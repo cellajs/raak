@@ -26,7 +26,7 @@ import {
 import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 
 const LabelsTable = lazy(() => import('~/modules/label/table/labels-table'));
 

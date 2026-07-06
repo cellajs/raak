@@ -46,7 +46,7 @@ import { Button, buttonVariants } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { useUserStore } from '~/modules/user/user-store';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 import { cn } from '~/utils/cn';
 
 interface CreateTaskFormProps {

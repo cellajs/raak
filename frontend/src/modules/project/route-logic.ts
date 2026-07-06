@@ -2,7 +2,7 @@ import { onlineManager } from '@tanstack/react-query';
 import { getProject, type Project } from 'sdk';
 import { findProjectByIdOrSlug, projectQueryKeys, projectQueryOptions } from '~/modules/project/query';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
-import { fetchSlugCacheId } from '~/query/basic';
+import { fetchSlugCacheId } from '~/query/basic/fetch-slug-cache-id';
 import { queryClient } from '~/query/query-client';
 import { redirectOnMissing } from '~/utils/redirect-on-missing';
 import { rewriteUrlToSlug } from '~/utils/rewrite-url-to-slug';

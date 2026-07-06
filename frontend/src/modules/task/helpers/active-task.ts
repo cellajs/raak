@@ -1,7 +1,7 @@
 import { taskKeys } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { Task } from '~/modules/task/types';
-import { getQueryItems, getSimilarQueries } from '~/query/basic';
+import { getQueryItems, getSimilarQueries } from '~/query/basic/mutate-query';
 
 export const cachedTasks = (): Task[] => {
   const queries = getSimilarQueries<Task>(taskKeys.list.base);

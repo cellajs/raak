@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import { projectQueryKeys } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
-import { findInCache } from '~/query/basic';
+import { findInCache } from '~/query/basic/find-in-list-cache';
 import { queryClient } from '~/query/query-client';
 
 /**

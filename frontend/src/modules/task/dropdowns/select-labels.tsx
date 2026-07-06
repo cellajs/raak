@@ -28,7 +28,7 @@ import {
 } from '~/modules/ui/combobox';
 import { Kbd } from '~/modules/ui/kbd';
 import { ScrollArea } from '~/modules/ui/scroll-area';
-import { createOptimisticEntity } from '~/query/basic';
+import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { inNumbersArray } from '~/utils/in-numbers-array';
 
 // Sentinel prefix for the "create label" row's Combobox value, so it can't

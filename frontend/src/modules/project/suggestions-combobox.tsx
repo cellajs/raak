@@ -21,7 +21,7 @@ import {
 } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 
 interface Props {
   value: ContextEntityBase[];

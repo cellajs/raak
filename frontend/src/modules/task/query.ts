@@ -10,30 +10,21 @@ import { deriveDescriptionCounts } from '~/modules/task/helpers/derive-descripti
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
-import {
-  baseInfiniteQueryOptions,
-  createCacheFinder,
-  createEntityKeys,
-  createOptimisticEntity,
-  fetchAllPages,
-  invalidateIfLastMutation,
-  registerEntityQueryKeys,
-  removePendingMutations,
-  SYNC_CHUNK_SIZE,
-} from '~/query/basic';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
+import { createOptimisticEntity } from '~/query/basic/create-optimistic';
+import { createEntityKeys } from '~/query/basic/create-query-keys';
+import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
+import { fetchAllPages } from '~/query/basic/fetch-all-pages';
+import { createCacheFinder } from '~/query/basic/find-in-list-cache';
+import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
-import {
-  coalescePendingCreate,
-  createStxForCreate,
-  createStxForDelete,
-  createStxForUpdate,
-  isArrayDelta,
-  mergeServerResponse,
-  squashPendingMutation,
-} from '~/query/offline';
-import { getCacheToken } from '~/query/realtime';
+import { isArrayDelta } from '~/query/offline/array-delta';
+import { coalescePendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
+import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
+import { mergeServerResponse } from '~/query/offline/update-success-utils';
+import { getCacheToken } from '~/query/realtime/cache-token-store';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
 import type { InfiniteQueryData, PageParams, QueryData, QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';

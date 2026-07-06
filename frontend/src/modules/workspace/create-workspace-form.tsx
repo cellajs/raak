@@ -17,7 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '~/modules/ui/alert';
 import { Button, SubmitButton } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useWorkspaceCreateMutation } from '~/modules/workspace/query';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 import { organizationsListQueryOptions } from '../organization/query';
 
 const formSchema = z.object({

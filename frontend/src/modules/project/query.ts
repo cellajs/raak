@@ -33,16 +33,14 @@ import {
 } from '~/modules/memberships/query-mutations';
 import type { EnrichedProject } from '~/modules/project/types';
 import { workspaceQueryKeys } from '~/modules/workspace/query';
-import {
-  baseInfiniteQueryOptions,
-  createCacheFinder,
-  createEntityKeys,
-  getSimilarQueries,
-  invalidateIfLastMutation,
-  preserveIncluded,
-  registerEntityQueryKeys,
-} from '~/query/basic';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
+import { createEntityKeys } from '~/query/basic/create-query-keys';
+import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
+import { createCacheFinder } from '~/query/basic/find-in-list-cache';
+import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
+import { getSimilarQueries } from '~/query/basic/mutate-query';
+import { preserveIncluded } from '~/query/basic/preserve-included';
 import type { MutationData } from '~/query/types';
 
 type ProjectFilters = Omit<GetProjectsData['query'], 'limit' | 'offset'>;

@@ -7,7 +7,7 @@ import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { selectExistingProjects } from '~/modules/task/helpers/project-actions';
 import { Button } from '~/modules/ui/button';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 
 interface Props {
   workspace: Workspace;

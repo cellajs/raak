@@ -19,8 +19,9 @@ import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachment
 import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { useUserStore, yjsTokenKey } from '~/modules/user/user-store';
-import { findInCache, flattenInfiniteData } from '~/query/basic';
 import { cacheUpdate } from '~/query/basic/cache-mutations';
+import { findInCache } from '~/query/basic/find-in-list-cache';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 import type { ItemData } from '~/query/basic/types';
 import { queryClient } from '~/query/query-client';
 import { getRandomColor } from '~/utils/random-color';

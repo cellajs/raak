@@ -12,7 +12,7 @@ import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
 import ProjectBoard from '~/modules/task/board/project-board';
 import WorkspaceBoard from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardTabs } from '~/modules/task/board/workspace-board-tabs';
-import { flattenInfiniteData } from '~/query/basic';
+import { flattenInfiniteData } from '~/query/basic/flatten';
 
 export interface BoardProps {
   boardId: string;
