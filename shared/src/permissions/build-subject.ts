@@ -34,6 +34,7 @@ export const buildSubject = (
     createdBy?: string | null;
     row?: Record<string, unknown>;
     parentRow?: Record<string, unknown>;
+    hostRow?: Record<string, unknown>;
   },
 ): SubjectForPermission => {
   const contextIds: ContextScope = {};
@@ -53,6 +54,7 @@ export const buildSubject = (
     ...(options?.createdBy !== undefined && { createdBy: options.createdBy }),
     ...(options?.row !== undefined && { row: options.row }),
     ...(options?.parentRow !== undefined && { parentRow: options.parentRow }),
+    ...(options?.hostRow !== undefined && { hostRow: options.hostRow }),
   };
 
   validateAncestorScope(subject);

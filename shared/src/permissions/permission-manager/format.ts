@@ -7,6 +7,7 @@ import type { GrantSource, PermissionDecision, PermissionMembership } from './ty
 const formatGrant = (g: GrantSource): string => {
   if (g.type === 'membership') return `${g.contextType}:${g.contextId}/${g.role}`;
   if (g.type === 'public') return `public:${g.mode}`;
+  if (g.type === 'host') return `host:${g.hostType}`;
   return `relation:${g.relation}`;
 };
 

@@ -1,6 +1,7 @@
 import type { ContextEntityType, EntityActionType, EntityIdColumnKeys, EntityRole, ProductEntityType } from '../../../types';
 import type { PublicReadGrants, PublicReadMode } from '../public-read';
 import type { RowRestrictions } from '../row-restrictions';
+import type { HostDelegation } from '../types';
 
 export type ContextEntityIdColumns = {
   [K in ContextEntityType as EntityIdColumnKeys[K]]: string | null;
@@ -52,6 +53,12 @@ export type SubjectForPermission = {
    * the engine never loads rows (see `design-cross-row-visibility.md`).
    */
   parentRow?: Record<string, unknown>;
+  /**
+   * The host product row's fields (hierarchy `host:`), for host-delegated decisions
+   * (`delegateToHost`). Resolved by the caller like `parentRow`; without it, delegation
+   * contributes nothing (fail closed).
+   */
+  hostRow?: Record<string, unknown>;
 };
 
 /**
@@ -61,7 +68,8 @@ export type SubjectForPermission = {
 export type GrantSource =
   | { type: 'membership'; contextType: ContextEntityType; contextId: string; role: string }
   | { type: 'relation'; relation: string }
-  | { type: 'public'; mode: PublicReadMode };
+  | { type: 'public'; mode: PublicReadMode }
+  | { type: 'host'; hostType: string };
 
 export interface ActionAttribution {
   enabled: boolean;
@@ -102,6 +110,11 @@ export interface PermissionCheckOptions {
    * the `checkPermission` wrapper like `publicGrants`.
    */
   restrictions?: RowRestrictions;
+  /**
+   * Host-delegated actions per hosted entity type (`delegateToHost`). Injected by the
+   * `checkPermission` wrapper like `publicGrants`.
+   */
+  hostDelegation?: HostDelegation;
   /** When `true`, emit debug logging of the decision tree. Off by default to keep the engine quiet. */
   debug?: boolean;
 }

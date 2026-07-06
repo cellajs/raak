@@ -295,6 +295,7 @@ export function getAllDecisions<T extends PermissionMembership>(
   const userId = options?.userId;
   const publicGrants = options?.publicGrants;
   const restrictions = options?.restrictions;
+  const hostDelegation = options?.hostDelegation;
   const debug = options?.debug === true;
 
   const results = new Map<string, PermissionDecision<T>>();
@@ -316,18 +317,22 @@ export function getAllDecisions<T extends PermissionMembership>(
   // Cache for relevant contexts by entity type
   const contextCache = new Map<ContextEntityType | ProductEntityType, ContextEntityType[]>();
 
-  for (const subject of subjectArray) {
-    // Get or compute ordered contexts for this entity type (most specific → root).
-    // For context entities (e.g., project): [project, organization] — includes self + ancestors
-    // For product entities (e.g., attachment): [organization] — just ancestors
-    // The first element [0] is always the primary context used for membership capture.
-    let orderedContexts = contextCache.get(subject.entityType);
-
+  // Ordered contexts for an entity type (most specific → root), cached.
+  // For context entities (e.g., project): [project, organization] — includes self + ancestors
+  // For product entities (e.g., attachment): [organization] — just ancestors
+  // The first element [0] is always the primary context used for membership capture.
+  const resolveOrderedContexts = (entityType: ContextEntityType | ProductEntityType): ContextEntityType[] => {
+    let orderedContexts = contextCache.get(entityType);
     if (!orderedContexts) {
-      const ancestors = hierarchy.getOrderedAncestors(subject.entityType) as ContextEntityType[];
-      orderedContexts = isContextEntity(subject.entityType) ? [subject.entityType, ...ancestors] : [...ancestors];
-      contextCache.set(subject.entityType, orderedContexts);
+      const ancestors = hierarchy.getOrderedAncestors(entityType) as ContextEntityType[];
+      orderedContexts = isContextEntity(entityType) ? [entityType, ...ancestors] : [...ancestors];
+      contextCache.set(entityType, orderedContexts);
     }
+    return orderedContexts;
+  };
+
+  for (const subject of subjectArray) {
+    const orderedContexts = resolveOrderedContexts(subject.entityType);
     // Get or build policy index for this entity type
     const policyIndex = getOrBuildPolicyIndex(policies, subject.entityType, policyIndexCache);
 
@@ -343,6 +348,45 @@ export function getAllDecisions<T extends PermissionMembership>(
       restrictions,
       debug,
     );
+
+    // Host delegation: a hosted row allows a delegated action if the HOST row allows it,
+    // including the host's row conditions, public grants and restrictions. Additive —
+    // unions with the subject's own decision, attributed as {type:'host'}. Requires the
+    // caller-resolved subject.hostRow (load-at-check); absent → contributes nothing.
+    const delegatedActions = hostDelegation?.[subject.entityType];
+    const hostType = delegatedActions?.length ? hierarchy.getHostType(subject.entityType) : undefined;
+    if (!isSystemAdmin && delegatedActions && hostType && subject.hostRow) {
+      const hostRow = subject.hostRow;
+      const hostSubject: SubjectForPermission = {
+        entityType: hostType as ProductEntityType,
+        ...(typeof hostRow.id === 'string' && { id: hostRow.id }),
+        ...(hostRow.createdBy !== undefined && { createdBy: hostRow.createdBy as string | null }),
+        // Host and hosted share the home context (enforced by the hierarchy builder)
+        contextIds: subject.contextIds,
+        row: hostRow,
+        ...(subject.parentRow !== undefined && { parentRow: subject.parentRow }),
+        // deliberately no hostRow: hosts cannot themselves be hosted (no chains)
+      };
+      const hostDecision = checkWithIndices(
+        membershipIndex,
+        getOrBuildPolicyIndex(policies, hostType as ProductEntityType, policyIndexCache),
+        hostSubject,
+        resolveOrderedContexts(hostType as ProductEntityType),
+        false,
+        userId,
+        publicGrants,
+        restrictions,
+        debug,
+      );
+      for (const action of delegatedActions) {
+        if (hostDecision.can[action]) {
+          decision.actions[action].enabled = true;
+          decision.actions[action].grantedBy.push({ type: 'host', hostType });
+          decision.can[action] = true;
+        }
+      }
+    }
+
     const key = subject.id ?? `_idx:${subjectArray.indexOf(subject)}`;
     results.set(key, decision);
   }
