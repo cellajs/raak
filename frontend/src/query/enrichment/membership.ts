@@ -3,7 +3,7 @@ import { findMembership } from '~/query/enrichment/helpers';
 import type { EnrichableEntity } from '~/query/enrichment/types';
 
 /** Fields that affect enrichment — update when MembershipBase gains new meaningful fields */
-const comparedKeys: (keyof MembershipBase)[] = ['archived', 'muted', 'displayOrder', 'role', 'workspaceId'];
+const comparedKeys: (keyof MembershipBase)[] = ['archived', 'muted', 'displayOrder', 'role'];
 
 /** Check if two memberships differ on meaningful fields */
 function hasMembershipChanged(a: MembershipBase | null, b: MembershipBase | null): boolean {
