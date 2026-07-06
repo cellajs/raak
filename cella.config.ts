@@ -16,6 +16,8 @@ export default defineConfig({
   // File overrides
   overrides: {
     // Paths the fork fully owns — never synced (existing or new)
+    // NOTE: package.jsons, lockfiles, this file are always ignored
+    // NOTE: Modules with `app` owner are also ignored, including their public static asset folder
     ignored: [
       'README.md',
       'cella.manifest.json',
@@ -26,8 +28,6 @@ export default defineConfig({
       'shared/config',
       'backend/drizzle',
       'frontend/public/static/common',
-      'frontend/public/static/marketing',
-      'frontend/src/modules/marketing',
       'frontend/src/modules/common/bg-animation',
       'frontend/src/routes/routeTree.gen.ts',
       'sdk/src/plugins/openapi-parser/tests/__snapshots__/parse-spec.test.ts.snap',
@@ -36,8 +36,6 @@ export default defineConfig({
     ],
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
-      'pnpm-lock.yaml',
-      'cella.config.ts',
       'backend/src/tables.ts',
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',

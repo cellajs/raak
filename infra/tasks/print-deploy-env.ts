@@ -8,7 +8,7 @@
  *
  * Usage: tsx infra/tasks/print-deploy-env.ts <staging|production>
  */
-import { isMain } from '../lib/is-main'
+import { isMain } from '../lib/utils/is-main'
 import type { appConfig as AppConfig } from '../../shared'
 import { deriveInfra } from '../lib/naming'
 import { enabledServices, serviceEndpoints } from '../lib/services'
@@ -71,7 +71,7 @@ export function buildDeployEnv(appConfig: Cfg, opts: { imageTag?: string } = {})
     .filter((service) => !service.reusesImageOf)
     .map((service) => {
       if (!service.dockerfile) throw new Error(`Service '${service.slug}' builds its own image but has no dockerfile in services.config.ts`)
-      return { service: service.slug, dockerfile: service.dockerfile }
+      return { service: service.slug, dockerfile: service.dockerfile, target: service.target ?? '' }
     })
 
   return {

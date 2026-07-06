@@ -29,7 +29,7 @@ const STANDARD_ENV = {
 } as const
 
 /** Uniform identity healthcheck injected into every app service. */
-export function healthcheck(port: number, startPeriod: string): HealthCheck {
+function healthcheck(port: number, startPeriod: string): HealthCheck {
   return {
     test: ['CMD', 'wget', '-qO-', `http://127.0.0.1:${port}/health`],
     interval: '30s',
@@ -56,6 +56,7 @@ function metaFrom(slug: string, cfg: AppServiceConfig): ServiceMeta {
   if (cfg.lbWebsockets) meta.lbWebsockets = true
   if (cfg.reusesImageOf) meta.reusesImageOf = cfg.reusesImageOf
   if (cfg.dockerfile) meta.dockerfile = cfg.dockerfile
+  if (cfg.target) meta.target = cfg.target
   if (cfg.coHosted) meta.coHosted = true
   if (cfg.bindings) meta.bindings = cfg.bindings
   return meta
