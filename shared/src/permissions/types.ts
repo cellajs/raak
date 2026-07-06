@@ -1,6 +1,7 @@
 import type { ContextEntityType, EntityActionType, EntityRole, EntityType, ProductEntityType } from '../../types';
 import type { PublicReadMode } from './public-read';
 import type { RowCondition } from './row-conditions';
+import type { RowRestrictionInput } from './row-restrictions';
 
 /**
  * Permission value accepted in access policy configuration.
@@ -64,6 +65,8 @@ export interface AccessPolicyConfiguration {
   contexts: Record<ContextEntityType, ContextPolicyBuilder>;
   /** Declare the subject-level public read grant for this subject (see `public-read.ts`). */
   publicRead: (mode: PublicReadMode) => void;
+  /** Declare the subject-level row restriction for this subject (see `row-restrictions.ts`). */
+  restrict: (restriction: RowRestrictionInput) => void;
 }
 
 /**

@@ -4,6 +4,7 @@ import { getContextRoles } from '../entity-guards';
 import type { ContextEntityType, EntityActionType, EntityRole, EntityType, ProductEntityType } from '../../types';
 import type { PublicReadGrants, PublicReadMode } from './public-read';
 import { own } from './row-conditions';
+import { normalizeRestriction, type RowRestrictionInput, type RowRestrictions } from './row-restrictions';
 import type {
   AccessPolicies,
   AccessPolicyCallback,
@@ -61,10 +62,11 @@ const createContextBuilders = (entries: AccessPolicyEntry[]): Record<ContextEnti
   return contexts;
 };
 
-/** Result of `configurePermissions`: role×context policies + subject-level public read grants. */
+/** Result of `configurePermissions`: role×context policies + subject-level grants/restrictions. */
 export interface PermissionsConfigResult {
   accessPolicies: AccessPolicies;
   publicReadGrants: PublicReadGrants;
+  rowRestrictions: RowRestrictions;
 }
 
 /**
@@ -90,6 +92,7 @@ export const configurePermissions = (
 ): PermissionsConfigResult => {
   const policies: AccessPolicies = {};
   const publicReadGrants: PublicReadGrants = {};
+  const rowRestrictions: RowRestrictions = {};
 
   const permissionableTypes = entityTypes.filter(
     (type): type is ContextEntityType | ProductEntityType => type !== 'user',
@@ -108,6 +111,12 @@ export const configurePermissions = (
         }
         publicReadGrants[entityType] = mode;
       },
+      restrict: (restriction: RowRestrictionInput) => {
+        if (rowRestrictions[entityType]) {
+          throw new Error(`[Permission] restrict() called twice for "${entityType}"`);
+        }
+        rowRestrictions[entityType] = normalizeRestriction(restriction);
+      },
     };
 
     callback(config);
@@ -119,7 +128,7 @@ export const configurePermissions = (
 
   validatePublicReadGrants(publicReadGrants);
 
-  return { accessPolicies: policies, publicReadGrants };
+  return { accessPolicies: policies, publicReadGrants, rowRestrictions };
 };
 
 /**

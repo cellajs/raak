@@ -9,6 +9,8 @@ export {
   type CollectionReadFilter,
   type ConditionalScope,
   hasNoReadScope,
+  type RestrictedGrantScope,
+  type RestrictedScope,
   resolveCollectionReadFilter,
 } from './collection-scope';
 export { getValidContextEntity, type ValidContextEntityResult } from './get-context-entity';

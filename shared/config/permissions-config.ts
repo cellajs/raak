@@ -28,7 +28,7 @@ import { configurePermissions } from '../src/permissions/access-policies';
  * 4. Create DB schema in `backend/src/db/schema/`
  * 5. Run `pnpm generate` to create migrations
  */
-export const { accessPolicies, publicReadGrants } = configurePermissions(
+export const { accessPolicies, publicReadGrants, rowRestrictions } = configurePermissions(
   appConfig.entityTypes,
   ({ subject, contexts, publicRead }) => {
   switch (subject.name) {

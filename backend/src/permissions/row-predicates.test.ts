@@ -7,6 +7,7 @@ import {
   configureAccessPolicies,
   getAllDecisions,
   type PermissionValue,
+  type RowRestrictions,
   resolvePermission,
   type SubjectForPermission,
 } from 'shared';
@@ -36,6 +37,8 @@ const parityTable = pgTable('test_permission_parity_rows', {
   id: varchar('id').primaryKey(),
   projectId: varchar('project_id').notNull(),
   createdBy: varchar('created_by'),
+  visibilityDepth: varchar('visibility_depth'),
+  audienceRoles: varchar('audience_roles').array(),
 });
 
 const PROJECTS = ['p1', 'p2', 'p3'] as const;
@@ -46,15 +49,31 @@ interface ParityRow {
   id: string;
   projectId: string;
   createdBy: string | null;
+  visibilityDepth: string | null;
+  audienceRoles: string[] | null;
 }
 
-/** Fixed row set: every project × creator (each user + null) combination. */
+/** Depth × audience combinations, incl. an unknown depth ('workspace' is not in attachment's chain). */
+const VISIBILITY_COMBOS: Array<{ key: string; visibilityDepth: string | null; audienceRoles: string[] | null }> = [
+  { key: 'open', visibilityDepth: null, audienceRoles: null },
+  { key: 'proj', visibilityDepth: 'project', audienceRoles: null },
+  { key: 'org-member', visibilityDepth: 'organization', audienceRoles: ['member'] },
+  { key: 'admin-only', visibilityDepth: null, audienceRoles: ['admin'] },
+  { key: 'unknown-depth', visibilityDepth: 'workspace', audienceRoles: ['guest', 'member'] },
+  { key: 'empty-roles', visibilityDepth: 'project', audienceRoles: [] },
+];
+
+/** Fixed row set: every project × creator × visibility combination. */
 const ROWS: ParityRow[] = PROJECTS.flatMap((projectId) =>
-  [...USERS, null].map((createdBy) => ({
-    id: `${projectId}:${createdBy ?? 'nobody'}`,
-    projectId,
-    createdBy,
-  })),
+  [...USERS, null].flatMap((createdBy) =>
+    VISIBILITY_COMBOS.map(({ key, visibilityDepth, audienceRoles }) => ({
+      id: `${projectId}:${createdBy ?? 'nobody'}:${key}`,
+      projectId,
+      createdBy,
+      visibilityDepth,
+      audienceRoles,
+    })),
+  ),
 );
 
 /** Deterministic PRNG (mulberry32) so failures reproduce exactly. */
@@ -93,7 +112,22 @@ interface Scenario {
   policies: AccessPolicies;
   memberships: MembershipBaseModel[];
   userId: string | undefined;
+  restrictions: RowRestrictions;
 }
+
+/** Random restriction config: none, depth-only, roles-only or both; exemption on or off. */
+const randomRestrictions = (random: () => number): RowRestrictions => {
+  const shape = pick(random, ['none', 'none', 'depth', 'roles', 'both', 'both'] as const);
+  if (shape === 'none') return {};
+  const exemptRoles = random() < 0.5 ? (['admin'] as const) : ([] as const);
+  return {
+    attachment: {
+      ...(shape !== 'roles' && { depthColumn: 'visibilityDepth' }),
+      ...(shape !== 'depth' && { rolesColumn: 'audienceRoles' }),
+      exemptRoles,
+    },
+  };
+};
 
 const membership = (contextType: 'organization' | 'project', contextId: string, role: string): MembershipBaseModel =>
   ({
@@ -107,14 +141,26 @@ const membership = (contextType: 'organization' | 'project', contextId: string, 
 
 const randomScenario = (random: () => number): Scenario => {
   const anonymous = random() < 0.1;
-  if (anonymous) return { policies: randomPolicies(random), memberships: [], userId: undefined };
+  if (anonymous) {
+    return {
+      policies: randomPolicies(random),
+      memberships: [],
+      userId: undefined,
+      restrictions: randomRestrictions(random),
+    };
+  }
 
   const memberships: MembershipBaseModel[] = [];
   if (random() < 0.4) memberships.push(membership('organization', ORG_ID, pick(random, ['admin', 'member'])));
   for (const projectId of PROJECTS) {
     if (random() < 0.4) memberships.push(membership('project', projectId, pick(random, ['admin', 'member', 'guest'])));
   }
-  return { policies: randomPolicies(random), memberships, userId: pick(random, USERS) };
+  return {
+    policies: randomPolicies(random),
+    memberships,
+    userId: pick(random, USERS),
+    restrictions: randomRestrictions(random),
+  };
 };
 
 const rowSubject = (row: ParityRow): SubjectForPermission => ({
@@ -122,6 +168,7 @@ const rowSubject = (row: ParityRow): SubjectForPermission => ({
   id: row.id,
   createdBy: row.createdBy,
   contextIds: { organization: ORG_ID, project: row.projectId },
+  row: { visibilityDepth: row.visibilityDepth, audienceRoles: row.audienceRoles },
 });
 
 /** Path 1: the engine's per-row read decision. */
@@ -130,6 +177,7 @@ const engineReadableIds = (scenario: Scenario): Set<string> => {
   for (const row of ROWS) {
     const { can } = getAllDecisions(scenario.policies, scenario.memberships, rowSubject(row), {
       userId: scenario.userId,
+      restrictions: scenario.restrictions,
     });
     if (can.read) readable.add(row.id);
   }
@@ -138,7 +186,14 @@ const engineReadableIds = (scenario: Scenario): Set<string> => {
 
 /** Path 2: the compiled SQL predicate executed against Postgres. */
 const sqlReadableIds = async (scenario: Scenario): Promise<Set<string>> => {
-  const filter = resolveCollectionReadFilterForPolicies(scenario.policies, scenario.memberships, 'attachment', ORG_ID);
+  const filter = resolveCollectionReadFilterForPolicies(
+    scenario.policies,
+    scenario.memberships,
+    'attachment',
+    ORG_ID,
+    undefined,
+    scenario.restrictions,
+  );
   const where = buildCollectionReadWhere(filter, parityTable, parityTable.projectId, scenario.userId);
 
   if (where.kind === 'none') return new Set();
@@ -148,14 +203,16 @@ const sqlReadableIds = async (scenario: Scenario): Promise<Set<string>> => {
 };
 
 beforeAll(async () => {
+  await seedDb.execute(sql`drop table if exists test_permission_parity_rows`);
   await seedDb.execute(sql`
-    create table if not exists test_permission_parity_rows (
+    create table test_permission_parity_rows (
       id varchar primary key,
       project_id varchar not null,
-      created_by varchar
+      created_by varchar,
+      visibility_depth varchar,
+      audience_roles varchar[]
     )
   `);
-  await seedDb.execute(sql`truncate table test_permission_parity_rows`);
   await seedDb.insert(parityTable).values(ROWS);
 });
 
@@ -180,6 +237,10 @@ describe('row-condition parity: engine check ⊆⊇ compiled SQL ⊆⊇ compute-
 
       // Engine ⊆⊇ compute-can: per single membership, the frontend-resolved state must
       // match the engine's decision for every row in that membership's scope.
+      // KNOWN LIMITATION: computeCan is restriction-blind (context-level, no row data) —
+      // restricted entities must resolve per row via the decision API, so parity with
+      // compute-can is only asserted when no restriction is declared.
+      if (scenario.restrictions.attachment) continue;
       for (const m of scenario.memberships) {
         const canMap = computeCan(m.contextType as 'organization' | 'project', m, scenario.policies);
         const state = canMap.attachment?.read ?? false;
@@ -205,9 +266,14 @@ describe('row-condition parity: engine check ⊆⊇ compiled SQL ⊆⊇ compute-
 
       let filter: ReturnType<typeof resolveCollectionReadFilterForPolicies>;
       try {
-        filter = resolveCollectionReadFilterForPolicies(scenario.policies, scenario.memberships, 'attachment', ORG_ID, {
-          subContextId: requestedProject,
-        });
+        filter = resolveCollectionReadFilterForPolicies(
+          scenario.policies,
+          scenario.memberships,
+          'attachment',
+          ORG_ID,
+          { subContextId: requestedProject },
+          scenario.restrictions,
+        );
       } catch {
         // 403: no scope at all for the requested project — the engine must agree that
         // no row of this project is readable.

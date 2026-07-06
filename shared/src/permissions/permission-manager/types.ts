@@ -1,5 +1,6 @@
 import type { ContextEntityType, EntityActionType, EntityIdColumnKeys, EntityRole, ProductEntityType } from '../../../types';
 import type { PublicReadGrants, PublicReadMode } from '../public-read';
+import type { RowRestrictions } from '../row-restrictions';
 
 export type ContextEntityIdColumns = {
   [K in ContextEntityType as EntityIdColumnKeys[K]]: string | null;
@@ -96,6 +97,11 @@ export interface PermissionCheckOptions {
    * driving the engine with synthetic policies (tests).
    */
   publicGrants?: PublicReadGrants;
+  /**
+   * Subject-level row restrictions to evaluate (see `row-restrictions.ts`). Injected by
+   * the `checkPermission` wrapper like `publicGrants`.
+   */
+  restrictions?: RowRestrictions;
   /** When `true`, emit debug logging of the decision tree. Off by default to keep the engine quiet. */
   debug?: boolean;
 }

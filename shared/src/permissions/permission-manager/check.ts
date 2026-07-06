@@ -5,6 +5,7 @@ import { getContextRoles, isContextEntity } from '../../entity-guards';
 import { allActionsAllowed, createActionRecord } from '../action-helpers';
 import { type PublicReadGrants, publicReadMatches } from '../public-read';
 import { type ConditionActor, isRowCondition, type RowForCondition } from '../row-conditions';
+import { membershipGrantQualifies, type RowRestrictions } from '../row-restrictions';
 import type { AccessPolicies, EntityActionPermissions } from '../types';
 import { formatBatchPermissionSummary, formatPermissionDecision } from './format';
 import type {
@@ -98,6 +99,7 @@ const checkWithIndices = <T extends PermissionMembership>(
   isSystemAdmin: boolean,
   userId?: string,
   publicGrants?: PublicReadGrants,
+  restrictions?: RowRestrictions,
   debug?: boolean,
 ): PermissionDecision<T> => {
   // Primary context is always the first (most specific) in the hierarchy.
@@ -146,6 +148,9 @@ const checkWithIndices = <T extends PermissionMembership>(
   const conditionRow: RowForCondition = { ...subject.row, createdBy: subject.createdBy };
   const conditionActor: ConditionActor = { userId };
 
+  // Row restriction for this entity type (narrows membership grants; see row-restrictions.ts)
+  const restriction = restrictions?.[subject.entityType];
+
   // Walk through each context level (most specific first, then ancestors)
   for (const contextType of orderedContexts) {
     // Strict: context in hierarchy must have roles defined
@@ -182,12 +187,19 @@ const checkWithIndices = <T extends PermissionMembership>(
         );
       }
 
+      // Row restriction: does this membership grant qualify for this row? Narrows
+      // membership grants only; row-condition and public grants are never narrowed,
+      // and `create` is never restricted (no row exists yet). Fail-closed without row data.
+      const grantQualifies =
+        !restriction || membershipGrantQualifies(restriction, subject, orderedContexts, contextType, m.role);
+
       // Attribute each granted action to this membership
       for (const action of appConfig.entityActions) {
         const policyValue = permissions[action];
 
         // Unconditional grant
         if (policyValue === 1) {
+          if (!grantQualifies && action !== 'create') continue;
           actions[action].enabled = true;
           actions[action].grantedBy.push({
             type: 'membership',
@@ -282,6 +294,7 @@ export function getAllDecisions<T extends PermissionMembership>(
   const isSystemAdmin = options?.isSystemAdmin === true;
   const userId = options?.userId;
   const publicGrants = options?.publicGrants;
+  const restrictions = options?.restrictions;
   const debug = options?.debug === true;
 
   const results = new Map<string, PermissionDecision<T>>();
@@ -327,6 +340,7 @@ export function getAllDecisions<T extends PermissionMembership>(
       isSystemAdmin,
       userId,
       publicGrants,
+      restrictions,
       debug,
     );
     const key = subject.id ?? `_idx:${subjectArray.indexOf(subject)}`;
