@@ -1,7 +1,8 @@
 import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
-import { deleteAttachmentsByGroupIds, deleteTasksByIds } from '#/modules/task/task-queries';
+import { cascadeSoftDeleteHosted } from '#/modules/entities/helpers/cascade-hosted';
+import { deleteTasksByIds } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
@@ -17,17 +18,17 @@ export async function deleteTasksOp(
   await tenantContextIncludingDeleted(ctx, async (txCtx) => {
     const tasksToDelete = await deleteTasksByIds(txCtx, { ids: allowedIds, deletedAt, deletedBy });
 
-    // Soft-delete associated attachments via groupId (best-effort cleanup)
+    // Host cascade: soft-delete hosted rows (attachments) of the deleted tasks
     const deletedTaskIds = tasksToDelete.map((task) => task.id);
-    if (deletedTaskIds.length > 0) {
-      const deletedAttachments = await deleteAttachmentsByGroupIds(txCtx, {
-        groupIds: deletedTaskIds,
-        deletedAt,
-        deletedBy,
-      });
-      if (deletedAttachments.length > 0) {
-        log.info('Task attachments deleted', { count: deletedAttachments.length });
-      }
+    const cascaded = await cascadeSoftDeleteHosted(txCtx, {
+      hostType: 'task',
+      hostIds: deletedTaskIds,
+      deletedAt,
+      deletedBy,
+    });
+    const cascadedCount = Object.values(cascaded).reduce((sum, hostedIds) => sum + hostedIds.length, 0);
+    if (cascadedCount > 0) {
+      log.info('Hosted rows cascade-deleted with tasks', { count: cascadedCount });
     }
   });
 

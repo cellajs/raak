@@ -166,9 +166,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     pendingCloseRef.current = true;
     setIsExiting(true);
 
-    // Handle attachments if present - they use groupId on the attachment record
+    // Handle attachments if present — taskId links them to the new task (host relation)
     if (attachments[':original']?.length) {
-      attachmentsCreationCallback({ organizationId, tenantId, projectId })(attachments);
+      attachmentsCreationCallback({ organizationId, tenantId, projectId, taskId: defaultId })(attachments);
     }
 
     // Backend handles label usedCount side-effects atomically

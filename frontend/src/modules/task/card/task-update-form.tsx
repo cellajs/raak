@@ -145,7 +145,8 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
     isPublic: projectPublicity,
     tenantId,
     organizationId: task.organizationId,
-    onComplete: attachmentsCreationCallback(task),
+    // Uploaded attachments belong to this task (host relation)
+    onComplete: attachmentsCreationCallback({ ...task, taskId: task.id }),
   };
 
   // Show faded read-only preview while waiting for WS sync (avoids empty flash)

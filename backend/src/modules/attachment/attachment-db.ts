@@ -2,6 +2,7 @@ import { boolean, foreignKey, index, snakeCase, uuid, varchar } from 'drizzle-or
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { maxLength } from '#/db/utils/constraints';
 import { contextRelationColumns } from '#/db/utils/context-relation-columns';
+import { hostRelationColumns } from '#/db/utils/host-relation-columns';
 import { productEntityColumns } from '#/db/utils/product-entity-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
@@ -13,8 +14,12 @@ export const attachmentsTable = snakeCase.table(
   'attachments',
   {
     ...productEntityColumns('attachment'),
+    // Host relation (hierarchy `host: 'task'`): nullable taskId — task-owned attachments
+    // cascade with their task and feed the e:attachment host counter.
+    ...hostRelationColumns('attachment'),
     public: boolean().notNull().default(false),
     bucketName: varchar({ length: maxLength.field }).notNull(),
+    /** Upload batch grouping (multi-file uploads shown as one carousel) — NOT ownership. */
     groupId: uuid(),
     filename: varchar({ length: maxLength.field }).notNull(),
     contentType: varchar({ length: maxLength.field }).notNull(),
@@ -31,6 +36,7 @@ export const attachmentsTable = snakeCase.table(
     index('attachments_created_by_index').on(table.createdBy),
     index('attachments_updated_by_index').on(table.updatedBy),
     index('attachments_group_id_index').on(table.groupId),
+    index('attachments_task_id_index').on(table.taskId),
     foreignKey({
       columns: [table.tenantId, table.organizationId],
       foreignColumns: [organizationsTable.tenantId, organizationsTable.id],

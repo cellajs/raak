@@ -17,10 +17,20 @@ export const useUploadAttachments = () => {
   });
 
   const attachmentsCreationCallback =
-    ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) =>
+    ({
+      organizationId,
+      tenantId,
+      projectId,
+      taskId,
+    }: {
+      organizationId: string;
+      tenantId: string;
+      projectId: string;
+      taskId?: string;
+    }) =>
     (data: UploadedUppyFile<'attachment'>) => {
-      // cella change: projectId is required in raak
-      const createdAttachments = parseUploadedAttachments(data, organizationId, projectId);
+      // cella change: projectId is required in raak; taskId links the attachment to its owning task (host relation)
+      const createdAttachments = parseUploadedAttachments(data, organizationId, projectId, taskId);
 
       const stx = createStxForCreate();
       // Body is array with stx embedded in each item

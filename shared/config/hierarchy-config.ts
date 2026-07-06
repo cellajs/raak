@@ -33,5 +33,8 @@ export const hierarchy = createEntityHierarchy(roles)
   .context('project', { parent: 'organization', roles: roles.all })
   .product('task', { parent: 'project' })
   .product('label', { parent: 'project' })
-  .product('attachment', { parent: 'project' })
+  // host: task-owned attachments (nullable taskId column) — deleting a task cascades to
+  // them, and CDC maintains e:attachment counts per task. Unhosted attachments (taskId
+  // null) live at project level as before.
+  .product('attachment', { parent: 'project', host: 'task' })
   .build();
