@@ -57,6 +57,9 @@ export const deriveDescriptionProps = async (
         result.checkboxCount++;
         if (block.props?.checked) result.checkedCount++;
       }
+      // TODO [#24] review: this counts description media BLOCKS (incl. external URLs with no
+      // attachment row) — since the hostEntity port, the CDC e:attachment counter counts live
+      // hosted ROWS per task. Decide which semantic the UI wants; see .todos/24.
       if (
         mediaBlockTypes.has(block.type) &&
         block.props &&
