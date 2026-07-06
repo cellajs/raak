@@ -1,21 +1,27 @@
 import type { ContextEntityType, EntityActionType, EntityRole, EntityType, ProductEntityType } from '../../types';
+import type { RowCondition } from './row-conditions';
 
 /**
- * Permission value for access policy entries.
+ * Permission value accepted in access policy configuration.
  *
  * - `1` = allowed for all entities of this type (unconditional)
  * - `0` = denied
- * - `'own'` = allowed only when the actor is the entity's creator (implicit "owner" relation).
- *   This is equivalent to a Zanzibar-style `owner` relation check on the entity,
- *   derived from the `createdBy` field rather than an explicit relation tuple.
- *   Evaluates to `true` when `entity.createdBy === userId`, `false` otherwise.
+ * - `RowCondition` = allowed only for rows satisfying the condition (see `row-conditions.ts`)
+ * - `'own'` = sugar for the built-in `own` condition (actor is the entity's creator);
+ *   normalized to the condition object when policies are configured.
  */
-export type PermissionValue = 0 | 1 | 'own';
+export type PermissionValue = 0 | 1 | 'own' | RowCondition;
 
 /**
- * Entity action permission set mapping each action to a permission value.
+ * Permission value after configuration-time normalization (`'own'` sugar resolved).
+ * This is the only vocabulary the engine and downstream consumers see.
  */
-export type EntityActionPermissions = Record<EntityActionType, PermissionValue>;
+export type NormalizedPermissionValue = 0 | 1 | RowCondition;
+
+/**
+ * Entity action permission set mapping each action to a normalized permission value.
+ */
+export type EntityActionPermissions = Record<EntityActionType, NormalizedPermissionValue>;
 
 /**
  * Access policy entry for a specific context and role combination.
@@ -46,7 +52,7 @@ export type AccessPolicies = Partial<Record<ContextEntityType | ProductEntityTyp
  * an entity can never be created from inside itself (creation is granted on ancestor rows).
  */
 export type ContextPolicyBuilder = {
-  [R in EntityRole]: (permissions: Partial<EntityActionPermissions>) => void;
+  [R in EntityRole]: (permissions: Partial<Record<EntityActionType, PermissionValue>>) => void;
 };
 
 /**
@@ -67,6 +73,7 @@ export type AccessPolicyCallback = (config: AccessPolicyConfiguration) => void;
  *
  * - `true` = unconditionally allowed
  * - `false` = denied
- * - `'own'` = allowed only when the actor owns the entity
+ * - condition name (e.g. `'own'`) = allowed only for rows satisfying that row condition;
+ *   resolve per row via `resolvePermission` (built-in `'own'`) or the condition's `matches`.
  */
-export type ActionPermissionState = boolean | 'own';
+export type ActionPermissionState = boolean | string;

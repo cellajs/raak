@@ -1,0 +1,240 @@
+import { sql } from 'drizzle-orm';
+import { pgTable, varchar } from 'drizzle-orm/pg-core';
+import {
+  type AccessPolicies,
+  appConfig,
+  computeCan,
+  configureAccessPolicies,
+  getAllDecisions,
+  type PermissionValue,
+  resolvePermission,
+  type SubjectForPermission,
+} from 'shared';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { seedDb } from '#/db/db';
+import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
+import { resolveCollectionReadFilterForPolicies } from './collection-scope';
+import { buildCollectionReadWhere } from './row-predicates';
+
+/**
+ * Check-form / SQL-form / compute-can parity property test — merge blocker.
+ *
+ * One policy definition drives three enforcement paths:
+ * 1. the permission engine's per-subject decision (`getAllDecisions`),
+ * 2. the compiled SQL row predicate for collection reads (`buildCollectionReadWhere`,
+ *    executed against real Postgres here),
+ * 3. the frontend `can` states (`computeCan` + `resolvePermission`).
+ *
+ * Any divergence between them is a security bug: a row readable via SQL but denied by
+ * the engine leaks data; the reverse silently hides rows. This test generates random
+ * policy sets (including row-conditional `'own'` grants), memberships and actors, and
+ * asserts the three paths agree row-for-row.
+ */
+
+/** Scratch table (real Postgres, admin connection): the minimal shape of a product table. */
+const parityTable = pgTable('test_permission_parity_rows', {
+  id: varchar('id').primaryKey(),
+  projectId: varchar('project_id').notNull(),
+  createdBy: varchar('created_by'),
+});
+
+const PROJECTS = ['p1', 'p2', 'p3'] as const;
+const USERS = ['u1', 'u2'] as const;
+const ORG_ID = 'org1';
+
+interface ParityRow {
+  id: string;
+  projectId: string;
+  createdBy: string | null;
+}
+
+/** Fixed row set: every project × creator (each user + null) combination. */
+const ROWS: ParityRow[] = PROJECTS.flatMap((projectId) =>
+  [...USERS, null].map((createdBy) => ({
+    id: `${projectId}:${createdBy ?? 'nobody'}`,
+    projectId,
+    createdBy,
+  })),
+);
+
+/** Deterministic PRNG (mulberry32) so failures reproduce exactly. */
+const mulberry32 = (seed: number) => {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const pick = <T>(random: () => number, values: readonly T[]): T => {
+  const value = values[Math.floor(random() * values.length)];
+  if (value === undefined) throw new Error('pick: empty values');
+  return value;
+};
+
+/** Random read policy value; other actions stay denied (only `read` matters here). */
+const randomReadValue = (random: () => number): PermissionValue => pick(random, [0, 1, 'own'] as const);
+
+/** Policies for `attachment` with random read cells for every context × role combination. */
+const randomPolicies = (random: () => number): AccessPolicies =>
+  configureAccessPolicies(appConfig.entityTypes, ({ subject, contexts }) => {
+    if (subject.name !== 'attachment') return;
+    contexts.organization.admin({ read: randomReadValue(random) });
+    contexts.organization.member({ read: randomReadValue(random) });
+    contexts.project.admin({ read: randomReadValue(random) });
+    contexts.project.member({ read: randomReadValue(random) });
+    contexts.project.guest({ read: randomReadValue(random) });
+  });
+
+interface Scenario {
+  policies: AccessPolicies;
+  memberships: MembershipBaseModel[];
+  userId: string | undefined;
+}
+
+const membership = (contextType: 'organization' | 'project', contextId: string, role: string): MembershipBaseModel =>
+  ({
+    id: `mem-${contextType}-${contextId}-${role}`,
+    userId: 'actor',
+    contextType,
+    contextId,
+    organizationId: ORG_ID,
+    role,
+  }) as unknown as MembershipBaseModel;
+
+const randomScenario = (random: () => number): Scenario => {
+  const anonymous = random() < 0.1;
+  if (anonymous) return { policies: randomPolicies(random), memberships: [], userId: undefined };
+
+  const memberships: MembershipBaseModel[] = [];
+  if (random() < 0.4) memberships.push(membership('organization', ORG_ID, pick(random, ['admin', 'member'])));
+  for (const projectId of PROJECTS) {
+    if (random() < 0.4) memberships.push(membership('project', projectId, pick(random, ['admin', 'member', 'guest'])));
+  }
+  return { policies: randomPolicies(random), memberships, userId: pick(random, USERS) };
+};
+
+const rowSubject = (row: ParityRow): SubjectForPermission => ({
+  entityType: 'attachment',
+  id: row.id,
+  createdBy: row.createdBy,
+  contextIds: { organization: ORG_ID, project: row.projectId },
+});
+
+/** Path 1: the engine's per-row read decision. */
+const engineReadableIds = (scenario: Scenario): Set<string> => {
+  const readable = new Set<string>();
+  for (const row of ROWS) {
+    const { can } = getAllDecisions(scenario.policies, scenario.memberships, rowSubject(row), {
+      userId: scenario.userId,
+    });
+    if (can.read) readable.add(row.id);
+  }
+  return readable;
+};
+
+/** Path 2: the compiled SQL predicate executed against Postgres. */
+const sqlReadableIds = async (scenario: Scenario): Promise<Set<string>> => {
+  const filter = resolveCollectionReadFilterForPolicies(scenario.policies, scenario.memberships, 'attachment', ORG_ID);
+  const where = buildCollectionReadWhere(filter, parityTable, parityTable.projectId, scenario.userId);
+
+  if (where.kind === 'none') return new Set();
+  const query = seedDb.select({ id: parityTable.id }).from(parityTable);
+  const rows = where.kind === 'all' ? await query : await query.where(where.where);
+  return new Set(rows.map((r) => r.id));
+};
+
+beforeAll(async () => {
+  await seedDb.execute(sql`
+    create table if not exists test_permission_parity_rows (
+      id varchar primary key,
+      project_id varchar not null,
+      created_by varchar
+    )
+  `);
+  await seedDb.execute(sql`truncate table test_permission_parity_rows`);
+  await seedDb.insert(parityTable).values(ROWS);
+});
+
+afterAll(async () => {
+  await seedDb.execute(sql`drop table if exists test_permission_parity_rows`);
+});
+
+describe('row-condition parity: engine check ⊆⊇ compiled SQL ⊆⊇ compute-can', () => {
+  it('agrees on every row across random policies, memberships and actors', async () => {
+    const random = mulberry32(0xa11ce);
+
+    for (let i = 0; i < 250; i++) {
+      const scenario = randomScenario(random);
+      const label = `seed 0xa11ce scenario ${i} (memberships: ${scenario.memberships
+        .map((m) => `${m.contextType}:${m.contextId}:${m.role}`)
+        .join(', ')}; user: ${scenario.userId ?? 'anonymous'})`;
+
+      // Engine ⊆⊇ SQL: identical readable row sets.
+      const fromEngine = engineReadableIds(scenario);
+      const fromSql = await sqlReadableIds(scenario);
+      expect(fromSql, label).toEqual(fromEngine);
+
+      // Engine ⊆⊇ compute-can: per single membership, the frontend-resolved state must
+      // match the engine's decision for every row in that membership's scope.
+      for (const m of scenario.memberships) {
+        const canMap = computeCan(m.contextType as 'organization' | 'project', m, scenario.policies);
+        const state = canMap.attachment?.read ?? false;
+        const rowsInScope = m.contextType === 'organization' ? ROWS : ROWS.filter((r) => r.projectId === m.contextId);
+
+        for (const row of rowsInScope) {
+          const resolved = resolvePermission(state, row.createdBy, scenario.userId);
+          const { can } = getAllDecisions(scenario.policies, [m], rowSubject(row), { userId: scenario.userId });
+          expect(resolved, `${label}; membership ${m.contextType}:${m.contextId}:${m.role}; row ${row.id}`).toBe(
+            can.read,
+          );
+        }
+      }
+    }
+  });
+
+  it('explicitly requested sub-context narrows conditional scopes the same way', async () => {
+    const random = mulberry32(0xbee5);
+
+    for (let i = 0; i < 100; i++) {
+      const scenario = randomScenario(random);
+      const requestedProject = pick(random, PROJECTS);
+
+      let filter: ReturnType<typeof resolveCollectionReadFilterForPolicies>;
+      try {
+        filter = resolveCollectionReadFilterForPolicies(scenario.policies, scenario.memberships, 'attachment', ORG_ID, {
+          subContextId: requestedProject,
+        });
+      } catch {
+        // 403: no scope at all for the requested project — the engine must agree that
+        // no row of this project is readable.
+        const fromEngine = engineReadableIds(scenario);
+        for (const row of ROWS.filter((r) => r.projectId === requestedProject)) {
+          expect(fromEngine.has(row.id), `seed 0xbee5 scenario ${i} row ${row.id}`).toBe(false);
+        }
+        continue;
+      }
+
+      const where = buildCollectionReadWhere(filter, parityTable, parityTable.projectId, scenario.userId);
+      const fromSqlAll =
+        where.kind === 'none'
+          ? new Set<string>()
+          : new Set(
+              (where.kind === 'all'
+                ? await seedDb.select({ id: parityTable.id }).from(parityTable)
+                : await seedDb.select({ id: parityTable.id }).from(parityTable).where(where.where)
+              ).map((r) => r.id),
+            );
+
+      // Narrowed SQL result == engine-readable rows of the requested project.
+      const fromEngine = engineReadableIds(scenario);
+      const expected = new Set(
+        ROWS.filter((r) => r.projectId === requestedProject && fromEngine.has(r.id)).map((r) => r.id),
+      );
+      expect(fromSqlAll, `seed 0xbee5 scenario ${i} project ${requestedProject}`).toEqual(expected);
+    }
+  });
+});

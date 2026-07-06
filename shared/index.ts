@@ -80,9 +80,12 @@ export type {
   AccessPolicyEntry,
   ContextPolicyBuilder,
   EntityActionPermissions,
+  NormalizedPermissionValue,
   PermissionValue,
   SubjectAccessPolicies,
 } from './src/permissions';
+export { isRowCondition, own } from './src/permissions';
+export type { ConditionActor, RowCondition, RowConditionSqlForm, RowForCondition } from './src/permissions';
 export { configureAccessPolicies, getPolicyPermissions, getSubjectPolicies } from './src/permissions';
 export { allActionsAllowed, allActionsDenied, createActionRecord, isUnconditionalPermission, resolvePermission } from './src/permissions';
 export { accessPolicies, computeCan } from './src/permissions';

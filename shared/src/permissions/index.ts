@@ -6,9 +6,12 @@ export type {
   ActionPermissionState,
   ContextPolicyBuilder,
   EntityActionPermissions,
+  NormalizedPermissionValue,
   PermissionValue,
   SubjectAccessPolicies,
 } from './types';
+export { isRowCondition, own } from './row-conditions';
+export type { ConditionActor, RowCondition, RowConditionSqlForm, RowForCondition } from './row-conditions';
 
 export { configureAccessPolicies, getPolicyPermissions, getSubjectPolicies } from './access-policies';
 export { allActionsAllowed, allActionsDenied, createActionRecord, isUnconditionalPermission, resolvePermission } from './action-helpers';

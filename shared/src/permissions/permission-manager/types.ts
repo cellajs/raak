@@ -34,16 +34,24 @@ export interface PermissionMembership {
 export type SubjectForPermission = {
   entityType: ContextEntityType | ProductEntityType;
   id?: string;
-  /** The user who created this entity. Enables implicit "owner" relation for `'own'` policies. */
+  /** The user who created this entity. Enables the built-in `own` row condition. */
   createdBy?: string | null;
   /** Ancestor context IDs keyed by context entity type. `null` means explicitly not scoped to that context. */
   contextIds: ContextScope;
+  /**
+   * Additional row fields for row-condition evaluation (see `row-conditions.ts`).
+   * Only needed when a policy uses a condition that reads columns beyond `createdBy`.
+   */
+  row?: Record<string, unknown>;
 };
 
-/** Source that granted an action — either a context membership or an implicit relation. */
+/**
+ * Source that granted an action — either a context membership or a row condition
+ * (`relation` is the condition's name, e.g. `'own'`).
+ */
 export type GrantSource =
   | { type: 'membership'; contextType: ContextEntityType; contextId: string; role: string }
-  | { type: 'relation'; relation: 'owner' };
+  | { type: 'relation'; relation: string };
 
 export interface ActionAttribution {
   enabled: boolean;

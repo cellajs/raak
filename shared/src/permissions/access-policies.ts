@@ -1,6 +1,7 @@
 import { appConfig } from '../config-builder/app-config';
 import { getContextRoles } from '../entity-guards';
 import type { ContextEntityType, EntityActionType, EntityRole, EntityType, ProductEntityType } from '../../types';
+import { own } from './row-conditions';
 import type {
   AccessPolicies,
   AccessPolicyCallback,
@@ -8,8 +9,15 @@ import type {
   AccessPolicyEntry,
   ContextPolicyBuilder,
   EntityActionPermissions,
+  NormalizedPermissionValue,
+  PermissionValue,
   SubjectAccessPolicies,
 } from './types';
+
+/** Resolves the `'own'` sugar literal to the built-in condition; passes everything else through. */
+const normalizePermissionValue = (value: PermissionValue): NormalizedPermissionValue => {
+  return value === 'own' ? own : value;
+};
 
 /**
  * Creates a context policy builder for fluent role-permission configuration.
@@ -22,12 +30,13 @@ const createContextPolicyBuilder = (
   const builder = {} as ContextPolicyBuilder;
 
   for (const role of roles) {
-    builder[role as EntityRole] = (permissions: Partial<EntityActionPermissions>) => {
+    builder[role as EntityRole] = (permissions: Partial<Record<EntityActionType, PermissionValue>>) => {
       // Normalize to a full record so the engine always reads an explicit value: any action the
-      // policy omits defaults to 0 (denied). Omitting an action is therefore equivalent to `0`.
+      // policy omits defaults to 0 (denied), and the `'own'` sugar literal resolves to the
+      // built-in row condition. Omitting an action is therefore equivalent to `0`.
       const fullPermissions = {} as EntityActionPermissions;
       for (const action of appConfig.entityActions as readonly EntityActionType[]) {
-        fullPermissions[action] = permissions[action] ?? 0;
+        fullPermissions[action] = normalizePermissionValue(permissions[action] ?? 0);
       }
       entries.push({ contextType, role: role as EntityRole, permissions: fullPermissions });
     };

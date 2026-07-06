@@ -3,6 +3,7 @@ import { hierarchy } from '../../../config/hierarchy-config';
 import type { ContextEntityType, ProductEntityType } from '../../../types';
 import { getContextRoles, isContextEntity } from '../../entity-guards';
 import { allActionsAllowed, createActionRecord } from '../action-helpers';
+import { type ConditionActor, isRowCondition, type RowForCondition } from '../row-conditions';
 import type { AccessPolicies, EntityActionPermissions } from '../types';
 import { formatBatchPermissionSummary, formatPermissionDecision } from './format';
 import type {
@@ -84,8 +85,9 @@ const getSubjectContextId = (
  * Internal function to check permissions for a single subject using pre-built indices.
  * This is the core logic shared by both single and batch permission checks.
  *
- * Supports Zanzibar-style implicit "owner" relation: when a policy value is `'own'`,
- * the engine checks if `subject.createdBy === userId` to determine grant.
+ * Supports row-conditional grants: when a policy value is a `RowCondition` (e.g. the
+ * built-in `own`, normalized from the `'own'` literal), the engine evaluates its
+ * check-form against the subject's row fields to determine the grant.
  */
 const checkWithIndices = <T extends PermissionMembership>(
   membershipIndex: MembershipIndex<T>,
@@ -137,6 +139,10 @@ const checkWithIndices = <T extends PermissionMembership>(
 
   // Collect resolved context IDs for debugging
   const contextIds: ResolvedContextIds = {};
+
+  // Row fields + actor for row-condition evaluation, built once per subject
+  const conditionRow: RowForCondition = { ...subject.row, createdBy: subject.createdBy };
+  const conditionActor: ConditionActor = { userId };
 
   // Walk through each context level (most specific first, then ancestors)
   for (const contextType of orderedContexts) {
@@ -190,11 +196,11 @@ const checkWithIndices = <T extends PermissionMembership>(
           continue;
         }
 
-        // Implicit "owner" relation check: grant if actor created this entity.
-        // In Zanzibar terms: check(actor, action, object) where relation(actor, 'owner', object) exists.
-        if (policyValue === 'own' && userId && subject.createdBy === userId) {
+        // Row-conditional grant: allowed only when the row satisfies the condition for this
+        // actor (e.g. built-in `own`: actor created the row). Attributed by condition name.
+        if (isRowCondition(policyValue) && policyValue.matches(conditionRow, conditionActor)) {
           actions[action].enabled = true;
-          actions[action].grantedBy.push({ type: 'relation', relation: 'owner' });
+          actions[action].grantedBy.push({ type: 'relation', relation: policyValue.name });
         }
       }
     }
