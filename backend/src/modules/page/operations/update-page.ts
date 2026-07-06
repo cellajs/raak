@@ -1,10 +1,8 @@
 import type { z } from '@hono/zod-openapi';
-// DORMANT (lens system): import { normalizeOps } from 'shared/version-changes';
 import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
-import { resolveUpdateOps } from '#/core/stx';
 import { updatePage } from '#/modules/page/page-queries';
-import type { pageUpdateStxBodySchema } from '#/modules/page/page-schema';
+import { type pageUpdateStxBodySchema, pageWire } from '#/modules/page/page-schema';
 import { withAuditUser, withAuditUserLite } from '#/modules/user/helpers/audit-user';
 import { getValidProductEntity } from '#/permissions/get-product-entity';
 import { extractKeywords } from '#/utils/extract-keywords';
@@ -23,11 +21,8 @@ export async function updatePageOp(
   const { fullResponse } = opts;
   const user = ctx.var.user;
 
-  // DORMANT (lens system) — reconnect when lenses are activated.
-  // const { ops, stx } = normalizeOps('page', input.ops, input.stx);
-
   const { entity } = await getValidProductEntity(ctx, id, 'page', 'update');
-  const resolved = resolveUpdateOps(entity, ops, stx);
+  const resolved = pageWire.resolveUpdateOps(entity, ops, stx);
 
   if (!resolved.changed) {
     const pageResponse = fullResponse ? await withAuditUser(ctx, entity, user) : withAuditUserLite(entity, user);

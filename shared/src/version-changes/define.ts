@@ -8,13 +8,38 @@
  * Lens modules are FROZEN once shipped and appended in date order to
  * `index.ts`. The global schema version is the lens count (D2).
  */
-import type { ProductEntityType } from '../../types';
+import type { ContextEntityType, ProductEntityType } from '../../types';
+
+/**
+ * Entity types lenses can target. Product entities get the full artifact set
+ * (ops/stx normalization, mirror writes); context entities get the reduced set
+ * (body widening + normalization + cache migration) — their writes are plain
+ * full-body PUTs with no per-field merge.
+ */
+export type LensEntityType = ProductEntityType | ContextEntityType;
+
+/**
+ * Version of the lens-module *format* itself (Cambria's "lens inception" guard).
+ * Lens modules are append-only and immortal, so the engine must be able to tell
+ * which format a frozen module was written against. Bump when LensDefinition
+ * changes incompatibly; the engine branches on `lens.formatVersion`.
+ */
+export const LENS_FORMAT_VERSION = 1;
 
 /** Rename a scalar field: `from` (old canonical) → `to` (new canonical). */
 export type RenameDelta = { rename: { from: string; to: string } };
 
-/** Add a new field. `default` fills the value when migrating older rows forward. */
+/**
+ * Add a new field. `default` fills the value when migrating older rows forward:
+ * a plain value, or a pure `(row) => value` function for computed defaults
+ * (must pass the lens purity lint — no I/O, no dynamic key access).
+ */
 export type AddDelta = { add: { field: string; default: unknown } };
+
+/** Resolves an `add` delta's default for a row (plain value or computed). */
+export function resolveAddDefault(add: AddDelta['add'], row: Record<string, unknown>): unknown {
+  return typeof add.default === 'function' ? (add.default as (row: Record<string, unknown>) => unknown)(row) : add.default;
+}
 
 /** Drop a field. Backward migration cannot restore the value (lossy). */
 export type DropDelta = { drop: { field: string } };
@@ -46,8 +71,10 @@ export interface LensCustom {
 export interface LensDefinition {
   /** Stable, date-prefixed, globally-unique id, e.g. `2026-07-01-task-name-to-title`. */
   id: string;
-  /** Product entity this lens applies to. */
-  entityType: ProductEntityType;
+  /** Lens-module format version. Omit to get the current `LENS_FORMAT_VERSION`; frozen with the module. */
+  formatVersion?: number;
+  /** Entity this lens applies to (product or context). */
+  entityType: LensEntityType;
   /** Human-readable summary of the change. */
   description: string;
   /** Lifecycle phase — drives wire widening and spec generation. */
@@ -70,10 +97,14 @@ export function defineLens(def: LensDefinition): LensDefinition {
   if (!ID_PATTERN.test(def.id)) {
     throw new Error(`Lens id "${def.id}" must be date-prefixed kebab-case, e.g. 2026-07-01-task-name-to-title`);
   }
+  const formatVersion = def.formatVersion ?? LENS_FORMAT_VERSION;
+  if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > LENS_FORMAT_VERSION) {
+    throw new Error(`Lens "${def.id}" declares unsupported formatVersion ${def.formatVersion} (current: ${LENS_FORMAT_VERSION})`);
+  }
   if ('retype' in def.delta && !def.custom?.opsConvert) {
     throw new Error(`Lens "${def.id}" uses a retype delta and must declare custom.opsConvert`);
   }
-  return Object.freeze(def);
+  return Object.freeze({ ...def, formatVersion });
 }
 
 /** Field-key rename map (old → new) derived from a lens delta, or `null` when the delta renames nothing. */

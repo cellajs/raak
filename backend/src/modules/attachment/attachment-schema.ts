@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
+import { createProductEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
-import { createUpdateSchema } from '#/core/stx';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
@@ -45,17 +45,20 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     id: validUuidSchema,
   });
 
-/** Create body with stx for single attachment creation */
-const attachmentCreateStxBodySchema = attachmentCreateBodySchema.extend({ stx: stxBaseSchema });
+/** Wire registration: lens-widened schemas + entity-bound runtime seams for attachment */
+export const attachmentWire = createProductEntityWire('attachment', {
+  createItem: attachmentCreateBodySchema,
+  updatable: {
+    name: z.string().max(maxLength.field),
+    originalKey: z.string(),
+  },
+});
 
 /** Array schema for batch creates (1-50 attachments per request), each with own stx */
-export const attachmentCreateManyStxBodySchema = attachmentCreateStxBodySchema.array().min(1).max(50);
+export const attachmentCreateManyStxBodySchema = attachmentWire.createItemSchema.array().min(1).max(50);
 
 /** Update body using fields pattern for single or multi-field updates with conflict detection */
-export const attachmentUpdateStxBodySchema = createUpdateSchema({
-  name: z.string().max(maxLength.field),
-  originalKey: z.string(),
-});
+export const attachmentUpdateStxBodySchema = attachmentWire.updateBodySchema;
 
 // Response schemas: batch operations use { data, rejectedIds }, single returns entity directly
 export const attachmentCreateResponseSchema = batchResponseSchema(attachmentSchema);

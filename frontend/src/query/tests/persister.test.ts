@@ -7,6 +7,7 @@ vi.mock('shared', () => ({
   appConfig: {
     slug: 'test-app',
     productEntityTypes: ['task', 'label', 'attachment', 'page'],
+    contextEntityTypes: ['organization', 'workspace', 'project'],
     clientCacheVersion: 'v1',
   },
 }));

@@ -1,11 +1,10 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
-import { resolveUpdateOps } from '#/core/stx';
 import { tenantContext } from '#/db/tenant-context';
 import type { LabelModel } from '#/modules/label/label-db';
 import { updateLabel } from '#/modules/label/label-queries';
-import type { labelUpdateStxBodySchema } from '#/modules/label/label-schema';
+import { type labelUpdateStxBodySchema, labelWire } from '#/modules/label/label-schema';
 import { getValidProductEntity } from '#/permissions/get-product-entity';
 import { getIsoDate } from '#/utils/iso-date';
 
@@ -21,7 +20,7 @@ export async function updateLabelOp(
   // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
   const updated = await tenantContext(ctx, async (txCtx) => {
     const { entity: before } = await getValidProductEntity(txCtx, id, 'label', 'update');
-    const resolved = resolveUpdateOps(before, rawOps, stx);
+    const resolved = labelWire.resolveUpdateOps(before, rawOps, stx);
 
     const values = {
       ...(resolved.changed ? resolved.values : {}),

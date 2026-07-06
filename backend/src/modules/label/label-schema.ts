@@ -1,7 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import { getColumns } from 'drizzle-orm';
+import { createProductEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
-import { createUpdateSchema } from '#/core/stx';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
@@ -52,11 +52,17 @@ export const labelEmbeddedSelect = pick(
   Object.keys(labelEmbeddedSchema.shape) as LabelEmbeddedKeys[],
 );
 
-/** Update body using fields pattern for single or multi-field updates with conflict detection */
-export const labelUpdateStxBodySchema = createUpdateSchema({
-  name: z.string().max(maxLength.field),
-  color: z.string().max(maxLength.field).nullable(),
+/** Wire registration: lens-widened schemas + entity-bound runtime seams for label */
+export const labelWire = createProductEntityWire('label', {
+  createItem: labelCreateSchema,
+  updatable: {
+    name: z.string().max(maxLength.field),
+    color: z.string().max(maxLength.field).nullable(),
+  },
 });
+
+/** Update body using fields pattern for single or multi-field updates with conflict detection */
+export const labelUpdateStxBodySchema = labelWire.updateBodySchema;
 
 export const labelListQuerySchema = paginationQuerySchema
   .extend({
@@ -69,7 +75,5 @@ export const labelListQuerySchema = paginationQuerySchema
     message: 'Only one of projectId or workspaceId can be provided',
   });
 
-const labelCreateStxBodySchema = labelCreateSchema.extend({ stx: stxBaseSchema });
-
-export const labelCreateManyStxBodySchema = labelCreateStxBodySchema.array().min(1).max(50);
+export const labelCreateManyStxBodySchema = labelWire.createItemSchema.array().min(1).max(50);
 export const labelCreateResponseSchema = batchResponseSchema(labelSchema);
