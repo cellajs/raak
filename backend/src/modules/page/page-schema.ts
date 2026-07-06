@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
+import { createProductEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
-import { createUpdateSchema } from '#/core/stx';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { pagesTable } from '#/modules/page/page-db';
 import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
@@ -49,23 +49,26 @@ const pageCreateBodySchema = pageInsertSchema
     displayOrder: z.number().optional(),
   });
 
-/** Create body with stx for single page creation */
-const pageCreateStxBodySchema = pageCreateBodySchema.extend({ stx: stxBaseSchema });
+/** Wire registration: lens-widened schemas + entity-bound runtime seams for page */
+export const pageWire = createProductEntityWire('page', {
+  createItem: pageCreateBodySchema,
+  updatable: {
+    name: z.string().max(maxLength.field),
+    description: z.string().max(maxLength.html).nullable(),
+    keywords: z.string().nullable(),
+    displayOrder: z.number(),
+    status: pageStatusSchema,
+    renderMode: pageRenderModeSchema,
+    parentId: z.string().max(maxLength.id).nullable(),
+    publicAt: z.string().nullable(),
+  },
+});
 
 /** Array schema for batch creates (1-50 pages per request), each with own stx */
-export const pageCreateManyStxBodySchema = pageCreateStxBodySchema.array().min(1).max(50);
+export const pageCreateManyStxBodySchema = pageWire.createItemSchema.array().min(1).max(50);
 
 /** Update body using fields pattern for single or multi-field updates with conflict detection */
-export const pageUpdateStxBodySchema = createUpdateSchema({
-  name: z.string().max(maxLength.field),
-  description: z.string().max(maxLength.html).nullable(),
-  keywords: z.string().nullable(),
-  displayOrder: z.number(),
-  status: pageStatusSchema,
-  renderMode: pageRenderModeSchema,
-  parentId: z.string().max(maxLength.id).nullable(),
-  publicAt: z.string().nullable(),
-});
+export const pageUpdateStxBodySchema = pageWire.updateBodySchema;
 
 // Response schemas: batch operations use { data, rejectedItems }, single returns entity directly
 export const pageCreateResponseSchema = batchResponseSchema(pageSchema);

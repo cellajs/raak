@@ -7,6 +7,7 @@ import { insertMemberships } from '#/modules/memberships/helpers/membership-help
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
 import { insertWorkspaces } from '#/modules/workspace/workspace-queries';
+import { workspaceWire } from '#/modules/workspace/workspace-schema';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
@@ -14,7 +15,9 @@ import { createRejectionState, takeWithRestriction } from '#/utils/rejection-uti
 
 type CreateWorkspaceItem = { id: string; name: string };
 
-export async function createWorkspacesOp(ctx: AuthContext, items: CreateWorkspaceItem[]) {
+export async function createWorkspacesOp(ctx: AuthContext, rawItems: CreateWorkspaceItem[]) {
+  // Lens seam: canonicalize old-shape field names before any body access
+  const items = rawItems.map((item) => workspaceWire.normalizeBody(item));
   const db = ctx.var.db;
   const user = ctx.var.user;
   const organization = ctx.var.organization;

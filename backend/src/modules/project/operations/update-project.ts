@@ -4,13 +4,16 @@ import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
 import { getEntityCounts } from '#/modules/entities/helpers/get-entity-counts';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { updateProject } from '#/modules/project/project-queries';
+import { projectWire } from '#/modules/project/project-schema';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
-export async function updateProjectOp(ctx: AuthContext, id: string, input: Record<string, unknown>) {
+export async function updateProjectOp(ctx: AuthContext, id: string, rawInput: Record<string, unknown>) {
+  // Lens seam: canonicalize old-shape field names before any body access
+  const input = projectWire.normalizeBody(rawInput);
   const user = ctx.var.user;
 
   const { entity: project, membership } = await getValidContextEntity(ctx, id, 'project', 'update');

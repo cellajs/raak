@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
+import { createProductEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
-import { createUpdateSchema } from '#/core/stx';
 import { arrayDeltaSchema } from '#/core/stx/array-delta';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelEmbeddedSchema } from '#/modules/label/label-schema';
@@ -55,18 +55,24 @@ const taskCreateSchema = taskInsertSchema
     assignedTo: z.array(z.string()).optional(),
   });
 
-/** Update body using fields pattern for single or multi-field updates with conflict detection */
-export const taskUpdateStxBodySchema = createUpdateSchema({
-  name: z.string().max(maxLength.field),
-  description: z.string().max(maxLength.html).nullable(),
-  status: z.number().int(),
-  variant: z.number().int(),
-  points: z.number().int().nullable(),
-  displayOrder: z.number(),
-  labels: arrayDeltaSchema,
-  assignedTo: arrayDeltaSchema,
-  projectId: z.string().max(maxLength.id),
+/** Wire registration: lens-widened schemas + entity-bound runtime seams for task */
+export const taskWire = createProductEntityWire('task', {
+  createItem: taskCreateSchema,
+  updatable: {
+    name: z.string().max(maxLength.field),
+    description: z.string().max(maxLength.html).nullable(),
+    status: z.number().int(),
+    variant: z.number().int(),
+    points: z.number().int().nullable(),
+    displayOrder: z.number(),
+    labels: arrayDeltaSchema,
+    assignedTo: arrayDeltaSchema,
+    projectId: z.string().max(maxLength.id),
+  },
 });
+
+/** Update body using fields pattern for single or multi-field updates with conflict detection */
+export const taskUpdateStxBodySchema = taskWire.updateBodySchema;
 
 /** Base schema without refinement - use this when you need .omit()/.pick() */
 export const taskListQueryBaseSchema = paginationQuerySchema.extend({
@@ -85,7 +91,6 @@ export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !dat
   message: 'Only one of projectId or workspaceId can be provided',
 });
 
-// Stx-wrapped schemas for product entity mutations
-const taskCreateStxBodySchema = taskCreateSchema.extend({ stx: stxBaseSchema });
-export const taskCreateManyStxBodySchema = taskCreateStxBodySchema.array().min(1).max(50);
+// Stx-wrapped schemas for product entity mutations (items lens-widened via the wire)
+export const taskCreateManyStxBodySchema = taskWire.createItemSchema.array().min(1).max(50);
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);

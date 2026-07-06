@@ -1,6 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import { t } from 'i18next';
 import { roles } from 'shared';
+import { createContextEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { membershipBaseSchema } from '#/modules/memberships/memberships-schema';
@@ -56,15 +57,33 @@ export const projectWithMembershipSchema = projectSchema.extend({
   included: projectIncludedSchema.extend({ membership: membershipBaseSchema }),
 });
 
-const projectCreateItemSchema = z.object({
-  id: validTempIdSchema,
-  name: validNameSchema,
-  slug: validSlugSchema,
-  publicAt: z.string().nullable(),
+/** Wire registration: lens-widened schemas + entity-bound runtime seam for project */
+export const projectWire = createContextEntityWire('project', {
+  createItem: z.object({
+    id: validTempIdSchema,
+    name: validNameSchema,
+    slug: validSlugSchema,
+    publicAt: z.string().nullable(),
+  }),
+  updateBody: createInsertSchema(projectsTable, {
+    slug: validSlugSchema,
+    name: validNameSchema,
+    thumbnailUrl: validCDNUrlSchema.nullable(),
+    bannerUrl: validCDNUrlSchema.nullable(),
+    publicAt: z.string().nullable(),
+  })
+    .pick({
+      slug: true,
+      name: true,
+      thumbnailUrl: true,
+      bannerUrl: true,
+      publicAt: true,
+    })
+    .partial(),
 });
 
 /** Array schema for batch creates - rejects duplicate slugs */
-export const projectCreateBodySchema = projectCreateItemSchema
+export const projectCreateBodySchema = projectWire.createItemSchema
   .array()
   .min(1)
   .max(10)
@@ -74,21 +93,7 @@ export const projectCreateResponseSchema = batchResponseSchema(projectWithMember
 
 export const workspaceIdQuery = z.object({ workspaceId: z.string().max(maxLength.id) });
 
-export const projectUpdateBodySchema = createInsertSchema(projectsTable, {
-  slug: validSlugSchema,
-  name: validNameSchema,
-  thumbnailUrl: validCDNUrlSchema.nullable(),
-  bannerUrl: validCDNUrlSchema.nullable(),
-  publicAt: z.string().nullable(),
-})
-  .pick({
-    slug: true,
-    name: true,
-    thumbnailUrl: true,
-    bannerUrl: true,
-    publicAt: true,
-  })
-  .partial();
+export const projectUpdateBodySchema = projectWire.updateBodySchema;
 
 export const projectListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder').optional(),

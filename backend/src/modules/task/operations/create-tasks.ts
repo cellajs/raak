@@ -7,7 +7,7 @@ import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts'
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { findTasksByStxMutationId, insertTasks } from '#/modules/task/task-queries';
-import type { taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
+import { type taskCreateManyStxBodySchema, taskWire } from '#/modules/task/task-schema';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
@@ -19,8 +19,10 @@ type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
 
 export async function createTasksOp(
   ctx: AuthContext,
-  input: CreateTasksInput,
+  rawInput: CreateTasksInput,
 ): Promise<OperationResult<{ data: ReturnTask[]; rejectedIds: string[] }>> {
+  // Lens seam: canonicalize old-shape field names before any body access
+  const input = rawInput.map((item) => taskWire.normalizeCreateItem(item));
   const organization = ctx.var.organization;
   const taskRestrictions = ctx.var.tenant.restrictions.quotas.task;
 

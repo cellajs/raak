@@ -1,5 +1,7 @@
 import { z } from '@hono/zod-openapi';
+import type { ProductEntityType } from 'shared';
 import { stxBaseSchema } from '#/schemas';
+import { widenBodySchema } from './lens-seam';
 
 /**
  * Create an ops-based update schema for a product entity.
@@ -11,18 +13,25 @@ import { stxBaseSchema } from '#/schemas';
  *
  * Each field in `opsShape` is optional. The schema is refined to require at least one op.
  *
+ * During a lens expand window, the ops object is widened via `widenBodySchema`
+ * (an ops object is a partial entity body): the old field name is accepted as
+ * an alias of its canonical twin, so old bundles pass validation. `normalizeOps`
+ * (via `resolveUpdateOps`) canonicalizes after validation. Aliases exist only
+ * at runtime — the static type stays canonical.
+ *
+ * @param entityType - Product entity the ops apply to (drives lens widening)
  * @param opsShape - Zod object shape where each key maps to its accepted value type
  *
  * @example
  * ```ts
- * const attachmentUpdateStxBodySchema = createUpdateSchema({
+ * const attachmentUpdateStxBodySchema = createUpdateSchema('attachment', {
  *   name: z.string(),
  *   originalKey: z.string(),
  * });
  * ```
  */
-export function createUpdateSchema<T extends z.ZodRawShape>(opsShape: T) {
-  const partialOps = z.object(opsShape).partial();
+export function createUpdateSchema<T extends z.ZodRawShape>(entityType: ProductEntityType, opsShape: T) {
+  const partialOps = widenBodySchema(entityType, z.object(opsShape).partial());
 
   return z
     .object({
