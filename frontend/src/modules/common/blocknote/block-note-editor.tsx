@@ -21,7 +21,7 @@ import { UppyFilePanel } from '~/modules/common/blocknote/custom-file-panel/uppy
 import { CustomFormattingToolbar } from '~/modules/common/blocknote/custom-formatting-toolbar/formatting-toolbar';
 import { CustomSideMenu } from '~/modules/common/blocknote/custom-side-menu/side-menu';
 import { CustomSlashMenu } from '~/modules/common/blocknote/custom-slash-menu/slash-menu';
-import { getParsedContent } from '~/modules/common/blocknote/helpers/blocknote-helpers';
+import { findClickedMedia, getParsedContent } from '~/modules/common/blocknote/helpers/blocknote-helpers';
 import { getDictionary } from '~/modules/common/blocknote/helpers/dictionary';
 import { openAttachment } from '~/modules/common/blocknote/helpers/open-attachment';
 import { createResolveFileUrl } from '~/modules/common/blocknote/helpers/resolve-file-url';
@@ -29,7 +29,6 @@ import { shadCNComponents } from '~/modules/common/blocknote/helpers/shad-cn';
 import { useEditorKeyboard } from '~/modules/common/blocknote/hooks/use-editor-keyboard';
 import { useSmartBlur } from '~/modules/common/blocknote/hooks/use-smart-blur';
 import { useUntrustedMediaWarning } from '~/modules/common/blocknote/hooks/use-untrusted-media-warning';
-import { useYjsContentSeed } from '~/modules/common/blocknote/hooks/use-yjs-content-seed';
 import { useYjsUndoManagerFix } from '~/modules/common/blocknote/hooks/use-yjs-undo-manager-fix';
 import type {
   CommonBlockNoteProps,
@@ -42,35 +41,28 @@ import { useDerivedFieldsSender } from '~/modules/common/blocknote/use-derived-f
 import { useUIStore } from '~/modules/ui/ui-store';
 import { router } from '~/routes/router';
 
-/** Pre-built collaboration config from the connection manager store. */
-interface CollaborationConfig {
+/**
+ * Everything collaborative mode needs, bundled: the Yjs wiring (provider, fragment,
+ * cursor user) plus the entity-persistence wiring for the derived-fields sender.
+ * Presence of the bundle switches the editor into collaborative mode.
+ */
+export interface CollaborationBundle {
   provider: WebsocketProvider;
   fragment: XmlFragment;
   user: { name: string; color: string };
-  showCursorLabels?: 'activity' | 'always';
+  entityType: ProductEntityType;
+  entityId: string;
+  /** Callback that sends description update through a React Query mutation (fires lifecycle hooks). */
+  sendDerivedUpdate: (entityId: string, description: string) => Promise<void>;
 }
 
-type BlockNoteProps =
-  | (CommonBlockNoteProps & {
-      updateData: (strBlocks: string) => void;
-      autoFocus?: boolean;
-      /** When true, fire `updateData` on every change (form-binding mode). Default: only on blur/Escape/Cmd+Enter. */
-      commitOnEveryChange?: boolean;
-      collaboration: CollaborationConfig;
-      entityType: ProductEntityType;
-      entityId: string;
-      /** Callback that sends description update through a React Query mutation (fires lifecycle hooks). */
-      sendDerivedUpdate: (entityId: string, description: string) => Promise<void>;
-    })
-  | (CommonBlockNoteProps & {
-      updateData: (strBlocks: string) => void;
-      autoFocus?: boolean;
-      commitOnEveryChange?: boolean;
-      collaboration?: never;
-      entityType?: never;
-      entityId?: never;
-      sendDerivedUpdate?: never;
-    });
+type BlockNoteProps = CommonBlockNoteProps & {
+  updateData: (strBlocks: string) => void;
+  autoFocus?: boolean;
+  /** When true, fire `updateData` on every change (form-binding mode). Default: only on blur/Escape/Cmd+Enter. */
+  commitOnEveryChange?: boolean;
+  collaboration?: CollaborationBundle;
+};
 
 function BlockNote({
   id,
@@ -97,9 +89,6 @@ function BlockNote({
   commitOnEveryChange = false,
   // Collaboration
   collaboration,
-  entityType: entityTypeProp,
-  entityId: entityIdProp,
-  sendDerivedUpdate,
   // Functions
   updateData,
   onEscapeClick,
@@ -131,7 +120,11 @@ function BlockNote({
     heading: { levels: headingLevels },
     trailingBlock,
     dictionary: getDictionary(),
-    collaboration,
+    // Only the Yjs wiring goes to the editor — the entity-persistence half of the
+    // bundle is consumed by the derived-fields sender below.
+    collaboration: collaboration
+      ? { provider: collaboration.provider, fragment: collaboration.fragment, user: collaboration.user }
+      : undefined,
 
     extensions: [checkedExtension(), ...(extensions ?? [])],
     resolveFileUrl: createResolveFileUrl({ publicFiles, baseFilePanelProps }),
@@ -141,26 +134,20 @@ function BlockNote({
   useYjsUndoManagerFix(editor, collaborative);
 
   // Send derived fields (summary, checkbox counts, etc.) to backend in collaborative mode.
-  // Also manages Yjs editor store registration for SSE suppression — unregister is
+  // Also manages Yjs editor registration for SSE suppression — unregister is
   // chained after the flush mutation completes so SSE can't overwrite with stale data.
-  const { markContentAsSent } = useDerivedFieldsSender(
-    collaborative && entityTypeProp && entityIdProp && sendDerivedUpdate
+  // Note: fresh sessions are seeded server-side by the Yjs relay; the seed arrives as a
+  // remote change, which the sender's remote filter already ignores — no handshake needed.
+  useDerivedFieldsSender(
+    collaboration
       ? {
-          entityId: entityIdProp,
-          entityType: entityTypeProp,
+          entityId: collaboration.entityId,
+          entityType: collaboration.entityType,
           editor,
-          sendUpdate: sendDerivedUpdate,
+          sendUpdate: collaboration.sendDerivedUpdate,
         }
       : null,
   );
-
-  // Seed Y.Doc with existing content on first sync when document is empty
-  useYjsContentSeed({
-    editor,
-    provider: collaboration?.provider,
-    defaultValue,
-    markContentAsSent,
-  });
 
   const handleKeyDown = useEditorKeyboard({
     editor,
@@ -203,19 +190,12 @@ function BlockNote({
   const handleClick: MouseEventHandler = (event) => {
     if (!clickOpensPreview || editable) return;
 
-    const target = event.target as HTMLElement;
-
-    // Check if click is on or inside a media element
-    const mediaElement = target.closest('img, video, audio') || target.querySelector('img, video, audio');
-    const insideFileBlock = !!target.closest('.bn-file-block-content-wrapper');
-
-    if (!mediaElement && !insideFileBlock) return;
+    const media = findClickedMedia(event.target as HTMLElement, { includeWrapped: true });
+    if (!media) return;
 
     event.preventDefault();
-
-    // Get the src of the clicked media to start carousel at that item
-    const clickedSrc = (mediaElement as HTMLMediaElement)?.src;
-    openAttachment(editor, blockNoteRef, clickedSrc);
+    // The clicked media's src starts the carousel at that item
+    openAttachment(editor, blockNoteRef, media.src);
   };
 
   useEffect(() => {

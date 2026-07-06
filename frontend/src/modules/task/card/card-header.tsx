@@ -13,12 +13,12 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { PopConfirm } from '~/modules/common/popconfirm';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { DeleteTask } from '~/modules/task/delete-task';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useReadOnlyInert } from '~/modules/task/hooks/use-read-only';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { changeTaskState } from '~/modules/task/hooks/use-task-states';
 import { variantOptions } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -201,7 +201,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
             <TooltipButton toolTipContent={t('c:close')} side="bottom" sideOffset={5} hideWhenDetached>
               <Button
                 onClick={() => {
-                  changeTaskState(task.id, 'collapsed');
+                  useTaskCardStore.getState().setTaskState(task.id, 'collapsed');
                 }}
                 aria-label="Collapse"
                 variant="ghost"

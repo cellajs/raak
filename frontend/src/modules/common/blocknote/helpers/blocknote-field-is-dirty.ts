@@ -7,8 +7,7 @@ export const blocknoteFieldIsDirty = (strBlocks: string): boolean => {
   try {
     const blocks = JSON.parse(strBlocks) as CustomBlock[];
 
-    const filteredBlocks = blocks.filter((b) => b !== undefined);
-    return filteredBlocks.some(({ content, type, children, props }) => {
+    return blocks.some(({ content, type, children, props }) => {
       const hasInlineContent = Array.isArray(content) && content.length > 0;
 
       const hasTableContent =

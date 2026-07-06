@@ -11,6 +11,7 @@ import { appConfig } from 'shared';
 import type { z } from 'zod';
 import type { ApiError } from '~/lib/api';
 import { AlertBanner } from '~/modules/common/alerter/alert-banner';
+import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
 import { blocksToHTML } from '~/modules/common/blocknote/helpers/blocknote-helpers';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
@@ -23,7 +24,6 @@ import { Button, SubmitButton } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import type { MutationData } from '~/query/types';
-import { blocknoteFieldIsDirty } from '~/utils/blocknote-field-is-dirty';
 
 const formSchema = zSendNewsletterBody;
 

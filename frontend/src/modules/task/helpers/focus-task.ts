@@ -1,12 +1,12 @@
+import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { currentActiveTask } from '~/modules/task/helpers/active-task';
 import { scrollTaskIntoView } from '~/modules/task/helpers/panel-scroll-registry';
-import { changeTaskState } from '~/modules/task/hooks/use-task-states';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 
 export const focusTask = (taskId: string | null) => {
   const { focusedTaskId: currentFocused, setFocusedTaskId } = useTaskInteractionStore.getState();
   if (currentFocused) {
-    changeTaskState(currentFocused, 'suppressEdit');
+    useTaskCardStore.getState().suppressEdit(currentFocused);
   }
 
   setFocusedTaskId(taskId);

@@ -1,6 +1,5 @@
 import { PaperclipIcon } from 'lucide-react';
 import { env } from '~/env';
-import { countChecklistItems } from '~/modules/task/helpers/count-checklist';
 import type { Task } from '~/modules/task/types';
 
 /**
@@ -9,7 +8,8 @@ import type { Task } from '~/modules/task/types';
 export const TaskCardSummaryButtons = ({ item }: { item: Task }) => {
   const attachmentsCount = item.attachmentCount ?? 0;
 
-  const { checked: checkedCount, total: totalCount } = countChecklistItems(item.checkboxCount, item.checkedCount);
+  const checkedCount = item.checkedCount ?? 0;
+  const totalCount = item.checkboxCount ?? 0;
 
   return (
     <>

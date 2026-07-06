@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { ProductEntityType } from 'shared';
-import type { CustomBlock, CustomBlockNoteEditor } from '~/modules/common/blocknote/types';
-import { useYjsEditorStore } from '~/modules/common/blocknote/yjs-editor';
+import type { CustomBlockNoteEditor } from '~/modules/common/blocknote/types';
+import { registerActiveYjsEditor, unregisterActiveYjsEditor } from '~/modules/common/blocknote/yjs-editor';
 
 const DERIVED_DEBOUNCE_MS = 1_000;
 
@@ -31,21 +31,11 @@ export function useDerivedFieldsSender(options: UseDerivedFieldsSenderOptions | 
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
-  /** Snapshot current editor content as "already sent" to prevent a spurious PUT.
-   *  Call this after seeding the editor with existing server content. */
-  const markContentAsSent = () => {
-    const opts = optionsRef.current;
-    if (!opts) return;
-    const blocks = opts.editor.document as unknown as CustomBlock[];
-    lastSentRef.current = JSON.stringify(blocks);
-  };
-
   const sendDescription = async () => {
     const opts = optionsRef.current;
     if (!opts) return;
 
-    const blocks = opts.editor.document as unknown as CustomBlock[];
-    const description = JSON.stringify(blocks);
+    const description = JSON.stringify(opts.editor.document);
 
     // Skip if content hasn't changed since last send
     if (description === lastSentRef.current) return;
@@ -62,7 +52,7 @@ export function useDerivedFieldsSender(options: UseDerivedFieldsSenderOptions | 
     if (!options) return;
 
     // Register for SSE suppression while the editor is active
-    useYjsEditorStore.getState().register(options.entityType, options.entityId);
+    registerActiveYjsEditor(options.entityType, options.entityId);
 
     const onChange = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -72,7 +62,11 @@ export function useDerivedFieldsSender(options: UseDerivedFieldsSenderOptions | 
       }, DERIVED_DEBOUNCE_MS);
     };
 
-    const unsubscribe = options.editor.onChange(onChange);
+    // Only the author persists: remote peers' edits arrive via Yjs and are excluded
+    // (includeUpdatesFromRemote = false), each peer's own sender handles their edits.
+    // Trade-off: if the author's tab dies before the debounce fires, no peer PUTs the
+    // content as a backup — the relay Y.Doc still has it, but the DB lags until the next edit.
+    const unsubscribe = options.editor.onChange(onChange, false);
     const { entityType, entityId } = options;
 
     return () => {
@@ -84,10 +78,10 @@ export function useDerivedFieldsSender(options: UseDerivedFieldsSenderOptions | 
         clearTimeout(timerRef.current);
         timerRef.current = undefined;
         sendDescription().finally(() => {
-          useYjsEditorStore.getState().unregister(entityType, entityId);
+          unregisterActiveYjsEditor(entityType, entityId);
         });
       } else {
-        useYjsEditorStore.getState().unregister(entityType, entityId);
+        unregisterActiveYjsEditor(entityType, entityId);
       }
     };
   }, [options?.editor]);
@@ -103,6 +97,4 @@ export function useDerivedFieldsSender(options: UseDerivedFieldsSenderOptions | 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
-
-  return { markContentAsSent };
 }

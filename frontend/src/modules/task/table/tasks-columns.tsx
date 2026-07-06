@@ -14,7 +14,6 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { getSeenContextId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
-import { countChecklistItems } from '~/modules/task/helpers/count-checklist';
 import { pointsOptions, statusOptions, TaskVariant, variantOptions } from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
@@ -261,7 +260,8 @@ export const useColumns = (
         width: 80,
         placeholderValue: '-',
         renderCell: ({ row }) => {
-          const { checked, total } = countChecklistItems(row.checkboxCount, row.checkedCount);
+          const checked = row.checkedCount ?? 0;
+          const total = row.checkboxCount ?? 0;
           if (total === 0) return null;
           return (
             <div className="inline-flex items-center gap-1">

@@ -1,4 +1,4 @@
-import { blocksToHTML } from '~/modules/common/blocknote/helpers/blocknote-helpers';
+import { blocksToHTML, walkBlocks } from '~/modules/common/blocknote/helpers/blocknote-helpers';
 import type { CustomBlock } from '~/modules/common/blocknote/types';
 
 export type DerivedDescriptionCounts = {
@@ -16,37 +16,37 @@ export type DerivedDescriptionProps = DerivedDescriptionCounts & {
 const mediaTypes = new Set(['audio', 'video', 'image', 'file']);
 const skipForSummary = new Set(['checklistItem']);
 
+/** Single depth-first walk that gathers all count-based derived properties. */
+const countBlocks = (blocks: CustomBlock[]): DerivedDescriptionCounts => {
+  let checkboxCount = 0;
+  let checkedCount = 0;
+  let attachmentCount = 0;
+
+  walkBlocks(blocks, (block) => {
+    if (block.type === 'checklistItem') {
+      checkboxCount++;
+      if (block.props && 'checked' in block.props && block.props.checked) checkedCount++;
+    }
+    if (
+      mediaTypes.has(block.type) &&
+      'url' in block.props &&
+      typeof block.props.url === 'string' &&
+      block.props.url.trim().length > 0
+    ) {
+      attachmentCount++;
+    }
+  });
+
+  return { expandable: blocks.length > 1, checkboxCount, checkedCount, attachmentCount };
+};
+
 /**
  * Parse description blocks once and extract all count-based derived properties.
  * Synchronous — safe for optimistic updates in onMutate.
  */
 export const deriveDescriptionCounts = (description: string): DerivedDescriptionCounts => {
   try {
-    const blocks = JSON.parse(description) as CustomBlock[];
-    let checkboxCount = 0;
-    let checkedCount = 0;
-    let attachmentCount = 0;
-
-    const walk = (items: CustomBlock[]) => {
-      for (const block of items) {
-        if (block.type === 'checklistItem') {
-          checkboxCount++;
-          if (block.props && 'checked' in block.props && block.props.checked) checkedCount++;
-        }
-        if (
-          mediaTypes.has(block.type) &&
-          'url' in block.props &&
-          typeof block.props.url === 'string' &&
-          block.props.url.trim().length > 0
-        ) {
-          attachmentCount++;
-        }
-        if (block.children?.length) walk(block.children as CustomBlock[]);
-      }
-    };
-    walk(blocks);
-
-    return { expandable: blocks.length > 1, checkboxCount, checkedCount, attachmentCount };
+    return countBlocks(JSON.parse(description) as CustomBlock[]);
   } catch {
     return { expandable: false, checkboxCount: 0, checkedCount: 0, attachmentCount: 0 };
   }
@@ -58,28 +58,7 @@ export const deriveDescriptionCounts = (description: string): DerivedDescription
  */
 export const deriveDescriptionProps = async (description: string): Promise<DerivedDescriptionProps> => {
   const blocks = JSON.parse(description) as CustomBlock[];
-  let checkboxCount = 0;
-  let checkedCount = 0;
-  let attachmentCount = 0;
-
-  const walk = (items: CustomBlock[]) => {
-    for (const block of items) {
-      if (block.type === 'checklistItem') {
-        checkboxCount++;
-        if (block.props && 'checked' in block.props && block.props.checked) checkedCount++;
-      }
-      if (
-        mediaTypes.has(block.type) &&
-        'url' in block.props &&
-        typeof block.props.url === 'string' &&
-        block.props.url.trim().length > 0
-      ) {
-        attachmentCount++;
-      }
-      if (block.children?.length) walk(block.children as CustomBlock[]);
-    }
-  };
-  walk(blocks);
+  const counts = countBlocks(blocks);
 
   // Find summary source: first non-checklist block with text content
   const summarySource =
@@ -97,12 +76,5 @@ export const deriveDescriptionProps = async (description: string): Promise<Deriv
   const html = await blocksToHTML(JSON.stringify([summarySource]));
   const summary = html.replace(/^<p[^>]*>(.*)<\/p>$/s, '$1');
 
-  return {
-    summary,
-    summaryLength,
-    expandable: blocks.length > 1,
-    checkboxCount,
-    checkedCount,
-    attachmentCount,
-  };
+  return { summary, summaryLength, ...counts };
 };
