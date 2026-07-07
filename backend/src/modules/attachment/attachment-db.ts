@@ -14,8 +14,9 @@ export const attachmentsTable = snakeCase.table(
   'attachments',
   {
     ...productEntityColumns('attachment'),
-    // Host relation (hierarchy `host: 'task'`): nullable taskId — task-owned attachments
-    // cascade with their task and feed the e:attachment host counter.
+    // Host relation columns (hierarchy `host:`): a nullable <host>Id column when a host is
+    // declared (raak: attachment -> task); empty in the template hierarchy. Hosted rows
+    // cascade with their host and feed the host counter.
     ...hostRelationColumns('attachment'),
     public: boolean().notNull().default(false),
     bucketName: varchar({ length: maxLength.field }).notNull(),
