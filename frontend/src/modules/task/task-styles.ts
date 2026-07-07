@@ -47,6 +47,30 @@ export const statusFillColors = {
   6: 'fill-sky-500',
 } as const;
 
+/**
+ * Left gutter + bottom padding for a task description, shared by the expanded (read-only) view
+ * and the editing form so toggling edit mode doesn't shift the text.
+ */
+export const taskDescriptionGutterStyle = 'pl-1 sm:pl-9 pb-4';
+
+/**
+ * Faint accepted/iced section-bar colors, shared by the collapsed-panel sections and the board
+ * skeleton so the accepted (green) / iced (sky) hue lives in one place. The interactive toggle
+ * header in `specific-status-section` uses a richer, single-use palette and stays inline.
+ */
+export const statusSectionColors = {
+  accepted: {
+    fill: 'bg-green-500/5',
+    text: 'text-green-500',
+    border: 'border-b border-b-green-500/10',
+  },
+  iced: {
+    fill: 'bg-sky-500/5',
+    text: 'text-sky-500',
+    border: 'border-t border-t-sky-500/10',
+  },
+} as const;
+
 /** Available label colors for project labels */
 export const labelColors = [
   '#A8E6CF',

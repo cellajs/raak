@@ -24,6 +24,7 @@ import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { formatSectionLabel, normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { TaskSearch } from '~/modules/task/task-search';
+import { statusSectionColors } from '~/modules/task/task-styles';
 import type { BoardResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
@@ -207,14 +208,16 @@ const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: Omit<Props, 'proje
   const renderRowHeight = rowHeight - 8;
   return (
     <div className="flex w-full flex-col overflow-auto border opacity-100 transition-opacity duration-300">
-      <div className="-mt-[.05rem] flex h-8 w-full justify-start gap-1 rounded-none border-t border-t-transparent border-b border-b-green-500/10 bg-green-500/5 ring-inset" />
+      <div
+        className={`-mt-[.05rem] flex h-8 w-full justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
+      />
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
         <div key={index} className="border-b px-1 py-2 hover:bg-transparent">
           <Skeleton className={'w-full rounded'} style={{ height: `${renderRowHeight}px` }} />
         </div>
       ))}
-      <div className="flex h-8 w-full justify-start gap-1 rounded-none bg-sky-500/5 ring-inset" />
+      <div className={`flex h-8 w-full justify-start gap-1 rounded-none ${statusSectionColors.iced.fill} ring-inset`} />
     </div>
   );
 };

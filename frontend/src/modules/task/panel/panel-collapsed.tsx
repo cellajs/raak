@@ -1,4 +1,5 @@
 import { CollapsedPanelView, type CollapsedSection } from '~/modules/common/board/board-panel';
+import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 
 /**
@@ -10,8 +11,8 @@ export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
   if (typeof counts.accepted === 'number') {
     sections.push({
       count: counts.accepted,
-      colorClass: 'bg-green-500/5 text-green-500',
-      borderClass: 'border-b border-b-green-500/10',
+      colorClass: `${statusSectionColors.accepted.fill} ${statusSectionColors.accepted.text}`,
+      borderClass: statusSectionColors.accepted.border,
       position: 'top',
     });
   }
@@ -19,8 +20,8 @@ export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
   if (typeof counts.iced === 'number') {
     sections.push({
       count: counts.iced,
-      colorClass: 'bg-sky-500/5 text-sky-500',
-      borderClass: 'border-t border-t-sky-500/10',
+      colorClass: `${statusSectionColors.iced.fill} ${statusSectionColors.iced.text}`,
+      borderClass: statusSectionColors.iced.border,
       position: 'bottom',
     });
   }

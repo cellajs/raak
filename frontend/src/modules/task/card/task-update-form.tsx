@@ -17,6 +17,7 @@ import { deriveDescriptionProps } from '~/modules/task/helpers/derive-descriptio
 import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
+import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { useUserStore, yjsTokenKey } from '~/modules/user/user-store';
 import { cacheUpdate } from '~/query/basic/cache-mutations';
@@ -29,7 +30,7 @@ import { getRandomColor } from '~/utils/random-color';
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
 // (see @blocknote/react BlockNoteView), which would add empty trailing height below the editor.
 const expandedStyle = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedWrapperStyle = 'pl-1 sm:pl-9 pb-4';
+const expandedWrapperStyle = taskDescriptionGutterStyle;
 const checkboxExtensions = [checkedExtension({ persisted: true })];
 
 interface TaskUpdateFormProps {
