@@ -51,6 +51,8 @@ baseApp.route('/public/projects', publicProjectHandlers);
 baseApp.route('/public/tasks', publicTaskHandlers);
 baseApp.route('/t', taskRedirectHandlers);
 
+baseApp.route('/yjs', yjsHandlers);
+
 // Modules with absolute route paths: cross-tenant list + tenant-scoped routes in one app.
 // Registered after all static mounts so param segments (/:tenantId/...) cannot shadow static paths.
 baseApp.route('/', organizationHandlers);
@@ -64,7 +66,6 @@ baseApp.route('/:tenantId/:organizationId/memberships', membershipHandlers);
 baseApp.route('/:tenantId/:organizationId/tasks', taskHandlers);
 baseApp.route('/:tenantId/:organizationId/labels', labelHandlers);
 baseApp.route('/:tenantId/:organizationId/seen', seenHandlers);
-baseApp.route('/yjs', yjsHandlers);
 
 // Dev-only email preview (local authoring + Storybook email stories)
 if (appConfig.mode !== 'production') baseApp.route('/dev/emails', emailPreviewHandlers);

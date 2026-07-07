@@ -2832,6 +2832,44 @@ export const redirectToTask = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Get Yjs token
+ *
+ * Returns a context-scoped HMAC-signed token for a specific entity type. The token proves the user has update permission and can be verified by the Yjs relay worker without a backend callback.
+ *
+ * **GET /yjs/token** ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=yjs#tag/yjs/GET/yjs/token) ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/yjs/token) ·· _yjs_cella_
+ *
+ * @param {getYjsTokenData} options
+ * @param {string} options.query.entitytype - `string`
+ * @param {string} options.query.tenantid - `string`
+ * @param {string} options.query.organizationid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getYjsToken = <ThrowOnError extends boolean = true>(
+  options: Options<GetYjsTokenData, ThrowOnError>,
+): RequestResult<GetYjsTokenResponses, GetYjsTokenErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetYjsTokenResponses, GetYjsTokenErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zGetYjsTokenQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetYjsTokenResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v1',
+        type: 'apiKey',
+      },
+    ],
+    url: '/yjs/token',
+    ...options,
+  });
+
+/**
  * Delete organizations
  *
  * Deletes one or more organizations by ID within a tenant.
@@ -4627,42 +4665,4 @@ export const markSeen = <ThrowOnError extends boolean = true>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
-  });
-
-/**
- * Get Yjs token
- *
- * Returns a context-scoped HMAC-signed token for a specific entity type. The token proves the user has update permission and can be verified by the Yjs relay worker without a backend callback.
- *
- * **GET /yjs/token** ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=yjs#tag/yjs/GET/yjs/token) ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/yjs/token) ·· _yjs_cella_
- *
- * @param {getYjsTokenData} options
- * @param {string} options.query.entitytype - `string`
- * @param {string} options.query.tenantid - `string`
- * @param {string} options.query.organizationid - `string`
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getYjsToken = <ThrowOnError extends boolean = true>(
-  options: Options<GetYjsTokenData, ThrowOnError>,
-): RequestResult<GetYjsTokenResponses, GetYjsTokenErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetYjsTokenResponses, GetYjsTokenErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: z.never().optional(),
-          query: zGetYjsTokenQuery,
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetYjsTokenResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v1',
-        type: 'apiKey',
-      },
-    ],
-    url: '/yjs/token',
-    ...options,
   });
