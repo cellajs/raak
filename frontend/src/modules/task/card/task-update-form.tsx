@@ -99,27 +99,26 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const { mutateAsync: updateDesc } = useTaskUpdateMutation(task.tenantId, task.organizationId);
   const orgKey = taskKeys.list.org(task.organizationId);
 
-  const sendDerivedUpdate = async (id: string, description: string) => {
-    // Skip if the task was deleted (e.g. unmount flush after deletion)
-    if (!findInCache<Task>('task', id)) return;
-    const { summary, summaryLength } = await deriveDescriptionProps(description);
-    await updateDesc({ id, ops: { description }, summary, summaryLength });
-  };
-
   const updateData = async (description: string) => {
     if (collaborative) {
-      // The derived-fields sender owns backend persistence in collab mode — no mutation
-      // fires on blur, so sync the caches directly: collapsed/expanded card views render
-      // from the query cache (not the Y.Doc), and instant remounts need it fresh.
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(task.id), (old) =>
-        old ? { ...old, description, updatedAt: new Date().toISOString() } : undefined,
-      );
+      // The Yjs relay owns backend persistence in collab mode (it materializes the
+      // session ≤3s after edits) — no mutation fires on blur. Sync the caches with a
+      // cache-only optimistic derive so collapsed/expanded card views (which render
+      // from the query cache, not the Y.Doc) show fresh summary/counts instantly;
+      // the relay's materialization arrives via SSE moments later with authoritative values.
+      const derived = await deriveDescriptionProps(description);
+      const patch = { description, ...derived, updatedAt: new Date().toISOString() };
+      queryClient.setQueryData<Task>(taskKeys.detail.byId(task.id), (old) => (old ? { ...old, ...patch } : undefined));
       const cached = findInCache<Task>('task', task.id);
-      if (cached) cacheUpdate(orgKey, [{ ...cached, description, updatedAt: new Date().toISOString() } as ItemData]);
+      if (cached) cacheUpdate(orgKey, [{ ...cached, ...patch } as ItemData]);
       return;
     }
 
-    await sendDerivedUpdate(task.id, description);
+    // Non-collab: persist via the standard mutation (offline queue, HLC, optimistic cache).
+    // Skip if the task was deleted (e.g. unmount flush after deletion).
+    if (!findInCache<Task>('task', task.id)) return;
+    const { summary, summaryLength } = await deriveDescriptionProps(description);
+    await updateDesc({ id: task.id, ops: { description }, summary, summaryLength });
   };
 
   // Stable random color for cursor labels
@@ -133,7 +132,6 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
           user: { name: user.name, color: userColorRef.current },
           entityType: 'task' as const,
           entityId: task.id,
-          sendDerivedUpdate,
         }
       : undefined;
 

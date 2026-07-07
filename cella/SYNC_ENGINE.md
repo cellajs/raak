@@ -778,7 +778,7 @@ Descriptions on product entities (`task`, `page`, etc.) use Yjs CRDT for real-ti
 
 ### Architecture
 
-The Yjs worker is a standalone `yjs/` workspace package (like `cdc/`). During editing it is a **binary relay** — it stores and forwards raw `Uint8Array` updates without parsing document content. The one exception is **server-side seeding**: when a fresh session starts, the relay converts the entity's stored `description` into an initial Y.Doc (`@blocknote/server-util` `blocksToYDoc`), so clients never seed.
+The Yjs worker is a standalone `yjs/` workspace package (like `cdc/`). During editing it is a **binary relay** — it stores and forwards raw `Uint8Array` updates without parsing document content. Content is parsed only at the session boundaries: **seeding** (fresh session → `entity.description` → Y.Doc via `@blocknote/server-util` `blocksToYDoc`) and **materialization** (Y.Doc → description via a secret-gated internal backend endpoint). The relay is the **single writer** for descriptions during collaboration — clients never seed and never persist.
 
 > **Authorization.** The relay authorizes each connection **locally** rather than calling back to the backend. On WS upgrade it verifies the HMAC token, then runs the shared permission engine (`shared/src/permissions`, the same engine the backend uses) against an RLS-scoped read of the entity scope + the user's memberships — see `yjs/src/data/permissions.ts` (`canEditEntity`). Denied → close `4003`, missing ancestor scope → `4400`, DB/resolver error → `4503`. Extracting the engine into `shared` means the relay and the backend can never drift on the same decision.
 
@@ -788,9 +788,11 @@ The Yjs worker is a standalone `yjs/` workspace package (like `cdc/`). During ed
 Online editing:
   Browser → y-websocket provider → Yjs worker (standalone service, own port)
   Fresh session: relay seeds Y.Doc from entity.description (server-side)
-  Author's client (debounced 1s, remote changes filtered — only the author PUTs):
-    → Compute derived fields from local Y.Doc (summary, checkboxCount, etc.)
-    → Standard update mutation (ops.description + derived) → backend re-derives + writes
+  Relay (debounced 3s, one call per doc regardless of editor count):
+    → Save binary state, diff materialized blocks vs last materialization
+    → Changed? POST /yjs/materialize (secret-gated, on behalf of the window's
+      last editor) → backend re-checks permission, sanitizes media URLs,
+      derives fields, stamps server HLC, writes the row
     → CDC detects row change → SSE → non-editing clients update
 
 Offline editing:
@@ -805,18 +807,18 @@ Other users (non-editing, online):
 
 ### Ephemeral lifecycle
 
-1. First WS connect → relay creates the `yjs_documents` row, seeded server-side from `entity.description` (empty when there is none). Concurrent first-connectors converge on one canonical seed: the insert is `ON CONFLICT DO NOTHING` and every connector re-loads the row afterwards.
-2. During editing → relay stores raw binary state (debounced 3s). Subsequent clients sync from stored state.
-3. Last WS disconnect → 5 min grace timer. If no reconnect → deletes `yjs_documents` row. `entity.description` remains the durable record.
-4. On editor close → flush pending description through the standard mutation; SSE suppression is lifted only after the flush settles.
+1. First WS connect → relay creates the `yjs_documents` row, seeded server-side from `entity.description` (empty when there is none). Concurrent first-connectors converge on one canonical seed: the insert is `ON CONFLICT DO NOTHING` and every connector re-loads the row afterwards. The seed initializes the materialization diff baseline, so seed-only sessions never write back.
+2. During editing → relay stores raw binary state (debounced 3s) and materializes changed content into the entity row in the same window.
+3. Last WS disconnect → 5 min grace timer → **final materialization gates row deletion**: backend unreachable keeps the row and reschedules; entity-deleted/permission-revoked (permanent) proceeds. A boot-time sweep recovers rows orphaned by a relay crash (`last_edited_by` carries attribution).
+4. On editor close → the client writes a cache-only optimistic summary for instant card updates; the relay's authoritative materialization arrives via SSE moments later.
 
 ### SSE suppression while editing
 
-While a Yjs editor is active, the SSE handler skips Yjs-owned fields (description + its derived fields, registered per entity type via `registerYjsOwnedFields`) for that entity — a slightly stale server snapshot must not overwrite the fresher local Y.Doc state. Non-description fields (`labels`, `status`, etc.) still flow through normally. On editor close, suppression lifts after the final flush and normal SSE flow resumes.
+While a Yjs editor is active, the SSE handler skips Yjs-owned fields (description + its derived fields, registered per entity type via `registerYjsOwnedFields`) for that entity — a slightly stale server snapshot must not overwrite the fresher local Y.Doc state. Non-description fields (`labels`, `status`, etc.) still flow through normally. Registration is the client's only collab-mode responsibility besides rendering; unregister happens on editor unmount.
 
 ### Derived fields
 
-Derived fields (`summary`, `checkboxCount`, `keywords`, etc.) are computed server-side on every create/update (authoritative). During collaborative editing, the **author's** client pre-computes them for optimistic UI and sends them with the description via the standard update mutation (1s debounce); the server re-derives before persisting. Remote peers' editors filter out echoed changes (`onChange` with `includeUpdatesFromRemote: false`), so each edit is persisted exactly once — by its author.
+Derived fields (`summary`, `checkboxCount`, `keywords`, etc.) are computed server-side on every create/update (authoritative). During collaborative editing they are refreshed by the relay's materialization calls — one per document per save window, with write amplification O(1) in the number of editors. The materialize request carries an empty `fieldTimestamps`, so the stx pipeline stamps a **server HLC** for `description` — LWW semantics against offline solo edits stay coherent. Entities opt in by registering a materializer (`registerYjsMaterializer` in the entity's backend module), a thin wrapper around their standard update operation.
 
 ---
 
