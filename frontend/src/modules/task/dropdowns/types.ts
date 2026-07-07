@@ -3,16 +3,15 @@ import type { TaskLabel, TaskPointsType, TaskStatusType, TaskVariantType } from 
 
 export type DropdownsType = 'points' | 'labels' | 'assignedTo' | 'status' | 'variant';
 
-/** Shared layout props for all task dropdowns */
-type DropdownLayoutProps = {
-  triggerWidth?: number;
-  /**
-   * Optional id of the task this dropdown is editing. When present, the
-   * dropdown subscribes to the task in the cache and reflects live updates
-   * (e.g. from SSE) while open. Omit for create-task forms.
-   */
-  taskId?: string;
-};
+/**
+ * Optional id of the task this dropdown is editing. When present, the dropdown
+ * subscribes to the task in the cache and reflects live updates (e.g. from SSE)
+ * while open. Omit for create-task forms.
+ */
+type TaskSubscriptionProps = { taskId?: string };
+
+/** Layout props for the CSS-var-width dropdowns (points/labels/members/status). */
+type DropdownLayoutProps = TaskSubscriptionProps & { triggerWidth?: number };
 
 /** Value/onChange props per dropdown type — no Task dependency */
 export type SelectPointsProps = DropdownLayoutProps & {
@@ -39,7 +38,8 @@ export type SelectStatusProps = DropdownLayoutProps & {
   onChange: (newValue: TaskStatusType) => void;
 };
 
-export type SelectVariantProps = DropdownLayoutProps & {
+// Variant uses a fixed width (no CSS-var trigger width), so it doesn't inherit triggerWidth.
+export type SelectVariantProps = TaskSubscriptionProps & {
   value: TaskVariantType;
   onChange: (newValue: TaskVariantType) => void;
   className?: string;

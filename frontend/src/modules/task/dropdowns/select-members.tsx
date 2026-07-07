@@ -105,8 +105,11 @@ export const SelectMembers = ({
     const updated = getItemsSortedByName([...selectedMembers, newUser]);
     setSelectedMembers(updated);
 
-    // Close dropdown if all visible members are now selected
-    if (updated.length === showedMembers.length) useDropdowner.getState().remove();
+    // Close dropdown once every visible member is selected (by identity, not just count —
+    // an assignee outside the frozen top-6 must not trip the close early).
+    if (showedMembers.length > 0 && showedMembers.every((m) => updated.some((u) => u.id === m.id))) {
+      useDropdowner.getState().remove();
+    }
 
     onChange(updated);
   };
