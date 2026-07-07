@@ -29,6 +29,7 @@ import { shadCNComponents } from '~/modules/common/blocknote/helpers/shad-cn';
 import { useEditorKeyboard } from '~/modules/common/blocknote/hooks/use-editor-keyboard';
 import { useSmartBlur } from '~/modules/common/blocknote/hooks/use-smart-blur';
 import { useUntrustedMediaWarning } from '~/modules/common/blocknote/hooks/use-untrusted-media-warning';
+import { useYjsSseSuppression } from '~/modules/common/blocknote/hooks/use-yjs-sse-suppression';
 import { useYjsUndoManagerFix } from '~/modules/common/blocknote/hooks/use-yjs-undo-manager-fix';
 import type {
   CommonBlockNoteProps,
@@ -37,14 +38,14 @@ import type {
   CustomBlockRegularTypes,
   CustomBlockTypes,
 } from '~/modules/common/blocknote/types';
-import { useDerivedFieldsSender } from '~/modules/common/blocknote/use-derived-fields-sender';
 import { useUIStore } from '~/modules/ui/ui-store';
 import { router } from '~/routes/router';
 
 /**
  * Everything collaborative mode needs, bundled: the Yjs wiring (provider, fragment,
- * cursor user) plus the entity-persistence wiring for the derived-fields sender.
+ * cursor user) plus the entity identity for SSE suppression while editing.
  * Presence of the bundle switches the editor into collaborative mode.
+ * Persistence is relay-side — the relay materializes sessions into the entity row.
  */
 export interface CollaborationBundle {
   provider: WebsocketProvider;
@@ -52,8 +53,6 @@ export interface CollaborationBundle {
   user: { name: string; color: string };
   entityType: ProductEntityType;
   entityId: string;
-  /** Callback that sends description update through a React Query mutation (fires lifecycle hooks). */
-  sendDerivedUpdate: (entityId: string, description: string) => Promise<void>;
 }
 
 type BlockNoteProps = CommonBlockNoteProps & {
@@ -120,8 +119,8 @@ function BlockNote({
     heading: { levels: headingLevels },
     trailingBlock,
     dictionary: getDictionary(),
-    // Only the Yjs wiring goes to the editor — the entity-persistence half of the
-    // bundle is consumed by the derived-fields sender below.
+    // Only the Yjs wiring goes to the editor — the entity identity in the bundle
+    // is consumed by the SSE suppression hook below.
     collaboration: collaboration
       ? { provider: collaboration.provider, fragment: collaboration.fragment, user: collaboration.user }
       : undefined,
@@ -133,20 +132,10 @@ function BlockNote({
   // Re-subscribe Yjs UndoManager after TipTap mount cycles so CMD+Z keeps working.
   useYjsUndoManagerFix(editor, collaborative);
 
-  // Send derived fields (summary, checkbox counts, etc.) to backend in collaborative mode.
-  // Also manages Yjs editor registration for SSE suppression — unregister is
-  // chained after the flush mutation completes so SSE can't overwrite with stale data.
-  // Note: fresh sessions are seeded server-side by the Yjs relay; the seed arrives as a
-  // remote change, which the sender's remote filter already ignores — no handshake needed.
-  useDerivedFieldsSender(
-    collaboration
-      ? {
-          entityId: collaboration.entityId,
-          entityType: collaboration.entityType,
-          editor,
-          sendUpdate: collaboration.sendDerivedUpdate,
-        }
-      : null,
+  // Shield Yjs-owned fields from SSE while this editor is active. The relay owns
+  // persistence (seeding + materialization), so no client sends description updates.
+  useYjsSseSuppression(
+    collaboration ? { entityType: collaboration.entityType, entityId: collaboration.entityId } : null,
   );
 
   const handleKeyDown = useEditorKeyboard({

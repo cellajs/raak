@@ -8,6 +8,7 @@ import { log } from '../lib/pino';
 import { loadEntityDescription } from '../data/entity-content';
 import { createDoc, loadState, saveState } from '../data/storage';
 import { descriptionToYUpdate } from '../lib/blocknote-seed';
+import { materializeState, stateToBlocksJson } from './materialize';
 import { broadcastToCollab, getCollab } from './session-manager';
 
 // y-protocols message types
@@ -154,6 +155,13 @@ async function handleSyncStep1(ctx: DocContext, ws: WebSocket, clientStateVector
     if (canonical && canonical.length > 0) fullState = canonical;
   }
 
+  // Initialize the materialization diff baseline from the state the session starts with
+  // (seed or stored row), so seed-only sessions and unchanged rejoins never POST.
+  const collabForBaseline = getCollab(ctx.entityType, ctx.entityId);
+  if (collabForBaseline && !collabForBaseline.lastMaterializedJson && fullState && fullState.length > 0) {
+    collabForBaseline.lastMaterializedJson = stateToBlocksJson(fullState) ?? undefined;
+  }
+
   // No content to diff against — send empty doc update
   if (!fullState) {
     ws.send(encodeSyncStep2(Y.encodeStateAsUpdate(new Y.Doc())));
@@ -176,6 +184,9 @@ async function handleSyncUpdate(ctx: DocContext, ws: WebSocket, update: Uint8Arr
   const collab = getCollab(ctx.entityType, ctx.entityId);
   if (!collab) return;
 
+  // Last writer in the save window — attribution for the debounced save + materialization
+  collab.lastEditor = ctx;
+
   if (collab.pendingState && collab.pendingState.length > 0) {
     collab.pendingState = safeMerge(collab.pendingState, update);
   } else {
@@ -195,10 +206,15 @@ async function handleSyncUpdate(ctx: DocContext, ws: WebSocket, update: Uint8Arr
     // Clear cached DB state — next window should re-fetch
     collab.cachedDbState = undefined;
 
-    const savePromise = saveState(ctx, snapshotToSave);
+    const savePromise = saveState(ctx, snapshotToSave, collab.lastEditor?.userId ?? null);
     collab.savingPromise = savePromise;
     try {
       await savePromise;
+      // Materialize the saved state into the entity's durable record (single writer:
+      // one call per doc per save window, regardless of how many clients are typing).
+      // A 'retry' failure leaves the diff baseline stale — the next save window or the
+      // gated session cleanup converges it.
+      await materializeState(collab, snapshotToSave);
     } catch (err) {
       log.error(`Failed to save state for ${ctx.entityType}:${ctx.entityId}`, { err: err });
       // Merge the failed snapshot with any new updates that arrived during the await

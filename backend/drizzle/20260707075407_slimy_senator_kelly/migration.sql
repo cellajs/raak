@@ -1,0 +1,1 @@
+ALTER TABLE "yjs_documents" ADD COLUMN "last_edited_by" uuid;

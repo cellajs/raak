@@ -11,6 +11,13 @@ vi.mock('../data/entity-content', () => ({
   loadEntityDescription: vi.fn().mockResolvedValue(null),
 }));
 
+// Mock materialization — the save-window integration is asserted via call args
+vi.mock('../sync/materialize', () => ({
+  materializeState: vi.fn().mockResolvedValue('ok'),
+  postMaterialize: vi.fn().mockResolvedValue('ok'),
+  stateToBlocksJson: vi.fn(() => '[]'),
+}));
+
 vi.mock('../sync/session-manager', () => {
   const collabs = new Map<string, any>();
   return {
@@ -32,6 +39,7 @@ vi.mock('../sync/session-manager', () => {
 const { handleMessage } = await import('../sync/relay');
 const { loadState, saveState, createDoc } = await import('../data/storage');
 const { loadEntityDescription } = await import('../data/entity-content');
+const { materializeState } = await import('../sync/materialize');
 const { yUpdateToBlocks } = await import('../lib/blocknote-seed');
 const { broadcastToCollab, getCollab, joinCollab, _collabs } = await import('../sync/session-manager') as any;
 
@@ -351,6 +359,27 @@ describe('debounced save', () => {
     await vi.advanceTimersByTimeAsync(3000);
 
     expect(saveState).toHaveBeenCalledTimes(1);
+  });
+
+  it('2.2.1b materialization runs once per save window with the saved state and last editor', async () => {
+    vi.mocked(loadState).mockResolvedValue(null);
+    const ws = mockWebSocket();
+    const collab = joinCollab(ctx);
+
+    const doc = new Y.Doc();
+    doc.getMap('test').set('key', 'value');
+    const update = Y.encodeStateAsUpdate(doc);
+    await handleMessage(ctx, ws as any, buildSyncUpdate(update));
+
+    expect(materializeState).not.toHaveBeenCalled();
+    expect(collab.lastEditor).toBe(ctx);
+
+    await vi.advanceTimersByTimeAsync(3000);
+
+    expect(materializeState).toHaveBeenCalledTimes(1);
+    expect(materializeState).toHaveBeenCalledWith(collab, update);
+    // saveState carries the last editor for crash-orphan attribution
+    expect(saveState).toHaveBeenCalledWith(ctx, update, ctx.userId);
   });
 
   it('2.2.2 rapid updates reset debounce — single save', async () => {
