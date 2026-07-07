@@ -210,31 +210,48 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
     if (!(trigger instanceof HTMLButtonElement)) return useDropdowner.getState().remove();
 
     const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
-    const base = {
-      triggerId,
-      triggerRef: { current: trigger },
-      taskId: targetTask.id,
-    };
+    const base = { triggerId, triggerRef: { current: trigger }, taskId: targetTask.id };
 
-    const fieldProps: Record<DropdownsType, Record<string, unknown>> = {
-      points: { dropdownType: 'points', value: targetTask.points, onChange: handlers.onPointsChange },
-      labels: {
-        dropdownType: 'labels',
-        value: targetTask.labels,
-        projectId: targetTask.projectId,
-        onChange: handlers.onLabelsChange,
-      },
-      assignedTo: {
-        dropdownType: 'assignedTo',
-        value: targetTask.assignedTo,
-        projectId: targetTask.projectId,
-        onChange: handlers.onAssignedToChange,
-      },
-      status: { dropdownType: 'status', value: targetTask.status, onChange: handlers.onStatusChange },
-      variant: { dropdownType: 'variant', value: targetTask.variant, onChange: handlers.onVariantChange },
-    };
-
-    handleTaskDropdownClick({ ...base, ...fieldProps[field] } as Parameters<typeof handleTaskDropdownClick>[0]);
+    // A switch keeps each call matched to the right discriminated-union member — no cast.
+    switch (field) {
+      case 'points':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'points',
+          value: targetTask.points,
+          onChange: handlers.onPointsChange,
+        });
+      case 'labels':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'labels',
+          value: targetTask.labels,
+          projectId: targetTask.projectId,
+          onChange: handlers.onLabelsChange,
+        });
+      case 'assignedTo':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'assignedTo',
+          value: targetTask.assignedTo,
+          projectId: targetTask.projectId,
+          onChange: handlers.onAssignedToChange,
+        });
+      case 'status':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'status',
+          value: targetTask.status,
+          onChange: handlers.onStatusChange,
+        });
+      case 'variant':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'variant',
+          value: targetTask.variant,
+          onChange: handlers.onVariantChange,
+        });
+    }
   };
 
   const actionHotkeys: HotkeyItem[] = [
