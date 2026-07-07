@@ -16,7 +16,8 @@ type DropdownLayoutProps = {
 
 /** Value/onChange props per dropdown type — no Task dependency */
 export type SelectPointsProps = DropdownLayoutProps & {
-  value: TaskPointsType | null;
+  /** Current stored points (a task's `points` — the backend contract is `number | null`). */
+  value: number | null;
   onChange: (newValue: TaskPointsType) => void;
 };
 

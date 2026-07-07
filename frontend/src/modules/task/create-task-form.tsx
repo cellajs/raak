@@ -38,8 +38,15 @@ import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity'
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { pointsOptions, statusOptions, TaskStatus, TaskVariant, variantOptions } from '~/modules/task/task-properties';
-import type { Task, TaskLabel, TaskPointsType, TaskStatusType } from '~/modules/task/types';
+import {
+  pointsOptionsByValue,
+  statusOptionsByValue,
+  TaskStatus,
+  TaskVariant,
+  variantOptions,
+  variantOptionsByValue,
+} from '~/modules/task/task-properties';
+import type { Task, TaskLabel, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
@@ -286,10 +293,10 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                       type="single"
                       variant="merged"
                       className="w-full gap-0"
-                      value={variantOptions[value - 1].type}
+                      value={variantOptionsByValue[value].type}
                       onValueChange={(newValue: string | string[]) => {
-                        const taskTypeValue = TaskVariant[newValue as keyof typeof TaskVariant];
-                        if (taskTypeValue !== undefined) onChange(taskTypeValue);
+                        const selected = variantOptions.find((o) => o.type === newValue);
+                        if (selected) onChange(selected.value);
                       }}
                     >
                       {variantOptions.map((variant) => (
@@ -319,7 +326,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
               control={form.control}
               name="points"
               render={({ field: { onChange, value } }) => {
-                const selectedPoints = value !== null && value !== undefined ? pointsOptions[value] : null;
+                const selectedPoints = value !== null && value !== undefined ? pointsOptionsByValue[value] : null;
                 return (
                   <FormItem>
                     <FormControl>
@@ -333,7 +340,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                         onClick={({ currentTarget }) =>
                           handleTaskDropdownClick({
                             dropdownType: 'points',
-                            value: (value ?? null) as TaskPointsType | null,
+                            value: value ?? null,
                             onChange,
                             triggerId: currentTarget.id,
                             triggerRef: { current: currentTarget },
@@ -512,7 +519,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
               >
                 <span>
                   {t('c:create')}
-                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptions[watchedStatus].status}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
                 </span>
               </Button>
 

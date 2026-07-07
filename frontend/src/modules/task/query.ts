@@ -74,16 +74,11 @@ export type TasksInfiniteQueryData = InfiniteQueryData<Task>;
 
 // --- Query keys ---
 
-/** Filters for task list queries. Only data-boundary params — no presentation (sort/order/view). */
-type TaskListFilters = {
-  projectId?: string;
-  workspaceId?: string;
-  /** Server-side search. Only present on table search queries (ephemeral). */
-  q?: string;
-  sort?: string;
-  order?: string;
-  matchMode?: string;
-};
+/**
+ * Filters for task list queries. Derived from the SDK query type so `sort`/`order`/`matchMode`
+ * carry the API's literal unions instead of bare `string`.
+ */
+type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
 /** Separate key space for public (unauthenticated) task queries */
 type PublicTaskListFilters = TaskListFilters & { publicAt: true };
 

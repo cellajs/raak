@@ -4,7 +4,7 @@ import { TaskCardSummaryButtons } from '~/modules/task/card/card-summary-buttons
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useReadOnlyInert } from '~/modules/task/hooks/use-read-only';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { variantOptions } from '~/modules/task/task-properties';
+import { variantOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 
@@ -38,7 +38,7 @@ export const TaskCardContentCollapsed = ({ task }: TaskContentCollapsedProps) =>
         className="relative -ml-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
         {...useReadOnlyInert(task.projectId)}
       >
-        {variantOptions[variantOptions.findIndex((v) => v.value === task.variant)]?.icon() || ''}
+        {variantOptionsByValue[task.variant]?.icon() ?? null}
       </Button>
       <div className="mt-1.5 mb-1 ml-1 inline leading-none opacity-90 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100">
         <BlockNoteMinimalHtml className="inline leading-none" html={task.summary} />

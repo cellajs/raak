@@ -36,6 +36,10 @@ export interface TaskProps {
   isFocused: boolean;
   isSheet?: boolean;
 }
+/**
+ * Selectable points values. `Task['points']` stays `number | null` (the backend contract is a
+ * full int), so this is the set the UI offers, not a guarantee about stored values.
+ */
 export type TaskPointsType = 0 | 1 | 2 | 3 | null;
 export type TaskStatusType = (typeof statusOptions)[number]['value'];
 export type TaskVariantType = (typeof variantOptions)[number]['value'];

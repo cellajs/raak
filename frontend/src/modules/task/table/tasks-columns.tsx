@@ -14,7 +14,12 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { getSeenContextId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
-import { pointsOptions, statusOptions, TaskVariant, variantOptions } from '~/modules/task/task-properties';
+import {
+  pointsOptionsByValue,
+  statusOptionsByValue,
+  TaskVariant,
+  variantOptions,
+} from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -111,7 +116,7 @@ export const useColumns = (
         minBreakpoint: 'sm',
         width: 140,
         renderCell: ({ row }) => {
-          const status = statusOptions[row.status];
+          const status = statusOptionsByValue[row.status];
           return (
             <>
               <SeenMark
@@ -153,7 +158,7 @@ export const useColumns = (
         renderCell: ({ row }) => {
           if (row.variant === TaskVariant.Bug) return null;
 
-          const points = row.points === null ? null : pointsOptions[row.points];
+          const points = row.points === null ? null : pointsOptionsByValue[row.points];
 
           return (
             <>

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import type { SelectStatusProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
-import { statusOptions } from '~/modules/task/task-properties';
+import { statusOptions, statusOptionsByValue } from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { TaskStatusType } from '~/modules/task/types';
 import {
@@ -27,7 +27,7 @@ export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWi
   const liveStatus = liveTask?.status ?? currentStatus;
 
   // Derived during render — no useState/useEffect copy of liveStatus.
-  const selectedStatus = statusOptions[liveStatus];
+  const selectedStatus = statusOptionsByValue[liveStatus];
 
   const [searchValue, setSearchValue] = useState('');
 
