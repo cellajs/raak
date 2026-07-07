@@ -37,8 +37,7 @@ export default defineConfig({
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
-      // Attachment module carries raak's task-host/project scoping — fork wins over the
-      // template's organization-only versions.
+      // Attachment module carries raak's task-host/project scoping
       'backend/src/modules/attachment/attachment-queries.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
