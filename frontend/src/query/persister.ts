@@ -1,24 +1,3 @@
-/**
- * React Query IndexedDB Persister — hybrid per-query + bundled storage
- *
- * UNIVERSAL PATTERN - Part of the offline persistence layer.
- *
- * Product entity queries (task, label, attachment, page, …) are stored as
- * individual IDB records for incremental diffing — only changed queries are
- * written. Context queries (me, organization, members, …) are bundled into
- * the meta record since they are few, small, and all needed at startup.
- *
- * Owner-aware facade (decision 1d): records live in the per-user `appdb`
- * (`~/query/app-db`), resolved live on every op. While signed out no DB is bound,
- * so the persister is a no-op (`restoreClient`→undefined ⇒ in-memory cache,
- * `persistClient`→skip). The provider therefore stays mounted at root; persistence
- * simply follows the user. Scope no longer carries the owner (the DB name does):
- *
- * - **Offline mode** (`offlineAccess=true`): scope `rq`, survives browser restart.
- * - **Session mode** (`offlineAccess=false`): scope `s-<uuid>`, survives refresh,
- *   cleaned on tab close via `beforeunload`; orphans swept on next startup.
- */
-
 import type { DehydratedState } from '@tanstack/react-query';
 import type { PersistedClient, Persister } from '@tanstack/react-query-persist-client';
 import { appConfig } from 'shared';
@@ -69,11 +48,12 @@ const PERSIST_THROTTLE_MS = 1000;
 const trackerResets: Array<() => void> = [];
 
 /**
- * Creates a hybrid IndexedDB persister for React Query, backed by the live `appdb`.
+ * Creates a hybrid IndexedDB persister for React Query, backed by the live per-user `appdb`.
  *
- * Product entity queries are stored as individual IDB records (incremental
- * diffing). Context queries are bundled into the meta record. All ops no-op while
- * no per-user DB is bound (signed out).
+ * Product entity queries are stored as individual IDB records (incremental diffing);
+ * context queries are bundled into the meta record since they are few, small, and all
+ * needed at startup. All ops no-op while no per-user DB is bound (signed out), so the
+ * provider can stay mounted at root and persistence follows the user.
  */
 function createIDBPersister(scope = 'rq') {
   /** In-memory change tracker: queryHash → last persisted dataUpdatedAt (product queries only) */
@@ -121,18 +101,16 @@ function createIDBPersister(scope = 'rq') {
   const MIGRATION_CHUNK_SIZE = 200;
 
   /**
-   * Boot-time lens migration (runtime touch point 2): rewrite cached
-   * product-entity rows, bundled context queries, and queued mutation variables
-   * from the persisted schema ordinal up to the bundle's currentSchemaVersion —
-   * locally, no refetch. Chunked so a crash mid-pass resumes idempotently: the
-   * pointer only advances in the final meta transaction, and re-running the
-   * chain over already-migrated rows is a no-op by construction.
+   * Boot-time lens migration: rewrite cached product entity rows, bundled context
+   * queries, and queued mutation variables from the persisted schema ordinal up to
+   * the bundle's currentSchemaVersion, locally, without refetch. Chunked; a crash
+   * mid-pass resumes idempotently since the pointer only advances at the end.
    */
   async function migrateScopeToCurrent(db: AppDatabase, fromVersion: number) {
     const records = await db.queries.where('scope').equals(scope).toArray();
     for (let i = 0; i < records.length; i += MIGRATION_CHUNK_SIZE) {
       const chunk = records.slice(i, i + MIGRATION_CHUNK_SIZE);
-      // Rewrites are computed before the write — Dexie transactions auto-commit
+      // Rewrites are computed before the write: Dexie transactions auto-commit
       // on non-Dexie awaits, and the lens chain (doba) is async.
       const rewritten: PersistedQueryRecord[] = [];
       for (const record of chunk) {
@@ -171,8 +149,8 @@ function createIDBPersister(scope = 'rq') {
     timeoutId = null;
     if (!client) return;
 
-    // Persist guard (1.7): a stale bundle must never write old-shape data over
-    // a newer bundle's migrated store.
+    // Persist guard: a stale bundle must never write old-shape data over a
+    // newer bundle's migrated store.
     if (isBundleStale()) return;
 
     const db = getAppDb();
@@ -190,7 +168,6 @@ function createIDBPersister(scope = 'rq') {
 
       const { queries, mutations } = client.clientState;
 
-      // Partition into product vs context
       const productQueries: DehydratedQuery[] = [];
       const contextQueries: DehydratedQuery[] = [];
       for (const q of queries) {
@@ -291,7 +268,7 @@ function createIDBPersister(scope = 'rq') {
         const persistedVersion = meta.clientCacheVersion ?? appConfig.clientCacheVersion;
         if (persistedVersion !== appConfig.clientCacheVersion) {
           if (scope.startsWith(SESSION_KEY_PREFIX)) {
-            // Session scopes are cold — wipe entirely rather than salvage.
+            // Session scopes are cold: wipe entirely rather than salvage.
             await clearScope(db);
             return undefined;
           }
@@ -302,12 +279,12 @@ function createIDBPersister(scope = 'rq') {
         // Lens boot migration: persisted schema ordinal behind the bundle →
         // rewrite cached rows + queued mutations locally (no refetch). Ahead
         // (rollback deploy) → wipe query data, keep mutations. A missing ordinal
-        // (pre-feature meta) seeds as current — genuinely old caches are covered
-        // by the clientCacheVersion bust above.
+        // seeds as current; genuinely old caches are covered by the
+        // clientCacheVersion bust above.
         const pointer = meta.schemaVersion ?? currentSchemaVersion;
         if (pointer !== currentSchemaVersion) {
           if (scope.startsWith(SESSION_KEY_PREFIX)) {
-            // Session scopes are cold — wipe rather than migrate.
+            // Session scopes are cold: wipe rather than migrate.
             await clearScope(db);
             return undefined;
           }

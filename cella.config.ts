@@ -37,6 +37,20 @@ export default defineConfig({
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
+      // Attachment module carries raak's task-host/project scoping — fork wins over the
+      // template's organization-only versions.
+      'backend/src/modules/attachment/attachment-queries.ts',
+      'backend/src/modules/attachment/operations/create-attachments.ts',
+      'backend/src/modules/attachment/operations/get-attachments.ts',
+      // Hierarchy-bound tests: raak's versions exercise the deeper hierarchy (project,
+      // guest, host relations) that the template's org-only rewrites cannot.
+      'backend/src/modules/entities/helpers/recalculate-counters.test.ts',
+      'backend/src/permissions/row-predicates.test.ts',
+      'backend/tests/attachment-seq-reads.test.ts',
+      'frontend/src/query/tests/cache-migration.test.ts',
+      'shared/src/permissions/host-delegation.test.ts',
+      'shared/src/permissions/public-read.test.ts',
+      'shared/src/permissions/row-restrictions.test.ts',
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',
