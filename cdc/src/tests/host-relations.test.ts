@@ -6,13 +6,6 @@ import type { EntityTableMeta } from '../types';
 import { getCountDeltas } from '../utils/update-counts';
 import { mockParseResult } from './factories';
 
-/**
- * Host relationship behavior (hierarchy `host:`, raak: attachment → task):
- * - update-counts maintains e:attachment per host task (create/soft-delete/re-host)
- * - the transaction buffer suppresses hosted-row hard-deletes cascading from a host
- *   hard-delete in the same transaction
- */
-
 const attachmentMeta = (): EntityTableMeta =>
   ({ kind: 'entity', type: 'attachment', table: {} }) as unknown as EntityTableMeta;
 
@@ -23,6 +16,9 @@ const attachmentActivity = (action: string): InsertActivityModel =>
     organizationId: 'org-1',
   }) as unknown as InsertActivityModel;
 
+// Host relationship behavior (hierarchy `host:`, raak: attachment → task): update-counts
+// maintains e:attachment per host task, and the transaction buffer suppresses hosted-row
+// hard-deletes cascading from a host hard-delete in the same transaction.
 describe('host counters (update-counts)', () => {
   it('create with a host id → +1 e:attachment on the task', () => {
     const deltas = getCountDeltas(
@@ -103,7 +99,7 @@ describe('host cascade suppression (transaction buffer)', () => {
     await buffer.onEvent('0/1', mockParseResult({ action: 'delete', entityType: 'task', subjectId: 'task-1' }));
     await buffer.onEvent('0/2', hostedDelete('att-1', 'task-1'));
     await buffer.onEvent('0/3', hostedDelete('att-2', 'task-1'));
-    // Hosted by a DIFFERENT task — must survive
+    // Hosted by a DIFFERENT task, must survive
     await buffer.onEvent('0/4', hostedDelete('att-3', 'task-9'));
     await buffer.onCommit();
 

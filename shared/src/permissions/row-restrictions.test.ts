@@ -5,13 +5,6 @@ import { getAllDecisions } from './permission-manager/check';
 import type { PermissionMembership, SubjectForPermission } from './permission-manager/types';
 import type { RowRestrictions } from './row-restrictions';
 
-/**
- * Row restriction semantics at the engine level (raak's chain: project > organization,
- * roles admin/member/guest). Restrictions narrow membership grants per row; row-condition
- * grants ('own'), public grants and `create` are never narrowed; fail-closed without row
- * data; admin exemption is explicit.
- */
-
 // Synthetic policies: every role can read tasks unconditionally; project members can
 // also update, and everyone with membership can create.
 const { accessPolicies: policies } = configurePermissions(appConfig.entityTypes, ({ subject, contexts }) => {
@@ -45,6 +38,7 @@ const task = (row: Record<string, unknown> | undefined): SubjectForPermission =>
 const readableBy = (m: PermissionMembership, row: Record<string, unknown> | undefined, userId = 'u1') =>
   getAllDecisions(policies, [m], task(row), { userId, restrictions }).can.read;
 
+// Engine-level scenario: raak's chain project > organization, roles admin/member/guest.
 describe('visibilityDepth', () => {
   it('null depth: unrestricted — every read grant qualifies', () => {
     expect(readableBy(orgMember, { visibilityDepth: null })).toBe(true);

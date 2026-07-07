@@ -1423,6 +1423,19 @@ export const zRedirectToTaskPath = z.object({
   id: z.string().max(50),
 });
 
+export const zGetYjsTokenQuery = z.object({
+  entityType: z.string().max(50),
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Yjs auth token
+ */
+export const zGetYjsTokenResponse = z.object({
+  token: z.string(),
+});
+
 export const zDeleteOrganizationsBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
 });
@@ -2582,17 +2595,4 @@ export const zMarkSeenPath = z.object({
  */
 export const zMarkSeenResponse = z.object({
   newCount: z.int().gte(0),
-});
-
-export const zGetYjsTokenQuery = z.object({
-  entityType: z.string().max(50),
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-});
-
-/**
- * Yjs auth token
- */
-export const zGetYjsTokenResponse = z.object({
-  token: z.string(),
 });
