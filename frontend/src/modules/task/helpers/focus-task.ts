@@ -13,7 +13,7 @@ export const focusTask = (taskId: string | null) => {
 };
 
 // Try to focus a card across a few animation frames, giving virtua time to mount it after scrolling.
-const focusWhenMounted = (id: string, attemptsLeft = 5) => {
+export const focusWhenMounted = (id: string, attemptsLeft = 5) => {
   const taskCard = document.getElementById(id);
   if (taskCard) {
     if (document.activeElement !== taskCard) taskCard.focus();

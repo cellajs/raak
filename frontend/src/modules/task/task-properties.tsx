@@ -77,11 +77,29 @@ export const variantOptions = [
 ] as const;
 
 /**
- * Task point options with metadata for rendering.
+ * Task point options with metadata for rendering. `value` is the stored points number.
  */
 export const pointsOptions = [
-  { value: 'none', label: '0', icon: NoneIcon },
-  { value: 'low', label: '1', icon: LowIcon },
-  { value: 'medium', label: '2', icon: MediumIcon },
-  { value: 'high', label: '3', icon: HighIcon },
+  { value: 0, label: '0', icon: NoneIcon },
+  { value: 1, label: '1', icon: LowIcon },
+  { value: 2, label: '2', icon: MediumIcon },
+  { value: 3, label: '3', icon: HighIcon },
 ] as const;
+
+/**
+ * Value-keyed lookups for the option arrays. Prefer these over positional indexing
+ * (`statusOptions[value]`, `variantOptions[value - 1]`), which only works while the array
+ * order happens to match the enum values and breaks silently on reorder.
+ */
+const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> =>
+  Object.fromEntries(options.map((o) => [o.value, o]));
+
+export const statusOptionsByValue = byValue(statusOptions) as Record<
+  (typeof statusOptions)[number]['value'],
+  (typeof statusOptions)[number]
+>;
+export const variantOptionsByValue = byValue(variantOptions) as Record<
+  (typeof variantOptions)[number]['value'],
+  (typeof variantOptions)[number]
+>;
+export const pointsOptionsByValue = byValue(pointsOptions) as Record<number, (typeof pointsOptions)[number]>;

@@ -18,7 +18,7 @@ import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import type { BoardResizablePanel, Task, TaskPointsType, TaskSearch } from '~/modules/task/types';
+import type { BoardResizablePanel, Task, TaskSearch } from '~/modules/task/types';
 import { useUserStore } from '~/modules/user/user-store';
 
 interface Props {
@@ -205,18 +205,19 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
     if (!taskCard) return;
     if (document.activeElement !== taskCard) taskCard.focus();
 
-    const trigger = taskCard.querySelector(`#${field}-${targetTask.id}${isSheetOpen ? '-sheet' : ''}`);
+    const triggerId = `${field}-${targetTask.id}${isSheetOpen ? '-sheet' : ''}`;
+    const trigger = taskCard.querySelector(`#${triggerId}`);
     if (!(trigger instanceof HTMLButtonElement)) return useDropdowner.getState().remove();
 
     const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
     const base = {
-      triggerId: `${field}-${targetTask.id}${isSheetOpen && '-sheet'}`,
+      triggerId,
       triggerRef: { current: trigger },
       taskId: targetTask.id,
     };
 
     const fieldProps: Record<DropdownsType, Record<string, unknown>> = {
-      points: { dropdownType: 'points', value: targetTask.points as TaskPointsType, onChange: handlers.onPointsChange },
+      points: { dropdownType: 'points', value: targetTask.points, onChange: handlers.onPointsChange },
       labels: {
         dropdownType: 'labels',
         value: targetTask.labels,

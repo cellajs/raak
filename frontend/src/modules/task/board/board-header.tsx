@@ -27,14 +27,16 @@ export const BoardHeader = ({
   workspace,
   publicView,
 }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isInWorkspace = !!workspace;
 
   const {
     search: { q: searchQuery = '' },
   } = useSearchParams<{ q?: string }>({});
 
-  const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
+  // No scope to derive params from in a public view or while a non-workspace board has no projects yet
+  const queryParams =
+    publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal('board', queryParams);
   const selectedTasks = useTaskInteractionStore((s) => s.selectedTasks);
   const setSelectedTasks = useTaskInteractionStore((s) => s.setSelectedTasks);
@@ -62,7 +64,7 @@ export const BoardHeader = ({
         />
       )}
 
-      {!isInWorkspace && projects.length && !selectedTasks.length && (
+      {!isInWorkspace && projects.length > 0 && !selectedTasks.length && (
         <Button
           variant="plain"
           data-form-dirty={false}
@@ -75,16 +77,11 @@ export const BoardHeader = ({
         </Button>
       )}
 
-      <TaskSearch
-        clearSelection={() => {
-          if (selectedTasks) clearSelection();
-        }}
-        toggleFocus={toggleSearchFocus}
-      >
+      <TaskSearch clearSelection={clearSelection} toggleFocus={toggleSearchFocus}>
         {' '}
         {typeof total === 'number' && searchQuery && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
-            <span>{new Intl.NumberFormat('de-DE').format(total)}</span>
+            <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>
             <span>{t('c:found')}</span>
           </div>
         )}
@@ -93,7 +90,7 @@ export const BoardHeader = ({
       {!searchQuery && !searchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
 
       {isInWorkspace && <WorkspaceActionButtons />}
-      {!publicView && !isInWorkspace && projects.length && <PanelProjectActions project={projects[0]} />}
+      {!publicView && !isInWorkspace && projects.length > 0 && <PanelProjectActions project={projects[0]} />}
 
       <DisplayOptions className="empty:hidden max-sm:hidden" />
 

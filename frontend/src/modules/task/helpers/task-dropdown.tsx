@@ -10,7 +10,7 @@ import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import type { TaskLabel, TaskPointsType, TaskStatusType, TaskVariantType } from '~/modules/task/types';
 
 type DropdownFieldMap = {
-  points: { value: TaskPointsType | null; onChange: (v: TaskPointsType) => void };
+  points: { value: number | null; onChange: (v: TaskPointsType) => void };
   labels: {
     value: TaskLabel[];
     projectId: string;

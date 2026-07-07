@@ -19,7 +19,7 @@ import { focusTask } from '~/modules/task/helpers/focus-task';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useReadOnlyInert } from '~/modules/task/hooks/use-read-only';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { variantOptions } from '~/modules/task/task-properties';
+import { variantOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/modules/user/user-store';
@@ -126,7 +126,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
         className="relative -ml-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100"
         {...useReadOnlyInert(task.projectId)}
       >
-        {variantOptions[variantOptions.findIndex((v) => v.value === task.variant)]?.icon() || ''}
+        {variantOptionsByValue[task.variant]?.icon() ?? null}
       </Button>
       <div className="ml-1 flex w-full flex-row items-center gap-1">
         {task.createdBy && (
@@ -150,7 +150,6 @@ export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
                 {isOnline ? relativeDate : t('c:update_on_online')}
               </span>
             </TooltipButton>
-            {/* <TaskHeaderInfo task={task} /> */}
           </>
         )}
 

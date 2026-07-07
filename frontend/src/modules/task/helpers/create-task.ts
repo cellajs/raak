@@ -2,7 +2,7 @@ import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
-import { focusTask } from '~/modules/task/helpers/focus-task';
+import { focusTask, focusWhenMounted } from '~/modules/task/helpers/focus-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -83,7 +83,6 @@ export const handleCreateForm = (project: { id: string; organizationId: string; 
   store.setDraftTask(project.id, formTask);
 
   // Focus the form element and trigger glow after React renders
-  const form = document.getElementById(id);
-  form?.focus();
+  focusWhenMounted(id);
   setTimeout(() => triggerTaskGlow(id), 100);
 };

@@ -2,7 +2,7 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { statusOptions, TaskStatus } from '~/modules/task/task-properties';
+import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
@@ -59,7 +59,7 @@ export const formatSectionLabel = (filters: SectionsValue): string => {
     .map(([key, values]) => {
       switch (key) {
         case 'status':
-          return `${values.map((status) => statusOptions[status].status).join(', ')}`;
+          return `${values.map((status) => statusOptionsByValue[status].status).join(', ')}`;
         default:
           return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${values.join(', ')}`;
       }

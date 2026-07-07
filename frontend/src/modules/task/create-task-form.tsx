@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import type React from 'react';
 import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import type { UseFormProps } from 'react-hook-form';
+import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { generateId } from 'shared/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -38,8 +38,15 @@ import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity'
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { pointsOptions, statusOptions, TaskStatus, TaskVariant, variantOptions } from '~/modules/task/task-properties';
-import type { Task, TaskLabel, TaskPointsType, TaskStatusType } from '~/modules/task/types';
+import {
+  pointsOptionsByValue,
+  statusOptionsByValue,
+  TaskStatus,
+  TaskVariant,
+  variantOptions,
+  variantOptionsByValue,
+} from '~/modules/task/task-properties';
+import type { Task, TaskLabel, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
@@ -118,6 +125,11 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
 
   // Form with draft in local storage
   const form = useFormWithDraft<NewTaskFormValues>(formId, { formOptions });
+
+  // Subscribe for render: the form only re-renders when isDirty *toggles*, so
+  // render-time form.getValues() reads of these fields go stale once dirty
+  const watchedVariant = useWatch({ control: form.control, name: 'variant' });
+  const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
   const updateAttachments = useCallback((data: UploadedUppyFile<'attachment'>) => setAttachments(data), []);
 
@@ -281,10 +293,10 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                       type="single"
                       variant="merged"
                       className="w-full gap-0"
-                      value={variantOptions[value - 1].type}
+                      value={variantOptionsByValue[value].type}
                       onValueChange={(newValue: string | string[]) => {
-                        const taskTypeValue = TaskVariant[newValue as keyof typeof TaskVariant];
-                        if (taskTypeValue !== undefined) onChange(taskTypeValue);
+                        const selected = variantOptions.find((o) => o.type === newValue);
+                        if (selected) onChange(selected.value);
                       }}
                     >
                       {variantOptions.map((variant) => (
@@ -309,12 +321,12 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
             }}
           />
 
-          {form.getValues('variant') !== TaskVariant.Bug && (
+          {watchedVariant !== TaskVariant.Bug && (
             <FormField
               control={form.control}
               name="points"
               render={({ field: { onChange, value } }) => {
-                const selectedPoints = value !== null && value !== undefined ? pointsOptions[value] : null;
+                const selectedPoints = value !== null && value !== undefined ? pointsOptionsByValue[value] : null;
                 return (
                   <FormItem>
                     <FormControl>
@@ -328,7 +340,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                         onClick={({ currentTarget }) =>
                           handleTaskDropdownClick({
                             dropdownType: 'points',
-                            value: (value ?? null) as TaskPointsType | null,
+                            value: value ?? null,
                             onChange,
                             triggerId: currentTarget.id,
                             triggerRef: { current: currentTarget },
@@ -507,9 +519,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
               >
                 <span>
                   {t('c:create')}
-                  {form.getValues('status') === TaskStatus.Unstarted
-                    ? ''
-                    : ` & ${statusOptions[form.getValues('status')].status}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
                 </span>
               </Button>
 
