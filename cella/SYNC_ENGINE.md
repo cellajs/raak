@@ -95,7 +95,7 @@ Postgres → CDC Worker → API Server → SSE → Client
 - **Per-field merge strategies** - Scalars use HLC-based LWW (latest timestamp wins); sets use commutative AWSet deltas (`{ add, remove }`); descriptions use Yjs CRDT via dedicated worker
 - **Offline mutation queue** - Persist pending mutations to IndexedDB, replay on reconnect
 - **Conflict strategy** - Scalars: latest HLC wins silently (no 409). Sets: commutative, conflict-free. Descriptions: character-level Yjs CRDT merge
-- **Yjs collaborative editing** - Standalone WebSocket relay worker for real-time description co-editing; client-side materialization of derived fields
+- **Yjs collaborative editing** - Standalone WebSocket relay worker for real-time description co-editing; the relay is the single writer — it seeds fresh sessions and materializes descriptions + derived fields server-side
 - **Smart mutations** The mutation layer (`query.ts`) encapsulates all sync logic so forms remain simple:
 
 ## Architecture
