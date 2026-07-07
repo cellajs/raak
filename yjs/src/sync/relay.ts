@@ -5,8 +5,10 @@ import * as Y from 'yjs';
 import type { DocContext } from '../constants';
 import { YJS_AWARENESS_RATE_LIMIT, YJS_SAVE_DEBOUNCE_MS } from '../constants';
 import { log } from '../lib/pino';
-import { broadcastToCollab, getCollab } from './session-manager';
+import { loadEntityDescription } from '../data/entity-content';
 import { createDoc, loadState, saveState } from '../data/storage';
+import { descriptionToYUpdate } from '../lib/blocknote-seed';
+import { broadcastToCollab, getCollab } from './session-manager';
 
 // y-protocols message types
 const YMessage = { Sync: 0, Awareness: 1 } as const;
@@ -138,9 +140,18 @@ async function handleSyncStep1(ctx: DocContext, ws: WebSocket, clientStateVector
     fullState = storedState;
   }
 
-  // No row in DB and no pending state — create the doc row
+  // No row in DB and no pending state — fresh session. Seed the doc from the
+  // entity's stored description server-side, so clients never seed (no client
+  // seed race, no undo-history pollution, no markContentAsSent handshake).
   if (!fullState && storedState === null) {
-    await createDoc(ctx);
+    const description = await loadEntityDescription(ctx);
+    const seed = descriptionToYUpdate(description);
+    await createDoc(ctx, seed);
+    // Re-load the canonical row: a concurrent connector (this or another instance)
+    // may have won the insert with its own seed — merging two independently
+    // generated seeds would duplicate content, so everyone adopts the winner's.
+    const canonical = await loadState(ctx);
+    if (canonical && canonical.length > 0) fullState = canonical;
   }
 
   // No content to diff against — send empty doc update

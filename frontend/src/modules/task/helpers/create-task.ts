@@ -1,5 +1,6 @@
 import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
 import { z } from 'zod';
+import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
@@ -8,7 +9,6 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus, TaskVariant } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { getSchemaDefaults } from '~/query/basic/create-optimistic';
-import { blocknoteFieldIsDirty } from '~/utils/blocknote-field-is-dirty';
 
 export const createTaskFormSchema = z.object({
   ...zCreateTasksBody.element.omit({ stx: true }).shape,

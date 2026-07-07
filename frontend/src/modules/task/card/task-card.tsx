@@ -18,12 +18,13 @@ import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expand
 import { TaskCardPrimitive } from '~/modules/task/card/card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
+import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskUpdateForm } from '~/modules/task/card/task-update-form';
 import { isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { toggleTaskCheckbox } from '~/modules/task/helpers/toggle-checkbox';
 import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
-import { changeTaskState } from '~/modules/task/hooks/use-task-states';
+import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
@@ -57,6 +58,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
   const taskRef = useRef<HTMLDivElement>(null);
   const expandedAtRef = useRef<number>(0);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
+  const { mutate: mutateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
   const mobileClosestEdge = useMobileTaskDragIndicatorStore((store) =>
     store.indicator?.taskId === task.id ? store.indicator.edge : null,
   );
@@ -90,7 +92,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       const checkboxId = wrapper?.querySelector<HTMLInputElement>('input.checklist-checkbox')?.dataset.checkboxId;
       if (checkboxId && task.description) {
         event.preventDefault();
-        toggleTaskCheckbox(task, checkboxId);
+        toggleTaskCheckbox(task, checkboxId, mutateTask);
         return;
       }
     }
@@ -104,7 +106,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     // If collapsed, expand (read-only) or edit (normal)
     if (state === 'collapsed') {
       expandedAtRef.current = Date.now();
-      changeTaskState(task.id, isReadOnly ? 'expanded' : 'editing');
+      useTaskCardStore.getState().setTaskState(task.id, isReadOnly ? 'expanded' : 'editing');
       return;
     }
 
@@ -113,7 +115,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
 
     // Re-enter editing when clicking an expanded card (skip in read-only)
     if (state === 'expanded' && !isReadOnly) {
-      changeTaskState(task.id, 'editing');
+      useTaskCardStore.getState().setTaskState(task.id, 'editing');
     }
   };
 
@@ -190,7 +192,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     const nextFocused = event.relatedTarget as HTMLElement | null;
     // Only exit editing if focus moved to another task card
     if (nextFocused?.closest?.('[data-state]') && !taskRef.current?.contains(nextFocused)) {
-      setTimeout(() => changeTaskState(task.id, 'expanded'), 50);
+      setTimeout(() => useTaskCardStore.getState().setTaskState(task.id, 'expanded'), 50);
     }
   };
 

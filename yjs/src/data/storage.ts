@@ -26,15 +26,21 @@ export async function saveState({ entityType, entityId, tenantId, userId }: DocC
 }
 
 /**
- * Inserts an empty document row on first connection. No-ops if it already exists.
+ * Inserts a document row on first connection, optionally with a server-side seed
+ * as its initial state. No-ops if it already exists — concurrent connectors must
+ * re-load afterwards and use the canonical row (two independently generated seeds
+ * would duplicate content when merged).
  */
-export async function createDoc({ entityType, entityId, tenantId, userId, organizationId }: DocContext): Promise<void> {
+export async function createDoc(
+  { entityType, entityId, tenantId, userId, organizationId }: DocContext,
+  initialState?: Uint8Array | null,
+): Promise<void> {
   await withClient(tenantId, userId, async (client) => {
     await client.query(
       `INSERT INTO yjs_documents (entity_type, entity_id, tenant_id, organization_id, state, updated_at)
        VALUES ($1, $2, $3, $4, $5, now())
        ON CONFLICT (entity_type, entity_id) DO NOTHING`,
-      [entityType, entityId, tenantId, organizationId, Buffer.alloc(0)],
+      [entityType, entityId, tenantId, organizationId, initialState ? Buffer.from(initialState) : Buffer.alloc(0)],
     );
   });
 }

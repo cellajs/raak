@@ -778,21 +778,25 @@ Descriptions on product entities (`task`, `page`, etc.) use Yjs CRDT for real-ti
 
 ### Architecture
 
-The Yjs worker is a standalone `yjs/` workspace package (like `cdc/`). It is a **pure binary relay** — the server never instantiates a `Y.Doc`. It stores and relays raw `Uint8Array` updates with zero document memory.
+The Yjs worker is a standalone `yjs/` workspace package (like `cdc/`). During editing it is a **binary relay** — it stores and forwards raw `Uint8Array` updates without parsing document content. The one exception is **server-side seeding**: when a fresh session starts, the relay converts the entity's stored `description` into an initial Y.Doc (`@blocknote/server-util` `blocksToYDoc`), so clients never seed.
 
 > **Authorization.** The relay authorizes each connection **locally** rather than calling back to the backend. On WS upgrade it verifies the HMAC token, then runs the shared permission engine (`shared/src/permissions`, the same engine the backend uses) against an RLS-scoped read of the entity scope + the user's memberships — see `yjs/src/data/permissions.ts` (`canEditEntity`). Denied → close `4003`, missing ancestor scope → `4400`, DB/resolver error → `4503`. Extracting the engine into `shared` means the relay and the backend can never drift on the same decision.
+
+> **Schema parity.** The relay builds its BlockNote schema from the same React-free configs the frontend editor uses (`shared/blocknote-schema-configs`), so the ProseMirror node specs are identical on both sides — a doc seeded server-side round-trips through the client editor without loss.
 
 ```
 Online editing:
   Browser → y-websocket provider → Yjs worker (standalone service, own port)
-  Client (debounced 3s):
-    → Compute derived fields from local Y.Doc (summary, keywords, checkboxCount, etc.)
-    → PATCH /:entityType/:entityId/derived → backend validates + writes to entity table
+  Fresh session: relay seeds Y.Doc from entity.description (server-side)
+  Author's client (debounced 1s, remote changes filtered — only the author PUTs):
+    → Compute derived fields from local Y.Doc (summary, checkboxCount, etc.)
+    → Standard update mutation (ops.description + derived) → backend re-derives + writes
     → CDC detects row change → SSE → non-editing clients update
 
 Offline editing:
-  Browser → BlockNote → JSON save on blur → REST mutation → entity.description
-  On reconnect: y-websocket connects, client initializes Y.Doc from entity.description
+  Browser → BlockNote (standalone mode) → JSON save on blur → REST mutation → entity.description
+  Pending flushes land in the offline mutation queue and replay on reconnect
+  Next collaborative session re-seeds from the durable entity.description
 
 Other users (non-editing, online):
   CDC detects materialized row change → SSE → TanStack Query cache update
@@ -801,18 +805,18 @@ Other users (non-editing, online):
 
 ### Ephemeral lifecycle
 
-1. First WS connect → relay creates `yjs_documents` row (empty state). Client pushes Y.Doc (initialized from `entity.description` JSON via `initialContent`).
+1. First WS connect → relay creates the `yjs_documents` row, seeded server-side from `entity.description` (empty when there is none). Concurrent first-connectors converge on one canonical seed: the insert is `ON CONFLICT DO NOTHING` and every connector re-loads the row afterwards.
 2. During editing → relay stores raw binary state (debounced 3s). Subsequent clients sync from stored state.
-3. Last WS disconnect → 5 min grace timer. If no reconnect → deletes `yjs_documents` row.
-4. On editor close → flush derived fields via REST (cancel debounce, fire with `keepalive: true`), seed TanStack Query cache from editor state.
+3. Last WS disconnect → 5 min grace timer. If no reconnect → deletes `yjs_documents` row. `entity.description` remains the durable record.
+4. On editor close → flush pending description through the standard mutation; SSE suppression is lifted only after the flush settles.
 
 ### SSE suppression while editing
 
-While a Yjs editor is active, the SSE handler skips description-derived fields for that entity (to avoid overwriting the fresher local Y.Doc state). Non-description fields (`labels`, `status`, etc.) still flow through normally. On editor close, the query cache is seeded from the editor state and normal SSE flow resumes.
+While a Yjs editor is active, the SSE handler skips Yjs-owned fields (description + its derived fields, registered per entity type via `registerYjsOwnedFields`) for that entity — a slightly stale server snapshot must not overwrite the fresher local Y.Doc state. Non-description fields (`labels`, `status`, etc.) still flow through normally. On editor close, suppression lifts after the final flush and normal SSE flow resumes.
 
 ### Derived fields
 
-Derived fields (`summary`, `checkboxCount`, `keywords`, etc.) are computed server-side on every create/update (authoritative). During collaborative editing, the client pre-computes them for optimistic UI (3s debounce) and sends them via the standard PUT mutation; the server re-derives before persisting.
+Derived fields (`summary`, `checkboxCount`, `keywords`, etc.) are computed server-side on every create/update (authoritative). During collaborative editing, the **author's** client pre-computes them for optimistic UI and sends them with the description via the standard update mutation (1s debounce); the server re-derives before persisting. Remote peers' editors filter out echoed changes (`onChange` with `includeUpdatesFromRemote: false`), so each edit is persisted exactly once — by its author.
 
 ---
 

@@ -8,7 +8,6 @@ import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
-import { changeTaskState } from '~/modules/task/hooks/use-task-states';
 import { taskKeys } from '~/modules/task/query';
 import { Badge } from '~/modules/ui/badge';
 import { queryClient } from '~/query/query-client';
@@ -48,7 +47,7 @@ function TaskSheetHandler() {
     const { states } = useTaskCardStore.getState();
     for (const [id, state] of Object.entries(states)) {
       if (state === 'editing') {
-        changeTaskState(id, 'suppressEdit');
+        useTaskCardStore.getState().suppressEdit(id);
       }
     }
     const boardCard = document.getElementById(taskSheetId);

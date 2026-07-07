@@ -5,11 +5,11 @@ import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
 import { zTask } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
-import { type Label, labelQueryKeys } from '~/modules/label/query';
+import { labelQueryKeys } from '~/modules/label/query';
 import { deriveDescriptionCounts } from '~/modules/task/helpers/derive-description-props';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
-import type { Task } from '~/modules/task/types';
+import type { Task, TaskLabel } from '~/modules/task/types';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
@@ -57,13 +57,13 @@ type OptimisticCacheFields = {
   /** Client-computed summary (backend regenerates server-side) */
   summary?: string;
   summaryLength?: number;
-  fullLabels: Label[];
+  fullLabels: TaskLabel[];
   fullAssignedTo: UserMinimalBase[];
 };
 
 type TaskCreateMutationFnVariables = BaseCreateParams & OptimisticCacheFields;
 
-type TaskUpdateMutationFnVariables = BaseUpdateParams & Partial<OptimisticCacheFields>;
+export type TaskUpdateMutationFnVariables = BaseUpdateParams & Partial<OptimisticCacheFields>;
 
 type TasksDeleteMutationFnVariables = {
   tasksToDelete: Task[];
@@ -128,15 +128,22 @@ registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, 
   });
 });
 
-// Register Yjs-owned fields — SSE updates will skip these while a Yjs editor is active
-registerYjsOwnedFields('task', [
-  'description',
-  'checkboxCount',
-  'checkedCount',
+/**
+ * Fields derived from the task description (computed server-side on description writes).
+ * Used both to merge server-computed values after a description mutation and to protect
+ * these fields from stale SSE overwrites while a Yjs editor is active.
+ */
+export const TASK_DERIVED_DESCRIPTION_FIELDS = [
   'summary',
   'summaryLength',
   'expandable',
-]);
+  'checkboxCount',
+  'checkedCount',
+  'attachmentCount',
+] as const;
+
+// Register Yjs-owned fields — SSE updates will skip these while a Yjs editor is active
+registerYjsOwnedFields('task', ['description', ...TASK_DERIVED_DESCRIPTION_FIELDS]);
 
 const tasksMutationKeyBase = ['task'] as const;
 const handleError = createResourceError('task');
@@ -364,12 +371,14 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
           }
         }
 
-        // When description changes, derive all virtual props optimistically
-        if ('description' in mergedOps && variables.summary) {
-          optimisticUpdates.summary = variables.summary;
-          optimisticUpdates.summaryLength = variables.summaryLength ?? previousTask.summaryLength;
-          if (typeof mergedOps.description === 'string') {
-            Object.assign(optimisticUpdates, deriveDescriptionCounts(mergedOps.description as string));
+        // When description changes, derive all virtual props optimistically.
+        // Counts are derived even without a client-computed summary (e.g. checkbox
+        // toggles skip summary — the backend regenerates it server-side).
+        if (typeof mergedOps.description === 'string') {
+          Object.assign(optimisticUpdates, deriveDescriptionCounts(mergedOps.description));
+          if (variables.summary) {
+            optimisticUpdates.summary = variables.summary;
+            optimisticUpdates.summaryLength = variables.summaryLength ?? previousTask.summaryLength;
           }
         }
 
@@ -394,8 +403,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
         }
       }
 
-      const hasCheckboxOnly = Object.keys(mergedOps).length === 1 && 'checked' in mergedOps;
-      if (!hasCheckboxOnly) setTimeout(() => triggerTaskGlow(taskId));
+      setTimeout(() => triggerTaskGlow(taskId));
 
       return { previousTask };
     },
@@ -425,7 +433,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
 
       // When description changes, also merge server-computed derived fields
       if (variables.ops && 'description' in variables.ops) {
-        mutatedKeys.push('summary', 'summaryLength', 'expandable', 'checkboxCount', 'checkedCount', 'attachmentCount');
+        mutatedKeys.push(...TASK_DERIVED_DESCRIPTION_FIELDS);
       }
 
       // When status changes, server stamps statusChangedAt

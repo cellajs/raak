@@ -12,9 +12,9 @@ import { membersListQueryOptions } from '~/modules/memberships/query';
 import type { Member } from '~/modules/memberships/types';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
+import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
 import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
-import { changeTaskState } from '~/modules/task/hooks/use-task-states';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
@@ -99,46 +99,46 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const { mutateAsync: updateDesc } = useTaskUpdateMutation(task.tenantId, task.organizationId);
   const orgKey = taskKeys.list.org(task.organizationId);
 
-  const updateData = async (description: string) => {
-    // Sync description to detail + list cache immediately for instant remounts
-    queryClient.setQueryData<Task>(taskKeys.detail.byId(task.id), (old) =>
-      old ? { ...old, description, updatedAt: new Date().toISOString() } : undefined,
-    );
-
-    const cached = findInCache<Task>('task', task.id);
-    if (cached) cacheUpdate(orgKey, [{ ...cached, description, updatedAt: new Date().toISOString() } as ItemData]);
-
-    // In collaborative mode, derived fields sender handles backend persistence
-    if (collaborative) return;
-
-    // Skip if the task was deleted (e.g. unmount flush after deletion)
-    if (!findInCache<Task>('task', task.id)) return;
-
-    const { summary, summaryLength } = await deriveDescriptionProps(description);
-    await updateDesc({ id: task.id, ops: { description }, summary, summaryLength });
-  };
-
   const sendDerivedUpdate = async (id: string, description: string) => {
+    // Skip if the task was deleted (e.g. unmount flush after deletion)
     if (!findInCache<Task>('task', id)) return;
     const { summary, summaryLength } = await deriveDescriptionProps(description);
     await updateDesc({ id, ops: { description }, summary, summaryLength });
   };
 
+  const updateData = async (description: string) => {
+    if (collaborative) {
+      // The derived-fields sender owns backend persistence in collab mode — no mutation
+      // fires on blur, so sync the caches directly: collapsed/expanded card views render
+      // from the query cache (not the Y.Doc), and instant remounts need it fresh.
+      queryClient.setQueryData<Task>(taskKeys.detail.byId(task.id), (old) =>
+        old ? { ...old, description, updatedAt: new Date().toISOString() } : undefined,
+      );
+      const cached = findInCache<Task>('task', task.id);
+      if (cached) cacheUpdate(orgKey, [{ ...cached, description, updatedAt: new Date().toISOString() } as ItemData]);
+      return;
+    }
+
+    await sendDerivedUpdate(task.id, description);
+  };
+
   // Stable random color for cursor labels
   const userColorRef = useRef(getRandomColor());
 
-  const collaborationConfig =
+  const collaborationBundle =
     collaborative && yjsConn
       ? {
           provider: yjsConn.provider,
           fragment: yjsConn.fragment,
           user: { name: user.name, color: userColorRef.current },
-          showCursorLabels: 'activity' as const,
+          entityType: 'task' as const,
+          entityId: task.id,
+          sendDerivedUpdate,
         }
       : undefined;
 
   const handleEscapeOrBlur = () => {
-    changeTaskState(task.id, 'expanded');
+    useTaskCardStore.getState().setTaskState(task.id, 'expanded');
   };
 
   const baseFilePanel = {
@@ -158,37 +158,13 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
     );
   }
 
-  if (collaborative && collaborationConfig) {
-    return (
-      <div className={expandedWrapperStyle}>
-        <BlockNote
-          id={`blocknote-${task.id}`}
-          editable
-          autoFocus
-          members={projectMembers}
-          defaultValue={task.description ?? undefined}
-          className={expandedStyle}
-          dense
-          updateData={updateData}
-          onEnterClick={handleEscapeOrBlur}
-          onEscapeClick={handleEscapeOrBlur}
-          extensions={checkboxExtensions}
-          baseFilePanelProps={baseFilePanel}
-          trailingBlock={false}
-          formattingToolbar={false}
-          clickOpensPreview
-          collaboration={collaborationConfig}
-          entityType="task"
-          entityId={task.id}
-          sendDerivedUpdate={sendDerivedUpdate}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className={expandedWrapperStyle}>
       <BlockNote
+        // Force a remount when the mode flips: useCreateBlockNote captures the
+        // collaboration config at creation, so a late non-collab → collab switch
+        // must not reuse the standalone editor instance.
+        key={collaborative ? 'collab' : 'solo'}
         id={`blocknote-${task.id}`}
         editable
         autoFocus
@@ -203,12 +179,17 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
         baseFilePanelProps={baseFilePanel}
         trailingBlock={false}
         formattingToolbar={false}
-        onBeforeLoad={(editor) => {
-          const strBlocks = JSON.stringify(editor.document);
-          if (task.description === null || strBlocks === task.description) return;
-          updateData(strBlocks);
-        }}
         clickOpensPreview
+        collaboration={collaborationBundle}
+        onBeforeLoad={
+          collaborative
+            ? undefined
+            : (editor) => {
+                const strBlocks = JSON.stringify(editor.document);
+                if (task.description === null || strBlocks === task.description) return;
+                updateData(strBlocks);
+              }
+        }
       />
     </div>
   );

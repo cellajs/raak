@@ -6,6 +6,7 @@ import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { cachedTasks, currentActiveTask } from '~/modules/task/helpers/active-task';
 import { prepareBoardPanels, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
@@ -15,8 +16,7 @@ import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { changeTaskState } from '~/modules/task/hooks/use-task-states';
-import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
+import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { BoardResizablePanel, Task, TaskPointsType, TaskSearch } from '~/modules/task/types';
 import { useUserStore } from '~/modules/user/user-store';
@@ -34,7 +34,6 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
   const { tenantId, organization } = useOrganizationLayoutContext();
   const { user } = useUserStore();
   const taskMutation = useTaskUpdateMutation(tenantId, organization.id);
-  const orgKey = taskKeys.list.org(organization.id);
 
   const search = useSearch({ strict: false }) as TaskSearch;
 
@@ -169,7 +168,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
     const taskCard = document.getElementById(task.id);
     const state = taskCard?.dataset.state;
     if (state === 'collapsed') return;
-    return changeTaskState(task.id, state === 'editing' ? 'expanded' : 'collapsed');
+    return useTaskCardStore.getState().setTaskState(task.id, state === 'editing' ? 'expanded' : 'collapsed');
   };
 
   const handleEnterKeyPress = () => {
@@ -179,7 +178,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
     const taskCard = document.getElementById(isSheetOpen ? `sheet-${task.id}` : task.id);
     const currentState = taskCard?.dataset.state ?? 'collapsed';
     if (isProjectReadOnly(task.projectId) && currentState === 'expanded') return;
-    changeTaskState(task.id, currentState === 'collapsed' ? 'expanded' : 'editing');
+    useTaskCardStore.getState().setTaskState(task.id, currentState === 'collapsed' ? 'expanded' : 'editing');
   };
 
   const handleNKeyDown = () => {
@@ -209,7 +208,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
     const trigger = taskCard.querySelector(`#${field}-${targetTask.id}${isSheetOpen ? '-sheet' : ''}`);
     if (!(trigger instanceof HTMLButtonElement)) return useDropdowner.getState().remove();
 
-    const handlers = buildFieldHandlers(targetTask, { taskMutation, orgKey, user });
+    const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
     const base = {
       triggerId: `${field}-${targetTask.id}${isSheetOpen && '-sheet'}`,
       triggerRef: { current: trigger },
