@@ -5,21 +5,10 @@ import { getAllDecisions } from './permission-manager/check';
 import type { PermissionMembership, SubjectForPermission } from './permission-manager/types';
 import type { HostDelegation } from './types';
 
-/**
- * Host permission delegation (`delegateToHost`, raak: attachment → task): a hosted row
- * allows a delegated action if the HOST row allows it — including the host's row
- * conditions, public grants and restrictions. Additive with the subject's own grants;
- * fail-closed without a caller-resolved hostRow.
- *
- * Synthetic policies: attachments have NO own read grants (strict inheritance, the
- * projectcampus comment shape); tasks are readable by project members and updatable
- * by nobody but org admins.
- */
-
 const { accessPolicies: policies } = configurePermissions(appConfig.entityTypes, ({ subject, contexts }) => {
   switch (subject.name) {
     case 'attachment':
-      // No read cells at all — read must come from the host
+      // No read cells at all: read must come from the host
       contexts.project.member({ update: 1 });
       contexts.organization.admin({});
       contexts.organization.member({});
@@ -54,6 +43,9 @@ const hostedAttachment = (hostRow: Record<string, unknown> | undefined): Subject
 
 const taskRow = { id: 'task1', createdBy: 'creator-1' };
 
+// Host permission delegation (delegateToHost, raak: attachment → task): a hosted row allows a
+// delegated action if the host row allows it, including the host's row conditions, public
+// grants and restrictions. Additive with the subject's own grants; fail-closed without a hostRow.
 describe('host delegation', () => {
   it('grants a delegated action when the host allows it, attributed as host grant', () => {
     const decision = getAllDecisions(policies, [projectMember], hostedAttachment(taskRow), {
@@ -107,7 +99,7 @@ describe('host delegation', () => {
 
   it('only delegates the declared actions', () => {
     // Task update is org-admin-only; attachment update is project-member-owned. Delegation
-    // covers read only — update stays governed by the attachment's own cells.
+    // covers read only: update stays governed by the attachment's own cells.
     const decision = getAllDecisions(policies, [projectMember], hostedAttachment(taskRow), {
       userId: 'u1',
       hostDelegation: delegation,

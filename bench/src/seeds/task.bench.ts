@@ -1,13 +1,3 @@
-/**
- * Load-test task seed — self-registers into the bench seed registry.
- *
- * Fork-owned seed (raak entity). Seeds after projects (tasks FK-reference a
- * project). `labels` and `assigned_to` are native Postgres arrays. See
- * `attachment.bench.ts` for the reference pattern.
- *
- * Runs in Node.js (data-setup), not in Artillery scenarios.
- */
-
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { mockTask } from '#/modules/task/task-mocks';
 import { registerBenchSeed } from '../registry';
@@ -17,11 +7,11 @@ import { TOTAL_PROJECTS } from './project.bench';
 export const TOTAL_TASKS = 500;
 
 /**
- * Generate a load-test task record by index.
+ * Generate a load-test task row by index.
  *
  * `mockTask` leaks `statusChangedAt`/`deletedAt`/`deletedBy` keys that are not
  * real `tasks` columns, so they are stripped (the registry derives INSERT
- * columns from record keys).
+ * columns from the row's keys).
  */
 export const loadtestTask = (index: number): InsertTaskModel => {
   const {
@@ -58,6 +48,8 @@ export const loadtestTask = (index: number): InsertTaskModel => {
   };
 };
 
+// Seeds after projects (order 110): tasks FK-reference a project. `labels` and
+// `assigned_to` are native Postgres arrays (see `pgArrayColumns`).
 registerBenchSeed({
   table: 'tasks',
   order: 120,

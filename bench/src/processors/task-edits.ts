@@ -1,10 +1,3 @@
-/**
- * Edit payload builders for the task mutation scenario.
- *
- * Co-located with the task-edit processor (the shared `helpers/` folder was
- * removed upstream). Each builder produces an `ops` + `stx` payload matching the
- * sync mutation contract for a single field edit.
- */
 import { uuidv7 } from 'uuidv7';
 import { userId } from '../seeds/ids';
 
@@ -87,7 +80,11 @@ function buildDescriptionEdit(): EditPayload {
   };
 }
 
-/** All edit types including description. */
+/**
+ * Builders for task field edits, co-located with the task-edit processor.
+ * Each produces an `ops` + `stx` payload matching the sync mutation contract
+ * for a single field edit.
+ */
 export const allEditBuilders: EditBuilder[] = [
   buildAssignedToEdit,
   buildVariantEdit,

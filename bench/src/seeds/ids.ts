@@ -1,19 +1,15 @@
-/**
- * Single source of truth for all load-test ID and email helpers.
- * Used by both data-setup (Node.js) and k6 scenarios (via esbuild).
- *
- * All entity IDs are valid UUIDs using the BENCH_UUID_PREFIX (00000000-0000-4000-)
- * so they can be inserted into uuid columns. Each entity type uses a distinct
- * variant byte to avoid collisions.
- */
-
 import { BENCH_TENANT_ID, BENCH_UUID_PREFIX } from 'shared/bench-identity';
 
-/** Builds a deterministic UUID: 00000000-0000-4000-{variant}-{index padded to 12 hex chars} */
+/**
+ * Single source of truth for load-test ID and email helpers, used by both
+ * data-setup and the Artillery processors. Builds a deterministic UUID:
+ * 00000000-0000-4000-{variant}-{index padded to 12 hex chars}. Each entity
+ * type uses a distinct variant byte to avoid collisions.
+ */
 const benchUuid = (variant: string, i: number) => `${BENCH_UUID_PREFIX}${variant}-${i.toString(16).padStart(12, '0')}`;
 
 /**
- * Variant byte (UUID group-4) claimed per core entity — the single source shared
+ * Variant byte (UUID group-4) claimed per core entity: the single source shared
  * by the id helpers below and each seed's `idVariant` (which derives its cleanup
  * predicate), so an id and the rows it cleans up can never drift apart.
  *

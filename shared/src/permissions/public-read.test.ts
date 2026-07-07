@@ -5,11 +5,6 @@ import { getAllDecisions } from './permission-manager/check';
 import type { SubjectForPermission } from './permission-manager/types';
 import type { PublicReadGrants } from './public-read';
 
-/**
- * Public read grants: subject-level, membership-independent read access based on row
- * data. Evaluated for anonymous actors (no memberships, no userId) and members alike.
- */
-
 const NOW = '2026-07-06T12:00:00Z';
 
 const grants: PublicReadGrants = {
@@ -35,6 +30,8 @@ const taskSubject = (parentPublicAt: string | null): SubjectForPermission => ({
 // No policies at all: everything below must come from public grants alone.
 const noPolicies = {};
 
+// Public read grants: subject-level, membership-independent read access based on row data,
+// evaluated for anonymous actors (no memberships, no userId) and members alike.
 describe('public read grants — anonymous actor', () => {
   it('publicSelf grants read when the row publicAt is set', () => {
     const { can, actions } = getAllDecisions(noPolicies, [], projectSubject(NOW), { publicGrants: grants });
