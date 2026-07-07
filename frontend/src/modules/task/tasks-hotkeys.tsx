@@ -205,12 +205,13 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
     if (!taskCard) return;
     if (document.activeElement !== taskCard) taskCard.focus();
 
-    const trigger = taskCard.querySelector(`#${field}-${targetTask.id}${isSheetOpen ? '-sheet' : ''}`);
+    const triggerId = `${field}-${targetTask.id}${isSheetOpen ? '-sheet' : ''}`;
+    const trigger = taskCard.querySelector(`#${triggerId}`);
     if (!(trigger instanceof HTMLButtonElement)) return useDropdowner.getState().remove();
 
     const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
     const base = {
-      triggerId: `${field}-${targetTask.id}${isSheetOpen && '-sheet'}`,
+      triggerId,
       triggerRef: { current: trigger },
       taskId: targetTask.id,
     };

@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import type React from 'react';
 import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import type { UseFormProps } from 'react-hook-form';
+import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { generateId } from 'shared/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -118,6 +118,11 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
 
   // Form with draft in local storage
   const form = useFormWithDraft<NewTaskFormValues>(formId, { formOptions });
+
+  // Subscribe for render: the form only re-renders when isDirty *toggles*, so
+  // render-time form.getValues() reads of these fields go stale once dirty
+  const watchedVariant = useWatch({ control: form.control, name: 'variant' });
+  const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
   const updateAttachments = useCallback((data: UploadedUppyFile<'attachment'>) => setAttachments(data), []);
 
@@ -309,7 +314,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
             }}
           />
 
-          {form.getValues('variant') !== TaskVariant.Bug && (
+          {watchedVariant !== TaskVariant.Bug && (
             <FormField
               control={form.control}
               name="points"
@@ -507,9 +512,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
               >
                 <span>
                   {t('c:create')}
-                  {form.getValues('status') === TaskStatus.Unstarted
-                    ? ''
-                    : ` & ${statusOptions[form.getValues('status')].status}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptions[watchedStatus].status}`}
                 </span>
               </Button>
 

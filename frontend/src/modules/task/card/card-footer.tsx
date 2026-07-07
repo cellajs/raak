@@ -94,7 +94,7 @@ export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isShe
       aria-label="Set labels"
       variant="ghost"
       size="xs"
-      className="sm: relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
+      className="relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
       {...readOnlyInert}
     >
       {task.labels.length > 0 ? (

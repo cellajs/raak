@@ -181,6 +181,45 @@ const transformUpdateData = <T extends TaskUpdateMutationFnVariables>(variables:
   };
 };
 
+// --- Mutation executors ---
+// Shared by the mutation hooks and the offline mutation defaults below, so a mutation
+// resumed from persistence replays with exactly the variable shape the hooks fire with.
+
+const executeTaskCreate = async (
+  { tenantId, organizationId }: QueryOrgContext,
+  { fullLabels: _fl, fullAssignedTo: _fa, isSheet: _is, summary: _summary, ...data }: TaskCreateMutationFnVariables,
+) => {
+  const stx = createStxForCreate();
+  const result = await createTasks({ body: [{ ...data, stx }], path: { organizationId, tenantId } });
+  return result.data[0];
+};
+
+const executeTaskUpdate = async (
+  { tenantId, organizationId }: QueryOrgContext,
+  variables: TaskUpdateMutationFnVariables,
+) => {
+  const { id, ...body } = transformUpdateData(variables);
+  return await updateTask({ body, path: { id, organizationId, tenantId } });
+};
+
+const executeTasksDelete = async (
+  { tenantId, organizationId }: QueryOrgContext,
+  { tasksToDelete }: TasksDeleteMutationFnVariables,
+) => {
+  const ids = tasksToDelete.map(({ id }) => id);
+  const stx = createStxForDelete();
+  const response = await deleteTasks({ body: { ids, stx }, path: { organizationId, tenantId } });
+  return response.rejectedIds.length === 0;
+};
+
+/** Resolve org context for a mutation resumed from persistence (persisted variables carry no context). */
+const resolveOrgContext = (cached?: { organizationId: string; tenantId: string } | null): QueryOrgContext => {
+  const organizationId = cached?.organizationId ?? getRouteOrgId();
+  const tenantId = cached?.tenantId ?? getRouteTenantId();
+  if (!organizationId || !tenantId) throw new Error('Cannot resolve organizationId/tenantId for task mutation');
+  return { organizationId, tenantId };
+};
+
 // --- Query options ---
 
 export const taskQueryOptions = (id: string, organizationId: string, tenantId: string) =>
@@ -272,20 +311,8 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
 
   return useMutation({
     mutationKey: taskKeys.create,
-    mutationFn: async ({
-      fullLabels,
-      fullAssignedTo,
-      isSheet,
-      summary: _summary,
-      ...data
-    }: TaskCreateMutationFnVariables) => {
-      const stx = createStxForCreate();
-      const result = await createTasks({
-        body: [{ ...data, stx }],
-        path: { organizationId, tenantId },
-      });
-      return result.data[0];
-    },
+    mutationFn: async (variables: TaskCreateMutationFnVariables) =>
+      executeTaskCreate({ tenantId, organizationId }, variables),
     scope: { id: 'task' },
     onMutate: async ({ fullLabels, fullAssignedTo, isSheet, ...variables }: TaskCreateMutationFnVariables) => {
       const optimisticTask = createOptimisticEntity(zTask, {
@@ -335,10 +362,8 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
 
   return useMutation({
     mutationKey: taskKeys.update,
-    mutationFn: async (variables: TaskUpdateMutationFnVariables) => {
-      const { id, ...body } = transformUpdateData(variables);
-      return await updateTask({ body, path: { id, organizationId, tenantId } });
-    },
+    mutationFn: async (variables: TaskUpdateMutationFnVariables) =>
+      executeTaskUpdate({ tenantId, organizationId }, variables),
     onMutate: async (variables: TaskUpdateMutationFnVariables) => {
       const { id: taskId, ops } = variables;
 
@@ -469,12 +494,8 @@ export const useTaskDeleteMutation = (tenantId: string, organizationId: string) 
   return useMutation({
     mutationKey: taskKeys.delete,
     scope: { id: 'task' },
-    mutationFn: async ({ tasksToDelete }: TasksDeleteMutationFnVariables) => {
-      const ids = tasksToDelete.map(({ id }) => id);
-      const stx = createStxForDelete();
-      const response = await deleteTasks({ body: { ids, stx }, path: { organizationId, tenantId } });
-      return response.rejectedIds.length === 0;
-    },
+    mutationFn: async (variables: TasksDeleteMutationFnVariables) =>
+      executeTasksDelete({ tenantId, organizationId }, variables),
     onMutate: async ({ tasksToDelete }: TasksDeleteMutationFnVariables) => {
       removePendingMutations(
         queryClient,
@@ -525,28 +546,20 @@ addMutationRegistrar((qc: QueryClient) => {
     },
   });
 
+  // Resumed mutations replay the hook-shaped persisted variables; org context is not
+  // in the variables, so resolve it from cache (update/delete) or the current route.
   qc.setMutationDefaults(taskKeys.create, {
-    mutationFn: async ({ tenantId, organizationId, data }: QueryOrgContext & { data: CreateTaskDataInner }) => {
-      const stx = createStxForCreate();
-      const result = await createTasks({ body: [{ ...data, stx }], path: { organizationId, tenantId } });
-      return result.data[0];
-    },
+    mutationFn: async (variables: TaskCreateMutationFnVariables) => executeTaskCreate(resolveOrgContext(), variables),
   });
 
   qc.setMutationDefaults(taskKeys.update, {
-    mutationFn: async (variables: TaskUpdateMutationFnVariables & QueryOrgContext) => {
-      const { id, ...body } = transformUpdateData(variables);
-      return updateTask({ body, path: { id, organizationId: variables.organizationId, tenantId: variables.tenantId } });
-    },
+    mutationFn: async (variables: TaskUpdateMutationFnVariables) =>
+      executeTaskUpdate(resolveOrgContext(findTaskInCache(variables.id)), variables),
   });
 
   qc.setMutationDefaults(taskKeys.delete, {
-    mutationFn: async ({ tenantId, organizationId, tasksToDelete }: QueryOrgContext & { tasksToDelete: Task[] }) => {
-      const ids = tasksToDelete.map(({ id }) => id);
-      const stx = createStxForDelete();
-      const response = await deleteTasks({ body: { ids, stx }, path: { organizationId, tenantId } });
-      return response.rejectedIds.length === 0;
-    },
+    mutationFn: async (variables: TasksDeleteMutationFnVariables) =>
+      executeTasksDelete(resolveOrgContext(variables.tasksToDelete[0]), variables),
   });
 });
 

@@ -150,7 +150,6 @@ export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
                 {isOnline ? relativeDate : t('c:update_on_online')}
               </span>
             </TooltipButton>
-            {/* <TaskHeaderInfo task={task} /> */}
           </>
         )}
 

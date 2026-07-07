@@ -15,14 +15,12 @@ const TaskSheet = ({ id, organizationId }: { id: string; organizationId: string 
   const { tenantId } = useParams({ strict: false });
   const { t } = useTranslation();
 
-  // Query task
-  const {
-    data: task,
-    isLoading,
-    isError,
-  } = organizationId && tenantId
-    ? useQuery(taskQueryOptions(id, organizationId, tenantId))
-    : useQuery(publicTaskQueryOptions(id));
+  // Query task — pick options conditionally, but call useQuery unconditionally (rules of hooks:
+  // the params can appear/disappear during the sheet's lifetime). Cast because useQuery can't
+  // take the union of the two factories' queryKey types (same pattern as ProjectBoardPanel).
+  const queryOpts =
+    organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
+  const { data: task, isLoading, isError } = useQuery(queryOpts as ReturnType<typeof taskQueryOptions>);
 
   const isReadOnly = useIsProjectReadOnly(task?.projectId);
 

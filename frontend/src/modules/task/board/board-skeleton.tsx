@@ -10,7 +10,7 @@ import {
   TagIcon,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { nanoid } from 'shared/nanoid';
@@ -51,7 +51,7 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
 
   const panels: BoardResizablePanel[] = useMemo(
     () => (isMobile ? [{ panelId: 'mobilePanel' }] : prepareBoardPanels(boardId, projects)),
-    [panelStateMap, projects],
+    [panelStateMap, projects, isMobile, boardId],
   );
 
   const minContainerWidth = useMemo(() => {
@@ -162,6 +162,8 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
 };
 
 const StickyModilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) => {
+  // Stable per-instance id — a fresh layoutId per render would break the shared-layout underline animation
+  const layoutId = useRef(nanoid()).current;
   return (
     <div className="z-80 block gap-1 border-b bg-background/75 text-center backdrop-blur-xs [scrollbar-width:none] max-sm:overflow-x-auto max-sm:border-t [&::-webkit-scrollbar]:hidden">
       <div className="inline-flex min-w-max gap-1 px-1 sm:flex sm:justify-center">
@@ -185,7 +187,7 @@ const StickyModilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) =>
                     {isActive && (
                       <motion.span
                         initial={false}
-                        layoutId={nanoid()}
+                        layoutId={layoutId}
                         transition={{ type: 'spring', duration: 0.4, bounce: 0, delay: 0.1 }}
                         className="absolute bottom-0 left-2 h-1 w-[calc(100%-1rem)] rounded-sm bg-primary"
                       />
