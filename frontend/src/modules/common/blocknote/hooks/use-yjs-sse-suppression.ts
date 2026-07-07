@@ -8,8 +8,8 @@ import { registerActiveYjsEditor, unregisterActiveYjsEditor } from '~/modules/co
  * snapshot must not overwrite the fresher local Y.Doc state.
  *
  * Persistence is relay-side (the relay materializes the session into the entity row),
- * so unlike the old derived-fields sender there is nothing to flush on unmount:
- * unregister immediately and let the next SSE update bring authoritative values.
+ * so there is nothing to flush on unmount: unregister immediately and let the next
+ * SSE update bring authoritative values.
  *
  * Pass `null` when not in collaborative mode.
  */

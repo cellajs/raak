@@ -69,7 +69,7 @@ Product entity mutations use per-field merge strategies instead of a single conf
 | **AWSet** | Add-Wins Set | `labels`, `assignedTo` | Commutative `{ add, remove }` deltas |
 | **YATA** | Yjs CRDT | `description` | Character-level merge via standalone Yjs worker |
 
-Scalars resolve silently via HLC comparison; set fields are conflict-free; descriptions use a dedicated Yjs WebSocket relay for real-time co-editing with client-side materialization of derived fields. See [FIELD_MERGE_STRATEGIES.md](./FIELD_MERGE_STRATEGIES.md) for full implementation details.
+Scalars resolve silently via HLC comparison; set fields are conflict-free; descriptions use a dedicated Yjs WebSocket relay for real-time co-editing; the relay materializes descriptions and derived fields server-side (single writer). See [FIELD_MERGE_STRATEGIES.md](./FIELD_MERGE_STRATEGIES.md) for full implementation details.
 
 ### Client sync cycle
 
