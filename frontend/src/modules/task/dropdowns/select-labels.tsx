@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
 import { CheckIcon, ChevronDownIcon, DotIcon } from 'lucide-react';
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { zLabel } from 'sdk/zod.gen';
@@ -14,7 +14,7 @@ import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/mo
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { SelectLabelsProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
-import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
+import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
 import { labelColors } from '~/modules/task/task-styles';
 import type { TaskLabel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
@@ -110,29 +110,7 @@ export const SelectLabels = ({
 
   const { mutateAsync: createLabelMutation } = useLabelCreateMutation(tenantId, organizationId);
 
-  // Subscribe to the task in cache so remote (SSE) label changes reflect here
-  // while the dropdown is open. Falls back to the static prop for create-task
-  // forms where no cached task exists yet.
-  const { data: liveTask } = useTaskQuery(taskId);
-  const liveLabels = liveTask?.labels ?? currentLabels;
-
-  // Dropdowner renders a snapshot — value prop won't update on cache changes.
-  // Always track selected labels locally so the dropdown UI stays in sync.
-  const [selectedLabels, setSelectedLabels] = useState(liveLabels);
-
-  // Reconcile when the live cached task changes. Compare by id set so local
-  // optimistic echoes don't trigger redundant state writes.
-  useEffect(() => {
-    const localIds = selectedLabels
-      .map((l) => l.id)
-      .sort()
-      .join(',');
-    const remoteIds = liveLabels
-      .map((l) => l.id)
-      .sort()
-      .join(',');
-    if (localIds !== remoteIds) setSelectedLabels(liveLabels);
-  }, [liveLabels]);
+  const [selectedLabels, setSelectedLabels] = useLiveSelection(taskId, (t) => t.labels, currentLabels);
 
   const [searchValue, setSearchValue] = useState('');
   const [selectedCollapsed, setSelectedCollapsed] = useState(!isMobile);

@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { UserMinimalBase } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -10,7 +10,7 @@ import { membersListQueryOptions } from '~/modules/memberships/query';
 import type { Member } from '~/modules/memberships/types';
 import type { SelectMembersProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
-import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
+import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
 import {
   Combobox,
   ComboboxEmpty,
@@ -45,29 +45,7 @@ export const SelectMembers = ({
   const members = flattenInfiniteData<Member>(membersQuery.data);
   const projectMembers = members.filter((m) => m.membership.projectId === projectId);
 
-  // Subscribe to the task in cache so remote (SSE) assignedTo changes reflect
-  // here while the dropdown is open. Falls back to the static prop for
-  // create-task forms where no cached task exists yet.
-  const { data: liveTask } = useTaskQuery(taskId);
-  const liveAssigned = liveTask?.assignedTo ?? currentAssigned;
-
-  // Dropdowner renders a snapshot — value prop won't update on cache changes.
-  // Always track selected members locally so the dropdown UI stays in sync.
-  const [selectedMembers, setSelectedMembers] = useState<UserMinimalBase[]>(liveAssigned);
-
-  // Reconcile when the live cached task changes. Compare by id set so local
-  // optimistic echoes don't cause redundant state writes.
-  useEffect(() => {
-    const localIds = selectedMembers
-      .map((u) => u.id)
-      .sort()
-      .join(',');
-    const remoteIds = liveAssigned
-      .map((u) => u.id)
-      .sort()
-      .join(',');
-    if (localIds !== remoteIds) setSelectedMembers(liveAssigned);
-  }, [liveAssigned]);
+  const [selectedMembers, setSelectedMembers] = useLiveSelection(taskId, (t) => t.assignedTo, currentAssigned);
 
   const [searchValue, setSearchValue] = useState('');
   const [showAll, setShowAll] = useState(false);
