@@ -1,6 +1,6 @@
 /**
  * Mock generators for stream notification schemas.
- * Used for both app and public stream notification OpenAPI examples.
+ * Used for app stream notification OpenAPI examples.
  */
 
 import { faker } from '@faker-js/faker';
@@ -9,7 +9,6 @@ import { mockStxBase } from './sync-transaction-mocks';
 
 /**
  * Generates a mock StreamNotification example for product entity events.
- * Used for both app and public stream notifications.
  *
  * For product entities (e.g. attachment):
  * - entityType is set, resourceType is null
@@ -18,6 +17,7 @@ import { mockStxBase } from './sync-transaction-mocks';
  */
 export const mockStreamNotification = (key = 'stream-notification:default') =>
   withFakerSeed(key, () => ({
+    kind: 'entity' as const,
     action: faker.helpers.arrayElement(['create', 'update', 'delete'] as const),
     entityType: 'attachment' as const,
     resourceType: null,

@@ -692,6 +692,11 @@
       "StreamNotification": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["entity", "membership"],
+            "description": "Discriminant for the notification: product-entity sync vs membership change"
+          },
           "action": {
             "type": "string",
             "enum": ["create", "update", "delete"]
@@ -780,6 +785,7 @@
           }
         },
         "required": [
+          "kind",
           "action",
           "entityType",
           "resourceType",
@@ -796,6 +802,7 @@
         ],
         "description": "Realtime notification delivered via SSE for entity and membership changes.",
         "example": {
+          "kind": "entity",
           "action": "update",
           "entityType": "attachment",
           "resourceType": null,

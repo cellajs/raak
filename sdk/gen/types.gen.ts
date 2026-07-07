@@ -109,6 +109,10 @@ export type StxBase = {
  * Realtime notification delivered via SSE for entity and membership changes.
  */
 export type StreamNotification = {
+  /**
+   * Discriminant for the notification: product-entity sync vs membership change
+   */
+  kind: 'entity' | 'membership';
   action: 'create' | 'update' | 'delete';
   entityType: 'task' | 'label' | 'attachment' | null;
   resourceType: 'request' | 'membership' | 'inactive_membership' | 'tenant' | null;
