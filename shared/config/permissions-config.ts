@@ -22,11 +22,9 @@ import { configurePermissions } from '../src/permissions/access-policies';
  *
  * ## Adding new entities
  *
- * 1. Add entity to appConfig.entityConfig with kind, parent/ancestors, and roles (for context)
- * 2. Add entity type to appConfig.entityTypes array
- * 3. Define access policies in the switch statement below
- * 4. Create DB schema in `backend/src/db/schema/`
- * 5. Run `pnpm generate` to create migrations
+ * Defining access policies (a `case` in the switch below) is only one step of adding an entity.
+ * For the full end-to-end recipe — hierarchy declaration, config arrays, DB table + RLS, module
+ * wiring, sync engine, and frontend registration — see `cella/ADD_ENTITY.md`.
  */
 export const { accessPolicies, publicReadGrants, rowRestrictions, hostDelegation } = configurePermissions(
   appConfig.entityTypes,
