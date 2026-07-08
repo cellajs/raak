@@ -1,23 +1,5 @@
-import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
-import { create } from 'zustand';
+import type { MobileTaskDropIndicator } from '~/modules/task/board/mobile-drag-indicator-store';
 import type { Task } from '~/modules/task/types';
-
-interface MobileTaskDropIndicator {
-  edge: Edge;
-  taskId: string;
-}
-
-interface MobileTaskDragIndicatorState {
-  indicator: MobileTaskDropIndicator | null;
-  clearIndicator: () => void;
-  setIndicator: (indicator: MobileTaskDropIndicator | null) => void;
-}
-
-export const useMobileTaskDragIndicatorStore = create<MobileTaskDragIndicatorState>()((set) => ({
-  indicator: null,
-  clearIndicator: () => set({ indicator: null }),
-  setIndicator: (indicator) => set({ indicator }),
-}));
 
 const taskCardSelector = '[data-task-card-id][data-project-id][data-status]:not([data-sheet="true"])';
 

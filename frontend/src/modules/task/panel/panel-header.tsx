@@ -51,7 +51,7 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
   })();
 
   const isReadOnly = useIsProjectReadOnly(project.id);
-  const isCreateFormOpen = useTaskInteractionStore((s) => s.openCreateForms.includes(project.id));
+  const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[project.id] !== undefined);
 
   const toggleCreateForm = () => handleCreateForm(project);
 

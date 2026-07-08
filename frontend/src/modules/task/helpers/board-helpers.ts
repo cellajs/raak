@@ -1,5 +1,6 @@
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
@@ -79,11 +80,13 @@ export const normalizePanelWidths = (storedLayout: Record<string, number>, curre
 };
 
 /**
- * Reset all task interaction state (selection, focus, draft tasks, open create forms, read-only project ids).
- * Called from route guards on entering / leaving a workspace or project, so stale UI (e.g. the bulk-remove button)
- * never leaks across boards. Adding a new field to `useTaskInteractionStore` is automatically covered as long as
- * it is included in that store's `initialState`.
+ * Reset all task interaction state (selection, focus, draft tasks) and per-task card view state.
+ * Called from route guards on entering / leaving a workspace or project, so stale UI (e.g. the
+ * bulk-remove button) never leaks across boards and the card-state map can't grow unbounded.
+ * Adding a new field to `useTaskInteractionStore` is automatically covered as long as it is
+ * included in that store's `initialState`.
  */
 export const resetTaskInteraction = () => {
   useTaskInteractionStore.getState().reset();
+  useTaskCardStore.getState().reset();
 };

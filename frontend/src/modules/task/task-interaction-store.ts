@@ -8,9 +8,10 @@ interface TaskInteractionState {
   setSelectedTasks: (tasks: Task[]) => void;
   focusedTaskId: string | null;
   setFocusedTaskId: (taskId: string | null) => void;
-  openCreateForms: string[];
-  toggleCreateForm: (projectId: string) => void;
-  /** Draft tasks keyed by projectId — inline create-form placeholders */
+  /**
+   * Draft tasks keyed by projectId — inline create-form placeholders. A project's create form
+   * is open iff it has a draft here, so consumers derive open-ness from `draftTasks[projectId]`.
+   */
   draftTasks: Record<string, Task>;
   setDraftTask: (projectId: string, task: Task | null) => void;
   updateDraftTask: (projectId: string, updates: Partial<Task>) => void;
@@ -18,10 +19,9 @@ interface TaskInteractionState {
   reset: () => void;
 }
 
-const initialState: Pick<TaskInteractionState, 'selectedTasks' | 'focusedTaskId' | 'openCreateForms' | 'draftTasks'> = {
+const initialState: Pick<TaskInteractionState, 'selectedTasks' | 'focusedTaskId' | 'draftTasks'> = {
   selectedTasks: [],
   focusedTaskId: null,
-  openCreateForms: [],
   draftTasks: {},
 };
 
@@ -41,16 +41,6 @@ export const useTaskInteractionStore = create<TaskInteractionState>()(
       setFocusedTaskId: (id) => {
         set((state) => {
           state.focusedTaskId = id;
-        });
-      },
-      toggleCreateForm: (projectId) => {
-        set((state) => {
-          const idx = state.openCreateForms.indexOf(projectId);
-          if (idx >= 0) {
-            state.openCreateForms.splice(idx, 1);
-          } else {
-            state.openCreateForms.push(projectId);
-          }
         });
       },
       setDraftTask: (projectId, task) => {

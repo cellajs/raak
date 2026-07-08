@@ -32,7 +32,7 @@ import { getDraggableItemData } from '~/utils/get-draggable-item-data';
 
 import '~/modules/task/card/card-glow.css';
 import { StickyBox } from '~/modules/common/sticky-box';
-import { useMobileTaskDragIndicatorStore } from '~/modules/task/helpers/mobile-drag-indicator';
+import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
 import { taskCardVariants } from '~/modules/task/task-styles';
 
 interface PortalDataProps {

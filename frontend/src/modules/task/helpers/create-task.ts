@@ -36,10 +36,9 @@ export const handleCreateForm = (project: { id: string; organizationId: string; 
   const store = useTaskInteractionStore.getState();
   const existingDraft = store.draftTasks[project.id];
 
-  // Toggle: if draft already exists, remove it
+  // Toggle: if draft already exists, remove it (form open-ness is derived from the draft)
   if (existingDraft) {
     focusTask(null);
-    store.toggleCreateForm(project.id);
     store.setDraftTask(project.id, null);
     return;
   }
@@ -70,7 +69,6 @@ export const handleCreateForm = (project: { id: string; organizationId: string; 
 
   // Set draft in Zustand store — ProjectBoardPanel merges it into the task list
   focusTask(id);
-  store.toggleCreateForm(project.id);
   store.setDraftTask(project.id, formTask);
 
   // Focus the form element and trigger glow after React renders

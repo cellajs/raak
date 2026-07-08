@@ -10,13 +10,10 @@ import { FocusViewContainer } from '~/modules/common/focus-view';
 import type { EntityEnrichment } from '~/modules/entities/types';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { getEdgeAndTargetOrder, isPanelData, isTaskData } from '~/modules/task/helpers/drag-and-drop';
-import {
-  isCoarsePointerDevice,
-  resolveMobileTaskDropIndicator,
-  useMobileTaskDragIndicatorStore,
-} from '~/modules/task/helpers/mobile-drag-indicator';
+import { isCoarsePointerDevice, resolveMobileTaskDropIndicator } from '~/modules/task/helpers/mobile-drag-indicator';
 import { getNewTaskOrder, getRelativeTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';

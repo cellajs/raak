@@ -40,7 +40,7 @@ export const BoardHeader = ({
   const total = useTasksTotal('board', queryParams);
   const selectedTasks = useTaskInteractionStore((s) => s.selectedTasks);
   const setSelectedTasks = useTaskInteractionStore((s) => s.setSelectedTasks);
-  const isCreateFormOpen = useTaskInteractionStore((s) => s.openCreateForms.includes(projects[0]?.id));
+  const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[projects[0]?.id] !== undefined);
 
   const [searchFocused, setSearchFocused] = useState(false);
   const readOnlyHide = useReadOnlyHide(projects[0]?.id);

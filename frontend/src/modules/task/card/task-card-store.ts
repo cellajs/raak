@@ -9,6 +9,8 @@ interface TaskStatesState {
   setTaskState: (taskId: string, state: TaskStates) => void;
   /** Revert an editing task to expanded; keep collapsed tasks collapsed. */
   suppressEdit: (taskId: string) => void;
+  /** Clear all per-task view state. Call when leaving a workspace/board so the map can't grow forever. */
+  reset: () => void;
 }
 
 export const useTaskCardStore = create<TaskStatesState>()(
@@ -43,6 +45,7 @@ export const useTaskCardStore = create<TaskStatesState>()(
           undefined,
           'suppressEdit',
         ),
+      reset: () => set({ states: {} }, undefined, 'reset'),
     }),
     { name: 'task-card' },
   ),
