@@ -22,7 +22,7 @@ import { Skeleton } from '~/modules/ui/skeleton';
 import { DisplayOptions } from '~/modules/workspace/header/display-options';
 import { cn } from '~/utils/cn';
 
-interface Props {
+interface BoardSkeletonProps {
   boardId: string;
   projects?: Project[];
   projectPage?: boolean;
@@ -33,7 +33,7 @@ interface Props {
 /**
  * Render skeleton per panel based on the current board layout
  */
-export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...prop }: Props) => {
+export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...prop }: BoardSkeletonProps) => {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
   const isMobile = useBreakpointBelow('sm');
@@ -195,7 +195,7 @@ const StickyMobilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) =>
   );
 };
 
-const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: Omit<Props, 'projects' | 'boardId'>) => {
+const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: Omit<BoardSkeletonProps, 'projects' | 'boardId'>) => {
   const renderRowHeight = rowHeight - 8;
   return (
     <div className="flex w-full flex-col overflow-auto border opacity-100 transition-opacity duration-300">

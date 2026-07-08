@@ -9,7 +9,7 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { Button } from '~/modules/ui/button';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-interface Props {
+interface AvailableProjectsEmptyActionProps {
   workspace: Workspace;
   fallback: ReactNode;
 }
@@ -18,7 +18,7 @@ interface Props {
  * Empty-board action shown when the user can add existing organization projects
  * that are not assigned to a workspace yet.
  */
-export const AvailableProjectsEmptyAction = ({ workspace, fallback }: Props) => {
+export const AvailableProjectsEmptyAction = ({ workspace, fallback }: AvailableProjectsEmptyActionProps) => {
   const { t } = useTranslation();
 
   const { data, isPending } = useInfiniteQuery(

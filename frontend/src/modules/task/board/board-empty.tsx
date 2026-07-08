@@ -7,12 +7,12 @@ import { createNewProject } from '~/modules/project/project-actions';
 import { AvailableProjectsEmptyAction } from '~/modules/task/board/available-projects-empty-action';
 import { Button } from '~/modules/ui/button';
 
-interface Props {
+interface BoardEmptyProps {
   workspace?: Workspace;
   publicView?: boolean;
 }
 
-export function BoardEmpty({ workspace, publicView }: Props) {
+export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
   const { t } = useTranslation();
   const isTablet = useBreakpointBelow('md');
 

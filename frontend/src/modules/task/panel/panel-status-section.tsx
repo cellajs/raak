@@ -13,7 +13,7 @@ import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/modules/user/user-store';
 import { dateMini } from '~/utils/date-mini';
 
-interface Props {
+interface PanelStatusSectionProps {
   type: TogglableStatusType;
   counts: TaskCounts;
   projectId: string;
@@ -28,7 +28,14 @@ interface Props {
  * A section header for "Accepted" or "Iced" tasks within a project panel.
  * Displays the count of tasks in that status, and allows toggling visibility.
  */
-export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky = false, stickyTopOffset }: Props) {
+export function PanelStatusSection({
+  type,
+  counts,
+  projectId,
+  onToggle,
+  isSticky = false,
+  stickyTopOffset,
+}: PanelStatusSectionProps) {
   const { t } = useTranslation();
   const { user } = useUserStore();
   const isMobile = useBreakpointBelow('sm');

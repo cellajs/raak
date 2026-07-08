@@ -26,7 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { cn } from '~/utils/cn';
 
-const PanelProjectActions = ({ project, className }: { project: EnrichedProject; className?: string }) => {
+export const PanelProjectActions = ({ project, className }: { project: EnrichedProject; className?: string }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -165,5 +165,3 @@ const PanelProjectActions = ({ project, className }: { project: EnrichedProject;
     </DropdownMenu>
   );
 };
-
-export { PanelProjectActions };

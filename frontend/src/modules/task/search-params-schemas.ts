@@ -1,5 +1,5 @@
 import { zGetTasksQuery } from 'sdk/zod.gen';
-import z from 'zod';
+import { z } from 'zod';
 
 const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board');
 

@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDownIcon, TagIcon, UserXIcon, XIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import type React from 'react';
 import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { type UseFormProps, useWatch } from 'react-hook-form';
@@ -60,14 +59,14 @@ interface CreateTaskFormProps {
   onStatusChange?: (status: TaskStatusType) => void;
 }
 
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
+const CreateTaskForm = ({
   projectId,
   organizationId,
   className,
   dialog: isDialog,
   onSuccess,
   onStatusChange,
-}) => {
+}: CreateTaskFormProps) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
 

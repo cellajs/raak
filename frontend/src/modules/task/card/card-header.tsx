@@ -23,12 +23,12 @@ import { useUserStore } from '~/modules/user/user-store';
 import { dateShort } from '~/utils/date-short';
 import { truncateMiddle } from '~/utils/truncate-middle';
 
-interface Props {
+interface TaskCardHeaderProps {
   task: Task;
   isSheet?: boolean;
 }
 
-export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
+export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
   const isOnline = useOnlineManager();

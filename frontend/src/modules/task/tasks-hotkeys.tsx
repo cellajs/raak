@@ -21,7 +21,7 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { BoardResizablePanel, Task, TaskSearch } from '~/modules/task/types';
 import { useUserStore } from '~/modules/user/user-store';
 
-interface Props {
+interface TasksHotkeysProps {
   boardId: string;
   projects: Project[];
   type: 'workspace' | 'project';
@@ -29,7 +29,7 @@ interface Props {
 
 type StrictBoardPanel = Required<Pick<BoardResizablePanel, 'project'>> & Omit<BoardResizablePanel, 'project'>;
 
-export function TasksHotkeys({ boardId, projects, type }: Props) {
+export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const { panelData } = useTaskBoardStore();
   const { tenantId, organization } = useOrganizationLayoutContext();
   const { user } = useUserStore();

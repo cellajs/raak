@@ -10,13 +10,13 @@ import { focusTask } from '~/modules/task/helpers/focus-task';
 import { Badge } from '~/modules/ui/badge';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/modules/ui/input-group';
 
-interface Props {
+interface TaskSearchProps {
   children?: React.ReactNode;
   clearSelection: () => void;
   toggleFocus: () => void;
 }
 
-export const TaskSearch = ({ children, clearSelection, toggleFocus }: Props) => {
+export const TaskSearch = ({ children, clearSelection, toggleFocus }: TaskSearchProps) => {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
 
