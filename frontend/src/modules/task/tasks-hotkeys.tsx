@@ -66,7 +66,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
   // Resolve the focused task and its panel's rendered task list (shared by vertical nav handlers).
   const resolveVerticalNavContext = () => {
     if (!projects.length) return null;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(boardId, projects);
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, panelData[boardId]);
     const currentTask = currentActiveTask();
     if (!currentTask) return null;
 
@@ -136,7 +136,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
   // Navigate between panels (Left/Right) — focus the first task visible in the target panel's viewport.
   const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length) return;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(boardId, projects);
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, panelData[boardId]);
     const currentTask = currentActiveTask();
 
     const currentPanelIndex = allPanels.findIndex(

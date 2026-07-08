@@ -51,8 +51,8 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
   const panelStateMap = useTaskBoardStore((state) => state.panelData[boardId]);
 
   const panels: BoardResizablePanel[] = useMemo(
-    () => (isMobile ? [{ panelId: 'mobilePanel' }] : prepareBoardPanels(boardId, projects)),
-    [panelStateMap, projects, isMobile, boardId],
+    () => (isMobile ? [{ panelId: 'mobilePanel' }] : prepareBoardPanels(projects, panelStateMap)),
+    [panelStateMap, projects, isMobile],
   );
 
   const minContainerWidth = useMemo(() => {

@@ -1,5 +1,5 @@
 import type { EnrichedProject } from '~/modules/project/types';
-import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -32,17 +32,60 @@ export const makePanelKey = (projectId: string, section: SectionsValue) => {
   return `${projectId}-${keyParts}`;
 };
 
+/**
+ * Whether a board-layout key belongs to a project — either the project's single-panel key
+ * (`projectId`) or one of its split-panel keys (`makePanelKey` → `${projectId}-…`). Precise
+ * prefix match, unlike a substring test which false-positives when one id is a substring of another.
+ */
+const layoutKeyBelongsToProject = (layoutKey: string, projectId: string) =>
+  layoutKey === projectId || layoutKey.startsWith(`${projectId}-`);
+
+/**
+ * Recompute the board-layout widths for a project whose panel is being (re)split into `sections`.
+ * `currentViewSections` is the project's existing split (undefined = single panel): when absent the
+ * project's keys collapse to one `projectId` entry keeping their total width + position; otherwise the
+ * project's width is divided evenly across the new section-panel keys. Pure — the caller persists it.
+ */
+export const computePanelLayoutSplit = (
+  layout: Record<string, number>,
+  projectId: string,
+  sections: SectionsValue[],
+  currentViewSections: SectionsValue[] | undefined,
+): Record<string, number> => {
+  const layoutArray = Object.entries(layout);
+
+  if (!currentViewSections) {
+    const insertIndex = layoutArray.findIndex(([key]) => layoutKeyBelongsToProject(key, projectId));
+    const totalSize = layoutArray.reduce(
+      (sum, [key, size]) => (layoutKeyBelongsToProject(key, projectId) ? sum + size : sum),
+      0,
+    );
+    const filtered = layoutArray.filter(([key]) => !layoutKeyBelongsToProject(key, projectId));
+    filtered.splice(insertIndex, 0, [projectId, totalSize]);
+    return Object.fromEntries(filtered);
+  }
+
+  const updated = layoutArray.flatMap(([key, size]): [string, number][] => {
+    if (!layoutKeyBelongsToProject(key, projectId)) return [[key, size]];
+    const percentagePart = size / currentViewSections.length;
+    return sections.map((sectionFilters): [string, number] => [
+      makePanelKey(projectId, sectionFilters),
+      percentagePart,
+    ]);
+  });
+  return Object.fromEntries(updated);
+};
+
 /** Sort projects by enriched membership displayOrder. */
 export const sortByMembership = (projects: EnrichedProject[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
 
-export const prepareBoardPanels = (boardId: string, projects: EnrichedProject[]) => {
-  const { panelData } = useTaskBoardStore.getState();
+export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: BoardPanelData | undefined) => {
   const sortedProjects = sortByMembership(projects);
 
   return sortedProjects.flatMap((project) => {
-    const viewSections = panelData[boardId]?.[project.id]?.viewSections;
+    const viewSections = boardPanelData?.[project.id]?.viewSections;
     // If the project has no splits, use a default single panel
     if (!viewSections?.length) return [{ project, panelId: project.id }];
 

@@ -41,19 +41,10 @@ export function useBoardPanels(boardId: string, projects: Project[], extraPanels
   const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);
   const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
-  // Create a stable key for panels based on panelInfo structure
-  const panelInfoKey = (() => {
-    if (!panelInfo) return '';
-    return Object.keys(panelInfo)
-      .sort()
-      .map((k) => `${k}:${JSON.stringify(panelInfo[k]?.viewSections ?? [])}`)
-      .join('|');
-  })();
-
   const panels: BoardResizablePanel[] = useMemo(() => {
-    const all = [...prepareBoardPanels(boardId, projects), ...(extraPanels ?? [])];
+    const all = [...prepareBoardPanels(projects, panelInfo), ...(extraPanels ?? [])];
     return sortPanelsByOrder(all, localOrders);
-  }, [boardId, projects, extraPanels, panelInfoKey, localOrders]);
+  }, [projects, extraPanels, panelInfo, localOrders]);
 
   // Drop stale local orders once their panels disappear
   useEffect(() => {
