@@ -1,14 +1,5 @@
 import { Link, useMatchRoute, useParams } from '@tanstack/react-router';
-import {
-  EllipsisVertical,
-  EllipsisVerticalIcon,
-  ExpandIcon,
-  FunnelIcon,
-  Plus,
-  PlusIcon,
-  SettingsIcon,
-  TagIcon,
-} from 'lucide-react';
+import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -153,7 +144,7 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
                 projectPage={projectPage}
               />
             )}
-            {isInWorkspace && isMobile && <StickyModilePanelHeader projectTabs={projectTabs} />}
+            {isInWorkspace && isMobile && <StickyMobilePanelHeader projectTabs={projectTabs} />}
             <PanelBodySkeleton {...prop} />
           </div>
         ))}
@@ -162,7 +153,7 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
   );
 };
 
-const StickyModilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) => {
+const StickyMobilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) => {
   // Stable per-instance id — a fresh layoutId per render would break the shared-layout underline animation
   const layoutId = useRef(nanoid()).current;
   return (
@@ -284,11 +275,11 @@ const PanelHeaderSkeleton = ({
           <div className="hidden grow sm:block" />
           {isPrimary && (
             <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label="Project options">
-              <EllipsisVertical size={16} />
+              <EllipsisVerticalIcon size={16} />
             </Button>
           )}
           <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
-            <Plus size={18} className="transition-transform duration-200" />
+            <PlusIcon size={18} className="transition-transform duration-200" />
 
             <span className="ml-1">{t('c:task')}</span>
           </Button>

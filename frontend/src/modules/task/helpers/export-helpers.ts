@@ -6,7 +6,7 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
   const parser = new DOMParser();
 
   return tasks.map((task) => {
-    //Parse the HTML and extract text content
+    // Parse the HTML and extract text content
     const summaryDoc = parser.parseFromString(task.summary, 'text/html');
     const summaryText = summaryDoc.body.textContent || '';
 

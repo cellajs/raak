@@ -1,19 +1,19 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { TaskStates } from '~/modules/task/types';
+import type { TaskState } from '~/modules/task/types';
 
-interface TaskStatesState {
-  states: Record<string, TaskStates>;
+interface TaskCardState {
+  states: Record<string, TaskState>;
   /** Set a task's view state (collapsed / expanded / editing).
    *  When entering editing, all other editing tasks are demoted to expanded. */
-  setTaskState: (taskId: string, state: TaskStates) => void;
+  setTaskState: (taskId: string, state: TaskState) => void;
   /** Revert an editing task to expanded; keep collapsed tasks collapsed. */
   suppressEdit: (taskId: string) => void;
   /** Clear all per-task view state. Call when leaving a workspace/board so the map can't grow forever. */
   reset: () => void;
 }
 
-export const useTaskCardStore = create<TaskStatesState>()(
+export const useTaskCardStore = create<TaskCardState>()(
   devtools(
     (set) => ({
       states: {},
@@ -38,7 +38,7 @@ export const useTaskCardStore = create<TaskStatesState>()(
         set(
           (s) => {
             const cur = s.states[taskId] ?? 'collapsed';
-            const next = cur === 'collapsed' ? 'collapsed' : ('expanded' as TaskStates);
+            const next = cur === 'collapsed' ? 'collapsed' : ('expanded' as TaskState);
             if (s.states[taskId] === next) return s;
             return { states: { ...s.states, [taskId]: next } };
           },

@@ -24,11 +24,11 @@ export type TaskCounts = {
 
 export type TaskSearch = z.infer<typeof tasksTableSearchSchema>;
 
-export type TaskStates = 'collapsed' | 'editing' | 'expanded';
+export type TaskState = 'collapsed' | 'editing' | 'expanded';
 
 export interface TaskProps {
   task: Task & { isMatchingSearch?: boolean };
-  state: TaskStates;
+  state: TaskState;
   isSelected: boolean;
   isFocused: boolean;
   isSheet?: boolean;

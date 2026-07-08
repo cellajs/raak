@@ -67,7 +67,7 @@ export const TaskSearch = ({ children, clearSelection, toggleFocus }: Props) => 
     if (isFilterActive) inputRef.current?.focus();
   }, [isFilterActive]);
 
-  // // Keep input value in sync with searchQuery when it changes externally
+  // Keep input value in sync with searchQuery when it changes externally
   useEffect(() => {
     if (searchQuery !== inputValue) setInputValue(searchQuery);
   }, [searchQuery]);

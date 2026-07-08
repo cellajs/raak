@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { defaultPanelPrefs, type TogglabelStatusTypes, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { TaskCounts } from '~/modules/task/types';
@@ -14,10 +14,10 @@ import { useUserStore } from '~/modules/user/user-store';
 import { dateMini } from '~/utils/date-mini';
 
 interface Props {
-  type: TogglabelStatusTypes;
+  type: TogglableStatusType;
   counts: TaskCounts;
   projectId: string;
-  onToggle?: (newState: boolean, type: TogglabelStatusTypes) => void;
+  onToggle?: (newState: boolean, type: TogglableStatusType) => void;
   /** When true, the section becomes sticky (pinned to top/bottom while scrolling) */
   isSticky?: boolean;
   /** Top offset in px when sticky (e.g. to clear a sticky PageTabNav on mobile) */

@@ -10,7 +10,7 @@ export const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
 
 type PanelPrefs = typeof defaultPanelPrefs;
 export type SectionsValue = Record<'status', Task['status'][]>;
-export type TogglabelStatusTypes = 'iced' | 'accepted';
+export type TogglableStatusType = 'iced' | 'accepted';
 
 /** One board's panel data: projectId → panel info. */
 export type BoardPanelData = Record<string, { viewSections?: SectionsValue[]; prefs: PanelPrefs }>;
@@ -23,7 +23,7 @@ interface TaskBoardState {
   togglePanelSectionExpandState: (
     boardId: string,
     projectId: string,
-    status: TogglabelStatusTypes,
+    status: TogglableStatusType,
     newState?: boolean,
   ) => void;
 }

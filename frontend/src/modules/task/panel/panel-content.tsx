@@ -4,7 +4,7 @@ import { Virtualizer, type VirtualizerHandle, WindowVirtualizer } from 'virtua';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { BoardPanelBody } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { defaultPanelPrefs, type TogglabelStatusTypes, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { MotionTaskCard } from '~/modules/task/card/motion-task-card';
 import { DraftTaskItem } from '~/modules/task/draft-task-item';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
@@ -105,7 +105,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   // Pending scroll action set by section toggle, consumed by the effect below
   const pendingScrollRef = useRef<'accepted-close' | 'iced-open' | null>(null);
 
-  const handleSectionToggle = useCallback((expanded: boolean, type: TogglabelStatusTypes) => {
+  const handleSectionToggle = useCallback((expanded: boolean, type: TogglableStatusType) => {
     if (type === 'accepted' && !expanded) pendingScrollRef.current = 'accepted-close';
     else if (type === 'iced' && expanded) pendingScrollRef.current = 'iced-open';
   }, []);

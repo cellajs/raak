@@ -56,7 +56,7 @@ interface CreateTaskFormProps {
   organizationId: string;
   className?: string;
   dialog?: boolean;
-  onSuccesses?: (task: Task) => void;
+  onSuccess?: (task: Task) => void;
   onStatusChange?: (status: TaskStatusType) => void;
 }
 
@@ -65,7 +65,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   organizationId,
   className,
   dialog: isDialog,
-  onSuccesses,
+  onSuccess,
   onStatusChange,
 }) => {
   const { t } = useTranslation();
@@ -157,7 +157,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     // Backend handles label usedCount side-effects atomically
     await taskMutation
       .mutateAsync(newTask)
-      .then((createdTask) => onSuccesses?.(createdTask))
+      .then((createdTask) => onSuccess?.(createdTask))
       .catch(() => {
         const { description, status, variant, points, fullLabels: labels, fullAssignedTo: assignedTo } = newTask;
         setForm(formId, { description, status, variant, points, labels, assignedTo });
