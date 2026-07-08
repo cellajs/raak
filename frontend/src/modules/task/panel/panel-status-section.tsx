@@ -37,7 +37,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky
   const isIced = type === 'iced';
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;
   const active = isIced ? !!counts.iced : !!counts.accepted || hasOnlyOlderAccepted;
-  const count = isIced ? (counts.iced ?? 0) : (counts.accepted ?? 0);
+  const count = isIced ? counts.iced : counts.accepted;
 
   const showStatus = useTaskBoardStore((state) => {
     const { expandIced, expandAccepted } = state.panelData[boardId]?.[projectId]?.prefs || defaultPanelPrefs;
@@ -91,7 +91,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky
               <div className="text-xs">
                 <span className="mr-2 ml-1">•</span>
                 <span>
-                  {(counts.accepted || 0) + counts.acceptedCutOff} {t('c:in_total')}
+                  {counts.accepted + counts.acceptedCutOff} {t('c:in_total')}
                 </span>
               </div>
             )}

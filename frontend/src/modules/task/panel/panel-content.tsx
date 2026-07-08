@@ -196,27 +196,25 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   }, [tasks.length]);
 
   // Build status section slots (always rendered inline, sticky when conditions met)
-  const topSlot =
-    'accepted' in counts ? (
-      <PanelStatusSection
-        type={'accepted'}
-        counts={counts}
-        projectId={project.id}
-        isSticky={stickyAccepted}
-        onToggle={handleSectionToggle}
-      />
-    ) : undefined;
+  const topSlot = counts.showAccepted ? (
+    <PanelStatusSection
+      type={'accepted'}
+      counts={counts}
+      projectId={project.id}
+      isSticky={stickyAccepted}
+      onToggle={handleSectionToggle}
+    />
+  ) : undefined;
 
-  const bottomSlot =
-    'iced' in counts ? (
-      <PanelStatusSection
-        type={'iced'}
-        counts={counts}
-        projectId={project.id}
-        isSticky={stickyIced}
-        onToggle={handleSectionToggle}
-      />
-    ) : undefined;
+  const bottomSlot = counts.showIced ? (
+    <PanelStatusSection
+      type={'iced'}
+      counts={counts}
+      projectId={project.id}
+      isSticky={stickyIced}
+      onToggle={handleSectionToggle}
+    />
+  ) : undefined;
 
   // Activate panel on mouse enter or focus (desktop)
   const handlePanelActivation = () => {

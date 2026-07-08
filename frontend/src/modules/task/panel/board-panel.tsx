@@ -92,15 +92,17 @@ export const BoardPanel = memo(function BoardPanel({
     const totalTasks = project.included?.counts?.entities?.task ?? 0;
     const hiddenAccepted = Math.max(0, totalTasks - projectFetchedCount);
 
-    const baseCounts: TaskCounts = {
-      acceptedCutOff: hiddenAccepted,
+    const showAccepted = !sectionFilters || sectionFilters.status.includes(TaskStatus.Accepted);
+    const showIced = !sectionFilters || sectionFilters.status.includes(TaskStatus.Iced);
+
+    return {
       total: filteredTasks.length,
-    };
-
-    if (!sectionFilters || sectionFilters.status.includes(TaskStatus.Accepted)) baseCounts.accepted = accepted;
-    if (!sectionFilters || sectionFilters.status.includes(TaskStatus.Iced)) baseCounts.iced = iced;
-
-    return baseCounts;
+      acceptedCutOff: hiddenAccepted,
+      showAccepted,
+      showIced,
+      accepted: showAccepted ? accepted : 0,
+      iced: showIced ? iced : 0,
+    } satisfies TaskCounts;
   }, [filteredTasks, project.included?.counts?.entities?.task, projectFetchedCount, sectionFilters]);
 
   return (

@@ -16,8 +16,12 @@ export type BoardResizablePanel = { project?: EnrichedProject; sectionFilters?: 
 
 export type TaskCounts = {
   total: number;
-  iced?: number;
-  accepted?: number;
+  /** Whether this panel shows the accepted / iced section (false when section filters exclude it). */
+  showAccepted: boolean;
+  showIced: boolean;
+  /** Count of accepted / iced tasks in this panel (0 when the section isn't shown here). */
+  accepted: number;
+  iced: number;
   /** Total accepted tasks including those beyond the cutoff. 0 = no cutoff data available. */
   acceptedCutOff: number;
 };

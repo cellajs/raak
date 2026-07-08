@@ -8,7 +8,7 @@ import type { TaskCounts } from '~/modules/task/types';
 export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
   const sections: CollapsedSection[] = [];
 
-  if (typeof counts.accepted === 'number') {
+  if (counts.showAccepted) {
     sections.push({
       count: counts.accepted,
       colorClass: `${statusSectionColors.accepted.fill} ${statusSectionColors.accepted.text}`,
@@ -17,7 +17,7 @@ export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
     });
   }
 
-  if (typeof counts.iced === 'number') {
+  if (counts.showIced) {
     sections.push({
       count: counts.iced,
       colorClass: `${statusSectionColors.iced.fill} ${statusSectionColors.iced.text}`,
@@ -26,7 +26,7 @@ export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
     });
   }
 
-  const mainCount = counts.total - (counts.iced || 0) - (counts.accepted || 0);
+  const mainCount = counts.total - counts.iced - counts.accepted;
 
   return <CollapsedPanelView mainCount={mainCount} sections={sections} />;
 };
