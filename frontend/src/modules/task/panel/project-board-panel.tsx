@@ -9,22 +9,19 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { Task } from '~/modules/task/types';
 import { stableArray } from '~/utils/stable-array';
 
+interface ProjectBoardPanelProps {
+  project: EnrichedProject;
+  publicView?: boolean;
+  sectionFilters?: SectionsValue;
+  windowScroll?: boolean;
+}
+
 /**
  * Fetches canonical task data for its project and merges draft tasks from Zustand.
  * Stabilises per-panel task arrays so panels whose tasks didn't change
  * keep the same reference and skip re-rendering entirely.
  */
-export function ProjectBoardPanel({
-  project,
-  publicView,
-  sectionFilters,
-  windowScroll,
-}: {
-  project: EnrichedProject;
-  publicView?: boolean;
-  sectionFilters?: SectionsValue;
-  windowScroll?: boolean;
-}) {
+export function ProjectBoardPanel({ project, publicView, sectionFilters, windowScroll }: ProjectBoardPanelProps) {
   const queryOpts = publicView
     ? publicTasksBoardQueryOptions(project.id)
     : tasksCanonicalOptions({

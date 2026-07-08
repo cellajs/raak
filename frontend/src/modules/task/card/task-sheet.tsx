@@ -10,7 +10,12 @@ import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { publicTaskQueryOptions } from '~/modules/task/public-query';
 import { taskQueryOptions } from '~/modules/task/query';
 
-const TaskSheet = ({ id, organizationId }: { id: string; organizationId: string | undefined }) => {
+interface TaskSheetProps {
+  id: string;
+  organizationId: string | undefined;
+}
+
+const TaskSheet = ({ id, organizationId }: TaskSheetProps) => {
   const isOnline = useOnlineManager();
   const { tenantId } = useParams({ strict: false });
   const { t } = useTranslation();
