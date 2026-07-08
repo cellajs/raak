@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
-import { usePanelDragHandle } from '~/modules/common/board/board-drag';
 import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { Spinner } from '~/modules/common/spinner';
+import { PanelDragHandleButton } from '~/modules/task/panel/panel-drag-handle-button';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
-import { cn } from '~/utils/cn';
 
 /**
  * Explainer panel content for task board showing organization welcome text.
@@ -21,7 +20,6 @@ export const ExplainerPanel = () => {
   const { organization, tenantId } = useOrganizationLayoutContext();
   const { setAlertSeen } = useAlertStore();
   const isCollapsed = useBoardStore((state) => state.panelCollapseState.explainer);
-  const panelDrag = usePanelDragHandle();
 
   const setAsSeen = () => setAlertSeen('welcome-text');
 
@@ -29,29 +27,13 @@ export const ExplainerPanel = () => {
     <BoardPanelContent
       isCollapsed={!!isCollapsed}
       collapsedContent={
-        <Button
-          type="button"
-          variant="ghost"
-          ref={panelDrag?.registerHandle}
-          className={cn(
-            'flex h-auto min-h-13 w-12.5 items-center justify-center p-0 hover:bg-transparent',
-            panelDrag && 'cursor-grab active:cursor-grabbing',
-          )}
-          aria-roledescription={panelDrag ? t('c:sortable') : undefined}
-          aria-label={
-            panelDrag
-              ? t('c:sortable_position', {
-                  name: t('c:getting_started'),
-                  position: panelDrag.index + 1,
-                  total: panelDrag.total,
-                })
-              : t('c:getting_started')
-          }
-          onKeyDown={panelDrag?.onKeyDown}
-          onClick={panelDrag?.onToggleCollapsed}
+        <PanelDragHandleButton
+          name={t('c:getting_started')}
+          fallbackLabel={t('c:getting_started')}
+          className="flex h-auto min-h-13 w-12.5 items-center justify-center p-0 hover:bg-transparent"
         >
           <InfoIcon size={16} />
-        </Button>
+        </PanelDragHandleButton>
       }
     >
       <div className="relative flex max-w-full flex-1 shrink-0 snap-center flex-col rounded-md rounded-b-none bg-transparent opacity-100 sm:h-[calc(100vh-78px)] sm:border">
@@ -60,30 +42,14 @@ export const ExplainerPanel = () => {
 
           <div className="flex h-full flex-col">
             <div className="flex min-h-13 items-center justify-between gap-2 truncate border-b bg-card px-2 font-semibold text-sm">
-              <Button
-                type="button"
-                variant="ghost"
-                ref={panelDrag?.registerHandle}
-                className={cn(
-                  'flex h-8 items-center gap-2 truncate p-2 hover:bg-transparent',
-                  panelDrag && 'cursor-grab active:cursor-grabbing',
-                )}
-                aria-roledescription={panelDrag ? t('c:sortable') : undefined}
-                aria-label={
-                  panelDrag
-                    ? t('c:sortable_position', {
-                        name: t('c:getting_started'),
-                        position: panelDrag.index + 1,
-                        total: panelDrag.total,
-                      })
-                    : t('c:getting_started')
-                }
-                onKeyDown={panelDrag?.onKeyDown}
-                onClick={panelDrag?.onToggleCollapsed}
+              <PanelDragHandleButton
+                name={t('c:getting_started')}
+                fallbackLabel={t('c:getting_started')}
+                className="flex h-8 items-center gap-2 truncate p-2 hover:bg-transparent"
               >
                 <InfoIcon size={16} />
                 <div className="truncate">{t('c:getting_started')}</div>
-              </Button>
+              </PanelDragHandleButton>
               <div className="grow" />
               <Button
                 variant="ghost"

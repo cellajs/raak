@@ -2,7 +2,6 @@ import { Link } from '@tanstack/react-router';
 import { FunnelIcon, PlusIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { usePanelDragHandle } from '~/modules/common/board/board-drag';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -12,6 +11,7 @@ import { formatSectionLabel, makePanelKey } from '~/modules/task/helpers/board-h
 import { type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
+import { PanelDragHandleButton } from '~/modules/task/panel/panel-drag-handle-button';
 import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { Badge } from '~/modules/ui/badge';
@@ -53,9 +53,6 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
 
   const toggleCreateForm = () => toggleCreateTaskForm(project);
 
-  // Drag handle context from board-layout (null when board is not reorderable)
-  const panelDrag = usePanelDragHandle();
-
   const projectLinkProps = {
     to: '/$tenantId/$organizationSlug/project/$slug' as const,
     params: { slug: project.slug, organizationSlug: organization.slug, tenantId },
@@ -65,27 +62,13 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
   const leadingSlot = (() => {
     if (isInWorkspace && isPrimary) {
       return (
-        <Button
-          type="button"
-          variant="ghost"
-          ref={panelDrag?.registerHandle}
+        <PanelDragHandleButton
+          name={project.name}
+          fallbackLabel={project.name}
           className={cn(
             'flex h-auto items-center gap-2 truncate p-0 no-underline hover:bg-transparent',
-            panelDrag && 'cursor-grab active:cursor-grabbing',
             isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
           )}
-          aria-roledescription={panelDrag ? t('c:sortable') : undefined}
-          aria-label={
-            panelDrag
-              ? t('c:sortable_position', {
-                  name: project.name,
-                  position: panelDrag.index + 1,
-                  total: panelDrag.total,
-                })
-              : project.name
-          }
-          onKeyDown={panelDrag?.onKeyDown}
-          onClick={panelDrag?.onToggleCollapsed}
         >
           <EntityAvatar
             className="h-8 w-8"
@@ -95,7 +78,7 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
             url={project.thumbnailUrl}
           />
           {!isCollapsed && <div className="truncate font-semibold leading-6">{project.name}</div>}
-        </Button>
+        </PanelDragHandleButton>
       );
     }
 
@@ -104,27 +87,12 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
       // In workspace: show project avatar with funnel badge
       if (isInWorkspace) {
         return (
-          <Button
-            type="button"
-            variant="ghost"
-            ref={panelDrag?.registerHandle}
+          <PanelDragHandleButton
+            name={`${project.name} — ${formatSectionLabel(sectionFilters)}`}
             className={cn(
               'flex h-auto min-w-0 items-center gap-2 p-0 hover:bg-transparent',
-              panelDrag && 'cursor-grab active:cursor-grabbing',
               isCollapsed ? 'w-full justify-center' : 'justify-start',
             )}
-            aria-roledescription={panelDrag ? t('c:sortable') : undefined}
-            aria-label={
-              panelDrag
-                ? t('c:sortable_position', {
-                    name: `${project.name} — ${formatSectionLabel(sectionFilters)}`,
-                    position: panelDrag.index + 1,
-                    total: panelDrag.total,
-                  })
-                : undefined
-            }
-            onKeyDown={panelDrag?.onKeyDown}
-            onClick={panelDrag?.onToggleCollapsed}
           >
             <div className="relative shrink-0">
               <EntityAvatar
@@ -143,7 +111,7 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
                 <span className="pr-1 text-sm">{formatSectionLabel(sectionFilters)}</span>
               </div>
             )}
-          </Button>
+          </PanelDragHandleButton>
         );
       }
 
