@@ -1,8 +1,8 @@
 import { z } from '@hono/zod-openapi';
 import { t } from 'i18next';
 import { roles } from 'shared';
-import { createContextEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
+import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { membershipBaseSchema } from '#/modules/memberships/memberships-schema';
 import { projectsTable } from '#/modules/project/project-db';
@@ -58,7 +58,7 @@ export const projectWithMembershipSchema = projectSchema.extend({
 });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for project */
-export const projectWire = createContextEntityWire('project', {
+export const projectContract = evolutionContract.context('project', {
   createItem: z.object({
     id: validTempIdSchema,
     name: validNameSchema,
@@ -83,7 +83,7 @@ export const projectWire = createContextEntityWire('project', {
 });
 
 /** Array schema for batch creates - rejects duplicate slugs */
-export const projectCreateBodySchema = projectWire.createItemSchema
+export const projectCreateBodySchema = projectContract.createItemSchema
   .array()
   .min(1)
   .max(10)
@@ -93,7 +93,7 @@ export const projectCreateResponseSchema = batchResponseSchema(projectWithMember
 
 export const workspaceIdQuery = z.object({ workspaceId: z.string().max(maxLength.id) });
 
-export const projectUpdateBodySchema = projectWire.updateBodySchema;
+export const projectUpdateBodySchema = projectContract.updateBodySchema;
 
 export const projectListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder').optional(),

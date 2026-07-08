@@ -1,5 +1,5 @@
 import type { ProductEntityType } from 'shared';
-import { normalizeOps } from 'shared/version-changes';
+import { normalizeOps } from 'shared/schema-evolution';
 import type { StxBase } from '#/schemas/sync-transaction-schemas';
 import type { ArrayDelta } from './array-delta';
 import { applyArrayDelta, isArrayDelta } from './array-delta';
@@ -59,7 +59,7 @@ export function resolveUpdateOps<T extends Record<string, unknown>>(
   const filtered = filterNoOpFields(entity, scalarOps);
   const { acceptedFields } = resolveFieldConflicts(filtered, stx.fieldTimestamps, entity.stx.fieldTimestamps);
 
-  // Apply AWSet deltas, which are commutative and need no conflict resolution.
+  // Apply AWSet deltas (commutative, no conflict resolution needed)
   const resolvedArrays: Record<string, string[]> = {};
   for (const [key, delta] of Object.entries(deltaOps)) {
     const current = Array.isArray(entity[key]) ? entity[key] : [];

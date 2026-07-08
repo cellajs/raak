@@ -1,4 +1,4 @@
-import { type EntityActionType, hierarchy, hostDelegation, type ProductEntityType } from 'shared';
+import { appConfig, type EntityActionType, hierarchy, hostDelegation, type ProductEntityType } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
@@ -20,7 +20,7 @@ const resolveHostRow = async (
   const hostType = hierarchy.getHostType(entityType);
   if (!hostType) return undefined;
 
-  const hostId = entity[`${hostType}Id`];
+  const hostId = entity[appConfig.entityIdColumnKeys[hostType]];
   if (typeof hostId !== 'string') return undefined;
 
   const hostRow =
@@ -72,7 +72,7 @@ export const getValidProductEntity = async <K extends ProductEntityType>(
   if (!entity) throw new AppError(404, 'not_found', 'warn', { entityType });
 
   // Host delegation (hierarchy `host:` + delegateToHost): resolve the host row once so the
-  // engine can union the host's decision into this row's. The engine never
+  // engine can union the host's decision into this row's (load-at-check, the engine never
   // loads rows itself). Only for hosted rows of delegated entity types.
   const hostRow = await resolveHostRow(ctx, entityType, entity);
 

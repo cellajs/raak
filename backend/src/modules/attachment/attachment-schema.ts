@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
-import { createProductEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
+import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
@@ -35,12 +35,12 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     bucketName: true,
     public: true,
     groupId: true,
-    // Host relation: the owning task (nullable); cascade and host counters key off it.
+    // cella change: Raak attachments may be hosted by a task.
     taskId: true,
     convertedContentType: true,
     convertedKey: true,
     thumbnailKey: true,
-    // cella addition: attachments have project as their parent context, so they require a projectId
+    // cella change: Raak attachments are scoped to a project parent context.
     projectId: true,
   })
   .extend({
@@ -48,19 +48,19 @@ const attachmentCreateBodySchema = attachmentInsertSchema
   });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seams for attachment */
-export const attachmentWire = createProductEntityWire('attachment', {
+export const attachmentContract = evolutionContract.product('attachment', {
   createItem: attachmentCreateBodySchema,
-  updatable: {
+  updateOps: {
     name: z.string().max(maxLength.field),
     originalKey: z.string(),
   },
 });
 
 /** Array schema for batch creates (1-50 attachments per request), each with own stx */
-export const attachmentCreateManyStxBodySchema = attachmentWire.createItemSchema.array().min(1).max(50);
+export const attachmentCreateManyStxBodySchema = attachmentContract.createItemSchema.array().min(1).max(50);
 
 /** Update body using fields pattern for single or multi-field updates with conflict detection */
-export const attachmentUpdateStxBodySchema = attachmentWire.updateBodySchema;
+export const attachmentUpdateStxBodySchema = attachmentContract.updateBodySchema;
 
 // Response schemas: batch operations use { data, rejectedIds }, single returns entity directly
 export const attachmentCreateResponseSchema = batchResponseSchema(attachmentSchema);
@@ -69,7 +69,7 @@ const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'crea
 
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
   sort: attachmentSortKeys.default('createdAt').optional(),
-  // cella addition: filter by projectID
+  // cella change: Raak attachment lists can be narrowed to a project.
   projectId: z.string().max(maxLength.id).optional(),
 });
 

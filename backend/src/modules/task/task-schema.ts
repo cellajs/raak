@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
-import { createProductEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
+import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { arrayDeltaSchema } from '#/core/stx/array-delta';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelEmbeddedSchema } from '#/modules/label/label-schema';
@@ -56,9 +56,9 @@ const taskCreateSchema = taskInsertSchema
   });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seams for task */
-export const taskWire = createProductEntityWire('task', {
+export const taskContract = evolutionContract.product('task', {
   createItem: taskCreateSchema,
-  updatable: {
+  updateOps: {
     name: z.string().max(maxLength.field),
     description: z.string().max(maxLength.html).nullable(),
     status: z.number().int(),
@@ -72,7 +72,7 @@ export const taskWire = createProductEntityWire('task', {
 });
 
 /** Update body using fields pattern for single or multi-field updates with conflict detection */
-export const taskUpdateStxBodySchema = taskWire.updateBodySchema;
+export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
 /** Base schema without refinement - use this when you need .omit()/.pick() */
 export const taskListQueryBaseSchema = paginationQuerySchema.extend({
@@ -92,5 +92,5 @@ export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !dat
 });
 
 // Stx-wrapped schemas for product entity mutations (items lens-widened via the wire)
-export const taskCreateManyStxBodySchema = taskWire.createItemSchema.array().min(1).max(50);
+export const taskCreateManyStxBodySchema = taskContract.createItemSchema.array().min(1).max(50);
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);

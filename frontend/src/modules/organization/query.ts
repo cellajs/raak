@@ -61,7 +61,7 @@ type OrganizationsListParams = Omit<NonNullable<GetOrganizationsData['query']>, 
 
 /**
  * Infinite query options to get a paginated list of organizations.
- * `include` is not part of the cache key; queries with/without counts share the same cache.
+ * Note: `include` is NOT part of the cache key - queries with/without counts share the same cache
  * for seamless offline behavior. The most recent fetch determines what's cached.
  */
 export const organizationsListQueryOptions = (params: OrganizationsListParams) => {
@@ -188,7 +188,8 @@ export const fetchOrganizationsForExport = async (params: {
   sort?: NonNullable<GetOrganizationsData['query']>['sort'];
   order?: NonNullable<GetOrganizationsData['query']>['order'];
 }) => {
-  const { limit, offset = 0, q = '', sort = 'createdAt', order = 'asc' } = params;
+  const { limit, offset = 0, q = '', sort = 'createdAt' } = params;
+  const order = params.order ?? (sort === 'displayOrder' ? 'asc' : 'desc');
   const response = await getOrganizations({
     query: { limit: String(limit), q, sort, order, offset: String(offset) },
   });

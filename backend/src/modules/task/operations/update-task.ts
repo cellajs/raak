@@ -11,7 +11,7 @@ import {
 import { getTaskRelations, hydrateTask, hydrateTaskLite } from '#/modules/task/helpers/hydrate-task';
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
-import { type taskUpdateStxBodySchema, taskWire } from '#/modules/task/task-schema';
+import { taskContract, type taskUpdateStxBodySchema } from '#/modules/task/task-schema';
 import { getValidProductEntity } from '#/permissions/get-product-entity';
 import { getIsoDate } from '#/utils/iso-date';
 import { assertBlockMediaUrls } from '#/utils/validate-block-urls';
@@ -51,7 +51,7 @@ export async function updateTaskOp(
   const taskResponse = await tenantContext(ctx, async (txCtx) => {
     const { entity } = await getValidProductEntity(txCtx, id, 'task', 'update');
 
-    const resolved = taskWire.resolveUpdateOps(entity, rawOps, stx);
+    const resolved = taskContract.resolveUpdateOps(entity, rawOps, stx);
 
     // Skip DB update if nothing changed
     if (!resolved.changed) {

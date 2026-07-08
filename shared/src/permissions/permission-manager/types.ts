@@ -1,11 +1,10 @@
-import type { ContextEntityType, EntityActionType, EntityIdColumnKeys, EntityRole, ProductEntityType } from '../../../types';
+import type { ContextEntityType, EntityActionType, EntityIdColumns, EntityRole, ProductEntityType } from '../../../types';
 import type { PublicReadGrants, PublicReadMode } from '../public-read';
 import type { RowRestrictions } from '../row-restrictions';
 import type { HostDelegation } from '../types';
+import type { PermissionTopology } from './topology';
 
-export type ContextEntityIdColumns = {
-  [K in ContextEntityType as EntityIdColumnKeys[K]]: string | null;
-};
+export type ContextEntityIdColumns = EntityIdColumns<ContextEntityType, string | null>;
 
 export type ContextScope = Partial<Record<ContextEntityType, string | null>>;
 
@@ -59,14 +58,16 @@ export type SubjectForPermission = {
 };
 
 /**
- * Source that granted an action: a context membership, a row condition
- * (`relation` is the condition's name, e.g. `'own'`), or a public read grant.
+ * Source that granted an action: a context membership, a row condition (`relation` is the
+ * condition's name, e.g. `'own'`), a public read grant, a host delegation, or the system-admin
+ * bypass (which grants every action regardless of membership).
  */
 export type GrantSource =
   | { type: 'membership'; contextType: ContextEntityType; contextId: string; role: string }
   | { type: 'relation'; relation: string }
   | { type: 'public'; mode: PublicReadMode }
-  | { type: 'host'; hostType: string };
+  | { type: 'host'; hostType: string }
+  | { type: 'systemAdmin' };
 
 export interface ActionAttribution {
   enabled: boolean;
@@ -112,6 +113,11 @@ export interface PermissionCheckOptions {
    * `checkPermission` wrapper like `publicGrants`.
    */
   hostDelegation?: HostDelegation;
+  /**
+   * Override the hierarchy/action topology the engine reads (defaults to the app's config).
+   * Tests use this to exercise a synthetic hierarchy; see `shared/src/testing/wide-fixture.ts`.
+   */
+  topology?: PermissionTopology;
   /** When `true`, emit debug logging of the decision tree. Off by default to keep the engine quiet. */
   debug?: boolean;
 }

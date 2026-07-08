@@ -6,7 +6,7 @@ import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts';
 import type { LabelModel } from '#/modules/label/label-db';
 import { findLabelsByOrg, findLabelsByStxMutationId, insertLabels } from '#/modules/label/label-queries';
-import { type labelCreateManyStxBodySchema, labelWire } from '#/modules/label/label-schema';
+import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
@@ -20,7 +20,7 @@ export async function createLabelsOp(
   rawInput: CreateLabelsInput,
 ): Promise<OperationResult<{ data: LabelModel[]; rejectedIds: string[] }>> {
   // Lens seam: canonicalize old-shape field names before any body access
-  const input = rawInput.map((item) => labelWire.normalizeCreateItem(item));
+  const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
   const { organization, tenant } = ctx.var;
   const labelRestrictions = tenant.restrictions.quotas.label;
 

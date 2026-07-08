@@ -1,6 +1,6 @@
 import type { CreateClientConfig } from 'sdk/client.gen';
 import { appConfig } from 'shared';
-import { currentSchemaVersion } from 'shared/version-changes';
+import { currentSchemaVersion } from 'shared/schema-evolution';
 import { ApiError, clientConfig } from '~/lib/api';
 import { checkConnectivity } from '~/query/offline/connectivity';
 
@@ -36,7 +36,7 @@ export const createClientConfig: CreateClientConfig = (baseConfig) => ({
     try {
       response = await clientConfig.fetch(nextInput, nextInit);
     } catch (error) {
-      // Network-level failure (no HTTP response), probe actual connectivity.
+      // Network-level failure (no HTTP response), probe actual connectivity
       if (error instanceof TypeError) checkConnectivity();
       throw error;
     }

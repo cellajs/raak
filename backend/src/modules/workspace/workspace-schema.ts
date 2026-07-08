@@ -1,7 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import { roles } from 'shared';
-import { createContextEntityWire } from '#/core/entity-wire';
 import { schemaTags } from '#/core/openapi-helpers';
+import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { membershipBaseSchema } from '#/modules/memberships/memberships-schema';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
@@ -40,7 +40,7 @@ export const workspaceWithMembershipSchema = workspaceSchema.extend({
 });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for workspace */
-export const workspaceWire = createContextEntityWire('workspace', {
+export const workspaceContract = evolutionContract.context('workspace', {
   createItem: z.object({
     id: validTempIdSchema,
     name: validNameSchema,
@@ -53,11 +53,11 @@ export const workspaceWire = createContextEntityWire('workspace', {
 });
 
 /** Array schema for batch creates */
-export const workspaceCreateBodySchema = workspaceWire.createItemSchema.array().min(1).max(10);
+export const workspaceCreateBodySchema = workspaceContract.createItemSchema.array().min(1).max(10);
 
 export const workspaceCreateResponseSchema = batchResponseSchema(workspaceWithMembershipSchema);
 
-export const workspaceUpdateBodySchema = workspaceWire.updateBodySchema;
+export const workspaceUpdateBodySchema = workspaceContract.updateBodySchema;
 
 export const workspaceListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder').optional(),
