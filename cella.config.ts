@@ -41,31 +41,19 @@ export default defineConfig({
       'backend/src/modules/attachment/attachment-queries.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
-      // Hierarchy-bound tests: raak's versions exercise the deeper hierarchy (project,
-      // guest, host relations) that the template's org-only rewrites cannot. Most now run on
-      // the shared wide-fixture kit / config-adaptive seeding and are intended for upstream
-      // contribution (see .todos/28); pinned until cella adopts them.
-      'backend/src/modules/entities/helpers/recalculate-counters.test.ts',
-      'backend/src/permissions/row-predicates.test.ts',
-      'backend/tests/attachment-seq-reads.test.ts',
-      'frontend/src/query/tests/cache-migration.test.ts',
-      'shared/src/permissions/host-delegation.test.ts',
-      'shared/src/permissions/public-read.test.ts',
-      'shared/src/permissions/row-restrictions.test.ts',
-      'shared/src/permissions/permission-manager/index.test.ts',
-      'shared/src/permissions/compute-can.test.ts',
-      // Topology seam + wide-fixture kit (raak-authored, pending upstream contribution). Pinned
-      // so a sync cannot revert the seam before cella adopts it; unpin once upstream lands.
+      // Permission engine seam files: the topology seam landed upstream (cellajs/cella#861), but
+      // raak carries its comment-sweep wording while upstream doesn't (yet). The logic is
+      // identical; keep pinned until a sync reconciles the comments, then unpin so raak tracks
+      // upstream engine changes. (The wide-fixture kit and converted tests are byte-identical to
+      // upstream and were unpinned — they sync cleanly.)
       'shared/src/permissions/permission-manager/check.ts',
       'shared/src/permissions/permission-manager/types.ts',
       'shared/src/permissions/access-policies.ts',
-      'shared/src/permissions/compute-can.ts',
-      'shared/src/permissions/index.ts',
-      'shared/src/testing/wide-fixture.ts',
-      'shared/src/testing/wide-fixture.test.ts',
-      'backend/tests/hierarchy-helpers.ts',
+      // row-predicates parity test: not yet upstreamed (config-adaptive generalization deferred,
+      // see .todos/28); raak's version exercises the project sub-context narrowing.
+      'backend/src/permissions/row-predicates.test.ts',
       // Fork-owned route/DB tests for raak-only features (own-read, public routes, task host
-      // cascade, task seq reads). Pinned to close the sync gap until upstreamed (see .todos/28).
+      // cascade, task seq reads) with no template counterpart (see .todos/28).
       'backend/tests/attachment-own-reads.test.ts',
       'backend/tests/public-read-routes.test.ts',
       'backend/tests/task-host-cascade.test.ts',
