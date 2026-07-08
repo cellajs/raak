@@ -1,7 +1,7 @@
 import { registerModule } from 'shared/module-registry';
 import { uuidv7 } from 'uuidv7';
-import { registerYjsMaterializer } from '#/core/yjs-materializers';
 import { updateTaskOp } from '#/modules/task/operations/update-task';
+import { registerYjsMaterializer } from '#/modules/yjs/yjs-materializers';
 
 registerModule({
   name: 'tasks',

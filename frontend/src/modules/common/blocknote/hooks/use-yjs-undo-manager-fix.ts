@@ -13,10 +13,6 @@ import type { CustomBlockNoteEditor } from '~/modules/common/blocknote/types';
  * keeps working.
  *
  * No-op when `enabled` is false (non-collaborative editors don't use yUndoPlugin).
- *
- * TODO [#15]: verify whether this workaround is still needed at all. Re-test the
- * remount to broken-undo repro on the current deps and delete the hook if upstream
- * has fixed the destroy/reuse behavior.
  */
 export function useYjsUndoManagerFix(editor: CustomBlockNoteEditor, enabled: boolean) {
   useEffect(() => {
