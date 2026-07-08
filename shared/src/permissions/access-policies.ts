@@ -16,7 +16,7 @@ import type {
   PermissionValue,
   SubjectAccessPolicies,
 } from './types';
-import type { PermissionTopology } from './permission-manager/types';
+import type { PermissionTopology } from './permission-manager/topology';
 
 /** Resolves the `'own'` sugar literal to the built-in condition; passes everything else through. */
 const normalizePermissionValue = (value: PermissionValue): NormalizedPermissionValue => {
@@ -105,9 +105,13 @@ export const configurePermissions = (
   const hostDelegation: HostDelegation = {};
 
   // Topology defaults to the app's real config; tests pass a synthetic one (wide-fixture.ts).
-  // Wrap method refs in arrows so `this` stays bound to the hierarchy object.
+  // Context set and roles derive from the (possibly synthetic) hierarchy — its own contextTypes,
+  // not appConfig's, so a fork whose real config is narrower than the fixture still builds every
+  // context. Method refs are wrapped in arrows so `this` stays bound to the hierarchy object.
   const entityActions = (topology?.entityActions ?? appConfig.entityActions) as readonly EntityActionType[];
-  const contextEntityTypes = topology?.contextEntityTypes ?? appConfig.contextEntityTypes;
+  const contextEntityTypes = (
+    topology ? topology.hierarchy.contextTypes : appConfig.contextEntityTypes
+  ) as readonly ContextEntityType[];
   const getRoles = (type: string): readonly string[] => (topology?.hierarchy ?? hierarchy).getRoles(type);
   const getHostType = (type: string) => (topology?.hierarchy ?? hierarchy).getHostType(type);
   const getParent = (type: string) => (topology?.hierarchy ?? hierarchy).getParent(type);

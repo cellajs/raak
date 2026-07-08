@@ -6,7 +6,7 @@ import { getPolicyPermissions, getSubjectPolicies } from './access-policies';
 import { allActionsDenied } from './action-helpers';
 import { isRowCondition } from './row-conditions';
 import type { AccessPolicies, ActionPermissionState } from './types';
-import type { PermissionTopology } from './permission-manager/types';
+import type { PermissionTopology } from './permission-manager/topology';
 
 /**
  * Per-action permission state for a single entity type.

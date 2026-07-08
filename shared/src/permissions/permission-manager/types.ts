@@ -2,6 +2,7 @@ import type { ContextEntityType, EntityActionType, EntityIdColumnKeys, EntityRol
 import type { PublicReadGrants, PublicReadMode } from '../public-read';
 import type { RowRestrictions } from '../row-restrictions';
 import type { HostDelegation } from '../types';
+import type { PermissionTopology } from './topology';
 
 export type ContextEntityIdColumns = {
   [K in ContextEntityType as EntityIdColumnKeys[K]]: string | null;
@@ -84,37 +85,6 @@ export interface PermissionDecision<T extends PermissionMembership = PermissionM
   actions: Record<EntityActionType, ActionAttribution>;
   can: Record<EntityActionType, boolean>;
   membership: T | null;
-}
-
-/**
- * Structural subset of the app's `EntityHierarchy` that the permission engine reads. The real
- * `hierarchy` singleton satisfies it as-is; tests pass a synthetic hierarchy (see
- * `shared/src/testing/wide-fixture.ts`) to exercise deeper shapes — nested contexts, host
- * relations, guest roles — than a given fork's config ships.
- */
-export interface TopologyHierarchy {
-  readonly contextTypes: readonly string[];
-  getOrderedAncestors(entityType: string): readonly string[];
-  getOrderedDescendants(entityType: string): readonly string[];
-  getHostType(entityType: string): string | null | undefined;
-  getRoles(contextType: string): readonly string[];
-  isContext(entityType: string): boolean;
-  getParent(entityType: string): string | null;
-}
-
-/**
- * Overrides the hierarchy/action topology the engine reads. Every field defaults to the app's
- * real config (`hierarchy` / `appConfig`), so omitting it changes nothing — this is a pure
- * testability seam. Used to drive the engine against a synthetic hierarchy without module mocks.
- */
-export interface PermissionTopology {
-  hierarchy: TopologyHierarchy;
-  /** Defaults to `appConfig.entityActions`. */
-  entityActions?: readonly EntityActionType[];
-  /** Defaults to `appConfig.contextEntityTypes`. */
-  contextEntityTypes?: readonly ContextEntityType[];
-  /** Ancestor id-column key per context type. Defaults to `appConfig.entityIdColumnKeys`. */
-  entityIdColumnKeys?: Readonly<Record<string, string>>;
 }
 
 /**
