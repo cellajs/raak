@@ -10,7 +10,6 @@ import { generateId } from 'shared/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
@@ -18,7 +17,6 @@ import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/
 import { Spinner } from '~/modules/common/spinner';
 import type { UploadedUppyFile } from '~/modules/common/uploader/types';
 import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
-import { SelectLabels } from '~/modules/task/dropdowns/select-labels';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   createTaskFormSchema,
@@ -44,7 +42,7 @@ import {
   variantOptions,
   variantOptionsByValue,
 } from '~/modules/task/task-properties';
-import type { Task, TaskLabel, TaskStatusType } from '~/modules/task/types';
+import type { Task, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
@@ -166,31 +164,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
       });
   };
 
-  const handleLabelsChange = (onChange: (labels: TaskLabel[]) => void) => (labels: TaskLabel[]) => {
-    onChange(labels);
-
-    useDropdowner.getState().update({
-      content: (
-        <SelectLabels
-          value={labels}
-          projectId={projectId}
-          triggerWidth={getFieldWidth()}
-          onChange={handleLabelsChange(onChange)} // Recursively pass the same handler
-        />
-      ),
-    });
-  };
-
   const handleStatusChange = (onChange: (status: TaskStatusType) => void) => (status: TaskStatusType) => {
     flushSync(() => onChange(status));
     setTimeout(() => onStatusChange?.(status));
-  };
-
-  const getFieldWidth = () => {
-    const element = document.getElementById(formId);
-    if (!element) return;
-    const styles = getComputedStyle(element);
-    return element.clientWidth - Number.parseFloat(styles.paddingLeft) - Number.parseFloat(styles.paddingRight) - 3;
   };
 
   const isDirty = useCallback(() => {
@@ -363,7 +339,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                           dropdownType: 'labels',
                           value: labels,
                           projectId,
-                          onChange: handleLabelsChange(onChange),
+                          onChange,
                           triggerId: currentTarget.id,
                           triggerRef: { current: currentTarget },
                           triggerWidth: currentTarget.clientWidth,
@@ -394,7 +370,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     e.preventDefault();
-                                    handleLabelsChange(onChange)(labels.filter((l) => l.name !== name));
+                                    onChange(labels.filter((l) => l.name !== name));
                                   }}
                                 >
                                   <XIcon size={16} strokeWidth={3} />
