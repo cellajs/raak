@@ -21,6 +21,9 @@ import { flattenInfiniteData } from '~/query/basic/flatten';
 
 const LIMIT = appConfig.requestLimits.tasksTable;
 
+// Stable identity so it never invalidates DataTable's memoized Row components.
+const rowKeyGetter = (row: Task) => row.id;
+
 export type TaskTableProps = {
   projects?: Project[];
   workspace?: Workspace;
@@ -74,25 +77,41 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     return data.pages.flatMap(({ items }) => items);
   }, [data]);
   const isOnline = useOnlineManager();
-  const rows = !fetchedRows
-    ? undefined
-    : isOnline
-      ? fetchedRows
-      : fetchedRows.filter((row) => searchFilterFunction(search, row));
+  // Keep a stable reference (and skip re-filtering) when nothing changed, so DataTable's
+  // memoized Rows don't re-render each parent render — especially offline, where the filter
+  // runs a per-task text search.
+  const rows = useMemo(() => {
+    if (!fetchedRows) return undefined;
+    return isOnline ? fetchedRows : fetchedRows.filter((row) => searchFilterFunction(search, row));
+  }, [fetchedRows, isOnline, search]);
 
   // isFetching already includes next page fetch scenario
   const fetchMore = useCallback(async () => {
     if (!hasNextPage || isLoading || isFetching) return;
     await fetchNextPage();
-  }, [hasNextPage, isLoading, isFetching]);
+  }, [hasNextPage, isLoading, isFetching, fetchNextPage]);
 
-  const onSelectedRowsChange = (value: Set<string>) => {
-    if (rows) setSelected(rows.filter((row) => value.has(row.id)));
-  };
+  const onSelectedRowsChange = useCallback(
+    (value: Set<string>) => {
+      if (rows) setSelected(rows.filter((row) => value.has(row.id)));
+    },
+    [rows],
+  );
 
   const selectedRowIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected]);
 
   const isRowSelectionDisabled = useCallback((row: Task) => isProjectReadOnly(row.projectId), []);
+
+  const noRowsComponent = useMemo(
+    () => (
+      <ContentPlaceholder
+        icon={BirdIcon}
+        title="c:no_resource_yet"
+        titleProps={{ resource: t('c:task_other').toLowerCase() }}
+      />
+    ),
+    [t],
+  );
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -112,7 +131,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
         {...{
           rows,
           rowHeight: 52,
-          rowKeyGetter: (row) => row.id,
+          rowKeyGetter,
           columns,
           enableVirtualization: true,
           enableStickyHeader: true,
@@ -129,13 +148,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
           isCompact,
           sortColumns,
           onSortColumnsChange,
-          NoRowsComponent: (
-            <ContentPlaceholder
-              icon={BirdIcon}
-              title="c:no_resource_yet"
-              titleProps={{ resource: t('c:task_other').toLowerCase() }}
-            />
-          ),
+          NoRowsComponent: noRowsComponent,
         }}
       />
     </div>

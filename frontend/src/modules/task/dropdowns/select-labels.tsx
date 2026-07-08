@@ -118,10 +118,14 @@ export const SelectLabels = ({
 
   const { trackUsage, getScore } = useLabelRecencyStore();
 
-  const projectLabels = labels.filter((l) => l.projectId === projectId);
+  const projectLabels = useMemo(() => labels.filter((l) => l.projectId === projectId), [labels, projectId]);
 
-  // Derive initLabels directly from query data
-  const initLabels = deduplicateLabels(labels, projectId, organizationId);
+  // Derive initLabels directly from query data. Memoized so a keystroke (searchValue) doesn't rebuild
+  // it and invalidate the searchResults / suggestedLabels memos that depend on its identity.
+  const initLabels = useMemo(
+    () => deduplicateLabels(labels, projectId, organizationId),
+    [labels, projectId, organizationId],
+  );
 
   // Search results filtered by query
   const searchResults = useMemo(() => {

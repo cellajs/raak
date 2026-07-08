@@ -168,17 +168,16 @@ const CreateTaskForm = ({
     setTimeout(() => onStatusChange?.(status));
   };
 
-  const isDirty = useCallback(() => {
-    if (!form.isDirty) return false;
-    return newTaskFormIsDirty(form.getValues());
-  }, [form]);
-
   const handleFormClick = useCallback(() => {
     if (isDialog || isFocused || isMobile) return;
     focusTask(formId);
   }, [isDialog, isFocused, isMobile]);
 
   if (form.loading) return null;
+
+  // Compute once per render — newTaskFormIsDirty JSON.parses the description, and it's read at
+  // several JSX sites below.
+  const isDirty = form.isDirty && newTaskFormIsDirty(form.getValues());
 
   return (
     <motion.div
@@ -462,7 +461,7 @@ const CreateTaskForm = ({
             <div className="flex [&:not(.absolute)]:active:translate-y-[.05rem]">
               <Button
                 type="submit"
-                disabled={!isDirty()}
+                disabled={!isDirty}
                 className="grow rounded-none rounded-l [&:not(.absolute)]:active:translate-y-0"
               >
                 <span>
@@ -480,7 +479,7 @@ const CreateTaskForm = ({
                       <FormControl>
                         <Button
                           type="button"
-                          disabled={!isDirty()}
+                          disabled={!isDirty}
                           aria-label="Set status"
                           variant={'default'}
                           className="relative rounded-none rounded-r border-l border-l-background/25 [&:not(.absolute)]:active:translate-y-0"
@@ -509,7 +508,7 @@ const CreateTaskForm = ({
               <Button
                 type="reset"
                 variant="secondary"
-                className={isDirty() ? '' : 'hidden'}
+                className={isDirty ? '' : 'hidden'}
                 aria-label="Cancel"
                 onClick={() => {
                   form.reset();
@@ -523,7 +522,7 @@ const CreateTaskForm = ({
                 variant="secondary"
                 aria-label="close"
                 onClick={handleCloseForm}
-                className={isDirty() ? 'hidden' : ''}
+                className={isDirty ? 'hidden' : ''}
               >
                 {t('c:close')}
               </Button>
