@@ -1,4 +1,3 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { type CSSProperties, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { UserMinimalBase } from 'sdk';
@@ -6,11 +5,11 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { membersListQueryOptions } from '~/modules/memberships/query';
 import type { Member } from '~/modules/memberships/types';
 import type { SelectMembersProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
+import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import {
   Combobox,
   ComboboxEmpty,
@@ -21,7 +20,6 @@ import {
 } from '~/modules/ui/combobox';
 import { Kbd } from '~/modules/ui/kbd';
 import { ScrollArea } from '~/modules/ui/scroll-area';
-import { flattenInfiniteData } from '~/query/basic/flatten';
 import { inNumbersArray } from '~/utils/in-numbers-array';
 
 export const SelectMembers = ({
@@ -34,16 +32,7 @@ export const SelectMembers = ({
   const { t } = useTranslation();
   const { tenantId, organization } = useOrganizationLayoutContext();
 
-  const membersQuery = useInfiniteQuery(
-    membersListQueryOptions({
-      entityId: projectId,
-      tenantId,
-      organizationId: organization.id,
-      entityType: 'project',
-    }),
-  );
-  const members = flattenInfiniteData<Member>(membersQuery.data);
-  const projectMembers = members.filter((m) => m.membership.projectId === projectId);
+  const projectMembers = useProjectMembers(projectId, tenantId, organization.id);
 
   const [selectedMembers, setSelectedMembers] = useLiveSelection(taskId, (t) => t.assignedTo, currentAssigned);
 

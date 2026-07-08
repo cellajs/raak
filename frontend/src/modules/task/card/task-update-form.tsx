@@ -1,4 +1,3 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import i18n from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { appConfig, isUnconditionalPermission } from 'shared';
@@ -8,12 +7,11 @@ import { BlockNote } from '~/modules/common/blocknote/block-note-editor';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
 import { useYjsConnection } from '~/modules/common/blocknote/yjs-connections';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { membersListQueryOptions } from '~/modules/memberships/query';
-import type { Member } from '~/modules/memberships/types';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
+import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
@@ -22,7 +20,6 @@ import type { Task } from '~/modules/task/types';
 import { useUserStore, yjsTokenKey } from '~/modules/user/user-store';
 import { cacheUpdate } from '~/query/basic/cache-mutations';
 import { findInCache } from '~/query/basic/find-in-list-cache';
-import { flattenInfiniteData } from '~/query/basic/flatten';
 import type { ItemData } from '~/query/basic/types';
 import { queryClient } from '~/query/query-client';
 import { getRandomColor } from '~/utils/random-color';
@@ -83,16 +80,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const waitingForSync = canCollaborate && !wsReady && !syncTimedOut;
   const collaborative = canCollaborate && wsReady;
 
-  const membersQuery = useInfiniteQuery(
-    membersListQueryOptions({
-      entityId: task.projectId,
-      tenantId,
-      organizationId: task.organizationId,
-      entityType: 'project',
-    }),
-  );
-  const members = flattenInfiniteData<Member>(membersQuery.data);
-  const projectMembers = members.filter(({ membership }) => membership.projectId === task.projectId);
+  const projectMembers = useProjectMembers(task.projectId, tenantId, task.organizationId);
 
   const projectPublicity = useProjectPublicity(task.projectId);
   const { attachmentsCreationCallback } = useUploadAttachments();

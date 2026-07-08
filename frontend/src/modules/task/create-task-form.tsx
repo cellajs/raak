@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { ChevronDownIcon, TagIcon, UserXIcon, XIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import type React from 'react';
@@ -18,8 +17,6 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
 import { Spinner } from '~/modules/common/spinner';
 import type { UploadedUppyFile } from '~/modules/common/uploader/types';
-import { membersListQueryOptions } from '~/modules/memberships/query';
-import type { Member } from '~/modules/memberships/types';
 import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
 import { SelectLabels } from '~/modules/task/dropdowns/select-labels';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
@@ -34,6 +31,7 @@ import { deriveDescriptionProps } from '~/modules/task/helpers/derive-descriptio
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
+import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
@@ -53,7 +51,6 @@ import { Button, buttonVariants } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { useUserStore } from '~/modules/user/user-store';
-import { flattenInfiniteData } from '~/query/basic/flatten';
 import { cn } from '~/utils/cn';
 
 interface CreateTaskFormProps {
@@ -88,20 +85,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   const [isExiting, setIsExiting] = useState(false);
   const pendingCloseRef = useRef(false);
 
-  const membersQuery = useInfiniteQuery(
-    membersListQueryOptions({
-      entityId: projectId,
-      tenantId,
-      organizationId: organizationId,
-      entityType: 'project',
-    }),
-  );
-
-  const members = flattenInfiniteData<Member>(membersQuery.data);
-  const projectMembers = useMemo(
-    () => members.filter((m) => m.membership.projectId === projectId),
-    [members, projectId],
-  );
+  const projectMembers = useProjectMembers(projectId, tenantId, organizationId);
 
   const projectPublicity = useProjectPublicity(projectId);
   const { attachmentsCreationCallback } = useUploadAttachments();
