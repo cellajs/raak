@@ -101,7 +101,7 @@ async function cleanupEntityHierarchy(...plans: TestEntityHierarchyPlan[]) {
 const rlsProductTypes = appConfig.productEntityTypes;
 
 /**
- * Per-entity seed fixtures for the generic RLS product-entity tests
+ * Per-entity seed fixtures for the generic RLS product entity tests
  * (write-through, composite FK, CDC seq). This is the FORK EXTENSION POINT:
  * add an entry per org-scoped product entity a fork defines (e.g. `task`, `label`)
  * and the write-through / FK / CDC blocks automatically cover it.

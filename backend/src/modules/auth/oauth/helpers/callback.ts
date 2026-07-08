@@ -291,7 +291,7 @@ const verifyCallbackFlow = async ({
   // Somehow already linked + verified → return verified result
   if (oauthAccount.verified) return { type: 'verified', user, oauthAccount };
 
-  // Verify oauthAccount + email records atomically
+  // Verify oauthAccount + email rows atomically
   await db.transaction(async (tx) => {
     await tx
       .update(oauthAccountsTable)

@@ -38,7 +38,7 @@ describe('Passkey Authentication', async () => {
     it('should generate challenge for authentication', async () => {
       const user = await createUser(signUpUser.email);
 
-      // Create passkey record
+      // Create passkey row
       const passkeyRecord = mockPasskeyRecord(user.id);
       await db.insert(passkeysTable).values(passkeyRecord);
 

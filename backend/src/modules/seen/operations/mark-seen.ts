@@ -90,7 +90,7 @@ export async function markSeenOp(ctx: AuthContext, entityIds: string[], entityTy
     // Single-roundtrip CTE that:
     // 1. Bulk-inserts seen_by rows, skipping duplicates (ON CONFLICT DO NOTHING)
     // 2. Upserts product_counters only for newly inserted rows (increments view_count)
-    // 3. Returns the count of genuinely new seen records
+    // 3. Returns the count of genuinely new seen rows
     const values = sql.join(
       vIds.map(
         (entityId) =>

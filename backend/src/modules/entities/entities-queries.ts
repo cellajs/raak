@@ -119,7 +119,7 @@ export const getOrgEntityCount = async ({ var: { db } }: DbContext, orgId: strin
 export const DELETE_ENUMERATE_CAP = 200;
 
 /**
- * Scan product-entity delete activities after a cursor (app stream).
+ * Scan product entity delete activities after a cursor (app stream).
  *
  * Capped at `DELETE_ENUMERATE_CAP + 1` so the caller can detect overflow (more deletes than we
  * enumerate) and fall back to client-side list invalidation. Membership changes are intentionally

@@ -22,7 +22,7 @@ export const findLabelsByOrg = async (ctx: AuthContext) => {
   return db.select().from(labelsTable).where(eq(labelsTable.organizationId, organizationId));
 };
 
-/** Insert labels and return the created records. Silently skips duplicates (PK conflict). */
+/** Insert labels and return the created rows. Silently skips duplicates (PK conflict). */
 export const insertLabels = async (ctx: DbContext, { labels }: { labels: (typeof labelsTable.$inferInsert)[] }) => {
   const { db } = ctx.var;
   return db.insert(labelsTable).values(labels).onConflictDoNothing().returning();
@@ -33,7 +33,7 @@ interface UpdateLabelOpts {
   values: Partial<typeof labelsTable.$inferInsert>;
 }
 
-/** Update a label by ID and return the updated record. */
+/** Update a label by ID and return the updated row. */
 export const updateLabel = async (ctx: AuthContext, { id, values }: UpdateLabelOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db

@@ -5,7 +5,7 @@ import { tenantIdLength } from '#/db/utils/constraints';
 import { usersTable } from '#/modules/user/user-db';
 
 /**
- * Seen-by tracking table for per-user-per-entity view records.
+ * Seen-by tracking table for per-user-per-entity view rows.
  *
  * Records when a user has viewed a product entity (e.g., task).
  * Derives unseen counts within a 90-day rolling window.
@@ -34,7 +34,7 @@ export const seenByTable = snakeCase.table(
   (table) => [
     // Composite PK required for partitioning by created_at
     primaryKey({ columns: [table.id, table.createdAt] }),
-    // Deduplication: one record per user per entity
+    // Deduplication: one row per user per entity
     unique('seen_by_user_entity_unique').on(table.userId, table.entityId),
     // Index for unseen count query: COUNT(*) WHERE userId AND contextId AND entityType
     index('seen_by_user_context_type_index').on(table.userId, table.contextId, table.entityType),

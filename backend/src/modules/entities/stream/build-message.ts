@@ -4,7 +4,7 @@ import type { StreamNotification } from '#/schemas';
 import type { AppStreamEvent, AppStreamMembershipEvent } from './types';
 
 /**
- * The app stream carries exactly two concerns: product-entity sync (seq/cacheToken
+ * The app stream carries exactly two concerns: product entity sync (seq/cacheToken
  * range fetch on the client) and membership changes (query invalidation). This is the
  * single source of the `kind` discriminant, used both to shape the wire notification
  * and to branch dispatch/handling on either end.

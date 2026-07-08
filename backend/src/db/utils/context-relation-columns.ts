@@ -41,7 +41,7 @@ export type ActivityContextColumns = {
 };
 
 /**
- * Generates context-entity id columns for a product entity based on the hierarchy config.
+ * Generates context entity id columns for a product entity based on the hierarchy config.
  * Ancestors (organization, and any intermediate context parents) become non-null columns,
  * except ancestors the hierarchy declares in `nullableAncestors` (variable-depth rows);
  * declared related contexts become nullable columns. Keeps product schemas fork-agnostic:

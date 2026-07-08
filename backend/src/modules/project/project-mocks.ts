@@ -46,7 +46,7 @@ const generateProjectBase = (id: string, name: string, createdAt: string, organi
 };
 
 /**
- * Generates a mock project record with all fields populated.
+ * Generates a mock project row with all fields populated.
  * Used for DB seeding, tests, and as base for API response examples.
  * @param suffix - Optional suffix to append to name (bypasses UniqueEnforcer for seeding)
  */

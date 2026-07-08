@@ -54,7 +54,7 @@ const generateWorkspaceBase = (
 };
 
 /**
- * Generates a mock workspace record with all fields populated.
+ * Generates a mock workspace row with all fields populated.
  * Used for DB seeding, tests, and as base for API response examples.
  * @param suffix - Optional suffix to append to name (bypasses UniqueEnforcer for seeding)
  */

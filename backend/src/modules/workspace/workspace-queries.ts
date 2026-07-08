@@ -13,7 +13,7 @@ interface InsertWorkspacesOpts {
   workspaces: (typeof workspacesTable.$inferInsert)[];
 }
 
-/** Insert workspaces and return the created records. */
+/** Insert workspaces and return the created rows. */
 export const insertWorkspaces = async ({ var: { db } }: DbContext, { workspaces }: InsertWorkspacesOpts) => {
   return db.insert(workspacesTable).values(workspaces).returning();
 };
@@ -23,7 +23,7 @@ interface UpdateWorkspaceOpts {
   values: Partial<typeof workspacesTable.$inferInsert>;
 }
 
-/** Update a workspace by ID and return the updated record. */
+/** Update a workspace by ID and return the updated row. */
 export const updateWorkspace = async (ctx: AuthContext, { id, values }: UpdateWorkspaceOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db

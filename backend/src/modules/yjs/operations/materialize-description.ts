@@ -20,7 +20,7 @@ export interface MaterializeDescriptionInput {
 }
 
 /**
- * Persist a Yjs collab session's description to the entity's durable record,
+ * Persist a Yjs collab session's description to the entity's durable row,
  * on behalf of the last editing user. Called by the Yjs relay (secret-gated route).
  *
  * Synthesizes an AuthContext for the editing user and dispatches to the entity's

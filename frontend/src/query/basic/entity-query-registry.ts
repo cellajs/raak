@@ -15,7 +15,7 @@ export interface EntityQueryKeys {
 }
 
 /**
- * Chunk size for delta-sync fetches: the backend's max limit. A response of exactly this
+ * Chunk size for delta sync fetches: the backend's max limit. A response of exactly this
  * size means the seq window may exceed one response; fetchRangeAndPatch treats that as
  * overflow and falls back to full list invalidation instead of paging.
  */

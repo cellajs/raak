@@ -39,7 +39,7 @@ interface SeenStoreState {
   startFlushInterval: () => void;
   /** Stop the periodic flush interval */
   stopFlushInterval: () => void;
-  /** Flush all pending seen records to the server */
+  /** Flush all pending seen rows to the server */
   flush: () => Promise<void>;
   /** Reset in-memory state to initial (call on sign-out; persisted data lives in appdb). */
   reset: () => void;
