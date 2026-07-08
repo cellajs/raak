@@ -24,7 +24,7 @@ const roleReadValue = (
   role: string,
 ): NormalizedPermissionValue => {
   const subjectPolicies = getSubjectPolicies(entityType, policies);
-  const permissions = getPolicyPermissions(subjectPolicies, contextType, role as never);
+  const permissions = getPolicyPermissions(subjectPolicies, contextType, role);
   return permissions?.read ?? 0;
 };
 
@@ -74,7 +74,8 @@ interface ScopeAccumulator {
  * - Unconditional grants (`read: 1`) widen the plain sub-context scope, as before.
  * - Row-conditional grants (`read: <condition>`, e.g. `'own'`) contribute a
  *   {@link ConditionalScope}: those contexts' rows are readable where the condition
- *   matches, so condition-only roles are listable.
+ *   matches. This makes condition-only roles listable at all; a role with only
+ *   `read: 'own'` otherwise contributes no unconditional scope.
  */
 const resolveScopes = (
   policies: AccessPolicies,
@@ -110,7 +111,7 @@ const resolveScopes = (
   };
 
   // Unconditional membership grants of a restricted entity qualify PER ROW (depth/roles)
-  // unless the role is exempt. Route them to restricted grants instead of merged scope.
+  // unless the role is exempt, route them to restricted grants instead of merged scope.
   // Row-conditional grants (e.g. 'own') are never narrowed by restrictions.
   const addUnconditional = (contextType: ContextEntityType, role: string, contextId: string | null) => {
     if (restriction && !restriction.exemptRoles.includes(role)) {
@@ -155,7 +156,8 @@ const resolveScopes = (
  *
  * Conditional scopes (`conditionalScopes`): additional rows readable where a row
  * condition matches (OR-ed with the unconditional scope). Empty for callers whose roles
- * carry no row-conditional read grants.
+ * carry no row-conditional read grants, existing call sites that only consume
+ * `subContextIds` keep their exact previous behavior.
  *
  * Restricted scope (`restricted`): present only for entities with a declared row
  * restriction. Each entry is one membership grant whose rows must additionally satisfy

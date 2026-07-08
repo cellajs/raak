@@ -1,11 +1,11 @@
-import { appConfig } from '../config-builder/app-config';
-import { hierarchy } from '../../config/hierarchy-config';
 import type { ContextEntityType, EntityActionType, EntityRole, EntityType } from '../../types';
 import { recordFromKeys } from '../config-builder/utils';
 import { getPolicyPermissions, getSubjectPolicies } from './access-policies';
 import { allActionsDenied } from './action-helpers';
 import { isRowCondition } from './row-conditions';
 import type { AccessPolicies, ActionPermissionState } from './types';
+import { resolveTopology } from './permission-manager/resolve-topology';
+import type { PermissionTopology } from './permission-manager/topology';
 
 /**
  * Per-action permission state for a single entity type.
@@ -33,13 +33,14 @@ function computeEntityPermissions(
   contextType: ContextEntityType,
   role: EntityRole,
   policies: AccessPolicies,
+  entityActions: readonly EntityActionType[],
 ): ActionStates {
   const subjectPolicies = getSubjectPolicies(entityType as ContextEntityType, policies);
   const permissions = getPolicyPermissions(subjectPolicies, contextType, role);
 
   if (!permissions) return allActionsDenied;
 
-  return recordFromKeys(appConfig.entityActions, (action) => {
+  return recordFromKeys(entityActions, (action) => {
     const value = permissions[action];
     if (value === 1) return true;
     // Row-conditional grant → surface the condition name (e.g. 'own'); the frontend
@@ -74,17 +75,20 @@ export const computeCan = (
   contextType: ContextEntityType,
   membership: { contextType: ContextEntityType; role: EntityRole } | undefined | null,
   policies: AccessPolicies,
+  topology?: PermissionTopology,
 ): EntityCanMap => {
   if (!membership) return {};
 
+  // Topology defaults to the app's real config; tests pass a synthetic one (wide-fixture.ts).
+  const { hierarchy: h, entityActions } = resolveTopology(topology);
   const map: EntityCanMap = {};
 
   // Permissions for the context entity itself
-  map[contextType] = computeEntityPermissions(contextType, membership.contextType, membership.role, policies);
+  map[contextType] = computeEntityPermissions(contextType, membership.contextType, membership.role, policies, entityActions);
 
   // Permissions for all descendant entity types (children + their children)
-  for (const descendant of hierarchy.getOrderedDescendants(contextType)) {
-    map[descendant] = computeEntityPermissions(descendant, membership.contextType, membership.role, policies);
+  for (const descendant of h.getOrderedDescendants(contextType) as EntityType[]) {
+    map[descendant] = computeEntityPermissions(descendant, membership.contextType, membership.role, policies, entityActions);
   }
 
   return map;

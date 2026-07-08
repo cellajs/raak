@@ -1069,7 +1069,7 @@ export const zSendNewsletterResponse = z.void();
 export const zGetTenantsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['createdAt', 'name']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -1269,7 +1269,7 @@ export const zDeleteRequestsResponse = z.object({
 export const zGetRequestsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'email', 'type', 'createdAt']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -1310,7 +1310,7 @@ export const zGetPublicCountsResponse = z.object({
 export const zGetUsersQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -1673,7 +1673,7 @@ export const zCreateWorkspacesResponse = z.object({
 export const zGetWorkspacesQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -1826,7 +1826,7 @@ export const zCreateProjectsResponse = z.object({
 export const zGetProjectsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -2076,7 +2076,7 @@ export const zGetAttachmentsPath = z.object({
 export const zGetAttachmentsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['name', 'createdAt', 'contentType']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -2264,7 +2264,7 @@ export const zGetMembersPath = z.object({
 export const zGetMembersQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -2297,7 +2297,7 @@ export const zGetPendingMembershipsPath = z.object({
 export const zGetPendingMembershipsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['createdAt']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),

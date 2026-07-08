@@ -1,10 +1,10 @@
 import type { z } from '@hono/zod-openapi';
-import { type LensEntityType, normalizeOps, widenedOpsKeyMap } from 'shared/version-changes';
+import { type LensEntityType, normalizeOps, widenedOpsKeyMap } from 'shared/schema-evolution';
 import type { StxBase } from '#/schemas/sync-transaction-schemas';
 
 /**
  * Runtime lens seam for entity bodies: canonicalize old-shape field names and
- * mirror-write expand-window twins. Works for any entity body; a product
+ * mirror-write expand-window twins. Works for any entity body — a product
  * create item's fields or a context entity's plain create/update body (an ops
  * object and a plain body are both "partial entity bodies"; only product
  * entities additionally carry stx). Passthrough while the lens list is empty.
@@ -17,7 +17,7 @@ export function normalizeBody<T extends Record<string, unknown>>(entityType: Len
 /**
  * Create-path lens seam for sync (product) entities: canonicalize old-shape
  * field names in a create item and mirror-write expand-window twins, so both
- * DB columns stay fresh whichever bundle created the row and rewrite the
+ * DB columns stay fresh whichever bundle created the row — and rewrite the
  * item's `stx.fieldTimestamps` keys alongside. Passthrough while the lens
  * list is empty.
  */
@@ -33,7 +33,7 @@ export function normalizeCreateItem<T extends { stx: StxBase }>(entityType: Lens
  * of its canonical twin. When the canonical field is required, the requirement
  * relaxes to "alias or canonical present".
  *
- * The static type is intentionally unchanged; aliases exist only at runtime,
+ * The static type is intentionally unchanged — aliases exist only at runtime,
  * and `normalizeBody`/`normalizeCreateItem`/`normalizeOps` restore canonical
  * keys before any code reads the body. Identity while the lens list is empty.
  */
@@ -65,6 +65,3 @@ export function widenBodySchema<T extends z.ZodObject<z.ZodRawShape>>(entityType
     }
   }) as unknown as T;
 }
-
-/** @deprecated Use `widenBodySchema` (same function; renamed when context entities joined the lens system). */
-export const widenCreateSchema = widenBodySchema;

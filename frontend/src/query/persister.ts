@@ -1,7 +1,7 @@
 import type { DehydratedState } from '@tanstack/react-query';
 import type { PersistedClient, Persister } from '@tanstack/react-query-persist-client';
 import { appConfig } from 'shared';
-import { currentSchemaVersion } from 'shared/version-changes';
+import { currentSchemaVersion } from 'shared/schema-evolution';
 import { reportCriticalError } from '~/lib/tracing';
 import { type AppDatabase, getAppDb, type PersistedQueryRecord } from '~/query/app-db';
 import { entityTypeOf, migrateMutations, migrateQueryState } from '~/query/cache-migration';
@@ -55,7 +55,7 @@ const trackerResets: Array<() => void> = [];
  * no per-user DB is bound (signed out).
  */
 function createIDBPersister(scope = 'rq') {
-  /** In-memory change tracker: queryHash -> last persisted dataUpdatedAt (product queries only) */
+  /** In-memory change tracker: queryHash → last persisted dataUpdatedAt (product queries only) */
   const lastPersistedAt = new Map<string, number>();
   /** In-memory snapshot of last persisted context queries for diffing */
   let lastContextSnapshot = '';
@@ -233,7 +233,7 @@ function createIDBPersister(scope = 'rq') {
 
   return {
     persistClient: async (client: PersistedClient) => {
-      if (!getAppDb()) return; // Signed out -> in-memory only
+      if (!getAppDb()) return; // Signed out → in-memory only
       pendingClient = client;
       if (!timeoutId) {
         timeoutId = setTimeout(flush, PERSIST_THROTTLE_MS);
@@ -251,7 +251,7 @@ function createIDBPersister(scope = 'rq') {
 
     restoreClient: async (): Promise<PersistedClient | undefined> => {
       const db = getAppDb();
-      if (!db) return undefined; // Signed out -> in-memory cache
+      if (!db) return undefined; // Signed out → in-memory cache
       try {
         let meta = await db.meta.get(scope);
         if (!meta) return undefined;

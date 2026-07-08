@@ -7,7 +7,7 @@ import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts'
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertProjects } from '#/modules/project/project-queries';
-import { type projectCreateBodySchema, projectWire } from '#/modules/project/project-schema';
+import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
 import { getValidContextEntity } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
@@ -29,7 +29,7 @@ type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 
 export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProjectItem[], workspaceId: string) {
   // Lens seam: canonicalize old-shape field names before any body access
-  const items = rawItems.map((item) => projectWire.normalizeBody(item));
+  const items = rawItems.map((item) => projectContract.normalizeBody(item));
   const db = ctx.var.db;
   const user = ctx.var.user;
   const organization = ctx.var.organization;

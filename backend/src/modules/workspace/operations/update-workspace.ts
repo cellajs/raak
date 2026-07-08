@@ -3,14 +3,14 @@ import { getEntityCounts } from '#/modules/entities/helpers/get-entity-counts';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { updateWorkspace } from '#/modules/workspace/workspace-queries';
-import { workspaceWire } from '#/modules/workspace/workspace-schema';
+import { workspaceContract } from '#/modules/workspace/workspace-schema';
 import { getValidContextEntity } from '#/permissions/get-context-entity';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
 export async function updateWorkspaceOp(ctx: AuthContext, id: string, rawInput: { name?: string }) {
   // Lens seam: canonicalize old-shape field names before any body access
-  const input = workspaceWire.normalizeBody(rawInput);
+  const input = workspaceContract.normalizeBody(rawInput);
   const user = ctx.var.user;
 
   const { entity: workspace, membership } = await getValidContextEntity(ctx, id, 'workspace', 'update');
