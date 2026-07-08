@@ -98,7 +98,6 @@ const isListData = <T>(data: QueryData<T> | InfiniteQueryData<T>): data is Infin
   return 'pages' in data;
 };
 
-
 export const useTableMutation = <N extends `${EntityType}s`, M extends MutationType, TVariables, TResult>({
   table,
   type,
@@ -149,7 +148,6 @@ export const useTableMutation = <N extends `${EntityType}s`, M extends MutationT
           }
         });
       }
-
 
       // Return a result with the snapshotted value(s)
       return previous;
