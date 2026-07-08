@@ -46,4 +46,10 @@ export type DropTarget<T> = Omit<DropTargetRecord, 'data'> & {
 };
 
 export type TaskDraggableData = DraggableItemData<Task, 'task'>;
-export type PanelDraggableData = DraggableItemData<{ tasks: Task[]; projectId: string }, 'panel'>;
+// Panels carry no per-drop order (unlike tasks), so displayOrder is absent from the drag payload.
+export type PanelDraggableData = Omit<
+  DraggableItemData<{ tasks: Task[]; projectId: string }, 'panel'>,
+  'displayOrder'
+> & {
+  displayOrder?: number;
+};

@@ -101,7 +101,7 @@ export const BoardPanel = memo(function BoardPanel({
     if (!sectionFilters || sectionFilters.status.includes(TaskStatus.Iced)) baseCounts.iced = iced;
 
     return baseCounts;
-  }, [filteredTasks, project.included?.counts?.entities?.task, projectFetchedCount]);
+  }, [filteredTasks, project.included?.counts?.entities?.task, projectFetchedCount, sectionFilters]);
 
   return (
     <div data-search={!!search.q} className="group/panel h-full">

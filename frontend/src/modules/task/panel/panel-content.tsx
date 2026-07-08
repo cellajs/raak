@@ -204,7 +204,6 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
         projectId={project.id}
         isSticky={stickyAccepted}
         onToggle={handleSectionToggle}
-        stickyTopOffset={isMobile ? 54 : undefined}
       />
     ) : undefined;
 
@@ -222,6 +221,15 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   // Activate panel on mouse enter or focus (desktop)
   const handlePanelActivation = () => {
     if (!isMobile) setActivePanel(project.id);
+  };
+
+  // Shared task renderer for both virtualizer branches (drafts are desktop-only)
+  const renderTask = (task: TaskProps['task']) => {
+    if (isDraftTask(task)) {
+      if (isMobile) return null;
+      return <DraftTaskItem key={task.id} task={task} project={project} onStatusChange={onStatusChange} />;
+    }
+    return <MotionTaskCard key={task.id} task={task} />;
   };
 
   return (
@@ -242,15 +250,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
               id={`panel-tasks-${project.id}`}
             >
               <WindowVirtualizer ref={virtualizerRef} as="ul" item="li">
-                {tasks.map((task) => {
-                  if (isDraftTask(task)) {
-                    if (isMobile) return null;
-                    return (
-                      <DraftTaskItem key={task.id} task={task} project={project} onStatusChange={onStatusChange} />
-                    );
-                  }
-                  return <MotionTaskCard key={task.id} task={task} />;
-                })}
+                {tasks.map(renderTask)}
               </WindowVirtualizer>
             </div>
           ) : (
@@ -289,15 +289,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
                   scrollRef={scrollViewportRef}
                   startMargin={counts.accepted || counts.acceptedCutOff ? 32 : 0}
                 >
-                  {tasks.map((task) => {
-                    if (isDraftTask(task)) {
-                      return (
-                        <DraftTaskItem key={task.id} task={task} project={project} onStatusChange={onStatusChange} />
-                      );
-                    }
-
-                    return <MotionTaskCard key={task.id} task={task} />;
-                  })}
+                  {tasks.map(renderTask)}
                 </Virtualizer>
               </div>
             ) : (

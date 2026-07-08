@@ -1,6 +1,4 @@
 import { Link } from '@tanstack/react-router';
-import '@uppy/core/css/style.css';
-import '@uppy/dashboard/css/style.css';
 import { FunnelIcon, PlusIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
