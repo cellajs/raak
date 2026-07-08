@@ -113,7 +113,7 @@ export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: Get
     total: sql<number>`count(*) over()`.mapWith(Number),
   } as const;
 
-  // Main query — admin LEFT JOIN vs regular INNER JOIN on memberships
+  // Admins use LEFT JOIN; regular users use INNER JOIN on memberships.
   let query = isSystemAdmin
     ? db.select(selectShape).from(organizationsTable).leftJoin(membershipsTable, membershipOn).$dynamic()
     : db.select(selectShape).from(organizationsTable).innerJoin(membershipsTable, membershipOn).$dynamic();

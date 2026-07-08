@@ -1,19 +1,3 @@
-/**
- * End-to-end proof of row-conditional reads (`read: 'own'`).
- *
- * The attachment policy grants org members `read: 'own'`: they may read/list
- * attachments they created anywhere in the org — including projects they are not a
- * member of — while other members' attachments stay hidden. Pins the full path:
- * policy → conditional collection scope → compiled SQL predicate → HTTP responses.
- *
- * - P1: aggregate list returns exactly the caller's own attachments
- * - P2: explicit ?projectId= the caller is no member of returns own rows (was 403 before)
- * - P3: single GET honors the condition (200 own / 403 foreign)
- * - P4: org admin (unconditional read) still sees everything
- *
- * Requires: PostgreSQL (core mode or higher)
- */
-
 import { inArray } from 'drizzle-orm';
 import { getAttachment, getAttachments } from 'sdk';
 import { generateId } from 'shared/entity-id';
@@ -36,6 +20,8 @@ const attachmentIds = {
   ownedByAdmin: generateId(),
 };
 
+// Covers row-conditional attachment reads through policy, collection scope,
+// compiled SQL predicate, and HTTP responses.
 describe('Attachment own-reads (row-conditional org member policy)', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;

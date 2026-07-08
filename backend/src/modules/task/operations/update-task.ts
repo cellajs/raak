@@ -86,7 +86,7 @@ export async function updateTaskOp(
       // Reassign creator if they're not a member of the target project
       updateValues.createdBy =
         entity.createdBy && memberSet.has(entity.createdBy as string) ? (entity.createdBy as string) : user.id;
-      // Strip labels — they are project-scoped (client can re-add target project labels separately)
+      // Strip labels because they are project-scoped.
       updateValues.labels = [];
     }
 
@@ -99,7 +99,7 @@ export async function updateTaskOp(
 
     const isProjectMove = 'projectId' in resolved.values && resolved.values.projectId !== entity.projectId;
 
-    // Lite path: skip relation DB queries — frontend uses optimistic cache
+    // Lite path: skip relation DB queries because the frontend uses optimistic cache.
     // Project moves always need full hydration because assignedTo/labels change server-side
     if (!fullResponse && !isProjectMove) return hydrateTaskLite(updatedTaskRecord, user);
 

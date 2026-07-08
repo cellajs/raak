@@ -6,25 +6,6 @@ import { normalizeBody, normalizeCreateItem, widenBodySchema } from './stx/lens-
 import { resolveUpdateOps } from './stx/resolve-update';
 import { createUpdateSchema } from './stx/update-schema';
 
-/**
- * Entity wire seam — the single registration point per entity module for
- * version-tolerant wire schemas (schema evolution lenses).
- *
- * Both entity classes share the same widening/normalization layer; only the
- * write semantics differ:
- * - `createProductEntityWire` — stx-based sync writes: create items carry
- *   `stx`, updates are `{ ops, stx }` merged per-field (HLC/AWSet);
- * - `createContextEntityWire` — plain full-body writes: create items and
- *   partial update bodies, no stx.
- *
- * The factories widen every derived schema for active expand windows and
- * expose entity-bound runtime normalizers, so the entityType is declared
- * exactly once per module and operations cannot pass a mismatched one.
- * Everything is a passthrough while the lens list is empty. The `lens:check`
- * wire-completeness rule asserts every configured entity type registers here.
- * See cella/SCHEMA_EVOLUTION.md (Design revision).
- */
-
 type AnyRecord = Record<string, unknown>;
 
 /**
@@ -46,7 +27,7 @@ export function createProductEntityWire<CS extends z.ZodRawShape, U extends z.Zo
     createItemSchema: widenBodySchema(entityType, options.createItem.extend({ stx: stxBaseSchema })),
     /** `{ ops, stx }` update body, ops lens-widened, ≥1 op required. */
     updateBodySchema: createUpdateSchema(entityType, options.updatable),
-    /** Runtime seam: canonicalize a validated create item (fields + stx.fieldTimestamps) before any body access. */
+    /** Runtime seam: canonicalizes a validated create item before any body access. */
     normalizeCreateItem: <T extends { stx: StxBase }>(item: T): T => normalizeCreateItem(entityType, item),
     /** Runtime seam: normalize + no-op-filter + HLC/AWSet-resolve a validated update. */
     resolveUpdateOps: <T extends AnyRecord>(
@@ -78,7 +59,7 @@ export function createContextEntityWire<CS extends z.ZodRawShape, US extends z.Z
     createItemSchema: widenBodySchema(entityType, options.createItem),
     /** Partial update body, lens-widened. */
     updateBodySchema: widenBodySchema(entityType, options.updateBody),
-    /** Runtime seam: canonicalize a validated create/update body before any body access. */
+    /** Runtime seam: canonicalizes a validated create/update body before any body access. */
     normalizeBody: <T extends AnyRecord>(body: T): T => normalizeBody(entityType, body),
   };
 }

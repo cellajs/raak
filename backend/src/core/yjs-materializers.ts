@@ -8,7 +8,7 @@ export interface YjsMaterializeInput {
 }
 
 /**
- * Persists a Yjs collab session's description for one entity type — typically a thin
+ * Persists a Yjs collab session's description for one entity type, typically a thin
  * wrapper around the entity's standard update operation with `ops: { description }`
  * and a server-origin stx (empty `fieldTimestamps` → the pipeline stamps a server HLC).
  */

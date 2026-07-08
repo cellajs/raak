@@ -8,14 +8,14 @@ import { usersTable } from '#/modules/user/user-db';
  * Seen-by tracking table for per-user-per-entity view records.
  *
  * Records when a user has viewed a product entity (e.g., task).
- * Used to derive unseen counts within a 90-day rolling window.
+ * Derives unseen counts within a 90-day rolling window.
  *
- * NOT tracked by CDC — like userCountersTable, frequent writes should not
+ * Excluded from CDC like userCountersTable: frequent writes should not
  * generate activities or SSE noise. Excluded from entityTables and resourceTables.
  *
  * Partitioned by created_at with 90-day retention via pg_partman.
  * Composite PK (id, createdAt) required for partitioning.
- * No FKs on organizationId/tenantId — RLS + application logic enforce integrity,
+ * No FKs on organizationId/tenantId: RLS + application logic enforce integrity,
  * and FKs on high-write partitioned tables add unnecessary overhead.
  */
 export const seenByTable = snakeCase.table(

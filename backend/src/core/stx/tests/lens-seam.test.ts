@@ -1,13 +1,3 @@
-/**
- * Tests for the lens seams: wire-schema widening (update + create) and
- * ops normalization inside resolveUpdateOps.
- *
- * `shared/version-changes` is mocked with a synthetic expand rename lens
- * (attachment.name → title); `LENSLESS` is a synthetic entity without lenses,
- * exercising the passthrough
- * branches. End-to-end engine behavior with real lens modules is covered in
- * shared/src/version-changes/tests.
- */
 import { z } from '@hono/zod-openapi';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -22,7 +12,7 @@ vi.mock('shared/version-changes', async (importOriginal) => {
       stx: { fieldTimestamps?: Record<string, unknown> },
     ) => {
       if (entityType !== 'attachment') return { ops, stx, unknownFields: [] };
-      // Synthetic expand rename: canonicalize name → title, mirror-write the twin.
+      // Synthetic expand rename: canonicalize name to title and mirror-write the twin.
       const nextOps = { ...ops };
       if ('name' in nextOps) {
         nextOps.title = nextOps.name;
@@ -45,9 +35,10 @@ import { createUpdateSchema } from '#/core/stx/update-schema';
 
 const stx = (fieldTimestamps: Record<string, string>) => ({ mutationId: 'm1', sourceId: 's1', fieldTimestamps });
 
-// Synthetic lens-less entity — widenedOpsKeyMap/normalizeOps are mocked above by name
+// Synthetic lens-less entity, with widenedOpsKeyMap/normalizeOps mocked above by name.
 const LENSLESS = 'doc' as ProductEntityType;
 
+// Covers lens seam widening and ops normalization with mocked version changes.
 describe('createUpdateSchema widening', () => {
   const schema = createUpdateSchema('attachment', { title: z.string(), originalKey: z.string() });
 

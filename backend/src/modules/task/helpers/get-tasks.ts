@@ -70,7 +70,7 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
     ? sql`NOT (${tasksTable.status} = ${TaskStatus.Accepted} AND coalesce(${tasksTable.updatedAt}, ${tasksTable.createdAt}) <= ${getDateFromToday(acceptedCutOff)})`
     : undefined;
 
-  // Shared WHERE filters. Seq range filters must be AND-combined — inside the OR'd search
+  // Shared WHERE filters. Seq range filters must be AND-combined; inside the OR'd search
   // group a bounded cursor ("51,150") would degenerate to `seq >= 51 OR seq <= 150` (= all rows).
   const filters = and(
     ...seqCursorFilters(tasksTable.seq, seqCursor),

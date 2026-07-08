@@ -1,22 +1,3 @@
-/**
- * Attachment seq-read contract integration tests.
- *
- * Pins the seq-read contract that delta sync relies on, on the template's product
- * entity (attachment):
- * - B1: `seqCursor` reads return seq-ascending order regardless of sort/order params,
- *   so a limit-capped response is a clean, deterministic prefix.
- * - B2: `seqCursor` reads include soft-deleted rows (tombstones, so caches can drop them);
- *   normal reads never see them.
- * - B3: `limit` above 1000 is rejected, not clamped.
- * - B4: bounded `seqCursor` ("a,b") respects BOTH bounds — regression for the bug where
- *   seq filters joined the OR'd search group and "a,b" degenerated to all rows.
- *
- * (Raak also pins B5: `seqCursor` composes with `acceptedCutOff` — a task-status
- * feature with no template counterpart.)
- *
- * Requires: PostgreSQL (core mode or higher)
- */
-
 import { inArray } from 'drizzle-orm';
 import { getAttachments } from 'sdk';
 import { generateId } from 'shared/entity-id';
@@ -32,7 +13,7 @@ import { mockFetchRequest, setTestConfig } from './test-utils';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
-// raak: attachments live under a project — create one to parent the rows
+// Attachments live under a project, so these rows need a parent.
 const projectId = generateId();
 const attachmentIds = {
   seq10: generateId(),
@@ -44,6 +25,8 @@ const attachmentIds = {
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
+// Covers attachment seq reads for delta sync: ordering, tombstones, limits,
+// bounded seqCursor windows, and acceptedCutOff composition.
 describe('Attachment seq reads', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;
@@ -71,7 +54,7 @@ describe('Attachment seq reads', async () => {
       createdBy: tenant.user.id,
     });
 
-    // Insert order is DESCENDING seq so createdAt order disagrees with seq order —
+    // Insert order is descending seq, so createdAt order disagrees with seq order.
     // B1 would pass accidentally if the endpoint sorted by createdAt.
     const baseAttachment = {
       tenantId: tenant.tenantId,
@@ -142,7 +125,7 @@ describe('Attachment seq reads', async () => {
     const result = await listAttachments({ seqCursor: '1', limit: '2', sort: 'createdAt', order: 'desc' });
 
     expect(result.status).toBe(200);
-    // Rows in seq order are 10, 20, 30 (tombstone), 40, 50 — the capped response
+    // Rows in seq order are 10, 20, 30 (tombstone), 40, 50. The capped response
     // must be exactly the two lowest seqs, nothing skipped below the cap.
     expect(result.items.map((a) => a.seq)).toEqual([10, 20]);
   });

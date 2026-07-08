@@ -1,13 +1,3 @@
-/**
- * End-to-end proof of the host lifecycle cascade (hierarchy `host: 'task'`).
- *
- * Deleting a task soft-deletes the attachments it hosts (attachments.taskId) through the
- * generic cascade helper — the hand-rolled groupId cascade is gone. Unhosted attachments
- * and attachments of other tasks are untouched.
- *
- * Requires: PostgreSQL (core mode or higher)
- */
-
 import { eq, inArray } from 'drizzle-orm';
 import { deleteTasks } from 'sdk';
 import { generateId } from 'shared/entity-id';
@@ -35,6 +25,8 @@ const attachmentIds = {
   unhosted: generateId(),
 };
 
+// Covers task host lifecycle cascades: deleting a task soft-deletes only the
+// attachments it hosts.
 describe('Task host cascade (attachments follow their task)', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;

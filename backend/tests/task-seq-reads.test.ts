@@ -1,19 +1,3 @@
-/**
- * Task seq-read contract integration tests.
- *
- * Pins the seq-read contract that delta sync relies on:
- * - B1: `seqCursor` reads return seq-ascending order regardless of sort/order params,
- *   so a limit-capped response is a clean, deterministic prefix.
- * - B2: `seqCursor` reads include soft-deleted rows (tombstones, so caches can drop them);
- *   normal reads never see them.
- * - B3: `limit` above 1000 is rejected, not clamped.
- * - B4: bounded `seqCursor` ("a,b") respects BOTH bounds — regression for the bug where
- *   seq filters joined the OR'd search group and "a,b" degenerated to all rows.
- * - B5: `seqCursor` composes with `acceptedCutOff` (delta window AND cutoff).
- *
- * Requires: PostgreSQL (core mode or higher)
- */
-
 import { inArray } from 'drizzle-orm';
 import { getTasks } from 'sdk';
 import { generateId } from 'shared/entity-id';
@@ -41,6 +25,8 @@ const taskIds = {
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
+// Covers task seq reads for delta sync: ordering, tombstones, limits,
+// bounded seqCursor windows, and acceptedCutOff composition.
 describe('Task seq reads', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;
@@ -68,7 +54,7 @@ describe('Task seq reads', async () => {
       createdBy: tenant.user.id,
     });
 
-    // Insert order is DESCENDING seq so createdAt order disagrees with seq order —
+    // Insert order is descending seq, so createdAt order disagrees with seq order.
     // B1 would pass accidentally if the endpoint sorted by createdAt.
     const baseTask = {
       tenantId: tenant.tenantId,
@@ -111,7 +97,7 @@ describe('Task seq reads', async () => {
     const result = await listTasks({ seqCursor: '1', limit: '2', sort: 'createdAt', order: 'desc' });
 
     expect(result.status).toBe(200);
-    // Rows in seq order are 10, 20, 30 (tombstone), 40, 50 — the capped response
+    // Rows in seq order are 10, 20, 30 (tombstone), 40, 50. The capped response
     // must be exactly the two lowest seqs, nothing skipped below the cap.
     expect(result.items.map((t) => t.seq)).toEqual([10, 20]);
   });
@@ -148,7 +134,7 @@ describe('Task seq reads', async () => {
     const result = await listTasks({ seqCursor: '1', acceptedCutOff: 14, limit: '100' });
 
     expect(result.status).toBe(200);
-    // seq 40 is Accepted with updatedAt 30 days ago — outside the 14-day window.
+    // seq 40 is Accepted with updatedAt 30 days ago, outside the 14-day window.
     // The tombstone (30) still flows: seqCursor implies tombstone mode.
     expect(result.items.map((t) => t.seq)).toEqual([10, 20, 30, 50]);
   });

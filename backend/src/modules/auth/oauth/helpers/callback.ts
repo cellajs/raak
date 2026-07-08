@@ -363,7 +363,6 @@ const processOAuthAccount = async (info: OAuthFlowResult & { ctx: Context<Env>; 
     // Start MFA challenge if the user has MFA enabled
     const mfaRedirectPath = await initiateMfa(ctx, info.user);
 
-    // Build full URL for redirect — new users go to welcome page
     const redirectPath = mfaRedirectPath || getPostAuthRedirectPath(info.user);
     const redirectUrl = new URL(redirectPath, appConfig.frontendUrl);
 

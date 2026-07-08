@@ -8,10 +8,10 @@ import { findAttachmentKeysByTaskId } from '#/modules/attachment/attachment-quer
 import { extractKeywords } from '#/utils/extract-keywords';
 import { getIsoDate } from '#/utils/iso-date';
 
-// Reuse a single editor instance — schema construction is expensive, conversions are stateless
+// Reuse a single editor instance; schema construction is expensive, conversions are stateless.
 const editor = ServerBlockNoteEditor.create();
 
-// Loose block type for parsed JSON — includes custom block types not in @blocknote/core's Block union
+// Loose block type for parsed JSON, including custom block types outside @blocknote/core's Block union.
 export type ParsedBlock = {
   type: string;
   props: Record<string, unknown>;
@@ -31,7 +31,7 @@ export type DerivedDescriptionProps = {
 
 /**
  * Derive all virtual properties from a BlockNote description in a single parse + walk.
- * Replaces the previous scanTaskDescription() + getSummary() pair.
+ * Runs the parse, walk, summary, and keyword derivation in one pass.
  */
 export const deriveDescriptionProps = async (
   description: string,
@@ -58,8 +58,8 @@ export const deriveDescriptionProps = async (
         if (block.props?.checked) result.checkedCount++;
       }
       // TODO [#24] review: this counts description media BLOCKS (incl. external URLs with no
-      // attachment row) — since the hostEntity port, the CDC e:attachment counter counts live
-      // hosted ROWS per task. Decide which semantic the UI wants; see .todos/24.
+      // attachment row). The CDC e:attachment counter counts live hosted rows per task.
+      // Decide which semantic the UI wants; see .todos/24.
       if (
         mediaBlockTypes.has(block.type) &&
         block.props &&
@@ -74,12 +74,12 @@ export const deriveDescriptionProps = async (
   };
   walk(blocks);
 
-  // Keywords — extract from already-parsed blocks (no re-parse)
+  // Extract keywords from already-parsed blocks.
   const fullText = getSearchableTextFromBlocks(blocks as unknown as Block[]);
   result.keywords = extractKeywords(fullText);
   result.expandable = blocks.length > 1;
 
-  // Summary — find first non-checklist block with text content
+  // Find the first non-checklist block with text content.
   const summarySource =
     blocks.find(
       ({ type, content }) =>
@@ -93,7 +93,7 @@ export const deriveDescriptionProps = async (
     : 0;
 
   if (summarySource.type === 'checklistItem') {
-    // Custom block types (e.g. checklistItem) aren't in the server schema — extract text directly
+    // Custom block types (e.g. checklistItem) aren't in the server schema; extract text directly.
     result.summary = Array.isArray(summarySource.content)
       ? (summarySource.content as { text?: string }[]).map((item) => item.text ?? '').join('')
       : '';
@@ -106,7 +106,7 @@ export const deriveDescriptionProps = async (
 };
 
 /**
- * Removes attachments that are no longer referenced in the description.
+ * Removes attachments absent from the description.
  * Uses the host relation (attachments.taskId) to find all attachments owned by the task.
  * Accepts pre-parsed blocks to avoid redundant JSON.parse.
  */

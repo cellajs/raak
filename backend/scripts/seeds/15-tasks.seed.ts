@@ -394,7 +394,7 @@ const tasksSeed = async () => {
       });
       if (member.role !== 'admin') adminDisplayOrder += 10;
 
-      // Project memberships — one per (user, project), linked to first workspace encountered
+      // Project memberships: one per (user, project), linked to the first workspace encountered.
       for (const projectId of member.projectIds) {
         const projData = projectDataMap.get(projectId);
         if (!projData) continue;
