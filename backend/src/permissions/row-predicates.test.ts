@@ -3,9 +3,9 @@ import { type PgColumn, pgTable, varchar } from 'drizzle-orm/pg-core';
 import {
   type AccessPolicies,
   appConfig,
+  type ContextEntityType,
   computeCan,
   configureAccessPolicies,
-  type ContextEntityType,
   getAllDecisions,
   getContextRoles,
   hierarchy,
