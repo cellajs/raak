@@ -10,18 +10,13 @@ import { toaster } from '~/modules/common/toaster/toaster';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
 import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
+import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
-import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
 import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { useUserStore, yjsTokenKey } from '~/modules/user/user-store';
-import { cacheUpdate } from '~/query/basic/cache-mutations';
-import { findInCache } from '~/query/basic/find-in-list-cache';
-import type { ItemData } from '~/query/basic/types';
-import { queryClient } from '~/query/query-client';
 import { getRandomColor } from '~/utils/random-color';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
@@ -85,30 +80,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const projectPublicity = useProjectPublicity(task.projectId);
   const { attachmentsCreationCallback } = useUploadAttachments();
 
-  const { mutateAsync: updateDesc } = useTaskUpdateMutation(task.tenantId, task.organizationId);
-  const orgKey = taskKeys.list.org(task.organizationId);
-
-  const updateData = async (description: string) => {
-    if (collaborative) {
-      // The Yjs relay owns backend persistence in collab mode (it materializes the
-      // session ≤3s after edits) — no mutation fires on blur. Sync the caches with a
-      // cache-only optimistic derive so collapsed/expanded card views (which render
-      // from the query cache, not the Y.Doc) show fresh summary/counts instantly;
-      // the relay's materialization arrives via SSE moments later with authoritative values.
-      const derived = await deriveDescriptionProps(description);
-      const patch = { description, ...derived, updatedAt: new Date().toISOString() };
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(task.id), (old) => (old ? { ...old, ...patch } : undefined));
-      const cached = findInCache<Task>('task', task.id);
-      if (cached) cacheUpdate(orgKey, [{ ...cached, ...patch } as ItemData]);
-      return;
-    }
-
-    // Non-collab: persist via the standard mutation (offline queue, HLC, optimistic cache).
-    // Skip if the task was deleted (e.g. unmount flush after deletion).
-    if (!findInCache<Task>('task', task.id)) return;
-    const { summary, summaryLength } = await deriveDescriptionProps(description);
-    await updateDesc({ id: task.id, ops: { description }, summary, summaryLength });
-  };
+  const updateData = useTaskDescriptionUpdate(task, collaborative);
 
   // Stable random color for cursor labels
   const userColorRef = useRef(getRandomColor());
