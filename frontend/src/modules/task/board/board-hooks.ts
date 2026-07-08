@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { getOrderBetween } from 'shared/display-order';
+import { getOrderBetween } from 'shared/utils/display-order';
 import { useShallow } from 'zustand/react/shallow';
 import type { BoardLayoutPanel } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';

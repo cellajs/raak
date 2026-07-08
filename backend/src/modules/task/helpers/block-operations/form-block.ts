@@ -1,5 +1,5 @@
 import type { Block } from '@blocknote/core';
-import { nanoid } from 'shared/nanoid';
+import { nanoid } from 'shared/utils/nanoid';
 import type { attachmentsTable } from '#/modules/attachment/attachment-db';
 
 export const formUrlBlock = (href: string, text: string, id?: string): Block => {

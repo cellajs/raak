@@ -5,7 +5,7 @@ import { type UseFormProps, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { ContextEntityBase, Organization, Workspace } from 'sdk';
 import { zCreateWorkspacesBody, zCreateWorkspacesPath } from 'sdk/zod.gen';
-import { generateId } from 'shared/entity-id';
+import { generateId } from 'shared/utils/entity-id';
 import { z } from 'zod';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';

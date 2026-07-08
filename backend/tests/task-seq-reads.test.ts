@@ -1,6 +1,6 @@
 import { inArray } from 'drizzle-orm';
 import { getTasks } from 'sdk';
-import { generateId } from 'shared/entity-id';
+import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { baseDb as db } from '#/db/db';
 import { projectsTable } from '#/modules/project/project-db';

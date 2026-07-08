@@ -31,7 +31,7 @@
     "@opentelemetry/sdk-logs": "^0.220.0",
     "@opentelemetry/sdk-metrics": "^2.9.0",
     "@opentelemetry/sdk-node": "^0.220.0",
-    "@opentelemetry/semantic-conventions": "^1.40.0",
+    "@opentelemetry/semantic-conventions": "^1.42.0",
     "drizzle-orm": "1.0.0-rc.3",
     "hono": "^4.12.28",
     "pg-format": "^1.0.4",

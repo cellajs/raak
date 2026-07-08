@@ -4,7 +4,7 @@ import { CheckIcon, ChevronDownIcon, DotIcon } from 'lucide-react';
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
-import { generateId } from 'shared/entity-id';
+import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { deduplicateLabels } from '~/modules/label/deduplicate-labels';
