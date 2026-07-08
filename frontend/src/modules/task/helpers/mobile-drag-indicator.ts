@@ -38,11 +38,18 @@ export const resolveMobileTaskDropIndicator = ({
       clientX >= rect.left - 24 && clientX <= rect.right + 24 && clientY >= rect.top && clientY <= rect.bottom,
   );
 
-  const candidate = (overlappingCards.length ? overlappingCards : cards).toSorted((left, right) => {
-    const leftDistance = getVerticalDistance(left.rect, clientY);
-    const rightDistance = getVerticalDistance(right.rect, clientY);
-    return leftDistance - rightDistance;
-  })[0];
+  // Single pass for the nearest card (strict `<` keeps the first DOM-order card on ties),
+  // instead of sorting the whole set on every pointer move / scroll.
+  const pool = overlappingCards.length ? overlappingCards : cards;
+  let candidate: { element: HTMLElement; rect: DOMRect } | undefined;
+  let candidateDistance = Number.POSITIVE_INFINITY;
+  for (const card of pool) {
+    const distance = getVerticalDistance(card.rect, clientY);
+    if (distance < candidateDistance) {
+      candidate = card;
+      candidateDistance = distance;
+    }
+  }
 
   if (!candidate) return null;
 

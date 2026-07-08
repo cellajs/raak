@@ -13,6 +13,17 @@ import { isQueryData } from '~/query/basic/mutate-query';
 import { queryClient } from '~/query/query-client';
 import type { QueryData } from '~/query/types';
 
+// Subscribe only to task-related query cache updates. A broad subscription re-runs the snapshot for
+// every unrelated query lifecycle event (e.g. an AI chat panel mounting its own useQuery hooks),
+// which can schedule a BoardHeader update mid-render of another component and trip React's
+// "setState in render" warning. Hoisted to module scope so useSyncExternalStore doesn't resubscribe
+// on every render.
+const subscribeToTaskCache = (onStoreChange: () => void) =>
+  queryClient.getQueryCache().subscribe((event) => {
+    const key = event.query?.queryKey;
+    if (Array.isArray(key) && key[0] === 'task') onStoreChange();
+  });
+
 export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQueryParam) => {
   const { search } = useSearchParams<{ q?: string }>({});
   const isPublicView = !queryParams;
@@ -22,16 +33,7 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
   const { tenantId: _, organizationId, ...scopeFilters } = queryParams ?? { organizationId: '', projectId: '' };
 
   return useSyncExternalStore(
-    // Subscribe only to task-related query cache updates. A broad subscription
-    // re-runs the snapshot for every unrelated query lifecycle event (e.g. an
-    // AI chat panel mounting its own useQuery hooks), which can schedule a
-    // BoardHeader update mid-render of another component and trip React's
-    // "setState in render" warning.
-    (onStoreChange) =>
-      queryClient.getQueryCache().subscribe((event) => {
-        const key = event.query?.queryKey;
-        if (Array.isArray(key) && key[0] === 'task') onStoreChange();
-      }),
+    subscribeToTaskCache,
 
     // Calculate the snapshot of the total task count
     () => {
