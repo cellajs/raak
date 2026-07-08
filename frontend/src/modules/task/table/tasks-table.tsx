@@ -14,8 +14,8 @@ import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
-import { TasksTableBar } from '~/modules/task/table/tasks-bar';
 import { useColumns } from '~/modules/task/table/tasks-columns';
+import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
 import type { Task, TaskSearch } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 

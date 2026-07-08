@@ -7,7 +7,7 @@ import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
+import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { handleTaskSelect } from '~/modules/task/helpers/task-selection';
@@ -23,13 +23,13 @@ import { Checkbox } from '~/modules/ui/checkbox';
 import { useUserStore } from '~/modules/user/user-store';
 import { cn } from '~/utils/cn';
 
-interface TasksFooterProps {
+interface TaskCardFooterProps {
   task: Task;
   isSelected: boolean;
   isSheet?: boolean;
 }
 
-export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isSheet = false }: TasksFooterProps) {
+export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, isSheet = false }: TaskCardFooterProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const readOnlyInert = useReadOnlyInert(task.projectId);
@@ -175,7 +175,7 @@ export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isShe
             {...readOnlyInert}
           >
             {selectedPoints === null || selectedPoints === undefined ? (
-              <NotSelected className="size-4 fill-current opacity-70" aria-hidden="true" />
+              <NotSelectedIcon className="size-4 fill-current opacity-70" aria-hidden="true" />
             ) : (
               <selectedPoints.icon className="size-4 fill-current" aria-hidden="true" />
             )}

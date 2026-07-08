@@ -15,7 +15,7 @@ import { getSeenContextId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskCardContentCollapsed } from '~/modules/task/card/card-content-collapsed';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
-import { TaskCardPrimitive } from '~/modules/task/card/card-drag-preview';
+import { TaskCardDragPreview } from '~/modules/task/card/card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -259,7 +259,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       {portalData &&
         createPortal(
           <div style={{ width: portalData.rect.width, height: portalData.rect.height }}>
-            <TaskCardPrimitive task={task} />
+            <TaskCardDragPreview task={task} />
           </div>,
           portalData.container,
         )}

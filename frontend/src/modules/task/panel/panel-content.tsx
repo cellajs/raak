@@ -12,9 +12,9 @@ import { getDraftDisplayOrder, getTargetIndexByStatus } from '~/modules/task/hel
 import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { usePanelAutoScroll } from '~/modules/task/hooks/use-panel-drop-target';
-import { useStatusSectionSticky } from '~/modules/task/hooks/use-status-section-visibility';
+import { useStatusSectionSticky } from '~/modules/task/hooks/use-status-section-sticky';
 import { TaskPanelEmpty } from '~/modules/task/panel/panel-empty';
-import { PanelStatusSection } from '~/modules/task/panel/specific-status-section';
+import { PanelStatusSection } from '~/modules/task/panel/panel-status-section';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';

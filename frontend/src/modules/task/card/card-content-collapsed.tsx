@@ -18,7 +18,7 @@ export const TaskCardContentCollapsed = ({ task }: TaskContentCollapsedProps) =>
       <div className="mt-1.5 mb-1 ml-1 inline leading-none opacity-90 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100">
         <BlockNoteMinimalHtml className="inline leading-none" html={task.summary} />
         {env.VITE_DEBUG_MODE && <span className="ml-2 text-muted">#{task.displayOrder}</span>}
-        <TaskCardSummaryButtons item={task} />
+        <TaskCardSummaryButtons task={task} />
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { getSeenContextId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
-import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
+import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import {
   pointsOptionsByValue,
   statusOptionsByValue,
@@ -163,7 +163,7 @@ export const useColumns = (
           return (
             <>
               {points === null ? (
-                <NotSelected className="mr-2 size-4 fill-current opacity-80" aria-hidden="true" />
+                <NotSelectedIcon className="mr-2 size-4 fill-current opacity-80" aria-hidden="true" />
               ) : (
                 <points.icon className="mr-2 size-4 shrink-0 fill-current" aria-hidden="true" />
               )}

@@ -16,7 +16,7 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
 import { Spinner } from '~/modules/common/spinner';
 import type { UploadedUppyFile } from '~/modules/common/uploader/types';
-import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
+import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   createTaskFormSchema,
@@ -305,7 +305,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                           </>
                         ) : (
                           <>
-                            <NotSelected className="size-4" aria-hidden="true" />
+                            <NotSelectedIcon className="size-4" aria-hidden="true" />
                             <span className="font-normal opacity-75">
                               {t('c:set_resource', { resource: t('c:points').toLowerCase() })}
                             </span>

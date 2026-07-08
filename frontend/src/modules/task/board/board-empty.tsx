@@ -4,7 +4,7 @@ import type { Workspace } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { createNewProject } from '~/modules/project/project-actions';
-import { AvailableProjectsEmptyAction } from '~/modules/task/board/available-projects-alert';
+import { AvailableProjectsEmptyAction } from '~/modules/task/board/available-projects-empty-action';
 import { Button } from '~/modules/ui/button';
 
 interface Props {

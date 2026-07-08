@@ -56,7 +56,7 @@ export const taskDescriptionGutterStyle = 'pl-1 sm:pl-9 pb-4';
 /**
  * Faint accepted/iced section-bar colors, shared by the collapsed-panel sections and the board
  * skeleton so the accepted (green) / iced (sky) hue lives in one place. The interactive toggle
- * header in `specific-status-section` uses a richer, single-use palette and stays inline.
+ * header in `panel-status-section` uses a richer, single-use palette and stays inline.
  */
 export const statusSectionColors = {
   accepted: {
