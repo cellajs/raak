@@ -67,7 +67,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   // No-op when scrollViewportRef is unattached (mobile / windowScroll branches).
   // The drop target itself is registered one level up in `board-panel.tsx`
   // so it remains live when the panel is collapsed.
-  usePanelAutoScroll(scrollViewportRef);
+  usePanelAutoScroll(scrollViewportRef, isMobile || !!windowScroll);
 
   // Compute boundary indices for accepted/iced task groups in the sorted list
   const { acceptedBoundaryIndex, icedBoundaryIndex } = useMemo(() => {
