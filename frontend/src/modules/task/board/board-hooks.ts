@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import type { Project } from 'sdk';
 import { useShallow } from 'zustand/react/shallow';
 import type { BoardLayoutPanel } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
@@ -34,7 +34,7 @@ export function sortPanelsByOrder(
 }
 
 /** Shared board panel setup: panels, layout, and resize handler. */
-export function useBoardPanels(boardId: string, projects: Project[], extraPanels?: BoardResizablePanel[]) {
+export function useBoardPanels(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
   const panelInfo = useTaskBoardStore(useShallow((state) => state.panelData[boardId]));
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);

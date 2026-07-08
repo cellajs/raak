@@ -14,7 +14,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
-  const { alertsSeen } = useAlertStore();
+  const alertsSeen = useAlertStore((s) => s.alertsSeen);
   const showExplainer = !!workspace && !alertsSeen.includes('welcome-text');
 
   const extraPanels = useMemo(() => {
