@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import { getOrderBetween } from 'shared/display-order';
 import { useShallow } from 'zustand/react/shallow';
 import type { BoardLayoutPanel } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
@@ -31,6 +32,70 @@ export function sortPanelsByOrder(
       return a.order - b.order;
     })
     .map(({ panel }) => panel);
+}
+
+/** What a panel drag-reorder should persist: a server-owned membership update, a local-only
+ *  panel order, or nothing (null) when the drop is a no-op. */
+export type PanelReorderResult =
+  | {
+      kind: 'membership';
+      membershipId: string;
+      tenantId: string;
+      organizationId: string;
+      projectId: string;
+      displayOrder: number;
+    }
+  | { kind: 'local'; panelId: string; displayOrder: number }
+  | null;
+
+/**
+ * Pure fractional-order computation for a panel drag-reorder. Resolves neighbor orders via the
+ * same comparator used to render, so server-owned and local-only panels reorder uniformly.
+ * Returns null (skip) for: unknown source, single panel (no anchor), float collision, or an
+ * unchanged membership order. The caller performs the actual persistence.
+ */
+export function computePanelReorder(
+  panels: BoardResizablePanel[],
+  localOrders: Record<string, number> | undefined,
+  newOrder: string[],
+  sourcePanelId: string,
+): PanelReorderResult {
+  const sourcePanel = panels.find((p) => p.panelId === sourcePanelId);
+  if (!sourcePanel) return null;
+
+  const panelById = new Map(panels.map((p) => [p.panelId, p]));
+  const orderAt = (i: number): number | undefined => {
+    if (i < 0 || i >= newOrder.length) return undefined;
+    const neighbor = panelById.get(newOrder[i]);
+    return neighbor ? getPanelDisplayOrder(neighbor, localOrders) : undefined;
+  };
+
+  const sourceIdx = newOrder.indexOf(sourcePanelId);
+  const prevOrder = orderAt(sourceIdx - 1);
+  const nextOrder = orderAt(sourceIdx + 1);
+
+  // Single panel — no anchor to reorder against.
+  if (prevOrder == null && nextOrder == null) return null;
+
+  const newDisplayOrder = getOrderBetween(prevOrder ?? undefined, nextOrder ?? undefined);
+  // Float collision — skip; a rebalance pass would be needed to recover.
+  if (newDisplayOrder === null) return null;
+
+  const sourceProject = sourcePanel.project;
+  if (sourceProject?.membership) {
+    if (newDisplayOrder === sourceProject.membership.displayOrder) return null;
+    return {
+      kind: 'membership',
+      membershipId: sourceProject.membership.id,
+      tenantId: sourceProject.tenantId,
+      organizationId: sourceProject.organizationId,
+      projectId: sourceProject.id,
+      displayOrder: newDisplayOrder,
+    };
+  }
+
+  // Local-only panel (explainer, ai-chat, …).
+  return { kind: 'local', panelId: sourcePanelId, displayOrder: newDisplayOrder };
 }
 
 /** Shared board panel setup: panels, layout, and resize handler. */
