@@ -32,7 +32,7 @@ import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
-import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
+import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -86,8 +86,6 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   const pendingCloseRef = useRef(false);
 
   const projectMembers = useProjectMembers(projectId, tenantId, organizationId);
-
-  const projectPublicity = useProjectPublicity(projectId);
   const { attachmentsCreationCallback } = useUploadAttachments();
 
   const taskMutation = useTaskCreateMutation(tenantId, organizationId);
@@ -116,16 +114,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
   const updateAttachments = useCallback((data: UploadedUppyFile<'attachment'>) => setAttachments(data), []);
-
-  const baseFilePanelProps = useMemo(
-    () => ({
-      isPublic: projectPublicity,
-      tenantId,
-      organizationId,
-      onComplete: updateAttachments,
-    }),
-    [organizationId, projectPublicity, tenantId, updateAttachments],
-  );
+  const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, updateAttachments);
 
   const handleCloseForm = () => {
     if (isDialog) useDialoger.getState().remove();

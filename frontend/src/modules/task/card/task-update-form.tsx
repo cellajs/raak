@@ -11,8 +11,8 @@ import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
-import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
 import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
+import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
@@ -76,8 +76,6 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const collaborative = canCollaborate && wsReady;
 
   const projectMembers = useProjectMembers(task.projectId, tenantId, task.organizationId);
-
-  const projectPublicity = useProjectPublicity(task.projectId);
   const { attachmentsCreationCallback } = useUploadAttachments();
 
   const updateData = useTaskDescriptionUpdate(task, collaborative);
@@ -100,13 +98,13 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
     useTaskCardStore.getState().setTaskState(task.id, 'expanded');
   };
 
-  const baseFilePanel = {
-    isPublic: projectPublicity,
+  // Uploaded attachments belong to this task (host relation)
+  const baseFilePanel = useTaskFilePanelProps(
+    task.projectId,
     tenantId,
-    organizationId: task.organizationId,
-    // Uploaded attachments belong to this task (host relation)
-    onComplete: attachmentsCreationCallback({ ...task, taskId: task.id }),
-  };
+    task.organizationId,
+    attachmentsCreationCallback({ ...task, taskId: task.id }),
+  );
 
   // Show faded read-only preview while waiting for WS sync (avoids empty flash)
   if (waitingForSync) {
