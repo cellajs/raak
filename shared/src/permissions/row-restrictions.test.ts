@@ -1,13 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { appConfig } from '../config-builder/app-config';
-import { configurePermissions } from './access-policies';
 import { getAllDecisions } from './permission-manager/check';
 import type { PermissionMembership, SubjectForPermission } from './permission-manager/types';
-import type { RowRestrictions } from './row-restrictions';
+import {
+  configureWidePermissions,
+  wideMembership,
+  widePublicGrants,
+  wideRestrictions,
+  wideSubject,
+  wideTopology,
+} from '../testing/wide-fixture';
+
+/**
+ * Row restrictions (`restrict`): narrow membership grants per row via `visibilityDepth` and
+ * `audienceRoles`, with exempt roles bypassing the restriction and row-condition/public grants
+ * never narrowed. See `row-restrictions.ts` for the full semantics.
+ *
+ * Runs against the wide fixture's project → organization chain (roles admin/member/guest),
+ * which exercises multi-level `visibilityDepth` ordering and cross-level `audienceRoles` sets
+ * regardless of how deeply a fork's own config nests contexts.
+ */
 
 // Synthetic policies: every role can read tasks unconditionally; project members can
 // also update, and everyone with membership can create.
-const { accessPolicies: policies } = configurePermissions(appConfig.entityTypes, ({ subject, contexts }) => {
+const { accessPolicies: policies } = configureWidePermissions(({ subject, contexts }) => {
   if (subject.name !== 'task') return;
   contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
   contexts.organization.member({ create: 1, read: 1 });
@@ -16,29 +31,27 @@ const { accessPolicies: policies } = configurePermissions(appConfig.entityTypes,
   contexts.project.guest({ read: 1 });
 });
 
-const restrictions: RowRestrictions = {
+const restrictions = wideRestrictions({
   task: { depthColumn: 'visibilityDepth', rolesColumn: 'audienceRoles', exemptRoles: ['admin'] },
-};
-
-const membership = (contextType: 'organization' | 'project', contextId: string, role: string): PermissionMembership =>
-  ({ contextType, contextId, role }) as PermissionMembership;
-
-const orgMember = membership('organization', 'org1', 'member');
-const orgAdmin = membership('organization', 'org1', 'admin');
-const projectMember = membership('project', 'p1', 'member');
-const projectGuest = membership('project', 'p1', 'guest');
-
-const task = (row: Record<string, unknown> | undefined): SubjectForPermission => ({
-  entityType: 'task',
-  id: 't1',
-  contextIds: { organization: 'org1', project: 'p1' },
-  ...(row !== undefined && { row }),
 });
 
-const readableBy = (m: PermissionMembership, row: Record<string, unknown> | undefined, userId = 'u1') =>
-  getAllDecisions(policies, [m], task(row), { userId, restrictions }).can.read;
+const orgMember = wideMembership('organization', 'org1', 'member');
+const orgAdmin = wideMembership('organization', 'org1', 'admin');
+const projectMember = wideMembership('project', 'p1', 'member');
+const projectGuest = wideMembership('project', 'p1', 'guest');
 
-// Engine-level scenario: raak's chain project > organization, roles admin/member/guest.
+const task = (row: Record<string, unknown> | undefined): SubjectForPermission =>
+  wideSubject({
+    entityType: 'task',
+    id: 't1',
+    contextIds: { organization: 'org1', project: 'p1' },
+    ...(row !== undefined && { row }),
+  });
+
+const readableBy = (m: PermissionMembership, row: Record<string, unknown> | undefined, userId = 'u1') =>
+  getAllDecisions(policies, [m], task(row), { userId, restrictions, topology: wideTopology }).can.read;
+
+// Multi-level ordering: wide fixture's chain project > organization, roles admin/member/guest.
 describe('visibilityDepth', () => {
   it('null depth: unrestricted — every read grant qualifies', () => {
     expect(readableBy(orgMember, { visibilityDepth: null })).toBe(true);
@@ -90,13 +103,17 @@ describe('exemption and bypass rules', () => {
   });
 
   it("row-condition grants ('own') are never narrowed — creator sees own restricted row", () => {
-    const { accessPolicies: ownPolicies } = configurePermissions(appConfig.entityTypes, ({ subject, contexts }) => {
+    const { accessPolicies: ownPolicies } = configureWidePermissions(({ subject, contexts }) => {
       if (subject.name !== 'task') return;
       contexts.organization.member({ read: 'own' });
     });
     const row = { visibilityDepth: 'project', audienceRoles: ['nobody'] };
     const subject: SubjectForPermission = { ...task(row), createdBy: 'u1' };
-    const { can } = getAllDecisions(ownPolicies, [orgMember], subject, { userId: 'u1', restrictions });
+    const { can } = getAllDecisions(ownPolicies, [orgMember], subject, {
+      userId: 'u1',
+      restrictions,
+      topology: wideTopology,
+    });
     expect(can.read).toBe(true);
   });
 
@@ -104,14 +121,19 @@ describe('exemption and bypass rules', () => {
     const row = { visibilityDepth: 'project', audienceRoles: ['nobody'], publicAt: '2026-01-01' };
     const { can } = getAllDecisions({}, [], task(row), {
       restrictions,
-      publicGrants: { task: 'publicSelf' },
+      publicGrants: widePublicGrants({ task: 'publicSelf' }),
+      topology: wideTopology,
     });
     expect(can.read).toBe(true);
   });
 
   it('create is never restricted; other actions are', () => {
     const row = { visibilityDepth: 'project', audienceRoles: ['guest'] };
-    const { can } = getAllDecisions(policies, [projectMember], task(row), { userId: 'u1', restrictions });
+    const { can } = getAllDecisions(policies, [projectMember], task(row), {
+      userId: 'u1',
+      restrictions,
+      topology: wideTopology,
+    });
     expect(can.create).toBe(true);
     expect(can.read).toBe(false);
     expect(can.update).toBe(false);
@@ -119,7 +141,11 @@ describe('exemption and bypass rules', () => {
 
   it('system admin bypasses restrictions like everything else', () => {
     const row = { visibilityDepth: 'project', audienceRoles: ['nobody'] };
-    const { can } = getAllDecisions(policies, [], task(row), { isSystemAdmin: true, restrictions });
+    const { can } = getAllDecisions(policies, [], task(row), {
+      isSystemAdmin: true,
+      restrictions,
+      topology: wideTopology,
+    });
     expect(can.read).toBe(true);
   });
 });
@@ -131,7 +157,11 @@ describe('fail-closed without row data', () => {
   });
 
   it('no restriction declared for the entity type → unchanged behavior', () => {
-    const { can } = getAllDecisions(policies, [projectMember], task(undefined), { userId: 'u1', restrictions: {} });
+    const { can } = getAllDecisions(policies, [projectMember], task(undefined), {
+      userId: 'u1',
+      restrictions: {},
+      topology: wideTopology,
+    });
     expect(can.read).toBe(true);
   });
 });

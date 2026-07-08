@@ -42,7 +42,9 @@ export default defineConfig({
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
       // Hierarchy-bound tests: raak's versions exercise the deeper hierarchy (project,
-      // guest, host relations) that the template's org-only rewrites cannot.
+      // guest, host relations) that the template's org-only rewrites cannot. Most now run on
+      // the shared wide-fixture kit / config-adaptive seeding and are intended for upstream
+      // contribution (see .todos/28); pinned until cella adopts them.
       'backend/src/modules/entities/helpers/recalculate-counters.test.ts',
       'backend/src/permissions/row-predicates.test.ts',
       'backend/tests/attachment-seq-reads.test.ts',
@@ -50,6 +52,24 @@ export default defineConfig({
       'shared/src/permissions/host-delegation.test.ts',
       'shared/src/permissions/public-read.test.ts',
       'shared/src/permissions/row-restrictions.test.ts',
+      'shared/src/permissions/permission-manager/index.test.ts',
+      'shared/src/permissions/compute-can.test.ts',
+      // Topology seam + wide-fixture kit (raak-authored, pending upstream contribution). Pinned
+      // so a sync cannot revert the seam before cella adopts it; unpin once upstream lands.
+      'shared/src/permissions/permission-manager/check.ts',
+      'shared/src/permissions/permission-manager/types.ts',
+      'shared/src/permissions/access-policies.ts',
+      'shared/src/permissions/compute-can.ts',
+      'shared/src/permissions/index.ts',
+      'shared/src/testing/wide-fixture.ts',
+      'shared/src/testing/wide-fixture.test.ts',
+      'backend/tests/hierarchy-helpers.ts',
+      // Fork-owned route/DB tests for raak-only features (own-read, public routes, task host
+      // cascade, task seq reads). Pinned to close the sync gap until upstreamed (see .todos/28).
+      'backend/tests/attachment-own-reads.test.ts',
+      'backend/tests/public-read-routes.test.ts',
+      'backend/tests/task-host-cascade.test.ts',
+      'backend/tests/task-seq-reads.test.ts',
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',

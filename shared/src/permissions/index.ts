@@ -37,8 +37,10 @@ export type {
   PermissionCheckOptions,
   PermissionDecision,
   PermissionMembership,
+  PermissionTopology,
   ResolvedContextIds,
   SubjectForPermission,
+  TopologyHierarchy,
 } from './permission-manager/types';
 export { buildSubject, buildSubjectFromEntity } from './build-subject';
 export { validateAncestorScope } from './validate-ancestor-scope';
