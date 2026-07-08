@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
+import { createNewProject } from '~/modules/project/project-actions';
 import { AvailableProjectsEmptyAction } from '~/modules/task/board/available-projects-alert';
-import { createNewProject } from '~/modules/task/helpers/project-actions';
 import { Button } from '~/modules/ui/button';
 
 interface Props {

@@ -8,13 +8,9 @@ import type { Project } from 'sdk';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
+import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
-import {
-  createNewProject,
-  openProjectMembersSheet,
-  openProjectSettingsSheet,
-} from '~/modules/task/helpers/project-actions';
 import { Button, type buttonVariants } from '~/modules/ui/button';
 import {
   DropdownMenu,
