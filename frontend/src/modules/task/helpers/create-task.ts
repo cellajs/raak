@@ -31,7 +31,7 @@ export const newTaskFormIsDirty = ({ assignedTo, labels, description }: NewTaskF
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
 // Handles logic for showing or hiding task creation form via Zustand draft state
-export const handleCreateForm = (project: { id: string; organizationId: string; tenantId: string }) => {
+export const toggleCreateTaskForm = (project: { id: string; organizationId: string; tenantId: string }) => {
   const id = `create-task-${project.id}`;
   const store = useTaskInteractionStore.getState();
   const existingDraft = store.draftTasks[project.id];

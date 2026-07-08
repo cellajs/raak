@@ -19,10 +19,10 @@ import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-select
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   createTaskFormSchema,
-  handleCreateForm,
   type NewTaskFormValues,
   newTaskFormDefaults,
   newTaskFormIsDirty,
+  toggleCreateTaskForm,
 } from '~/modules/task/helpers/create-task';
 import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
 import { focusTask } from '~/modules/task/helpers/focus-task';
@@ -117,7 +117,7 @@ const CreateTaskForm = ({
     if (isDialog) useDialoger.getState().remove();
     else {
       focusTask(null);
-      handleCreateForm({ id: projectId, organizationId, tenantId });
+      toggleCreateTaskForm({ id: projectId, organizationId, tenantId });
     }
   };
 

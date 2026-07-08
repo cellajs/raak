@@ -10,7 +10,7 @@ import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { cachedTasks, currentActiveTask } from '~/modules/task/helpers/active-task';
 import { prepareBoardPanels, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
-import { handleCreateForm as toggleCreateForm } from '~/modules/task/helpers/create-task';
+import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
@@ -191,7 +191,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
 
     const targetProject = projects.find((p) => p.id === targetProjectId) ?? projects[0];
     if (isProjectReadOnly(targetProject.id)) return;
-    toggleCreateForm(targetProject);
+    toggleCreateTaskForm(targetProject);
   };
 
   // Open a field dropdown for the focused task

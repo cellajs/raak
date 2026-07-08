@@ -11,7 +11,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { formatSectionLabel, makePanelKey } from '~/modules/task/helpers/board-helpers';
-import { handleCreateForm, type NewTaskFormValues, newTaskFormIsDirty } from '~/modules/task/helpers/create-task';
+import { type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
@@ -53,7 +53,7 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
   const isReadOnly = useIsProjectReadOnly(project.id);
   const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[project.id] !== undefined);
 
-  const toggleCreateForm = () => handleCreateForm(project);
+  const toggleCreateForm = () => toggleCreateTaskForm(project);
 
   // Drag handle context from board-layout (null when board is not reorderable)
   const panelDrag = usePanelDragHandle();

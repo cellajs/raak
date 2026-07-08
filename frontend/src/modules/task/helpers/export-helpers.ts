@@ -21,7 +21,7 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
       projectId: project?.name ?? '-',
       createdBy: task.createdBy?.name ?? '-',
       updatedBy: task.updatedBy?.name ?? '-',
-      assignedTo: task.assignedTo.map((m) => m.name) || '-',
+      assignedTo: task.assignedTo.map((m) => m.name),
     } as unknown as Task;
   });
 };

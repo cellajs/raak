@@ -29,6 +29,7 @@ import {
 import { Kbd } from '~/modules/ui/kbd';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
+import { cn } from '~/utils/cn';
 import { inNumbersArray } from '~/utils/in-numbers-array';
 
 // Sentinel prefix for the "create label" row's Combobox value, so it can't
@@ -55,7 +56,7 @@ const renderLabelItem = (
         style={{ background: label.color || undefined }}
         strokeWidth={6}
       />
-      <div className={`grow ${label.projectId !== projectId && !isSelected && 'opacity-50'}`}>{label.name}</div>
+      <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
       <span className="pointer-events-none flex size-4 items-center justify-center">
         {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
       </span>
@@ -273,7 +274,7 @@ export const SelectLabels = ({
             {t('c:selected')}
             {selectedCollapsed && <span className="ml-1 text-xs opacity-70">{selectedLabels.length}</span>}
             <span className="grow" />
-            <ChevronDownIcon className={`size-3.5 transition-transform ${!selectedCollapsed && 'rotate-180'}`} />
+            <ChevronDownIcon className={cn('size-3.5 transition-transform', !selectedCollapsed && 'rotate-180')} />
           </button>
         )}
         <ScrollArea>
