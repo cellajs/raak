@@ -41,11 +41,8 @@ export default defineConfig({
       'backend/src/modules/attachment/attachment-queries.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
-      // row-predicates parity test: still fork-specific — its config-adaptive generalization is
-      // deferred (see .todos/28). Every other hierarchy-bound test now runs on the shared
-      // wide-fixture kit / config-adaptive seeding and is owned upstream (cellajs/cella#861), so
-      // those sync cleanly and are no longer pinned.
-      'backend/src/permissions/row-predicates.test.ts',
+      // NOTE: the hierarchy-bound permission tests are no longer pinned — they run on the shared
+      // wide-fixture kit / config-adaptive seeding and are owned upstream, so they sync cleanly.
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',
