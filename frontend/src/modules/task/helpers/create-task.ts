@@ -30,15 +30,6 @@ export const newTaskFormDefaults: NewTaskFormValues = {
 export const newTaskFormIsDirty = ({ assignedTo, labels, description }: NewTaskFormValues) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
-export const getTargetIndexByStatus = (tasks: Task[], status: TaskStatus) => {
-  // Determine direction: forward for early-stage statuses, backward otherwise
-  const isForwardSearch = [TaskStatus.Iced, TaskStatus.Unstarted].includes(status);
-  const finder = isForwardSearch ? tasks.findIndex : tasks.findLastIndex;
-
-  // Use appropriate finder method to locate task with matching status
-  return finder.call(tasks, (task) => task.status === status);
-};
-
 // Handles logic for showing or hiding task creation form via Zustand draft state
 export const handleCreateForm = (project: { id: string; organizationId: string; tenantId: string }) => {
   const id = `create-task-${project.id}`;

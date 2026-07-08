@@ -14,9 +14,6 @@ export type TaskLabel = NonNullable<Task['labels']>[number];
 
 export type BoardResizablePanel = { project?: EnrichedProject; sectionFilters?: SectionsValue; panelId: string };
 
-/** Check whether a task object is a virtual draft (inline create-form placeholder). */
-export const isDraftTask = (task: { _draft?: boolean }): boolean => '_draft' in task && task._draft === true;
-
 export type TaskCounts = {
   total: number;
   iced?: number;

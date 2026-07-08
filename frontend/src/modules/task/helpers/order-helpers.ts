@@ -1,9 +1,10 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import { defaultOrder, getRelativeOrder, orderGap } from 'shared/display-order';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { TaskStatus } from '~/modules/task/task-properties';
-import { isDraftTask, type Task } from '~/modules/task/types';
+import type { Task } from '~/modules/task/types';
 
 /**
  * Return task order for new task
@@ -84,4 +85,14 @@ export const getDraftDisplayOrder = (status: number, projectId: string) => {
 
   const lowest = Math.min(...projectTasks.map((t) => t.displayOrder));
   return lowest - 1000;
+};
+
+/**
+ * Index of the anchor task to insert a new task next to, given its status.
+ * Early-stage statuses (iced/unstarted) search forward; later statuses search backward.
+ */
+export const getTargetIndexByStatus = (tasks: Task[], status: TaskStatus) => {
+  const isForwardSearch = [TaskStatus.Iced, TaskStatus.Unstarted].includes(status);
+  const matchesStatus = (task: Task) => task.status === status;
+  return isForwardSearch ? tasks.findIndex(matchesStatus) : tasks.findLastIndex(matchesStatus);
 };

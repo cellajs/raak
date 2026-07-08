@@ -7,8 +7,8 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { defaultPanelPrefs, type TogglabelStatusTypes, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { MotionTaskCard } from '~/modules/task/card/motion-task-card';
 import { DraftTaskItem } from '~/modules/task/draft-task-item';
-import { getTargetIndexByStatus } from '~/modules/task/helpers/create-task';
-import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
+import { getDraftDisplayOrder, getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
 import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { usePanelAutoScroll } from '~/modules/task/hooks/use-panel-drop-target';
@@ -18,7 +18,6 @@ import { PanelStatusSection } from '~/modules/task/panel/specific-status-section
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';
-import { isDraftTask } from '~/modules/task/types';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
 interface PanelProps {

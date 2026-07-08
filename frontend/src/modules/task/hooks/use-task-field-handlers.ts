@@ -8,8 +8,6 @@ import { useUserStore } from '~/modules/user/user-store';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { computeArrayDelta } from '~/query/offline/array-delta';
 
-export type TaskFieldHandlers = ReturnType<typeof buildFieldHandlers>;
-
 interface FieldHandlerDeps {
   taskMutation: ReturnType<typeof useTaskUpdateMutation>;
   user: UserMinimalBase;
