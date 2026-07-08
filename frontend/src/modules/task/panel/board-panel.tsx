@@ -9,8 +9,8 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import type { EnrichedProject } from '~/modules/project/types';
 import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { createTaskAction } from '~/modules/task/create-task-action';
 import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
+import { createTaskAction } from '~/modules/task/helpers/create-task-action';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { TaskPanelCollapsed } from '~/modules/task/panel/panel-collapsed';
@@ -92,16 +92,18 @@ export const BoardPanel = memo(function BoardPanel({
     const totalTasks = project.included?.counts?.entities?.task ?? 0;
     const hiddenAccepted = Math.max(0, totalTasks - projectFetchedCount);
 
-    const baseCounts: TaskCounts = {
-      acceptedCutOff: hiddenAccepted,
+    const showAccepted = !sectionFilters || sectionFilters.status.includes(TaskStatus.Accepted);
+    const showIced = !sectionFilters || sectionFilters.status.includes(TaskStatus.Iced);
+
+    return {
       total: filteredTasks.length,
-    };
-
-    if (!sectionFilters || sectionFilters.status.includes(TaskStatus.Accepted)) baseCounts.accepted = accepted;
-    if (!sectionFilters || sectionFilters.status.includes(TaskStatus.Iced)) baseCounts.iced = iced;
-
-    return baseCounts;
-  }, [filteredTasks, project.included?.counts?.entities?.task, projectFetchedCount]);
+      acceptedCutOff: hiddenAccepted,
+      showAccepted,
+      showIced,
+      accepted: showAccepted ? accepted : 0,
+      iced: showIced ? iced : 0,
+    } satisfies TaskCounts;
+  }, [filteredTasks, project.included?.counts?.entities?.task, projectFetchedCount, sectionFilters]);
 
   return (
     <div data-search={!!search.q} className="group/panel h-full">

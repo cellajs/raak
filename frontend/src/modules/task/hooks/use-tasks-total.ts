@@ -1,17 +1,28 @@
 import { useSyncExternalStore } from 'react';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
-import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
+import { publicTasksTableQueryKey } from '~/modules/task/public-query';
 import {
   type BaseTasksQueryParam,
   type TasksInfiniteQueryData,
   taskKeys,
-  tasksTableQueryOptions,
+  tasksTableQueryKey,
 } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { isQueryData } from '~/query/basic/mutate-query';
 import { queryClient } from '~/query/query-client';
 import type { QueryData } from '~/query/types';
+
+// Subscribe only to task-related query cache updates. A broad subscription re-runs the snapshot for
+// every unrelated query lifecycle event (e.g. an AI chat panel mounting its own useQuery hooks),
+// which can schedule a BoardHeader update mid-render of another component and trip React's
+// "setState in render" warning. Hoisted to module scope so useSyncExternalStore doesn't resubscribe
+// on every render.
+const subscribeToTaskCache = (onStoreChange: () => void) =>
+  queryClient.getQueryCache().subscribe((event) => {
+    const key = event.query?.queryKey;
+    if (Array.isArray(key) && key[0] === 'task') onStoreChange();
+  });
 
 export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQueryParam) => {
   const { search } = useSearchParams<{ q?: string }>({});
@@ -22,16 +33,7 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
   const { tenantId: _, organizationId, ...scopeFilters } = queryParams ?? { organizationId: '', projectId: '' };
 
   return useSyncExternalStore(
-    // Subscribe only to task-related query cache updates. A broad subscription
-    // re-runs the snapshot for every unrelated query lifecycle event (e.g. an
-    // AI chat panel mounting its own useQuery hooks), which can schedule a
-    // BoardHeader update mid-render of another component and trip React's
-    // "setState in render" warning.
-    (onStoreChange) =>
-      queryClient.getQueryCache().subscribe((event) => {
-        const key = event.query?.queryKey;
-        if (Array.isArray(key) && key[0] === 'task') onStoreChange();
-      }),
+    subscribeToTaskCache,
 
     // Calculate the snapshot of the total task count
     () => {
@@ -51,9 +53,9 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
         }, 0);
       }
 
-      const { queryKey } = queryParams
-        ? tasksTableQueryOptions({ ...search, ...queryParams })
-        : publicTasksTableQueryOptions({ ...search, projectId: scopeFilters.projectId! });
+      const queryKey = queryParams
+        ? tasksTableQueryKey({ ...search, ...queryParams })
+        : publicTasksTableQueryKey({ ...search, projectId: scopeFilters.projectId! });
 
       const queryData = queryClient.getQueryData<TasksInfiniteQueryData>(queryKey);
 

@@ -7,15 +7,15 @@ import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
+import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { handleTaskSelect } from '~/modules/task/helpers/task-selection';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/task/hooks/use-read-only';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { pointsOptions, statusOptions, TaskStatus, TaskVariant } from '~/modules/task/task-properties';
+import { pointsOptionsByValue, statusOptionsByValue, TaskStatus, TaskVariant } from '~/modules/task/task-properties';
 import { statusButtonVariants } from '~/modules/task/task-styles';
-import type { Task, TaskPointsType } from '~/modules/task/types';
+import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
@@ -23,13 +23,13 @@ import { Checkbox } from '~/modules/ui/checkbox';
 import { useUserStore } from '~/modules/user/user-store';
 import { cn } from '~/utils/cn';
 
-interface TasksFooterProps {
+interface TaskCardFooterProps {
   task: Task;
   isSelected: boolean;
   isSheet?: boolean;
 }
 
-export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isSheet = false }: TasksFooterProps) {
+export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, isSheet = false }: TaskCardFooterProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const readOnlyInert = useReadOnlyInert(task.projectId);
@@ -52,7 +52,7 @@ export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isShe
       ? t('c:status_updated_at', { when: statusChangedRelative })
       : t('c:status_updated_on', { when: statusChangedRelative });
 
-  const selectedPoints = task.points !== null && task.points !== undefined ? pointsOptions[task.points] : null;
+  const selectedPoints = task.points !== null && task.points !== undefined ? pointsOptionsByValue[task.points] : null;
 
   const onDropdownOpen = (currentTarget: EventTarget & HTMLButtonElement, dropdownType: DropdownsType) => {
     const base = { triggerId: currentTarget.id, triggerRef: { current: currentTarget }, taskId: task.id };
@@ -61,7 +61,7 @@ export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isShe
       handleTaskDropdownClick({
         ...base,
         dropdownType,
-        value: task.points as TaskPointsType,
+        value: task.points,
         onChange: handlers.onPointsChange,
       });
     } else if (dropdownType === 'labels') {
@@ -94,7 +94,7 @@ export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isShe
       aria-label="Set labels"
       variant="ghost"
       size="xs"
-      className="sm: relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
+      className="relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
       {...readOnlyInert}
     >
       {task.labels.length > 0 ? (
@@ -175,7 +175,7 @@ export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isShe
             {...readOnlyInert}
           >
             {selectedPoints === null || selectedPoints === undefined ? (
-              <NotSelected className="size-4 fill-current opacity-70" aria-hidden="true" />
+              <NotSelectedIcon className="size-4 fill-current opacity-70" aria-hidden="true" />
             ) : (
               <selectedPoints.icon className="size-4 fill-current" aria-hidden="true" />
             )}
@@ -229,7 +229,9 @@ export const TaskCardFooter = memo(function TaskFooter({ task, isSelected, isShe
               )}
               {...readOnlyInert}
             >
-              {t(`c:${readOnlyHide ? statusOptions[task.status].status : statusOptions[task.status].action}`)}
+              {t(
+                `c:${readOnlyHide ? statusOptionsByValue[task.status].status : statusOptionsByValue[task.status].action}`,
+              )}
             </Button>
           </TooltipButton>
           <TooltipButton toolTipContent={statusTooltip} side="top">

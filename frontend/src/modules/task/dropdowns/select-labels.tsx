@@ -1,9 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
 import { CheckIcon, ChevronDownIcon, DotIcon } from 'lucide-react';
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Project } from 'sdk';
 import { zLabel } from 'sdk/zod.gen';
 import { generateId } from 'shared/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -14,7 +13,7 @@ import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/mo
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { SelectLabelsProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
-import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
+import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
 import { labelColors } from '~/modules/task/task-styles';
 import type { TaskLabel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
@@ -29,6 +28,7 @@ import {
 import { Kbd } from '~/modules/ui/kbd';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
+import { cn } from '~/utils/cn';
 import { inNumbersArray } from '~/utils/in-numbers-array';
 
 // Sentinel prefix for the "create label" row's Combobox value, so it can't
@@ -55,7 +55,7 @@ const renderLabelItem = (
         style={{ background: label.color || undefined }}
         strokeWidth={6}
       />
-      <div className={`grow ${label.projectId !== projectId && !isSelected && 'opacity-50'}`}>{label.name}</div>
+      <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
       <span className="pointer-events-none flex size-4 items-center justify-center">
         {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
       </span>
@@ -77,7 +77,6 @@ export const SelectLabels = ({
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const { tenantId, organization } = useOrganizationLayoutContext();
-  const queryClient = useQueryClient();
 
   const organizationId = organization.id;
 
@@ -96,53 +95,40 @@ export const SelectLabels = ({
   );
   const allLabels = labelsQuery.data?.items ?? [];
 
-  // Scope labels to workspace projects (falls back to all org labels if no workspace)
+  // Reactively read the workspace's projects from cache (enabled → subscribes so labels re-scope
+  // when the list updates; in a workspace route the board has already fetched it).
+  const { data: workspaceProjectIds } = useInfiniteQuery({
+    ...projectsListQueryOptions({ workspaceId: workspaceId ?? '' }),
+    enabled: !!workspaceId,
+    select: (data) => new Set(data.pages.flatMap((page) => page.items.map((p) => p.id))),
+  });
+
+  // Scope labels to workspace projects (falls back to all org labels outside a workspace or before
+  // the projects list has loaded).
   const labels = useMemo(() => {
-    if (!workspaceId) return allLabels;
-    const projectsQueryKey = projectsListQueryOptions({ workspaceId }).queryKey;
-    const projectsData = queryClient.getQueryData<{ pages: { items: Project[] }[] }>(projectsQueryKey);
-    if (!projectsData) return allLabels;
-    const projectIds = new Set(projectsData.pages.flatMap((page) => page.items.map((p) => p.id)));
-    return allLabels.filter((l) => projectIds.has(l.projectId));
-  }, [allLabels, workspaceId, queryClient]);
+    if (!workspaceId || !workspaceProjectIds) return allLabels;
+    return allLabels.filter((l) => workspaceProjectIds.has(l.projectId));
+  }, [allLabels, workspaceId, workspaceProjectIds]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { mutateAsync: createLabelMutation } = useLabelCreateMutation(tenantId, organizationId);
 
-  // Subscribe to the task in cache so remote (SSE) label changes reflect here
-  // while the dropdown is open. Falls back to the static prop for create-task
-  // forms where no cached task exists yet.
-  const { data: liveTask } = useTaskQuery(taskId);
-  const liveLabels = liveTask?.labels ?? currentLabels;
-
-  // Dropdowner renders a snapshot, so value prop changes do not update it.
-  // Always track selected labels locally so the dropdown UI stays in sync.
-  const [selectedLabels, setSelectedLabels] = useState(liveLabels);
-
-  // Reconcile when the live cached task changes. Compare by id set so local
-  // optimistic echoes don't trigger redundant state writes.
-  useEffect(() => {
-    const localIds = selectedLabels
-      .map((l) => l.id)
-      .sort()
-      .join(',');
-    const remoteIds = liveLabels
-      .map((l) => l.id)
-      .sort()
-      .join(',');
-    if (localIds !== remoteIds) setSelectedLabels(liveLabels);
-  }, [liveLabels]);
+  const [selectedLabels, setSelectedLabels] = useLiveSelection(taskId, (t) => t.labels, currentLabels);
 
   const [searchValue, setSearchValue] = useState('');
   const [selectedCollapsed, setSelectedCollapsed] = useState(!isMobile);
 
   const { trackUsage, getScore } = useLabelRecencyStore();
 
-  const projectLabels = labels.filter((l) => l.projectId === projectId);
+  const projectLabels = useMemo(() => labels.filter((l) => l.projectId === projectId), [labels, projectId]);
 
-  // Derive initLabels directly from query data
-  const initLabels = deduplicateLabels(labels, projectId, organizationId);
+  // Derive initLabels directly from query data. Memoized so a keystroke (searchValue) doesn't rebuild
+  // it and invalidate the searchResults / suggestedLabels memos that depend on its identity.
+  const initLabels = useMemo(
+    () => deduplicateLabels(labels, projectId, organizationId),
+    [labels, projectId, organizationId],
+  );
 
   // Search results filtered by query
   const searchResults = useMemo(() => {
@@ -295,7 +281,7 @@ export const SelectLabels = ({
             {t('c:selected')}
             {selectedCollapsed && <span className="ml-1 text-xs opacity-70">{selectedLabels.length}</span>}
             <span className="grow" />
-            <ChevronDownIcon className={`size-3.5 transition-transform ${!selectedCollapsed && 'rotate-180'}`} />
+            <ChevronDownIcon className={cn('size-3.5 transition-transform', !selectedCollapsed && 'rotate-180')} />
           </button>
         )}
         <ScrollArea>

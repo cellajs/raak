@@ -14,24 +14,21 @@ import { PopConfirm } from '~/modules/common/popconfirm';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskVariantButton } from '~/modules/task/card/task-variant-button';
 import { DeleteTask } from '~/modules/task/delete-task';
 import { focusTask } from '~/modules/task/helpers/focus-task';
-import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
-import { useReadOnlyInert } from '~/modules/task/hooks/use-read-only';
-import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { variantOptions } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/modules/user/user-store';
 import { dateShort } from '~/utils/date-short';
 import { truncateMiddle } from '~/utils/truncate-middle';
 
-interface Props {
+interface TaskCardHeaderProps {
   task: Task;
   isSheet?: boolean;
 }
 
-export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
+export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
   const isOnline = useOnlineManager();
@@ -43,8 +40,6 @@ export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
   const { copyToClipboard } = useCopyToClipboard(2000);
 
   const relativeDate = useRelativeDate(task.createdAt, user?.language || 'en', 'ago');
-
-  const handlers = useTaskFieldHandlers(task);
 
   const openOptionsDropdown = () => {
     if (!optionsTriggerRef.current) return;
@@ -108,26 +103,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
 
   return (
     <div className="flex w-full flex-row justify-between py-1">
-      <Button
-        id={`variant-${task.id}${isSheet ? '-sheet' : ''}`}
-        onClick={({ currentTarget }) =>
-          handleTaskDropdownClick({
-            dropdownType: 'variant',
-            value: task.variant,
-            onChange: handlers.onVariantChange,
-            triggerId: currentTarget.id,
-            triggerRef: { current: currentTarget },
-            taskId: task.id,
-          })
-        }
-        aria-label="Set type"
-        variant="ghost"
-        size="xs"
-        className="relative -ml-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100"
-        {...useReadOnlyInert(task.projectId)}
-      >
-        {variantOptions[variantOptions.findIndex((v) => v.value === task.variant)]?.icon() || ''}
-      </Button>
+      <TaskVariantButton task={task} isSheet={isSheet} />
       <div className="ml-1 flex w-full flex-row items-center gap-1">
         {task.createdBy && (
           <>
@@ -150,7 +126,6 @@ export const TaskCardHeader = ({ task, isSheet = false }: Props) => {
                 {isOnline ? relativeDate : t('c:update_on_online')}
               </span>
             </TooltipButton>
-            {/* <TaskHeaderInfo task={task} /> */}
           </>
         )}
 

@@ -11,8 +11,8 @@ interface BoardUIState {
 
   // Active board context
   activeBoardId: string | null;
-  activeBoardType: string | null;
-  setActiveBoard: (boardId: string, boardType: string) => void;
+  activeBoardType: 'workspace' | 'project' | null;
+  setActiveBoard: (boardId: string, boardType: 'workspace' | 'project') => void;
 
   // Active panel: one at a time, set by hover/focus on desktop and tab on mobile.
   activePanelId: string | null;

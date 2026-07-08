@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { DotIcon, PaperclipIcon } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project } from 'sdk';
 import { zUserMinimalBase } from 'sdk/zod.gen';
@@ -13,8 +13,13 @@ import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { getSeenContextId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
-import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
-import { pointsOptions, statusOptions, TaskVariant, variantOptions } from '~/modules/task/task-properties';
+import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
+import {
+  pointsOptionsByValue,
+  statusOptionsByValue,
+  TaskVariant,
+  variantOptions,
+} from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -66,16 +71,59 @@ function SummaryCell({
   );
 }
 
-export const useColumns = (
-  projects: Project[],
-  opts?: { hideProject?: boolean; organization?: Organization; tenantId?: string },
-) => {
+/**
+ * Reactive source of the table's projects. The column definitions are frozen at first render
+ * (useState), and DataTable's Rows are memoized — so the project cell reads projects from context
+ * instead of a frozen closure. Without this, a cold load whose projects fetch lands after the table
+ * mounts would show raw project ids forever.
+ */
+export const TableProjectsContext = createContext<Project[]>([]);
+
+function ProjectCell({
+  row,
+  tabIndex,
+  organization,
+  tenantId,
+}: {
+  row: Task;
+  tabIndex: number;
+  organization?: Organization;
+  tenantId?: string;
+}) {
+  const projects = useContext(TableProjectsContext);
+  const project = projects.find((p) => p.id === row.projectId);
+  if (!project || !organization || !tenantId) return row.projectId;
+
+  return (
+    <Link
+      to="/$tenantId/$organizationSlug/project/$slug"
+      params={{ slug: project.slug, organizationSlug: organization.slug, tenantId }}
+      tabIndex={tabIndex}
+      className="group flex items-center space-x-2 truncate outline-0 ring-0"
+    >
+      <EntityAvatar
+        type="project"
+        className="h-8 w-8 group-hover:font-semibold group-active:translate-y-[.05rem]"
+        id={project.id}
+        name={project.name}
+        url={project.thumbnailUrl}
+      />
+      <span className="in-data-[is-compact=true]:hidden truncate decoration-foreground/20 underline-offset-3 group-hover:underline group-active:translate-y-[.05rem] group-active:decoration-foreground/50">
+        {project.name}
+      </span>
+    </Link>
+  );
+}
+
+export const useColumns = (opts?: { hideProject?: boolean; organization?: Organization; tenantId?: string }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const setTriggerRef = useDialoger((state) => state.setTriggerRef);
 
-  const columns = useMemo(() => {
+  // Built once (useState lazy init) so column-management state (reorder/hide/resize) is preserved.
+  // Values closed over here that could change (projects) are read reactively in their cells instead.
+  return useState<ColumnOrColumnGroup<Task>[]>(() => {
     const cols: ColumnOrColumnGroup<Task>[] = [
       {
         ...SelectColumn,
@@ -111,7 +159,7 @@ export const useColumns = (
         minBreakpoint: 'sm',
         width: 140,
         renderCell: ({ row }) => {
-          const status = statusOptions[row.status];
+          const status = statusOptionsByValue[row.status];
           return (
             <>
               <SeenMark
@@ -153,12 +201,12 @@ export const useColumns = (
         renderCell: ({ row }) => {
           if (row.variant === TaskVariant.Bug) return null;
 
-          const points = row.points === null ? null : pointsOptions[row.points];
+          const points = row.points === null ? null : pointsOptionsByValue[row.points];
 
           return (
             <>
               {points === null ? (
-                <NotSelected className="mr-2 size-4 fill-current opacity-80" aria-hidden="true" />
+                <NotSelectedIcon className="mr-2 size-4 fill-current opacity-80" aria-hidden="true" />
               ) : (
                 <points.icon className="mr-2 size-4 shrink-0 fill-current" aria-hidden="true" />
               )}
@@ -227,30 +275,9 @@ export const useColumns = (
         hidden: opts?.hideProject,
         minBreakpoint: 'sm',
         width: 180,
-        renderCell: ({ row, tabIndex }) => {
-          const project = projects.find((p) => p.id === row.projectId);
-          if (!project || !opts?.organization || !opts?.tenantId) return row.projectId;
-
-          return (
-            <Link
-              to="/$tenantId/$organizationSlug/project/$slug"
-              params={{ slug: project.slug, organizationSlug: opts.organization.slug, tenantId: opts.tenantId }}
-              tabIndex={tabIndex}
-              className="group flex items-center space-x-2 truncate outline-0 ring-0"
-            >
-              <EntityAvatar
-                type="project"
-                className="h-8 w-8 group-hover:font-semibold group-active:translate-y-[.05rem]"
-                id={project.id}
-                name={project.name}
-                url={project.thumbnailUrl}
-              />
-              <span className="in-data-[is-compact=true]:hidden truncate decoration-foreground/20 underline-offset-3 group-hover:underline group-active:translate-y-[.05rem] group-active:decoration-foreground/50">
-                {project.name}
-              </span>
-            </Link>
-          );
-        },
+        renderCell: ({ row, tabIndex }) => (
+          <ProjectCell row={row} tabIndex={tabIndex} organization={opts?.organization} tenantId={opts?.tenantId} />
+        ),
         modes: { compact: { width: 50 } },
       },
       {
@@ -337,7 +364,5 @@ export const useColumns = (
       },
     ];
     return cols;
-  }, []);
-
-  return useState<ColumnOrColumnGroup<Task>[]>(columns);
+  });
 };

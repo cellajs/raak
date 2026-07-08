@@ -18,13 +18,13 @@
 [data-status="3"] {
   --glow-color-rgb: 132, 204, 22;
 }
-/* unstarted */
-[data-status="4"] {
-  --glow-color-rgb: 100, 116, 139;
-}
 /* started */
-[data-status="5"] {
+[data-status="4"] {
   --glow-color-rgb: 170, 175, 181;
+}
+/* unstarted */
+[data-status="5"] {
+  --glow-color-rgb: 100, 116, 139;
 }
 /* iced */
 [data-status="6"] {

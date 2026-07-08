@@ -33,7 +33,7 @@ export const TasksTableBar = ({
   isCompact,
   setIsCompact,
 }: TasksTableBarProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal('table', queryParams);
 
@@ -66,15 +66,10 @@ export const TasksTableBar = ({
         />
       )}
 
-      <TaskSearch
-        clearSelection={() => {
-          if (selected) clearSelection();
-        }}
-        toggleFocus={toggleSearchFocus}
-      >
+      <TaskSearch clearSelection={clearSelection} toggleFocus={toggleSearchFocus}>
         {typeof total === 'number' && searchVars.q && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
-            <span>{new Intl.NumberFormat('de-DE').format(total)}</span>
+            <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>
             <span>{t('c:found')}</span>
           </div>
         )}

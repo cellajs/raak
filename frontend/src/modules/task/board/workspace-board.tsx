@@ -1,26 +1,25 @@
 import { useSearch } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { getOrderBetween } from 'shared/display-order';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useMemberUpdateMutation } from '~/modules/memberships/query-mutations';
-import { getPanelDisplayOrder, useBoardPanels } from '~/modules/task/board/board-hooks';
+import { computePanelReorder, useBoardPanels } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ExplainerPanel } from '~/modules/task/panel/explainer-panel';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
+import { type BoardResizablePanel, EXPLAINER_PANEL_ID } from '~/modules/task/types';
 
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
   const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
-  const { alertsSeen } = useAlertStore();
+  const alertsSeen = useAlertStore((s) => s.alertsSeen);
   const showExplainer = !!workspace && !alertsSeen.includes('welcome-text');
 
-  const extraPanels = useMemo(() => {
-    const panels: { panelId: string }[] = [];
-    if (showExplainer) panels.push({ panelId: 'explainer' });
-    return panels.length > 0 ? panels : undefined;
+  const extraPanels = useMemo((): BoardResizablePanel[] | undefined => {
+    if (!showExplainer) return undefined;
+    return [{ kind: 'explainer', panelId: EXPLAINER_PANEL_ID }];
   }, [showExplainer]);
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
 
@@ -29,48 +28,22 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
 
   const handlePanelReorder = useCallback(
     (newOrder: string[], sourcePanelId: string) => {
-      const sourcePanel = panels.find((p) => p.panelId === sourcePanelId);
-      if (!sourcePanel) return;
-
-      // Resolve neighbor orders via the render comparator, so server-owned
-      // and local-only panels are treated uniformly when computing the new fractional order.
       const localOrders = useBoardStore.getState().boardPanelOrders[boardId];
-      const panelById = new Map(panels.map((p) => [p.panelId, p]));
-      const orderAt = (i: number): number | undefined => {
-        if (i < 0 || i >= newOrder.length) return undefined;
-        const neighbor = panelById.get(newOrder[i]);
-        return neighbor ? getPanelDisplayOrder(neighbor, localOrders) : undefined;
-      };
+      const result = computePanelReorder(panels, localOrders, newOrder, sourcePanelId);
+      if (!result) return;
 
-      const sourceIdx = newOrder.indexOf(sourcePanelId);
-      const prevOrder = orderAt(sourceIdx - 1);
-      const nextOrder = orderAt(sourceIdx + 1);
-
-      // Single panel, no anchor to reorder against.
-      if (prevOrder == null && nextOrder == null) return;
-
-      const newDisplayOrder = getOrderBetween(prevOrder ?? undefined, nextOrder ?? undefined);
-      // Float collision, a rebalance pass would be needed to recover.
-      if (newDisplayOrder === null) return;
-
-      const sourceProject = sourcePanel.project;
-      if (sourceProject?.membership) {
-        if (newDisplayOrder === sourceProject.membership.displayOrder) return;
+      if (result.kind === 'membership') {
         updateMembership({
-          path: {
-            id: sourceProject.membership.id,
-            tenantId: sourceProject.tenantId,
-            organizationId: sourceProject.organizationId,
-          },
-          body: { displayOrder: newDisplayOrder },
-          entityId: sourceProject.id,
+          path: { id: result.membershipId, tenantId: result.tenantId, organizationId: result.organizationId },
+          body: { displayOrder: result.displayOrder },
+          entityId: result.projectId,
           entityType: 'project',
         });
         return;
       }
 
-      // Local-only panel (explainer, ai-chat), persist its new order.
-      setPanelOrder(boardId, sourcePanelId, newDisplayOrder);
+      // Local-only panel (explainer, ai-chat, etc.), persist its new order.
+      setPanelOrder(boardId, result.panelId, result.displayOrder);
     },
     [boardId, panels, setPanelOrder, updateMembership],
   );
@@ -82,7 +55,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     lastScrolledSlug.current = projectSlug;
     const targetProject = projects.find((p) => p.slug === projectSlug);
     if (!targetProject) return;
-    const targetPanel = panels.find((col) => col.project?.id === targetProject.id);
+    const targetPanel = panels.find((col) => col.kind === 'project' && col.project.id === targetProject.id);
     if (!targetPanel) return;
     boardLayoutRef.current?.expandAndScrollToPanel(targetPanel.panelId);
   }, [projectSlug, panels, projects]);
@@ -99,7 +72,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     >
       {(panelId) => {
         const panel = panels.find((c) => c.panelId === panelId);
-        if (!panel?.project) return <ExplainerPanel />;
+        if (panel?.kind !== 'project') return <ExplainerPanel />;
         return <ProjectBoardPanel project={panel.project} sectionFilters={panel.sectionFilters} />;
       }}
     </BoardLayout>

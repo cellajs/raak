@@ -1,17 +1,21 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { TaskStates } from '~/modules/task/types';
+import type { TaskState } from '~/modules/task/types';
 
-interface TaskStatesState {
-  states: Record<string, TaskStates>;
+interface TaskCardState {
+  states: Record<string, TaskState>;
   /** Set a task's view state (collapsed / expanded / editing).
    *  When entering editing, all other editing tasks are demoted to expanded. */
-  setTaskState: (taskId: string, state: TaskStates) => void;
+  setTaskState: (taskId: string, state: TaskState) => void;
   /** Revert an editing task to expanded; keep collapsed tasks collapsed. */
   suppressEdit: (taskId: string) => void;
+  /** Demote every editing task to expanded (single-editor rule, e.g. when the sheet opens). */
+  suppressAllEditing: () => void;
+  /** Clear all per-task view state. Call when leaving a workspace/board so the map can't grow forever. */
+  reset: () => void;
 }
 
-export const useTaskCardStore = create<TaskStatesState>()(
+export const useTaskCardStore = create<TaskCardState>()(
   devtools(
     (set) => ({
       states: {},
@@ -36,13 +40,30 @@ export const useTaskCardStore = create<TaskStatesState>()(
         set(
           (s) => {
             const cur = s.states[taskId] ?? 'collapsed';
-            const next = cur === 'collapsed' ? 'collapsed' : ('expanded' as TaskStates);
+            const next = cur === 'collapsed' ? 'collapsed' : ('expanded' as TaskState);
             if (s.states[taskId] === next) return s;
             return { states: { ...s.states, [taskId]: next } };
           },
           undefined,
           'suppressEdit',
         ),
+      suppressAllEditing: () =>
+        set(
+          (s) => {
+            let changed = false;
+            const next = { ...s.states };
+            for (const id in next) {
+              if (next[id] === 'editing') {
+                next[id] = 'expanded';
+                changed = true;
+              }
+            }
+            return changed ? { states: next } : s;
+          },
+          undefined,
+          'suppressAllEditing',
+        ),
+      reset: () => set({ states: {} }, undefined, 'reset'),
     }),
     { name: 'task-card' },
   ),

@@ -2,7 +2,7 @@ import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
-import { focusTask } from '~/modules/task/helpers/focus-task';
+import { focusTask, focusWhenMounted } from '~/modules/task/helpers/focus-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -30,25 +30,15 @@ export const newTaskFormDefaults: NewTaskFormValues = {
 export const newTaskFormIsDirty = ({ assignedTo, labels, description }: NewTaskFormValues) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
-export const getTargetIndexByStatus = (tasks: Task[], status: TaskStatus) => {
-  // Determine direction: forward for early-stage statuses, backward otherwise
-  const isForwardSearch = [TaskStatus.Iced, TaskStatus.Unstarted].includes(status);
-  const finder = isForwardSearch ? tasks.findIndex : tasks.findLastIndex;
-
-  // Use appropriate finder method to locate task with matching status
-  return finder.call(tasks, (task) => task.status === status);
-};
-
 // Handles logic for showing or hiding task creation form via Zustand draft state
-export const handleCreateForm = (project: { id: string; organizationId: string; tenantId: string }) => {
+export const toggleCreateTaskForm = (project: { id: string; organizationId: string; tenantId: string }) => {
   const id = `create-task-${project.id}`;
   const store = useTaskInteractionStore.getState();
   const existingDraft = store.draftTasks[project.id];
 
-  // Toggle: if draft already exists, remove it
+  // Toggle: if draft already exists, remove it (form open-ness is derived from the draft)
   if (existingDraft) {
     focusTask(null);
-    store.toggleCreateForm(project.id);
     store.setDraftTask(project.id, null);
     return;
   }
@@ -79,11 +69,9 @@ export const handleCreateForm = (project: { id: string; organizationId: string; 
 
   // ProjectBoardPanel merges this draft into the task list.
   focusTask(id);
-  store.toggleCreateForm(project.id);
   store.setDraftTask(project.id, formTask);
 
   // Focus the form element and trigger glow after React renders
-  const form = document.getElementById(id);
-  form?.focus();
+  focusWhenMounted(id);
   setTimeout(() => triggerTaskGlow(id), 100);
 };

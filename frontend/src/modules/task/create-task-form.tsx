@@ -1,52 +1,53 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { ChevronDownIcon, TagIcon, UserXIcon, XIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import type React from 'react';
 import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import type { UseFormProps } from 'react-hook-form';
+import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { generateId } from 'shared/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
 import { Spinner } from '~/modules/common/spinner';
 import type { UploadedUppyFile } from '~/modules/common/uploader/types';
-import { membersListQueryOptions } from '~/modules/memberships/query';
-import type { Member } from '~/modules/memberships/types';
-import { NotSelected } from '~/modules/task/dropdowns/point-icons/not-selected';
-import { SelectLabels } from '~/modules/task/dropdowns/select-labels';
+import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   createTaskFormSchema,
-  handleCreateForm,
   type NewTaskFormValues,
   newTaskFormDefaults,
   newTaskFormIsDirty,
+  toggleCreateTaskForm,
 } from '~/modules/task/helpers/create-task';
 import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
-import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
+import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
+import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { pointsOptions, statusOptions, TaskStatus, TaskVariant, variantOptions } from '~/modules/task/task-properties';
-import type { Task, TaskLabel, TaskPointsType, TaskStatusType } from '~/modules/task/types';
+import {
+  pointsOptionsByValue,
+  statusOptionsByValue,
+  TaskStatus,
+  TaskVariant,
+  variantOptions,
+  variantOptionsByValue,
+} from '~/modules/task/task-properties';
+import type { Task, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { useUserStore } from '~/modules/user/user-store';
-import { flattenInfiniteData } from '~/query/basic/flatten';
 import { cn } from '~/utils/cn';
 
 interface CreateTaskFormProps {
@@ -54,18 +55,18 @@ interface CreateTaskFormProps {
   organizationId: string;
   className?: string;
   dialog?: boolean;
-  onSuccesses?: (task: Task) => void;
+  onSuccess?: (task: Task) => void;
   onStatusChange?: (status: TaskStatusType) => void;
 }
 
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
+const CreateTaskForm = ({
   projectId,
   organizationId,
   className,
   dialog: isDialog,
-  onSuccesses,
+  onSuccess,
   onStatusChange,
-}) => {
+}: CreateTaskFormProps) => {
   const { t } = useTranslation();
   const { user } = useUserStore();
 
@@ -81,22 +82,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   const [isExiting, setIsExiting] = useState(false);
   const pendingCloseRef = useRef(false);
 
-  const membersQuery = useInfiniteQuery(
-    membersListQueryOptions({
-      entityId: projectId,
-      tenantId,
-      organizationId: organizationId,
-      entityType: 'project',
-    }),
-  );
-
-  const members = flattenInfiniteData<Member>(membersQuery.data);
-  const projectMembers = useMemo(
-    () => members.filter((m) => m.membership.projectId === projectId),
-    [members, projectId],
-  );
-
-  const projectPublicity = useProjectPublicity(projectId);
+  const projectMembers = useProjectMembers(projectId, tenantId, organizationId);
   const { attachmentsCreationCallback } = useUploadAttachments();
 
   const taskMutation = useTaskCreateMutation(tenantId, organizationId);
@@ -119,23 +105,19 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   // Form with draft in local storage
   const form = useFormWithDraft<NewTaskFormValues>(formId, { formOptions });
 
-  const updateAttachments = useCallback((data: UploadedUppyFile<'attachment'>) => setAttachments(data), []);
+  // Subscribe for render: the form only re-renders when isDirty *toggles*, so
+  // render-time form.getValues() reads of these fields go stale once dirty
+  const watchedVariant = useWatch({ control: form.control, name: 'variant' });
+  const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
-  const baseFilePanelProps = useMemo(
-    () => ({
-      isPublic: projectPublicity,
-      tenantId,
-      organizationId,
-      onComplete: updateAttachments,
-    }),
-    [organizationId, projectPublicity, tenantId, updateAttachments],
-  );
+  const updateAttachments = useCallback((data: UploadedUppyFile<'attachment'>) => setAttachments(data), []);
+  const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, updateAttachments);
 
   const handleCloseForm = () => {
     if (isDialog) useDialoger.getState().remove();
     else {
       focusTask(null);
-      handleCreateForm({ id: projectId, organizationId, tenantId });
+      toggleCreateTaskForm({ id: projectId, organizationId, tenantId });
     }
   };
 
@@ -174,26 +156,11 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     // Backend handles label usedCount side-effects atomically
     await taskMutation
       .mutateAsync(newTask)
-      .then((createdTask) => onSuccesses?.(createdTask))
+      .then((createdTask) => onSuccess?.(createdTask))
       .catch(() => {
         const { description, status, variant, points, fullLabels: labels, fullAssignedTo: assignedTo } = newTask;
         setForm(formId, { description, status, variant, points, labels, assignedTo });
       });
-  };
-
-  const handleLabelsChange = (onChange: (labels: TaskLabel[]) => void) => (labels: TaskLabel[]) => {
-    onChange(labels);
-
-    useDropdowner.getState().update({
-      content: (
-        <SelectLabels
-          value={labels}
-          projectId={projectId}
-          triggerWidth={getFieldWidth()}
-          onChange={handleLabelsChange(onChange)} // Recursively pass the same handler
-        />
-      ),
-    });
   };
 
   const handleStatusChange = (onChange: (status: TaskStatusType) => void) => (status: TaskStatusType) => {
@@ -201,24 +168,16 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     setTimeout(() => onStatusChange?.(status));
   };
 
-  const getFieldWidth = () => {
-    const element = document.getElementById(formId);
-    if (!element) return;
-    const styles = getComputedStyle(element);
-    return element.clientWidth - Number.parseFloat(styles.paddingLeft) - Number.parseFloat(styles.paddingRight) - 3;
-  };
-
-  const isDirty = useCallback(() => {
-    if (!form.isDirty) return false;
-    return newTaskFormIsDirty(form.getValues());
-  }, [form]);
-
   const handleFormClick = useCallback(() => {
     if (isDialog || isFocused || isMobile) return;
     focusTask(formId);
   }, [isDialog, isFocused, isMobile]);
 
   if (form.loading) return null;
+
+  // Compute once per render — newTaskFormIsDirty JSON.parses the description, and it's read at
+  // several JSX sites below.
+  const isDirty = form.isDirty && newTaskFormIsDirty(form.getValues());
 
   return (
     <motion.div
@@ -281,10 +240,10 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                       type="single"
                       variant="merged"
                       className="w-full gap-0"
-                      value={variantOptions[value - 1].type}
+                      value={variantOptionsByValue[value].type}
                       onValueChange={(newValue: string | string[]) => {
-                        const taskTypeValue = TaskVariant[newValue as keyof typeof TaskVariant];
-                        if (taskTypeValue !== undefined) onChange(taskTypeValue);
+                        const selected = variantOptions.find((o) => o.type === newValue);
+                        if (selected) onChange(selected.value);
                       }}
                     >
                       {variantOptions.map((variant) => (
@@ -309,12 +268,12 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
             }}
           />
 
-          {form.getValues('variant') !== TaskVariant.Bug && (
+          {watchedVariant !== TaskVariant.Bug && (
             <FormField
               control={form.control}
               name="points"
               render={({ field: { onChange, value } }) => {
-                const selectedPoints = value !== null && value !== undefined ? pointsOptions[value] : null;
+                const selectedPoints = value !== null && value !== undefined ? pointsOptionsByValue[value] : null;
                 return (
                   <FormItem>
                     <FormControl>
@@ -328,7 +287,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                         onClick={({ currentTarget }) =>
                           handleTaskDropdownClick({
                             dropdownType: 'points',
-                            value: (value ?? null) as TaskPointsType | null,
+                            value: value ?? null,
                             onChange,
                             triggerId: currentTarget.id,
                             triggerRef: { current: currentTarget },
@@ -344,7 +303,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                           </>
                         ) : (
                           <>
-                            <NotSelected className="size-4" aria-hidden="true" />
+                            <NotSelectedIcon className="size-4" aria-hidden="true" />
                             <span className="font-normal opacity-75">
                               {t('c:set_resource', { resource: t('c:points').toLowerCase() })}
                             </span>
@@ -378,7 +337,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                           dropdownType: 'labels',
                           value: labels,
                           projectId,
-                          onChange: handleLabelsChange(onChange),
+                          onChange,
                           triggerId: currentTarget.id,
                           triggerRef: { current: currentTarget },
                           triggerWidth: currentTarget.clientWidth,
@@ -409,7 +368,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     e.preventDefault();
-                                    handleLabelsChange(onChange)(labels.filter((l) => l.name !== name));
+                                    onChange(labels.filter((l) => l.name !== name));
                                   }}
                                 >
                                   <XIcon size={16} strokeWidth={3} />
@@ -502,14 +461,12 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
             <div className="flex [&:not(.absolute)]:active:translate-y-[.05rem]">
               <Button
                 type="submit"
-                disabled={!isDirty()}
+                disabled={!isDirty}
                 className="grow rounded-none rounded-l [&:not(.absolute)]:active:translate-y-0"
               >
                 <span>
                   {t('c:create')}
-                  {form.getValues('status') === TaskStatus.Unstarted
-                    ? ''
-                    : ` & ${statusOptions[form.getValues('status')].status}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
                 </span>
               </Button>
 
@@ -522,7 +479,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                       <FormControl>
                         <Button
                           type="button"
-                          disabled={!isDirty()}
+                          disabled={!isDirty}
                           aria-label="Set status"
                           variant={'default'}
                           className="relative rounded-none rounded-r border-l border-l-background/25 [&:not(.absolute)]:active:translate-y-0"
@@ -551,7 +508,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
               <Button
                 type="reset"
                 variant="secondary"
-                className={isDirty() ? '' : 'hidden'}
+                className={isDirty ? '' : 'hidden'}
                 aria-label="Cancel"
                 onClick={() => {
                   form.reset();
@@ -565,7 +522,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
                 variant="secondary"
                 aria-label="close"
                 onClick={handleCloseForm}
-                className={isDirty() ? 'hidden' : ''}
+                className={isDirty ? 'hidden' : ''}
               >
                 {t('c:close')}
               </Button>

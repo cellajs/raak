@@ -5,7 +5,7 @@ import { useSearchParams } from '~/hooks/use-search-params';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
-import { handleCreateForm } from '~/modules/task/helpers/create-task';
+import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { useReadOnlyHide } from '~/modules/task/hooks/use-read-only';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
@@ -27,18 +27,20 @@ export const BoardHeader = ({
   workspace,
   publicView,
 }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isInWorkspace = !!workspace;
 
   const {
     search: { q: searchQuery = '' },
   } = useSearchParams<{ q?: string }>({});
 
-  const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
+  // No scope to derive params from in a public view or while a non-workspace board has no projects yet
+  const queryParams =
+    publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal('board', queryParams);
   const selectedTasks = useTaskInteractionStore((s) => s.selectedTasks);
   const setSelectedTasks = useTaskInteractionStore((s) => s.setSelectedTasks);
-  const isCreateFormOpen = useTaskInteractionStore((s) => s.openCreateForms.includes(projects[0]?.id));
+  const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[projects[0]?.id] !== undefined);
 
   const [searchFocused, setSearchFocused] = useState(false);
   const readOnlyHide = useReadOnlyHide(projects[0]?.id);
@@ -46,7 +48,7 @@ export const BoardHeader = ({
   const toggleSearchFocus = () => setSearchFocused((prev) => !prev);
   const clearSelection = () => setSelectedTasks([]);
 
-  const toggleCreateForm = () => handleCreateForm(projects[0]);
+  const toggleCreateForm = () => toggleCreateTaskForm(projects[0]);
 
   return (
     <div
@@ -62,7 +64,7 @@ export const BoardHeader = ({
         />
       )}
 
-      {!isInWorkspace && projects.length && !selectedTasks.length && (
+      {!isInWorkspace && projects.length > 0 && !selectedTasks.length && (
         <Button
           variant="plain"
           data-form-dirty={false}
@@ -75,16 +77,11 @@ export const BoardHeader = ({
         </Button>
       )}
 
-      <TaskSearch
-        clearSelection={() => {
-          if (selectedTasks) clearSelection();
-        }}
-        toggleFocus={toggleSearchFocus}
-      >
+      <TaskSearch clearSelection={clearSelection} toggleFocus={toggleSearchFocus}>
         {' '}
         {typeof total === 'number' && searchQuery && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
-            <span>{new Intl.NumberFormat('de-DE').format(total)}</span>
+            <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>
             <span>{t('c:found')}</span>
           </div>
         )}
@@ -93,7 +90,7 @@ export const BoardHeader = ({
       {!searchQuery && !searchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
 
       {isInWorkspace && <WorkspaceActionButtons />}
-      {!publicView && !isInWorkspace && projects.length && <PanelProjectActions project={projects[0]} />}
+      {!publicView && !isInWorkspace && projects.length > 0 && <PanelProjectActions project={projects[0]} />}
 
       <DisplayOptions className="empty:hidden max-sm:hidden" />
 

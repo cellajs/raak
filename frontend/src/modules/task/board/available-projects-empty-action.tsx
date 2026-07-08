@@ -3,13 +3,13 @@ import { PlusIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
+import { selectExistingProjects } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
-import { selectExistingProjects } from '~/modules/task/helpers/project-actions';
 import { Button } from '~/modules/ui/button';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-interface Props {
+interface AvailableProjectsEmptyActionProps {
   workspace: Workspace;
   fallback: ReactNode;
 }
@@ -18,7 +18,7 @@ interface Props {
  * Empty-board action shown when the user can add existing organization projects
  * that are not assigned to a workspace yet.
  */
-export const AvailableProjectsEmptyAction = ({ workspace, fallback }: Props) => {
+export const AvailableProjectsEmptyAction = ({ workspace, fallback }: AvailableProjectsEmptyActionProps) => {
   const { t } = useTranslation();
 
   const { data, isPending } = useInfiniteQuery(

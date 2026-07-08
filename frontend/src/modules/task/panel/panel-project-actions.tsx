@@ -1,6 +1,3 @@
-import '@uppy/core/css/style.css';
-import '@uppy/dashboard/css/style.css';
-
 import { useNavigate } from '@tanstack/react-router';
 import {
   ArrowRightIcon,
@@ -11,23 +8,22 @@ import {
   SquareSplitHorizontalIcon,
   UsersIcon,
 } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { SplitProjectPanelDialog } from '~/modules/project/split-project-panel';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/task/helpers/project-actions';
 import { TaskStatus } from '~/modules/task/task-properties';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
-import { router } from '~/routes/router';
 import { cn } from '~/utils/cn';
 
-const PanelProjectActions = ({ project, className }: { project: EnrichedProject; className?: string }) => {
+export const PanelProjectActions = ({ project, className }: { project: EnrichedProject; className?: string }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -61,11 +57,6 @@ const PanelProjectActions = ({ project, className }: { project: EnrichedProject;
         },
       );
   };
-
-  useEffect(() => {
-    const unsubscribe = router.subscribe('onBeforeLoad', () => useDialoger.getState().remove('create-task'));
-    return () => unsubscribe();
-  }, []);
 
   return (
     <DropdownMenu>
@@ -171,5 +162,3 @@ const PanelProjectActions = ({ project, className }: { project: EnrichedProject;
     </DropdownMenu>
   );
 };
-
-export { PanelProjectActions };

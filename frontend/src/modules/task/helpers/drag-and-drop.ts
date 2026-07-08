@@ -1,5 +1,7 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
-import { isDraftTask, type PanelDraggableData, type Task, type TaskDraggableData } from '~/modules/task/types';
+import { defaultOrder } from 'shared/display-order';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
+import type { PanelDraggableData, Task, TaskDraggableData } from '~/modules/task/types';
 
 export const isPanelData = (data: Record<string | symbol, unknown>): data is PanelDraggableData => {
   return data.dragItem === true && typeof data.type === 'string' && data.type === 'panel';
@@ -16,10 +18,10 @@ export const getEdgeAndTargetOrder = (target: Task, source: Task, passedEdge: Ed
   // Filter tasks with the same status as the source item only if status has changed
   let targetOrder = target.displayOrder;
   if (isStatusChanged) {
-    const statusTasks = tasks.filter((el) => el.status === source.status && isDraftTask(el));
+    const statusTasks = tasks.filter((el) => el.status === source.status && !isDraftTask(el));
     if (statusTasks.length)
       targetOrder = edge === 'top' ? statusTasks[0].displayOrder : statusTasks[statusTasks.length - 1].displayOrder;
-    else targetOrder = edge === 'top' ? 0 : 100;
+    else targetOrder = defaultOrder;
   }
   return { targetOrder, edge };
 };

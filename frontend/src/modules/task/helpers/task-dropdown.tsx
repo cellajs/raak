@@ -6,24 +6,10 @@ import { SelectMembers } from '~/modules/task/dropdowns/select-members';
 import { SelectPoints } from '~/modules/task/dropdowns/select-points';
 import { SelectStatus } from '~/modules/task/dropdowns/select-status';
 import { SelectVariant } from '~/modules/task/dropdowns/select-variant';
-import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import type { TaskLabel, TaskPointsType, TaskStatusType, TaskVariantType } from '~/modules/task/types';
 
-type DropdownFieldMap = {
-  points: { value: TaskPointsType | null; onChange: (v: TaskPointsType) => void };
-  labels: {
-    value: TaskLabel[];
-    projectId: string;
-    workspaceId?: string;
-    onChange: (v: TaskLabel[]) => void;
-  };
-  assignedTo: { value: UserMinimalBase[]; projectId: string; onChange: (v: UserMinimalBase[]) => void };
-  status: { value: TaskStatusType; onChange: (v: TaskStatusType) => void };
-  variant: { value: TaskVariantType; onChange: (v: TaskVariantType) => void };
-};
-
-type HandleDropdownProps<T extends DropdownsType> = DropdownFieldMap[T] & {
-  dropdownType: T;
+/** Props shared by every task-field dropdown, independent of which field is edited. */
+type CommonDropdownProps = {
   triggerId: string;
   triggerRef: RefObject<HTMLButtonElement | null>;
   triggerWidth?: number;
@@ -36,8 +22,29 @@ type HandleDropdownProps<T extends DropdownsType> = DropdownFieldMap[T] & {
   taskId?: string;
 };
 
-export function handleTaskDropdownClick<T extends DropdownsType>(props: HandleDropdownProps<T>) {
-  const { dropdownType, triggerId, triggerRef, triggerWidth, taskId } = props;
+/** Discriminated on `dropdownType` so each branch narrows without a cast. */
+export type HandleDropdownProps = CommonDropdownProps &
+  (
+    | { dropdownType: 'points'; value: number | null; onChange: (v: TaskPointsType) => void }
+    | {
+        dropdownType: 'labels';
+        value: TaskLabel[];
+        projectId: string;
+        workspaceId?: string;
+        onChange: (v: TaskLabel[]) => void;
+      }
+    | {
+        dropdownType: 'assignedTo';
+        value: UserMinimalBase[];
+        projectId: string;
+        onChange: (v: UserMinimalBase[]) => void;
+      }
+    | { dropdownType: 'status'; value: TaskStatusType; onChange: (v: TaskStatusType) => void }
+    | { dropdownType: 'variant'; value: TaskVariantType; onChange: (v: TaskVariantType) => void }
+  );
+
+export function handleTaskDropdownClick(props: HandleDropdownProps) {
+  const { dropdownType, triggerId, triggerRef, triggerWidth: width, taskId } = props;
   const options: DropdownData = {
     id: dropdownType,
     triggerRef,
@@ -45,35 +52,35 @@ export function handleTaskDropdownClick<T extends DropdownsType>(props: HandleDr
     align: dropdownType === 'status' || dropdownType === 'assignedTo' ? 'end' : 'start',
   };
 
-  const width = triggerWidth;
   let component: React.ReactElement;
 
-  if (dropdownType === 'points') {
-    const { value, onChange } = props as HandleDropdownProps<'points'>;
-    component = <SelectPoints value={value} onChange={onChange} taskId={taskId} triggerWidth={width} />;
-  } else if (dropdownType === 'labels') {
-    const { value, projectId, workspaceId, onChange } = props as HandleDropdownProps<'labels'>;
+  if (props.dropdownType === 'points') {
+    component = <SelectPoints value={props.value} onChange={props.onChange} taskId={taskId} triggerWidth={width} />;
+  } else if (props.dropdownType === 'labels') {
     component = (
       <SelectLabels
-        value={value}
-        projectId={projectId}
-        workspaceId={workspaceId}
-        onChange={onChange}
+        value={props.value}
+        projectId={props.projectId}
+        workspaceId={props.workspaceId}
+        onChange={props.onChange}
         taskId={taskId}
         triggerWidth={width}
       />
     );
-  } else if (dropdownType === 'assignedTo') {
-    const { value, projectId, onChange } = props as HandleDropdownProps<'assignedTo'>;
+  } else if (props.dropdownType === 'assignedTo') {
     component = (
-      <SelectMembers value={value} projectId={projectId} onChange={onChange} taskId={taskId} triggerWidth={width} />
+      <SelectMembers
+        value={props.value}
+        projectId={props.projectId}
+        onChange={props.onChange}
+        taskId={taskId}
+        triggerWidth={width}
+      />
     );
-  } else if (dropdownType === 'status') {
-    const { value, onChange } = props as HandleDropdownProps<'status'>;
-    component = <SelectStatus value={value} onChange={onChange} taskId={taskId} triggerWidth={width} />;
+  } else if (props.dropdownType === 'status') {
+    component = <SelectStatus value={props.value} onChange={props.onChange} taskId={taskId} triggerWidth={width} />;
   } else {
-    const { value, onChange } = props as HandleDropdownProps<'variant'>;
-    component = <SelectVariant value={value} onChange={onChange} taskId={taskId} />;
+    component = <SelectVariant value={props.value} onChange={props.onChange} taskId={taskId} />;
   }
 
   return useDropdowner.getState().create(component, options);

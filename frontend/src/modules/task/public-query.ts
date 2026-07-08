@@ -2,7 +2,7 @@ import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { getPublicTask, getPublicTasks } from 'sdk';
 import { appConfig } from 'shared';
 import type { GetTasksParam } from '~/modules/task/query';
-import { getTasksNextPageParam, taskKeys } from '~/modules/task/query';
+import { getTasksNextPageParam, taskKeys, tasksTableQueryDefaults } from '~/modules/task/query';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
 
@@ -31,22 +31,33 @@ export const publicTasksBoardQueryOptions = (projectId: string) => {
   });
 };
 
+type PublicTasksTableParams = Omit<GetTasksParam, 'acceptedCutOff' | 'organizationId' | 'workspaceId' | 'tenantId'> & {
+  projectId: string;
+};
+
+/** The public tasks-table infinite query key (shared with use-tasks-total's count snapshot). */
+export const publicTasksTableQueryKey = ({
+  q,
+  sort = tasksTableQueryDefaults.sort,
+  order = tasksTableQueryDefaults.order,
+  matchMode = tasksTableQueryDefaults.matchMode,
+  projectId,
+}: PublicTasksTableParams) =>
+  taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, publicAt: true as const });
+
 export const publicTasksTableQueryOptions = ({
   q,
-  sort = 'createdAt',
-  order = 'desc',
-  matchMode = 'all',
+  sort = tasksTableQueryDefaults.sort,
+  order = tasksTableQueryDefaults.order,
+  matchMode = tasksTableQueryDefaults.matchMode,
   limit: baseLimit = appConfig.requestLimits.tasksTable,
   projectId,
-}: Omit<GetTasksParam, 'acceptedCutOff' | 'organizationId' | 'workspaceId' | 'tenantId'> & {
-  projectId: string;
-  limit?: number;
-}) => {
+}: PublicTasksTableParams & { limit?: number }) => {
   const limit = String(baseLimit);
   const { initialPageParam } = baseInfiniteQueryOptions;
 
   const query = { q, sort, order, projectId, matchMode };
-  const queryKey = taskKeys.publicList.filtered({ ...query, publicAt: true as const });
+  const queryKey = publicTasksTableQueryKey({ q, sort, order, matchMode, projectId });
 
   return infiniteQueryOptions({
     queryKey,

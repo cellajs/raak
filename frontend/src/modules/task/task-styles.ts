@@ -1,15 +1,16 @@
 import { cva } from 'class-variance-authority';
 
+// Glow colors per status live in card-glow.css ([data-status] sets --glow-color-rgb)
 export const taskCardVariants = cva('task-card', {
   variants: {
     status: {
-      0: '[&]:style="--glow-color-rgb:34,197,94" border-b-green-500/25 to-green-500/30',
-      1: '[&]:style="--glow-color-rgb:249,115,22" border-b-orange-500/25 to-orange-500/30',
-      2: '[&]:style="--glow-color-rgb:234,179,8" border-b-yellow-500/25 to-yellow-500/30',
-      3: '[&]:style="--glow-color-rgb:132,204,22" border-b-lime-500/25 to-lime-500/30',
-      4: '[&]:style="--glow-color-rgb:100,116,139" border-b-slate-500/40 to-slate-500/30',
+      0: 'border-b-green-500/25 to-green-500/30',
+      1: 'border-b-orange-500/25 to-orange-500/30',
+      2: 'border-b-yellow-500/25 to-yellow-500/30',
+      3: 'border-b-lime-500/25 to-lime-500/30',
+      4: 'border-b-slate-500/40 to-slate-500/30',
       5: '',
-      6: '[&]:style="--glow-color-rgb:14,165,233" border-b-sky-500/30 to-sky-500/30',
+      6: 'border-b-sky-500/30 to-sky-500/30',
     },
   },
 });
@@ -41,9 +42,33 @@ export const statusFillColors = {
   1: 'fill-orange-500',
   2: 'fill-yellow-500',
   3: 'fill-lime-500',
-  4: 'fill-regular',
+  4: 'fill-gray-400',
   5: 'fill-slate-500',
   6: 'fill-sky-500',
+} as const;
+
+/**
+ * Left gutter + bottom padding for a task description, shared by the expanded (read-only) view
+ * and the editing form so toggling edit mode doesn't shift the text.
+ */
+export const taskDescriptionGutterStyle = 'pl-1 sm:pl-9 pb-4';
+
+/**
+ * Faint accepted/iced section-bar colors, shared by the collapsed-panel sections and the board
+ * skeleton so the accepted (green) / iced (sky) hue lives in one place. The interactive toggle
+ * header in `panel-status-section` uses a richer, single-use palette and stays inline.
+ */
+export const statusSectionColors = {
+  accepted: {
+    fill: 'bg-green-500/5',
+    text: 'text-green-500',
+    border: 'border-b border-b-green-500/10',
+  },
+  iced: {
+    fill: 'bg-sky-500/5',
+    text: 'text-sky-500',
+    border: 'border-t border-t-sky-500/10',
+  },
 } as const;
 
 /** Available label colors for project labels */

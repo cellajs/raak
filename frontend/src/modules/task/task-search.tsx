@@ -9,14 +9,15 @@ import { SearchSpinner } from '~/modules/common/search-spinner';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { Badge } from '~/modules/ui/badge';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/modules/ui/input-group';
+import { cn } from '~/utils/cn';
 
-interface Props {
+interface TaskSearchProps {
   children?: React.ReactNode;
   clearSelection: () => void;
   toggleFocus: () => void;
 }
 
-export const TaskSearch = ({ children, clearSelection, toggleFocus }: Props) => {
+export const TaskSearch = ({ children, clearSelection, toggleFocus }: TaskSearchProps) => {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
 
@@ -67,7 +68,7 @@ export const TaskSearch = ({ children, clearSelection, toggleFocus }: Props) => 
     if (isFilterActive) inputRef.current?.focus();
   }, [isFilterActive]);
 
-  // // Keep input value in sync with searchQuery when it changes externally
+  // Keep input value in sync with searchQuery when it changes externally
   useEffect(() => {
     if (searchQuery !== inputValue) setInputValue(searchQuery);
   }, [searchQuery]);
@@ -108,7 +109,10 @@ export const TaskSearch = ({ children, clearSelection, toggleFocus }: Props) => 
         <Badge
           variant="plain"
           size="micro"
-          className={`${(!inputValue || !/\s/.test(inputValue)) && 'hidden'} cursor-pointer opacity-70 hover:opacity-100`}
+          className={cn(
+            (!inputValue || !/\s/.test(inputValue)) && 'hidden',
+            'cursor-pointer opacity-70 hover:opacity-100',
+          )}
           onClick={toggleSearchMode}
         >
           {matchMode}
@@ -118,7 +122,7 @@ export const TaskSearch = ({ children, clearSelection, toggleFocus }: Props) => 
         <XCircleIcon
           id="search-close"
           size={16}
-          className={`${!inputValue && 'hidden'} cursor-pointer opacity-70 hover:opacity-100`}
+          className={cn(!inputValue && 'hidden', 'cursor-pointer opacity-70 hover:opacity-100')}
           onMouseDown={(e) => {
             preventInputBlur(e);
 

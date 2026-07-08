@@ -8,8 +8,6 @@ import { useUserStore } from '~/modules/user/user-store';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { computeArrayDelta } from '~/query/offline/array-delta';
 
-export type TaskFieldHandlers = ReturnType<typeof buildFieldHandlers>;
-
 interface FieldHandlerDeps {
   taskMutation: ReturnType<typeof useTaskUpdateMutation>;
   user: UserMinimalBase;
@@ -118,8 +116,11 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
  * Each handler wraps the task update mutation with optimistic updates.
  */
 export const useTaskFieldHandlers = (task: Task) => {
-  const { user } = useUserStore();
+  const user = useUserStore((s) => s.user);
   const taskMutation = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
+  // Intentionally NOT memoized: the label/assignee baselines (see buildFieldHandlers) rely on fresh
+  // handlers per render + the dropdowner capturing one instance per open session. Memoizing would
+  // either never hold (taskMutation is a new object each render) or leak a baseline across sessions.
   return buildFieldHandlers(task, { taskMutation, user });
 };

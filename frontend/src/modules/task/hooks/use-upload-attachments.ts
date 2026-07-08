@@ -38,12 +38,10 @@ export const useUploadAttachments = () => {
       mutate({
         body,
         tenantId,
-        organizationId: organizationId,
+        organizationId,
       });
       return createdAttachments;
     };
 
-  return {
-    attachmentsCreationCallback, // Return the renamed callback
-  };
+  return { attachmentsCreationCallback };
 };
