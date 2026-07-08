@@ -1,6 +1,6 @@
 import { Building2Icon, CloudIcon, FolderIcon, StickyNoteIcon, UsersIcon, ZapIcon } from 'lucide-react';
 import { appConfig } from 'shared';
-import { nanoid } from 'shared/nanoid';
+import { nanoid } from 'shared/utils/nanoid';
 import type { InfoCard } from '~/modules/marketing/about/info-cards';
 import type { PricingPlan } from '~/modules/marketing/about/pricing';
 import type { ShowcaseItem } from '~/modules/marketing/about/showcase';

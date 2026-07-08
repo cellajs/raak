@@ -1,5 +1,5 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
-import { defaultOrder } from 'shared/display-order';
+import { defaultOrder } from 'shared/utils/display-order';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import type { PanelDraggableData, Task, TaskDraggableData } from '~/modules/task/types';
 

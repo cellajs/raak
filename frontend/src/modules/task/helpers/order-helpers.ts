@@ -1,5 +1,5 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
-import { defaultOrder, getRelativeOrder, orderGap } from 'shared/display-order';
+import { defaultOrder, getRelativeOrder, orderGap } from 'shared/utils/display-order';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';

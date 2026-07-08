@@ -13,7 +13,7 @@ import { createServerStx } from '#/core/stx';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
 import { TaskStatus, TaskVariant } from '#/modules/task/task-properties';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
-import { nanoid } from 'shared/nanoid';
+import { nanoid } from 'shared/utils/nanoid';
 import { mockLabel } from '#/modules/label/label-mocks';
 import { mockContextMembership } from '#/modules/memberships/memberships-mocks';
 import { mockProject } from '#/modules/project/project-mocks';

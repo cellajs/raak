@@ -5,7 +5,7 @@ import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { generateId } from 'shared/entity-id';
+import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';

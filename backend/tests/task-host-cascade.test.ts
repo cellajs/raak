@@ -1,6 +1,6 @@
 import { eq, inArray } from 'drizzle-orm';
 import { deleteTasks } from 'sdk';
-import { generateId } from 'shared/entity-id';
+import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { baseDb as db } from '#/db/db';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';

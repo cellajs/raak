@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
-import { nanoid } from 'shared/nanoid';
+import { nanoid } from 'shared/utils/nanoid';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { COLLAPSED_PANEL_MIN_WIDTH, PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
