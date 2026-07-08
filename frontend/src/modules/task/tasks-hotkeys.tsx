@@ -18,7 +18,7 @@ import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import type { BoardResizablePanel, Task, TaskSearch } from '~/modules/task/types';
+import type { ProjectResizablePanel, Task, TaskSearch } from '~/modules/task/types';
 import { useUserStore } from '~/modules/user/user-store';
 
 interface TasksHotkeysProps {
@@ -27,7 +27,7 @@ interface TasksHotkeysProps {
   type: 'workspace' | 'project';
 }
 
-type StrictBoardPanel = Required<Pick<BoardResizablePanel, 'project'>> & Omit<BoardResizablePanel, 'project'>;
+type StrictBoardPanel = ProjectResizablePanel;
 
 export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const { panelData } = useTaskBoardStore();

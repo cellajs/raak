@@ -5,7 +5,7 @@ import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { Task } from '~/modules/task/types';
+import type { ProjectResizablePanel, Task } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
@@ -85,13 +85,14 @@ export const sortByMembership = (projects: EnrichedProject[]) => {
 export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: BoardPanelData | undefined) => {
   const sortedProjects = sortByMembership(projects);
 
-  return sortedProjects.flatMap((project) => {
+  return sortedProjects.flatMap((project): ProjectResizablePanel[] => {
     const viewSections = boardPanelData?.[project.id]?.viewSections;
     // If the project has no splits, use a default single panel
-    if (!viewSections?.length) return [{ project, panelId: project.id }];
+    if (!viewSections?.length) return [{ kind: 'project', project, panelId: project.id }];
 
     // If split filters exist, create a panel for each status
     return viewSections.map((sectionCriteria) => ({
+      kind: 'project',
       project,
       sectionFilters: sectionCriteria,
       panelId: makePanelKey(project.id, sectionCriteria),

@@ -8,6 +8,7 @@ import { computePanelReorder, useBoardPanels } from '~/modules/task/board/board-
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ExplainerPanel } from '~/modules/task/panel/explainer-panel';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
+import { type BoardResizablePanel, EXPLAINER_PANEL_ID } from '~/modules/task/types';
 
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
   const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
@@ -16,10 +17,9 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   const alertsSeen = useAlertStore((s) => s.alertsSeen);
   const showExplainer = !!workspace && !alertsSeen.includes('welcome-text');
 
-  const extraPanels = useMemo(() => {
-    const panels: { panelId: string }[] = [];
-    if (showExplainer) panels.push({ panelId: 'explainer' });
-    return panels.length > 0 ? panels : undefined;
+  const extraPanels = useMemo((): BoardResizablePanel[] | undefined => {
+    if (!showExplainer) return undefined;
+    return [{ kind: 'explainer', panelId: EXPLAINER_PANEL_ID }];
   }, [showExplainer]);
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
 
@@ -55,7 +55,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     lastScrolledSlug.current = projectSlug;
     const targetProject = projects.find((p) => p.slug === projectSlug);
     if (!targetProject) return;
-    const targetPanel = panels.find((col) => col.project?.id === targetProject.id);
+    const targetPanel = panels.find((col) => col.kind === 'project' && col.project.id === targetProject.id);
     if (!targetPanel) return;
     boardLayoutRef.current?.expandAndScrollToPanel(targetPanel.panelId);
   }, [projectSlug, panels, projects]);
@@ -72,7 +72,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     >
       {(panelId) => {
         const panel = panels.find((c) => c.panelId === panelId);
-        if (!panel?.project) return <ExplainerPanel />;
+        if (panel?.kind !== 'project') return <ExplainerPanel />;
         return <ProjectBoardPanel project={panel.project} sectionFilters={panel.sectionFilters} />;
       }}
     </BoardLayout>

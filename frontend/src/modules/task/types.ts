@@ -12,7 +12,19 @@ export type Task = GetTaskResponse & { _draft?: boolean };
 /** Embedded label shape as it appears on a task (subset of full Label). */
 export type TaskLabel = NonNullable<Task['labels']>[number];
 
-export type BoardResizablePanel = { project?: EnrichedProject; sectionFilters?: SectionsValue; panelId: string };
+/** Stable id for the explainer ("getting started") panel. Also a persisted board-layout /
+ *  collapse-state key, so this string value must not change. */
+export const EXPLAINER_PANEL_ID = 'explainer';
+
+/** A board column: either a project panel (optionally a section-filtered split of one) or a
+ *  local, non-project panel (currently just the explainer). The `kind` discriminant replaces
+ *  the old "any panel without a project is the explainer" heuristic. */
+export type BoardResizablePanel =
+  | { kind: 'project'; project: EnrichedProject; sectionFilters?: SectionsValue; panelId: string }
+  | { kind: 'explainer'; panelId: string };
+
+/** The project variant of a board panel (what `prepareBoardPanels` always produces). */
+export type ProjectResizablePanel = Extract<BoardResizablePanel, { kind: 'project' }>;
 
 export type TaskCounts = {
   total: number;

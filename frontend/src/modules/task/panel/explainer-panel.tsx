@@ -8,6 +8,7 @@ import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { Spinner } from '~/modules/common/spinner';
 import { PanelDragHandleButton } from '~/modules/task/panel/panel-drag-handle-button';
+import { EXPLAINER_PANEL_ID } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
 
@@ -19,7 +20,7 @@ export const ExplainerPanel = () => {
 
   const { organization, tenantId } = useOrganizationLayoutContext();
   const { setAlertSeen } = useAlertStore();
-  const isCollapsed = useBoardStore((state) => state.panelCollapseState.explainer);
+  const isCollapsed = useBoardStore((state) => state.panelCollapseState[EXPLAINER_PANEL_ID]);
 
   const setAsSeen = () => setAlertSeen('welcome-text');
 

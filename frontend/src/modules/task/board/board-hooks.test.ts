@@ -4,6 +4,7 @@ import type { BoardResizablePanel } from '~/modules/task/types';
 import { computePanelReorder, getPanelDisplayOrder, sortPanelsByOrder } from './board-hooks';
 
 const makeProjectPanel = (projectId: string, displayOrder: number, panelId = projectId): BoardResizablePanel => ({
+  kind: 'project',
   panelId,
   project: {
     id: projectId,
@@ -13,7 +14,8 @@ const makeProjectPanel = (projectId: string, displayOrder: number, panelId = pro
   } as unknown as EnrichedProject,
 });
 
-const makeExtraPanel = (panelId: string): BoardResizablePanel => ({ panelId });
+// A local, non-project panel (explainer). Used to stand in for any order-only board column.
+const makeExtraPanel = (panelId: string): BoardResizablePanel => ({ kind: 'explainer', panelId });
 
 describe('getPanelDisplayOrder', () => {
   it('reads server-owned membership.displayOrder for project panels', () => {

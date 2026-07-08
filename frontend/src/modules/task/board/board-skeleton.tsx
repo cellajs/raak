@@ -11,16 +11,18 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { PageTab } from '~/modules/common/page/tab-nav';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import type { EnrichedProject } from '~/modules/project/types';
+import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { formatSectionLabel, normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { TaskSearch } from '~/modules/task/task-search';
 import { statusSectionColors } from '~/modules/task/task-styles';
-import type { BoardResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
 import { DisplayOptions } from '~/modules/workspace/header/display-options';
 import { cn } from '~/utils/cn';
+
+type SkeletonPanel = { panelId: string; project?: EnrichedProject; sectionFilters?: SectionsValue };
 
 interface BoardSkeletonProps {
   boardId: string;
@@ -41,7 +43,9 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
   const isInWorkspace = matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
   const panelStateMap = useTaskBoardStore((state) => state.panelData[boardId]);
 
-  const panels: BoardResizablePanel[] = useMemo(
+  // Skeleton columns need only an id, plus a project/filters when drawing a project header.
+  // Project panels from prepareBoardPanels satisfy this; the mobile placeholder has neither.
+  const panels: SkeletonPanel[] = useMemo(
     () => (isMobile ? [{ panelId: 'mobilePanel' }] : prepareBoardPanels(projects, panelStateMap)),
     [panelStateMap, projects, isMobile],
   );

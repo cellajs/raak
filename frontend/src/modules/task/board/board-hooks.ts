@@ -14,7 +14,8 @@ export function getPanelDisplayOrder(
   panel: BoardResizablePanel,
   localOrders: Record<string, number> = {},
 ): number | undefined {
-  return panel.project?.membership?.displayOrder ?? localOrders[panel.panelId];
+  const membershipOrder = panel.kind === 'project' ? panel.project.membership?.displayOrder : undefined;
+  return membershipOrder ?? localOrders[panel.panelId];
 }
 
 /** Sort panels by their resolved displayOrder. Panels without an order keep their
@@ -81,7 +82,7 @@ export function computePanelReorder(
   // Float collision — skip; a rebalance pass would be needed to recover.
   if (newDisplayOrder === null) return null;
 
-  const sourceProject = sourcePanel.project;
+  const sourceProject = sourcePanel.kind === 'project' ? sourcePanel.project : undefined;
   if (sourceProject?.membership) {
     if (newDisplayOrder === sourceProject.membership.displayOrder) return null;
     return {
