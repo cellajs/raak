@@ -1,12 +1,12 @@
 import { useSyncExternalStore } from 'react';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
-import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
+import { publicTasksTableQueryKey } from '~/modules/task/public-query';
 import {
   type BaseTasksQueryParam,
   type TasksInfiniteQueryData,
   taskKeys,
-  tasksTableQueryOptions,
+  tasksTableQueryKey,
 } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { isQueryData } from '~/query/basic/mutate-query';
@@ -53,9 +53,9 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
         }, 0);
       }
 
-      const { queryKey } = queryParams
-        ? tasksTableQueryOptions({ ...search, ...queryParams })
-        : publicTasksTableQueryOptions({ ...search, projectId: scopeFilters.projectId! });
+      const queryKey = queryParams
+        ? tasksTableQueryKey({ ...search, ...queryParams })
+        : publicTasksTableQueryKey({ ...search, projectId: scopeFilters.projectId! });
 
       const queryData = queryClient.getQueryData<TasksInfiniteQueryData>(queryKey);
 
