@@ -9,6 +9,8 @@ interface TaskCardState {
   setTaskState: (taskId: string, state: TaskState) => void;
   /** Revert an editing task to expanded; keep collapsed tasks collapsed. */
   suppressEdit: (taskId: string) => void;
+  /** Demote every editing task to expanded (single-editor rule, e.g. when the sheet opens). */
+  suppressAllEditing: () => void;
   /** Clear all per-task view state. Call when leaving a workspace/board so the map can't grow forever. */
   reset: () => void;
 }
@@ -44,6 +46,22 @@ export const useTaskCardStore = create<TaskCardState>()(
           },
           undefined,
           'suppressEdit',
+        ),
+      suppressAllEditing: () =>
+        set(
+          (s) => {
+            let changed = false;
+            const next = { ...s.states };
+            for (const id in next) {
+              if (next[id] === 'editing') {
+                next[id] = 'expanded';
+                changed = true;
+              }
+            }
+            return changed ? { states: next } : s;
+          },
+          undefined,
+          'suppressAllEditing',
         ),
       reset: () => set({ states: {} }, undefined, 'reset'),
     }),

@@ -40,17 +40,6 @@ interface PortalDataProps {
   rect: DOMRect;
 }
 
-function areEqual(prevProps: TaskProps, nextProps: TaskProps) {
-  // Compare to decide if component should rerender
-  return (
-    prevProps.task === nextProps.task &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.isFocused === nextProps.isFocused &&
-    prevProps.state === nextProps.state &&
-    prevProps.isSheet === nextProps.isSheet
-  );
-}
-
 /**
  * Manage task card rendering and interactions, including click/double-click behavior, focus management, and drag-and-drop for reordering.
  */
@@ -182,7 +171,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       onDragLeave: dragEnd,
       onDrop: dragEnd,
     });
-  }, [task, state, isSheet]);
+  }, [task, isSheet, isReadOnly]);
 
   // Exit editing only when focus moves to another task card (not to dialogs, portals, or void).
   // Small delay lets BlockNote's blur handler flush content to cache and
@@ -191,7 +180,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     if (state !== 'editing') return;
     const nextFocused = event.relatedTarget as HTMLElement | null;
     // Only exit editing if focus moved to another task card
-    if (nextFocused?.closest?.('[data-state]') && !taskRef.current?.contains(nextFocused)) {
+    if (nextFocused?.closest?.('[data-task-card-id]') && !taskRef.current?.contains(nextFocused)) {
       setTimeout(() => useTaskCardStore.getState().setTaskState(task.id, 'expanded'), 50);
     }
   };
@@ -265,6 +254,6 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         )}
     </FocusTrap>
   );
-}, areEqual);
+});
 
 export { TaskCard };
