@@ -263,11 +263,28 @@ export const tasksCanonicalOptions = ({
   });
 };
 
+/** Default sort/order/match for the tasks table, single-sourced so the options factory and the
+ *  lightweight count snapshot (use-tasks-total) can't drift on their query key. */
+export const tasksTableQueryDefaults = { sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
+
+/** The tasks-table infinite query key. Extracted so use-tasks-total can read the key directly
+ *  instead of building the whole options object (queryFn/getNextPageParam closures) to discard it. */
+export const tasksTableQueryKey = ({
+  q,
+  sort = tasksTableQueryDefaults.sort,
+  order = tasksTableQueryDefaults.order,
+  matchMode = tasksTableQueryDefaults.matchMode,
+  projectId,
+  workspaceId,
+  organizationId,
+}: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) =>
+  taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, matchMode, q });
+
 export const tasksTableQueryOptions = ({
   q,
-  sort = 'createdAt',
-  order = 'desc',
-  matchMode = 'all',
+  sort = tasksTableQueryDefaults.sort,
+  order = tasksTableQueryDefaults.order,
+  matchMode = tasksTableQueryDefaults.matchMode,
   projectId,
   workspaceId,
   organizationId,
@@ -278,7 +295,7 @@ export const tasksTableQueryOptions = ({
   const { initialPageParam } = baseInfiniteQueryOptions;
 
   const query = { q, sort, order, organizationId, projectId, workspaceId, matchMode };
-  const queryKey = taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, matchMode, q });
+  const queryKey = tasksTableQueryKey({ q, sort, order, matchMode, projectId, workspaceId, organizationId });
 
   return infiniteQueryOptions({
     queryKey,

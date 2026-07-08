@@ -44,12 +44,7 @@ function TaskSheetHandler() {
   useEffect(() => {
     if (!taskSheetId) return;
     // Demote any other editing task (single-editor rule)
-    const { states } = useTaskCardStore.getState();
-    for (const [id, state] of Object.entries(states)) {
-      if (state === 'editing') {
-        useTaskCardStore.getState().suppressEdit(id);
-      }
-    }
+    useTaskCardStore.getState().suppressAllEditing();
     const boardCard = document.getElementById(taskSheetId);
     if (boardCard) boardCard.setAttribute('data-suppress-glow', '');
     return () => boardCard?.removeAttribute('data-suppress-glow');

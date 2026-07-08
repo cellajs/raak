@@ -16,7 +16,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
     >
       {(panelId) => {
         const col = panels.find((c) => c.panelId === panelId);
-        if (!col?.project) return null;
+        if (col?.kind !== 'project') return null;
 
         return (
           <ProjectBoardPanel

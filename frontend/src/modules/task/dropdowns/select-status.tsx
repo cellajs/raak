@@ -82,7 +82,7 @@ export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWi
                 className="group flex w-full items-center gap-2 rounded-md leading-normal"
               >
                 <status.icon
-                  className={`size-4 fill-current group-hover:opacity-100 ${statusFillColors[status.value] || ''}`}
+                  className={`size-4 fill-current group-hover:opacity-100 ${statusFillColors[status.value]}`}
                 />
                 <div className="grow">{t(`c:${status.status}`)}</div>
                 <ComboboxItemIndicator className="text-success" />

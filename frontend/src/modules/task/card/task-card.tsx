@@ -15,7 +15,7 @@ import { getSeenContextId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskCardContentCollapsed } from '~/modules/task/card/card-content-collapsed';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
-import { TaskCardPrimitive } from '~/modules/task/card/card-drag-preview';
+import { TaskCardDragPreview } from '~/modules/task/card/card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -32,23 +32,12 @@ import { getDraggableItemData } from '~/utils/get-draggable-item-data';
 
 import '~/modules/task/card/card-glow.css';
 import { StickyBox } from '~/modules/common/sticky-box';
-import { useMobileTaskDragIndicatorStore } from '~/modules/task/helpers/mobile-drag-indicator';
+import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
 import { taskCardVariants } from '~/modules/task/task-styles';
 
 interface PortalDataProps {
   container: HTMLElement;
   rect: DOMRect;
-}
-
-function areEqual(prevProps: TaskProps, nextProps: TaskProps) {
-  // Compare to decide if component should rerender
-  return (
-    prevProps.task === nextProps.task &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.isFocused === nextProps.isFocused &&
-    prevProps.state === nextProps.state &&
-    prevProps.isSheet === nextProps.isSheet
-  );
 }
 
 /**
@@ -182,7 +171,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       onDragLeave: dragEnd,
       onDrop: dragEnd,
     });
-  }, [task, state, isSheet]);
+  }, [task, isSheet, isReadOnly]);
 
   // Exit editing only when focus moves to another task card (not to dialogs, portals, or void).
   // Small delay lets BlockNote's blur handler flush content to cache and
@@ -191,7 +180,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     if (state !== 'editing') return;
     const nextFocused = event.relatedTarget as HTMLElement | null;
     // Only exit editing if focus moved to another task card
-    if (nextFocused?.closest?.('[data-state]') && !taskRef.current?.contains(nextFocused)) {
+    if (nextFocused?.closest?.('[data-task-card-id]') && !taskRef.current?.contains(nextFocused)) {
       setTimeout(() => useTaskCardStore.getState().setTaskState(task.id, 'expanded'), 50);
     }
   };
@@ -259,12 +248,12 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       {portalData &&
         createPortal(
           <div style={{ width: portalData.rect.width, height: portalData.rect.height }}>
-            <TaskCardPrimitive task={task} />
+            <TaskCardDragPreview task={task} />
           </div>,
           portalData.container,
         )}
     </FocusTrap>
   );
-}, areEqual);
+});
 
 export { TaskCard };

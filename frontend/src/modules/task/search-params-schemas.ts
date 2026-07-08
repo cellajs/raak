@@ -1,7 +1,7 @@
 import { zGetTasksQuery } from 'sdk/zod.gen';
-import z from 'zod';
+import { z } from 'zod';
 
-export const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board');
+const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board');
 
 const baseTaskViewSchema = z.object({
   taskSheetId: z.string().optional(),

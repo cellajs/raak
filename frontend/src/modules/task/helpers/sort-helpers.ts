@@ -15,9 +15,5 @@ export const sortTaskOrder = (
   if (task1.status !== task2.status) return task1.status - task2.status;
 
   // Secondary sort by displayOrder within the same status
-  if (task1.displayOrder !== null && task2.displayOrder !== null)
-    return reverse ? task1.displayOrder - task2.displayOrder : task2.displayOrder - task1.displayOrder;
-
-  // Handle cases where displayOrder is null
-  return 0;
+  return reverse ? task1.displayOrder - task2.displayOrder : task2.displayOrder - task1.displayOrder;
 };

@@ -1,14 +1,5 @@
 import { Link, useMatchRoute, useParams } from '@tanstack/react-router';
-import {
-  EllipsisVertical,
-  EllipsisVerticalIcon,
-  ExpandIcon,
-  FunnelIcon,
-  Plus,
-  PlusIcon,
-  SettingsIcon,
-  TagIcon,
-} from 'lucide-react';
+import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,17 +11,20 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { PageTab } from '~/modules/common/page/tab-nav';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import type { EnrichedProject } from '~/modules/project/types';
+import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { formatSectionLabel, normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { TaskSearch } from '~/modules/task/task-search';
-import type { BoardResizablePanel } from '~/modules/task/types';
+import { statusSectionColors } from '~/modules/task/task-styles';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
 import { DisplayOptions } from '~/modules/workspace/header/display-options';
 import { cn } from '~/utils/cn';
 
-interface Props {
+type SkeletonPanel = { panelId: string; project?: EnrichedProject; sectionFilters?: SectionsValue };
+
+interface BoardSkeletonProps {
   boardId: string;
   projects?: Project[];
   projectPage?: boolean;
@@ -41,7 +35,7 @@ interface Props {
 /**
  * Render skeleton per panel based on the current board layout
  */
-export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...prop }: Props) => {
+export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...prop }: BoardSkeletonProps) => {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
   const isMobile = useBreakpointBelow('sm');
@@ -49,9 +43,11 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
   const isInWorkspace = matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
   const panelStateMap = useTaskBoardStore((state) => state.panelData[boardId]);
 
-  const panels: BoardResizablePanel[] = useMemo(
-    () => (isMobile ? [{ panelId: 'mobilePanel' }] : prepareBoardPanels(boardId, projects)),
-    [panelStateMap, projects, isMobile, boardId],
+  // Skeleton columns need only an id, plus a project/filters when drawing a project header.
+  // Project panels from prepareBoardPanels satisfy this; the mobile placeholder has neither.
+  const panels: SkeletonPanel[] = useMemo(
+    () => (isMobile ? [{ panelId: 'mobilePanel' }] : prepareBoardPanels(projects, panelStateMap)),
+    [panelStateMap, projects, isMobile],
   );
 
   const minContainerWidth = useMemo(() => {
@@ -152,7 +148,7 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
                 projectPage={projectPage}
               />
             )}
-            {isInWorkspace && isMobile && <StickyModilePanelHeader projectTabs={projectTabs} />}
+            {isInWorkspace && isMobile && <StickyMobilePanelHeader projectTabs={projectTabs} />}
             <PanelBodySkeleton {...prop} />
           </div>
         ))}
@@ -161,7 +157,7 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
   );
 };
 
-const StickyModilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) => {
+const StickyMobilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) => {
   // Stable per-instance id — a fresh layoutId per render would break the shared-layout underline animation
   const layoutId = useRef(nanoid()).current;
   return (
@@ -203,18 +199,20 @@ const StickyModilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) =>
   );
 };
 
-const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: Omit<Props, 'projects' | 'boardId'>) => {
+const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: Omit<BoardSkeletonProps, 'projects' | 'boardId'>) => {
   const renderRowHeight = rowHeight - 8;
   return (
     <div className="flex w-full flex-col overflow-auto border opacity-100 transition-opacity duration-300">
-      <div className="-mt-[.05rem] flex h-8 w-full justify-start gap-1 rounded-none border-t border-t-transparent border-b border-b-green-500/10 bg-green-500/5 ring-inset" />
+      <div
+        className={`-mt-[.05rem] flex h-8 w-full justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
+      />
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
         <div key={index} className="border-b px-1 py-2 hover:bg-transparent">
           <Skeleton className={'w-full rounded'} style={{ height: `${renderRowHeight}px` }} />
         </div>
       ))}
-      <div className="flex h-8 w-full justify-start gap-1 rounded-none bg-sky-500/5 ring-inset" />
+      <div className={`flex h-8 w-full justify-start gap-1 rounded-none ${statusSectionColors.iced.fill} ring-inset`} />
     </div>
   );
 };
@@ -281,11 +279,11 @@ const PanelHeaderSkeleton = ({
           <div className="hidden grow sm:block" />
           {isPrimary && (
             <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label="Project options">
-              <EllipsisVertical size={16} />
+              <EllipsisVerticalIcon size={16} />
             </Button>
           )}
           <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
-            <Plus size={18} className="transition-transform duration-200" />
+            <PlusIcon size={18} className="transition-transform duration-200" />
 
             <span className="ml-1">{t('c:task')}</span>
           </Button>

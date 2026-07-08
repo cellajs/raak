@@ -6,7 +6,7 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
   const parser = new DOMParser();
 
   return tasks.map((task) => {
-    //Parse the HTML and extract text content
+    // Parse the HTML and extract text content
     const summaryDoc = parser.parseFromString(task.summary, 'text/html');
     const summaryText = summaryDoc.body.textContent || '';
 
@@ -21,7 +21,7 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
       projectId: project?.name ?? '-',
       createdBy: task.createdBy?.name ?? '-',
       updatedBy: task.updatedBy?.name ?? '-',
-      assignedTo: task.assignedTo.map((m) => m.name) || '-',
+      assignedTo: task.assignedTo.map((m) => m.name),
     } as unknown as Task;
   });
 };

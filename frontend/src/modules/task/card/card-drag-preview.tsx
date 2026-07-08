@@ -7,7 +7,7 @@ import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
 
 /** A primitive card component for displaying task information during drag operations */
-export const TaskCardPrimitive = ({ task }: { task: Task }) => {
+export const TaskCardDragPreview = ({ task }: { task: Task }) => {
   return (
     <Card
       tabIndex={0}

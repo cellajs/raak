@@ -10,7 +10,7 @@ import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { cachedTasks, currentActiveTask } from '~/modules/task/helpers/active-task';
 import { prepareBoardPanels, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
-import { handleCreateForm as toggleCreateForm } from '~/modules/task/helpers/create-task';
+import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
@@ -18,18 +18,18 @@ import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import type { BoardResizablePanel, Task, TaskSearch } from '~/modules/task/types';
+import type { ProjectResizablePanel, Task, TaskSearch } from '~/modules/task/types';
 import { useUserStore } from '~/modules/user/user-store';
 
-interface Props {
+interface TasksHotkeysProps {
   boardId: string;
   projects: Project[];
   type: 'workspace' | 'project';
 }
 
-type StrictBoardPanel = Required<Pick<BoardResizablePanel, 'project'>> & Omit<BoardResizablePanel, 'project'>;
+type StrictBoardPanel = ProjectResizablePanel;
 
-export function TasksHotkeys({ boardId, projects, type }: Props) {
+export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const { panelData } = useTaskBoardStore();
   const { tenantId, organization } = useOrganizationLayoutContext();
   const { user } = useUserStore();
@@ -66,7 +66,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
   // Resolve the focused task and its panel's rendered task list (shared by vertical nav handlers).
   const resolveVerticalNavContext = () => {
     if (!projects.length) return null;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(boardId, projects);
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, panelData[boardId]);
     const currentTask = currentActiveTask();
     if (!currentTask) return null;
 
@@ -136,7 +136,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
   // Navigate between panels (Left/Right) — focus the first task visible in the target panel's viewport.
   const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length) return;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(boardId, projects);
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, panelData[boardId]);
     const currentTask = currentActiveTask();
 
     const currentPanelIndex = allPanels.findIndex(
@@ -191,7 +191,7 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
 
     const targetProject = projects.find((p) => p.id === targetProjectId) ?? projects[0];
     if (isProjectReadOnly(targetProject.id)) return;
-    toggleCreateForm(targetProject);
+    toggleCreateTaskForm(targetProject);
   };
 
   // Open a field dropdown for the focused task
@@ -210,31 +210,48 @@ export function TasksHotkeys({ boardId, projects, type }: Props) {
     if (!(trigger instanceof HTMLButtonElement)) return useDropdowner.getState().remove();
 
     const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
-    const base = {
-      triggerId,
-      triggerRef: { current: trigger },
-      taskId: targetTask.id,
-    };
+    const base = { triggerId, triggerRef: { current: trigger }, taskId: targetTask.id };
 
-    const fieldProps: Record<DropdownsType, Record<string, unknown>> = {
-      points: { dropdownType: 'points', value: targetTask.points, onChange: handlers.onPointsChange },
-      labels: {
-        dropdownType: 'labels',
-        value: targetTask.labels,
-        projectId: targetTask.projectId,
-        onChange: handlers.onLabelsChange,
-      },
-      assignedTo: {
-        dropdownType: 'assignedTo',
-        value: targetTask.assignedTo,
-        projectId: targetTask.projectId,
-        onChange: handlers.onAssignedToChange,
-      },
-      status: { dropdownType: 'status', value: targetTask.status, onChange: handlers.onStatusChange },
-      variant: { dropdownType: 'variant', value: targetTask.variant, onChange: handlers.onVariantChange },
-    };
-
-    handleTaskDropdownClick({ ...base, ...fieldProps[field] } as Parameters<typeof handleTaskDropdownClick>[0]);
+    // A switch keeps each call matched to the right discriminated-union member — no cast.
+    switch (field) {
+      case 'points':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'points',
+          value: targetTask.points,
+          onChange: handlers.onPointsChange,
+        });
+      case 'labels':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'labels',
+          value: targetTask.labels,
+          projectId: targetTask.projectId,
+          onChange: handlers.onLabelsChange,
+        });
+      case 'assignedTo':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'assignedTo',
+          value: targetTask.assignedTo,
+          projectId: targetTask.projectId,
+          onChange: handlers.onAssignedToChange,
+        });
+      case 'status':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'status',
+          value: targetTask.status,
+          onChange: handlers.onStatusChange,
+        });
+      case 'variant':
+        return handleTaskDropdownClick({
+          ...base,
+          dropdownType: 'variant',
+          value: targetTask.variant,
+          onChange: handlers.onVariantChange,
+        });
+    }
   };
 
   const actionHotkeys: HotkeyItem[] = [

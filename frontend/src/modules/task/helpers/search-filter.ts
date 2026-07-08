@@ -2,6 +2,21 @@ import type { Block } from '@blocknote/core';
 import { getSearchableTextFromBlocks } from 'shared/blocknote';
 import type { Task, TaskSearch } from '~/modules/task/types';
 
+// Parsing the BlockNote description JSON is the expensive part of the filter (it runs per task on
+// every keystroke / cache event in board mode and the offline table filter). Cache it keyed by the
+// task object: react-query structural-shares unchanged tasks, so this hits across renders, and a
+// WeakMap needs no manual eviction — entries are GC'd once a task object leaves the cache.
+const descriptionTextCache = new WeakMap<Task, string>();
+const getDescriptionText = (task: Task): string => {
+  const cached = descriptionTextCache.get(task);
+  if (cached !== undefined) return cached;
+  const text = task.description
+    ? getSearchableTextFromBlocks(JSON.parse(task.description) as Block[]).toLowerCase()
+    : '';
+  descriptionTextCache.set(task, text);
+  return text;
+};
+
 /**
  * Search filter function for tasks based on search parameters.
  */
@@ -26,14 +41,10 @@ export const searchFilterFunction = (
 
   if (keywords.length === 0) return true; // No filtering if there are no valid search keywords
 
-  // Extract searchable text from description blocks, including safe URL metadata
-  const parseBlocksText = (json: string | null) =>
-    json ? getSearchableTextFromBlocks(JSON.parse(json) as Block[]).toLowerCase() : '';
-
-  // Task fields
-  const { description, keywords: taskKeywords, labels, assignedTo } = task;
+  // Task fields (description text is parsed once per task via the cache above)
+  const { keywords: taskKeywords, labels, assignedTo } = task;
   const searchableText = [
-    parseBlocksText(description),
+    getDescriptionText(task),
     taskKeywords.toLowerCase(),
     ...labels.map(({ name }) => name.toLowerCase()),
     ...assignedTo.map(({ name }) => name.toLowerCase()),

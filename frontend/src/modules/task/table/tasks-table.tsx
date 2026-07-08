@@ -14,12 +14,15 @@ import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
-import { TasksTableBar } from '~/modules/task/table/tasks-bar';
-import { useColumns } from '~/modules/task/table/tasks-columns';
+import { TableProjectsContext, useColumns } from '~/modules/task/table/tasks-columns';
+import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
 import type { Task, TaskSearch } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 const LIMIT = appConfig.requestLimits.tasksTable;
+
+// Stable identity so it never invalidates DataTable's memoized Row components.
+const rowKeyGetter = (row: Task) => row.id;
 
 export type TaskTableProps = {
   projects?: Project[];
@@ -40,14 +43,19 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts' }),
     enabled: !projectsProp,
   });
-  const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
+  // Memoized so the reactive project cells (TableProjectsContext) only re-render when the list
+  // actually changes, not on every table render.
+  const projects = useMemo(
+    () => projectsProp ?? flattenInfiniteData<Project>(fetchedData),
+    [projectsProp, fetchedData],
+  );
 
   // Table state
   const { q, sort, order } = search;
   const limit = LIMIT;
 
-  // Build columns
-  const [columns, setColumns] = useColumns(projects, { hideProject: !workspace, organization, tenantId });
+  // Build columns (frozen; project cells read `projects` reactively via TableProjectsContext)
+  const [columns, setColumns] = useColumns({ hideProject: !workspace, organization, tenantId });
   const [selected, setSelected] = useState<Task[]>([]);
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
@@ -74,70 +82,82 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     return data.pages.flatMap(({ items }) => items);
   }, [data]);
   const isOnline = useOnlineManager();
-  const rows = !fetchedRows
-    ? undefined
-    : isOnline
-      ? fetchedRows
-      : fetchedRows.filter((row) => searchFilterFunction(search, row));
+  // Keep a stable reference (and skip re-filtering) when nothing changed, so DataTable's
+  // memoized Rows don't re-render each parent render — especially offline, where the filter
+  // runs a per-task text search.
+  const rows = useMemo(() => {
+    if (!fetchedRows) return undefined;
+    return isOnline ? fetchedRows : fetchedRows.filter((row) => searchFilterFunction(search, row));
+  }, [fetchedRows, isOnline, search]);
 
   // isFetching already includes next page fetch scenario
   const fetchMore = useCallback(async () => {
     if (!hasNextPage || isLoading || isFetching) return;
     await fetchNextPage();
-  }, [hasNextPage, isLoading, isFetching]);
+  }, [hasNextPage, isLoading, isFetching, fetchNextPage]);
 
-  const onSelectedRowsChange = (value: Set<string>) => {
-    if (rows) setSelected(rows.filter((row) => value.has(row.id)));
-  };
+  const onSelectedRowsChange = useCallback(
+    (value: Set<string>) => {
+      if (rows) setSelected(rows.filter((row) => value.has(row.id)));
+    },
+    [rows],
+  );
 
   const selectedRowIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected]);
 
   const isRowSelectionDisabled = useCallback((row: Task) => isProjectReadOnly(row.projectId), []);
 
+  const noRowsComponent = useMemo(
+    () => (
+      <ContentPlaceholder
+        icon={BirdIcon}
+        title="c:no_resource_yet"
+        titleProps={{ resource: t('c:task_other').toLowerCase() }}
+      />
+    ),
+    [t],
+  );
+
   return (
-    <div className="flex h-full flex-col gap-4">
-      <TasksTableBar
-        selected={selected}
-        searchVars={{ ...search, limit }}
-        columns={columns}
-        setColumns={setColumns}
-        projects={projects}
-        workspace={workspace}
-        publicView={publicView}
-        clearSelection={() => setSelected([])}
-        isCompact={isCompact}
-        setIsCompact={setIsCompact}
-      />
-      <DataTable<Task>
-        {...{
-          rows,
-          rowHeight: 52,
-          rowKeyGetter: (row) => row.id,
-          columns,
-          enableVirtualization: true,
-          enableStickyHeader: true,
-          limit,
-          error,
-          isLoading,
-          isFetching,
-          isFiltered: !!q,
-          hasNextPage,
-          fetchMore,
-          selectedRows: selectedRowIds,
-          onSelectedRowsChange,
-          isRowSelectionDisabled,
-          isCompact,
-          sortColumns,
-          onSortColumnsChange,
-          NoRowsComponent: (
-            <ContentPlaceholder
-              icon={BirdIcon}
-              title="c:no_resource_yet"
-              titleProps={{ resource: t('c:task_other').toLowerCase() }}
-            />
-          ),
-        }}
-      />
-    </div>
+    <TableProjectsContext.Provider value={projects}>
+      <div className="flex h-full flex-col gap-4">
+        <TasksTableBar
+          selected={selected}
+          searchVars={{ ...search, limit }}
+          columns={columns}
+          setColumns={setColumns}
+          projects={projects}
+          workspace={workspace}
+          publicView={publicView}
+          clearSelection={() => setSelected([])}
+          isCompact={isCompact}
+          setIsCompact={setIsCompact}
+        />
+        <DataTable<Task>
+          {...{
+            rows,
+            rowHeight: 52,
+            rowKeyGetter,
+            columns,
+            enableVirtualization: true,
+            enableStickyHeader: true,
+            limit,
+            error,
+            isLoading,
+            isFetching,
+            isFiltered: !!q,
+            hasNextPage,
+            fetchMore,
+            selectedRows: selectedRowIds,
+            onSelectedRowsChange,
+            isRowSelectionDisabled,
+            isCompact,
+            sortColumns,
+            onSortColumnsChange,
+            NoRowsComponent: noRowsComponent,
+          }}
+        />
+      </div>
+    </TableProjectsContext.Provider>
   );
 }

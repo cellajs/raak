@@ -1,4 +1,3 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import i18n from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { appConfig, isUnconditionalPermission } from 'shared';
@@ -8,28 +7,22 @@ import { BlockNote } from '~/modules/common/blocknote/block-note-editor';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
 import { useYjsConnection } from '~/modules/common/blocknote/yjs-connections';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { membersListQueryOptions } from '~/modules/memberships/query';
-import type { Member } from '~/modules/memberships/types';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
-import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
+import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
+import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
+import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
-import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
+import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { useUserStore, yjsTokenKey } from '~/modules/user/user-store';
-import { cacheUpdate } from '~/query/basic/cache-mutations';
-import { findInCache } from '~/query/basic/find-in-list-cache';
-import { flattenInfiniteData } from '~/query/basic/flatten';
-import type { ItemData } from '~/query/basic/types';
-import { queryClient } from '~/query/query-client';
 import { getRandomColor } from '~/utils/random-color';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
 // (see @blocknote/react BlockNoteView), which would add empty trailing height below the editor.
 const expandedStyle = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedWrapperStyle = 'pl-1 sm:pl-9 pb-4';
+const expandedWrapperStyle = taskDescriptionGutterStyle;
 const checkboxExtensions = [checkedExtension({ persisted: true })];
 
 interface TaskUpdateFormProps {
@@ -82,44 +75,10 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const waitingForSync = canCollaborate && !wsReady && !syncTimedOut;
   const collaborative = canCollaborate && wsReady;
 
-  const membersQuery = useInfiniteQuery(
-    membersListQueryOptions({
-      entityId: task.projectId,
-      tenantId,
-      organizationId: task.organizationId,
-      entityType: 'project',
-    }),
-  );
-  const members = flattenInfiniteData<Member>(membersQuery.data);
-  const projectMembers = members.filter(({ membership }) => membership.projectId === task.projectId);
-
-  const projectPublicity = useProjectPublicity(task.projectId);
+  const projectMembers = useProjectMembers(task.projectId, tenantId, task.organizationId);
   const { attachmentsCreationCallback } = useUploadAttachments();
 
-  const { mutateAsync: updateDesc } = useTaskUpdateMutation(task.tenantId, task.organizationId);
-  const orgKey = taskKeys.list.org(task.organizationId);
-
-  const updateData = async (description: string) => {
-    if (collaborative) {
-      // The Yjs relay owns backend persistence in collab mode (it materializes the
-      // session ≤3s after edits) — no mutation fires on blur. Sync the caches with a
-      // cache-only optimistic derive so collapsed/expanded card views (which render
-      // from the query cache, not the Y.Doc) show fresh summary/counts instantly;
-      // the relay's materialization arrives via SSE moments later with authoritative values.
-      const derived = await deriveDescriptionProps(description);
-      const patch = { description, ...derived, updatedAt: new Date().toISOString() };
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(task.id), (old) => (old ? { ...old, ...patch } : undefined));
-      const cached = findInCache<Task>('task', task.id);
-      if (cached) cacheUpdate(orgKey, [{ ...cached, ...patch } as ItemData]);
-      return;
-    }
-
-    // Non-collab: persist via the standard mutation (offline queue, HLC, optimistic cache).
-    // Skip if the task was deleted (e.g. unmount flush after deletion).
-    if (!findInCache<Task>('task', task.id)) return;
-    const { summary, summaryLength } = await deriveDescriptionProps(description);
-    await updateDesc({ id: task.id, ops: { description }, summary, summaryLength });
-  };
+  const updateData = useTaskDescriptionUpdate(task, collaborative);
 
   // Stable random color for cursor labels
   const userColorRef = useRef(getRandomColor());
@@ -139,13 +98,13 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
     useTaskCardStore.getState().setTaskState(task.id, 'expanded');
   };
 
-  const baseFilePanel = {
-    isPublic: projectPublicity,
+  // Uploaded attachments belong to this task (host relation)
+  const baseFilePanel = useTaskFilePanelProps(
+    task.projectId,
     tenantId,
-    organizationId: task.organizationId,
-    // Uploaded attachments belong to this task (host relation)
-    onComplete: attachmentsCreationCallback({ ...task, taskId: task.id }),
-  };
+    task.organizationId,
+    attachmentsCreationCallback({ ...task, taskId: task.id }),
+  );
 
   // Show faded read-only preview while waiting for WS sync (avoids empty flash)
   if (waitingForSync) {

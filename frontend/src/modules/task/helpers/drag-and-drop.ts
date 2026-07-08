@@ -1,6 +1,7 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import { defaultOrder } from 'shared/display-order';
-import { isDraftTask, type PanelDraggableData, type Task, type TaskDraggableData } from '~/modules/task/types';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
+import type { PanelDraggableData, Task, TaskDraggableData } from '~/modules/task/types';
 
 export const isPanelData = (data: Record<string | symbol, unknown>): data is PanelDraggableData => {
   return data.dragItem === true && typeof data.type === 'string' && data.type === 'panel';

@@ -61,13 +61,15 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
  * Lives separately from `usePanelDropTarget` because the scroll viewport only
  * exists in the expanded state, while the drop target must be live in both.
  *
- * When `scrollRef` has no element attached (mobile / windowScroll branches
- * where the page itself scrolls), falls back to window auto-scroll so that
- * dragging near the viewport edge still scrolls the page.
+ * When `windowScroll` is set (mobile / windowScroll branches where the page
+ * itself scrolls, so no element viewport is mounted), falls back to window
+ * auto-scroll so dragging near the viewport edge still scrolls the page.
+ * `windowScroll` is a dependency so the registration flips to the correct target
+ * if the branch changes (e.g. crossing the mobile breakpoint) while mounted.
  */
-export function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>) {
+export function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScroll: boolean) {
   useEffect(() => {
-    if (scrollRef.current) {
+    if (!windowScroll && scrollRef.current) {
       return autoScrollForElements({
         element: scrollRef.current,
         getAllowedAxis: () => 'vertical',
@@ -76,5 +78,5 @@ export function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>) {
     return autoScrollWindowForElements({
       getAllowedAxis: () => 'vertical',
     });
-  }, [scrollRef]);
+  }, [scrollRef, windowScroll]);
 }

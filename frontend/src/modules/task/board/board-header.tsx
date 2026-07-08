@@ -5,7 +5,7 @@ import { useSearchParams } from '~/hooks/use-search-params';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
-import { handleCreateForm } from '~/modules/task/helpers/create-task';
+import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { useReadOnlyHide } from '~/modules/task/hooks/use-read-only';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
@@ -40,7 +40,7 @@ export const BoardHeader = ({
   const total = useTasksTotal('board', queryParams);
   const selectedTasks = useTaskInteractionStore((s) => s.selectedTasks);
   const setSelectedTasks = useTaskInteractionStore((s) => s.setSelectedTasks);
-  const isCreateFormOpen = useTaskInteractionStore((s) => s.openCreateForms.includes(projects[0]?.id));
+  const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[projects[0]?.id] !== undefined);
 
   const [searchFocused, setSearchFocused] = useState(false);
   const readOnlyHide = useReadOnlyHide(projects[0]?.id);
@@ -48,7 +48,7 @@ export const BoardHeader = ({
   const toggleSearchFocus = () => setSearchFocused((prev) => !prev);
   const clearSelection = () => setSelectedTasks([]);
 
-  const toggleCreateForm = () => handleCreateForm(projects[0]);
+  const toggleCreateForm = () => toggleCreateTaskForm(projects[0]);
 
   return (
     <div
