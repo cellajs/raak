@@ -166,7 +166,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     pendingCloseRef.current = true;
     setIsExiting(true);
 
-    // Handle attachments if present — taskId links them to the new task (host relation)
+    // taskId links attachments to the new task.
     if (attachments[':original']?.length) {
       attachmentsCreationCallback({ organizationId, tenantId, projectId, taskId: defaultId })(attachments);
     }

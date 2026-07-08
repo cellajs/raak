@@ -10,7 +10,7 @@ export const parseUploadedAttachments = (
   organizationId: string,
   // cella addition: attachments have project as their parent context, so they require a projectId
   projectId?: string,
-  // host relation: the owning task — uploaded from a task form, the attachment belongs to that task
+  // host relation: the owning task. Uploaded from a task form, the attachment belongs to that task.
   taskId?: string,
 ): Attachment[] => {
   // Process original files
@@ -48,7 +48,7 @@ export const parseUploadedAttachments = (
     });
 
     attachments.push(attachment as Attachment);
-    // Note: cast needed because hey-api generates non-nullable intersection for nullable refs
+    // Cast needed because hey-api generates non-nullable intersection for nullable refs.
     if (uploadId) attachmentsByUploadId.set(uploadId, attachment as Attachment);
   }
 

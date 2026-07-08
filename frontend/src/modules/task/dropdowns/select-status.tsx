@@ -22,11 +22,11 @@ type StatusOption = (typeof statusOptions)[number];
 export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWidth = 240 }: SelectStatusProps) => {
   const { t } = useTranslation();
 
-  // Live cache subscription — reflects remote SSE status changes while open.
+  // Live cache subscription reflects remote SSE status changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
   const liveStatus = liveTask?.status ?? currentStatus;
 
-  // Derived during render — no useState/useEffect copy of liveStatus.
+  // Derived during render, without a useState/useEffect copy of liveStatus.
   const selectedStatus = statusOptions[liveStatus];
 
   const [searchValue, setSearchValue] = useState('');

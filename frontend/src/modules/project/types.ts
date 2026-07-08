@@ -1,5 +1,5 @@
 import type { Project } from 'sdk';
 import type { EntityEnrichment } from '~/modules/entities/types';
 
-/** Frontend-enriched project type — Project with client-side cache enrichment fields */
+/** Frontend-enriched project type with client-side cache enrichment fields. */
 export type EnrichedProject = Project & EntityEnrichment;

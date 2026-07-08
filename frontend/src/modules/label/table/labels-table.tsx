@@ -88,7 +88,7 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
     select: ({ pages }) => pages.flatMap(({ items }) => items),
   });
 
-  // Deduplicate labels by name — aggregate counts and collect all sibling IDs
+  // Deduplicate labels by name, aggregating counts and collecting sibling IDs.
   const rows = useMemo(() => {
     if (!fetchedRows) return [];
     const labelMap = new Map<string, LabelRow>();

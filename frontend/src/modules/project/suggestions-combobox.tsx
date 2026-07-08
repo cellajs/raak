@@ -73,7 +73,7 @@ export const ProjectSuggestionCombobox = ({
       itemToStringValue={(p) => p.id}
       value={selected}
       onValueChange={(items) => {
-        // Preserve any previously-selected items that aren't in current results
+        // Preserve selected items that aren't in current results.
         const inResultsIds = new Set(items.map((p) => p.id));
         const carriedOver = value.filter((v) => !projects.some((p) => p.id === v.id));
         onChange([...carriedOver, ...items.filter((p) => inResultsIds.has(p.id))]);

@@ -74,7 +74,7 @@ export type TasksInfiniteQueryData = InfiniteQueryData<Task>;
 
 // --- Query keys ---
 
-/** Filters for task list queries. Only data-boundary params — no presentation (sort/order/view). */
+/** Filters for task list queries. Only data-boundary params, no presentation params. */
 type TaskListFilters = {
   projectId?: string;
   workspaceId?: string;
@@ -93,12 +93,12 @@ const baseKeys = createEntityKeys<TaskListFilters>('task');
  * Task query keys.
  *
  * Key hierarchy:
- *   ['task', 'list']                          — all tasks (broadest prefix)
- *   ['task', 'list', organizationId]                   — all tasks for one org
- *   ['task', 'list', organizationId, {projectId, ...}] — specific query
+ *   ['task', 'list']                                   all tasks (broadest prefix)
+ *   ['task', 'list', organizationId]                   all tasks for one org
+ *   ['task', 'list', organizationId, {projectId, filters}] specific query
  *
- *   ['task', 'detail', id]                    — single task detail
- *   ['task', 'detail', 'public', id]          — public task detail
+ *   ['task', 'detail', id]                             single task detail
+ *   ['task', 'detail', 'public', id]                   public task detail
  *
  * Public queries use a dedicated factory to keep them isolated.
  */
@@ -142,7 +142,7 @@ export const TASK_DERIVED_DESCRIPTION_FIELDS = [
   'attachmentCount',
 ] as const;
 
-// Register Yjs-owned fields — SSE updates will skip these while a Yjs editor is active
+// Register Yjs-owned fields; SSE updates skip these while a Yjs editor is active.
 registerYjsOwnedFields('task', ['description', ...TASK_DERIVED_DESCRIPTION_FIELDS]);
 
 const tasksMutationKeyBase = ['task'] as const;
@@ -197,7 +197,7 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
   });
 
 /**
- * Canonical task query — one flat query per project scope.
+ * Canonical task query: one flat query per project scope.
  * Fetches all tasks for a project, stored at taskKeys.list.scope(organizationId, projectId).
  * Board/table derive views via select() or client-side filtering.
  * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.
@@ -312,12 +312,12 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
     },
     onSuccess: (createdTask, _variables, context) => {
       // Replace optimistic with real task in-place to preserve DOM element (and ongoing glow animation).
-      // If optimistic is gone, it was removed by an SSE delete that raced our POST response — do not resurrect.
+      // If optimistic is gone, an SSE delete raced our POST response.
       if (context?.optimisticTask && findTaskInCache(context.optimisticTask.id)) {
         cacheUpdate(orgKey, [createdTask]);
       }
 
-      // Backend bumped usedCount — mark label list stale (SSE handles refresh)
+      // Backend bumped usedCount, mark label list stale (SSE handles refresh).
       if (createdTask.labels.length > 0) {
         queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
       }
@@ -366,14 +366,14 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
           } else if (key === 'assignedTo' && variables.fullAssignedTo) {
             optimisticUpdates.assignedTo = variables.fullAssignedTo;
           } else if (!isArrayDelta(value)) {
-            // Only apply scalar values directly — AWSet deltas handled via fullLabels/fullAssignedTo
+            // Only apply scalar values directly, AWSet deltas use fullLabels/fullAssignedTo.
             (optimisticUpdates as Record<string, unknown>)[key] = value;
           }
         }
 
         // When description changes, derive all virtual props optimistically.
         // Counts are derived even without a client-computed summary (e.g. checkbox
-        // toggles skip summary — the backend regenerates it server-side).
+        // toggles skip summary; the backend regenerates it server-side).
         if (typeof mergedOps.description === 'string') {
           Object.assign(optimisticUpdates, deriveDescriptionCounts(mergedOps.description));
           if (variables.summary) {
@@ -390,7 +390,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
 
         // Cross-project move: remove from old project cache, add to new project cache
         if ('projectId' in mergedOps && mergedOps.projectId !== previousTask.projectId) {
-          // Strip labels optimistically — they are project-scoped
+          // Strip labels optimistically because they are project-scoped.
           optimisticTask.labels = [];
           const oldScopeKey = taskKeys.list.scope(organizationId, previousTask.projectId);
           cacheRemove(oldScopeKey, [previousTask]);
@@ -450,7 +450,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
       cacheUpdate(orgKey, [merged]);
       queryClient.setQueryData<Task>(detailKey, (old) => (old ? { ...old, ...merged } : old));
 
-      // Backend managed label usedCount side-effects — mark label list stale (SSE handles refresh)
+      // Backend managed label usedCount side-effects, mark label list stale (SSE handles refresh).
       if (variables.ops && ('labels' in variables.ops || 'projectId' in variables.ops)) {
         queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
       }
@@ -491,11 +491,11 @@ export const useTaskDeleteMutation = (tenantId: string, organizationId: string) 
     meta: { suppressGlobalErrorToast: true },
     onError: (_err, _vars, context) => {
       handleError('delete');
-      // Restore to org-level — items will only land in queries where they match by ID bail-out
+      // Restore to org-level; items only land in queries where they match by ID bail-out.
       if (context?.tasksToDelete) cacheCreate(orgKey, context.tasksToDelete);
     },
     onSuccess: (_data, { tasksToDelete }) => {
-      // Backend decremented label usedCount — mark label list stale (SSE handles refresh)
+      // Backend decremented label usedCount, mark label list stale (SSE handles refresh).
       if (tasksToDelete.some((t) => t.labels.length > 0)) {
         queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
       }

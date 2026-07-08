@@ -11,7 +11,7 @@ import { getSkipPageEnter } from '~/utils/nav-transition';
  */
 export const AppContent = () => {
   // Per-context-entity navigation mask: a curtain over the content area that briefly holds the
-  // background, then reveals — hiding the scroll-to-header travel. Re-triggers when the entity key
+  // background, then reveals, hiding the scroll-to-header travel. Re-triggers when the entity key
   // changes; skipped on same-base forward navigation (e.g. org -> org), where there's no scroll delta.
   const entityKey = usePageEntityKey();
   const showCurtain = !!entityKey && !getSkipPageEnter();

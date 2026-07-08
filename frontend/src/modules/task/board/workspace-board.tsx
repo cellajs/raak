@@ -32,7 +32,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
       const sourcePanel = panels.find((p) => p.panelId === sourcePanelId);
       if (!sourcePanel) return;
 
-      // Resolve neighbor orders via the same comparator used to render, so server-owned
+      // Resolve neighbor orders via the render comparator, so server-owned
       // and local-only panels are treated uniformly when computing the new fractional order.
       const localOrders = useBoardStore.getState().boardPanelOrders[boardId];
       const panelById = new Map(panels.map((p) => [p.panelId, p]));
@@ -46,11 +46,11 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
       const prevOrder = orderAt(sourceIdx - 1);
       const nextOrder = orderAt(sourceIdx + 1);
 
-      // Single panel — no anchor to reorder against.
+      // Single panel, no anchor to reorder against.
       if (prevOrder == null && nextOrder == null) return;
 
       const newDisplayOrder = getOrderBetween(prevOrder ?? undefined, nextOrder ?? undefined);
-      // Float collision — skip; a rebalance pass would be needed to recover.
+      // Float collision, a rebalance pass would be needed to recover.
       if (newDisplayOrder === null) return;
 
       const sourceProject = sourcePanel.project;
@@ -69,7 +69,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
         return;
       }
 
-      // Local-only panel (explainer, ai-chat, …) — persist its new order.
+      // Local-only panel (explainer, ai-chat), persist its new order.
       setPanelOrder(boardId, sourcePanelId, newDisplayOrder);
     },
     [boardId, panels, setPanelOrder, updateMembership],

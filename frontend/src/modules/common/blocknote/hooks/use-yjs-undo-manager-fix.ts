@@ -47,7 +47,7 @@ export function useYjsUndoManagerFix(editor: CustomBlockNoteEditor, enabled: boo
           doc.on('afterTransaction', undoManager.afterTransactionHandler);
         }
       } catch {
-        // Non-critical — if this fails, undo just won't work until next mount
+        // Non-critical: if this fails, undo just won't work until next mount.
       }
     };
 

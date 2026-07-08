@@ -13,7 +13,7 @@ import { queryClient } from '~/query/query-client';
  *
  * Both signals already live in the TanStack Query cache, so we read them directly. This avoids
  * the registration / cleanup pattern entirely (no store field, no provider, no effects) and
- * works in any render tree — including portals like the task sheet.
+ * works in any render tree, including portals like the task sheet.
  */
 export const isProjectReadOnly = (projectId: string | undefined): boolean => {
   if (!projectId) return false;

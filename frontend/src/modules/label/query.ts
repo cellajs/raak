@@ -88,7 +88,7 @@ type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'off
   GetLabelsData['path'] & { limit?: number };
 
 /**
- * Canonical label query — one flat query per organization scope.
+ * Canonical label query: one flat query per organization scope.
  * Fetches all labels for the org, stored at keys.list.org(organizationId).
  * Consumers derive views via select() for workspace/project filtering.
  * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.

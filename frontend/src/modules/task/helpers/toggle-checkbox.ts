@@ -29,7 +29,7 @@ function toggleCheckboxInDescription(description: string, checkboxId: string): s
  * the offline queue, and pending-mutation registration (SSE won't clobber it).
  * onMutate covers the optimistic cache writes, including derived checkbox counts
  * and the glow; the backend derives summary/counts server-side.
- * Stays in expanded state — no editing mode needed.
+ * Stays in expanded state without editing mode.
  */
 export function toggleTaskCheckbox(
   task: Task,

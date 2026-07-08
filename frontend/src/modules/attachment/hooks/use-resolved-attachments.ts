@@ -1,8 +1,3 @@
-/**
- * Hook to resolve URLs for multiple attachments (carousel/dialog use case).
- * Uses resolveAttachmentUrl() core function with cache restoration awareness.
- * Reuses existing blob URLs to prevent flashes from URL.revokeObjectURL.
- */
 import { useIsRestoring } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import type { CarouselItemData } from '~/modules/attachment/attachments-carousel';
@@ -68,7 +63,7 @@ export function useResolvedAttachments(
       for (const item of items) {
         if (cancelled) break;
 
-        // Already has URL — use directly
+        // Already has URL, use directly.
         if (item.url) {
           resolved.push(buildItemData(item, item.url));
           continue;
@@ -97,7 +92,7 @@ export function useResolvedAttachments(
       }
 
       if (!cancelled) {
-        // Revoke only blob URLs no longer in use
+        // Revoke blob URLs absent from the active item set.
         for (const [id, url] of blobUrlsRef.current) {
           if (!newBlobUrls.has(id)) URL.revokeObjectURL(url);
         }

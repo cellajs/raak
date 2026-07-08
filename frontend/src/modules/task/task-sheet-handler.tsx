@@ -39,7 +39,7 @@ function TaskSheetHandler() {
   const taskSheetId = search.taskSheetId;
 
   // Suppress any board editor and mark board card to suppress glow while sheet is open.
-  // Don't set the sheet task to 'editing' in the store — the sheet manages its own state
+  // The sheet manages its own editing state
   // locally to avoid the board card also rendering a TaskUpdateForm.
   useEffect(() => {
     if (!taskSheetId) return;

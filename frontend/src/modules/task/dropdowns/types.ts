@@ -14,7 +14,7 @@ type DropdownLayoutProps = {
   taskId?: string;
 };
 
-/** Value/onChange props per dropdown type — no Task dependency */
+/** Value/onChange props per dropdown type without a Task dependency. */
 export type SelectPointsProps = DropdownLayoutProps & {
   value: TaskPointsType | null;
   onChange: (newValue: TaskPointsType) => void;

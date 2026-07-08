@@ -21,11 +21,11 @@ type PointsOption = (typeof pointsOptions)[number];
 export const SelectPoints = ({ value: currentPoints, onChange, taskId, triggerWidth = 192 }: SelectPointsProps) => {
   const { t } = useTranslation();
 
-  // Live cache subscription — reflects remote SSE points changes while open.
+  // Live cache subscription reflects remote SSE points changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
   const livePoints = liveTask ? (liveTask.points as TaskPointsType | null) : currentPoints;
 
-  // Derived during render — no useState/useEffect copy of livePoints.
+  // Derived during render, without a useState/useEffect copy of livePoints.
   const selectedPoints = livePoints !== null ? (pointsOptions[livePoints] ?? null) : null;
 
   const [searchValue, setSearchValue] = useState('');

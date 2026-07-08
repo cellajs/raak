@@ -13,7 +13,7 @@ interface TaskCardContentExpandedProps {
 /**
  * Renders the task description as static HTML in the expanded (non-editing) state.
  *
- * Note: we intentionally do NOT apply `inert` here even in read-only mode — `inert` blocks
+ * We intentionally do NOT apply `inert` here even in read-only mode. `inert` blocks
  * text selection in the entire subtree, preventing read-only users from copying the description.
  */
 export function TaskCardContentExpanded({ task }: TaskCardContentExpandedProps) {

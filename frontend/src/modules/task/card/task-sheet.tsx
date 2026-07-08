@@ -26,7 +26,7 @@ const TaskSheet = ({ id, organizationId }: { id: string; organizationId: string 
 
   const isReadOnly = useIsProjectReadOnly(task?.projectId);
 
-  // Sheet manages its own editing state — don't use the shared store.
+  // Sheet manages its own editing state, separate from the shared store.
   // Using the store would set the board card to 'editing' too, causing
   // a duplicate editor whose unmount flush overwrites sheet edits.
   const taskState = isReadOnly ? 'expanded' : 'editing';

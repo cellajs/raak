@@ -10,7 +10,7 @@ interface TaskInteractionState {
   setFocusedTaskId: (taskId: string | null) => void;
   openCreateForms: string[];
   toggleCreateForm: (projectId: string) => void;
-  /** Draft tasks keyed by projectId — inline create-form placeholders */
+  /** Draft tasks keyed by projectId for inline create-form placeholders. */
   draftTasks: Record<string, Task>;
   setDraftTask: (projectId: string, task: Task | null) => void;
   updateDraftTask: (projectId: string, updates: Partial<Task>) => void;

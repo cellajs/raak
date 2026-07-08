@@ -48,7 +48,7 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
     workspace =
       queryClient.getQueryData(options.queryKey) ?? (isOnline ? await queryClient.ensureQueryData(options) : undefined);
   } else if (isOnline) {
-    // Not in cache — fetch by slug
+    // Not in cache: fetch by slug.
     workspace = await fetchSlugCacheId(
       () => getWorkspace({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
       workspaceQueryKeys.detail.byId,
@@ -61,7 +61,7 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
   rewriteUrlToSlug(params, { slug: workspace.slug }, '/$tenantId/$organizationSlug/workspace/$slug');
 
   // Prefetch projects, labels and tasks so views (board/table) don't waterfall.
-  // Board uses excludeArchived='true' (a separate cache key) — prefetch both variants.
+  // Board uses excludeArchived='true' as a separate cache key, so prefetch both variants.
   queryClient.prefetchInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
   queryClient.prefetchInfiniteQuery(
     projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),

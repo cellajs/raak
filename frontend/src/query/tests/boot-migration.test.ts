@@ -1,10 +1,3 @@
-/**
- * Boot-time lens migration pass in the persister: persisted schema ordinal
- * behind the bundle → cached rows + queued mutations rewritten locally, pointer
- * advanced atomically; ahead (stale bundle or rollback) → restore nothing and
- * stop persisting (schema-version-guard); session scopes wiped instead of
- * migrated.
- */
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,7 +10,7 @@ vi.mock('shared', () => ({
   },
 }));
 
-// Lens engine mock: bundle is at schema v1 with a single attachment rename name → title.
+// Lens engine mock: bundle is at schema v1 with a single attachment rename name -> title.
 vi.mock('shared/version-changes', () => ({
   currentSchemaVersion: 1,
   migrateCachedEntity: vi.fn(async (_entityType: string, entity: Record<string, unknown>) => {
@@ -90,6 +83,7 @@ async function seedScope(scope: string, schemaVersion: number) {
   });
 }
 
+// Covers boot-time lens migration, stale bundles, and session-scope cache clearing.
 describe('persister lens boot migration', () => {
   beforeEach(async () => {
     bindAppDb('u1');
@@ -112,7 +106,7 @@ describe('persister lens boot migration', () => {
     expect(attachmentQuery!.state.data).toEqual([{ id: 'a1', title: 'pic' }]);
     expect(restored!.clientState.mutations[0].state.variables).toEqual({ title: 'offline edit' });
 
-    // Pointer advanced on disk — a second restore runs no migration.
+    // Pointer advanced on disk, so a second restore runs no migration.
     const meta = await getAppDb()!.meta.get('rq');
     expect(meta!.schemaVersion).toBe(1);
     vi.mocked(migrateCachedEntity).mockClear();
@@ -125,7 +119,7 @@ describe('persister lens boot migration', () => {
 
     const restored = await persister.restoreClient();
     const attachmentQuery = restored!.clientState.queries.find((q) => q.queryHash === '["attachment","list"]');
-    // Row keeps its (old-shape) data untouched — nothing ran.
+    // Row keeps its old-shape data untouched because nothing ran.
     expect(attachmentQuery!.state.data).toEqual([{ id: 'a1', name: 'pic' }]);
     expect(migrateCachedEntity).not.toHaveBeenCalled();
   });
@@ -137,7 +131,7 @@ describe('persister lens boot migration', () => {
     expect(restored).toBeUndefined();
     expect(isBundleStale()).toBe(true);
 
-    // Newer store is untouched — no downgrade, no wipe.
+    // Newer store is untouched: no downgrade, no wipe.
     const meta = await getAppDb()!.meta.get('rq');
     expect(meta!.schemaVersion).toBe(5);
     expect(await getAppDb()!.queries.where('scope').equals('rq').count()).toBe(1);
@@ -154,7 +148,7 @@ describe('persister lens boot migration', () => {
     });
     await persister.flush();
 
-    // Meta unchanged — the stale bundle's write was refused.
+    // Meta unchanged because the stale bundle's write was refused.
     const meta = await getAppDb()!.meta.get('rq');
     expect(meta!.schemaVersion).toBe(5);
     expect(meta!.timestamp).not.toBe(999);

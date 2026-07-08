@@ -55,7 +55,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const canCollaborate =
     yjsConfigured && isOnline && !!yjsToken && isUnconditionalPermission(project?.can?.task?.update);
 
-  // Connect to Yjs relay — the connection manager handles ref-counting and grace periods.
+  // Connect to Yjs relay; the connection manager handles ref-counting and grace periods.
   // The token proves update permission; entity-level access is verified asynchronously.
   const yjsConn = useYjsConnection(canCollaborate ? task.id : undefined, 'task', tenantId);
 
@@ -102,7 +102,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const updateData = async (description: string) => {
     if (collaborative) {
       // The Yjs relay owns backend persistence in collab mode (it materializes the
-      // session ≤3s after edits) — no mutation fires on blur. Sync the caches with a
+      // session ≤3s after edits), no mutation fires on blur. Sync the caches with a
       // cache-only optimistic derive so collapsed/expanded card views (which render
       // from the query cache, not the Y.Doc) show fresh summary/counts instantly;
       // the relay's materialization arrives via SSE moments later with authoritative values.

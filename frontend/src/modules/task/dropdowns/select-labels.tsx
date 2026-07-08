@@ -116,7 +116,7 @@ export const SelectLabels = ({
   const { data: liveTask } = useTaskQuery(taskId);
   const liveLabels = liveTask?.labels ?? currentLabels;
 
-  // Dropdowner renders a snapshot — value prop won't update on cache changes.
+  // Dropdowner renders a snapshot, so value prop changes do not update it.
   // Always track selected labels locally so the dropdown UI stays in sync.
   const [selectedLabels, setSelectedLabels] = useState(liveLabels);
 
@@ -237,7 +237,7 @@ export const SelectLabels = ({
     const updatedLabels = getItemsSortedByName([...selectedLabels, newLabel]);
     setSelectedLabels(updatedLabels);
 
-    // Create label first, then update task — label must exist on server before the task references it.
+    // Create label first, then update task after the server has the referenced label.
     const createdLabel = await createLabelMutation(newLabelData);
     const finalLabels = updatedLabels.map((l) => (l.id === newLabel.id ? createdLabel : l));
     setSelectedLabels(finalLabels);

@@ -51,7 +51,7 @@ export const SelectMembers = ({
   const { data: liveTask } = useTaskQuery(taskId);
   const liveAssigned = liveTask?.assignedTo ?? currentAssigned;
 
-  // Dropdowner renders a snapshot — value prop won't update on cache changes.
+  // Dropdowner renders a snapshot, so value prop changes do not update it.
   // Always track selected members locally so the dropdown UI stays in sync.
   const [selectedMembers, setSelectedMembers] = useState<UserMinimalBase[]>(liveAssigned);
 
