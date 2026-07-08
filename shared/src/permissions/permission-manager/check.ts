@@ -283,8 +283,8 @@ export function getAllDecisions<T extends PermissionMembership>(
     return isSingle ? results.get(subjects.id ?? '_idx:0')! : results;
   }
 
-  // Validate all inputs before processing
-  subjectArray.forEach((subject, i) => validateSubject(subject, i));
+  // Validate all inputs before processing (against the topology hierarchy, which may be synthetic)
+  subjectArray.forEach((subject, i) => validateSubject(subject, i, topoHierarchy));
   memberships.forEach((membership, i) => validateMembership(membership, i));
 
   // Build membership index once for all subjects

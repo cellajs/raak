@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeCan } from './compute-can';
-import { configureWidePermissions, wideMembership, wideTopology } from '../testing/wide-fixture';
+import { computeWideCan, configureWidePermissions, wideMembership, wideTopology } from '../testing/wide-fixture';
 
 /**
  * `computeCan` derives an entity-type-keyed `can` map (context entity + descendants) from a
@@ -92,7 +92,7 @@ describe('computeCan with own permissions', () => {
 
   it('grants read-only access to a project guest on attachment (guest-only grant)', () => {
     const membership = wideMembership('project', 'p1', 'guest');
-    const can = computeCan('project', membership, policies, wideTopology);
+    const can = computeWideCan('project', membership, policies);
 
     expect(can.attachment?.read).toBe(true);
     expect(can.attachment?.create).toBe(false);
@@ -104,8 +104,8 @@ describe('computeCan with own permissions', () => {
     const orgMembership = wideMembership('organization', 'org1', 'member');
     const projectMembership = wideMembership('project', 'p1', 'member');
 
-    const orgCan = computeCan('organization', orgMembership, policies, wideTopology);
-    const projectCan = computeCan('project', projectMembership, policies, wideTopology);
+    const orgCan = computeWideCan('organization', orgMembership, policies);
+    const projectCan = computeWideCan('project', projectMembership, policies);
 
     // Org members can read tasks across the org, but not update them...
     expect(orgCan.task?.read).toBe(true);

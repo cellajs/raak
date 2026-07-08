@@ -19,7 +19,10 @@
 import { createEntityHierarchy, createRoleRegistry } from '../config-builder/entity-hierarchy';
 import type { EntityActionType, EntityType } from '../../types';
 import {
+  type AccessPolicies,
   type AccessPolicyCallback,
+  type ActionPermissionState,
+  computeCan,
   configurePermissions,
   type HostDelegation,
   type PermissionMembership,
@@ -133,3 +136,23 @@ export const wideRestrictions = (restrictions: Partial<Record<WideEntityType, Ro
 export const wideHostDelegation = (
   delegation: Partial<Record<WideProductType, readonly EntityActionType[]>>,
 ): HostDelegation => delegation as HostDelegation;
+
+/** `computeCan`'s result keyed by the wide vocabulary, so tests read `.task` etc. cast-free. */
+export type WideCanMap = Partial<Record<WideEntityType, Record<EntityActionType, ActionPermissionState>>>;
+
+/**
+ * Drive `computeCan` over the wide hierarchy. `computeCan` is typed against the app's real
+ * entities (its `contextType` param and result map), so this wrapper contains the wide↔app casts,
+ * keeping the tests cast-free.
+ */
+export const computeWideCan = (
+  contextType: WideContextType,
+  membership: PermissionMembership | undefined | null,
+  policies: AccessPolicies,
+): WideCanMap =>
+  computeCan(
+    contextType as unknown as Parameters<typeof computeCan>[0],
+    membership as unknown as Parameters<typeof computeCan>[1],
+    policies,
+    wideTopology,
+  ) as unknown as WideCanMap;

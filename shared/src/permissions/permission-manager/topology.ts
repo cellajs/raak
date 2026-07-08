@@ -18,6 +18,7 @@ export interface TopologyHierarchy {
   getHostType(entityType: string): string | null | undefined;
   getRoles(contextType: string): readonly string[];
   isContext(entityType: string): boolean;
+  isProduct(entityType: string): boolean;
   getParent(entityType: string): string | null;
 }
 
