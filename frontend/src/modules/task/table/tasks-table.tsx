@@ -14,7 +14,7 @@ import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
-import { useColumns } from '~/modules/task/table/tasks-columns';
+import { TableProjectsContext, useColumns } from '~/modules/task/table/tasks-columns';
 import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
 import type { Task, TaskSearch } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
@@ -43,14 +43,19 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     ...projectsListQueryOptions({ workspaceId: workspace?.id, include: 'counts' }),
     enabled: !projectsProp,
   });
-  const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
+  // Memoized so the reactive project cells (TableProjectsContext) only re-render when the list
+  // actually changes, not on every table render.
+  const projects = useMemo(
+    () => projectsProp ?? flattenInfiniteData<Project>(fetchedData),
+    [projectsProp, fetchedData],
+  );
 
   // Table state
   const { q, sort, order } = search;
   const limit = LIMIT;
 
-  // Build columns
-  const [columns, setColumns] = useColumns(projects, { hideProject: !workspace, organization, tenantId });
+  // Build columns (frozen; project cells read `projects` reactively via TableProjectsContext)
+  const [columns, setColumns] = useColumns({ hideProject: !workspace, organization, tenantId });
   const [selected, setSelected] = useState<Task[]>([]);
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
@@ -114,43 +119,45 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   );
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <TasksTableBar
-        selected={selected}
-        searchVars={{ ...search, limit }}
-        columns={columns}
-        setColumns={setColumns}
-        projects={projects}
-        workspace={workspace}
-        publicView={publicView}
-        clearSelection={() => setSelected([])}
-        isCompact={isCompact}
-        setIsCompact={setIsCompact}
-      />
-      <DataTable<Task>
-        {...{
-          rows,
-          rowHeight: 52,
-          rowKeyGetter,
-          columns,
-          enableVirtualization: true,
-          enableStickyHeader: true,
-          limit,
-          error,
-          isLoading,
-          isFetching,
-          isFiltered: !!q,
-          hasNextPage,
-          fetchMore,
-          selectedRows: selectedRowIds,
-          onSelectedRowsChange,
-          isRowSelectionDisabled,
-          isCompact,
-          sortColumns,
-          onSortColumnsChange,
-          NoRowsComponent: noRowsComponent,
-        }}
-      />
-    </div>
+    <TableProjectsContext.Provider value={projects}>
+      <div className="flex h-full flex-col gap-4">
+        <TasksTableBar
+          selected={selected}
+          searchVars={{ ...search, limit }}
+          columns={columns}
+          setColumns={setColumns}
+          projects={projects}
+          workspace={workspace}
+          publicView={publicView}
+          clearSelection={() => setSelected([])}
+          isCompact={isCompact}
+          setIsCompact={setIsCompact}
+        />
+        <DataTable<Task>
+          {...{
+            rows,
+            rowHeight: 52,
+            rowKeyGetter,
+            columns,
+            enableVirtualization: true,
+            enableStickyHeader: true,
+            limit,
+            error,
+            isLoading,
+            isFetching,
+            isFiltered: !!q,
+            hasNextPage,
+            fetchMore,
+            selectedRows: selectedRowIds,
+            onSelectedRowsChange,
+            isRowSelectionDisabled,
+            isCompact,
+            sortColumns,
+            onSortColumnsChange,
+            NoRowsComponent: noRowsComponent,
+          }}
+        />
+      </div>
+    </TableProjectsContext.Provider>
   );
 }
