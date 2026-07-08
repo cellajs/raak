@@ -1,9 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
 import { CheckIcon, ChevronDownIcon, DotIcon } from 'lucide-react';
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Project } from 'sdk';
 import { zLabel } from 'sdk/zod.gen';
 import { generateId } from 'shared/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -78,7 +77,6 @@ export const SelectLabels = ({
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const { tenantId, organization } = useOrganizationLayoutContext();
-  const queryClient = useQueryClient();
 
   const organizationId = organization.id;
 
@@ -97,15 +95,20 @@ export const SelectLabels = ({
   );
   const allLabels = labelsQuery.data?.items ?? [];
 
-  // Scope labels to workspace projects (falls back to all org labels if no workspace)
+  // Reactively read the workspace's projects from cache (enabled → subscribes so labels re-scope
+  // when the list updates; in a workspace route the board has already fetched it).
+  const { data: workspaceProjectIds } = useInfiniteQuery({
+    ...projectsListQueryOptions({ workspaceId: workspaceId ?? '' }),
+    enabled: !!workspaceId,
+    select: (data) => new Set(data.pages.flatMap((page) => page.items.map((p) => p.id))),
+  });
+
+  // Scope labels to workspace projects (falls back to all org labels outside a workspace or before
+  // the projects list has loaded).
   const labels = useMemo(() => {
-    if (!workspaceId) return allLabels;
-    const projectsQueryKey = projectsListQueryOptions({ workspaceId }).queryKey;
-    const projectsData = queryClient.getQueryData<{ pages: { items: Project[] }[] }>(projectsQueryKey);
-    if (!projectsData) return allLabels;
-    const projectIds = new Set(projectsData.pages.flatMap((page) => page.items.map((p) => p.id)));
-    return allLabels.filter((l) => projectIds.has(l.projectId));
-  }, [allLabels, workspaceId, queryClient]);
+    if (!workspaceId || !workspaceProjectIds) return allLabels;
+    return allLabels.filter((l) => workspaceProjectIds.has(l.projectId));
+  }, [allLabels, workspaceId, workspaceProjectIds]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
