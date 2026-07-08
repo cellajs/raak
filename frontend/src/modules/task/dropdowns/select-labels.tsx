@@ -223,7 +223,7 @@ export const SelectLabels = ({
     const updatedLabels = getItemsSortedByName([...selectedLabels, newLabel]);
     setSelectedLabels(updatedLabels);
 
-    // Create label first, then update task — label must exist on server before the task references it.
+    // Create label first, then update task after the server has the referenced label.
     const createdLabel = await createLabelMutation(newLabelData);
     const finalLabels = updatedLabels.map((l) => (l.id === newLabel.id ? createdLabel : l));
     setSelectedLabels(finalLabels);

@@ -20,7 +20,7 @@ export const attachmentsTable = snakeCase.table(
     ...hostRelationColumns('attachment'),
     public: boolean().notNull().default(false),
     bucketName: varchar({ length: maxLength.field }).notNull(),
-    /** Upload batch grouping (multi-file uploads shown as one carousel) — NOT ownership. */
+    /** Upload batch grouping (multi-file uploads shown as one carousel), not ownership. */
     groupId: uuid(),
     filename: varchar({ length: maxLength.field }).notNull(),
     contentType: varchar({ length: maxLength.field }).notNull(),

@@ -14,7 +14,7 @@ interface BoardUIState {
   activeBoardType: 'workspace' | 'project' | null;
   setActiveBoard: (boardId: string, boardType: 'workspace' | 'project') => void;
 
-  // Active panel (only one at a time — set by hover/focus on desktop, tab on mobile)
+  // Active panel: one at a time, set by hover/focus on desktop and tab on mobile.
   activePanelId: string | null;
   setActivePanel: (panelId: string | null) => void;
 

@@ -98,7 +98,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
     >
       {isMobile || windowScroll ? (
         <div className="mb-10 flex h-full flex-col" id={`tasks-list-${project.id}`}>
-          {/* Accepted section (mobile/windowScroll — always inline, no sticky) */}
+          {/* Accepted section (mobile/windowScroll, always inline, no sticky) */}
           {topSlot}
 
           {hasContent ? (
@@ -114,7 +114,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
             <TaskPanelEmpty projectId={project.id} />
           )}
 
-          {/* Iced section (mobile/windowScroll — always inline, no sticky) */}
+          {/* Iced section (mobile/windowScroll, always inline, no sticky) */}
           {bottomSlot}
         </div>
       ) : (
@@ -125,7 +125,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
           viewportClassName="[&>div]:!flex [&>div]:!flex-col [&>div]:!grow"
           disableTrackClick
         >
-          {/* Accepted section — inline, becomes sticky when active + expanded + intersecting */}
+          {/* Accepted section: inline, sticky when active + expanded + intersecting */}
           {topSlot}
 
           {/* Fallback container for create task form */}
@@ -154,7 +154,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
             )}
           </div>
 
-          {/* Iced section — inline, becomes sticky when active + expanded + intersecting */}
+          {/* Iced section: inline, sticky when active + expanded + intersecting */}
           {bottomSlot}
         </ScrollArea>
       )}

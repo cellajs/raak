@@ -47,7 +47,7 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
   const draftForm = useDraftStore.getState().getForm<NewTaskFormValues | undefined>(id);
   const draftStatus = draftForm?.status || TaskStatus.Unstarted;
 
-  // Base structure for a draft task — schema defaults + draft-specific overrides
+  // Base structure for a draft task with schema defaults and draft-specific overrides.
   const defaultTask: Task = {
     ...getSchemaDefaults(zTask),
     id,
@@ -67,7 +67,7 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
     displayOrder: defaultTask.displayOrder,
   };
 
-  // Set draft in Zustand store — ProjectBoardPanel merges it into the task list
+  // ProjectBoardPanel merges this draft into the task list.
   focusTask(id);
   store.setDraftTask(project.id, formTask);
 

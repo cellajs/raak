@@ -42,7 +42,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
         return;
       }
 
-      // Local-only panel (explainer, ai-chat, …) — persist its new order.
+      // Local-only panel (explainer, ai-chat, etc.), persist its new order.
       setPanelOrder(boardId, result.panelId, result.displayOrder);
     },
     [boardId, panels, setPanelOrder, updateMembership],

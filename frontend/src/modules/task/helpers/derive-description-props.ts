@@ -42,7 +42,7 @@ const countBlocks = (blocks: CustomBlock[]): DerivedDescriptionCounts => {
 
 /**
  * Parse description blocks once and extract all count-based derived properties.
- * Synchronous — safe for optimistic updates in onMutate.
+ * Synchronous and safe for optimistic updates in onMutate.
  */
 export const deriveDescriptionCounts = (description: string): DerivedDescriptionCounts => {
   try {
@@ -54,7 +54,7 @@ export const deriveDescriptionCounts = (description: string): DerivedDescription
 
 /**
  * Derive all description properties including summary (async due to HTML conversion).
- * Single parse, single walk — replaces getSummary + countAllMediaAttachments + inline parsing.
+ * Uses a single parse and walk for summary and count derivation.
  */
 export const deriveDescriptionProps = async (description: string): Promise<DerivedDescriptionProps> => {
   const blocks = JSON.parse(description) as CustomBlock[];

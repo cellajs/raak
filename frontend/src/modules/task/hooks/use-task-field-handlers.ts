@@ -48,7 +48,7 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
     });
   };
 
-  // Same baseline-tracking pattern as labels — see comment above.
+  // Same baseline-tracking pattern as labels.
   let assignedToBaseline: UserMinimalBase[] | null = null;
   const onAssignedToChange = (updatedUsers: UserMinimalBase[]) => {
     const baseline = assignedToBaseline ?? task.assignedTo;

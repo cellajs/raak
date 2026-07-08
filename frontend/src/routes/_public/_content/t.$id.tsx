@@ -12,7 +12,7 @@ import { SpinnerPage } from '~/routes/route-utils';
 
 // Local wrapper so autoCodeSplitting keeps the spinner available to both the (split)
 // component and the (non-split) pendingComponent. The splitter only hoists shared local
-// bindings — not shared imports — into a shared chunk, so referencing the SpinnerPage
+// bindings, not shared imports, into a shared chunk, so referencing the SpinnerPage
 // import directly from both props strips it from the main chunk (ReferenceError).
 const TaskLinkSpinner = () => <SpinnerPage />;
 
@@ -23,11 +23,11 @@ const TaskLinkSpinner = () => <SpinnerPage />;
  * When a user visits /t/:id (redirected from the backend OG/redirect handler),
  * this route resolves the task's context and decides where to send them:
  *
- * - Authenticated + has org access → private project board with task sheet
- * - Authenticated + no access + public project → public board with task sheet
- * - Authenticated + no access + private project → error (no access)
- * - Not authenticated + public project → public board with task sheet
- * - Not authenticated + private project → sign-in page with redirect back
+ * - Authenticated + has org access -> private project board with task sheet
+ * - Authenticated + no access + public project -> public board with task sheet
+ * - Authenticated + no access + private project -> error (no access)
+ * - Not authenticated + public project -> public board with task sheet
+ * - Not authenticated + private project -> sign-in page with redirect back
  */
 export const Route = createFileRoute('/_public/_content/t/$id')({
   staticData: { isAuth: false },
@@ -72,7 +72,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
           });
         }
 
-        // No workspace cached — redirect to project board directly
+        // No workspace cached, redirect to project board directly.
         throw redirect({
           to: '/$tenantId/$organizationSlug/project/$slug',
           params: { tenantId, organizationSlug: organizationSlug, slug: projectSlug },
@@ -81,7 +81,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
         });
       }
 
-      // No org access but project is public — show public view
+      // No org access but project is public, show public view.
       if (publicAt) {
         throw redirect({
           to: '/$tenantId/$organizationSlug/public/project/$slug',
@@ -91,14 +91,14 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
         });
       }
 
-      // No org access and not public — show error
+      // No org access and not public, show error.
       useToastStore.getState().showToast(i18n.t('error:forbidden.text'), 'warning');
       throw redirect({ to: appConfig.defaultRedirectPath, replace: true });
     }
 
     // Not authenticated
     if (publicAt) {
-      // Public project — redirect to public board
+      // Public project, redirect to public board.
       throw redirect({
         to: '/$tenantId/$organizationSlug/public/project/$slug',
         params: { tenantId, organizationSlug, slug: projectSlug },
@@ -107,7 +107,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
       });
     }
 
-    // Not authenticated + private project — redirect to sign-in with return URL
+    // Not authenticated + private project, redirect to sign-in with return URL.
     throw redirect({
       to: '/auth/authenticate',
       search: { fromRoot: true, redirect: `/t/${id}` },

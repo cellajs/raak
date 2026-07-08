@@ -21,7 +21,7 @@ export const findTasksByStxMutationId = async (ctx: AuthContext, { mutationId }:
     .where(and(sql`${tasksTable.stx}->>'mutationId' = ${mutationId}`, eq(tasksTable.organizationId, organizationId)));
 };
 
-/** Insert tasks and return the created records. Silently skips duplicates (PK conflict). */
+/** Insert tasks and return the created rows. Silently skips duplicates (PK conflict). */
 export const insertTasks = async (ctx: DbContext, { tasks }: { tasks: InsertTaskModel[] }) => {
   const { db } = ctx.var;
   return db.insert(tasksTable).values(tasks).onConflictDoNothing().returning();
@@ -32,7 +32,7 @@ interface UpdateTaskOpts {
   values: Partial<InsertTaskModel>;
 }
 
-/** Update a task by ID and return the updated record. */
+/** Update a task by ID and return the updated row. */
 export const updateTask = async (ctx: AuthContext, { id, values }: UpdateTaskOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db
@@ -49,7 +49,7 @@ interface DeleteTasksByIdsOpts {
   deletedAt: string;
 }
 
-/** Soft-delete tasks by IDs and return the affected records. */
+/** Soft-delete tasks by IDs and return the affected rows. */
 export const deleteTasksByIds = async (ctx: AuthContext, { ids, deletedAt, deletedBy }: DeleteTasksByIdsOpts) => {
   const { db, organizationId } = ctx.var;
   return db

@@ -3,7 +3,7 @@ import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 
 /**
- * Task-specific collapsed panel — maps TaskCounts to the generic CollapsedPanelView.
+ * Task-specific collapsed panel mapping TaskCounts to the generic CollapsedPanelView.
  */
 export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
   const sections: CollapsedSection[] = [];

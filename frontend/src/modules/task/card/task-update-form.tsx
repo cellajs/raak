@@ -48,7 +48,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const canCollaborate =
     yjsConfigured && isOnline && !!yjsToken && isUnconditionalPermission(project?.can?.task?.update);
 
-  // Connect to Yjs relay — the connection manager handles ref-counting and grace periods.
+  // Connect to Yjs relay; the connection manager handles ref-counting and grace periods.
   // The token proves update permission; entity-level access is verified asynchronously.
   const yjsConn = useYjsConnection(canCollaborate ? task.id : undefined, 'task', tenantId);
 

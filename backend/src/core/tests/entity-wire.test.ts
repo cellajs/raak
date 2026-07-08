@@ -1,13 +1,3 @@
-/**
- * Tests for the entity-wire factories: per-entity registration deriving
- * lens-widened wire schemas + entity-bound runtime normalizers for both
- * entity classes (product/sync and context/plain).
- *
- * `shared/version-changes` is mocked with a synthetic expand rename lens
- * (attachment.name → title, organization.welcomeText → welcomeHtml); entities
- * without lenses exercise the passthrough branches. End-to-end engine behavior
- * with real lens modules is covered in shared/src/version-changes/tests.
- */
 import { z } from '@hono/zod-openapi';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -31,7 +21,7 @@ vi.mock('shared/version-changes', async (importOriginal) => {
     ) => {
       const rename = RENAMES[entityType];
       if (!rename) return { ops, stx, unknownFields: [] };
-      // Synthetic expand rename: canonicalize old → new, mirror-write the twin.
+      // Synthetic expand rename: canonicalize old to new and mirror-write the twin.
       const nextOps = { ...ops };
       if (rename.from in nextOps) nextOps[rename.to] = nextOps[rename.from];
       if (rename.to in nextOps) nextOps[rename.from] = nextOps[rename.to];
@@ -44,6 +34,7 @@ import { createContextEntityWire, createProductEntityWire } from '#/core/entity-
 
 const stx = (fieldTimestamps: Record<string, string>) => ({ mutationId: 'm1', sourceId: 's1', fieldTimestamps });
 
+// Covers per-entity wire factories with mocked expand-window renames.
 describe('createProductEntityWire', () => {
   const wire = createProductEntityWire('attachment', {
     createItem: z.object({ id: z.string(), title: z.string() }),

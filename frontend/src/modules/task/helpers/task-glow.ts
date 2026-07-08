@@ -15,7 +15,7 @@ const triggerGlow = (el: HTMLElement, className: string) => {
 
 export const triggerSectionGlow = (type: 'iced' | 'accepted', projectId: string) => {
   const id = `section-${type}-${projectId}`;
-  // Element may not be in DOM yet after optimistic update — retry once after a frame
+  // Element may not be in DOM yet after optimistic update, retry once after a frame.
   const attempt = () => {
     const el = document.getElementById(id);
     if (el) triggerGlow(el, 'animate-highlight-flash');

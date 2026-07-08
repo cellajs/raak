@@ -115,7 +115,7 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
         );
       }
 
-      // In project view: show funnel icon + label (existing behavior)
+      // In project view: show funnel icon + label.
       return (
         <Button
           variant="ghost"

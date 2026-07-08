@@ -7,7 +7,7 @@ import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
 
 /**
- * Memo'd wrapper for draft (create-form) tasks — owns the focusedTaskId subscription via boolean selector.
+ * Memo'd wrapper for draft tasks with a focusedTaskId boolean selector.
  */
 export const DraftTaskItem = memo(function DraftTaskItem({
   task,

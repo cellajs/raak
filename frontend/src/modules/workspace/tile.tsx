@@ -13,7 +13,7 @@ import { getContextEntityRoute } from '~/utils/context-entity-route';
  *
  * Reads from the shared all-projects query (already fetched by sidebar/menu) and filters
  * by `membership.workspaceId`. React Query memoizes the `select` per subscriber, so each
- * tile only re-renders when its own slice changes — no N per-workspace project fetches.
+ * tile only re-renders when its own slice changes. There are no N per-workspace project fetches.
  */
 export const WorkspaceTile = ({ entity }: { entity: Workspace }) => {
   const { t } = useTranslation();

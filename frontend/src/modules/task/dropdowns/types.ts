@@ -13,7 +13,7 @@ type TaskSubscriptionProps = { taskId?: string };
 /** Layout props for the CSS-var-width dropdowns (points/labels/members/status). */
 type DropdownLayoutProps = TaskSubscriptionProps & { triggerWidth?: number };
 
-/** Value/onChange props per dropdown type — no Task dependency */
+/** Value/onChange props per dropdown type without a Task dependency. */
 export type SelectPointsProps = DropdownLayoutProps & {
   /** Current stored points (a task's `points` — the backend contract is `number | null`). */
   value: number | null;

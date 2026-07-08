@@ -133,7 +133,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     return undefined;
   };
 
-  // Navigate between panels (Left/Right) — focus the first task visible in the target panel's viewport.
+  // Left/Right focuses the first visible task in the target panel.
   const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length) return;
     const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, panelData[boardId]);

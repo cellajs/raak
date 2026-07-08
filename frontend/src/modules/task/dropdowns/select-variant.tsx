@@ -14,11 +14,11 @@ type VariantOption = (typeof variantOptions)[number];
 export const SelectVariant = ({ value: currentVariant, onChange, taskId, className = '' }: SelectVariantProps) => {
   const { t } = useTranslation();
 
-  // Live cache subscription — reflects remote SSE variant changes while open.
+  // Live cache subscription reflects remote SSE variant changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
   const liveVariant = liveTask?.variant ?? currentVariant;
 
-  // Derived during render — no useState/useEffect copy of liveVariant.
+  // Derived during render, without a useState/useEffect copy of liveVariant.
   const selectedType = variantOptions.find((v) => v.value === liveVariant);
 
   const [searchValue, setSearchValue] = useState('');

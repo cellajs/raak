@@ -33,7 +33,7 @@ const isAttachmentSeeded = async () => {
 };
 
 /**
- * Seeds the database with attachment records for each seeded organization.
+ * Seeds the database with attachment rows for each seeded organization.
  * Records reference pre-existing files in the dev S3 bucket under `seed/`.
  */
 export const attachmentsSeed = async () => {

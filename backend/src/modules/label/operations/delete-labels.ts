@@ -17,7 +17,7 @@ export async function deleteLabelsOp(
   // processes the label soft-delete events (avoids row locks on tasks during request).
   await tenantContextIncludingDeleted(ctx, async (txCtx) => {
     await deleteLabelsByIds(txCtx, { ids: allowedIds, deletedAt, deletedBy });
-    // Counter cleanup is best-effort — orphaned counters are harmless stale cache
+    // Counter cleanup is best-effort; orphaned counters are harmless stale cache.
     await deleteCountersByKeys(txCtx, { keys: allowedIds });
   });
 

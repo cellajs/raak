@@ -43,7 +43,7 @@ export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBe
     projectData =
       queryClient.getQueryData(options.queryKey) ?? (isOnline ? await queryClient.ensureQueryData(options) : undefined);
   } else if (isOnline) {
-    // Not in cache — fetch by slug
+    // Not in cache, fetch by slug.
     projectData = await fetchSlugCacheId(
       () => getProject({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
       projectQueryKeys.detail.byId,

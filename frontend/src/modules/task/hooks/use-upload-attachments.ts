@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-// biome-ignore lint/style/noRestrictedImports: this file IS a colocated mutation hook — wraps createAttachments with task-specific cache update logic.
+// biome-ignore lint/style/noRestrictedImports: colocated mutation hook wrapping createAttachments with task-specific cache update logic.
 import { type CreateAttachmentsData, type CreateAttachmentsResponse, createAttachments } from 'sdk';
 import type { ApiError } from '~/lib/api';
 import { parseUploadedAttachments } from '~/modules/attachment/helpers/parse-uploaded';
@@ -29,7 +29,7 @@ export const useUploadAttachments = () => {
       taskId?: string;
     }) =>
     (data: UploadedUppyFile<'attachment'>) => {
-      // cella change: projectId is required in raak; taskId links the attachment to its owning task (host relation)
+      // projectId is required in raak; taskId links the attachment to its owning task.
       const createdAttachments = parseUploadedAttachments(data, organizationId, projectId, taskId);
 
       const stx = createStxForCreate();

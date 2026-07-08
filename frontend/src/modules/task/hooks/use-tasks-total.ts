@@ -29,7 +29,7 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
   const isPublicView = !queryParams;
 
   const searchQuery = search.q?.trim();
-  // Exclude tenantId — not part of query keys
+  // Exclude tenantId because it is not part of query keys.
   const { tenantId: _, organizationId, ...scopeFilters } = queryParams ?? { organizationId: '', projectId: '' };
 
   return useSyncExternalStore(

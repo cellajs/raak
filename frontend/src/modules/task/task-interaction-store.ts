@@ -9,7 +9,7 @@ interface TaskInteractionState {
   focusedTaskId: string | null;
   setFocusedTaskId: (taskId: string | null) => void;
   /**
-   * Draft tasks keyed by projectId — inline create-form placeholders. A project's create form
+   * Draft tasks keyed by projectId for inline create-form placeholders. A project's create form
    * is open iff it has a draft here, so consumers derive open-ness from `draftTasks[projectId]`.
    */
   draftTasks: Record<string, Task>;

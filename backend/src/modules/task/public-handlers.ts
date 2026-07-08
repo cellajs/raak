@@ -21,11 +21,11 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   const mainTask = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'task', id);
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
-  // REMARK no tenant status check — unlike authenticated routes (which reject suspended/archived tenants in tenantGuard),
+  // Public reads intentionally bypass tenant status checks from tenantGuard.
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', mainTask.projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
-  // Anonymous engine check: publicRead('publicParent') — the task is readable when its
+  // Anonymous engine check: publicRead('publicParent') makes the task readable when its
   // parent project's publicAt is set. Parent row resolved here, per the cross-row design.
   const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask, parentRow: project });
   if (!checkPermission([], 'read', subject).isAllowed) {
@@ -43,7 +43,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
 app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const { projectId, ...queryInfo } = ctx.req.valid('query');
 
-  // REMARK no tenant status check — unlike authenticated routes (which reject suspended/archived tenants in tenantGuard),
+  // Public reads intentionally bypass tenant status checks from tenantGuard.
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 

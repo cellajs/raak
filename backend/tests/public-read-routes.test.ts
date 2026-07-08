@@ -1,17 +1,3 @@
-/**
- * End-to-end proof of consolidated public read grants.
- *
- * Public routes no longer hand-check `row.publicAt` — they ask the permission engine
- * with an anonymous actor (no memberships), and the engine resolves the declared
- * grants: `publicRead('publicSelf')` on project, `publicRead('publicParent')` on task.
- *
- * - Q1: public project GET — 200 when publicAt set, 403 when not
- * - Q2: public task GET — follows the PARENT project's publicAt (publicParent)
- * - Q3: public task list — same rule, whole list gated by the parent project
- *
- * Requires: PostgreSQL (core mode or higher)
- */
-
 import { inArray } from 'drizzle-orm';
 import { getPublicProject, getPublicTask, getPublicTasks } from 'sdk';
 import { generateId } from 'shared/entity-id';
@@ -33,6 +19,7 @@ const privateProjectId = generateId();
 const taskInPublicProject = generateId();
 const taskInPrivateProject = generateId();
 
+// Covers permission-engine publicRead grants for anonymous project and task reads.
 describe('Public read routes (engine-resolved grants, anonymous actor)', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;

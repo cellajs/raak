@@ -73,7 +73,7 @@ export const BoardPanel = memo(function BoardPanel({
     [filteredTasks, expandIced, expandAccepted],
   );
 
-  // Panel-level drop target — registered on the outer wrapper so it works in
+  // Panel-level drop target registered on the outer wrapper so it works in
   // both expanded and collapsed states (mobile uses a different layout).
   const panelRef = useRef<HTMLDivElement | null>(null);
   const { highlightProject } = usePanelDropTarget({ panelRef, projectId: project.id, tasks });

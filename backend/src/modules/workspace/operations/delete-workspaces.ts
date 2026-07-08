@@ -9,7 +9,7 @@ export async function deleteWorkspacesOp(ctx: AuthContext, ids: string[]) {
   const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'workspace', toDeleteIds);
   await deleteWorkspacesByIds(ctx, { ids: allowedIds });
 
-  // Invalidate membership cache so the current user no longer sees deleted memberships
+  // Invalidate membership cache so deleted memberships are absent from later reads.
   invalidateCache.user(ctx.var.user.id);
 
   log.info('Workspaces deleted', { count: allowedIds.length, ids: allowedIds });

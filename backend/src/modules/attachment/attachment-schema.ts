@@ -35,7 +35,7 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     bucketName: true,
     public: true,
     groupId: true,
-    // host relation: the owning task (nullable) — cascade and host counters key off it
+    // Host relation: the owning task (nullable); cascade and host counters key off it.
     taskId: true,
     convertedContentType: true,
     convertedKey: true,

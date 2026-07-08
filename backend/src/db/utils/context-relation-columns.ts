@@ -17,11 +17,11 @@ type NullableUuid = ReturnType<typeof uuid>;
 
 /**
  * Context-entity id columns generated for a product entity, derived from the hierarchy:
- * - strict ancestors (parent chain) → non-null id columns, unless declared in the hierarchy's
+ * - strict ancestors (parent chain): non-null id columns, unless declared in the hierarchy's
  *   `nullableAncestors` (variable-depth rows, e.g. a project-scoped entity that may also exist
- *   at a higher level) — those stay in the chain for permission/public-read inheritance but
+ *   at a higher level); those stay in the chain for permission/public-read inheritance but
  *   become nullable columns
- * - related contexts (`relatedContexts`) → nullable id columns
+ * - related contexts (`relatedContexts`): nullable id columns
  */
 export type ContextRelationColumns<E extends string> = {
   [C in Exclude<AncestorContextType<E>, NullableAncestorType<E>> & EntityType as EntityIdColumnKey<C>]: NotNullUuid;
@@ -41,8 +41,8 @@ export type ActivityContextColumns = {
 };
 
 /**
- * Generates context-entity id columns for a product entity based on the hierarchy config.
- * Ancestors (organization, and any intermediate context parents) become non-null columns —
+ * Generates context entity id columns for a product entity based on the hierarchy config.
+ * Ancestors (organization, and any intermediate context parents) become non-null columns,
  * except ancestors the hierarchy declares in `nullableAncestors` (variable-depth rows);
  * declared related contexts become nullable columns. Keeps product schemas fork-agnostic:
  * forks only adjust the hierarchy, not each table definition.

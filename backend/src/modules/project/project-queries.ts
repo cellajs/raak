@@ -10,7 +10,7 @@ import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/he
 import { getOrderColumn } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
-/** Insert projects and return the created records. */
+/** Insert projects and return the created rows. */
 export const insertProjects = async (
   ctx: DbContext,
   { projects }: { projects: (typeof projectsTable.$inferInsert)[] },
@@ -24,7 +24,7 @@ interface UpdateProjectOpts {
   values: Partial<typeof projectsTable.$inferInsert>;
 }
 
-/** Update a project by ID and return the updated record. */
+/** Update a project by ID and return the updated row. */
 export const updateProject = async (ctx: AuthContext, { id, values }: UpdateProjectOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db

@@ -18,7 +18,7 @@ import { resolveCollectionReadFilterForPolicies } from './collection-scope';
 import { buildCollectionReadWhere } from './row-predicates';
 
 /**
- * Check-form / SQL-form / compute-can parity property test — merge blocker.
+ * Check-form / SQL-form / compute-can parity property test.
  *
  * One policy definition drives three enforcement paths:
  * 1. the permission engine's per-subject decision (`getAllDecisions`),
@@ -237,7 +237,7 @@ describe('row-condition parity: engine check ⊆⊇ compiled SQL ⊆⊇ compute-
 
       // Engine ⊆⊇ compute-can: per single membership, the frontend-resolved state must
       // match the engine's decision for every row in that membership's scope.
-      // KNOWN LIMITATION: computeCan is restriction-blind (context-level, no row data) —
+      // computeCan is restriction-blind (context-level, no row data).
       // restricted entities must resolve per row via the decision API, so parity with
       // compute-can is only asserted when no restriction is declared.
       if (scenario.restrictions.attachment) continue;
@@ -275,7 +275,7 @@ describe('row-condition parity: engine check ⊆⊇ compiled SQL ⊆⊇ compute-
           scenario.restrictions,
         );
       } catch {
-        // 403: no scope at all for the requested project — the engine must agree that
+        // 403: no scope at all for the requested project. The engine must agree that
         // no row of this project is readable.
         const fromEngine = engineReadableIds(scenario);
         for (const row of ROWS.filter((r) => r.projectId === requestedProject)) {

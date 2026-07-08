@@ -35,7 +35,7 @@ export async function createLabelsOp(
   );
   if (existing) return { success: true, data: { data: existing, rejectedIds: [] } };
 
-  // Check restriction limits (soft — concurrent requests may slightly overshoot)
+  // Check restriction limits. Concurrent requests may slightly overshoot.
   const currentCount = await getOrgEntityCount(ctx, organization.id, 'label');
 
   if (labelRestrictions !== 0 && currentCount + input.length > labelRestrictions) {
