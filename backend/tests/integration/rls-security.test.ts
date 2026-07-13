@@ -59,6 +59,7 @@ const TEST_MEMBERSHIP_A = '00000000-0000-4000-a000-000000000006';
 const TEST_MEMBERSHIP_B = '00000000-0000-4000-a000-000000000007';
 const TEST_ATTACHMENT_A = '00000000-0000-4000-a000-00000000000e';
 const TEST_ATTACHMENT_C = '00000000-0000-4000-a000-00000000000f';
+const TEST_TASK_A = '00000000-0000-4000-a000-000000000010';
 const TEST_ACTIVITY_A = 'rls-activity-001';
 
 // Runtime role connection (subject to RLS)
@@ -143,6 +144,12 @@ interface RlsProductFixture {
   rowId: string;
   /** Original name of the representative row, for restore after update tests. */
   rowName: string;
+  /**
+   * Home context id of the representative row: its deepest seeded ancestor, mirroring
+   * findUnseenCountsByUser's COALESCE attribution (org in base topology; e.g. project
+   * when the fork nests products deeper). Used by the unseen-count tests.
+   */
+  homeContextId: string;
   /** Build an INSERT for a fresh row (caller supplies a unique id, no ON CONFLICT). */
   insert: (p: { id: string; tenantId: string; orgId: string; createdBy: string }) => SQL;
   /** Seed prerequisites + the representative row (runs as admin/superuser). */
@@ -156,6 +163,7 @@ const rlsProductFixtures: Record<string, RlsProductFixture> = {
     table: 'attachments',
     rowId: TEST_ATTACHMENT_A,
     rowName: 'Test File',
+    homeContextId: attachmentHierarchyA.sqlContextColumns[0]?.id ?? TEST_ORG_A,
     insert: ({ id, tenantId, orgId, createdBy }) => {
       const plan = hierarchyForOrg(orgId);
       return sql`
@@ -175,6 +183,32 @@ const rlsProductFixtures: Record<string, RlsProductFixture> = {
     },
     cleanup: async () => {
       await adminDb.execute(sql`DELETE FROM attachments WHERE id IN (${TEST_ATTACHMENT_A}, ${TEST_ATTACHMENT_C})`);
+    },
+  },
+  // raak: tasks share attachment's ancestor chain (project → organization), so they reuse
+  // the same seeded hierarchy plans. Tasks are raak's seen-tracked type, so this fixture
+  // also backs the unseen-count tests.
+  task: {
+    table: 'tasks',
+    rowId: TEST_TASK_A,
+    rowName: 'Test Task',
+    homeContextId: attachmentHierarchyA.sqlContextColumns[0]?.id ?? TEST_ORG_A,
+    insert: ({ id, tenantId, orgId, createdBy }) => {
+      const plan = hierarchyForOrg(orgId);
+      return sql`
+        INSERT INTO tasks (id, entity_type, tenant_id, name, stx, keywords, created_by${contextColumnList(plan)}, summary, variant, display_order, status)
+        VALUES (${id}, 'task', ${tenantId}, 'WT Task', '{}', '', ${createdBy}${contextValueList(plan)}, 'WT Task', 0, 1000, 0)
+      `;
+    },
+    seed: async () => {
+      await adminDb.execute(sql`
+        INSERT INTO tasks (id, entity_type, tenant_id, name, stx, keywords, created_by${contextColumnList(attachmentHierarchyA)}, summary, variant, display_order, status)
+        VALUES (${TEST_TASK_A}, 'task', ${TEST_TENANT_A}, 'Test Task', '{}', '', ${TEST_USER_A}${contextValueList(attachmentHierarchyA)}, 'Test Task', 0, 1000, 0)
+        ON CONFLICT (id) DO NOTHING
+      `);
+    },
+    cleanup: async () => {
+      await adminDb.execute(sql`DELETE FROM tasks WHERE id = ${TEST_TASK_A}`);
     },
   },
 };
@@ -716,29 +750,35 @@ const rlsSuiteReady = await (async () => {
     // getUnseenCounts delegates to findUnseenCountsByUser, which counts entity-table rows the user
     // has not seen. Entity tables have FORCE RLS, so this MUST run inside a tenant context
     // (tenantRead sets app.tenant_id); a context-less baseDb read silently returns zero and the
-    // unseen badge breaks. These lock that behaviour in. Org A holds exactly one in-window
-    // attachment (TEST_ATTACHMENT_A) and User A has no seen_by rows initially.
+    // unseen badge breaks. These lock that behaviour in, exercised on the first seen-tracked
+    // entity type that has a fixture (base Cella: attachment; a fork may track e.g. task).
+    // The fixture's representative row is the only in-window row of that type in its home
+    // context and User A has no seen_by rows initially.
     type UnseenRow = { contextId: string; entityType: string; unseenCount: number };
+    const trackedProduct = iterableRlsProducts.find(([type]) =>
+      (trackedEntityTypes as readonly string[]).includes(type),
+    );
+    const [trackedType, trackedFixture] = trackedProduct ?? [undefined, undefined];
     const cutoff = () => new Date(Date.now() - seenWindowMs).toISOString();
     const countUnseen = (tx: NodePgTx) =>
       findUnseenCountsByUser({ var: { db: tx } } as Parameters<typeof findUnseenCountsByUser>[0], {
         userId: TEST_USER_A,
-        contextIds: [TEST_ORG_A],
+        contextIds: [trackedFixture?.homeContextId ?? TEST_ORG_A],
         entityTypes: trackedEntityTypes,
         cutoff: cutoff(),
       });
 
     it('counts in-window unseen entities under tenant context', async () => {
-      if (!rolesAvailable || !requiredTablesAvailable || !seenByAvailable) return;
+      if (!rolesAvailable || !requiredTablesAvailable || !seenByAvailable || !trackedFixture) return;
       const rows = await queryAsRuntimeRole<UnseenRow>(TEST_TENANT_A, TEST_USER_A, countUnseen);
-      const orgA = rows.find((r) => r.contextId === TEST_ORG_A);
-      expect(orgA).toBeDefined();
-      expect(orgA?.entityType).toBe('attachment');
-      expect(orgA?.unseenCount).toBe(1);
+      const homeRow = rows.find((r) => r.contextId === trackedFixture.homeContextId);
+      expect(homeRow).toBeDefined();
+      expect(homeRow?.entityType).toBe(trackedType);
+      expect(homeRow?.unseenCount).toBe(1);
     });
 
     it('returns zero without tenant context (RLS regression canary)', async () => {
-      if (!rolesAvailable || !requiredTablesAvailable || !seenByAvailable) return;
+      if (!rolesAvailable || !requiredTablesAvailable || !seenByAvailable || !trackedFixture) return;
       // Entity rows are invisible without app.tenant_id → no unseen counts. If getUnseenCounts
       // ever reverts to a context-less baseDb read, this fails.
       const rows = await queryWithoutContext<UnseenRow>(countUnseen);
@@ -746,17 +786,17 @@ const rlsSuiteReady = await (async () => {
     });
 
     it('drops the count once the entity is marked seen', async () => {
-      if (!rolesAvailable || !requiredTablesAvailable || !seenByAvailable) return;
+      if (!rolesAvailable || !requiredTablesAvailable || !seenByAvailable || !trackedFixture) return;
       const seenId = '00000000-0000-4000-a000-0000000000a1';
       await adminDb.execute(sql`
         INSERT INTO seen_by (id, user_id, entity_id, entity_type, context_id, organization_id, tenant_id, created_at)
-        VALUES (${seenId}, ${TEST_USER_A}, ${TEST_ATTACHMENT_A}, 'attachment', ${TEST_ORG_A}, ${TEST_ORG_A}, ${TEST_TENANT_A}, NOW())
+        VALUES (${seenId}, ${TEST_USER_A}, ${trackedFixture.rowId}, ${trackedType}, ${trackedFixture.homeContextId}, ${TEST_ORG_A}, ${TEST_TENANT_A}, NOW())
         ON CONFLICT (user_id, entity_id) DO NOTHING
       `);
       try {
         const rows = await queryAsRuntimeRole<UnseenRow>(TEST_TENANT_A, TEST_USER_A, countUnseen);
-        // Org A's only in-window attachment is now seen → no unseen row for that context.
-        expect(rows.find((r) => r.contextId === TEST_ORG_A)).toBeUndefined();
+        // The home context's only in-window row of the tracked type is now seen → no unseen row.
+        expect(rows.find((r) => r.contextId === trackedFixture.homeContextId)).toBeUndefined();
       } finally {
         await adminDb.execute(sql`DELETE FROM seen_by WHERE id = ${seenId}`);
       }
