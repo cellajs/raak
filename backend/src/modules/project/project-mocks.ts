@@ -39,6 +39,7 @@ const generateProjectBase = (id: string, name: string, createdAt: string, organi
     tenantId,
     organizationId,
     createdAt,
+    publishedAt: createdAt,
     createdBy: null,
     updatedAt: createdAt,
     updatedBy: null,

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.4](https://github.com/cellajs/cella/compare/0.3.3...0.3.4) (2026-07-09)
+
+
+### 🐞 Bug fixes
+
+* ignore maintenances change ([2620872](https://github.com/cellajs/cella/commit/2620872acbd70364403c7cfef1ae1e116e517a43))
+
+## [0.3.3](https://github.com/cellajs/cella/compare/0.3.2...0.3.3) (2026-07-09)
+
+
+### 🐞 Bug fixes
+
+* fix lockfile ([#870](https://github.com/cellajs/cella/issues/870)) ([36664c4](https://github.com/cellajs/cella/commit/36664c4ba35ebd5bb801ecc34278000adaae77f7))
+
+## [0.3.2](https://github.com/cellajs/cella/compare/0.3.1...0.3.2) (2026-07-09)
+
+
+### 🎉 New features
+
+* docs search and ui improvements ([#867](https://github.com/cellajs/cella/issues/867)) ([f2e077a](https://github.com/cellajs/cella/commit/f2e077a37a68ad667758699c7134a95340d57b5a))
+
 ## [0.3.1](https://github.com/cellajs/cella/compare/0.3.0...0.3.1) (2026-07-08)
 
 

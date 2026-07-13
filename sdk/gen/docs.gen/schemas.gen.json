@@ -955,6 +955,10 @@
           "type": ["string", "null"],
           "required": true
         },
+        "remindedAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "createdBy": {
           "type": ["object", "null"],
           "required": true,
@@ -1004,6 +1008,7 @@
       "tokenId": "5440aeff-3fb0-400b-98b1-ebefcdf13a71",
       "role": "guest",
       "rejectedAt": null,
+      "remindedAt": null,
       "createdAt": "2024-02-07T13:46:57.160Z",
       "createdBy": "6bb32e12-c633-4791-b3f1-c12772606004",
       "organizationId": "4fa889f9-15ca-4730-a060-e4167170b7db",
@@ -1226,6 +1231,10 @@
           },
           "extendsRef": "#/components/schemas/UserMinimalBase"
         },
+        "publishedAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "shortName": {
           "type": ["string", "null"],
           "required": true,
@@ -1389,6 +1398,7 @@
       "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
       "authStrategies": ["passkey"],
       "chatSupport": true,
+      "publishedAt": "2024-12-25T15:04:42.969Z",
       "createdAt": "2024-12-25T15:04:42.969Z",
       "createdBy": null,
       "updatedAt": "2024-12-25T15:04:42.969Z",
@@ -1497,6 +1507,10 @@
             }
           },
           "extendsRef": "#/components/schemas/UserMinimalBase"
+        },
+        "publishedAt": {
+          "type": ["string", "null"],
+          "required": true
         },
         "publicAt": {
           "type": ["string", "null"],
@@ -1610,6 +1624,7 @@
       "tenantId": "1ibx0cit7hpfxahcbywq0szz",
       "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
       "createdAt": "2024-12-23T15:24:26.607Z",
+      "publishedAt": "2024-12-23T15:24:26.607Z",
       "createdBy": null,
       "updatedAt": "2024-12-23T15:24:26.607Z",
       "updatedBy": null,
@@ -2263,6 +2278,10 @@
           },
           "extendsRef": "#/components/schemas/UserMinimalBase"
         },
+        "publishedAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "included": {
           "type": "object",
@@ -2353,6 +2372,7 @@
       "tenantId": "a0h3yt",
       "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
       "createdAt": "2024-03-18T14:19:46.053Z",
+      "publishedAt": "2024-03-18T14:19:46.053Z",
       "createdBy": null,
       "updatedAt": "2024-03-18T14:19:46.053Z",
       "updatedBy": null,
