@@ -8,7 +8,7 @@ import { configurePermissions } from '../src/permissions/access-policies';
  */
 export const { accessPolicies, publicReadGrants, rowRestrictions, hostDelegation } = configurePermissions(
   appConfig.entityTypes,
-  ({ subject, contexts, publicRead, delegateToHost }) => {
+  ({ subject, contexts, publicRead }) => {
   switch (subject.name) {
     case 'organization':
       // self (this organization): create is inert here, org creation is gated by tenant quota, not this policy
@@ -37,9 +37,9 @@ export const { accessPolicies, publicReadGrants, rowRestrictions, hostDelegation
     case 'attachment':
       // Public read: readable by anyone when the parent project's publicAt is set
       publicRead('publicParent');
-      // Host delegation: a task-owned attachment is readable by whoever can read its task
-      // (host row resolved at check time). Additive with the cells below.
-      delegateToHost(['read']);
+      // Task-owned attachments need no task-based read delegation: every role that can
+      // read a task already reads attachments via the cells below (project roles + org
+      // admin), and org members keep read:'own'. Rows are self-describing.
       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
       // read: 'own' means org members may read/list attachments they created anywhere in the
       // org (row condition), even in projects they are not a member of.

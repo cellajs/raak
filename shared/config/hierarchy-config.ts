@@ -30,8 +30,9 @@ export const hierarchy = createEntityHierarchy(roles)
   .context('project', { parent: 'organization', roles: roles.all })
   .product('task', { parent: 'project' })
   .product('label', { parent: 'project' })
-  // host: task-owned attachments (nullable taskId column): deleting a task cascades to
-  // them, and CDC maintains e:attachment counts per task. Unhosted attachments (taskId
-  // null) live at project level.
-  .product('attachment', { parent: 'project', host: 'task' })
+  // Task-owned attachments reference their task via a plain nullable taskId data column
+  // (declared in attachment-db.ts): relationships between products are data, never
+  // permission indirection. deleteTasksOp cascades attachments in the same transaction.
+  // Attachments without a task (taskId null) live at project level.
+  .product('attachment', { parent: 'project' })
   .build();
