@@ -41,15 +41,8 @@ export default defineConfig({
       'backend/src/modules/attachment/attachment-queries.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
-      // Hierarchy-bound tests: raak's versions exercise the deeper hierarchy (project,
-      // guest, host relations) that the template's org-only rewrites cannot.
-      'backend/src/modules/entities/helpers/recalculate-counters.test.ts',
-      'backend/src/permissions/row-predicates.test.ts',
-      'backend/tests/attachment-seq-reads.test.ts',
-      'frontend/src/query/tests/cache-migration.test.ts',
-      'shared/src/permissions/host-delegation.test.ts',
-      'shared/src/permissions/public-read.test.ts',
-      'shared/src/permissions/row-restrictions.test.ts',
+      // NOTE: the hierarchy-bound permission tests are no longer pinned — they run on the shared
+      // wide-fixture kit / config-adaptive seeding and are owned upstream, so they sync cleanly.
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',
