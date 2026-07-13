@@ -20,7 +20,7 @@ export type EntityRouteEntry = {
  */
 export const entityRouteConfig = {
   organization: {
-    path: '/$tenantId/$organizationSlug/organization',
+    path: '/$tenantId/$organizationSlug/organization/attachments',
     paramName: 'organizationSlug',
   },
   workspace: {

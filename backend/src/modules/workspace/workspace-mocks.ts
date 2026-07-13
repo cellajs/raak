@@ -47,6 +47,7 @@ const generateWorkspaceBase = (
     tenantId,
     organizationId,
     createdAt,
+    publishedAt: createdAt,
     createdBy: null,
     updatedAt: createdAt,
     updatedBy: null,

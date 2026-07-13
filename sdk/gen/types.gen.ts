@@ -321,6 +321,7 @@ export type InactiveMembership = {
   tokenId: string | null;
   role: 'admin' | 'member' | 'guest';
   rejectedAt: string | null;
+  remindedAt: string | null;
   createdBy: UserMinimalBase &
     ({
       [key: string]: unknown;
@@ -413,6 +414,7 @@ export type Project = {
     ({
       [key: string]: unknown;
     } | null);
+  publishedAt: string | null;
   publicAt: string | null;
   organizationId: string;
   included: {
@@ -517,6 +519,7 @@ export type Organization = {
     ({
       [key: string]: unknown;
     } | null);
+  publishedAt: string | null;
   shortName: string | null;
   country: string | null;
   timezone: string | null;
@@ -571,6 +574,7 @@ export type Workspace = {
     ({
       [key: string]: unknown;
     } | null);
+  publishedAt: string | null;
   organizationId: string;
   included: {
     membership?: MembershipBase;

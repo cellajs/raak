@@ -74,6 +74,10 @@
               },
               "extendsRef": "#/components/schemas/UserMinimalBase"
             },
+            "publishedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "publicAt": {
               "type": ["string", "null"],
               "required": true
@@ -182,6 +186,7 @@
           "tenantId": "1ibx0cit7hpfxahcbywq0szz",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
           "createdAt": "2024-12-23T15:24:26.607Z",
+          "publishedAt": "2024-12-23T15:24:26.607Z",
           "createdBy": null,
           "updatedAt": "2024-12-23T15:24:26.607Z",
           "updatedBy": null,
@@ -344,6 +349,10 @@
                     },
                     "extendsRef": "#/components/schemas/UserMinimalBase"
                   },
+                  "publishedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "publicAt": {
                     "type": ["string", "null"],
                     "required": true
@@ -468,6 +477,7 @@
               "tenantId": "hoiny6rsob7j0p6kfz7rauzy",
               "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
               "createdAt": "2024-04-18T21:12:59.543Z",
+              "publishedAt": "2024-04-18T21:12:59.543Z",
               "createdBy": null,
               "updatedAt": "2024-04-18T21:12:59.543Z",
               "updatedBy": null,
@@ -756,6 +766,10 @@
                     },
                     "extendsRef": "#/components/schemas/UserMinimalBase"
                   },
+                  "publishedAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "publicAt": {
                     "type": ["string", "null"],
                     "required": true
@@ -869,6 +883,7 @@
               "tenantId": "yx645yb0gleyvjbbm5piweg2",
               "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
               "createdAt": "2024-11-21T01:19:53.533Z",
+              "publishedAt": "2024-11-21T01:19:53.533Z",
               "createdBy": null,
               "updatedAt": "2024-11-21T01:19:53.533Z",
               "updatedBy": null,
@@ -901,6 +916,7 @@
               "tenantId": "pa56tpd77kpi37syiavgc67t",
               "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
               "createdAt": "2024-10-29T04:35:17.725Z",
+              "publishedAt": "2024-10-29T04:35:17.725Z",
               "createdBy": null,
               "updatedAt": "2024-10-29T04:35:17.725Z",
               "updatedBy": null,
@@ -1080,6 +1096,10 @@
               },
               "extendsRef": "#/components/schemas/UserMinimalBase"
             },
+            "publishedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "publicAt": {
               "type": ["string", "null"],
               "required": true
@@ -1187,6 +1207,7 @@
           "tenantId": "1ibx0cit7hpfxahcbywq0szz",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
           "createdAt": "2024-12-23T15:24:26.607Z",
+          "publishedAt": "2024-12-23T15:24:26.607Z",
           "createdBy": null,
           "updatedAt": "2024-12-23T15:24:26.607Z",
           "updatedBy": null,
@@ -1347,6 +1368,10 @@
               },
               "extendsRef": "#/components/schemas/UserMinimalBase"
             },
+            "publishedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "publicAt": {
               "type": ["string", "null"],
               "required": true
@@ -1454,6 +1479,7 @@
           "tenantId": "1ibx0cit7hpfxahcbywq0szz",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
           "createdAt": "2024-12-23T15:24:26.607Z",
+          "publishedAt": "2024-12-23T15:24:26.607Z",
           "createdBy": null,
           "updatedAt": "2024-12-23T15:24:26.607Z",
           "updatedBy": null,
@@ -1636,6 +1662,10 @@
               },
               "extendsRef": "#/components/schemas/UserMinimalBase"
             },
+            "publishedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "publicAt": {
               "type": ["string", "null"],
               "required": true
@@ -1743,6 +1773,7 @@
           "tenantId": "1ibx0cit7hpfxahcbywq0szz",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
           "createdAt": "2024-12-23T15:24:26.607Z",
+          "publishedAt": "2024-12-23T15:24:26.607Z",
           "createdBy": null,
           "updatedAt": "2024-12-23T15:24:26.607Z",
           "updatedBy": null,
@@ -1897,6 +1928,10 @@
               },
               "extendsRef": "#/components/schemas/UserMinimalBase"
             },
+            "publishedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "publicAt": {
               "type": ["string", "null"],
               "required": true
@@ -2004,6 +2039,7 @@
           "tenantId": "1ibx0cit7hpfxahcbywq0szz",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
           "createdAt": "2024-12-23T15:24:26.607Z",
+          "publishedAt": "2024-12-23T15:24:26.607Z",
           "createdBy": null,
           "updatedAt": "2024-12-23T15:24:26.607Z",
           "updatedBy": null,
@@ -2153,6 +2189,10 @@
               },
               "extendsRef": "#/components/schemas/UserMinimalBase"
             },
+            "publishedAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "publicAt": {
               "type": ["string", "null"],
               "required": true
@@ -2260,6 +2300,7 @@
           "tenantId": "1ibx0cit7hpfxahcbywq0szz",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
           "createdAt": "2024-12-23T15:24:26.607Z",
+          "publishedAt": "2024-12-23T15:24:26.607Z",
           "createdBy": null,
           "updatedAt": "2024-12-23T15:24:26.607Z",
           "updatedBy": null,

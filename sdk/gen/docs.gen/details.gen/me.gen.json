@@ -867,6 +867,10 @@
                         "type": ["string", "null"],
                         "required": true
                       },
+                      "remindedAt": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
                       "createdBy": {
                         "type": ["object", "null"],
                         "required": true,
@@ -931,6 +935,7 @@
                 "tokenId": "dc3036bd-bd6a-4ea8-8385-228db2dcc869",
                 "role": "guest",
                 "rejectedAt": null,
+                "remindedAt": null,
                 "createdAt": "2024-11-13T15:29:06.546Z",
                 "createdBy": "3c595dbd-7273-4cf3-8035-df6a8e52c42b",
                 "organizationId": "33bb76f4-56ce-4cd0-9331-f680165d54a9",
@@ -960,6 +965,7 @@
                 "tokenId": "221aad91-1de2-4e38-93b7-dcc8a33619bf",
                 "role": "admin",
                 "rejectedAt": null,
+                "remindedAt": null,
                 "createdAt": "2024-04-11T17:15:50.993Z",
                 "createdBy": "2cff0319-02f4-4691-97de-0e52a19930c6",
                 "organizationId": "c2a25f30-823d-40d7-af0c-f6c90c7756a6",
