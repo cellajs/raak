@@ -1364,7 +1364,80 @@
                     "label": { "type": "number", "required": true },
                     "attachment": { "type": "number", "required": true }
                   }
+                },
+                "activity": {
+                  "type": "object",
+                  "required": true,
+                  "properties": {
+                    "task": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "created": {
+                          "type": ["number", "null"],
+                          "required": true
+                        },
+                        "updated": {
+                          "type": ["number", "null"],
+                          "required": true
+                        }
+                      }
+                    },
+                    "label": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "created": {
+                          "type": ["number", "null"],
+                          "required": true
+                        },
+                        "updated": {
+                          "type": ["number", "null"],
+                          "required": true
+                        }
+                      }
+                    },
+                    "attachment": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "created": {
+                          "type": ["number", "null"],
+                          "required": true
+                        },
+                        "updated": {
+                          "type": ["number", "null"],
+                          "required": true
+                        }
+                      }
+                    }
+                  }
                 }
+              }
+            },
+            "members": {
+              "type": "array",
+              "required": false,
+              "itemType": "object",
+              "ref": "#/components/schemas/UserMinimalBase",
+              "items": {
+                "type": "object",
+                "description": "Minimal user data for references.",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["user"]
+                  }
+                },
+                "ref": "#/components/schemas/UserMinimalBase"
               }
             }
           }
@@ -1432,6 +1505,11 @@
             "task": 47,
             "label": 21,
             "attachment": 451
+          },
+          "activity": {
+            "task": { "created": 1734107615547, "updated": 1734969019663 },
+            "label": { "created": 1733968111009, "updated": null },
+            "attachment": { "created": 1733759623099, "updated": 1734323050171 }
           }
         }
       }
@@ -1586,6 +1664,54 @@
                     "attachment": { "type": "number", "required": true }
                   }
                 },
+                "activity": {
+                  "type": "object",
+                  "required": true,
+                  "properties": {
+                    "task": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "created": {
+                          "type": ["number", "null"],
+                          "required": true
+                        },
+                        "updated": {
+                          "type": ["number", "null"],
+                          "required": true
+                        }
+                      }
+                    },
+                    "label": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "created": {
+                          "type": ["number", "null"],
+                          "required": true
+                        },
+                        "updated": {
+                          "type": ["number", "null"],
+                          "required": true
+                        }
+                      }
+                    },
+                    "attachment": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "created": {
+                          "type": ["number", "null"],
+                          "required": true
+                        },
+                        "updated": {
+                          "type": ["number", "null"],
+                          "required": true
+                        }
+                      }
+                    }
+                  }
+                },
                 "taskStatusCounts": {
                   "type": "object",
                   "required": false,
@@ -1599,6 +1725,31 @@
                     "iced": { "type": "number", "required": true }
                   }
                 }
+              }
+            },
+            "members": {
+              "type": "array",
+              "required": false,
+              "itemType": "object",
+              "ref": "#/components/schemas/UserMinimalBase",
+              "items": {
+                "type": "object",
+                "description": "Minimal user data for references.",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["user"]
+                  }
+                },
+                "ref": "#/components/schemas/UserMinimalBase"
               }
             }
           }
@@ -2347,7 +2498,37 @@
                   "type": "object",
                   "required": true,
                   "properties": {}
+                },
+                "activity": {
+                  "type": "object",
+                  "required": true,
+                  "properties": {}
                 }
+              }
+            },
+            "members": {
+              "type": "array",
+              "required": false,
+              "itemType": "object",
+              "ref": "#/components/schemas/UserMinimalBase",
+              "items": {
+                "type": "object",
+                "description": "Minimal user data for references.",
+                "properties": {
+                  "id": { "type": "string", "required": true },
+                  "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
+                  "thumbnailUrl": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
+                  "entityType": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["user"]
+                  }
+                },
+                "ref": "#/components/schemas/UserMinimalBase"
               }
             }
           }
@@ -2405,6 +2586,11 @@
             "task": 65,
             "label": 122,
             "attachment": 365
+          },
+          "activity": {
+            "task": { "created": 1734373779411, "updated": 1734981731354 },
+            "label": { "created": 1734305717599, "updated": null },
+            "attachment": { "created": 1734021177645, "updated": 1734180931753 }
           }
         }
       }

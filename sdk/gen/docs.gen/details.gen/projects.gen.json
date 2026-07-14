@@ -152,6 +152,54 @@
                         "attachment": { "type": "number", "required": true }
                       }
                     },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "task": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "label": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "attachment": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        }
+                      }
+                    },
                     "taskStatusCounts": {
                       "type": "object",
                       "required": false,
@@ -165,6 +213,31 @@
                         "iced": { "type": "number", "required": true }
                       }
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }
@@ -427,6 +500,54 @@
                               "attachment": { "type": "number", "required": true }
                             }
                           },
+                          "activity": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "task": {
+                                "type": "object",
+                                "required": true,
+                                "properties": {
+                                  "created": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  },
+                                  "updated": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  }
+                                }
+                              },
+                              "label": {
+                                "type": "object",
+                                "required": true,
+                                "properties": {
+                                  "created": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  },
+                                  "updated": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  }
+                                }
+                              },
+                              "attachment": {
+                                "type": "object",
+                                "required": true,
+                                "properties": {
+                                  "created": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  },
+                                  "updated": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  }
+                                }
+                              }
+                            }
+                          },
                           "taskStatusCounts": {
                             "type": "object",
                             "required": false,
@@ -440,6 +561,31 @@
                               "iced": { "type": "number", "required": true }
                             }
                           }
+                        }
+                      },
+                      "members": {
+                        "type": "array",
+                        "required": false,
+                        "itemType": "object",
+                        "ref": "#/components/schemas/UserMinimalBase",
+                        "items": {
+                          "type": "object",
+                          "description": "Minimal user data for references.",
+                          "properties": {
+                            "id": { "type": "string", "required": true },
+                            "name": { "type": "string", "required": true },
+                            "slug": { "type": "string", "required": true },
+                            "thumbnailUrl": {
+                              "type": ["string", "null"],
+                              "required": true
+                            },
+                            "entityType": {
+                              "type": "string",
+                              "required": true,
+                              "enum": ["user"]
+                            }
+                          },
+                          "ref": "#/components/schemas/UserMinimalBase"
                         }
                       }
                     }
@@ -844,6 +990,54 @@
                               "attachment": { "type": "number", "required": true }
                             }
                           },
+                          "activity": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "task": {
+                                "type": "object",
+                                "required": true,
+                                "properties": {
+                                  "created": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  },
+                                  "updated": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  }
+                                }
+                              },
+                              "label": {
+                                "type": "object",
+                                "required": true,
+                                "properties": {
+                                  "created": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  },
+                                  "updated": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  }
+                                }
+                              },
+                              "attachment": {
+                                "type": "object",
+                                "required": true,
+                                "properties": {
+                                  "created": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  },
+                                  "updated": {
+                                    "type": ["number", "null"],
+                                    "required": true
+                                  }
+                                }
+                              }
+                            }
+                          },
                           "taskStatusCounts": {
                             "type": "object",
                             "required": false,
@@ -857,6 +1051,31 @@
                               "iced": { "type": "number", "required": true }
                             }
                           }
+                        }
+                      },
+                      "members": {
+                        "type": "array",
+                        "required": false,
+                        "itemType": "object",
+                        "ref": "#/components/schemas/UserMinimalBase",
+                        "items": {
+                          "type": "object",
+                          "description": "Minimal user data for references.",
+                          "properties": {
+                            "id": { "type": "string", "required": true },
+                            "name": { "type": "string", "required": true },
+                            "slug": { "type": "string", "required": true },
+                            "thumbnailUrl": {
+                              "type": ["string", "null"],
+                              "required": true
+                            },
+                            "entityType": {
+                              "type": "string",
+                              "required": true,
+                              "enum": ["user"]
+                            }
+                          },
+                          "ref": "#/components/schemas/UserMinimalBase"
                         }
                       }
                     }
@@ -1174,6 +1393,54 @@
                         "attachment": { "type": "number", "required": true }
                       }
                     },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "task": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "label": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "attachment": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        }
+                      }
+                    },
                     "taskStatusCounts": {
                       "type": "object",
                       "required": false,
@@ -1187,6 +1454,31 @@
                         "iced": { "type": "number", "required": true }
                       }
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }
@@ -1446,6 +1738,54 @@
                         "attachment": { "type": "number", "required": true }
                       }
                     },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "task": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "label": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "attachment": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        }
+                      }
+                    },
                     "taskStatusCounts": {
                       "type": "object",
                       "required": false,
@@ -1459,6 +1799,31 @@
                         "iced": { "type": "number", "required": true }
                       }
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }
@@ -1740,6 +2105,54 @@
                         "attachment": { "type": "number", "required": true }
                       }
                     },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "task": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "label": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "attachment": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        }
+                      }
+                    },
                     "taskStatusCounts": {
                       "type": "object",
                       "required": false,
@@ -1753,6 +2166,31 @@
                         "iced": { "type": "number", "required": true }
                       }
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }
@@ -2006,6 +2444,54 @@
                         "attachment": { "type": "number", "required": true }
                       }
                     },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "task": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "label": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "attachment": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        }
+                      }
+                    },
                     "taskStatusCounts": {
                       "type": "object",
                       "required": false,
@@ -2019,6 +2505,31 @@
                         "iced": { "type": "number", "required": true }
                       }
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }
@@ -2267,6 +2778,54 @@
                         "attachment": { "type": "number", "required": true }
                       }
                     },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "task": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "label": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        },
+                        "attachment": {
+                          "type": "object",
+                          "required": true,
+                          "properties": {
+                            "created": {
+                              "type": ["number", "null"],
+                              "required": true
+                            },
+                            "updated": {
+                              "type": ["number", "null"],
+                              "required": true
+                            }
+                          }
+                        }
+                      }
+                    },
                     "taskStatusCounts": {
                       "type": "object",
                       "required": false,
@@ -2280,6 +2839,31 @@
                         "iced": { "type": "number", "required": true }
                       }
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }

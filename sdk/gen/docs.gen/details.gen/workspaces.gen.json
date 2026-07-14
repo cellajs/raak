@@ -150,7 +150,37 @@
                             "type": "object",
                             "required": true,
                             "properties": {}
+                          },
+                          "activity": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {}
                           }
+                        }
+                      },
+                      "members": {
+                        "type": "array",
+                        "required": false,
+                        "itemType": "object",
+                        "ref": "#/components/schemas/UserMinimalBase",
+                        "items": {
+                          "type": "object",
+                          "description": "Minimal user data for references.",
+                          "properties": {
+                            "id": { "type": "string", "required": true },
+                            "name": { "type": "string", "required": true },
+                            "slug": { "type": "string", "required": true },
+                            "thumbnailUrl": {
+                              "type": ["string", "null"],
+                              "required": true
+                            },
+                            "entityType": {
+                              "type": "string",
+                              "required": true,
+                              "enum": ["user"]
+                            }
+                          },
+                          "ref": "#/components/schemas/UserMinimalBase"
                         }
                       }
                     }
@@ -220,6 +250,11 @@
                     "task": 491,
                     "label": 182,
                     "attachment": 106
+                  },
+                  "activity": {
+                    "task": { "created": 1734375421781, "updated": 1734852237831 },
+                    "label": { "created": 1735599495073, "updated": 1735660940149 },
+                    "attachment": { "created": 1735612448476, "updated": 1735686286283 }
                   }
                 }
               }
@@ -546,7 +581,37 @@
                             "type": "object",
                             "required": true,
                             "properties": {}
+                          },
+                          "activity": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {}
                           }
+                        }
+                      },
+                      "members": {
+                        "type": "array",
+                        "required": false,
+                        "itemType": "object",
+                        "ref": "#/components/schemas/UserMinimalBase",
+                        "items": {
+                          "type": "object",
+                          "description": "Minimal user data for references.",
+                          "properties": {
+                            "id": { "type": "string", "required": true },
+                            "name": { "type": "string", "required": true },
+                            "slug": { "type": "string", "required": true },
+                            "thumbnailUrl": {
+                              "type": ["string", "null"],
+                              "required": true
+                            },
+                            "entityType": {
+                              "type": "string",
+                              "required": true,
+                              "enum": ["user"]
+                            }
+                          },
+                          "ref": "#/components/schemas/UserMinimalBase"
                         }
                       }
                     }
@@ -605,6 +670,11 @@
                     "task": 423,
                     "label": 413,
                     "attachment": 435
+                  },
+                  "activity": {
+                    "task": { "created": 1733370282291, "updated": 1735128143248 },
+                    "label": { "created": 1733565564277, "updated": 1735168180029 },
+                    "attachment": { "created": 1734721622144, "updated": 1734885164232 }
                   }
                 }
               }
@@ -653,6 +723,11 @@
                     "task": 153,
                     "label": 264,
                     "attachment": 40
+                  },
+                  "activity": {
+                    "task": { "created": 1733726254960, "updated": null },
+                    "label": { "created": 1734360916085, "updated": 1734642373436 },
+                    "attachment": { "created": 1733237028784, "updated": 1733632033336 }
                   }
                 }
               }
@@ -883,7 +958,37 @@
                       "type": "object",
                       "required": true,
                       "properties": {}
+                    },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {}
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }
@@ -936,6 +1041,11 @@
                 "task": 65,
                 "label": 122,
                 "attachment": 365
+              },
+              "activity": {
+                "task": { "created": 1734373779411, "updated": 1734981731354 },
+                "label": { "created": 1734305717599, "updated": null },
+                "attachment": { "created": 1734021177645, "updated": 1734180931753 }
               }
             }
           }
@@ -1149,7 +1259,37 @@
                       "type": "object",
                       "required": true,
                       "properties": {}
+                    },
+                    "activity": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {}
                     }
+                  }
+                },
+                "members": {
+                  "type": "array",
+                  "required": false,
+                  "itemType": "object",
+                  "ref": "#/components/schemas/UserMinimalBase",
+                  "items": {
+                    "type": "object",
+                    "description": "Minimal user data for references.",
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "thumbnailUrl": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "entityType": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["user"]
+                      }
+                    },
+                    "ref": "#/components/schemas/UserMinimalBase"
                   }
                 }
               }
@@ -1202,6 +1342,11 @@
                 "task": 65,
                 "label": 122,
                 "attachment": 365
+              },
+              "activity": {
+                "task": { "created": 1734373779411, "updated": 1734981731354 },
+                "label": { "created": 1734305717599, "updated": null },
+                "attachment": { "created": 1734021177645, "updated": 1734180931753 }
               }
             }
           }
