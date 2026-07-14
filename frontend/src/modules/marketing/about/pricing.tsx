@@ -78,9 +78,7 @@ export function Pricing() {
             <div className="mt-4">
               <h3 className="flex w-full justify-center text-center font-bold text-2xl">
                 {t(title)}
-                {popular && (
-                  <SparklesIcon className="ml-1 w-5 text-primary" strokeWidth={appConfig.theme.strokeWidth} />
-                )}
+                {popular && <SparklesIcon className="ml-1 w-5 text-primary" />}
               </h3>
               <div className="mt-4 flex items-center justify-center text-gray-600 dark:text-gray-400">
                 {discount && (

@@ -93,7 +93,7 @@ export const WorkspaceSettings = ({ workspace, sheet: isSheet }: { workspace: Wo
           </Button>
           {!canDelete && (
             <p className="mt-4 flex items-center text-muted-foreground text-sm italic">
-              <CircleAlertIcon size={16} strokeWidth={1.5} className="mr-1 inline" />
+              <CircleAlertIcon strokeWidth={1.5} className="mr-1 inline" />
               {t('c:delete_workspace_restricted.text')}
             </p>
           )}

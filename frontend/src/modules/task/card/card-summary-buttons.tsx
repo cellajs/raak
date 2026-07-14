@@ -25,7 +25,7 @@ export const TaskCardSummaryButtons = ({ task }: { task: Task }) => {
           )}
           {attachmentsCount > 0 && (
             <div className="inline-flex cursor-pointer items-center text-sm">
-              <PaperclipIcon size={10} className="-rotate-45 transition-transform" />
+              <PaperclipIcon className="size-2.5 -rotate-45 transition-transform" />
               <span className="">{attachmentsCount}</span>
             </div>
           )}

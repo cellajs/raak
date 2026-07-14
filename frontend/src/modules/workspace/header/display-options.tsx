@@ -54,9 +54,9 @@ const DisplayOptions = ({ className = '' }: Props) => {
             onFocus={() => setHoveredValue(value)}
             onBlur={() => setHoveredValue(currentValue)}
           >
-            {value === 'board' && <SquareKanbanIcon size={16} />}
-            {value === 'table' && <Rows4Icon size={16} />}
-            {value === 'overview' && <Grid2X2Icon size={16} />}
+            {value === 'board' && <SquareKanbanIcon />}
+            {value === 'table' && <Rows4Icon />}
+            {value === 'overview' && <Grid2X2Icon />}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>

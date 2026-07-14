@@ -51,7 +51,7 @@ const AddProjects = ({ mode: baseMode }: AddProjectsProps) => {
                 exit={{ opacity: 0 }}
                 transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
               >
-                <ChevronRightIcon className="opacity-50" size={16} />
+                <ChevronRightIcon className="opacity-50" />
                 <UnsavedBadge title={mode[0] === 'select' ? t('c:select') : t('c:create')} />
               </motion.span>
             )}
@@ -84,12 +84,12 @@ const AddProjects = ({ mode: baseMode }: AddProjectsProps) => {
                 className="w-auto grow py-6 sm:py-10"
                 id="create-project-option"
               >
-                <ShrubIcon size={48} strokeWidth={1} />
+                <ShrubIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
                   <p className="">{t('c:create_project.text')}</p>
                   <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover:opacity-100">
                     <strong>{t('c:continue')}</strong>
-                    <ChevronRightIcon className="ml-1" size={16} />
+                    <ChevronRightIcon className="ml-1" />
                   </div>
                 </div>
               </ToggleGroupItem>
@@ -100,12 +100,12 @@ const AddProjects = ({ mode: baseMode }: AddProjectsProps) => {
                 aria-label="Select project"
                 className="w-auto grow py-6 sm:py-10"
               >
-                <SquareMousePointerIcon size={48} strokeWidth={1} />
+                <SquareMousePointerIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
                   <div className="">{t('c:select_project')}</div>
                   <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover:opacity-100">
                     <strong>{t('c:continue')}</strong>
-                    <ChevronRightIcon className="ml-1" size={16} />
+                    <ChevronRightIcon className="ml-1" />
                   </div>
                 </div>
               </ToggleGroupItem>

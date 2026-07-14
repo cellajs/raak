@@ -93,32 +93,32 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
         {isInWorkspace ? (
           <>
             <Button className="max-md:hidden" variant="plain">
-              <PlusIcon size={16} />
+              <PlusIcon />
               <span className="ml-1 max-md:hidden xl:hidden">{t('c:add')}</span>
               <span className="ml-1 max-xl:hidden">
                 {t('c:add_resource', { resource: t('c:project').toLowerCase() })}
               </span>
             </Button>
             <Button className="max-md:hidden" variant="outline">
-              <TagIcon size={16} />
+              <TagIcon />
             </Button>
             <Button className="max-md:hidden" variant="outline">
-              <SettingsIcon size={16} />
+              <SettingsIcon />
             </Button>
 
             <Button variant="ghost" className="md:hidden">
-              <EllipsisVerticalIcon size={16} />
+              <EllipsisVerticalIcon />
             </Button>
           </>
         ) : projects.length ? (
           <>
             <div className="hidden grow sm:block" />
             <Button variant="plain" data-form-dirty={false} className="relative hidden rounded sm:inline-flex">
-              <PlusIcon size={18} />
+              <PlusIcon className="size-4.5" />
               <span className="ml-1">{t('c:task')}</span>
             </Button>
             <Button variant="ghost" className="max-sm:hidden">
-              <EllipsisVerticalIcon size={16} />
+              <EllipsisVerticalIcon />
             </Button>
           </>
         ) : null}
@@ -126,7 +126,7 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
         <DisplayOptions className="max-sm:hidden" />
 
         <Button variant={'outline'} className={cn('flex max-lg:hidden')}>
-          <ExpandIcon size={16} />
+          <ExpandIcon />
         </Button>
       </div>
       <div className="flex h-full flex-row gap-2" style={{ minWidth: minContainerWidth }}>
@@ -279,11 +279,11 @@ const PanelHeaderSkeleton = ({
           <div className="hidden grow sm:block" />
           {isPrimary && (
             <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label="Project options">
-              <EllipsisVerticalIcon size={16} />
+              <EllipsisVerticalIcon />
             </Button>
           )}
           <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
-            <PlusIcon size={18} className="transition-transform duration-200" />
+            <PlusIcon className="size-4.5 transition-transform duration-200" />
 
             <span className="ml-1">{t('c:task')}</span>
           </Button>

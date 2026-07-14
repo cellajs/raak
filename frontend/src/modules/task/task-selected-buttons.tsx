@@ -1,4 +1,4 @@
-import { TrashIcon, XSquareIcon } from 'lucide-react';
+import { SquareXIcon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useTaskDeleteMutation } from '~/modules/task/query';
@@ -38,14 +38,14 @@ export const TaskSelectedButtons = ({
           <Badge className="absolute -top-1.5 -right-2 flex min-w-5 justify-center px-1 py-0 shadow-sm">
             {selectedTasks.length}
           </Badge>
-          <TrashIcon size={16} />
+          <TrashIcon />
           <span className="ml-1 max-md:hidden">{t('c:remove')}</span>
         </Button>
       </TooltipButton>
 
       <TooltipButton toolTipContent={t('c:clear_selection')}>
         <Button variant="ghost" className="relative" onClick={clearSelection}>
-          <XSquareIcon size={16} />
+          <SquareXIcon />
           <span className="ml-1 max-lg:hidden">{t('c:clear')}</span>
         </Button>
       </TooltipButton>

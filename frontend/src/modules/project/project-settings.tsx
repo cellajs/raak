@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { LogOutIcon, Trash2, UnlinkIcon } from 'lucide-react';
+import { LogOutIcon, Trash2Icon, UnlinkIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { Project, Workspace } from 'sdk';
@@ -152,7 +152,7 @@ export const ProjectSettings = ({ sheet: isSheet, project }: { sheet?: boolean; 
           </CardHeader>
           <CardContent>
             <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2Icon className="mr-2 h-4 w-4" />
               <span>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</span>
             </Button>
           </CardContent>

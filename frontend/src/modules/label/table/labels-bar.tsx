@@ -1,4 +1,4 @@
-import { TrashIcon, XSquareIcon } from 'lucide-react';
+import { SquareXIcon, TrashIcon } from 'lucide-react';
 import { ColumnsView } from '~/modules/common/data-table/columns-view';
 import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
 import { TableBarContainer } from '~/modules/common/data-table/table-bar-container';
@@ -65,7 +65,7 @@ export const LabelsTableBar = ({
                 icon={TrashIcon}
                 label="c:remove"
               />
-              <TableBarButton variant="ghost" onClick={clearSelection} icon={XSquareIcon} label="c:clear" />
+              <TableBarButton variant="ghost" onClick={clearSelection} icon={SquareXIcon} label="c:clear" />
             </>
           ) : (
             <TableCount count={total} label="c:label" isFiltered={isFiltered} onResetFilters={onResetFilters} />

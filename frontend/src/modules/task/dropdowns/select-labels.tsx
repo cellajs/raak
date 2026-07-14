@@ -50,8 +50,7 @@ const renderLabelItem = (
       className="group flex w-full items-center gap-2 rounded-md leading-normal"
     >
       <DotIcon
-        className="mr-1 ml-0.5 rounded-md text-background"
-        size={10}
+        className="mr-1 ml-0.5 size-2.5 rounded-md text-background"
         style={{ background: label.color || undefined }}
         strokeWidth={6}
       />

@@ -371,14 +371,14 @@ const CreateTaskForm = ({
                                     onChange(labels.filter((l) => l.name !== name));
                                   }}
                                 >
-                                  <XIcon size={16} strokeWidth={3} />
+                                  <XIcon strokeWidth={3} />
                                 </div>
                               </div>
                             );
                           })
                         ) : (
                           <>
-                            <TagIcon size={16} className="opacity-75" />
+                            <TagIcon className="opacity-75" />
                             <span className="ml-2 font-normal opacity-75">
                               {t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}
                             </span>
@@ -494,7 +494,7 @@ const CreateTaskForm = ({
                             })
                           }
                         >
-                          <ChevronDownIcon size={16} />
+                          <ChevronDownIcon />
                         </Button>
                       </FormControl>
                       <FormMessage />

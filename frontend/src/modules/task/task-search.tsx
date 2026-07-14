@@ -1,5 +1,5 @@
 import { useMatchRoute } from '@tanstack/react-router';
-import { XCircleIcon } from 'lucide-react';
+import { CircleXIcon } from 'lucide-react';
 import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from '~/hooks/use-debounce';
@@ -119,9 +119,8 @@ export const TaskSearch = ({ children, clearSelection, toggleFocus }: TaskSearch
         </Badge>
       </InputGroupAddon>
       <InputGroupAddon className="pr-2" align="inline-end">
-        <XCircleIcon
+        <CircleXIcon
           id="search-close"
-          size={16}
           className={cn(!inputValue && 'hidden', 'cursor-pointer opacity-70 hover:opacity-100')}
           onMouseDown={(e) => {
             preventInputBlur(e);
