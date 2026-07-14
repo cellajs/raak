@@ -27,12 +27,11 @@ export default defineConfig({
       'sdk/gen',
       'shared/config',
       'backend/drizzle',
+      'frontend/src/content',
       'frontend/public/static/common',
       'frontend/src/modules/common/bg-animation',
       'frontend/src/routes/routeTree.gen.ts',
-      'sdk/src/plugins/openapi-parser/tests/__snapshots__/parse-spec.test.ts.snap',
       '.github/release-please-manifest.json',
-      '.github/release-please-config.json',
     ],
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [

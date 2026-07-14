@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronUp, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2, TrashIcon } from 'lucide-react';
+import { ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
@@ -142,7 +142,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
               className="h-8 w-8 data-dropdowner-active:bg-accent/50"
               size="xs"
             >
-              <EllipsisVerticalIcon size={14} />
+              <EllipsisVerticalIcon className="icon-sm" />
             </Button>
           </TooltipButton>
 
@@ -167,7 +167,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
                   />
                 }
               >
-                <Maximize2 size={14} />
+                <Maximize2Icon className="icon-sm" />
               </Button>
             </TooltipButton>
           )}
@@ -183,7 +183,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
                 size="xs"
                 className="h-8 w-8"
               >
-                <ChevronUp size={16} />
+                <ChevronUpIcon />
               </Button>
             </TooltipButton>
           )}

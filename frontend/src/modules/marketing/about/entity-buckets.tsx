@@ -1,7 +1,6 @@
 import {
   ArrowRightIcon,
   Building2Icon,
-  CheckSquareIcon,
   FileTextIcon,
   FolderKanbanIcon,
   HashIcon,
@@ -10,6 +9,7 @@ import {
   MessageCircleIcon,
   MessageSquareIcon,
   PaperclipIcon,
+  SquareCheckBigIcon,
   TagIcon,
   UserIcon,
 } from 'lucide-react';
@@ -38,7 +38,7 @@ const configs: Record<string, AppConfig> = {
       { Icon: FolderKanbanIcon, label: 'about:entity_buckets.projects' },
     ],
     synced: [
-      { Icon: CheckSquareIcon, label: 'about:entity_buckets.tasks' },
+      { Icon: SquareCheckBigIcon, label: 'about:entity_buckets.tasks' },
       { Icon: TagIcon, label: 'about:entity_buckets.labels' },
       { Icon: PaperclipIcon, label: 'about:entity_buckets.attachments' },
     ],
@@ -190,7 +190,7 @@ export const EntityBuckets = () => {
               animate={{ x: [0, 4, 0] }}
               transition={{ repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut', duration: 1 }}
             >
-              <ArrowRightIcon size={16} />
+              <ArrowRightIcon />
             </motion.span>
           </div>
         )}

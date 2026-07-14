@@ -91,7 +91,7 @@ export const WorkspaceActionButtons = () => {
   const actions = [
     {
       key: 'add',
-      icon: <PlusIcon size={16} />,
+      icon: <PlusIcon />,
       label: t('c:add_resource', { resource: t('c:project').toLowerCase() }),
       onClick: createNewProject,
       ref: refs.add,
@@ -99,7 +99,7 @@ export const WorkspaceActionButtons = () => {
     },
     {
       key: 'labels',
-      icon: <TagIcon size={16} />,
+      icon: <TagIcon />,
       label: t('c:manage_resource', { resource: t('c:label_other').toLowerCase() }),
       onClick: openLabelsSheet,
       ref: refs.labels,
@@ -107,7 +107,7 @@ export const WorkspaceActionButtons = () => {
     },
     {
       key: 'workspace',
-      icon: <SettingsIcon size={16} />,
+      icon: <SettingsIcon />,
       label: t('c:resource_settings', { resource: t('c:workspace') }),
       onClick: openPreferencesSheet,
       ref: refs.workspace,
@@ -138,7 +138,7 @@ export const WorkspaceActionButtons = () => {
           className={`group-data-[search-focused=true]/boardHeader:hidden md:hidden ${searchQuery && 'hidden'}`}
           render={<Button variant="ghost" aria-label="Workspace options" />}
         >
-          <EllipsisVerticalIcon size={16} />
+          <EllipsisVerticalIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="min-w-48 p-1" align="end">
           {actions.map(({ key, icon, label, onClick, ref }) => (
@@ -151,13 +151,13 @@ export const WorkspaceActionButtons = () => {
 
           {project && projectMembership && (
             <DropdownMenuItem onClick={() => openProjectMembersSheet(project)} className="flex items-center gap-2">
-              <UsersIcon size={16} />
+              <UsersIcon />
               <span>{t('c:project_members')}</span>
             </DropdownMenuItem>
           )}
           {project && projectMembership && (
             <DropdownMenuItem onClick={() => openProjectSettingsSheet(project)} className="flex items-center gap-2">
-              <SettingsIcon size={16} />
+              <SettingsIcon />
               <span>{t('c:resource_settings', { resource: t('c:project') })}</span>
             </DropdownMenuItem>
           )}

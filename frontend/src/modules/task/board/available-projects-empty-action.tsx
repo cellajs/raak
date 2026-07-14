@@ -40,7 +40,7 @@ export const AvailableProjectsEmptyAction = ({ workspace, fallback }: AvailableP
         {t('c:unassigned_projects', { count: availableCount })}
       </p>
       <Button type="button" variant="plain" onClick={selectExistingProjects}>
-        <PlusIcon size={16} />
+        <PlusIcon />
         <span>{t('c:unassigned_projects_action')}</span>
       </Button>
     </div>

@@ -137,7 +137,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           </div>
         )
       ) : (
-        <TagIcon size={16} className="opacity-60" />
+        <TagIcon className="opacity-60" />
       )}
     </Button>
   );
@@ -249,7 +249,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               )}
               {...readOnlyInert}
             >
-              <ChevronDownIcon size={14} strokeWidth={2} />
+              <ChevronDownIcon className="icon-sm" strokeWidth={2} />
             </Button>
           </TooltipButton>
         </div>

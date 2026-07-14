@@ -160,7 +160,9 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
             onClick={toggleCreateForm}
           >
             <Badge className="absolute -top-1 -right-1 z-100 flex in-data-[form-dirty=false]:hidden h-2 w-2 justify-center p-0" />
-            <PlusIcon size={18} className={cn('transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
+            <PlusIcon
+              className={cn('size-4.5', 'transition-transform duration-200', isCreateFormOpen && 'rotate-45')}
+            />
             <span className="ml-1">{t('c:task')}</span>
           </Button>
         )}

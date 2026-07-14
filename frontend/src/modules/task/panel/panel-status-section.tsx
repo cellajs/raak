@@ -99,13 +99,12 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky
         )}
         <ChevronDownIcon
           data-rotate={showStatus}
-          size={16}
           className="absolute right-4 transition-transform data-[rotate=true]:rotate-180"
         />
       </Button>
       {hasOnlyOlderAccepted && showStatus && (
         <div className="flex gap-4 border-b border-b-green-500/10 bg-green-50 px-4 py-5 text-green-500/70 text-xs dark:bg-green-950">
-          <InfoIcon size={16} className="inline-block" />
+          <InfoIcon className="inline-block" />
           {t('c:older_accepted_table_only', { count: counts.acceptedCutOff })}
         </div>
       )}

@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, useRef } from 'react';
 import type { z } from 'zod';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -123,7 +123,7 @@ export const BoardPanel = memo(function BoardPanel({
               showFab ? 'opacity-100' : 'pointer-events-none -bottom-12 scale-50 opacity-0'
             }`}
           >
-            <Plus size={24} strokeWidth={1.5} />
+            <PlusIcon className="icon-xl" strokeWidth={1.5} />
             {hasDraft && (
               <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">
                 !

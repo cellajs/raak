@@ -33,7 +33,7 @@ export const ExplainerPanel = () => {
           fallbackLabel={t('c:getting_started')}
           className="flex h-auto min-h-13 w-12.5 items-center justify-center p-0 hover:bg-transparent"
         >
-          <InfoIcon size={16} />
+          <InfoIcon />
         </PanelDragHandleButton>
       }
     >
@@ -48,7 +48,7 @@ export const ExplainerPanel = () => {
                 fallbackLabel={t('c:getting_started')}
                 className="flex h-8 items-center gap-2 truncate p-2 hover:bg-transparent"
               >
-                <InfoIcon size={16} />
+                <InfoIcon />
                 <div className="truncate">{t('c:getting_started')}</div>
               </PanelDragHandleButton>
               <div className="grow" />

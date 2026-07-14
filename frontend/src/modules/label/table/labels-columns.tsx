@@ -25,7 +25,7 @@ export const useColumns = () => {
 
         renderCell: ({ row }) => (
           <div className="flex w-full justify-center">
-            <DotIcon className="rounded-md" size={22} style={{ background: row.color || undefined }} strokeWidth={0} />
+            <DotIcon className="size-5.5 rounded-md" style={{ background: row.color || undefined }} strokeWidth={0} />
           </div>
         ),
       },
@@ -48,7 +48,7 @@ export const useColumns = () => {
         sortable: true,
         renderCell: ({ row }) => (
           <>
-            <StickyNoteIcon className="mr-2 shrink-0 opacity-50" size={16} />
+            <StickyNoteIcon className="mr-2 shrink-0 opacity-50" />
             {(row.usedCount ?? 0).toString()}
           </>
         ),

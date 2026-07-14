@@ -256,8 +256,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
               {row.labels.map((label) => (
                 <div key={label.id} className="flex items-center gap-1">
                   <DotIcon
-                    className="shrink-0 rounded-md text-background"
-                    size={8}
+                    className="size-2 shrink-0 rounded-md text-background"
                     style={{ background: label.color || undefined }}
                     strokeWidth={4}
                   />
@@ -310,7 +309,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
           if (count === 0) return null;
           return (
             <div className="inline-flex items-center gap-1">
-              <PaperclipIcon size={12} className="-rotate-45 opacity-50" />
+              <PaperclipIcon className="icon-xs -rotate-45 opacity-50" />
               <span className="">{count}</span>
             </div>
           );

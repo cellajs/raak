@@ -65,7 +65,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
         render={<Button variant="ghost" className={cn('max-sm:hidden', className)} aria-label="Project options" />}
         ref={projectButtonRef}
       >
-        <EllipsisVerticalIcon size={16} />
+        <EllipsisVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="min-w-48 p-1" align="end">
         {boardType === 'workspace' && (
@@ -78,7 +78,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
             }
             className="flex items-center gap-2"
           >
-            <ArrowRightIcon size={16} />
+            <ArrowRightIcon />
             <span>{t('c:go_to_project')}</span>
           </DropdownMenuItem>
         )}
@@ -93,7 +93,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
             }
             className="flex items-center gap-2"
           >
-            <ArrowRightIcon size={16} />
+            <ArrowRightIcon />
             <span>{t('c:go_to_workspace')}</span>
           </DropdownMenuItem>
         )}
@@ -102,7 +102,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
             onClick={() => openProjectMembersSheet(project, projectButtonRef)}
             className="flex items-center gap-2"
           >
-            <UsersIcon size={16} />
+            <UsersIcon />
             <span>{t('c:project_members')}</span>
           </DropdownMenuItem>
         )}
@@ -111,7 +111,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
             onClick={() => openProjectSettingsSheet(project, projectButtonRef)}
             className="flex items-center gap-2"
           >
-            <SettingsIcon size={16} />
+            <SettingsIcon />
             <span>{t('c:resource_settings', { resource: t('c:project') })}</span>
           </DropdownMenuItem>
         )}
@@ -119,7 +119,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
         {boardType === 'project' && (
           <>
             <DropdownMenuItem onClick={splitProjectPanels} className="flex items-center gap-2">
-              <SplitIcon size={16} />
+              <SplitIcon />
               <span>{t('c:split')}</span>
             </DropdownMenuItem>
             {panelsSectionView && (
@@ -127,7 +127,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
                 onClick={() => dropPanelSections(boardId, project.id)}
                 className="flex items-center gap-2"
               >
-                <MergeIcon size={16} />
+                <MergeIcon />
                 <span>{t('c:merge')}</span>
               </DropdownMenuItem>
             )}
@@ -154,7 +154,7 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
             }
             className="flex items-center gap-2"
           >
-            <SquareSplitHorizontalIcon size={16} />
+            <SquareSplitHorizontalIcon />
             {panelsSectionView ? <span>{t('c:merge')}</span> : <span>{t('c:split')}</span>}
           </DropdownMenuItem>
         )}

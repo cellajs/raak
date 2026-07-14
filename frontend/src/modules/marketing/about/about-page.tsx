@@ -36,7 +36,7 @@ function AboutPage() {
         <Hero key={'welcome'} title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
           {joinedToWaitlist ? (
             <span className="flex items-center justify-between gap-2 rounded-full border-2 border-success px-4 py-3.5 ring-4 ring-primary/5">
-              <CheckIcon className="size-8 text-success" size={20} />
+              <CheckIcon className="size-8 text-success" />
               <span className="p-2">{t('c:in_waitlist', { appName: appConfig.name })}</span>
             </span>
           ) : (
@@ -58,7 +58,7 @@ function AboutPage() {
             aria-label="Read more"
           >
             <span>{t('about:why')}</span>
-            <ArrowDownIcon size={16} className="ml-2 animate-bounce" />
+            <ArrowDownIcon className="ml-2 animate-bounce" />
           </Button>
         </Hero>
 

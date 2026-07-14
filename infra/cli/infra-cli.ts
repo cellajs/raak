@@ -10,6 +10,7 @@ import { detectComputeDeferred, detectStackState, pickStackShort } from '../lib/
 import { infraDir } from '../lib/utils/paths'
 import { runApply } from './actions/apply'
 import { runPreview } from './actions/preview'
+import { runRotatePassphrase } from './actions/rotate-passphrase'
 import { runSecrets } from './actions/secrets'
 import { runSetup } from './actions/setup'
 import { runUnlock } from './actions/unlock'
@@ -75,6 +76,18 @@ if (spawnSync('pulumi', ['version'], { stdio: 'ignore' }).status !== 0) {
 
 const context = await loadContext()
 
+// Fail on an apex-hosted frontend before any prompt or provisioning step: the
+// LB module cannot serve the app at the zone apex (deriveInfra throws the same
+// error deep inside `pulumi up`, but by then half a deploy has run).
+{
+  const { frontendApexIssue } = await import('../lib/naming')
+  const apexIssue = frontendApexIssue(context.appConfig)
+  if (apexIssue) {
+    console.error(`\u2717 ${apexIssue}`)
+    process.exit(1)
+  }
+}
+
 console.info(`State: ${context.state}${context.state === 'fresh' ? '' : ` (Pulumi.${context.environment}.yaml)`}\n`)
 
 const deferredSince = detectComputeDeferred(context.stackYaml)
@@ -95,6 +108,7 @@ const mode: CliMode =
         choices: [
           { name: 'Resume', value: 'resume', description: 'Verify & sync config + GitHub secrets with the CI key; self-heals missing keys. Read-only on DB/VPC/PN — cannot change protected infra.' },
           { name: 'Rotate keys', value: 'rotate', description: 'Mint fresh CI deploy and VM reader keys. Use after editing the CI policy permission sets.' },
+          { name: 'Rotate passphrase', value: 'rotate-passphrase', description: 'Re-encrypt stack state with a freshly generated Pulumi passphrase and sync it to GitHub. Needs the current passphrase; no bootstrap key.' },
           { name: 'Apply infra change', value: 'apply', description: 'Privileged converge: one-shot `pulumi up` with a bootstrap key for DB/VPC/PN changes the CI key cannot. No refresh (buckets are CI-scoped).' },
           { name: 'Preview', value: 'preview', description: 'Read-only `pulumi preview`. Validates auth & shows drift; makes no changes.' },
           { name: 'Manage runtime secrets', value: 'secrets', description: 'List, set, rotate, or delete operator-managed runtime secrets in Scaleway Secret Manager.' },
@@ -105,6 +119,11 @@ const mode: CliMode =
 
 if (mode === 'apply') {
   await runApply(context)
+  process.exit(0)
+}
+
+if (mode === 'rotate-passphrase') {
+  await runRotatePassphrase(context)
   process.exit(0)
 }
 

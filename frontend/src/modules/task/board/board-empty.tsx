@@ -18,15 +18,14 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
 
   const createProjectAction = isTablet ? (
     <Button variant="plain" onClick={createNewProject}>
-      <PlusIcon size={16} />
+      <PlusIcon />
       <span>{`${t('c:add')} ${t('c:project').toLowerCase()}`}</span>
     </Button>
   ) : (
     <>
       <RedoIcon
-        size={200}
         strokeWidth={0.2}
-        className="absolute top-4 right-20 translate-y-20 -rotate-180 scale-x-0 scale-y-75 text-primary opacity-0 transition-all delay-500 duration-500 group-hover/workspace:translate-y-0 group-hover/workspace:rotate-[-130deg] group-hover/workspace:scale-x-100 group-hover/workspace:opacity-100 lg:right-36"
+        className="absolute top-4 right-20 size-50 translate-y-20 -rotate-180 scale-x-0 scale-y-75 text-primary opacity-0 transition-all delay-500 duration-500 group-hover/workspace:translate-y-0 group-hover/workspace:rotate-[-130deg] group-hover/workspace:scale-x-100 group-hover/workspace:opacity-100 lg:right-36"
       />
       <p className="inline-flex gap-1 opacity-0 transition-opacity duration-500 group-hover/workspace:opacity-100">
         <span>{t('c:click')}</span>
