@@ -369,6 +369,20 @@ export const zProject = z.object({
           label: z.number(),
           attachment: z.number(),
         }),
+        activity: z.object({
+          task: z.object({
+            created: z.number().nullable(),
+            updated: z.number().nullable(),
+          }),
+          label: z.object({
+            created: z.number().nullable(),
+            updated: z.number().nullable(),
+          }),
+          attachment: z.object({
+            created: z.number().nullable(),
+            updated: z.number().nullable(),
+          }),
+        }),
         taskStatusCounts: z
           .object({
             accepted: z.number(),
@@ -382,6 +396,7 @@ export const zProject = z.object({
           .optional(),
       })
       .optional(),
+    members: z.array(zUserMinimalBase).optional(),
   }),
 });
 
@@ -490,8 +505,23 @@ export const zOrganization = z.object({
           label: z.number(),
           attachment: z.number(),
         }),
+        activity: z.object({
+          task: z.object({
+            created: z.number().nullable(),
+            updated: z.number().nullable(),
+          }),
+          label: z.object({
+            created: z.number().nullable(),
+            updated: z.number().nullable(),
+          }),
+          attachment: z.object({
+            created: z.number().nullable(),
+            updated: z.number().nullable(),
+          }),
+        }),
       })
       .optional(),
+    members: z.array(zUserMinimalBase).optional(),
   }),
 });
 
@@ -524,8 +554,10 @@ export const zWorkspace = z.object({
           total: z.number(),
         }),
         entities: z.record(z.string(), z.unknown()),
+        activity: z.record(z.string(), z.unknown()),
       })
       .optional(),
+    members: z.array(zUserMinimalBase).optional(),
   }),
 });
 
@@ -1509,8 +1541,23 @@ export const zCreateOrganizationsResponse = z.object({
                   label: z.number(),
                   attachment: z.number(),
                 }),
+                activity: z.object({
+                  task: z.object({
+                    created: z.number().nullable(),
+                    updated: z.number().nullable(),
+                  }),
+                  label: z.object({
+                    created: z.number().nullable(),
+                    updated: z.number().nullable(),
+                  }),
+                  attachment: z.object({
+                    created: z.number().nullable(),
+                    updated: z.number().nullable(),
+                  }),
+                }),
               })
               .optional(),
+            members: z.array(zUserMinimalBase).optional(),
           })
           .optional(),
       }),
@@ -1663,8 +1710,10 @@ export const zCreateWorkspacesResponse = z.object({
                   total: z.number(),
                 }),
                 entities: z.record(z.string(), z.unknown()),
+                activity: z.record(z.string(), z.unknown()),
               })
               .optional(),
+            members: z.array(zUserMinimalBase).optional(),
           })
           .optional(),
       }),
@@ -1805,6 +1854,20 @@ export const zCreateProjectsResponse = z.object({
                   label: z.number(),
                   attachment: z.number(),
                 }),
+                activity: z.object({
+                  task: z.object({
+                    created: z.number().nullable(),
+                    updated: z.number().nullable(),
+                  }),
+                  label: z.object({
+                    created: z.number().nullable(),
+                    updated: z.number().nullable(),
+                  }),
+                  attachment: z.object({
+                    created: z.number().nullable(),
+                    updated: z.number().nullable(),
+                  }),
+                }),
                 taskStatusCounts: z
                   .object({
                     accepted: z.number(),
@@ -1818,6 +1881,7 @@ export const zCreateProjectsResponse = z.object({
                   .optional(),
               })
               .optional(),
+            members: z.array(zUserMinimalBase).optional(),
           })
           .optional(),
       }),
@@ -1927,6 +1991,20 @@ export const zAssignProjectWorkspaceResponse = zProject.and(
               label: z.number(),
               attachment: z.number(),
             }),
+            activity: z.object({
+              task: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+              label: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+              attachment: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+            }),
             taskStatusCounts: z
               .object({
                 accepted: z.number(),
@@ -1940,6 +2018,7 @@ export const zAssignProjectWorkspaceResponse = zProject.and(
               .optional(),
           })
           .optional(),
+        members: z.array(zUserMinimalBase).optional(),
       })
       .optional(),
   }),
@@ -1973,6 +2052,20 @@ export const zRemoveProjectWorkspaceResponse = zProject.and(
               label: z.number(),
               attachment: z.number(),
             }),
+            activity: z.object({
+              task: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+              label: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+              attachment: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+            }),
             taskStatusCounts: z
               .object({
                 accepted: z.number(),
@@ -1986,6 +2079,7 @@ export const zRemoveProjectWorkspaceResponse = zProject.and(
               .optional(),
           })
           .optional(),
+        members: z.array(zUserMinimalBase).optional(),
       })
       .optional(),
   }),
@@ -2023,6 +2117,20 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
               label: z.number(),
               attachment: z.number(),
             }),
+            activity: z.object({
+              task: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+              label: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+              attachment: z.object({
+                created: z.number().nullable(),
+                updated: z.number().nullable(),
+              }),
+            }),
             taskStatusCounts: z
               .object({
                 accepted: z.number(),
@@ -2036,6 +2144,7 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
               .optional(),
           })
           .optional(),
+        members: z.array(zUserMinimalBase).optional(),
       })
       .optional(),
   }),

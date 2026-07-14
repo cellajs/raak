@@ -432,6 +432,20 @@ export type Project = {
         label: number;
         attachment: number;
       };
+      activity: {
+        task: {
+          created: number | null;
+          updated: number | null;
+        };
+        label: {
+          created: number | null;
+          updated: number | null;
+        };
+        attachment: {
+          created: number | null;
+          updated: number | null;
+        };
+      };
       taskStatusCounts?: {
         accepted: number;
         reviewed: number;
@@ -442,6 +456,7 @@ export type Project = {
         iced: number;
       };
     };
+    members?: Array<UserMinimalBase>;
   };
 };
 
@@ -549,7 +564,22 @@ export type Organization = {
         label: number;
         attachment: number;
       };
+      activity: {
+        task: {
+          created: number | null;
+          updated: number | null;
+        };
+        label: {
+          created: number | null;
+          updated: number | null;
+        };
+        attachment: {
+          created: number | null;
+          updated: number | null;
+        };
+      };
     };
+    members?: Array<UserMinimalBase>;
   };
 };
 
@@ -589,7 +619,11 @@ export type Workspace = {
       entities: {
         [key: string]: unknown;
       };
+      activity: {
+        [key: string]: unknown;
+      };
     };
+    members?: Array<UserMinimalBase>;
   };
 };
 
@@ -4067,7 +4101,22 @@ export type CreateOrganizationsResponses = {
               label: number;
               attachment: number;
             };
+            activity: {
+              task: {
+                created: number | null;
+                updated: number | null;
+              };
+              label: {
+                created: number | null;
+                updated: number | null;
+              };
+              attachment: {
+                created: number | null;
+                updated: number | null;
+              };
+            };
           };
+          members?: Array<UserMinimalBase>;
         };
       }
     >;
@@ -4388,7 +4437,11 @@ export type CreateWorkspacesResponses = {
             entities: {
               [key: string]: unknown;
             };
+            activity: {
+              [key: string]: unknown;
+            };
           };
+          members?: Array<UserMinimalBase>;
         };
       }
     >;
@@ -4702,6 +4755,20 @@ export type CreateProjectsResponses = {
               label: number;
               attachment: number;
             };
+            activity: {
+              task: {
+                created: number | null;
+                updated: number | null;
+              };
+              label: {
+                created: number | null;
+                updated: number | null;
+              };
+              attachment: {
+                created: number | null;
+                updated: number | null;
+              };
+            };
             taskStatusCounts?: {
               accepted: number;
               reviewed: number;
@@ -4712,6 +4779,7 @@ export type CreateProjectsResponses = {
               iced: number;
             };
           };
+          members?: Array<UserMinimalBase>;
         };
       }
     >;
@@ -4960,6 +5028,20 @@ export type AssignProjectWorkspaceResponses = {
           label: number;
           attachment: number;
         };
+        activity: {
+          task: {
+            created: number | null;
+            updated: number | null;
+          };
+          label: {
+            created: number | null;
+            updated: number | null;
+          };
+          attachment: {
+            created: number | null;
+            updated: number | null;
+          };
+        };
         taskStatusCounts?: {
           accepted: number;
           reviewed: number;
@@ -4970,6 +5052,7 @@ export type AssignProjectWorkspaceResponses = {
           iced: number;
         };
       };
+      members?: Array<UserMinimalBase>;
     };
   };
 };
@@ -5036,6 +5119,20 @@ export type RemoveProjectWorkspaceResponses = {
           label: number;
           attachment: number;
         };
+        activity: {
+          task: {
+            created: number | null;
+            updated: number | null;
+          };
+          label: {
+            created: number | null;
+            updated: number | null;
+          };
+          attachment: {
+            created: number | null;
+            updated: number | null;
+          };
+        };
         taskStatusCounts?: {
           accepted: number;
           reviewed: number;
@@ -5046,6 +5143,7 @@ export type RemoveProjectWorkspaceResponses = {
           iced: number;
         };
       };
+      members?: Array<UserMinimalBase>;
     };
   };
 };
@@ -5114,6 +5212,20 @@ export type MoveProjectToWorkspaceResponses = {
           label: number;
           attachment: number;
         };
+        activity: {
+          task: {
+            created: number | null;
+            updated: number | null;
+          };
+          label: {
+            created: number | null;
+            updated: number | null;
+          };
+          attachment: {
+            created: number | null;
+            updated: number | null;
+          };
+        };
         taskStatusCounts?: {
           accepted: number;
           reviewed: number;
@@ -5124,6 +5236,7 @@ export type MoveProjectToWorkspaceResponses = {
           iced: number;
         };
       };
+      members?: Array<UserMinimalBase>;
     };
   };
 };
