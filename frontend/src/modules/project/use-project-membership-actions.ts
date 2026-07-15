@@ -51,7 +51,7 @@ export function useProjectMembershipActions({
       onSuccess?.();
 
       removeMembershipFromCache(
-        (membership) => membership.contextType === 'project' && membership.contextId === project.id,
+        (membership) => membership.channelType === 'project' && membership.channelId === project.id,
       );
 
       navigate({ to: boardType === 'workspace' ? '.' : '/home', replace: true });

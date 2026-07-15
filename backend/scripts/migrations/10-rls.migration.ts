@@ -9,9 +9,7 @@ import { logMigrationResult, upsertMigration } from './helpers/drizzle-utils';
 import type { GenerateScript } from '../types';
 
 async function run() {
-  // ============================================================================
-  // Table Classification
-  // ============================================================================
+  // Table classification
 
   /**
    * Collect all entity tables that need RLS setup (ownership, FORCE RLS, grants).
@@ -21,10 +19,10 @@ async function run() {
     .filter(([entityType]) => entityType !== 'user')
     .map(([, table]) => getTableName(table));
 
-  // Context entity and membership tables use application-layer guards for access control.
-  const contextEntityTableNames = appConfig.contextEntityTypes.map((entityType) => {
+  // Channel entity and membership tables use application-layer guards for access control.
+  const channelEntityTableNames = appConfig.channelEntityTypes.map((entityType) => {
     const table = entityTables[entityType as keyof typeof entityTables];
-    if (!table) throw new Error(`No table found for context entity type: ${entityType}`);
+    if (!table) throw new Error(`No table found for channel entity type: ${entityType}`);
     return getTableName(table);
   });
   const membershipTableNames = [getTableName(membershipsTable), getTableName(inactiveMembershipsTable)];
@@ -39,13 +37,13 @@ async function run() {
   // Only product entity tables + yjs_documents still use RLS (excluding pages)
   const additionalRlsTables = [getTableName(yjsDocumentsTable)];
   const rlsTables = [
-    ...entityTableNames.filter((t) => !contextEntityTableNames.includes(t) && !noRlsProductEntityNames.includes(t)),
+    ...entityTableNames.filter((t) => !channelEntityTableNames.includes(t) && !noRlsProductEntityNames.includes(t)),
     ...additionalRlsTables,
   ];
 
-  // Tables without RLS but needing grants (auth, system, context entities, memberships, pages, etc.)
+  // Tables without RLS but needing grants (auth, system, channel entities, memberships, pages, etc.)
   const fullCrudTables = [
-    ...contextEntityTableNames,
+    ...channelEntityTableNames,
     ...membershipTableNames,
     ...noRlsProductEntityNames,
     'users',
@@ -59,7 +57,7 @@ async function run() {
     'unsubscribe_tokens',
     'emails',
     'rate_limits',
-    'context_counters',
+    'channel_counters',
     'seen_by',
     'product_counters',
     'domains',
@@ -67,9 +65,7 @@ async function run() {
   ];
   const readOnlyTables = ['system_roles', 'activities'];
 
-  // ============================================================================
   // Migration SQL
-  // ============================================================================
 
   const migrationSql = `-- RLS (Row-Level Security) Setup
 -- Configures FORCE RLS, table ownership, and grants.
@@ -113,9 +109,7 @@ ${readOnlyTables.map((t) => `    GRANT SELECT ON ${t} TO runtime_role;`).join('\
 END $$;
 `;
 
-  // ============================================================================
-  // Execute Migration
-  // ============================================================================
+  // Execute migration
 
   const result = upsertMigration('rls_setup', migrationSql);
   logMigrationResult(result, 'RLS setup');

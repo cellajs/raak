@@ -1,23 +1,13 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/dist/types/types';
-import type { ContextEntityType } from 'shared';
+import type { ChannelEntityType } from 'shared';
 import { getRelativeOrder } from 'shared/utils/display-order';
 import type { UserMenu } from '~/modules/me/types';
 import { sortAndFilterMenu } from './sort-and-filter-menu';
 
-/**
- * Calculates the relative order position for a dragged item based on its drop location.
- *
- * @param data - The user menu data containing all menu items and submenus
- * @param entityType - The type of context entity (organization, workspace, etc.)
- * @param archived - Whether to filter for archived items
- * @param itemId - The ID of the item being dragged
- * @param targetOrder - The displayOrder of the drop target
- * @param edge - The drop edge ('top' or 'bottom'), or null
- * @returns The new order value for the item
- */
+/** Computes the new displayOrder for a dragged item from its drop target and edge. */
 export const getRelativeItemOrder = (
   data: UserMenu,
-  entityType: ContextEntityType,
+  entityType: ChannelEntityType,
   archived: boolean,
   itemId: string,
   targetOrder: number,

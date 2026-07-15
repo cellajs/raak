@@ -3,7 +3,7 @@ import { BriefcaseIcon, ChevronsUpDownIcon, SearchIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ContextEntityBase } from 'sdk';
+import type { ChannelEntityBase } from 'sdk';
 import { useDebounce } from '~/hooks/use-debounce';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -24,12 +24,12 @@ import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 interface Props {
-  value: ContextEntityBase[];
+  value: ChannelEntityBase[];
   workspaceId: string;
   tenantId: string;
   targetOrgId: string;
   organizationName: string;
-  onChange: (items: ContextEntityBase[]) => void;
+  onChange: (items: ChannelEntityBase[]) => void;
 }
 
 export const ProjectSuggestionCombobox = ({

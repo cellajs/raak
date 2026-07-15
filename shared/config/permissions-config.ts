@@ -45,8 +45,10 @@ export const { accessPolicies, publicReadGrants } = configurePermissions(
       contexts.project.guest({ read: 1, update: 0, delete: 0 });
       break;
     case 'attachment':
-      // Public read: readable by anyone when the parent project's publicAt is set
-      publicRead('publicParent');
+      // Public read: readable by anyone once the row's own publicAt is set. publicAt is
+      // denormalized from the parent project (create path + cascade trigger), so an
+      // attachment under a public project is publicly readable.
+      publicRead('publicSelf');
       // Task-owned attachments need no task-based read delegation: every role that can
       // read a task already reads attachments via the cells below (project roles + org
       // admin), and org members keep read:'own'. Rows are self-describing.
@@ -66,8 +68,10 @@ export const { accessPolicies, publicReadGrants } = configurePermissions(
       contexts.project.guest({ create: 0, read: 0, update: 0, delete: 0 });
       break;
     case 'task':
-      // Public read: readable by anyone when the parent project's publicAt is set
-      publicRead('publicParent');
+      // Public read: readable by anyone once the row's own publicAt is set. publicAt is
+      // denormalized from the parent project (create path + cascade trigger), so a task
+      // under a public project is publicly readable (backs public share links).
+      publicRead('publicSelf');
       contexts.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
       contexts.organization.member({ create: 0, read: 0, update: 0, delete: 0 });
       contexts.project.admin({ create: 1, read: 1, update: 1, delete: 1 });

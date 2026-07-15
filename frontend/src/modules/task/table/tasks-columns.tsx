@@ -11,7 +11,7 @@ import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { TriggerRef } from '~/modules/common/dialoger/use-dialoger';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { getSeenContextId } from '~/modules/seen/helpers';
+import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import {
@@ -166,7 +166,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
                 entityId={row.id}
                 tenantId={row.tenantId}
                 organizationId={row.organizationId}
-                contextId={getSeenContextId('task', row)}
+                channelId={getSeenChannelId('task', row)}
                 entityType="task"
               />
               <status.icon

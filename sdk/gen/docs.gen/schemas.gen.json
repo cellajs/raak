@@ -100,6 +100,10 @@
           "required": true,
           "format": "uuid"
         },
+        "publicAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "seq": {
           "type": "integer",
           "required": true,
@@ -173,6 +177,7 @@
       "updatedBy": "0de893f1-dbbf-43d7-b4da-932e8fed4f40",
       "deletedAt": null,
       "deletedBy": null,
+      "publicAt": null,
       "seq": 123,
       "stx": {
         "mutationId": "6d81d96a-7bdc-4827-9d21-ba6fd6449bad",
@@ -184,8 +189,8 @@
     }
   },
   {
-    "name": "ContextEntityBase",
-    "ref": "#/components/schemas/ContextEntityBase",
+    "name": "ChannelEntityBase",
+    "ref": "#/components/schemas/ChannelEntityBase",
     "type": "object",
     "schema": {
       "type": "object",
@@ -370,10 +375,10 @@
           "type": ["string", "null"],
           "required": true
         },
-        "contextType": {
+        "channelType": {
           "type": ["string", "null"],
           "required": true,
-          "description": "Context entity type for membership events (e.g. organization, project)",
+          "description": "Channel entity type for membership events (e.g. organization, project)",
           "enum": ["organization", "workspace", "project", null]
         },
         "seq": {
@@ -381,10 +386,10 @@
           "required": true,
           "description": "Per-entityType sequence number used for gap detection in sync"
         },
-        "contextId": {
+        "channelId": {
           "type": ["string", "null"],
           "required": true,
-          "description": "Context entity ID for grouping (e.g. projectId for tasks in unseen counts)"
+          "description": "Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)"
         },
         "stx": {
           "type": ["object", "null"],
@@ -473,8 +478,8 @@
       "subjectId": "e781e15e-ec97-4ad0-aa42-418ee4c50d02",
       "organizationId": "3a9fc6f0-5cf3-491b-a437-8e8c3a3796f6",
       "tenantId": "14qv8uf107q9zmdjan1ygz1e",
-      "contextType": null,
-      "contextId": "967b4d7e-cf6a-480d-8005-cee1180d3e4a",
+      "channelType": null,
+      "channelId": "967b4d7e-cf6a-480d-8005-cee1180d3e4a",
       "seq": 218,
       "cacheToken": "gV9Umhb9C4l3EKNwaUqHHn49KRYOFMDb",
       "stx": {
@@ -520,6 +525,10 @@
           "type": ["string", "null"],
           "required": true,
           "format": "uuid"
+        },
+        "publicAt": {
+          "type": ["string", "null"],
+          "required": true
         },
         "seq": {
           "type": "integer",
@@ -577,6 +586,7 @@
       "description": "Suffragium culpo sollers canis sunt substantia.",
       "keywords": "alter depulso animi",
       "color": "#b4aef5",
+      "publicAt": null,
       "tenantId": "nk9bo5",
       "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
       "createdAt": "2024-11-19T06:50:38.211Z",
@@ -929,12 +939,12 @@
         "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-        "contextType": {
+        "channelType": {
           "type": "string",
           "required": true,
           "enum": ["organization", "workspace", "project"]
         },
-        "contextId": { "type": "string", "required": true, "format": "uuid" },
+        "channelId": { "type": "string", "required": true, "format": "uuid" },
         "email": { "type": "string", "required": true, "maxLength": 255 },
         "userId": {
           "type": ["string", "null"],
@@ -1001,8 +1011,8 @@
     "description": "A membership record for a user who has not yet accepted an invitation.",
     "example": {
       "id": "3a9a7e76-5c6d-4867-9375-a62c7ac56d46",
-      "contextType": "organization",
-      "contextId": "be272d18-0e1c-4437-a2e5-dde561aa4420",
+      "channelType": "organization",
+      "channelId": "be272d18-0e1c-4437-a2e5-dde561aa4420",
       "email": "marilyn27@hotmail.com",
       "userId": "a6050a0e-4d57-4c82-a942-641f6844a7a8",
       "tokenId": "5440aeff-3fb0-400b-98b1-ebefcdf13a71",
@@ -1027,12 +1037,12 @@
         "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-        "contextType": {
+        "channelType": {
           "type": "string",
           "required": true,
           "enum": ["organization", "workspace", "project"]
         },
-        "contextId": { "type": "string", "required": true, "format": "uuid" },
+        "channelId": { "type": "string", "required": true, "format": "uuid" },
         "userId": { "type": "string", "required": true, "format": "uuid" },
         "role": {
           "type": "string",
@@ -1076,11 +1086,11 @@
       "module": ["memberships"],
       "owner": ["cella"]
     },
-    "description": "A user's membership in a context entity, including role and activity data.",
+    "description": "A user's membership in a channel entity, including role and activity data.",
     "example": {
       "id": "e42e3138-0158-4182-9492-ec103576391c",
-      "contextType": "organization",
-      "contextId": "054c1669-6dcb-4f1d-9acf-5fba56e1fb7f",
+      "channelType": "organization",
+      "channelId": "054c1669-6dcb-4f1d-9acf-5fba56e1fb7f",
       "userId": "e73242d3-88f3-450e-838c-c98f7f3d9215",
       "organizationId": "14e27393-e22a-45d1-8c22-3250dc6fc109",
       "workspaceId": "92f342dd-6e67-4956-ab1c-f91b3ce934d7",
@@ -1105,12 +1115,12 @@
       "properties": {
         "id": { "type": "string", "required": true, "format": "uuid" },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-        "contextType": {
+        "channelType": {
           "type": "string",
           "required": true,
           "enum": ["organization", "workspace", "project"]
         },
-        "contextId": { "type": "string", "required": true, "format": "uuid" },
+        "channelId": { "type": "string", "required": true, "format": "uuid" },
         "userId": { "type": "string", "required": true, "format": "uuid" },
         "role": {
           "type": "string",
@@ -1148,8 +1158,8 @@
     "example": {
       "id": "da336271-583f-4567-913c-f17c567ab81d",
       "tenantId": "vw3f7p",
-      "contextType": "organization",
-      "contextId": "993dce90-023a-4125-a6a3-03215e93aa04",
+      "channelType": "organization",
+      "channelId": "993dce90-023a-4125-a6a3-03215e93aa04",
       "userId": "154db176-be65-484a-bb34-246b1f99f492",
       "organizationId": "45a11f6e-5760-4a44-96c4-3c1b43d10162",
       "workspaceId": "c6fcea22-8d23-42d7-b57e-8ce814300c30",
@@ -1235,6 +1245,10 @@
           "type": ["string", "null"],
           "required": true
         },
+        "publicAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "shortName": {
           "type": ["string", "null"],
           "required": true,
@@ -1305,12 +1319,12 @@
               "properties": {
                 "id": { "type": "string", "required": true, "format": "uuid" },
                 "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                "contextType": {
+                "channelType": {
                   "type": "string",
                   "required": true,
                   "enum": ["organization", "workspace", "project"]
                 },
-                "contextId": { "type": "string", "required": true, "format": "uuid" },
+                "channelId": { "type": "string", "required": true, "format": "uuid" },
                 "userId": { "type": "string", "required": true, "format": "uuid" },
                 "role": {
                   "type": "string",
@@ -1450,7 +1464,7 @@
       "module": ["organizations"],
       "owner": ["cella"]
     },
-    "description": "The main context entity is an organization.",
+    "description": "The main channel entity is an organization.",
     "example": {
       "id": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
       "tenantId": "d1lgzb",
@@ -1472,6 +1486,7 @@
       "authStrategies": ["passkey"],
       "chatSupport": true,
       "publishedAt": "2024-12-25T15:04:42.969Z",
+      "publicAt": null,
       "createdAt": "2024-12-25T15:04:42.969Z",
       "createdBy": null,
       "updatedAt": "2024-12-25T15:04:42.969Z",
@@ -1480,8 +1495,8 @@
         "membership": {
           "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",
           "tenantId": "6vxzq0",
-          "contextType": "organization",
-          "contextId": "cfd2bd5e-6bcd-421d-8e08-509c329c26d9",
+          "channelType": "organization",
+          "channelId": "cfd2bd5e-6bcd-421d-8e08-509c329c26d9",
           "userId": "511cb6b8-226a-403e-9b93-c625939bbefa",
           "organizationId": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
           "workspaceId": "60eb184c-3194-4b70-a954-6d7149170337",
@@ -1606,12 +1621,12 @@
               "properties": {
                 "id": { "type": "string", "required": true, "format": "uuid" },
                 "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                "contextType": {
+                "channelType": {
                   "type": "string",
                   "required": true,
                   "enum": ["organization", "workspace", "project"]
                 },
-                "contextId": { "type": "string", "required": true, "format": "uuid" },
+                "channelId": { "type": "string", "required": true, "format": "uuid" },
                 "userId": { "type": "string", "required": true, "format": "uuid" },
                 "role": {
                   "type": "string",
@@ -1783,8 +1798,8 @@
         "membership": {
           "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
           "tenantId": "8nu0zs",
-          "contextType": "organization",
-          "contextId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
+          "channelType": "organization",
+          "channelId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
           "userId": "7115d570-615b-4dd2-8ee9-01082e977f39",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
           "workspaceId": "8efd4f8b-9ac1-4e56-bbb5-ebe2385f83da",
@@ -1871,6 +1886,10 @@
           "required": true,
           "format": "uuid"
         },
+        "publicAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "seq": {
           "type": "integer",
           "required": true,
@@ -1920,10 +1939,6 @@
           "required": true,
           "minimum": -2147483648,
           "maximum": 2147483647
-        },
-        "publicAt": {
-          "type": ["string", "null"],
-          "required": true
         },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -2433,6 +2448,10 @@
           "type": ["string", "null"],
           "required": true
         },
+        "publicAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "included": {
           "type": "object",
@@ -2445,12 +2464,12 @@
               "properties": {
                 "id": { "type": "string", "required": true, "format": "uuid" },
                 "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                "contextType": {
+                "channelType": {
                   "type": "string",
                   "required": true,
                   "enum": ["organization", "workspace", "project"]
                 },
-                "contextId": { "type": "string", "required": true, "format": "uuid" },
+                "channelId": { "type": "string", "required": true, "format": "uuid" },
                 "userId": { "type": "string", "required": true, "format": "uuid" },
                 "role": {
                   "type": "string",
@@ -2554,6 +2573,7 @@
       "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
       "createdAt": "2024-03-18T14:19:46.053Z",
       "publishedAt": "2024-03-18T14:19:46.053Z",
+      "publicAt": null,
       "createdBy": null,
       "updatedAt": "2024-03-18T14:19:46.053Z",
       "updatedBy": null,
@@ -2561,8 +2581,8 @@
         "membership": {
           "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
           "tenantId": "ecya0r",
-          "contextType": "organization",
-          "contextId": "61543dc3-4ff9-4b4a-b374-26052338523b",
+          "channelType": "organization",
+          "channelId": "61543dc3-4ff9-4b4a-b374-26052338523b",
           "userId": "c808c467-cf5d-4669-8838-4b717284ce03",
           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
           "workspaceId": "37b34924-612e-454b-9d73-98fa9290dee1",

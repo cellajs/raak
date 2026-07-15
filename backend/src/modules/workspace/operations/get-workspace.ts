@@ -2,7 +2,7 @@ import type { AuthContext } from '#/core/context';
 import { getEntityCounts } from '#/modules/entities/helpers/get-entity-counts';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
-import { getValidContextEntity } from '#/permissions/get-context-entity';
+import { getValidChannelEntity } from '#/permissions/get-channel-entity';
 
 interface GetWorkspaceOpts {
   bySlug?: boolean;
@@ -13,7 +13,7 @@ export async function getWorkspaceOp(ctx: AuthContext, id: string, opts: GetWork
   const user = ctx.var.user;
   const { bySlug, include } = opts;
 
-  const { entity: workspace, membership } = await getValidContextEntity(ctx, id, 'workspace', 'read', bySlug);
+  const { entity: workspace, membership } = await getValidChannelEntity(ctx, id, 'workspace', 'read', bySlug);
 
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');

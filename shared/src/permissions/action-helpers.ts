@@ -22,17 +22,10 @@ export const allActionsAllowed = Object.freeze(createActionRecord(() => true as 
 >;
 
 /**
- * Resolves a three-state permission (`true | false | condition name`) to a boolean.
- *
- * Handles the built-in `'own'` condition (actor created the entity, derived from
- * `entity.createdBy`). Any other condition name resolves to `false` here (a secure
- * default); call sites using a custom row condition must resolve it via the
- * condition's own check-form.
- *
- * @param permission - The permission state from `EntityCanMap` (`true`, `false`, or a condition name)
- * @param entityCreatedBy - The `createdBy` field of the entity being checked
- * @param userId - The current user's ID (the actor)
- * @returns `true` if action is allowed, `false` otherwise. Defaults to `false` for safety.
+ * Resolves a three-state permission (`true | false | condition name`) to a boolean. Handles the
+ * built-in `'own'` condition (compares the actor's `userId` against `entity.createdBy`). Any other
+ * condition name resolves to `false` here (secure default); custom row conditions must be resolved
+ * by the call site via the condition's own check-form.
  */
 export const resolvePermission = (
   permission: ActionPermissionState | undefined,
@@ -45,12 +38,15 @@ export const resolvePermission = (
 };
 
 /**
- * Checks whether a permission is unconditionally granted (`true`),
- * as opposed to entity-dependent (`'own'`) or denied (`false`).
+ * Whether a permission is granted **unconditionally** (`true`), as opposed to row-conditional
+ * (`'own'` or another condition name) or denied (`false`).
  *
- * Use this to decide if a user qualifies for context-scoped features
- * (e.g. collaborative editing) where per-entity ownership can't be checked upfront.
+ * Use this — rather than {@link resolvePermission} — for **context-scoped** features that can't
+ * resolve per-row ownership up front: e.g. deciding whether to offer collaborative (Yjs) editing
+ * on an entity type, where the affordance is enabled for a role, not for a specific row. A `'own'`
+ * grant is deliberately NOT unconditional: it depends on the row, which this check has no access
+ * to, so it returns `false` (secure default). Per-row affordances should use `resolvePermission`.
  */
-export const isUnconditionalPermission = (permission: ActionPermissionState | undefined): boolean => {
-  return permission === true;
-};
+export const isUnconditionalPermission = (permission: ActionPermissionState | undefined): boolean =>
+  permission === true;
+

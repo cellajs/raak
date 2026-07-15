@@ -1,8 +1,8 @@
-import { appConfig, type ContextEntityType, type MenuSection } from 'shared';
+import { appConfig, type ChannelEntityType, type MenuSection } from 'shared';
 import type { UserMenuItem } from '~/modules/me/types';
 
 // Build initial menu state based on the provided menu structure.
-function buildInitialMenu<const T extends readonly { entityType: ContextEntityType }[]>(
+function buildInitialMenu<const T extends readonly { entityType: ChannelEntityType }[]>(
   structure: T,
 ): { [K in T[number]['entityType']]: UserMenuItem[] } {
   type Key = T[number]['entityType'];
@@ -14,14 +14,7 @@ function buildInitialMenu<const T extends readonly { entityType: ContextEntityTy
 // Base menu
 const baseMenu = buildInitialMenu(appConfig.menuStructure);
 
-/**
- * Builds a user menu from a mapping of context entity types to their corresponding items.
- *
- * @param byType - A map of entity types to their menu items
- * @param menuStructure - The menu structure configuration
- * @param opts - Optional configuration for building detailed menu with submenus
- * @returns The constructed user menu with items grouped by entity type
- */
+/** Builds a user menu from a map of channel entity types to their items; `opts` enables detailed submenus. */
 export function buildMenu(
   byType: Map<MenuSection['entityType'] | MenuSection['subentityType'], UserMenuItem[]>,
   menuStructure: MenuSection[],

@@ -1,14 +1,15 @@
 export * from './span-names';
 export { createSpanStoreProcessor, type SpanStoreProcessorOptions } from './span-store-processor';
 
-// ================================
 // Types
-// ================================
-
 /** Span status aligned with OTel conventions. */
 export type SpanStatus = 'ok' | 'error' | 'unset';
 
-/** Span data structure for storage and display; real OTel tracers create the underlying spans (see span-store-processor.ts for the bridge). */
+/**
+ * Span data structure for storage and display; real OTel tracers create the underlying spans.
+ *
+ * @see span-store-processor.ts
+ */
 export interface SpanData {
   traceId: string;
   spanId: string;
@@ -167,7 +168,7 @@ export type SpanAttributeValue = string | number | boolean | null | undefined;
 
 /** Span attributes with optional trace context for auto e2e latency. */
 export interface SpanAttributes {
-  [key: string]: SpanAttributeValue | IncomingTraceContext | undefined;
+  [key: string]: SpanAttributeValue | IncomingTraceContext;
   _trace?: IncomingTraceContext;
 }
 

@@ -15,9 +15,7 @@ import { parseMessage } from './parse-message';
 import { processEvents } from './process-events';
 import { runPostCatchupRecovery } from '../services/catchup-recovery';
 
-// ================================
 // Message helpers
-// ================================
 
 /** Narrowed DML message type. */
 type DmlMessage = Pgoutput.MessageInsert | Pgoutput.MessageUpdate | Pgoutput.MessageDelete;
@@ -58,9 +56,7 @@ async function acknowledgeLsn(lsn: string): Promise<void> {
   }
 }
 
-// ================================
 // Buffers
-// ================================
 
 /** Flush buffer: accumulates events across transactions for micro-batching */
 const flushBuffer = new FlushBuffer(processEvents, acknowledgeLsn, RESOURCE_LIMITS.buffers.flushWindowMs);
@@ -68,14 +64,12 @@ const flushBuffer = new FlushBuffer(processEvents, acknowledgeLsn, RESOURCE_LIMI
 /** Transaction buffer: cascade suppression within a single transaction */
 const txBuffer = new TransactionBuffer((events) => flushBuffer.enqueue(events));
 
-// ================================
 // Message handling
-// ================================
 
 /**
  * Handle incoming replication data message.
  * Transaction-aware: buffers events between BEGIN and COMMIT, suppresses
- * cascaded child deletes when a context entity (project/org) is deleted.
+ * cascaded child deletes when a channel entity (project/org) is deleted.
  */
 export async function handleDataMessage(lsn: string, msg: Pgoutput.Message): Promise<void> {
   const { tag } = msg;

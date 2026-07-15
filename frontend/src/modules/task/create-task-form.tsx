@@ -5,6 +5,7 @@ import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import type { Attachment } from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
@@ -14,7 +15,6 @@ import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
 import { Spinner } from '~/modules/common/spinner';
-import type { UploadedUppyFile } from '~/modules/common/uploader/types';
 import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
@@ -77,7 +77,7 @@ const CreateTaskForm = ({
   const focusedTaskId = useTaskInteractionStore((s) => s.focusedTaskId);
 
   const [defaultId] = useState(generateId());
-  const [attachments, setAttachments] = useState({} as UploadedUppyFile<'attachment'>);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [editorKey, setEditorKey] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const pendingCloseRef = useRef(false);
@@ -110,7 +110,7 @@ const CreateTaskForm = ({
   const watchedVariant = useWatch({ control: form.control, name: 'variant' });
   const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
-  const updateAttachments = useCallback((data: UploadedUppyFile<'attachment'>) => setAttachments(data), []);
+  const updateAttachments = useCallback((data: Attachment[]) => setAttachments(data), []);
   const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, updateAttachments);
 
   const handleCloseForm = () => {
@@ -149,7 +149,7 @@ const CreateTaskForm = ({
     setIsExiting(true);
 
     // taskId links attachments to the new task.
-    if (attachments[':original']?.length) {
+    if (attachments.length) {
       attachmentsCreationCallback({ organizationId, tenantId, projectId, taskId: defaultId })(attachments);
     }
 

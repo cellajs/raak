@@ -64,19 +64,19 @@ describe('resolvePermission', () => {
 });
 
 describe('isUnconditionalPermission', () => {
-  it('returns true for unconditional true', () => {
+  it('is true only for an unconditional grant', () => {
     expect(isUnconditionalPermission(true)).toBe(true);
   });
 
-  it('returns false for own (entity-dependent)', () => {
+  it('is false for a row-conditional grant — it depends on the row, which this cannot see', () => {
+    // The whole point: context-scoped features (e.g. collab editing) enable on this, and `'own'`
+    // must NOT enable them, because ownership is per-row and unknown here.
     expect(isUnconditionalPermission('own')).toBe(false);
   });
 
-  it('returns false for denied', () => {
+  it('is false for denied or absent', () => {
     expect(isUnconditionalPermission(false)).toBe(false);
-  });
-
-  it('returns false for undefined', () => {
     expect(isUnconditionalPermission(undefined)).toBe(false);
   });
 });
+

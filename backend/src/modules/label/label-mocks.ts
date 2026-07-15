@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import {
-  generateMockContextIdColumns,
+  generateMockChannelIdColumns,
   MOCK_REF_DATE,
   mockBatchResponse,
   mockPaginated,
@@ -14,7 +14,7 @@ import type { LabelModel } from '#/modules/label/label-db';
 /**
  * Generates a mock label with all fields populated.
  * Uses deterministic seeding - same key produces same data.
- * Context entity ID columns are generated dynamically based on appConfig.contextEntityTypes.
+ * Context entity ID columns are generated dynamically based on appConfig.channelEntityTypes.
  * @param key - Seed key for deterministic output
  * @param suffix - Optional suffix to append to name for uniqueness in seeding
  */
@@ -40,9 +40,11 @@ export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
       keywords: faker.lorem.words(3),
       // Specific columns
       color: faker.color.rgb().toLowerCase(),
-      // Context entity columns
+      // Base product column: labels are not publicly readable
+      publicAt: null,
+      // Channel entity columns
       tenantId: mockTenantId(),
-      ...generateMockContextIdColumns('relatable'),
+      ...generateMockChannelIdColumns('relatable'),
       // Audit fields
       createdAt,
       createdBy: userId,

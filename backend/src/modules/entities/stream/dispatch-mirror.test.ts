@@ -23,8 +23,8 @@ const membership = (organizationId: string, role: string, userId: string): Membe
   ({
     id: `mem-organization-${organizationId}-${role}-${userId}`,
     userId,
-    contextType: 'organization',
-    contextId: organizationId,
+    channelType: 'organization',
+    channelId: organizationId,
     organizationId,
     role,
   }) as unknown as MembershipBaseModel;
@@ -64,9 +64,9 @@ const fakeSubscriber = (
  * with deeper chains (e.g. project) get their id columns nulled here.
  */
 const nullAncestorScopes = Object.fromEntries(
-  appConfig.contextEntityTypes
-    .filter((contextType) => contextType !== 'organization')
-    .map((contextType) => [appConfig.entityIdColumnKeys[contextType], null]),
+  appConfig.channelEntityTypes
+    .filter((channelType) => channelType !== 'organization')
+    .map((channelType) => [appConfig.entityIdColumnKeys[channelType], null]),
 );
 
 const attachmentRow = (id: string, organizationId: string, extra: Record<string, unknown> = {}) => ({

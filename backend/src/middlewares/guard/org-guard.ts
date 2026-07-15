@@ -8,10 +8,6 @@ import { getOrgCache, setOrgCache } from './org-cache';
  * Middleware to ensure the user has access to an organization-scoped route.
  * Must run after tenantGuard to use tenant-scoped transaction with RLS.
  * Valid access for users that is a member of the organization or is a system admin.
- *
- * @param ctx - Request/response context with organizationId URL parameter
- * @param next - The next middleware or route handler to call if the check passes
- * @returns Error response or continues to next handler with organization context set
  */
 export const orgGuard = xMiddleware(
   {
@@ -61,7 +57,7 @@ export const orgGuard = xMiddleware(
 
     // Check if user has access to organization (or is a system admin)
     const orgMembership =
-      memberships.find((m) => m.organizationId === organization.id && m.contextType === 'organization') || null;
+      memberships.find((m) => m.organizationId === organization.id && m.channelType === 'organization') || null;
     if (!isSystemAdmin && !orgMembership) {
       throw new AppError(403, 'forbidden', 'warn', { entityType: 'organization' });
     }

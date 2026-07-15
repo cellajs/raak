@@ -34,7 +34,7 @@ export type UserBase = {
 /**
  * Base schema for entities with memberships (e.g. organization).
  */
-export type ContextEntityBase = {
+export type ChannelEntityBase = {
   id: string;
   name: string;
   createdAt: string;
@@ -73,8 +73,8 @@ export type ProductEntityBase = {
 export type MembershipBase = {
   id: string;
   tenantId: string;
-  contextType: 'organization' | 'workspace' | 'project';
-  contextId: string;
+  channelType: 'organization' | 'workspace' | 'project';
+  channelId: string;
   userId: string;
   role: 'admin' | 'member' | 'guest';
   archived: boolean;
@@ -120,17 +120,17 @@ export type StreamNotification = {
   organizationId: string | null;
   tenantId: string | null;
   /**
-   * Context entity type for membership events (e.g. organization, project)
+   * Channel entity type for membership events (e.g. organization, project)
    */
-  contextType: 'organization' | 'workspace' | 'project' | null;
+  channelType: 'organization' | 'workspace' | 'project' | null;
   /**
    * Per-entityType sequence number used for gap detection in sync
    */
   seq: number | null;
   /**
-   * Context entity ID for grouping (e.g. projectId for tasks in unseen counts)
+   * Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)
    */
-  contextId: string | null;
+  channelId: string | null;
   stx: StxBase &
     ({
       [key: string]: unknown;
@@ -314,8 +314,8 @@ export type InactiveMembership = {
   createdAt: string;
   id: string;
   tenantId: string;
-  contextType: 'organization' | 'workspace' | 'project';
-  contextId: string;
+  channelType: 'organization' | 'workspace' | 'project';
+  channelId: string;
   email: string;
   userId: string | null;
   tokenId: string | null;
@@ -474,6 +474,7 @@ export type Task = {
   keywords: string;
   deletedAt: string | null;
   deletedBy: string | null;
+  publicAt: string | null;
   seq: number;
   expandable: boolean;
   summary: string;
@@ -485,7 +486,6 @@ export type Task = {
   checkboxCount: number;
   checkedCount: number;
   attachmentCount: number;
-  publicAt: string | null;
   organizationId: string;
   projectId: string;
   labels: Array<{
@@ -514,7 +514,7 @@ export type Task = {
 };
 
 /**
- * The main context entity is an organization.
+ * The main channel entity is an organization.
  */
 export type Organization = {
   createdAt: string;
@@ -535,6 +535,7 @@ export type Organization = {
       [key: string]: unknown;
     } | null);
   publishedAt: string | null;
+  publicAt: string | null;
   shortName: string | null;
   country: string | null;
   timezone: string | null;
@@ -605,6 +606,7 @@ export type Workspace = {
       [key: string]: unknown;
     } | null);
   publishedAt: string | null;
+  publicAt: string | null;
   organizationId: string;
   included: {
     membership?: MembershipBase;
@@ -650,6 +652,7 @@ export type Attachment = {
     } | null);
   deletedAt: string | null;
   deletedBy: string | null;
+  publicAt: string | null;
   seq: number;
   taskId: string | null;
   public: boolean;
@@ -668,14 +671,14 @@ export type Attachment = {
 };
 
 /**
- * A user's membership in a context entity, including role and activity data.
+ * A user's membership in a channel entity, including role and activity data.
  */
 export type Membership = {
   createdAt: string;
   id: string;
   tenantId: string;
-  contextType: 'organization' | 'workspace' | 'project';
-  contextId: string;
+  channelType: 'organization' | 'workspace' | 'project';
+  channelId: string;
   userId: string;
   role: 'admin' | 'member' | 'guest';
   createdBy: string;
@@ -703,6 +706,7 @@ export type Label = {
   keywords: string;
   deletedAt: string | null;
   deletedBy: string | null;
+  publicAt: string | null;
   seq: number;
   color: string | null;
   organizationId: string;
@@ -2053,7 +2057,7 @@ export type GetMyInvitationsResponses = {
    */
   200: {
     items: Array<{
-      entity: ContextEntityBase;
+      entity: ChannelEntityBase;
       inactiveMembership: InactiveMembership;
     }>;
     total: number;
@@ -2341,7 +2345,7 @@ export type GetUnseenCountsError = GetUnseenCountsErrors[keyof GetUnseenCountsEr
 
 export type GetUnseenCountsResponses = {
   /**
-   * Unseen counts per parent context entity per entity type
+   * Unseen counts per parent channel entity per entity type
    */
   200: {
     [key: string]: {
@@ -2508,7 +2512,7 @@ export type PostAppCatchupResponses = {
         entityCounts?: {
           [key: string]: number;
         };
-        childContextChanges?: {
+        childChannelChanges?: {
           [key: string]: {
             entitySeqs?: {
               [key: string]: number;
@@ -4080,7 +4084,7 @@ export type CreateOrganizationsResponses = {
    */
   201: {
     /**
-     * The main context entity is an organization.
+     * The main channel entity is an organization.
      */
     data: Array<
       Organization & {
@@ -5513,7 +5517,8 @@ export type GetPresignedUrlData = {
     organizationId: string;
   };
   query: {
-    key: string;
+    attachmentId: string;
+    variant?: 'original' | 'thumbnail' | 'converted';
   };
   url: '/{tenantId}/{organizationId}/attachments/presigned-url';
 };
@@ -5891,7 +5896,7 @@ export type HandleMembershipInvitationResponses = {
   /**
    * Invitation was accepted
    */
-  200: ContextEntityBase;
+  200: ChannelEntityBase;
 };
 
 export type HandleMembershipInvitationResponse =

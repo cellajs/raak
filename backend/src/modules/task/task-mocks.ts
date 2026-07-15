@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import {
-  generateMockContextIdColumns,
+  generateMockChannelIdColumns,
   MOCK_REF_DATE,
   mockBatchResponse,
   mockStx,
@@ -44,7 +44,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       publicAt: faker.helpers.maybe(() => faker.date.past({ refDate }).toISOString(), { probability: 0.3 }) ?? null,
       // Context entity columns
       tenantId: mockTenantId(),
-      ...generateMockContextIdColumns('relatable'),
+      ...generateMockChannelIdColumns('relatable'),
       // Audit fields
       createdAt,
       createdBy: userId,

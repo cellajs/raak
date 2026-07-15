@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { actionToVerb, activityActions, appConfig } from 'shared';
 import {
-  generateMockContextIdColumns,
+  generateMockChannelIdColumns,
   MOCK_REF_DATE,
   mockPaginated,
   mockTenantId,
@@ -12,12 +12,9 @@ import type { ActivityModel } from '#/modules/activities/activities-db';
 import { entityTableNames } from '#/tables';
 
 /**
- * Generates a mock activity with all fields populated. Currently hardcoded
- * with entityType values but true schema also includes resourceType values.
- * It should always be oneOf: entityType or resourceType populated with their respective values.
- * Uses deterministic seeding - same key produces same data.
- * Context entity ID columns are generated dynamically based on relatable context entity types.
- * Used for DB seeding, tests, and API response examples.
+ * Mock activity with all fields populated (deterministic per `key`). Channel-entity ID columns are
+ * generated dynamically. Schema is oneOf `entityType`/`resourceType`; this mock hardcodes `entityType`.
+ * Used for DB seeding, tests, and API examples.
  */
 export const mockActivity = (key = 'activity:default', overrides?: Partial<ActivityModel>): ActivityModel =>
   withFakerSeed(key, () => {
@@ -44,7 +41,7 @@ export const mockActivity = (key = 'activity:default', overrides?: Partial<Activ
           ? faker.helpers.arrayElements(['name', 'email', 'slug', 'description'], { min: 2, max: 4 })
           : null,
       stx: null,
-      ...generateMockContextIdColumns('relatable'),
+      ...generateMockChannelIdColumns('relatable'),
       ...overrides,
     };
   });

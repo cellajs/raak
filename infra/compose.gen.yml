@@ -23,6 +23,10 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       BACKEND_URL: ${BACKEND_URL}
       RUN_MIGRATIONS_ON_BOOT: 'false'
+      API_WS_URL: ${API_WS_URL}
+      CDC_HEALTH_PORT: '4001'
+      YJS_PORT: '4002'
+      MCP_API_URL: ${MCP_API_URL}
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4000/health']
       interval: '30s'
@@ -41,7 +45,8 @@ services:
         staging: DEV1-S
       primaryRollout: true
       drainPolicy: requests
-      lbRoute: default
+      lbRoute: path
+      lbPathBegin: /api
       dockerfile: Dockerfile
       target: backend
   migrate:
@@ -125,7 +130,8 @@ services:
       drainSeconds: 5
       instanceType: DEV1-S
       drainPolicy: reconnect
-      lbRoute: host
+      lbRoute: path
+      lbPathBegin: /yjs
       lbWebsockets: true
       dockerfile: Dockerfile
       target: yjs
@@ -164,7 +170,8 @@ services:
       drainSeconds: 10
       instanceType: DEV1-S
       drainPolicy: requests
-      lbRoute: host
+      lbRoute: path
+      lbPathBegin: /mcp
       reusesImageOf: backend
       coHosted: true
       bindings:
@@ -194,5 +201,5 @@ services:
       drainSeconds: 0
       instanceType: DEV1-S
       drainPolicy: requests
-      lbRoute: host
+      lbRoute: default
       dockerfile: infra/caddy/Dockerfile

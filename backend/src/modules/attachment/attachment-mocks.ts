@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import {
-  generateMockEntityContextIdColumns,
+  generateMockEntityChannelIdColumns,
   MOCK_REF_DATE,
   mockBatchResponse,
   mockNanoid,
@@ -15,7 +15,7 @@ import type { AttachmentModel } from '#/modules/attachment/attachment-db';
 /**
  * Generates a mock attachment with all fields populated.
  * Uses deterministic seeding - same key produces same data.
- * Context entity ID columns are generated dynamically from the attachment's hierarchy ancestors.
+ * Channel entity ID columns are generated dynamically from the attachment's hierarchy ancestors.
  */
 export const mockAttachment = (key = 'attachment:default'): AttachmentModel =>
   withFakerSeed(key, () => {
@@ -48,9 +48,10 @@ export const mockAttachment = (key = 'attachment:default'): AttachmentModel =>
       updatedBy: userId,
       deletedAt: null,
       deletedBy: null,
+      publicAt: null,
       seq: faker.number.int({ min: 1, max: 500 }),
       stx: mockStx(),
-      ...generateMockEntityContextIdColumns('attachment'),
+      ...generateMockEntityChannelIdColumns('attachment'),
     };
   });
 

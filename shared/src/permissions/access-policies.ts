@@ -1,12 +1,12 @@
-import type { ContextEntityType, EntityActionType, EntityType, ProductEntityType } from '../../types';
+import type { ChannelEntityType, EntityActionType, EntityType, ProductEntityType } from '../../types';
 import type { PublicReadGrants, PublicReadMode } from './public-read';
-import { own } from './row-conditions';
+import { isRowCondition, own } from './row-conditions';
 import type {
   AccessPolicies,
   AccessPolicyCallback,
   AccessPolicyConfiguration,
   AccessPolicyEntry,
-  ContextPolicyBuilder,
+  ChannelPolicyBuilder,
   EntityActionPermissions,
   NormalizedPermissionValue,
   PermissionValue,
@@ -23,12 +23,12 @@ const normalizePermissionValue = (value: PermissionValue): NormalizedPermissionV
 /**
  * Creates a context policy builder for fluent role-permission configuration.
  */
-const createContextPolicyBuilder = (
-  contextType: ContextEntityType,
+const createChannelPolicyBuilder = (
+  channelType: ChannelEntityType,
   roles: readonly string[],
   entries: AccessPolicyEntry[],
   entityActions: readonly EntityActionType[],
-): ContextPolicyBuilder => {
+): ChannelPolicyBuilder => {
 
   const builder: Record<string, (permissions: Partial<Record<EntityActionType, PermissionValue>>) => void> = {};
 
@@ -39,29 +39,40 @@ const createContextPolicyBuilder = (
       // built-in row condition.
       const fullPermissions = {} as EntityActionPermissions;
       for (const action of entityActions) {
-        fullPermissions[action] = normalizePermissionValue(permissions[action] ?? 0);
+        const value = normalizePermissionValue(permissions[action] ?? 0);
+        // Fail loud at boot: a row condition on `create` can never match. The row doesn't exist
+        // yet (the subject carries no `row`), so e.g. `create: 'own'` reads a `createdBy` that
+        // isn't there and silently denies forever. That's a config mistake, not a runtime state —
+        // surface it here rather than as a permanent, invisible denial in production.
+        if (action === 'create' && isRowCondition(value)) {
+          throw new Error(
+            `[Permission] "${channelType}.${role}" uses a row condition ('${value.name}') on 'create', ` +
+              `which can never match — the row does not exist yet. Use 1 or 0 for create.`,
+          );
+        }
+        fullPermissions[action] = value;
       }
-      entries.push({ contextType, role, permissions: fullPermissions });
+      entries.push({ channelType, role, permissions: fullPermissions });
     };
   }
 
-  return builder as ContextPolicyBuilder;
+  return builder as ChannelPolicyBuilder;
 };
 
 /**
  * Creates a contexts object with builders for all context types.
  */
-const createContextBuilders = (
+const createChannelBuilders = (
   entries: AccessPolicyEntry[],
-  contextEntityTypes: readonly ContextEntityType[],
-  getRoles: (contextType: string) => readonly string[],
+  channelEntityTypes: readonly ChannelEntityType[],
+  getRoles: (channelType: string) => readonly string[],
   entityActions: readonly EntityActionType[],
-): Record<ContextEntityType, ContextPolicyBuilder> => {
-  const contexts = {} as Record<ContextEntityType, ContextPolicyBuilder>;
+): Record<ChannelEntityType, ChannelPolicyBuilder> => {
+  const contexts = {} as Record<ChannelEntityType, ChannelPolicyBuilder>;
 
-  for (const contextType of contextEntityTypes) {
-    const roles = getRoles(contextType);
-    contexts[contextType] = createContextPolicyBuilder(contextType, roles, entries, entityActions);
+  for (const channelType of channelEntityTypes) {
+    const roles = getRoles(channelType);
+    contexts[channelType] = createChannelPolicyBuilder(channelType, roles, entries, entityActions);
   }
 
   return contexts;
@@ -76,7 +87,7 @@ export interface PermissionsConfigResult {
 /**
  * Configures the full permission set for all entity types using a callback pattern.
  * The callback receives the subject, context builders for role×context grants, and
- * `publicRead(mode)` for the subject-level public read grant (see `public-read.ts`).
+ * `publicRead(mode)` for the subject-level public read grant.
  *
  * @example
  * ```ts
@@ -89,35 +100,27 @@ export interface PermissionsConfigResult {
  *   }
  * });
  * ```
+ *
+ * @see public-read.ts
  */
 export const configurePermissions = (
   entityTypes: readonly EntityType[],
   callback: AccessPolicyCallback,
   topology?: PermissionTopology,
-  options?: {
-    /**
-     * Assert at config time that every subject with declared rows covers EVERY role of
-     * EVERY context in its ancestor chain (default true — see
-     * `validatePolicyCompleteness`). Test helpers with deliberately partial fixtures
-     * opt out.
-     */
-    validateCompleteness?: boolean;
-  },
 ): PermissionsConfigResult => {
   const policies: AccessPolicies = {};
   const publicReadGrants: PublicReadGrants = {};
 
   // Topology defaults to the app's real config; tests pass a synthetic one (wide-fixture.ts).
-  const { entityActions, contextEntityTypes, getRoles, getParent } = resolveTopology(topology);
-  const validateCompleteness = options?.validateCompleteness ?? true;
+  const { entityActions, channelEntityTypes, getRoles } = resolveTopology(topology);
 
   const permissionableTypes = entityTypes.filter(
-    (type): type is ContextEntityType | ProductEntityType => type !== 'user',
+    (type): type is ChannelEntityType | ProductEntityType => type !== 'user',
   );
 
   for (const entityType of permissionableTypes) {
     const entries: AccessPolicyEntry[] = [];
-    const contexts = createContextBuilders(entries, contextEntityTypes, getRoles, entityActions);
+    const contexts = createChannelBuilders(entries, channelEntityTypes, getRoles, entityActions);
 
     const config: AccessPolicyConfiguration = {
       subject: { name: entityType },
@@ -137,82 +140,7 @@ export const configurePermissions = (
     }
   }
 
-  validatePublicReadGrants(publicReadGrants, getParent);
-  if (validateCompleteness) {
-    validatePolicyCompleteness(policies, { contextEntityTypes, getRoles, getParent });
-  }
-
   return { accessPolicies: policies, publicReadGrants };
-};
-
-/**
- * The engine is strict at runtime: the first membership whose (context, role) has no
- * policy row for the checked subject THROWS — a request-time 500 that only surfaces
- * when a real user with that role hits that subject. Enforce the same rule at config
- * time instead: every subject that declares ANY rows must declare a row for every role
- * of every context in its ancestor chain — an all-zero row (`contexts.x.role({})`)
- * expresses "no access" explicitly. Subjects with no case at all are skipped (they
- * fail fast with a clear engine error on their first check).
- */
-const validatePolicyCompleteness = (
-  policies: AccessPolicies,
-  topology: {
-    contextEntityTypes: readonly ContextEntityType[];
-    getRoles: (contextType: string) => readonly string[];
-    getParent: (type: string) => string | null;
-  },
-): void => {
-  const { contextEntityTypes, getRoles, getParent } = topology;
-
-  /** The subject's context chain: self (for context entities) plus every ancestor. */
-  const chainOf = (subject: string): ContextEntityType[] => {
-    const chain: ContextEntityType[] = [];
-    let current: string | null = contextEntityTypes.includes(subject as ContextEntityType)
-      ? subject
-      : getParent(subject);
-    while (current) {
-      chain.push(current as ContextEntityType);
-      current = getParent(current);
-    }
-    return chain;
-  };
-
-  const missing: string[] = [];
-  for (const [subject, entries] of Object.entries(policies)) {
-    const declared = new Set(entries.map((entry) => `${entry.contextType}:${entry.role}`));
-    for (const contextType of chainOf(subject)) {
-      for (const role of getRoles(contextType)) {
-        if (!declared.has(`${contextType}:${role}`)) missing.push(`"${subject}": ${contextType}.${role}`);
-      }
-    }
-  }
-
-  if (missing.length > 0) {
-    throw new Error(
-      `[Permission] Incomplete policy: every subject with declared rows needs a row for every role of every context in its chain (all-zero rows express "no access"). Missing:\n  ${missing.join('\n  ')}`,
-    );
-  }
-};
-
-/**
- * A parent-dependent public grant only works if the parent itself can become public:
- * its own grant must include self-publication.
- */
-const validatePublicReadGrants = (
-  grants: PublicReadGrants,
-  getParent: (type: string) => string | null,
-): void => {
-  for (const [entityType, mode] of Object.entries(grants) as [ContextEntityType | ProductEntityType, PublicReadMode][]) {
-    if (mode !== 'publicParent' && mode !== 'publicParentOrSelf') continue;
-
-    const parent = getParent(entityType);
-    const parentMode = parent ? grants[parent as ContextEntityType | ProductEntityType] : undefined;
-    if (parentMode !== 'publicSelf' && parentMode !== 'publicParentOrSelf') {
-      throw new Error(
-        `[Permission] "${entityType}" declares publicRead '${mode}' but its parent "${parent}" has no self-publication grant (publicRead 'publicSelf').`,
-      );
-    }
-  }
 };
 
 /**
@@ -225,15 +153,14 @@ export const configureAccessPolicies = (
   callback: AccessPolicyCallback,
   topology?: PermissionTopology,
 ): AccessPolicies => {
-  // Raw/test path: synthetic policy sets are deliberately partial, so no completeness check.
-  return configurePermissions(entityTypes, callback, topology, { validateCompleteness: false }).accessPolicies;
+  return configurePermissions(entityTypes, callback, topology).accessPolicies;
 };
 
 /**
  * Gets the access policies for a specific subject (entity type).
  */
 export const getSubjectPolicies = (
-  subject: ContextEntityType | ProductEntityType,
+  subject: ChannelEntityType | ProductEntityType,
   policies: AccessPolicies,
 ): SubjectAccessPolicies => {
   return policies[subject] ?? [];
@@ -244,9 +171,9 @@ export const getSubjectPolicies = (
  */
 export const getPolicyPermissions = (
   policies: SubjectAccessPolicies,
-  contextType: ContextEntityType,
+  channelType: ChannelEntityType,
   role: string,
 ): EntityActionPermissions | undefined => {
-  const entry = policies.find((p) => p.contextType === contextType && p.role === role);
+  const entry = policies.find((p) => p.channelType === channelType && p.role === role);
   return entry?.permissions;
 };

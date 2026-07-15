@@ -45,7 +45,7 @@ ReactDOM.createRoot(root, {
 }).render(
   <StrictMode>
     <Themer />
-    <LucideProvider strokeWidth={appConfig.theme.strokeWidth}>
+    <LucideProvider>
       <QueryClientProvider>
         <AppRouter />
       </QueryClientProvider>

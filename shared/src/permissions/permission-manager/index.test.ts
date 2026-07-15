@@ -1,12 +1,6 @@
-import { getContextRoles, hierarchy, isContextEntity, isProductEntity } from 'shared';
+import { getChannelRoles, hierarchy, isChannelEntity, isProductEntity } from 'shared';
 import { describe, expect, it } from 'vitest';
-import {
-  configureWidePermissions,
-  wideHierarchy,
-  wideMembership,
-  wideSubject,
-  wideTopology,
-} from '../../testing/wide-fixture';
+import { configureWidePermissions, wideMembership, wideSubject, wideTopology } from '../../testing/wide-fixture';
 import { getAllDecisions } from './check';
 import type { SubjectForPermission } from './types';
 
@@ -18,7 +12,7 @@ import type { SubjectForPermission } from './types';
  */
 
 const organizationSubject = (id: string): SubjectForPermission =>
-  wideSubject({ entityType: 'organization', id, contextIds: {} });
+  wideSubject({ entityType: 'organization', id, channelIds: {} });
 
 const attachmentSubject = (
   id: string,
@@ -29,7 +23,7 @@ const attachmentSubject = (
   return wideSubject({
     entityType: 'attachment',
     id,
-    contextIds: { organization: organizationId, ...(project !== undefined && { project }) },
+    channelIds: { organization: organizationId, ...(project !== undefined && { project }) },
     ...rest,
   });
 };
@@ -49,18 +43,18 @@ describe('hierarchy guards (real app config)', () => {
     });
   });
 
-  describe('getContextRoles', () => {
+  describe('getChannelRoles', () => {
     it('returns roles for the organization context', () => {
-      const roles = getContextRoles('organization');
+      const roles = getChannelRoles('organization');
       expect(roles).toEqual(['admin', 'member']);
     });
   });
 
-  describe('isContextEntity / isProductEntity', () => {
-    it('correctly identifies context entities', () => {
-      expect(isContextEntity('organization')).toBe(true);
-      expect(isContextEntity('attachment')).toBe(false);
-      expect(isContextEntity('user')).toBe(false);
+  describe('isChannelEntity / isProductEntity', () => {
+    it('correctly identifies channel entities', () => {
+      expect(isChannelEntity('organization')).toBe(true);
+      expect(isChannelEntity('attachment')).toBe(false);
+      expect(isChannelEntity('user')).toBe(false);
     });
 
     it('correctly identifies product entities', () => {
@@ -211,8 +205,8 @@ describe('PermissionDecision action attribution', () => {
     expect(decision.actions.create.grantedBy).toHaveLength(1);
     expect(decision.actions.create.grantedBy[0]).toEqual({
       type: 'membership',
-      contextType: 'organization',
-      contextId: 'org1',
+      channelType: 'organization',
+      channelId: 'org1',
       role: 'member',
     });
 
@@ -228,18 +222,7 @@ describe('PermissionDecision action attribution', () => {
 
     expect(decision.subject.entityType).toBe('attachment');
     expect(decision.subject.id).toBe('att1');
-    expect(decision.subject.contextIds).toEqual({ organization: 'org1' });
-  });
-
-  it('returns orderedContexts and primaryContext', () => {
-    const memberships = [wideMembership('organization', 'org1', 'member')];
-    const subject = attachmentSubject('att1', 'org1');
-    const decision = getAllDecisions(policies, memberships, subject, { topology: wideTopology });
-
-    // Derive expected contexts from the wide hierarchy (attachment → project → organization)
-    const ancestors = wideHierarchy.getOrderedAncestors('attachment');
-    expect(decision.orderedContexts).toEqual(ancestors);
-    expect(decision.primaryContext).toBe(ancestors[0]);
+    expect(decision.subject.channelIds).toEqual({ organization: 'org1' });
   });
 
   it('accumulates multiple grants for same action from different roles', () => {
@@ -255,14 +238,14 @@ describe('PermissionDecision action attribution', () => {
     expect(decision.actions.read.grantedBy).toHaveLength(2);
     expect(decision.actions.read.grantedBy).toContainEqual({
       type: 'membership',
-      contextType: 'organization',
-      contextId: 'org1',
+      channelType: 'organization',
+      channelId: 'org1',
       role: 'admin',
     });
     expect(decision.actions.read.grantedBy).toContainEqual({
       type: 'membership',
-      contextType: 'organization',
-      contextId: 'org1',
+      channelType: 'organization',
+      channelId: 'org1',
       role: 'member',
     });
 
@@ -411,8 +394,8 @@ describe('own permission, grant attribution', () => {
     expect(decision.actions.create.grantedBy).toHaveLength(1);
     expect(decision.actions.create.grantedBy[0]).toEqual({
       type: 'membership',
-      contextType: 'organization',
-      contextId: 'org1',
+      channelType: 'organization',
+      channelId: 'org1',
       role: 'member',
     });
   });
@@ -438,8 +421,8 @@ describe('own permission, grant attribution', () => {
     expect(decision.actions.update.enabled).toBe(true);
     expect(decision.actions.update.grantedBy[0]).toEqual({
       type: 'membership',
-      contextType: 'organization',
-      contextId: 'org1',
+      channelType: 'organization',
+      channelId: 'org1',
       role: 'admin',
     });
   });
@@ -498,21 +481,15 @@ describe('wide hierarchy, guest role, multi-level ancestors', () => {
     ({ subject, contexts }) => {
       switch (subject.name) {
         case 'attachment':
-          // Guests can create at project level. Every context×role cell is declared (deny by
-          // default) so the engine's strict policy-coverage check is satisfied when memberships
-          // resolve at either level.
-          contexts.organization.admin({});
-          contexts.organization.member({});
+          // Guests can create at project level. Omitted actions and policy rows deny by default.
           contexts.project.admin({ create: 1, update: 1 });
           contexts.project.member({ create: 1, update: 1 });
           contexts.project.guest({ create: 1 });
           break;
         case 'task':
           contexts.organization.admin({ read: 1 });
-          contexts.organization.member({});
           contexts.project.admin({ read: 1, update: 1 });
           contexts.project.member({ read: 1, update: 1 });
-          contexts.project.guest({});
           break;
       }
     },

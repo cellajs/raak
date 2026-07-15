@@ -1,9 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 // biome-ignore lint/style/noRestrictedImports: colocated mutation hook wrapping createAttachments with task-specific cache update logic.
-import { type CreateAttachmentsData, type CreateAttachmentsResponse, createAttachments } from 'sdk';
+import { type Attachment, type CreateAttachmentsData, type CreateAttachmentsResponse, createAttachments } from 'sdk';
 import type { ApiError } from '~/lib/api';
-import { parseUploadedAttachments } from '~/modules/attachment/helpers/parse-uploaded';
-import type { UploadedUppyFile } from '~/modules/common/uploader/types';
 import { createStxForCreate } from '~/query/offline/stx-utils';
 
 export const useUploadAttachments = () => {
@@ -28,9 +26,10 @@ export const useUploadAttachments = () => {
       projectId: string;
       taskId?: string;
     }) =>
-    (data: UploadedUppyFile<'attachment'>) => {
-      // projectId is required in raak; taskId links the attachment to its owning task.
-      const createdAttachments = parseUploadedAttachments(data, organizationId, projectId, taskId);
+    (attachments: Attachment[]) => {
+      // The panel parses uploads org-scoped only; add raak's linkage (projectId is required,
+      // taskId ties the attachment to its owning task) before persisting.
+      const createdAttachments = attachments.map((att) => ({ ...att, projectId, taskId }));
 
       const stx = createStxForCreate();
       // Body is array with stx embedded in each item

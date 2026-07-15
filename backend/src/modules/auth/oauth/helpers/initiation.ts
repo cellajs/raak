@@ -32,19 +32,11 @@ export const parseOAuthCookie = (raw: string | false | null | undefined): OAuthC
 };
 
 /**
- * Creates an OAuth session by setting the necessary cookies and redirecting to the provider.
+ * Creates an OAuth session: sets the flow-context cookies and redirects to the provider.
  *
  * - Stores OAuth flow context (invite, connect, verify, or default)
  * - Associates the context with the OAuth `state` to prevent CSRF
- * - Optionally includes PKCE `codeVerifier`
- *
- * @param ctx - Hono context
- * @param provider - OAuth provider name
- * @param url - Provider’s authorization endpoint
- * @param state - OAuth state param
- * @param codeVerifier - PKCE code verifier (optional)
- * @param nonce - OIDC nonce echoed back in the provider id_token (optional)
- * @returns redirect response
+ * - Optionally includes a PKCE `codeVerifier` and an OIDC `nonce` (echoed back in the id_token)
  */
 export const handleOAuthInitiation = async (
   ctx: Context<Env, string, { out: { query: OAuthQueryParams } }>,
@@ -55,13 +47,16 @@ export const handleOAuthInitiation = async (
   nonce?: string,
 ) => {
   const { type, redirectAfter } = ctx.req.valid('query');
-  const cookieContent = { codeVerifier, nonce, type, redirectAfter };
+  const cookieContent: OAuthCookiePayload = { codeVerifier, nonce, type, redirectAfter };
 
   if (type === 'connect') {
     try {
       const { sessionToken } = await getParsedSessionCookie(ctx);
       const { user } = await validateSession(sessionToken);
       if (!user) throw new AppError(404, 'not_found', 'error', { entityType: 'user' });
+      // Pin the connecting user in the signed state payload: the session cookie
+      // (SameSite=Strict) is absent on the provider's cross-site callback.
+      cookieContent.connectUserId = user.id;
     } catch (err) {
       if (err instanceof AppError) {
         throw new AppError(err.status, err.type as ErrorKey, err.severity, {

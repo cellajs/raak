@@ -94,6 +94,17 @@ export const findAttachmentByKey = async (ctx: DbContext, { key }: FindAttachmen
   return att;
 };
 
+interface FindAttachmentByIdOpts {
+  id: string;
+}
+
+/** Find an attachment by id. Already tenant-scoped via RLS. */
+export const findAttachmentById = async (ctx: DbContext, { id }: FindAttachmentByIdOpts) => {
+  const { db } = ctx.var;
+  const [att] = await db.select().from(attachmentsTable).where(eq(attachmentsTable.id, id)).limit(1);
+  return att;
+};
+
 interface FindAttachmentKeysByTaskIdOpts {
   taskId: string;
 }

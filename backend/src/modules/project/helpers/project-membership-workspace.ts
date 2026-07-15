@@ -6,7 +6,7 @@ import {
   findMaxDisplayOrder,
   insertProjectMembership,
 } from '#/modules/project/project-queries';
-import { getValidContextEntity } from '#/permissions';
+import { getValidChannelEntity } from '#/permissions';
 
 type ProjectMembershipTarget = {
   id: string;
@@ -14,7 +14,7 @@ type ProjectMembershipTarget = {
 };
 
 type ProjectMembership = AuthContext['var']['memberships'][number] & {
-  contextType: 'project';
+  channelType: 'project';
   projectId: string;
 };
 
@@ -37,11 +37,11 @@ function isProjectMembershipTarget(
   membership: AuthContext['var']['memberships'][number],
   project: ProjectMembershipTarget,
 ): membership is ProjectMembership {
-  return membership.projectId === project.id && membership.contextType === project.entityType;
+  return membership.projectId === project.id && membership.channelType === project.entityType;
 }
 
 export async function resolveProjectWorkspaceId(ctx: AuthContext, workspaceId: string): Promise<string> {
-  const { entity } = await getValidContextEntity(ctx, workspaceId, 'workspace', 'read');
+  const { entity } = await getValidChannelEntity(ctx, workspaceId, 'workspace', 'read');
   return entity.id;
 }
 
@@ -74,7 +74,7 @@ export async function replaceProjectMembershipWorkspace(
     const maxOrder = workspaceId
       ? await findMaxDisplayOrder(txCtx, {
           userId: membership.userId,
-          contextType: membership.contextType,
+          channelType: membership.channelType,
           workspaceId,
         })
       : null;
@@ -84,7 +84,7 @@ export async function replaceProjectMembershipWorkspace(
     await deleteProjectMembership(txCtx, {
       membershipId: membership.id,
       userId: membership.userId,
-      contextId: membership.contextId,
+      channelId: membership.channelId,
       projectId: membership.projectId,
     });
 
@@ -92,8 +92,8 @@ export async function replaceProjectMembershipWorkspace(
       values: {
         tenantId: membership.tenantId,
         userId: membership.userId,
-        contextType: membership.contextType,
-        contextId: membership.contextId,
+        channelType: membership.channelType,
+        channelId: membership.channelId,
         organizationId: membership.organizationId,
         workspaceId,
         projectId: membership.projectId,
@@ -137,7 +137,7 @@ async function createCurrentUserProjectMembershipInWorkspace(
 
   const maxOrder = await findMaxDisplayOrder(ctx, {
     userId: user.id,
-    contextType: project.entityType,
+    channelType: project.entityType,
     workspaceId,
   });
 
@@ -145,8 +145,8 @@ async function createCurrentUserProjectMembershipInWorkspace(
     values: {
       tenantId: organization.tenantId,
       userId: user.id,
-      contextType: project.entityType,
-      contextId: project.id,
+      channelType: project.entityType,
+      channelId: project.id,
       organizationId: organization.id,
       workspaceId,
       projectId: project.id,

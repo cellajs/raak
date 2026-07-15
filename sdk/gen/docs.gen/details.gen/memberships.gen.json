@@ -20,12 +20,12 @@
                 "properties": {
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                  "contextType": {
+                  "channelType": {
                     "type": "string",
                     "required": true,
                     "enum": ["organization", "workspace", "project"]
                   },
-                  "contextId": { "type": "string", "required": true, "format": "uuid" },
+                  "channelId": { "type": "string", "required": true, "format": "uuid" },
                   "userId": { "type": "string", "required": true, "format": "uuid" },
                   "role": {
                     "type": "string",
@@ -76,8 +76,8 @@
             {
               "id": "da336271-583f-4567-913c-f17c567ab81d",
               "tenantId": "vw3f7p",
-              "contextType": "organization",
-              "contextId": "993dce90-023a-4125-a6a3-03215e93aa04",
+              "channelType": "organization",
+              "channelId": "993dce90-023a-4125-a6a3-03215e93aa04",
               "userId": "154db176-be65-484a-bb34-246b1f99f492",
               "organizationId": "45a11f6e-5760-4a44-96c4-3c1b43d10162",
               "workspaceId": "c6fcea22-8d23-42d7-b57e-8ce814300c30",
@@ -290,17 +290,17 @@
         "contentType": "application/json",
         "schema": {
           "type": "object",
-          "description": "A user's membership in a context entity, including role and activity data.",
+          "description": "A user's membership in a channel entity, including role and activity data.",
           "properties": {
             "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-            "contextType": {
+            "channelType": {
               "type": "string",
               "required": true,
               "enum": ["organization", "workspace", "project"]
             },
-            "contextId": { "type": "string", "required": true, "format": "uuid" },
+            "channelId": { "type": "string", "required": true, "format": "uuid" },
             "userId": { "type": "string", "required": true, "format": "uuid" },
             "role": {
               "type": "string",
@@ -342,8 +342,8 @@
         },
         "example": {
           "id": "e42e3138-0158-4182-9492-ec103576391c",
-          "contextType": "organization",
-          "contextId": "054c1669-6dcb-4f1d-9acf-5fba56e1fb7f",
+          "channelType": "organization",
+          "channelId": "054c1669-6dcb-4f1d-9acf-5fba56e1fb7f",
           "userId": "e73242d3-88f3-450e-838c-c98f7f3d9215",
           "organizationId": "14e27393-e22a-45d1-8c22-3250dc6fc109",
           "workspaceId": "92f342dd-6e67-4956-ab1c-f91b3ce934d7",
@@ -433,8 +433,8 @@
       {
         "status": 200,
         "description": "Invitation was accepted",
-        "name": "ContextEntityBase",
-        "ref": "#/components/schemas/ContextEntityBase",
+        "name": "ChannelEntityBase",
+        "ref": "#/components/schemas/ChannelEntityBase",
         "contentType": "application/json",
         "schema": {
           "type": "object",
@@ -463,7 +463,7 @@
               "required": true
             }
           },
-          "ref": "#/components/schemas/ContextEntityBase",
+          "ref": "#/components/schemas/ChannelEntityBase",
           "contentType": "application/json"
         },
         "example": {
@@ -589,12 +589,12 @@
                     "properties": {
                       "id": { "type": "string", "required": true, "format": "uuid" },
                       "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                      "contextType": {
+                      "channelType": {
                         "type": "string",
                         "required": true,
                         "enum": ["organization", "workspace", "project"]
                       },
-                      "contextId": { "type": "string", "required": true, "format": "uuid" },
+                      "channelId": { "type": "string", "required": true, "format": "uuid" },
                       "userId": { "type": "string", "required": true, "format": "uuid" },
                       "role": {
                         "type": "string",
@@ -655,8 +655,8 @@
               "membership": {
                 "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
                 "tenantId": "u87zf2",
-                "contextType": "organization",
-                "contextId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
+                "channelType": "organization",
+                "channelId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
                 "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
                 "organizationId": "ab6c6ea4-cec4-470a-acfc-5636298aa0f2",
                 "workspaceId": "1d13baee-938d-4a51-81c9-6f214148469f",
@@ -689,8 +689,8 @@
               "membership": {
                 "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
                 "tenantId": "lwj64z",
-                "contextType": "organization",
-                "contextId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
+                "channelType": "organization",
+                "channelId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
                 "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
                 "organizationId": "661de358-c94b-4156-816b-769bf63c907e",
                 "workspaceId": "8bb48f50-f5ac-45ed-a8f4-71af3e3099da",
@@ -847,8 +847,8 @@
           "items": [
             {
               "id": "b63f20bc-295d-4299-b66a-04b550926e5e",
-              "contextType": "organization",
-              "contextId": "73b6c996-a20e-4bb3-b5a6-c4c4758edb9c",
+              "channelType": "organization",
+              "channelId": "73b6c996-a20e-4bb3-b5a6-c4c4758edb9c",
               "email": "phillip32@yahoo.com",
               "userId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "tokenId": "c9f521e3-f100-4f6d-8b23-8d10af2a4b70",
@@ -864,8 +864,8 @@
             },
             {
               "id": "17e5b49f-b1c3-4cc0-bf3d-f8449a148ac7",
-              "contextType": "organization",
-              "contextId": "8981cd73-a7bf-4e99-b126-641d43cb870c",
+              "channelType": "organization",
+              "channelId": "8981cd73-a7bf-4e99-b126-641d43cb870c",
               "email": "clifford88@yahoo.com",
               "userId": "772a771f-c150-465e-9635-46594859fc3d",
               "tokenId": "ccfef453-bf07-44c2-8ef7-7d580cc1edd9",

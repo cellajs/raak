@@ -9,7 +9,7 @@ import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
-import { getValidContextEntity } from '#/permissions';
+import { getValidChannelEntity } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
@@ -34,7 +34,7 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
   const user = ctx.var.user;
   const organization = ctx.var.organization;
 
-  const { entity: workspace } = await getValidContextEntity(ctx, workspaceId, 'workspace', 'read');
+  const { entity: workspace } = await getValidChannelEntity(ctx, workspaceId, 'workspace', 'read');
 
   // Check if adding is allowed based on the organization's restrictions
   const currentProjectsCount = await getOrgEntityCount(ctx, organization.id, 'project');

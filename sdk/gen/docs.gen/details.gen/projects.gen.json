@@ -94,12 +94,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -267,8 +267,8 @@
             "membership": {
               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
               "tenantId": "8nu0zs",
-              "contextType": "organization",
-              "contextId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
+              "channelType": "organization",
+              "channelId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
               "userId": "7115d570-615b-4dd2-8ee9-01082e977f39",
               "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
               "workspaceId": "8efd4f8b-9ac1-4e56-bbb5-ebe2385f83da",
@@ -442,12 +442,12 @@
                         "properties": {
                           "id": { "type": "string", "required": true, "format": "uuid" },
                           "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                          "contextType": {
+                          "channelType": {
                             "type": "string",
                             "required": true,
                             "enum": ["organization", "workspace", "project"]
                           },
-                          "contextId": { "type": "string", "required": true, "format": "uuid" },
+                          "channelId": { "type": "string", "required": true, "format": "uuid" },
                           "userId": { "type": "string", "required": true, "format": "uuid" },
                           "role": {
                             "type": "string",
@@ -631,8 +631,8 @@
                 "membership": {
                   "id": "1f366272-953c-486d-81dc-ee61f43478a1",
                   "tenantId": "t4n7co",
-                  "contextType": "organization",
-                  "contextId": "b5c28e6f-552e-42e4-940d-66f5ab0174ab",
+                  "channelType": "organization",
+                  "channelId": "b5c28e6f-552e-42e4-940d-66f5ab0174ab",
                   "userId": "8ed7182a-e09f-41c6-9302-0e59a26ff7ac",
                   "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
                   "workspaceId": "0fe88d20-ed47-4cd6-aea6-575d1255c1f5",
@@ -932,12 +932,12 @@
                         "properties": {
                           "id": { "type": "string", "required": true, "format": "uuid" },
                           "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                          "contextType": {
+                          "channelType": {
                             "type": "string",
                             "required": true,
                             "enum": ["organization", "workspace", "project"]
                           },
-                          "contextId": { "type": "string", "required": true, "format": "uuid" },
+                          "channelId": { "type": "string", "required": true, "format": "uuid" },
                           "userId": { "type": "string", "required": true, "format": "uuid" },
                           "role": {
                             "type": "string",
@@ -1110,8 +1110,8 @@
                 "membership": {
                   "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
                   "tenantId": "u87zf2",
-                  "contextType": "organization",
-                  "contextId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
+                  "channelType": "organization",
+                  "channelId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
                   "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
                   "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
                   "workspaceId": "1d13baee-938d-4a51-81c9-6f214148469f",
@@ -1143,8 +1143,8 @@
                 "membership": {
                   "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
                   "tenantId": "lwj64z",
-                  "contextType": "organization",
-                  "contextId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
+                  "channelType": "organization",
+                  "channelId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
                   "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
                   "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
                   "workspaceId": "8bb48f50-f5ac-45ed-a8f4-71af3e3099da",
@@ -1335,12 +1335,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -1507,8 +1507,8 @@
             "membership": {
               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
               "tenantId": "8nu0zs",
-              "contextType": "organization",
-              "contextId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
+              "channelType": "organization",
+              "channelId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
               "userId": "7115d570-615b-4dd2-8ee9-01082e977f39",
               "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
               "workspaceId": "8efd4f8b-9ac1-4e56-bbb5-ebe2385f83da",
@@ -1680,12 +1680,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -1852,8 +1852,8 @@
             "membership": {
               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
               "tenantId": "8nu0zs",
-              "contextType": "organization",
-              "contextId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
+              "channelType": "organization",
+              "channelId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
               "userId": "7115d570-615b-4dd2-8ee9-01082e977f39",
               "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
               "workspaceId": "8efd4f8b-9ac1-4e56-bbb5-ebe2385f83da",
@@ -2047,12 +2047,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -2219,8 +2219,8 @@
             "membership": {
               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
               "tenantId": "8nu0zs",
-              "contextType": "organization",
-              "contextId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
+              "channelType": "organization",
+              "channelId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
               "userId": "7115d570-615b-4dd2-8ee9-01082e977f39",
               "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
               "workspaceId": "8efd4f8b-9ac1-4e56-bbb5-ebe2385f83da",
@@ -2386,12 +2386,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -2558,8 +2558,8 @@
             "membership": {
               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
               "tenantId": "8nu0zs",
-              "contextType": "organization",
-              "contextId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
+              "channelType": "organization",
+              "channelId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
               "userId": "7115d570-615b-4dd2-8ee9-01082e977f39",
               "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
               "workspaceId": "8efd4f8b-9ac1-4e56-bbb5-ebe2385f83da",
@@ -2720,12 +2720,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -2892,8 +2892,8 @@
             "membership": {
               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
               "tenantId": "8nu0zs",
-              "contextType": "organization",
-              "contextId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
+              "channelType": "organization",
+              "channelId": "15fbb7d9-3e21-4d3c-9f13-8d6429c19ae6",
               "userId": "7115d570-615b-4dd2-8ee9-01082e977f39",
               "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
               "workspaceId": "8efd4f8b-9ac1-4e56-bbb5-ebe2385f83da",

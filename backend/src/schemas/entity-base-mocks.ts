@@ -11,10 +11,10 @@ const mockEntityCore = () => ({
 });
 
 /**
- * Generates a mock ContextEntityBase response.
- * Context entities have memberships (e.g., organization).
+ * Generates a mock ChannelEntityBase response.
+ * Channel entities have memberships (e.g., organization).
  */
-export const mockContextEntityBase = (key = 'context-entity:default') =>
+export const mockChannelEntityBase = (key = 'context-entity:default') =>
   withFakerSeed(key, () => {
     const name = faker.company.name();
     return {

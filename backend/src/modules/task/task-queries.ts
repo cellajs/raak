@@ -76,7 +76,7 @@ export const findProjectsByWorkspace = async (ctx: AuthContext, { workspaceId }:
     .innerJoin(
       membershipsTable,
       and(
-        eq(membershipsTable.contextType, 'project'),
+        eq(membershipsTable.channelType, 'project'),
         eq(membershipsTable.projectId, projectsTable.id),
         eq(membershipsTable.workspaceId, workspaceId),
         eq(membershipsTable.userId, userId),
@@ -118,7 +118,7 @@ export const findProjectMemberUserIds = async (
     .where(
       and(
         inArray(membershipsTable.userId, userIds),
-        eq(membershipsTable.contextType, 'project'),
+        eq(membershipsTable.channelType, 'project'),
         eq(membershipsTable.projectId, projectId),
         eq(membershipsTable.organizationId, organizationId),
       ),

@@ -19,7 +19,7 @@ import {
   validSlugSchema,
   validTempIdSchema,
 } from '#/schemas';
-import { contextEntityIncludedSchema } from '#/schemas/context-entity-included';
+import { channelEntityIncludedSchema } from '#/schemas/channel-entity-included';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
 /** Task status counts for accepted/iced cutoff display */
@@ -33,7 +33,7 @@ const taskStatusCountsSchema = z.object({
   iced: z.number(),
 });
 
-const baseIncluded = contextEntityIncludedSchema('project');
+const baseIncluded = channelEntityIncludedSchema('project');
 const projectIncludedSchema = baseIncluded.extend({
   counts: baseIncluded.shape.counts.unwrap().extend({ taskStatusCounts: taskStatusCountsSchema.optional() }).optional(),
 });
@@ -58,7 +58,7 @@ export const projectWithMembershipSchema = projectSchema.extend({
 });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for project */
-export const projectContract = evolutionContract.context('project', {
+export const projectContract = evolutionContract.channel('project', {
   createItem: z.object({
     id: validTempIdSchema,
     name: validNameSchema,
