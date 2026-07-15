@@ -48,6 +48,7 @@ const generateWorkspaceBase = (
     organizationId,
     createdAt,
     publishedAt: createdAt,
+    publicAt: null,
     createdBy: null,
     updatedAt: createdAt,
     updatedBy: null,

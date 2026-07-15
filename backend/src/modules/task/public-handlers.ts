@@ -22,14 +22,11 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Public reads intentionally bypass tenant status checks from tenantGuard.
-  const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', mainTask.projectId);
-  if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-
-  // Anonymous engine check: publicRead('publicParent') makes the task readable when its
-  // parent project's publicAt is set. Parent row resolved here, per the cross-row design.
-  const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask, parentRow: project });
-  if (!checkPermission([], 'read', subject).isAllowed) {
-    throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
+  // Anonymous engine check: publicRead('publicSelf') makes the task readable once its own
+  // publicAt is set (denormalized from the parent project via create path + cascade trigger).
+  const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
+  if (!checkPermission([], 'read', subject, { anonymous: true }).isAllowed) {
+    throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
   }
 
   const publicCtx = { var: { db: unsafeInternalAdminDb!, userId: '', organizationId: '' } } as AuthContext;
@@ -47,14 +44,10 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
-  // Anonymous engine check with a representative subject: publicRead('publicParent') is
-  // row-independent for tasks (it reads only the parent project), so one check covers the list.
-  const listSubject = buildSubject(
-    'task',
-    { organizationId: project.organizationId, projectId: project.id },
-    { parentRow: project },
-  );
-  if (!checkPermission([], 'read', listSubject).isAllowed) {
+  // The project must itself be public (publicRead('publicSelf') → project.publicAt set); its
+  // tasks inherit that publicity via the publicAt cascade, so one project check gates the list.
+  const projectSubject = buildSubject('project', project, { id: project.id, row: project });
+  if (!checkPermission([], 'read', projectSubject, { anonymous: true }).isAllowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
   }
 

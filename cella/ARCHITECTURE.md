@@ -56,11 +56,13 @@ This diagram shows the normal production topology of a Cella app. Your own setup
 
 Tables can be split into `entity`, `resource`, and other tables. Entities are split into categories:
 
-- `ContextEntityType`: has memberships (`organization`)
-- `ProductEntityType`: content-related and inherits access from context membership (`attachment`)
-- `EntityType`: the union of `user`, context entities, and product entities
+- `ChannelEntityType`: has memberships (`organization`)
+- `ProductEntityType`: content-related and inherits access from channel membership (`attachment`)
+- `EntityType`: the union of `user`, channel entities, and product entities
 
-The template config has one context entity, `organization`, and one product entity, `attachment`, whose parent is `organization`. Forks commonly add deeper contexts and products; examples in comments use `project`, `task`, and `label`, but those are not part of the default hierarchy.
+The template config has one channel entity, `organization`, and one product entity, `attachment`, whose parent is `organization`. Forks commonly add deeper channels and products; examples in comments use `project`, `task`, and `label`, but those are not part of the default hierarchy.
+
+> **Glossary — "channel".** A **channel entity** is a membership-scoped entity that hosts products (e.g. `organization`, `project`): it carries roles and memberships, and its `channelType`/`channelId` scope permissions and counters. This is distinct from two other uses of "channel": a **stream channel** — the sync dispatcher's routing key `type:id` (e.g. `org:abc`), which at runtime is always a root channel-entity id — and the browser's **tab broadcast channel** (`BroadcastChannel`). The three align by design (a stream channel *is* a root channel entity's routing key); where a doc means the routing key or the browser API specifically, it says "stream channel" or "tab broadcast channel".
 
 Both frontend and backend have business logic split in modules. Most of them are in both backend and frontend, such as `authentication`, `user` and `organization`. The benefit of modularity is twofold: better code (readability, portability etc) and to pull upstream cella changes with less friction.
 
@@ -69,22 +71,22 @@ Both frontend and backend have business logic split in modules. Most of them are
 The entity taxonomy is defined using `createEntityHierarchy()`. Forks customize their entity setup in `shared/config/hierarchy-config.ts`.
 
 ```
-createEntityHierarchy(roles).user().context('organization', ...).product('attachment', ...).build()
+createEntityHierarchy(roles).user().channel('organization', ...).product('attachment', ...).build()
 ```
 
-The builder validates that parents exist before children, products have a context parent, context roles are valid, and optional `relatedContexts`/`nullableAncestors` are structurally valid. Public readability is declared and validated separately by `configurePermissions()` in `shared/config/permissions-config.ts`. The resulting frozen `EntityHierarchy` drives schema helpers, permission traversal, count/seq scoping, menu construction, and stream dispatch.
+The builder validates that parents exist before children, products have a context parent, context roles are valid, and optional `relatedChannels`/`nullableAncestors` are structurally valid. Public readability is declared and validated separately by `configurePermissions()` in `shared/config/permissions-config.ts`. The resulting frozen `EntityHierarchy` drives schema helpers, permission traversal, count/seq scoping, menu construction, and stream dispatch.
 
-Key methods: `getParent()`, `getOrderedAncestors()`, `getRelatedContexts()`, `getNullableAncestors()`, `getChildren()`, and `getOrderedDescendants()`.
+Key methods: `getParent()`, `getOrderedAncestors()`, `getRelatedChannels()`, `getNullableAncestors()`, `getChildren()`, and `getOrderedDescendants()`.
 
 ## Sync engine
 
-Cella has a selective approach to sync and offline. Context entities such as organizations use standard CRUD OpenAPI endpoints. Product entities such as attachments add `stx`, seq-based catchup, offline mutation plumbing, and a notify-then-fetch realtime path. TanStack Query is the client-side merge point for both context and product entities as well as other resources.
+Cella has a selective approach to sync and offline. Channel entities such as organizations use standard CRUD OpenAPI endpoints. Product entities such as attachments add `stx`, seq-based catchup, offline mutation plumbing, and a notify-then-fetch realtime path. TanStack Query is the client-side merge point for both context and product entities as well as other resources.
 
 The pipeline flows: **Postgres WAL → CDC worker → WebSocket → ActivityBus → SSE → client**. There is one realtime endpoint:
 
 - **App stream** (`/entities/app/stream`): authenticated, carries permitted product-entity notifications and membership changes. Product and membership payloads share `event: change` and are distinguished by `kind: 'entity' | 'membership'`. One leader tab holds SSE; followers receive notifications through BroadcastChannel.
 
-Sequence numbers are hierarchy-aware: the CDC worker stamps product creates and updates—including soft deletes and restores—and scopes counters to the row's deepest non-null ancestor. 
+Sequence numbers are hierarchy-aware: the CDC worker stamps product creates and updates (including soft deletes and restores) and scopes counters to the row's deepest non-null ancestor. 
 
 ### Merge and client lifecycle
 
@@ -94,7 +96,7 @@ Before opening SSE, the client performs catchup to establish or reconcile per-sc
 
 ### Schema evolution (WIP)
 
-Offline clients don't update in lockstep with deploys, so breaking schema changes to context and product entities can ship as **append-only lens modules** in `shared/src/schema-evolution/` (global schema version = lens count). Each lens declares one change (`rename`, `add`, `drop`, `retype`, `setRename`); from that declaration the system derives widened wire schemas for the expand window, product ops/context body normalization, and a boot-time client cache migration that rewrites cached rows and queued mutations locally — no refetch. Tabs broadcast their schema version so a stale bundle stops persisting before it can downgrade a migrated store. With an empty lens list (current state) everything is a passthrough; the interim mechanism for breaking changes is a `clientCacheVersion` bump (cache wipe, mutations kept), CI-enforced by `schema-bust-gate`. Version telemetry and contraction policy exist, but fleet-floor/minimum-window contraction is not automatically enforced yet. See [Schema evolution](/docs/page/architecture/schema-evolution) for the shipping playbook.
+Offline clients don't update in lockstep with deploys, so breaking schema changes to context and product entities can ship as **append-only lens modules** in `shared/src/schema-evolution/` (global schema version = lens count). Each lens declares one change (`rename`, `add`, `drop`, `retype`, `setRename`); from that declaration the system derives widened wire schemas for the expand window, product ops/context body normalization, and a boot-time client cache migration that rewrites cached rows and queued mutations locally (no refetch). Tabs broadcast their schema version so a stale bundle stops persisting before it can downgrade a migrated store. With an empty lens list (current state) everything is a passthrough; the interim mechanism for breaking changes is a `clientCacheVersion` bump (cache wipe, mutations kept), CI-enforced by `schema-bust-gate`. Version telemetry and contraction policy exist, but fleet-floor/minimum-window contraction is not automatically enforced yet. See [Schema evolution](/docs/page/architecture/schema-evolution) for the shipping playbook.
 
 ## Query layer
 
@@ -119,7 +121,7 @@ The React Query cache is persisted into `appdb` via Dexie with two modes control
 - **Offline mode** (`offlineAccess=true`): scope `rq`, survives browser restart and eagerly fills read caches for all orgs. It does not by itself make failed writes durable.
 - **Session mode** (`offlineAccess=false`): per-tab scope `s-<uuid>`, survives refresh but cleaned up on tab close (orphans swept on next startup). Sync service only resolves staleness for the current org.
 
-While signed out the persister simply does nothing and the cache stays in memory, so the provider can stay mounted at the app root and persistence follows the user automatically. Within each mode the persister uses a **hybrid storage layout**: product entity queries are stored as individual records in the `queries` table for incremental diffing — only changed queries are written — while context queries are bundled into the `meta` record, since they are few, small, and all needed at startup.
+While signed out the persister simply does nothing and the cache stays in memory, so the provider can stay mounted at the app root and persistence follows the user automatically. Within each mode the persister uses a **hybrid storage layout**: product entity queries are stored as individual records in the `queries` table for incremental diffing (only changed queries are written), while context queries are bundled into the `meta` record, since they are few, small, and all needed at startup.
 
 On app routes, only the leader tab's paused mutations pass `shouldDehydrateMutation`; all tabs can still persist query changes. In the shared offline `rq` scope, context queries and mutations occupy the same meta record, so a follower query write can still replace the leader's dehydrated mutation array. Leader-only dehydration therefore reduces duplication but is not a complete cross-tab single-writer guarantee. Since `mutationFn` cannot be serialized, entity modules register replay defaults through `addMutationRegistrar()` before restoration; serialized variables must include every ID the default needs after reload.
 
@@ -127,13 +129,13 @@ The meta record also carries a `schemaVersion` ordinal (see [Schema evolution](/
 
 ### Enrichment pipeline
 
-A QueryCache subscriber in `frontend/src/query/enrichment/` auto-enriches context entity list data whenever cache entries change. Three enrichers run in sequence on each item:
+A QueryCache subscriber in `frontend/src/query/enrichment/` auto-enriches channel entity list data whenever cache entries change. Three enrichers run in sequence on each item:
 
 1. **Membership**: attaches the user's cached membership to the entity.
 2. **Permissions**: computes a `can` map (action → `true | false | 'own'`, keyed by entity type + descendants) from the membership role and `accessPolicies`. The `'own'` value indicates the action is allowed only for entities created by the current user (implicit owner relation). Use `resolvePermission(permission, entity.createdBy?.id, userId)` to resolve per-entity. System admins get full permissions.
 3. **Ancestor slugs**: walks the entity hierarchy to build URL-friendly slug paths from cached data.
 
-This is how `item.membership`, `item.can`, and `item.ancestorSlugs` are populated on context entities without extra API calls.
+This is how `item.membership`, `item.can`, and `item.ancestorSlugs` are populated on channel entities without extra API calls.
 
 ## Authentication
 
@@ -150,11 +152,11 @@ Cookie-based sessions (hashed, typed as `regular`/`impersonation`/`mfa`) with si
 
 ## Multi-tenancy
 
-A `tenant` is not an entity — but a `resource` that acts as top-level isolation unit.
+A `tenant` is not an entity, but a `resource` that acts as top-level isolation unit.
 
-Tenant-scoped routes use `/:tenantId/` in the path. Organization-scoped product routes use the `authGuard` → `tenantGuard` → `orgGuard` chain; the guards load the authorized context and initially set `ctx.var.db` to `baseDb`. Product entity handlers then wrap their DB operations in `tenantRead()` (read-only) or `tenantContext()` (read-write) to get an RLS-scoped transaction. Context entity handlers use `baseDb` directly (no RLS), with the guard set appropriate to their route. See AGENTS.md for the full guard matrix.
+Tenant-scoped routes use `/:tenantId/` in the path. Organization-scoped product routes use the `authGuard` → `tenantGuard` → `orgGuard` chain; the guards load the authorized context and initially set `ctx.var.db` to `baseDb`. Product entity handlers then wrap their DB operations in `tenantRead()` (read-only) or `tenantContext()` (read-write) to get an RLS-scoped transaction. Channel entity handlers use `baseDb` directly (no RLS), with the guard set appropriate to their route. See AGENTS.md for the full guard matrix.
 
-## Security
+## Permissions
 
 Cella tries to apply a defense-in-depth strategy. The permission manager and guard chain are the primary authorization mechanisms; tenant RLS, composite FKs, and immutability triggers are safety nets that catch application bugs.
 
@@ -171,7 +173,7 @@ The permission decision engine (`checkPermission` / `getAllDecisions`) lives in 
 
 RLS session variables (`app.tenant_id`, `app.user_id`, `app.include_deleted`) are set per transaction by the helpers in `backend/src/db/tenant-context.ts`. `tenant_id` is the hard DB-enforced SELECT boundary for product tables and tenant-scoped support tables such as `yjs_documents`.
 
-**Context entities** (organizations in the template) and **memberships** do not use RLS. Access control for these tables is enforced at the application layer by the relevant guard/permission path.
+**Channel entities** (organizations in the template) and **memberships** do not use RLS. Access control for these tables is enforced at the application layer by the relevant guard/permission path.
 
 Organization isolation is enforced at the **application layer** by the guard/permission path, not at the RLS level. This avoids expensive `EXISTS` membership subqueries on every row access. On organization-scoped product routes, `orgGuard` validates membership before the handler runs. Cross-org API tests in `backend/tests/security/cross-org.test.ts` verify this boundary.
 
@@ -181,8 +183,8 @@ Tenant SELECT policies are fail-closed: missing or empty `app.tenant_id` returns
 
 Product entity handlers use helpers from `backend/src/db/tenant-context.ts`:
 
-- **`tenantRead(ctx, fn)`** — Opens a read-only transaction with RLS session variables set. `tenantReadIncludingDeleted()` additionally sets `app.include_deleted=true` for delta/tombstone reads.
-- **`tenantContext(ctx, fn)`** — Opens a read-write transaction and sets the same variables, so SELECT policies pass for reads/`RETURNING` inside the write. Because tables use `FORCE ROW LEVEL SECURITY`, the schema installs unconditional write-through policies; write isolation is enforced by guards, permissions, composite FKs, and immutability triggers rather than restrictive RLS write predicates. `tenantContextIncludingDeleted()` can see tombstones.
+- **`tenantRead(ctx, fn)`**: opens a read-only transaction with RLS session variables set. `tenantReadIncludingDeleted()` additionally sets `app.include_deleted=true` for delta/tombstone reads.
+- **`tenantContext(ctx, fn)`**: opens a read-write transaction and sets the same variables, so SELECT policies pass for reads/`RETURNING` inside the write. Because tables use `FORCE ROW LEVEL SECURITY`, the schema installs unconditional write-through policies; write isolation is enforced by guards, permissions, composite FKs, and immutability triggers rather than restrictive RLS write predicates. `tenantContextIncludingDeleted()` can see tombstones.
 
 The `tenantRead` callback receives a `readCtx` with `{ var: { ...ctx.var, db: tx } }` so query functions can use the RLS-scoped transaction.
 
@@ -191,7 +193,7 @@ The `tenantRead` callback receives a `readCtx` with `{ var: { ...ctx.var, db: tx
 | Category | SELECT | Write | Builder | Use case |
 |----------|--------|-------|---------|----------|
 | Tenant-scoped | Fail-closed tenant match; tombstones hidden unless requested | Unconditional write-through policy; app-layer authorization | `tenantSelectPolicy()`, `writeThroughPolicies()` | `attachments`, `yjs_documents`; fork-added tenant-scoped products |
-| No RLS | — | — | — | Context entities, memberships, and ordinary resources |
+| No RLS | - | - | - | Channel entities, memberships, and ordinary resources |
 
 ### Database roles
 
@@ -207,6 +209,8 @@ Identity columns (`tenant_id`, `organization_id`, `user_id` on memberships, etc.
 ### Permission manager
 
 `getAllDecisions()` resolves permissions by walking the entity hierarchy (most-specific context → root), matching memberships against policies defined with `configurePermissions()` in `shared/config/permissions-config.ts`. Policies support `1` (allowed), `0` (denied), and `'own'` (allowed only when `entity.createdBy === userId`). Grant attribution records membership, relation, public, or system-admin sources. System admins bypass ordinary checks.
+
+See [Permissions](/docs/page/architecture/permissions) for the full permission model, including row conditions, public read grants, the per-tier enforcement paths, and their constraints.
 
 ### Fork contract
 
@@ -235,9 +239,9 @@ At startup the backend builds the full spec (including `info.x-extensions`), val
 
 Mock generators live beside the backend source in `backend/src/mocks/` (plus module-specific mock files) and serve three purposes:
 
-- **OpenAPI examples** — Deterministic, seeded response mocks provide `example:` values on Zod schemas and route responses.
-- **Database seeding** — Insert mocks return Drizzle `Insert*Model` types; generators use `UniqueEnforcer` where seeded values must be unique.
-- **Tests and load tests** — Reusable mock data generators.
+- **OpenAPI examples**: deterministic, seeded response mocks provide `example:` values on Zod schemas and route responses.
+- **Database seeding**: insert mocks return Drizzle `Insert*Model` types; generators use `UniqueEnforcer` where seeded values must be unique.
+- **Tests and load tests**: reusable mock data generators.
 
 
 ## Testing

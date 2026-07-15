@@ -7,7 +7,7 @@ vi.mock('shared', () => ({
   appConfig: {
     slug: 'test-app',
     productEntityTypes: ['task', 'label', 'attachment'],
-    contextEntityTypes: ['organization', 'workspace', 'project'],
+    channelEntityTypes: ['organization', 'workspace', 'project'],
     clientCacheVersion: 'v1',
   },
 }));
@@ -30,7 +30,7 @@ const { persister, sessionPersister, cleanupOrphanedSessions } = await import('~
 // The persister reads/writes the live per-user appdb; bind one (owner `u1`) per test.
 const { bindAppDb, deleteAppDb, getAppDb } = await import('~/query/app-db');
 
-// -- Helpers ------------------------------------------------------------------
+// Helpers
 
 function makeQuery(hash: string, entityType: string, dataUpdatedAt: number, data: unknown = null) {
   return {
@@ -69,7 +69,7 @@ async function deleteDb() {
   await deleteAppDb();
 }
 
-// -- Tests --------------------------------------------------------------------
+// Tests
 
 describe('per-query IDB persister', () => {
   beforeEach(async () => {
@@ -238,8 +238,8 @@ describe('per-query IDB persister', () => {
 
       // Context queries bundled in meta
       const meta = await getAppDb()!.meta.get('rq');
-      expect(meta!.contextQueries).toHaveLength(3);
-      const hashes = meta!.contextQueries.map((q: { queryHash: string }) => q.queryHash).sort();
+      expect(meta!.channelQueries).toHaveLength(3);
+      const hashes = meta!.channelQueries.map((q: { queryHash: string }) => q.queryHash).sort();
       expect(hashes).toEqual(['["me"]', '["member","list"]', '["organization","list"]']);
     });
 
@@ -324,7 +324,7 @@ describe('per-query IDB persister', () => {
         timestamp: Date.now() - 3 * 60 * 60 * 1000, // 3 hours ago (past 2h cutoff)
         buster: '',
         mutations: [],
-        contextQueries: [],
+        channelQueries: [],
       });
       await db.queries.put({
         id: `${oldScope}:["task","list"]`,

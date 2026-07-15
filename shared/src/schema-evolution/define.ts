@@ -1,12 +1,12 @@
-import type { ContextEntityType, ProductEntityType } from '../../types';
+import type { ChannelEntityType, ProductEntityType } from '../../types';
 
 /**
  * Entity types lenses can target. Product entities get the full artifact set
- * (ops/stx normalization, mirror writes); context entities get the reduced set
+ * (ops/stx normalization, mirror writes); channel entities get the reduced set
  * (body widening + normalization + cache migration): their writes are plain
  * full-body PUTs with no per-field merge.
  */
-export type LensEntityType = ProductEntityType | ContextEntityType;
+export type LensEntityType = ProductEntityType | ChannelEntityType;
 
 /**
  * Version of the lens-module *format* itself (Cambria's "lens inception" guard).

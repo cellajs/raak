@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { type ContextEntityType, type EntityRole, hierarchy, roles } from 'shared';
+import { type ChannelEntityType, type EntityRole, hierarchy, roles } from 'shared';
 import { RadioGroup, RadioGroupItem } from '~/modules/ui/radio-group';
 import { cn } from '~/utils/cn';
 
 interface Props {
   onValueChange: (value?: string) => void;
   value?: EntityRole;
-  /** Restrict options to this context entity's role vocabulary (e.g. course → staff/student/guest). */
-  entityType?: ContextEntityType;
+  /** Restrict options to this channel entity's role vocabulary (e.g. course → staff/student/guest). */
+  entityType?: ChannelEntityType;
   className?: string;
 }
 

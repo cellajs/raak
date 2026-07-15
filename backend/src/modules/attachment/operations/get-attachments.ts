@@ -9,6 +9,7 @@ import type { attachmentListQuerySchema } from '#/modules/attachment/attachment-
 import { productCountersTable } from '#/modules/entities/product-counters-db';
 import { findProjectById } from '#/modules/task/task-queries';
 import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
+import { actorFrom } from '#/permissions/actor';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumn } from '#/utils/order-column';
@@ -29,18 +30,15 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
 
   // cella change: Resolve the caller's readable scope (unconditional projects + row-conditional
   // slices, e.g. `read: 'own'`) and compile it to a single row predicate.
+  const actor = actorFrom(ctx);
   const readFilter = resolveCollectionReadFilter(
     ctx.var.memberships,
     'attachment',
     organizationId,
-    projectId ? { subContextId: projectId } : undefined,
+    actor,
+    projectId ? { subChannelId: projectId } : undefined,
   );
-  const scopeWhere = buildCollectionReadWhere(
-    readFilter,
-    attachmentsTable,
-    attachmentsTable.projectId,
-    ctx.var.user.id,
-  );
+  const scopeWhere = buildCollectionReadWhere(readFilter, attachmentsTable, attachmentsTable.projectId, actor);
 
   if (scopeWhere.kind === 'none') {
     const data = { items: [], total: 0 };

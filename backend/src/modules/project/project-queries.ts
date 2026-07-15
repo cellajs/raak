@@ -1,7 +1,7 @@
 import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from 'drizzle-orm';
-import type { ContextEntityType, EntityRole } from 'shared';
+import type { ChannelEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
-import { contextCountersTable } from '#/modules/entities/context-counters-db';
+import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getEntityCountsSelect } from '#/modules/entities/helpers/get-entity-counts';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -49,14 +49,14 @@ export const deleteProjectsByIds = async (ctx: AuthContext, { ids }: DeleteProje
 
 interface FindMaxDisplayOrderOpts {
   userId: string;
-  contextType: ContextEntityType;
+  channelType: ChannelEntityType;
   workspaceId: string;
 }
 
 /** Find the max displayOrder for a user's memberships in a workspace. */
 export const findMaxDisplayOrder = async (
   ctx: DbContext,
-  { userId, contextType, workspaceId }: FindMaxDisplayOrderOpts,
+  { userId, channelType, workspaceId }: FindMaxDisplayOrderOpts,
 ) => {
   const { db } = ctx.var;
   const [{ maxOrder }] = await db
@@ -65,7 +65,7 @@ export const findMaxDisplayOrder = async (
     .where(
       and(
         eq(membershipsTable.userId, userId),
-        eq(membershipsTable.contextType, contextType),
+        eq(membershipsTable.channelType, channelType),
         eq(membershipsTable.workspaceId, workspaceId),
       ),
     );
@@ -75,14 +75,14 @@ export const findMaxDisplayOrder = async (
 interface DeleteProjectMembershipOpts {
   membershipId: string;
   userId: string;
-  contextId: string;
+  channelId: string;
   projectId: string;
 }
 
 /** Delete a project membership by its project identity. */
 export const deleteProjectMembership = async (
   ctx: DbContext,
-  { membershipId, userId, contextId, projectId }: DeleteProjectMembershipOpts,
+  { membershipId, userId, channelId, projectId }: DeleteProjectMembershipOpts,
 ) => {
   const { db } = ctx.var;
   return db
@@ -91,8 +91,8 @@ export const deleteProjectMembership = async (
       and(
         eq(membershipsTable.id, membershipId),
         eq(membershipsTable.userId, userId),
-        eq(membershipsTable.contextType, 'project'),
-        eq(membershipsTable.contextId, contextId),
+        eq(membershipsTable.channelType, 'project'),
+        eq(membershipsTable.channelId, channelId),
         eq(membershipsTable.projectId, projectId),
       ),
     );
@@ -134,7 +134,7 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
   const membershipKeyOn = and(
     eq(membershipsTable.projectId, projectsTable.id),
     eq(membershipsTable.userId, userId),
-    eq(membershipsTable.contextType, entityType),
+    eq(membershipsTable.channelType, entityType),
   );
 
   // Membership filters (role/archived) in JOIN ON
@@ -184,8 +184,8 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
 
   if (countData) {
     query = query.leftJoin(
-      contextCountersTable,
-      sql`${projectsTable.id}::text = ${contextCountersTable.contextKey}`,
+      channelCountersTable,
+      sql`${projectsTable.id}::text = ${channelCountersTable.channelKey}`,
     ) as typeof query;
   }
 

@@ -1,4 +1,4 @@
-import type { ContextEntityType } from 'shared';
+import type { ChannelEntityType } from 'shared';
 
 export type EntityRouteEntry = {
   /** Route path template for this entity */
@@ -8,7 +8,7 @@ export type EntityRouteEntry = {
   /** Default search params for this entity route */
   search?: Record<string, string>;
   /** When shown as subitem, navigate to a parent entity's route instead */
-  subitemOf?: { entityType: ContextEntityType; searchParam: string };
+  subitemOf?: { entityType: ChannelEntityType; searchParam: string };
 };
 
 /**
@@ -32,4 +32,4 @@ export const entityRouteConfig = {
     paramName: 'slug',
     subitemOf: { entityType: 'workspace', searchParam: 'projectSlug' },
   },
-} as const satisfies Record<ContextEntityType, EntityRouteEntry>;
+} as const satisfies Record<ChannelEntityType, EntityRouteEntry>;

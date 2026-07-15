@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
-import { zContextEntityBase } from 'sdk/zod.gen';
+import { zChannelEntityBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
@@ -18,7 +18,7 @@ import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 const formSchema = z.object({
-  selectedProjects: z.array(zContextEntityBase).min(1),
+  selectedProjects: z.array(zChannelEntityBase).min(1),
   organizationId: z.string(),
   workspaceId: z.string(),
 });

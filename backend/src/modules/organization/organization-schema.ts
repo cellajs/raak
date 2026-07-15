@@ -21,11 +21,11 @@ import {
   validTempIdSchema,
   validUrlSchema,
 } from '#/schemas';
-import { contextEntityIncludedSchema } from '#/schemas/context-entity-included';
+import { channelEntityIncludedSchema } from '#/schemas/channel-entity-included';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 import { mockOrganizationResponse } from './organization-mocks';
 
-const organizationIncludedSchema = contextEntityIncludedSchema('organization');
+const organizationIncludedSchema = channelEntityIncludedSchema('organization');
 
 export const organizationSchema = z
   .object({
@@ -37,7 +37,7 @@ export const organizationSchema = z
     included: organizationIncludedSchema,
   })
   .openapi('Organization', {
-    description: 'The main context entity is an organization.',
+    description: 'The main channel entity is an organization.',
     example: mockOrganizationResponse(),
     'x-tags': schemaTags('data', 'organizations', 'cella'),
   });
@@ -47,7 +47,7 @@ export const organizationWithMembershipSchema = organizationSchema.extend({
 });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for organization */
-export const organizationContract = evolutionContract.context('organization', {
+export const organizationContract = evolutionContract.channel('organization', {
   createItem: z.object({
     id: validTempIdSchema,
     name: validNameSchema,

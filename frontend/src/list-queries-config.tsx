@@ -1,4 +1,4 @@
-import type { ContextEntityType } from 'shared';
+import type { ChannelEntityType } from 'shared';
 import { attachmentsCanonicalOptions } from '~/modules/attachment/query';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 import { membersListQueryOptions } from '~/modules/memberships/query';
@@ -6,7 +6,7 @@ import { organizationsListQueryOptions } from '~/modules/organization/query';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
-import type { BuildEntitySyncQueriesParams, ContextEntityListQueryMap, EntitySyncQueryOptions } from '~/query/types';
+import type { BuildEntitySyncQueriesParams, ChannelEntityListQueryMap, EntitySyncQueryOptions } from '~/query/types';
 
 /**
  * Maps context entity types to their list query options (used for menu generation).
@@ -16,11 +16,11 @@ import type { BuildEntitySyncQueriesParams, ContextEntityListQueryMap, EntitySyn
  * TDZ error when this module is evaluated mid-cycle (e.g. during Vite HMR) before the entity query
  * module has finished initializing. See the circular import chain via `~/query/realtime`.
  */
-export const contextEntityListQueriesByType = {
+export const channelEntityListQueriesByType = {
   organization: (params) => organizationsListQueryOptions(params),
   workspace: (params) => workspacesListQueryOptions(params),
   project: (params) => projectsListQueryOptions(params),
-} satisfies ContextEntityListQueryMap;
+} satisfies ChannelEntityListQueryMap;
 
 /** Returns query options to sync for a given entity. React Query handles staleness. */
 export const buildEntitySyncQueries = ({
@@ -35,14 +35,14 @@ export const buildEntitySyncQueries = ({
   const memberListLimit = 200;
   const queryOrganizationId = targetEntityType === 'organization' ? targetEntityId : currentOrganizationId;
 
-  const addMembersQuery = (contextEntityType: ContextEntityType) => {
+  const addMembersQuery = (channelEntityType: ChannelEntityType) => {
     if (includeMemberQueries) {
       syncQueries.push(
         membersListQueryOptions({
           entityId: targetEntityId,
           tenantId,
           organizationId: queryOrganizationId,
-          entityType: contextEntityType,
+          entityType: channelEntityType,
           limit: memberListLimit,
         }),
       );

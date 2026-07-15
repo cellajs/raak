@@ -1,7 +1,7 @@
 import { boolean, foreignKey, index, snakeCase, uuid, varchar } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
+import { channelRelationColumns } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
-import { contextRelationColumns } from '#/db/utils/context-relation-columns';
 import { productEntityColumns } from '#/db/utils/product-entity-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
@@ -17,6 +17,10 @@ export const attachmentsTable = snakeCase.table(
     // plain data, never permission indirection. deleteTasksOp owns the lifecycle
     // cascade; attachments without a task (taskId null) live at project level.
     taskId: uuid(),
+    // S3 bucket visibility (public vs private bucket) — NOT a permission grant. Unrelated to the
+    // permission `publicAt` (from productEntityColumns) which grants non-member read. Named `public`
+    // for historical reasons; a rename to e.g. `isInPublicBucket` is deferred to a future attachment
+    // migration to avoid a standalone data migration here.
     public: boolean().notNull().default(false),
     bucketName: varchar({ length: maxLength.field }).notNull(),
     /** Upload batch grouping (multi-file uploads shown as one carousel), not ownership. */
@@ -28,7 +32,7 @@ export const attachmentsTable = snakeCase.table(
     originalKey: varchar({ length: maxLength.url }).notNull(),
     convertedKey: varchar({ length: maxLength.url }),
     thumbnailKey: varchar({ length: maxLength.url }),
-    ...contextRelationColumns('attachment'),
+    ...channelRelationColumns('attachment'),
   },
   (table) => [
     index('attachments_organization_id_index').on(table.organizationId),

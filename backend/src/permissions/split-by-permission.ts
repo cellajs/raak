@@ -1,33 +1,26 @@
-import type { ContextEntityIdColumns, ContextEntityType, EntityActionType, ProductEntityType } from 'shared';
+import type { ChannelEntityIdColumns, ChannelEntityType, EntityActionType, ProductEntityType } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
 import { tenantRead } from '#/db/tenant-context';
 import { resolveEntities } from '#/modules/entities/entities-queries';
 import { checkPermission } from '#/permissions';
-import { buildSubject } from '#/permissions/build-subject';
+import { actorFrom } from '#/permissions/actor';
+import { buildSubjectFromEntity } from '#/permissions/build-subject';
 
 /**
- * Splits entity IDs into allowed and disallowed based on the user's permissions.
+ * Resolves `ids` and splits them into `allowedIds` / `rejectedIds` by whether the user may perform
+ * `action`.
  *
- * Resolves the entities and checks whether the user can perform the specified action.
- * The result is split into `allowedIds` and `rejectedIds`.
- * Throws 403 if none of the requested IDs are allowed.
- *
- * @param action - Action to check `"create" | "read" | "update" | "delete"`.
  * @param entityType - The type of entity (context or product, not user).
- * @param ids - The entity IDs to check.
- * @returns An object with `allowedIds` and `rejectedIds` arrays.
  * @throws {AppError} 403 if no entities are allowed.
  */
 export const splitByPermission = async (
   ctx: AuthContext,
   action: EntityActionType,
-  entityType: ContextEntityType | ProductEntityType,
+  entityType: ChannelEntityType | ProductEntityType,
   ids: string[],
 ) => {
-  const isSystemAdmin = ctx.var.isSystemAdmin;
-  const userId = ctx.var.user.id;
   const memberships = ctx.var.memberships;
 
   // Resolve entities (includes createdBy for implicit owner relation)
@@ -37,17 +30,15 @@ export const splitByPermission = async (
       ? await tenantRead(ctx, (readCtx) => resolveEntities(readCtx, entityType, ids))
       : await resolveEntities(ctx, entityType, ids);
 
-  // Check permissions for all entities in a single batch operation.
-  // userId enables 'own' policy evaluation per entity; the entity doubles as `row` so
-  // row conditions and public read grants evaluate from real row data.
+  // Check permissions for all entities in a single batch operation. Each entity doubles as
+  // `row`, so row conditions and public read grants evaluate from real row data.
   const subjects = entities.map((entity) =>
-    buildSubject(entityType, entity as Partial<ContextEntityIdColumns>, {
-      id: entity.id,
-      createdBy: 'createdBy' in entity ? (entity.createdBy as string | null) : undefined,
-      row: entity as Record<string, unknown>,
-    }),
+    buildSubjectFromEntity(
+      entityType,
+      entity as { id: string; createdBy?: string | null } & Partial<ChannelEntityIdColumns>,
+    ),
   );
-  const { results } = checkPermission(memberships, action, subjects, { isSystemAdmin, userId });
+  const { results } = checkPermission(memberships, action, subjects, actorFrom(ctx));
 
   // Partition into allowed and disallowed
   const allowedIds: string[] = [];

@@ -1,5 +1,5 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
-import type { ContextEntityType } from 'shared';
+import type { ChannelEntityType } from 'shared';
 import { getEntityQueryKeys } from './entity-query-registry';
 
 /**
@@ -64,7 +64,7 @@ export function invalidateIfLastMutation(queryClient: QueryClient, mutationKey: 
 }
 
 /**
- * Invalidate context entity queries when membership changes.
+ * Invalidate channel entity queries when membership changes.
  * Call this after invite/update/delete membership mutations to sync entity counts.
  *
  * Invalidates:
@@ -72,13 +72,13 @@ export function invalidateIfLastMutation(queryClient: QueryClient, mutationKey: 
  * - Parent organization detail if organizationId differs from entityId
  *
  * @param queryClient - React Query client
- * @param entityType - Type of the context entity (e.g., 'organization')
+ * @param entityType - Type of the channel entity (e.g., 'organization')
  * @param entityId - ID of the affected entity
  * @param organizationId - Parent organization ID (if entity is nested under an org)
  */
 export function invalidateOnMembershipChange(
   queryClient: QueryClient,
-  entityType: ContextEntityType,
+  entityType: ChannelEntityType,
   entityId: string,
   organizationId?: string,
 ): void {

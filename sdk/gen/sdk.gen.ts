@@ -723,7 +723,7 @@ export const startImpersonation = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -758,7 +758,7 @@ export const stopImpersonation = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -891,7 +891,7 @@ export const generateTotpKey = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -926,7 +926,7 @@ export const deleteTotp = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -961,7 +961,7 @@ export const createTotp = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1036,7 +1036,7 @@ export const createPasskey = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1076,7 +1076,7 @@ export const deletePasskey = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1365,7 +1365,7 @@ export const deleteMe = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1400,7 +1400,7 @@ export const getMe = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1443,7 +1443,7 @@ export const updateMe = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1485,7 +1485,7 @@ export const toggleMfa = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1524,7 +1524,7 @@ export const getMyAuth = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1559,7 +1559,7 @@ export const getMyInvitations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1595,7 +1595,7 @@ export const deleteMySessions = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1636,7 +1636,7 @@ export const deleteMyMembership = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1674,7 +1674,7 @@ export const getUploadToken = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1713,7 +1713,7 @@ export const unsubscribeMe = <ThrowOnError extends boolean = true>(
 /**
  * Get my memberships
  *
- * Returns all memberships for the current user across all context entities.
+ * Returns all memberships for the current user across all channel entities.
  *
  * **GET /me/memberships** ·· [getMyMemberships](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/memberships) ·· [getMyMemberships](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/memberships) ·· _me_cella_
  *
@@ -1737,7 +1737,7 @@ export const getMyMemberships = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1748,7 +1748,7 @@ export const getMyMemberships = <ThrowOnError extends boolean = true>(
 /**
  * Get unseen counts
  *
- * Returns the number of unseen product entities per parent context entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.
+ * Returns the number of unseen product entities per parent channel entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.
  *
  * **GET /unseen/counts** ·· [getUnseenCounts](https://www.raak.dev/docs/operations?operationTag=seen#tag/seen/GET/unseen/counts) ·· [getUnseenCounts](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/unseen/counts) ·· _seen_cella_
  *
@@ -1772,7 +1772,7 @@ export const getUnseenCounts = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1811,7 +1811,7 @@ export const checkSlug = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1849,7 +1849,7 @@ export const getAppStream = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1886,7 +1886,7 @@ export const postAppCatchup = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1926,7 +1926,7 @@ export const systemInvite = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -1966,7 +1966,7 @@ export const deleteUsers = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2013,7 +2013,7 @@ export const updateUser = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2057,7 +2057,7 @@ export const sendNewsletter = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2103,7 +2103,7 @@ export const getTenants = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2140,7 +2140,7 @@ export const createTenant = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2180,7 +2180,7 @@ export const selfCreateTenant = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2226,7 +2226,7 @@ export const updateTenant = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2266,7 +2266,7 @@ export const getDomains = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2303,7 +2303,7 @@ export const createDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2344,7 +2344,7 @@ export const deleteDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2381,7 +2381,7 @@ export const getDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2418,7 +2418,7 @@ export const verifyDomain = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2454,7 +2454,7 @@ export const deleteRequests = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2499,7 +2499,7 @@ export const getRequests = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2605,7 +2605,7 @@ export const getUsers = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2642,7 +2642,7 @@ export const getUser = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2655,7 +2655,7 @@ export const getUser = <ThrowOnError extends boolean = true>(
  *
  * Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.
  *
- * **GET /public/projects/{id}** ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/public/projects/{id}) ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/public/projects/{id}) ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/public/projects/{id}) ·· _projects_app_context_
+ * **GET /public/projects/{id}** ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/public/projects/{id}) ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/public/projects/{id}) ·· [getPublicProject](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/GET/public/projects/{id}) ·· _projects_app_channel_
  *
  * @param {getPublicProjectData} options
  * @param {string} options.path.id - `string`
@@ -2861,7 +2861,7 @@ export const getYjsToken = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2874,7 +2874,7 @@ export const getYjsToken = <ThrowOnError extends boolean = true>(
  *
  * Deletes one or more organizations by ID within a tenant.
  *
- * **DELETE /{tenantId}/organizations** ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/organizations) ·· _organizations_cella_context_
+ * **DELETE /{tenantId}/organizations** ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/organizations) ·· [deleteOrganizations](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/DELETE/{tenantId}/organizations) ·· _organizations_cella_channel_
  *
  * @param {deleteOrganizationsData} options
  * @param {string} options.path.tenantid - `string`
@@ -2898,7 +2898,7 @@ export const deleteOrganizations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2915,7 +2915,7 @@ export const deleteOrganizations = <ThrowOnError extends boolean = true>(
  *
  * Creates one or more new organizations within a tenant.
  *
- * **POST /{tenantId}/organizations** ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/organizations) ·· _organizations_cella_context_
+ * **POST /{tenantId}/organizations** ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/organizations) ·· [createOrganizations](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/POST/{tenantId}/organizations) ·· _organizations_cella_channel_
  *
  * @param {createOrganizationsData} options
  * @param {string} options.path.tenantid - `string`
@@ -2938,7 +2938,7 @@ export const createOrganizations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -2955,7 +2955,7 @@ export const createOrganizations = <ThrowOnError extends boolean = true>(
  *
  * Returns a list of organizations.
  *
- * **GET /organizations** ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/organizations) ·· _organizations_cella_context_
+ * **GET /organizations** ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/organizations) ·· [getOrganizations](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/GET/organizations) ·· _organizations_cella_channel_
  *
  * @param {getOrganizationsData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -2987,7 +2987,7 @@ export const getOrganizations = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3000,7 +3000,7 @@ export const getOrganizations = <ThrowOnError extends boolean = true>(
  *
  * Retrieves an organization by ID within a tenant. Pass ?slug=true to resolve by slug instead.
  *
- * **GET /{tenantId}/organizations/{id}** ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
+ * **GET /{tenantId}/organizations/{id}** ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/organizations/{id}) ·· [getOrganization](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/GET/{tenantId}/organizations/{id}) ·· _organizations_cella_channel_
  *
  * @param {getOrganizationData} options
  * @param {string} options.path.tenantid - `string`
@@ -3026,7 +3026,7 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3039,7 +3039,7 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
  *
  * Updates an organization within a tenant.
  *
- * **PUT /{tenantId}/organizations/{id}** ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/organizations/{id}) ·· _organizations_cella_context_
+ * **PUT /{tenantId}/organizations/{id}** ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=organizations#tag/organizations/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/organizations/{id}) ·· [updateOrganization](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/PUT/{tenantId}/organizations/{id}) ·· _organizations_cella_channel_
  *
  * @param {updateOrganizationData} options
  * @param {string} options.path.tenantid - `string`
@@ -3079,7 +3079,7 @@ export const updateOrganization = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3096,7 +3096,7 @@ export const updateOrganization = <ThrowOnError extends boolean = true>(
  *
  * Deletes one or more workspaces by ID.
  *
- * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
+ * **DELETE /{tenantId}/{organizationId}/workspaces** ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/workspaces) ·· [deleteWorkspaces](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/DELETE/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_channel_
  *
  * @param {deleteWorkspacesData} options
  * @param {string} options.path.tenantid - `string`
@@ -3121,7 +3121,7 @@ export const deleteWorkspaces = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3138,7 +3138,7 @@ export const deleteWorkspaces = <ThrowOnError extends boolean = true>(
  *
  * Creates one or more personal workspaces owned by the current user.
  *
- * **POST /{tenantId}/{organizationId}/workspaces** ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_context_
+ * **POST /{tenantId}/{organizationId}/workspaces** ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/workspaces) ·· [createWorkspaces](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/POST/{tenantId}/{organizationId}/workspaces) ·· _workspaces_app_channel_
  *
  * @param {createWorkspacesData} options
  * @param {string} options.path.tenantid - `string`
@@ -3162,7 +3162,7 @@ export const createWorkspaces = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3179,7 +3179,7 @@ export const createWorkspaces = <ThrowOnError extends boolean = true>(
  *
  * Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.
  *
- * **GET /workspaces** ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/workspaces) ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/workspaces) ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/workspaces) ·· _workspaces_app_context_
+ * **GET /workspaces** ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/workspaces) ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/workspaces) ·· [getWorkspaces](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/GET/workspaces) ·· _workspaces_app_channel_
  *
  * @param {getWorkspacesData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -3211,7 +3211,7 @@ export const getWorkspaces = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3224,7 +3224,7 @@ export const getWorkspaces = <ThrowOnError extends boolean = true>(
  *
  * Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.
  *
- * **GET /{tenantId}/{organizationId}/workspaces/{id}** ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
+ * **GET /{tenantId}/{organizationId}/workspaces/{id}** ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· [getWorkspace](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/GET/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_channel_
  *
  * @param {getWorkspaceData} options
  * @param {string} options.path.tenantid - `string`
@@ -3251,7 +3251,7 @@ export const getWorkspace = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3264,7 +3264,7 @@ export const getWorkspace = <ThrowOnError extends boolean = true>(
  *
  * Updates a workspace by ID.
  *
- * **PUT /{tenantId}/{organizationId}/workspaces/{id}** ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_context_
+ * **PUT /{tenantId}/{organizationId}/workspaces/{id}** ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=workspaces#tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· [updateWorkspace](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/PUT/{tenantId}/{organizationId}/workspaces/{id}) ·· _workspaces_app_channel_
  *
  * @param {updateWorkspaceData} options
  * @param {string} options.path.tenantid - `string`
@@ -3290,7 +3290,7 @@ export const updateWorkspace = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3307,7 +3307,7 @@ export const updateWorkspace = <ThrowOnError extends boolean = true>(
  *
  * Deletes one or more projects by ID.
  *
- * **DELETE /{tenantId}/{organizationId}/projects** ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
+ * **DELETE /{tenantId}/{organizationId}/projects** ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects) ·· [deleteProjects](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/DELETE/{tenantId}/{organizationId}/projects) ·· _projects_app_channel_
  *
  * @param {deleteProjectsData} options
  * @param {string} options.path.tenantid - `string`
@@ -3332,7 +3332,7 @@ export const deleteProjects = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3349,7 +3349,7 @@ export const deleteProjects = <ThrowOnError extends boolean = true>(
  *
  * Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.
  *
- * **POST /{tenantId}/{organizationId}/projects** ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/POST/{tenantId}/{organizationId}/projects) ·· _projects_app_context_
+ * **POST /{tenantId}/{organizationId}/projects** ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/POST/{tenantId}/{organizationId}/projects) ·· [createProjects](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/POST/{tenantId}/{organizationId}/projects) ·· _projects_app_channel_
  *
  * @param {createProjectsData} options
  * @param {string} options.path.tenantid - `string`
@@ -3374,7 +3374,7 @@ export const createProjects = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3391,7 +3391,7 @@ export const createProjects = <ThrowOnError extends boolean = true>(
  *
  * Returns a paginated list of projects where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, workspaceId to scope to a specific workspace, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by project name.
  *
- * **GET /projects** ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/projects) ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/projects) ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/projects) ·· _projects_app_context_
+ * **GET /projects** ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/projects) ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/projects) ·· [getProjects](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/GET/projects) ·· _projects_app_channel_
  *
  * @param {getProjectsData} options
  * @param {string=} options.query.q - `string` (optional)
@@ -3425,7 +3425,7 @@ export const getProjects = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3438,7 +3438,7 @@ export const getProjects = <ThrowOnError extends boolean = true>(
  *
  * Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.
  *
- * **GET /{tenantId}/{organizationId}/projects/{id}** ·· [getProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/GET/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
+ * **GET /{tenantId}/{organizationId}/projects/{id}** ·· [getProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/GET/{tenantId}/{organizationId}/projects/{id}) ·· [getProject](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/GET/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_channel_
  *
  * @param {getProjectData} options
  * @param {string} options.path.tenantid - `string`
@@ -3465,7 +3465,7 @@ export const getProject = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3478,7 +3478,7 @@ export const getProject = <ThrowOnError extends boolean = true>(
  *
  * Updates a project by ID.
  *
- * **PUT /{tenantId}/{organizationId}/projects/{id}** ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_context_
+ * **PUT /{tenantId}/{organizationId}/projects/{id}** ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}) ·· [updateProject](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/PUT/{tenantId}/{organizationId}/projects/{id}) ·· _projects_app_channel_
  *
  * @param {updateProjectData} options
  * @param {string} options.path.tenantid - `string`
@@ -3508,7 +3508,7 @@ export const updateProject = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3525,7 +3525,7 @@ export const updateProject = <ThrowOnError extends boolean = true>(
  *
  * Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.
  *
- * **PUT /{tenantId}/{organizationId}/projects/{id}/assign-workspace** ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· _projects_app_context_
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/assign-workspace** ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· [assignProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/PUT/{tenantId}/{organizationId}/projects/{id}/assign-workspace) ·· _projects_app_channel_
  *
  * @param {assignProjectWorkspaceData} options
  * @param {string} options.path.tenantid - `string`
@@ -3551,7 +3551,7 @@ export const assignProjectWorkspace = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3564,7 +3564,7 @@ export const assignProjectWorkspace = <ThrowOnError extends boolean = true>(
  *
  * Removes the current user's project membership from its assigned workspace without leaving the project.
  *
- * **DELETE /{tenantId}/{organizationId}/projects/{id}/workspace** ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· _projects_app_context_
+ * **DELETE /{tenantId}/{organizationId}/projects/{id}/workspace** ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· [removeProjectWorkspace](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/DELETE/{tenantId}/{organizationId}/projects/{id}/workspace) ·· _projects_app_channel_
  *
  * @param {removeProjectWorkspaceData} options
  * @param {string} options.path.tenantid - `string`
@@ -3594,7 +3594,7 @@ export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3607,7 +3607,7 @@ export const removeProjectWorkspace = <ThrowOnError extends boolean = true>(
  *
  * Moves a project from one workspace to another.
  *
- * **PUT /{tenantId}/{organizationId}/projects/{id}/move** ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=context#tag/context/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· _projects_app_context_
+ * **PUT /{tenantId}/{organizationId}/projects/{id}/move** ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=projects#tag/projects/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=app#tag/app/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· [moveProjectToWorkspace](https://www.raak.dev/docs/operations?operationTag=channel#tag/channel/PUT/{tenantId}/{organizationId}/projects/{id}/move) ·· _projects_app_channel_
  *
  * @param {moveProjectToWorkspaceData} options
  * @param {string} options.path.tenantid - `string`
@@ -3633,7 +3633,7 @@ export const moveProjectToWorkspace = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3669,7 +3669,7 @@ export const handleMcp = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3712,7 +3712,7 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3760,7 +3760,7 @@ export const getAttachments = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3797,7 +3797,7 @@ export const createAttachments = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3819,7 +3819,8 @@ export const createAttachments = <ThrowOnError extends boolean = true>(
  * @param {getPresignedUrlData} options
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
- * @param {string} options.query.key - `string`
+ * @param {string} options.query.attachmentid - `string`
+ * @param {enum=} options.query.variant - `enum` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getPresignedUrl = <ThrowOnError extends boolean = true>(
@@ -3839,7 +3840,7 @@ export const getPresignedUrl = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3877,7 +3878,7 @@ export const getAttachment = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3918,7 +3919,7 @@ export const updateAttachment = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3962,7 +3963,7 @@ export const deleteMemberships = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -3977,7 +3978,7 @@ export const deleteMemberships = <ThrowOnError extends boolean = true>(
 /**
  * Create memberships
  *
- * Creates one or more memberships, inviting users (existing or new) to a context entity such as an organization.
+ * Creates one or more memberships, inviting users (existing or new) to a channel entity such as an organization.
  *
  * **POST /{tenantId}/{organizationId}/memberships** ·· [membershipInvite](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships) ·· [membershipInvite](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/memberships) ·· _memberships_cella_
  *
@@ -4007,7 +4008,7 @@ export const membershipInvite = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4053,7 +4054,7 @@ export const updateMembership = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4099,7 +4100,7 @@ export const handleMembershipInvitation = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4110,7 +4111,7 @@ export const handleMembershipInvitation = <ThrowOnError extends boolean = true>(
 /**
  * Get list of members
  *
- * Retrieves members (users) of a context entity by ID, including their associated membership data.
+ * Retrieves members (users) of a channel entity by ID, including their associated membership data.
  *
  * **GET /{tenantId}/{organizationId}/memberships/members** ·· [getMembers](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/GET/{tenantId}/{organizationId}/memberships/members) ·· [getMembers](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/memberships/members) ·· _memberships_cella_
  *
@@ -4146,7 +4147,7 @@ export const getMembers = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4157,7 +4158,7 @@ export const getMembers = <ThrowOnError extends boolean = true>(
 /**
  * Get list of pending memberships
  *
- * Returns pending memberships for a context entity, identified by ID. This does not include pending invitations for non-existing users.
+ * Returns pending memberships for a channel entity, identified by ID. This does not include pending invitations for non-existing users.
  *
  * **GET /{tenantId}/{organizationId}/memberships/pending** ·· [getPendingMemberships](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/GET/{tenantId}/{organizationId}/memberships/pending) ·· [getPendingMemberships](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/memberships/pending) ·· _memberships_cella_
  *
@@ -4191,7 +4192,7 @@ export const getPendingMemberships = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4230,7 +4231,7 @@ export const deleteTasks = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4281,7 +4282,7 @@ export const getTasks = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4318,7 +4319,7 @@ export const createTasks = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4360,7 +4361,7 @@ export const getTask = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4401,7 +4402,7 @@ export const updateTask = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4444,7 +4445,7 @@ export const deleteLabels = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4493,7 +4494,7 @@ export const getLabels = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4530,7 +4531,7 @@ export const createLabels = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4572,7 +4573,7 @@ export const getLabel = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4612,7 +4613,7 @@ export const updateLabel = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],
@@ -4655,7 +4656,7 @@ export const markSeen = <ThrowOnError extends boolean = true>(
     security: [
       {
         in: 'cookie',
-        name: 'raak-development-session-v1',
+        name: 'raak-development-session-v2',
         type: 'apiKey',
       },
     ],

@@ -5,7 +5,6 @@ import {
   FolderKanbanIcon,
   HashIcon,
   LayoutGridIcon,
-  type LucideIcon,
   MessageCircleIcon,
   MessageSquareIcon,
   PaperclipIcon,
@@ -16,6 +15,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { IconComponent } from '~/modules/common/icons/types';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 
 // A conceptual illustration of Cella's selective sync: structural entities (no sync) and
@@ -23,7 +23,7 @@ import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 // The wrapper is an open-top "U" to signal this is conceptual, not a closed system. A toggle
 // swaps between example app configs to show the same split holds for different entity setups.
 
-type Entity = { Icon: LucideIcon; label: string };
+type Entity = { Icon: IconComponent; label: string };
 
 type AppConfig = { label: string; noSync: Entity[]; synced: Entity[] };
 

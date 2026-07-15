@@ -85,6 +85,10 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "included": {
                     "type": "object",
@@ -97,12 +101,12 @@
                         "properties": {
                           "id": { "type": "string", "required": true, "format": "uuid" },
                           "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                          "contextType": {
+                          "channelType": {
                             "type": "string",
                             "required": true,
                             "enum": ["organization", "workspace", "project"]
                           },
-                          "contextId": { "type": "string", "required": true, "format": "uuid" },
+                          "channelId": { "type": "string", "required": true, "format": "uuid" },
                           "userId": { "type": "string", "required": true, "format": "uuid" },
                           "role": {
                             "type": "string",
@@ -218,6 +222,7 @@
               "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
               "createdAt": "2024-04-18T21:12:59.543Z",
               "publishedAt": "2024-04-18T21:12:59.543Z",
+              "publicAt": null,
               "createdBy": null,
               "updatedAt": "2024-04-18T21:12:59.543Z",
               "updatedBy": null,
@@ -225,8 +230,8 @@
                 "membership": {
                   "id": "1f366272-953c-486d-81dc-ee61f43478a1",
                   "tenantId": "t4n7co",
-                  "contextType": "organization",
-                  "contextId": "b5c28e6f-552e-42e4-940d-66f5ab0174ab",
+                  "channelType": "organization",
+                  "channelId": "b5c28e6f-552e-42e4-940d-66f5ab0174ab",
                   "userId": "8ed7182a-e09f-41c6-9302-0e59a26ff7ac",
                   "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
                   "workspaceId": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
@@ -516,6 +521,10 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "included": {
                     "type": "object",
@@ -528,12 +537,12 @@
                         "properties": {
                           "id": { "type": "string", "required": true, "format": "uuid" },
                           "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                          "contextType": {
+                          "channelType": {
                             "type": "string",
                             "required": true,
                             "enum": ["organization", "workspace", "project"]
                           },
-                          "contextId": { "type": "string", "required": true, "format": "uuid" },
+                          "channelId": { "type": "string", "required": true, "format": "uuid" },
                           "userId": { "type": "string", "required": true, "format": "uuid" },
                           "role": {
                             "type": "string",
@@ -638,6 +647,7 @@
               "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
               "createdAt": "2024-11-21T01:19:53.533Z",
               "publishedAt": "2024-11-21T01:19:53.533Z",
+              "publicAt": null,
               "createdBy": null,
               "updatedAt": "2024-11-21T01:19:53.533Z",
               "updatedBy": null,
@@ -645,8 +655,8 @@
                 "membership": {
                   "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
                   "tenantId": "u87zf2",
-                  "contextType": "organization",
-                  "contextId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
+                  "channelType": "organization",
+                  "channelId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
                   "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
                   "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
                   "workspaceId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
@@ -691,6 +701,7 @@
               "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
               "createdAt": "2024-10-29T04:35:17.725Z",
               "publishedAt": "2024-10-29T04:35:17.725Z",
+              "publicAt": null,
               "createdBy": null,
               "updatedAt": "2024-10-29T04:35:17.725Z",
               "updatedBy": null,
@@ -698,8 +709,8 @@
                 "membership": {
                   "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
                   "tenantId": "lwj64z",
-                  "contextType": "organization",
-                  "contextId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
+                  "channelType": "organization",
+                  "channelId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
                   "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
                   "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
                   "workspaceId": "772a771f-c150-465e-9635-46594859fc3d",
@@ -893,6 +904,10 @@
               "type": ["string", "null"],
               "required": true
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "included": {
               "type": "object",
@@ -905,12 +920,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -1009,6 +1024,7 @@
           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
           "createdAt": "2024-03-18T14:19:46.053Z",
           "publishedAt": "2024-03-18T14:19:46.053Z",
+          "publicAt": null,
           "createdBy": null,
           "updatedAt": "2024-03-18T14:19:46.053Z",
           "updatedBy": null,
@@ -1016,8 +1032,8 @@
             "membership": {
               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
               "tenantId": "ecya0r",
-              "contextType": "organization",
-              "contextId": "61543dc3-4ff9-4b4a-b374-26052338523b",
+              "channelType": "organization",
+              "channelId": "61543dc3-4ff9-4b4a-b374-26052338523b",
               "userId": "c808c467-cf5d-4669-8838-4b717284ce03",
               "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
               "workspaceId": "37b34924-612e-454b-9d73-98fa9290dee1",
@@ -1194,6 +1210,10 @@
               "type": ["string", "null"],
               "required": true
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "included": {
               "type": "object",
@@ -1206,12 +1226,12 @@
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-                    "contextType": {
+                    "channelType": {
                       "type": "string",
                       "required": true,
                       "enum": ["organization", "workspace", "project"]
                     },
-                    "contextId": { "type": "string", "required": true, "format": "uuid" },
+                    "channelId": { "type": "string", "required": true, "format": "uuid" },
                     "userId": { "type": "string", "required": true, "format": "uuid" },
                     "role": {
                       "type": "string",
@@ -1310,6 +1330,7 @@
           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
           "createdAt": "2024-03-18T14:19:46.053Z",
           "publishedAt": "2024-03-18T14:19:46.053Z",
+          "publicAt": null,
           "createdBy": null,
           "updatedAt": "2024-03-18T14:19:46.053Z",
           "updatedBy": null,
@@ -1317,8 +1338,8 @@
             "membership": {
               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
               "tenantId": "ecya0r",
-              "contextType": "organization",
-              "contextId": "61543dc3-4ff9-4b4a-b374-26052338523b",
+              "channelType": "organization",
+              "channelId": "61543dc3-4ff9-4b4a-b374-26052338523b",
               "userId": "c808c467-cf5d-4669-8838-4b717284ce03",
               "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
               "workspaceId": "37b34924-612e-454b-9d73-98fa9290dee1",

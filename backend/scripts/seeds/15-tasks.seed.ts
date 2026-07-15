@@ -15,7 +15,7 @@ import { TaskStatus, TaskVariant } from '#/modules/task/task-properties';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
 import { nanoid } from 'shared/utils/nanoid';
 import { mockLabel } from '#/modules/label/label-mocks';
-import { mockContextMembership } from '#/modules/memberships/memberships-mocks';
+import { mockChannelMembership } from '#/modules/memberships/memberships-mocks';
 import { mockProject } from '#/modules/project/project-mocks';
 import { mockWorkspace } from '#/modules/workspace/workspace-mocks';
 import { mockPastIsoDate, mockUuid, setMockContext } from '#/mocks';
@@ -96,7 +96,7 @@ const tasksSeed = async () => {
   }
 
   const organizations = await db.select().from(organizationsTable);
-  const memberships = await db.select().from(membershipsTable).where(eq(membershipsTable.contextType, 'organization'));
+  const memberships = await db.select().from(membershipsTable).where(eq(membershipsTable.channelType, 'organization'));
 
   // Make sure admin user has admin or member role in organizations (not guest)
   await db
@@ -105,7 +105,7 @@ const tasksSeed = async () => {
     .where(
       and(
         eq(membershipsTable.userId, defaultAdminUser.id),
-        eq(membershipsTable.contextType, 'organization'),
+        eq(membershipsTable.channelType, 'organization'),
         eq(membershipsTable.role, 'guest'),
       ),
     );
@@ -113,7 +113,7 @@ const tasksSeed = async () => {
   const adminMemberships = await db
     .select()
     .from(membershipsTable)
-    .where(and(eq(membershipsTable.userId, defaultAdminUser.id), eq(membershipsTable.contextType, 'organization')));
+    .where(and(eq(membershipsTable.userId, defaultAdminUser.id), eq(membershipsTable.channelType, 'organization')));
 
   const adminOrgIds = adminMemberships.map((m) => m.organizationId).filter((el) => el !== null);
 
@@ -380,9 +380,9 @@ const tasksSeed = async () => {
 
     for (const member of plan.members) {
       // Workspace membership
-      const wsMembership = mockContextMembership(
+      const wsMembership = mockChannelMembership(
         'workspace',
-        plan.workspace as Parameters<typeof mockContextMembership>[1],
+        plan.workspace as Parameters<typeof mockChannelMembership>[1],
         { id: member.userId },
         { organizationId },
       );
@@ -404,9 +404,9 @@ const tasksSeed = async () => {
         seenProjectMemberships.add(key);
 
         allPass2Memberships.push(
-          mockContextMembership(
+          mockChannelMembership(
             'project',
-            { id: projectId, tenantId: projData.tenantId } as Parameters<typeof mockContextMembership>[1],
+            { id: projectId, tenantId: projData.tenantId } as Parameters<typeof mockChannelMembership>[1],
             { id: member.userId },
             { organizationId: projData.organizationId, workspaceId },
           ),

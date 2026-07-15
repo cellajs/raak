@@ -5,8 +5,9 @@ import { errorMessage } from '../utils/errors'
 /** A materialized, content-addressed generation: the VM resource is
  *  `vm-<svc>-<id>`, baked with `sha`, promoted at monotonic `seq`. */
 export interface GenRef {
-  /** Content-addressed generation id (see lib/gen-id.ts). Authoritative resource
-   *  suffix. The live VM exists under THIS id, so it is stored, not re-derived. */
+  /** Content-addressed generation id. Authoritative resource suffix. The live VM
+   *  exists under THIS id, so it is stored, not re-derived.
+   *  @see lib/gen-id.ts */
   id: string
   /** Image SHA baked into this generation. */
   sha: string
@@ -196,11 +197,9 @@ export function serializeControlState(state: ControlState): string {
   return `${JSON.stringify(state, null, 2)}\n`
 }
 
-// ---------------------------------------------------------------------------
 // Pure ledger transitions: every rollout state change is a total function over
 // the previous rollout, so the orchestrator never hand-mutates pointer fields
 // and the transitions are unit-tested in isolation.
-// ---------------------------------------------------------------------------
 
 /** A service with no rollout history yet. */
 export function emptyRollout(): ServiceRollout {
@@ -242,10 +241,8 @@ export async function writeControlState(
   return putJsonObject(s3, bucket, key, serializeControlState(state), opts)
 }
 
-// ---------------------------------------------------------------------------
 // Orchestrator helpers (used by the deploy tasks; read process.env / build a
 // client, so not part of the pure unit-tested core above).
-// ---------------------------------------------------------------------------
 
 /** Build an S3 client for the state bucket with explicit credentials. */
 export async function makeControlClient(region: string, accessKey: string, secretKey: string): Promise<S3Like> {
@@ -313,12 +310,10 @@ export async function updateServiceRollout(
   await writeControlState(s3, bucket, key, state, etag ? { ifMatch: etag } : {})
 }
 
-// ---------------------------------------------------------------------------
 // Distributed lock: prevents concurrent mutating ops (two operators, or an
 // operator and CI) from racing on the same stack. Built on Scaleway's
 // conditional writes: atomic create-if-absent via `If-None-Match: *`, stale
 // break via `If-Match: <etag>`.
-// ---------------------------------------------------------------------------
 
 export interface LockInfo {
   owner: string

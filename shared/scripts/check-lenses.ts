@@ -1,6 +1,8 @@
 /**
- * CI guards for schema-evolution lenses. See README.md in this directory for what each
- * check enforces. Exit code 1 on any violation; run via `pnpm --filter shared lens:check`.
+ * CI guards for schema-evolution lenses. Exit code 1 on any violation; run via
+ * `pnpm --filter shared lens:check`.
+ *
+ * @see README.md
  */
 import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
@@ -154,10 +156,10 @@ function checkContractCompleteness() {
       );
     }
   }
-  for (const type of appConfig.contextEntityTypes) {
-    if (!combined.includes(`evolutionContract.context('${type}'`)) {
+  for (const type of appConfig.channelEntityTypes) {
+    if (!combined.includes(`evolutionContract.channel('${type}'`)) {
       failures.push(
-        `Contract completeness: context entity "${type}" never calls evolutionContract.context('${type}', …) in backend/src/modules — its create/update body schemas bypass the lens seams.`,
+        `Contract completeness: channel entity "${type}" never calls evolutionContract.channel('${type}', …) in backend/src/modules — its create/update body schemas bypass the lens seams.`,
       );
     }
   }

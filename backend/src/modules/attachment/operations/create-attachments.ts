@@ -57,7 +57,7 @@ export async function createAttachmentsOp(ctx: AuthContext, rawInput: CreateAtta
     canCreateEntity(ctx, {
       entityType: 'attachment',
       // cella change: Raak attachment creation requires the project context.
-      contextIds: { organization: organization.id, project: att.projectId },
+      channelIds: { organization: organization.id, project: att.projectId },
     });
     return attachment;
   });

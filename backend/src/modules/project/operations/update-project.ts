@@ -7,7 +7,7 @@ import { updateProject } from '#/modules/project/project-queries';
 import { projectContract } from '#/modules/project/project-schema';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
-import { getValidContextEntity } from '#/permissions';
+import { getValidChannelEntity } from '#/permissions';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
@@ -16,7 +16,7 @@ export async function updateProjectOp(ctx: AuthContext, id: string, rawInput: Re
   const input = projectContract.normalizeBody(rawInput);
   const user = ctx.var.user;
 
-  const { entity: project, membership } = await getValidContextEntity(ctx, id, 'project', 'update');
+  const { entity: project, membership } = await getValidChannelEntity(ctx, id, 'project', 'update');
 
   const slug = input.slug as string | undefined;
 

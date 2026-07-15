@@ -11,7 +11,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { FocusTrap } from '~/modules/common/focus-trap';
-import { getSeenContextId } from '~/modules/seen/helpers';
+import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskCardContentCollapsed } from '~/modules/task/card/card-content-collapsed';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
@@ -222,7 +222,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
             entityId={task.id}
             tenantId={task.tenantId}
             organizationId={task.organizationId}
-            contextId={getSeenContextId('task', task)}
+            channelId={getSeenChannelId('task', task)}
             entityType="task"
           />
           {effectiveState !== 'collapsed' && (

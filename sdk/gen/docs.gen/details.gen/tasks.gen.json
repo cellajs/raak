@@ -40,6 +40,10 @@
               "required": true,
               "format": "uuid"
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "seq": {
               "type": "integer",
               "required": true,
@@ -89,10 +93,6 @@
               "required": true,
               "minimum": -2147483648,
               "maximum": 2147483647
-            },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
             },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -343,6 +343,10 @@
                     "required": true,
                     "format": "uuid"
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -392,10 +396,6 @@
                     "required": true,
                     "minimum": -2147483648,
                     "maximum": 2147483647
-                  },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
                   },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -899,6 +899,10 @@
                     "required": true,
                     "format": "uuid"
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -948,10 +952,6 @@
                     "required": true,
                     "minimum": -2147483648,
                     "maximum": 2147483647
-                  },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
                   },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -1277,6 +1277,10 @@
                     "required": true,
                     "format": "uuid"
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -1326,10 +1330,6 @@
                     "required": true,
                     "minimum": -2147483648,
                     "maximum": 2147483647
-                  },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
                   },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -1581,6 +1581,10 @@
                     "required": true,
                     "format": "uuid"
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -1630,10 +1634,6 @@
                     "required": true,
                     "minimum": -2147483648,
                     "maximum": 2147483647
-                  },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
                   },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -2102,6 +2102,10 @@
               "required": true,
               "format": "uuid"
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "seq": {
               "type": "integer",
               "required": true,
@@ -2151,10 +2155,6 @@
               "required": true,
               "minimum": -2147483648,
               "maximum": 2147483647
-            },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
             },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -2401,6 +2401,10 @@
               "required": true,
               "format": "uuid"
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "seq": {
               "type": "integer",
               "required": true,
@@ -2450,10 +2454,6 @@
               "required": true,
               "minimum": -2147483648,
               "maximum": 2147483647
-            },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
             },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },

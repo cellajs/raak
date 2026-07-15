@@ -32,7 +32,7 @@ Postgres + OpenAPI + React Query are the foundational primitives. Standard OpenA
 
 | Entity type | Features | Example |
 |------|--------------|---------|
-| `ContextEntityType` | Standard REST CRUD, server-generated IDs | `organization` |
+| `ChannelEntityType` | Standard REST CRUD, server-generated IDs | `organization` |
 | `ProductEntityType` | HLC scalar merge, set-like array deltas, paused-mutation persistence infrastructure, app SSE, live cache updates, multi-tab leader election; optional Yjs integration | `attachment` |
 
 ---
@@ -77,18 +77,18 @@ Postgres → CDC Worker → API Server → SSE → Client
 ## Core concepts
 
 ### Architecture overview
-- **Logical replication** - CDC Worker receives WAL changes, persists activities to `activitiesTable`, sends messages to API
+- **Logical replication** - CDC Worker receives WAL changes, activities to `activitiesTable`, sends to API
 - **ActivityBus** - Receives CDC messages via WebSocket, emits events to internal handlers
 - **Catchup via POST + delta fetch** - Client POSTs `{ cursor, seqs }` to the stream endpoint; server compares per-scope seqs and returns a gap summary. Client calls registered REST list endpoints with an open-ended `?seqCursor=min` and patches cached rows, including soft-delete tombstones.
 - **Live stream** - One authenticated SSE stream sends lightweight product-entity and membership notifications. Product notifications include a cache token.
 - **Notify + fetch pattern** - SSE product notifications trigger seq-range fetches. The app entity cache can coalesce token-backed detail fetches.
-- **React Query as merge point** - Initial/prefetch load and notification-triggered fetches feed into the same cache
+- **React Query as merge point** - Initial/prefetch load and notification-triggered fetches enter same cache
 
 ### Realtime mechanics
-- **Gap detection** - Entity-type sequence numbers (`seq`) detect missed product entity changes, including soft deletes
-- **Leader-tab SSE** - One leader tab owns the SSE connection and broadcasts notifications to followers. Every tab can mutate.
+- **Gap detection** - Entity-type sequence numbers (`seq`) detect missed product entity changes
+- **Leader-tab SSE** - One leader tab owns the SSE connection and broadcasts notifications to followers
 - **TTL app entity cache** - Server-side cache with request coalescing for token-backed detail fetches
-- **Fetch prioritizer** - Client distinguishes the currently viewed organization (`high`) from other organizations (`low`)
+- **Fetch prioritizer** - Client distinguishes the currently viewed organization (`high`) from others (`low`)
 
 ### Sync mechanics
 - **Catchup before persisted replay** - On startup, restored paused mutations wait for the first catchup attempt before replay. Ordinary online mutations are not gated on stream state.
@@ -139,13 +139,13 @@ Clients first branch on `kind`. Membership notifications invalidate membership/c
 |-------|-----------|----------------|
 | **Single entity** | `seq` set, `batchUntilSeq` null | Range fetch that seq and patch caches; tombstones remove cached entities |
 | **Create/update batch** | `batchUntilSeq` set | Range fetch via `seqCursor=seq,batchUntilSeq`; live rows upsert, tombstones remove |
-| **Hard delete** | `action: 'delete'` | Physical delete (rare, e.g. DB admin); invalidate the scoped list to reconcile — soft deletes arrive as `update` tombstones instead |
+| **Hard delete** | `action: 'delete'` | Physical delete (rare, e.g. DB admin); invalidate the scoped list to reconcile; soft deletes arrive as `update` tombstones instead |
 
 Batch notifications carry a `cacheToken` and the backend reserves its entity keys. The batch-resolve middleware is currently marked TODO and is not attached to a list route, so current range fetches still execute the list endpoint normally.
 
 
 ## Notification format
-Synced entity tables have an `stx` JSONB column for transaction metadata. It is sent on product-entity notifications. A later mutation overwrites the envelope, but the merged `fieldTimestamps` inside it remain part of conflict resolution. Entity `seq` values and `context_counters` are the current gap-detection state; `activitiesTable` is the append-only audit/cursor history.
+Synced entity tables have an `stx` JSONB column for transaction metadata. It is sent on product-entity notifications. A later mutation overwrites the envelope, but the merged `fieldTimestamps` inside it remain part of conflict resolution. Entity `seq` values and `channel_counters` are the current gap-detection state; `activitiesTable` is the append-only audit/cursor history.
 
 
 ```typescript
@@ -157,8 +157,8 @@ interface StreamNotification {
   subjectId: string | null;
   organizationId: string | null;
   tenantId: string | null;
-  contextType: string | null;                   // Context entity type for membership (e.g., 'project')
-  contextId: string | null;                     // Parent entity ID for unseen count grouping
+  channelType: string | null;                   // Channel entity type for membership (e.g., 'project')
+  channelId: string | null;                     // Parent entity ID for unseen count grouping
   seq: number | null;                           // Per-entityType sequence stamped by CDC worker (entities only)
   stx: StxBase | null;                          // Sync transaction metadata (entities only)
   cacheToken: string | null;                    // Session-signed app entity-cache token (entities only)
@@ -202,7 +202,7 @@ Before opening SSE, the client POSTs its cursor and flattened seq watermarks to 
 interface CatchupChangeSummary {
   entitySeqs?: Record<string, number>;
   entityCounts?: Record<string, number>;
-  childContextChanges?: Record<string, {
+  childChannelChanges?: Record<string, {
     entitySeqs?: Record<string, number>;
     entityCounts?: Record<string, number>;
   }>;
@@ -212,7 +212,7 @@ interface CatchupChangeSummary {
 
 The client processes catchup in a two-phase sync cycle:
 
-**Phase A (catchup — before SSE opens):**
+**Phase A (catchup, before SSE opens):**
 - On the first connection (`cursor` absent), stores org and child-context seq baselines and returns. Route loaders are responsible for initial data.
 - On later connections, compares server and stored seqs. For cached scopes with a positive delta, it fetches from `clientSeq + 1` using open-ended `seqCursor`; a full chunk or failed fetch falls back to active-list invalidation.
 - Soft-delete tombstones returned by the delta endpoint remove rows from detail/list caches.
@@ -220,10 +220,10 @@ The client processes catchup in a two-phase sync cycle:
 - `entityCounts` are compared with the previous server counts seen in this browser session. They are deliberately not compared with permission-filtered cached totals.
 - Embedded propagation runs after all delta fetches.
 
-**Phase B (sync service — background, after SSE reaches `live`):**
+**Phase B (background sync service, after SSE reaches `live`):**
 - Runs `ensureQueryData` / `ensureInfiniteQueryData` for entity queries
-- High priority (current org): resolves staleness immediately — React Query sees stale data and refetches
-- Low priority (other orgs): only when `offlineAccess` is on — fills offline cache
+- High priority (current org): resolves staleness immediately; React Query sees stale data and refetches
+- Low priority (other orgs): only when `offlineAccess` is on; fills offline cache
 - Without `offlineAccess`, non-current orgs rely on their module's query behavior when mounted. `refetchOnMount` is globally `false`; modules opt in where needed.
 
 Fallback chain if Phase B doesn't run (SSE fails):
@@ -244,15 +244,15 @@ Restored paused mutations wait for the initial catchup attempt before `resumePau
 **When offline:** the current defaults do not reliably queue the edit. TanStack Query's `offlineFirst` mode allows the first mutation attempt to run even when offline, and this repository sets mutation `retry: 0`; a network failure therefore normally settles as an error and the module rolls back its optimistic state instead of leaving an `isPaused` mutation. The persistence/replay path applies only when a mutation is paused for another reason. There is no client-side side-by-side conflict detector.
 
 #### 2. Per-field merge strategies
-Each field type has its own merge strategy — no single conflict model for all fields:
+Each field type has its own merge strategy:
 - **Scalars** (name, status, points, etc.): HLC-based LWW via `stx.fieldTimestamps`. An older timestamp is omitted from the write. Different scalar fields carry independent timestamps.
 - **Set-like arrays** (labels, assignedTo in forks): `{ add, remove }` deltas are resolved against the row read by the handler, removing first and then adding missing IDs. They do not use field timestamps.
 - **Configured descriptions**: Yjs can provide character-level merge through the optional relay. The template does not enable Yjs or register a product materializer by default.
 
-The merge strategy is implicit from the value shape in the `ops` key — bare value → LWW scalar, `{ add, remove }` object → array delta.
+The merge strategy is implicit from the value shape in the `ops` key: bare value → LWW scalar, `{ add, remove }` object → array delta.
 
 #### 3. Conflict resolution
-The server does not return a 409 for an HLC loss. `resolveFieldConflicts()` computes dropped scalar names internally, but `resolveUpdateOps()` currently discards that list and mutation responses do not expose `droppedFields`. Missing incoming timestamps are accepted, so entity modules must generate timestamps for every scalar if they want LWW protection.
+The server does not return a 409 for an HLC loss: losing scalar values are omitted from the write, and the returned entity carries the authoritative values. Client update schemas require one valid HLC per scalar op; array deltas carry none. Trusted server updates use a separate resolver that generates their timestamps internally.
 
 Resolution is performed in JavaScript after reading the entity, followed by an ordinary `UPDATE` inside the transaction. It is not a SQL `CASE` compare-and-set and the read is not locked with `FOR UPDATE`, so overlapping writes can still race (especially whole-array delta writes and `stx` metadata).
 
@@ -300,19 +300,19 @@ Idempotency is operation-specific, not a global mutation guarantee. The default 
 Uses entity-type sequence numbers (`seq`) for **create/update/soft-delete/restore detection**. A soft delete sets `deleted_at`; a restore clears it. Both are updates, so CDC stamps them and delta reads can reconcile the cached row.
 
 **Sequence architecture:**
-- **`seq`** — Per-row sequence stamped by the CDC worker after each product-entity create/update. The worker reserves a range in `context_counters.counts['s:{entityType}']` and writes assigned values back to the rows. New rows have their schema default until CDC stamps them.
-- **Hierarchy-aware scoping** — The CDC worker uses the row's deepest non-null ancestor ID as the context key. This equals the declared parent for ordinary hierarchies and supports variable-depth entities whose nearer ancestor can be null.
-- **Membership detection** — Membership changes are detected via the org-level `s:membership` counter and standard membership invalidation.
-- **Delete detection** — Soft deletes are seq-stamped tombstone rows (`deletedAt != null`) returned by `seqCursor` reads. A physical hard delete has no row to fetch; the live handler invalidates the list, while the in-session server-count signal may detect a missed create/delete. No automatic hard-purge horizon is implemented in this repository.
-- **`seqCursor`** — List query parameter with two forms: `seqCursor=51` means `seq >= 51` and is used by catchup; `seqCursor=51,150` means the inclusive bounded range and is used by live batch notifications.
+- **`seq`**: Per-row sequence stamped by the CDC worker after each product-entity create/update. The worker reserves a range in `channel_counters.counts['s:{entityType}']` and writes assigned values back to the rows. New rows have their schema default until CDC stamps them.
+- **Hierarchy-aware scoping**: The CDC worker uses the row's deepest non-null ancestor ID as the context key. This equals the declared parent for ordinary hierarchies and supports variable-depth entities whose nearer ancestor can be null.
+- **Membership detection**: Membership changes are detected via the org-level `s:membership` counter and standard membership invalidation.
+- **Delete detection**: Soft deletes are seq-stamped tombstone rows (`deletedAt != null`) returned by `seqCursor` reads. A physical hard delete has no row to fetch; the live handler invalidates the list, while the in-session server-count signal may detect a missed create/delete. No automatic hard-purge horizon is implemented in this repository.
+- **`seqCursor`**: List query parameter with two forms: `seqCursor=51` means `seq >= 51` and is used by catchup; `seqCursor=51,150` means the inclusive bounded range and is used by live batch notifications.
 
 **Two modes of gap detection:**
 
-1. **Catchup (offline/reconnect):** Client compares stored org/child-context `clientEntitySeq` values with `serverEntitySeq` values from `context_counters`. For a cached changed scope it reads from `clientEntitySeq + 1` without an upper bound. Tombstones remove entities from cache. The first connection only records a baseline.
+1. **Catchup (offline/reconnect):** Client compares stored org/child-context `clientEntitySeq` values with `serverEntitySeq` values from `channel_counters`. For a cached changed scope it reads from `clientEntitySeq + 1` without an upper bound. Tombstones remove entities from cache. The first connection only records a baseline.
 
 2. **Live (SSE):** Product create/update notifications include `seq`, scoped to entity type + effective context (e.g., tasks within a project in a fork). The single-notification path advances its watermark before starting the range fetch; the batch path advances to `batchUntilSeq` only after a successful range fetch. An own create/update echo returns before either update after patching cached `stx`, so catchup may safely see that seq again.
 
-**How it works — scenario:**
+**How it works (scenario):**
 
 An organization has attachments. `seq` is stamped by the CDC worker on product INSERT/UPDATE, including soft-delete updates.
 
@@ -356,7 +356,7 @@ Registered product entity queries can opt into `syncStaleTime`, which returns **
 | 5 min (`syncStaleTime`) | Product entity queries, stream disconnected | Fallback so queries refresh on navigation |
 | Infinity (global default) | `offlineAccess` enabled and device offline, for queries without their own `staleTime` | Serve those cached queries without time-based staleness until back online |
 
-Only product entity queries opt in to `syncStaleTime` — they are the only entities covered by the CDC → catchup pipeline. Context entities (organizations, memberships) and non-synced queries normally use the global 30s default; with `offlineAccess` enabled, that global default becomes Infinity while the browser is offline. A query-level `syncStaleTime` still takes precedence and returns 5 minutes whenever the stream is disconnected, including offline.
+Only product entity queries opt in to `syncStaleTime`: they are the only entities covered by the CDC → catchup pipeline. Channel entities (organizations, memberships) and non-synced queries normally use the global 30s default; with `offlineAccess` enabled, that global default becomes Infinity while the browser is offline. A query-level `syncStaleTime` still takes precedence and returns 5 minutes whenever the stream is disconnected, including offline.
 
 ### Cache integrity check (entityCounts)
 
@@ -381,7 +381,7 @@ Uses per-field merge strategies instead of version-based conflict detection. The
 
 #### Wire format
 
-All updatable fields — both scalars and set-like arrays — go in a single `ops` key. The merge strategy is detected at runtime:
+All updatable fields, both scalars and set-like arrays, go in a single `ops` key. The merge strategy is detected at runtime:
 - Bare value (`string | number | boolean | null`) → scalar → LWW with HLC
 - Object with `{ add, remove }` → array delta
 
@@ -404,7 +404,7 @@ Combines the local physical clock, a logical counter, and a source hash:
 
 ```
 Format: "1710500000123:0001:abcde" (unix millis + zero-padded counter + sourceId hash)
-Compare: lexicographic string comparison gives correct ordering
+Compare: parsed millis, then counter, then source hash
 ```
 
 The 5-character `sourceId` hash breaks ties when timestamps and counters match. Each tab advances its own clock, and the server advances its module clock from received timestamps before generating server timestamps. Clients do not advance their clocks from remote HLCs, so this is deterministic LWW ordering rather than a full cross-client causal clock.
@@ -423,29 +423,30 @@ function createStxForUpdate(scalarFieldNames: string[]): StxBase {
 
 **Server-side (merge resolution in handlers):**
 ```typescript
-import { resolveUpdateOps } from '#/core/stx/resolve-update';
+import { resolveServerUpdateOps, resolveUpdateOps } from '#/core/stx/resolve-update';
 
-// Normalizes lens keys, filters scalar no-ops, applies HLC comparison,
-// resolves array deltas against the entity snapshot, and builds merged stx.
+// Client path: validates timestamps at the wire schema, then normalizes lens keys,
+// filters scalar no-ops, applies HLC comparison, and resolves array deltas.
 const resolved = resolveUpdateOps(entityType, entity, ops, stx);
 
-// The entity operation then performs a regular UPDATE with resolved.values/stx.
+// Trusted-server path: advances past stored scalar clocks and assigns one server HLC.
+const serverResolved = resolveServerUpdateOps(entityType, entity, ops);
 ```
 
 #### Array-delta properties
 
 Array fields can use set-like delta operations:
-- **Remove then add** — IDs in `remove` are filtered out, then IDs in `add` that are not present are appended
-- **Idempotent replay** — applying the same delta again to its result is a no-op
-- **Order-sensitive concurrency** — add/remove operations do not carry causal tags, so opposite concurrent operations are not commutative or guaranteed add-wins
-- **Whole-array write** — the resolved array is written as a value, so concurrent read-modify-write transactions can overwrite one another
+- **Remove then add**: IDs in `remove` are filtered out, then IDs in `add` that are not present are appended
+- **Idempotent replay**: applying the same delta again to its result is a no-op
+- **Order-sensitive concurrency**: add/remove operations do not carry causal tags, so opposite concurrent operations are not commutative or guaranteed add-wins
+- **Whole-array write**: the resolved array is written as a value, so concurrent read-modify-write transactions can overwrite one another
 
 #### Key features
 - `stx.fieldTimestamps` tracks per-scalar-field HLC timestamps (replaces `recordVersion` + `fieldVersions`)
-- Entity modules should generate HLCs for every scalar field they change
-- Server accepts a scalar when its HLC is newer than the stored HLC; missing stored or incoming HLC is also accepted
-- Dropped scalar names remain internal and are not returned in current mutation responses
-- Server advances its local HLC state from incoming timestamps before generating a server HLC
+- Client update schemas require exactly the scalar op keys in `fieldTimestamps`; malformed, missing, unrelated, and array-delta timestamps are rejected
+- Server accepts a client scalar when no stored HLC exists or its valid incoming HLC is newer
+- Trusted server writes use `resolveServerUpdateOps()`, which generates one HLC causally after the affected fields' stored clocks
+- Losing scalar names are not returned separately; the mutation response entity contains the authoritative values
 - Resolution and persistence are separate read/compute/update steps; they do not eliminate concurrent write races
 
 ### Echo prevention (sourceId)
@@ -474,7 +475,7 @@ Uses React Query's mutation cache. `squashPendingMutation()` and `coalescePendin
 - `squashPendingMutation()` removes pending same-entity updates and returns merged ops: newer scalar values win and array deltas are combined.
 - The caller must put those returned ops into the incoming mutation's variables; using them only for optimistic cache state loses the earlier ops when the request executes.
 - Restored mutation replay waits for the first app-stream catchup attempt.
-- Queued mutation variables are rewritten at boot when the persisted schema ordinal is behind the bundle (see "Schema evolution" below) — replay always happens in current shape
+- Queued mutation variables are rewritten at boot when the persisted schema ordinal is behind the bundle (see "Schema evolution" below); replay always happens in current shape
 
 **Current attachment limitations:** the update hook invokes `squashPendingMutation()` from `onMutate`, where the new mutation is already pending; the helper does not exclude the caller and removes every matching pending mutation. It then uses the returned merged ops only for the optimistic cache write, leaving the request variables unchanged. Create variables are an array while `coalescePendingCreate()` expects a top-level `{ id, ... }`, and delete only removes pending updates. Finally, the hook variables close over `tenantId`/`organizationId`, while restored mutation defaults expect those IDs in serialized variables. Create/edit, create/delete, cross-update squash, and reload replay are therefore infrastructure intentions, not working guarantees of the default attachment module.
 
@@ -494,11 +495,11 @@ Deploys change entity schemas; clients don't update in lockstep. A PWA tab can r
 
 There are two runtime seams; the rest is derived schema/configuration:
 
-**1. Server seam — entity evolution contracts.** During a lens's *expand window*, generated schemas accept both old and new field names. Product creates/updates pass through `normalizeCreateItem`/`resolveUpdateOps`; context creates/updates pass through `normalizeBody`. Product normalization canonicalizes `ops` keys **and their `stx.fieldTimestamps` keys** (a renamed scalar must keep its HLC history, or an older offline edit could wrongly win). The normalizers mirror-write the expand-window twin so persisted rows can carry both columns, and product HLC/array-delta resolution sees the normalized keys.
+**1. Server seam: entity evolution contracts.** During a lens's *expand window*, generated schemas accept both old and new field names. Product creates/updates pass through `normalizeCreateItem`/`resolveUpdateOps`; context creates/updates pass through `normalizeBody`. Product normalization canonicalizes `ops` keys **and their `stx.fieldTimestamps` keys** (a renamed scalar must keep its HLC history, or an older offline edit could wrongly win). The normalizers mirror-write the expand-window twin so persisted rows can carry both columns, and product HLC/array-delta resolution sees the normalized keys.
 
-**2. Client seam — boot cache migration in the persister.** The persisted meta record carries a `schemaVersion` ordinal (the lens count baked into the bundle). When it's behind, cached product rows, bundled context queries, and queued mutation variables are rewritten in place — chunked Dexie transactions, pointer advanced atomically in the final write, Web Lock so only one tab runs the pass. Migrations are idempotent, so an interrupted pass safely re-runs. No network involved: a fleet of clients migrating costs the server nothing.
+**2. Client seam: boot cache migration in the persister.** The persisted meta record carries a `schemaVersion` ordinal (the lens count baked into the bundle). When it's behind, cached product rows, bundled context queries, and queued mutation variables are rewritten in place: chunked Dexie transactions, pointer advanced atomically in the final write, Web Lock so only one tab runs the pass. Migrations are idempotent, so an interrupted pass safely re-runs. No network involved: a fleet of clients migrating costs the server nothing.
 
-**Multi-tab safety**: tabs announce their schema version on the BroadcastChannel; a tab that sees a higher version (or a newer pointer on disk) marks itself **stale** via `schema-version-guard` and stops persisting — a stale bundle must never write old-shape data over a migrated store. A pointer *ahead* of the bundle on restore means the same thing: restore nothing, never write, let the PWA reload prompt replace the bundle.
+**Multi-tab safety**: tabs announce their schema version on the BroadcastChannel; a tab that sees a higher version (or a newer pointer on disk) marks itself **stale** via `schema-version-guard` and stops persisting: a stale bundle must never write old-shape data over a migrated store. A pointer *ahead* of the bundle on restore means the same thing: restore nothing, never write, let the PWA reload prompt replace the bundle.
 
 **Telemetry and contraction policy**: the configured frontend API client attaches `X-Client-Version`, and backend middleware records its distribution through OTel; Doba lens transforms also report duration/warning metrics. This supplies the intended fleet-floor signal, but the repository does not currently consume that telemetry to enforce contraction timing. `lens:check` enforces append-only modules, collisions, purity, registered entity contracts, and that a contract lens has a preceding expand lens; the configured minimum expand/stale-bundle windows are policy constants, not an automated gate yet.
 
@@ -541,9 +542,9 @@ Leader-only mutation dehydration reduces duplicate persisted queues but does not
 ## TTL cache
 
 The API has one authenticated, token-gated entity cache for detail endpoints. It provides:
-- **Request coalescing** — concurrent detail misses for one entity share work
-- **Token-gated reuse** — the token is signed for the subscriber's session
-- **Short-lived enriched responses** — cached values are endpoint responses, not raw CDC rows
+- **Request coalescing**: concurrent detail misses for one entity share work
+- **Token-gated reuse**: the token is signed for the subscriber's session
+- **Short-lived enriched responses**: cached values are endpoint responses, not raw CDC rows
 
 ### App cache design
 
@@ -577,7 +578,7 @@ When a realtime entity changes, the SSE stream notification includes a `cacheTok
    └── Subsequent clients (any token for same entity) get cache hit (X-Cache: HIT)
 ```
 
-**Token signing:** Session-signed HMAC — CDC provides base token (nanoid), SSE signs per-subscriber with session token. Server validates signature and extracts base token for resolution.
+**Token signing:** Session-signed HMAC. CDC provides base token (nanoid), SSE signs per-subscriber with session token. Server validates signature and extracts base token for resolution.
 
 **Frontend flow:**
 - Stream handler stores tokens on notification receive
@@ -631,8 +632,8 @@ Subsequent requests → Cache hit → Return cached enriched data
 
 Priority routing compares the current route organization with the notification/sync target. The type includes `medium`, but `getSyncPriority()` currently returns only `high` or `low`. It applies in two places:
 
-1. **Live SSE handler** — when a product notification has a seq (the normal create/update path), both priorities run the range fetch. Priority only changes fallback invalidation/refetch behavior. Batch notifications also always range-fetch.
-2. **Sync service (Phase B)** — processes current org first, other orgs after (or not at all without `offlineAccess`)
+1. **Live SSE handler**: when a product notification has a seq (the normal create/update path), both priorities run the range fetch. Priority only changes fallback invalidation/refetch behavior. Batch notifications also always range-fetch.
+2. **Sync service (Phase B)**: processes current org first, other orgs after (or not at all without `offlineAccess`)
 
 | Priority | Condition | Live SSE behavior | Sync service behavior |
 |----------|-----------|--------------------|-----------------------|
@@ -671,7 +672,7 @@ entityEmbeddings: [
 ];
 ```
 
-The server attaches a `propagation` hint to SSE notifications and catchup responses for source entity types. The hint contains only source entity IDs that changed, split into `update` (created/updated) and `remove` (deleted) — no target entity queries needed.
+The server attaches a `propagation` hint to SSE notifications and catchup responses for source entity types. The hint contains only source entity IDs that changed, split into `update` (created/updated) and `remove` (deleted); no target entity queries needed.
 
 The client scans cached host list/detail queries using `Set` lookups, replacing or removing embedded objects whose IDs appear in the hint. The template config leaves `entityEmbeddings` empty, so this path is inactive until a fork configures it.
 
@@ -691,11 +692,11 @@ Cella includes an optional Yjs CRDT relay for product fields such as a rich-text
 
 ### Architecture
 
-The Yjs worker is a standalone `yjs/` workspace package (like `cdc/`). During editing it is a **binary relay** — it stores and forwards raw `Uint8Array` updates without parsing each update's document content. Parsing happens for **seeding** (fresh session → `entity.description` → Y.Doc via `@blocknote/server-util` `blocksToYDoc`) and **materialization** (the debounced/final Y.Doc state → description via a secret-gated internal backend endpoint). The relay is the **single writer** for descriptions during collaboration — clients never seed and never persist.
+The Yjs worker is a standalone `yjs/` workspace package (like `cdc/`). During editing it is a **binary relay**: it stores and forwards raw `Uint8Array` updates without parsing each update's document content. Parsing happens for **seeding** (fresh session → `entity.description` → Y.Doc via `@blocknote/server-util` `blocksToYDoc`) and **materialization** (the debounced/final Y.Doc state → description via a secret-gated internal backend endpoint). The relay is the **single writer** for descriptions during collaboration: clients never seed and never persist.
 
-> **Authorization.** The relay authorizes each connection **locally** rather than calling back to the backend. On WS upgrade it verifies the HMAC token, then runs the shared permission engine (the same engine the backend uses) against an RLS-scoped read of the entity scope + the user's memberships — see `yjs/src/data/permissions.ts` (`canEditEntity`). Denied → close `4003`, missing ancestor scope → `4400`, DB/resolver error → `4503`. Sharing the engine keeps the core decision logic aligned; the relay still owns its input loading and transport checks.
+> **Authorization.** The relay authorizes each connection **locally** rather than calling back to the backend. On WS upgrade it verifies the HMAC token, then runs the shared permission engine (the same engine the backend uses) against an RLS-scoped read of the entity scope + the user's memberships; see `yjs/src/data/permissions.ts` (`canEditEntity`). Denied → close `4003`, missing ancestor scope → `4400`, DB/resolver error → `4503`. Sharing the engine keeps the core decision logic aligned; the relay still owns its input loading and transport checks.
 
-> **Schema parity.** The relay builds its BlockNote schema from the same React-free configs the frontend editor uses, in `shared/src/utils/blocknote-schema-configs.ts`, so the ProseMirror node specs are identical on both sides — a doc seeded server-side round-trips through the client editor without loss.
+> **Schema parity.** The relay builds its BlockNote schema from the same React-free configs the frontend editor uses, in `shared/src/utils/blocknote-schema-configs.ts`, so the ProseMirror node specs are identical on both sides: a doc seeded server-side round-trips through the client editor without loss.
 
 ```
 Online editing:
@@ -728,11 +729,11 @@ Other users (non-editing, online):
 
 ### SSE suppression while editing
 
-While a Yjs editor is active, the SSE handler skips Yjs-owned fields (description + its derived fields, registered per entity type via `registerYjsOwnedFields`) for that entity — a slightly stale server snapshot must not overwrite the fresher local Y.Doc state. Non-description fields (`labels`, `status`, etc.) still flow through normally. Registration is the client's only collab-mode responsibility besides rendering; unregister happens on editor unmount.
+While a Yjs editor is active, the SSE handler skips Yjs-owned fields (description + its derived fields, registered per entity type via `registerYjsOwnedFields`) for that entity: a slightly stale server snapshot must not overwrite the fresher local Y.Doc state. Non-description fields (`labels`, `status`, etc.) still flow through normally. Registration is the client's only collab-mode responsibility besides rendering; unregister happens on editor unmount.
 
 ### Derived fields
 
-An opted-in entity registers a materializer with `registerYjsMaterializer`; that operation is responsible for computing derived fields and writing through the entity's standard update path. The relay sends empty `fieldTimestamps`. `buildStx()` generates a server HLC only when an accepted field has no existing timestamp; if the field already has one, the current code preserves it. A materializer therefore needs explicit timestamp handling before claiming coherent LWW ordering against offline REST edits.
+An opted-in entity registers a materializer with `registerYjsMaterializer`; that operation is responsible for computing derived fields and writing through the entity's standard update path. It uses `resolveServerUpdateOps()`, which advances the server clock past the affected fields' stored timestamps and assigns one new HLC to the materialized scalar update. The template does not register a product materializer by default.
 
 ---
 

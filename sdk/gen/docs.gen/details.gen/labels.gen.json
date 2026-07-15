@@ -46,6 +46,10 @@
                     "required": true,
                     "format": "uuid"
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -103,6 +107,7 @@
               "description": "Audentia angustus articulus voco commodi abduco deduco occaecati cubicularis volo.",
               "keywords": "utroque in comminor",
               "color": "#7d3fbd",
+              "publicAt": null,
               "tenantId": "eg2q4g",
               "projectId": "b41ee456-f6f2-49b7-947a-897a617f1449",
               "createdAt": "2024-11-21T01:19:53.533Z",
@@ -125,6 +130,7 @@
               "description": "Argentum attonbitus trans summa crapula.",
               "keywords": "bestia auxilium non",
               "color": "#fb24bf",
+              "publicAt": null,
               "tenantId": "iavgc6",
               "projectId": "3c2ac382-7d82-4be1-b935-e9d906125ba7",
               "createdAt": "2024-10-29T04:35:17.725Z",
@@ -263,6 +269,10 @@
                     "required": true,
                     "format": "uuid"
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -331,6 +341,7 @@
               "description": "Dolor somnus vobis atavus tergiversatio tersus suadeo colo.",
               "keywords": "benigne id abduco",
               "color": "#f3c9f4",
+              "publicAt": null,
               "tenantId": "rauzy6",
               "projectId": "fe77a8fb-8a8a-444c-841b-543b4862befa",
               "createdAt": "2024-04-18T21:12:59.543Z",
@@ -353,6 +364,7 @@
               "description": "Tum candidus curvo perspiciatis defendo adinventitias.",
               "keywords": "carpo verecundia cometes",
               "color": "#ee65b4",
+              "publicAt": null,
               "tenantId": "r85nah",
               "projectId": "230f592f-25ef-4bf3-8260-196c17422784",
               "createdAt": "2024-02-24T16:36:46.247Z",
@@ -416,6 +428,10 @@
                     "required": true,
                     "format": "uuid"
                   },
+                  "publicAt": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -484,6 +500,7 @@
               "description": "Dolor somnus vobis atavus tergiversatio tersus suadeo colo.",
               "keywords": "benigne id abduco",
               "color": "#f3c9f4",
+              "publicAt": null,
               "tenantId": "rauzy6",
               "projectId": "fe77a8fb-8a8a-444c-841b-543b4862befa",
               "createdAt": "2024-04-18T21:12:59.543Z",
@@ -506,6 +523,7 @@
               "description": "Tum candidus curvo perspiciatis defendo adinventitias.",
               "keywords": "carpo verecundia cometes",
               "color": "#ee65b4",
+              "publicAt": null,
               "tenantId": "r85nah",
               "projectId": "230f592f-25ef-4bf3-8260-196c17422784",
               "createdAt": "2024-02-24T16:36:46.247Z",
@@ -767,6 +785,10 @@
               "required": true,
               "format": "uuid"
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "seq": {
               "type": "integer",
               "required": true,
@@ -818,6 +840,7 @@
           "description": "Suffragium culpo sollers canis sunt substantia.",
           "keywords": "alter depulso animi",
           "color": "#b4aef5",
+          "publicAt": null,
           "tenantId": "nk9bo5",
           "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
           "createdAt": "2024-11-19T06:50:38.211Z",
@@ -928,6 +951,10 @@
               "required": true,
               "format": "uuid"
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "seq": {
               "type": "integer",
               "required": true,
@@ -979,6 +1006,7 @@
           "description": "Suffragium culpo sollers canis sunt substantia.",
           "keywords": "alter depulso animi",
           "color": "#b4aef5",
+          "publicAt": null,
           "tenantId": "nk9bo5",
           "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
           "createdAt": "2024-11-19T06:50:38.211Z",

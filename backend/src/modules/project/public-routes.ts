@@ -10,7 +10,7 @@ const publicProjectRoutes = {
     method: 'get',
     path: '/{id}',
     xGuard: [publicGuard],
-    tags: ['projects', 'app', 'context'],
+    tags: ['projects', 'app', 'channel'],
     operationId: 'getPublicProject',
     summary: 'Fetch public project by ID',
     description: 'Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.',

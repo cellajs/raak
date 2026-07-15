@@ -32,7 +32,7 @@ export const zUserBase = z.object({
 /**
  * Base schema for entities with memberships (e.g. organization).
  */
-export const zContextEntityBase = z.object({
+export const zChannelEntityBase = z.object({
   id: z.string(),
   name: z.string(),
   createdAt: z.string(),
@@ -65,8 +65,8 @@ export const zProductEntityBase = z.object({
 export const zMembershipBase = z.object({
   id: z.uuid(),
   tenantId: z.string().max(24),
-  contextType: z.enum(['organization', 'workspace', 'project']),
-  contextId: z.uuid(),
+  channelType: z.enum(['organization', 'workspace', 'project']),
+  channelId: z.uuid(),
   userId: z.uuid(),
   role: z.enum(['admin', 'member', 'guest']),
   archived: z.boolean(),
@@ -97,9 +97,9 @@ export const zStreamNotification = z.object({
   subjectId: z.string().nullable(),
   organizationId: z.string().nullable(),
   tenantId: z.string().nullable(),
-  contextType: z.enum(['organization', 'workspace', 'project']).nullable(),
+  channelType: z.enum(['organization', 'workspace', 'project']).nullable(),
   seq: z.int().nullable(),
-  contextId: z.string().nullable(),
+  channelId: z.string().nullable(),
   stx: zStxBase.and(z.record(z.string(), z.unknown())).nullable(),
   cacheToken: z.string().nullable(),
   batchUntilSeq: z.int().nullable(),
@@ -269,8 +269,8 @@ export const zInactiveMembership = z.object({
   createdAt: z.string(),
   id: z.uuid(),
   tenantId: z.string().max(24),
-  contextType: z.enum(['organization', 'workspace', 'project']),
-  contextId: z.uuid(),
+  channelType: z.enum(['organization', 'workspace', 'project']),
+  channelId: z.uuid(),
   email: z.string().max(255),
   userId: z.uuid().nullable(),
   tokenId: z.uuid().nullable(),
@@ -414,6 +414,7 @@ export const zTask = z.object({
   keywords: z.string().max(1000000),
   deletedAt: z.string().nullable(),
   deletedBy: z.uuid().nullable(),
+  publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
   expandable: z.boolean(),
   summary: z.string().max(1000000),
@@ -425,7 +426,6 @@ export const zTask = z.object({
   checkboxCount: z.int().gte(-2147483648).lte(2147483647),
   checkedCount: z.int().gte(-2147483648).lte(2147483647),
   attachmentCount: z.int().gte(-2147483648).lte(2147483647),
-  publicAt: z.string().nullable(),
   organizationId: z.uuid(),
   projectId: z.uuid(),
   labels: z.array(
@@ -460,7 +460,7 @@ export const zTask = z.object({
 });
 
 /**
- * The main context entity is an organization.
+ * The main channel entity is an organization.
  */
 export const zOrganization = z.object({
   createdAt: z.string(),
@@ -475,6 +475,7 @@ export const zOrganization = z.object({
   createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   publishedAt: z.string().nullable(),
+  publicAt: z.string().nullable(),
   shortName: z.string().max(255).nullable(),
   country: z.string().max(255).nullable(),
   timezone: z.string().max(255).nullable(),
@@ -541,6 +542,7 @@ export const zWorkspace = z.object({
   createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   publishedAt: z.string().nullable(),
+  publicAt: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
     membership: zMembershipBase.optional(),
@@ -578,6 +580,7 @@ export const zAttachment = z.object({
   updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   deletedAt: z.string().nullable(),
   deletedBy: z.uuid().nullable(),
+  publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
   taskId: z.uuid().nullable(),
   public: z.boolean(),
@@ -596,14 +599,14 @@ export const zAttachment = z.object({
 });
 
 /**
- * A user's membership in a context entity, including role and activity data.
+ * A user's membership in a channel entity, including role and activity data.
  */
 export const zMembership = z.object({
   createdAt: z.string(),
   id: z.uuid(),
   tenantId: z.string().max(24),
-  contextType: z.enum(['organization', 'workspace', 'project']),
-  contextId: z.uuid(),
+  channelType: z.enum(['organization', 'workspace', 'project']),
+  channelId: z.uuid(),
   userId: z.uuid(),
   role: z.enum(['admin', 'member', 'guest']),
   createdBy: z.uuid(),
@@ -631,6 +634,7 @@ export const zLabel = z.object({
   keywords: z.string().max(1000000),
   deletedAt: z.string().nullable(),
   deletedBy: z.uuid().nullable(),
+  publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
   color: z.string().max(255).nullable(),
   organizationId: z.uuid(),
@@ -911,7 +915,7 @@ export const zGetMyAuthResponse = zMeAuthData;
 export const zGetMyInvitationsResponse = z.object({
   items: z.array(
     z.object({
-      entity: zContextEntityBase,
+      entity: zChannelEntityBase,
       inactiveMembership: zInactiveMembership,
     }),
   ),
@@ -964,7 +968,7 @@ export const zGetMyMembershipsResponse = z.object({
 });
 
 /**
- * Unseen counts per parent context entity per entity type
+ * Unseen counts per parent channel entity per entity type
  */
 export const zGetUnseenCountsResponse = z.record(z.string(), z.record(z.string(), z.int().gte(0)));
 
@@ -1000,7 +1004,7 @@ export const zPostAppCatchupResponse = z.object({
     z.object({
       entitySeqs: z.record(z.string(), z.int()).optional(),
       entityCounts: z.record(z.string(), z.int()).optional(),
-      childContextChanges: z
+      childChannelChanges: z
         .record(
           z.string(),
           z.object({
@@ -2251,7 +2255,8 @@ export const zGetPresignedUrlPath = z.object({
 });
 
 export const zGetPresignedUrlQuery = z.object({
-  key: z.string().max(2048),
+  attachmentId: z.uuid(),
+  variant: z.enum(['original', 'thumbnail', 'converted']).optional().default('original'),
 });
 
 /**
@@ -2367,7 +2372,7 @@ export const zHandleMembershipInvitationPath = z.object({
 /**
  * Invitation was accepted
  */
-export const zHandleMembershipInvitationResponse = zContextEntityBase;
+export const zHandleMembershipInvitationResponse = zChannelEntityBase;
 
 export const zGetMembersPath = z.object({
   tenantId: z.string().max(50),

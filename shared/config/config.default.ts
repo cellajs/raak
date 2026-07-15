@@ -12,8 +12,8 @@ export const config = {
   /** All entity types in the app - must match hierarchy.allTypes. */
   entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment'] as const,
 
-  /** Context entities with memberships - must match hierarchy.contextTypes. */
-  contextEntityTypes: ['organization', 'workspace', 'project'] as const,
+  /** Context entities with memberships - must match hierarchy.channelTypes. */
+  channelEntityTypes: ['organization', 'workspace', 'project'] as const,
 
   /** Product/content entities - must match hierarchy.productTypes. */
   productEntityTypes: ['task', 'label', 'attachment'] as const,
@@ -108,10 +108,23 @@ export const config = {
 
   /** Frontend SPA base URL */
   frontendUrl: 'https://www.raak.dev',
-  backendUrl: 'https://api.raak.dev',
-  backendAuthUrl: 'https://api.raak.dev/auth',
-  yjsUrl: 'https://yjs.raak.dev',
-  mcpUrl: 'https://mcp.raak.dev',
+  // Same-origin: API, yjs and mcp are paths under the app host (no CORS, __Host- cookies).
+  backendUrl: 'https://www.raak.dev/api',
+  backendAuthUrl: 'https://www.raak.dev/api/auth',
+  yjsUrl: 'wss://www.raak.dev/yjs',
+  mcpUrl: 'https://www.raak.dev/mcp',
+
+  /**
+   * Pre-same-origin service hosts, kept alive as 301 redirects into the path-based URLs
+   * (api.raak.dev/x → www.raak.dev/api/x) so old email links and cached clients keep working.
+   * Remove after the deprecation window — the LB decommissions each DNS record + cert on the
+   * next `pulumi up`. Entries for disabled services are ignored.
+   */
+  legacyUrls: {
+    backend: 'https://api.raak.dev',
+    yjs: 'https://yjs.raak.dev',
+    mcp: 'https://mcp.raak.dev',
+  },
 
   /**
    * Deployable services. Each entry gates a service (and/or its route surface)
@@ -122,10 +135,10 @@ export const config = {
    */
   services: {
     frontend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev' },
-    backend: { enabled: true as boolean, publicUrl: 'https://api.raak.dev' },
+    backend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/api' },
     cdc: { enabled: true as boolean },
-    yjs: { enabled: true as boolean, publicUrl: 'https://yjs.raak.dev' },
-    mcp: { enabled: true as boolean, publicUrl: 'https://mcp.raak.dev' },
+    yjs: { enabled: true as boolean, publicUrl: 'wss://www.raak.dev/yjs' },
+    mcp: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/mcp' },
   },
 
   // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
@@ -166,7 +179,9 @@ export const config = {
   /** Enable maintenance mode (blocks all requests) */
   maintenance: false,
   /** Cookie version - increment when changing cookie structure to invalidate old cookies */
-  cookieVersion: 'v1',
+  // Same-origin clean break from Domain-scoped cookies: every logged-in user re-authenticates
+  // once at cutover (upstream moved v1 → v2 with this migration).
+  cookieVersion: 'v2',
   /** Persisted client query-cache shape - bump on breaking cached entity changes */
   clientCacheVersion: 'v1',
 

@@ -38,7 +38,7 @@ export const tasksTable = snakeCase.table(
     checkboxCount: integer().default(0).notNull(),
     checkedCount: integer().default(0).notNull(),
     attachmentCount: integer().default(0).notNull(),
-    publicAt: timestamp('public_at', { mode: 'string' }),
+    // publicAt comes from productEntityColumns (base column); non-member public read is gated on it.
     organizationId: uuid().notNull(),
     projectId: uuid()
       .notNull()

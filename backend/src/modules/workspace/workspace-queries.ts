@@ -1,6 +1,6 @@
 import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
-import { contextCountersTable } from '#/modules/entities/context-counters-db';
+import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getEntityCountsSelect } from '#/modules/entities/helpers/get-entity-counts';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -69,7 +69,7 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
   const membershipKeyOn = and(
     eq(membershipsTable.workspaceId, workspacesTable.id),
     eq(membershipsTable.userId, userId),
-    eq(membershipsTable.contextType, entityType),
+    eq(membershipsTable.channelType, entityType),
   );
 
   // Membership filters (role/archived) in JOIN ON
@@ -118,8 +118,8 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
 
   if (countData) {
     query = query.leftJoin(
-      contextCountersTable,
-      sql`${workspacesTable.id}::text = ${contextCountersTable.contextKey}`,
+      channelCountersTable,
+      sql`${workspacesTable.id}::text = ${channelCountersTable.channelKey}`,
     ) as typeof query;
   }
 

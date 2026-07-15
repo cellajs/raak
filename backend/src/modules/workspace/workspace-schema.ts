@@ -15,10 +15,10 @@ import {
   validNameSchema,
   validTempIdSchema,
 } from '#/schemas';
-import { contextEntityIncludedSchema } from '#/schemas/context-entity-included';
+import { channelEntityIncludedSchema } from '#/schemas/channel-entity-included';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
-const workspaceIncludedSchema = contextEntityIncludedSchema('workspace');
+const workspaceIncludedSchema = channelEntityIncludedSchema('workspace');
 
 export const workspaceSchema = z
   .object({
@@ -40,7 +40,7 @@ export const workspaceWithMembershipSchema = workspaceSchema.extend({
 });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for workspace */
-export const workspaceContract = evolutionContract.context('workspace', {
+export const workspaceContract = evolutionContract.channel('workspace', {
   createItem: z.object({
     id: validTempIdSchema,
     name: validNameSchema,

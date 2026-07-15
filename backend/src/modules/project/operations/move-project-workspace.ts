@@ -6,11 +6,11 @@ import {
   setCurrentUserProjectMembershipWorkspace,
 } from '#/modules/project/helpers/project-membership-workspace';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
-import { getValidContextEntity } from '#/permissions';
+import { getValidChannelEntity } from '#/permissions';
 import { log } from '#/utils/logger';
 
 export async function moveProjectToWorkspaceOp(ctx: AuthContext, id: string, workspaceId: string) {
-  const { entity: project } = await getValidContextEntity(ctx, id, 'project', 'read');
+  const { entity: project } = await getValidChannelEntity(ctx, id, 'project', 'read');
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
   const membership = requireCurrentUserProjectMembership(ctx, project);
   const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, {

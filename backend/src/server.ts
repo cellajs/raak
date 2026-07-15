@@ -10,6 +10,19 @@ import { app as middlewares } from '#/middlewares/app';
 
 const baseApp = new OpenAPIHono<Env>();
 
+// TODO review
+/**
+ * Same-origin migration: the LB routes `/api/*` and `/mcp/*` on the app host
+ * to the backend/mcp service (registry `lbPathBegin`) but does NOT strip the
+ * prefix, so the app also serves itself under those prefixes. `mount()`
+ * re-dispatches with the prefix stripped, so handlers see the same paths as
+ * legacy subdomain traffic and routes registered later (modules, OpenAPI docs,
+ * the mcp worker's mounts) are covered dynamically. Registered before the
+ * global middleware so prefixed requests run it once, in the inner dispatch.
+ */
+baseApp.mount('/api', (request, env, executionCtx) => baseApp.fetch(request, env, executionCtx));
+baseApp.mount('/mcp', (request, env, executionCtx) => baseApp.fetch(request, env, executionCtx));
+
 // Redirect favicon
 baseApp.get('/favicon.ico', (c) => c.redirect(`${appConfig.frontendUrl}/favicon.ico`, 301));
 

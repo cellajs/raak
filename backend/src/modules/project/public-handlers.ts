@@ -21,7 +21,7 @@ app.openapi(publicProjectRoutes.getPublicProject, async (ctx) => {
   // Anonymous engine check: readable only via the declared public read grant
   // (publicRead('publicSelf') in permissions-config, matches when project.publicAt is set).
   const subject = buildSubject(entityType, project, { id: project.id, row: project });
-  if (!checkPermission([], 'read', subject).isAllowed) {
+  if (!checkPermission([], 'read', subject, { anonymous: true }).isAllowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType, meta: { organizationId: project.organizationId } });
   }
 

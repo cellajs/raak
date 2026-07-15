@@ -1,6 +1,6 @@
 import { and, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
-import { contextCountersTable } from '#/modules/entities/context-counters-db';
+import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { labelsTable } from '#/modules/label/label-db';
 
 interface FindLabelsByStxMutationIdOpts {
@@ -68,7 +68,7 @@ interface DeleteCountersByKeysOpts {
 /** Delete context counters by keys. */
 export const deleteCountersByKeys = async (ctx: DbContext, { keys }: DeleteCountersByKeysOpts) => {
   const { db } = ctx.var;
-  return db.delete(contextCountersTable).where(inArray(contextCountersTable.contextKey, keys));
+  return db.delete(channelCountersTable).where(inArray(channelCountersTable.channelKey, keys));
 };
 
 interface FindLabelUsedCountOpts {
@@ -79,9 +79,9 @@ interface FindLabelUsedCountOpts {
 export const findLabelUsedCount = async (ctx: DbContext, { labelId }: FindLabelUsedCountOpts) => {
   const { db } = ctx.var;
   const [counters] = await db
-    .select({ usedCount: sql<number>`coalesce((${contextCountersTable.counts}->>'e:task')::int, 0)` })
-    .from(contextCountersTable)
-    .where(eq(contextCountersTable.contextKey, labelId))
+    .select({ usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>'e:task')::int, 0)` })
+    .from(channelCountersTable)
+    .where(eq(channelCountersTable.channelKey, labelId))
     .limit(1);
   return counters?.usedCount ?? 0;
 };
@@ -92,9 +92,9 @@ export const buildLabelsListQuery = (ctx: AuthContext, { filters }: { filters: S
   return db
     .select({
       ...getColumns(labelsTable),
-      usedCount: sql<number>`coalesce((${contextCountersTable.counts}->>'e:task')::int, 0)`.as('used_count'),
+      usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>'e:task')::int, 0)`.as('used_count'),
     })
     .from(labelsTable)
-    .leftJoin(contextCountersTable, sql`${contextCountersTable.contextKey} = ${labelsTable.id}::text`)
+    .leftJoin(channelCountersTable, sql`${channelCountersTable.channelKey} = ${labelsTable.id}::text`)
     .where(and(eq(labelsTable.organizationId, organizationId), ...filters));
 };

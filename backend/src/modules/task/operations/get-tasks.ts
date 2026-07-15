@@ -6,6 +6,7 @@ import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { getTasks } from '#/modules/task/helpers/get-tasks';
 import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-queries';
 import type { taskListQuerySchema } from '#/modules/task/task-schema';
+import { actorFrom } from '#/permissions/actor';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 
 type GetTasksInput = z.infer<typeof taskListQuerySchema>;
@@ -18,24 +19,25 @@ export async function getTasksOp(
   const organizationId = ctx.var.organization.id;
 
   // Resolve the explicit sub-context narrowing (if any) from the request.
-  let requested: { subContextId?: string; subContextIds?: string[] } | undefined;
+  let requested: { subChannelId?: string; subChannelIds?: string[] } | undefined;
   if (workspaceId) {
     // ?workspaceId=…: restrict to the workspace's projects the caller may read.
     const workspaceProjects = await tenantRead(ctx, (readCtx) => findProjectsByWorkspace(readCtx, { workspaceId }));
-    requested = { subContextIds: workspaceProjects.map(({ id }) => id) };
+    requested = { subChannelIds: workspaceProjects.map(({ id }) => id) };
   }
   if (projectId) {
     // ?projectId=…: must exist and be within the caller's readable scope.
     const project = await tenantRead(ctx, (readCtx) => findProjectById(readCtx, { projectId }));
     if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-    requested = { subContextId: projectId };
+    requested = { subChannelId: projectId };
   }
 
   // Scope to the caller's readable projects; undefined means org-wide (all readable projects).
-  const { subContextIds: projectIds } = resolveCollectionReadFilter(
+  const { subChannelIds: projectIds } = resolveCollectionReadFilter(
     ctx.var.memberships,
     'task',
     organizationId,
+    actorFrom(ctx),
     requested,
   );
 

@@ -1,9 +1,9 @@
 import type { Pgoutput } from 'pg-logical-replication';
-import { isContextEntity, appConfig } from 'shared';
-import type { ContextEntityIdColumns } from 'shared';
+import { isChannelEntity, appConfig } from 'shared';
+import type { ChannelEntityIdColumns } from 'shared';
 import type { ParseMessageResult } from '../pipeline/parse-message';
 import type { PendingEvent } from '../types';
-import { contextIdColumnKeys } from '../utils/context-columns';
+import { channelIdColumnKeys } from '../utils/channel-columns';
 import { log } from '../lib/pino';
 import { RESOURCE_LIMITS } from '../constants';
 
@@ -20,11 +20,11 @@ const { transactionTimeoutMs } = RESOURCE_LIMITS.buffers;
 /**
  * Transaction-aware buffer for CDC WAL events.
  *
- * Uses streaming cascade suppression: as DELETE events arrive, context entity
+ * Uses streaming cascade suppression: as DELETE events arrive, channel entity
  * IDs (organization, project, workspace) are tracked in a Set. Child deletes
  * referencing a tracked context ID are dropped inline, never buffered.
  *
- * This keeps memory bounded to surviving events only (context entity deletes +
+ * This keeps memory bounded to surviving events only (channel entity deletes +
  * non-delete mutations), regardless of cascade size. A 100k-task org delete
  * buffers ~8 events instead of ~116k.
  *
@@ -35,8 +35,8 @@ export class TransactionBuffer {
   private pendingEvents: PendingEvent[] = [];
   private timeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
-  /** Context entity IDs deleted in the current transaction (streaming suppression). */
-  private deletedContextIds = new Set<string>();
+  /** Channel entity IDs deleted in the current transaction (streaming suppression). */
+  private deletedChannelIds = new Set<string>();
 
   /** Count of events suppressed in the current transaction. */
   private suppressedCount = 0;
@@ -66,7 +66,7 @@ export class TransactionBuffer {
 
     this.activeXid = msg.xid;
     this.pendingEvents = [];
-    this.deletedContextIds.clear();
+    this.deletedChannelIds.clear();
     this.suppressedCount = 0;
     this.startTimeout();
   }
@@ -74,7 +74,7 @@ export class TransactionBuffer {
   /**
    * Buffer a processed DML event. If no transaction is active, process immediately.
    * Cascaded child deletes are dropped inline via streaming suppression when the
-   * parent context entity delete has already been seen.
+   * parent channel entity delete has already been seen.
    */
   async onEvent(lsn: string, result: ParseMessageResult): Promise<void> {
     // No active transaction: emit immediately (passthrough)
@@ -85,13 +85,13 @@ export class TransactionBuffer {
 
     const { activity } = result;
 
-    // Track context entity deletes for streaming suppression
-    if (activity.action === 'delete' && activity.entityType && isContextEntity(activity.entityType) && activity.subjectId) {
-      this.deletedContextIds.add(activity.subjectId);
+    // Track channel entity deletes for streaming suppression
+    if (activity.action === 'delete' && activity.entityType && isChannelEntity(activity.entityType) && activity.subjectId) {
+      this.deletedChannelIds.add(activity.subjectId);
     }
 
     // Drop cascaded child deletes inline, never buffer them
-    if (this.deletedContextIds.size > 0 && this.isCascadedDelete(result)) {
+    if (this.deletedChannelIds.size > 0 && this.isCascadedDelete(result)) {
       this.suppressedCount++;
       return;
     }
@@ -102,29 +102,29 @@ export class TransactionBuffer {
   /**
    * Handle a COMMIT message: process surviving buffered events.
    * Most cascade suppression happens inline in onEvent(). A second pass catches
-   * any child deletes that arrived before their parent context entity delete.
+   * any child deletes that arrived before their parent channel entity delete.
    */
   async onCommit(): Promise<void> {
     this.clearTimeout();
 
     let events = this.pendingEvents;
     let suppressedCount = this.suppressedCount;
-    const deletedContextIds = this.deletedContextIds.size > 0 ? [...this.deletedContextIds] : null;
+    const deletedChannelIds = this.deletedChannelIds.size > 0 ? [...this.deletedChannelIds] : null;
 
     this.activeXid = null;
     this.pendingEvents = [];
-    this.deletedContextIds.clear();
+    this.deletedChannelIds.clear();
     this.suppressedCount = 0;
 
-    // Second pass: catch child deletes that arrived before their parent context entity
+    // Second pass: catch child deletes that arrived before their parent channel entity
     // delete. Most children are dropped inline in onEvent(), but WAL order isn't always
     // parent-first (e.g., application-level batch deletes). This pass is cheap since only
-    // surviving events remain (typically context entity deletes + non-delete mutations).
-    if (deletedContextIds && events.length > 1) {
-      const deletedContextSet = new Set(deletedContextIds);
+    // surviving events remain (typically channel entity deletes + non-delete mutations).
+    if (deletedChannelIds && events.length > 1) {
+      const deletedChannelSet = new Set(deletedChannelIds);
       const filtered: PendingEvent[] = [];
       for (const event of events) {
-        if (this.isCascadedDeleteByIds(event.result, deletedContextSet)) {
+        if (this.isCascadedDeleteByIds(event.result, deletedChannelSet)) {
           suppressedCount++;
         } else {
           filtered.push(event);
@@ -137,7 +137,7 @@ export class TransactionBuffer {
       log.info('Suppressed cascaded delete events', {
         suppressedCount,
         processedCount: events.length,
-        deletedContextIds,
+        deletedChannelIds,
       });
     }
 
@@ -187,24 +187,24 @@ export class TransactionBuffer {
    * Used in onEvent() for streaming suppression.
    */
   private isCascadedDelete(result: ParseMessageResult): boolean {
-    return this.isCascadedDeleteByIds(result, this.deletedContextIds);
+    return this.isCascadedDeleteByIds(result, this.deletedChannelIds);
   }
 
   /**
-   * Check if an event is a cascaded delete from a deleted context entity, matched via the
-   * activity's context entity ID columns.
+   * Check if an event is a cascaded delete from a deleted channel entity, matched via the
+   * activity's channel entity ID columns.
    */
-  private isCascadedDeleteByIds(result: ParseMessageResult, deletedContextIds: Set<string>): boolean {
+  private isCascadedDeleteByIds(result: ParseMessageResult, deletedChannelIds: Set<string>): boolean {
     const { activity } = result;
     if (activity.action !== 'delete') return false;
 
-    // Don't suppress the context entity delete itself
-    if (activity.entityType && isContextEntity(activity.entityType)) return false;
+    // Don't suppress the channel entity delete itself
+    if (activity.entityType && isChannelEntity(activity.entityType)) return false;
 
-    // Check all context entity ID columns on this activity
-    for (const idColumn of contextIdColumnKeys) {
-      const value = (activity as Partial<ContextEntityIdColumns>)[idColumn];
-      if (typeof value === 'string' && deletedContextIds.has(value)) {
+    // Check all channel entity ID columns on this activity
+    for (const idColumn of channelIdColumnKeys) {
+      const value = (activity as Partial<ChannelEntityIdColumns>)[idColumn];
+      if (typeof value === 'string' && deletedChannelIds.has(value)) {
         return true;
       }
     }

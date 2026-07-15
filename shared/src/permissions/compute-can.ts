@@ -1,4 +1,4 @@
-import type { ContextEntityType, EntityActionType, EntityRole, EntityType } from '../../types';
+import type { ChannelEntityType, EntityActionType, EntityRole, EntityType } from '../../types';
 import { recordFromKeys } from '../config-builder/utils';
 import { getPolicyPermissions, getSubjectPolicies } from './access-policies';
 import { allActionsDenied } from './action-helpers';
@@ -8,20 +8,13 @@ import { resolveTopology } from './permission-manager/resolve-topology';
 import type { PermissionTopology } from './permission-manager/topology';
 
 /**
- * Per-action permission state for a single entity type.
- *
- * - `true` = unconditionally allowed (policy value `1`)
- * - `false` = denied (policy value `0`)
- * - condition name (e.g. `'own'`) = allowed only for rows satisfying that row condition.
- *   The frontend resolves it per row: `resolvePermission` handles the built-in `'own'`
- *   (compare `entity.createdBy` against the current user ID); custom conditions resolve
- *   via their check-form.
- *
- * Keeping the state three-valued preserves row-condition semantics at the UI layer.
+ * Per-action permission state for one entity type. Three-valued to carry row conditions to the UI:
+ * `true` = allowed (`1`), `false` = denied (`0`), condition name (e.g. `'own'`) = allowed only on
+ * matching rows, resolved per row on the frontend by `resolvePermission` / the condition's check-form.
  */
 type ActionStates = Record<EntityActionType, ActionPermissionState>;
 
-/** Entity-type-keyed permission map: context entity + its descendant types */
+/** Entity-type-keyed permission map: channel entity + its descendant types */
 export type EntityCanMap = Partial<Record<EntityType, ActionStates>>;
 
 /**
@@ -29,14 +22,14 @@ export type EntityCanMap = Partial<Record<EntityType, ActionStates>>;
  * Returns allActionsDenied when no policy is found.
  */
 function computeEntityPermissions(
-  entityType: ContextEntityType | EntityType,
-  contextType: ContextEntityType,
+  entityType: ChannelEntityType | EntityType,
+  channelType: ChannelEntityType,
   role: EntityRole,
   policies: AccessPolicies,
   entityActions: readonly EntityActionType[],
 ): ActionStates {
-  const subjectPolicies = getSubjectPolicies(entityType as ContextEntityType, policies);
-  const permissions = getPolicyPermissions(subjectPolicies, contextType, role);
+  const subjectPolicies = getSubjectPolicies(entityType as ChannelEntityType, policies);
+  const permissions = getPolicyPermissions(subjectPolicies, channelType, role);
 
   if (!permissions) return allActionsDenied;
 
@@ -51,29 +44,20 @@ function computeEntityPermissions(
 }
 
 /**
- * Computes a permission map keyed by entity type for a context entity and its descendants.
- * Used on the frontend to derive `can` from the membership baked onto a context entity.
- *
- * The map includes permissions for:
- * - The context entity itself (e.g., `organization`)
- * - All descendant entity types per the hierarchy (e.g., `attachment`)
- *
- * Actions with `'own'` permission are preserved as `'own'` in the map.
- * The frontend resolves these per-entity by checking `entity.createdBy === userId`.
- *
- * Returns empty map if no membership is provided.
+ * Frontend `can` map for a channel entity and all its hierarchy descendants, derived from the
+ * membership baked onto the channel entity. `'own'` grants are preserved (see {@link ActionStates}).
+ * Returns `{}` when no membership is given.
  *
  * @example
  * ```ts
  * const can = computeCan('organization', membership, policies);
  * // can.organization.update → true
  * // can.attachment.update → 'own' (member can only update own attachments)
- * // can.attachment.create → true
  * ```
  */
 export const computeCan = (
-  contextType: ContextEntityType,
-  membership: { contextType: ContextEntityType; role: EntityRole } | undefined | null,
+  channelType: ChannelEntityType,
+  membership: { channelType: ChannelEntityType; role: EntityRole } | undefined | null,
   policies: AccessPolicies,
   topology?: PermissionTopology,
 ): EntityCanMap => {
@@ -83,12 +67,12 @@ export const computeCan = (
   const { hierarchy: h, entityActions } = resolveTopology(topology);
   const map: EntityCanMap = {};
 
-  // Permissions for the context entity itself
-  map[contextType] = computeEntityPermissions(contextType, membership.contextType, membership.role, policies, entityActions);
+  // Permissions for the channel entity itself
+  map[channelType] = computeEntityPermissions(channelType, membership.channelType, membership.role, policies, entityActions);
 
   // Permissions for all descendant entity types (children + their children)
-  for (const descendant of h.getOrderedDescendants(contextType) as EntityType[]) {
-    map[descendant] = computeEntityPermissions(descendant, membership.contextType, membership.role, policies, entityActions);
+  for (const descendant of h.getOrderedDescendants(channelType) as EntityType[]) {
+    map[descendant] = computeEntityPermissions(descendant, membership.channelType, membership.role, policies, entityActions);
   }
 
   return map;

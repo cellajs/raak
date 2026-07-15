@@ -765,7 +765,7 @@
     "path": "/me/memberships",
     "tags": ["me"],
     "summary": "Get my memberships",
-    "description": "Returns all memberships for the current user across all context entities.",
+    "description": "Returns all memberships for the current user across all channel entities.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": false,
@@ -788,7 +788,7 @@
     "path": "/unseen/counts",
     "tags": ["seen"],
     "summary": "Get unseen counts",
-    "description": "Returns the number of unseen product entities per parent context entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.",
+    "description": "Returns the number of unseen product entities per parent channel entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": false,
@@ -1333,7 +1333,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1506,7 +1506,7 @@
     "tagsByKind": {
       "module": ["organizations"],
       "owner": ["cella"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "organization"
   },
@@ -1531,7 +1531,7 @@
     "tagsByKind": {
       "module": ["organizations"],
       "owner": ["cella"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "organization"
   },
@@ -1556,7 +1556,7 @@
     "tagsByKind": {
       "module": ["organizations"],
       "owner": ["cella"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "organization"
   },
@@ -1581,7 +1581,7 @@
     "tagsByKind": {
       "module": ["organizations"],
       "owner": ["cella"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "organization"
   },
@@ -1606,7 +1606,7 @@
     "tagsByKind": {
       "module": ["organizations"],
       "owner": ["cella"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "organization"
   },
@@ -1631,7 +1631,7 @@
     "tagsByKind": {
       "module": ["workspaces"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "workspace"
   },
@@ -1656,7 +1656,7 @@
     "tagsByKind": {
       "module": ["workspaces"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "workspace"
   },
@@ -1681,7 +1681,7 @@
     "tagsByKind": {
       "module": ["workspaces"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "workspace"
   },
@@ -1706,7 +1706,7 @@
     "tagsByKind": {
       "module": ["workspaces"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "workspace"
   },
@@ -1731,7 +1731,7 @@
     "tagsByKind": {
       "module": ["workspaces"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "workspace"
   },
@@ -1756,7 +1756,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1781,7 +1781,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1806,7 +1806,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1831,7 +1831,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1856,7 +1856,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1881,7 +1881,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1906,7 +1906,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -1931,7 +1931,7 @@
     "tagsByKind": {
       "module": ["projects"],
       "owner": ["app"],
-      "entity": ["context"]
+      "entity": ["channel"]
     },
     "entityType": "project"
   },
@@ -2115,7 +2115,7 @@
     "path": "/{tenantId}/{organizationId}/memberships",
     "tags": ["memberships"],
     "summary": "Create memberships",
-    "description": "Creates one or more memberships, inviting users (existing or new) to a context entity such as an organization.",
+    "description": "Creates one or more memberships, inviting users (existing or new) to a channel entity such as an organization.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": true,
@@ -2207,7 +2207,7 @@
     "path": "/{tenantId}/{organizationId}/memberships/members",
     "tags": ["memberships"],
     "summary": "Get list of members",
-    "description": "Retrieves members (users) of a context entity by ID, including their associated membership data.",
+    "description": "Retrieves members (users) of a channel entity by ID, including their associated membership data.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": false,
@@ -2230,7 +2230,7 @@
     "path": "/{tenantId}/{organizationId}/memberships/pending",
     "tags": ["memberships"],
     "summary": "Get list of pending memberships",
-    "description": "Returns pending memberships for a context entity, identified by ID. This does not include pending invitations for non-existing users.",
+    "description": "Returns pending memberships for a channel entity, identified by ID. This does not include pending invitations for non-existing users.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": false,

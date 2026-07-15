@@ -23,6 +23,7 @@
     "print-deploy-env": "tsx tasks/print-deploy-env.ts",
     "print-frontend-build-env": "tsx tasks/print-frontend-build-env.ts",
     "repair-certs": "tsx tasks/repair-certs.ts",
+    "repair-control-store": "tsx tasks/repair-control-store.ts",
     "setup-ci-key": "tsx tasks/setup-ci-key.ts",
     "smoke": "tsx tasks/smoke.ts",
     "stack-lock": "tsx tasks/stack-lock.ts",
