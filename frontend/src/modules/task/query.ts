@@ -24,7 +24,6 @@ import { isArrayDelta } from '~/query/offline/array-delta';
 import { coalescePendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
-import { getCacheToken } from '~/query/realtime/cache-token-store';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
 import type { InfiniteQueryData, PageParams, QueryData, QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
@@ -115,11 +114,10 @@ export const taskKeys = {
   },
 };
 
-registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, options) => {
+registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor) => {
   return getTasks({
     path: { tenantId: tenantId!, organizationId: organizationId! },
     query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
-    headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
 
@@ -221,10 +219,8 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
   queryOptions({
     queryKey: taskKeys.detail.byId(id),
     queryFn: async () => {
-      const cacheToken = getCacheToken('task', id);
       return getTask({
         path: { id, organizationId, tenantId },
-        headers: cacheToken ? { 'X-Cache-Token': cacheToken } : undefined,
       });
     },
     initialData: () => findTaskInCache(id),
@@ -546,14 +542,12 @@ addMutationRegistrar((qc: QueryClient) => {
   qc.setQueryDefaults(taskKeys.detail.base, {
     queryFn: ({ queryKey, meta }) => {
       const id = queryKey[2] as string;
-      const cacheToken = getCacheToken('task', id);
       const cachedTask = findTaskInCache(id);
       const organizationId = (meta?.organizationId as string) ?? cachedTask?.organizationId ?? getRouteOrgId();
       const tenantId = (meta?.tenantId as string) ?? cachedTask?.tenantId ?? getRouteTenantId();
       if (!organizationId || !tenantId) throw new Error('Cannot resolve organizationId/tenantId for task fetch');
       return getTask({
         path: { id, organizationId, tenantId },
-        headers: cacheToken ? { 'X-Cache-Token': cacheToken } : undefined,
       });
     },
   });

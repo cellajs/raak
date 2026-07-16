@@ -101,7 +101,6 @@ export const zStreamNotification = z.object({
   seq: z.int().nullable(),
   channelId: z.string().nullable(),
   stx: zStxBase.and(z.record(z.string(), z.unknown())).nullable(),
-  cacheToken: z.string().nullable(),
   batchUntilSeq: z.int().nullable(),
   propagation: z
     .object({
@@ -243,6 +242,7 @@ export const zMeAuthData = z.object({
       ipSubnetHash: z.string().max(64).nullable(),
       ipCountry: z.string().max(2).nullable(),
       ipAsn: z.int().gte(-2147483648).lte(2147483647).nullable(),
+      deviceIdHash: z.string().max(64).nullable(),
       createdAt: z.string(),
       expiresAt: z.string(),
       isCurrent: z.boolean(),
@@ -314,6 +314,7 @@ export const zTenant = z.object({
       apiPointsPerHour: z.int().gte(0),
     }),
   }),
+  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])),
   createdBy: z.uuid().nullable(),
   subscriptionId: z.string().max(255).nullable(),
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']),
@@ -486,7 +487,6 @@ export const zOrganization = z.object({
   logoUrl: z.string().max(2048).nullable(),
   websiteUrl: z.string().max(2048).nullable(),
   welcomeText: z.string().max(1000000).nullable(),
-  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])),
   chatSupport: z.boolean(),
   included: z.object({
     membership: zMembershipBase.optional(),
@@ -1162,6 +1162,7 @@ export const zUpdateTenantBody = z.object({
   subscriptionId: z.string().max(255).nullish(),
   subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']).optional(),
   subscriptionPlan: z.string().max(255).nullish(),
+  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])).optional(),
   restrictions: z
     .object({
       quotas: z.record(z.string(), z.int().gte(0)).optional(),
@@ -1464,7 +1465,7 @@ export const zRedirectToTaskPath = z.object({
 });
 
 export const zGetYjsTokenQuery = z.object({
-  entityType: z.string().max(50),
+  entityType: z.enum(['task', 'label', 'attachment']),
   tenantId: z.string().max(50),
   organizationId: z.string().max(50),
 });
@@ -1640,7 +1641,6 @@ export const zUpdateOrganizationBody = z.object({
   bannerUrl: z.string().max(2048).nullish(),
   websiteUrl: z.string().max(2048).nullish(),
   welcomeText: z.string().max(1000000).nullish(),
-  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])).optional(),
   chatSupport: z.boolean().optional(),
 });
 

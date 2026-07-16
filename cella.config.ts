@@ -40,8 +40,6 @@ export default defineConfig({
       'backend/src/modules/attachment/attachment-queries.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
-      // NOTE: the hierarchy-bound permission tests are no longer pinned — they run on the shared
-      // wide-fixture kit / config-adaptive seeding and are owned upstream, so they sync cleanly.
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',

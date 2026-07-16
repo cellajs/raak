@@ -84,7 +84,7 @@ const labelsRoutes = {
     method: 'get',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
-    xCache: [appCache()],
+    xCache: [appCache('label')],
     tags: ['labels', 'app', 'product'],
     summary: 'Get label',
     description: 'Retrieves a label by its ID.',

@@ -85,7 +85,6 @@ describe('sendBatchMessageToApi', () => {
       activity: { seq?: number; batchUntilSeq?: number };
       rowData: Record<string, unknown>;
       batchRows: { seq?: number }[];
-      batchReservations?: unknown[];
     });
     const orgA = payloads.find((p) => p.rowData.organizationId === 'org-a');
     const orgB = payloads.find((p) => p.rowData.organizationId === 'org-b');
@@ -94,11 +93,9 @@ describe('sendBatchMessageToApi', () => {
     expect(orgA?.activity.batchUntilSeq).toBe(11);
     expect(orgB?.activity.seq).toBe(5);
     expect(orgB?.activity.batchUntilSeq).toBe(7);
-    // Each message speaks only for its own context's rows and reservations
+    // Each message speaks only for its own context's rows
     expect(orgA?.batchRows.map((row) => row.seq)).toEqual([10, 11]);
     expect(orgB?.batchRows.map((row) => row.seq)).toEqual([5, 6, 7]);
-    expect(orgA?.batchReservations).toHaveLength(2);
-    expect(orgB?.batchReservations).toHaveLength(3);
     // Both ranges are contiguous: the integrity invariant holds per context
     expect(log.error).not.toHaveBeenCalled();
   });
@@ -121,6 +118,27 @@ describe('sendBatchMessageToApi', () => {
       organizationId: 'org-a',
       createdBy: 'u1',
     });
+  });
+
+  it('groups non-product entities (user) by org instead of demanding a channel ancestor', () => {
+    // A user has no organization ancestor and its activity carries no organizationId. Before the
+    // fix, batching ≥2 user rows (e.g. seeding) called resolveChannelKey and threw
+    // "the hierarchy model requires an organization ancestor". Non-product entities have no seq
+    // context and must group by org (here 'none'), like resources.
+    const asUser = (seq: number): ReturnType<typeof mockBatchEvent> => {
+      const event = mockBatchEvent(seq, `user-${seq}`);
+      return {
+        ...event,
+        activity: { ...event.activity, entityType: 'user', organizationId: null } as typeof event.activity,
+        rowData: { id: `user-${seq}` },
+        seq: undefined,
+      };
+    };
+    const events = [asUser(1), asUser(2)];
+
+    expect(() => sendBatchMessageToApi(events, { traceId: 'test', spanId: 'test' } as never)).not.toThrow();
+    expect(wsClient.send).toHaveBeenCalledOnce();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('handles single-event batch without error', () => {

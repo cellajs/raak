@@ -2206,6 +2206,7 @@ export const selfCreateTenant = <ThrowOnError extends boolean = true>(
  * @param {string | null=} options.body.subscriptionId - `string | null` (optional)
  * @param {enum=} options.body.subscriptionStatus - `enum` (optional)
  * @param {string | null=} options.body.subscriptionPlan - `string | null` (optional)
+ * @param {any[]=} options.body.authStrategies - `any[]` (optional)
  * @param {object=} options.body.restrictions - `object` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -2839,7 +2840,7 @@ export const redirectToTask = <ThrowOnError extends boolean = true>(
  * **GET /yjs/token** ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=yjs#tag/yjs/GET/yjs/token) ·· [getYjsToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/yjs/token) ·· _yjs_cella_
  *
  * @param {getYjsTokenData} options
- * @param {string} options.query.entitytype - `string`
+ * @param {enum} options.query.entitytype - `enum`
  * @param {string} options.query.tenantid - `string`
  * @param {string} options.query.organizationid - `string`
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -3058,7 +3059,6 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
  * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
  * @param {string | null=} options.body.websiteUrl - `string | null` (optional)
  * @param {string | null=} options.body.welcomeText - `string | null` (optional)
- * @param {any[]=} options.body.authStrategies - `any[]` (optional)
  * @param {boolean=} options.body.chatSupport - `boolean` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -3851,7 +3851,7 @@ export const getPresignedUrl = <ThrowOnError extends boolean = true>(
 /**
  * Get attachment
  *
- * Returns a single attachment by ID. Supports CDC cache via X-Cache-Token header.
+ * Returns a single attachment by ID. Served from the CDC-invalidated entity detail cache.
  *
  * **GET /{tenantId}/{organizationId}/attachments/{id}** ·· [getAttachment](https://www.raak.dev/docs/operations?operationTag=attachments#tag/attachments/GET/{tenantId}/{organizationId}/attachments/{id}) ·· [getAttachment](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/attachments/{id}) ·· [getAttachment](https://www.raak.dev/docs/operations?operationTag=product#tag/product/GET/{tenantId}/{organizationId}/attachments/{id}) ·· _attachments_cella_product_
  *

@@ -31,7 +31,6 @@ import { addMutationRegistrar } from '~/query/mutation-registry';
 import { coalescePendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
-import { getCacheToken } from '~/query/realtime/cache-token-store';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
 import type { QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
@@ -55,11 +54,10 @@ const keys = {
     filtered: (organizationId: string, filters: LabelFilters) => ['label', 'list', organizationId, filters] as const,
   },
 };
-registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, options) => {
+registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor) => {
   return getLabels({
     path: { tenantId: tenantId!, organizationId: organizationId! },
     query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
-    headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
 export const labelQueryKeys = keys;
@@ -75,10 +73,8 @@ export const labelQueryOptions = (id: string, organizationId: string, tenantId: 
   queryOptions({
     queryKey: keys.detail.byId(id),
     queryFn: async () => {
-      const cacheToken = getCacheToken('label', id);
       return getLabel({
         path: { id, organizationId, tenantId },
-        headers: cacheToken ? { 'X-Cache-Token': cacheToken } : undefined,
       });
     },
     initialData: () => findLabelInCache(id),
@@ -267,14 +263,12 @@ addMutationRegistrar((queryClient: QueryClient) => {
   queryClient.setQueryDefaults(keys.detail.base, {
     queryFn: ({ queryKey, meta }) => {
       const id = queryKey[2] as string;
-      const cacheToken = getCacheToken('label', id);
       const cached = findLabelInCache(id);
       const organizationId = (meta?.organizationId as string) ?? cached?.organizationId ?? getRouteOrgId();
       const tenantId = (meta?.tenantId as string) ?? cached?.tenantId ?? getRouteTenantId();
       if (!organizationId || !tenantId) throw new Error('Cannot resolve organizationId/tenantId for label fetch');
       return getLabel({
         path: { id, organizationId, tenantId },
-        headers: cacheToken ? { 'X-Cache-Token': cacheToken } : undefined,
       });
     },
   });
