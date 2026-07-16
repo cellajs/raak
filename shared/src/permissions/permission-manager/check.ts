@@ -1,7 +1,7 @@
 import type { ChannelEntityType, EntityActionType, ProductEntityType } from '../../../types';
 import { allActionsAllowed, createActionRecord } from '../action-helpers';
-import { type PublicReadGrants, publicRow } from '../public-read';
-import { type ConditionActor, isRowCondition, rowPredicateMatches, type RowForCondition } from '../row-conditions';
+import type { PublicReadGrants } from '../public-read';
+import { type ConditionActor, isRowCondition, matchesRowCondition, type RowForCondition } from '../row-conditions';
 import type { AccessPolicies, EntityActionPermissions } from '../types';
 import { formatBatchPermissionSummary, formatPermissionDecision } from './format';
 import { resolveTopology } from './resolve-topology';
@@ -33,6 +33,30 @@ const buildMembershipIndex = <T extends PermissionMembership>(memberships: T[]):
     list.push(m);
     index.set(key, list);
   }
+  return index;
+};
+
+/**
+ * Per-array memo of the validated membership index, keyed by the memberships array's identity.
+ *
+ * The index is a pure function of the array's contents, and every membership-update path
+ * REPLACES the array rather than mutating it in place — HTTP requests read a fresh array after
+ * cache invalidation, and an SSE subscriber's `memberships` is reassigned on membership events.
+ * So a stable reference always maps to the same index, and the WeakMap frees the entry once the
+ * array is unreferenced (disconnect / cache expiry). This turns the per-event dispatch fan-out
+ * from N index builds into N O(1) lookups (and skips re-validating an already-validated array).
+ *
+ * Contract: do not mutate a memberships array in place after passing it to a permission check.
+ */
+const membershipIndexMemo = new WeakMap<object, MembershipIndex<PermissionMembership>>();
+
+const getMembershipIndex = <T extends PermissionMembership>(memberships: T[]): MembershipIndex<T> => {
+  const cached = membershipIndexMemo.get(memberships);
+  if (cached) return cached as MembershipIndex<T>;
+
+  memberships.forEach((m, i) => validateMembership(m, i));
+  const index = buildMembershipIndex(memberships);
+  membershipIndexMemo.set(memberships, index as MembershipIndex<PermissionMembership>);
   return index;
 };
 
@@ -84,9 +108,9 @@ const getSubjectChannelId = (
  * Internal function to check permissions for a single subject using pre-built indices.
  * This is the core logic shared by both single and batch permission checks.
  *
- * Supports row-conditional grants: when a policy value is a `RowCondition` (e.g. the
- * built-in `own`, normalized from the `'own'` literal), the engine evaluates its
- * check-form against the subject's row fields to determine the grant.
+ * Supports row-conditional grants: when a policy value is a row-condition name (e.g. the
+ * built-in `'own'`), the engine evaluates that condition's check-form (`matchesRowCondition`)
+ * against the subject's row fields to determine the grant.
  */
 const checkWithIndices = <T extends PermissionMembership>(
   membershipIndex: MembershipIndex<T>,
@@ -204,9 +228,9 @@ const checkWithIndices = <T extends PermissionMembership>(
 
         // Row-conditional grant: allowed only when the row satisfies the condition for this
         // actor (e.g. built-in `own`: actor created the row). Attributed by condition name.
-        if (isRowCondition(policyValue) && rowPredicateMatches(policyValue.predicate, conditionRow, conditionActor)) {
+        if (isRowCondition(policyValue) && matchesRowCondition(policyValue, conditionRow, conditionActor)) {
           actions[action].enabled = true;
-          actions[action].grantedBy.push({ type: 'relation', relation: policyValue.name });
+          actions[action].grantedBy.push({ type: 'relation', relation: policyValue });
         }
       }
     }
@@ -214,9 +238,9 @@ const checkWithIndices = <T extends PermissionMembership>(
 
   // Subject-level public read grant: rows readable by any actor (anonymous included) when
   // the row's own `publicAt` is set. Membership-independent, so it is evaluated outside the
-  // policy walk — but through the same row-predicate the SQL compiler uses (`public-read.ts`).
+  // policy walk — but through the same `'public'` row condition the SQL compiler uses.
   const publicMode = publicGrants?.[subject.entityType];
-  if (publicMode && rowPredicateMatches(publicRow.predicate, conditionRow, conditionActor)) {
+  if (publicMode && matchesRowCondition('public', conditionRow, conditionActor)) {
     actions.read.enabled = true;
     actions.read.grantedBy.push({ type: 'public', mode: publicMode });
   }
@@ -273,12 +297,12 @@ export function getAllDecisions<T extends PermissionMembership>(
     return isSingle ? results.get(subjects.id ?? '_idx:0')! : results;
   }
 
-  // Validate all inputs before processing (against the topology hierarchy, which may be synthetic)
+  // Validate subjects (against the topology hierarchy, which may be synthetic).
   subjectArray.forEach((subject, i) => validateSubject(subject, i, topoHierarchy));
-  memberships.forEach((membership, i) => validateMembership(membership, i));
 
-  // Build membership index once for all subjects
-  const membershipIndex = buildMembershipIndex(memberships);
+  // Validated membership index, memoized per array identity (see membershipIndexMemo): reused
+  // across events for a stable subscriber/request array instead of rebuilt on every call.
+  const membershipIndex = getMembershipIndex(memberships);
 
   // Cache for policy indices by entity type
   const policyIndexCache = new Map<ChannelEntityType | ProductEntityType, PolicyIndex>();

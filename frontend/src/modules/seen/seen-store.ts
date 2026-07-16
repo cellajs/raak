@@ -48,7 +48,7 @@ interface SeenStoreState {
 const FLUSH_INTERVAL_MS = appConfig.mode === 'development' ? 10 * 1000 : 60 * 1000; // 10s in dev, 1min in prod
 
 /** Build a key for the pending map */
-const batchKey = (organizationId: string, entityType: string) => `${organizationId}:${entityType}`;
+const batchKey = (organizationId: string, entityType: ProductEntityType) => `${organizationId}:${entityType}`;
 
 /**
  * Batched unseen-count optimistic update.
@@ -62,7 +62,7 @@ const batchKey = (organizationId: string, entityType: string) => `${organization
  * Decrements are accumulated and applied in a single `setQueryData` call via
  * microtask, so one scroll batch produces at most one cache event.
  */
-const pendingDecrements: { channelId: string; entityType: string }[] = [];
+const pendingDecrements: { channelId: string; entityType: ProductEntityType }[] = [];
 let decrementScheduled = false;
 
 /** Max delay before forcing a flush even if the browser never goes idle */
@@ -73,7 +73,7 @@ const scheduleIdleCallback =
     ? (cb: () => void) => requestIdleCallback(cb, { timeout: UNSEEN_DECREMENT_MAX_DELAY_MS })
     : (cb: () => void) => setTimeout(cb, 1000);
 
-function scheduleUnseenDecrement(channelId: string, entityType: string) {
+function scheduleUnseenDecrement(channelId: string, entityType: ProductEntityType) {
   pendingDecrements.push({ channelId, entityType });
 
   if (!decrementScheduled) {
@@ -114,14 +114,9 @@ function flushUnseenDecrements() {
 }
 
 /**
- * Store for tracking "seen" entities in the viewport.
- *
- * Entities observed via IntersectionObserver are queued here, then batch-flushed
- * to POST /:tenantId/:organizationId/seen periodically (or on page unload via sendBeacon).
- *
- * Successfully flushed IDs are kept in `flushedIds` and persisted to localStorage
- * via Zustand's persist middleware, so they are not re-sent on subsequent sessions.
- * If a flush fails, pending IDs are retained for the next interval.
+ * Store for "seen" entities. Queued from IntersectionObserver, then batch-flushed to
+ * POST /:tenantId/:organizationId/seen periodically (or on unload via sendBeacon). Flushed IDs
+ * persist to localStorage (Zustand persist) so they aren't re-sent next session; failed flushes are retained.
  */
 export const useSeenStore = create<SeenStoreState>()(
   devtools(
@@ -271,12 +266,7 @@ export const useSeenStore = create<SeenStoreState>()(
   ),
 );
 
-/**
- * Flush pending seen data via sendBeacon on page unload.
- * Uses sendBeacon for reliability when the page is being closed.
- *
- * Call this once at app init (e.g., in a useEffect in the root component).
- */
+/** Flush pending seen data via sendBeacon on page unload. Call once at app init (e.g. root useEffect). */
 export const setupSeenBeaconFlush = () => {
   const handler = () => {
     const { pending } = useSeenStore.getState();

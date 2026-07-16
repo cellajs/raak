@@ -5,6 +5,7 @@ import {
   type ChannelEntityType,
   elevatedRoles as configuredElevatedRoles,
   publicReadGrants as configuredPublicReadGrants,
+  type EntityRole,
   getPolicyPermissions,
   getSubjectPolicies,
   hierarchy,
@@ -13,8 +14,7 @@ import {
   type PermissionTopology,
   type ProductEntityType,
   type PublicReadGrants,
-  publicRow,
-  type RowCondition,
+  type RowConditionName,
 } from 'shared';
 import { AppError } from '#/core/error';
 import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
@@ -24,7 +24,7 @@ const roleReadValue = (
   policies: AccessPolicies,
   entityType: ProductEntityType,
   channelType: ChannelEntityType,
-  role: string,
+  role: EntityRole,
 ): NormalizedPermissionValue => {
   const subjectPolicies = getSubjectPolicies(entityType, policies);
   const permissions = getPolicyPermissions(subjectPolicies, channelType, role);
@@ -39,7 +39,7 @@ const roleReadValue = (
  * column) — the shape every pre-deep-chain caller produced.
  */
 export interface ConditionalScope {
-  condition: RowCondition;
+  condition: RowConditionName;
   subChannelIds: string[] | undefined;
   channelType?: ChannelEntityType;
   /** Home-scoped grant (elevatedRoles): these levels' columns must be NULL as well. */
@@ -78,11 +78,11 @@ interface ScopeAccumulator {
   ancestorUnconditional: Map<ChannelEntityType, Set<string>>;
   /** HOME-scoped unconditional grants (elevatedRoles), keyed by context type. */
   homeScoped: Map<ChannelEntityType, Set<string>>;
-  /** Keyed by `${condition name}:${level}:${homeOnly}`; conditions sharing a name must be the same rule. */
+  /** Keyed by `${condition name}:${level}:${homeOnly}`; the name uniquely identifies the rule. */
   conditional: Map<
     string,
     {
-      condition: RowCondition;
+      condition: RowConditionName;
       channelType?: ChannelEntityType;
       homeOnly: boolean;
       orgWide: boolean;
@@ -115,7 +115,7 @@ const resolveScopes = (
   // Grant scoping: with elevatedRoles configured, a non-elevated role's grant speaks only
   // for rows HOMED at its level. Grants at the deepest level are home-exact by
   // construction; root/intermediate grants of non-elevated roles become home-scoped.
-  const isHomeScopedGrant = (channelType: ChannelEntityType, role: string): boolean =>
+  const isHomeScopedGrant = (channelType: ChannelEntityType, role: EntityRole): boolean =>
     elevatedRoles !== undefined && !elevatedRoles.includes(role) && channelType !== subChannelType;
 
   const acc: ScopeAccumulator = {
@@ -127,12 +127,12 @@ const resolveScopes = (
   };
 
   const addConditional = (
-    condition: RowCondition,
+    condition: RowConditionName,
     channelId: string | null,
     channelType?: ChannelEntityType,
     homeOnly = false,
   ) => {
-    const key = `${condition.name}:${channelType ?? ''}:${homeOnly}`;
+    const key = `${condition}:${channelType ?? ''}:${homeOnly}`;
     const entry = acc.conditional.get(key) ?? {
       condition,
       channelType,
@@ -145,7 +145,7 @@ const resolveScopes = (
     acc.conditional.set(key, entry);
   };
 
-  const addUnconditional = (channelType: ChannelEntityType, role: string, channelId: string | null) => {
+  const addUnconditional = (channelType: ChannelEntityType, role: EntityRole, channelId: string | null) => {
     // Non-elevated roles above the deepest level scope to rows HOMED at their grant level
     if (isHomeScopedGrant(channelType, role)) {
       const ids = acc.homeScoped.get(channelType) ?? new Set<string>();
@@ -202,7 +202,7 @@ const resolveScopes = (
   // a caller with no membership scope at all can still read public rows. Modelled as an
   // org-wide conditional slice (`publicAt IS NOT NULL`), which means it rides the exact same
   // compile path as policy row conditions and needs no special case downstream.
-  if (publicGrants?.[entityType]) addConditional(publicRow, null);
+  if (publicGrants?.[entityType]) addConditional('public', null);
 
   return acc;
 };
@@ -401,6 +401,12 @@ export const resolveCollectionReadFilterForPolicies = ({
   // sysadmin passes `orgGuard` with NO membership, so without this they would resolve to an
   // empty scope and get an empty list — while single-row reads of the same rows succeed.
   if (!('anonymous' in actor) && actor.isSystemAdmin) {
+    // An explicitly requested sub-context still narrows the read — sysadmin widens
+    // WHO can read, never WHAT a placement-filtered list returns.
+    if (requested?.subChannelId !== undefined)
+      return { subChannelIds: [requested.subChannelId], conditionalScopes: [] };
+    if (requested?.subChannelIds !== undefined)
+      return { subChannelIds: requested.subChannelIds, conditionalScopes: [] };
     return { subChannelIds: undefined, conditionalScopes: [] };
   }
 

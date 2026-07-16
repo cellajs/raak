@@ -29,6 +29,20 @@ be a no-op.
   permission check, system-admin + public-read parity in collection reads, and public
   read collapsed to a single row-local `publicAt` mode. **Widens access** — audit
   `'own'` cells on channel-entity and `create` rows *before* pulling.
+- [2026-07-row-condition-names](./2026-07-row-condition-names/): collapses the row-condition
+  model to a `RowConditionName = 'own' | 'public'` union — drops the `RowPredicate`/`RowCondition`
+  descriptor, replaces `rowPredicateMatches`/`own`/`publicRow` with `matchesRowCondition(name, …)`,
+  and narrows `ActionPermissionState` to the closed name union. **Shape-only, no semantic change**
+  and fully compiler-enforced; config surface (`read: 'own'`, `publicRead`) unchanged. In-sync
+  forks get it for free; no script.
+- [2026-07-batch-cache-removal](./2026-07-batch-cache-removal/): removes the unused
+  batch cache machinery (`batchCache` middleware, `batchReservations`, batch token
+  index); fork-breaking on the frontend `DeltaFetchFn` (drops the 4th `options`/`cacheToken`
+  param on every `registerEntityQueryKeys` delta-fetch). Manual, no script.
+- [2026-07-detail-cache-tokenless](./2026-07-detail-cache-tokenless/): drops the single-entity
+  cache token — `appCache()` → `appCache(entityType)` on every product detail route, cache
+  hits re-authorize via `checkPermission`, and `cacheToken` is removed from the whole
+  CDC→SSE→client pipeline (+ `X-Cache-Token` frontend sends). Manual, no script.
 - [2026-07-channel-entity-rename](./2026-07-channel-entity-rename/): renames the
   "channel entity" concept to "channel entity" (`ContextEntityType→ChannelEntityType`,
   builder `.context()→.channel()`, `context_type/context_id→channel_type/channel_id`,

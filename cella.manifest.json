@@ -2,9 +2,9 @@
   "upstream": {
     "repo": "cellajs/cella",
     "track": "branch",
-    "commit": "b91654f7a7bbf390d393bf5ff568133ad106b866",
+    "commit": "717c880496ceea52827176169f1dd60cd224039c",
     "release": null,
-    "url": "https://github.com/cellajs/cella/commit/b91654f7a7bbf390d393bf5ff568133ad106b866",
-    "syncedAt": "2026-07-15T11:23:06.327Z"
+    "url": "https://github.com/cellajs/cella/commit/717c880496ceea52827176169f1dd60cd224039c",
+    "syncedAt": "2026-07-16T17:49:51.289Z"
   }
 }

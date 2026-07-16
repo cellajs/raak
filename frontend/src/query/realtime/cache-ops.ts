@@ -13,15 +13,10 @@ import { changeInfiniteQueryData, changeQueryData } from '~/query/basic/helpers'
 import { isInfiniteQueryData, isQueryData } from '~/query/basic/mutate-query';
 import type { EntityQueryData, InfiniteEntityQueryData, ItemData } from '~/query/basic/types';
 import { queryClient } from '~/query/query-client';
-import { removeCacheToken, storeCacheToken } from './cache-token-store';
 
 /**
- * Check if an entity has any pending (in-flight or paused) mutation.
- * When true, remote cache writes should be skipped to preserve optimistic state.
- * The mutation's own onSuccess will reconcile the cache when it settles.
- *
- * Checks update, create, and delete mutation keys following the standard
- * [entityType, 'update'|'create'|'delete'] convention from createEntityKeys.
+ * True if an entity has a pending (in-flight or paused) mutation. When true, skip remote cache
+ * writes to preserve optimistic state — the mutation's own onSuccess reconciles the cache on settle.
  */
 export function hasPendingMutationForEntity(entityType: string, entityId: string): boolean {
   const mutationCache = queryClient.getMutationCache();
@@ -110,7 +105,7 @@ function matchesCanonicalScope(queryKey: readonly unknown[], entity: ItemData, s
  * stx is conflict-resolution metadata never rendered in the UI.
  */
 export function patchEntityStxInCache(
-  entityType: string,
+  entityType: ProductEntityType,
   entityId: string,
   stx: { fieldTimestamps?: Record<string, string> },
   organizationId?: string,
@@ -146,18 +141,12 @@ export function patchEntityStxInCache(
   }
 }
 
-/** Store cache token for entity (live notifications only) */
-export function storeEntityCacheToken(entityType: string, entityId: string, token: string): void {
-  storeCacheToken(entityType, entityId, token);
-}
-
-/** Remove entity from detail cache and remove cache token */
+/** Remove entity from detail cache */
 function removeEntityFromCache(entityType: string, entityId: string): void {
   if (hasEntityQueryKeys(entityType)) {
     const keys = getEntityQueryKeys(entityType);
     queryClient.removeQueries({ queryKey: keys.detail.byId(entityId) });
   }
-  removeCacheToken(entityType, entityId);
 }
 
 /** Remove entity from detail cache, list caches, and token store. */
@@ -224,14 +213,10 @@ export function removeEntityFromListCache(entityId: string, keys: EntityQueryKey
 }
 
 /**
- * Fetch a single entity by ID and update both detail and list caches.
- * Uses query defaults (registered by entity modules via queryClient.setQueryDefaults)
- * to resolve the queryFn, so no entity-specific imports are needed here.
- * Falls back to list invalidation if no query defaults are registered.
- *
- * @param organizationId - Optional org ID from SSE notification, passed via meta
- *   so entity-specific queryFn can resolve path params (e.g., task needs organizationId + tenantId).
- * @param tenantId - Optional tenant ID from SSE notification, passed via meta.
+ * Fetch a single entity by ID and update detail + list caches. Resolves the queryFn from query
+ * defaults (registered by entity modules), so no entity-specific imports here; falls back to list
+ * invalidation if none are registered. `organizationId`/`tenantId` from the SSE notification are
+ * passed via meta so entity queryFns can resolve path params (e.g. task needs organizationId + tenantId).
  */
 export async function fetchEntityAndUpdateList(
   entityId: string,
@@ -239,7 +224,7 @@ export async function fetchEntityAndUpdateList(
   action: 'create' | 'update',
   organizationId?: string,
   tenantId?: string,
-  entityType?: string,
+  entityType?: ProductEntityType,
 ): Promise<void> {
   // Skip remote writes for entities with pending mutations to preserve optimistic state.
   // The mutation's onSuccess will reconcile the cache when it settles.
@@ -351,18 +336,12 @@ function patchFetchedEntity(
 }
 
 /**
- * Fetch changed entities by seq range and patch them into list + detail caches.
- * Uses the registered deltaFetch function to call the list endpoint with `seqCursor`.
- * Returns true only when the FULL range was ingested (callers may then advance their sync
- * cursor); false when unavailable, failed, or the window overflows one response, callers
- * fall back to full list invalidation and react-query owns recovery.
+ * Fetch changed entities by seq range (via the registered deltaFetch: list endpoint + `seqCursor`)
+ * and patch them into list + detail caches. Returns true only when the FULL range was ingested (so
+ * callers may advance their sync cursor); false when unavailable, failed, or the window overflows
+ * one response — callers then fall back to full list invalidation and react-query owns recovery.
  *
- * seqCursor formats:
- * - "51", open-ended (seq >= 51), used by catchup
- * - "51,150", bounded range, used by batch notifications
- *
- * When cacheToken is provided (batch notifications), it's passed through to the API call
- * as X-Cache-Token header, enabling entity cache fan-out on the backend.
+ * seqCursor: "51" (open-ended, catchup) or "51,150" (bounded range, batch notifications).
  */
 export async function fetchRangeAndPatch(
   entityType: string,
@@ -370,7 +349,6 @@ export async function fetchRangeAndPatch(
   tenantId: string | null,
   seqCursor: string,
   keys: EntityQueryKeys,
-  cacheToken?: string,
 ): Promise<boolean> {
   if (!tenantId && organizationId) {
     console.debug(`[CacheOps] No tenantId for ${entityType} delta fetch, falling back to invalidation`);
@@ -381,7 +359,7 @@ export async function fetchRangeAndPatch(
   if (!deltaFetch) return false;
 
   try {
-    const { items } = await deltaFetch(organizationId, tenantId, seqCursor, cacheToken ? { cacheToken } : undefined);
+    const { items } = await deltaFetch(organizationId, tenantId, seqCursor);
 
     // Overflow guard: registrars request SYNC_CHUNK_SIZE, so a full response means the seq
     // window may exceed what one fetch returns. Patching a truncated window would silently

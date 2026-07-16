@@ -31,7 +31,6 @@ import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { coalescePendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
-import { getCacheToken } from '~/query/realtime/cache-token-store';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
 import { createResourceError } from '~/utils/resource-error';
 
@@ -48,11 +47,10 @@ const keys = {
       ['attachment', 'list', organizationId, filters] as const,
   },
 };
-registerEntityQueryKeys('attachment', keys, (organizationId, tenantId, seqCursor, options) => {
+registerEntityQueryKeys('attachment', keys, (organizationId, tenantId, seqCursor) => {
   return getAttachments({
     path: { tenantId: tenantId!, organizationId: organizationId! },
     query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
-    headers: options?.cacheToken ? { 'x-cache-token': options.cacheToken } : undefined,
   });
 });
 export const attachmentQueryKeys = keys;
@@ -101,10 +99,9 @@ export const attachmentsListQueryOptions = (params: AttachmentsListParams) => {
 };
 
 /**
- * Canonical attachment query, one flat query per organization scope.
- * Fetches all attachments for the org, stored at keys.list.org(organizationId).
- * Consumers derive views via select() for groupId filtering.
- * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.
+ * Canonical attachment query: one flat query per org (keys.list.org), fetching all its attachments.
+ * Consumers derive views via select() for groupId filtering. Sync (SSE + delta fetch) keeps it
+ * fresh; staleTime follows sync liveness.
  */
 export const attachmentsCanonicalOptions = ({
   organizationId,
@@ -131,13 +128,7 @@ export const attachmentsCanonicalOptions = ({
 
 export const attachmentQueryOptions = (tenantId: string, organizationId: string, id: string) => ({
   queryKey: keys.detail.byId(id),
-  queryFn: async () => {
-    const cacheToken = getCacheToken('attachment', id);
-    return getAttachment({
-      path: { tenantId, organizationId, id },
-      headers: cacheToken ? { 'X-Cache-Token': cacheToken } : undefined,
-    });
-  },
+  queryFn: async () => getAttachment({ path: { tenantId, organizationId, id } }),
   initialData: () => findAttachmentInCache(id),
 });
 
@@ -313,15 +304,11 @@ addMutationRegistrar((queryClient: QueryClient) => {
   queryClient.setQueryDefaults(keys.detail.base, {
     queryFn: ({ queryKey, meta }) => {
       const id = queryKey[2] as string;
-      const cacheToken = getCacheToken('attachment', id);
       const cached = findAttachmentInCache(id);
       const organizationId = (meta?.organizationId as string) ?? cached?.organizationId ?? getRouteOrgId();
       const tenantId = (meta?.tenantId as string) ?? cached?.tenantId ?? getRouteTenantId();
       if (!organizationId || !tenantId) throw new Error('Cannot resolve organizationId/tenantId for attachment fetch');
-      return getAttachment({
-        path: { id, organizationId, tenantId },
-        headers: cacheToken ? { 'X-Cache-Token': cacheToken } : undefined,
-      });
+      return getAttachment({ path: { id, organizationId, tenantId } });
     },
   });
 

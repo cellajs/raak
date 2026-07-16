@@ -4,16 +4,8 @@ import { log } from '../lib/pino';
 import type { TraceContext } from '../lib/tracing';
 import type { CdcRowData } from '../types';
 import { wsClient } from '../network/websocket-client';
-import { nanoid } from 'shared/utils/nanoid';
 import { resolveChannelKey } from '../utils/compute-unified-deltas';
 import { pickPermissionRowData } from '../utils/permission-row-data';
-
-/** An individual entity cache-reservation token, sent with batch payloads. */
-export interface CdcBatchReservation {
-  token: string;
-  entityType: string;
-  entityId: string;
-}
 
 /** Per-row payload for batch messages: permission-relevant fields only (see pickPermissionRowData). */
 export interface CdcBatchRow {
@@ -38,8 +30,6 @@ export interface CdcOutboundMessage {
   activity: InsertActivityModel & { id?: string; seq?: number; batchUntilSeq?: number };
   rowData: CdcRowData;
   batchRows?: CdcBatchRow[];
-  cacheToken: string | null;
-  batchReservations?: CdcBatchReservation[];
   _trace: TraceContext;
 }
 
@@ -63,7 +53,6 @@ export function generateActivityId(lsn: string): string {
 
 /**
  * Build activity payload for WebSocket transmission.
- * Generates cacheToken for product entities.
  */
 function buildActivityPayload(
   baseActivity: InsertActivityModel & { id?: string },
@@ -71,18 +60,15 @@ function buildActivityPayload(
   traceContext: TraceContext,
   seq?: number,
 ): CdcOutboundMessage {
-  const cacheToken = baseActivity.entityType && isProductEntity(baseActivity.entityType) ? nanoid() : null;
-
   // Channel entity IDs are already populated on the activity by createActivity;
   // rowData is already compacted by the handlers (compactRowData).
   const activity = { ...baseActivity, seq };
 
-  return { activity, rowData, cacheToken, _trace: traceContext };
+  return { activity, rowData, _trace: traceContext };
 }
 
 /**
  * Send CDC message (activity + row data) to API server via WebSocket.
- * Generates cacheToken for product entities.
  */
 export function sendMessageToApi(
   activity: InsertActivityModel,
@@ -105,12 +91,17 @@ export interface BatchEventInfo {
 
 /**
  * The seq-context key of a batch event, mirroring seq allocation: seqs are counters per
- * (channelKey, entityType) — see {@link computeBatchUnifiedDeltas}. Resource events (no
- * entityType) never carry seqs; grouping them by org matches their dispatch channel.
+ * (channelKey, entityType) — see {@link computeBatchUnifiedDeltas}. Only product entities
+ * carry seqs. Resource events (no entityType) and non-product entities (user, organization)
+ * have no seq context; grouping them by org matches their dispatch channel.
  */
 function batchChannelKey({ activity, rowData }: BatchEventInfo): string {
-  if (!activity.entityType) return activity.organizationId ?? 'none';
-  return resolveChannelKey(activity.entityType, rowData, activity);
+  // Only product entities carry seqs and need channel-key grouping. Resources (no entityType)
+  // and non-product entities (user, organization) have no seq context: group by org, or 'none'.
+  if (activity.entityType && isProductEntity(activity.entityType)) {
+    return resolveChannelKey(activity.entityType, rowData, activity);
+  }
+  return activity.organizationId ?? 'none';
 }
 
 /**
@@ -119,8 +110,8 @@ function batchChannelKey({ activity, rowData }: BatchEventInfo): string {
  * Seqs are per-context counters, so one message can only describe one seq context: a
  * transaction batch spanning contexts (e.g. one bulk create with mixed placements) is
  * split into one message per seq context — the same channelKey seq allocation groups
- * by — each with its own contiguous seq..batchUntilSeq range, batch cacheToken and
- * reservations. Single-context batches send exactly one message, as before.
+ * by — each with its own contiguous seq..batchUntilSeq range. Single-context batches
+ * send exactly one message, as before.
  */
 export function sendBatchMessageToApi(
   events: BatchEventInfo[],
@@ -162,18 +153,6 @@ function sendBatchGroupToApi(
     });
   }
 
-  const batchToken = first.activity.entityType && isProductEntity(first.activity.entityType) ? nanoid() : null;
-
-  const batchReservations: CdcBatchReservation[] | undefined = batchToken
-    ? events
-        .filter((e) => e.activity.entityType && e.activity.subjectId)
-        .map((e) => ({
-          token: nanoid(),
-          entityType: e.activity.entityType!,
-          entityId: e.activity.subjectId!,
-        }))
-    : undefined;
-
   const base = buildActivityPayload(first.activity, first.rowData, traceContext, minSeq);
   const activity = { ...base.activity, batchUntilSeq };
 
@@ -184,7 +163,9 @@ function sendBatchGroupToApi(
     rowData: pickPermissionRowData(event.rowData) as CdcRowData,
   }));
 
-  const payload: CdcOutboundMessage = { ...base, activity, batchRows, cacheToken: batchToken, batchReservations };
+  // The backend invalidates each row's detail-cache entry from batchRows, so a later detail
+  // fetch re-enriches (see cdc-websocket handleMessage).
+  const payload: CdcOutboundMessage = { ...base, activity, batchRows };
 
   if (!wsClient.send(payload)) {
     log.warn('Failed to send batch message to API', { batchSize: events.length });

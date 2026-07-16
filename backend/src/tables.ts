@@ -28,6 +28,11 @@ export const entityTables = {
   label: labelsTable,
 } as const satisfies Record<string, ResolvableTable>;
 
+/** Entity type keys of the table registry. */
+export type EntityType = keyof typeof entityTables;
+/** Row model of an entity table by entity type key. */
+export type EntityModel<T extends EntityType> = (typeof entityTables)[T]['$inferSelect'];
+
 /** Resource types that are not entities but have activities logged. */
 export const resourceTypes = ['request', 'membership', 'inactive_membership', 'tenant'] as const;
 

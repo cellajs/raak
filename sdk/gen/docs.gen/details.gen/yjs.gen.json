@@ -60,7 +60,11 @@
     "request": {
       "query": {
         "properties": {
-          "entityType": { "type": "string", "required": true, "maxLength": 50 },
+          "entityType": {
+            "type": "string",
+            "required": true,
+            "enum": ["task", "label", "attachment"]
+          },
           "tenantId": { "type": "string", "required": true, "maxLength": 50 },
           "organizationId": { "type": "string", "required": true, "maxLength": 50 }
         }

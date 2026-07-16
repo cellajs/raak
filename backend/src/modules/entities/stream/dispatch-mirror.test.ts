@@ -1,5 +1,5 @@
 import type { SSEStreamingApi } from 'hono/streaming';
-import { appConfig } from 'shared';
+import { appConfig, type EntityRole } from 'shared';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { ActivityEvent } from '#/lib/activity-bus';
 import type { AppStreamSubscriber } from '#/modules/entities/helpers/dispatch-to-stream';
@@ -19,7 +19,7 @@ import type { AppStreamEvent } from './types';
 const ORG_A = 'org-dispatch-a';
 const ORG_B = 'org-dispatch-b';
 
-const membership = (organizationId: string, role: string, userId: string): MembershipBaseModel =>
+const membership = (organizationId: string, role: EntityRole, userId: string): MembershipBaseModel =>
   ({
     id: `mem-organization-${organizationId}-${role}-${userId}`,
     userId,
@@ -48,7 +48,6 @@ const fakeSubscriber = (
     channel: `org:${channelOrg}`,
     stream,
     userId,
-    sessionToken: 'test-session-token',
     organizationIds: new Set(organizationIds),
     isSystemAdmin: false,
     memberships,
@@ -90,7 +89,6 @@ const attachmentEvent = (organizationId: string, overrides: Record<string, unkno
     organizationId,
     ...nullAncestorScopes,
     rowData: null,
-    cacheToken: null,
     seq: 7,
     batchUntilSeq: null,
     propagation: null,

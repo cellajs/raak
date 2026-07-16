@@ -98,7 +98,7 @@ const taskRoutes = {
     method: 'get',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
-    xCache: [appCache()],
+    xCache: [appCache('task')],
     tags: ['tasks', 'app', 'product'],
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',

@@ -14,30 +14,22 @@ import { getSyncPriority } from './sync-priority';
 import type { AppStreamNotification } from './types';
 
 /**
- * Handles incoming app stream notifications and updates the React Query cache accordingly.
- * Routes notifications to membership, organization, or product entity handlers.
- *
- * Notification-only format: no entity data is included. Handlers invalidate queries
- * to trigger refetch, or use cacheToken for efficient fetches.
+ * Route an incoming app-stream notification to the membership/organization/product handler.
+ * Notification-only format: no entity data included — handlers invalidate or seq-range fetch.
  */
 export function handleAppStreamNotification(notification: AppStreamNotification): void {
-  const { subjectId, action, stx, organizationId, tenantId, channelType, seq, cacheToken, _trace } = notification;
+  const { subjectId, action, stx, organizationId, tenantId, channelType, seq, _trace } = notification;
 
   withSpanSync(
     syncSpanNames.messageProcess,
     { entityType: notification.entityType, action, entityId: subjectId, _trace },
     () => {
-      // Store cache token if present (for product entities)
-      if (cacheToken && notification.entityType && subjectId) {
-        cacheOps.storeEntityCacheToken(notification.entityType, subjectId, cacheToken);
-      }
-
       // Store tenantId in sync store whenever we see it in a notification
       if (organizationId && tenantId) {
         useSyncStore.getState().setOrgTenantId(organizationId, tenantId);
       }
 
-      // Membership changes use targeted query invalidation, not the seq/cacheToken sync path.
+      // Membership changes use targeted query invalidation, not the seq sync path.
       if (notification.kind === 'membership') {
         handleMembershipNotification(action, organizationId, channelType);
         return;
@@ -54,7 +46,7 @@ export function handleAppStreamNotification(notification: AppStreamNotification)
         const seqCursor = `${seq},${notification.batchUntilSeq}`;
 
         cacheOps
-          .fetchRangeAndPatch(entityType, organizationId, tenantId, seqCursor, keys, cacheToken ?? undefined)
+          .fetchRangeAndPatch(entityType, organizationId, tenantId, seqCursor, keys)
           .then((success) => {
             if (success && notification.batchUntilSeq) {
               // Store project-scoped seq when channelId (projectId) is available, else org-scoped
@@ -101,13 +93,9 @@ export function handleAppStreamNotification(notification: AppStreamNotification)
 }
 
 /**
- * Handle membership events (created, updated, deleted).
- * Uses channelType for targeted query invalidation instead of broad invalidation.
- *
- * Strategy:
- * - create: Invalidate the specific channel entity list (e.g., organizations), then refresh menu
- * - update: Invalidate member queries for the org, refresh user data for role changes
- * - delete: Invalidate the specific channel entity list, then refresh menu
+ * Handle membership create/update/delete via channelType-targeted invalidation (not broad):
+ * create/delete invalidate the specific channel list + refresh menu; update invalidates member
+ * queries and refreshes user data for role changes.
  */
 function handleMembershipNotification(
   action: AppStreamNotification['action'],
@@ -134,11 +122,7 @@ function handleMembershipNotification(
   console.debug(`[handleMembershipNotification] ${action} channelType=${channelType} organizationId=${organizationId}`);
 }
 
-/**
- * Handle product entity events (page, attachment, etc).
- * Uses notification-based sync: no entity data included.
- * Invalidates queries to trigger refetch, using cacheToken for efficient fetches.
- */
+/** Handle product entity events (page, attachment, …): notification-only, so invalidate or seq-range refetch. */
 function handleEntityNotification(
   entityType: ProductEntityType,
   entityId: string,
@@ -233,18 +217,17 @@ function handleEntityNotification(
 }
 
 /** Refetch the server's predicate-exact unseen counts for a tracked entity type. */
-function invalidateUnseenCounts(entityType: string): void {
+function invalidateUnseenCounts(entityType: ProductEntityType): void {
   const trackedTypes = appConfig.seenTrackedEntityTypes as readonly string[];
   if (!trackedTypes.includes(entityType)) return;
   queryClient.invalidateQueries({ queryKey: seenKeys.unseenCounts });
 }
 
 /**
- * Adjust unseen count optimistically when a tracked entity is created or deleted via SSE.
- * Uses channelId to patch the query cache directly, avoiding a full refetch.
- * Falls back to query invalidation if channelId is unavailable.
+ * Optimistically adjust the unseen count for a tracked entity created/deleted via SSE: patch the
+ * cache directly by channelId to avoid a full refetch, falling back to invalidation if none.
  */
-function adjustUnseenCount(entityType: string, channelId: string | null, delta: number): void {
+function adjustUnseenCount(entityType: ProductEntityType, channelId: string | null, delta: number): void {
   const trackedTypes = appConfig.seenTrackedEntityTypes as readonly string[];
   if (!trackedTypes.includes(entityType)) return;
 
@@ -274,12 +257,11 @@ function adjustUnseenCount(entityType: string, channelId: string | null, delta: 
 }
 
 /**
- * Handle unseen count adjustment when a tracked entity is deleted.
- * If the entity was already seen (in flushedIds or pending), the unseen count
- * doesn't change (total−1 and seen−1 cancel out). If it was unseen, decrement.
- * Falls back to query invalidation when channelId is unavailable.
+ * Adjust the unseen count when a tracked entity is deleted: if it was already seen (flushedIds or
+ * pending), the count is unchanged (total−1 and seen−1 cancel); if unseen, decrement. Falls back to
+ * invalidation when channelId is unavailable.
  */
-function handleDeleteUnseenCount(entityType: string, entityId: string, channelId: string | null): void {
+function handleDeleteUnseenCount(entityType: ProductEntityType, entityId: string, channelId: string | null): void {
   const trackedTypes = appConfig.seenTrackedEntityTypes as readonly string[];
   if (!trackedTypes.includes(entityType)) return;
 

@@ -12,7 +12,7 @@ export const config = {
   /** All entity types in the app - must match hierarchy.allTypes. */
   entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment'] as const,
 
-  /** Context entities with memberships - must match hierarchy.channelTypes. */
+  /** Channel entities with memberships - must match hierarchy.channelTypes. */
   channelEntityTypes: ['organization', 'workspace', 'project'] as const,
 
   /** Product/content entities - must match hierarchy.productTypes. */
@@ -20,8 +20,8 @@ export const config = {
 
   /**
    * Product entity types tracked for seen/unseen counts.
-   * Unseen counts are grouped by the parent context entity of each tracked type
-   * (e.g., tasks grouped by projectId). Badges appear on that parent context in the menu.
+   * Unseen counts are grouped by the parent channel entity of each tracked type
+   * (e.g., tasks grouped by projectId). Badges appear on that parent channel in the menu.
    */
   seenTrackedEntityTypes: ['task'] as const,
 
@@ -56,7 +56,7 @@ export const config = {
   ] as const,
 
   /**
-   * User menu structure of context entities with optional nested subentities.
+   * User menu structure of channel entities with optional nested subentities.
    * If subentityType is set, the table must include `${entity}Id` foreign key.
    */
   menuStructure: [
@@ -228,6 +228,9 @@ export const config = {
     gracePeriodInSeconds: 60,
     digits: 6,
   },
+
+  /** Per-user concurrent regular-session cap; oldest beyond it are evicted on sign-in */
+  maxSessionsPerUser: 10,
 
   /******************************************************************************
    * API CONFIGURATION
