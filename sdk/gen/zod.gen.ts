@@ -102,6 +102,7 @@ export const zStreamNotification = z.object({
   channelId: z.string().nullable(),
   stx: zStxBase.and(z.record(z.string(), z.unknown())).nullable(),
   batchUntilSeq: z.int().nullable(),
+  syncWindow: z.int().nullable(),
   propagation: z
     .object({
       sourceType: z.string(),
@@ -1422,7 +1423,7 @@ export const zGetPublicTasksQuery = z.object({
     .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
     .optional()
     .default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),
@@ -2475,7 +2476,7 @@ export const zGetTasksQuery = z.object({
     .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
     .optional()
     .default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z.string().optional(),

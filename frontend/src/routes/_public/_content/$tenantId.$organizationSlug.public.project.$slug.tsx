@@ -1,9 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, stripSearchParams } from '@tanstack/react-router';
 import { PublicProjectRouteComponent } from '~/modules/project/public-route-components';
 import { publicProjectRouteBeforeLoad } from '~/modules/project/public-route-logic';
 import { focusTask } from '~/modules/task/helpers/focus-task';
-import { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
-import { createErrorComponent } from '~/routes/route-utils';
+import { combinedTaskSearchSchema, tasksSearchDefaults } from '~/modules/task/search-params-schemas';
+import { createErrorComponent } from '~/routes/_route-utils';
 import { appTitle } from '~/utils/app-title';
 
 /**
@@ -14,6 +14,8 @@ import { appTitle } from '~/utils/app-title';
 export const Route = createFileRoute('/_public/_content/$tenantId/$organizationSlug/public/project/$slug')({
   staticData: { isAuth: false },
   validateSearch: combinedTaskSearchSchema,
+  // Absence means default: params equal to the default view are stripped from the URL
+  search: { middlewares: [stripSearchParams(tasksSearchDefaults)] },
   onLeave: () => focusTask(null),
   beforeLoad: publicProjectRouteBeforeLoad,
   head: ({ match }) => {

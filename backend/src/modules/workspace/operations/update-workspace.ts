@@ -1,5 +1,5 @@
 import type { AuthContext } from '#/core/context';
-import { getEntityCounts } from '#/modules/entities/helpers/get-entity-counts';
+import { getEntityCounts } from '#/modules/entities/entities-queries';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { updateWorkspace } from '#/modules/workspace/workspace-queries';

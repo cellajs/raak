@@ -15,6 +15,7 @@ import { ProjectBoard } from '~/modules/task/board/project-board';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardTabs } from '~/modules/task/board/workspace-board-tabs';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { clearViewedChannels, setViewedChannels } from '~/query/realtime/viewed-channels';
 import { router } from '~/routes/router';
 
 export interface BoardProps {
@@ -49,6 +50,14 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   useEffect(() => {
     setActiveBoard(boardId, workspace ? 'workspace' : 'project');
   }, [boardId, workspace, setActiveBoard]);
+
+  // Keep the rendered project channels on the scheduler's live tier. The workspace route names only
+  // the workspace, so without this every panel's tasks would sync on the 2-30s background tier.
+  const viewedProjectIds = projects.map((p) => p.id).join(',');
+  useEffect(() => {
+    setViewedChannels(viewedProjectIds ? viewedProjectIds.split(',') : []);
+    return () => clearViewedChannels();
+  }, [viewedProjectIds]);
 
   // Close the mobile create-task dialog on navigation. One board-level subscription
   // instead of one per PanelProjectActions instance (which registered N per board).

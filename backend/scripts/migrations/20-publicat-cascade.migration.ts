@@ -1,6 +1,4 @@
-import pc from 'picocolors';
-import type { GenerateScript } from '../types';
-import { logMigrationResult, upsertMigration } from './helpers/drizzle-utils';
+import type { SideEffectBlock, SideEffectProducer } from '../types';
 
 /**
  * publicAt cascade: denormalizes a project's `public_at` onto its child products so row-local
@@ -21,7 +19,7 @@ import { logMigrationResult, upsertMigration } from './helpers/drizzle-utils';
  * Children: tasks, attachments — the product entities with `publicRead('publicSelf')` whose home
  * channel is the project. Extend both lists here if another public product entity is added.
  */
-async function run() {
+async function run(): Promise<SideEffectBlock> {
   const children = ['tasks', 'attachments'] as const;
 
   const backfill = children
@@ -92,16 +90,15 @@ $$ LANGUAGE plpgsql;
 ${insertTriggers}
 `;
 
-  const result = upsertMigration('publicat_cascade', migrationSql);
-  logMigrationResult(result, 'publicAt cascade');
-
-  console.info('');
-  console.info(`  ${pc.bold(pc.greenBright('publicAt cascade:'))} projects → ${children.join(', ')}`);
-  console.info('');
+  return {
+    tag: 'publicat_cascade',
+    title: 'publicAt cascade — projects → child products',
+    sql: migrationSql,
+    notes: [`Cascade: projects → ${children.join(', ')}`],
+  };
 }
 
-export const generateConfig: GenerateScript = {
+export const sideEffect: SideEffectProducer = {
   name: 'publicAt cascade',
-  type: 'migration',
-  run,
+  produce: run,
 };

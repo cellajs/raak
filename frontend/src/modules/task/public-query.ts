@@ -2,7 +2,8 @@ import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { getPublicTask, getPublicTasks } from 'sdk';
 import { appConfig } from 'shared';
 import type { GetTasksParam } from '~/modules/task/query';
-import { getTasksNextPageParam, taskKeys, tasksTableQueryDefaults } from '~/modules/task/query';
+import { getTasksNextPageParam, taskKeys } from '~/modules/task/query';
+import { tasksSearchDefaults } from '~/modules/task/search-params-schemas';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
 
@@ -38,18 +39,18 @@ type PublicTasksTableParams = Omit<GetTasksParam, 'acceptedCutOff' | 'organizati
 /** The public tasks-table infinite query key (shared with use-tasks-total's count snapshot). */
 export const publicTasksTableQueryKey = ({
   q,
-  sort = tasksTableQueryDefaults.sort,
-  order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
+  sort = tasksSearchDefaults.sort,
+  order = tasksSearchDefaults.order,
+  matchMode = tasksSearchDefaults.matchMode,
   projectId,
 }: PublicTasksTableParams) =>
   taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, publicAt: true as const });
 
 export const publicTasksTableQueryOptions = ({
   q,
-  sort = tasksTableQueryDefaults.sort,
-  order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
+  sort = tasksSearchDefaults.sort,
+  order = tasksSearchDefaults.order,
+  matchMode = tasksSearchDefaults.matchMode,
   limit: baseLimit = appConfig.requestLimits.tasksTable,
   projectId,
 }: PublicTasksTableParams & { limit?: number }) => {

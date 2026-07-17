@@ -3,7 +3,7 @@ import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
-import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts';
+import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { findLabelsByOrg, findLabelsByStxMutationId, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';

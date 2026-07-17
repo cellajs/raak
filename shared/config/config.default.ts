@@ -115,18 +115,6 @@ export const config = {
   mcpUrl: 'https://www.raak.dev/mcp',
 
   /**
-   * Pre-same-origin service hosts, kept alive as 301 redirects into the path-based URLs
-   * (api.raak.dev/x → www.raak.dev/api/x) so old email links and cached clients keep working.
-   * Remove after the deprecation window — the LB decommissions each DNS record + cert on the
-   * next `pulumi up`. Entries for disabled services are ignored.
-   */
-  legacyUrls: {
-    backend: 'https://api.raak.dev',
-    yjs: 'https://yjs.raak.dev',
-    mcp: 'https://mcp.raak.dev',
-  },
-
-  /**
    * Deployable services. Each entry gates a service (and/or its route surface)
    * plus its public endpoint. Services are enabled by default; opt out with
    * `{ enabled: false }`. `publicUrl` is derived from the matching URL fields

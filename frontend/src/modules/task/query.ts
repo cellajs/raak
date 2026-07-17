@@ -8,6 +8,7 @@ import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { labelQueryKeys } from '~/modules/label/query';
 import { deriveDescriptionCounts } from '~/modules/task/helpers/derive-description-props';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
+import { tasksSearchDefaults } from '~/modules/task/search-params-schemas';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
@@ -259,17 +260,13 @@ export const tasksCanonicalOptions = ({
   });
 };
 
-/** Default sort/order/match for the tasks table, single-sourced so the options factory and the
- *  lightweight count snapshot (use-tasks-total) can't drift on their query key. */
-export const tasksTableQueryDefaults = { sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
-
 /** The tasks-table infinite query key. Extracted so use-tasks-total can read the key directly
  *  instead of building the whole options object (queryFn/getNextPageParam closures) to discard it. */
 export const tasksTableQueryKey = ({
   q,
-  sort = tasksTableQueryDefaults.sort,
-  order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
+  sort = tasksSearchDefaults.sort,
+  order = tasksSearchDefaults.order,
+  matchMode = tasksSearchDefaults.matchMode,
   projectId,
   workspaceId,
   organizationId,
@@ -278,9 +275,9 @@ export const tasksTableQueryKey = ({
 
 export const tasksTableQueryOptions = ({
   q,
-  sort = tasksTableQueryDefaults.sort,
-  order = tasksTableQueryDefaults.order,
-  matchMode = tasksTableQueryDefaults.matchMode,
+  sort = tasksSearchDefaults.sort,
+  order = tasksSearchDefaults.order,
+  matchMode = tasksSearchDefaults.matchMode,
   projectId,
   workspaceId,
   organizationId,

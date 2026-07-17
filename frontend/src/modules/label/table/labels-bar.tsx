@@ -8,7 +8,7 @@ import { TableSearch } from '~/modules/common/data-table/table-search';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { type Label, useLabelDeleteMutation } from '~/modules/label/query';
 import type { LabelRow, LabelsEntityType, LabelsSearch } from '~/modules/label/table/labels-table';
-import { useInfiniteQueryTotal } from '~/query/basic/use-infinite-query-total';
+import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type LabelsTableBarProps = { entity: LabelsEntityType } & Omit<
   BaseTableBarProps<LabelRow, LabelsSearch>,
@@ -30,7 +30,7 @@ export const LabelsTableBar = ({
   organizationId,
   tenantId,
 }: LabelsTableBarProps) => {
-  const total = useInfiniteQueryTotal(queryKey);
+  const total = useListQueryTotal(queryKey);
 
   const { q } = searchVars;
 

@@ -2,7 +2,8 @@ import type { GetMyMembershipsResponse } from 'sdk';
 import { hierarchy, type ProductEntityType } from 'shared';
 import { queryClient } from '~/query/query-client';
 import { useSyncStore } from '~/query/realtime/sync-store';
-import { router } from '~/routes/router';
+import { isViewedChannel } from '~/query/realtime/viewed-channels';
+import { getRouter } from '~/routes/_router-instance';
 
 type SyncPriority = 'high' | 'medium' | 'low';
 
@@ -14,7 +15,7 @@ interface SyncNotification {
 
 /** Get the current org ID from the router's matched route context, if user is within an org layout. */
 export function getRouteOrgId(): string | null {
-  for (const match of router.state.matches) {
+  for (const match of getRouter().state.matches) {
     const ctx = match.context;
     if (ctx && 'organization' in ctx && ctx.organization) {
       return (ctx.organization as { id: string }).id;
@@ -25,7 +26,7 @@ export function getRouteOrgId(): string | null {
 
 /** Get the current tenant ID from the router's matched route context, if user is within an org layout. */
 export function getRouteTenantId(): string | null {
-  for (const match of router.state.matches) {
+  for (const match of getRouter().state.matches) {
     const ctx = match.context;
     if (ctx && 'tenantId' in ctx && typeof ctx.tenantId === 'string') {
       return ctx.tenantId;
@@ -44,6 +45,83 @@ export function getTenantIdForOrg(organizationId: string): string | null {
   if (!data?.items) return null;
   const membership = data.items.find((m) => m.organizationId === organizationId);
   return membership?.tenantId ?? null;
+}
+
+/**
+ * Eagerness tier for the lazy sync scheduler: how soon this client wants a scope's changes.
+ * `min` is the floor (0 = live), `max` the ceiling (offline-freshness guarantee); the scheduler
+ * clamps the server-spread delay between them. `Infinity` = fetch on open only.
+ */
+export interface SyncTier {
+  min: number;
+  max: number;
+}
+
+const TIER_VIEWING: SyncTier = { min: 0, max: 0 };
+const TIER_BACKGROUND: SyncTier = { min: 2_000, max: 30_000 };
+const TIER_ON_OPEN: SyncTier = { min: Number.POSITIVE_INFINITY, max: Number.POSITIVE_INFINITY };
+
+/** Channel entities a route loads into its context, read by id the way `getRouteOrgId` reads org. */
+const CHANNEL_CONTEXT_KEYS = ['organization', 'workspace', 'project'] as const;
+
+/** Ids of the channel entities a matched route resolved into its context. */
+function contextChannelIds(context: unknown): string[] {
+  if (!context || typeof context !== 'object') return [];
+  const ctx = context as Record<string, unknown>;
+  const ids: string[] = [];
+  for (const key of CHANNEL_CONTEXT_KEYS) {
+    const entity = ctx[key];
+    if (!entity || typeof entity !== 'object' || !('id' in entity)) continue;
+    const id = (entity as { id: unknown }).id;
+    if (typeof id === 'string') ids.push(id);
+  }
+  return ids;
+}
+
+/**
+ * True when this channel is on screen: a view registered it, a matched route param carries its id,
+ * or a matched route resolved it into context.
+ *
+ * The param check only fires on id-param routes. Our channel routes are slug-based
+ * (`/project/$slug`, and `rewriteUrlToSlug` redirects any id form away), so the loaded entity in
+ * route context is where the id actually lives.
+ */
+function routeMatchesChannel(channelId: string): boolean {
+  if (isViewedChannel(channelId)) return true;
+  for (const match of getRouter().state.matches) {
+    const params = match.params as Record<string, unknown> | undefined;
+    if (params && Object.values(params).some((value) => value === channelId)) return true;
+    if (contextChannelIds(match.context).includes(channelId)) return true;
+  }
+  return false;
+}
+
+/** True when the user is looking at the scope: same org, and (for sub-org scopes) the channel is in the route. */
+export function isViewingScope(organizationId: string, channelId: string | null): boolean {
+  const routeOrgId = getRouteOrgId();
+  if (!routeOrgId || routeOrgId !== organizationId) return false;
+  if (!channelId || channelId === organizationId) return true;
+  return routeMatchesChannel(channelId);
+}
+
+/** Membership `muted`/`archived` = the user declared "not urgent" for this scope. */
+function isMutedOrArchived(organizationId: string, channelId: string | null): boolean {
+  const data = queryClient.getQueryData<GetMyMembershipsResponse>(['me', 'memberships']);
+  if (!data?.items) return false;
+  const targetId = channelId ?? organizationId;
+  const membership = data.items.find((m) => m.channelId === targetId);
+  return membership ? membership.muted || membership.archived : false;
+}
+
+/**
+ * The client's say in sync timing (see .todos/SYNC_FANOUT_SOLUTION.md, Piece N): viewing the
+ * scope → live; muted/archived → fetch on open only; anything else → soon-ish background.
+ */
+export function getSyncTier(entityType: string, organizationId: string, channelId: string | null): SyncTier {
+  if (!hierarchy.isProduct(entityType)) return TIER_ON_OPEN;
+  if (isViewingScope(organizationId, channelId)) return TIER_VIEWING;
+  if (isMutedOrArchived(organizationId, channelId)) return TIER_ON_OPEN;
+  return TIER_BACKGROUND;
 }
 
 /**

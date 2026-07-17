@@ -140,6 +140,10 @@ export type StreamNotification = {
    */
   batchUntilSeq: number | null;
   /**
+   * Server-suggested spread window (ms) for the lazy delta fetch — scales with channel audience and load; the client clamps it between its eagerness tier bounds
+   */
+  syncWindow: number | null;
+  /**
    * Embedded entity propagation hint for cross-entity cache invalidation
    */
   propagation: {
@@ -361,7 +365,7 @@ export type Tenant = {
     };
     rateLimits: {
       /**
-       * Max API points per hour per user within this tenant
+       * Max API points per hour per user within this tenant (0 = no tenant limit; the global safety ceiling still applies)
        */
       apiPointsPerHour: number;
     };

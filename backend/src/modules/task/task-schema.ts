@@ -81,7 +81,7 @@ export const taskListQueryBaseSchema = paginationQuerySchema.extend({
     .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
     .default('createdAt')
     .optional(),
-  order: z.enum(['asc', 'desc']).default('asc').optional(),
+  order: z.enum(['asc', 'desc']).default('desc').optional(),
   acceptedCutOff: z.coerce.number().positive().optional(),
   projectId: z.string().max(maxLength.id).optional(),
   workspaceId: z.string().max(maxLength.id).optional(),

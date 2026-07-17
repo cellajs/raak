@@ -115,9 +115,9 @@ describe('Task seq reads', async () => {
   });
 
   it('B3: limit above 1000 is rejected, not clamped', async () => {
-    // Validation failures map to 403 via the app's defaultHook (not 400)
+    // Validation failures are malformed requests: 400 via the app's defaultHook, never 403
     const result = await listTasks({ limit: '1001' });
-    expect(result.status).toBe(403);
+    expect(result.status).toBe(400);
     expect(result.items).toEqual([]);
   });
 

@@ -8,7 +8,7 @@ import { useUserStore } from '~/modules/user/user-store';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { getCachedMemberships } from '~/query/enrichment/helpers';
 import { cacheRestored } from '~/query/query-client';
-import { SpinnerPage } from '~/routes/route-utils';
+import { SpinnerPage } from '~/routes/_route-utils';
 
 // Local wrapper so autoCodeSplitting keeps the spinner available to both the (split)
 // component and the (non-split) pendingComponent. The splitter only hoists shared local
