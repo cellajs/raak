@@ -27,7 +27,7 @@ import { PendingMembershipsCount } from '~/modules/memberships/pending-membershi
 import { fetchMembersForExport } from '~/modules/memberships/query';
 import type { Member, MembersRouteSearchParams } from '~/modules/memberships/types';
 import { InviteUsers } from '~/modules/user/invite-users';
-import { useInfiniteQueryTotal } from '~/query/basic/use-infinite-query-total';
+import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type MembersTableBarProps = MembersTableWrapperProps & BaseTableBarProps<Member, MembersRouteSearchParams>;
 
@@ -45,7 +45,7 @@ export const MembersTableBar = ({
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
 
-  const total = useInfiniteQueryTotal(queryKey);
+  const total = useListQueryTotal(queryKey);
 
   const deleteButtonRef = useRef(null);
   const inviteButtonRef = useRef(null);
@@ -55,7 +55,7 @@ export const MembersTableBar = ({
 
   const isFiltered = role !== undefined || !!q;
   // Managing members is a channel-scoped affordance (not a per-row question), and the enriched
-  // entity carries no `createdBy` to resolve `'own'` against — so gate on an unconditional grant.
+  // The entity has no `createdBy` for resolving `'own'`, so require an unconditional grant.
   const canUpdate = isUnconditionalPermission(channelEntity.can?.[channelEntity.entityType]?.update);
   const entityType = channelEntity.entityType;
 
@@ -126,8 +126,8 @@ export const MembersTableBar = ({
       limit,
       offset,
       q,
-      sort: sort || 'createdAt',
-      order: order || 'desc',
+      sort,
+      order,
       role,
       entityId: channelEntity.id,
       entityType: channelEntity.entityType,

@@ -89,6 +89,10 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "path": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "included": {
                     "type": "object",
@@ -226,6 +230,7 @@
               "createdBy": null,
               "updatedAt": "2024-04-18T21:12:59.543Z",
               "updatedBy": null,
+              "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "included": {
                 "membership": {
                   "id": "1f366272-953c-486d-81dc-ee61f43478a1",
@@ -525,6 +530,10 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "path": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "included": {
                     "type": "object",
@@ -651,6 +660,7 @@
               "createdBy": null,
               "updatedAt": "2024-11-21T01:19:53.533Z",
               "updatedBy": null,
+              "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "included": {
                 "membership": {
                   "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
@@ -705,6 +715,7 @@
               "createdBy": null,
               "updatedAt": "2024-10-29T04:35:17.725Z",
               "updatedBy": null,
+              "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
               "included": {
                 "membership": {
                   "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
@@ -908,6 +919,10 @@
               "type": ["string", "null"],
               "required": true
             },
+            "path": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "included": {
               "type": "object",
@@ -1028,6 +1043,7 @@
           "createdBy": null,
           "updatedAt": "2024-03-18T14:19:46.053Z",
           "updatedBy": null,
+          "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
           "included": {
             "membership": {
               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
@@ -1214,6 +1230,10 @@
               "type": ["string", "null"],
               "required": true
             },
+            "path": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "included": {
               "type": "object",
@@ -1334,6 +1354,7 @@
           "createdBy": null,
           "updatedAt": "2024-03-18T14:19:46.053Z",
           "updatedBy": null,
+          "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
           "included": {
             "membership": {
               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",

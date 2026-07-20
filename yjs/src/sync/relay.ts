@@ -19,7 +19,7 @@ const awarenessTimestamps = new WeakMap<WebSocket, number>();
 
 /**
  * Per-client message buffer: queues all sync messages (reads and writes) while entity verification is pending.
- * Once verified, the buffer is flushed. If denied, it's discarded.
+ * Once verified, the buffered messages are released and applied. If denied, they're discarded.
  */
 const pendingBuffers = new WeakMap<WebSocket, { ctx: DocContext; messages: Uint8Array[] }>();
 
@@ -36,8 +36,8 @@ function bufferMessage(ws: WebSocket, ctx: DocContext, rawMessage: Uint8Array): 
   }
 }
 
-/** Flush queued messages after entity verification succeeds. Replays them through handleMessage. */
-export function flushPendingBuffer(ws: WebSocket): void {
+/** Release queued messages after entity verification succeeds. Replays them through handleMessage. */
+export function releaseBufferedMessages(ws: WebSocket): void {
   const buf = pendingBuffers.get(ws);
   if (!buf || buf.messages.length === 0) {
     pendingBuffers.delete(ws);
@@ -49,7 +49,7 @@ export function flushPendingBuffer(ws: WebSocket): void {
 
   for (const raw of messages) {
     handleMessage(ctx, ws, raw).catch((err) => {
-      log.error(`Failed to flush buffered message for ${ctx.entityType}:${ctx.entityId}`, { err: err });
+      log.error(`Failed to apply buffered message for ${ctx.entityType}:${ctx.entityId}`, { err: err });
     });
   }
 }
@@ -92,7 +92,7 @@ export async function handleMessage(ctx: DocContext, ws: WebSocket, data: Uint8A
   const messageType = decoding.readVarUint(decoder);
 
   if (messageType === YMessage.Sync) {
-    // Gate all sync messages (reads + writes) until entity access is verified
+    // Buffer all sync messages (reads + writes) until entity access is verified
     if (!ctx.verified) {
       bufferMessage(ws, ctx, data);
       return;
@@ -155,8 +155,8 @@ async function handleSyncStep1(ctx: DocContext, ws: WebSocket, clientStateVector
     if (canonical && canonical.length > 0) fullState = canonical;
   }
 
-  // Initialize the materialization diff baseline from the state the session starts with
-  // (seed or stored row), so seed-only sessions and unchanged rejoins never POST.
+  // Record the session's initial blocks JSON so seed-only sessions and unchanged
+  // rejoins never POST a durable entity update.
   const collabForBaseline = getCollab(ctx.entityType, ctx.entityId);
   if (collabForBaseline && !collabForBaseline.lastMaterializedJson && fullState && fullState.length > 0) {
     collabForBaseline.lastMaterializedJson = stateToBlocksJson(fullState) ?? undefined;
@@ -184,7 +184,7 @@ async function handleSyncUpdate(ctx: DocContext, ws: WebSocket, update: Uint8Arr
   const collab = getCollab(ctx.entityType, ctx.entityId);
   if (!collab) return;
 
-  // Last writer in the save window: attribution for the debounced save + materialization
+  // The last writer in the save window supplies the user id for the durable entity update.
   collab.lastEditor = ctx;
 
   if (collab.pendingState && collab.pendingState.length > 0) {
@@ -210,8 +210,8 @@ async function handleSyncUpdate(ctx: DocContext, ws: WebSocket, update: Uint8Arr
     collab.savingPromise = savePromise;
     try {
       await savePromise;
-      // Materialize the saved state into the entity's durable record (single writer:
-      // one call per doc per save window, regardless of how many clients are typing).
+      // Convert the saved state to blocks and persist it to the entity (single writer:
+      // one call per document per save window, regardless of how many clients are typing).
       // A 'retry' failure leaves the diff baseline stale; the next save window or the
       // gated session cleanup converges it.
       await materializeState(collab, snapshotToSave);

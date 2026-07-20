@@ -1,19 +1,9 @@
-import pc from 'picocolors';
-import { logMigrationResult, upsertMigration } from './helpers/drizzle-utils';
-import type { GenerateScript } from '../types';
+import type { SideEffectBlock, SideEffectProducer } from '../types';
 
-/**
- * Converts ephemeral/regenerable tables to UNLOGGED to skip WAL writes. These tolerate
- * truncation on unclean shutdown:
- * - rate_limits: clients get a fresh window
- * - user_counters, channel_counters, product_counters: rebuilt from source data on startup
- *
- * Idempotent: checks pg_class.relpersistence before altering.
- */
+/** Regenerable tables converted to UNLOGGED; shared with the verification block. */
+export const unloggedTables = ['rate_limits', 'user_counters', 'channel_counters', 'product_counters'];
 
-const unloggedTables = ['rate_limits', 'user_counters', 'channel_counters', 'product_counters'];
-
-async function run() {
+async function run(): Promise<SideEffectBlock> {
   const alterStatements = unloggedTables
     .map(
       (t) => `  IF (SELECT relpersistence FROM pg_class WHERE relname = '${t}') != 'u' THEN
@@ -41,15 +31,15 @@ ${alterStatements}
 END $$;
 `;
 
-  const result = upsertMigration('unlogged_setup', migrationSql);
-  logMigrationResult(result, 'UNLOGGED setup');
-
-  console.info('');
-  console.info(`  ${pc.greenBright('UNLOGGED tables:')} ${unloggedTables.join(', ')}`);
+  return {
+    tag: 'unlogged_setup',
+    title: 'UNLOGGED tables',
+    sql: migrationSql,
+    notes: [`UNLOGGED tables: ${unloggedTables.join(', ')}`],
+  };
 }
 
-export const generateConfig: GenerateScript = {
+export const sideEffect: SideEffectProducer = {
   name: 'UNLOGGED',
-  type: 'migration',
-  run,
+  produce: run,
 };

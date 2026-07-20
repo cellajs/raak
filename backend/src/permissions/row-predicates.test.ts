@@ -26,41 +26,14 @@ import { seedDb } from '#/db/db';
 import { canReceiveEntityEvent } from '#/modules/entities/helpers/dispatch-to-stream';
 import type { AppStreamProductEvent } from '#/modules/entities/stream/types';
 import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
-import { checkPermission } from './check-permission';
+import { checkAccess } from './check-permission';
 import { resolveCollectionReadFilter, resolveCollectionReadFilterForPolicies } from './collection-scope';
 import { buildCollectionReadWhere } from './row-predicates';
-
-/**
- * Check-form / SQL-form / compute-can parity property test.
- *
- * One policy definition drives three enforcement paths:
- * 1. the permission engine's per-subject decision (`getAllDecisions`),
- * 2. the compiled SQL row predicate for collection reads (`buildCollectionReadWhere`,
- *    executed against real Postgres here),
- * 3. the frontend `can` states (`computeCan` + `resolvePermission`).
- *
- * Any divergence between them is a security bug: a row readable via SQL but denied by
- * the engine leaks data; the reverse silently hides rows. This test generates random
- * policy sets (including row-conditional `'own'` grants), memberships and actors, and
- * asserts the three paths agree row-for-row.
- *
- * The scenario space deliberately varies BOTH axes that previously went unexercised, each of
- * which hid a real divergence:
- * - `isSystemAdmin` — the collection path took no admin flag at all, so a sysadmin (who passes
- *   `orgGuard` with no membership) got an empty list while single-row reads of the same rows
- *   succeeded.
- * - public read grants — the collection path never compiled a public clause, so a row published
- *   via `publicAt` was readable single-row and over SSE, but silently absent from every list.
- *
- * Config-adaptive: the scenario space is derived from `attachment`'s real ancestor chain, so it
- * runs on any fork. A fork with a nested context (raak: `project → organization`) exercises the
- * sub-context narrowing; an org-only fork (cella: `organization`) skips it (`runIf`).
- */
 
 // attachment's ancestor chain, most-specific → root. raak: [project, organization]; cella: [organization].
 const CHAIN = hierarchy.getOrderedAncestors('attachment') as ChannelEntityType[];
 const ROOT = CHAIN[CHAIN.length - 1]; // organization (the collection is scoped to one root instance)
-const SUB = CHAIN.length > 1 ? CHAIN[0] : null; // the narrowable sub-context (project) — null on an org-only fork
+const SUB = CHAIN.length > 1 ? CHAIN[0] : null; // narrowable sub-context, null on an org-only fork
 const ROOT_ID = 'org1';
 const SUB_INSTANCES = SUB ? ['s1', 's2', 's3'] : []; // sub-context instance ids (empty when there is no sub-context)
 
@@ -88,7 +61,7 @@ const parityTable = pgTable(
   subIdKey && subColumnName ? { ...baseColumns, [subIdKey]: varchar(subColumnName).notNull() } : baseColumns,
 );
 // The sub-context column passed to `buildCollectionReadWhere`. On an org-only fork the read is
-// org-wide (subChannelIds always undefined/[]), so this column is never referenced — `id` stands in.
+// org-wide (subChannelIds always undefined/[]), so this column is never referenced; `id` stands in.
 const subChannelColumn = (
   subIdKey ? (parityTable as unknown as Record<string, PgColumn>)[subIdKey] : parityTable.id
 ) as PgColumn;
@@ -186,7 +159,7 @@ const randomScenario = (random: () => number): Scenario => {
       policies: randomPolicies(random),
       memberships: [],
       userId: undefined,
-      // An anonymous actor is never a system admin — the union makes that unrepresentable.
+      // The actor union makes an anonymous system administrator unrepresentable.
       isSystemAdmin: false,
       publicGrants: randomPublicGrants(random),
     };
@@ -203,7 +176,7 @@ const randomScenario = (random: () => number): Scenario => {
     policies: randomPolicies(random),
     memberships,
     userId: pick(random, USERS),
-    // Sysadmins frequently hold NO membership — the exact shape that produced the empty-list bug.
+    // System administrators may have no membership; collection access must still match row access.
     isSystemAdmin: random() < 0.15,
     publicGrants: randomPublicGrants(random),
   };
@@ -299,8 +272,8 @@ describe('row-condition parity: engine check ⊆⊇ compiled SQL ⊆⊇ compute-
       // This leg is membership-only by construction: `computeCan` derives a can-map from ONE
       // membership's policy row, so it models neither the system-admin bypass (the frontend has
       // `computeSystemAdminCan` for that) nor membership-independent public grants. Both sides
-      // are therefore evaluated with neither, which keeps the comparison meaningful instead of
-      // trivially true.
+      // are therefore evaluated with neither, which keeps the comparison meaningful and
+      // non-trivial.
       for (const m of scenario.memberships) {
         const canMap = computeCan(m.channelType as ChannelEntityType, m, scenario.policies);
         const state = canMap.attachment?.read ?? false;
@@ -370,17 +343,8 @@ describe('row-condition parity: engine check ⊆⊇ compiled SQL ⊆⊇ compute-
   });
 });
 
-/*
- * Deep-chain parity: 4-level SYNTHETIC hierarchy (organization > course >
- * courseSection > project, product `item` parented to project with nullable
- * ancestors) — exercises intermediate ancestor-level grants (course /
- * courseSection) that a 2-level config structurally cannot reach. Both paths
- * run on the same topology seam: the engine via `getAllDecisions(…, { topology })`,
- * the scope compiler via `resolveCollectionReadFilterForPolicies(…, topology)`.
- * The casts naming synthetic entities are contained in the fixtures below,
- * mirroring `shared/src/testing/wide-fixture.ts`.
- */
-
+// This synthetic four-level topology exercises intermediate ancestor grants. Both the
+// engine and scope compiler receive it through their topology seam.
 const deepRoles = createRoleRegistry(['admin', 'member', 'staff', 'student', 'owner', 'follower'] as const);
 const deepHierarchy = createEntityHierarchy(deepRoles)
   .user()
@@ -581,24 +545,39 @@ describe('deep-chain parity: intermediate ancestor grants agree between engine a
       expect(fromSql, label).toEqual(fromEngine);
     }
   });
-});
 
-/*
- * elevatedRoles parity (same synthetic topology): with `elevatedRoles` configured,
- * a product grant of a non-listed role speaks only for rows HOMED at its own
- * context level, while listed roles (admin/staff) keep subtree scope. Engine
- * (`getAllDecisions(…, { elevatedRoles })`) ≍ compiled SQL, row for row.
- *
- * FORK WATCH: cella ships `elevatedRoles: undefined` and a single channel level, so this
- * behaviour is exercised ONLY by the synthetic deep topology below — never by cella's real
- * config. The fork that actually turns it on (projectcampus: `['admin','staff']` over
- * organization→course→courseSection→project, with `submission read:'own'` home-scoped) is
- * covered by its own fork parity test. If this synthetic fixture and that real chain ever drift
- * in shape, both suites stay green while the fork breaks — keep them shaped alike.
- */
+  // Sysadmin widens who can read, never what a placement-filtered list returns. The
+  // admin bypass must preserve `requested` narrowing.
+  it('an explicitly requested sub-context narrows a sysadmin read like any other', async () => {
+    const sysadmin: Actor = { userId: 'u1', isSystemAdmin: true };
+    const sqlIdsFor = async (requested: { subChannelId?: string; subChannelIds?: string[] }) => {
+      const filter = resolveCollectionReadFilterForPolicies({
+        policies: deepPolicies(() => 0),
+        memberships: [],
+        entityType: DEEP_ITEM,
+        organizationId: ROOT_ID,
+        actor: sysadmin,
+        topology: deepTopology,
+        requested,
+      });
+      const where = buildCollectionReadWhere(filter, deepParityTable, deepParityTable.projectId, sysadmin);
+      if (where.kind === 'none') return new Set<string>();
+      const query = seedDb.select({ id: deepParityTable.id }).from(deepParityTable);
+      const rows = where.kind === 'all' ? await query : await query.where(where.where);
+      return new Set(rows.map((r) => r.id));
+    };
+    const homedAt = (...projectIds: string[]) =>
+      new Set(DEEP_ROWS.filter((r) => r.projectId !== null && projectIds.includes(r.projectId)).map((r) => r.id));
+
+    expect(await sqlIdsFor({ subChannelId: 'p1' })).toEqual(homedAt('p1'));
+    expect(await sqlIdsFor({ subChannelIds: ['p1', 'p2'] })).toEqual(homedAt('p1', 'p2'));
+  });
+});
 
 const SUBTREE_ROLES = ['admin', 'staff'] as const;
 
+// Non-elevated product roles see rows homed at their grant level; elevated roles retain
+// subtree scope. This synthetic chain covers configs that enable `elevatedRoles`.
 describe('elevatedRoles parity: home-scoped grants agree between engine and SQL', () => {
   it('agrees on every row across random policies and memberships with elevatedRoles configured', async () => {
     const random = mulberry32(0x50b7);
@@ -619,7 +598,7 @@ describe('elevatedRoles parity: home-scoped grants agree between engine and SQL'
       memberships: [deepMembership('course', 'c1', 'student')],
       userId: 'u1',
     };
-    // Rows homed at c1 itself — NOT the section/project rows physically below it.
+    // Rows homed at c1 itself, excluding section/project rows physically below it.
     const expected = new Set(
       DEEP_ROWS.filter((r) => r.courseId === 'c1' && r.courseSectionId === null && r.projectId === null).map(
         (r) => r.id,
@@ -657,27 +636,8 @@ describe('elevatedRoles parity: home-scoped grants agree between engine and SQL'
   });
 });
 
-/*
- * Three-way mirror parity under the REAL app config: collection SQL ≍ single-row
- * engine check ≍ SSE dispatch predicate (`canReceiveEntityEvent`). The dispatch
- * decision is re-checked when a cache hit is served (`appCache` re-runs the same
- * predicate against the cached row), so any divergence is a security bug.
- *
- * Config note: `canReceiveEntityEvent` evaluates through `checkPermission`, which
- * binds the app's REAL policies — there is no policy-injection seam, and adding
- * one only for tests would fork the code path under test. So unlike the
- * synthetic-topology blocks above, this block runs the real config (cella:
- * 2-level, unconditional org grants; a fork with a nested chain or `'own'` read
- * cells exercises those automatically via the CHAIN-derived scenario space).
- * Deep-chain and elevatedRoles decisions are asserted engine ≍ SQL above and reach
- * dispatch through the same `checkPermission` call.
- *
- * `isSystemAdmin` IS varied here: the bypass has to agree across all three paths, and the
- * collection path used to have no admin flag at all. Public grants ride the real config
- * (which declares none), so their parity is asserted in the synthetic block above, where the
- * grants can actually be injected.
- */
-
+// Real-config scenarios must agree across collection SQL, single-row checks, and SSE
+// dispatch. The attachment ancestor chain and system-admin state define the scenario space.
 const realMembership = (
   channelType: ChannelEntityType,
   channelId: string,
@@ -752,7 +712,7 @@ describe('three-way mirror parity: SQL ≍ engine ≍ dispatch under the real ap
       for (const row of ROWS) {
         // Same subject shape dispatch builds: ancestor scope + the row itself
         const subject = rowSubject(row);
-        const engineAllowed = checkPermission(memberships, 'read', subject, actor).isAllowed;
+        const engineAllowed = checkAccess({ userId, isSystemAdmin, memberships }, 'read', subject).isAllowed;
         const dispatchAllowed = canReceiveEntityEvent({ userId, isSystemAdmin, memberships }, dispatchEvent(row));
 
         expect(dispatchAllowed, `${label} → row ${row.id} dispatch-vs-engine`).toBe(engineAllowed);

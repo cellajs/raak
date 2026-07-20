@@ -2,7 +2,7 @@ import { isRecord } from '../utils/guards'
 import { scwS3Endpoint } from '../scaleway/scw-fetch'
 import { errorMessage } from '../utils/errors'
 
-/** A materialized, content-addressed generation: the VM resource is
+/** A provisioned, content-addressed generation: the VM resource is
  *  `vm-<svc>-<id>`, baked with `sha`, promoted at monotonic `seq`. */
 export interface GenRef {
   /** Content-addressed generation id. Authoritative resource suffix. The live VM
@@ -16,14 +16,14 @@ export interface GenRef {
 }
 
 /**
- * Per-service rollout ledger. The pointers (not a single mutable gen number) are
+ * Per-service rollout record (the S3 control object). The pointers (not a single mutable gen number) are
  * the source of truth so a partial deploy is always recoverable by recomputing
- * desired-vs-live rather than replaying a transition:
+ * desired-vs-live reconciliation:
  *   - `active`: the generation currently serving live on the LB.
  *   - `pendingSha`: a deploy INTENT, the SHA being rolled in. The genId is
- *                  derived and materialized by the Pulumi program (the genId
+ *                  derived and recorded by the Pulumi program (the genId
  *                  authority), then read back by the orchestrator, so the
- *                  ledger never has to predict an id the program owns.
+ *                  control object never has to predict an id the program owns.
  *   - `seq`: monotonic counter, bumped on each promotion (ordering + GC).
  * No `previous` is kept: the old generation is reaped once the new one is
  * healthy, and rollback is a revert commit + forward redeploy (recreates every
@@ -116,7 +116,7 @@ export function emptyControlState(): ControlState {
 }
 
 /** Bucket holding both the Pulumi state and the control object. Must live in
- *  the app project — Scaleway Object Storage pins API keys to their preferred
+ *  the app project: Scaleway Object Storage pins API keys to their preferred
  *  project, so a bucket elsewhere is out of reach of the project-scoped CI key
  *  (see ensure-state-bucket's preflight). */
 export function stateBucket(slug: string): string {
@@ -156,8 +156,7 @@ function parseServiceRollout(slug: string, value: unknown): ServiceRollout {
   return out
 }
 
-/** Parse + validate the control JSON. Throws on a malformed document rather than
- *  silently defaulting, so a corrupt object fails the deploy loudly. */
+/** Parse and validate the control JSON. A malformed document fails the deploy loudly. */
 export function parseControlState(text: string): ControlState {
   let raw: unknown
   try {
@@ -197,11 +196,11 @@ export function serializeControlState(state: ControlState): string {
   return `${JSON.stringify(state, null, 2)}\n`
 }
 
-// Pure ledger transitions: every rollout state change is a total function over
+// Pure rollout-state transitions: every state change is a total function over
 // the previous rollout, so the orchestrator never hand-mutates pointer fields
 // and the transitions are unit-tested in isolation.
 
-/** A service with no rollout history yet. */
+/** A service with no recorded rollout yet. */
 export function emptyRollout(): ServiceRollout {
   return { seq: 0 }
 }
@@ -248,7 +247,7 @@ export async function writeControlState(
 export async function makeControlClient(region: string, accessKey: string, secretKey: string): Promise<S3Like> {
   const { S3Client } = await s3sdk()
   // The cast keeps the SDK behind the minimal structural port above, so tests
-  // can satisfy S3Like with a plain fake instead of the real client.
+  // can satisfy S3Like with a plain fake.
   return new S3Client({
     region,
     endpoint: scwS3Endpoint(region),
@@ -294,8 +293,7 @@ export async function controlContextForStack(stack: string, log: (msg: string) =
 }
 
 /** Read-modify-write a single service's rollout entry. Uses `If-Match` when the
- *  object already exists (optimistic concurrency; Scaleway supports it) so a
- *  racing writer is rejected rather than silently clobbered. */
+ *  object already exists so optimistic concurrency rejects a racing writer. */
 export async function updateServiceRollout(
   s3: S3Like,
   bucket: string,
@@ -310,11 +308,7 @@ export async function updateServiceRollout(
   await writeControlState(s3, bucket, key, state, etag ? { ifMatch: etag } : {})
 }
 
-// Distributed lock: prevents concurrent mutating ops (two operators, or an
-// operator and CI) from racing on the same stack. Built on Scaleway's
-// conditional writes: atomic create-if-absent via `If-None-Match: *`, stale
-// break via `If-Match: <etag>`.
-
+/** Metadata for the conditional-write lock that serializes stack mutations. */
 export interface LockInfo {
   owner: string
   operation: string

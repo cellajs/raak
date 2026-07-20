@@ -9,8 +9,8 @@ import {
   stampInactiveMembershipsReminded,
   updateInactiveMembershipToken,
 } from '#/modules/memberships/memberships-queries';
+import { hashToken } from '#/utils/hash-token';
 import { log } from '#/utils/logger';
-import { encodeLowerCased } from '#/utils/oslo';
 import { slugFromEmail } from '#/utils/slug-from-email';
 import { createDate, TimeSpan } from '#/utils/time-span';
 import { memberInviteEmail, memberInviteWithTokenEmail } from '../../../../emails';
@@ -24,8 +24,8 @@ interface DispatchDeferredInvitesOpts {
  * Dispatch invites that were deferred while their context was unpublished: send the held
  * emails through the normal invitation flow and stamp `remindedAt`. Invitation tokens are
  * rotated (fresh secret + expiry) since raw tokens are unrecoverable and may have expired
- * while the context was a draft. Rows emailed within the last 7 days are skipped (legacy
- * re-invite throttle).
+ * while the context was a draft. The active re-invite throttle skips rows emailed within
+ * the last seven days.
  */
 export async function dispatchDeferredInvites(ctx: AuthContext, { channelIds }: DispatchDeferredInvitesOpts) {
   const user = ctx.var.user;
@@ -70,7 +70,7 @@ export async function dispatchDeferredInvites(ctx: AuthContext, { channelIds }: 
         const [token] = await insertTokens(ctx, {
           tokens: [
             {
-              secret: encodeLowerCased(raw),
+              secret: hashToken(raw),
               type: 'invitation' as const,
               email: row.email,
               createdBy: row.createdBy,

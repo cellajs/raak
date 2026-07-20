@@ -3,7 +3,7 @@ import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
 import { WorkspaceRouteComponent } from '~/modules/workspace/route-components';
 import { workspaceRouteBeforeLoad } from '~/modules/workspace/route-logic';
-import { createErrorComponent } from '~/routes/route-utils';
+import { createErrorComponent } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';
 
 /**

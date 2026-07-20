@@ -1860,13 +1860,13 @@ export const getAppStream = <ThrowOnError extends boolean = true>(
 /**
  * App event catchup
  *
- * Fetch missed entity and membership changes since last sync. Send cursor and per-scope seqs in the body.
+ * Fetch missed entity and membership changes since last sync. Send cursor and declared views (prefix sets + org-sequence cursors) in the body.
  *
  * **POST /entities/app/stream** ·· [postAppCatchup](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/app/stream) ·· [postAppCatchup](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/entities/app/stream) ·· _entities_cella_
  *
  * @param {postAppCatchupData} options
  * @param {string=} options.body.cursor - `string` (optional)
- * @param {object=} options.body.seqs - `object` (optional)
+ * @param {any[]=} options.body.views - `any[]` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const postAppCatchup = <ThrowOnError extends boolean = true>(
@@ -2727,6 +2727,7 @@ export const getPublicTask = <ThrowOnError extends boolean = true>(
  * @param {enum=} options.query.matchmode - `enum` (optional)
  * @param {number=} options.query.acceptedcutoff - `number` (optional)
  * @param {string} options.query.projectid - `string`
+ * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getPublicTasks = <ThrowOnError extends boolean = true>(
@@ -3060,6 +3061,7 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
  * @param {string | null=} options.body.websiteUrl - `string | null` (optional)
  * @param {string | null=} options.body.welcomeText - `string | null` (optional)
  * @param {boolean=} options.body.chatSupport - `boolean` (optional)
+ * @param {object=} options.body.organizationFlags - `object` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const updateOrganization = <ThrowOnError extends boolean = true>(
@@ -3741,6 +3743,7 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
+ * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getAttachments = <ThrowOnError extends boolean = true>(
@@ -4263,6 +4266,7 @@ export const deleteTasks = <ThrowOnError extends boolean = true>(
  * @param {number=} options.query.acceptedcutoff - `number` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @param {string=} options.query.workspaceid - `string` (optional)
+ * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getTasks = <ThrowOnError extends boolean = true>(
@@ -4475,6 +4479,7 @@ export const deleteLabels = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.seqcursor - `string` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @param {string=} options.query.workspaceid - `string` (optional)
+ * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getLabels = <ThrowOnError extends boolean = true>(

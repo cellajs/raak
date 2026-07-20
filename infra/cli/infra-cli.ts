@@ -10,18 +10,15 @@ import { detectComputeDeferred, detectStackState, pickStackShort } from '../lib/
 import { infraDir } from '../lib/utils/paths'
 import { runApply } from './actions/apply'
 import { runPreview } from './actions/preview'
+import { runResetDatabase } from './actions/reset-database'
 import { runRotatePassphrase } from './actions/rotate-passphrase'
 import { runSecrets } from './actions/secrets'
 import { runSetup } from './actions/setup'
 import { runUnlock } from './actions/unlock'
 import type { CliMode, InfraContext } from './shared'
 
-// Load infra-only repo envs (e.g. SCW_PROJECT_ID) so they reach the CLI and the
-// child tasks it spawns. The canonical location is backend/.env (same file the
-// backend loads and what backend/.env.example documents); the repo-root .env is
-// a fallback for forks that keep one there. Real environment variables still win
-// (loadEnvFile never overrides an already-set var), so CI's explicit SCW_* take
-// precedence, and backend/.env wins over the root fallback by loading first.
+// Load backend/.env before the root fallback so infra child tasks share the app's
+// local config. Existing environment variables keep precedence over both files.
 for (const envFile of [resolve(infraDir, '..', 'backend', '.env'), resolve(infraDir, '..', '.env')]) {
   if (existsSync(envFile)) process.loadEnvFile(envFile)
 }
@@ -32,11 +29,8 @@ async function loadContext(): Promise<InfraContext> {
   const stackYaml = existsSync(stackPath) ? readFileSync(stackPath, 'utf8') : undefined
   const state = detectStackState({ yamlText: stackYaml })
 
-  // Resolve appConfig once, keyed to this stack's environment. `shared` reads
-  // APP_MODE at module-eval time, so it must be set before the first import.
-  // The CLI is authoritative here (force-assign, don't defer to a stray shell
-  // APP_MODE): this keeps context.appConfig, the spawned child tasks, and the
-  // Pulumi program's stack/APP_MODE consistency guard all on this one mode.
+  // Set the stack mode before importing `shared`, which reads APP_MODE during
+  // module evaluation. The CLI-selected stack is authoritative for child tasks.
   process.env.APP_MODE = environment
   const { appConfig } = await import('shared')
 
@@ -47,10 +41,8 @@ async function loadContext(): Promise<InfraContext> {
     throw new Error('SCW_PROJECT_ID is not set — add it to backend/.env before running the infra CLI.')
   }
 
-  // Operator application id: required like SCW_PROJECT_ID once bootstrapped:
-  // granted full S3 on the CI-scoped buckets (storage.ts) so operator keys can
-  // read/refresh them. On a fresh stack it doesn't exist yet; bootstrap creates
-  // the app and writes the id into backend/.env, so only enforce it afterwards.
+  // Bootstrap creates the operator application and writes its id to backend/.env.
+  // Bootstrapped stacks require it for operator access to CI-scoped buckets.
   const operatorApplicationId = process.env.SCW_OPERATOR_APPLICATION_ID?.trim()
   if (!operatorApplicationId && state === 'bootstrapped') {
     throw new Error('SCW_OPERATOR_APPLICATION_ID is not set — add it to backend/.env before running the infra CLI.')
@@ -109,9 +101,10 @@ const mode: CliMode =
           { name: 'Resume', value: 'resume', description: 'Verify & sync config + GitHub secrets with the CI key; self-heals missing keys. Read-only on DB/VPC/PN — cannot change protected infra.' },
           { name: 'Rotate keys', value: 'rotate', description: 'Mint fresh CI deploy and VM reader keys. Use after editing the CI policy permission sets.' },
           { name: 'Rotate passphrase', value: 'rotate-passphrase', description: 'Re-encrypt stack state with a freshly generated Pulumi passphrase and sync it to GitHub. Needs the current passphrase; no bootstrap key.' },
-          { name: 'Apply infra change', value: 'apply', description: 'Privileged converge: one-shot `pulumi up` with a bootstrap key for DB/VPC/PN changes the CI key cannot. No refresh (buckets are CI-scoped).' },
+          { name: 'Apply infra change', value: 'apply', description: 'Privileged converge: one-shot `pulumi up` with a bootstrap key for DB/VPC/PN changes the CI key cannot. No refresh (buckets are CI-scoped); offers to prune state entries whose live object is already gone.' },
           { name: 'Preview', value: 'preview', description: 'Read-only `pulumi preview`. Validates auth & shows drift; makes no changes.' },
           { name: 'Manage runtime secrets', value: 'secrets', description: 'List, set, rotate, or delete operator-managed runtime secrets in Scaleway Secret Manager.' },
+          { name: 'Reset database', value: 'reset-database', description: 'DESTRUCTIVE: delete + recreate the app database empty (backup first, roles re-granted), then migrate/seed on the serial console. Pre-production, or with services quiesced.' },
           { name: 'Unlock', value: 'unlock', description: 'Clear a stale stack lock left by an interrupted apply/deploy. Use only when no run is actually in progress.' },
         ],
       })
@@ -134,6 +127,11 @@ if (mode === 'preview') {
 
 if (mode === 'secrets') {
   await runSecrets(context)
+  process.exit(0)
+}
+
+if (mode === 'reset-database') {
+  await runResetDatabase(context)
   process.exit(0)
 }
 

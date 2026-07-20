@@ -1,8 +1,8 @@
 import type { AuthContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
+import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { generateUniqueSlug } from '#/modules/entities/helpers/generate-slug';
-import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';

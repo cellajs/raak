@@ -3,7 +3,7 @@ import { channelEntityColumns } from '#/db/utils/channel-entity-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
 /**
- * Projects table is a context entity table.
+ * Projects table is a channel entity table.
  * Each project belongs to exactly one organization and inherits its tenant (RLS isolation boundary).
  */
 export const projectsTable = snakeCase.table(

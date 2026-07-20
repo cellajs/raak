@@ -23,7 +23,7 @@ export const membershipChannelColumns = () => ({
 });
 
 /**
- * Memberships table to track active memberships of users in organizations and other context entities.
+ * Memberships table to track active memberships of users in organizations and other channel entities.
  * Each membership belongs to exactly one tenant (RLS isolation boundary).
  */
 export const membershipsTable = snakeCase.table(

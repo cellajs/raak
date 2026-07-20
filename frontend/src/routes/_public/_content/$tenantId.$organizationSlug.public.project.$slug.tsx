@@ -3,7 +3,7 @@ import { PublicProjectRouteComponent } from '~/modules/project/public-route-comp
 import { publicProjectRouteBeforeLoad } from '~/modules/project/public-route-logic';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
-import { createErrorComponent } from '~/routes/route-utils';
+import { createErrorComponent } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';
 
 /**

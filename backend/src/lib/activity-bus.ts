@@ -1,13 +1,8 @@
 import { EventEmitter } from 'node:events';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { type ActivityEventType, activityEventTypes, isValidEventType, type PropagationHint } from 'shared';
-import {
-  eventAttrs,
-  recordMessageReceived,
-  type SyncTraceContext,
-  startSyncSpan,
-  syncSpanNames,
-} from '#/lib/sync-metrics';
+import type { SyncTraceContext } from '#/lib/sync-metrics';
+import { eventAttrs, recordMessageReceived, startSyncSpan, syncSpanNames } from '#/lib/sync-metrics';
 import type { ActivityModel } from '#/modules/activities/activities-db';
 import type { TrackedModel, TrackedType } from '#/tables';
 import { log } from '#/utils/logger';
@@ -17,28 +12,30 @@ import { log } from '#/utils/logger';
  */
 const allEventTypes = new Set<ActivityEventType>(activityEventTypes);
 
-/**
- * Activity event with entity or resource data, created from CDC message.
- * This is the in-memory event format emitted by ActivityBus.
- *
- * Sync fields (seq, batchUntilSeq, etc.) originate from the CDC worker and are
- * passed through to StreamNotification for the client sync engine.
- * `trace` is backend-internal only (OTel span correlation).
- */
 /** Per-row batch payload (permission-relevant fields only), mirrored from the CDC wire. */
 export interface ActivityBatchRow {
   seq?: number;
   rowData: Record<string, unknown>;
+  /** Old-row permission subset when this row's path changed (move-out), else absent. */
+  movedFrom?: Record<string, unknown> | null;
 }
 
+/**
+ * In-memory CDC event emitted by ActivityBus. Sync fields flow to client stream
+ * notifications, while `trace` remains internal for OTel correlation.
+ */
 export interface ActivityEvent extends Omit<ActivityModel, 'type' | 'createdAt'> {
   type: ActivityEventType;
   rowData: unknown;
-  /** Per-row permission fields for batch events — dispatch decides per subscriber per row. */
+  /** Old-row permission subset when the row's path changed (move-out), else null. */
+  movedFrom?: Record<string, unknown> | null;
+  /** Per-row permission fields let dispatch decide visibility per subscriber and row. */
   batchRows?: ActivityBatchRow[] | null;
-  // Sync fields from CDC worker
+  // Sync fields from CDC worker (org-sequence position values)
   seq: number | null;
   batchUntilSeq: number | null;
+  /** Authoritative row count for batches: the sequence range may interleave with other groups. */
+  count: number | null;
   propagation: PropagationHint | null;
   trace: SyncTraceContext | null;
 }

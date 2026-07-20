@@ -13,9 +13,9 @@ export async function loadState({ entityType, entityId, tenantId, userId }: DocC
 }
 
 /**
- * Overwrites the stored Y.Doc state. Called on debounced flush from the relay.
- * `lastEditedBy` records the last writer for materialization attribution: it lets
- * the startup sweep persist crash-orphaned sessions on behalf of the right user.
+ * Overwrites the stored Y.Doc state. Called on debounced save from the relay.
+ * `lastEditedBy` identifies the user supplied when the startup sweep persists a
+ * crash-orphaned session into the durable entity record.
  */
 export async function saveState(
   { entityType, entityId, tenantId, userId }: DocContext,

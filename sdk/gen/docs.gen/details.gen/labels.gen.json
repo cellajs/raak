@@ -56,6 +56,10 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
+                  "path": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "color": {
                     "type": ["string", "null"],
                     "required": true,
@@ -101,50 +105,52 @@
         "example": {
           "items": [
             {
-              "id": "6a3f30f2-0433-415e-bbed-4a4eacb4a6c0",
+              "id": "e212f507-96fe-4855-b92b-8e671b17b41e",
               "entityType": "label",
               "name": "feature",
-              "description": "Audentia angustus articulus voco commodi abduco deduco occaecati cubicularis volo.",
-              "keywords": "utroque in comminor",
-              "color": "#7d3fbd",
+              "description": "Contego debeo volubilis cum vindico.",
+              "keywords": "audacia perspiciatis supra",
+              "color": "#a6adbc",
               "publicAt": null,
-              "tenantId": "eg2q4g",
-              "projectId": "b41ee456-f6f2-49b7-947a-897a617f1449",
+              "tenantId": "gme3gy",
+              "projectId": "6a3f30f2-0433-415e-bbed-4a4eacb4a6c0",
               "createdAt": "2024-11-21T01:19:53.533Z",
               "createdBy": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "updatedAt": "2024-11-21T01:19:53.533Z",
               "updatedBy": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "deletedAt": null,
               "deletedBy": null,
-              "seq": 204,
+              "seq": 53,
               "stx": {
-                "mutationId": "05cc9f52-1e3f-4100-af6d-b238d10af2a4",
-                "sourceId": "700b63f2-0bc2-495d-b299-66a04b550926",
+                "mutationId": "4497605c-c9f5-421e-a3f1-00f6db238d10",
+                "sourceId": "f2a4b700-b63f-420b-9c29-5d29966a04b5",
                 "fieldTimestamps": {}
-              }
+              },
+              "path": null
             },
             {
-              "id": "fcd93da6-f475-47fd-a00c-c2dc65b1a01e",
+              "id": "422db633-9b81-43cf-b84d-7523c2ac3827",
               "entityType": "label",
               "name": "low priority",
-              "description": "Argentum attonbitus trans summa crapula.",
-              "keywords": "bestia auxilium non",
-              "color": "#fb24bf",
+              "description": "Ascit suscipio utpote amplexus nihil aut concedo.",
+              "keywords": "vel praesentium universe",
+              "color": "#d08227",
               "publicAt": null,
-              "tenantId": "iavgc6",
-              "projectId": "3c2ac382-7d82-4be1-b935-e9d906125ba7",
+              "tenantId": "pmhsya",
+              "projectId": "fcd93da6-f475-47fd-a00c-c2dc65b1a01e",
               "createdAt": "2024-10-29T04:35:17.725Z",
               "createdBy": "772a771f-c150-465e-9635-46594859fc3d",
               "updatedAt": "2024-10-29T04:35:17.725Z",
               "updatedBy": "772a771f-c150-465e-9635-46594859fc3d",
               "deletedAt": null,
               "deletedBy": null,
-              "seq": 475,
+              "seq": 421,
               "stx": {
-                "mutationId": "4de5ede8-ccfe-4f45-83bf-074c2ef77d58",
-                "sourceId": "cc1edd90-17e5-4b49-afb1-c3cc0f3df844",
+                "mutationId": "e5ede8cc-fef4-453b-bf07-4c2ef77d580c",
+                "sourceId": "1edd9017-e5b4-49fb-81c3-cc0f3df8449a",
                 "fieldTimestamps": {}
-              }
+              },
+              "path": null
             }
           ],
           "total": 2
@@ -217,7 +223,8 @@
           "limit": { "type": "string", "required": false },
           "seqCursor": { "type": "string", "required": false },
           "projectId": { "type": "string", "required": false, "maxLength": 50 },
-          "workspaceId": { "type": "string", "required": false, "maxLength": 50 }
+          "workspaceId": { "type": "string", "required": false, "maxLength": 50 },
+          "pathPrefix": { "type": "string", "required": false, "maxLength": 512 }
         }
       }
     }
@@ -279,6 +286,10 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
+                  "path": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "color": {
                     "type": ["string", "null"],
                     "required": true,
@@ -335,15 +346,15 @@
         "example": {
           "data": [
             {
-              "id": "f53a0c8a-26b6-495c-9c9e-d9cd1f55c648",
+              "id": "a8af2ccb-4380-4b29-b6f3-c4dff2fe77a8",
               "entityType": "label",
               "name": "enhancement",
-              "description": "Dolor somnus vobis atavus tergiversatio tersus suadeo colo.",
-              "keywords": "benigne id abduco",
-              "color": "#f3c9f4",
+              "description": "Eligendi sophismata exercitationem somnus cattus cilicium textilis cervus.",
+              "keywords": "alo tactus confido",
+              "color": "#64f6c9",
               "publicAt": null,
-              "tenantId": "rauzy6",
-              "projectId": "fe77a8fb-8a8a-444c-841b-543b4862befa",
+              "tenantId": "4ovzm1",
+              "projectId": "f53a0c8a-26b6-495c-9c9e-d9cd1f55c648",
               "createdAt": "2024-04-18T21:12:59.543Z",
               "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "updatedAt": "2024-04-18T21:12:59.543Z",
@@ -355,30 +366,32 @@
                 "mutationId": "61722978-1062-41a4-84be-44424ddc25f8",
                 "sourceId": "c138ca88-7751-4adb-adbf-08b9af3e691e",
                 "fieldTimestamps": {}
-              }
+              },
+              "path": null
             },
             {
-              "id": "ebef5b66-8321-40fb-87a2-1be26ba4ee7e",
+              "id": "7d369703-e5ea-444c-83c3-2a47230f592f",
               "entityType": "label",
               "name": "enhancement",
-              "description": "Tum candidus curvo perspiciatis defendo adinventitias.",
-              "keywords": "carpo verecundia cometes",
-              "color": "#ee65b4",
+              "description": "Utpote vulnus subseco vomica auxilium.",
+              "keywords": "ascit cuppedia abbas",
+              "color": "#2d8a1a",
               "publicAt": null,
-              "tenantId": "r85nah",
-              "projectId": "230f592f-25ef-4bf3-8260-196c17422784",
+              "tenantId": "a54hj9",
+              "projectId": "ebef5b66-8321-40fb-87a2-1be26ba4ee7e",
               "createdAt": "2024-02-24T16:36:46.247Z",
               "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
               "updatedAt": "2024-02-24T16:36:46.247Z",
               "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
               "deletedAt": null,
               "deletedBy": null,
-              "seq": 484,
+              "seq": 32,
               "stx": {
-                "mutationId": "fc3e08db-54ef-4dd4-b5f1-0b01ab3092c5",
-                "sourceId": "d1fb31ba-52c2-4db0-b9b4-7a24f941b71c",
+                "mutationId": "ffc3e08d-b54e-4fdd-945f-10b01ab3092c",
+                "sourceId": "fd1fb31b-a52c-42db-b09b-47a24f941b71",
                 "fieldTimestamps": {}
-              }
+              },
+              "path": null
             }
           ],
           "rejectedIds": []
@@ -438,6 +451,10 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
+                  "path": {
+                    "type": ["string", "null"],
+                    "required": true
+                  },
                   "color": {
                     "type": ["string", "null"],
                     "required": true,
@@ -494,15 +511,15 @@
         "example": {
           "data": [
             {
-              "id": "f53a0c8a-26b6-495c-9c9e-d9cd1f55c648",
+              "id": "a8af2ccb-4380-4b29-b6f3-c4dff2fe77a8",
               "entityType": "label",
               "name": "enhancement",
-              "description": "Dolor somnus vobis atavus tergiversatio tersus suadeo colo.",
-              "keywords": "benigne id abduco",
-              "color": "#f3c9f4",
+              "description": "Eligendi sophismata exercitationem somnus cattus cilicium textilis cervus.",
+              "keywords": "alo tactus confido",
+              "color": "#64f6c9",
               "publicAt": null,
-              "tenantId": "rauzy6",
-              "projectId": "fe77a8fb-8a8a-444c-841b-543b4862befa",
+              "tenantId": "4ovzm1",
+              "projectId": "f53a0c8a-26b6-495c-9c9e-d9cd1f55c648",
               "createdAt": "2024-04-18T21:12:59.543Z",
               "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "updatedAt": "2024-04-18T21:12:59.543Z",
@@ -514,30 +531,32 @@
                 "mutationId": "61722978-1062-41a4-84be-44424ddc25f8",
                 "sourceId": "c138ca88-7751-4adb-adbf-08b9af3e691e",
                 "fieldTimestamps": {}
-              }
+              },
+              "path": null
             },
             {
-              "id": "ebef5b66-8321-40fb-87a2-1be26ba4ee7e",
+              "id": "7d369703-e5ea-444c-83c3-2a47230f592f",
               "entityType": "label",
               "name": "enhancement",
-              "description": "Tum candidus curvo perspiciatis defendo adinventitias.",
-              "keywords": "carpo verecundia cometes",
-              "color": "#ee65b4",
+              "description": "Utpote vulnus subseco vomica auxilium.",
+              "keywords": "ascit cuppedia abbas",
+              "color": "#2d8a1a",
               "publicAt": null,
-              "tenantId": "r85nah",
-              "projectId": "230f592f-25ef-4bf3-8260-196c17422784",
+              "tenantId": "a54hj9",
+              "projectId": "ebef5b66-8321-40fb-87a2-1be26ba4ee7e",
               "createdAt": "2024-02-24T16:36:46.247Z",
               "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
               "updatedAt": "2024-02-24T16:36:46.247Z",
               "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
               "deletedAt": null,
               "deletedBy": null,
-              "seq": 484,
+              "seq": 32,
               "stx": {
-                "mutationId": "fc3e08db-54ef-4dd4-b5f1-0b01ab3092c5",
-                "sourceId": "d1fb31ba-52c2-4db0-b9b4-7a24f941b71c",
+                "mutationId": "ffc3e08d-b54e-4fdd-945f-10b01ab3092c",
+                "sourceId": "fd1fb31b-a52c-42db-b09b-47a24f941b71",
                 "fieldTimestamps": {}
-              }
+              },
+              "path": null
             }
           ],
           "rejectedIds": []
@@ -795,6 +814,10 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
+            "path": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "color": {
               "type": ["string", "null"],
               "required": true,
@@ -834,27 +857,28 @@
           "contentType": "application/json"
         },
         "example": {
-          "id": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
+          "id": "6b6a3bb1-71c3-4caf-84a8-45a2b703d155",
           "entityType": "label",
           "name": "feature",
-          "description": "Suffragium culpo sollers canis sunt substantia.",
-          "keywords": "alter depulso animi",
-          "color": "#b4aef5",
+          "description": "Decerno deficio cupio spiculum depono.",
+          "keywords": "amplitudo atrox speciosus",
+          "color": "#e305dd",
           "publicAt": null,
-          "tenantId": "nk9bo5",
-          "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
+          "tenantId": "1c1z4m",
+          "projectId": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
           "createdAt": "2024-11-19T06:50:38.211Z",
           "createdBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
           "updatedAt": "2024-11-19T06:50:38.211Z",
           "updatedBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
           "deletedAt": null,
           "deletedBy": null,
-          "seq": 217,
+          "seq": 43,
           "stx": {
-            "mutationId": "4735a9ad-a058-4dd1-a599-cf1d4b09243f",
-            "sourceId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
+            "mutationId": "64735a9a-da05-48dd-b159-9cf1d4b09243",
+            "sourceId": "b137ed70-0bc3-4f7c-8bcd-b0bf3d32d343",
             "fieldTimestamps": {}
-          }
+          },
+          "path": null
         }
       },
       {
@@ -961,6 +985,10 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
+            "path": {
+              "type": ["string", "null"],
+              "required": true
+            },
             "color": {
               "type": ["string", "null"],
               "required": true,
@@ -1000,27 +1028,28 @@
           "contentType": "application/json"
         },
         "example": {
-          "id": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
+          "id": "6b6a3bb1-71c3-4caf-84a8-45a2b703d155",
           "entityType": "label",
           "name": "feature",
-          "description": "Suffragium culpo sollers canis sunt substantia.",
-          "keywords": "alter depulso animi",
-          "color": "#b4aef5",
+          "description": "Decerno deficio cupio spiculum depono.",
+          "keywords": "amplitudo atrox speciosus",
+          "color": "#e305dd",
           "publicAt": null,
-          "tenantId": "nk9bo5",
-          "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
+          "tenantId": "1c1z4m",
+          "projectId": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
           "createdAt": "2024-11-19T06:50:38.211Z",
           "createdBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
           "updatedAt": "2024-11-19T06:50:38.211Z",
           "updatedBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
           "deletedAt": null,
           "deletedBy": null,
-          "seq": 217,
+          "seq": 43,
           "stx": {
-            "mutationId": "4735a9ad-a058-4dd1-a599-cf1d4b09243f",
-            "sourceId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
+            "mutationId": "64735a9a-da05-48dd-b159-9cf1d4b09243",
+            "sourceId": "b137ed70-0bc3-4f7c-8bcd-b0bf3d32d343",
             "fieldTimestamps": {}
-          }
+          },
+          "path": null
         }
       },
       {

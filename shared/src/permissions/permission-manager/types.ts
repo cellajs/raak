@@ -40,7 +40,7 @@ export type SubjectForPermission = {
    * when a policy uses a rule that reads columns beyond `createdBy`.
    *
    * Every rule reads THIS row only. The engine never loads rows, and no rule may depend on
-   * another row — that is what keeps the check-form, the compiled SQL, and stream dispatch
+   * another row: that is what keeps the check-form, the compiled SQL, and stream dispatch
    * able to reach the same verdict from the same data.
    *
    * @see row-conditions.ts
@@ -87,7 +87,7 @@ export interface PermissionCheckOptions {
   /** The acting user's ID. Required when evaluating `'own'` policies (implicit owner relation). */
   userId?: string;
   /**
-   * Subject-level public read grants to evaluate. The `checkPermission` wrapper injects the
+   * Subject-level public read grants to evaluate. The `checkAccess*` wrappers inject the
    * configured grants; pass explicitly only when driving the engine with synthetic policies
    * (tests).
    *
@@ -98,7 +98,7 @@ export interface PermissionCheckOptions {
    * Grant scoping for PRODUCT subjects: roles listed here have subtree-scoped grants
    * (their context and everything below); all other roles speak only for rows HOMED at
    * their grant's context level. `undefined` (default) keeps every grant subtree-scoped
-   * — the template behavior. Injected by the `checkPermission` wrapper like `publicGrants`.
+   *. The template behavior. Injected by the `checkAccess*` wrappers like `publicGrants`.
    *
    * @see shared/config/permissions-config.ts
    */

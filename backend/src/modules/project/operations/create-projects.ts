@@ -1,9 +1,9 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
+import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/helpers/check-slug';
-import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertProjects } from '#/modules/project/project-queries';

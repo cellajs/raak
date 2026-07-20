@@ -6,7 +6,7 @@ import { resolveEntity } from '#/modules/entities/entities-queries';
 import { getTasks } from '#/modules/task/helpers/get-tasks';
 import { getTaskRelations, hydrateTask } from '#/modules/task/helpers/hydrate-task';
 import { publicTaskRoutes } from '#/modules/task/public-routes';
-import { buildSubject, checkPermission } from '#/permissions';
+import { buildSubject, checkAccess } from '#/permissions';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
@@ -25,7 +25,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   // Anonymous engine check: publicRead('publicSelf') makes the task readable once its own
   // publicAt is set (denormalized from the parent project via create path + cascade trigger).
   const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
-  if (!checkPermission([], 'read', subject, { anonymous: true }).isAllowed) {
+  if (!checkAccess({ anonymous: true }, 'read', subject).isAllowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
   }
 
@@ -47,7 +47,7 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   // The project must itself be public (publicRead('publicSelf') → project.publicAt set); its
   // tasks inherit that publicity via the publicAt cascade, so one project check gates the list.
   const projectSubject = buildSubject('project', project, { id: project.id, row: project });
-  if (!checkPermission([], 'read', projectSubject, { anonymous: true }).isAllowed) {
+  if (!checkAccess({ anonymous: true }, 'read', projectSubject).isAllowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
   }
 

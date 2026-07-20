@@ -8,7 +8,7 @@ import { buildProviderEnv } from '../../lib/scaleway/bootstrap-scw-env'
 import { errorMessage } from '../../lib/utils/errors'
 import { infraDir } from '../../lib/utils/paths'
 import { maskedSecret } from '../prompts/masked-secret'
-import { runPulumiUpWithHint } from '../../lib/stack/pulumi-up'
+import { parseOrphanedDeletes, pruneOrphanedDeletes, runPulumiUpWithHint } from '../../lib/stack/pulumi-up'
 import { resolveOrganizationId } from '../../lib/scaleway/scaleway-iam'
 import { deriveInfra } from '../../lib/naming'
 import { acquireStackLockOrExit, envOr, type InfraContext, promptRequiredInput, promptStackName, pulumiLoginAndSelect, resolveVerifiedPassphrase } from '../shared'
@@ -113,7 +113,7 @@ export async function runApply(context: InfraContext): Promise<void> {
   // back to an old generation (destroying newer live VMs). CI does this in the
   // deploy workflow; the operator apply path must too. Best-effort by design:
   // it skips cleanly when there is no compute output yet, but a hard failure
-  // (bad creds/passphrase) aborts rather than risk applying against stale config.
+  // (bad credentials or passphrase) aborts to prevent applying against stale configuration.
   console.info(pc.dim('\n→ Reconciling rollout config from live state (sync-rollout-config)…'))
   const sync = spawnSync('pnpm', ['--filter', 'infra', 'sync-rollout-config', '--stack', targetStack], { cwd: infraDir, env: applyEnv, stdio: 'inherit' })
   if (sync.status !== 0) {
@@ -124,13 +124,28 @@ export async function runApply(context: InfraContext): Promise<void> {
 
   // No compute-deferred marker and no stack-file backup here: the stack is
   // already bootstrapped with live compute, the bootstrap key reaches
-  // `pulumi up` via SCW_* env (applyEnv) rather than stack config, and
+  // `pulumi up` receives provider credentials through SCW_* env (applyEnv), and
   // `pulumi up` is idempotent; an interrupted run is recovered simply by
   // re-running it. Deferring compute (as the fresh-provision flow does) would
   // tear down the running VMs/LB on an established stack.
   while (true) {
-    const code = await runPulumiUpWithHint(targetStack, infraDir, applyEnv)
+    const { code, output } = await runPulumiUpWithHint(targetStack, infraDir, applyEnv)
     if (code === 0) break
+
+    // A delete that 404s means the live object is already gone (deleted
+    // out-of-band or cascade-deleted by Scaleway) and only the state entry
+    // remains. Pruning it completes what the delete would have done, so offer
+    // that and re-converge, which keeps the apply from wedging one resource at a time.
+    const orphans = parseOrphanedDeletes(output)
+    if (orphans.length > 0) {
+      console.warn(`\n${warningMark} ${orphans.length} resource(s) failed to delete because the live object no longer exists:`)
+      for (const urn of orphans) console.warn(`  ${pc.dim('-')} ${urn}`)
+      if (await confirm({ message: `Prune ${orphans.length === 1 ? 'this stale entry' : 'these stale entries'} from state and retry pulumi up?`, default: true })) {
+        pruneOrphanedDeletes(orphans, targetStack, infraDir, applyEnv)
+        continue
+      }
+    }
+
     if (!(await confirm({ message: 'Retry pulumi up?', default: false }))) break
   }
 

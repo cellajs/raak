@@ -1,9 +1,9 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import type { ProductEntityType } from 'shared';
+import { draftVisibleTo, type ProductEntityType } from 'shared';
 import type { Env } from '#/core/context';
 import { xMiddleware } from '#/core/x-middleware';
-import { checkPermission } from '#/permissions';
-import { actorFrom } from '#/permissions/actor';
+import { checkAccess } from '#/permissions';
+import { accessFrom } from '#/permissions/actor';
 import { buildSubjectFromEntity } from '#/permissions/build-subject';
 import { coalesce, isInFlight } from '#/utils/request-coalescing';
 import { entityCache } from './app-entity-cache';
@@ -11,7 +11,7 @@ import { entityCache } from './app-entity-cache';
 /**
  * Entity-keyed detail cache middleware.
  *
- * Keyed by `entityType:{id}` from the request path — no cache token. On a hit, the caller is
+ * Keyed by `entityType:{id}` from the request path with no cache token. On a hit, the caller is
  * re-authorized against the cached row with `checkPermission` (live authorization, replacing the
  * old session-signed token capability), then the enriched response is served. On a miss, the
  * handler runs once (coalesced) and its enriched result is cached. CDC invalidates the entry by
@@ -72,9 +72,11 @@ function isEnriched(value: Record<string, unknown> | null | undefined): value is
 }
 
 /**
- * Re-authorize a cache hit against the cached row. The enriched response replaces `createdBy`
- * with a user object, so normalize it back to the raw id the permission subject expects; every
- * other field the check needs (channel ids, publicAt) is already present on the response.
+ * Re-authorize a cache hit against the cached row: the draft veto first (an author-cached
+ * draft must never serve to a non-author, matching SSE dispatch and the detail read),
+ * then the engine. The enriched response replaces `createdBy` with a user object, so
+ * normalize it back to the raw id the permission subject expects; every other field the
+ * check needs (channel ids, publicAt, publishedAt) is already present on the response.
  */
 function callerCanRead(ctx: Context<Env>, entityType: ProductEntityType, cached: Record<string, unknown>): boolean {
   try {
@@ -86,8 +88,10 @@ function callerCanRead(ctx: Context<Env>, entityType: ProductEntityType, cached:
           ? ((createdBy as { id: string }).id ?? null)
           : ((createdBy as string | null | undefined) ?? null),
     } as { id: string; createdBy?: string | null };
+    const access = accessFrom(ctx as never);
+    if (!draftVisibleTo(authRow, 'anonymous' in access ? undefined : access.userId)) return false;
     const subject = buildSubjectFromEntity(entityType, authRow);
-    return checkPermission(ctx.var.memberships, 'read', subject, actorFrom(ctx)).isAllowed;
+    return checkAccess(access, 'read', subject).isAllowed;
   } catch {
     // Unexpected row shape → don't serve from cache; the handler re-authorizes authoritatively.
     return false;

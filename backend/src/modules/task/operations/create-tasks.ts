@@ -3,7 +3,7 @@ import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
-import { getOrgEntityCount } from '#/modules/entities/helpers/get-entity-counts';
+import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { findTasksByStxMutationId, insertTasks } from '#/modules/task/task-queries';

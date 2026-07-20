@@ -1,4 +1,7 @@
 import type { ChannelEntityType } from 'shared';
+// Side-effect: registers raak's channel-path resolver so the sync engine derives sub-org
+// grant-boundary views and narrows covering fetches with pathPrefix (project/workspace channels).
+import '~/query/realtime/register-channel-paths';
 import { attachmentsCanonicalOptions } from '~/modules/attachment/query';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 import { membersListQueryOptions } from '~/modules/memberships/query';
@@ -9,12 +12,7 @@ import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import type { BuildEntitySyncQueriesParams, ChannelEntityListQueryMap, EntitySyncQueryOptions } from '~/query/types';
 
 /**
- * Maps context entity types to their list query options (used for menu generation).
- *
- * Factories are wrapped in arrow functions instead of referenced directly. This defers
- * reading the (ESM live) binding until call time, avoiding a "Cannot access X before initialization"
- * TDZ error when this module is evaluated mid-cycle (e.g. during Vite HMR) before the entity query
- * module has finished initializing. See the circular import chain via `~/query/realtime`.
+ * Maps channel entity types to their list query options (used for menu generation).
  */
 export const channelEntityListQueriesByType = {
   organization: (params) => organizationsListQueryOptions(params),

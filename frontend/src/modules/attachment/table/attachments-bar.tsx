@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Attachment } from 'sdk';
 import { DeleteAttachments } from '~/modules/attachment/delete-attachments';
 import type { AttachmentsTableProps } from '~/modules/attachment/table/attachments-table';
-import { useAttachmentsUploadDialog } from '~/modules/attachment/table/helpers';
+import { useAttachmentsUploadDialog } from '~/modules/attachment/table/use-attachments-upload-dialog';
 import type { AttachmentsRouteSearchParams } from '~/modules/attachment/types';
 import { AlertBanner } from '~/modules/common/alerter/alert-banner';
 import { ColumnsView } from '~/modules/common/data-table/columns-view';
@@ -16,7 +16,8 @@ import { TableSearch } from '~/modules/common/data-table/table-search';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { FocusView } from '~/modules/common/focus-view';
-import { useInfiniteQueryTotal } from '~/query/basic/use-infinite-query-total';
+import { useResolveCan } from '~/modules/entities/use-resolve-can';
+import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type AttachmentsTableBarProps = AttachmentsTableProps & BaseTableBarProps<Attachment, AttachmentsRouteSearchParams>;
 
@@ -29,21 +30,27 @@ export const AttachmentsTableBar = ({
   setColumns,
   clearSelection,
   isSheet = false,
-  canUpload = true,
+  canUpload = false,
   queryKey,
 }: AttachmentsTableBarProps) => {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
   const { open } = useAttachmentsUploadDialog(channelEntity.tenantId, channelEntity.id);
+  const resolveCan = useResolveCan();
 
   const deleteButtonRef = useRef(null);
 
-  const total = useInfiniteQueryTotal(queryKey);
+  const total = useListQueryTotal(queryKey);
 
   const { q } = searchVars;
 
   const isFiltered = !!q;
   const showUpload = canUpload && !isFiltered;
+
+  // Honest bulk delete: act only on the rows this user may delete ('own' resolves per row);
+  // the badge shows that count when it differs from the selection. The backend's rejectedIds
+  // path stays as the net for stale client-side permissions.
+  const deletable = selected.filter((row) => resolveCan(channelEntity.can?.attachment?.delete, row.createdBy));
 
   // Drop selected rows on search
   const onSearch = (searchString: string) => {
@@ -57,14 +64,14 @@ export const AttachmentsTableBar = ({
   };
 
   const openDeleteDialog = () => {
-    createDialog(<DeleteAttachments dialog attachments={selected} callback={clearSelection} />, {
+    createDialog(<DeleteAttachments dialog attachments={deletable} callback={clearSelection} />, {
       id: 'delete-attachments',
       triggerRef: deleteButtonRef,
       className: 'max-w-xl',
       title: t('c:remove_resource', { resource: t('c:attachment_other').toLowerCase() }),
       description: t('c:confirm.delete_counted_resource', {
-        count: selected.length,
-        resource: selected.length > 1 ? t('c:attachment_other').toLowerCase() : t('c:attachment').toLowerCase(),
+        count: deletable.length,
+        resource: deletable.length > 1 ? t('c:attachment_other').toLowerCase() : t('c:attachment').toLowerCase(),
       }),
     });
   };
@@ -77,15 +84,17 @@ export const AttachmentsTableBar = ({
           <FilterBarActions>
             {selected.length > 0 ? (
               <>
-                <TableBarButton
-                  ref={deleteButtonRef}
-                  variant="destructive"
-                  onClick={openDeleteDialog}
-                  className="relative"
-                  badge={selected.length}
-                  icon={TrashIcon}
-                  label="c:delete"
-                />
+                {deletable.length > 0 && (
+                  <TableBarButton
+                    ref={deleteButtonRef}
+                    variant="destructive"
+                    onClick={openDeleteDialog}
+                    className="relative"
+                    badge={deletable.length}
+                    icon={TrashIcon}
+                    label="c:delete"
+                  />
+                )}
 
                 <TableBarButton variant="ghost" onClick={clearSelection} icon={SquareXIcon} label="c:clear" />
               </>

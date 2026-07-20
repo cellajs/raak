@@ -1,21 +1,20 @@
-import type { GetUnseenCountsResponse } from 'sdk';
-import { appConfig, type ChannelEntityType, isProductEntity, type ProductEntityType } from 'shared';
+import { type ChannelEntityType, isProductEntity, type ProductEntityType } from 'shared';
 import { syncSpanNames, withSpanSync } from '~/lib/tracing';
-import { seenKeys } from '~/modules/seen/query';
-import { useSeenStore } from '~/modules/seen/seen-store';
-import { type EntityQueryKeys, getEntityQueryKeys, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
+import { invalidateUnseenCounts } from '~/modules/seen/query';
+import { applyHardDeleteUnseen } from '~/modules/seen/unseen-sync';
+import { type EntityQueryKeys, getEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { sourceId } from '~/query/offline/stx-utils';
-import { queryClient } from '~/query/query-client';
 import { useSyncStore } from '~/query/realtime/sync-store';
 import * as cacheOps from './cache-ops';
+import { enqueueRange } from './lazy-sync-scheduler';
 import * as membershipOps from './membership-ops';
 import { propagateEmbeddings } from './propagation';
-import { getSyncPriority } from './sync-priority';
+import { getSyncTier } from './sync-priority';
 import type { AppStreamNotification } from './types';
 
 /**
  * Route an incoming app-stream notification to the membership/organization/product handler.
- * Notification-only format: no entity data included — handlers invalidate or seq-range fetch.
+ * Notifications omit entity data, so handlers invalidate or fetch a seq range.
  */
 export function handleAppStreamNotification(notification: AppStreamNotification): void {
   const { subjectId, action, stx, organizationId, tenantId, channelType, seq, _trace } = notification;
@@ -24,6 +23,10 @@ export function handleAppStreamNotification(notification: AppStreamNotification)
     syncSpanNames.messageProcess,
     { entityType: notification.entityType, action, entityId: subjectId, _trace },
     () => {
+      // Checked before setOrgTenantId creates the entry: an org the sync store has never
+      // seen means the SSE connection is not registered on its channel.
+      const isUnknownOrg = !!organizationId && !useSyncStore.getState().orgs[organizationId];
+
       // Store tenantId in sync store whenever we see it in a notification
       if (organizationId && tenantId) {
         useSyncStore.getState().setOrgTenantId(organizationId, tenantId);
@@ -32,6 +35,13 @@ export function handleAppStreamNotification(notification: AppStreamNotification)
       // Membership changes use targeted query invalidation, not the seq sync path.
       if (notification.kind === 'membership') {
         handleMembershipNotification(action, organizationId, channelType);
+        // A self-membership in a NEW org arrives on the user channel; the connection is not
+        // registered on that org channel, so reconnect to re-register and catch up on it.
+        // (Dynamic import: stream-store imports this module for its config.)
+        if (action === 'create' && isUnknownOrg) {
+          console.debug('[handleAppStreamNotification] Membership in unknown org, reconnecting stream');
+          void import('./stream-store').then((m) => m.appStreamManager.reconnect());
+        }
         return;
       }
 
@@ -40,35 +50,24 @@ export function handleAppStreamNotification(notification: AppStreamNotification)
       if (!isProductEntity(entityType))
         return console.error('Unknown entityType in app stream notification:', entityType);
 
-      // Create/update batch: range fetch also handles soft-delete tombstones.
-      if (notification.batchUntilSeq && seq != null && organizationId && hasEntityQueryKeys(entityType)) {
-        const keys = getEntityQueryKeys(entityType);
-        const seqCursor = `${seq},${notification.batchUntilSeq}`;
-
-        cacheOps
-          .fetchRangeAndPatch(entityType, organizationId, tenantId, seqCursor, keys)
-          .then((success) => {
-            if (success && notification.batchUntilSeq) {
-              // Store project-scoped seq when channelId (projectId) is available, else org-scoped
-              if (notification.channelId) {
-                useSyncStore
-                  .getState()
-                  .setChannelSeq(organizationId, notification.channelId, entityType, notification.batchUntilSeq);
-              } else {
-                useSyncStore.getState().setOrgSeq(organizationId, entityType, notification.batchUntilSeq);
-              }
-            }
-            // Propagate after fresh source data is in cache
-            if (notification.propagation) propagateEmbeddings(notification.propagation);
-          })
-          .catch((err) => console.warn('[AppStream] Batch fetch failed:', err));
-
-        // Unseen counts: never derive user-facing numbers from shared seq ranges — a
-        // batch may contain drafts or span contexts, so its width is not "new for you".
-        // Refetch the predicate-exact server counts instead (React Query dedupes bursts).
-        if (action === 'create') {
-          invalidateUnseenCounts(entityType);
-        }
+      // Create/update batches enqueue a merged, spread seq range for lazy fetching.
+      // The scheduler flushes viewing-tier scopes immediately. The range fetch also handles
+      // soft-delete tombstones; unseen counts recount once per merged flush, not per batch
+      // (a batch's width is never "new for you": drafts, own rows). Hard-delete batches must
+      // not enqueue because deleted rows leave no tombstone to fetch. They fall through to
+      // the delete branch's invalidation below.
+      if (action !== 'delete' && notification.batchUntilSeq && seq != null && organizationId) {
+        enqueueRange({
+          entityType,
+          organizationId,
+          tenantId: tenantId ?? null,
+          channelId: notification.channelId ?? null,
+          fromSeq: seq,
+          untilSeq: notification.batchUntilSeq,
+          isCreate: action === 'create',
+          syncWindowMs: notification.syncWindow ?? undefined,
+          propagation: notification.propagation ?? undefined,
+        });
         return;
       }
 
@@ -87,6 +86,7 @@ export function handleAppStreamNotification(notification: AppStreamNotification)
         notification.channelId ?? null,
         keys,
         notification.propagation,
+        notification.syncWindow ?? null,
       );
     },
   );
@@ -134,6 +134,7 @@ function handleEntityNotification(
   channelId: string | null,
   keys: EntityQueryKeys,
   propagation?: AppStreamNotification['propagation'],
+  syncWindow?: number | null,
 ): void {
   // Echo prevention for create/update: skip data fetch for own mutations,
   // but still patch stx metadata so subsequent mutations read fresh versions.
@@ -146,41 +147,34 @@ function handleEntityNotification(
     return;
   }
 
-  // Track project-scoped seq watermark (from CDC worker)
-  // Use channelId (projectId) for project-scoped entities, org fallback for org-scoped
-  if (seq !== null) {
-    const store = useSyncStore.getState();
-    if (channelId) {
-      const current = store.getChannelSeq(organizationId, channelId, entityType);
-      if (seq > current) store.setChannelSeq(organizationId, channelId, entityType, seq);
-    } else {
-      const current = store.getOrgSeq(organizationId, entityType);
-      if (seq > current) store.setOrgSeq(organizationId, entityType, seq);
-    }
-  }
-
-  // Determine fetch priority based on entityConfig ancestors and current route
-  const priority = getSyncPriority({ entityType, entityId, organizationId });
+  // The two paths without synced rows (hard delete, seq-less fallback) derive their
+  // invalidation/fetch decision from the same tier system the scheduler uses: viewing tier
+  // acts now, background/muted defers to next access.
+  const isViewing = getSyncTier(entityType, organizationId, channelId).min === 0;
 
   switch (action) {
     case 'create':
     case 'update':
       if (seq !== null) {
-        const seqCursor = `${seq},${seq}`;
-        cacheOps
-          .fetchRangeAndPatch(entityType, organizationId, tenantId, seqCursor, keys)
-          .then((success) => {
-            if (!success) {
-              cacheOps.invalidateEntityDetail(entityId, keys, priority === 'low' ? 'none' : 'active');
-              cacheOps.invalidateEntityListForOrg(keys, organizationId, priority === 'low' ? 'none' : 'active');
-            }
-            if (propagation) propagateEmbeddings(propagation);
-          })
-          .catch((err) => console.warn('[AppStream] Entity range fetch failed:', err));
+        // A single event is a width-1 batch: same lazy path as batches (merge, spread, flush).
+        // The caught-up watermark advances after a successful flush. Advancing before a fetch
+        // completes would permanently skip the range.
+        enqueueRange({
+          entityType,
+          organizationId,
+          tenantId,
+          channelId,
+          fromSeq: seq,
+          untilSeq: seq,
+          isCreate: action === 'create',
+          syncWindowMs: syncWindow ?? undefined,
+          propagation: propagation ?? undefined,
+        });
+        // Unseen accounting happens at flush time: unseen-sync counts the fetched rows.
         break;
       }
 
-      if (priority === 'low') {
+      if (!isViewing) {
         // Mark stale only, refetch on next access
         cacheOps.invalidateEntityDetail(entityId, keys, 'none');
         cacheOps.invalidateEntityListForOrg(keys, organizationId, 'none');
@@ -195,9 +189,9 @@ function handleEntityNotification(
           .catch((err) => console.warn('[AppStream] Entity fetch failed:', err));
       }
 
-      // Optimistically increment unseen count for new entities from other users
+      // Seq-less events have no synced rows, so they trigger an exact unseen-count recount.
       if (action === 'create') {
-        adjustUnseenCount(entityType, channelId, 1);
+        invalidateUnseenCounts(entityType);
       }
       break;
 
@@ -207,85 +201,20 @@ function handleEntityNotification(
       // so mark the detail stale and invalidate the org-scoped list to reconcile, consistent
       // with the catchup count-integrity invalidation flow. Covers single and batch deletes.
       cacheOps.invalidateEntityDetail(entityId, keys, 'none');
-      cacheOps.invalidateEntityListForOrg(keys, organizationId, priority === 'low' ? 'none' : 'active');
-      handleDeleteUnseenCount(entityType, entityId, channelId);
+      cacheOps.invalidateEntityListForOrg(keys, organizationId, isViewing ? 'active' : 'none');
+      applyHardDeleteUnseen(entityType, entityId, channelId);
       if (propagation) propagateEmbeddings(propagation);
+      break;
+
+    case 'moveOut':
+      // The row left this subscriber's readable scope (reparent): the server sends this
+      // ONLY when the new location is not readable here, so no delta fetch will ever
+      // return the row. The notification is the removal. Treat it like a tombstone:
+      // drop the row from lists/detail and correct unseen counts.
+      cacheOps.removeEntity(entityType, entityId, organizationId);
+      applyHardDeleteUnseen(entityType, entityId, channelId);
       break;
   }
 
-  console.debug(`[handleEntityNotification] ${entityType}:${action} priority=${priority}`);
-}
-
-/** Refetch the server's predicate-exact unseen counts for a tracked entity type. */
-function invalidateUnseenCounts(entityType: ProductEntityType): void {
-  const trackedTypes = appConfig.seenTrackedEntityTypes as readonly string[];
-  if (!trackedTypes.includes(entityType)) return;
-  queryClient.invalidateQueries({ queryKey: seenKeys.unseenCounts });
-}
-
-/**
- * Optimistically adjust the unseen count for a tracked entity created/deleted via SSE: patch the
- * cache directly by channelId to avoid a full refetch, falling back to invalidation if none.
- */
-function adjustUnseenCount(entityType: ProductEntityType, channelId: string | null, delta: number): void {
-  const trackedTypes = appConfig.seenTrackedEntityTypes as readonly string[];
-  if (!trackedTypes.includes(entityType)) return;
-
-  if (!channelId) {
-    queryClient.invalidateQueries({ queryKey: seenKeys.unseenCounts });
-    return;
-  }
-
-  queryClient.setQueryData<GetUnseenCountsResponse>(seenKeys.unseenCounts, (old) => {
-    if (!old) return old;
-    const current = old[channelId]?.[entityType] ?? 0;
-    const updated = Math.max(0, current + delta);
-
-    if (updated === 0) {
-      // Remove zero entries to keep cache clean
-      if (!old[channelId]) return old;
-      const { [entityType]: _, ...rest } = old[channelId];
-      if (Object.keys(rest).length === 0) {
-        const { [channelId]: __, ...withoutChannel } = old;
-        return withoutChannel;
-      }
-      return { ...old, [channelId]: rest };
-    }
-
-    return { ...old, [channelId]: { ...old[channelId], [entityType]: updated } };
-  });
-}
-
-/**
- * Adjust the unseen count when a tracked entity is deleted: if it was already seen (flushedIds or
- * pending), the count is unchanged (total−1 and seen−1 cancel); if unseen, decrement. Falls back to
- * invalidation when channelId is unavailable.
- */
-function handleDeleteUnseenCount(entityType: ProductEntityType, entityId: string, channelId: string | null): void {
-  const trackedTypes = appConfig.seenTrackedEntityTypes as readonly string[];
-  if (!trackedTypes.includes(entityType)) return;
-
-  const seenStore = useSeenStore.getState();
-  const wasSeen = seenStore.flushedIds.has(entityId) || isInPending(seenStore.pending, entityId);
-
-  if (wasSeen) {
-    // Entity was seen: total and seen both decrease by 1, net unseen change is 0.
-    // Clean up flushedIds so it doesn't grow unbounded
-    if (seenStore.flushedIds.has(entityId)) {
-      const newFlushed = new Set(seenStore.flushedIds);
-      newFlushed.delete(entityId);
-      useSeenStore.setState({ flushedIds: newFlushed });
-    }
-  } else {
-    // Entity was unseen from this client's perspective, decrement.
-    adjustUnseenCount(entityType, channelId, -1);
-  }
-}
-
-/** Check if an entityId is in any pending seen batch */
-function isInPending(pending: Map<string, { entityIds: Set<string> }>, entityId: string): boolean {
-  for (const batch of pending.values()) {
-    if (batch.entityIds.has(entityId)) return true;
-  }
-  return false;
+  console.debug(`[handleEntityNotification] ${entityType}:${action} viewing=${isViewing}`);
 }

@@ -27,7 +27,7 @@ type Entity = { Icon: IconComponent; label: string };
 
 type AppConfig = { label: string; noSync: Entity[]; synced: Entity[] };
 
-// Each config keeps a structural "No sync" bucket (users/org + a context entity) and a
+// Each config keeps a structural "No sync" bucket (users/org + a channel entity) and a
 // "Synced" bucket of high-frequency collaborative content typical for that kind of app.
 const configs: Record<string, AppConfig> = {
   todo: {

@@ -5,9 +5,7 @@ export { roles, hierarchy } from './hierarchy-config';
 
 export const config = {
 
-  /******************************************************************************
-   * ENTITY DATA MODEL
-   ******************************************************************************/
+  // Entity data model
 
   /** All entity types in the app - must match hierarchy.allTypes. */
   entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment'] as const,
@@ -40,7 +38,7 @@ export const config = {
   entityActions: ['create', 'read', 'update', 'delete'] as const,
 
   /** Resource types that are not entities but have activities logged */
-  resourceTypes: ['request', 'membership', 'inactive_membership', 'tenant'] as const,
+  resourceTypes: ['request', 'membership', 'inactive_membership', 'tenant', 'system_role'] as const,
 
   /**
    * Entity embeddings: declares which entities are embedded as ID arrays inside
@@ -76,9 +74,7 @@ export const config = {
     },
   } as const,
 
-  /******************************************************************************
-   * SYSTEM ROLES
-   ******************************************************************************/
+  // System roles
 
   /**
    * System-wide roles stored in DB.
@@ -86,9 +82,7 @@ export const config = {
    */
   systemRoles: ['admin'] as const,
 
-  /******************************************************************************
-   * APP IDENTITY
-   ******************************************************************************/
+  // App identity
 
   /** App display name shown in UI and emails */
   name: 'Raak',
@@ -100,31 +94,19 @@ export const config = {
   description: 'A TypeScript template to build collaborative web apps with sync engine. MIT licensed.',
   /** SEO keywords for search engines */
   keywords:
-    'starter kit, fullstack, monorepo, typescript, hono, honojs, drizzle, shadcn, react, postgres, pwa, offline, instant§ updates, realtime data, sync engine',
+    'starter kit, fullstack, monorepo, typescript, hono, honojs, drizzle, shadcn, react, postgres, pwa, offline, instant updates, realtime data, sync engine',
 
-  /******************************************************************************
-   * URLS & ENDPOINTS
-   ******************************************************************************/
+  // URLs & endpoints
 
   /** Frontend SPA base URL */
   frontendUrl: 'https://www.raak.dev',
-  // Same-origin: API, yjs and mcp are paths under the app host (no CORS, __Host- cookies).
+  // Same-origin: every service is a path under the app origin, so cookies stay
+  // first-party (`__Host-`, SameSite=Strict), CORS disappears and CSP collapses
+  // to 'self'. The LB routes /api, /yjs and /mcp by path prefix (matchPathBegin).
   backendUrl: 'https://www.raak.dev/api',
   backendAuthUrl: 'https://www.raak.dev/api/auth',
   yjsUrl: 'wss://www.raak.dev/yjs',
   mcpUrl: 'https://www.raak.dev/mcp',
-
-  /**
-   * Pre-same-origin service hosts, kept alive as 301 redirects into the path-based URLs
-   * (api.raak.dev/x → www.raak.dev/api/x) so old email links and cached clients keep working.
-   * Remove after the deprecation window — the LB decommissions each DNS record + cert on the
-   * next `pulumi up`. Entries for disabled services are ignored.
-   */
-  legacyUrls: {
-    backend: 'https://api.raak.dev',
-    yjs: 'https://yjs.raak.dev',
-    mcp: 'https://mcp.raak.dev',
-  },
 
   /**
    * Deployable services. Each entry gates a service (and/or its route surface)
@@ -142,7 +124,7 @@ export const config = {
   },
 
   // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
-  // service in-process (one VM for previews/small forks). Default false keeps the
+  // service in-process: one VM for previews/small forks. Default false keeps the
   // split (one service per process). cdc co-hosting forfeits API blue-green.
   singleVM: false as boolean,
 
@@ -159,9 +141,7 @@ export const config = {
   /** Redirect path for first-time users */
   welcomeRedirectPath: '/welcome',
 
-  /******************************************************************************
-   * EMAIL
-   ******************************************************************************/
+  // Email
 
   /** From address for system notifications */
   senderEmail: 'notifications@shareworks.nl',
@@ -170,9 +150,7 @@ export const config = {
   /** Email address for security alerts (sysadmin failures, etc.) */
   securityEmail: 'info@cellajs.com',
 
-  /******************************************************************************
-   * MODE & FLAGS
-   ******************************************************************************/
+  // Mode & flags
   
   /** Runtime mode - overridden per environment file */
   mode: 'development' as ConfigMode,
@@ -183,11 +161,9 @@ export const config = {
   // once at cutover (upstream moved v1 → v2 with this migration).
   cookieVersion: 'v2',
   /** Persisted client query-cache shape - bump on breaking cached entity changes */
-  clientCacheVersion: 'v1',
+  clientCacheVersion: 'v2-sequence',
 
-  /******************************************************************************
-   * FEATURE FLAGS
-   ******************************************************************************/
+  // Feature flags
 
   /**
    * Feature toggles for app capabilities.
@@ -206,9 +182,7 @@ export const config = {
     chatSupport: false as boolean,
   },
 
-  /******************************************************************************
-   * AUTHENTICATION
-   ******************************************************************************/
+  // Authentication
 
   /**
    * Enabled authentication strategies.
@@ -229,12 +203,15 @@ export const config = {
     digits: 6,
   },
 
-  /** Per-user concurrent regular-session cap; oldest beyond it are evicted on sign-in */
+  /**
+   * Maximum concurrent regular sessions per user. On sign-in, the oldest sessions beyond the cap are
+   * hard-deleted (Hanko-style eviction). Keep comfortably above a realistic device count. This is
+   * bloat/abuse protection (credential-stuffing bursts, unbounded session accumulation), not a UX
+   * feature. `mfa` and `impersonation` sessions never count toward or get evicted by the cap.
+   */
   maxSessionsPerUser: 10,
 
-  /******************************************************************************
-   * API CONFIGURATION
-   ******************************************************************************/
+  // API configuration
 
   /** API version prefix for endpoints */
   apiVersion: 'v1',
@@ -245,9 +222,7 @@ export const config = {
 
                   The documentation is generated from source code using \`zod\` schemas, converted into OpenAPI via \`zod-openapi\` and served through the \`hono\` framework.`,
 
-  /******************************************************************************
-   * REQUEST LIMITS
-   ******************************************************************************/
+  // Request limits
 
   /**
    * Default page sizes for list endpoints. Backend enforces max 1000.
@@ -276,9 +251,7 @@ export const config = {
   /** Default body size limit in bytes */
   defaultBodyLimit: 1 * 1024 * 1024,
 
-  /******************************************************************************
-   * STORAGE & UPLOADS (S3)
-   ******************************************************************************/
+  // Storage & uploads (S3)
 
   /** S3-compatible storage configuration */
   s3: {
@@ -315,13 +288,12 @@ export const config = {
     allowedContentTypes: [] as string[], // Empty = all types allowed
     excludedContentTypes: ['video/*'] as string[], // Excluded types (takes precedence over allowed)
     downloadConcurrency: 2, // Max concurrent background downloads
+    downloadRetryAttempts: 3, // Max retry attempts for failed background downloads
     uploadRetryAttempts: 3, // Max retry attempts for failed uploads
     uploadRetryDelays: [60000, 300000, 900000] as const, // Retry delays in ms (1min, 5min, 15min)
   },
 
-  /******************************************************************************
-   * THIRD-PARTY SERVICES
-   ******************************************************************************/
+  // Third-party services
 
   /** Gleap token for customer support widget */
   gleapToken: '1ZoAxCRA83h5pj7qtRSvuz7rNNN9iXDd',
@@ -331,9 +303,7 @@ export const config = {
   matrixURL: 'https://matrix-client.matrix.org',
   maplePublicIngestKey: 'maple_pk_LnUSK6-_5j3orVrlZ1Hv6I1pxzDh3SJ5',
 
-  /******************************************************************************
-   * THEMING & UI
-   ******************************************************************************/
+  // Theming & UI
 
   /** Primary theme color for PWA manifest and browser chrome */
   themeColor: '#26262b',
@@ -371,9 +341,7 @@ export const config = {
     'bg-red-300',
   ],
 
-  /******************************************************************************
-   * LOCALIZATION
-   ******************************************************************************/
+  // Localization
 
   /** Default language code */
   defaultLanguage: 'en' as const,
@@ -385,9 +353,7 @@ export const config = {
     timezones: [],
   },
 
-  /******************************************************************************
-   * COMPANY DETAILS
-   ******************************************************************************/
+  // Company details
 
   /** Company/organization details for footer, legal pages, and contact info */
   company: {
@@ -415,12 +381,13 @@ export const config = {
     },
   },
 
-  /******************************************************************************
-   * USER DEFAULTS
-   ******************************************************************************/
+  // User defaults
 
   /** Default user flags applied to new users */
   defaultUserFlags: {
     finishedOnboarding: false,
   },
+
+  /** Default per-organization feature flags, layered under each org's own `organizationFlags`. */
+  defaultOrganizationFlags: {},
 } satisfies RequiredConfig;

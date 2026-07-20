@@ -1,18 +1,19 @@
 import type { ChannelEntityType } from 'shared';
 
 export type EntityRouteEntry = {
-  /** Route path template for this entity */
+  /** Route path template for this entity: its canonical landing surface. Also the redirect
+   *  target when the entity's tabbed layout route is visited directly (default tab). */
   path: string;
   /** Route param name this entity's slug fills (both as self and as ancestor) */
   paramName: string;
   /** Default search params for this entity route */
   search?: Record<string, string>;
-  /** When shown as subitem, navigate to a parent entity's route instead */
+  /** When shown as a subitem, navigate to a parent entity's route. */
   subitemOf?: { entityType: ChannelEntityType; searchParam: string };
 };
 
 /**
- * Unified route config for context entities.
+ * Unified route config for channel entities.
  *
  * Each entity declares its route path, its param name, and optional subitem behavior.
  * The param name is used both when the entity is the target AND when it appears as an

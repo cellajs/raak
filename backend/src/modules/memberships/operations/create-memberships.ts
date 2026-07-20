@@ -15,8 +15,8 @@ import {
   stampInactiveMembershipsReminded,
 } from '#/modules/memberships/memberships-queries';
 import { getValidChannelEntity } from '#/permissions/get-channel-entity';
+import { hashToken } from '#/utils/hash-token';
 import { log } from '#/utils/logger';
-import { encodeLowerCased } from '#/utils/oslo';
 import { slugFromEmail } from '#/utils/slug-from-email';
 import { createDate, TimeSpan } from '#/utils/time-span';
 import { memberAddedEmail, memberInviteEmail, memberInviteWithTokenEmail } from '../../../../emails';
@@ -52,7 +52,7 @@ export async function createMembershipsOp(ctx: AuthContext, input: CreateMembers
 
   /**
    * Draft context (publishedAt null): invites are recorded (inactive memberships + tokens)
-   * but email dispatch is held and existing users are not added directly — everything is
+   * but email dispatch is held and existing users are not added directly. Everything is
    * released when the context is published. The context's most-privileged role (first in
    * its vocabulary, e.g. admin/staff/owner) stays live so staff can collaborate in drafts.
    */
@@ -137,7 +137,7 @@ export async function createMembershipsOp(ctx: AuthContext, input: CreateMembers
       } else {
         const hasActiveOrgMembership = entityType !== rootChannelType && !!rows.find((r) => r.orgMembershipId);
 
-        // Draft context: existing users are deferred too — no membership, no nav entry, no email
+        // Draft context: existing users are deferred too, with no membership, nav entry, or email.
         if (hasActiveOrgMembership && !deferDispatch) {
           existingUsersToDirectAdd.push({ userId: userRow.userId, email });
         } else {
@@ -196,7 +196,7 @@ export async function createMembershipsOp(ctx: AuthContext, input: CreateMembers
   const rawTokens: Array<{ email: string; raw: string }> = [];
   const tokensToInsert = newUserTokenEmails.map((email) => {
     const raw = nanoid(40);
-    const hashed = encodeLowerCased(raw);
+    const hashed = hashToken(raw);
     rawTokens.push({ email, raw });
 
     return {
@@ -258,7 +258,7 @@ export async function createMembershipsOp(ctx: AuthContext, input: CreateMembers
 
   const staticProps = { senderName, senderThumbnailUrl, role, entityName };
 
-  // Draft context: hold every email — deferred invites are dispatched at publish
+  // Draft context: hold every email until deferred invites are dispatched at publish time.
   if (!deferDispatch && noTokenRecipients.length > 0) {
     await mailer.prepareEmails(memberInviteEmail, staticProps, noTokenRecipients, user.email);
   }

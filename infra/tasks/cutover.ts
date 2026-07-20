@@ -108,7 +108,7 @@ export async function sequenceCutover(plan: CutoverPlan): Promise<CutoverResult>
   // after the new generation is health-verified; the safe intermediate state is
   // the overlap `[old, new]`. Drive the live list toward desired with idempotent
   // SetBackendServers calls; an empty, stale, or unexpected live pool (including
-  // old == new on an idempotent redeploy) is reconciled rather than assumed
+  // old == new on an idempotent redeploy) is always reconciled
   // correct.
   const overlap = [...new Set([...plan.oldIps, ...plan.newIps])]
   let live = plan.getServers ? await plan.getServers() : plan.oldIps
@@ -146,12 +146,6 @@ export async function sequenceCutover(plan: CutoverPlan): Promise<CutoverResult>
 
   return { ok: true, steps }
 }
-
-// Impure edge: the real Scaleway `SetBackendServers` REST call.
-// PUT /lb/v1/zones/{zone}/backends/{backendId}/servers   body: { server_ip: [...] }
-// replaces the whole server list in one atomic server-side operation (Scaleway
-// Load Balancer zoned API v1). Preview-gated: exercised only in a live deploy,
-// never by the unit tests (which inject `setServers`).
 
 const LB_BASE = 'https://api.scaleway.com/lb/v1'
 

@@ -31,9 +31,9 @@ import { resolveEntity } from '#/modules/entities/entities-queries';
 import { defaultHook } from '#/utils/default-hook';
 import { getValidSingleUseToken } from '#/utils/get-valid-single-use-token';
 import { getValidToken } from '#/utils/get-valid-token';
+import { hashToken } from '#/utils/hash-token';
 import { isExpiredDate } from '#/utils/is-expired-date';
 import { log } from '#/utils/logger';
-import { encodeLowerCased } from '#/utils/oslo';
 import { slugFromEmail } from '#/utils/slug-from-email';
 import { createDate, TimeSpan } from '#/utils/time-span';
 import { memberInviteWithTokenEmail, systemInviteEmail } from '../../../../emails';
@@ -75,7 +75,7 @@ app.openapi(authGeneralRoutes.invokeToken, async (ctx) => {
 
     // getValidToken returns a RAW singleUseToken only when it freshly minted one (won the CAS). On a
     // tolerated re-click / concurrent re-submit it returns null here, meaning the caller's existing
-    // 5-minute cookie is still valid — so only (re)set the cookie on a fresh mint.
+    // The five-minute cookie may still be valid, so only reset it after a fresh mint.
     if (tokenRecord.singleUseToken) {
       // Set cookie using token type as name. Content is single use token. Expires in 5 minutes or until used.
       await setAuthCookie(ctx, tokenRecord.type, tokenRecord.singleUseToken, new TimeSpan(5, 'm'));
@@ -199,7 +199,7 @@ app.openapi(authGeneralRoutes.resendInvitationWithToken, async (ctx) => {
 
   // Generate token and store hashed
   const newToken = nanoid(40);
-  const hashedToken = encodeLowerCased(newToken);
+  const hashedToken = hashToken(newToken);
 
   // Insert token first
   await insertInvitationToken(ctx, {

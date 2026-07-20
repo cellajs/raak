@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 // Mock the generated SDK so we can assert exactly how a *replayed* mutation calls the API.
-// `Req` is intentionally loose — the tests inspect opaque request objects the SDK would send.
+// `Req` is intentionally loose because the tests inspect opaque request objects the SDK would send.
 type Req = { path: Record<string, string | undefined>; body: Record<string, unknown> | Array<Record<string, unknown>> };
 const { createAttachments, updateAttachment, deleteAttachments } = vi.hoisted(() => ({
   createAttachments: vi.fn(async (_req: Req) => ({ data: [] })),
@@ -29,12 +29,6 @@ const ctx = { tenantId: 'ten-1', organizationId: 'org-1' };
 const lastBody = (spy: { mock: { lastCall?: [Req] } }) => spy.mock.lastCall?.[0].body as Record<string, unknown>;
 const lastPath = (spy: { mock: { lastCall?: [Req] } }) => spy.mock.lastCall?.[0].path;
 
-/**
- * These fns run when a paused mutation replays from the persisted queue after a reload — the
- * component closure that supplied tenant/org is gone, so everything must come from persisted
- * variables. The hooks inject that context; these tests lock that fix in.
- * @see query.ts
- */
 describe('attachment offline-replay mutation functions', () => {
   it('update replays from persisted variables: tenant/org in the path, stx in the body', async () => {
     updateAttachment.mockClear();
@@ -75,9 +69,31 @@ describe('attachment offline-replay mutation functions', () => {
     for (const item of body) expect(item.stx.mutationId).toEqual(expect.any(String));
   });
 
+  it('replay reuses the stx persisted in variables: same mutationId and HLCs, no restamp (D4)', async () => {
+    updateAttachment.mockClear();
+    const persistedStx = {
+      mutationId: 'original-mutation-id',
+      sourceId: 'tab-1',
+      fieldTimestamps: { name: '1710500000123:0001:abcde' },
+    };
+    await updateAttachmentMutationFn({ ...ctx, id: 'att-1', ops: { name: 'Renamed' }, stx: persistedStx });
+
+    // Idempotency + intent-time LWW: the replayed request is byte-identical to the original.
+    expect(lastBody(updateAttachment).stx).toEqual(persistedStx);
+  });
+
+  it('create replay reuses persisted stx across every item', async () => {
+    createAttachments.mockClear();
+    const persistedStx = { mutationId: 'create-mid', sourceId: 'tab-1', fieldTimestamps: {} };
+    await createAttachmentsMutationFn({ ...ctx, data: [{ id: 'x', filename: 'x.png' }] as never, stx: persistedStx });
+
+    const body = createAttachments.mock.lastCall?.[0].body as Array<{ stx: { mutationId: string } }>;
+    expect(body[0].stx).toEqual(persistedStx);
+  });
+
   it('REGRESSION: without injected context the persisted request loses tenant/org', async () => {
     // The exact bug the fix prevents: before the hook injected context, a mutation persisted as
-    // `{ id, ops }` replayed through the default fn with tenant/org undefined — a broken request.
+    // `{ id, ops }` replayed through the default function with tenant/org undefined, producing a broken request.
     updateAttachment.mockClear();
     // @ts-expect-error intentionally passing the OLD (incomplete) variable shape.
     await updateAttachmentMutationFn({ id: 'att-1', ops: { name: 'x' } });

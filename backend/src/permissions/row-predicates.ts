@@ -3,15 +3,6 @@ import type { AnyPgTable, PgColumn } from 'drizzle-orm/pg-core';
 import { type Actor, appConfig, type ChannelEntityType, type RowConditionName } from 'shared';
 import type { CollectionReadFilter } from './collection-scope';
 
-/**
- * Compiles row-condition SQL forms (declared ORM-free in `shared`, see
- * `shared/src/permissions/row-conditions.ts`) into drizzle predicates, and assembles the
- * full WHERE clause for a conditionally-scoped collection read.
- *
- * The compiled SQL must agree with each condition's check-form, asserted by the parity
- * property test (`row-predicates.test.ts`).
- */
-
 /** A never-matching predicate: the SQL analogue of a check-form returning `false`. */
 const NEVER: SQL = sql`false`;
 
@@ -59,7 +50,7 @@ export type CollectionReadWhere =
  *
  * Deep chains: entries tagged with an intermediate `channelType` (e.g. course grants on
  * a project-homed entity) are scoped by THAT level's own id column, resolved via
- * `appConfig.entityIdColumnKeys` — on tables with denormalized ancestor columns an
+ * `appConfig.entityIdColumnKeys`. On tables with denormalized ancestor columns an
  * intermediate id covers every row physically below it.
  *
  * @param filter - Resolved scope filter (`resolveCollectionReadFilter`).
@@ -103,7 +94,7 @@ export const buildCollectionReadWhere = (
   }
 
   // HOME-scoped grants (elevatedRoles): the grant level's column matches AND every
-  // more-specific ancestor column is NULL — rows homed exactly at that level.
+  // more-specific ancestor column is NULL, which identifies rows homed at that level.
   for (const { channelType, subChannelIds, deeperChannels } of filter.homeScopes ?? []) {
     if (subChannelIds.length === 0) continue;
     const scoped = and(

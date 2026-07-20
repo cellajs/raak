@@ -6,7 +6,8 @@ import { useCallback, useRef, useState } from 'react';
 import useDownloader from 'react-use-downloader';
 import { isCDNUrl } from 'shared/utils/is-cdn-url';
 import { useLatestCallback, useLatestRef } from '~/hooks/use-latest-ref';
-import { clearAttachmentDialogSearchParams, openAttachmentDialog } from '~/modules/attachment/dialog/helpers';
+import { openAttachmentDialog } from '~/modules/attachment/dialog/open-attachment-dialog';
+import { ATTACHMENT_DIALOG_PARAM, clearAttachmentDialogSearchParams } from '~/modules/attachment/dialog/params';
 import { FilePlaceholder } from '~/modules/attachment/file-placeholder';
 import { AttachmentRender } from '~/modules/attachment/render/attachment-render';
 import { CloseButton } from '~/modules/common/close-button';
@@ -28,11 +29,19 @@ import { cn } from '~/utils/cn';
 export type CarouselItemData = {
   id: string;
   url: string;
-  convertedUrl?: string | null;
   name?: string;
   filename?: string;
+  /**
+   * Content type driving renderer choice. BlockNote passes a block *type* ('image', 'video'…)
+   * or a MIME type; `AttachmentRender` matches both by substring.
+   */
   contentType?: string;
   convertedContentType?: string | null;
+  /**
+   * URL is a local blob object URL. `blob:` URLs fail the CDN check, so without this flag the
+   * toolbar's affordances would vanish exactly when the file is available offline.
+   */
+  isLocal?: boolean;
 };
 
 interface CarouselPropsBase {
@@ -97,10 +106,7 @@ export function AttachmentsCarousel({
       to: '.',
       replace: true,
       resetScroll: false,
-      search: (prev) => ({
-        ...prev,
-        attachmentDialogId: newItem.id,
-      }),
+      search: (prev) => ({ ...prev, [ATTACHMENT_DIALOG_PARAM]: newItem.id }),
     });
   };
 
@@ -154,7 +160,9 @@ export function AttachmentsCarousel({
             </Button>
           )}
 
-          {isCDNUrl(currentItem.url) && (
+          {/* Download works for local blob URLs too (same-document fetch, works offline).
+              Open-in-new-tab above stays CDN-only: top-level blob navigation is browser-dependent. */}
+          {(isCDNUrl(currentItem.url) || currentItem.isLocal) && (
             <Button
               variant="ghost"
               size="icon"
@@ -175,7 +183,7 @@ export function AttachmentsCarousel({
       )}
 
       <CarouselContent className="h-full">
-        {items.map(({ id, url, convertedUrl, contentType = 'image', convertedContentType }, idx) => {
+        {items.map(({ id, url, filename, contentType = 'image', convertedContentType }, idx) => {
           return (
             <CarouselItem
               key={id}
@@ -193,8 +201,9 @@ export function AttachmentsCarousel({
                 type={convertedContentType || contentType}
                 imagePanZoom={isDialog}
                 showButtons={currentItemIndex === idx}
-                url={convertedUrl ?? url}
-                altName={`Slide ${idx}`}
+                url={url}
+                filename={filename}
+                altName={i18n.t('c:attachment')}
                 onPanStateToggle={toggleWatchDrag}
               />
             </CarouselItem>

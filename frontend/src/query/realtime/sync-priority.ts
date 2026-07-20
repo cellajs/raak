@@ -1,20 +1,13 @@
 import type { GetMyMembershipsResponse } from 'sdk';
-import { hierarchy, type ProductEntityType } from 'shared';
+import { hierarchy } from 'shared';
 import { queryClient } from '~/query/query-client';
+import { isObservedChannel } from '~/query/realtime/observed-channels';
 import { useSyncStore } from '~/query/realtime/sync-store';
-import { router } from '~/routes/router';
-
-type SyncPriority = 'high' | 'medium' | 'low';
-
-interface SyncNotification {
-  entityType: ProductEntityType;
-  entityId: string;
-  organizationId: string | null;
-}
+import { getRouter } from '~/routes/-router-instance';
 
 /** Get the current org ID from the router's matched route context, if user is within an org layout. */
 export function getRouteOrgId(): string | null {
-  for (const match of router.state.matches) {
+  for (const match of getRouter().state.matches) {
     const ctx = match.context;
     if (ctx && 'organization' in ctx && ctx.organization) {
       return (ctx.organization as { id: string }).id;
@@ -25,7 +18,7 @@ export function getRouteOrgId(): string | null {
 
 /** Get the current tenant ID from the router's matched route context, if user is within an org layout. */
 export function getRouteTenantId(): string | null {
-  for (const match of router.state.matches) {
+  for (const match of getRouter().state.matches) {
     const ctx = match.context;
     if (ctx && 'tenantId' in ctx && typeof ctx.tenantId === 'string') {
       return ctx.tenantId;
@@ -47,23 +40,49 @@ export function getTenantIdForOrg(organizationId: string): string | null {
 }
 
 /**
- * Sync priority by current route: high when the user is viewing the org that scopes this entity,
- * low otherwise (different org, not in an org route, non-product entity).
+ * Eagerness tier for the lazy sync scheduler: how soon this client wants a channel view's changes.
+ * `min` is the floor (0 = live), `max` the ceiling (offline-freshness guarantee); the scheduler
+ * clamps the server-spread delay between them. `Infinity` = fetch on open only.
  */
-export function getSyncPriority(notification: SyncNotification): SyncPriority {
-  const { entityType, organizationId } = notification;
+export interface SyncTier {
+  min: number;
+  max: number;
+}
 
-  // Only product entities have sync priority logic
-  if (!hierarchy.isProduct(entityType)) return 'low';
+const TIER_VIEWING: SyncTier = { min: 0, max: 0 };
+const TIER_BACKGROUND: SyncTier = { min: 2_000, max: 30_000 };
+const TIER_ON_OPEN: SyncTier = { min: Number.POSITIVE_INFINITY, max: Number.POSITIVE_INFINITY };
 
+/**
+ * True when the user is looking at the channel view: same org, and (for sub-org channel views) a mounted view
+ * observes a query carrying the channel ID. This covers slug routes and boards whose routes do not
+ * name every rendered channel. See `observed-channels.ts`.
+ */
+export function isViewingChannel(organizationId: string, channelId: string | null): boolean {
   const routeOrgId = getRouteOrgId();
+  if (!routeOrgId || routeOrgId !== organizationId) return false;
+  if (!channelId || channelId === organizationId) return true;
+  return isObservedChannel(channelId);
+}
 
-  // Not in an org route -> low priority
-  if (!routeOrgId) return 'low';
+/** Membership `muted`/`archived` = the user declared "not urgent" for this scope. */
+function isMutedOrArchived(organizationId: string, channelId: string | null): boolean {
+  const data = queryClient.getQueryData<GetMyMembershipsResponse>(['me', 'memberships']);
+  if (!data?.items) return false;
+  const targetId = channelId ?? organizationId;
+  const membership = data.items.find((m) => m.channelId === targetId);
+  return membership ? membership.muted || membership.archived : false;
+}
 
-  // Different org -> low priority
-  if (organizationId && routeOrgId !== organizationId) return 'low';
-
-  // User is in matching org context
-  return 'high';
+/**
+ * The client's say in sync timing (see cella/SYNC_ENGINE.md, Scheduling): viewing the
+ * scope → live; muted/archived → fetch on open only; anything else → soon-ish background.
+ * This is the ONLY priority system: paths without synced rows (hard delete, seq-less
+ * fallback) derive their invalidation behavior from the viewing tier too.
+ */
+export function getSyncTier(entityType: string, organizationId: string, channelId: string | null): SyncTier {
+  if (!hierarchy.isProduct(entityType)) return TIER_ON_OPEN;
+  if (isViewingChannel(organizationId, channelId)) return TIER_VIEWING;
+  if (isMutedOrArchived(organizationId, channelId)) return TIER_ON_OPEN;
+  return TIER_BACKGROUND;
 }

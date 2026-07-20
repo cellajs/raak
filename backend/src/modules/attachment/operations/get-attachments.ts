@@ -13,14 +13,14 @@ import { actorFrom } from '#/permissions/actor';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumn } from '#/utils/order-column';
-import { seqCursorFilters } from '#/utils/seq-cursor';
+import { pathPrefixFilter, seqCursorFilters } from '#/utils/seq-cursor';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
 type GetAttachmentsInput = z.infer<typeof attachmentListQuerySchema>;
 
 export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsInput) {
   const organizationId = ctx.var.organization.id;
-  const { q, sort, order, limit, offset, seqCursor, projectId } = input;
+  const { q, sort, order, limit, offset, seqCursor, projectId, pathPrefix } = input;
 
   // cella change: Validate an explicitly requested project exists before scoping the read to it.
   if (projectId) {
@@ -57,6 +57,10 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
 
   // Sequence-based delta sync filter
   filters.push(...seqCursorFilters(attachmentsTable.seq, seqCursor));
+
+  // Subtree placement narrowing (sync-engine covering fetches for a viewed channel); additive
+  // on top of the permission WHERE and raak's projectId scoping. Undefined = no narrowing.
+  filters.push(...pathPrefixFilter(attachmentsTable.path, pathPrefix));
 
   if (q?.trim()) {
     const queryToken = prepareStringForILikeFilter(q.trim());

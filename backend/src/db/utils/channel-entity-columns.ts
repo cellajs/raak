@@ -1,6 +1,7 @@
 import { timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import type { ChannelEntityType } from 'shared';
 import { maxLength } from '#/db/utils/constraints';
+import { channelPathColumn } from '#/db/utils/path-column';
 import { tenantEntityColumns } from '#/db/utils/tenant-entity-columns';
 import { usersTable } from '#/modules/user/user-db';
 
@@ -18,7 +19,10 @@ export const channelEntityColumns = <T extends ChannelEntityType>(entityType: T)
    * When the context went live for its members: null = draft (invites against it are
    * deferred, see membership dispatch). Defaults to creation time, so forks without
    * draft flows never see null and the mechanism stays dormant. Distinct from
-   * `publicAt` below: `publishedAt` gates MEMBERS, `publicAt` grants NON-members.
+   * `publicAt` below: `publishedAt` controls MEMBER visibility, `publicAt` grants NON-members.
+   * The PRODUCT-entity sibling (`published-column.ts`, nullable, no default) carries
+   * different semantics: null = author-only draft, enforced across dispatch, reads,
+   * counters and cache (see `shared/src/published-rows.ts`).
    */
   publishedAt: timestamp({ mode: 'string' }).defaultNow(),
   /**
@@ -27,4 +31,5 @@ export const channelEntityColumns = <T extends ChannelEntityType>(entityType: T)
    * `shared/config/permissions-config.ts`; null (the default) keeps the mechanism dormant.
    */
   publicAt: timestamp('public_at', { mode: 'string' }),
+  ...channelPathColumn(entityType),
 });

@@ -2,12 +2,8 @@ import '@blocknote/shadcn/style.css';
 import '~/modules/common/blocknote/styles.css';
 import '~/modules/common/blocknote/custom-elements/checklist/checklist-styles.css';
 
-import {
-  FilePanelController,
-  type FilePanelProps,
-  GridSuggestionMenuController,
-  useCreateBlockNote,
-} from '@blocknote/react';
+import type { FilePanelProps } from '@blocknote/react';
+import { FilePanelController, GridSuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { type MouseEventHandler, useCallback, useEffect, useRef } from 'react';
 import { appConfig, type ProductEntityType } from 'shared';
@@ -39,12 +35,12 @@ import type {
   CustomBlockTypes,
 } from '~/modules/common/blocknote/types';
 import { useUIStore } from '~/modules/ui/ui-store';
-import { router } from '~/routes/router';
+import { getRouter } from '~/routes/-router-instance';
 
 /**
  * Bundle for collaborative mode: Yjs wiring (provider, fragment, cursor user) + entity identity for SSE
  * suppression while editing. Presence of this bundle switches the editor into collaborative mode;
- * persistence is relay-side (the relay materializes sessions into the entity row).
+ * the relay persists session state to the entity row.
  */
 export interface CollaborationBundle {
   provider: WebsocketProvider;
@@ -131,7 +127,7 @@ function BlockNote({
   useYjsUndoManagerFix(editor, collaborative);
 
   // Shield Yjs-owned fields from SSE while this editor is active. The relay owns
-  // persistence (seeding + materialization), so no client sends description updates.
+  // persistence and seeding, so no client sends description updates.
   useYjsSseSuppression(
     collaboration ? { entityType: collaboration.entityType, entityId: collaboration.entityId } : null,
   );
@@ -187,7 +183,7 @@ function BlockNote({
 
   useEffect(() => {
     if (!onBeforeLoad || !editable) return;
-    const unsubscribe = router.subscribe('onBeforeLoad', handleOnBeforeLoad);
+    const unsubscribe = getRouter().subscribe('onBeforeLoad', handleOnBeforeLoad);
     return () => unsubscribe();
   }, []);
 

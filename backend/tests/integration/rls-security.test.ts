@@ -1,26 +1,3 @@
-/**
- * RLS security regression tests.
- *
- * These tests verify that Row-Level Security policies correctly
- * isolate tenant data and prevent unauthorized access.
- *
- * Architecture:
- * - SELECT-only RLS policies on product entity tables (attachments, tasks, labels, yjs_documents)
- * - Write-through RLS policies (unconditional allow), write isolation enforced by guards + composite FKs + immutability triggers
- * - No RLS on channel entities (organizations, memberships), guarded at app layer
- *
- * IMPORTANT: These tests require PostgreSQL with RLS roles configured.
- * Run with `pnpm test:full` (not test:core).
- *
- * Connections:
- * - `adminDb` (postgres superuser): Setup/cleanup, bypasses RLS
- * - `runtimeDb` (runtime_role): Subject to RLS policies, used for assertions
- * - Session variables (app.tenant_id, app.user_id)
- *   are set via set_config() within transactions to drive RLS policy evaluation
- *
- * @see cella/ARCHITECTURE.md for full architecture documentation
- */
-
 import { randomUUID } from 'node:crypto';
 import { getTableName, type SQL, sql } from 'drizzle-orm';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -278,9 +255,22 @@ async function ensureRlsRoles() {
   }
 
   // Non-RLS tables runtime_role must access (write isolation enforced by guards at the app layer).
+  // Channel entities (organizations, workspaces, projects) are all non-RLS and land in production's
+  // fullCrudTables, so runtime_role gets full CRUD on each. projects is required by the publicAt
+  // cascade: the BEFORE INSERT trigger inherit_public_at_from_project() reads projects.public_at
+  // when a task/attachment is created, running as the invoking runtime_role.
   // seen_by is non-RLS (production classifies it in fullCrudTables), runtime_role reads it in the
   // NOT EXISTS of the unseen-count query, so it needs a grant here too.
-  const nonRlsTables = ['organizations', 'memberships', 'inactive_memberships', 'users', 'tenants', 'seen_by'];
+  const nonRlsTables = [
+    'organizations',
+    'workspaces',
+    'projects',
+    'memberships',
+    'inactive_memberships',
+    'users',
+    'tenants',
+    'seen_by',
+  ];
   for (const table of nonRlsTables) {
     if (!(await tableExists(table))) continue;
     const priv = table === 'tenants' ? 'SELECT' : 'SELECT, INSERT, UPDATE, DELETE';
@@ -364,7 +354,9 @@ async function cleanupTestData() {
   await cleanupEntityHierarchy(attachmentHierarchyA);
   await adminDb.execute(sql`DELETE FROM organizations WHERE id IN (${TEST_ORG_A}, ${TEST_ORG_B})`);
   await adminDb.execute(sql`DELETE FROM users WHERE id IN (${TEST_USER_A}, ${TEST_USER_B})`);
-  await adminDb.execute(sql`DELETE FROM tenants WHERE id IN (${TEST_TENANT_A}, ${TEST_TENANT_B}, ${TEST_TENANT_EMPTY})`);
+  await adminDb.execute(
+    sql`DELETE FROM tenants WHERE id IN (${TEST_TENANT_A}, ${TEST_TENANT_B}, ${TEST_TENANT_EMPTY})`,
+  );
 }
 
 /**
@@ -533,7 +525,7 @@ describe('RLS Security Tests', () => {
 /**
  * Whether the environment can run the RLS suite: roles + base tables present.
  * Checked at module load (after global-setup migrations) so the suite skips
- * gracefully on a DB without RLS roles rather than failing every assertion.
+ * gracefully on a database without RLS roles and avoids failing every assertion.
  */
 const rlsSuiteReady = await (async () => {
   try {
@@ -757,10 +749,11 @@ const rlsSuiteReady = await (async () => {
     it('drops the count once the entity is marked seen', async () => {
       if (!rolesAvailable || !requiredTablesAvailable || !seenByAvailable || !trackedFixture) return;
       const seenId = '00000000-0000-4000-a000-0000000000a1';
+      // `seen_by` is partitioned by `created_at`, so it cannot have a unique arbiter on
+      // `(user_id, entity_id)`. This fixed-id fixture is removed in `finally`.
       await adminDb.execute(sql`
         INSERT INTO seen_by (id, user_id, entity_id, entity_type, channel_id, organization_id, tenant_id, created_at)
         VALUES (${seenId}, ${TEST_USER_A}, ${trackedFixture.rowId}, ${trackedType}, ${trackedFixture.homeChannelId}, ${TEST_ORG_A}, ${TEST_TENANT_A}, NOW())
-        ON CONFLICT (user_id, entity_id) DO NOTHING
       `);
       try {
         const rows = await queryAsRuntimeRole<UnseenRow>(TEST_TENANT_A, TEST_USER_A, countUnseen);
@@ -817,9 +810,7 @@ const rlsSuiteReady = await (async () => {
 
       it('should allow DELETE as runtime_role', async () => {
         const id = randomUUID();
-        await adminDb.execute(
-          fixture.insert({ id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A }),
-        );
+        await adminDb.execute(fixture.insert({ id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A }));
         await queryAsRuntimeRole(TEST_TENANT_A, TEST_USER_A, async (tx) =>
           tx.execute(sql.raw(`DELETE FROM ${fixture.table} WHERE id = '${id}'`)),
         );
@@ -868,9 +859,7 @@ const rlsSuiteReady = await (async () => {
         // Org A belongs to Tenant A, inserting with Tenant B should violate the composite FK
         await expect(
           unwrapDrizzle(
-            adminDb.execute(
-              fixture.insert({ id: randomUUID(), tenantId: TEST_TENANT_B, createdBy: TEST_USER_A }),
-            ),
+            adminDb.execute(fixture.insert({ id: randomUUID(), tenantId: TEST_TENANT_B, createdBy: TEST_USER_A })),
           ),
         ).rejects.toThrow(/foreign key|violates/i);
       });
@@ -973,7 +962,7 @@ const rlsSuiteReady = await (async () => {
     });
   });
 
-  // ---- CDC seq stamping invariant ----
+  // ---- CDC seq stamping under FORCE RLS ----
   // Regression test: the CDC worker runs as admin_role (no app.tenant_id set)
   // and must be able to UPDATE seq on product entity rows under FORCE RLS.
   // Without BYPASSRLS on the connecting role, the tenant SELECT policy hides

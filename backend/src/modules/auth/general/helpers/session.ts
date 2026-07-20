@@ -19,11 +19,11 @@ import { type UserModel, usersTable } from '#/modules/user/user-db';
 import { sessionCookieSchema } from '#/schemas';
 import { getIp } from '#/utils/get-ip';
 import { hashDeviceIdForUser, hashIpForUser, hashSubnet } from '#/utils/hash-pii';
+import { hashToken } from '#/utils/hash-token';
 import { toSubnet } from '#/utils/ip-subnet';
 import { isExpiredDate } from '#/utils/is-expired-date';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
-import { encodeLowerCased } from '#/utils/oslo';
 import { isSystemAccessAllowed } from '#/utils/system-access';
 import { createDate, TimeSpan } from '#/utils/time-span';
 
@@ -44,11 +44,11 @@ const ensureDeviceId = async (ctx: Context<Env>): Promise<string> => {
 /**
  * Enforce `appConfig.maxSessionsPerUser` by hard-deleting the oldest active regular sessions beyond
  * the cap. Called just before inserting a new session, so `cap - 1` leaves room for it. Concurrent
- * sign-ins can transiently overshoot by one — harmless. Only `regular` sessions count: `mfa`
+ * sign-ins can transiently overshoot by one without harm. Only `regular` sessions count: `mfa`
  * challenges and admin `impersonation` sessions are excluded.
  *
  * The two-step select-then-delete is deliberate: the PK is `(id, expiresAt)` on a partitioned table,
- * and pairing both columns in the delete lets PostgreSQL prune straight to the right partition — the
+ * and pairing both columns in the delete lets PostgreSQL prune directly to the right partition. The
  * same trick the expired-row cleanup in {@link validateSession} uses.
  *
  * Exported for direct unit testing of the cap; production callers reach it via {@link setUserSession}.
@@ -117,7 +117,7 @@ export const setUserSession = async (
 
   // Generate token and store hashed
   const sessionToken = nanoid(40);
-  const hashedSessionToken = encodeLowerCased(sessionToken);
+  const hashedSessionToken = hashToken(sessionToken);
 
   // Calculate expiration
   const timeSpan = type === 'impersonation' ? new TimeSpan(1, 'h') : new TimeSpan(1, 'w');
@@ -147,7 +147,7 @@ export const setUserSession = async (
   };
 
   if (type === 'regular') {
-    // A3 — a browser holds at most one live session: repeated sign-ins from the same browser don't stack up as unrelated rows.
+    // A3: a browser holds at most one live session, so repeated sign-ins do not stack up.
     if (session.deviceIdHash) {
       await db
         .delete(sessionsTable)

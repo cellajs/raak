@@ -21,7 +21,7 @@ import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { isArrayDelta } from '~/query/offline/array-delta';
-import { coalescePendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
+import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
@@ -114,10 +114,10 @@ export const taskKeys = {
   },
 };
 
-registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor) => {
+registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, pathPrefix) => {
   return getTasks({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, pathPrefix, limit: String(SYNC_CHUNK_SIZE) },
   });
 });
 
@@ -228,7 +228,7 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
 
 /**
  * Canonical task query: one flat query per project scope.
- * Fetches all tasks for a project, stored at taskKeys.list.scope(organizationId, projectId).
+ * Fetches all tasks for a project, stored at taskKeys.list.home(organizationId, projectId).
  * Board/table derive views via select() or client-side filtering.
  * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.
  */
@@ -244,7 +244,7 @@ export const tasksCanonicalOptions = ({
   const limit = appConfig.requestLimits.tasks;
 
   return queryOptions({
-    queryKey: taskKeys.list.scope(organizationId, projectId),
+    queryKey: taskKeys.list.home(organizationId, projectId),
     queryFn: async () => {
       return fetchAllPages(
         ({ limit, offset }) =>
@@ -331,7 +331,7 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
         assignedTo: fullAssignedTo,
       });
       const optimisticId = optimisticTask.id;
-      const scopeKey = taskKeys.list.scope(organizationId, variables.projectId);
+      const scopeKey = taskKeys.list.home(organizationId, variables.projectId);
 
       await queryClient.cancelQueries({ queryKey: orgKey });
       cacheCreate(scopeKey, [optimisticTask]);
@@ -376,7 +376,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
       const { id: taskId, ops } = variables;
 
       // If there's a pending create for this entity, fold update ops into it
-      if (ops && coalescePendingCreate(queryClient, taskKeys.create, taskId, ops as Record<string, unknown>)) {
+      if (ops && squashIntoPendingCreate(queryClient, taskKeys.create, taskId, ops as Record<string, unknown>)) {
         return { coalesced: true };
       }
 
@@ -425,9 +425,9 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
         if ('projectId' in mergedOps && mergedOps.projectId !== previousTask.projectId) {
           // Strip labels optimistically because they are project-scoped.
           optimisticTask.labels = [];
-          const oldScopeKey = taskKeys.list.scope(organizationId, previousTask.projectId);
+          const oldScopeKey = taskKeys.list.home(organizationId, previousTask.projectId);
           cacheRemove(oldScopeKey, [previousTask]);
-          const newScopeKey = taskKeys.list.scope(organizationId, mergedOps.projectId as string);
+          const newScopeKey = taskKeys.list.home(organizationId, mergedOps.projectId as string);
           cacheCreate(newScopeKey, [optimisticTask]);
           queryClient.setQueryData<Task>(taskKeys.detail.byId(taskId), optimisticTask);
         } else {
@@ -449,9 +449,9 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
       if (context?.previousTask) {
         // Cross-project move rollback: remove from new project, restore to old
         if (_vars.ops && 'projectId' in _vars.ops && _vars.ops.projectId !== context.previousTask.projectId) {
-          const newScopeKey = taskKeys.list.scope(organizationId, _vars.ops.projectId as string);
+          const newScopeKey = taskKeys.list.home(organizationId, _vars.ops.projectId as string);
           cacheRemove(newScopeKey, [context.previousTask]);
-          const oldScopeKey = taskKeys.list.scope(organizationId, context.previousTask.projectId);
+          const oldScopeKey = taskKeys.list.home(organizationId, context.previousTask.projectId);
           cacheCreate(oldScopeKey, [context.previousTask]);
         } else {
           cacheUpdate(orgKey, [context.previousTask]);

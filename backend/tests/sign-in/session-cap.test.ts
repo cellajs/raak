@@ -6,7 +6,7 @@ import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { baseDb as db } from '#/db/db';
 import { evictExcessSessions } from '#/modules/auth/general/helpers/session';
 import { type SessionTypes, sessionsTable } from '#/modules/auth/sessions-db';
-import { encodeLowerCased } from '#/utils/oslo';
+import { hashToken } from '#/utils/hash-token';
 import { createTestUser } from '../helpers';
 import { clearDatabase } from '../test-utils';
 
@@ -26,7 +26,7 @@ async function insertSession(userId: string, type: SessionTypes, createdAtMs: nu
   const id = generateId();
   await db.insert(sessionsTable).values({
     id,
-    secret: encodeLowerCased(nanoid(40)),
+    secret: hashToken(nanoid(40)),
     userId,
     type,
     authStrategy: 'passkey',
@@ -73,7 +73,7 @@ describe('per-user session cap (A1)', () => {
 
     const all = await db.select({ id: sessionsTable.id }).from(sessionsTable).where(eq(sessionsTable.userId, user.id));
     const ids = new Set(all.map((r) => r.id));
-    // The two oldest rows overall are mfa/impersonation, yet both survive — they are excluded from the cap.
+    // The two oldest rows are mfa/impersonation sessions, which are excluded from the cap.
     expect(ids.has(mfaId)).toBe(true);
     expect(ids.has(imperId)).toBe(true);
   });

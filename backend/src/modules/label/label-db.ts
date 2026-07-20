@@ -23,7 +23,7 @@ export const labelsTable = snakeCase.table(
   },
   (table) => [
     index('labels_organization_id_index').on(table.organizationId),
-    index('labels_project_seq_index').on(table.projectId, table.seq),
+    index('labels_organization_id_seq_index').on(table.organizationId, table.seq),
     index('labels_tenant_id_index').on(table.tenantId),
     index('labels_created_by_index').on(table.createdBy),
     index('labels_updated_by_index').on(table.updatedBy),
