@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.5](https://github.com/cellajs/cella/compare/0.5.4...0.5.5) (2026-07-20)
+
+
+### 🎉 New features
+
+* **infra:** expose/unexpose database publicly via the infra CLI ([#932](https://github.com/cellajs/cella/issues/932)) ([bb1b97e](https://github.com/cellajs/cella/commit/bb1b97e1456f14ccb86142c521210eab5542e640))
+
+## [0.5.4](https://github.com/cellajs/cella/compare/0.5.3...0.5.4) (2026-07-20)
+
+
+### 🐞 Bug fixes
+
+* sw catches all api requests ([#930](https://github.com/cellajs/cella/issues/930)) ([3d6aae8](https://github.com/cellajs/cella/commit/3d6aae89cca5a4d181f5b4d4094c4c3de7657e17))
+
+## [0.5.3](https://github.com/cellajs/cella/compare/0.5.2...0.5.3) (2026-07-20)
+
+
+### 🎉 New features
+
+* seed system admin from ADMIN_EMAIL in the migrate companion ([#928](https://github.com/cellajs/cella/issues/928)) ([4b4a5a1](https://github.com/cellajs/cella/commit/4b4a5a1b4cccc098fd92a0ba705514e950d36e92))
+
 ## [0.5.2](https://github.com/cellajs/cella/compare/0.5.1...0.5.2) (2026-07-20)
 
 
