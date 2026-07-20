@@ -6,6 +6,9 @@ Cella is a TypeScript template to collaborative web apps with sync engine for of
 
 Cella is an implementation-ready template with quite some modules and a default entity config. The base config lives in [shared/config/config.default.ts](../shared/config/config.default.ts), with entity hierarchy and roles defined in [shared/config/hierarchy-config.ts](../shared/config/hierarchy-config.ts). Those feed into `appConfig`, which is the main merged runtime config object exposed by shared. Each fork will typically change the underlying config, hierarchy and permissions, so it is important to write entity-agnostic code rather than hardcoding assumptions about the default entity set and their roles.
 
+## Before you finish
+**Always run `pnpm check` at the repo root after any code change, and only report the work done once it passes clean.** `pnpm check` runs `sdk` regen + typecheck + `lint:fix` — it is the single gate for "is this change sound?". Also run `pnpm generate` if you touched DB schemas. Never claim a change is complete without a clean `pnpm check`; if it fails, fix it or say so explicitly.
+
 ## Architecture
 
 See [Architecture](/docs/page/architecture) for tech stack, file structure, data modeling, security, and sync/offline design.
@@ -40,7 +43,7 @@ Route-level guards in `backend/src/middlewares/guard/` control auth and tenant i
 - **Product entity handlers** wrap reads in `tenantRead(ctx, fn)` (RLS-scoped SELECT) and writes in `tenantContext(ctx, fn)` (read-write transaction that sets RLS session vars so internal SELECTs/RETURNING pass; permissive RLS write-through policies leave write authorization to guards, permissions, FKs, and triggers) from `backend/src/db/tenant-context.ts`.
 - **Channel entity handlers** use `ctx.var.db` (baseDb) directly, no RLS.
 
-See [Multi-tenancy](./multi_tenancy.md) for the exact read/write boundary and table categories.
+See [Multi-tenancy](./MULTI_TENANCY.md) for the exact read/write boundary and table categories.
 
 ## Error handling
 
@@ -52,7 +55,7 @@ Auth is split into five sub-modules in `backend/src/modules/auth/`: `general/` (
 
 ## Permissions
 
-The permission system in `backend/src/permissions/` provides: the `checkAccess*` family — `checkAccess` (single check), `checkAccessBatch` (one actor, many subjects), `checkAccessFanout` (many actors, one subject; engine-collapsed) — all taking an `Access` object pairing identity with memberships, built via `accessFrom(ctx)`; plus `canAccessEntityType`, `canCreateEntity`, `getValidChannelEntity`, `getValidProductEntity` (fetch + permission check), `splitByPermission` (batch filtering). Access policies are defined using `configureAccessPolicies()` with three values: `1` (allowed), `0` (denied), `'own'` (allowed only for the entity's creator, an implicit owner relation). The engine checks `entity.createdBy === userId` for `'own'` policies. On the frontend, `computeCan()` produces a three-state map (`true | false | 'own'`); use `resolvePermission()` from `shared` to resolve `'own'` per-entity. See [Permissions](./PERMISSIONS.md) for the decision model and [Multi-tenancy](./multi_tenancy.md) for its database backstop.
+The permission system in `backend/src/permissions/` provides: the `checkAccess*` family — `checkAccess` (single check), `checkAccessBatch` (one actor, many subjects), `checkAccessFanout` (many actors, one subject; engine-collapsed) — all taking an `Access` object pairing identity with memberships, built via `accessFrom(ctx)`; plus `canAccessEntityType`, `canCreateEntity`, `getValidChannelEntity`, `getValidProductEntity` (fetch + permission check), `splitByPermission` (batch filtering). Access policies are defined using `configureAccessPolicies()` with three values: `1` (allowed), `0` (denied), `'own'` (allowed only for the entity's creator, an implicit owner relation). The engine checks `entity.createdBy === userId` for `'own'` policies. On the frontend, `computeCan()` produces a three-state map (`true | false | 'own'`); use `resolvePermission()` from `shared` to resolve `'own'` per-entity. See [Permissions](./PERMISSIONS.md) for the decision model and [Multi-tenancy](./MULTI_TENANCY.md) for its database backstop.
 
 ## State & API
 
