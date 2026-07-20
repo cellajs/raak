@@ -1,20 +1,17 @@
 import { getTableName } from 'drizzle-orm';
-import pc from 'picocolors';
 import { appConfig } from 'shared';
 import { entityTables } from '#/tables';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { yjsDocumentsTable } from '#/modules/yjs/yjs-db';
-import { logMigrationResult, upsertMigration } from './helpers/drizzle-utils';
-import type { GenerateScript } from '../types';
+import type { SideEffectBlock, SideEffectProducer } from '../types';
 
-async function run() {
-  // Table classification
-
-  /**
-   * Collect all entity tables that need RLS setup (ownership, FORCE RLS, grants).
-   * Policies are defined in Drizzle schema files using pgPolicy() - not generated here.
-   */
+/**
+ * Classify tables for RLS setup (ownership, FORCE RLS, grants).
+ * Policies are defined in Drizzle schema files using pgPolicy() - not generated here.
+ * Exported so the verify block (99-verify) asserts against the exact same lists.
+ */
+export function classifyRlsTables(): { rlsTables: string[]; fullCrudTables: string[]; readOnlyTables: string[] } {
   const entityTableNames = Object.entries(entityTables)
     .filter(([entityType]) => entityType !== 'user')
     .map(([, table]) => getTableName(table));
@@ -29,7 +26,7 @@ async function run() {
 
   // Products excluded from RLS (parentless, always public, protected by sysAdminGuard).
   // Filtered by the tables that actually exist: a fork without these modules must not
-  // emit grants for nonexistent tables — one failed statement rolls back the whole
+  // emit grants for nonexistent tables because one failed statement rolls back the whole
   // grant block (see the exception handler below).
   const noRlsCandidates = ['pages'];
   const noRlsProductEntityNames = noRlsCandidates.filter((name) => (entityTableNames as string[]).includes(name));
@@ -64,6 +61,12 @@ async function run() {
     'tenants',
   ];
   const readOnlyTables = ['system_roles', 'activities'];
+
+  return { rlsTables, fullCrudTables, readOnlyTables };
+}
+
+async function run(): Promise<SideEffectBlock> {
+  const { rlsTables, fullCrudTables, readOnlyTables } = classifyRlsTables();
 
   // Migration SQL
 
@@ -109,18 +112,15 @@ ${readOnlyTables.map((t) => `    GRANT SELECT ON ${t} TO runtime_role;`).join('\
 END $$;
 `;
 
-  // Execute migration
-
-  const result = upsertMigration('rls_setup', migrationSql);
-  logMigrationResult(result, 'RLS setup');
-
-  console.info('');
-  console.info(`  ${pc.greenBright('RLS tables:')} ${rlsTables.join(', ')}`);
-  console.info('');
+  return {
+    tag: 'rls_setup',
+    title: 'RLS — ownership, FORCE RLS, grants',
+    sql: migrationSql,
+    notes: [`RLS tables: ${rlsTables.join(', ')}`],
+  };
 }
 
-export const generateConfig: GenerateScript = {
+export const sideEffect: SideEffectProducer = {
   name: 'RLS',
-  type: 'migration',
-  run,
+  produce: run,
 };

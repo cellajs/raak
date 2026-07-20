@@ -27,18 +27,24 @@ const cdcMessageSchema = z.object({
     // Override nullable fields that are always present in CDC messages
     action: activityActionSchema,
     subjectId: z.string().nullable(),
-    // seq: entity-type sequence stamped by CDC worker (product entities only)
+    // seq: org-sequence position stamped by CDC worker (product entities only)
     seq: z.number().optional(),
-    // Batch fields (set by CDC Worker for multi-entity transactions)
+    // Batch fields (set by CDC Worker for multi-entity transactions). Under the org
+    // sequence a group's seq..batchUntilSeq range may interleave with other groups;
+    // `count` is the authoritative row count.
     batchUntilSeq: z.number().optional(),
+    count: z.number().optional(),
   }),
   rowData: z.record(z.string(), z.unknown()),
+  // Old-row permission subset when the row's materialized path changed (move-out)
+  movedFrom: z.record(z.string(), z.unknown()).nullable().optional(),
   // Per-row permission fields for batches: dispatch decides per subscriber across all rows
   batchRows: z
     .array(
       z.object({
         seq: z.number().optional(),
         rowData: z.record(z.string(), z.unknown()),
+        movedFrom: z.record(z.string(), z.unknown()).nullable().optional(),
       }),
     )
     .optional(),
@@ -119,24 +125,6 @@ function isAllowedCdcSource(remoteIp: string | undefined, forwardedFor: string |
   return false;
 }
 
-/**
- * CDC WebSocket server for the internal CDC worker channel.
- *
- * Accepts connections exclusively from the co-located CDC Worker process.
- * This is a server-to-server channel (Node.js → Node.js) that carries full
- * entity row data for the real-time sync pipeline. It must NEVER be exposed
- * to external networks or browser clients.
- *
- * Security layers:
- * - Path-locked to `/internal/cdc` (all other paths → 404)
- * - Shared secret via `x-cdc-secret` header (min 16 chars, validated at startup)
- * - Source-IP restricted in production: loopback or the Scaleway VPC /24,
- *   read from X-Forwarded-For when reached through the per-VM Caddy ingress
- *   (see {@link isAllowedCdcSource})
- * - Single connection at a time (new connections replace existing ones)
- * - Idle timeout (90s) auto-closes stale connections
- */
-
 /** Self-reported CDC worker health payload pushed over the WS control channel. */
 export interface CdcWorkerHealth {
   replicationStatus: string;
@@ -152,6 +140,10 @@ export interface CdcWorkerHealth {
   catchingUp?: boolean;
 }
 
+/**
+ * Internal CDC worker channel. It requires the shared secret and an allowed source,
+ * permits one live connection, and closes idle peers after 90 seconds.
+ */
 class CdcWebSocketServer {
   private wss: WebSocketServer | null = null;
   private currentConnection: WebSocket | null = null;
@@ -322,9 +314,11 @@ class CdcWebSocketServer {
         ...message.activity,
         type,
         rowData: message.rowData,
+        movedFrom: message.movedFrom ?? null,
         batchRows: message.batchRows ?? null,
         seq: message.activity.seq ?? null,
         batchUntilSeq: message.activity.batchUntilSeq ?? null,
+        count: message.activity.count ?? null,
         propagation: null,
         trace: message._trace ?? null,
       } as ActivityEvent;

@@ -8,7 +8,7 @@ import { TaskStatus } from '#/modules/task/task-properties';
 import { findLabelsByProjects, findProjectMembers, findTasksPaginated } from '#/modules/task/task-queries';
 import { taskListQueryBaseSchema } from '#/modules/task/task-schema';
 import { getOrderColumn } from '#/utils/order-column';
-import { seqCursorFilters } from '#/utils/seq-cursor';
+import { pathPrefixFilter, seqCursorFilters } from '#/utils/seq-cursor';
 
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
 type QueryInfo = z.infer<typeof queryInfoSchema>;
@@ -17,7 +17,7 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
 export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo: QueryInfo) => {
-  const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
+  const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor, pathPrefix } = queryInfo;
   const trimmedQuery = q?.trim();
 
   // Get users and labels data in parallel
@@ -74,6 +74,9 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
   // group a bounded cursor ("51,150") would degenerate to `seq >= 51 OR seq <= 150` (= all rows).
   const filters = and(
     ...seqCursorFilters(tasksTable.seq, seqCursor),
+    // Sync-engine subtree narrowing (covering fetches for a viewed channel); additive to the
+    // projectId scoping below. Undefined pathPrefix = no narrowing.
+    ...pathPrefixFilter(tasksTable.path, pathPrefix),
     tasksSearchFilters.length ? or(...tasksSearchFilters) : undefined,
     eq(tasksTable.organizationId, ctx.var.organizationId),
     inArray(tasksTable.projectId, projectIds),

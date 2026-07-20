@@ -30,7 +30,13 @@ export const customSchema = BlockNoteSchema.create().extend({
     notify: notifyBlock(), // Adds Notify block
     codeBlock: createCodeBlockSpec({
       ...codeBlockConfig,
-      createHighlighter: codeBlockOptions.createHighlighter,
+      // Pre-existing dep-graph quirk: multiple @shikijs/types versions resolve in the tree
+      // (prosemirror-highlight pins 4.3.0, our shiki is 4.3.1), so `HighlighterGeneric`'s
+      // invariant type params don't unify. The runtime highlighter is correct; cast to the
+      // spec's expected shape. Remove if the shiki versions ever dedupe.
+      createHighlighter: codeBlockOptions.createHighlighter as NonNullable<
+        Parameters<typeof createCodeBlockSpec>[0]
+      >['createHighlighter'],
     }),
   },
   inlineContentSpecs: { mention: MentionSchema },

@@ -55,6 +55,12 @@ export const DocsSearch = () => {
   const [results, setResults] = useState<DocsSearchResult[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Warm the engine on open so the first keystroke doesn't wait on the Orama import and corpus
+  // build. Memoized in the client, so this only races the search effect to the same promise.
+  useEffect(() => {
+    getDocsSearchClient(queryClient).catch(() => {});
+  }, [queryClient]);
+
   useEffect(() => {
     const term = debouncedValue.trim();
     if (!term) {
@@ -87,7 +93,7 @@ export const DocsSearch = () => {
   };
 
   const onSelect = (selection: SearchSelection) => {
-    // History entry: re-run that query instead of navigating.
+    // History entries re-run their query without navigating.
     if ('kind' in selection) {
       setSearchValue(selection.value);
       return;

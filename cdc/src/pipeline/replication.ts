@@ -20,8 +20,8 @@ const { reconnection, slotTakeover } = RESOURCE_LIMITS;
  * Build the replication connection URL from the CDC database URL.
  *
  * Strips the `sslmode=require&uselibpqcompat=true` params so the explicit,
- * CA-verified `ssl` config (see {@link createReplicationService}) is used
- * instead of pg's unverified libpq-compat downgrade.
+ * CA-verified `ssl` config (see {@link createReplicationService}) is used and
+ * prevents pg's unverified libpq-compat downgrade.
  */
 function buildReplicationUrl(): URL {
   const replicationUrl = new URL(stripSslParams(env.DATABASE_CDC_URL));
@@ -98,8 +98,8 @@ const PG_OBJECT_IN_USE = '55006';
  *
  * "replication slot is active for PID N" alone is hard to act on: the PID is a
  * Postgres walsender, not a host process. The holder's application_name and
- * backend_start usually identify the competing worker at a glance — the old
- * worker of a rolling deploy, or a stray local process that never shut down.
+ * backend_start usually identify the competing worker at a glance, such as the
+ * outgoing worker of a rolling deploy or a stray local process that never shut down.
  * Returns null when the slot is free or the lookup fails; diagnostics must
  * never break the retry loop.
  */
@@ -159,6 +159,11 @@ export async function subscribeWithReconnect(service: LogicalReplicationService,
   let attempt = 0;
   while (true) {
     try {
+      // Ensure on every attempt because dropping a database removes its slots, and a worker
+      // cannot create a slot while the database is unreachable. This costs one catalog SELECT
+      // per subscription attempt and is a no-op when another worker already holds the slot.
+      await ensureReplicationSlot();
+
       log.info(`Subscribing to replication slot...`);
       replicationState.status = wsClient.isConnected() ? 'active' : 'paused';
       await service.subscribe(plugin, CDC_SLOT_NAME);

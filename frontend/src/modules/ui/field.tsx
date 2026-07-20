@@ -2,16 +2,8 @@ import { Field } from '@base-ui/react/field';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { ChevronUpIcon, CircleQuestionMarkIcon } from 'lucide-react';
 import * as React from 'react';
-import {
-  Controller,
-  type ControllerProps,
-  type FieldPath,
-  type FieldValues,
-  FormProvider,
-  type FormProviderProps,
-  useFormContext,
-  useFormState,
-} from 'react-hook-form';
+import type { ControllerProps, FieldPath, FieldValues, FormProviderProps } from 'react-hook-form';
+import { Controller, FormProvider, useFormContext, useFormState } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Button } from '~/modules/ui/button';
 import { Label } from '~/modules/ui/label';
@@ -352,7 +344,7 @@ export function FormLabel({
  * Only use this for native inputs or components that accept and consume those injected props
  * (e.g. `Input`, `Checkbox`, Shadcn `Select`). Custom selectors that expose a value-based
  * callback (`onValueChange`) must NOT be wrapped here: place them directly inside `FormItem`
- * and bind to `field.value` / `field.onChange` instead. Wrapping such a component causes Base UI
+ * and bind directly to `field.value` / `field.onChange`. Wrapping such a component causes Base UI
  * to call its event handler with a non-event value and crash (`reading 'defaultPrevented'`).
  */
 export function FormControl({ children }: { children: React.ReactElement }) {

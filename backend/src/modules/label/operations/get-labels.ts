@@ -13,7 +13,7 @@ import { actorFrom } from '#/permissions/actor';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumn } from '#/utils/order-column';
-import { seqCursorFilters } from '#/utils/seq-cursor';
+import { pathPrefixFilter, seqCursorFilters } from '#/utils/seq-cursor';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
@@ -22,7 +22,7 @@ export async function getLabelsOp(
   input: GetLabelsInput,
 ): Promise<OperationResult<{ items: (LabelModel & { usedCount: number })[]; total: number }>> {
   const { projectId, workspaceId, ...queryInfo } = input;
-  const { q, sort, order, offset, limit, seqCursor } = queryInfo;
+  const { q, sort, order, offset, limit, seqCursor, pathPrefix } = queryInfo;
   const organizationId = ctx.var.organization.id;
 
   // Resolve the explicit sub-context narrowing (if any) from the request.
@@ -62,6 +62,10 @@ export async function getLabelsOp(
 
     // Sequence-based delta sync filter
     labelsFilters.push(...seqCursorFilters(labelsTable.seq, seqCursor));
+
+    // Sync-engine subtree narrowing (covering fetches for a viewed channel); additive to the
+    // permission scope. Undefined pathPrefix = no narrowing.
+    labelsFilters.push(...pathPrefixFilter(labelsTable.path, pathPrefix));
 
     // Restrict to the caller's readable scope unless org-wide (kind 'all').
     if (scopeWhere.kind === 'where') labelsFilters.push(scopeWhere.where);

@@ -5,18 +5,6 @@ import type { Plugin } from 'vite';
 import { parse } from 'yaml';
 import { createUpdatedAtResolver, type UpdatedAtResolver } from './git-updated-at';
 
-/**
- * Virtual module `virtual:docs-frontmatter`: a build-time index of all docs pages
- * (src/content/docs md/mdx) keyed by content-root-relative module path, each entry
- * holding the page's parsed frontmatter and extracted headings.
- *
- * Parsing here, without importing page modules, keeps each page body in its own
- * code-split chunk and lets the "on this page" aside render before the body chunk loads.
- * Headings must produce the same ids as the mdx pipeline (rehype-slug with the `spy-`
- * prefix, vite.config.ts): same slugger (github-slugger), fresh instance per source
- * file, and the leading h1 of repo docs skipped (mirrors remarkStripRepoDocH1).
- */
-
 const VIRTUAL_ID = 'virtual:docs-frontmatter';
 const RESOLVED_ID = `\0${VIRTUAL_ID}`;
 
@@ -24,7 +12,7 @@ const RESOLVED_ID = `\0${VIRTUAL_ID}`;
  * Second virtual module `virtual:docs-search-sections`: plaintext body
  * paragraphs per page, keyed like the frontmatter index and anchored to their
  * nearest heading. Only the (lazy) docs search engine imports it, so page body
- * text ships in one code-split chunk instead of the eager metadata chunk.
+ * text stays in the code-split content chunk and out of the eager metadata chunk.
  */
 const SECTIONS_VIRTUAL_ID = 'virtual:docs-search-sections';
 const SECTIONS_RESOLVED_ID = `\0${SECTIONS_VIRTUAL_ID}`;
@@ -91,7 +79,7 @@ const HEADING_LINE_SINGLE = /^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$/;
 
 /**
  * Single-pass extraction of headings and body sections. One slugger instance
- * drives both, so section anchors agree with heading ids by construction —
+ * drives both, so section anchors agree with heading ids by construction.
  * including github-slugger's `-1` dedup suffixes for repeated heading texts.
  * `stripLeadingH1` mirrors remarkStripRepoDocH1: repo docs' first h1 never renders.
  * Exported for the slug-agreement unit tests.
@@ -190,6 +178,7 @@ export function pageStructure(file: string, source: string): { headings: DocHead
   };
 }
 
+/** Exposes page metadata and search text as virtual modules without importing page components. */
 export function docsFrontmatter(): Plugin {
   let contentDir: string;
   let resolver: UpdatedAtResolver | undefined;
@@ -213,7 +202,7 @@ export function docsFrontmatter(): Plugin {
       entries.push([key, { frontmatter, headings }] as const);
 
       // Search corpus: skip the root index (docs config, landing body) and pages
-      // excluded from navigation — hidden/draft pages must not surface in search.
+      // excluded from navigation. Hidden and draft pages must not surface in search.
       const { draft, hidden } = (frontmatter ?? {}) as { draft?: boolean; hidden?: boolean };
       if (/^index\.mdx?$/.test(relative) || draft || hidden) continue;
       // Bare anchor ids: consumers navigate via hashes, which drop the DOM prefix.
@@ -265,7 +254,7 @@ export function docsFrontmatter(): Plugin {
           }
         }
         // Body edits change the search corpus: invalidate quietly so the next
-        // (re)load of the sections module is fresh. No reload — the search DB is
+        // (re)load of the sections module is fresh. Without a reload, the search DB is
         // memoized per session anyway, and body HMR shouldn't hard-refresh dev.
         const sectionsMod = server.moduleGraph.getModuleById(SECTIONS_RESOLVED_ID);
         if (sectionsMod) server.moduleGraph.invalidateModule(sectionsMod);

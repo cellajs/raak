@@ -91,17 +91,20 @@ export const zStxBase = z.object({
  */
 export const zStreamNotification = z.object({
   kind: z.enum(['entity', 'membership']),
-  action: z.enum(['create', 'update', 'delete']),
+  action: z.enum(['create', 'update', 'delete', 'moveOut']),
   entityType: z.enum(['task', 'label', 'attachment']).nullable(),
-  resourceType: z.enum(['request', 'membership', 'inactive_membership', 'tenant']).nullable(),
+  resourceType: z.enum(['request', 'membership', 'inactive_membership', 'tenant', 'system_role']).nullable(),
   subjectId: z.string().nullable(),
   organizationId: z.string().nullable(),
   tenantId: z.string().nullable(),
   channelType: z.enum(['organization', 'workspace', 'project']).nullable(),
+  path: z.string().nullable(),
   seq: z.int().nullable(),
   channelId: z.string().nullable(),
   stx: zStxBase.and(z.record(z.string(), z.unknown())).nullable(),
   batchUntilSeq: z.int().nullable(),
+  count: z.int().nullable(),
+  syncWindow: z.int().nullable(),
   propagation: z
     .object({
       sourceType: z.string(),
@@ -353,6 +356,7 @@ export const zProject = z.object({
   updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
+  path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
     membership: zMembershipBase.optional(),
@@ -417,6 +421,7 @@ export const zTask = z.object({
   deletedBy: z.uuid().nullable(),
   publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+  path: z.string().nullable(),
   expandable: z.boolean(),
   summary: z.string().max(1000000),
   summaryLength: z.int().gte(-2147483648).lte(2147483647),
@@ -477,6 +482,7 @@ export const zOrganization = z.object({
   updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
+  path: z.string().nullable(),
   shortName: z.string().max(255).nullable(),
   country: z.string().max(255).nullable(),
   timezone: z.string().max(255).nullable(),
@@ -488,6 +494,7 @@ export const zOrganization = z.object({
   websiteUrl: z.string().max(2048).nullable(),
   welcomeText: z.string().max(1000000).nullable(),
   chatSupport: z.boolean(),
+  organizationFlags: z.record(z.string(), z.unknown()),
   included: z.object({
     membership: zMembershipBase.optional(),
     counts: z
@@ -543,6 +550,7 @@ export const zWorkspace = z.object({
   updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
+  path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
     membership: zMembershipBase.optional(),
@@ -582,6 +590,7 @@ export const zAttachment = z.object({
   deletedBy: z.uuid().nullable(),
   publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+  path: z.string().nullable(),
   taskId: z.uuid().nullable(),
   public: z.boolean(),
   bucketName: z.string().max(255),
@@ -636,6 +645,7 @@ export const zLabel = z.object({
   deletedBy: z.uuid().nullable(),
   publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
+  path: z.string().nullable(),
   color: z.string().max(255).nullable(),
   organizationId: z.uuid(),
   projectId: z.uuid(),
@@ -992,7 +1002,19 @@ export const zCheckSlugResponse = z.void();
 
 export const zPostAppCatchupBody = z.object({
   cursor: z.string().optional(),
-  seqs: z.record(z.string(), z.int()).optional(),
+  views: z
+    .array(
+      z.object({
+        key: z.string().max(512),
+        organizationId: z.string(),
+        prefixes: z.array(z.string().max(512)).min(1).max(64),
+        entityTypes: z.array(z.enum(['task', 'label', 'attachment'])).min(1),
+        depth: z.enum(['self', 'subtree']).optional(),
+        cursor: z.int().gte(0),
+      }),
+    )
+    .max(256)
+    .optional(),
 });
 
 /**
@@ -1002,16 +1024,10 @@ export const zPostAppCatchupResponse = z.object({
   changes: z.record(
     z.string(),
     z.object({
-      entitySeqs: z.record(z.string(), z.int()).optional(),
-      entityCounts: z.record(z.string(), z.int()).optional(),
-      childChannelChanges: z
-        .record(
-          z.string(),
-          z.object({
-            entitySeqs: z.record(z.string(), z.int()).optional(),
-            entityCounts: z.record(z.string(), z.int()).optional(),
-          }),
-        )
+      signals: z
+        .object({
+          membership: z.int().optional(),
+        })
         .optional(),
       propagation: z
         .array(
@@ -1026,6 +1042,16 @@ export const zPostAppCatchupResponse = z.object({
         .optional(),
     }),
   ),
+  views: z
+    .array(
+      z.object({
+        key: z.string(),
+        status: z.enum(['ok', 'opaque', 'forbidden']),
+        frontiers: z.record(z.string(), z.int()).optional(),
+        counts: z.record(z.string(), z.int()).optional(),
+      }),
+    )
+    .optional(),
   cursor: z.string().nullable(),
 });
 
@@ -1112,7 +1138,10 @@ export const zGetTenantsQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   status: z.enum(['active', 'suspended', 'archived']).optional(),
 });
 
@@ -1313,7 +1342,10 @@ export const zGetRequestsQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
 });
 
 /**
@@ -1354,7 +1386,10 @@ export const zGetUsersQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   role: z.enum(['admin']).optional(),
 });
 
@@ -1425,10 +1460,14 @@ export const zGetPublicTasksQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   matchMode: z.enum(['all', 'any']).optional().default('all'),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50),
+  pathPrefix: z.string().max(512).optional(),
 });
 
 /**
@@ -1578,7 +1617,10 @@ export const zGetOrganizationsQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   relatableUserId: z.string().max(50).optional(),
   role: z.enum(['admin', 'member', 'guest']).optional(),
   excludeArchived: z.enum(['true', 'false']).optional(),
@@ -1642,6 +1684,7 @@ export const zUpdateOrganizationBody = z.object({
   websiteUrl: z.string().max(2048).nullish(),
   welcomeText: z.string().max(1000000).nullish(),
   chatSupport: z.boolean().optional(),
+  organizationFlags: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const zUpdateOrganizationPath = z.object({
@@ -1733,7 +1776,10 @@ export const zGetWorkspacesQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   organizationId: z.string().max(50).optional(),
   role: z.enum(['admin', 'member', 'guest']).optional(),
   excludeArchived: z.enum(['true', 'false']).optional(),
@@ -1901,7 +1947,10 @@ export const zGetProjectsQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   organizationId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
   relatableUserId: z.string().max(50).optional(),
@@ -2196,8 +2245,12 @@ export const zGetAttachmentsQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   projectId: z.string().max(50).optional(),
+  pathPrefix: z.string().max(512).optional(),
 });
 
 /**
@@ -2385,7 +2438,10 @@ export const zGetMembersQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   entityId: z.string().max(50),
   entityType: z.enum(['organization', 'workspace', 'project']),
   role: z.enum(['admin', 'member', 'guest']).optional(),
@@ -2418,7 +2474,10 @@ export const zGetPendingMembershipsQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   entityId: z.string().max(50),
   entityType: z.enum(['organization', 'workspace', 'project']),
 });
@@ -2478,11 +2537,15 @@ export const zGetTasksQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   matchMode: z.enum(['all', 'any']).optional().default('all'),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
+  pathPrefix: z.string().max(512).optional(),
 });
 
 /**
@@ -2624,9 +2687,13 @@ export const zGetLabelsQuery = z.object({
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
-  seqCursor: z.string().optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
+  pathPrefix: z.string().max(512).optional(),
 });
 
 /**

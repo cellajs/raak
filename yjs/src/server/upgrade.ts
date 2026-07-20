@@ -10,13 +10,12 @@ import { verifyToken } from './auth';
 import { stripYjsPrefix } from './path-prefix';
 import { checkConnectionRate } from './rate-limiter';
 import { joinCollab, leaveCollab } from '../sync/session-manager';
-import { handleMessage, flushPendingBuffer, discardPendingBuffer } from '../sync/relay';
+import { handleMessage, releaseBufferedMessages, discardPendingBuffer } from '../sync/relay';
 
 /**
  * Reject the upgrade at the HTTP level: no WebSocket handshake is completed.
- * Calling handleUpgrade + ws.close() instead would fire the client's `onopen`
- * (resetting its backoff counter) before `onclose`, causing a rapid ~100ms
- * retry loop with the same bad credentials.
+ * Completing the handshake before closing fires the client's `onopen`, resets its
+ * backoff counter, and causes a rapid ~100ms retry loop with the same bad credentials.
  */
 function rejectUpgrade(socket: Duplex, code: number, reason: string): void {
   if (socket.destroyed) return;
@@ -26,11 +25,11 @@ function rejectUpgrade(socket: Duplex, code: number, reason: string): void {
   );
 }
 
-/** Apply the result of entity verification: flush buffered messages on success, discard and close on failure. */
+/** Apply the result of entity verification: release buffered messages on success, discard and close on failure. */
 function applyVerifyResult(ws: WebSocket, ctx: DocContext, allowed: boolean): void {
   if (allowed) {
     ctx.verified = true;
-    flushPendingBuffer(ws);
+    releaseBufferedMessages(ws);
     log.debug(`Entity verified for ${ctx.entityType}:${ctx.entityId}`, { userId: ctx.userId });
   } else {
     log.warn(`Entity access denied for ${ctx.entityType}:${ctx.entityId}`);
@@ -71,7 +70,7 @@ async function verifyEntityAsync(ws: WebSocket, ctx: DocContext): Promise<void> 
  */
 export function setupUpgradeHandler(server: WebSocketServer): (req: IncomingMessage, socket: Duplex, head: Buffer) => void {
   return async (req, socket, head) => {
-    // Same-origin migration: accept both '/<entityId>' (legacy subdomain
+    // Same-origin migration: accept both '/<entityId>' (direct LB or subdomain
     // origin) and '/yjs/<entityId>' (path-routed app origin; the LB does not
     // strip the prefix).
     const url = new URL(stripYjsPrefix(req.url ?? '/'), `http://${req.headers.host}`);

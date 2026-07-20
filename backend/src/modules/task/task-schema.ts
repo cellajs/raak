@@ -85,6 +85,8 @@ export const taskListQueryBaseSchema = paginationQuerySchema.extend({
   acceptedCutOff: z.coerce.number().positive().optional(),
   projectId: z.string().max(maxLength.id).optional(),
   workspaceId: z.string().max(maxLength.id).optional(),
+  /** Materialized id-path prefix: sync-engine subtree narrowing (additive to projectId scoping). */
+  pathPrefix: z.string().max(512).optional(),
 });
 
 export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !data.projectId || !data.workspaceId, {

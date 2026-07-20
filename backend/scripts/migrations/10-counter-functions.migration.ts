@@ -1,16 +1,15 @@
-import pc from 'picocolors';
-import { logMigrationResult, upsertMigration } from './helpers/drizzle-utils';
-import type { GenerateScript } from '../types';
+import type { SideEffectBlock, SideEffectProducer } from '../types';
 
 /**
  * PL/pgSQL function merging JSONB count deltas into channel_counters rows. Fixed-shape SQL
  * lets the CDC worker use prepared statements for counter upserts.
  *
  * Increments apply with a floor of 0 (no negative counters). `li:` (last insert) / `lu:`
- * (last update) keys are epoch-ms activity stamps, not deltas: they merge via GREATEST so
- * the signal only moves forward.
+ * (last update) keys are epoch-ms activity stamps and `f:`/`fs:` keys are org-sequence
+ * frontiers (subtree/self), not deltas: they merge via GREATEST so the signal only
+ * moves forward.
  */
-async function run() {
+async function run(): Promise<SideEffectBlock> {
   const migrationSql = `-- Counter Functions Setup
 -- PL/pgSQL helper for JSONB counter delta merging.
 -- Used by the CDC worker for prepared-statement-compatible counter upserts.
@@ -26,8 +25,9 @@ DECLARE
 BEGIN
   FOR k, v IN SELECT * FROM jsonb_each_text(deltas)
   LOOP
-    IF k LIKE 'li:%' OR k LIKE 'lu:%' THEN
-      -- Activity stamps (epoch ms): keep the max, the signal only moves forward
+    IF k LIKE 'li:%' OR k LIKE 'lu:%' OR k LIKE 'f:%' OR k LIKE 'fs:%' THEN
+      -- Activity stamps (epoch ms) and sequence frontiers: keep the max,
+      -- the signal only moves forward
       result := result || jsonb_build_object(
         k, GREATEST(COALESCE((result->>k)::bigint, 0), v::bigint)
       );
@@ -42,16 +42,15 @@ END;
 $$;
 `;
 
-  const result = upsertMigration('counter_functions', migrationSql);
-  logMigrationResult(result, 'Counter functions');
-
-  console.info('');
-  console.info(`  ${pc.bold(pc.greenBright('Function:'))} apply_count_deltas(existing jsonb, deltas jsonb) → jsonb`);
-  console.info('');
+  return {
+    tag: 'counter_functions',
+    title: 'Counter functions — apply_count_deltas',
+    sql: migrationSql,
+    notes: ['Function: apply_count_deltas(existing jsonb, deltas jsonb) → jsonb'],
+  };
 }
 
-export const generateConfig: GenerateScript = {
+export const sideEffect: SideEffectProducer = {
   name: 'Counters',
-  type: 'migration',
-  run,
+  produce: run,
 };

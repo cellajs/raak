@@ -62,6 +62,7 @@ export interface LocalBlobStorageConfig {
   allowedContentTypes: string[];
   excludedContentTypes: string[];
   downloadConcurrency: number;
+  downloadRetryAttempts: number;
   uploadRetryAttempts: number;
   uploadRetryDelays: readonly number[];
 }
@@ -108,7 +109,7 @@ export interface MenuStructureItem {
   /**
    * When a subentity membership is created, an associated membership on the parent entity is
    * auto-created. By default it gets the least-privileged fitting role (`member` when the parent
-   * vocabulary has it). Set `carryRole` to carry the invited role over instead, when valid in the
+   * vocabulary has it). Set `carryRole` to preserve the invited role when it is valid in the
    * parent's vocabulary (e.g. courseSection `student` → course `student`).
    */
   carryRole?: boolean;
@@ -178,13 +179,6 @@ export interface RequiredConfig<T extends ConfigStringArrays = ConfigStringArray
   yjsUrl: string;
 
   mcpUrl: string;
-  /**
-   * Old per-service public URLs (pre same-origin migration) kept alive at the
-   * load balancer as 301 redirects into the path-based URLs. Only honored for
-   * enabled services that declare an `lbPathBegin`; remove an entry to
-   * decommission its legacy host (DNS record, cert and redirect drop together).
-   */
-  legacyUrls: Partial<Record<string, string>>;
   services: Record<string, AppServiceEndpointConfig>;
   // Cost escape hatch: backend (MODE=api) also boots every enabled service
   // in-process when true. Default false keeps the split (one service/process).
@@ -253,4 +247,7 @@ export interface RequiredConfig<T extends ConfigStringArrays = ConfigStringArray
 
   // User defaults
   defaultUserFlags: Record<string, boolean>;
+
+  // Organization defaults
+  defaultOrganizationFlags: Record<string, boolean>;
 }

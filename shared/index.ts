@@ -20,13 +20,23 @@ export {
   createRoleRegistry,
 } from './src/config-builder/entity-hierarchy';
 
-// Row-to-context attribution (shared rule for CDC seq/counters, notifications, recalculation)
+// Row-to-home attribution (shared rule for CDC counters/self summaries, notifications, recalculation)
 export type { AncestorSource, ResolvedAncestor } from './src/config-builder/resolve-row-channel';
 export {
   possibleHomeChannels,
   resolveDeepestAncestorId,
   resolveNonNullAncestors,
 } from './src/config-builder/resolve-row-channel';
+
+// Materialized id-path rule (sequence sync: routing, move-out, subtree addressing)
+export {
+  computeAncestorPath,
+  computeChannelPath,
+  computeProductPath,
+  pathHomeId,
+  pathSegments,
+  pathStartsWith,
+} from './src/config-builder/row-path';
 
 // Config builder types
 export type { AppServiceEndpointConfig, RequestLimitsConfig, RequiredConfig, S3Config, S3ConfigInput } from './src/config-builder/types';
@@ -49,6 +59,7 @@ export type {
   Language,
   MenuSection,
   NullableAncestorType,
+  OrganizationFlags,
   ProductEntityType,
   RootChannelType,
   SeenTrackedEntityType,
@@ -74,6 +85,8 @@ export {
 } from './src/entity-guards';
 
 export { hasKey, recordFromKeys, identityRecord, typedEntries, typedKeys } from './src/config-builder/utils';
+export { seenWindowMs } from './src/seen-window';
+export { draftVisibleTo, isUnpublishedDraft } from './src/published-rows';
 
 // Permissions
 export type {
@@ -97,11 +110,15 @@ export type { ActionPermissionState, EntityCanMap } from './src/permissions';
 
 // Permission engine (tier-neutral decision logic, shared by backend + yjs)
 export {
+  type Access,
   type Actor,
   buildSubject,
   buildSubjectFromEntity,
   type BatchPermissionResult,
-  checkPermission,
+  checkAccess,
+  checkAccessBatch,
+  checkAccessFanout,
+  type CheckAccessFanoutOptions,
   formatBatchPermissionSummary,
   formatPermissionDecision,
   getAllDecisions,

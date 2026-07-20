@@ -3,7 +3,7 @@ import { channelEntityColumns } from '#/db/utils/channel-entity-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
 /**
- * Workspaces table is a personal context entity table.
+ * Workspaces table is a personal channel entity table.
  * Each workspace belongs to exactly one organization and inherits its tenant (RLS isolation boundary),
  * and is owned by a single user (not shared with others).
  */

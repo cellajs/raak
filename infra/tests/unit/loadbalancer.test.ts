@@ -15,31 +15,18 @@ describe('loadbalancer module — registry-driven wiring', () => {
   })
 
   it('creates one DNS record per unique public host pointing at the LB IP', () => {
-    // Deduped by HOSTNAME, not per service: path-routed services share the app
-    // host, so a per-service loop would emit duplicate records post-migration.
+    // Deduped by HOSTNAME because path-routed services share the app host and a
+    // per-service loop would emit duplicate records.
     expect(src).toMatch(/for \(const \{ host, base \} of publicHosts\)/)
     expect(src).toMatch(/new scaleway\.domain\.Record\(`\$\{base\}-dns`/)
     expect(src).toMatch(/data:\s*lbPublicIp/)
-  })
-
-  it('keeps legacy hosts (appConfig.legacyUrls) alive with DNS + cert + 301 redirect', () => {
-    // Config-driven: hosts come from appConfig.legacyUrls, the redirect prefix
-    // from the service's lbPathBegin — never hardcoded per service.
-    expect(src).toMatch(/Object\.entries\(appConfig\.legacyUrls\)/)
-    expect(src).toMatch(/redirectPrefix: service\.lbPathBegin/)
-    expect(src).toMatch(/new scaleway\.loadbalancers\.Acl\(`\$\{base\}-legacy-redirect`/)
-    // {{path}} lacks the leading slash and never carries the prefix, so the
-    // target writes the prefix literally (same contract as the apex redirect).
-    expect(src).toMatch(/target: `https:\/\/\$\{appHost\}\$\{redirectPrefix\}\/\{\{path\}\}\?\{\{query\}\}`/)
-    // A host still serving as a live endpoint must never be redirected away.
-    expect(src).toMatch(/if \(hostEntries\.has\(host\)\) continue/)
   })
 
   it('issues a Lets Encrypt certificate per DNS record, gated on public propagation', () => {
     expect(src).toMatch(/new scaleway\.loadbalancers\.Certificate\(`\$\{base\}-cert`/)
     expect(src).toMatch(/commonName:\s*host/)
     // Cert creation waits for the record to answer publicly (not merely exist),
-    // and the frontend attach waits for the cert to be `ready` — both via the
+    // and the frontend attach waits for the cert to be `ready`. Both via the
     // create-only gates in resources/dns-cert-gates.ts.
     expect(src).toMatch(/dependsOn:\s*\[dns,\s*dnsGates\.get\(host\)!\]/)
     expect(src).toMatch(/new DnsPropagationGate\(/)

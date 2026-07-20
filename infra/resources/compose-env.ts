@@ -39,13 +39,8 @@ function composePlaceholders(slug: string): string[] {
   return [...vars]
 }
 
-// Registry bindings: resolve `@{<slug>.<prop>}` templates from the registry's
-// `bindings` field. Supported properties:
-//   @{<slug>.url}: the service's public URL from the endpoint registry
-//   @{<slug>.privateIp}: the service's current-generation private-network IP
-//   @{<slug>.port}: the service's health/app port
-//   @{self.<prop>}: the consuming service's own values
-
+// Registry bindings resolve `@{<slug>.url|privateIp|port}` from endpoint data.
+// `@{self.<prop>}` resolves the consuming service's own value.
 const BINDING_RE = /@\{([a-z]+)\.([a-zA-Z]+)\}/g
 const endpointBySlug = new Map(endpoints.map((e) => [e.slug, e]))
 
@@ -117,7 +112,7 @@ export function createComposeEnvBuilder(currentGenBindingIp: CurrentGenBindingIp
     loopbackSlug?: ServiceName
   }
 
-  /** The service's own bindings, unioned — on the singleVM host — with every
+  /** The service's own bindings, unioned. On the singleVM host. With every
    *  folded worker's bindings (their env now lives on the host block, see
    *  publishCoHostedEnv). Conflicting templates for one var fail loudly. */
   function effectiveBindings(svc: ServiceDefinition): Record<string, EffectiveBinding> {
@@ -144,8 +139,8 @@ export function createComposeEnvBuilder(currentGenBindingIp: CurrentGenBindingIp
    *  but NOT active in this deploy (e.g. a disabled mcp). publishCoHostedEnv
    *  folds co-hosted env into the host block unconditionally (the compose file
    *  is shared across deploy modes), so the host's placeholder scan sees their
-   *  `${VAR}`s — but no in-process worker will ever read them, so one that is
-   *  otherwise unresolvable is skipped rather than fatal. */
+   *  `${VAR}`s: but no in-process worker will ever read them, so one that is
+   *  otherwise unresolvable is skipped because no in-process worker reads it. */
   function inactiveCoHostedVars(): Set<string> {
     const active = new Set((coHosting?.coHosted ?? []).map((s) => s.slug))
     const vars = new Set<string>()

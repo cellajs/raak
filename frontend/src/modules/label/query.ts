@@ -28,7 +28,7 @@ import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
-import { coalescePendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
+import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
@@ -54,10 +54,10 @@ const keys = {
     filtered: (organizationId: string, filters: LabelFilters) => ['label', 'list', organizationId, filters] as const,
   },
 };
-registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor) => {
+registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, pathPrefix) => {
   return getLabels({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, pathPrefix, limit: String(SYNC_CHUNK_SIZE) },
   });
 });
 export const labelQueryKeys = keys;
@@ -186,7 +186,7 @@ export const useLabelUpdateMutation = (tenantId: string, organizationId: string)
     },
     onMutate: async ({ id, ops }: UpdateLabelVars) => {
       // If there's a pending create for this entity, fold update ops into it
-      if (coalescePendingCreate(queryClient, keys.create, id, ops as Record<string, unknown>)) {
+      if (squashIntoPendingCreate(queryClient, keys.create, id, ops as Record<string, unknown>)) {
         return { coalesced: true };
       }
 

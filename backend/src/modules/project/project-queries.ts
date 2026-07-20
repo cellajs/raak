@@ -2,7 +2,7 @@ import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from '
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
-import { getEntityCountsSelect } from '#/modules/entities/helpers/get-entity-counts';
+import { getEntityCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';

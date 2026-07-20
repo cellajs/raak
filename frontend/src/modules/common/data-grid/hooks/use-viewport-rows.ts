@@ -1,12 +1,21 @@
 import { useMemo } from 'react';
 import { floor, max, min } from '../utils/grid-utils';
 
+/**
+ * Rows rendered while the layout is not yet measured (a single pre-paint render
+ * pass). Bounded so a large cached dataset doesn't render every row component
+ * on first paint; the real overscan window replaces it as soon as the layout
+ * effect commits its first measurement.
+ */
+const UNMEASURED_ROW_COUNT = 30;
+
 interface ViewportRowsArgs<R> {
   rows: readonly R[];
   rowHeight: number | ((row: R) => number);
   clientHeight: number;
   scrollTop: number;
   enableVirtualization: boolean;
+  measured: boolean;
 }
 
 export function useViewportRows<R>({
@@ -15,6 +24,7 @@ export function useViewportRows<R>({
   clientHeight,
   scrollTop,
   enableVirtualization,
+  measured,
 }: ViewportRowsArgs<R>) {
   const { totalRowHeight, gridTemplateRows, getRowTop, getRowHeight, findRowIdx } = useMemo(() => {
     if (typeof rowHeight === 'number') {
@@ -27,8 +37,8 @@ export function useViewportRows<R>({
       };
     }
 
-    // Heights of all rows are computed upfront — a known perf cost. Could adopt
-    // react-window's approach: https://github.com/bvaughn/react-window/blob/b0a470cc264e9100afcaa1b78ed59d88f7914ad4/src/VariableSizeList.js#L68
+    // Computing all row heights upfront is an accepted performance cost. For a variable-height
+    // indexing approach, see https://github.com/bvaughn/react-window/blob/b0a470cc264e9100afcaa1b78ed59d88f7914ad4/src/VariableSizeList.js#L68
     let totalRowHeight = 0;
     let gridTemplateRows = '';
     let currentHeight: number | null = null;
@@ -107,12 +117,17 @@ export function useViewportRows<R>({
   let rowOverscanStartIdx = 0;
   let rowOverscanEndIdx = rows.length - 1;
 
-  if (enableVirtualization && clientHeight > 0) {
-    const overscanThreshold = 4;
-    const rowVisibleStartIdx = findRowIdx(scrollTop);
-    const rowVisibleEndIdx = findRowIdx(scrollTop + clientHeight);
-    rowOverscanStartIdx = max(0, rowVisibleStartIdx - overscanThreshold);
-    rowOverscanEndIdx = min(rows.length - 1, rowVisibleEndIdx + overscanThreshold);
+  if (enableVirtualization) {
+    if (measured && clientHeight > 0) {
+      const overscanThreshold = 4;
+      const rowVisibleStartIdx = findRowIdx(scrollTop);
+      const rowVisibleEndIdx = findRowIdx(scrollTop + clientHeight);
+      rowOverscanStartIdx = max(0, rowVisibleStartIdx - overscanThreshold);
+      rowOverscanEndIdx = min(rows.length - 1, rowVisibleEndIdx + overscanThreshold);
+    } else {
+      // Layout not measured yet: render a bounded slice, not every row.
+      rowOverscanEndIdx = min(rows.length - 1, UNMEASURED_ROW_COUNT - 1);
+    }
   }
 
   return {

@@ -110,6 +110,10 @@
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
         },
+        "path": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "taskId": {
           "type": ["string", "null"],
           "required": true,
@@ -154,21 +158,21 @@
     },
     "description": "A product entity for file attachment metadata.",
     "example": {
-      "id": "1eb1a578-1a68-45a7-9ee9-b7e9b6c234f2",
-      "tenantId": "qnt152",
+      "id": "c23c36d8-1d96-4a7b-9dc8-27d21ba6fd64",
+      "tenantId": "mpmuhw",
       "entityType": "attachment",
       "name": "rightfully_lest_noted.mp3",
       "description": null,
-      "keywords": "vereor strenuus verecundia",
+      "keywords": "abscido beneficium crinis",
       "public": false,
       "bucketName": "attachments",
       "taskId": null,
       "groupId": null,
       "filename": "rightfully_lest_noted.mp3",
-      "contentType": "video/mp4",
+      "contentType": "image/webp",
       "convertedContentType": null,
-      "size": "7611296",
-      "originalKey": "uploads/fkyy8dwkbmpkeuemouu8t58r/rightfully_lest_noted.mp3",
+      "size": "9142077",
+      "originalKey": "uploads/x7d6csd6xo4nqwl7k09e163g/rightfully_lest_noted.mp3",
       "convertedKey": null,
       "thumbnailKey": null,
       "createdAt": "2024-10-12T12:26:26.417Z",
@@ -178,14 +182,15 @@
       "deletedAt": null,
       "deletedBy": null,
       "publicAt": null,
-      "seq": 123,
+      "seq": 311,
       "stx": {
-        "mutationId": "6d81d96a-7bdc-4827-9d21-ba6fd6449bad",
-        "sourceId": "e036cee3-625c-452e-ab1a-be9390460217",
+        "mutationId": "0841e0bb-2810-4252-8874-9789e1db3e97",
+        "sourceId": "e911b782-3199-4195-9377-499bdcbbdc07",
         "fieldTimestamps": {}
       },
-      "projectId": "0841e0bb-2810-4252-8874-9789e1db3e97",
-      "organizationId": "e911b782-3199-4195-9377-499bdcbbdc07"
+      "projectId": "1eb1a578-1a68-45a7-9ee9-b7e9b6c234f2",
+      "organizationId": "bad021eb-efc6-48ff-835e-959b96d6abdd",
+      "path": "bad021eb-efc6-48ff-835e-959b96d6abdd/1eb1a578-1a68-45a7-9ee9-b7e9b6c234f2"
     }
   },
   {
@@ -351,7 +356,8 @@
         "action": {
           "type": "string",
           "required": true,
-          "enum": ["create", "update", "delete"]
+          "description": "Change kind; moveOut = the row left this path (reparent) and is no longer readable there",
+          "enum": ["create", "update", "delete", "moveOut"]
         },
         "entityType": {
           "type": ["string", "null"],
@@ -361,7 +367,7 @@
         "resourceType": {
           "type": ["string", "null"],
           "required": true,
-          "enum": ["request", "membership", "inactive_membership", "tenant", null]
+          "enum": ["request", "membership", "inactive_membership", "tenant", "system_role", null]
         },
         "subjectId": {
           "type": ["string", "null"],
@@ -381,10 +387,15 @@
           "description": "Channel entity type for membership events (e.g. organization, project)",
           "enum": ["organization", "workspace", "project", null]
         },
+        "path": {
+          "type": ["string", "null"],
+          "required": true,
+          "description": "Materialized id-path of the affected rows (root-first ancestor ids); moveOut carries the OLD path"
+        },
         "seq": {
           "type": ["integer", "null"],
           "required": true,
-          "description": "Per-entityType sequence number used for gap detection in sync"
+          "description": "Org-sequence position (one order per organization, shared across product entity types)"
         },
         "channelId": {
           "type": ["string", "null"],
@@ -420,7 +431,17 @@
         "batchUntilSeq": {
           "type": ["integer", "null"],
           "required": true,
-          "description": "Last seq for a batched notification — client should fetch range"
+          "description": "Last sequence position for a batched notification — client should fetch range"
+        },
+        "count": {
+          "type": ["integer", "null"],
+          "required": true,
+          "description": "Authoritative row count for batches: sequence ranges of different paths may interleave"
+        },
+        "syncWindow": {
+          "type": ["integer", "null"],
+          "required": true,
+          "description": "Server-suggested spread window (ms) for the lazy delta fetch — scales with channel audience and load; the client clamps it between its eagerness tier bounds"
         },
         "propagation": {
           "type": ["object", "null"],
@@ -482,6 +503,7 @@
         "fieldTimestamps": {}
       },
       "batchUntilSeq": null,
+      "syncWindow": null,
       "propagation": null
     }
   },
@@ -530,6 +552,10 @@
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
         },
+        "path": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "color": {
           "type": ["string", "null"],
           "required": true,
@@ -574,27 +600,28 @@
     },
     "description": "A label used to categorize and filter tasks within a project or workspace.",
     "example": {
-      "id": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
+      "id": "6b6a3bb1-71c3-4caf-84a8-45a2b703d155",
       "entityType": "label",
       "name": "feature",
-      "description": "Suffragium culpo sollers canis sunt substantia.",
-      "keywords": "alter depulso animi",
-      "color": "#b4aef5",
+      "description": "Decerno deficio cupio spiculum depono.",
+      "keywords": "amplitudo atrox speciosus",
+      "color": "#e305dd",
       "publicAt": null,
-      "tenantId": "nk9bo5",
-      "projectId": "b703d155-2477-46a7-812a-a204ed050f29",
+      "tenantId": "1c1z4m",
+      "projectId": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
       "createdAt": "2024-11-19T06:50:38.211Z",
       "createdBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
       "updatedAt": "2024-11-19T06:50:38.211Z",
       "updatedBy": "c302ccce-62e7-414f-820c-b3ed49d919d4",
       "deletedAt": null,
       "deletedBy": null,
-      "seq": 217,
+      "seq": 43,
       "stx": {
-        "mutationId": "4735a9ad-a058-4dd1-a599-cf1d4b09243f",
-        "sourceId": "137ed700-bc3f-47cb-acdb-0bf3d32d3433",
+        "mutationId": "64735a9a-da05-48dd-b159-9cf1d4b09243",
+        "sourceId": "b137ed70-0bc3-4f7c-8bcd-b0bf3d32d343",
         "fieldTimestamps": {}
-      }
+      },
+      "path": null
     }
   },
   {
@@ -1249,6 +1276,10 @@
           "type": ["string", "null"],
           "required": true
         },
+        "path": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "shortName": {
           "type": ["string", "null"],
           "required": true,
@@ -1302,6 +1333,11 @@
           "maxLength": 1000000
         },
         "chatSupport": { "type": "boolean", "required": true },
+        "organizationFlags": {
+          "type": "object",
+          "required": true,
+          "properties": {}
+        },
         "included": {
           "type": "object",
           "required": true,
@@ -1463,6 +1499,7 @@
       "id": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
       "tenantId": "d1lgzb",
       "entityType": "organization",
+      "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
       "name": "Spencer, Pouros and Bergnaum",
       "slug": "spencer-pouros-and-bergnaum",
       "shortName": "Spencer,",
@@ -1478,6 +1515,7 @@
       "websiteUrl": "https://spencer-pouros-and-bergnaum.example",
       "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
       "chatSupport": true,
+      "organizationFlags": {},
       "publishedAt": "2024-12-25T15:04:42.969Z",
       "publicAt": null,
       "createdAt": "2024-12-25T15:04:42.969Z",
@@ -1599,6 +1637,10 @@
           "required": true
         },
         "publicAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
+        "path": {
           "type": ["string", "null"],
           "required": true
         },
@@ -1787,6 +1829,7 @@
       "createdBy": null,
       "updatedAt": "2024-12-23T15:24:26.607Z",
       "updatedBy": null,
+      "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
       "included": {
         "membership": {
           "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -1888,6 +1931,10 @@
           "required": true,
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
+        },
+        "path": {
+          "type": ["string", "null"],
+          "required": true
         },
         "expandable": { "type": "boolean", "required": true },
         "summary": { "type": "string", "required": true, "maxLength": 1000000 },
@@ -2054,39 +2101,40 @@
     },
     "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
     "example": {
-      "id": "46c222d9-8561-4f60-a76a-97e8fd23e552",
+      "id": "d4682055-05dc-4e85-9317-e6ffee6af29f",
       "entityType": "task",
-      "name": "Censura cubicularis desino arbustum adstringo consequatur cornu abutor.",
-      "description": "Totam tandem vester ipsam considero. Amicitia defessus utroque crux. Volutabrum vereor vesica creator spero volo articulus molestiae vilicus circumvenio.",
-      "keywords": "commodi crapula tamdiu",
-      "expandable": false,
-      "summary": "Desipio valetudo cupressus viridis venio sollicito arto esse decens ea.",
-      "summaryLength": 244,
+      "name": "Crapula tamdiu sulum facilis.",
+      "description": "Valetudo cupressus viridis venio sollicito arto esse. Ea depopulo voluptatem patruus speciosus apud. Cupio substantia derideo maiores campana.",
+      "keywords": "demoror speciosus aveho",
+      "expandable": true,
+      "summary": "Vinum vereor sollicito abbas demulceo.",
+      "summaryLength": 313,
       "variant": 3,
-      "points": 9,
-      "displayOrder": 139.68,
-      "status": 2,
+      "points": 12,
+      "displayOrder": 170.96,
+      "status": 0,
       "statusChangedAt": "2024-02-04T01:33:42.885Z",
-      "checkboxCount": 4,
-      "checkedCount": 4,
-      "attachmentCount": 2,
-      "labels": ["37a330fe-a07a-4e1e-a221-dd882eadd4ec", "a9337905-0b08-412d-9b19-a54314736788"],
-      "assignedTo": ["5846a17c-3d59-49e7-8096-c0d27dd6201a"],
+      "checkboxCount": 0,
+      "checkedCount": 5,
+      "attachmentCount": 4,
+      "labels": ["82eadd4e-c8a9-4337-9905-0b0812db19a5", "31473678-8585-4846-8a17-c3d599e7096c"],
+      "assignedTo": ["27dd6201-a0d8-468a-a323-19498e4bff65", "18c606d3-6797-4652-9e1b-a1149334ba09"],
       "publicAt": null,
-      "tenantId": "iein65",
-      "projectId": "319498e4-bff6-4591-88c6-06d36797652e",
+      "tenantId": "nase66",
+      "projectId": "46c222d9-8561-4f60-a76a-97e8fd23e552",
       "createdAt": "2024-02-04T01:33:42.885Z",
       "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
       "updatedAt": "2024-02-04T01:33:42.885Z",
       "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
       "deletedAt": null,
       "deletedBy": null,
-      "seq": 364,
+      "seq": 236,
       "stx": {
-        "mutationId": "a1149334-ba09-457a-a4c6-237f3b08a140",
-        "sourceId": "ebca91ac-453d-4a43-93be-ad8eb4aa03ef",
+        "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
+        "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
         "fieldTimestamps": {}
-      }
+      },
+      "path": null
     }
   },
   {
@@ -2120,7 +2168,7 @@
                 "apiPointsPerHour": {
                   "type": "integer",
                   "required": true,
-                  "description": "Max API points per hour per user within this tenant",
+                  "description": "Max API points per hour per user within this tenant (0 = no tenant limit; the global safety ceiling still applies)",
                   "minimum": 0
                 }
               }
@@ -2451,6 +2499,10 @@
           "type": ["string", "null"],
           "required": true
         },
+        "path": {
+          "type": ["string", "null"],
+          "required": true
+        },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "included": {
           "type": "object",
@@ -2576,6 +2628,7 @@
       "createdBy": null,
       "updatedAt": "2024-03-18T14:19:46.053Z",
       "updatedBy": null,
+      "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
       "included": {
         "membership": {
           "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",

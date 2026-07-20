@@ -7,6 +7,7 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { requestsTable } from '#/modules/requests/requests-db';
+import { systemRolesTable } from '#/modules/system/system-roles-db';
 import { tasksTable } from '#/modules/task/task-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { usersTable } from '#/modules/user/user-db';
@@ -42,6 +43,7 @@ export const resourceTables = {
   membership: membershipsTable,
   inactive_membership: inactiveMembershipsTable,
   tenant: tenantsTable,
+  system_role: systemRolesTable,
 } as const satisfies Record<string, TableWithId>;
 
 // Derived types from the table registries above

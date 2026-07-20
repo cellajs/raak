@@ -9,55 +9,55 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './__root'
-import { Route as PublicRouteRouteImport } from './_public/route'
 import { Route as AppRouteRouteImport } from './_app/route'
+import { Route as PublicRouteRouteImport } from './_public/route'
 import { Route as AppIndexRouteImport } from './_app/index'
-import { Route as PublicErrorRouteImport } from './_public/error'
-import { Route as AppWelcomeRouteImport } from './_app/welcome'
-import { Route as AppHomeRouteImport } from './_app/home'
 import { Route as AppAccountRouteImport } from './_app/account'
-import { Route as PublicAuthRouteRouteImport } from './_public/auth/route'
-import { Route as PublicContentRouteRouteImport } from './_public/_content/route'
+import { Route as AppHomeRouteImport } from './_app/home'
 import { Route as AppSystemRouteRouteImport } from './_app/system/route'
-import { Route as PublicAuthUnsubscribedRouteImport } from './_public/auth/unsubscribed'
-import { Route as PublicAuthSignOutRouteImport } from './_public/auth/sign-out'
-import { Route as PublicAuthMfaRouteImport } from './_public/auth/mfa'
-import { Route as PublicAuthErrorRouteImport } from './_public/auth/error'
-import { Route as PublicAuthAuthenticateRouteImport } from './_public/auth/authenticate'
-import { Route as PublicMarketingContactRouteImport } from './_public/_marketing/contact'
-import { Route as PublicMarketingAccessibilityRouteImport } from './_public/_marketing/accessibility'
-import { Route as PublicMarketingAboutRouteImport } from './_public/_marketing/about'
-import { Route as AppSystemUsersRouteImport } from './_app/system/users'
-import { Route as AppSystemTenantsRouteImport } from './_app/system/tenants'
-import { Route as AppSystemRequestsRouteImport } from './_app/system/requests'
-import { Route as AppSystemOrganizationsRouteImport } from './_app/system/organizations'
-import { Route as PublicContentDocsRouteRouteImport } from './_public/_content/docs/route'
+import { Route as AppWelcomeRouteImport } from './_app/welcome'
+import { Route as PublicContentRouteRouteImport } from './_public/_content/route'
+import { Route as PublicAuthRouteRouteImport } from './_public/auth/route'
+import { Route as PublicErrorRouteImport } from './_public/error'
 import { Route as AppTenantIdOrganizationSlugRouteRouteImport } from './_app/$tenantId.$organizationSlug/route'
-import { Route as PublicMarketingLegalIndexRouteImport } from './_public/_marketing/legal.index'
-import { Route as PublicContentDocsIndexRouteImport } from './_public/_content/docs/index'
-import { Route as PublicAuthEmailVerificationReasonRouteImport } from './_public/auth/email-verification.$reason'
-import { Route as PublicMarketingLegalSubjectRouteImport } from './_public/_marketing/legal.$subject'
-import { Route as PublicContentTIdRouteImport } from './_public/_content/t.$id'
-import { Route as PublicContentDocsSchemasRouteImport } from './_public/_content/docs/schemas'
-import { Route as PublicContentDocsPagesRouteImport } from './_public/_content/docs/pages'
-import { Route as PublicContentDocsOverviewRouteImport } from './_public/_content/docs/overview'
-import { Route as PublicContentDocsOperationsRouteImport } from './_public/_content/docs/operations'
+import { Route as AppSystemOrganizationsRouteImport } from './_app/system/organizations'
+import { Route as AppSystemRequestsRouteImport } from './_app/system/requests'
+import { Route as AppSystemTenantsRouteImport } from './_app/system/tenants'
+import { Route as AppSystemUsersRouteImport } from './_app/system/users'
+import { Route as PublicContentDocsRouteRouteImport } from './_public/_content/docs/route'
+import { Route as PublicMarketingAboutRouteImport } from './_public/_marketing/about'
+import { Route as PublicMarketingAccessibilityRouteImport } from './_public/_marketing/accessibility'
+import { Route as PublicMarketingContactRouteImport } from './_public/_marketing/contact'
+import { Route as PublicAuthAuthenticateRouteImport } from './_public/auth/authenticate'
+import { Route as PublicAuthErrorRouteImport } from './_public/auth/error'
+import { Route as PublicAuthMfaRouteImport } from './_public/auth/mfa'
+import { Route as PublicAuthSignOutRouteImport } from './_public/auth/sign-out'
+import { Route as PublicAuthUnsubscribedRouteImport } from './_public/auth/unsubscribed'
 import { Route as AppTenantIdOrganizationSlugOrganizationRouteRouteImport } from './_app/$tenantId.$organizationSlug/organization/route'
-import { Route as PublicContentDocsPageSplatRouteImport } from './_public/_content/docs/page.$'
-import { Route as PublicContentDocsOperationsTableRouteImport } from './_public/_content/docs/operations_.table'
-import { Route as AppTenantIdOrganizationSlugWorkspaceSlugRouteImport } from './_app/$tenantId.$organizationSlug/workspace.$slug'
-import { Route as AppTenantIdOrganizationSlugProjectSlugRouteImport } from './_app/$tenantId.$organizationSlug/project.$slug'
-import { Route as AppTenantIdOrganizationSlugOrganizationSettingsRouteImport } from './_app/$tenantId.$organizationSlug/organization/settings'
-import { Route as AppTenantIdOrganizationSlugOrganizationMembersRouteImport } from './_app/$tenantId.$organizationSlug/organization/members'
+import { Route as PublicContentDocsIndexRouteImport } from './_public/_content/docs/index'
+import { Route as PublicContentDocsOperationsRouteImport } from './_public/_content/docs/operations'
+import { Route as PublicContentDocsOverviewRouteImport } from './_public/_content/docs/overview'
+import { Route as PublicContentDocsPagesRouteImport } from './_public/_content/docs/pages'
+import { Route as PublicContentDocsSchemasRouteImport } from './_public/_content/docs/schemas'
+import { Route as PublicContentTIdRouteImport } from './_public/_content/t.$id'
+import { Route as PublicMarketingLegalIndexRouteImport } from './_public/_marketing/legal.index'
+import { Route as PublicMarketingLegalSubjectRouteImport } from './_public/_marketing/legal.$subject'
+import { Route as PublicAuthEmailVerificationReasonRouteImport } from './_public/auth/email-verification.$reason'
 import { Route as AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport } from './_app/$tenantId.$organizationSlug/organization/attachments'
+import { Route as AppTenantIdOrganizationSlugOrganizationMembersRouteImport } from './_app/$tenantId.$organizationSlug/organization/members'
+import { Route as AppTenantIdOrganizationSlugOrganizationSettingsRouteImport } from './_app/$tenantId.$organizationSlug/organization/settings'
+import { Route as AppTenantIdOrganizationSlugProjectSlugRouteImport } from './_app/$tenantId.$organizationSlug/project.$slug'
+import { Route as AppTenantIdOrganizationSlugWorkspaceSlugRouteImport } from './_app/$tenantId.$organizationSlug/workspace.$slug'
+import { Route as PublicContentDocsOperationsTableRouteImport } from './_public/_content/docs/operations_.table'
+import { Route as PublicContentDocsPageSplatRouteImport } from './_public/_content/docs/page.$'
 import { Route as PublicContentTenantIdOrganizationSlugPublicProjectSlugRouteImport } from './_public/_content/$tenantId.$organizationSlug.public.project.$slug'
 
-const PublicRouteRoute = PublicRouteRouteImport.update({
-  id: '/_public',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicRouteRoute = PublicRouteRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -65,14 +65,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const PublicErrorRoute = PublicErrorRouteImport.update({
-  id: '/error',
-  path: '/error',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const AppWelcomeRoute = AppWelcomeRouteImport.update({
-  id: '/welcome',
-  path: '/welcome',
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppHomeRoute = AppHomeRouteImport.update({
@@ -80,53 +75,64 @@ const AppHomeRoute = AppHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppAccountRoute = AppAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+const AppSystemRouteRoute = AppSystemRouteRouteImport.update({
+  id: '/system',
+  path: '/system',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const AppWelcomeRoute = AppWelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const PublicContentRouteRoute = PublicContentRouteRouteImport.update({
+  id: '/_content',
+  getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicAuthRouteRoute = PublicAuthRouteRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const PublicContentRouteRoute = PublicContentRouteRouteImport.update({
-  id: '/_content',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const AppSystemRouteRoute = AppSystemRouteRouteImport.update({
-  id: '/system',
-  path: '/system',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const PublicAuthUnsubscribedRoute = PublicAuthUnsubscribedRouteImport.update({
-  id: '/unsubscribed',
-  path: '/unsubscribed',
-  getParentRoute: () => PublicAuthRouteRoute,
-} as any)
-const PublicAuthSignOutRoute = PublicAuthSignOutRouteImport.update({
-  id: '/sign-out',
-  path: '/sign-out',
-  getParentRoute: () => PublicAuthRouteRoute,
-} as any)
-const PublicAuthMfaRoute = PublicAuthMfaRouteImport.update({
-  id: '/mfa',
-  path: '/mfa',
-  getParentRoute: () => PublicAuthRouteRoute,
-} as any)
-const PublicAuthErrorRoute = PublicAuthErrorRouteImport.update({
+const PublicErrorRoute = PublicErrorRouteImport.update({
   id: '/error',
   path: '/error',
-  getParentRoute: () => PublicAuthRouteRoute,
+  getParentRoute: () => PublicRouteRoute,
 } as any)
-const PublicAuthAuthenticateRoute = PublicAuthAuthenticateRouteImport.update({
-  id: '/authenticate',
-  path: '/authenticate',
-  getParentRoute: () => PublicAuthRouteRoute,
+const AppTenantIdOrganizationSlugRouteRoute =
+  AppTenantIdOrganizationSlugRouteRouteImport.update({
+    id: '/$tenantId/$organizationSlug',
+    path: '/$tenantId/$organizationSlug',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
+const AppSystemOrganizationsRoute = AppSystemOrganizationsRouteImport.update({
+  id: '/organizations',
+  path: '/organizations',
+  getParentRoute: () => AppSystemRouteRoute,
 } as any)
-const PublicMarketingContactRoute = PublicMarketingContactRouteImport.update({
-  id: '/_marketing/contact',
-  path: '/contact',
+const AppSystemRequestsRoute = AppSystemRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => AppSystemRouteRoute,
+} as any)
+const AppSystemTenantsRoute = AppSystemTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
+  getParentRoute: () => AppSystemRouteRoute,
+} as any)
+const AppSystemUsersRoute = AppSystemUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppSystemRouteRoute,
+} as any)
+const PublicContentDocsRouteRoute = PublicContentDocsRouteRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => PublicContentRouteRoute,
+} as any)
+const PublicMarketingAboutRoute = PublicMarketingAboutRouteImport.update({
+  id: '/_marketing/about',
+  path: '/about',
   getParentRoute: () => PublicRouteRoute,
 } as any)
 const PublicMarketingAccessibilityRoute =
@@ -135,74 +141,57 @@ const PublicMarketingAccessibilityRoute =
     path: '/accessibility',
     getParentRoute: () => PublicRouteRoute,
   } as any)
-const PublicMarketingAboutRoute = PublicMarketingAboutRouteImport.update({
-  id: '/_marketing/about',
-  path: '/about',
+const PublicMarketingContactRoute = PublicMarketingContactRouteImport.update({
+  id: '/_marketing/contact',
+  path: '/contact',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const AppSystemUsersRoute = AppSystemUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AppSystemRouteRoute,
+const PublicAuthAuthenticateRoute = PublicAuthAuthenticateRouteImport.update({
+  id: '/authenticate',
+  path: '/authenticate',
+  getParentRoute: () => PublicAuthRouteRoute,
 } as any)
-const AppSystemTenantsRoute = AppSystemTenantsRouteImport.update({
-  id: '/tenants',
-  path: '/tenants',
-  getParentRoute: () => AppSystemRouteRoute,
+const PublicAuthErrorRoute = PublicAuthErrorRouteImport.update({
+  id: '/error',
+  path: '/error',
+  getParentRoute: () => PublicAuthRouteRoute,
 } as any)
-const AppSystemRequestsRoute = AppSystemRequestsRouteImport.update({
-  id: '/requests',
-  path: '/requests',
-  getParentRoute: () => AppSystemRouteRoute,
+const PublicAuthMfaRoute = PublicAuthMfaRouteImport.update({
+  id: '/mfa',
+  path: '/mfa',
+  getParentRoute: () => PublicAuthRouteRoute,
 } as any)
-const AppSystemOrganizationsRoute = AppSystemOrganizationsRouteImport.update({
-  id: '/organizations',
-  path: '/organizations',
-  getParentRoute: () => AppSystemRouteRoute,
+const PublicAuthSignOutRoute = PublicAuthSignOutRouteImport.update({
+  id: '/sign-out',
+  path: '/sign-out',
+  getParentRoute: () => PublicAuthRouteRoute,
 } as any)
-const PublicContentDocsRouteRoute = PublicContentDocsRouteRouteImport.update({
-  id: '/docs',
-  path: '/docs',
-  getParentRoute: () => PublicContentRouteRoute,
+const PublicAuthUnsubscribedRoute = PublicAuthUnsubscribedRouteImport.update({
+  id: '/unsubscribed',
+  path: '/unsubscribed',
+  getParentRoute: () => PublicAuthRouteRoute,
 } as any)
-const AppTenantIdOrganizationSlugRouteRoute =
-  AppTenantIdOrganizationSlugRouteRouteImport.update({
-    id: '/$tenantId/$organizationSlug',
-    path: '/$tenantId/$organizationSlug',
-    getParentRoute: () => AppRouteRoute,
-  } as any)
-const PublicMarketingLegalIndexRoute =
-  PublicMarketingLegalIndexRouteImport.update({
-    id: '/_marketing/legal/',
-    path: '/legal/',
-    getParentRoute: () => PublicRouteRoute,
+const AppTenantIdOrganizationSlugOrganizationRouteRoute =
+  AppTenantIdOrganizationSlugOrganizationRouteRouteImport.update({
+    id: '/organization',
+    path: '/organization',
+    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
   } as any)
 const PublicContentDocsIndexRoute = PublicContentDocsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicContentDocsRouteRoute,
 } as any)
-const PublicAuthEmailVerificationReasonRoute =
-  PublicAuthEmailVerificationReasonRouteImport.update({
-    id: '/email-verification/$reason',
-    path: '/email-verification/$reason',
-    getParentRoute: () => PublicAuthRouteRoute,
+const PublicContentDocsOperationsRoute =
+  PublicContentDocsOperationsRouteImport.update({
+    id: '/operations',
+    path: '/operations',
+    getParentRoute: () => PublicContentDocsRouteRoute,
   } as any)
-const PublicMarketingLegalSubjectRoute =
-  PublicMarketingLegalSubjectRouteImport.update({
-    id: '/_marketing/legal/$subject',
-    path: '/legal/$subject',
-    getParentRoute: () => PublicRouteRoute,
-  } as any)
-const PublicContentTIdRoute = PublicContentTIdRouteImport.update({
-  id: '/t/$id',
-  path: '/t/$id',
-  getParentRoute: () => PublicContentRouteRoute,
-} as any)
-const PublicContentDocsSchemasRoute =
-  PublicContentDocsSchemasRouteImport.update({
-    id: '/schemas',
-    path: '/schemas',
+const PublicContentDocsOverviewRoute =
+  PublicContentDocsOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
     getParentRoute: () => PublicContentDocsRouteRoute,
   } as any)
 const PublicContentDocsPagesRoute = PublicContentDocsPagesRouteImport.update({
@@ -210,52 +199,39 @@ const PublicContentDocsPagesRoute = PublicContentDocsPagesRouteImport.update({
   path: '/pages',
   getParentRoute: () => PublicContentDocsRouteRoute,
 } as any)
-const PublicContentDocsOverviewRoute =
-  PublicContentDocsOverviewRouteImport.update({
-    id: '/overview',
-    path: '/overview',
+const PublicContentDocsSchemasRoute =
+  PublicContentDocsSchemasRouteImport.update({
+    id: '/schemas',
+    path: '/schemas',
     getParentRoute: () => PublicContentDocsRouteRoute,
   } as any)
-const PublicContentDocsOperationsRoute =
-  PublicContentDocsOperationsRouteImport.update({
-    id: '/operations',
-    path: '/operations',
-    getParentRoute: () => PublicContentDocsRouteRoute,
+const PublicContentTIdRoute = PublicContentTIdRouteImport.update({
+  id: '/t/$id',
+  path: '/t/$id',
+  getParentRoute: () => PublicContentRouteRoute,
+} as any)
+const PublicMarketingLegalIndexRoute =
+  PublicMarketingLegalIndexRouteImport.update({
+    id: '/_marketing/legal/',
+    path: '/legal/',
+    getParentRoute: () => PublicRouteRoute,
   } as any)
-const AppTenantIdOrganizationSlugOrganizationRouteRoute =
-  AppTenantIdOrganizationSlugOrganizationRouteRouteImport.update({
-    id: '/organization',
-    path: '/organization',
-    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
+const PublicMarketingLegalSubjectRoute =
+  PublicMarketingLegalSubjectRouteImport.update({
+    id: '/_marketing/legal/$subject',
+    path: '/legal/$subject',
+    getParentRoute: () => PublicRouteRoute,
   } as any)
-const PublicContentDocsPageSplatRoute =
-  PublicContentDocsPageSplatRouteImport.update({
-    id: '/page/$',
-    path: '/page/$',
-    getParentRoute: () => PublicContentDocsRouteRoute,
+const PublicAuthEmailVerificationReasonRoute =
+  PublicAuthEmailVerificationReasonRouteImport.update({
+    id: '/email-verification/$reason',
+    path: '/email-verification/$reason',
+    getParentRoute: () => PublicAuthRouteRoute,
   } as any)
-const PublicContentDocsOperationsTableRoute =
-  PublicContentDocsOperationsTableRouteImport.update({
-    id: '/operations_/table',
-    path: '/operations/table',
-    getParentRoute: () => PublicContentDocsRouteRoute,
-  } as any)
-const AppTenantIdOrganizationSlugWorkspaceSlugRoute =
-  AppTenantIdOrganizationSlugWorkspaceSlugRouteImport.update({
-    id: '/workspace/$slug',
-    path: '/workspace/$slug',
-    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
-  } as any)
-const AppTenantIdOrganizationSlugProjectSlugRoute =
-  AppTenantIdOrganizationSlugProjectSlugRouteImport.update({
-    id: '/project/$slug',
-    path: '/project/$slug',
-    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
-  } as any)
-const AppTenantIdOrganizationSlugOrganizationSettingsRoute =
-  AppTenantIdOrganizationSlugOrganizationSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+const AppTenantIdOrganizationSlugOrganizationAttachmentsRoute =
+  AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport.update({
+    id: '/attachments',
+    path: '/attachments',
     getParentRoute: () => AppTenantIdOrganizationSlugOrganizationRouteRoute,
   } as any)
 const AppTenantIdOrganizationSlugOrganizationMembersRoute =
@@ -264,11 +240,35 @@ const AppTenantIdOrganizationSlugOrganizationMembersRoute =
     path: '/members',
     getParentRoute: () => AppTenantIdOrganizationSlugOrganizationRouteRoute,
   } as any)
-const AppTenantIdOrganizationSlugOrganizationAttachmentsRoute =
-  AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport.update({
-    id: '/attachments',
-    path: '/attachments',
+const AppTenantIdOrganizationSlugOrganizationSettingsRoute =
+  AppTenantIdOrganizationSlugOrganizationSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AppTenantIdOrganizationSlugOrganizationRouteRoute,
+  } as any)
+const AppTenantIdOrganizationSlugProjectSlugRoute =
+  AppTenantIdOrganizationSlugProjectSlugRouteImport.update({
+    id: '/project/$slug',
+    path: '/project/$slug',
+    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
+  } as any)
+const AppTenantIdOrganizationSlugWorkspaceSlugRoute =
+  AppTenantIdOrganizationSlugWorkspaceSlugRouteImport.update({
+    id: '/workspace/$slug',
+    path: '/workspace/$slug',
+    getParentRoute: () => AppTenantIdOrganizationSlugRouteRoute,
+  } as any)
+const PublicContentDocsOperationsTableRoute =
+  PublicContentDocsOperationsTableRouteImport.update({
+    id: '/operations_/table',
+    path: '/operations/table',
+    getParentRoute: () => PublicContentDocsRouteRoute,
+  } as any)
+const PublicContentDocsPageSplatRoute =
+  PublicContentDocsPageSplatRouteImport.update({
+    id: '/page/$',
+    path: '/page/$',
+    getParentRoute: () => PublicContentDocsRouteRoute,
   } as any)
 const PublicContentTenantIdOrganizationSlugPublicProjectSlugRoute =
   PublicContentTenantIdOrganizationSlugPublicProjectSlugRouteImport.update({
@@ -538,18 +538,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_public': {
-      id: '/_public'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof PublicRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PublicRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -559,18 +559,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_public/error': {
-      id: '/_public/error'
-      path: '/error'
-      fullPath: '/error'
-      preLoaderRoute: typeof PublicErrorRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_app/welcome': {
-      id: '/_app/welcome'
-      path: '/welcome'
-      fullPath: '/welcome'
-      preLoaderRoute: typeof AppWelcomeRouteImport
+    '/_app/account': {
+      id: '/_app/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/home': {
@@ -580,19 +573,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppHomeRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/account': {
-      id: '/_app/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AppAccountRouteImport
+    '/_app/system': {
+      id: '/_app/system'
+      path: '/system'
+      fullPath: '/system'
+      preLoaderRoute: typeof AppSystemRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_public/auth': {
-      id: '/_public/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof PublicAuthRouteRouteImport
-      parentRoute: typeof PublicRouteRoute
+    '/_app/welcome': {
+      id: '/_app/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof AppWelcomeRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/_public/_content': {
       id: '/_public/_content'
@@ -601,81 +594,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicContentRouteRouteImport
       parentRoute: typeof PublicRouteRoute
     }
-    '/_app/system': {
-      id: '/_app/system'
-      path: '/system'
-      fullPath: '/system'
-      preLoaderRoute: typeof AppSystemRouteRouteImport
+    '/_public/auth': {
+      id: '/_public/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof PublicAuthRouteRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/error': {
+      id: '/_public/error'
+      path: '/error'
+      fullPath: '/error'
+      preLoaderRoute: typeof PublicErrorRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_app/$tenantId/$organizationSlug': {
+      id: '/_app/$tenantId/$organizationSlug'
+      path: '/$tenantId/$organizationSlug'
+      fullPath: '/$tenantId/$organizationSlug'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_public/auth/unsubscribed': {
-      id: '/_public/auth/unsubscribed'
-      path: '/unsubscribed'
-      fullPath: '/auth/unsubscribed'
-      preLoaderRoute: typeof PublicAuthUnsubscribedRouteImport
-      parentRoute: typeof PublicAuthRouteRoute
-    }
-    '/_public/auth/sign-out': {
-      id: '/_public/auth/sign-out'
-      path: '/sign-out'
-      fullPath: '/auth/sign-out'
-      preLoaderRoute: typeof PublicAuthSignOutRouteImport
-      parentRoute: typeof PublicAuthRouteRoute
-    }
-    '/_public/auth/mfa': {
-      id: '/_public/auth/mfa'
-      path: '/mfa'
-      fullPath: '/auth/mfa'
-      preLoaderRoute: typeof PublicAuthMfaRouteImport
-      parentRoute: typeof PublicAuthRouteRoute
-    }
-    '/_public/auth/error': {
-      id: '/_public/auth/error'
-      path: '/error'
-      fullPath: '/auth/error'
-      preLoaderRoute: typeof PublicAuthErrorRouteImport
-      parentRoute: typeof PublicAuthRouteRoute
-    }
-    '/_public/auth/authenticate': {
-      id: '/_public/auth/authenticate'
-      path: '/authenticate'
-      fullPath: '/auth/authenticate'
-      preLoaderRoute: typeof PublicAuthAuthenticateRouteImport
-      parentRoute: typeof PublicAuthRouteRoute
-    }
-    '/_public/_marketing/contact': {
-      id: '/_public/_marketing/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof PublicMarketingContactRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/_marketing/accessibility': {
-      id: '/_public/_marketing/accessibility'
-      path: '/accessibility'
-      fullPath: '/accessibility'
-      preLoaderRoute: typeof PublicMarketingAccessibilityRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/_marketing/about': {
-      id: '/_public/_marketing/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof PublicMarketingAboutRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_app/system/users': {
-      id: '/_app/system/users'
-      path: '/users'
-      fullPath: '/system/users'
-      preLoaderRoute: typeof AppSystemUsersRouteImport
-      parentRoute: typeof AppSystemRouteRoute
-    }
-    '/_app/system/tenants': {
-      id: '/_app/system/tenants'
-      path: '/tenants'
-      fullPath: '/system/tenants'
-      preLoaderRoute: typeof AppSystemTenantsRouteImport
+    '/_app/system/organizations': {
+      id: '/_app/system/organizations'
+      path: '/organizations'
+      fullPath: '/system/organizations'
+      preLoaderRoute: typeof AppSystemOrganizationsRouteImport
       parentRoute: typeof AppSystemRouteRoute
     }
     '/_app/system/requests': {
@@ -685,11 +629,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSystemRequestsRouteImport
       parentRoute: typeof AppSystemRouteRoute
     }
-    '/_app/system/organizations': {
-      id: '/_app/system/organizations'
-      path: '/organizations'
-      fullPath: '/system/organizations'
-      preLoaderRoute: typeof AppSystemOrganizationsRouteImport
+    '/_app/system/tenants': {
+      id: '/_app/system/tenants'
+      path: '/tenants'
+      fullPath: '/system/tenants'
+      preLoaderRoute: typeof AppSystemTenantsRouteImport
+      parentRoute: typeof AppSystemRouteRoute
+    }
+    '/_app/system/users': {
+      id: '/_app/system/users'
+      path: '/users'
+      fullPath: '/system/users'
+      preLoaderRoute: typeof AppSystemUsersRouteImport
       parentRoute: typeof AppSystemRouteRoute
     }
     '/_public/_content/docs': {
@@ -699,67 +650,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicContentDocsRouteRouteImport
       parentRoute: typeof PublicContentRouteRoute
     }
-    '/_app/$tenantId/$organizationSlug': {
-      id: '/_app/$tenantId/$organizationSlug'
-      path: '/$tenantId/$organizationSlug'
-      fullPath: '/$tenantId/$organizationSlug'
-      preLoaderRoute: typeof AppTenantIdOrganizationSlugRouteRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_public/_marketing/legal/': {
-      id: '/_public/_marketing/legal/'
-      path: '/legal'
-      fullPath: '/legal/'
-      preLoaderRoute: typeof PublicMarketingLegalIndexRouteImport
+    '/_public/_marketing/about': {
+      id: '/_public/_marketing/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof PublicMarketingAboutRouteImport
       parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/_marketing/accessibility': {
+      id: '/_public/_marketing/accessibility'
+      path: '/accessibility'
+      fullPath: '/accessibility'
+      preLoaderRoute: typeof PublicMarketingAccessibilityRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/_marketing/contact': {
+      id: '/_public/_marketing/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof PublicMarketingContactRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/auth/authenticate': {
+      id: '/_public/auth/authenticate'
+      path: '/authenticate'
+      fullPath: '/auth/authenticate'
+      preLoaderRoute: typeof PublicAuthAuthenticateRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
+    '/_public/auth/error': {
+      id: '/_public/auth/error'
+      path: '/error'
+      fullPath: '/auth/error'
+      preLoaderRoute: typeof PublicAuthErrorRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
+    '/_public/auth/mfa': {
+      id: '/_public/auth/mfa'
+      path: '/mfa'
+      fullPath: '/auth/mfa'
+      preLoaderRoute: typeof PublicAuthMfaRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
+    '/_public/auth/sign-out': {
+      id: '/_public/auth/sign-out'
+      path: '/sign-out'
+      fullPath: '/auth/sign-out'
+      preLoaderRoute: typeof PublicAuthSignOutRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
+    '/_public/auth/unsubscribed': {
+      id: '/_public/auth/unsubscribed'
+      path: '/unsubscribed'
+      fullPath: '/auth/unsubscribed'
+      preLoaderRoute: typeof PublicAuthUnsubscribedRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
+    '/_app/$tenantId/$organizationSlug/organization': {
+      id: '/_app/$tenantId/$organizationSlug/organization'
+      path: '/organization'
+      fullPath: '/$tenantId/$organizationSlug/organization'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRouteImport
+      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
     }
     '/_public/_content/docs/': {
       id: '/_public/_content/docs/'
       path: '/'
       fullPath: '/docs/'
       preLoaderRoute: typeof PublicContentDocsIndexRouteImport
-      parentRoute: typeof PublicContentDocsRouteRoute
-    }
-    '/_public/auth/email-verification/$reason': {
-      id: '/_public/auth/email-verification/$reason'
-      path: '/email-verification/$reason'
-      fullPath: '/auth/email-verification/$reason'
-      preLoaderRoute: typeof PublicAuthEmailVerificationReasonRouteImport
-      parentRoute: typeof PublicAuthRouteRoute
-    }
-    '/_public/_marketing/legal/$subject': {
-      id: '/_public/_marketing/legal/$subject'
-      path: '/legal/$subject'
-      fullPath: '/legal/$subject'
-      preLoaderRoute: typeof PublicMarketingLegalSubjectRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/_content/t/$id': {
-      id: '/_public/_content/t/$id'
-      path: '/t/$id'
-      fullPath: '/t/$id'
-      preLoaderRoute: typeof PublicContentTIdRouteImport
-      parentRoute: typeof PublicContentRouteRoute
-    }
-    '/_public/_content/docs/schemas': {
-      id: '/_public/_content/docs/schemas'
-      path: '/schemas'
-      fullPath: '/docs/schemas'
-      preLoaderRoute: typeof PublicContentDocsSchemasRouteImport
-      parentRoute: typeof PublicContentDocsRouteRoute
-    }
-    '/_public/_content/docs/pages': {
-      id: '/_public/_content/docs/pages'
-      path: '/pages'
-      fullPath: '/docs/pages'
-      preLoaderRoute: typeof PublicContentDocsPagesRouteImport
-      parentRoute: typeof PublicContentDocsRouteRoute
-    }
-    '/_public/_content/docs/overview': {
-      id: '/_public/_content/docs/overview'
-      path: '/overview'
-      fullPath: '/docs/overview'
-      preLoaderRoute: typeof PublicContentDocsOverviewRouteImport
       parentRoute: typeof PublicContentDocsRouteRoute
     }
     '/_public/_content/docs/operations': {
@@ -769,46 +727,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicContentDocsOperationsRouteImport
       parentRoute: typeof PublicContentDocsRouteRoute
     }
-    '/_app/$tenantId/$organizationSlug/organization': {
-      id: '/_app/$tenantId/$organizationSlug/organization'
-      path: '/organization'
-      fullPath: '/$tenantId/$organizationSlug/organization'
-      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRouteImport
-      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
-    }
-    '/_public/_content/docs/page/$': {
-      id: '/_public/_content/docs/page/$'
-      path: '/page/$'
-      fullPath: '/docs/page/$'
-      preLoaderRoute: typeof PublicContentDocsPageSplatRouteImport
+    '/_public/_content/docs/overview': {
+      id: '/_public/_content/docs/overview'
+      path: '/overview'
+      fullPath: '/docs/overview'
+      preLoaderRoute: typeof PublicContentDocsOverviewRouteImport
       parentRoute: typeof PublicContentDocsRouteRoute
     }
-    '/_public/_content/docs/operations_/table': {
-      id: '/_public/_content/docs/operations_/table'
-      path: '/operations/table'
-      fullPath: '/docs/operations/table'
-      preLoaderRoute: typeof PublicContentDocsOperationsTableRouteImport
+    '/_public/_content/docs/pages': {
+      id: '/_public/_content/docs/pages'
+      path: '/pages'
+      fullPath: '/docs/pages'
+      preLoaderRoute: typeof PublicContentDocsPagesRouteImport
       parentRoute: typeof PublicContentDocsRouteRoute
     }
-    '/_app/$tenantId/$organizationSlug/workspace/$slug': {
-      id: '/_app/$tenantId/$organizationSlug/workspace/$slug'
-      path: '/workspace/$slug'
-      fullPath: '/$tenantId/$organizationSlug/workspace/$slug'
-      preLoaderRoute: typeof AppTenantIdOrganizationSlugWorkspaceSlugRouteImport
-      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
+    '/_public/_content/docs/schemas': {
+      id: '/_public/_content/docs/schemas'
+      path: '/schemas'
+      fullPath: '/docs/schemas'
+      preLoaderRoute: typeof PublicContentDocsSchemasRouteImport
+      parentRoute: typeof PublicContentDocsRouteRoute
     }
-    '/_app/$tenantId/$organizationSlug/project/$slug': {
-      id: '/_app/$tenantId/$organizationSlug/project/$slug'
-      path: '/project/$slug'
-      fullPath: '/$tenantId/$organizationSlug/project/$slug'
-      preLoaderRoute: typeof AppTenantIdOrganizationSlugProjectSlugRouteImport
-      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
+    '/_public/_content/t/$id': {
+      id: '/_public/_content/t/$id'
+      path: '/t/$id'
+      fullPath: '/t/$id'
+      preLoaderRoute: typeof PublicContentTIdRouteImport
+      parentRoute: typeof PublicContentRouteRoute
     }
-    '/_app/$tenantId/$organizationSlug/organization/settings': {
-      id: '/_app/$tenantId/$organizationSlug/organization/settings'
-      path: '/settings'
-      fullPath: '/$tenantId/$organizationSlug/organization/settings'
-      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationSettingsRouteImport
+    '/_public/_marketing/legal/': {
+      id: '/_public/_marketing/legal/'
+      path: '/legal'
+      fullPath: '/legal/'
+      preLoaderRoute: typeof PublicMarketingLegalIndexRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/_marketing/legal/$subject': {
+      id: '/_public/_marketing/legal/$subject'
+      path: '/legal/$subject'
+      fullPath: '/legal/$subject'
+      preLoaderRoute: typeof PublicMarketingLegalSubjectRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/auth/email-verification/$reason': {
+      id: '/_public/auth/email-verification/$reason'
+      path: '/email-verification/$reason'
+      fullPath: '/auth/email-verification/$reason'
+      preLoaderRoute: typeof PublicAuthEmailVerificationReasonRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
+    '/_app/$tenantId/$organizationSlug/organization/attachments': {
+      id: '/_app/$tenantId/$organizationSlug/organization/attachments'
+      path: '/attachments'
+      fullPath: '/$tenantId/$organizationSlug/organization/attachments'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport
       parentRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRoute
     }
     '/_app/$tenantId/$organizationSlug/organization/members': {
@@ -818,12 +790,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationMembersRouteImport
       parentRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRoute
     }
-    '/_app/$tenantId/$organizationSlug/organization/attachments': {
-      id: '/_app/$tenantId/$organizationSlug/organization/attachments'
-      path: '/attachments'
-      fullPath: '/$tenantId/$organizationSlug/organization/attachments'
-      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport
+    '/_app/$tenantId/$organizationSlug/organization/settings': {
+      id: '/_app/$tenantId/$organizationSlug/organization/settings'
+      path: '/settings'
+      fullPath: '/$tenantId/$organizationSlug/organization/settings'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationSettingsRouteImport
       parentRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRoute
+    }
+    '/_app/$tenantId/$organizationSlug/project/$slug': {
+      id: '/_app/$tenantId/$organizationSlug/project/$slug'
+      path: '/project/$slug'
+      fullPath: '/$tenantId/$organizationSlug/project/$slug'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugProjectSlugRouteImport
+      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
+    }
+    '/_app/$tenantId/$organizationSlug/workspace/$slug': {
+      id: '/_app/$tenantId/$organizationSlug/workspace/$slug'
+      path: '/workspace/$slug'
+      fullPath: '/$tenantId/$organizationSlug/workspace/$slug'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugWorkspaceSlugRouteImport
+      parentRoute: typeof AppTenantIdOrganizationSlugRouteRoute
+    }
+    '/_public/_content/docs/operations_/table': {
+      id: '/_public/_content/docs/operations_/table'
+      path: '/operations/table'
+      fullPath: '/docs/operations/table'
+      preLoaderRoute: typeof PublicContentDocsOperationsTableRouteImport
+      parentRoute: typeof PublicContentDocsRouteRoute
+    }
+    '/_public/_content/docs/page/$': {
+      id: '/_public/_content/docs/page/$'
+      path: '/page/$'
+      fullPath: '/docs/page/$'
+      preLoaderRoute: typeof PublicContentDocsPageSplatRouteImport
+      parentRoute: typeof PublicContentDocsRouteRoute
     }
     '/_public/_content/$tenantId/$organizationSlug/public/project/$slug': {
       id: '/_public/_content/$tenantId/$organizationSlug/public/project/$slug'

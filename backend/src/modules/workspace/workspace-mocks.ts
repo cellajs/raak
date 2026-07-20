@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { UniqueEnforcer } from 'enforce-unique';
+import { computeChannelPath, hierarchy } from 'shared';
 import slugify from 'slugify';
 import {
   generateMockFullCounts,
@@ -52,6 +53,8 @@ const generateWorkspaceBase = (
     createdBy: null,
     updatedAt: createdAt,
     updatedBy: null,
+    // Generated column in the live schema (channelPathColumn); mocks mirror the SQL rule.
+    path: computeChannelPath(hierarchy, 'workspace', { id, organizationId }),
   };
 };
 

@@ -1,17 +1,11 @@
 import { createEntityHierarchy, createRoleRegistry } from '../src/config-builder/entity-hierarchy';
 
-/******************************************************************************
- * ROLE REGISTRY
- ******************************************************************************/
+// Role registry
 
-/**
- * Single source of truth for all entity roles used in memberships and permissions.
- */
+/** Single source of truth for all entity roles used in memberships and permissions. */
 export const roles = createRoleRegistry(['admin', 'member', 'guest'] as const);
 
-/******************************************************************************
- * ENTITY HIERARCHY
- ******************************************************************************/
+// Entity hierarchy
 
 /**
  * Entity relationships with single-parent inheritance. Kept separate from config.default.ts

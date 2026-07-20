@@ -7,7 +7,7 @@ import { appStorageReady } from '~/query/app-storage';
 import { onError } from '~/query/on-error';
 import { queryClient } from '~/query/query-client';
 import { appStreamManager } from '~/query/realtime/stream-store';
-import { withSuspenseSpinner } from '~/routes/route-utils';
+import { withSuspenseSpinner } from '~/routes/-route-utils';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const AppLayout = lazyNamed(() => import('~/modules/common/app/app-layout'), 'AppLayout');
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/_app')({
 
     // No stored user -> treat as unauthenticated and redirect immediately. We must NOT
     // await /me here: doing so gates first paint on the round-trip and shows a blank
-    // screen when the backend is slow or unreachable. Instead we hydrate /me in the
+    // screen when the backend is slow or unreachable. Hydrate /me in the
     // background. A valid session still populates the store (the rare case of a cookie
     // without a stored user simply resolves on the next navigation). Failures are
     // handled by the global query error handler.

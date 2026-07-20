@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { computeProductPath, hierarchy } from 'shared';
 import {
   generateMockChannelIdColumns,
   MOCK_REF_DATE,
@@ -13,13 +14,14 @@ import type { TaskModel } from '#/modules/task/task-db';
 /**
  * Generates a mock task with all fields populated.
  * Uses deterministic seeding - same key produces same data.
- * Context entity ID columns are generated dynamically based on relatable context entity types.
+ * Channel entity ID columns are generated dynamically based on relatable channel entity types.
  */
 export const mockTask = (key = 'task:default'): TaskModel =>
   withFakerSeed(key, () => {
     const refDate = MOCK_REF_DATE;
     const createdAt = faker.date.past({ refDate }).toISOString();
     const userId = mockUuid();
+    const channelIds = generateMockChannelIdColumns('relatable');
 
     return {
       id: mockUuid(),
@@ -42,9 +44,9 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       labels: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       assignedTo: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 2 } }),
       publicAt: faker.helpers.maybe(() => faker.date.past({ refDate }).toISOString(), { probability: 0.3 }) ?? null,
-      // Context entity columns
+      // Channel entity columns
       tenantId: mockTenantId(),
-      ...generateMockChannelIdColumns('relatable'),
+      ...channelIds,
       // Audit fields
       createdAt,
       createdBy: userId,
@@ -54,6 +56,8 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       deletedBy: null,
       seq: faker.number.int({ min: 1, max: 500 }),
       stx: mockStx(),
+      // Generated column in the live schema (productPathColumn); mocks mirror the SQL rule.
+      path: computeProductPath(hierarchy, 'task', channelIds),
     };
   });
 

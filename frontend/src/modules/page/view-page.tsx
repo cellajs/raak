@@ -5,13 +5,8 @@ import { type ComponentType, lazy, Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
 import { Spinner } from '~/modules/common/spinner';
-import {
-  type DocPage,
-  getChildDocPages,
-  getDocPage,
-  getDocPageLoader,
-  getResolvedDocPageComponent,
-} from '~/modules/page/content';
+import type { DocPage } from '~/modules/page/content';
+import { getChildDocPages, getDocPage, getDocPageLoader, getResolvedDocPageComponent } from '~/modules/page/content';
 import { mdxComponents } from '~/modules/page/mdx-components';
 import { TocAside } from '~/modules/page/toc-aside';
 import { dateShort } from '~/utils/date-short';
@@ -38,7 +33,7 @@ function ViewPage({ slug }: ViewPageProps) {
   const page = getDocPage(slug);
 
   // Code-split MDX body for this slug. On the docs route the route loader (page.$.tsx) already
-  // resolved it, so it renders synchronously — no Suspense fallback; the lazy path covers callers
+  // resolved it, so it renders synchronously with no Suspense fallback. The lazy path covers callers
   // without that loader. The component is keyed by slug at the call site, so this memo is per-page.
   const Content = useMemo<ComponentType<{ components?: typeof mdxComponents }> | null>(() => {
     const resolved = getResolvedDocPageComponent(slug);

@@ -1,26 +1,23 @@
-import { MutationObserver, QueryClient } from '@tanstack/react-query';
+import { MutationObserver, onlineManager, QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { squashPendingMutation } from '../squash-utils';
 
 /**
- * Helper: create a mutation that stays "pending" by never resolving its mutationFn.
- * Returns a cleanup function to resolve the pending promise.
+ * Helper: create a PAUSED mutation (offline at mutate time), the state offline edits queue in
+ * and the only state squashing may touch. Returns a cleanup restoring online mode.
  */
 function queuePendingMutation(
   queryClient: QueryClient,
   mutationKey: readonly unknown[],
   variables: Record<string, unknown>,
 ): () => void {
-  let resolve: () => void;
-  const neverResolve = new Promise<Record<string, unknown>>((r) => {
-    resolve = () => r({});
-  });
+  onlineManager.setOnline(false);
   const observer = new MutationObserver(queryClient, {
     mutationKey,
-    mutationFn: (_vars: Record<string, unknown>) => neverResolve,
+    mutationFn: async (_vars: Record<string, unknown>) => ({}),
   });
-  observer.mutate(variables);
-  return () => resolve();
+  observer.mutate(variables).catch(() => {});
+  return () => onlineManager.setOnline(true);
 }
 
 interface FakeEntity {
@@ -252,7 +249,7 @@ describe('create + edit coalescing', () => {
     const createVars = { id: 'temp-1', name: 'New Task', status: 'todo' };
     cleanups.push(queuePendingMutation(queryClient, createKey, createVars));
 
-    // User edits the description while still offline; coalescePendingCreate merges into the pending create.
+    // User edits the description while still offline; squashIntoPendingCreate merges into the pending create.
     const mutations = queryClient.getMutationCache().findAll({ mutationKey: createKey });
     const pendingCreate = mutations.find((m) => {
       const vars = m.state.variables as { id?: string } | undefined;

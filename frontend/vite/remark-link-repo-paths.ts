@@ -1,24 +1,6 @@
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-/**
- * Remark plugin: turn inline code that names a repo file into a link to that file on
- * GitHub. `` `backend/src/server.ts` `` -> a link to the blob URL, with an optional
- * `:line` / `:line-line` suffix mapped to `#L..`. A trailing slash marks a directory
- * reference (`` `frontend/src/query/` ``) and links to the tree URL instead. Only
- * paths that resolve to a real file or directory (checked against the repo root at
- * build time) are linked, so dead links can't be introduced and ambiguous bare names
- * (e.g. `index.ts`) stay plain code.
- *
- * Also rewrites relative markdown links (`[x](../shared/...)`) inside imported repo
- * docs to GitHub blob URLs — rendered in the SPA they would otherwise resolve as
- * broken routes. Content-root pages are left untouched.
- *
- * Runs at the mdast stage (before rehype), so it applies to content/docs pages and the
- * repo docs they import alike. Dependency-free: a manual walk avoids pulling in
- * unist-util-visit for one visitor.
- */
-
 interface Options {
   /** Absolute path to the repo root; candidate paths are resolved against it. */
   repoRoot: string;
@@ -26,16 +8,19 @@ interface Options {
   repoUrl: string;
   /** Branch the blob URLs point at. */
   branch?: string;
+  /** Repo-relative source documents that have a first-class route in the docs site. */
+  docRoutes?: Readonly<Record<string, string>>;
 }
 
 type MdNode = { type: string; value?: string; url?: string; children?: MdNode[] };
 
 // `dir/file.ext` with a known source extension, optionally `:12` or `:12-20`.
 const PATH_RE = /^([\w.][\w./-]*\.(?:tsx?|jsx?|mjs|cjs|json|ya?ml|css|md|sh|toml))(?::(\d+)(?:-(\d+))?)?$/;
-// `dir/` — the trailing slash marks an explicit directory reference.
+// The trailing slash in `dir/` marks an explicit directory reference.
 const DIR_RE = /^([\w.][\w./-]*)\/$/;
 
-export function remarkLinkRepoPaths({ repoRoot, repoUrl, branch = 'main' }: Options) {
+/** Links verified repository paths in inline code and imported repository-document links. */
+export function remarkLinkRepoPaths({ repoRoot, repoUrl, branch = 'main', docRoutes = {} }: Options) {
   const root = repoUrl.replace(/\/+$/, '');
   const base = `${root}/blob/${branch}/`;
 
@@ -59,7 +44,7 @@ export function remarkLinkRepoPaths({ repoRoot, repoUrl, branch = 'main' }: Opti
 
   return (tree: MdNode, file?: { path?: string }) => {
     // Repo docs (imported from outside the content root) carry repo-relative markdown links that
-    // would render as broken SPA routes — point them at GitHub. Content-root pages keep their links
+    // would render as broken SPA routes, so point them at GitHub. Content-root pages keep their links
     // (authors there use absolute /docs/... or external URLs).
     const docDir = file?.path && !file.path.includes('/src/content/docs/') ? path.dirname(file.path) : null;
 
@@ -70,6 +55,8 @@ export function remarkLinkRepoPaths({ repoRoot, repoUrl, branch = 'main' }: Opti
       const rel = path.relative(repoRoot, abs).replaceAll(path.sep, '/');
       // Stay inside the repo and never introduce a dead link.
       if (rel.startsWith('..') || !existsSync(abs)) return null;
+      const docsRoute = docRoutes[rel];
+      if (docsRoute) return `${docsRoute}${hash ? `#${hash}` : ''}`;
       return `${base}${rel}${hash ? `#${hash}` : ''}`;
     };
 

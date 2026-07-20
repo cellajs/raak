@@ -13,7 +13,7 @@ function entityTypeOf(key: unknown): ProductEntityType | undefined {
   return typeof head === 'string' && productEntitySet.has(head) ? (head as ProductEntityType) : undefined;
 }
 
-// Lazy import to break circular dependency: query-client -> on-error -> flush-stores -> query-client
+// Lazy import to break circular dependency: query-client -> on-error -> teardown-user-state -> query-client
 // Without this, HMR re-evaluation hits a TDZ error on `onError`.
 const handleError = (error: ApiError, meta: QueryMeta | undefined) =>
   import('~/query/on-error').then((m) => m.onError(error, meta));
@@ -110,7 +110,7 @@ export const queryClient: QueryClient =
         // Connectivity failures must enter the persisted paused-mutation queue, not be lost.
         // `offlineFirst` still fires the first attempt (the connectivity probe may be mid-flight,
         // so a stale offline flag shouldn't block a real request), and `mutationRetry` keeps
-        // retrying *network* errors until the retryer hits a boundary while offline — the point at
+        // retrying *network* errors until the retryer hits a boundary while offline. At that point
         // which TanStack pauses the mutation and dehydrates it for replay on reconnect (see
         // `shouldDehydrateMutation` in provider.tsx). Server errors (ApiError) are not retried, so
         // they settle fast and their handlers (4xx quarantine, 5xx toast) run immediately.

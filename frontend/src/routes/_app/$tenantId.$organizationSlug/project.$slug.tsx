@@ -3,7 +3,7 @@ import { ProjectRouteComponent } from '~/modules/project/route-components';
 import { projectRouteBeforeLoad } from '~/modules/project/route-logic';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
-import { createErrorComponent } from '~/routes/route-utils';
+import { createErrorComponent } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';
 
 /**

@@ -2,16 +2,22 @@ import type { MiddlewareHandler } from 'hono';
 import type { Env } from '#/core/context';
 import { rateLimiter } from '#/middlewares/rate-limiter/core';
 import { bulkBodyLength } from '#/middlewares/rate-limiter/helpers';
-import { sendLockoutEmail } from '#/middlewares/rate-limiter/helpers/send-lockout-email';
+import { sendLockoutEmail } from '#/middlewares/rate-limiter/send-lockout-email';
 import { defaultRestrictions } from '#/modules/tenants/tenant-restrictions';
 
 /**
  * Email spam limit for endpoints where emails are sent to others. Max 10 requests per hour.
  * Keyed per user when authenticated, so invite flows behind a shared office/NAT IP get their
- * own budget (and rotating IPs does not mint fresh buckets); falls back to IP for anonymous
+ * own budget (and rotating IPs does not create fresh buckets); falls back to IP for anonymous
  * requests (sign up, public requests etc.).
  */
 export const spamLimiter = rateLimiter('success', 'spam', [['userId', 'ip']], {
+  // 204 must count as success: sendMagicLink and resendInvitationWithToken return 204, and with
+  // the default [200, 201] this limiter never consumed a point on them (i.e. no spam limit at
+  // all). This stays scoped here because a global 204 would let failseries
+  // limiters (e.g. emailEnumLimiter on checkEmail, whose hit response is 204) be reset by
+  // interleaving a known-valid request between probes.
+  limits: { successStatusCodes: [200, 201, 204] },
   description: 'Max 10 requests/hour per user (per IP when anonymous) for email-sending endpoints',
 });
 
@@ -42,12 +48,15 @@ export const presignedUrlLimiter = rateLimiter('limit', 'presignedUrl', [['userI
 });
 
 /**
- * TOTP verification rate limiter to prevent brute force attacks on MFA codes
+ * TOTP verification rate limiter to prevent brute force attacks on MFA codes.
+ * The key is IP-only (the body carries just the code), so the lockout email resolves the
+ * pending user from the request's `confirm-mfa` cookie via ctx.
  */
+const totpLimits = { points: 5, duration: 60 * 60, blockDuration: 60 * 30 };
 export const totpVerificationLimiter = rateLimiter('failseries', 'totpVerification', ['ip'], {
-  limits: { points: 5, duration: 60 * 60, blockDuration: 60 * 30 },
+  limits: totpLimits,
   description: 'Blocks IP for 30 min after 5 failed TOTP attempts',
-  onBlock: (key) => sendLockoutEmail(key, 'totp-lockout'),
+  onBlock: (key, ctx) => sendLockoutEmail(key, 'totp-lockout', ctx, totpLimits),
 });
 
 /**
@@ -80,7 +89,8 @@ export const passkeyChallengeLimiter = rateLimiter('limit', 'passkeyChallenge', 
  * `ctx.var.tenant.restrictions.rateLimits.apiPointsPerHour`, falling back
  * to the global default when no tenant is available on the context.
  *
- * Global safety-net ceiling: 5000 points/hour (static `limits.points`).
+ * Global safety-net ceiling: 5000 points/hour (static `limits.points`). Tenant budgets are
+ * clamped to it, and a budget of 0 ("no tenant-specific limit") falls back to it.
  *
  * @internal Use `bulkPointsLimiter` or `singlePointsLimiter` for common cases, or create custom limiters with different costs as needed.
  * @param cost - Static cost per request, or 0 to use dynamic `getConsumePoints`.
@@ -102,6 +112,28 @@ export const pointsLimiter = (cost = 1) =>
       return budget ?? defaultRestrictions().rateLimits.apiPointsPerHour;
     },
   });
+
+/**
+ * Sync-driven read limiter (backpressure, not throughput): bounds the fan-out read
+ * endpoints (delta list fetches and unseen-count reads) that every SSE notification can
+ * trigger across the whole online audience. Generous by design (the lazy scheduler already
+ * merges and spreads fetches); a 429 here rides the client's existing fetch-failure fallback
+ * (targeted invalidation + backoff). Attach to product list ops and unseen counts.
+ */
+export const syncReadLimiter = rateLimiter('limit', 'syncRead', [['userId', 'ip']], {
+  limits: { points: 5000, duration: 60 * 60, blockDuration: 60 * 5 },
+  description: 'Max 5000 sync-driven reads/hour per user (delta lists, unseen counts)',
+});
+
+/**
+ * SSE connect limiter: bounds stream connection attempts per user. The client's reconnect
+ * backoff (5-30s + circuit breaker) stays far below this; only a runaway reconnect loop or
+ * deliberate abuse reaches it.
+ */
+export const streamConnectLimiter = rateLimiter('limit', 'streamConnect', [['userId', 'ip']], {
+  limits: { points: 240, duration: 60 * 60, blockDuration: 60 * 5 },
+  description: 'Max 240 SSE stream connects/hour per user',
+});
 
 /**
  * Bulk-operation points limiter: cost = length of the request body array.

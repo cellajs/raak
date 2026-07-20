@@ -7,8 +7,8 @@ import { privateNetworkId } from './network'
 const dbNodeType = infra.dbNodeType
 const dbVolumeSize = infra.dbVolumeSize
 
-/** Database name derived from slug (e.g. 'cella') */
-const dbSlug = naming.slug.replace(/-/g, '_') // PostgreSQL identifiers can't have hyphens
+/** Database name derived from slug (e.g. 'cella'). Shared with the reset task via `naming`. */
+const dbSlug = naming.dbName
 
 // Passwords: one per role, each from stack config secret or generated.
 
@@ -21,10 +21,9 @@ function rolePassword(name: string): pulumi.Output<string> {
 const adminPassword = rolePassword('admin')
 const runtimePassword = rolePassword('runtime')
 
-// Temporary public endpoint for operator tasks (e.g. one-off data migrations).
-// `infra:dbPublicEndpoint=true` attaches a public LB endpoint to the instance.
-// `infra:dbPublicAcl` is a comma-separated list of CIDRs allowed to connect.
-// Both should be unset once the task is done so the DB returns to private-only.
+// Opt-in public endpoint for scoped operator tasks such as data migrations.
+// `infra:dbPublicEndpoint` enables it; `infra:dbPublicAcl` limits client CIDRs.
+// Unset both after the task to return the database to private-only access.
 const dbPublicEndpoint = infraConfig.getBoolean('dbPublicEndpoint') ?? false
 const dbPublicAcl = infraConfig.get('dbPublicAcl') ?? ''
 
@@ -131,7 +130,7 @@ export const instanceId = instance.id
  * Instance CA certificate (PEM) for verifying the TLS connection to the managed
  * PostgreSQL. Scaleway issues a per-instance, self-signed CA; this output feeds
  * the `database-ssl-ca` runtime secret (resources/secrets.ts) so app services
- * can pin it and verify the connection instead of skipping verification.
+ * can pin it and verify the connection.
  */
 export const caCertificate = instance.certificate
 
@@ -140,7 +139,7 @@ export const databaseName = database.name
 
 // The instance is created with a privateNetwork block, so this only trips if
 // Scaleway ever returns an instance without one, fail with a real error
-// instead of an opaque undefined-property crash.
+// before an opaque undefined-property crash can occur.
 const privateNetwork = instance.privateNetwork.apply((pn) => {
   if (!pn) throw new Error('database: main-postgres has no private network endpoint')
   return pn
@@ -195,7 +194,7 @@ export const connectionStringRuntime = buildConnectionString(runtimeUser.name, r
 export const connectionStringCdc = buildConnectionString(adminUser.name, adminPassword)
 
 /**
- * Admin connection over the temporary public endpoint, when enabled.
+ * Admin connection over the opt-in public endpoint, when enabled.
  * Returns an empty string when `infra:dbPublicEndpoint` is false.
  */
 export const connectionStringAdminPublic = pulumi

@@ -1,4 +1,4 @@
-import { and, count, getColumns, gt, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { and, count, getColumns, gt, inArray, isNotNull, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AnyPgTable, PgColumn } from 'drizzle-orm/pg-core';
 import type { SeenTrackedEntityType } from 'shared';
 import { appConfig, hierarchy } from 'shared';
@@ -18,7 +18,7 @@ interface FindUnseenCountsByUserOpts {
   entityTypes: readonly SeenTrackedEntityType[];
   cutoff: string;
   /**
-   * Per-type collection read predicate (same compiler as list endpoints), so badges
+   * Per-type collection read filter (same SQL compiler as list endpoints), so badges
    * only count rows the user can actually fetch. `undefined` value = unrestricted
    * scope for that type; a type absent from the record is counted unrestricted too
    * (callers should pre-drop types whose scope resolved to `none`).
@@ -32,13 +32,18 @@ interface FindUnseenCountsByUserOpts {
  * "Unseen" = live tracked rows created within the seen window (`cutoff`) that have no seen_by
  * record for this user, restricted to rows the user's read scope can fetch (mirror rule: the
  * badge counts exactly what the corresponding list endpoint would return). Computed per entity
- * type as a single NOT EXISTS query — exact per-entity, so no total-minus-seen aggregate skew
- * (a recently-viewed row that just aged out of the window can no longer cancel a different
+ * type as a single NOT EXISTS query. It is exact per entity, with no total-minus-seen aggregate
+ * skew
+ * (a recently-viewed row that just aged out of the window cannot cancel a different
  * in-window row).
  *
- * The window lives only here, on entity.createdAt. seen_by is retention-bounded (pg_partman) to
- * the same 90 days on view time, and because viewTime >= createdAt, a seen row can only be dropped
- * once its entity is already out of this window — so NOT EXISTS on a dropped row never miscounts.
+ * The window lives only here, on the row's recency key: publish time for draft-lifecycle
+ * tables (`COALESCE(publishedAt, createdAt)`, so publishing an old draft still lights the
+ * badge), plain createdAt elsewhere. Mirrored client-side in `unseen-sync.ts`; the two
+ * must agree or badge deltas drift until the next recount. seen_by is retention-bounded
+ * (pg_partman) to the same 90 days on view time, and because a row is only viewable (and
+ * thus seen) after its recency instant, a seen row can only be dropped once its entity is
+ * already out of this window, so NOT EXISTS on a dropped row never miscounts.
  */
 export const findUnseenCountsByUser = async (
   ctx: DbContext,
@@ -61,13 +66,19 @@ export const findUnseenCountsByUser = async (
       ? sql<string>`COALESCE(${sql.join(ancestorColumns, sql`, `)})`
       : sql<string>`${orgTable.organizationId}`;
 
+    // Recency key: publish time on draft-lifecycle tables, createdAt elsewhere.
+    const recencyColumn: SQL<string> = columns.publishedAt
+      ? sql<string>`COALESCE(${columns.publishedAt}, ${orgTable.createdAt})`
+      : sql<string>`${orgTable.createdAt}`;
+
     const filters: SQL[] = [
       inArray(channelIdColumn, channelIds),
-      gt(orgTable.createdAt, cutoff),
+      gt(recencyColumn, cutoff),
       sql`NOT EXISTS (SELECT 1 FROM ${seenByTable} WHERE ${seenByTable.userId} = ${userId} AND ${seenByTable.entityId} = ${orgTable.id})`,
     ];
     if (columns.deletedAt) filters.push(isNull(columns.deletedAt));
-    // Forks add feed-parity filters here (e.g. excluding draft rows the feed hides).
+    // Feed parity: unpublished drafts are hidden from every feed, so they are never unseen.
+    if (columns.publishedAt) filters.push(isNotNull(columns.publishedAt));
     const scopeWhere = scopeWhereByType?.[entityType];
     if (scopeWhere) filters.push(scopeWhere);
 

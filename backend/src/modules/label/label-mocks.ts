@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { computeProductPath, hierarchy } from 'shared';
 import {
   generateMockChannelIdColumns,
   MOCK_REF_DATE,
@@ -14,7 +15,7 @@ import type { LabelModel } from '#/modules/label/label-db';
 /**
  * Generates a mock label with all fields populated.
  * Uses deterministic seeding - same key produces same data.
- * Context entity ID columns are generated dynamically based on appConfig.channelEntityTypes.
+ * Channel entity ID columns are generated dynamically based on appConfig.channelEntityTypes.
  * @param key - Seed key for deterministic output
  * @param suffix - Optional suffix to append to name for uniqueness in seeding
  */
@@ -31,6 +32,7 @@ export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
       'urgent',
       'low priority',
     ]);
+    const channelIds = generateMockChannelIdColumns('relatable');
 
     return {
       id: mockUuid(),
@@ -44,7 +46,7 @@ export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
       publicAt: null,
       // Channel entity columns
       tenantId: mockTenantId(),
-      ...generateMockChannelIdColumns('relatable'),
+      ...channelIds,
       // Audit fields
       createdAt,
       createdBy: userId,
@@ -54,6 +56,8 @@ export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
       deletedBy: null,
       seq: faker.number.int({ min: 1, max: 500 }),
       stx: mockStx(),
+      // Generated column in the live schema (productPathColumn); mocks mirror the SQL rule.
+      path: computeProductPath(hierarchy, 'label', channelIds),
     };
   });
 

@@ -46,7 +46,7 @@ export const tasksTable = snakeCase.table(
   },
   (table) => [
     index('tasks_organization_id_index').on(table.organizationId),
-    index('tasks_project_seq_index').on(table.projectId, table.seq),
+    index('tasks_organization_id_seq_index').on(table.organizationId, table.seq),
     index('tasks_tenant_id_index').on(table.tenantId),
     index('tasks_created_by_index').on(table.createdBy),
     index('tasks_updated_by_index').on(table.updatedBy),

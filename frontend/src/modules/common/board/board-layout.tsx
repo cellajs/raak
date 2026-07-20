@@ -4,22 +4,11 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import {
-  attachClosestEdge,
-  type Edge,
-  extractClosestEdge,
-} from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { motion } from 'motion/react';
-import {
-  type KeyboardEvent,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { isPanelReorderDragData, PanelDragHandleContext, reorderPanels } from '~/modules/common/board/board-drag';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { DropIndicator } from '~/modules/common/drop-indicator';
@@ -50,7 +39,7 @@ interface BoardLayoutProps {
   defaultLayout: Record<string, number>;
   onLayoutChanged?: (layout: Record<string, number>) => void;
   children: (panelId: string, index: number) => ReactNode;
-  /** When true, panels grow with content instead of being viewport-height constrained */
+  /** When true, panels grow with content without a viewport-height constraint. */
   autoHeight?: boolean;
   /** When true, panels can be reordered via drag-and-drop */
   reorderable?: boolean;
@@ -101,7 +90,7 @@ export function BoardLayout({
   }));
 
   // Persisting is debounced at the storage layer (`idbKvStorage`), so a window resize firing
-  // onLayoutChanged ~per frame coalesces into a single write, so no extra throttling is needed here.
+  // onLayoutChanged ~per frame batches into a single write, so no extra throttling is needed here.
   const handleLayoutChanged = useCallback(
     (layout: Record<string, number>) => {
       onLayoutChanged?.(layout);

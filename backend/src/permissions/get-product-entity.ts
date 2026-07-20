@@ -1,11 +1,11 @@
-import type { EntityActionType, ProductEntityType } from 'shared';
+import { draftVisibleTo, type EntityActionType, type ProductEntityType } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
 import { tenantRead } from '#/db/tenant-context';
 import { resolveEntity } from '#/modules/entities/entities-queries';
-import { checkPermission } from '#/permissions';
-import { actorFrom } from '#/permissions/actor';
+import { checkAccess } from '#/permissions';
+import { accessFrom } from '#/permissions/actor';
 import { buildSubjectFromEntity } from '#/permissions/build-subject';
 import type { EntityModel } from '#/tables';
 
@@ -27,8 +27,6 @@ export const getValidProductEntity = async <K extends ProductEntityType>(
   entityType: K,
   action: Exclude<EntityActionType, 'create'>,
 ): Promise<ValidProductEntityResult<K>> => {
-  const memberships = ctx.var.memberships;
-
   // Auto-wrap in tenantRead when called outside an RLS context (bare baseDb)
   // Skip tenantRead for tenant-less entities (e.g. pages) where tenantId is not set
   const entity =
@@ -37,10 +35,16 @@ export const getValidProductEntity = async <K extends ProductEntityType>(
       : await resolveEntity(ctx, entityType, id);
   if (!entity) throw new AppError(404, 'not_found', 'warn', { entityType });
 
+  // Unpublished drafts (publishedAt null) read as absent to everyone but their author.
+  // same 404 shape as a soft-deleted row, so a draft's existence is never revealed.
+  if (!draftVisibleTo(entity as Record<string, unknown>, ctx.var.userId)) {
+    throw new AppError(404, 'not_found', 'warn', { entityType });
+  }
+
   // Step 2: Check permission for the requested action. The entity doubles as `row`, so
   // 'own' row conditions and public read grants evaluate from real row data.
   const subject = buildSubjectFromEntity(entityType, entity);
-  const { isAllowed } = checkPermission(memberships, action, subject, actorFrom(ctx));
+  const { isAllowed } = checkAccess(accessFrom(ctx), action, subject);
 
   if (!isAllowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType, meta: { action } });

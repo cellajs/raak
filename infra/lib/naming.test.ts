@@ -19,6 +19,20 @@ describe('deriveInfra', () => {
     expect(deriveInfra(fakeConfig({ slug: 'my-cool-app' })).naming.registryNamespace).toBe('mycoolapp')
   })
 
+  it('dbName replaces hyphens with underscores (PostgreSQL identifier constraint)', () => {
+    expect(deriveInfra(fakeConfig()).naming.dbName).toBe('cella')
+    expect(deriveInfra(fakeConfig({ slug: 'cella-staging' })).naming.dbName).toBe('cella_staging')
+  })
+
+  it('dbName is the single source for the logical database name', () => {
+    // The create and reset paths share this name to prevent the reset from
+    // addressing the wrong database or creating a second one.
+    const derived = deriveInfra(fakeConfig({ slug: 'my-cool-app' }))
+    expect(derived.naming.dbName).toBe('my_cool_app')
+    expect(derived.naming.dbName).not.toContain('-')
+    expect(derived.naming.resource('postgres')).toBe('my-cool-app-postgres')
+  })
+
   it('all bucket names are unique within a stack', () => {
     const d = deriveInfra(fakeConfig())
     const names = [

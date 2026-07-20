@@ -20,14 +20,12 @@ interface ImageViewerProps {
   width?: string;
   className?: string;
   enablePan?: boolean;
-  reset?: () => void;
   zoom?: number;
   pandx?: number;
   pandy?: number;
   rotation?: number;
   onPan?: (x: number, y: number) => void;
   setZoom: (z: number) => void;
-  onReset?: (dx: number, dy: number, zoom: number) => void;
   // biome-ignore lint/suspicious/noExplicitAny:by author
   onClick?: (e: React.MouseEvent<any>) => void;
   children?: React.ReactNode;
@@ -40,7 +38,6 @@ export class ImageViewer extends React.PureComponent<ImageViewerProps, ImageView
   public static defaultProps: Partial<ImageViewerProps> = {
     enablePan: true,
     onPan: () => undefined,
-    onReset: () => undefined,
     pandx: 0,
     pandy: 0,
     zoom: 0,
@@ -71,8 +68,7 @@ export class ImageViewer extends React.PureComponent<ImageViewerProps, ImageView
   public componentDidUpdate(prevProps: ImageViewerProps) {
     const { zoom, pandx, pandy } = this.props;
     const zoomChanged = prevProps.zoom !== zoom;
-    // Sync pan from props too (e.g. on reset). Previously the parent forced a full remount via a
-    // `key` to apply pan/reset, which reloaded the <img> and flickered after every pan gesture.
+    // Sync pan from props too (e.g. on reset) so local state follows external resets without remounting.
     const panChanged = prevProps.pandx !== pandx || prevProps.pandy !== pandy;
     if (!zoomChanged && !panChanged) return;
 
@@ -82,20 +78,12 @@ export class ImageViewer extends React.PureComponent<ImageViewerProps, ImageView
       newMatrixData[3] = zoom || newMatrixData[3];
     }
     if (panChanged) {
-      // Nullish so a legitimate 0 (reset / centered) is applied rather than skipped.
+      // Nullish checks preserve a legitimate 0 for reset or centered positions.
       newMatrixData[4] = pandx ?? newMatrixData[4];
       newMatrixData[5] = pandy ?? newMatrixData[5];
     }
     this.setState({ matrixData: newMatrixData });
   }
-
-  public reset = () => {
-    const matrixData = [0.4, 0, 0, 0.4, 0, 0];
-    this.setState({ matrixData });
-    if (this.props.onReset) {
-      this.props.onReset(0, 0, 1);
-    }
-  };
 
   public onClick = (e: React.MouseEvent<EventTarget>) => {
     if (this.state.comesFromDragging) {
@@ -239,7 +227,6 @@ export class ImageViewer extends React.PureComponent<ImageViewerProps, ImageView
     document.removeEventListener('wheel', this.preventDefault, false);
   };
 
-  // Change visibility from private to public
   public componentWillUnmount() {
     document.removeEventListener('wheel', this.preventDefault, false);
   }

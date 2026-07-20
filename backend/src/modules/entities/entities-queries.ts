@@ -1,8 +1,9 @@
-import { and, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { type ChannelEntityType, hierarchy, roles, type EntityType as SharedEntityType } from 'shared';
 import type z from 'zod';
 import type { DbContext } from '#/core/context';
 import { jsonbIntRaw } from '#/db/utils/jsonb-counters';
+import { hasPublishedAt } from '#/db/utils/published-predicate';
 import { activitiesTable } from '#/modules/activities/activities-db';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import type { membershipCountSchema } from '#/schemas';
@@ -27,6 +28,8 @@ export const findChannelCountersByKeys = async ({ var: { db } }: DbContext, keys
     .select({
       channelKey: channelCountersTable.channelKey,
       counts: channelCountersTable.counts,
+      // Canonical id-path (CDC-maintained): lets catchup verify claimed view ancestry.
+      path: channelCountersTable.path,
     })
     .from(channelCountersTable)
     .where(inArray(channelCountersTable.channelKey, keys));
@@ -34,17 +37,19 @@ export const findChannelCountersByKeys = async ({ var: { db } }: DbContext, keys
 
 /**
  * Returns the SQL select shape for entity counts from channelCountersTable.
- * Reads pre-computed counts from JSONB instead of running COUNT(*) subqueries.
+ * Reads pre-computed counts from JSONB without running COUNT(*) subqueries.
  *
  * JSONB key conventions:
  *   m:{role}  → membership count by role (e.g. m:admin, m:member)
  *   m:pending → pending invitations count
  *   m:total   → total active members
- *   e:{type}  → child entity count (e.g. e:attachment)
- *   li:{type} → epoch ms of the latest live row created in the context's OWN stream
- *   lu:{type} → epoch ms of the latest live-row content update in that stream
+ *   e:{type}  → child entity count (e.g. e:attachment; countable rows must be live AND
+ *               published on draft-lifecycle tables)
+ *   li:{type} → epoch ms of the latest countable row born in the context's OWN stream
+ *               (publish time on draft-lifecycle tables, else created time)
+ *   lu:{type} → epoch ms of the latest countable-row content update in that stream
  *               (product types only). Stamped at the home context (deepest non-null
- *               ancestor) — deliberately NOT propagated to higher ancestors like
+ *               ancestor). These stamps do not propagate to higher ancestors like
  *               e: deltas are; they are per-stream signals.
  */
 export const getEntityCountsSelect = (entityType: ChannelEntityType) => {
@@ -115,8 +120,24 @@ export const getEntityCounts = async ({ var: { db } }: DbContext, entityType: Ch
 /**
  * Reads a single pre-computed entity count from channelCountersTable.
  * Used for quota checks: reads `e:{entityType}` from the org's counter row.
+ *
+ * Draft-lifecycle tables (opt-in `publishedAt`) fall back to a direct COUNT over live
+ * rows INCLUDING drafts: the `e:` counter tracks published rows only, but a quota must
+ * bound total storage, not published visibility. This prevents drafts from stockpiling for free.
  */
-export const getOrgEntityCount = async ({ var: { db } }: DbContext, orgId: string, entityType: EntityType) => {
+export const getOrgEntityCount = async (ctx: DbContext, orgId: string, entityType: EntityType) => {
+  const { db } = ctx.var;
+
+  const table = hierarchy.isProduct(entityType) ? getEntityTable(entityType) : null;
+  if (table && hasPublishedAt(table)) {
+    const deletedFilter = hasDeletedAt(table) ? sql.raw(' AND deleted_at IS NULL') : sql.raw('');
+    const [row] = await db
+      .select({ count: count() })
+      .from(table)
+      .where(sql`organization_id = ${orgId}${deletedFilter}`);
+    return row?.count ?? 0;
+  }
+
   const key = `e:${entityType}`;
   const [row] = await db
     .select({ count: sql<number>`coalesce((${channelCountersTable.counts}->>${key})::int, 0)` })
@@ -130,15 +151,15 @@ export const getOrgEntityCount = async ({ var: { db } }: DbContext, orgId: strin
 /**
  * Max delete rows to enumerate per catchup before falling back to list invalidation.
  * The delete scan requests `CAP + 1` rows so the caller can detect overflow (more deletes
- * than we are willing to enumerate) and tell the client to invalidate the whole list instead
- * of removing entities one id at a time.
+ * than we are willing to enumerate) and tell the client to invalidate the whole list without
+ * removing entities one id at a time.
  */
 export const DELETE_ENUMERATE_CAP = 200;
 
 /**
  * Scan product entity delete activities after a cursor (app stream), capped at
  * `DELETE_ENUMERATE_CAP + 1` so the caller can detect overflow and fall back to list invalidation.
- * Membership changes are excluded here — detected via the `s:membership` seq counter instead, so
+ * Membership changes are excluded here and detected via the `membership` seq counter, so
  * membership churn never consumes the delete budget.
  */
 export const findDeleteActivities = async (
@@ -193,7 +214,7 @@ export const findLatestUserActivityId = async (
 /**
  * @internal Resolves an entity by ID or slug from its table.
  *
- * **Do not use directly in route handlers.** Use the permission-checking wrappers instead:
+ * **Do not use directly in route handlers.** Use these permission-checking wrappers:
  * - `getValidChannelEntity` for channel entities (e.g., organization)
  * - `getValidProductEntity` for product entities (e.g., attachment, page)
  *
@@ -238,6 +259,13 @@ export async function resolveEntities<T extends EntityType>(
   return entities as Array<EntityModel<T>>;
 }
 
+/**
+ * Draft-exclusion fragment for catchup/delta scans: drafts are outside the sync engine,
+ * so their seq bumps must never surface ids to sync back. Empty for tables without the column.
+ */
+const publishedSqlFilter = (table: ResolvableTable) =>
+  hasPublishedAt(table) ? sql.raw(' AND published_at IS NOT NULL') : sql.raw('');
+
 /** Fetch IDs of entities that changed since a given seq. Lightweight ID-only query. */
 export const findChangedEntityIds = async (
   { var: { db } }: DbContext,
@@ -250,7 +278,7 @@ export const findChangedEntityIds = async (
   const rows = await db
     .select({ id: table.id })
     .from(table)
-    .where(sql`seq > ${afterSeq} AND organization_id = ${organizationId}`);
+    .where(sql`seq > ${afterSeq} AND organization_id = ${organizationId}${publishedSqlFilter(table)}`);
 
   return rows.map((r) => r.id);
 };
@@ -268,7 +296,7 @@ export const findChangedEntityDeltaIds = async (
   const result = await db.execute<{ id: string; deletedAt: string | null }>(sql`
     SELECT id, ${deletedAtSelect} AS "deletedAt"
     FROM ${table}
-    WHERE seq > ${afterSeq} AND organization_id = ${organizationId}
+    WHERE seq > ${afterSeq} AND organization_id = ${organizationId}${publishedSqlFilter(table)}
   `);
 
   const updatedIds: string[] = [];

@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { UniqueEnforcer } from 'enforce-unique';
+import { computeChannelPath, hierarchy } from 'shared';
 import slugify from 'slugify';
 import {
   MOCK_REF_DATE,
@@ -43,6 +44,8 @@ const generateProjectBase = (id: string, name: string, createdAt: string, organi
     createdBy: null,
     updatedAt: createdAt,
     updatedBy: null,
+    // Generated column in the live schema (channelPathColumn); mocks mirror the SQL rule.
+    path: computeChannelPath(hierarchy, 'project', { id, organizationId }),
   };
 };
 

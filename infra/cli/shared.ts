@@ -12,7 +12,7 @@ import { maskedSecret } from './prompts/masked-secret'
 type AppConfigType = typeof AppConfig
 
 /** Infra CLI operation modes */
-export type CliMode = 'resume' | 'rotate' | 'rotate-passphrase' | 'apply' | 'preview' | 'secrets' | 'unlock'
+export type CliMode = 'resume' | 'rotate' | 'rotate-passphrase' | 'apply' | 'preview' | 'secrets' | 'reset-database' | 'unlock'
 
 /**
  * Context for the infra CLI, including stack information and state. Passed to each service handler to provide necessary information about the current infra status and configuration.
@@ -98,8 +98,8 @@ export async function confirmPassphraseStored(passphrase: string, heading: strin
 /**
  * The bootstrap-time counterpart of `resolveVerifiedPassphrase`: when the stack
  * already encrypts something (or `PULUMI_CONFIG_PASSPHRASE` is set), defer to
- * the verify/prompt flow. Otherwise — a brand-new stack with nothing encrypted
- * yet — generate the passphrase instead of asking the operator to invent one,
+ * the verify/prompt flow. A brand-new stack with nothing encrypted yet gets a
+ * generated passphrase,
  * showing it once via `confirmPassphraseStored`. `generated` tells the caller
  * this is a newly established passphrase.
  */
@@ -144,7 +144,7 @@ export function pulumiLoginAndSelect(infraDir: string, env: NodeJS.ProcessEnv, a
   spawnSync('pulumi', ['stack', 'select', targetStack], { cwd: infraDir, env, stdio: 'ignore' })
 }
 
-/** Handle to a held stack lock; `release` never throws (logs a warning instead). */
+/** Handle to a held stack lock; `release` logs failures and never throws. */
 export interface StackLockHandle {
   release: () => Promise<void>
 }

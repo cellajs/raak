@@ -61,7 +61,7 @@ function createTestApp(middleware: ReturnType<typeof rateLimiter>, userId?: stri
   return app;
 }
 
-/** Fake node-server bindings so getIp's socket fallback resolves to null instead of crashing */
+/** Fake node-server bindings so getIp's socket fallback resolves to null without crashing. */
 const emptyBindings = { incoming: { socket: {} } } as Env['Bindings'];
 
 describe('rate limiter identifier validation', () => {
@@ -84,6 +84,26 @@ describe('rate limiter identifier validation', () => {
     it('should allow request when email is present in body', async () => {
       const res = await app.request(jsonRequest('/test', { email: 'test@example.com' }));
       expect(res.status).toBe(200);
+    });
+
+    it('should normalize email case and whitespace into a single bucket', async () => {
+      // Handlers lowercase+trim before delivering mail, so without the same normalization
+      // here, `Victim@x.com` / `victim@x.com` / ` VICTIM@X.COM ` were three separate rate
+      // limit buckets all hitting one inbox.
+      consumeSpy.mockClear();
+      for (const email of ['Victim@Example.COM', 'victim@example.com', ' VICTIM@example.com ']) {
+        await app.request(jsonRequest('/test', { email }));
+      }
+      expect(consumeSpy).toHaveBeenCalledTimes(3);
+      for (const call of consumeSpy.mock.calls) {
+        expect(call[0]).toBe('email:victim@example.com');
+      }
+    });
+
+    it('should reject a non-string email instead of keying on it', async () => {
+      // Rate limiting runs before zod validation, so the body shape is untrusted here.
+      const res = await app.request(jsonRequest('/test', { email: 42 }));
+      expect(res.status).toBe(400);
     });
 
     it('should reject when email is only in query (not body)', async () => {

@@ -94,7 +94,7 @@ describe('Task seq reads', async () => {
 
   it('B1: seqCursor reads are seq-ascending; a capped response is a clean prefix', async () => {
     // sort/order params must NOT override seq ordering on seq reads
-    const result = await listTasks({ seqCursor: '1', limit: '2', sort: 'createdAt', order: 'desc' });
+    const result = await listTasks({ seqCursor: '1,999999', limit: '2', sort: 'createdAt', order: 'desc' });
 
     expect(result.status).toBe(200);
     // Rows in seq order are 10, 20, 30 (tombstone), 40, 50. The capped response
@@ -104,7 +104,7 @@ describe('Task seq reads', async () => {
 
   it('B2: seqCursor reads include tombstones; normal reads never do', async () => {
     // Delta read: tombstones flow through so client caches can drop soft-deleted rows
-    const delta = await listTasks({ seqCursor: '1', limit: '100' });
+    const delta = await listTasks({ seqCursor: '1,999999', limit: '100' });
     expect(delta.items.map((t) => t.seq)).toEqual([10, 20, 30, 40, 50]);
     const tombstone = delta.items.find((t) => t.seq === 30);
     expect(tombstone?.deletedAt).not.toBeNull();
@@ -115,9 +115,9 @@ describe('Task seq reads', async () => {
   });
 
   it('B3: limit above 1000 is rejected, not clamped', async () => {
-    // Validation failures map to 403 via the app's defaultHook (not 400)
+    // Validation failures are malformed requests: 400 via the app's defaultHook, never 403
     const result = await listTasks({ limit: '1001' });
-    expect(result.status).toBe(403);
+    expect(result.status).toBe(400);
     expect(result.items).toEqual([]);
   });
 
@@ -131,7 +131,7 @@ describe('Task seq reads', async () => {
 
   it('B5: seqCursor composes with acceptedCutOff', async () => {
     // acceptedCutOff is a number in the SDK contract (client-side zod validates it)
-    const result = await listTasks({ seqCursor: '1', acceptedCutOff: 14, limit: '100' });
+    const result = await listTasks({ seqCursor: '1,999999', acceptedCutOff: 14, limit: '100' });
 
     expect(result.status).toBe(200);
     // seq 40 is Accepted with updatedAt 30 days ago, outside the 14-day window.
