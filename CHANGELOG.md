@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/cellajs/raak/compare/0.0.3...0.0.4) (2026-07-20)
+
+
+### 🐞 Bug fixes
+
+* test ci fix ([98e719c](https://github.com/cellajs/raak/commit/98e719ce5c96edb11507ea35f42a7ffe0e04b59a))
+
 ## [0.0.3](https://github.com/cellajs/raak/compare/0.0.2...0.0.3) (2026-07-16)
 
 
