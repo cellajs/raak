@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.5](https://github.com/cellajs/raak/compare/0.0.4...0.0.5) (2026-07-20)
+
+
+### 🐞 Bug fixes
+
+* align config development ([7d7db73](https://github.com/cellajs/raak/commit/7d7db735a1b391cfea1943a20122753785bf20b1))
+
+
+### 🧹 Chores
+
+* alignment ([89deb8f](https://github.com/cellajs/raak/commit/89deb8f55e439b6acade0f7c40612231fdf6798d))
+* sync upstream cella v0.5.2 (29da1502) ([#54](https://github.com/cellajs/raak/issues/54)) ([37fbe95](https://github.com/cellajs/raak/commit/37fbe95a2613a943866b8ae3e6f26aa9ccfcae96))
+* sync upstream cella v0.5.5 (1b5ba354) ([#56](https://github.com/cellajs/raak/issues/56)) ([3c260de](https://github.com/cellajs/raak/commit/3c260decef11cfb859e293ffaebfec6dfc4affd0))
+
 ## [0.0.4](https://github.com/cellajs/raak/compare/0.0.3...0.0.4) (2026-07-20)
 
 
