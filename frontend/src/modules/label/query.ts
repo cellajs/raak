@@ -2,7 +2,7 @@ import {
   infiniteQueryOptions,
   type QueryClient,
   queryOptions,
-  useMutation,
+  type UseMutationOptions,
   useQueryClient,
 } from '@tanstack/react-query';
 import {
@@ -13,6 +13,7 @@ import {
   getLabel,
   getLabels,
   type Label,
+  type StxBase,
   type UpdateLabelData,
   updateLabel,
 } from 'sdk';
@@ -28,7 +29,8 @@ import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
-import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
+import { type PreparedVars, usePreparedMutation } from '~/query/offline/prepared-mutation';
+import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
 import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
@@ -40,7 +42,16 @@ export type { Label } from 'sdk';
 type LabelCreateInput = Omit<CreateLabelsData['body'][number], 'stx'>;
 type UpdateLabelBody = NonNullable<UpdateLabelData['body']>;
 type UpdateLabelFields = UpdateLabelBody['ops'];
+/** Public update input the hook accepts; the hook enriches it into durable variables. */
 type UpdateLabelVars = { id: string; ops: UpdateLabelFields };
+
+// Durable mutation variables: carry tenant/org context AND stx so a mutation replayed from the
+// persisted queue after a reload (component closure gone) reconstructs the same request. stx is
+// minted at intent time so a replay reuses the original mutationId and field timestamps (LWW must
+// arbitrate by intent time). The `?? createStxFor*` fallback in each fn keeps old queues replayable.
+type CreateLabelFullVars = QueryOrgContext & { data: LabelCreateInput; stx?: StxBase };
+type UpdateLabelFullVars = QueryOrgContext & UpdateLabelVars & { stx?: StxBase };
+type DeleteLabelVars = QueryOrgContext & { labels: Label[]; stx?: StxBase };
 
 const labelsLimit = appConfig.requestLimits.labels;
 
@@ -136,125 +147,219 @@ export const labelsQueryOptions = ({
   });
 };
 
-// --- Mutations ---
+// --- Mutation fns ---
+// Shared by the interactive hooks and the offline-replay defaults, so a mutation resumed from
+// persistence reconstructs the same request from durable variables alone.
+
+const createLabelMutationFn = async ({ tenantId, organizationId, data, stx }: CreateLabelFullVars) => {
+  const effectiveStx = stx ?? createStxForCreate();
+  const result = await createLabels({ body: [{ ...data, stx: effectiveStx }], path: { organizationId, tenantId } });
+  return result.data[0];
+};
+
+const updateLabelMutationFn = async ({ tenantId, organizationId, id, ops, stx }: UpdateLabelFullVars) => {
+  const effectiveStx = stx ?? createStxForUpdate(ops ? Object.keys(ops) : []);
+  return updateLabel({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
+};
+
+const deleteLabelMutationFn = async ({ tenantId, organizationId, labels, stx }: DeleteLabelVars) => {
+  const ids = labels.map(({ id }) => id);
+  const effectiveStx = stx ?? createStxForDelete();
+  await deleteLabels({ path: { organizationId, tenantId }, body: { ids, stx: effectiveStx } });
+};
+
+type CreateData = Awaited<ReturnType<typeof createLabelMutationFn>>;
+type UpdateData = Awaited<ReturnType<typeof updateLabelMutationFn>>;
+type DeleteData = Awaited<ReturnType<typeof deleteLabelMutationFn>>;
+
+// --- Mutation options ---
+// Full options (not just mutationFn) shared by the live hook and the offline-replay defaults, so a
+// replayed mutation runs the same reconciliation callbacks. Callbacks derive the org key from
+// durable variables; on replay onMutate does not re-run, so onSettled invalidation recovers.
+
+const labelCreateOptions = (
+  queryClient: QueryClient,
+): UseMutationOptions<CreateData, Error, CreateLabelFullVars, { optimisticLabel: Label }> => ({
+  mutationKey: keys.create,
+  scope: { id: 'label' },
+  mutationFn: createLabelMutationFn,
+  meta: { suppressGlobalErrorToast: true },
+  onMutate: async ({ organizationId, data }) => {
+    const orgKey = keys.list.org(organizationId);
+    await queryClient.cancelQueries({ queryKey: orgKey });
+    const optimisticLabel = createOptimisticEntity(zLabel, data);
+    cacheCreate(orgKey, [optimisticLabel]);
+    return { optimisticLabel };
+  },
+  onError: (_err, variables, context) => {
+    handleError('create');
+    if (context?.optimisticLabel) cacheRemove(keys.list.org(variables.organizationId), [context.optimisticLabel]);
+  },
+  onSuccess: (createdLabel, variables, context) => {
+    const orgKey = keys.list.org(variables.organizationId);
+    if (context?.optimisticLabel) cacheRemove(orgKey, [context.optimisticLabel]);
+    // Upsert guard: avoid duplicates from a concurrent SSE + onSuccess race.
+    if (findLabelInCache(createdLabel.id)) cacheUpdate(orgKey, [createdLabel]);
+    else cacheCreate(orgKey, [createdLabel]);
+  },
+  onSettled: (_data, error, variables) => {
+    if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+  },
+});
+
+const labelUpdateOptions = (
+  queryClient: QueryClient,
+): UseMutationOptions<UpdateData, Error, UpdateLabelFullVars, { previousLabel: Label | undefined }> => ({
+  mutationKey: keys.update,
+  // Same scope as create/delete: label writes serialize, so a squashed update never replays before its queued create.
+  scope: { id: 'label' },
+  mutationFn: updateLabelMutationFn,
+  meta: { suppressGlobalErrorToast: true },
+  // Squash/coalesce runs in the hook's prepare step, so variables already carry the merge; onMutate keeps only cache work.
+  onMutate: async ({ organizationId, id, ops }) => {
+    const orgKey = keys.list.org(organizationId);
+    await queryClient.cancelQueries({ queryKey: orgKey });
+    await queryClient.cancelQueries({ queryKey: keys.detail.byId(id) });
+    const previousLabel = findLabelInCache(id);
+    if (previousLabel) {
+      const optimisticLabel = { ...previousLabel, ...ops, updatedAt: new Date().toISOString() };
+      cacheUpdate(orgKey, [optimisticLabel]);
+      queryClient.setQueryData(keys.detail.byId(id), optimisticLabel);
+    }
+    return { previousLabel };
+  },
+  onError: (_err, variables, context) => {
+    handleError('update');
+    if (context?.previousLabel) {
+      cacheUpdate(keys.list.org(variables.organizationId), [context.previousLabel]);
+      queryClient.setQueryData(keys.detail.byId(context.previousLabel.id), context.previousLabel);
+    }
+  },
+  onSuccess: (updatedLabel, variables) => {
+    const orgKey = keys.list.org(variables.organizationId);
+    const cached = findLabelInCache(updatedLabel.id);
+    const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
+    const merged = mergeServerResponse({ cached, serverEntity: updatedLabel, mutatedKeys });
+    syncEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
+  },
+  onSettled: (_data, error, variables) => {
+    if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+  },
+});
+
+const labelDeleteOptions = (
+  queryClient: QueryClient,
+): UseMutationOptions<DeleteData, Error, DeleteLabelVars, { deletedLabels: Label[] }> => ({
+  mutationKey: keys.delete,
+  scope: { id: 'label' },
+  mutationFn: deleteLabelMutationFn,
+  meta: { suppressGlobalErrorToast: true },
+  onMutate: async ({ organizationId, labels }) => {
+    const orgKey = keys.list.org(organizationId);
+    removePendingMutations(
+      queryClient,
+      keys.update,
+      labels.map((l) => l.id),
+    );
+    await queryClient.cancelQueries({ queryKey: orgKey });
+    cacheRemove(orgKey, labels);
+    for (const { id } of labels) queryClient.removeQueries({ queryKey: keys.detail.byId(id) });
+    return { deletedLabels: labels };
+  },
+  onError: (_err, variables, context) => {
+    handleError('delete');
+    if (context?.deletedLabels) cacheCreate(keys.list.org(variables.organizationId), context.deletedLabels);
+  },
+  onSettled: (_data, error, variables) => {
+    if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+  },
+});
+
+// --- Mutation hooks ---
 
 export const useLabelCreateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
-  const orgKey = keys.list.org(organizationId);
-
-  return useMutation({
-    mutationKey: keys.create,
-    scope: { id: 'label' },
-    mutationFn: async (data: LabelCreateInput) => {
-      const stx = createStxForCreate();
-      const result = await createLabels({ body: [{ ...data, stx }], path: { organizationId, tenantId } });
-      return result.data[0];
-    },
-    onMutate: async (newLabelData) => {
-      await queryClient.cancelQueries({ queryKey: orgKey });
-      const optimisticLabel = createOptimisticEntity(zLabel, newLabelData);
-      cacheCreate(orgKey, [optimisticLabel]);
-      return { optimisticLabel };
-    },
-    meta: { suppressGlobalErrorToast: true },
-    onError: (_err, _newLabel, context) => {
-      handleError('create');
-      if (context?.optimisticLabel) cacheRemove(orgKey, [context.optimisticLabel]);
-    },
-    onSuccess: (createdLabel, _variables, context) => {
-      if (context?.optimisticLabel) cacheRemove(orgKey, [context.optimisticLabel]);
-      // Upsert guard: avoid duplicates from concurrent race
-      if (findLabelInCache(createdLabel.id)) cacheUpdate(orgKey, [createdLabel]);
-      else cacheCreate(orgKey, [createdLabel]);
-    },
-    onSettled: (_data, error) => {
-      if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, orgKey);
-    },
-  });
+  // Inject org context + stx so a replay reuses the original mutation id and timestamps; callers pass just the data.
+  return usePreparedMutation<CreateData, Error, CreateLabelFullVars, { optimisticLabel: Label }, LabelCreateInput>(
+    labelCreateOptions(queryClient),
+    (data) => ({ kind: 'run', vars: { tenantId, organizationId, data, stx: createStxForCreate() } }),
+  );
 };
 
 export const useLabelUpdateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
-  const orgKey = keys.list.org(organizationId);
 
-  return useMutation({
-    mutationKey: keys.update,
-    mutationFn: async ({ id, ops }: UpdateLabelVars) => {
-      const scalarFieldNames = ops ? Object.keys(ops) : [];
-      const stx = createStxForUpdate(scalarFieldNames);
-      return updateLabel({ body: { ops, stx }, path: { id, organizationId, tenantId } });
-    },
-    onMutate: async ({ id, ops }: UpdateLabelVars) => {
-      // If there's a pending create for this entity, fold update ops into it
-      if (squashIntoPendingCreate(queryClient, keys.create, id, ops as Record<string, unknown>)) {
-        return { coalesced: true };
-      }
-
-      const mergedOps = squashPendingMutation(queryClient, keys.update, id, ops as Record<string, unknown>);
-      await queryClient.cancelQueries({ queryKey: orgKey });
-      await queryClient.cancelQueries({ queryKey: keys.detail.byId(id) });
-      const previousLabel = findLabelInCache(id);
-      if (previousLabel) {
-        const optimisticLabel = { ...previousLabel, ...mergedOps, updatedAt: new Date().toISOString() };
-        cacheUpdate(orgKey, [optimisticLabel]);
+  /**
+   * Squash/coalesce before the mutation exists so the request carries the merge. Folding into a
+   * queued create issues no update and patches the optimistic row here (onMutate won't run).
+   */
+  const prepare = ({ id, ops }: UpdateLabelVars): PreparedVars<UpdateLabelFullVars> => {
+    if (squashIntoPendingCreate(queryClient, keys.create, id, ops as Record<string, unknown>)) {
+      const cached = findLabelInCache(id);
+      if (cached) {
+        const optimisticLabel = { ...cached, ...ops, updatedAt: new Date().toISOString() };
+        cacheUpdate(keys.list.org(organizationId), [optimisticLabel]);
         queryClient.setQueryData(keys.detail.byId(id), optimisticLabel);
       }
-      return { previousLabel };
-    },
-    meta: { suppressGlobalErrorToast: true },
-    onError: (_err, _variables, context) => {
-      handleError('update');
-      if (context?.previousLabel) {
-        cacheUpdate(orgKey, [context.previousLabel]);
-        queryClient.setQueryData(keys.detail.byId(context.previousLabel.id), context.previousLabel);
-      }
-    },
-    onSuccess: (updatedLabel, variables) => {
-      const cached = findLabelInCache(updatedLabel.id);
-      const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
-      const merged = mergeServerResponse({ cached, serverEntity: updatedLabel, mutatedKeys });
-      syncEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
-    },
-    onSettled: (_data, error) => {
-      if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, orgKey);
-    },
-  });
+      return { kind: 'coalesced' };
+    }
+    // Coalesce queued offline edits; squashPendingMutation keeps each inherited field's original
+    // timestamp so LWW arbitrates by intent time, and only the changed fields carry this edit's stamps.
+    const newStx = createStxForUpdate(Object.keys(ops));
+    const { ops: mergedOps, stx } = squashPendingMutation(
+      queryClient,
+      keys.update,
+      id,
+      ops as Record<string, unknown>,
+      newStx,
+    );
+    return { kind: 'run', vars: { tenantId, organizationId, id, ops: mergedOps as UpdateLabelFields, stx } };
+  };
+
+  return usePreparedMutation<
+    UpdateData,
+    Error,
+    UpdateLabelFullVars,
+    { previousLabel: Label | undefined },
+    UpdateLabelVars
+  >(labelUpdateOptions(queryClient), prepare);
 };
 
 export const useLabelDeleteMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
-  const orgKey = keys.list.org(organizationId);
 
-  return useMutation({
-    mutationKey: keys.delete,
-    scope: { id: 'label' },
-    mutationFn: async (labels: Label[]) => {
-      const ids = labels.map(({ id }) => id);
-      const stx = createStxForDelete();
-      await deleteLabels({ body: { ids, stx }, path: { organizationId, tenantId } });
-    },
-    onMutate: async (labelsToDelete) => {
+  /**
+   * Cancel queued creates for labels deleted while offline (they never reached the server), clear
+   * their queued updates, finish deletion cache-side, and keep them out of the request. `noop` when
+   * nothing remains.
+   */
+  const prepare = (labels: Label[]): PreparedVars<DeleteLabelVars> => {
+    const cancelled = new Set(
+      removePausedCreates(
+        queryClient,
+        keys.create,
+        labels.map((l) => l.id),
+      ),
+    );
+    const localOnly = labels.filter((l) => cancelled.has(l.id));
+    if (localOnly.length > 0) {
       removePendingMutations(
         queryClient,
         keys.update,
-        labelsToDelete.map((l) => l.id),
+        localOnly.map((l) => l.id),
       );
-      await queryClient.cancelQueries({ queryKey: orgKey });
-      cacheRemove(orgKey, labelsToDelete);
-      for (const { id } of labelsToDelete) {
-        queryClient.removeQueries({ queryKey: keys.detail.byId(id) });
-      }
-      return { deletedLabels: labelsToDelete };
-    },
-    meta: { suppressGlobalErrorToast: true },
-    onError: (_err, _labels, context) => {
-      handleError('delete');
-      if (context?.deletedLabels) cacheCreate(orgKey, context.deletedLabels);
-    },
-    onSettled: (_data, error) => {
-      if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, orgKey);
-    },
-  });
+      cacheRemove(keys.list.org(organizationId), localOnly);
+      for (const { id } of localOnly) queryClient.removeQueries({ queryKey: keys.detail.byId(id) });
+    }
+    const remaining = labels.filter((l) => !cancelled.has(l.id));
+    if (remaining.length === 0) return { kind: 'noop' };
+    return { kind: 'run', vars: { tenantId, organizationId, labels: remaining, stx: createStxForDelete() } };
+  };
+
+  return usePreparedMutation<DeleteData, Error, DeleteLabelVars, { deletedLabels: Label[] }, Label[]>(
+    labelDeleteOptions(queryClient),
+    prepare,
+  );
 };
 
 // --- Mutation defaults (offline persistence) ---
@@ -273,27 +378,8 @@ addMutationRegistrar((queryClient: QueryClient) => {
     },
   });
 
-  queryClient.setMutationDefaults(keys.create, {
-    mutationFn: async ({ tenantId, organizationId, data }: QueryOrgContext & { data: LabelCreateInput }) => {
-      const stx = createStxForCreate();
-      const result = await createLabels({ body: [{ ...data, stx }], path: { organizationId, tenantId } });
-      return result.data[0];
-    },
-  });
-
-  queryClient.setMutationDefaults(keys.update, {
-    mutationFn: async ({ tenantId, organizationId, id, ops }: QueryOrgContext & UpdateLabelVars) => {
-      const scalarFieldNames = ops ? Object.keys(ops) : [];
-      const stx = createStxForUpdate(scalarFieldNames);
-      return updateLabel({ body: { ops, stx }, path: { id, organizationId, tenantId } });
-    },
-  });
-
-  queryClient.setMutationDefaults(keys.delete, {
-    mutationFn: async ({ tenantId, organizationId, labels }: QueryOrgContext & { labels: Label[] }) => {
-      const ids = labels.map((l) => l.id);
-      const stx = createStxForDelete();
-      await deleteLabels({ path: { organizationId, tenantId }, body: { ids, stx } });
-    },
-  });
+  // The SAME full options the hooks use (not just mutationFn), so a replayed mutation runs the same reconciliation callbacks.
+  queryClient.setMutationDefaults(keys.create, labelCreateOptions(queryClient));
+  queryClient.setMutationDefaults(keys.update, labelUpdateOptions(queryClient));
+  queryClient.setMutationDefaults(keys.delete, labelDeleteOptions(queryClient));
 });

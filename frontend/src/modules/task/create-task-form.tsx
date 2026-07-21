@@ -48,6 +48,7 @@ import { Button, buttonVariants } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { useUserStore } from '~/modules/user/user-store';
+import { COALESCED } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
 
 interface CreateTaskFormProps {
@@ -156,7 +157,8 @@ const CreateTaskForm = ({
     // Backend handles label usedCount side-effects atomically
     await taskMutation
       .mutateAsync(newTask)
-      .then((createdTask) => onSuccess?.(createdTask))
+      // Creates never coalesce, so this always resolves to the created task; the guard narrows the type.
+      .then((createdTask) => createdTask !== COALESCED && onSuccess?.(createdTask))
       .catch(() => {
         const { description, status, variant, points, fullLabels: labels, fullAssignedTo: assignedTo } = newTask;
         setForm(formId, { description, status, variant, points, labels, assignedTo });
