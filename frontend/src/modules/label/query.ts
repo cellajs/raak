@@ -19,7 +19,8 @@ import {
 } from 'sdk';
 import { zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
-import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
+import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
+import { cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
@@ -95,20 +96,28 @@ type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'off
   GetLabelsData['path'] & { limit?: number };
 
 /**
- * Canonical label query: one flat query per organization scope.
- * Fetches all labels for the org, stored at keys.list.org(organizationId).
- * Consumers derive views via select() for workspace/project filtering.
- * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.
+ * Canonical label query: one flat list per project (labels are project-homed, `projectId notNull`),
+ * stored at keys.list.home(organizationId, projectId). This is the row's canonical home list live
+ * sync splices into; org/workspace-level views aggregate these per-project lists client-side (see
+ * the label picker). staleTime follows sync liveness.
  */
-export const labelsCanonicalOptions = ({ organizationId, tenantId }: { organizationId: string; tenantId: string }) => {
+export const labelsCanonicalOptions = ({
+  organizationId,
+  tenantId,
+  projectId,
+}: {
+  organizationId: string;
+  tenantId: string;
+  projectId: string;
+}) => {
   return queryOptions({
-    queryKey: keys.list.org(organizationId),
+    queryKey: keys.list.home(organizationId, projectId),
     queryFn: async () => {
       return fetchAllPages(
         ({ limit, offset }) =>
           getLabels({
             path: { organizationId, tenantId },
-            query: { limit, offset },
+            query: { projectId, limit, offset },
           }),
         labelsLimit,
       );
@@ -185,10 +194,10 @@ const labelCreateOptions = (
   mutationFn: createLabelMutationFn,
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ organizationId, data }) => {
-    const orgKey = keys.list.org(organizationId);
-    await queryClient.cancelQueries({ queryKey: orgKey });
+    await queryClient.cancelQueries({ queryKey: keys.list.org(organizationId) });
     const optimisticLabel = createOptimisticEntity(zLabel, data);
-    cacheCreate(orgKey, [optimisticLabel]);
+    // Insert into the label's canonical home (project) list only, never filtered/search lists.
+    insertEntitiesIntoHome(queryClient, { entityType: 'label', entities: [optimisticLabel], keys, organizationId });
     return { optimisticLabel };
   },
   onError: (_err, variables, context) => {
@@ -198,9 +207,13 @@ const labelCreateOptions = (
   onSuccess: (createdLabel, variables, context) => {
     const orgKey = keys.list.org(variables.organizationId);
     if (context?.optimisticLabel) cacheRemove(orgKey, [context.optimisticLabel]);
-    // Upsert guard: avoid duplicates from a concurrent SSE + onSuccess race.
-    if (findLabelInCache(createdLabel.id)) cacheUpdate(orgKey, [createdLabel]);
-    else cacheCreate(orgKey, [createdLabel]);
+    // Upsert into the canonical home (updates in place if a concurrent SSE already inserted it).
+    insertEntitiesIntoHome(queryClient, {
+      entityType: 'label',
+      entities: [createdLabel],
+      keys,
+      organizationId: variables.organizationId,
+    });
   },
   onSettled: (_data, error, variables) => {
     if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
@@ -268,7 +281,14 @@ const labelDeleteOptions = (
   },
   onError: (_err, variables, context) => {
     handleError('delete');
-    if (context?.deletedLabels) cacheCreate(keys.list.org(variables.organizationId), context.deletedLabels);
+    // Restore each row into its canonical home list only (updates in place elsewhere), never filtered lists.
+    if (context?.deletedLabels)
+      insertEntitiesIntoHome(queryClient, {
+        entityType: 'label',
+        entities: context.deletedLabels,
+        keys,
+        organizationId: variables.organizationId,
+      });
   },
   onSettled: (_data, error, variables) => {
     if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));

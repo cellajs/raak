@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueries } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
 import { CheckIcon, ChevronDownIcon, DotIcon } from 'lucide-react';
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
@@ -87,28 +87,26 @@ export const SelectLabels = ({
   });
   const workspaceId = workspaceIdProp ?? (workspaceMatch?.context as { workspace?: { id: string } })?.workspace?.id;
 
-  const labelsQuery = useQuery(
-    labelsCanonicalOptions({
-      organizationId,
-      tenantId,
-    }),
-  );
-  const allLabels = labelsQuery.data?.items ?? [];
-
   // Reactively read the workspace's projects from cache (enabled → subscribes so labels re-scope
   // when the list updates; in a workspace route the board has already fetched it).
   const { data: workspaceProjectIds } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: workspaceId ?? '' }),
     enabled: !!workspaceId,
-    select: (data) => new Set(data.pages.flatMap((page) => page.items.map((p) => p.id))),
+    select: (data) => data.pages.flatMap((page) => page.items.map((p) => p.id)),
   });
 
-  // Scope labels to workspace projects (falls back to all org labels outside a workspace or before
-  // the projects list has loaded).
-  const labels = useMemo(() => {
-    if (!workspaceId || !workspaceProjectIds) return allLabels;
-    return allLabels.filter((l) => workspaceProjectIds.has(l.projectId));
-  }, [allLabels, workspaceId, workspaceProjectIds]);
+  // Labels are project-homed: aggregate the per-project canonical home lists client-side. Inside a
+  // workspace, span its projects; outside one, just the current project. Falls back to the current
+  // project until the workspace project list has loaded.
+  const labelProjectIds = useMemo(
+    () => (workspaceId && workspaceProjectIds ? workspaceProjectIds : [projectId]),
+    [workspaceId, workspaceProjectIds, projectId],
+  );
+
+  const labels = useQueries({
+    queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
+    combine: (results) => results.flatMap((r) => r.data?.items ?? []),
+  });
 
   const inputRef = useRef<HTMLInputElement>(null);
 

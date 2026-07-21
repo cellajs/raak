@@ -10,6 +10,7 @@ import { deriveDescriptionCounts } from '~/modules/task/helpers/derive-descripti
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
+import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
@@ -386,10 +387,14 @@ const taskCreateOptions = (
       labels: fullLabels,
       assignedTo: fullAssignedTo,
     });
-    const scopeKey = taskKeys.list.home(organizationId, rest.projectId);
-
     await queryClient.cancelQueries({ queryKey: orgKey });
-    cacheCreate(scopeKey, [optimisticTask]);
+    // Insert into the row's canonical home (project) list only, never filtered/search lists.
+    insertEntitiesIntoHome(queryClient, {
+      entityType: 'task',
+      entities: [optimisticTask],
+      keys: taskKeys,
+      organizationId,
+    });
 
     setTimeout(() => triggerTaskGlow(optimisticTask.id));
 
@@ -507,8 +512,14 @@ const taskDeleteOptions = (
   },
   onError: (_err, variables, context) => {
     handleError('delete');
-    // Restore to org-level; items only land in queries where they match by ID bail-out.
-    if (context?.tasksToDelete) cacheCreate(taskKeys.list.org(variables.organizationId), context.tasksToDelete);
+    // Restore each row into its canonical home list only (updates in place elsewhere), never filtered lists.
+    if (context?.tasksToDelete)
+      insertEntitiesIntoHome(queryClient, {
+        entityType: 'task',
+        entities: context.tasksToDelete,
+        keys: taskKeys,
+        organizationId: variables.organizationId,
+      });
   },
   onSuccess: (_data, { tasksToDelete }) => {
     // Backend decremented label usedCount, mark label list stale (SSE handles refresh).

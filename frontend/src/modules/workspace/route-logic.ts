@@ -60,13 +60,13 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
   // Rewrite URL to use slug if user navigated with ID (parent handles organizationId)
   rewriteUrlToSlug(params, { slug: workspace.slug }, '/$tenantId/$organizationSlug/workspace/$slug');
 
-  // Prefetch projects, labels and tasks so views (board/table) don't waterfall.
+  // Prefetch projects and tasks so views (board/table) don't waterfall. Labels are project-homed,
+  // so they are prefetched per project in the loop below (alongside the per-project task queries).
   // Board uses excludeArchived='true' as a separate cache key, so prefetch both variants.
   queryClient.prefetchInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
   queryClient.prefetchInfiniteQuery(
     projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),
   );
-  queryClient.prefetchQuery(labelsCanonicalOptions({ organizationId, tenantId }));
 
   // Prefetch per-project canonical task queries when projects are already cached
   const cachedProjects = queryClient.getQueryData(
@@ -83,6 +83,7 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
 
     for (const project of projectsToPrefetch) {
       queryClient.prefetchQuery(tasksCanonicalOptions({ organizationId, tenantId, projectId: project.id }));
+      queryClient.prefetchQuery(labelsCanonicalOptions({ organizationId, tenantId, projectId: project.id }));
     }
   }
 

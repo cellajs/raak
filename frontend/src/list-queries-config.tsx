@@ -51,7 +51,6 @@ export const buildEntitySyncQueries = ({
     case 'organization': {
       addMembersQuery('organization');
       syncQueries.push(attachmentsCanonicalOptions({ tenantId, organizationId: targetEntityId }));
-      syncQueries.push(labelsCanonicalOptions({ tenantId, organizationId: targetEntityId }));
       break;
     }
 
@@ -64,6 +63,9 @@ export const buildEntitySyncQueries = ({
       addMembersQuery('project');
       syncQueries.push(
         tasksCanonicalOptions({ organizationId: currentOrganizationId, tenantId, projectId: targetEntityId }),
+      );
+      syncQueries.push(
+        labelsCanonicalOptions({ organizationId: currentOrganizationId, tenantId, projectId: targetEntityId }),
       );
       break;
     }
