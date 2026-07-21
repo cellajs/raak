@@ -923,11 +923,11 @@ export type GetTokenDataResponses = {
 export type GetTokenDataResponse = GetTokenDataResponses[keyof GetTokenDataResponses];
 
 export type StartImpersonationData = {
-  body?: never;
-  path?: never;
-  query: {
+  body: {
     targetUserId: string;
   };
+  path?: never;
+  query?: never;
   url: '/auth/impersonation/start';
 };
 
