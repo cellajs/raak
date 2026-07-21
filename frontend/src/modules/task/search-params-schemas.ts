@@ -3,6 +3,12 @@ import { z } from 'zod';
 
 const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board');
 
+/**
+ * Default board view state. Single source for URL stripping (route search middleware) and query
+ * fallbacks. Mirrors the defaults in `zGetTasksQuery` plus the `view` default.
+ */
+export const taskSearchDefaults = { q: '', view: 'board', sort: 'createdAt', order: 'asc', matchMode: 'all' } as const;
+
 const baseTaskViewSchema = z.object({
   taskSheetId: z.string().optional(),
   userSheetId: z.string().optional(),

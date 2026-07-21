@@ -1,7 +1,7 @@
 import { createXRoute } from '#/core/x-routes';
 import { appCache } from '#/middlewares/entity-cache';
 import { authGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
-import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
+import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchTasksResponse, mockTaskResponse, mockTasksResponse } from '#/modules/task/task-mocks';
 import {
   taskCreateManyStxBodySchema,
@@ -63,6 +63,8 @@ const taskRoutes = {
     method: 'get',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    // Sync-driven read backpressure on the delta path (template pattern for fork product lists)
+    xRateLimiter: [syncReadLimiter],
     tags: ['tasks', 'app', 'product'],
     summary: 'Get list of tasks',
     description: 'Returns a list of tasks within one or more specified projects.',

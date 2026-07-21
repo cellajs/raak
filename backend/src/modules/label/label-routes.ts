@@ -1,7 +1,7 @@
 import { createXRoute } from '#/core/x-routes';
 import { appCache } from '#/middlewares/entity-cache';
 import { authGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
-import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
+import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchLabelsResponse, mockLabelResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
 import {
   labelCreateManyStxBodySchema,
@@ -56,6 +56,8 @@ const labelsRoutes = {
     method: 'get',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
+    // Sync-driven read backpressure on the delta path (template pattern for fork product lists)
+    xRateLimiter: [syncReadLimiter],
     tags: ['labels', 'app', 'product'],
     summary: 'Get list of labels',
     description: 'Returns a list of labels for a given project or workspace.',

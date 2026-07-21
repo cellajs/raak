@@ -1,11 +1,99 @@
 ---
 title: Getting started
-description: Learn how to get started building your own web app using cella.
+description: Learn how to self-host Raak or help out with development.
 order: -39
 keywords: install, setup, dev, modules, deploy
-updatedAt: 2026-07-09T09:55:08.380Z
+updatedAt: 2026-07-21T00:00:00.000Z
 ---
 
-import Content from '../../../../cella/QUICKSTART.md';
+Raak is a fast, high-density issue tracker for small teams juggling many projects at once. It is built on [Cella](https://cellajs.com), a TypeScript template for collaborative web apps with a sync engine for offline and realtime use. Postgres, OpenAPI and React Query are the foundational layers.
 
-<Content />
+This page covers two things: running Raak locally to work on it, and self-hosting your own deployment. For everything else (architecture, sync engine, permissions, testing) see the [Cella docs](https://cellajs.com/docs) and the `cella/` folder in this repository.
+
+## Prerequisites
+
+- **Node 24.x** and **pnpm 11**. Check with `node -v` and `pnpm -v`. A version manager such as [Volta](https://docs.volta.sh/guide/) keeps this pinned automatically.
+- **Docker**, running. The local Postgres database (and the test database) run in containers.
+- **Git over SSH**. See [GitHub's guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh).
+
+## Run it locally
+
+Clone the repo and install dependencies:
+
+```bash
+git clone git@github.com:cellajs/raak.git && cd raak
+pnpm install
+```
+
+Create the environment files from their examples. Both are git-ignored, and the defaults in the examples work out of the box for local development:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Start the database, seed it with test data, and run the dev stack:
+
+```bash
+pnpm docker   # start Postgres in Docker (detached)
+pnpm seed     # apply migrations, DB roles, and seed demo data
+pnpm dev      # run backend + CDC worker + frontend + Yjs relay
+```
+
+The app is served on a single origin at [http://localhost:3000](http://localhost:3000), with the backend under `/api`. The seed creates an admin user (`admin-test@cellajs.com` by default, set via `ADMIN_EMAIL`); sign in by requesting a magic link for that address.
+
+Without outbound email configured (see below), magic links are logged to the backend console instead of being sent, which is all you need for local work.
+
+### Useful commands
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Full dev stack (backend, CDC worker, frontend, Yjs relay) |
+| `pnpm dev:single` | Backend + frontend only, single-VM mode |
+| `pnpm docker` | Start the Postgres container (detached) |
+| `pnpm seed` | Migrate + seed the database |
+| `pnpm check` | SDK regen + typecheck + lint. Run this after any code change |
+| `pnpm generate` | Create Drizzle migrations after a DB schema change |
+| `pnpm sdk` | Regenerate the OpenAPI spec and frontend SDK |
+| `pnpm test` | Run the full test suite (spins up the test DB) |
+| `pnpm story` | Start Storybook |
+| `pnpm cella` | Sync with the upstream Cella template |
+
+`pnpm check` is the single gate for whether a change is sound. Run it at the repo root before considering any change complete.
+
+### Environment variables
+
+The example env files ship with working local defaults. The interesting knobs live in `backend/.env`:
+
+- **Database.** `DATABASE_URL` (RLS-scoped runtime role), `DATABASE_ADMIN_URL` (migrations, role creation), and `DATABASE_CDC_URL` (replication) are pre-filled for the Docker Postgres.
+- **Secrets.** `COOKIE_SECRET`, `CDC_SECRET`, `YJS_SECRET`, `PII_HASH_SECRET`, `DATA_ENCRYPTION_KEY` and friends are placeholder values that are fine locally. Set real values before deploying.
+- **Email.** `BREVO_API_KEY` enables transactional email (magic links, verification). Create a key at [Brevo](https://app.brevo.com/settings/keys/api). Leave it empty locally and links are logged to the console.
+- **Optional integrations.** OAuth (`GITHUB_*`, `GOOGLE_*`, `MICROSOFT_*`), uploads (`TRANSLOADIT_*`, `S3_*`), and AI (`SCW_AI_API_KEY`) are all opt-in.
+
+The frontend only needs `frontend/.env` for debug toggles (`VITE_DEBUG_MODE`, `VITE_DEBUG_I18N`).
+
+## Self-hosting
+
+Raak deploys as immutable VM generations on [Scaleway](https://www.scaleway.com/) via [Pulumi](https://www.pulumi.com/), driven by an interactive infra CLI. Merging your automated release PR to `main` rolls out a new deployment automatically, fully as Infrastructure as Code.
+
+The complete deployment guide lives in the infra package README at `infra/README.md`. It covers the full lifecycle:
+
+- **Fresh installation.** Prerequisites (a domain, Pulumi, the GitHub CLI, a Scaleway project), generating a short-lived bootstrap key, and running `pnpm infra` to provision state, credentials, and the first `pulumi up`.
+- **The deploy flow.** How a push to `main` builds images, provisions a new VM generation, health-gates the cutover on the load balancer, and retires the old generation.
+- **Credentials.** The three descending-privilege Scaleway keys and the Pulumi passphrase, and how to rotate each.
+- **Creating the first admin.** A fresh production database has no users; seed one admin by hand via the serial console or a break-glass DB exposure.
+- **Day-two operations.** Changing infra config, resizing the database, resetting the database, repairing certificates, and rolling back.
+
+Get started with:
+
+```bash
+pnpm infra
+```
+
+The CLI inspects your local `Pulumi.<stack>.yaml` and either runs a fresh install or manages an existing setup. Follow `infra/README.md` step by step from there.
+
+## Learn more
+
+- [Cella docs](https://cellajs.com/docs) for architecture, the sync engine, permissions, multi-tenancy, and testing.
+- The `cella/` folder in this repository for the same guides checked into source, including `cella/AGENTS.md` (the agent and contributor guidelines) and the module-level READMEs.
+- `infra/README.md` for the deployment control plane and operations reference.

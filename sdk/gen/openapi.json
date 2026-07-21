@@ -15231,7 +15231,7 @@
           "category": "tasks"
         },
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -16205,7 +16205,7 @@
         "summary": "Get list of labels",
         "description": "Returns a list of labels for a given project or workspace.",
         "x-guard": ["authGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
         "parameters": [
           {

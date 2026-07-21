@@ -2261,7 +2261,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["syncReadLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -2386,7 +2386,7 @@
     "hasExample": true,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["syncReadLimiter"],
       "xCache": []
     },
     "tagsByKind": {

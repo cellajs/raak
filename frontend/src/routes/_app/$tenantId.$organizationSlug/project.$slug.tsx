@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, stripSearchParams } from '@tanstack/react-router';
 import { ProjectRouteComponent } from '~/modules/project/route-components';
 import { projectRouteBeforeLoad } from '~/modules/project/route-logic';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
-import { combinedTaskSearchSchema } from '~/modules/task/search-params-schemas';
+import { combinedTaskSearchSchema, taskSearchDefaults } from '~/modules/task/search-params-schemas';
 import { createErrorComponent } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';
 
@@ -15,6 +15,8 @@ export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/project/
     floatingNavButtons: { left: 'menu' },
   },
   validateSearch: combinedTaskSearchSchema,
+  // Absence means default: params equal to the default view are stripped from the URL
+  search: { middlewares: [stripSearchParams(taskSearchDefaults)] },
   onLeave: resetTaskInteraction,
   beforeLoad: projectRouteBeforeLoad,
   head: ({ match }) => {
