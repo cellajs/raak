@@ -1,4 +1,5 @@
 import type { GetMyMembershipsResponse } from 'sdk';
+import { isProductEntity } from 'shared';
 import { getRegisteredEntityTypes, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { queryClient } from '~/query/query-client';
 import { deriveGrantBoundaryViews } from '~/query/realtime/views';
@@ -41,7 +42,9 @@ export function resolveChannelPath(channelType: string | null, channelId: string
 export function declareViewsFromMemberships(): void {
   const data = queryClient.getQueryData<GetMyMembershipsResponse>(['me', 'memberships']);
   const memberships = data?.items ?? [];
-  const entityTypes = getRegisteredEntityTypes().filter((entityType) => hasEntityQueryKeys(entityType));
+  const entityTypes = getRegisteredEntityTypes().filter(
+    (entityType) => hasEntityQueryKeys(entityType) && isProductEntity(entityType),
+  );
 
   const derived = deriveGrantBoundaryViews({
     memberships,

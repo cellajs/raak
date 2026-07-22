@@ -1,5 +1,5 @@
 import type { GetMyMembershipsResponse, PostAppCatchupResponse } from 'sdk';
-import { appConfig, type ProductEntityType } from 'shared';
+import { appConfig, isProductEntity, type ProductEntityType } from 'shared';
 import { meKeys } from '~/modules/me/query';
 import { seenKeys } from '~/modules/seen/helpers';
 import { getEntityQueryKeys, getRegisteredEntityTypes, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
@@ -183,7 +183,9 @@ function membershipChannelKeys(): Set<string> {
 
 /** Registered product entity types, for building the catchup views request. */
 export function catchupEntityTypes(): string[] {
-  return getRegisteredEntityTypes().filter((entityType) => hasEntityQueryKeys(entityType));
+  return getRegisteredEntityTypes().filter(
+    (entityType) => hasEntityQueryKeys(entityType) && isProductEntity(entityType),
+  );
 }
 
 /**
