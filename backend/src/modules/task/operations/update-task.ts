@@ -24,10 +24,10 @@ export async function updateTaskOp(
   ctx: AuthContext,
   id: string,
   input: UpdateTaskInput,
-  opts: { fullResponse?: boolean },
+  opts: { fullResponse?: boolean; serverOrigin?: boolean },
 ): Promise<OperationResult<ReturnTask>> {
   const { ops: rawOps = {}, stx } = input;
-  const { fullResponse } = opts;
+  const { fullResponse, serverOrigin } = opts;
   const user = ctx.var.user;
 
   // Pre-compute description metadata outside the transaction to avoid holding a DB
@@ -51,7 +51,12 @@ export async function updateTaskOp(
   const taskResponse = await tenantContext(ctx, async (txCtx) => {
     const { entity } = await getValidProductEntity(txCtx, id, 'task', 'update');
 
-    const resolved = taskContract.resolveUpdateOps(entity, rawOps, stx);
+    // Server-origin writes (Yjs description materialization) carry no client field
+    // timestamps, so they stamp a fresh server HLC for every changed scalar instead of
+    // resolving against client HLCs.
+    const resolved = serverOrigin
+      ? taskContract.resolveServerUpdateOps(entity, rawOps)
+      : taskContract.resolveUpdateOps(entity, rawOps, stx);
 
     // Skip DB update if nothing changed
     if (!resolved.changed) {

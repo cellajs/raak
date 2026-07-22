@@ -12,13 +12,14 @@ registerModule({
 });
 
 // Yjs relay materialization: persist a collab session's description through the standard
-// update op. Empty fieldTimestamps → the stx pipeline stamps a server HLC for `description`;
-// the backend re-derives summary/counts/keywords authoritatively.
+// update op as a trusted server write. serverOrigin routes through resolveServerUpdateOps,
+// which stamps a fresh server HLC for `description` and attributes it to the server sourceId;
+// the passed stx is unused on that path. The backend re-derives summary/counts/keywords.
 registerYjsMaterializer('task', async (ctx, { entityId, description }) => {
   await updateTaskOp(
     ctx,
     entityId,
     { ops: { description }, stx: { mutationId: uuidv7(), sourceId: 'yjs-relay', fieldTimestamps: {} } },
-    { fullResponse: false },
+    { fullResponse: false, serverOrigin: true },
   );
 });
