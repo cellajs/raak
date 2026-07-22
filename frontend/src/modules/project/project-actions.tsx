@@ -14,11 +14,11 @@ import { fallbackContentRef } from '~/utils/fallback-content-ref';
  * Opens the project members sheet.
  */
 export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject<HTMLButtonElement | null>) => {
-  const channelEntity = { ...project, tenantId: project.tenantId };
+  const channel = { ...project, tenantId: project.tenantId };
 
   useSheeter.getState().create(
     <div className="container w-full">
-      <MembersTable channelEntity={channelEntity} isSheet />
+      <MembersTable channel={channel} isSheet />
     </div>,
     {
       id: 'project-members',

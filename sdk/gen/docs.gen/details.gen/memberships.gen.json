@@ -433,8 +433,8 @@
       {
         "status": 200,
         "description": "Invitation was accepted",
-        "name": "ChannelEntityBase",
-        "ref": "#/components/schemas/ChannelEntityBase",
+        "name": "ChannelBase",
+        "ref": "#/components/schemas/ChannelBase",
         "contentType": "application/json",
         "schema": {
           "type": "object",
@@ -463,7 +463,7 @@
               "required": true
             }
           },
-          "ref": "#/components/schemas/ChannelEntityBase",
+          "ref": "#/components/schemas/ChannelBase",
           "contentType": "application/json"
         },
         "example": {

@@ -3,14 +3,14 @@ import type { OperationResult } from '#/core/operation-result';
 import { tenantRead } from '#/db/tenant-context';
 import type { LabelModel } from '#/modules/label/label-db';
 import { findLabelUsedCount } from '#/modules/label/label-queries';
-import { getValidProductEntity } from '#/permissions/get-product-entity';
+import { getValidProduct } from '#/permissions/get-valid-product';
 
 export async function getLabelOp(
   ctx: AuthContext,
   id: string,
 ): Promise<OperationResult<LabelModel & { usedCount: number }>> {
   const { label, usedCount } = await tenantRead(ctx, async (readCtx) => {
-    const { entity: label } = await getValidProductEntity(readCtx, id, 'label', 'read');
+    const { entity: label } = await getValidProduct(readCtx, id, 'label', 'read');
     const usedCount = await findLabelUsedCount(readCtx, { labelId: id });
     return { label, usedCount };
   });

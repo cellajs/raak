@@ -11,13 +11,13 @@ const { applyUnfetchableRemovalUnseen, ingestSyncedRows, noteUnseenReconciled } 
 
 // The sample seen-tracked product type and its home context are derived from config, so this
 // spec is identical across forks: base Cella tracks an org-homed 'attachment', a fork may track a
-// deeper-homed type such as 'task'. A row's home channel — the node `resolveDeepestAncestorId`
-// groups badges by — is the id of its deepest non-null ancestor; the row also carries every
+// deeper-homed type such as 'task'. A row's home channel (the node `resolveDeepestAncestorId`
+// groups badges by) is the id of its deepest non-null ancestor; the row also carries every
 // further ancestor id (e.g. the non-nullable organization), matching how real synced rows look.
 const TRACKED = appConfig.seenTrackedProductTypes[0];
 const ANCESTORS = hierarchy.getOrderedAncestors(TRACKED); // deepest → root
 const ancestorId = Object.fromEntries(ANCESTORS.map((type) => [type, `ch-${type}`]));
-const CHANNEL = ancestorId[ANCESTORS[0]]; // deepest ancestor id — the home channel
+const CHANNEL = ancestorId[ANCESTORS[0]]; // deepest ancestor id (the home channel)
 const ORG = ancestorId[ANCESTORS[ANCESTORS.length - 1]]; // root ancestor (organization) id
 // A product type that is not seen-tracked, for the negative control below.
 const UNTRACKED = appConfig.productEntityTypes.find((type) => !isSeenTracked(type));
@@ -41,7 +41,7 @@ const settle = () => vi.advanceTimersByTimeAsync(5_100);
 describe('unseen count deltas from synced rows', () => {
   // Positive control: ingestSyncedRows/applyUnfetchableRemovalUnseen early-return for any product
   // type isSeenTracked doesn't cover. If the tracked type ever stops being tracked, every "count
-  // did not change" assertion below would pass vacuously — fail here instead.
+  // did not change" assertion below would pass vacuously. This guard fails loudly first.
   beforeAll(() => {
     expect(isSeenTracked(TRACKED)).toBe(true);
   });

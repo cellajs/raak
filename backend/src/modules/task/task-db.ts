@@ -13,7 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { maxLength } from '#/db/utils/constraints';
-import { productEntityColumns } from '#/db/utils/product-entity-columns';
+import { productColumns } from '#/db/utils/product-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 
@@ -24,7 +24,7 @@ import { projectsTable } from '#/modules/project/project-db';
 export const tasksTable = snakeCase.table(
   'tasks',
   {
-    ...productEntityColumns('task'),
+    ...productColumns('task'),
     expandable: boolean().default(false).notNull(),
     summary: varchar({ length: maxLength.html }).notNull(),
     summaryLength: integer().default(0).notNull(),
@@ -38,7 +38,7 @@ export const tasksTable = snakeCase.table(
     checkboxCount: integer().default(0).notNull(),
     checkedCount: integer().default(0).notNull(),
     attachmentCount: integer().default(0).notNull(),
-    // publicAt comes from productEntityColumns (base column); non-member public read is gated on it.
+    // publicAt comes from productColumns (base column); non-member public read is gated on it.
     organizationId: uuid().notNull(),
     projectId: uuid()
       .notNull()

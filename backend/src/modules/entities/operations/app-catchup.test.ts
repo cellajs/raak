@@ -51,16 +51,18 @@ describe('answerCatchupViews', () => {
   });
 
   it('answers a view outside the caller memberships without leaking numbers', async () => {
-    // Raak's first product entity type (task) has publicRead('publicSelf') configured
-    // (permissions-config.ts), a membership-independent grant: a non-member of OTHER_ORG can
-    // never be proven to have ZERO read route (a public task might exist there), so the
-    // status is 'opaque' (no numbers), not 'forbidden' (no route at all) — the un-leaking
-    // intent still holds, since 'opaque' also omits frontiers/counts.
+    // The exact non-'ok' status is fork-dependent: 'forbidden' when the product type has no
+    // public read route, 'opaque' when a publicRead() grant means a readable row can exist.
+    // The guarantee both forks share is what this test asserts: not 'ok', and no numbers.
     const answers = await answerCatchupViews(orgAdmin, { userId: 'actor', isSystemAdmin: false }, [
       { key: 'v2', organizationId: OTHER_ORG, prefixes: [OTHER_ORG], entityTypes: [productType], cursor: 0 },
     ]);
 
-    expect(answers).toEqual([{ key: 'v2', status: 'opaque' }]);
+    expect(answers).toHaveLength(1);
+    expect(answers[0].key).toBe('v2');
+    expect(answers[0].status).not.toBe('ok');
+    expect(answers[0].frontiers).toBeUndefined();
+    expect(answers[0].counts).toBeUndefined();
   });
 
   it('a mixed request answers each view independently', async () => {
@@ -69,12 +71,11 @@ describe('answerCatchupViews', () => {
       { key: 'b', organizationId: OTHER_ORG, prefixes: [OTHER_ORG], entityTypes: [productType], cursor: 5 },
     ]);
 
-    // See the previous test: task's publicRead makes 'opaque', not 'forbidden', the correct
-    // outcome for a non-member org.
-    expect(answers.map((a) => [a.key, a.status])).toEqual([
-      ['a', 'ok'],
-      ['b', 'opaque'],
-    ]);
+    // View 'a' is the caller's own org (ok); view 'b' is a non-member org, whose exact
+    // non-'ok' status is fork-dependent (see the previous test).
+    expect(answers.map((a) => a.key)).toEqual(['a', 'b']);
+    expect(answers[0].status).toBe('ok');
+    expect(answers[1].status).not.toBe('ok');
   });
 
   it('a forged prefix pointing at another org is forbidden even with real memberships', async () => {

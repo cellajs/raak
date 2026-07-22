@@ -207,7 +207,7 @@ async function flushDue(): Promise<void> {
 }
 
 /**
- * The channel id covering every due channel of a group, used to scope the delta fetch by the
+ * The channel id covering every due channel of a group, scoping the delta fetch by the
  * entity's conventional ancestor filter (e.g. projectId); undefined = whole org (no narrowing).
  * One shared channel (the common case: a single viewed channel) needs no path lookup. Multiple
  * distinct channels narrow to their least-common-ancestor channel via the fork-registered
