@@ -2,6 +2,7 @@ import type { ProductEntityType } from 'shared';
 import { invalidateUnseenCounts } from '~/modules/seen/query';
 import { ingestSyncedRows } from '~/modules/seen/unseen-sync';
 import { getEntityQueryKeys, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
+import { isSyncDeliveryTrusted, setSyncDeliveryTrusted } from '~/query/basic/sync-stale-config';
 import { sourceId } from '~/query/offline/stx-utils';
 import { queryClient } from '~/query/query-client';
 import * as cacheOps from './cache-ops';
@@ -238,6 +239,15 @@ function coveringChannelId(entries: DirtyEntry[]): string | undefined {
   return common.length > 1 ? common[common.length - 1] : undefined;
 }
 
+// A promised seq (notification batch-end / catchup frontier) that never came back: drop to
+// basic-fetch mode (staleTime fallback) until a clean catchup reconciles. Logs once per entry;
+// the warn reaches Maple via the browser SDK, never the user.
+function enterBasicFetchMode(context: Record<string, unknown>): void {
+  if (!isSyncDeliveryTrusted()) return;
+  setSyncDeliveryTrusted(false);
+  console.warn('[SyncTrust] delivery shortfall; switching to basic-fetch mode', context);
+}
+
 /** Flush one covering group: fetch the merged range once, then settle every entry from it. */
 async function flushGroup(entries: DirtyEntry[]): Promise<'ok' | 'fallback' | 'requeued'> {
   const { entityType, organizationId } = entries[0];
@@ -268,9 +278,16 @@ async function flushGroup(entries: DirtyEntry[]): Promise<'ok' | 'fallback' | 'r
   }
 
   if (result.status === 'ok') {
-    // Per-view advance accounting: the fetch covered [fromSeq, untilSeq] for every channel
-    // under the covering prefix, so each due channel advances to the shared upper bound.
-    for (const entry of entries) advanceCaughtUp({ ...entry, untilSeq });
+    if (result.reachedSeq < untilSeq) {
+      // Short delivery: keep the cursor honest (do not advance) so catchup re-checks the gap,
+      // heal the visible view once, and degrade sync trust.
+      cacheOps.invalidateEntityListForOrg(keys, organizationId, 'active');
+      enterBasicFetchMode({ entityType, organizationId, promisedSeq: untilSeq, reachedSeq: result.reachedSeq });
+    } else {
+      // Per-view advance accounting: the fetch covered [fromSeq, untilSeq] for every channel
+      // under the covering prefix, so each due channel advances to the shared upper bound.
+      for (const entry of entries) advanceCaughtUp({ ...entry, untilSeq });
+    }
     // Unseen sync: exact badge deltas from the fetched rows (each row resolves its own home
     // channel; the org id is only the fallback for rows without ancestor ids).
     ingestSyncedRows(entityType, organizationId, result.items as { id: string }[]);
