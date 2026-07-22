@@ -3,5 +3,4 @@ ALTER TABLE "seen_by" RENAME COLUMN "entity_id" TO "product_id";--> statement-br
 ALTER TABLE "seen_by" RENAME COLUMN "entity_type" TO "product_type";--> statement-breakpoint
 ALTER INDEX "seen_by_user_entity_index" RENAME TO "seen_by_user_product_index";--> statement-breakpoint
 ALTER INDEX "seen_by_entity_id_index" RENAME TO "seen_by_product_id_index";--> statement-breakpoint
-ALTER TABLE "product_counters" ADD COLUMN "product_type" varchar NOT NULL;--> statement-breakpoint
-ALTER TABLE "product_counters" DROP COLUMN "entity_type";
+ALTER TABLE "product_counters" RENAME COLUMN "entity_type" TO "product_type";
