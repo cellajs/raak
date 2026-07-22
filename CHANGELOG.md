@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/cellajs/raak/compare/0.0.7...0.0.8) (2026-07-22)
+
+
+### 🐞 Bug fixes
+
+* restore entity realtime + Yjs collaborative sync in production ([#62](https://github.com/cellajs/raak/issues/62)) ([81bbae1](https://github.com/cellajs/raak/commit/81bbae19ebca2e1a829b8192f91f54bddcd954ac))
+
 ## [0.0.7](https://github.com/cellajs/raak/compare/0.0.6...0.0.7) (2026-07-22)
 
 
