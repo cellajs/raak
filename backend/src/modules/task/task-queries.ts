@@ -1,5 +1,6 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
+import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -187,24 +188,38 @@ interface FindTasksPaginatedOpts {
   orderBy: SQL[];
   limit: number;
   offset: number;
+  isDelta: boolean;
 }
 
-/** Fetch paginated tasks with count in parallel. */
+/**
+ * Fetch a paginated page of tasks and its `total`. Delta reads (seqCursor) discard `total`, so the
+ * COUNT(*) is skipped entirely; tasks are always project-scoped and thus never org-wide
+ * counter-eligible, so non-delta reads resolve `total` via the exact COUNT(*).
+ */
 export const findTasksPaginated = async (
   ctx: DbContext,
-  { filters, orderBy, limit, offset }: FindTasksPaginatedOpts,
+  { filters, orderBy, limit, offset, isDelta }: FindTasksPaginatedOpts,
 ) => {
   const { db } = ctx.var;
-  return Promise.all([
-    db
-      .select()
-      .from(tasksTable)
-      .where(filters)
-      .orderBy(...orderBy)
-      .limit(limit)
-      .offset(offset),
-    db.select({ total: count() }).from(tasksTable).where(filters),
-  ]);
+  const itemsQuery = db
+    .select()
+    .from(tasksTable)
+    .where(filters)
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
+
+  const totalSource: ListTotalSource = isDelta
+    ? { kind: 'pageLength' }
+    : {
+        kind: 'exact',
+        count: async () => {
+          const [{ total }] = await db.select({ total: count() }).from(tasksTable).where(filters);
+          return total;
+        },
+      };
+
+  return resolveListTotal(itemsQuery, totalSource);
 };
 
 /** Count tasks grouped by status for a single project. */

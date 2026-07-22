@@ -4,6 +4,7 @@ import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
+import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
 import type { LabelModel } from '#/modules/label/label-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { buildLabelsListQuery } from '#/modules/label/label-queries';
@@ -52,6 +53,11 @@ export async function getLabelsOp(
   // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted labels
   const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
+  // Delta reads discard `total`; org-wide unfiltered reads use the O(1) channel counter; everything
+  // narrower (search / project-scoped / row-scoped 'own') falls back to the exact COUNT(*).
+  const isDelta = !!seqCursor;
+  const counterEligible = scopeWhere.kind === 'all' && !q?.trim() && !seqCursor;
+
   const result = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;
 
@@ -81,17 +87,26 @@ export async function getLabelsOp(
           }),
         ];
 
-    const [items, [{ total }]] = await Promise.all([
-      db
-        .select()
-        .from(labelsSubquery)
-        .orderBy(...orderBy)
-        .limit(limit)
-        .offset(offset),
-      db.select({ total: count() }).from(labelsSubquery),
-    ]);
+    const itemsQuery = db
+      .select()
+      .from(labelsSubquery)
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset);
 
-    return { items, total };
+    const totalSource: ListTotalSource = isDelta
+      ? { kind: 'pageLength' }
+      : counterEligible
+        ? { kind: 'counter', ctx: readCtx, channelKey: organizationId, entityType: 'label' }
+        : {
+            kind: 'exact',
+            count: async () => {
+              const [{ total }] = await db.select({ total: count() }).from(labelsSubquery);
+              return total;
+            },
+          };
+
+    return resolveListTotal(itemsQuery, totalSource);
   });
 
   return { success: true, data: result };

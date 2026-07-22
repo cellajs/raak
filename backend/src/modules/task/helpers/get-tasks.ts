@@ -82,11 +82,17 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
     seqCursor ? undefined : isNull(tasksTable.deletedAt),
   );
 
-  // Parallel count + data fetch
+  // Non-delta reads fetch the page and its exact COUNT(*) in parallel; delta reads skip the count.
   const orderBy = seqCursor
     ? [orderColumn, asc(tasksTable.id)]
     : [orderColumn, desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number))];
-  const [tasks, [{ total }]] = await findTasksPaginated(ctx, { filters, orderBy, limit, offset });
+  const { items: tasks, total } = await findTasksPaginated(ctx, {
+    filters,
+    orderBy,
+    limit,
+    offset,
+    isDelta: !!seqCursor,
+  });
 
   const items = hydrateTasks(tasks, tasksUsers, tasksLabels);
 
