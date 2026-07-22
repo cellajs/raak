@@ -211,8 +211,8 @@
     }
   },
   {
-    "name": "ChannelEntityBase",
-    "ref": "#/components/schemas/ChannelEntityBase",
+    "name": "ChannelBase",
+    "ref": "#/components/schemas/ChannelBase",
     "type": "object",
     "schema": {
       "type": "object",
@@ -261,8 +261,8 @@
     }
   },
   {
-    "name": "ProductEntityBase",
-    "ref": "#/components/schemas/ProductEntityBase",
+    "name": "ProductBase",
+    "ref": "#/components/schemas/ProductBase",
     "type": "object",
     "schema": {
       "type": "object",

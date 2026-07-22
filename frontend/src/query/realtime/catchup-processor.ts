@@ -1,8 +1,12 @@
 import type { GetMyMembershipsResponse, PostAppCatchupResponse } from 'sdk';
-import { appConfig, isProductEntity, type ProductEntityType } from 'shared';
+import { appConfig, type ProductEntityType } from 'shared';
 import { meKeys } from '~/modules/me/query';
 import { seenKeys } from '~/modules/seen/helpers';
-import { getEntityQueryKeys, getRegisteredEntityTypes, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
+import {
+  getEntityQueryKeys,
+  getRegisteredProductEntityTypes,
+  hasEntityQueryKeys,
+} from '~/query/basic/entity-query-registry';
 import { isSyncDeliveryTrusted, setSyncDeliveryTrusted } from '~/query/basic/sync-stale-config';
 import { queryClient } from '~/query/query-client';
 import { useSyncStore } from '~/query/realtime/sync-store';
@@ -192,9 +196,7 @@ function membershipChannelKeys(): Set<string> {
 
 /** Registered product entity types, for building the catchup views request. */
 export function catchupEntityTypes(): string[] {
-  return getRegisteredEntityTypes().filter(
-    (entityType) => hasEntityQueryKeys(entityType) && isProductEntity(entityType),
-  );
+  return getRegisteredProductEntityTypes();
 }
 
 /**

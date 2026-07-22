@@ -1,5 +1,5 @@
 import { foreignKey, index, snakeCase, unique, uuid } from 'drizzle-orm/pg-core';
-import { channelEntityColumns } from '#/db/utils/channel-entity-columns';
+import { channelColumns } from '#/db/utils/channel-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
 /**
@@ -10,7 +10,7 @@ import { organizationsTable } from '#/modules/organization/organization-db';
 export const workspacesTable = snakeCase.table(
   'workspaces',
   {
-    ...channelEntityColumns('workspace'),
+    ...channelColumns('workspace'),
     organizationId: uuid().notNull(),
   },
   (table) => [

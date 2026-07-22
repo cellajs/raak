@@ -173,15 +173,12 @@ describe('Catchup (view-driven, sequence)', async () => {
 
     expect(result.response.status).toBe(200);
     const { views } = result.data as AppCatchupResponse;
-    // Attachment has publicRead('publicSelf') configured (permissions-config.ts), a
-    // membership-independent grant: a non-member of the other org can never be proven to
-    // have ZERO read route there (a public attachment might exist), so the status is
-    // 'opaque' (no numbers), not 'forbidden' (no route at all) — the un-leaking intent
-    // still holds below, since 'opaque' also omits frontiers/counts.
-    expect(views!.map((v) => [v.key, v.status])).toEqual([
-      ['other:attachment', 'opaque'],
-      [`${orgId}:attachment`, 'ok'],
-    ]);
+    // The other org's exact non-'ok' status is fork-dependent: 'forbidden' with no public read
+    // route, 'opaque' when a publicRead() grant means a readable row can exist there. The
+    // guarantee both forks share is what this test asserts: not 'ok', and no numbers leaked.
+    expect(views!.map((v) => v.key)).toEqual(['other:attachment', `${orgId}:attachment`]);
+    expect(views![0].status).not.toBe('ok');
+    expect(views![1].status).toBe('ok');
     expect(views![0].frontiers).toBeUndefined();
     expect(views![0].counts).toBeUndefined();
   });

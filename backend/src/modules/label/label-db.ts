@@ -3,7 +3,7 @@ import { toSnakeCase } from 'drizzle-orm/casing';
 import { foreignKey, index, snakeCase, uuid, varchar } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { maxLength } from '#/db/utils/constraints';
-import { productEntityColumns } from '#/db/utils/product-entity-columns';
+import { productColumns } from '#/db/utils/product-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 
@@ -14,7 +14,7 @@ import { projectsTable } from '#/modules/project/project-db';
 export const labelsTable = snakeCase.table(
   'labels',
   {
-    ...productEntityColumns('label'),
+    ...productColumns('label'),
     color: varchar({ length: maxLength.field }),
     organizationId: uuid().notNull(),
     projectId: uuid()

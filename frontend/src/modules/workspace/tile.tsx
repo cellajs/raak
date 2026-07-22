@@ -6,7 +6,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Card, CardContent } from '~/modules/ui/card';
-import { getChannelEntityRoute } from '~/utils/channel-entity-route';
+import { getChannelRoute } from '~/utils/channel-route';
 
 /**
  * Tile component for a workspace, showing its name and associated projects as avatars.
@@ -17,7 +17,7 @@ import { getChannelEntityRoute } from '~/utils/channel-entity-route';
  */
 export const WorkspaceTile = ({ entity }: { entity: Workspace }) => {
   const { t } = useTranslation();
-  const { to, params } = getChannelEntityRoute(entity);
+  const { to, params } = getChannelRoute(entity);
 
   const { data: projects = [] } = useInfiniteQuery({
     ...projectsListQueryOptions({}),

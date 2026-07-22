@@ -6,7 +6,7 @@ import {
   findMaxDisplayOrder,
   insertProjectMembership,
 } from '#/modules/project/project-queries';
-import { getValidChannelEntity } from '#/permissions';
+import { getValidChannel } from '#/permissions';
 
 type ProjectMembershipTarget = {
   id: string;
@@ -41,7 +41,7 @@ function isProjectMembershipTarget(
 }
 
 export async function resolveProjectWorkspaceId(ctx: AuthContext, workspaceId: string): Promise<string> {
-  const { entity } = await getValidChannelEntity(ctx, workspaceId, 'workspace', 'read');
+  const { entity } = await getValidChannel(ctx, workspaceId, 'workspace', 'read');
   return entity.id;
 }
 

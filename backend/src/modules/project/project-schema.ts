@@ -19,7 +19,7 @@ import {
   validSlugSchema,
   validTempIdSchema,
 } from '#/schemas';
-import { channelEntityIncludedSchema } from '#/schemas/channel-entity-included';
+import { channelIncludedSchema } from '#/schemas/channel-included';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
 /** Task status counts for accepted/iced cutoff display */
@@ -33,7 +33,7 @@ const taskStatusCountsSchema = z.object({
   iced: z.number(),
 });
 
-const baseIncluded = channelEntityIncludedSchema('project');
+const baseIncluded = channelIncludedSchema('project');
 const projectIncludedSchema = baseIncluded.extend({
   counts: baseIncluded.shape.counts.unwrap().extend({ taskStatusCounts: taskStatusCountsSchema.optional() }).optional(),
 });

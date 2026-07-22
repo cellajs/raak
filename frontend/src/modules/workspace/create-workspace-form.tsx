@@ -3,7 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 import { type UseFormProps, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import type { ChannelEntityBase, Organization, Workspace } from 'sdk';
+import type { ChannelBase, Organization, Workspace } from 'sdk';
 import { zCreateWorkspacesBody, zCreateWorkspacesPath } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
 import { z } from 'zod';
@@ -101,7 +101,7 @@ const CreateWorkspaceForm = ({ callback, dialog: isDialog }: CreateWorkspaceForm
   };
 
   const onOrganizationSelect = useCallback(
-    (selectedOrg: ChannelEntityBase) => {
+    (selectedOrg: ChannelBase) => {
       form.setValue('tenantId', selectedOrg.tenantId, {
         shouldDirty: false,
         shouldTouch: false,

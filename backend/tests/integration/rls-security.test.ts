@@ -1,16 +1,17 @@
 import { randomUUID } from 'node:crypto';
-import { getTableName, type SQL, sql } from 'drizzle-orm';
+import { eq, getTableName, sql } from 'drizzle-orm';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { appConfig } from 'shared';
+import { appConfig, type ProductEntityType } from 'shared';
 import { testAdminRoleDatabaseUrl, testRuntimeDatabaseUrl } from 'shared/test-db';
 import { buildTestEntityHierarchyPlan, type TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
 import { nanoidTenant } from 'shared/utils/nanoid';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { baseDb as adminDb, type Tx } from '#/db/db';
 import { membershipImmutableColumns } from '#/db/immutability-triggers';
+import { buildInsertableProduct } from '#/mocks';
 import { seenWindowMs, trackedProductTypes } from '#/modules/seen/operations/mark-seen';
 import { findUnseenCountsByUser } from '#/modules/seen/seen-queries';
-import { entityTables } from '#/tables';
+import { entityTables, getEntityTable } from '#/tables';
 
 /** Local read-only tenant context helper, mirrors tenantRead without importing it. */
 async function tenantReadTest<T>(tenantId: string, userId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {
@@ -36,7 +37,6 @@ const TEST_ORG_B = '00000000-0000-4000-a000-000000000004';
 const TEST_MEMBERSHIP_A = '00000000-0000-4000-a000-000000000006';
 const TEST_MEMBERSHIP_B = '00000000-0000-4000-a000-000000000007';
 const TEST_ATTACHMENT_A = '00000000-0000-4000-a000-00000000000e';
-const TEST_TASK_A = '00000000-0000-4000-a000-000000000010';
 const TEST_ACTIVITY_A = 'rls-activity-001';
 
 // Runtime role connection (subject to RLS)
@@ -49,23 +49,7 @@ let requiredTablesAvailable = false;
 /** Whether the seen_by table exists (partman-partitioned; may be absent in a minimal test DB). */
 let seenByAvailable = false;
 
-const attachmentHierarchyA = buildTestEntityHierarchyPlan({
-  entityType: 'attachment',
-  rootChannelId: TEST_ORG_A,
-  makeChannelId: () => randomUUID(),
-});
 const quoteIdent = (identifier: string) => `"${identifier.replaceAll('"', '""')}"`;
-
-const channelColumnList = (plan: TestEntityHierarchyPlan) =>
-  sql.raw(plan.sqlChannelColumns.map(({ columnName }) => `, ${quoteIdent(columnName)}`).join(''));
-
-const contextValueList = (plan: TestEntityHierarchyPlan) =>
-  plan.sqlChannelColumns.length > 0
-    ? sql`, ${sql.join(
-        plan.sqlChannelColumns.map(({ id }) => sql`${id}`),
-        sql`, `,
-      )}`
-    : sql``;
 
 async function seedEntityHierarchy(
   plan: TestEntityHierarchyPlan,
@@ -98,18 +82,17 @@ async function cleanupEntityHierarchy(...plans: TestEntityHierarchyPlan[]) {
 const rlsProductTypes = appConfig.productEntityTypes;
 
 /**
- * Per-entity seed fixtures for the generic RLS product-entity tests
- * (write-through, composite FK, CDC seq). This is the FORK EXTENSION POINT:
- * add an entry per org-scoped product entity a fork defines (e.g. `task`, `label`)
- * and the write-through / FK / CDC blocks automatically cover it.
- *
- * Each entry owns its own prerequisite + representative-row seeding so entities
- * with extra parents (e.g. a task needing a project) stay self-contained.
+ * Seed fixture backing one product entity's generic RLS tests (write-through, composite FK, CDC
+ * seq, unseen counts). Fully derived from the entity model, so a fork needs no per-entity edits:
+ * the row is built from the type's registered mock ({@link buildInsertableProduct}) and its
+ * ancestor columns come from a hierarchy plan seeded alongside it.
  */
 interface RlsProductFixture {
+  /** Entity type key (e.g. 'attachment'). */
+  entityType: ProductEntityType;
   /** Table name (e.g. 'attachments'). */
   table: string;
-  /** Pre-seeded representative row id (tenant A / org A) used by update/CDC tests. */
+  /** Pre-seeded representative row id (tenant A / org A) used by update/CDC/unseen tests. */
   rowId: string;
   /** Original name of the representative row, for restore after update tests. */
   rowName: string;
@@ -119,68 +102,78 @@ interface RlsProductFixture {
    * when the fork nests products deeper). Used by the unseen-count tests.
    */
   homeChannelId: string;
-  /** Build an INSERT for a fresh row (caller supplies a unique id, no ON CONFLICT). */
-  insert: (p: { id: string; tenantId: string; createdBy: string }) => SQL;
-  /** Seed prerequisites + the representative row (runs as admin/superuser). */
+  /** Ancestor channel plan seeded for this entity (organization + any deeper contexts). */
+  plan: TestEntityHierarchyPlan;
+  /** Insert a fresh row via drizzle on the given executor (admin or an RLS runtime tx). */
+  insert: (exec: NodePgDatabase | NodePgTx, p: { id: string; tenantId: string; createdBy: string }) => Promise<unknown>;
+  /** Seed the representative row (runs as admin/superuser, idempotent). */
   seed: () => Promise<void>;
-  /** Remove the representative row + prerequisites. */
+  /** Remove the representative row. */
   cleanup: () => Promise<void>;
 }
 
-const rlsProductFixtures: Record<string, RlsProductFixture> = {
-  attachment: {
-    table: 'attachments',
-    rowId: TEST_ATTACHMENT_A,
-    rowName: 'Test File',
-    homeChannelId: attachmentHierarchyA.sqlChannelColumns[0]?.id ?? TEST_ORG_A,
-    insert: ({ id, tenantId, createdBy }) => sql`
-        INSERT INTO attachments (id, entity_type, tenant_id, name, stx, keywords, created_by${channelColumnList(attachmentHierarchyA)}, bucket_name, filename, content_type, size, original_key)
-        VALUES (${id}, 'attachment', ${tenantId}, 'WT File', '{}', '', ${createdBy}${contextValueList(attachmentHierarchyA)}, 'test-bucket', 'wt.txt', 'text/plain', '100', 'attachments/wt.txt')
-      `,
+// Deterministic representative-row ids. Attachment keeps a fixed id so the attachment-specific
+// blocks (tenant-scoped access, fail-closed) can target it directly; other product types get a
+// stable per-run id.
+const rlsProductRowIds: Partial<Record<ProductEntityType, string>> = { attachment: TEST_ATTACHMENT_A };
+
+const makeRlsProductFixture = (entityType: ProductEntityType): RlsProductFixture => {
+  const table = getEntityTable(entityType);
+  const rowId = rlsProductRowIds[entityType] ?? randomUUID();
+  const rowName = `RLS ${entityType}`;
+  const plan = buildTestEntityHierarchyPlan({
+    entityType,
+    rootChannelId: TEST_ORG_A,
+    makeChannelId: () => randomUUID(),
+  });
+  // Deepest seeded ancestor is where unseen counts roll up (the org itself when org-homed).
+  const homeChannelId = plan.sqlChannelColumns[0]?.id ?? TEST_ORG_A;
+
+  const buildRow = (p: { id: string; tenantId: string; createdBy: string }, extra: Record<string, unknown> = {}) =>
+    // The row is built from the entity's mock + hierarchy plan, so its runtime shape matches the
+    // table's insert model; TS cannot verify a dynamically-built row against the union insert type.
+    buildInsertableProduct(entityType, {
+      id: p.id,
+      tenantId: p.tenantId,
+      createdBy: p.createdBy,
+      updatedBy: null,
+      deletedBy: null,
+      ...plan.channelIdColumns,
+      // Recent so the unseen-count tests attribute it; the mock's createdAt is a random past date.
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      seq: 0,
+      ...extra,
+    }) as never;
+
+  return {
+    entityType,
+    table: getTableName(table),
+    rowId,
+    rowName,
+    homeChannelId,
+    plan,
+    insert: async (exec, p) => {
+      await exec.insert(table).values(buildRow(p));
+    },
     seed: async () => {
-      await adminDb.execute(sql`
-        INSERT INTO attachments (id, entity_type, tenant_id, name, stx, keywords, created_by${channelColumnList(attachmentHierarchyA)}, bucket_name, filename, content_type, size, original_key)
-        VALUES
-          (${TEST_ATTACHMENT_A}, 'attachment', ${TEST_TENANT_A}, 'Test File', '{}', '', ${TEST_USER_A}${contextValueList(attachmentHierarchyA)}, 'test-bucket', 'test.txt', 'text/plain', '1024', 'attachments/test.txt')
-        ON CONFLICT (id) DO NOTHING
-      `);
+      await adminDb
+        .insert(table)
+        .values(buildRow({ id: rowId, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A }, { name: rowName }))
+        .onConflictDoNothing();
     },
     cleanup: async () => {
-      await adminDb.execute(sql`DELETE FROM attachments WHERE id = ${TEST_ATTACHMENT_A}`);
+      await adminDb.delete(table).where(eq(table.id, rowId));
     },
-  },
-  // raak: tasks share attachment's ancestor chain (project → organization), so they reuse
-  // the same seeded hierarchy plans. Tasks are raak's seen-tracked type, so this fixture
-  // also backs the unseen-count tests.
-  task: {
-    table: 'tasks',
-    rowId: TEST_TASK_A,
-    rowName: 'Test Task',
-    homeChannelId: attachmentHierarchyA.sqlChannelColumns[0]?.id ?? TEST_ORG_A,
-    insert: ({ id, tenantId, createdBy }) => sql`
-        INSERT INTO tasks (id, entity_type, tenant_id, name, stx, keywords, created_by${channelColumnList(attachmentHierarchyA)}, summary, variant, display_order, status)
-        VALUES (${id}, 'task', ${tenantId}, 'WT Task', '{}', '', ${createdBy}${contextValueList(attachmentHierarchyA)}, 'WT Task', 0, 1000, 0)
-      `,
-    seed: async () => {
-      await adminDb.execute(sql`
-        INSERT INTO tasks (id, entity_type, tenant_id, name, stx, keywords, created_by${channelColumnList(attachmentHierarchyA)}, summary, variant, display_order, status)
-        VALUES (${TEST_TASK_A}, 'task', ${TEST_TENANT_A}, 'Test Task', '{}', '', ${TEST_USER_A}${contextValueList(attachmentHierarchyA)}, 'Test Task', 0, 1000, 0)
-        ON CONFLICT (id) DO NOTHING
-      `);
-    },
-    cleanup: async () => {
-      await adminDb.execute(sql`DELETE FROM tasks WHERE id = ${TEST_TASK_A}`);
-    },
-  },
+  };
 };
 
 /**
- * RLS product types that have a fixture, what the generic blocks iterate (collection-time).
- * Table existence is checked at runtime in `beforeAll` (see {@link activeRlsProducts}).
+ * Fixtures for every configured product entity (collection-time). Table existence is checked at
+ * runtime in `beforeAll` (see {@link activeRlsProducts}); a fork's new product type flows in here
+ * automatically via config + its registered mock, with no edits to this file.
  */
-const iterableRlsProducts = rlsProductTypes
-  .filter((t) => rlsProductFixtures[t])
-  .map((t) => [t, rlsProductFixtures[t]] as const);
+const iterableRlsProducts = rlsProductTypes.map((t) => [t, makeRlsProductFixture(t)] as const);
 
 /** RLS product fixtures whose table actually exists in the test DB (populated in beforeAll). */
 let activeRlsProducts: { type: string; fixture: RlsProductFixture }[] = [];
@@ -255,22 +248,16 @@ async function ensureRlsRoles() {
   }
 
   // Non-RLS tables runtime_role must access (write isolation enforced by guards at the app layer).
-  // Channel entities (organizations, workspaces, projects) are all non-RLS and land in production's
-  // fullCrudTables, so runtime_role gets full CRUD on each. projects is required by the publicAt
-  // cascade: the BEFORE INSERT trigger inherit_public_at_from_project() reads projects.public_at
-  // when a task/attachment is created, running as the invoking runtime_role.
-  // seen_by is non-RLS (production classifies it in fullCrudTables), runtime_role reads it in the
-  // NOT EXISTS of the unseen-count query, so it needs a grant here too.
-  const nonRlsTables = [
-    'organizations',
-    'workspaces',
-    'projects',
-    'memberships',
-    'inactive_memberships',
-    'users',
-    'tenants',
-    'seen_by',
-  ];
+  // Channel entities are all non-RLS and land in production's fullCrudTables, so runtime_role gets
+  // full CRUD on each; derived from config so a fork's deeper contexts (e.g. project, needed by a
+  // product's publicAt-inheritance trigger that reads the parent as the invoking runtime_role) are
+  // covered without listing them here. seen_by is non-RLS too (production classifies it in
+  // fullCrudTables), read in the NOT EXISTS of the unseen-count query, so it needs a grant as well.
+  const channelTableNames = appConfig.channelEntityTypes
+    .map((type) => entityTables[type as keyof typeof entityTables])
+    .filter(Boolean)
+    .map((table) => getTableName(table));
+  const nonRlsTables = [...channelTableNames, 'memberships', 'inactive_memberships', 'users', 'tenants', 'seen_by'];
   for (const table of nonRlsTables) {
     if (!(await tableExists(table))) continue;
     const priv = table === 'tenants' ? 'SELECT' : 'SELECT, INSERT, UPDATE, DELETE';
@@ -316,7 +303,11 @@ async function setupTestData() {
     ON CONFLICT (id) DO NOTHING
   `);
 
-  await seedEntityHierarchy(attachmentHierarchyA, TEST_TENANT_A, TEST_USER_A, `rls-a-${Date.now()}`);
+  // Seed each product entity's ancestor hierarchy (deeper contexts below the org, if the fork
+  // nests products; a no-op for org-homed products like base Cella's attachment).
+  for (const { fixture } of activeRlsProducts) {
+    await seedEntityHierarchy(fixture.plan, TEST_TENANT_A, TEST_USER_A, `rls-a-${Date.now()}`);
+  }
 
   // Create memberships: User A in Org A (Tenant A), User B in Org B (Tenant B)
   await adminDb.execute(sql`
@@ -351,7 +342,7 @@ async function cleanupTestData() {
     await fixture.cleanup();
   }
   await adminDb.execute(sql`DELETE FROM memberships WHERE id IN (${TEST_MEMBERSHIP_A}, ${TEST_MEMBERSHIP_B})`);
-  await cleanupEntityHierarchy(attachmentHierarchyA);
+  await cleanupEntityHierarchy(...activeRlsProducts.map(({ fixture }) => fixture.plan));
   await adminDb.execute(sql`DELETE FROM organizations WHERE id IN (${TEST_ORG_A}, ${TEST_ORG_B})`);
   await adminDb.execute(sql`DELETE FROM users WHERE id IN (${TEST_USER_A}, ${TEST_USER_B})`);
   await adminDb.execute(
@@ -793,7 +784,7 @@ const rlsSuiteReady = await (async () => {
       it('should allow INSERT as runtime_role', async () => {
         const id = randomUUID();
         await queryAsRuntimeRole(TEST_TENANT_A, TEST_USER_A, async (tx) =>
-          tx.execute(fixture.insert({ id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A })),
+          fixture.insert(tx, { id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A }),
         );
         await adminDb.execute(sql.raw(`DELETE FROM ${fixture.table} WHERE id = '${id}'`));
       });
@@ -810,7 +801,7 @@ const rlsSuiteReady = await (async () => {
 
       it('should allow DELETE as runtime_role', async () => {
         const id = randomUUID();
-        await adminDb.execute(fixture.insert({ id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A }));
+        await fixture.insert(adminDb, { id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A });
         await queryAsRuntimeRole(TEST_TENANT_A, TEST_USER_A, async (tx) =>
           tx.execute(sql.raw(`DELETE FROM ${fixture.table} WHERE id = '${id}'`)),
         );
@@ -838,7 +829,7 @@ const rlsSuiteReady = await (async () => {
         const id = randomUUID();
         // Write without any session context, write-through policy uses sql`true`
         await queryWithoutChannel(async (tx) =>
-          tx.execute(fixture.insert({ id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A })),
+          fixture.insert(tx, { id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A }),
         );
         // SELECT without context should still be denied (fail-closed read)
         const rows = await queryWithoutChannel(async (tx) =>
@@ -858,16 +849,14 @@ const rlsSuiteReady = await (async () => {
       it('should reject INSERT with mismatched tenant_id / organization_id', async () => {
         // Org A belongs to Tenant A, inserting with Tenant B should violate the composite FK
         await expect(
-          unwrapDrizzle(
-            adminDb.execute(fixture.insert({ id: randomUUID(), tenantId: TEST_TENANT_B, createdBy: TEST_USER_A })),
-          ),
+          unwrapDrizzle(fixture.insert(adminDb, { id: randomUUID(), tenantId: TEST_TENANT_B, createdBy: TEST_USER_A })),
         ).rejects.toThrow(/foreign key|violates/i);
       });
 
       it('should allow INSERT with matching tenant_id / organization_id', async () => {
         const id = randomUUID();
         await expect(
-          adminDb.execute(fixture.insert({ id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A })),
+          fixture.insert(adminDb, { id, tenantId: TEST_TENANT_A, createdBy: TEST_USER_A }),
         ).resolves.not.toThrow();
         // Cleanup
         await adminDb.execute(sql.raw(`DELETE FROM ${fixture.table} WHERE id = '${id}'`));
@@ -886,7 +875,9 @@ const rlsSuiteReady = await (async () => {
 
     const seededChannelRowIdsByTable = new Map<string, string>([
       ['organizations', TEST_ORG_A],
-      ...attachmentHierarchyA.seedChannelRows.map((row) => [row.tableName, row.id] as const),
+      ...iterableRlsProducts.flatMap(([, fixture]) =>
+        fixture.plan.seedChannelRows.map((row) => [row.tableName, row.id] as const),
+      ),
     ]);
 
     // Channel entities: use base columns. Only target rows this suite owns.

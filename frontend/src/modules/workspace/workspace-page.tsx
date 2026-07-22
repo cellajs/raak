@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { FocusViewContainer } from '~/modules/common/focus-view';
-import type { ChannelEntityEnrichment } from '~/modules/entities/types';
+import type { ChannelEnrichment } from '~/modules/entities/types';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
@@ -38,7 +38,7 @@ interface Props {
 const WorkspacePage = ({ workspaceId, organizationId, tenantId, children }: Props) => {
   const { t } = useTranslation();
   const { data } = useSuspenseQuery(workspaceQueryOptions(workspaceId, organizationId, tenantId));
-  const workspace = data as typeof data & ChannelEntityEnrichment;
+  const workspace = data as typeof data & ChannelEnrichment;
 
   const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId, include: 'counts' }));
   const projects = flattenInfiniteData<EnrichedProject>(projectsData);

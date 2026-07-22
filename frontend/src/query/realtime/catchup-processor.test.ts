@@ -347,10 +347,7 @@ describe('catchup → fetch prioritizer fold', () => {
     vi.mocked(getSyncTier).mockReturnValue({ min: 2000, max: 30_000 });
 
     const keys = createEntityKeys<Record<string, never>>('attachment');
-    const deltaFetch = vi.fn(async () => ({
-      items: [{ id: 'att-bg', organizationId: 'org-1', seq: 9 }],
-      total: 1,
-    }));
+    const deltaFetch = vi.fn(async () => ({ items: [{ id: 'att-1', organizationId: 'org-1', seq: 9 }], total: 1 }));
     registerEntityQueryKeys('attachment', keys, deltaFetch);
 
     useSyncStore.getState().setOrgTenantId('org-1', 'tenant-1');
@@ -373,10 +370,7 @@ describe('catchup → fetch prioritizer fold', () => {
     vi.mocked(getSyncTier).mockReturnValue({ min: 0, max: 0 });
 
     const keys = createEntityKeys<Record<string, never>>('attachment');
-    const deltaFetch = vi.fn(async () => ({
-      items: [{ id: 'att-view', organizationId: 'org-1', seq: 9 }],
-      total: 1,
-    }));
+    const deltaFetch = vi.fn(async () => ({ items: [{ id: 'att-1', organizationId: 'org-1', seq: 9 }], total: 1 }));
     registerEntityQueryKeys('attachment', keys, deltaFetch);
 
     useSyncStore.getState().setOrgTenantId('org-1', 'tenant-1');

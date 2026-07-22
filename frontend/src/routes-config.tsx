@@ -1,6 +1,6 @@
 import type { ChannelEntityType } from 'shared';
 
-export type EntityRouteEntry = {
+export type ChannelRouteEntry = {
   /** Route path template for this entity: its canonical landing surface. Also the redirect
    *  target when the entity's tabbed layout route is visited directly (default tab). */
   path: string;
@@ -19,7 +19,7 @@ export type EntityRouteEntry = {
  * The param name is used both when the entity is the target AND when it appears as an
  * ancestor in another entity's route (e.g. organization's 'organizationSlug' appears in workspace routes).
  */
-export const entityRouteConfig = {
+export const channelRouteConfig = {
   organization: {
     path: '/$tenantId/$organizationSlug/organization/attachments',
     paramName: 'organizationSlug',
@@ -33,4 +33,4 @@ export const entityRouteConfig = {
     paramName: 'slug',
     subitemOf: { entityType: 'workspace', searchParam: 'projectSlug' },
   },
-} as const satisfies Record<ChannelEntityType, EntityRouteEntry>;
+} as const satisfies Record<ChannelEntityType, ChannelRouteEntry>;

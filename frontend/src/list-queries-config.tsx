@@ -9,16 +9,16 @@ import { organizationsListQueryOptions } from '~/modules/organization/query';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
-import type { BuildEntitySyncQueriesParams, ChannelEntityListQueryMap, EntitySyncQueryOptions } from '~/query/types';
+import type { BuildEntitySyncQueriesParams, ChannelListQueryMap, EntitySyncQueryOptions } from '~/query/types';
 
 /**
  * Maps channel entity types to their list query options (used for menu generation).
  */
-export const channelEntityListQueriesByType = {
+export const channelListQueriesByType = {
   organization: (params) => organizationsListQueryOptions(params),
   workspace: (params) => workspacesListQueryOptions(params),
   project: (params) => projectsListQueryOptions(params),
-} satisfies ChannelEntityListQueryMap;
+} satisfies ChannelListQueryMap;
 
 /** Returns query options to sync for a given entity. React Query handles staleness. */
 export const buildEntitySyncQueries = ({

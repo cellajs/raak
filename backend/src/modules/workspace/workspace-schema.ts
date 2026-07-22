@@ -15,10 +15,10 @@ import {
   validNameSchema,
   validTempIdSchema,
 } from '#/schemas';
-import { channelEntityIncludedSchema } from '#/schemas/channel-entity-included';
+import { channelIncludedSchema } from '#/schemas/channel-included';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
-const workspaceIncludedSchema = channelEntityIncludedSchema('workspace');
+const workspaceIncludedSchema = channelIncludedSchema('workspace');
 
 export const workspaceSchema = z
   .object({

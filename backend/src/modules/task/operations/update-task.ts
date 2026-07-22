@@ -12,7 +12,7 @@ import { getTaskRelations, hydrateTask, hydrateTaskLite } from '#/modules/task/h
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
 import { taskContract, type taskUpdateStxBodySchema } from '#/modules/task/task-schema';
-import { getValidProductEntity } from '#/permissions/get-product-entity';
+import { getValidProduct } from '#/permissions/get-valid-product';
 import { getIsoDate } from '#/utils/iso-date';
 import { assertBlockMediaUrls } from '#/utils/validate-block-urls';
 
@@ -49,7 +49,7 @@ export async function updateTaskOp(
 
   // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
   const taskResponse = await tenantContext(ctx, async (txCtx) => {
-    const { entity } = await getValidProductEntity(txCtx, id, 'task', 'update');
+    const { entity } = await getValidProduct(txCtx, id, 'task', 'update');
 
     // Server-origin writes (Yjs description materialization) carry no client field
     // timestamps, so they stamp a fresh server HLC for every changed scalar instead of
