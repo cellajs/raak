@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/cellajs/raak/compare/0.0.6...0.0.7) (2026-07-22)
+
+
+### 🐞 Bug fixes
+
+* rename product_counters.entity_type instead of unsafe ADD NOT NULL ([#60](https://github.com/cellajs/raak/issues/60)) ([5c27c0e](https://github.com/cellajs/raak/commit/5c27c0e4e5b2ac27eb6ce4411a98a2c32df6ac20))
+
 ## [0.0.6](https://github.com/cellajs/raak/compare/0.0.5...0.0.6) (2026-07-22)
 
 
