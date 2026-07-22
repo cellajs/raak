@@ -3,6 +3,7 @@ import { appConfig, isProductEntity, type ProductEntityType } from 'shared';
 import { meKeys } from '~/modules/me/query';
 import { seenKeys } from '~/modules/seen/helpers';
 import { getEntityQueryKeys, getRegisteredEntityTypes, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
+import { isSyncDeliveryTrusted, setSyncDeliveryTrusted } from '~/query/basic/sync-stale-config';
 import { queryClient } from '~/query/query-client';
 import { useSyncStore } from '~/query/realtime/sync-store';
 import * as cacheOps from './cache-ops';
@@ -33,6 +34,7 @@ import { getSyncTier, getTenantIdForOrg } from './sync-priority';
 export async function processAppCatchup(response: PostAppCatchupResponse, baselineOnly = false): Promise<void> {
   const { changes, views } = response;
   const syncStore = useSyncStore.getState();
+  let hadGap = false; // any view still behind the server frontier this cycle
 
   // ── Views: product entity sync per (org, entityType) ──────────────────────
   if (views?.length) {
@@ -80,6 +82,7 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
       }
 
       if (frontier <= clientCursor) continue; // caught up
+      hadGap = true;
 
       const tenantId = syncStore.getOrgTenantId(organizationId) ?? getTenantIdForOrg(organizationId);
 
@@ -146,6 +149,12 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
   if (baselineOnly) {
     console.debug(`[CatchupProcessor] Baseline: stored cursors for ${views?.length ?? 0} views, ${orgIds.length} orgs`);
     return;
+  }
+
+  // Nothing outstanding this cycle: a prior delivery shortfall has been filled, resume trusted mode.
+  if (!hadGap && !isSyncDeliveryTrusted()) {
+    setSyncDeliveryTrusted(true);
+    console.info('[SyncTrust] catchup reconciled; resuming trusted mode');
   }
 
   // Refresh memberships (getMyMemberships, invalidate channel lists, refresh current user).

@@ -293,7 +293,15 @@ export async function fetchEntityAndUpdateList(
 export interface RangeFetchResult {
   status: 'ok' | 'overflow' | 'unsupported' | 'error';
   items: ItemData[];
+  /** Highest seq actually returned; 0 when empty. Lets callers detect a short delivery. */
+  reachedSeq: number;
 }
+
+// Product rows carry the org sequence; read it defensively (ItemData is intentionally loose).
+const seqOf = (item: ItemData): number => {
+  const seq = (item as { seq?: unknown }).seq;
+  return typeof seq === 'number' ? seq : 0;
+};
 
 export async function fetchRangeAndPatch(
   entityType: string,
@@ -305,11 +313,11 @@ export async function fetchRangeAndPatch(
 ): Promise<RangeFetchResult> {
   if (!tenantId && organizationId) {
     console.debug(`[CacheOps] No tenantId for ${entityType} delta fetch, falling back to invalidation`);
-    return { status: 'unsupported', items: [] };
+    return { status: 'unsupported', items: [], reachedSeq: 0 };
   }
 
   const deltaFetch = getEntityDeltaFetch(entityType);
-  if (!deltaFetch) return { status: 'unsupported', items: [] };
+  if (!deltaFetch) return { status: 'unsupported', items: [], reachedSeq: 0 };
 
   try {
     const { items } = await deltaFetch(organizationId, tenantId, seqCursor, channelId);
@@ -320,7 +328,7 @@ export async function fetchRangeAndPatch(
     // cursor to the window end), treat as "delta too large" and let the caller invalidate.
     if (items.length >= SYNC_CHUNK_SIZE) {
       console.debug(`[CacheOps] Delta fetch: ${entityType} window overflow (seqCursor=${seqCursor}) → invalidation`);
-      return { status: 'overflow', items: [] };
+      return { status: 'overflow', items: [], reachedSeq: 0 };
     }
 
     let sawNewRow = false;
@@ -335,9 +343,9 @@ export async function fetchRangeAndPatch(
     if (items.length > 0) {
       console.debug(`[CacheOps] Delta fetch: ${entityType} patched ${items.length} entities (seqCursor=${seqCursor})`);
     }
-    return { status: 'ok', items };
+    return { status: 'ok', items, reachedSeq: items.reduce((max, item) => Math.max(max, seqOf(item)), 0) };
   } catch (error) {
     console.warn(`[CacheOps] Delta fetch failed for ${entityType}, falling back to invalidation`, error);
-    return { status: 'error', items: [] };
+    return { status: 'error', items: [], reachedSeq: 0 };
   }
 }
