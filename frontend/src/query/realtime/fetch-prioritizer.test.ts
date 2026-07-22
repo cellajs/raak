@@ -198,7 +198,17 @@ describe('fetch-prioritizer', () => {
     expect(useSyncStore.getState().getChannelSeq('org-1', 'proj-b', 'attachment')).toBe(12);
   });
 
-  it('narrows the covering fetch with a pathPrefix when every due channel resolves a path', async () => {
+  it('scopes the covering fetch to the channel id for a single viewed channel (no path lookup)', async () => {
+    enqueueRange({ ...base, channelId: 'proj-a', fromSeq: 5, untilSeq: 8 });
+
+    await flushAllNow();
+
+    // The common case: one channel is its own scope, resolved without touching the path resolver.
+    expect(fetchRangeAndPatch.mock.calls[0][5]).toBe('proj-a');
+    expect(resolveChannelPath).not.toHaveBeenCalled();
+  });
+
+  it('narrows the covering fetch to the least-common-ancestor channel id when due channels diverge', async () => {
     resolveChannelPath.mockImplementation((_type, channelId) =>
       channelId === 'proj-a' ? 'org-1/course-1/proj-a' : 'org-1/course-1/proj-b',
     );
@@ -207,8 +217,8 @@ describe('fetch-prioritizer', () => {
 
     await flushAllNow();
 
-    // Common true ancestor of both projects: the course subtree.
-    expect(fetchRangeAndPatch.mock.calls[0][5]).toBe('org-1/course-1');
+    // Common true ancestor of both projects: the course channel id (the leaf of the shared path).
+    expect(fetchRangeAndPatch.mock.calls[0][5]).toBe('course-1');
   });
 
   it('widens to the whole org when any due channel path is unknown', async () => {

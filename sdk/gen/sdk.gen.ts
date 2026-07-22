@@ -2731,7 +2731,6 @@ export const getPublicTask = <ThrowOnError extends boolean = true>(
  * @param {enum=} options.query.matchmode - `enum` (optional)
  * @param {number=} options.query.acceptedcutoff - `number` (optional)
  * @param {string} options.query.projectid - `string`
- * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getPublicTasks = <ThrowOnError extends boolean = true>(
@@ -3747,7 +3746,6 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
- * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getAttachments = <ThrowOnError extends boolean = true>(
@@ -4270,7 +4268,6 @@ export const deleteTasks = <ThrowOnError extends boolean = true>(
  * @param {number=} options.query.acceptedcutoff - `number` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @param {string=} options.query.workspaceid - `string` (optional)
- * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getTasks = <ThrowOnError extends boolean = true>(
@@ -4483,7 +4480,6 @@ export const deleteLabels = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.seqcursor - `string` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @param {string=} options.query.workspaceid - `string` (optional)
- * @param {string=} options.query.pathprefix - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getLabels = <ThrowOnError extends boolean = true>(

@@ -70,8 +70,6 @@ export const labelListQuerySchema = paginationQuerySchema
     order: z.enum(['asc', 'desc']).default('asc').optional(),
     projectId: z.string().max(maxLength.id).optional(),
     workspaceId: z.string().max(maxLength.id).optional(),
-    /** Materialized id-path prefix: sync-engine subtree narrowing (additive to projectId scoping). */
-    pathPrefix: z.string().max(512).optional(),
   })
   .refine((data) => !data.projectId || !data.workspaceId, {
     message: 'Only one of projectId or workspaceId can be provided',

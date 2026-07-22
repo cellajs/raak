@@ -3,7 +3,7 @@ import { registerChannelPathResolver } from '~/query/realtime/view-declaration';
 
 /**
  * Fork channel-path resolver: lets the sync engine derive grant-boundary views and narrow
- * covering delta-fetches with `pathPrefix` for raak's sub-org channels (`project`, `workspace`,
+ * covering delta-fetches by the covering channel id for raak's sub-org channels (`project`, `workspace`,
  * both direct children of `organization`).
  *
  * The server-computed `path` (e.g. `"<orgId>/<projectId>"`) rides on every cached channel row,
