@@ -1,5 +1,5 @@
 import type { AuthContext } from '#/core/context';
-import { getEntityCounts } from '#/modules/entities/entities-queries';
+import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
@@ -15,7 +15,7 @@ export async function getProjectOp(ctx: AuthContext, id: string, opts: { bySlug?
   const includeMembership = include.includes('membership');
 
   const [counts, taskStatusCounts, projectWithAudit] = await Promise.all([
-    includeCounts ? getEntityCounts(ctx, 'project', project.id) : undefined,
+    includeCounts ? getChannelCounts(ctx, 'project', project.id) : undefined,
     includeCounts ? getTaskStatusCounts(ctx, project.id) : undefined,
     withAuditUser(ctx, project, user),
   ]);

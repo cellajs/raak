@@ -1,6 +1,6 @@
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import { getEntityCounts } from '#/modules/entities/entities-queries';
+import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { updateProject } from '#/modules/project/project-queries';
@@ -32,7 +32,7 @@ export async function updateProjectOp(ctx: AuthContext, id: string, rawInput: Re
 
   // Get updated counts
   const [counts, taskStatusCounts] = await Promise.all([
-    getEntityCounts(ctx, 'project', updatedProjectRecord.id),
+    getChannelCounts(ctx, 'project', updatedProjectRecord.id),
     getTaskStatusCounts(ctx, updatedProjectRecord.id),
   ]);
 

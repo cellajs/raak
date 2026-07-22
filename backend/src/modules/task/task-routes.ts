@@ -1,6 +1,6 @@
 import { createXRoute } from '#/core/x-routes';
-import { appCache } from '#/middlewares/entity-cache';
 import { authGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
+import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchTasksResponse, mockTaskResponse, mockTasksResponse } from '#/modules/task/task-mocks';
 import {
@@ -100,7 +100,7 @@ const taskRoutes = {
     method: 'get',
     path: '/{id}',
     xGuard: [authGuard, tenantGuard, orgGuard],
-    xCache: [appCache('task')],
+    xCache: [productCache('task')],
     tags: ['tasks', 'app', 'product'],
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',

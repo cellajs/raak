@@ -142,7 +142,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     const currentPanelIndex = allPanels.findIndex(
       ({ sectionFilters, project }) =>
         project.id === currentTask?.projectId &&
-        (!sectionFilters || sectionFilters.status.includes(currentTask.status)),
+        (!sectionFilters || (!!currentTask && sectionFilters.status.includes(currentTask.status))),
     );
 
     const direction = event.key === 'ArrowRight' ? 1 : -1;

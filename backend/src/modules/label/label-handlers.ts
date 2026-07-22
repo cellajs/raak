@@ -28,7 +28,7 @@ app.openapi(labelRoutes.getLabel, async (ctx) => {
   const { id } = ctx.req.valid('param');
   const result = await getLabelOp(ctx, id);
   assertSuccess(result, 'label');
-  ctx.set('entityCacheData', result.data);
+  ctx.set('productCacheData', result.data);
   return ctx.json(result.data, 200);
 });
 

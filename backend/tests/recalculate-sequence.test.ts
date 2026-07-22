@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm';
+import { appConfig, hierarchy } from 'shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { baseDb as db, seedDb } from '#/db/db';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
@@ -14,30 +15,46 @@ setTestConfig({ enabledAuthStrategies: ['passkey'] });
 /**
  * Counter recalculation (the drift/incident repair tool; its output IS the contract) must
  * agree with CDC's incremental sequence writes: `sequence` = max stamped seq across the
- * org's product tables, `f:{type}` = max seq per (node, type), `e:{type}` = live published.
+ * org's product tables, `e:f:{type}` = max seq per (node, type), `e:c:{type}` = live published.
  */
 describe('recalculateCounters (sequence + frontier)', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;
 
-  // Raak's attachment is project-homed (parent: project), not org-homed like base cella's:
-  // the self family (fs:/es:) rolls up to the DEEPEST ancestor (projectId), not the org. All
-  // three rows share one project so the self counters land at a single, assertable key.
-  const projectId = crypto.randomUUID();
+  // The seeded product's home node — where the self family (e:f:h:/e:c:h:) rolls up — is the
+  // deepest ancestor, derived from config: the organization when the product is org-homed (base
+  // Cella), or a deeper channel such as a shared project when a fork homes it lower. Ids for
+  // ancestors below the organization are generated; all three rows share them so the self
+  // counters land at a single, assertable node.
+  const PRODUCT = 'attachment';
+  const ANCESTORS = hierarchy.getOrderedAncestors(PRODUCT); // deepest → root
+  const deeperAncestorIds = Object.fromEntries(
+    ANCESTORS.filter((type) => type !== 'organization').map((type) => [type, crypto.randomUUID()]),
+  );
+  const homeChannelId = () => {
+    const deepest = ANCESTORS[0];
+    return deepest === 'organization' ? tenant.organization.id : deeperAncestorIds[deepest];
+  };
+  const ancestorColumns = (orgId: string) =>
+    Object.fromEntries(
+      ANCESTORS.map((type) => [
+        appConfig.entityIdColumnKeys[type],
+        type === 'organization' ? orgId : deeperAncestorIds[type],
+      ]),
+    );
 
   beforeAll(async () => {
     mockFetchRequest();
     tenant = await createTestTenant(call, 'recalc-sequence');
 
     const base = (key: string, seq: number, extra: Record<string, unknown> = {}) => {
-      // Strip generated/select-only fields; bind to the test tenant/org/project; audit users
-      // nulled (mock ids have no users rows and the columns are nullable FKs).
+      // Strip generated/select-only fields; bind to the test tenant and the product's ancestor
+      // columns; audit users nulled (mock ids have no users rows and the columns are nullable FKs).
       const { path: _path, ...row } = mockAttachment(key) as unknown as Record<string, unknown>;
       return {
         ...row,
         tenantId: tenant.tenantId,
-        organizationId: tenant.organization.id,
-        projectId,
+        ...ancestorColumns(tenant.organization.id),
         createdBy: null,
         updatedBy: null,
         deletedBy: null,
@@ -57,36 +74,39 @@ describe('recalculateCounters (sequence + frontier)', async () => {
   afterAll(async () => {
     await seedDb.execute(sql`DELETE FROM attachments WHERE organization_id = ${tenant.organization.id}`);
     await seedDb.execute(sql`DELETE FROM channel_counters WHERE channel_key = ${tenant.organization.id}`);
-    await seedDb.execute(sql`DELETE FROM channel_counters WHERE channel_key = ${projectId}`);
+    const home = homeChannelId();
+    if (home !== tenant.organization.id) {
+      await seedDb.execute(sql`DELETE FROM channel_counters WHERE channel_key = ${home}`);
+    }
     await clearSecurityTestData();
   });
 
-  it('rebuilds sequence, f:attachment and e:attachment from row state', async () => {
+  it('rebuilds sequence, subtree and self-family counters from row state', async () => {
     await recalculateCounters(db);
 
-    const [row] = await db
-      .select({ counts: channelCountersTable.counts, path: channelCountersTable.path })
-      .from(channelCountersTable)
-      .where(sql`channel_key = ${tenant.organization.id}`);
+    const readCounts = async (channelKey: string) => {
+      const [counterRow] = await db
+        .select({ counts: channelCountersTable.counts, path: channelCountersTable.path })
+        .from(channelCountersTable)
+        .where(sql`channel_key = ${channelKey}`);
+      return counterRow;
+    };
 
-    const counts = row.counts as Record<string, number>;
+    const orgRow = await readCounts(tenant.organization.id);
+    const orgCounts = orgRow.counts as Record<string, number>;
     // Path backfill: the org channel's canonical path is its own id.
-    expect(row.path).toBe(tenant.organization.id);
+    expect(orgRow.path).toBe(tenant.organization.id);
     // Sequence reservation counter: max stamped value across product tables.
-    expect(counts.sequence).toBe(47);
-    // Frontier includes tombstones (they keep their seq for delta reads).
-    expect(counts['f:attachment']).toBe(47);
-    // Live count excludes the soft-deleted row.
-    expect(counts['e:attachment']).toBe(2);
+    expect(orgCounts.sequence).toBe(47);
+    // Subtree frontier includes tombstones (they keep their seq for delta reads).
+    expect(orgCounts[`e:f:${PRODUCT}`]).toBe(47);
+    // Subtree live count excludes the soft-deleted row.
+    expect(orgCounts[`e:c:${PRODUCT}`]).toBe(2);
 
-    // Self family (attachments are project-homed in raak, so self == the shared project
-    // node, NOT the org node): check the rollup at the deepest ancestor, projectId.
-    const [projectRow] = await db
-      .select({ counts: channelCountersTable.counts })
-      .from(channelCountersTable)
-      .where(sql`channel_key = ${projectId}`);
-    const projectCounts = projectRow.counts as Record<string, number>;
-    expect(projectCounts['fs:attachment']).toBe(47);
-    expect(projectCounts['es:attachment']).toBe(2);
+    // Self family lands at the home node (deepest ancestor): the org itself when org-homed, or a
+    // deeper channel otherwise. When home == org these keys sit on the same org row read above.
+    const homeCounts = (await readCounts(homeChannelId())).counts as Record<string, number>;
+    expect(homeCounts[`e:f:h:${PRODUCT}`]).toBe(47);
+    expect(homeCounts[`e:c:h:${PRODUCT}`]).toBe(2);
   });
 });

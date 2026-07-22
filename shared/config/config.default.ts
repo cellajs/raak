@@ -21,7 +21,7 @@ export const config = {
    * Unseen counts are grouped by the parent channel entity of each tracked type
    * (e.g., tasks grouped by projectId). Badges appear on that parent channel in the menu.
    */
-  seenTrackedEntityTypes: ['task'] as const,
+  seenTrackedProductTypes: ['task'] as const,
 
   /** Maps entity types to their ID column names - must match entityTypes */
   entityIdColumnKeys: {
@@ -49,8 +49,8 @@ export const config = {
    * SSE propagation hints, and client-side cache patching.
    * Forks extend when adding new embedding relationships.
    */
-  entityEmbeddings: [
-    { embeddedEntity: 'label', hostEntity: 'task', hostColumn: 'labels' },
+  productEmbeddings: [
+    { embeddedProduct: 'label', hostProduct: 'task', hostColumn: 'labels' },
   ] as const,
 
   /**
@@ -197,7 +197,7 @@ export const config = {
   tokenTypes: ['email-verification', 'oauth-verification', 'invitation', 'confirm-mfa', 'magic'] as const,
 
   /** TOTP configuration for MFA */
-  totpConfig: {
+  totp: {
     intervalInSeconds: 30,
     gracePeriodInSeconds: 60,
     digits: 6,

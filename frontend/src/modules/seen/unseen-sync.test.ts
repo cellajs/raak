@@ -1,3 +1,4 @@
+import { appConfig, hierarchy } from 'shared';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.stubGlobal('window', { addEventListener: vi.fn(), removeEventListener: vi.fn() });
@@ -6,22 +7,27 @@ vi.stubGlobal('navigator', { onLine: true });
 const { queryClient } = await import('~/query/query-client');
 const { isSeenTracked, seenKeys } = await import('./helpers');
 const { useSeenStore } = await import('./seen-store');
-const { applyHardDeleteUnseen, ingestSyncedRows, noteUnseenReconciled } = await import('./unseen-sync');
+const { applyUnfetchableRemovalUnseen, ingestSyncedRows, noteUnseenReconciled } = await import('./unseen-sync');
 
-// Raak tracks 'task' (base cella tracks 'attachment'). Tasks are project-homed: hierarchy's
-// ordered ancestors for 'task' are ['project', 'organization'], so a row's deepest non-null
-// ancestor id — the channel `resolveDeepestAncestorId` groups badges by — is its projectId.
-// Rows still carry organizationId too (the further, non-nullable ancestor), matching how real
-// synced task rows are shaped.
-const CHANNEL = 'proj-1'; // project id — task's home channel
-const ORG = 'org-1'; // organization id — task's root ancestor
+// The sample seen-tracked product type and its home context are derived from config, so this
+// spec is identical across forks: base Cella tracks an org-homed 'attachment', a fork may track a
+// deeper-homed type such as 'task'. A row's home channel — the node `resolveDeepestAncestorId`
+// groups badges by — is the id of its deepest non-null ancestor; the row also carries every
+// further ancestor id (e.g. the non-nullable organization), matching how real synced rows look.
+const TRACKED = appConfig.seenTrackedProductTypes[0];
+const ANCESTORS = hierarchy.getOrderedAncestors(TRACKED); // deepest → root
+const ancestorId = Object.fromEntries(ANCESTORS.map((type) => [type, `ch-${type}`]));
+const CHANNEL = ancestorId[ANCESTORS[0]]; // deepest ancestor id — the home channel
+const ORG = ancestorId[ANCESTORS[ANCESTORS.length - 1]]; // root ancestor (organization) id
+// A product type that is not seen-tracked, for the negative control below.
+const UNTRACKED = appConfig.productEntityTypes.find((type) => !isSeenTracked(type));
+
 const now = () => new Date().toISOString();
 const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
 
 const row = (id: string, overrides: Record<string, unknown> = {}) => ({
   id,
-  projectId: CHANNEL,
-  organizationId: ORG,
+  ...Object.fromEntries(ANCESTORS.map((type) => [appConfig.entityIdColumnKeys[type], ancestorId[type]])),
   createdAt: now(),
   deletedAt: null,
   ...overrides,
@@ -33,16 +39,16 @@ const counts = () => (queryClient.getQueryData(seenKeys.unseenCounts) as Record<
 const settle = () => vi.advanceTimersByTimeAsync(5_100);
 
 describe('unseen count deltas from synced rows', () => {
-  // Positive control: ingestSyncedRows/applyHardDeleteUnseen early-return for any entityType
-  // isSeenTracked doesn't cover. If 'task' ever stops being tracked, every "count did not
-  // change" assertion below would pass vacuously — fail here instead.
+  // Positive control: ingestSyncedRows/applyUnfetchableRemovalUnseen early-return for any product
+  // type isSeenTracked doesn't cover. If the tracked type ever stops being tracked, every "count
+  // did not change" assertion below would pass vacuously — fail here instead.
   beforeAll(() => {
-    expect(isSeenTracked('task')).toBe(true);
+    expect(isSeenTracked(TRACKED)).toBe(true);
   });
 
   beforeEach(() => {
     vi.useFakeTimers();
-    queryClient.setQueryData(seenKeys.unseenCounts, { [CHANNEL]: { task: 5 } });
+    queryClient.setQueryData(seenKeys.unseenCounts, { [CHANNEL]: { [TRACKED]: 5 } });
     useSeenStore.getState().reset();
     noteUnseenReconciled();
   });
@@ -54,109 +60,109 @@ describe('unseen count deltas from synced rows', () => {
 
   it('counts a new unseen row once, even when it reappears in later ranges (created, then updated)', async () => {
     vi.advanceTimersByTime(10); // created after the reconcile anchor
-    ingestSyncedRows('task', CHANNEL, [row('a1')]);
-    ingestSyncedRows('task', CHANNEL, [row('a1')]); // same row, next range
+    ingestSyncedRows(TRACKED, CHANNEL, [row('a1')]);
+    ingestSyncedRows(TRACKED, CHANNEL, [row('a1')]); // same row, next range
     await settle();
 
-    expect(counts()[CHANNEL].task).toBe(6);
+    expect(counts()[CHANNEL][TRACKED]).toBe(6);
   });
 
   it('does not count rows already covered by the exact baseline (created before the reconcile anchor)', async () => {
-    ingestSyncedRows('task', CHANNEL, [row('old-1', { createdAt: daysAgo(1) })]);
+    ingestSyncedRows(TRACKED, CHANNEL, [row('old-1', { createdAt: daysAgo(1) })]);
     await settle();
 
-    expect(counts()[CHANNEL].task).toBe(5);
+    expect(counts()[CHANNEL][TRACKED]).toBe(5);
   });
 
   it('does not count rows outside the seen window or rows this client already saw', async () => {
     vi.advanceTimersByTime(10);
-    useSeenStore.getState().markEntitySeen('tenant-1', ORG, CHANNEL, 'task', 'seen-1');
-    await settle(); // markEntitySeen itself queued a -1 (5 → 4)
+    useSeenStore.getState().markProductSeen('tenant-1', ORG, CHANNEL, TRACKED, 'seen-1');
+    await settle(); // markProductSeen itself queued a -1 (5 → 4)
 
-    ingestSyncedRows('task', CHANNEL, [
+    ingestSyncedRows(TRACKED, CHANNEL, [
       row('ancient', { createdAt: daysAgo(120) }), // outside 90-day window
       row('seen-1'), // locally seen
     ]);
     await settle();
 
-    expect(counts()[CHANNEL].task).toBe(4);
+    expect(counts()[CHANNEL][TRACKED]).toBe(4);
   });
 
   it('decrements for a tombstoned baseline row, and nets zero for a row it counted itself', async () => {
     // Baseline row soft-deleted → −1 (5 → 4)
-    ingestSyncedRows('task', CHANNEL, [row('base-1', { createdAt: daysAgo(1), deletedAt: now() })]);
+    ingestSyncedRows(TRACKED, CHANNEL, [row('base-1', { createdAt: daysAgo(1), deletedAt: now() })]);
     await settle();
-    expect(counts()[CHANNEL].task).toBe(4);
+    expect(counts()[CHANNEL][TRACKED]).toBe(4);
 
     // Live row: +1 then tombstone −1 → net zero
     vi.advanceTimersByTime(10);
-    ingestSyncedRows('task', CHANNEL, [row('live-1')]);
+    ingestSyncedRows(TRACKED, CHANNEL, [row('live-1')]);
     await settle();
-    expect(counts()[CHANNEL].task).toBe(5);
-    ingestSyncedRows('task', CHANNEL, [row('live-1', { deletedAt: now() })]);
+    expect(counts()[CHANNEL][TRACKED]).toBe(5);
+    ingestSyncedRows(TRACKED, CHANNEL, [row('live-1', { deletedAt: now() })]);
     await settle();
-    expect(counts()[CHANNEL].task).toBe(4);
+    expect(counts()[CHANNEL][TRACKED]).toBe(4);
   });
 
   it('reconcile wins wholesale: after noteUnseenReconciled, re-ingested rows are baseline rows', async () => {
     vi.advanceTimersByTime(10);
-    ingestSyncedRows('task', CHANNEL, [row('a2')]);
+    ingestSyncedRows(TRACKED, CHANNEL, [row('a2')]);
     await settle();
-    expect(counts()[CHANNEL].task).toBe(6);
+    expect(counts()[CHANNEL][TRACKED]).toBe(6);
 
     noteUnseenReconciled(); // exact recount replaced the cache; anchor moves forward
-    ingestSyncedRows('task', CHANNEL, [row('a2')]); // same row again → baseline's job now
+    ingestSyncedRows(TRACKED, CHANNEL, [row('a2')]); // same row again → baseline's job now
     await settle();
-    expect(counts()[CHANNEL].task).toBe(6);
+    expect(counts()[CHANNEL][TRACKED]).toBe(6);
   });
 
-  it('hard delete decrements unseen rows and nets zero for locally-seen ones', async () => {
-    applyHardDeleteUnseen('task', 'gone-1', CHANNEL); // unseen → −1
+  it('unfetchable removal decrements unseen rows and nets zero for locally-seen ones', async () => {
+    applyUnfetchableRemovalUnseen(TRACKED, 'gone-1', CHANNEL); // unseen → −1
     await settle();
-    expect(counts()[CHANNEL].task).toBe(4);
+    expect(counts()[CHANNEL][TRACKED]).toBe(4);
 
-    useSeenStore.getState().markEntitySeen('tenant-1', ORG, CHANNEL, 'task', 'gone-2');
+    useSeenStore.getState().markProductSeen('tenant-1', ORG, CHANNEL, TRACKED, 'gone-2');
     await settle(); // view-mark −1 (4 → 3)
-    applyHardDeleteUnseen('task', 'gone-2', CHANNEL); // seen → net 0
+    applyUnfetchableRemovalUnseen(TRACKED, 'gone-2', CHANNEL); // seen → net 0
     await settle();
-    expect(counts()[CHANNEL].task).toBe(3);
+    expect(counts()[CHANNEL][TRACKED]).toBe(3);
   });
 
   it('derives the channel from the row (deepest ancestor id), falling back to the passed channel', async () => {
     vi.advanceTimersByTime(10);
-    ingestSyncedRows('task', 'fallback-ch', [
-      row('c1'), // row's own projectId wins over the fallback
+    ingestSyncedRows(TRACKED, 'fallback-ch', [
+      row('c1'), // row's own home ancestor id wins over the fallback
       { id: 'c2', createdAt: now(), deletedAt: null }, // no ancestor id on the row → fallback
     ]);
     await settle();
 
-    expect(counts()[CHANNEL].task).toBe(6);
-    expect(counts()['fallback-ch'].task).toBe(1);
+    expect(counts()[CHANNEL][TRACKED]).toBe(6);
+    expect(counts()['fallback-ch'][TRACKED]).toBe(1);
   });
 
   it('publish lights the badge: recency keys on publishedAt, not the old createdAt', async () => {
     vi.advanceTimersByTime(10);
-    // The draft's createdAt is outside the window and before the reconcile anchor.
-    // Its recent publishedAt value makes it count as new. Raak has not adopted the
-    // published-rows lifecycle server-side, but the client mirror's recency rule
-    // (`publishedAt ?? createdAt`) is generic — a synced row carrying publishedAt exercises it.
-    ingestSyncedRows('task', CHANNEL, [row('pub-1', { createdAt: daysAgo(100), publishedAt: now() })]);
+    // The draft's createdAt is outside the window and before the reconcile anchor; its recent
+    // publishedAt makes it count as new. The client recency rule (`publishedAt ?? createdAt`) is
+    // generic, so a synced row carrying publishedAt exercises it regardless of the fork's feeds.
+    ingestSyncedRows(TRACKED, CHANNEL, [row('pub-1', { createdAt: daysAgo(100), publishedAt: now() })]);
     await settle();
 
-    expect(counts()[CHANNEL].task).toBe(6);
+    expect(counts()[CHANNEL][TRACKED]).toBe(6);
   });
 
   it('never counts an unpublished draft (defense in depth — drafts do not sync at all)', async () => {
     vi.advanceTimersByTime(10);
-    ingestSyncedRows('task', CHANNEL, [row('draft-1', { publishedAt: null })]);
+    ingestSyncedRows(TRACKED, CHANNEL, [row('draft-1', { publishedAt: null })]);
     await settle();
 
-    expect(counts()[CHANNEL].task).toBe(5);
+    expect(counts()[CHANNEL][TRACKED]).toBe(5);
   });
 
-  it('ignores untracked entity types', async () => {
-    ingestSyncedRows('page' as never, CHANNEL, [row('p1')]);
+  it('ignores untracked product types', async () => {
+    if (!UNTRACKED) return;
+    ingestSyncedRows(UNTRACKED, CHANNEL, [row('p1')]);
     await settle();
-    expect(counts()[CHANNEL].task).toBe(5);
+    expect(counts()[CHANNEL][TRACKED]).toBe(5);
   });
 });

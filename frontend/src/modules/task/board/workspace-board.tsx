@@ -36,8 +36,8 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
         updateMembership({
           path: { id: result.membershipId, tenantId: result.tenantId, organizationId: result.organizationId },
           body: { displayOrder: result.displayOrder },
-          entityId: result.projectId,
-          entityType: 'project',
+          channelId: result.projectId,
+          channelType: 'project',
         });
         return;
       }
