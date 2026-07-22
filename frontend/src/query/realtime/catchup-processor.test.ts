@@ -1,5 +1,6 @@
 import type { PostAppCatchupResponse } from 'sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { isSyncDeliveryTrusted, setSyncDeliveryTrusted } from '~/query/basic/sync-stale-config';
 
 vi.mock('shared', () => ({
   appConfig: {
@@ -99,7 +100,7 @@ describe('catchup processor (view-driven)', () => {
   it('uses the pre-catchup org-view cursor for the delta fetch', async () => {
     const keys = createEntityKeys<Record<string, never>>('attachment');
     const deltaFetch = vi.fn(async () => ({
-      items: [{ id: 'attachment-1', organizationId: 'org-1', name: 'fresh' }],
+      items: [{ id: 'attachment-1', organizationId: 'org-1', name: 'fresh', seq: 6 }],
       total: 1,
     }));
     registerEntityQueryKeys('attachment', keys, deltaFetch);
@@ -122,7 +123,7 @@ describe('catchup processor (view-driven)', () => {
     expect(useSyncStore.getState().getOrgSeq('org-1', 'attachment')).toBe(6);
     expect(queryClient.getQueryData(keys.detail.byId('attachment-1'))).toMatchObject({ name: 'fresh' });
     expect(queryClient.getQueryData(keys.list.org('org-1'))).toEqual({
-      items: [{ id: 'attachment-1', organizationId: 'org-1', name: 'fresh' }],
+      items: [{ id: 'attachment-1', organizationId: 'org-1', name: 'fresh', seq: 6 }],
       total: 1,
     });
   });
@@ -131,8 +132,8 @@ describe('catchup processor (view-driven)', () => {
     const keys = createEntityKeys<Record<string, never>>('attachment');
     const deltaFetch = vi.fn(async () => ({
       items: [
-        { id: 'att-org', organizationId: 'org-1', name: 'fresh-org' },
-        { id: 'att-proj', organizationId: 'org-1', projectId: 'proj-9', name: 'fresh-proj' },
+        { id: 'att-org', organizationId: 'org-1', name: 'fresh-org', seq: 11 },
+        { id: 'att-proj', organizationId: 'org-1', projectId: 'proj-9', name: 'fresh-proj', seq: 12 },
       ],
       total: 2,
     }));
@@ -173,6 +174,27 @@ describe('catchup processor (view-driven)', () => {
     // Fetch failed → list invalidated (recovery handed to react-query), THEN cursor advanced.
     expect(invalidateSpy).toHaveBeenCalledWith(expect.objectContaining({ queryKey: keys.list.org('org-1') }));
     expect(useSyncStore.getState().getOrgSeq('org-1', 'attachment')).toBe(9);
+  });
+
+  it('short delivery (ok but empty window) holds the cursor, invalidates, and degrades trust', async () => {
+    const keys = createEntityKeys<Record<string, never>>('attachment');
+    // ok status but no rows reach the promised frontier: the delivery fell short.
+    const deltaFetch = vi.fn(async () => ({ items: [], total: 0 }));
+    registerEntityQueryKeys('attachment', keys, deltaFetch);
+
+    setSyncDeliveryTrusted(true);
+    useSyncStore.getState().setOrgTenantId('org-1', 'tenant-1');
+    useSyncStore.getState().setOrgSeq('org-1', 'attachment', 4);
+    queryClient.setQueryData(keys.list.org('org-1'), { items: [], total: 0 });
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    await processAppCatchup(okViewResponse(9));
+
+    // Fetched the window, but reachedSeq (0) < frontier (9): never advance silently.
+    expect(deltaFetch).toHaveBeenCalledWith('org-1', 'tenant-1', '5,9', undefined);
+    expect(useSyncStore.getState().getOrgSeq('org-1', 'attachment')).toBe(4);
+    expect(invalidateSpy).toHaveBeenCalledWith(expect.objectContaining({ queryKey: keys.list.org('org-1') }));
+    expect(isSyncDeliveryTrusted()).toBe(false);
   });
 
   it('skips the delta fetch for orgs with nothing cached (scope-symmetry guard), still advancing', async () => {
@@ -325,7 +347,10 @@ describe('catchup → fetch prioritizer fold', () => {
     vi.mocked(getSyncTier).mockReturnValue({ min: 2000, max: 30_000 });
 
     const keys = createEntityKeys<Record<string, never>>('attachment');
-    const deltaFetch = vi.fn(async () => ({ items: [], total: 0 }));
+    const deltaFetch = vi.fn(async () => ({
+      items: [{ id: 'att-bg', organizationId: 'org-1', seq: 9 }],
+      total: 1,
+    }));
     registerEntityQueryKeys('attachment', keys, deltaFetch);
 
     useSyncStore.getState().setOrgTenantId('org-1', 'tenant-1');
@@ -348,7 +373,10 @@ describe('catchup → fetch prioritizer fold', () => {
     vi.mocked(getSyncTier).mockReturnValue({ min: 0, max: 0 });
 
     const keys = createEntityKeys<Record<string, never>>('attachment');
-    const deltaFetch = vi.fn(async () => ({ items: [], total: 0 }));
+    const deltaFetch = vi.fn(async () => ({
+      items: [{ id: 'att-view', organizationId: 'org-1', seq: 9 }],
+      total: 1,
+    }));
     registerEntityQueryKeys('attachment', keys, deltaFetch);
 
     useSyncStore.getState().setOrgTenantId('org-1', 'tenant-1');
