@@ -28,7 +28,7 @@ app.openapi(taskRoutes.getTask, async (ctx) => {
   const { id } = ctx.req.valid('param');
   const result = await getTaskOp(ctx, id);
   assertSuccess(result, 'task');
-  ctx.set('entityCacheData', result.data);
+  ctx.set('productCacheData', result.data);
   return ctx.json(result.data, 200);
 });
 

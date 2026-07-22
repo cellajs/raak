@@ -2,7 +2,7 @@ import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from '
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
-import { getEntityCountsSelect } from '#/modules/entities/entities-queries';
+import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
@@ -169,7 +169,7 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
     displayOrder: membershipsTable.displayOrder,
   });
 
-  const countData = includeCounts ? getEntityCountsSelect(entityType) : null;
+  const countData = includeCounts ? getChannelCountsSelect(entityType) : null;
 
   const { createdBy: _cb, updatedBy: _mb, ...projectCols } = getColumns(projectsTable);
   const selectShape = {

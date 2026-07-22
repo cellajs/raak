@@ -1,5 +1,5 @@
 import type { AuthContext } from '#/core/context';
-import { getEntityCounts } from '#/modules/entities/entities-queries';
+import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidChannelEntity } from '#/permissions/get-channel-entity';
@@ -19,7 +19,7 @@ export async function getWorkspaceOp(ctx: AuthContext, id: string, opts: GetWork
   const includeMembership = include.includes('membership');
 
   const [counts, workspaceWithAudit] = await Promise.all([
-    includeCounts ? getEntityCounts(ctx, 'workspace', workspace.id) : undefined,
+    includeCounts ? getChannelCounts(ctx, 'workspace', workspace.id) : undefined,
     withAuditUser(ctx, workspace, user),
   ]);
 

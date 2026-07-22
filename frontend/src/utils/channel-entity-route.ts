@@ -33,7 +33,11 @@ export const getChannelEntityRoute = (item: EnrichedChannelEntity, isSubitem?: b
   // Subitem: render on the parent's page (param already set above) with this entity as search.
   const subitemOf = isSubitem ? entry.subitemOf : undefined;
   if (subitemOf && ancestorSlugs[subitemOf.entityType]) {
-    return { to: entityRouteConfig[subitemOf.entityType].path, params, search: { [subitemOf.searchParam]: slug } };
+    return {
+      to: entityRouteConfig[subitemOf.entityType].path,
+      params,
+      search: { [subitemOf.searchParam]: slug },
+    };
   }
 
   params[config.paramName] = slug;

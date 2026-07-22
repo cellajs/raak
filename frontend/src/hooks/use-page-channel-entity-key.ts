@@ -10,7 +10,7 @@ import { entityRouteConfig } from '~/routes-config';
  * Re-triggers the page-enter mask once per channel entity navigation, without coupling to any
  * specific entity type. Tab switches within the same entity don't change the key.
  */
-export const usePageEntityKey = (): string | undefined => {
+export const usePageChannelEntityKey = (): string | undefined => {
   const params = useParams({ strict: false }) as Record<string, string | undefined>;
 
   const parts = appConfig.channelEntityTypes

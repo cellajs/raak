@@ -2,7 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { Project } from 'sdk';
 import { useSearchParams } from '~/hooks/use-search-params';
-import { BaseEntityGrid, EntityGridBar, EntityGridTile } from '~/modules/entities/entity-grid';
+import { BaseEntityGrid, ChannelEntityGridTile, EntityGridBar } from '~/modules/entities/entity-grid';
 import { projectsListQueryOptions } from './query';
 
 type ProjectSearch = Parameters<typeof projectsListQueryOptions>[0];
@@ -15,10 +15,11 @@ interface Props {
   limitedView?: boolean;
 }
 
-// EntityGridTile expects org-shaped `included.counts` but the tile only reads
+// ChannelEntityGridTile expects org-shaped `included.counts` but the tile only reads
 // `counts.membership.total`, which Projects also provide. Use a wrapper type
 // so BaseEntityGrid infers a Project-compatible generic without a full cast.
-const tileComponent = EntityGridTile as typeof EntityGridTile & ((props: { entity: Project }) => React.JSX.Element);
+const tileComponent = ChannelEntityGridTile as typeof ChannelEntityGridTile &
+  ((props: { entity: Project }) => React.JSX.Element);
 
 export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedView: initialLimitedView }: Props) {
   const [expanded, setExpanded] = useState(false);

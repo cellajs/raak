@@ -163,11 +163,11 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
           return (
             <>
               <SeenMark
-                entityId={row.id}
+                productId={row.id}
                 tenantId={row.tenantId}
                 organizationId={row.organizationId}
                 channelId={getSeenChannelId('task', row)}
-                entityType="task"
+                productType="task"
               />
               <status.icon
                 className={`mr-2 size-4 shrink-0 fill-current ${statusFillColors[row.status]}`}

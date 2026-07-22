@@ -219,11 +219,11 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
           className="space-between relative flex flex-col border-primary p-1.5! group-[.is-focused]/task:-ml-0.5 group-[.is-focused]/task:border-l-2 sm:px-2!"
         >
           <SeenMark
-            entityId={task.id}
+            productId={task.id}
             tenantId={task.tenantId}
             organizationId={task.organizationId}
             channelId={getSeenChannelId('task', task)}
-            entityType="task"
+            productType="task"
           />
           {effectiveState !== 'collapsed' && (
             <StickyBox

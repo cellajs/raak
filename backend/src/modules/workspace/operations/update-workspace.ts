@@ -1,5 +1,5 @@
 import type { AuthContext } from '#/core/context';
-import { getEntityCounts } from '#/modules/entities/entities-queries';
+import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { updateWorkspace } from '#/modules/workspace/workspace-queries';
@@ -20,7 +20,7 @@ export async function updateWorkspaceOp(ctx: AuthContext, id: string, rawInput: 
 
   log.info('Workspace updated', { workspaceId: updatedWorkspaceRecord.id });
 
-  const counts = await getEntityCounts(ctx, workspace.entityType, workspace.id);
+  const counts = await getChannelCounts(ctx, workspace.entityType, workspace.id);
   const workspaceWithAudit = await withAuditUser(ctx, updatedWorkspaceRecord, user);
   const included = { ...(membership && { membership: toMembershipBase(membership) }), counts };
 

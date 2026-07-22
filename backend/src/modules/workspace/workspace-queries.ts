@@ -1,7 +1,7 @@
 import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
-import { getEntityCountsSelect } from '#/modules/entities/entities-queries';
+import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
@@ -96,7 +96,7 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
 
   const [{ total }] = await db.select({ total: count() }).from(baseQuery);
 
-  const countData = includeCounts ? getEntityCountsSelect(entityType) : null;
+  const countData = includeCounts ? getChannelCountsSelect(entityType) : null;
 
   const orderColumn = getOrderColumn(sort, workspacesTable.id, order, {
     id: workspacesTable.id,
