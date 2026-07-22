@@ -327,8 +327,7 @@
           "offset": { "type": "string", "required": false },
           "limit": { "type": "string", "required": false },
           "seqCursor": { "type": "string", "required": false },
-          "projectId": { "type": "string", "required": false, "maxLength": 50 },
-          "pathPrefix": { "type": "string", "required": false, "maxLength": 512 }
+          "projectId": { "type": "string", "required": false, "maxLength": 50 }
         }
       }
     }

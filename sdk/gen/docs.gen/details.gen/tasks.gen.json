@@ -669,8 +669,7 @@
             "enum": ["all", "any"]
           },
           "acceptedCutOff": { "type": "number", "required": false },
-          "projectId": { "type": "string", "required": true, "maxLength": 50 },
-          "pathPrefix": { "type": "string", "required": false, "maxLength": 512 }
+          "projectId": { "type": "string", "required": true, "maxLength": 50 }
         }
       }
     }
@@ -1235,8 +1234,7 @@
           },
           "acceptedCutOff": { "type": "number", "required": false },
           "projectId": { "type": "string", "required": false, "maxLength": 50 },
-          "workspaceId": { "type": "string", "required": false, "maxLength": 50 },
-          "pathPrefix": { "type": "string", "required": false, "maxLength": 512 }
+          "workspaceId": { "type": "string", "required": false, "maxLength": 50 }
         }
       }
     }

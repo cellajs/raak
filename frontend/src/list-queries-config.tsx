@@ -1,6 +1,6 @@
 import type { ChannelEntityType } from 'shared';
 // Side-effect: registers raak's channel-path resolver so the sync engine derives sub-org
-// grant-boundary views and narrows covering fetches with pathPrefix (project/workspace channels).
+// grant-boundary views and resolves the covering channel for delta fetches (project/workspace channels).
 import '~/query/realtime/register-channel-paths';
 import { attachmentsCanonicalOptions } from '~/modules/attachment/query';
 import { labelsCanonicalOptions } from '~/modules/label/query';

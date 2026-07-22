@@ -1467,7 +1467,6 @@ export const zGetPublicTasksQuery = z.object({
   matchMode: z.enum(['all', 'any']).optional().default('all'),
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50),
-  pathPrefix: z.string().max(512).optional(),
 });
 
 /**
@@ -2250,7 +2249,6 @@ export const zGetAttachmentsQuery = z.object({
     .regex(/^\d+,\d+$/)
     .optional(),
   projectId: z.string().max(50).optional(),
-  pathPrefix: z.string().max(512).optional(),
 });
 
 /**
@@ -2545,7 +2543,6 @@ export const zGetTasksQuery = z.object({
   acceptedCutOff: z.number().gt(0).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
-  pathPrefix: z.string().max(512).optional(),
 });
 
 /**
@@ -2693,7 +2690,6 @@ export const zGetLabelsQuery = z.object({
     .optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
-  pathPrefix: z.string().max(512).optional(),
 });
 
 /**

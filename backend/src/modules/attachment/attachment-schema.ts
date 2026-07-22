@@ -81,8 +81,6 @@ export const attachmentListQuerySchema = paginationQuerySchema.extend({
   sort: attachmentSortKeys.default('createdAt').optional(),
   // cella change: Raak attachment lists can be narrowed to a project.
   projectId: z.string().max(maxLength.id).optional(),
-  /** Materialized id-path prefix: restrict to rows at or below this subtree node. */
-  pathPrefix: z.string().max(512).optional(),
 });
 
 /** Selectable stored-file variants. Mirrors the frontend `BlobVariant`. */

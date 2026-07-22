@@ -3800,7 +3800,6 @@ export type GetPublicTasksData = {
     matchMode?: 'all' | 'any';
     acceptedCutOff?: number;
     projectId: string;
-    pathPrefix?: string;
   };
   url: '/public/tasks';
 };
@@ -5442,7 +5441,6 @@ export type GetAttachmentsData = {
     limit?: string;
     seqCursor?: string;
     projectId?: string;
-    pathPrefix?: string;
   };
   url: '/{tenantId}/{organizationId}/attachments';
 };
@@ -6213,7 +6211,6 @@ export type GetTasksData = {
     acceptedCutOff?: number;
     projectId?: string;
     workspaceId?: string;
-    pathPrefix?: string;
   };
   url: '/{tenantId}/{organizationId}/tasks';
 };
@@ -6547,7 +6544,6 @@ export type GetLabelsData = {
     seqCursor?: string;
     projectId?: string;
     workspaceId?: string;
-    pathPrefix?: string;
   };
   url: '/{tenantId}/{organizationId}/labels';
 };

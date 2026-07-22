@@ -206,16 +206,24 @@ async function flushDue(): Promise<void> {
 }
 
 /**
- * Narrowest path prefix covering every due channel of a group; undefined = whole org (no
- * narrowing). Paths come from the fork-registered channel-path resolver; any org-level entry
- * or unresolvable channel widens to the org. The template always widens (its only channel IS
- * the org), so `pathPrefix` never leaves undefined there.
+ * The channel id covering every due channel of a group, used to scope the delta fetch by the
+ * entity's conventional ancestor filter (e.g. projectId); undefined = whole org (no narrowing).
+ * One shared channel (the common case: a single viewed channel) needs no path lookup. Multiple
+ * distinct channels narrow to their least-common-ancestor channel via the fork-registered
+ * channel-path resolver; any org-level entry, unresolvable channel, or channels that diverge at
+ * the org root widen to the org. The template always widens (its only channel IS the org).
  */
-function coveringPathPrefix(entries: DirtyEntry[]): string | undefined {
-  const paths: string[][] = [];
+function coveringChannelId(entries: DirtyEntry[]): string | undefined {
+  const ids = new Set<string>();
   for (const entry of entries) {
     if (!entry.channelId || entry.channelId === entry.organizationId) return undefined;
-    const path = resolveChannelPath(null, entry.channelId);
+    ids.add(entry.channelId);
+  }
+  if (ids.size === 1) return [...ids][0];
+
+  const paths: string[][] = [];
+  for (const id of ids) {
+    const path = resolveChannelPath(null, id);
     if (!path) return undefined;
     paths.push(path.split('/'));
   }
@@ -225,8 +233,9 @@ function coveringPathPrefix(entries: DirtyEntry[]): string | undefined {
     while (i < common.length && i < segments.length && common[i] === segments[i]) i++;
     common = common.slice(0, i);
   }
-  // A single root segment is the org id: no narrowing.
-  return common.length > 1 ? common.join('/') : undefined;
+  // A single root segment is the org id: no narrowing. Otherwise the deepest common segment is
+  // the covering channel id.
+  return common.length > 1 ? common[common.length - 1] : undefined;
 }
 
 /** Flush one covering group: fetch the merged range once, then settle every entry from it. */
@@ -249,7 +258,7 @@ async function flushGroup(entries: DirtyEntry[]): Promise<'ok' | 'fallback' | 'r
     tenantId,
     `${fromSeq},${untilSeq}`,
     keys,
-    coveringPathPrefix(entries),
+    coveringChannelId(entries),
   );
 
   if (result.status === 'error' && entries.some((entry) => entry.attempts + 1 < MAX_FLUSH_ATTEMPTS)) {

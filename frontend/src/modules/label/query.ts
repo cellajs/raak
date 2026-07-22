@@ -66,10 +66,10 @@ const keys = {
     filtered: (organizationId: string, filters: LabelFilters) => ['label', 'list', organizationId, filters] as const,
   },
 };
-registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, pathPrefix) => {
+registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, scopeChannelId) => {
   return getLabels({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, pathPrefix, limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, projectId: scopeChannelId, limit: String(SYNC_CHUNK_SIZE) },
   });
 });
 export const labelQueryKeys = keys;

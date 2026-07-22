@@ -22,19 +22,19 @@ export const SYNC_CHUNK_SIZE = 1000;
 /**
  * Delta fetch for catchup-based sync (organizationId null for public entities). Returns entities
  * changed in a seq range via the list endpoint's `seqCursor` param; implementations must request
- * `limit: String(SYNC_CHUNK_SIZE)` and forward `pathPrefix` when present.
+ * `limit: String(SYNC_CHUNK_SIZE)` and scope by `scopeChannelId` when present.
  *
  * - seqCursor is always the bounded inclusive form "51,150" (seq >= 51 AND <= 150); every
  *   caller knows its upper bound (catchup from the view frontier, live from the batch end).
- * - pathPrefix optionally narrows the fetch to one channel subtree (server-side
- *   `path LIKE prefix/%` residual filter on top of the unchanged permission WHERE); the
- *   covering-fetch router passes the narrowest prefix that covers its dirty views.
+ * - scopeChannelId optionally narrows the fetch to one channel via the entity's conventional
+ *   ancestor filter (e.g. `projectId`); the covering-fetch router passes the channel that
+ *   covers its dirty views, or undefined for a whole-org fetch.
  */
 export type DeltaFetchFn = (
   organizationId: string | null,
   tenantId: string | null,
   seqCursor: string,
-  pathPrefix?: string,
+  scopeChannelId?: string,
 ) => Promise<{ items: ItemData[]; total: number }>;
 
 /**
