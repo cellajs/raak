@@ -124,10 +124,10 @@ export const taskKeys = {
   },
 };
 
-registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, scopeChannelId) => {
+registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, channelId) => {
   return getTasks({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, projectId: scopeChannelId, limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, projectId: channelId, limit: String(SYNC_CHUNK_SIZE) },
   });
 });
 

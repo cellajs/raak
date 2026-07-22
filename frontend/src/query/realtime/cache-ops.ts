@@ -283,7 +283,7 @@ export async function fetchEntityAndUpdateList(
  * callers may advance their sync cursor); false when unavailable, failed, or the window overflows
  * one response. Callers then fall back to full list invalidation and react-query owns recovery.
  *
- * seqCursor is the bounded inclusive range "51,150"; `scopeChannelId` optionally narrows the
+ * seqCursor is the bounded inclusive range "51,150"; `channelId` optionally narrows the
  * fetch to one channel (forwarded to the registered deltaFetch as its ancestor filter).
  *
  * Result statuses drive the caller's recovery policy: 'ok' (patched; `items` are the fetched
@@ -301,7 +301,7 @@ export async function fetchRangeAndPatch(
   tenantId: string | null,
   seqCursor: string,
   keys: EntityQueryKeys,
-  scopeChannelId?: string,
+  channelId?: string,
 ): Promise<RangeFetchResult> {
   if (!tenantId && organizationId) {
     console.debug(`[CacheOps] No tenantId for ${entityType} delta fetch, falling back to invalidation`);
@@ -312,7 +312,7 @@ export async function fetchRangeAndPatch(
   if (!deltaFetch) return { status: 'unsupported', items: [] };
 
   try {
-    const { items } = await deltaFetch(organizationId, tenantId, seqCursor, scopeChannelId);
+    const { items } = await deltaFetch(organizationId, tenantId, seqCursor, channelId);
 
     // Overflow guard: registrars request SYNC_CHUNK_SIZE, so a full response means the seq
     // window may exceed what one fetch returns. Patching a truncated window would silently
