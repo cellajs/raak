@@ -16,7 +16,7 @@ import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
-import { useUserStore, yjsTokenKey } from '~/modules/user/user-store';
+import { useCurrentUser, useUserStore, yjsTokenKey } from '~/modules/user/user-store';
 import { getRandomColor } from '~/utils/random-color';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
@@ -36,7 +36,7 @@ interface TaskUpdateFormProps {
  */
 export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const { tenantId } = useOrganizationLayoutContext();
-  const user = useUserStore((s) => s.user);
+  const user = useCurrentUser();
 
   const tokenKey = yjsTokenKey('task', tenantId);
   const yjsToken = useUserStore((s) => s.yjsTokens[tokenKey]);

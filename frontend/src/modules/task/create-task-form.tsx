@@ -47,7 +47,7 @@ import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
-import { useUserStore } from '~/modules/user/user-store';
+import { useCurrentUser } from '~/modules/user/user-store';
 import { COALESCED } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
 
@@ -69,7 +69,7 @@ const CreateTaskForm = ({
   onStatusChange,
 }: CreateTaskFormProps) => {
   const { t } = useTranslation();
-  const { user } = useUserStore();
+  const user = useCurrentUser();
 
   const { tenantId } = useOrganizationLayoutContext();
 

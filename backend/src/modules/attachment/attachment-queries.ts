@@ -94,15 +94,20 @@ export const findAttachmentByKey = async (ctx: DbContext, { key }: FindAttachmen
   return att;
 };
 
-interface FindAttachmentByIdOpts {
-  id: string;
+interface FindAttachmentsByIdsOpts {
+  ids: string[];
 }
 
-/** Find an attachment by id. Already tenant-scoped via RLS. */
-export const findAttachmentById = async (ctx: DbContext, { id }: FindAttachmentByIdOpts) => {
+/**
+ * Find live (non-deleted) attachments by id. Tenant-scoped via RLS from `tenantRead`:
+ * unknown, deleted, and cross-tenant ids are simply absent from the result.
+ */
+export const findAttachmentsByIds = async (ctx: DbContext, { ids }: FindAttachmentsByIdsOpts) => {
   const { db } = ctx.var;
-  const [att] = await db.select().from(attachmentsTable).where(eq(attachmentsTable.id, id)).limit(1);
-  return att;
+  return db
+    .select()
+    .from(attachmentsTable)
+    .where(and(inArray(attachmentsTable.id, ids), isNull(attachmentsTable.deletedAt)));
 };
 
 interface FindAttachmentKeysByTaskIdOpts {
