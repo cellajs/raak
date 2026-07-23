@@ -12,10 +12,7 @@ import { useUserStore, yjsTokenKey } from '~/modules/user/user-store';
 const GRACE_PERIOD_MS = 30_000;
 const MAX_BACKOFF_MS = 30_000;
 
-// Safety-net circuit breaker: after this many consecutive token failures
-// we stop retrying and show a toast. Normally the server rejects at HTTP
-// level (no WS upgrade), so y-websocket's exponential backoff works, but
-// this guards against edge cases (e.g. mismatched secrets).
+// Stop repeated token failures after the WebSocket backoff safety threshold and notify the user.
 const MAX_TOKEN_FAILURES = 5;
 
 /**
@@ -118,16 +115,16 @@ function acquireConnection(editSessionId: string, entityType: ProductEntityType,
     // Show user-facing feedback based on close code
     switch (event.code) {
       case YJS_CLOSE.TOKEN_INVALID:
-        toaster(i18n.t('error:sync_token_expired.text'), 'warning');
+        toaster.warning(i18n.t('error:sync_token_expired.text'));
         break;
       case YJS_CLOSE.ACCESS_DENIED:
-        toaster(i18n.t('error:no_permission_for_sync.text'), 'warning');
+        toaster.warning(i18n.t('error:no_permission_for_sync.text'));
         break;
       case YJS_CLOSE.BACKEND_UNAVAILABLE:
-        toaster(i18n.t('error:sync_unavailable.text'), 'warning');
+        toaster.warning(i18n.t('error:sync_unavailable.text'));
         break;
       default:
-        toaster(i18n.t('error:sync_failed.text'), 'warning');
+        toaster.warning(i18n.t('error:sync_failed.text'));
     }
 
     // Clear token for this entity type so collaborative mode is disabled until refresh

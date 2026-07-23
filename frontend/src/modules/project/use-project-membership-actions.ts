@@ -47,7 +47,7 @@ export function useProjectMembershipActions({
       return await deleteMyMembership({ query: { entityId, entityType: 'project' } });
     },
     onSuccess: () => {
-      toaster(t('c:success.you_left_entity', { entity: t('c:project').toLowerCase() }), 'success');
+      toaster.success(t('c:success.you_left_entity', { entity: t('c:project').toLowerCase() }));
       onSuccess?.();
 
       removeMembershipFromCache(
@@ -70,7 +70,7 @@ export function useProjectMembershipActions({
       });
     },
     onSuccess: (updatedProject) => {
-      toaster(t('c:success.project_disconnected'), 'success');
+      toaster.success(t('c:success.project_disconnected'));
       onSuccess?.();
 
       const membership = getApiIncludedMembership(updatedProject);

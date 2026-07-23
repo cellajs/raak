@@ -20,15 +20,8 @@ export interface EntityQueryKeys {
 export const SYNC_CHUNK_SIZE = 1000;
 
 /**
- * Delta fetch for catchup-based sync (organizationId null for public entities). Returns entities
- * changed in a seq range via the list endpoint's `seqCursor` param; implementations must request
- * `limit: String(SYNC_CHUNK_SIZE)` and narrow by `channelId` when present.
- *
- * - seqCursor is always the bounded inclusive form "51,150" (seq >= 51 AND <= 150); every
- *   caller knows its upper bound (catchup from the view frontier, live from the batch end).
- * - channelId optionally narrows the fetch to one channel via the entity's conventional
- *   ancestor filter (e.g. `projectId`); the covering-fetch router passes the channel that
- *   covers its dirty views, or undefined for a whole-org fetch.
+ * Fetches one bounded inclusive sequence range for catchup, optionally narrowed to a subtree.
+ * Public entities omit organization, and implementations use `SYNC_CHUNK_SIZE` as their limit.
  */
 export type DeltaFetchFn = (
   organizationId: string | null,
@@ -46,11 +39,8 @@ const SENTINEL_HOME = '__home__';
 const SENTINEL_ID = '__id__';
 
 /**
- * Probe the key builders with sentinel ids and assert the createEntityKeys shape that live routing
- * (cache-ops) and viewing detection (observed-channels) depend on: list keys are `[entityType,
- * 'list', ...ids]` carrying the org and home-channel ids (as segments or filter-object values) past
- * position 1; detail keys carry the entity id. Deterministic and config-time, so a wrong hand-rolled
- * shape throws at module load, so it never silently degrades sync routing at runtime.
+ * Validate entity-key builders against the list and detail shapes required by live routing.
+ * Deterministic startup failure prevents malformed custom keys from silently degrading sync.
  */
 function assertKeyContract(entityType: EntityType, keys: EntityQueryKeys): void {
   const carries = (key: readonly unknown[], id: string) =>
@@ -80,14 +70,9 @@ function assertKeyContract(entityType: EntityType, keys: EntityQueryKeys): void 
 }
 
 /**
- * Register an entity type's query keys at module init. Optional `deltaFetch` lets the catchup
- * processor fetch only the changed entities via `seqCursor`, avoiding a full list refetch.
- *
- * Canonical list data must live at `keys.list.home(orgId, homeChannelId)`: live sync splices new
- * rows only into a row's home list, and viewing detection (`observed-channels.ts`) derives "channel
- * on screen" from the channel id in observed list keys. `createEntityKeys` carries both by
- * construction; hand-rolled keys are shape-checked here at load (throws), and cache-ops warns at
- * runtime when a fetched row lands in no cache, also catching filters that exclude rows.
+ * Registers validated entity query keys and an optional sequence delta fetcher at module load.
+ * Canonical list data must use home keys because live sync placement and channel observation derive
+ * from that shape; hand-written keys fail validation.
  */
 export function registerEntityQueryKeys(
   entityType: EntityType,

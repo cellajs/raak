@@ -21,7 +21,6 @@ import {
   updateProject,
 } from 'sdk';
 import { appConfig } from 'shared';
-import { toast } from 'sonner';
 import { ApiError } from '~/lib/api';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { labelQueryKeys } from '~/modules/label/query';
@@ -47,12 +46,9 @@ type ProjectFilters = Omit<GetProjectsData['query'], 'limit' | 'offset'>;
 
 const keys = createEntityKeys<ProjectFilters>('project');
 
-// Register keys for SSE/stream handler support
+// Register query keys for dynamic lookup in stream handlers
 registerEntityQueryKeys('project', keys);
 
-/**
- * Project query keys.
- */
 export const projectQueryKeys = {
   ...keys,
   detail: {
@@ -77,9 +73,8 @@ type ProjectsListParams = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 
 };
 
 /**
- * Infinite query options to get a paginated list of projects.
- * `include` is not part of the cache key; queries with/without counts share the same cache.
- * for seamless offline behavior. The most recent fetch determines what's cached.
+ * Paginated projects infinite query. `include` is deliberately not part of the cache key because
+ * queries with/without counts share one cache for offline behavior; the most recent fetch wins.
  */
 export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
   const {
@@ -92,24 +87,21 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
     role,
     excludeArchived,
     include,
-    limit: baseLimit = appConfig.requestLimits.projects,
+    limit = appConfig.requestLimits.projects,
   } = params;
 
-  const limit = String(baseLimit);
-
   // Exclude `include` from cache key so queries with/without counts share the same cache
-  const keyFilters = { q, sort, order, organizationId, workspaceId, relatableUserId, role, excludeArchived };
+  const filters = { q, sort, order, organizationId, workspaceId, relatableUserId, role, excludeArchived };
 
-  const queryKey = keys.list.filtered(keyFilters);
-  const baseQuery = { ...keyFilters, limit, include };
+  const requestQuery = { ...filters, include, limit: String(limit) };
 
   return infiniteQueryOptions({
-    queryKey,
-    queryFn: async ({ pageParam: { page, offset: _offset }, signal }) => {
-      const offset = String(_offset ?? (page ?? 0) * Number(limit));
+    queryKey: keys.list.filtered(filters),
+    queryFn: async ({ pageParam: { page, offset }, signal }) => {
+      const requestOffset = String(offset ?? (page ?? 0) * limit);
 
       const result = await getProjects({
-        query: { ...baseQuery, offset },
+        query: { ...requestQuery, offset: requestOffset },
         signal,
       });
       // Cache entries are populated by the enrichment pipeline (membership/can/ancestorSlugs).
@@ -120,9 +112,7 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
   });
 };
 
-/**
- * Query options for a single project by id or slug.
- */
+/** Query options for a single project by id or slug. */
 export const projectQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
@@ -139,12 +129,7 @@ export const publicProjectQueryOptions = (id: string, bySlug = false) =>
     retry: false,
   });
 
-/**
- * Custom hook to create a new project.
- * This hook provides the functionality to create a new project.
- *
- * @returns The mutation hook for creating an project.
- */
+/** Mutation hook for creating a new project. */
 export const useProjectCreateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -157,7 +142,7 @@ export const useProjectCreateMutation = () => {
       return result.data[0] as Project;
     },
     onSuccess: (createdProject) => {
-      toaster(t('c:success.create_resource', { resource: t('c:project') }), 'success');
+      toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
       const membership = getApiIncludedMembership(createdProject);
       if (membership) addMyMembershipCache(membership);
       cacheCreate(listKey, [createdProject]);
@@ -168,13 +153,7 @@ export const useProjectCreateMutation = () => {
   });
 };
 
-/**
- * Custom hook to update an existing project.
- * This hook provides the functionality to update an project. After a successful update,
- * it updates the local cache and invalidates relevant queries to keep the data fresh.
- *
- * @returns The mutation hook for updating an project.
- */
+/** Mutation hook for updating an existing project. */
 export const useProjectUpdateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -183,7 +162,7 @@ export const useProjectUpdateMutation = () => {
     mutationKey: keys.update,
     mutationFn: ({ path, body }) => updateProject({ path, body }),
     onSuccess: (updatedProject) => {
-      toaster(t('c:success.update_resource', { resource: t('c:project') }), 'success');
+      toaster.success(t('c:success.update_resource', { resource: t('c:project') }));
       cacheUpdate(listKey, [updatedProject]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
       // Directly update detail cache so beforeLoad doesn't use stale slug for URL rewrite
@@ -197,10 +176,8 @@ export const useProjectUpdateMutation = () => {
 };
 
 /**
- * Custom hook to delete projects.
- * This hook provides the functionality to delete one or more projects.
- *
- * @returns The mutation hook for deleting projects.
+ * Mutation hook for deleting projects. Also invalidates label lists, whose
+ * project-scoped rows disappear with the project.
  */
 export const useProjectDeleteMutation = () => {
   const queryClient = useQueryClient();
@@ -219,7 +196,7 @@ export const useProjectDeleteMutation = () => {
               count: projects.length,
               resources: t('c:project_other').toLowerCase(),
             });
-      toaster(deleteText, 'success');
+      toaster.success(deleteText);
 
       // Invalidate labels table queries
       const labelsQueries = getSimilarQueries([...labelQueryKeys.list.base, { organizationId }]);
@@ -246,7 +223,7 @@ export const useAssignProjectMutation = () => {
     mutationKey: keys.update,
     mutationFn: ({ path, query }) => assignProjectWorkspace({ path, query }),
     onSuccess: (newProject, { path: { organizationId }, query: { workspaceId }, workspaceName }) => {
-      toast.success(
+      toaster.success(
         t('c:success.assign_resource', {
           resource: `${t('c:project')} ${newProject.name}`,
           secondResource: workspaceName,
@@ -291,7 +268,7 @@ export const useProjectMoveMutation = () => {
     mutationKey: keys.update,
     mutationFn: ({ path, query }) => moveProjectToWorkspace({ path, query }),
     onSuccess: (movedProject, { path: { organizationId }, query: { workspaceId }, currentWorkspaceId }) => {
-      toaster(t('c:success.project_moved'), 'success');
+      toaster.success(t('c:success.project_moved'));
 
       const currentQueryKey = workspaceQueryKeys.detail.byId(currentWorkspaceId);
       queryClient.invalidateQueries({ queryKey: currentQueryKey });

@@ -1,5 +1,5 @@
 import type { GetNextPageParamFunction, QueryClient, UseMutationOptions } from '@tanstack/react-query';
-import { infiniteQueryOptions, queryOptions, useQueryClient } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateTasksData, GetTasksData, StxBase, UpdateTaskData, UserMinimalBase } from 'sdk';
 import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
 import { zTask } from 'sdk/zod.gen';
@@ -11,7 +11,7 @@ import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
-import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
+import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
@@ -22,11 +22,11 @@ import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { isArrayDelta } from '~/query/offline/array-delta';
-import { type PreparedVars, usePreparedMutation } from '~/query/offline/prepared-mutation';
+import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
-import { getRouteOrgId, getRouteTenantId } from '~/query/realtime/sync-priority';
+import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { InfiniteQueryData, PageParams, QueryData, QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
@@ -70,10 +70,6 @@ type TasksDeleteMutationFnVariables = {
   tasksToDelete: Task[];
 };
 
-// Durable mutation variables: carry tenant/org context AND stx so a mutation replayed from the
-// persisted queue after a reload (component closure gone) reconstructs the same request. stx is
-// minted at intent time so a replay reuses the original mutationId and field timestamps (LWW must
-// arbitrate by intent time). The `?? createStxFor*` fallback in each fn keeps old queues replayable.
 type TaskCreateFullVars = QueryOrgContext & TaskCreateMutationFnVariables & { stx?: StxBase };
 type TaskUpdateFullVars = QueryOrgContext & TaskUpdateMutationFnVariables & { stx?: StxBase };
 type TasksDeleteFullVars = QueryOrgContext & TasksDeleteMutationFnVariables & { stx?: StxBase };
@@ -163,10 +159,10 @@ export const getTasksNextPageParam: GetNextPageParamFunction<PageParams, TasksQu
   return { page: allPages.length, offset: fetchedCount };
 };
 
-// --- Mutation fns ---
 // Shared by the interactive hooks and the offline-replay defaults, so a mutation resumed from
 // persistence reconstructs the same request from durable variables alone. The optimistic-only
-// fields (fullLabels/fullAssignedTo/isSheet/summary/summaryLength) are stripped before the request.
+// fields (fullLabels/fullAssignedTo/isSheet/summary/summaryLength) are stripped before the request,
+// and the `?? createStxFor*` fallback keeps queues persisted before stx became durable replayable.
 
 const createTaskMutationFn = async (vars: TaskCreateFullVars) => {
   const {
@@ -268,16 +264,10 @@ const applyOptimisticTaskUpdate = (
   return { previousTask };
 };
 
-// --- Query options ---
-
 export const taskQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: taskKeys.detail.byId(id),
-    queryFn: async () => {
-      return getTask({
-        path: { id, organizationId, tenantId },
-      });
-    },
+    queryFn: () => getTask({ path: { id, organizationId, tenantId } }),
     initialData: () => findTaskInCache(id),
   });
 
@@ -296,18 +286,16 @@ export const tasksCanonicalOptions = ({
   tenantId: string;
   projectId: string;
 }) => {
-  const limit = appConfig.requestLimits.tasks;
-
   return queryOptions({
     queryKey: taskKeys.list.home(organizationId, projectId),
-    queryFn: async () => {
+    queryFn: () => {
       return fetchAllPages(
         ({ limit, offset }) =>
           getTasks({
             path: { organizationId, tenantId },
             query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOff },
           }),
-        limit,
+        appConfig.requestLimits.tasks,
       );
     },
     staleTime: syncStaleTime,
@@ -340,24 +328,23 @@ export const tasksTableQueryOptions = ({
   workspaceId,
   organizationId,
   tenantId,
-  limit: baseLimit = appConfig.requestLimits.tasksTable,
+  limit = appConfig.requestLimits.tasksTable,
 }: Omit<GetTasksParam, 'acceptedCutOff'> & { limit?: number }) => {
-  const limit = String(baseLimit);
   const { initialPageParam } = baseInfiniteQueryOptions;
 
-  const query = { q, sort, order, organizationId, projectId, workspaceId, matchMode };
-  const queryKey = tasksTableQueryKey({ q, sort, order, matchMode, projectId, workspaceId, organizationId });
+  const requestQuery = { q, sort, order, organizationId, projectId, workspaceId, matchMode, limit: String(limit) };
 
   return infiniteQueryOptions({
-    queryKey,
+    queryKey: tasksTableQueryKey({ q, sort, order, matchMode, projectId, workspaceId, organizationId }),
     initialPageParam,
     refetchOnWindowFocus: false,
     meta: { persist: false },
-    queryFn: async ({ pageParam: { page, offset: _offset }, signal }) => {
-      const offset = String(_offset || (page || 0) * Number(limit));
-      return await getTasks({
+    queryFn: ({ pageParam: { page, offset }, signal }) => {
+      const requestOffset = String(offset || (page || 0) * limit);
+
+      return getTasks({
         path: { organizationId, tenantId },
-        query: { ...query, limit, offset },
+        query: { ...requestQuery, offset: requestOffset },
         signal,
       });
     },
@@ -366,11 +353,11 @@ export const tasksTableQueryOptions = ({
   });
 };
 
-// --- Mutation options ---
-// Full options (not just mutationFn) shared by the live hooks and the offline-replay defaults, so a
-// replayed mutation runs the same reconciliation callbacks. Callbacks derive the org key from
-// durable variables; on replay onMutate does not re-run, so onSettled invalidation recovers.
-
+/**
+ * Full options for one task op, shared by the live hook and the offline-replay defaults so a
+ * replay reconciles like the live one. Callbacks take the QueryClient explicitly and derive the org
+ * key from durable variables. On replay onMutate does not re-run, so onSettled invalidation recovers.
+ */
 const taskCreateOptions = (
   queryClient: QueryClient,
 ): UseMutationOptions<CreateData, Error, TaskCreateFullVars, { optimisticTask: Task }> => ({
@@ -389,12 +376,7 @@ const taskCreateOptions = (
     });
     await queryClient.cancelQueries({ queryKey: orgKey });
     // Insert into the row's canonical home (project) list only, never filtered/search lists.
-    insertEntitiesIntoHome(queryClient, {
-      entityType: 'task',
-      entities: [optimisticTask],
-      keys: taskKeys,
-      organizationId,
-    });
+    insertEntitiesIntoHome(queryClient, [optimisticTask]);
 
     setTimeout(() => triggerTaskGlow(optimisticTask.id));
 
@@ -500,26 +482,16 @@ const taskDeleteOptions = (
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ organizationId, tasksToDelete }) => {
     const orgKey = taskKeys.list.org(organizationId);
-    removePendingMutations(
-      queryClient,
-      taskKeys.update,
-      tasksToDelete.map((t) => t.id),
-    );
+    const taskIds = tasksToDelete.map(({ id }) => id);
+    removePendingMutations(queryClient, taskKeys.update, taskIds);
     await queryClient.cancelQueries({ queryKey: orgKey });
     cacheRemove(orgKey, tasksToDelete);
-    for (const { id } of tasksToDelete) queryClient.removeQueries({ queryKey: taskKeys.detail.byId(id) });
+    removeDetailQueriesById(queryClient, taskKeys.detail.base, taskIds);
     return { tasksToDelete };
   },
-  onError: (_err, variables, context) => {
+  onError: (_err, _variables, context) => {
     handleError('delete');
-    // Restore each row into its canonical home list only (updates in place elsewhere), never filtered lists.
-    if (context?.tasksToDelete)
-      insertEntitiesIntoHome(queryClient, {
-        entityType: 'task',
-        entities: context.tasksToDelete,
-        keys: taskKeys,
-        organizationId: variables.organizationId,
-      });
+    if (context?.tasksToDelete) insertEntitiesIntoHome(queryClient, context.tasksToDelete);
   },
   onSuccess: (_data, { tasksToDelete }) => {
     // Backend decremented label usedCount, mark label list stale (SSE handles refresh).
@@ -533,30 +505,24 @@ const taskDeleteOptions = (
   },
 });
 
-// --- Mutations ---
-
 export const useTaskCreateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
+  const mutation = useMutation(taskCreateOptions(queryClient));
+
   // Inject org context + stx so a replay reuses the original mutation id and timestamps; callers pass the task data.
-  return usePreparedMutation<
-    CreateData,
-    Error,
-    TaskCreateFullVars,
-    { optimisticTask: Task },
-    TaskCreateMutationFnVariables
-  >(taskCreateOptions(queryClient), (input) => ({
+  const prepare = (input: TaskCreateMutationFnVariables): PreparedVars<TaskCreateFullVars> => ({
     kind: 'run',
     vars: { tenantId, organizationId, ...input, stx: createStxForCreate() },
-  }));
+  });
+
+  return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
 export const useTaskUpdateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
+  const mutation = useMutation(taskUpdateOptions(queryClient));
 
-  /**
-   * Squash/coalesce before the mutation exists so the request carries the merge. Folding into a
-   * queued create issues no update and patches the optimistic row here (onMutate won't run).
-   */
+  /** Folding into a queued create issues no update and patches the optimistic row here (onMutate won't run). */
   const prepare = (input: TaskUpdateMutationFnVariables): PreparedVars<TaskUpdateFullVars> => {
     const { id: taskId, ops } = input;
 
@@ -576,75 +542,49 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
     return { kind: 'run', vars: { tenantId, organizationId, ...input, ops: mergedOps as typeof ops, stx } };
   };
 
-  return usePreparedMutation<
-    UpdateData,
-    Error,
-    TaskUpdateFullVars,
-    { previousTask: Task | undefined },
-    TaskUpdateMutationFnVariables
-  >(taskUpdateOptions(queryClient), prepare);
+  return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
 export const useTaskDeleteMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
+  const mutation = useMutation(taskDeleteOptions(queryClient));
 
-  /**
-   * Cancel queued creates for tasks deleted while offline (they never reached the server), clear
-   * their queued updates, finish deletion cache-side, and keep them out of the request. `noop` when
-   * nothing remains.
-   */
+  /** Tasks deleted while offline never reached the server: cancel their queued work and keep them out of the request. */
   const prepare = ({ tasksToDelete }: TasksDeleteMutationFnVariables): PreparedVars<TasksDeleteFullVars> => {
-    const cancelled = new Set(
-      removePausedCreates(
-        queryClient,
-        taskKeys.create,
-        tasksToDelete.map((t) => t.id),
-      ),
-    );
-    const localOnly = tasksToDelete.filter((t) => cancelled.has(t.id));
-    if (localOnly.length > 0) {
-      removePendingMutations(
-        queryClient,
-        taskKeys.update,
-        localOnly.map((t) => t.id),
-      );
+    const taskIds = tasksToDelete.map(({ id }) => id);
+    const cancelled = new Set(removePausedCreates(queryClient, taskKeys.create, taskIds));
+
+    if (cancelled.size > 0) {
+      const localOnly = tasksToDelete.filter((t) => cancelled.has(t.id));
+      const localOnlyIds = localOnly.map(({ id }) => id);
+      removePendingMutations(queryClient, taskKeys.update, localOnlyIds);
       cacheRemove(taskKeys.list.org(organizationId), localOnly);
-      for (const { id } of localOnly) queryClient.removeQueries({ queryKey: taskKeys.detail.byId(id) });
+      removeDetailQueriesById(queryClient, taskKeys.detail.base, localOnlyIds);
     }
+
     const remaining = tasksToDelete.filter((t) => !cancelled.has(t.id));
     if (remaining.length === 0) return { kind: 'noop' };
     return { kind: 'run', vars: { tenantId, organizationId, tasksToDelete: remaining, stx: createStxForDelete() } };
   };
 
-  return usePreparedMutation<
-    DeleteData,
-    Error,
-    TasksDeleteFullVars,
-    { tasksToDelete: Task[] },
-    TasksDeleteMutationFnVariables
-  >(taskDeleteOptions(queryClient), prepare);
+  return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-// --- Mutation defaults (offline persistence) ---
+// Mutation defaults (offline persistence)
 
-addMutationRegistrar((qc: QueryClient) => {
-  qc.setQueryDefaults(taskKeys.detail.base, {
+addMutationRegistrar((queryClient: QueryClient) => {
+  queryClient.setQueryDefaults(taskKeys.detail.base, {
     queryFn: ({ queryKey, meta }) => {
       const id = queryKey[2] as string;
-      const cachedTask = findTaskInCache(id);
-      const organizationId = (meta?.organizationId as string) ?? cachedTask?.organizationId ?? getRouteOrgId();
-      const tenantId = (meta?.tenantId as string) ?? cachedTask?.tenantId ?? getRouteTenantId();
-      if (!organizationId || !tenantId) throw new Error('Cannot resolve organizationId/tenantId for task fetch');
-      return getTask({
-        path: { id, organizationId, tenantId },
-      });
+      const cached = findTaskInCache(id);
+      const { organizationId, tenantId } = resolveQueryOrgTenantIds(meta, cached, 'task');
+      return getTask({ path: { id, organizationId, tenantId } });
     },
   });
 
-  // The SAME full options the hooks use (not just mutationFn), so a replayed mutation runs the same reconciliation callbacks.
-  qc.setMutationDefaults(taskKeys.create, taskCreateOptions(qc));
-  qc.setMutationDefaults(taskKeys.update, taskUpdateOptions(qc));
-  qc.setMutationDefaults(taskKeys.delete, taskDeleteOptions(qc));
+  queryClient.setMutationDefaults(taskKeys.create, taskCreateOptions(queryClient));
+  queryClient.setMutationDefaults(taskKeys.update, taskUpdateOptions(queryClient));
+  queryClient.setMutationDefaults(taskKeys.delete, taskDeleteOptions(queryClient));
 });
 
 /** Fetch tasks for table export. Bypasses cache; returns flat items. */

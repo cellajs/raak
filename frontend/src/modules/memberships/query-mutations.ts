@@ -117,7 +117,7 @@ const onError = (
 
 export const useInviteMemberMutation = () =>
   useMutation<MembershipInviteResponse, ApiError, InviteMember, undefined>({
-    mutationKey: memberQueryKeys.update(),
+    mutationKey: memberQueryKeys.update,
     mutationFn: ({ body, path, query }) => membershipInvite({ body, path, query }),
     onSuccess: ({ invitesSentCount }, { channel }) => {
       const { id: entityId, entityType, organizationId } = channel;
@@ -154,7 +154,7 @@ export const useInviteMemberMutation = () =>
 
 export const useMemberUpdateMutation = () =>
   useMutation<Membership, ApiError, MutationUpdateMembership, MembershipChannelProp>({
-    mutationKey: memberQueryKeys.update(),
+    mutationKey: memberQueryKeys.update,
     mutationFn: async ({ path, body }) => {
       return await updateMembership({ body, path });
     },
@@ -256,7 +256,7 @@ export const useMemberUpdateMutation = () =>
       // Invalidate entity queries to ensure counts and data are fresh
       invalidateOnMembershipChange(queryClient, channelType, channelId, organizationId);
 
-      toaster(toastMessage, 'success');
+      toaster.success(toastMessage);
     },
     onError: (_, __, context) => {
       // Invalidate memberships to undo the optimistic update; the enrichment subscriber syncs entity lists.
@@ -267,7 +267,7 @@ export const useMemberUpdateMutation = () =>
 
 export const useMembershipsDeleteMutation = () =>
   useMutation<void, ApiError, DeleteMembership, MemberChannelProp[]>({
-    mutationKey: memberQueryKeys.delete(),
+    mutationKey: memberQueryKeys.delete,
     mutationFn: async ({ path, body, query }) => {
       await deleteMemberships({ path, body, query });
     },
@@ -308,7 +308,7 @@ export const useMembershipsDeleteMutation = () =>
     onSuccess: (_, { query: { entityId, entityType }, path: { organizationId } }) => {
       // Invalidate entity queries to ensure counts are fresh
       invalidateOnMembershipChange(queryClient, entityType, entityId, organizationId);
-      toaster(t('c:success.delete_members'), 'success');
+      toaster.success(t('c:success.delete_members'));
     },
     onError,
   });
@@ -369,7 +369,7 @@ export const useChangeEntityRoleMutation = () =>
   useMutation<ChangeEntityRoleResult, ApiError, ChangeEntityRoleVariables>({
     mutationFn: async ({ entity, role }) => {
       if (!onlineManager.isOnline()) {
-        toaster(t('c:action.offline.text'), 'warning');
+        toaster.warning(t('c:action.offline.text'));
         throw new Error('offline');
       }
 
@@ -407,9 +407,9 @@ export const useChangeEntityRoleMutation = () =>
       const updatedEntity = { ...entity, membership };
       updateEntityInListCache(entity.entityType, [updatedEntity]);
 
-      toaster(t('c:success.role_updated'), 'success');
+      toaster.success(t('c:success.role_updated'));
     },
     onError: () => {
-      toaster(t('error:error'), 'error');
+      toaster.error(t('error:error'));
     },
   });
