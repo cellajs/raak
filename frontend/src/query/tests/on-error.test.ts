@@ -1,13 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockCheckConnectivity = vi.fn();
-// Mirrors the Sonner-style toaster: onError indexes a severity method off the callable base.
-const mockToaster = Object.assign(vi.fn(), {
-  success: vi.fn(),
-  info: vi.fn(),
-  warning: vi.fn(),
-  error: vi.fn(),
-});
+// onError dispatches by severity (toaster.error/warning/info), so the mock needs those methods.
+const mockToaster = Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn(), info: vi.fn(), success: vi.fn() });
 const mockSetDownAlert = vi.fn();
 const mockNavigate = vi.fn();
 const mockTeardownUserState = vi.fn();
