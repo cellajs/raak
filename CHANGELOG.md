@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.0.9](https://github.com/cellajs/raak/compare/0.0.8...0.0.9) (2026-07-23)
+
+
+### 🐞 Bug fixes
+
+* degrade when live doesnt actually fetch the data but returns empty ([#68](https://github.com/cellajs/raak/issues/68)) ([31ed59a](https://github.com/cellajs/raak/commit/31ed59a642fc84098a602eb3c374130489e802f8))
+* drizzle port mismatch ([2783678](https://github.com/cellajs/raak/commit/2783678659d21407be8729b76972392f9596f902))
+* priotizer test drift ([c605141](https://github.com/cellajs/raak/commit/c6051418a37af12e03500d37b61156247f846289))
+* **yjs:** materialize task descriptions as trusted server updates ([#64](https://github.com/cellajs/raak/issues/64)) ([d8837c6](https://github.com/cellajs/raak/commit/d8837c6febe757c0b2289c9daad6a9ffbe87b9c3))
+
+
+### 🔧 Small improvements
+
+* only count when necessary in product lists ([8b65720](https://github.com/cellajs/raak/commit/8b65720279d5cdffe9919d7421ad6bf3c5b18338))
+* **sync:** scope delta fetches by projectId, drop the pathPrefix filter ([#65](https://github.com/cellajs/raak/issues/65)) ([31f0e3b](https://github.com/cellajs/raak/commit/31f0e3bf494a424a3b93d8bd9182b827eb0807fc))
+
+
+### 🧹 Chores
+
+* scopeChannelId -&gt; channelId ([#67](https://github.com/cellajs/raak/issues/67)) ([2ef80c8](https://github.com/cellajs/raak/commit/2ef80c888ba1074bd3728268f6595268157925fb))
+* sync ([d1ee41d](https://github.com/cellajs/raak/commit/d1ee41db486286517e5c4dcecfaccc5d0ac0fec7))
+* sync upstream cella ([#73](https://github.com/cellajs/raak/issues/73)) ([d1ee41d](https://github.com/cellajs/raak/commit/d1ee41db486286517e5c4dcecfaccc5d0ac0fec7))
+* sync upstream cella v0.5.7 (32847feb) ([#71](https://github.com/cellajs/raak/issues/71)) ([2187ed1](https://github.com/cellajs/raak/commit/2187ed11fab69a7e27f994de27d105e3405d84bf))
+* sync upstream cella v0.5.7 (baa38f0e) ([#70](https://github.com/cellajs/raak/issues/70)) ([d012bda](https://github.com/cellajs/raak/commit/d012bdad3cad3763570d12db107ce21c84bf7ada))
+* sync upstream cella v0.5.7 (c908b990) ([#69](https://github.com/cellajs/raak/issues/69)) ([409608e](https://github.com/cellajs/raak/commit/409608e6b8169fe4f097c0aaa01fff978bd41d99))
+* sync upstream cella v0.6.0 (c4a6d592) ([#74](https://github.com/cellajs/raak/issues/74)) ([9bec653](https://github.com/cellajs/raak/commit/9bec6536c1bbb5fa14dbadb2c37ceccdd5dc965f))
+
 ## [0.0.8](https://github.com/cellajs/raak/compare/0.0.7...0.0.8) (2026-07-22)
 
 
