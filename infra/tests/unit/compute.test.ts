@@ -129,7 +129,7 @@ describe('compute module source contracts', () => {
     expect(source).not.toMatch(/stableInternalGen_/)
     expect(source).not.toMatch(/stablePrivateIp/)
     expect(source).toMatch(/deleteBeforeReplace: true/)
-    // deriveGenId stays the genId authority for a pending SHA. Assert the call, not prose about it.
+    // A pending SHA derives its content-addressed generation id from the service fingerprint.
     expect(source).toMatch(/deriveGenId\(entry\.pendingSha, fingerprint\)/)
   })
 

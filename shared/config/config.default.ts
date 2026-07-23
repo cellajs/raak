@@ -46,7 +46,12 @@ export const config = {
    */
   productEmbeddings: [
     { embeddedProduct: 'label', hostProduct: 'task', hostColumn: 'labels' },
-  ] as const,
+  ] as readonly {
+    readonly embeddedProduct: (typeof hierarchy.productTypes)[number];
+    readonly hostProduct: (typeof hierarchy.productTypes)[number];
+    readonly hostColumn: string;
+    readonly lifecycle?: 'shared' | 'owned';
+  }[],
 
   /**
    * User menu structure of channel entities with optional nested subentities.
