@@ -43,7 +43,7 @@ export const parseUploadedAttachments = (
       filename,
       name,
       description: '',
-      public: user_meta?.public === 'true',
+      publicBucket: user_meta?.publicBucket === 'true',
       bucketName: user_meta?.bucketName,
       originalKey: url ?? '',
       groupId,

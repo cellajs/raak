@@ -72,7 +72,7 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
     await clearSecurityTestData();
   });
 
-  it('Q1: public project GET follows the publicSelf grant', async () => {
+  it('Q1: public project GET follows the public read grant', async () => {
     const publicResult = await call(getPublicProject, {
       path: { id: publicProjectId },
       headers: defaultHeaders,

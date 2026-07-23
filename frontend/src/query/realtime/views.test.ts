@@ -1,53 +1,15 @@
+import type { PolicyCellInput } from 'shared';
 import {
-  type AccessPolicies,
-  createEntityHierarchy,
-  createRoleRegistry,
-  type EntityType,
-  type PermissionTopology,
-  type PermissionValue,
-} from 'shared';
-import { configureAccessPolicies } from 'shared/testing/policies';
+  type DeepChannelType as ChannelType,
+  deepHierarchy,
+  deepReadPolicies as policies,
+} from 'shared/testing/deep-fixture';
 import { describe, expect, it } from 'vitest';
 import { deriveGrantBoundaryViews, type ViewMembership } from './views';
 
-// Synthetic deep topology (projectcampus-shaped), same as the backend classifier tests:
-// derived views must be exactly the ones resolveViewReadStatus can prove `ok`.
+// Shared deep fixture, same hierarchy as the backend classifier tests: derived views
+// must be exactly the ones resolveViewReadStatus can prove `ok`.
 const ORG = 'org-1';
-const roles = createRoleRegistry(['admin', 'member', 'staff', 'student', 'owner', 'follower'] as const);
-const deepHierarchy = createEntityHierarchy(roles)
-  .user()
-  .channel('organization', { parent: null, roles: ['admin', 'member'] })
-  .channel('course', { parent: 'organization', roles: ['staff', 'student'] })
-  .channel('courseSection', { parent: 'course', roles: ['staff', 'student'] })
-  .channel('project', { parent: 'courseSection', roles: ['owner', 'follower'] })
-  .product('item', { parent: 'project', nullableAncestors: ['project', 'courseSection', 'course'] })
-  .build();
-const deepTopology: PermissionTopology = { hierarchy: deepHierarchy };
-
-type ChannelType = 'organization' | 'course' | 'courseSection' | 'project';
-const ENTITY_TYPES = ['user', 'organization', 'course', 'courseSection', 'project', 'item'] as const;
-const CHANNEL_ROLES = {
-  organization: ['admin', 'member'],
-  course: ['staff', 'student'],
-  courseSection: ['staff', 'student'],
-  project: ['owner', 'follower'],
-} as const satisfies Record<ChannelType, readonly string[]>;
-
-const policies = (readValue: (channelType: ChannelType, role: string) => PermissionValue): AccessPolicies =>
-  configureAccessPolicies(
-    ENTITY_TYPES as unknown as readonly EntityType[],
-    ({ subject, contexts }) => {
-      if ((subject.name as string) !== 'item') return;
-      const builders = contexts as unknown as Record<
-        ChannelType,
-        Record<string, (perms: { read: PermissionValue }) => void>
-      >;
-      for (const [channelType, channelRoles] of Object.entries(CHANNEL_ROLES) as [ChannelType, readonly string[]][]) {
-        for (const role of channelRoles) builders[channelType][role]({ read: readValue(channelType, role) });
-      }
-    },
-    deepTopology,
-  );
 
 const membership = (channelType: ChannelType, channelId: string, role: string): ViewMembership => ({
   organizationId: ORG,
@@ -66,7 +28,7 @@ const paths: Record<string, string> = {
 
 const derive = (
   memberships: ViewMembership[],
-  read: (channelType: ChannelType, role: string) => PermissionValue,
+  read: (channelType: ChannelType, role: string) => PolicyCellInput,
   elevatedRoles?: readonly string[],
 ) =>
   deriveGrantBoundaryViews({
@@ -74,7 +36,7 @@ const derive = (
     entityTypes: ['item'],
     resolvePath: (_type, id) => paths[id] ?? null,
     policies: policies(read),
-    topology: deepHierarchy,
+    hierarchy: deepHierarchy,
     elevatedRoles,
   });
 
@@ -82,13 +44,13 @@ const ELEVATED = ['admin', 'staff'] as const;
 
 describe('deriveGrantBoundaryViews', () => {
   it('org-wide subtree for elevated org roles; org SELF for home-scoped org roles', () => {
-    const adminRead = (ct: ChannelType, role: string): PermissionValue =>
+    const adminRead = (ct: ChannelType, role: string): PolicyCellInput =>
       ct === 'organization' && role === 'admin' ? 1 : 0;
     expect(derive([membership('organization', ORG, 'admin')], adminRead, ELEVATED)).toEqual([
       { key: `${ORG}:item:subtree`, organizationId: ORG, prefixes: [ORG], entityTypes: ['item'], depth: 'subtree' },
     ]);
 
-    const memberRead = (ct: ChannelType, role: string): PermissionValue =>
+    const memberRead = (ct: ChannelType, role: string): PolicyCellInput =>
       ct === 'organization' && role === 'member' ? 1 : 0;
     expect(derive([membership('organization', ORG, 'member')], memberRead, ELEVATED)).toEqual([
       { key: `${ORG}:item:self`, organizationId: ORG, prefixes: [ORG], entityTypes: ['item'], depth: 'self' },
@@ -96,7 +58,7 @@ describe('deriveGrantBoundaryViews', () => {
   });
 
   it('home-level grants merge into ONE prefix-set subtree view (the 3-of-5 aggregate)', () => {
-    const ownerRead = (ct: ChannelType, role: string): PermissionValue =>
+    const ownerRead = (ct: ChannelType, role: string): PolicyCellInput =>
       ct === 'project' && role === 'owner' ? 1 : 0;
     const views = derive(
       [
@@ -119,7 +81,7 @@ describe('deriveGrantBoundaryViews', () => {
   });
 
   it('elevated intermediate grants derive subtree views; non-elevated derive SELF views', () => {
-    const staffRead = (ct: ChannelType, role: string): PermissionValue => (ct === 'course' && role === 'staff' ? 1 : 0);
+    const staffRead = (ct: ChannelType, role: string): PolicyCellInput => (ct === 'course' && role === 'staff' ? 1 : 0);
     expect(derive([membership('course', 'c1', 'staff')], staffRead, ELEVATED)).toEqual([
       {
         key: `${ORG}:item:subtree`,
@@ -130,7 +92,7 @@ describe('deriveGrantBoundaryViews', () => {
       },
     ]);
 
-    const studentRead = (ct: ChannelType, role: string): PermissionValue =>
+    const studentRead = (ct: ChannelType, role: string): PolicyCellInput =>
       ct === 'course' && role === 'student' ? 1 : 0;
     expect(derive([membership('course', 'c1', 'student')], studentRead, ELEVATED)).toEqual([
       { key: `${ORG}:item:self`, organizationId: ORG, prefixes: [paths.c1], entityTypes: ['item'], depth: 'self' },
@@ -138,7 +100,7 @@ describe('deriveGrantBoundaryViews', () => {
   });
 
   it('without elevatedRoles every unconditional grant is subtree (engine parity)', () => {
-    const studentRead = (ct: ChannelType, role: string): PermissionValue =>
+    const studentRead = (ct: ChannelType, role: string): PolicyCellInput =>
       ct === 'course' && role === 'student' ? 1 : 0;
     expect(derive([membership('course', 'c1', 'student')], studentRead, undefined)).toEqual([
       {
@@ -152,7 +114,7 @@ describe('deriveGrantBoundaryViews', () => {
   });
 
   it('an org-wide subtree prefix subsumes narrower ones; conditional/unknown grants derive nothing', () => {
-    const read = (ct: ChannelType, role: string): PermissionValue => {
+    const read = (ct: ChannelType, role: string): PolicyCellInput => {
       if (ct === 'organization' && role === 'admin') return 1;
       if (ct === 'project' && role === 'owner') return 1;
       if (ct === 'course' && role === 'student') return 'own';

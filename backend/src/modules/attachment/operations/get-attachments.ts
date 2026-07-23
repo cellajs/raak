@@ -10,7 +10,7 @@ import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpe
 import { productCountersTable } from '#/modules/entities/product-counters-db';
 import { findProjectById } from '#/modules/task/task-queries';
 import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
-import { actorFrom } from '#/permissions/actor';
+import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumn } from '#/utils/order-column';
@@ -37,7 +37,7 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     'attachment',
     organizationId,
     actor,
-    projectId ? { subChannelId: projectId } : undefined,
+    projectId ? { homeChannelId: projectId } : undefined,
   );
   const scopeWhere = buildCollectionReadWhere(readFilter, attachmentsTable, attachmentsTable.projectId, actor);
 

@@ -1,6 +1,6 @@
 import i18n from 'i18next';
 import { useEffect, useRef, useState } from 'react';
-import { appConfig, isUnconditionalPermission } from 'shared';
+import { appConfig, isUnconditionalCan } from 'shared';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { BlockNote } from '~/modules/common/blocknote/blocknote-editor';
@@ -45,8 +45,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
   const yjsConfigured = !!appConfig.yjsUrl;
   const isOnline = useOnlineManager();
   const project = findProjectByIdOrSlug(task.projectId, tenantId);
-  const canCollaborate =
-    yjsConfigured && isOnline && !!yjsToken && isUnconditionalPermission(project?.can?.task?.update);
+  const canCollaborate = yjsConfigured && isOnline && !!yjsToken && isUnconditionalCan(project?.can?.task?.update);
 
   // Connect to Yjs relay; the connection manager handles ref-counting and grace periods.
   // The token proves update permission; entity-level access is verified asynchronously.

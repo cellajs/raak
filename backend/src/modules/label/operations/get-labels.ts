@@ -10,7 +10,7 @@ import { labelsTable } from '#/modules/label/label-db';
 import { buildLabelsListQuery } from '#/modules/label/label-queries';
 import type { labelListQuerySchema } from '#/modules/label/label-schema';
 import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-queries';
-import { actorFrom } from '#/permissions/actor';
+import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumn } from '#/utils/order-column';
@@ -26,18 +26,18 @@ export async function getLabelsOp(
   const { q, sort, order, offset, limit, seqCursor } = queryInfo;
   const organizationId = ctx.var.organization.id;
 
-  // Resolve the explicit sub-context narrowing (if any) from the request.
-  let requested: { subChannelId?: string; subChannelIds?: string[] } | undefined;
+  // Resolve the explicit channel narrowing (if any) from the request.
+  let requested: { homeChannelId?: string; homeChannelIds?: string[] } | undefined;
   if (workspaceId) {
     // ?workspaceId=…: restrict to the workspace's projects the caller may read.
     const workspaceProjects = await tenantRead(ctx, (readCtx) => findProjectsByWorkspace(readCtx, { workspaceId }));
-    requested = { subChannelIds: workspaceProjects.map(({ id }) => id) };
+    requested = { homeChannelIds: workspaceProjects.map(({ id }) => id) };
   }
   if (projectId) {
     // ?projectId=…: must exist and be within the caller's readable scope.
     const project = await tenantRead(ctx, (readCtx) => findProjectById(readCtx, { projectId }));
     if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-    requested = { subChannelId: projectId };
+    requested = { homeChannelId: projectId };
   }
 
   // Resolve the caller's readable scope (unconditional projects + row-conditional slices,

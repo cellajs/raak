@@ -19,9 +19,9 @@ app.openapi(publicProjectRoutes.getPublicProject, async (ctx) => {
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType });
 
   // Anonymous engine check: readable only via the declared public read grant
-  // (publicRead('publicSelf') in permissions-config, matches when project.publicAt is set).
+  // (publicRead() in permissions-config, matches when project.publicAt is set).
   const subject = buildSubject(entityType, project, { id: project.id, row: project });
-  if (!checkAccess({ anonymous: true }, 'read', subject).isAllowed) {
+  if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType, meta: { organizationId: project.organizationId } });
   }
 

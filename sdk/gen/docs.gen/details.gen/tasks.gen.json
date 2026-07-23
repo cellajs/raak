@@ -50,10 +50,6 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "path": {
-              "type": ["string", "null"],
-              "required": true
-            },
             "expandable": { "type": "boolean", "required": true },
             "summary": { "type": "string", "required": true, "maxLength": 1000000 },
             "summaryLength": {
@@ -246,8 +242,7 @@
             "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
             "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
             "fieldTimestamps": {}
-          },
-          "path": null
+          }
         }
       },
       {
@@ -357,10 +352,6 @@
                     "required": true,
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
-                  },
-                  "path": {
-                    "type": ["string", "null"],
-                    "required": true
                   },
                   "expandable": { "type": "boolean", "required": true },
                   "summary": { "type": "string", "required": true, "maxLength": 1000000 },
@@ -560,8 +551,7 @@
                 "mutationId": "22b37585-9b53-4a2b-aedf-c7d983b808f2",
                 "sourceId": "786aca2f-7c84-45b6-95f5-a889487dfacb",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             },
             {
               "id": "20290721-253a-4f4b-b7fe-d421888dc7ba",
@@ -596,8 +586,7 @@
                 "mutationId": "31655acf-e941-4862-b644-c6e5ca01004b",
                 "sourceId": "6f7300b3-c569-4921-9660-e16af3e4aa72",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             }
           ],
           "total": 25
@@ -916,10 +905,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "path": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
                   "expandable": { "type": "boolean", "required": true },
                   "summary": { "type": "string", "required": true, "maxLength": 1000000 },
                   "summaryLength": {
@@ -1118,8 +1103,7 @@
                 "mutationId": "22b37585-9b53-4a2b-aedf-c7d983b808f2",
                 "sourceId": "786aca2f-7c84-45b6-95f5-a889487dfacb",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             },
             {
               "id": "20290721-253a-4f4b-b7fe-d421888dc7ba",
@@ -1154,8 +1138,7 @@
                 "mutationId": "31655acf-e941-4862-b644-c6e5ca01004b",
                 "sourceId": "6f7300b3-c569-4921-9660-e16af3e4aa72",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             }
           ],
           "total": 25
@@ -1296,10 +1279,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "path": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
                   "expandable": { "type": "boolean", "required": true },
                   "summary": { "type": "string", "required": true, "maxLength": 1000000 },
                   "summaryLength": {
@@ -1509,8 +1488,7 @@
                 "mutationId": "0a059eb5-9fad-4a05-9421-137456cc6ee2",
                 "sourceId": "6c3c2d5a-1195-47ca-9425-bc1ddcecd065",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             },
             {
               "id": "27d36970-3e5e-4a44-bc3c-32a47230f592",
@@ -1545,8 +1523,7 @@
                 "mutationId": "3e103be7-d699-4b0a-96b4-d210ffbada30",
                 "sourceId": "6ea097b1-0677-435b-b3b4-34d64d94bd33",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             }
           ],
           "rejectedIds": []
@@ -1606,10 +1583,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "path": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
                   "expandable": { "type": "boolean", "required": true },
                   "summary": { "type": "string", "required": true, "maxLength": 1000000 },
                   "summaryLength": {
@@ -1819,8 +1792,7 @@
                 "mutationId": "0a059eb5-9fad-4a05-9421-137456cc6ee2",
                 "sourceId": "6c3c2d5a-1195-47ca-9425-bc1ddcecd065",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             },
             {
               "id": "27d36970-3e5e-4a44-bc3c-32a47230f592",
@@ -1855,8 +1827,7 @@
                 "mutationId": "3e103be7-d699-4b0a-96b4-d210ffbada30",
                 "sourceId": "6ea097b1-0677-435b-b3b4-34d64d94bd33",
                 "fieldTimestamps": {}
-              },
-              "path": null
+              }
             }
           ],
           "rejectedIds": []
@@ -2133,10 +2104,6 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "path": {
-              "type": ["string", "null"],
-              "required": true
-            },
             "expandable": { "type": "boolean", "required": true },
             "summary": { "type": "string", "required": true, "maxLength": 1000000 },
             "summaryLength": {
@@ -2329,8 +2296,7 @@
             "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
             "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
             "fieldTimestamps": {}
-          },
-          "path": null
+          }
         }
       },
       {
@@ -2437,10 +2403,6 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "path": {
-              "type": ["string", "null"],
-              "required": true
-            },
             "expandable": { "type": "boolean", "required": true },
             "summary": { "type": "string", "required": true, "maxLength": 1000000 },
             "summaryLength": {
@@ -2633,8 +2595,7 @@
             "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
             "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
             "fieldTimestamps": {}
-          },
-          "path": null
+          }
         }
       },
       {

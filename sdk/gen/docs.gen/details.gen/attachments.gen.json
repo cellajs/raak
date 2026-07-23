@@ -122,19 +122,15 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "path": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
                   "taskId": {
                     "type": ["string", "null"],
                     "required": true,
                     "format": "uuid"
                   },
-                  "public": {
+                  "publicBucket": {
                     "type": "boolean",
                     "required": true,
-                    "description": "When true, served directly from the CDN without a presigned URL."
+                    "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
                   },
                   "bucketName": { "type": "string", "required": true, "maxLength": 255 },
                   "groupId": {
@@ -194,7 +190,7 @@
               "name": "vice.mar",
               "description": null,
               "keywords": "tam arx barba",
-              "public": false,
+              "publicBucket": false,
               "bucketName": "attachments",
               "taskId": null,
               "groupId": null,
@@ -219,8 +215,7 @@
                 "fieldTimestamps": {}
               },
               "projectId": "043315eb-ed4a-44ea-9cb4-a6c0fe212f50",
-              "organizationId": "96fe8559-2b8e-4671-ab17-b41ee456f6f2",
-              "path": "96fe8559-2b8e-4671-ab17-b41ee456f6f2/043315eb-ed4a-44ea-9cb4-a6c0fe212f50"
+              "organizationId": "96fe8559-2b8e-4671-ab17-b41ee456f6f2"
             },
             {
               "id": "4de5ede8-ccfe-4f45-83bf-074c2ef77d58",
@@ -229,7 +224,7 @@
               "name": "bah_oof_truthfully.css",
               "description": null,
               "keywords": "nihil acidus alius",
-              "public": false,
+              "publicBucket": false,
               "bucketName": "attachments",
               "taskId": null,
               "groupId": null,
@@ -254,8 +249,7 @@
                 "fieldTimestamps": {}
               },
               "projectId": "65b1a01e-b422-4db6-8339-b813cf84d752",
-              "organizationId": "c2ac3827-d82b-4e19-b35e-9d906125ba7c",
-              "path": "c2ac3827-d82b-4e19-b35e-9d906125ba7c/65b1a01e-b422-4db6-8339-b813cf84d752"
+              "organizationId": "c2ac3827-d82b-4e19-b35e-9d906125ba7c"
             }
           ],
           "total": 2
@@ -455,19 +449,15 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "path": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
                   "taskId": {
                     "type": ["string", "null"],
                     "required": true,
                     "format": "uuid"
                   },
-                  "public": {
+                  "publicBucket": {
                     "type": "boolean",
                     "required": true,
-                    "description": "When true, served directly from the CDN without a presigned URL."
+                    "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
                   },
                   "bucketName": { "type": "string", "required": true, "maxLength": 255 },
                   "groupId": {
@@ -538,7 +528,7 @@
               "name": "ugh_besides.svgz",
               "description": null,
               "keywords": "conicio viridis fuga",
-              "public": false,
+              "publicBucket": false,
               "bucketName": "attachments",
               "taskId": null,
               "groupId": null,
@@ -563,8 +553,7 @@
                 "fieldTimestamps": {}
               },
               "projectId": "c9ed9cd1-f55c-4648-a7a8-af2ccb4380b2",
-              "organizationId": "6f3c4dff-2fe7-47a8-afb8-a8a44c41b543",
-              "path": "6f3c4dff-2fe7-47a8-afb8-a8a44c41b543/c9ed9cd1-f55c-4648-a7a8-af2ccb4380b2"
+              "organizationId": "6f3c4dff-2fe7-47a8-afb8-a8a44c41b543"
             },
             {
               "id": "4227841f-fc3e-408d-ab54-efdd45f10b01",
@@ -573,7 +562,7 @@
               "name": "instead_volleyball.jpe",
               "description": null,
               "keywords": "comburo vulnero tot",
-              "public": false,
+              "publicBucket": false,
               "bucketName": "attachments",
               "taskId": null,
               "groupId": null,
@@ -598,8 +587,7 @@
                 "fieldTimestamps": {}
               },
               "projectId": "7a21be26-ba4e-4e7e-b27d-369703e5ea44",
-              "organizationId": "3c32a472-30f5-492f-925e-fbf3260196c1",
-              "path": "3c32a472-30f5-492f-925e-fbf3260196c1/7a21be26-ba4e-4e7e-b27d-369703e5ea44"
+              "organizationId": "3c32a472-30f5-492f-925e-fbf3260196c1"
             }
           ],
           "rejectedIds": []
@@ -725,19 +713,15 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "path": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
                   "taskId": {
                     "type": ["string", "null"],
                     "required": true,
                     "format": "uuid"
                   },
-                  "public": {
+                  "publicBucket": {
                     "type": "boolean",
                     "required": true,
-                    "description": "When true, served directly from the CDN without a presigned URL."
+                    "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
                   },
                   "bucketName": { "type": "string", "required": true, "maxLength": 255 },
                   "groupId": {
@@ -808,7 +792,7 @@
               "name": "ugh_besides.svgz",
               "description": null,
               "keywords": "conicio viridis fuga",
-              "public": false,
+              "publicBucket": false,
               "bucketName": "attachments",
               "taskId": null,
               "groupId": null,
@@ -833,8 +817,7 @@
                 "fieldTimestamps": {}
               },
               "projectId": "c9ed9cd1-f55c-4648-a7a8-af2ccb4380b2",
-              "organizationId": "6f3c4dff-2fe7-47a8-afb8-a8a44c41b543",
-              "path": "6f3c4dff-2fe7-47a8-afb8-a8a44c41b543/c9ed9cd1-f55c-4648-a7a8-af2ccb4380b2"
+              "organizationId": "6f3c4dff-2fe7-47a8-afb8-a8a44c41b543"
             },
             {
               "id": "4227841f-fc3e-408d-ab54-efdd45f10b01",
@@ -843,7 +826,7 @@
               "name": "instead_volleyball.jpe",
               "description": null,
               "keywords": "comburo vulnero tot",
-              "public": false,
+              "publicBucket": false,
               "bucketName": "attachments",
               "taskId": null,
               "groupId": null,
@@ -868,8 +851,7 @@
                 "fieldTimestamps": {}
               },
               "projectId": "7a21be26-ba4e-4e7e-b27d-369703e5ea44",
-              "organizationId": "3c32a472-30f5-492f-925e-fbf3260196c1",
-              "path": "3c32a472-30f5-492f-925e-fbf3260196c1/7a21be26-ba4e-4e7e-b27d-369703e5ea44"
+              "organizationId": "3c32a472-30f5-492f-925e-fbf3260196c1"
             }
           ],
           "rejectedIds": []
@@ -949,10 +931,10 @@
               "maxLength": 2048
             },
             "bucketName": { "type": "string", "required": true, "maxLength": 255 },
-            "public": {
+            "publicBucket": {
               "type": "boolean",
               "required": false,
-              "description": "When true, served directly from the CDN without a presigned URL."
+              "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
             },
             "groupId": {
               "type": ["string", "null"],
@@ -1307,19 +1289,15 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "path": {
-              "type": ["string", "null"],
-              "required": true
-            },
             "taskId": {
               "type": ["string", "null"],
               "required": true,
               "format": "uuid"
             },
-            "public": {
+            "publicBucket": {
               "type": "boolean",
               "required": true,
-              "description": "When true, served directly from the CDN without a presigned URL."
+              "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
             },
             "bucketName": { "type": "string", "required": true, "maxLength": 255 },
             "groupId": {
@@ -1373,7 +1351,7 @@
           "name": "rightfully_lest_noted.mp3",
           "description": null,
           "keywords": "abscido beneficium crinis",
-          "public": false,
+          "publicBucket": false,
           "bucketName": "attachments",
           "taskId": null,
           "groupId": null,
@@ -1398,8 +1376,7 @@
             "fieldTimestamps": {}
           },
           "projectId": "1eb1a578-1a68-45a7-9ee9-b7e9b6c234f2",
-          "organizationId": "bad021eb-efc6-48ff-835e-959b96d6abdd",
-          "path": "bad021eb-efc6-48ff-835e-959b96d6abdd/1eb1a578-1a68-45a7-9ee9-b7e9b6c234f2"
+          "organizationId": "bad021eb-efc6-48ff-835e-959b96d6abdd"
         }
       },
       {
@@ -1572,19 +1549,15 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "path": {
-              "type": ["string", "null"],
-              "required": true
-            },
             "taskId": {
               "type": ["string", "null"],
               "required": true,
               "format": "uuid"
             },
-            "public": {
+            "publicBucket": {
               "type": "boolean",
               "required": true,
-              "description": "When true, served directly from the CDN without a presigned URL."
+              "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
             },
             "bucketName": { "type": "string", "required": true, "maxLength": 255 },
             "groupId": {
@@ -1638,7 +1611,7 @@
           "name": "rightfully_lest_noted.mp3",
           "description": null,
           "keywords": "abscido beneficium crinis",
-          "public": false,
+          "publicBucket": false,
           "bucketName": "attachments",
           "taskId": null,
           "groupId": null,
@@ -1663,8 +1636,7 @@
             "fieldTimestamps": {}
           },
           "projectId": "1eb1a578-1a68-45a7-9ee9-b7e9b6c234f2",
-          "organizationId": "bad021eb-efc6-48ff-835e-959b96d6abdd",
-          "path": "bad021eb-efc6-48ff-835e-959b96d6abdd/1eb1a578-1a68-45a7-9ee9-b7e9b6c234f2"
+          "organizationId": "bad021eb-efc6-48ff-835e-959b96d6abdd"
         }
       },
       {

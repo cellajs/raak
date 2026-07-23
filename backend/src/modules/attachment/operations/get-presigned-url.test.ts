@@ -15,7 +15,7 @@ vi.mock('#/modules/attachment/helpers/signed-url', () => ({
 }));
 const checkAccess = vi.fn();
 vi.mock('#/permissions', () => ({ checkAccess: (...args: unknown[]) => checkAccess(...args) }));
-vi.mock('#/permissions/actor', () => ({ accessFrom: () => ({}) }));
+vi.mock('#/permissions/access', () => ({ accessFrom: () => ({}) }));
 vi.mock('#/permissions/build-subject', () => ({ buildSubjectFromEntity: () => ({}) }));
 
 const { getPresignedUrlOp } = await import('./get-presigned-url');
@@ -33,7 +33,7 @@ const attachment = {
 beforeEach(() => {
   vi.clearAllMocks();
   getSignedUrlFromKey.mockResolvedValue('https://signed.example/url');
-  checkAccess.mockReturnValue({ isAllowed: true });
+  checkAccess.mockReturnValue({ allowed: true });
 });
 
 describe('getPresignedUrlOp — fail-closed id+variant signing', () => {
@@ -43,7 +43,7 @@ describe('getPresignedUrlOp — fail-closed id+variant signing', () => {
     expect(res).toEqual({ success: true, data: 'https://signed.example/url' });
     expect(getSignedUrlFromKey).toHaveBeenCalledWith(attachment.thumbnailKey, {
       bucketName: 'private-bucket',
-      isPublic: false,
+      publicBucket: false,
     });
   });
 
@@ -68,7 +68,7 @@ describe('getPresignedUrlOp — fail-closed id+variant signing', () => {
 
   it('denies read → 403 and never signs', async () => {
     findAttachmentById.mockResolvedValue(attachment);
-    checkAccess.mockReturnValue({ isAllowed: false });
+    checkAccess.mockReturnValue({ allowed: false });
     const res = await getPresignedUrlOp(ctx, { attachmentId: 'att-1', variant: 'original' });
     expect(res).toEqual({ success: false, error: 'forbidden', status: 403 });
     expect(getSignedUrlFromKey).not.toHaveBeenCalled();

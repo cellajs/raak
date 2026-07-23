@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { configureWidePermissions, widePublicGrants, wideSubject, wideTopology } from '../testing/wide-fixture';
-import { getAllDecisions } from './permission-manager/check';
-import type { SubjectForPermission } from './permission-manager/types';
+import { configureWidePermissions, widePublicGrants, wideSubject, wideOverrides } from '../testing/wide-fixture';
+import { getAllDecisions } from './engine/check';
+import type { SubjectForPermission } from './engine/types';
 import { matchesRowCondition } from './row-conditions';
 
 /**
  * Verifies membership-independent public reads from the row's own `publicAt` across the wide
- * synthetic topology. Parent-derived publication remains outside the permission engine because
+ * synthetic hierarchy. Parent-derived publication remains outside the permission engine because
  * SQL and stream dispatch evaluate row-local data.
  */
 const NOW = '2026-07-06T12:00:00Z';
 
-const grants = widePublicGrants({ project: 'publicSelf', task: 'publicSelf' });
+const grants = widePublicGrants({ project: true, task: true });
 
 const projectSubject = (publicAt: string | null): SubjectForPermission =>
   wideSubject({
@@ -28,19 +28,19 @@ describe('public read grants — anonymous actor', () => {
   it('grants read when the row publicAt is set', () => {
     const { can, actions } = getAllDecisions(noPolicies, [], projectSubject(NOW), {
       publicGrants: grants,
-      topology: wideTopology,
+      ...wideOverrides,
     });
     expect(can.read).toBe(true);
-    expect(actions.read.grantedBy).toEqual([{ type: 'public', mode: 'publicSelf' }]);
+    expect(actions.read.grantedBy).toEqual([{ type: 'public' }]);
   });
 
   it('denies when publicAt is null or row data is absent', () => {
     expect(
-      getAllDecisions(noPolicies, [], projectSubject(null), { publicGrants: grants, topology: wideTopology }).can.read,
+      getAllDecisions(noPolicies, [], projectSubject(null), { publicGrants: grants, ...wideOverrides }).can.read,
     ).toBe(false);
 
     const noRow = wideSubject({ entityType: 'project', id: 'p1', channelIds: { organization: 'org1' } });
-    expect(getAllDecisions(noPolicies, [], noRow, { publicGrants: grants, topology: wideTopology }).can.read).toBe(
+    expect(getAllDecisions(noPolicies, [], noRow, { publicGrants: grants, ...wideOverrides }).can.read).toBe(
       false,
     );
   });
@@ -54,7 +54,7 @@ describe('public read grants — anonymous actor', () => {
       channelIds: { organization: 'org1', project: 'p1' },
       row: { publicAt: null },
     });
-    expect(getAllDecisions(noPolicies, [], task, { publicGrants: grants, topology: wideTopology }).can.read).toBe(
+    expect(getAllDecisions(noPolicies, [], task, { publicGrants: grants, ...wideOverrides }).can.read).toBe(
       false,
     );
 
@@ -66,14 +66,14 @@ describe('public read grants — anonymous actor', () => {
       row: { publicAt: NOW },
     });
     expect(
-      getAllDecisions(noPolicies, [], publishedTask, { publicGrants: grants, topology: wideTopology }).can.read,
+      getAllDecisions(noPolicies, [], publishedTask, { publicGrants: grants, ...wideOverrides }).can.read,
     ).toBe(true);
   });
 
   it('grants read only — other actions stay denied', () => {
     const { can } = getAllDecisions(noPolicies, [], projectSubject(NOW), {
       publicGrants: grants,
-      topology: wideTopology,
+      ...wideOverrides,
     });
     expect(can.read).toBe(true);
     expect(can.create).toBe(false);
@@ -88,13 +88,13 @@ describe('public read grants — anonymous actor', () => {
       channelIds: {},
       row: { publicAt: NOW },
     });
-    expect(getAllDecisions(noPolicies, [], orgSubject, { publicGrants: grants, topology: wideTopology }).can.read).toBe(
+    expect(getAllDecisions(noPolicies, [], orgSubject, { publicGrants: grants, ...wideOverrides }).can.read).toBe(
       false,
     );
   });
 
   it('no publicGrants passed → engine behaves exactly as before', () => {
-    expect(getAllDecisions(noPolicies, [], projectSubject(NOW), { topology: wideTopology }).can.read).toBe(false);
+    expect(getAllDecisions(noPolicies, [], projectSubject(NOW), { ...wideOverrides }).can.read).toBe(false);
   });
 });
 
@@ -111,19 +111,19 @@ describe("the 'public' row condition — the shared rule", () => {
 
 describe('configurePermissions — publicRead declaration', () => {
   it('collects grants per subject and returns them alongside policies', () => {
-    const { publicReadGrants } = configureWidePermissions(({ subject, publicRead }) => {
-      if (subject.name === 'project') publicRead('publicSelf');
-      if (subject.name === 'task') publicRead('publicSelf');
+    const { publicReadGrants } = configureWidePermissions(({ entityType, publicRead }) => {
+      if (entityType === 'project') publicRead();
+      if (entityType === 'task') publicRead();
     });
-    expect(publicReadGrants).toEqual({ project: 'publicSelf', task: 'publicSelf' });
+    expect(publicReadGrants).toEqual({ project: true, task: true });
   });
 
   it('throws when publicRead is declared twice for a subject', () => {
     expect(() =>
-      configureWidePermissions(({ subject, publicRead }) => {
-        if (subject.name === 'project') {
-          publicRead('publicSelf');
-          publicRead('publicSelf');
+      configureWidePermissions(({ entityType, publicRead }) => {
+        if (entityType === 'project') {
+          publicRead();
+          publicRead();
         }
       }),
     ).toThrow('publicRead() called twice');

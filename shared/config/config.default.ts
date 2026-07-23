@@ -1,20 +1,23 @@
 import type { ConfigMode, RequiredConfig, S3ConfigInput } from '../src/config-builder/types';
+import { nonEmpty } from '../src/config-builder/utils';
+import { hierarchy } from './hierarchy-config';
 
 // Re-export for external consumers
 export { roles, hierarchy } from './hierarchy-config';
 
 export const config = {
 
-  // Entity data model
+  // Entity data model, derived from the hierarchy: the builder in hierarchy-config.ts is the
+  // single declaration of the entity taxonomy.
 
-  /** All entity types in the app - must match hierarchy.allTypes. */
-  entityTypes: ['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment'] as const,
+  /** All entity types in the app. */
+  entityTypes: nonEmpty(hierarchy.allTypes),
 
-  /** Channel entities with memberships - must match hierarchy.channelTypes. */
-  channelEntityTypes: ['organization', 'workspace', 'project'] as const,
+  /** Channel entities with memberships. */
+  channelEntityTypes: nonEmpty(hierarchy.channelTypes),
 
-  /** Product/content entities - must match hierarchy.productTypes. */
-  productEntityTypes: ['task', 'label', 'attachment'] as const,
+  /** Product/content entities. */
+  productEntityTypes: nonEmpty(hierarchy.productTypes),
 
   /**
    * Product entity types tracked for seen/unseen counts.
@@ -23,16 +26,8 @@ export const config = {
    */
   seenTrackedProductTypes: ['task'] as const,
 
-  /** Maps entity types to their ID column names - must match entityTypes */
-  entityIdColumnKeys: {
-    user: 'userId',
-    organization: 'organizationId',
-    workspace: 'workspaceId',
-    project: 'projectId',
-    task: 'taskId',
-    label: 'labelId',
-    attachment: 'attachmentId',
-  } as const,
+  /** Maps entity types to their ID column names, derived from the hierarchy (`${type}Id`). */
+  entityIdColumnKeys: hierarchy.idColumnKeys,
 
   /** Available CRUD actions for permission checks */
   entityActions: ['create', 'read', 'update', 'delete'] as const,
@@ -161,7 +156,7 @@ export const config = {
   // once at cutover (upstream moved v1 → v2 with this migration).
   cookieVersion: 'v2',
   /** Persisted client query-cache shape - bump on breaking cached entity changes */
-  clientCacheVersion: 'v3-propagation-hints',
+  clientCacheVersion: 'v5-public-bucket',
 
   // Feature flags
 
