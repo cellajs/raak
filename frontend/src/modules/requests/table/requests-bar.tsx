@@ -43,7 +43,7 @@ export const RequestsTableBar = ({
   const { q, order, sort } = searchVars;
   const isFiltered = !!q;
 
-  const requestsListKey = requestsKeys.table.base();
+  const requestsListKey = requestsKeys.table.base;
 
   const { mutateAsync: approveRequests } = useSendApprovalInviteMutation();
 
@@ -69,7 +69,7 @@ export const RequestsTableBar = ({
                 count: args.data.length,
                 resources: t('c:request_other').toLowerCase(),
               });
-        toaster(message, 'success');
+        toaster.success(message);
       }
       clearSelection();
     };

@@ -65,7 +65,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
       setSyncTimedOut(true);
       if (!toastShownRef.current) {
         toastShownRef.current = true;
-        toaster(i18n.t('error:sync_failed.text'), 'warning');
+        toaster.warning(i18n.t('error:sync_failed.text'));
       }
     }, 3_000);
     return () => clearTimeout(timer);

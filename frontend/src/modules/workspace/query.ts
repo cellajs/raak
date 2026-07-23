@@ -16,7 +16,7 @@ import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
-import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
+import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
@@ -29,12 +29,9 @@ type WorkspaceFilters = Omit<GetWorkspacesData['query'], 'limit' | 'offset'>;
 
 const keys = createEntityKeys<WorkspaceFilters>('workspace');
 
-// Register keys for SSE/stream handler support
+// Register query keys for dynamic lookup in stream handlers
 registerEntityQueryKeys('workspace', keys);
 
-/**
- * Workspace query keys.
- */
 export const workspaceQueryKeys = keys;
 
 const findWorkspaceInCache = createCacheFinder<Workspace>('workspace');
@@ -47,9 +44,7 @@ type WorkspacesListParams = Omit<NonNullable<GetWorkspacesData['query']>, 'limit
   limit?: number;
 };
 
-/**
- * Infinite query options to get a paginated list of workspaces.
- */
+/** Paginated workspaces infinite query. `include` is deliberately not part of the cache key. */
 export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) => {
   const {
     q = '',
@@ -59,23 +54,19 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
     role,
     excludeArchived,
     include,
-    limit: baseLimit = appConfig.requestLimits.default,
+    limit = appConfig.requestLimits.default,
   } = params;
 
-  const limit = String(baseLimit);
-
-  const keyFilters = { q, sort, order, organizationId, role, excludeArchived };
-
-  const queryKey = keys.list.filtered(keyFilters);
-  const baseQuery = { ...keyFilters, include, limit };
+  const filters = { q, sort, order, organizationId, role, excludeArchived };
+  const requestQuery = { ...filters, include, limit: String(limit) };
 
   return infiniteQueryOptions({
-    queryKey,
-    queryFn: async ({ pageParam: { page, offset: _offset }, signal }) => {
-      const offset = String(_offset ?? (page ?? 0) * Number(limit));
+    queryKey: keys.list.filtered(filters),
+    queryFn: ({ pageParam: { page, offset }, signal }) => {
+      const requestOffset = String(offset ?? (page ?? 0) * limit);
 
       return getWorkspaces({
-        query: { ...baseQuery, offset },
+        query: { ...requestQuery, offset: requestOffset },
         signal,
       });
     },
@@ -84,9 +75,7 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
   });
 };
 
-/**
- * Query options for a single workspace by id or slug.
- */
+/** Query options for a single workspace by id or slug. */
 export const workspaceQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
@@ -94,12 +83,8 @@ export const workspaceQueryOptions = (id: string, organizationId: string, tenant
     placeholderData: () => findWorkspaceByIdOrSlug(id, tenantId),
     structuralSharing: preserveIncluded,
   });
-/**
- * Custom hook to create a new workspace.
- * This hook provides the functionality to create a new workspace.
- *
- * @returns The mutation hook for creating an workspace.
- */
+
+/** Mutation hook for creating a new workspace. */
 export const useWorkspaceCreateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -112,7 +97,7 @@ export const useWorkspaceCreateMutation = () => {
       return result.data[0] as Workspace;
     },
     onSuccess: (createdWorkspace) => {
-      toaster(t('c:success.create_resource', { resource: t('c:workspace') }), 'success');
+      toaster.success(t('c:success.create_resource', { resource: t('c:workspace') }));
       const membership = getApiIncludedMembership(createdWorkspace);
       if (membership) addMyMembershipCache(membership);
       cacheCreate(listKey, [createdWorkspace]);
@@ -123,13 +108,7 @@ export const useWorkspaceCreateMutation = () => {
   });
 };
 
-/**
- * Custom hook to update an existing workspace.
- * This hook provides the functionality to update an workspace. After a successful update,
- * it updates the local cache and invalidates relevant queries to keep the data fresh.
- *
- * @returns The mutation hook for updating an workspace.
- */
+/** Mutation hook for updating an existing workspace. */
 export const useUpdateWorkspaceMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -138,7 +117,7 @@ export const useUpdateWorkspaceMutation = () => {
     mutationKey: keys.update,
     mutationFn: ({ path, body }) => updateWorkspace({ path, body }),
     onSuccess: (updatedWorkspace) => {
-      toaster(t('c:success.update_resource', { resource: t('c:workspace') }), 'success');
+      toaster.success(t('c:success.update_resource', { resource: t('c:workspace') }));
       cacheUpdate(listKey, [updatedWorkspace]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
       // Directly update detail cache so beforeLoad doesn't use stale slug for URL rewrite
@@ -151,12 +130,7 @@ export const useUpdateWorkspaceMutation = () => {
   });
 };
 
-/**
- * Custom hook to delete workspaces.
- * This hook provides the functionality to delete one or more workspaces.
- *
- * @returns The mutation hook for deleting workspaces.
- */
+/** Mutation hook for deleting workspaces. */
 export const useWorkspaceDeleteMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -175,9 +149,13 @@ export const useWorkspaceDeleteMutation = () => {
             })
           : t('c:success.delete_resource', { resource: t('c:workspace') });
 
-      toaster(message, 'success');
+      toaster.success(message);
       cacheRemove(listKey, workspaces);
-      for (const ws of workspaces) queryClient.removeQueries({ queryKey: keys.detail.byId(ws.id) });
+      removeDetailQueriesById(
+        queryClient,
+        keys.detail.base,
+        workspaces.map(({ id }) => id),
+      );
     },
     onSettled: () => {
       invalidateIfLastMutation(queryClient, keys.all, listKey);

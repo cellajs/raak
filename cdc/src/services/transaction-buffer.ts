@@ -7,28 +7,20 @@ import { channelIdColumnKeys } from '../utils/channel-columns';
 import { log } from '../lib/pino';
 import { RESOURCE_LIMITS } from '../constants';
 
-/** Reverse lookup: targetType → source types that embed into it (from productEmbeddings) */
-const softCascadeTargets = new Map<string, Set<string>>();
+/** Reverse lookup: hostProduct → embedded products that embed into it (from productEmbeddings) */
+const embeddedByHostProduct = new Map<string, Set<string>>();
 for (const { embeddedProduct, hostProduct } of appConfig.productEmbeddings) {
-  const sources = softCascadeTargets.get(hostProduct) ?? new Set<string>();
-  sources.add(embeddedProduct);
-  softCascadeTargets.set(hostProduct, sources);
+  const embedded = embeddedByHostProduct.get(hostProduct) ?? new Set<string>();
+  embedded.add(embeddedProduct);
+  embeddedByHostProduct.set(hostProduct, embedded);
 }
 
 const { transactionTimeoutMs } = RESOURCE_LIMITS.buffers;
 
 /**
- * Transaction-aware buffer for CDC WAL events.
- *
- * Uses streaming cascade suppression: as DELETE events arrive, channel entity
- * IDs (organization, project, workspace) are tracked in a Set. Child deletes
- * referencing a tracked context ID are dropped inline, never buffered.
- *
- * This keeps memory bounded to surviving events only (channel entity deletes +
- * non-delete mutations), regardless of cascade size. A 100k-task org delete
- * buffers about 8 events while avoiding roughly 116k individual events.
- *
- * Single-event transactions (the common case) are passed through with no overhead.
+ * Buffers transaction-aware CDC events while suppressing cascaded deletes as they arrive.
+ * Tracking deleted channel IDs bounds memory to surviving events regardless of cascade size;
+ * single-event transactions pass through directly.
  */
 export class TransactionBuffer {
   private activeXid: number | null = null;
@@ -116,10 +108,8 @@ export class TransactionBuffer {
     this.deletedChannelIds.clear();
     this.suppressedCount = 0;
 
-    // Second pass: catch child deletes that arrived before their parent channel entity
-    // delete. Most children are dropped inline in onEvent(), but WAL order isn't always
-    // parent-first (e.g., application-level batch deletes). This pass is cheap since only
-    // surviving events remain (typically channel entity deletes + non-delete mutations).
+    // Catch children that preceded their parent delete in WAL order.
+    // Inline suppression already removed the common parent-first case.
     if (deletedChannelIds && events.length > 1) {
       const deletedChannelSet = new Set(deletedChannelIds);
       const filtered: PendingEvent[] = [];
@@ -151,9 +141,9 @@ export class TransactionBuffer {
 
     let surviving = events;
 
-    // Soft cascade suppression: if tx contains DELETEs of source type A and UPDATEs of target type B,
-    // and A→B is a known embedding relationship (productEmbeddings), suppress the B updates.
-    if (surviving.length > 1 && softCascadeTargets.size > 0) {
+    // Soft cascade suppression: if tx contains DELETEs of embedded product A and UPDATEs of host
+    // product B, and A→B is a known embedding relationship (productEmbeddings), suppress the B updates.
+    if (surviving.length > 1 && embeddedByHostProduct.size > 0) {
       surviving = this.suppressSoftCascades(surviving);
     }
 
@@ -214,8 +204,8 @@ export class TransactionBuffer {
 
   /**
    * Suppress embedding-propagation updates triggered by deletes in the same transaction.
-   * Handles cases where a host entity array is updated synchronously alongside
-   * an embedded entity delete (the client handles this via propagateEmbeddings); acts
+   * Handles cases where a host product array is updated synchronously alongside
+   * an embedded-product delete (the client handles this via propagateEmbeddings); acts
    * as a generic safeguard against soft cascade duplication.
    */
   private suppressSoftCascades(events: PendingEvent[]): PendingEvent[] {
@@ -234,8 +224,8 @@ export class TransactionBuffer {
     for (const event of events) {
       const { activity } = event.result;
       if (activity.action === 'update' && activity.entityType) {
-        const sourceTypes = softCascadeTargets.get(activity.entityType);
-        if (sourceTypes && [...sourceTypes].some((s) => deleteTypes.has(s))) {
+        const embeddedTypes = embeddedByHostProduct.get(activity.entityType);
+        if (embeddedTypes && [...embeddedTypes].some((s) => deleteTypes.has(s))) {
           softSuppressedCount++;
           continue;
         }

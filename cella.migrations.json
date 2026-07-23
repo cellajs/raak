@@ -1,5 +1,8 @@
 {
   "applied": [
-    "20260722T0902-drop-entity-suffix-renames"
+    "20260722T0902-drop-entity-suffix-renames",
+    "20260722T1906-embedding-propagation-rename",
+    "20260722T2050-sonner-style-toaster-api",
+    "20260722T2105-prepared-mutation-compose"
   ]
 }
