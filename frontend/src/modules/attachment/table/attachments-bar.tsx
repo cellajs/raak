@@ -1,10 +1,9 @@
-import { InfoIcon, SquareXIcon, TrashIcon, UploadIcon } from 'lucide-react';
+import { InfoIcon, SquareXIcon, TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Attachment } from 'sdk';
 import { DeleteAttachments } from '~/modules/attachment/delete-attachments';
 import type { AttachmentsTableProps } from '~/modules/attachment/table/attachments-table';
-import { useAttachmentsUploadDialog } from '~/modules/attachment/table/use-attachments-upload-dialog';
 import type { AttachmentsRouteSearchParams } from '~/modules/attachment/types';
 import { AlertBanner } from '~/modules/common/alerter/alert-banner';
 import { ColumnsView } from '~/modules/common/data-table/columns-view';
@@ -30,12 +29,10 @@ export const AttachmentsTableBar = ({
   setColumns,
   clearSelection,
   isSheet = false,
-  canUpload = false,
   queryKey,
 }: AttachmentsTableBarProps) => {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
-  const { open } = useAttachmentsUploadDialog(channel.tenantId, channel.id);
   const resolveCan = useResolveCan();
 
   const deleteButtonRef = useRef(null);
@@ -45,7 +42,6 @@ export const AttachmentsTableBar = ({
   const { q } = searchVars;
 
   const isFiltered = !!q;
-  const showUpload = canUpload && !isFiltered;
 
   // Honest bulk delete: act only on the rows this user may delete ('own' resolves per row);
   // the badge shows that count when it differs from the selection. The backend's rejectedIds
@@ -98,9 +94,7 @@ export const AttachmentsTableBar = ({
 
                 <TableBarButton variant="ghost" onClick={clearSelection} icon={SquareXIcon} label="c:clear" />
               </>
-            ) : (
-              showUpload && <TableBarButton icon={UploadIcon} label="c:upload" onClick={() => open()} />
-            )}
+            ) : null}
             {selected.length === 0 && (
               <TableCount count={total} label="c:attachment" isFiltered={isFiltered} onResetFilters={onResetFilters} />
             )}

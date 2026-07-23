@@ -431,6 +431,7 @@ export const zTask = z.object({
   checkboxCount: z.int().gte(-2147483648).lte(2147483647),
   checkedCount: z.int().gte(-2147483648).lte(2147483647),
   attachmentCount: z.int().gte(-2147483648).lte(2147483647),
+  attachments: z.array(z.uuid()),
   organizationId: z.uuid(),
   projectId: z.uuid(),
   labels: z.array(
@@ -589,7 +590,6 @@ export const zAttachment = z.object({
   deletedBy: z.uuid().nullable(),
   publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
-  taskId: z.uuid().nullable(),
   publicBucket: z.boolean(),
   bucketName: z.string().max(255),
   groupId: z.uuid().nullable(),
@@ -2268,7 +2268,6 @@ export const zCreateAttachmentsBody = z
       bucketName: z.string().max(255),
       publicBucket: z.boolean().optional(),
       groupId: z.uuid().nullish(),
-      taskId: z.uuid().nullish(),
       convertedContentType: z.string().max(255).nullish(),
       convertedKey: z.string().max(2048).nullish(),
       thumbnailKey: z.string().max(2048).nullish(),

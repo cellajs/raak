@@ -13,10 +13,9 @@ export const attachmentsTable = snakeCase.table(
   'attachments',
   {
     ...productColumns('attachment'),
-    // Soft reference to the owning task (nullable, no FK, like embedded id arrays):
-    // plain data, never permission indirection. deleteTasksOp owns the lifecycle
-    // cascade; attachments without a task (taskId null) live at project level.
-    taskId: uuid(),
+    // Task-hosted attachments are referenced by the derived task.attachments array
+    // (owned-lifecycle productEmbedding); the CDC worker owns their garbage collection.
+    // Project-level attachments are simply never referenced by a host array.
     publicBucket: boolean().notNull().default(false),
     bucketName: varchar({ length: maxLength.field }).notNull(),
     /** Upload batch grouping (multi-file uploads shown as one carousel), not ownership. */
@@ -39,7 +38,6 @@ export const attachmentsTable = snakeCase.table(
     index('attachments_created_by_index').on(table.createdBy),
     index('attachments_updated_by_index').on(table.updatedBy),
     index('attachments_group_id_index').on(table.groupId),
-    index('attachments_task_id_index').on(table.taskId),
     foreignKey({
       columns: [table.tenantId, table.organizationId],
       foreignColumns: [organizationsTable.tenantId, organizationsTable.id],

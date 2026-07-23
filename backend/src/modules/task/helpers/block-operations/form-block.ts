@@ -48,6 +48,8 @@ const formFileBlock = (id: string, type: 'file' | 'image' | 'video' | 'audio', n
     backgroundColor: 'default',
     name,
     url,
+    // Attachment entity reference: feeds the derived task.attachments host array.
+    attachmentId: id,
     caption: '',
     ...(type !== 'file' && { showPreview: true }),
     ...((type === 'video' || type === 'image') && {

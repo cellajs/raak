@@ -1,6 +1,5 @@
+import { mediaBlockTypes } from 'shared/blocknote';
 import { validateBlockMediaUrls } from '#/utils/validate-block-urls';
-
-const mediaBlockTypes = new Set(['image', 'video', 'audio', 'file']);
 
 type BlockLike = { type: string; props?: Record<string, unknown>; children?: BlockLike[] };
 

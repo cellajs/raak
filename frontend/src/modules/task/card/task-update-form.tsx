@@ -102,7 +102,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
     task.projectId,
     tenantId,
     task.organizationId,
-    attachmentsCreationCallback({ ...task, taskId: task.id }),
+    attachmentsCreationCallback({ ...task }),
   );
 
   // Show faded read-only preview while waiting for WS sync (avoids empty flash)

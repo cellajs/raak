@@ -20,11 +20,11 @@ setMockContext('script');
  * Each seeded organization gets one attachment per file, assigned to one of its projects.
  */
 const SEED_FILES = [
-  { filename: 'sample-image.webp', contentType: 'image/webp', size: '24500', originalKey: 'seed/sample-image.webp', public: true },
-  { filename: 'sample-document.pdf', contentType: 'application/pdf', size: '145000', originalKey: 'seed/sample-document.pdf', public: false },
-  { filename: 'sample-text.txt', contentType: 'text/plain', size: '1200', originalKey: 'seed/sample-text.txt', public: false },
-  { filename: 'sample-photo.jpg', contentType: 'image/jpeg', size: '89000', originalKey: 'seed/sample-photo.jpg', public: true },
-  { filename: 'sample-spreadsheet.csv', contentType: 'text/csv', size: '3400', originalKey: 'seed/sample-spreadsheet.csv', public: false },
+  { filename: 'sample-image.webp', contentType: 'image/webp', size: '24500', originalKey: 'seed/sample-image.webp', publicBucket: true },
+  { filename: 'sample-document.pdf', contentType: 'application/pdf', size: '145000', originalKey: 'seed/sample-document.pdf', publicBucket: false },
+  { filename: 'sample-text.txt', contentType: 'text/plain', size: '1200', originalKey: 'seed/sample-text.txt', publicBucket: false },
+  { filename: 'sample-photo.jpg', contentType: 'image/jpeg', size: '89000', originalKey: 'seed/sample-photo.jpg', publicBucket: true },
+  { filename: 'sample-spreadsheet.csv', contentType: 'text/csv', size: '3400', originalKey: 'seed/sample-spreadsheet.csv', publicBucket: false },
 ];
 
 const isAttachmentSeeded = async () => {
@@ -93,8 +93,8 @@ export const attachmentsSeed = async () => {
           contentType: file.contentType,
           size: file.size,
           originalKey: file.originalKey,
-          public: file.public,
-          bucketName: file.public ? appConfig.s3.publicBucket : appConfig.s3.privateBucket,
+          publicBucket: file.publicBucket,
+          bucketName: file.publicBucket ? appConfig.s3.publicBucket : appConfig.s3.privateBucket,
         };
       }),
     );

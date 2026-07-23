@@ -99,7 +99,15 @@ function patchSingleHost(
   const record = host as unknown as Record<string, unknown>;
   const embedded = record[hostColumn];
 
-  // Array column (e.g., task.labels)
+  // Plain id-array column (e.g., task.attachments): only removals are patchable,
+  // updates carry no embedded copy to refresh.
+  if (Array.isArray(embedded) && embedded.every((item) => typeof item === 'string')) {
+    const ids = embedded as string[];
+    if (!ids.some((id) => removeSet.has(id))) return host;
+    return { ...host, [hostColumn]: ids.filter((id) => !removeSet.has(id)) } as ItemData;
+  }
+
+  // Array column of embedded objects (e.g., task.labels)
   if (Array.isArray(embedded)) {
     const needsPatch = embedded.some(
       (item: { id?: string }) => item.id && (updateSet.has(item.id) || removeSet.has(item.id)),

@@ -500,6 +500,7 @@ export type Task = {
   checkboxCount: number;
   checkedCount: number;
   attachmentCount: number;
+  attachments: Array<string>;
   organizationId: string;
   projectId: string;
   labels: Array<{
@@ -672,7 +673,6 @@ export type Attachment = {
   deletedBy: string | null;
   publicAt: string | null;
   seq: number;
-  taskId: string | null;
   /**
    * When true, the file is stored in the public bucket and served from the CDN without a presigned URL.
    */
@@ -5503,7 +5503,6 @@ export type CreateAttachmentsData = {
      */
     publicBucket?: boolean;
     groupId?: string | null;
-    taskId?: string | null;
     /**
      * MIME type of the server-converted variant; null when none.
      */

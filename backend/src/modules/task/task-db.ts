@@ -38,6 +38,9 @@ export const tasksTable = snakeCase.table(
     checkboxCount: integer().default(0).notNull(),
     checkedCount: integer().default(0).notNull(),
     attachmentCount: integer().default(0).notNull(),
+    // Derived from description media blocks (attachmentId props). Owned-lifecycle
+    // productEmbedding host column: the CDC worker GCs attachment rows it no longer references.
+    attachments: uuid().array().notNull().default(sql`'{}'::uuid[]`),
     // publicAt comes from productColumns (base column); non-member public read is gated on it.
     organizationId: uuid().notNull(),
     projectId: uuid()
@@ -53,6 +56,8 @@ export const tasksTable = snakeCase.table(
     index('tasks_project_status_index').on(table.projectId, table.status),
     index('idx_tasks_labels_gin').using('gin', table.labels),
     index('idx_tasks_assigned_to_gin').using('gin', table.assignedTo),
+    // Backs the CDC refcount check: "which live tasks still reference attachment X?"
+    index('idx_tasks_attachments_gin').using('gin', table.attachments),
     foreignKey({
       columns: [table.tenantId, table.organizationId],
       foreignColumns: [organizationsTable.tenantId, organizationsTable.id],

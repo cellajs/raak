@@ -34,7 +34,6 @@ export const mockAttachment = (key = 'attachment:default'): AttachmentModel =>
       keywords: faker.lorem.words(3),
       publicBucket: false,
       bucketName: 'attachments',
-      taskId: null,
       groupId: null,
       filename,
       contentType: faker.system.mimeType(),

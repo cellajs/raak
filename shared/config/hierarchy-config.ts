@@ -24,9 +24,10 @@ export const hierarchy = createEntityHierarchy(roles)
   .channel('project', { parent: 'organization', roles: roles.all })
   .product('task', { parent: 'project' })
   .product('label', { parent: 'project' })
-  // Task-owned attachments reference their task via a plain nullable taskId data column
-  // (declared in attachment-db.ts): relationships between products are data, never
-  // permission indirection. deleteTasksOp cascades attachments in the same transaction.
-  // Attachments without a task (taskId null) live at project level.
+  // Attachments are referenced by tasks via the derived task.attachments id array
+  // (an owned-lifecycle productEmbedding mirroring description media blocks):
+  // relationships between products are data, never permission indirection. The CDC
+  // worker garbage-collects attachment rows no live task references and cascades
+  // them on task deletion; project-level attachments stay outside any host array.
   .product('attachment', { parent: 'project' })
   .build();

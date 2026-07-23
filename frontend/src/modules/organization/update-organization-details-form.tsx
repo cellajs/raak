@@ -7,7 +7,6 @@ import { zUpdateOrganizationBody } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import type { z } from 'zod';
 import { useBeforeUnload } from '~/hooks/use-before-unload';
-import { persistAttachments } from '~/modules/attachment/helpers/persist-attachments';
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
@@ -38,11 +37,6 @@ interface Props {
 export function UpdateOrganizationDetailsForm({ organization, callback, sheet: isSheet }: Props) {
   const { t } = useTranslation();
   const { mutate, isPending } = useOrganizationUpdateMutation();
-
-  // Inline media become real org-scoped attachment rows (persistAttachments), so the file
-  // panel follows `can.attachment.create` like the attachments table's upload button.
-  // Reaching this form via an organization UPDATE grant does not imply attachment CREATE.
-  const canUploadAttachments = organization.can?.attachment?.create === true;
 
   const formOptions: UseFormProps<FormValues> = {
     resolver: zodResolver(formSchema),
@@ -92,23 +86,6 @@ export function UpdateOrganizationDetailsForm({ organization, callback, sheet: i
               trailingBlock: false,
               className:
                 'min-h-20 max-h-[50vh] overflow-auto bg-background pl-10 pr-6 p-3 border-input ring-offset-background focus-visible:ring-ring max-focus-visible:ring-transparent max-focus-visible:ring-offset-0 w-full rounded-md border text-sm focus-visible:outline-hidden sm:focus-visible:ring-2 focus-visible:ring-offset-2',
-              // Omitted without attachment-create permission: the editor renders no file panel.
-              baseFilePanelProps: canUploadAttachments
-                ? {
-                    mediaMode: 'private-attachment',
-                    tenantId: organization.tenantId,
-                    organizationId: organization.id,
-                    // Persist inline media as private, org-scoped attachments so the
-                    // id the block references resolves via presigned + permission check.
-                    onComplete: (attachments) =>
-                      persistAttachments(attachments, {
-                        tenantId: organization.tenantId,
-                        organizationId: organization.id,
-                      }).catch(() => {
-                        toaster.error(t('error:create_resource', { resource: t('c:attachment').toLowerCase() }));
-                      }),
-                  }
-                : undefined,
             }}
           />
         </Suspense>

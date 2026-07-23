@@ -40,6 +40,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       checkboxCount: faker.number.int({ min: 0, max: 10 }),
       checkedCount: faker.number.int({ min: 0, max: 5 }),
       attachmentCount: faker.number.int({ min: 0, max: 5 }),
+      attachments: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       labels: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       assignedTo: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 2 } }),
       publicAt: faker.helpers.maybe(() => faker.date.past({ refDate }).toISOString(), { probability: 0.3 }) ?? null,

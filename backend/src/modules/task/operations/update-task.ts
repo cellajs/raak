@@ -2,11 +2,11 @@ import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantContext } from '#/db/tenant-context';
+import { filterExistingAttachmentIds } from '#/modules/attachment/attachment-queries';
 import {
   type DerivedDescriptionProps,
   deriveDescriptionProps,
   type ParsedBlock,
-  removeAttachments,
 } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTask, hydrateTaskLite } from '#/modules/task/helpers/hydrate-task';
 import type { InsertTaskModel } from '#/modules/task/task-db';
@@ -31,7 +31,9 @@ export async function updateTaskOp(
   const user = ctx.var.user;
 
   // Pre-compute description metadata outside the transaction to avoid holding a DB
-  // connection during CPU-intensive BlockNote HTML conversion + keyword extraction
+  // connection during CPU-intensive BlockNote HTML conversion + keyword extraction.
+  // A cleared description derives empty counts and an empty attachments array, so the
+  // CDC worker can garbage-collect the previously referenced attachments.
   let derivedDescription: DerivedDescriptionProps | undefined;
   let parsedBlocks: ParsedBlock[] | undefined;
   if ('description' in rawOps) {
@@ -95,9 +97,14 @@ export async function updateTaskOp(
       updateValues.labels = [];
     }
 
-    if (resolved.values.description !== undefined) {
-      if (parsedBlocks) await removeAttachments(txCtx, { blocks: parsedBlocks, entityId: id, deletedBy: user.id });
-      if (derivedDescription) Object.assign(updateValues, derivedDescription);
+    if (resolved.values.description !== undefined && derivedDescription) {
+      // Drop ids that don't resolve to a live in-org attachment row (doctored or stale
+      // block props must never enter the owned-embedding host array).
+      derivedDescription.attachments = await filterExistingAttachmentIds(txCtx, {
+        ids: derivedDescription.attachments,
+        organizationId: txCtx.var.organizationId,
+      });
+      Object.assign(updateValues, derivedDescription);
     }
 
     const updatedTaskRecord = await updateTask(txCtx, { id, values: updateValues });

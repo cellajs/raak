@@ -105,21 +105,33 @@ export const findAttachmentById = async (ctx: DbContext, { id }: FindAttachmentB
   return att;
 };
 
-interface FindAttachmentKeysByTaskIdOpts {
-  taskId: string;
+interface FilterExistingAttachmentIdsOpts {
+  ids: string[];
+  organizationId: string;
 }
 
-/** Find attachment IDs and S3 keys owned by a task (host relation, e.g. for description sync). */
-export const findAttachmentKeysByTaskId = async (ctx: DbContext, { taskId }: FindAttachmentKeysByTaskIdOpts) => {
+/**
+ * Narrow candidate attachment ids to live rows in this organization. Guards the derived
+ * task.attachments host array against doctored or stale ids from client-authored blocks.
+ */
+export const filterExistingAttachmentIds = async (
+  ctx: DbContext,
+  { ids, organizationId }: FilterExistingAttachmentIdsOpts,
+) => {
+  if (ids.length === 0) return [];
   const { db } = ctx.var;
-  return db
-    .select({
-      id: attachmentsTable.id,
-      convertedKey: attachmentsTable.convertedKey,
-      originalKey: attachmentsTable.originalKey,
-    })
+  const rows = await db
+    .select({ id: attachmentsTable.id })
     .from(attachmentsTable)
-    .where(eq(attachmentsTable.taskId, taskId));
+    .where(
+      and(
+        inArray(attachmentsTable.id, ids),
+        eq(attachmentsTable.organizationId, organizationId),
+        isNull(attachmentsTable.deletedAt),
+      ),
+    );
+  const found = new Set(rows.map((row) => row.id));
+  return ids.filter((id) => found.has(id));
 };
 
 interface FindAttachmentViewCountOpts {

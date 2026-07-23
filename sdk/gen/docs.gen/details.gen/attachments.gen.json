@@ -122,11 +122,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "taskId": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "format": "uuid"
-                  },
                   "publicBucket": {
                     "type": "boolean",
                     "required": true,
@@ -192,7 +187,6 @@
               "keywords": "tam arx barba",
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "vice.mar",
               "contentType": "audio/3gpp",
@@ -226,7 +220,6 @@
               "keywords": "nihil acidus alius",
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "bah_oof_truthfully.css",
               "contentType": "application/xhtml+xml",
@@ -449,11 +442,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "taskId": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "format": "uuid"
-                  },
                   "publicBucket": {
                     "type": "boolean",
                     "required": true,
@@ -530,7 +518,6 @@
               "keywords": "conicio viridis fuga",
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "ugh_besides.svgz",
               "contentType": "application/vnd.amazon.ebook",
@@ -564,7 +551,6 @@
               "keywords": "comburo vulnero tot",
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "instead_volleyball.jpe",
               "contentType": "application/pdf",
@@ -713,11 +699,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "taskId": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "format": "uuid"
-                  },
                   "publicBucket": {
                     "type": "boolean",
                     "required": true,
@@ -794,7 +775,6 @@
               "keywords": "conicio viridis fuga",
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "ugh_besides.svgz",
               "contentType": "application/vnd.amazon.ebook",
@@ -828,7 +808,6 @@
               "keywords": "comburo vulnero tot",
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "instead_volleyball.jpe",
               "contentType": "application/pdf",
@@ -937,11 +916,6 @@
               "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
             },
             "groupId": {
-              "type": ["string", "null"],
-              "required": false,
-              "format": "uuid"
-            },
-            "taskId": {
               "type": ["string", "null"],
               "required": false,
               "format": "uuid"
@@ -1289,11 +1263,6 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "taskId": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "publicBucket": {
               "type": "boolean",
               "required": true,
@@ -1353,7 +1322,6 @@
           "keywords": "abscido beneficium crinis",
           "publicBucket": false,
           "bucketName": "attachments",
-          "taskId": null,
           "groupId": null,
           "filename": "rightfully_lest_noted.mp3",
           "contentType": "image/webp",
@@ -1549,11 +1517,6 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "taskId": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "publicBucket": {
               "type": "boolean",
               "required": true,
@@ -1613,7 +1576,6 @@
           "keywords": "abscido beneficium crinis",
           "publicBucket": false,
           "bucketName": "attachments",
-          "taskId": null,
           "groupId": null,
           "filename": "rightfully_lest_noted.mp3",
           "contentType": "image/webp",

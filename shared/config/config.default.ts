@@ -46,6 +46,9 @@ export const config = {
    */
   productEmbeddings: [
     { embeddedProduct: 'label', hostProduct: 'task', hostColumn: 'labels' },
+    // Owned lifecycle: task.attachments is derived from description media blocks;
+    // CDC garbage-collects attachment rows no live task references.
+    { embeddedProduct: 'attachment', hostProduct: 'task', hostColumn: 'attachments', lifecycle: 'owned' },
   ] as const,
 
   /**
@@ -156,7 +159,7 @@ export const config = {
   // once at cutover (upstream moved v1 → v2 with this migration).
   cookieVersion: 'v2',
   /** Persisted client query-cache shape - bump on breaking cached entity changes */
-  clientCacheVersion: 'v5-public-bucket',
+  clientCacheVersion: 'v6-task-attachments',
 
   // Feature flags
 

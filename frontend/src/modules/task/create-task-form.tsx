@@ -149,9 +149,9 @@ const CreateTaskForm = ({
     pendingCloseRef.current = true;
     setIsExiting(true);
 
-    // taskId links attachments to the new task.
+    // Persist the stashed upload rows; task linkage rides the description's attachmentId props.
     if (attachments.length) {
-      attachmentsCreationCallback({ organizationId, tenantId, projectId, taskId: defaultId })(attachments);
+      attachmentsCreationCallback({ organizationId, tenantId, projectId })(attachments);
     }
 
     // Backend handles label usedCount side-effects atomically

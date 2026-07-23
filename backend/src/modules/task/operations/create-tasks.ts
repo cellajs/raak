@@ -51,6 +51,8 @@ export async function createTasksOp(
   // Prepare tasks for insert
   const tasksToInsert = await Promise.all(
     input.map(async ({ stx, id, ...taskInfo }) => {
+      // Derived attachments are UUID-shape-checked only: attachment rows created in the
+      // same client batch may not be committed yet, so existence is not enforced here.
       const descriptionText = String(taskInfo.description ?? '');
       const derived = await deriveDescriptionProps(descriptionText);
 

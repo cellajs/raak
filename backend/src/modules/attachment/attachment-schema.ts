@@ -45,8 +45,6 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     bucketName: true,
     publicBucket: true,
     groupId: true,
-    // cella change: Raak attachments may be hosted by a task.
-    taskId: true,
     convertedContentType: true,
     convertedKey: true,
     thumbnailKey: true,
