@@ -22,10 +22,10 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Public reads intentionally bypass tenant status checks from tenantGuard.
-  // Anonymous engine check: publicRead('publicSelf') makes the task readable once its own
+  // Anonymous engine check: publicRead() makes the task readable once its own
   // publicAt is set (denormalized from the parent project via create path + cascade trigger).
   const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
-  if (!checkAccess({ anonymous: true }, 'read', subject).isAllowed) {
+  if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
   }
 
@@ -44,10 +44,10 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
-  // The project must itself be public (publicRead('publicSelf') → project.publicAt set); its
+  // The project must itself be public (publicRead() → project.publicAt set); its
   // tasks inherit that publicity via the publicAt cascade, so one project check gates the list.
   const projectSubject = buildSubject('project', project, { id: project.id, row: project });
-  if (!checkAccess({ anonymous: true }, 'read', projectSubject).isAllowed) {
+  if (!checkAccess({ anonymous: true }, 'read', projectSubject).allowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
   }
 

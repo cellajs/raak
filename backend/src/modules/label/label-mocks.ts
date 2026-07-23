@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { computeProductPath, hierarchy } from 'shared';
 import {
   generateMockChannelIdColumns,
   MOCK_REF_DATE,
@@ -56,8 +55,6 @@ export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
       deletedBy: null,
       seq: faker.number.int({ min: 1, max: 500 }),
       stx: mockStx(),
-      // Generated column in the live schema (productPathColumn); mocks mirror the SQL rule.
-      path: computeProductPath(hierarchy, 'label', channelIds),
     };
   });
 

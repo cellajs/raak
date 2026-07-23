@@ -3,6 +3,12 @@
     "20260722T0902-drop-entity-suffix-renames",
     "20260722T1906-embedding-propagation-rename",
     "20260722T2050-sonner-style-toaster-api",
-    "20260722T2105-prepared-mutation-compose"
+    "20260722T2105-prepared-mutation-compose",
+    "20260723T0739-hierarchy-owned-id-columns",
+    "20260723T0802-hierarchy-derived-entity-arrays",
+    "20260723T0814-hierarchy-instance-only-api",
+    "20260723T0822-drop-product-path-column",
+    "20260723T0824-public-read-flag",
+    "20260723T0959-permission-vocabulary"
   ]
 }

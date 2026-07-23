@@ -1,27 +1,27 @@
 import { appConfig } from '../../config-builder/app-config';
 import type { EntityActionType } from '../../../types';
 import { createActionRecord } from '../action-helpers';
-import type { GrantSource, PermissionDecision, PermissionMembership } from './types';
+import type { GrantSource, PermissionDecision, AccessMembership } from './types';
 
 const formatGrant = (g: GrantSource): string => {
   if (g.type === 'membership') return `${g.channelType}:${g.channelId}/${g.role}`;
-  if (g.type === 'public') return `public:${g.mode}`;
+  if (g.type === 'public') return 'public';
   if (g.type === 'systemAdmin') return 'systemAdmin';
   return `relation:${g.relation}`;
 };
 
 /** Formats a decision tree for debug logging. */
-export const formatPermissionDecision = <T extends PermissionMembership>(decision: PermissionDecision<T>): string => {
+export const formatPermissionDecision = <T extends AccessMembership>(decision: PermissionDecision<T>): string => {
   const lines = [
     `[Permission Check] entity=${decision.subject.entityType} id=${decision.subject.id}`,
-    `├─ Context IDs: ${JSON.stringify(decision.subject.channelIds)}`,
+    `├─ Channel IDs: ${JSON.stringify(decision.subject.channelIds)}`,
     '│',
     '├─ Action Attribution:',
   ];
 
   for (const action of appConfig.entityActions) {
     const attr = decision.actions[action];
-    const status = attr.enabled ? '✓ GRANTED' : '✗ DENIED';
+    const status = attr.allowed ? '✓ GRANTED' : '✗ DENIED';
     const grants = attr.grantedBy.length > 0 ? `by [${attr.grantedBy.map(formatGrant).join(', ')}]` : '(no grants)';
     lines.push(`│  ├─ ${action}: ${status} ${grants}`);
   }
@@ -34,7 +34,7 @@ export const formatPermissionDecision = <T extends PermissionMembership>(decisio
 };
 
 /** Formats per-entity and per-action decision counts for debug logging. */
-export const formatBatchPermissionSummary = <T extends PermissionMembership>(
+export const formatBatchPermissionSummary = <T extends AccessMembership>(
   decisions: Map<string, PermissionDecision<T>>,
 ): string => {
   if (decisions.size === 0) return '[Batch Permission] No subjects checked';

@@ -2,13 +2,12 @@ import type { SideEffectBlock, SideEffectProducer } from '../types';
 
 /**
  * publicAt cascade: denormalizes a project's `public_at` onto its child products so row-local
- * public read (`publicRead('publicSelf')`) reflects "public because the parent project is public".
+ * public read (`publicRead()`) reflects "public because the parent project is public".
  *
- * Public read is now row-local (permission-actor migration removed `publicParent`): a row is
- * publicly readable only when its OWN `public_at` is set. Tasks and attachments declare
- * `publicRead('publicSelf')` and are served under a public project (public share links), so their
- * `public_at` must mirror the project's. This keeps single-row reads, collection SQL and CDC in
- * agreement without a read-time join.
+ * Public read is row-local: a row is publicly readable only when its OWN `public_at` is set.
+ * Tasks and attachments declare `publicRead()` and are served under a public project (public
+ * share links), so their `public_at` must mirror the project's. This keeps single-row reads,
+ * collection SQL and CDC in agreement without a read-time join.
  *
  * Three parts:
  *   1. one-time BACKFILL of existing rows,
@@ -16,8 +15,8 @@ import type { SideEffectBlock, SideEffectProducer } from '../types';
  *   3. a BEFORE INSERT trigger on each child that inherits the parent's `public_at` at creation
  *      (covers rows created after the project went public, across every insert path).
  *
- * Children: tasks, attachments — the product entities with `publicRead('publicSelf')` whose home
- * channel is the project. Extend both lists here if another public product entity is added.
+ * Children: tasks, attachments, the product entities with `publicRead()` whose home channel is
+ * the project. Extend both lists here if another public product entity is added.
  */
 function run(): SideEffectBlock {
   const children = ['tasks', 'attachments'] as const;

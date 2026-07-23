@@ -1,13 +1,5 @@
-import {
-  type AccessPolicies,
-  createEntityHierarchy,
-  createRoleRegistry,
-  type EntityType,
-  type PermissionTopology,
-  type PermissionValue,
-  type ProductEntityType,
-} from 'shared';
-import { configureAccessPolicies } from 'shared/testing/policies';
+import type { PolicyCellInput, ProductEntityType } from 'shared';
+import { type DeepChannelType, deepOverrides, deepReadPolicies as policies } from 'shared/testing/deep-fixture';
 import { describe, expect, it } from 'vitest';
 import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
 import { resolveViewReadStatusForPolicies } from './view-read-status';
@@ -15,47 +7,12 @@ import { resolveViewReadStatusForPolicies } from './view-read-status';
 /**
  * Catchup prefix authorization (`resolveViewReadStatus`): `ok` requires PROOF of
  * unconditional subtree read on the prefix's deepest node; readable-but-unproven is
- * `opaque` (no summaries returned); no read route is `forbidden`. Same synthetic
- * deep topology as the row-predicates parity suite.
+ * `opaque` (no summaries returned); no read route is `forbidden`. Uses the shared
+ * deep fixture, same hierarchy as the row-predicates parity suite.
  */
 const ROOT_ID = 'org-1';
 
-const deepRoles = createRoleRegistry(['admin', 'member', 'staff', 'student', 'owner', 'follower'] as const);
-const deepHierarchy = createEntityHierarchy(deepRoles)
-  .user()
-  .channel('organization', { parent: null, roles: ['admin', 'member'] })
-  .channel('course', { parent: 'organization', roles: ['staff', 'student'] })
-  .channel('courseSection', { parent: 'course', roles: ['staff', 'student'] })
-  .channel('project', { parent: 'courseSection', roles: ['owner', 'follower'] })
-  .product('item', { parent: 'project', nullableAncestors: ['project', 'courseSection', 'course'] })
-  .build();
-const deepTopology: PermissionTopology = { hierarchy: deepHierarchy };
-
-type DeepChannelType = 'organization' | 'course' | 'courseSection' | 'project';
-const DEEP_ENTITY_TYPES = ['user', 'organization', 'course', 'courseSection', 'project', 'item'] as const;
-const DEEP_CHANNEL_ROLES = {
-  organization: ['admin', 'member'],
-  course: ['staff', 'student'],
-  courseSection: ['staff', 'student'],
-  project: ['owner', 'follower'],
-} as const satisfies Record<DeepChannelType, readonly string[]>;
 const ITEM = 'item' as unknown as ProductEntityType;
-
-const policies = (readValue: (channelType: DeepChannelType, role: string) => PermissionValue): AccessPolicies =>
-  configureAccessPolicies(
-    DEEP_ENTITY_TYPES as unknown as readonly EntityType[],
-    ({ subject, contexts }) => {
-      if ((subject.name as string) !== 'item') return;
-      const builders = contexts as unknown as Record<
-        DeepChannelType,
-        Record<string, (perms: { read: PermissionValue }) => void>
-      >;
-      for (const [channelType, roles] of Object.entries(DEEP_CHANNEL_ROLES) as [DeepChannelType, readonly string[]][]) {
-        for (const role of roles) builders[channelType][role]({ read: readValue(channelType, role) });
-      }
-    },
-    deepTopology,
-  );
 
 const membership = (channelType: DeepChannelType, channelId: string, role: string): MembershipBaseModel =>
   ({
@@ -70,7 +27,7 @@ const membership = (channelType: DeepChannelType, channelId: string, role: strin
 const statusFor = (
   prefix: string,
   opts: {
-    read?: (channelType: DeepChannelType, role: string) => PermissionValue;
+    read?: (channelType: DeepChannelType, role: string) => PolicyCellInput;
     memberships?: MembershipBaseModel[];
     isSystemAdmin?: boolean;
     elevatedRoles?: readonly string[];
@@ -86,7 +43,7 @@ const statusFor = (
       organizationId: ROOT_ID,
       actor: { userId: 'actor', isSystemAdmin: opts.isSystemAdmin ?? false },
       elevatedRoles: opts.elevatedRoles,
-      topology: deepTopology,
+      ...deepOverrides,
     },
     prefix,
     opts.depth,
@@ -94,13 +51,13 @@ const statusFor = (
   );
 
 describe('resolveViewReadStatus', () => {
-  const orgAdminRead = (ct: DeepChannelType, role: string): PermissionValue =>
+  const orgAdminRead = (ct: DeepChannelType, role: string): PolicyCellInput =>
     ct === 'organization' && role === 'admin' ? 1 : 0;
-  const courseStaffRead = (ct: DeepChannelType, role: string): PermissionValue =>
+  const courseStaffRead = (ct: DeepChannelType, role: string): PolicyCellInput =>
     ct === 'course' && role === 'staff' ? 1 : 0;
-  const projectOwnerRead = (ct: DeepChannelType, role: string): PermissionValue =>
+  const projectOwnerRead = (ct: DeepChannelType, role: string): PolicyCellInput =>
     ct === 'project' && role === 'owner' ? 1 : 0;
-  const orgMemberOwnRead = (ct: DeepChannelType, role: string): PermissionValue =>
+  const orgMemberOwnRead = (ct: DeepChannelType, role: string): PolicyCellInput =>
     ct === 'organization' && role === 'member' ? 'own' : 0;
 
   it('org-wide unconditional read answers every prefix in the org', () => {
@@ -143,7 +100,7 @@ describe('resolveViewReadStatus', () => {
   it('SELF views: a home-scoped grant (non-elevated under elevatedRoles) answers its own node', () => {
     // Course student read=1 with elevatedRoles configured: the grant is home-scoped.
     // It covers exactly the course wall (rows homed at c1), which is what a self view asks.
-    const courseStudentRead = (ct: DeepChannelType, role: string): PermissionValue =>
+    const courseStudentRead = (ct: DeepChannelType, role: string): PolicyCellInput =>
       ct === 'course' && role === 'student' ? 1 : 0;
     const opts = {
       read: courseStudentRead,
@@ -192,7 +149,7 @@ describe('resolveViewReadStatus', () => {
   });
 
   it('VERIFIED ancestry: ancestor HOME-grants still never prove deeper self views', () => {
-    const courseStudentRead = (ct: DeepChannelType, role: string): PermissionValue =>
+    const courseStudentRead = (ct: DeepChannelType, role: string): PolicyCellInput =>
       ct === 'course' && role === 'student' ? 1 : 0;
     const opts = {
       read: courseStudentRead,

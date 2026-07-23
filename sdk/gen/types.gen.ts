@@ -347,7 +347,7 @@ export type InactiveMembership = {
  * A signed token authorizing file uploads to the configured storage provider.
  */
 export type UploadToken = {
-  public: boolean;
+  publicBucket: boolean;
   sub: string;
   s3: boolean;
   signature: string | null;
@@ -490,7 +490,6 @@ export type Task = {
   deletedBy: string | null;
   publicAt: string | null;
   seq: number;
-  path: string | null;
   expandable: boolean;
   summary: string;
   summaryLength: number;
@@ -673,12 +672,11 @@ export type Attachment = {
   deletedBy: string | null;
   publicAt: string | null;
   seq: number;
-  path: string | null;
   taskId: string | null;
   /**
-   * When true, served directly from the CDN without a presigned URL.
+   * When true, the file is stored in the public bucket and served from the CDN without a presigned URL.
    */
-  public: boolean;
+  publicBucket: boolean;
   bucketName: string;
   groupId: string | null;
   filename: string;
@@ -746,7 +744,6 @@ export type Label = {
   deletedBy: string | null;
   publicAt: string | null;
   seq: number;
-  path: string | null;
   color: string | null;
   organizationId: string;
   projectId: string;
@@ -2216,7 +2213,7 @@ export type GetUploadTokenData = {
   body?: never;
   path?: never;
   query: {
-    public?: string | boolean;
+    publicBucket?: string | boolean;
     organizationId?: string;
     templateId: 'avatar' | 'cover' | 'attachment';
   };
@@ -5502,9 +5499,9 @@ export type CreateAttachmentsData = {
     originalKey: string;
     bucketName: string;
     /**
-     * When true, served directly from the CDN without a presigned URL.
+     * When true, the file is stored in the public bucket and served from the CDN without a presigned URL.
      */
-    public?: boolean;
+    publicBucket?: boolean;
     groupId?: string | null;
     taskId?: string | null;
     /**
