@@ -4,7 +4,7 @@ import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskLabel, TaskPointsType, TaskStatusType, TaskVariantType } from '~/modules/task/types';
-import { useUserStore } from '~/modules/user/user-store';
+import { useCurrentUser } from '~/modules/user/user-store';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { computeArrayDelta } from '~/query/offline/array-delta';
 
@@ -116,7 +116,7 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
  * Each handler wraps the task update mutation with optimistic updates.
  */
 export const useTaskFieldHandlers = (task: Task) => {
-  const user = useUserStore((s) => s.user);
+  const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
   // Intentionally NOT memoized: the label/assignee baselines (see buildFieldHandlers) rely on fresh
