@@ -506,6 +506,8 @@ export type Task = {
     id: string;
     name: string;
     color: string | null;
+    mode: 'primary' | 'secondary' | 'epic';
+    icon: string | null;
     projectId: string;
   }>;
   variant: 1 | 2 | 3;
@@ -745,6 +747,11 @@ export type Label = {
   publicAt: string | null;
   seq: number;
   color: string | null;
+  mode: 'primary' | 'secondary' | 'epic';
+  slug: string;
+  icon: string | null;
+  organizationTracked: boolean;
+  displayOrder: number | null;
   organizationId: string;
   projectId: string;
   stx: StxBase;
@@ -6610,6 +6617,10 @@ export type CreateLabelsData = {
     projectId: string;
     id: string;
     color: string | null;
+    mode?: 'primary' | 'secondary' | 'epic';
+    slug?: string;
+    icon?: string | null;
+    displayOrder?: number;
     stx: StxBase;
   }>;
   path: {
@@ -6740,6 +6751,9 @@ export type UpdateLabelData = {
     ops: {
       name?: string;
       color?: string | null;
+      slug?: string;
+      icon?: string | null;
+      displayOrder?: number;
     };
     stx: StxBase;
   };

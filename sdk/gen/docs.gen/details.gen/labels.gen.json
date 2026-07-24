@@ -61,6 +61,24 @@
                     "required": true,
                     "maxLength": 255
                   },
+                  "mode": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["primary", "secondary", "epic"]
+                  },
+                  "slug": { "type": "string", "required": true, "maxLength": 255 },
+                  "icon": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 255
+                  },
+                  "organizationTracked": { "type": "boolean", "required": true },
+                  "displayOrder": {
+                    "type": ["number", "null"],
+                    "required": true,
+                    "minimum": -140737488355328,
+                    "maximum": 140737488355327
+                  },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "stx": {
@@ -107,6 +125,11 @@
               "description": "Contego debeo volubilis cum vindico.",
               "keywords": "audacia perspiciatis supra",
               "color": "#a6adbc",
+              "mode": "secondary",
+              "slug": "feature",
+              "icon": null,
+              "organizationTracked": false,
+              "displayOrder": null,
               "publicAt": null,
               "tenantId": "gme3gy",
               "projectId": "6a3f30f2-0433-415e-bbed-4a4eacb4a6c0",
@@ -130,6 +153,11 @@
               "description": "Ascit suscipio utpote amplexus nihil aut concedo.",
               "keywords": "vel praesentium universe",
               "color": "#d08227",
+              "mode": "secondary",
+              "slug": "low-priority",
+              "icon": null,
+              "organizationTracked": false,
+              "displayOrder": null,
               "publicAt": null,
               "tenantId": "pmhsya",
               "projectId": "fcd93da6-f475-47fd-a00c-c2dc65b1a01e",
@@ -284,6 +312,24 @@
                     "required": true,
                     "maxLength": 255
                   },
+                  "mode": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["primary", "secondary", "epic"]
+                  },
+                  "slug": { "type": "string", "required": true, "maxLength": 255 },
+                  "icon": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 255
+                  },
+                  "organizationTracked": { "type": "boolean", "required": true },
+                  "displayOrder": {
+                    "type": ["number", "null"],
+                    "required": true,
+                    "minimum": -140737488355328,
+                    "maximum": 140737488355327
+                  },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "stx": {
@@ -341,6 +387,11 @@
               "description": "Eligendi sophismata exercitationem somnus cattus cilicium textilis cervus.",
               "keywords": "alo tactus confido",
               "color": "#64f6c9",
+              "mode": "secondary",
+              "slug": "enhancement",
+              "icon": null,
+              "organizationTracked": false,
+              "displayOrder": null,
               "publicAt": null,
               "tenantId": "4ovzm1",
               "projectId": "f53a0c8a-26b6-495c-9c9e-d9cd1f55c648",
@@ -364,6 +415,11 @@
               "description": "Utpote vulnus subseco vomica auxilium.",
               "keywords": "ascit cuppedia abbas",
               "color": "#2d8a1a",
+              "mode": "secondary",
+              "slug": "enhancement",
+              "icon": null,
+              "organizationTracked": false,
+              "displayOrder": null,
               "publicAt": null,
               "tenantId": "a54hj9",
               "projectId": "ebef5b66-8321-40fb-87a2-1be26ba4ee7e",
@@ -443,6 +499,24 @@
                     "required": true,
                     "maxLength": 255
                   },
+                  "mode": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["primary", "secondary", "epic"]
+                  },
+                  "slug": { "type": "string", "required": true, "maxLength": 255 },
+                  "icon": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "maxLength": 255
+                  },
+                  "organizationTracked": { "type": "boolean", "required": true },
+                  "displayOrder": {
+                    "type": ["number", "null"],
+                    "required": true,
+                    "minimum": -140737488355328,
+                    "maximum": 140737488355327
+                  },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "stx": {
@@ -500,6 +574,11 @@
               "description": "Eligendi sophismata exercitationem somnus cattus cilicium textilis cervus.",
               "keywords": "alo tactus confido",
               "color": "#64f6c9",
+              "mode": "secondary",
+              "slug": "enhancement",
+              "icon": null,
+              "organizationTracked": false,
+              "displayOrder": null,
               "publicAt": null,
               "tenantId": "4ovzm1",
               "projectId": "f53a0c8a-26b6-495c-9c9e-d9cd1f55c648",
@@ -523,6 +602,11 @@
               "description": "Utpote vulnus subseco vomica auxilium.",
               "keywords": "ascit cuppedia abbas",
               "color": "#2d8a1a",
+              "mode": "secondary",
+              "slug": "enhancement",
+              "icon": null,
+              "organizationTracked": false,
+              "displayOrder": null,
               "publicAt": null,
               "tenantId": "a54hj9",
               "projectId": "ebef5b66-8321-40fb-87a2-1be26ba4ee7e",
@@ -608,6 +692,18 @@
               "required": true,
               "maxLength": 255
             },
+            "mode": {
+              "type": "string",
+              "required": false,
+              "enum": ["primary", "secondary", "epic"]
+            },
+            "slug": { "type": "string", "required": false, "maxLength": 255 },
+            "icon": {
+              "type": ["string", "null"],
+              "required": false,
+              "maxLength": 255
+            },
+            "displayOrder": { "type": "number", "required": false },
             "stx": {
               "type": "object",
               "required": true,
@@ -800,6 +896,24 @@
               "required": true,
               "maxLength": 255
             },
+            "mode": {
+              "type": "string",
+              "required": true,
+              "enum": ["primary", "secondary", "epic"]
+            },
+            "slug": { "type": "string", "required": true, "maxLength": 255 },
+            "icon": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 255
+            },
+            "organizationTracked": { "type": "boolean", "required": true },
+            "displayOrder": {
+              "type": ["number", "null"],
+              "required": true,
+              "minimum": -140737488355328,
+              "maximum": 140737488355327
+            },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
@@ -840,6 +954,11 @@
           "description": "Decerno deficio cupio spiculum depono.",
           "keywords": "amplitudo atrox speciosus",
           "color": "#e305dd",
+          "mode": "secondary",
+          "slug": "feature",
+          "icon": null,
+          "organizationTracked": false,
+          "displayOrder": null,
           "publicAt": null,
           "tenantId": "1c1z4m",
           "projectId": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
@@ -966,6 +1085,24 @@
               "required": true,
               "maxLength": 255
             },
+            "mode": {
+              "type": "string",
+              "required": true,
+              "enum": ["primary", "secondary", "epic"]
+            },
+            "slug": { "type": "string", "required": true, "maxLength": 255 },
+            "icon": {
+              "type": ["string", "null"],
+              "required": true,
+              "maxLength": 255
+            },
+            "organizationTracked": { "type": "boolean", "required": true },
+            "displayOrder": {
+              "type": ["number", "null"],
+              "required": true,
+              "minimum": -140737488355328,
+              "maximum": 140737488355327
+            },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
@@ -1006,6 +1143,11 @@
           "description": "Decerno deficio cupio spiculum depono.",
           "keywords": "amplitudo atrox speciosus",
           "color": "#e305dd",
+          "mode": "secondary",
+          "slug": "feature",
+          "icon": null,
+          "organizationTracked": false,
+          "displayOrder": null,
           "publicAt": null,
           "tenantId": "1c1z4m",
           "projectId": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
@@ -1086,7 +1228,14 @@
                 "type": ["string", "null"],
                 "required": false,
                 "maxLength": 255
-              }
+              },
+              "slug": { "type": "string", "required": false, "maxLength": 255 },
+              "icon": {
+                "type": ["string", "null"],
+                "required": false,
+                "maxLength": 255
+              },
+              "displayOrder": { "type": "number", "required": false }
             }
           },
           "stx": {

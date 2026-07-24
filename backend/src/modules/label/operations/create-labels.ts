@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import { labelSlug } from 'shared';
 import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
@@ -53,6 +54,7 @@ export async function createLabelsOp(
 
     const label = {
       ...labelInfo,
+      slug: labelInfo.slug ?? labelSlug(labelInfo.name ?? 'New label'),
       entityType: 'label' as const,
       tenantId: organization.tenantId,
       organizationId: organization.id,

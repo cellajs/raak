@@ -571,6 +571,24 @@
           "required": true,
           "maxLength": 255
         },
+        "mode": {
+          "type": "string",
+          "required": true,
+          "enum": ["primary", "secondary", "epic"]
+        },
+        "slug": { "type": "string", "required": true, "maxLength": 255 },
+        "icon": {
+          "type": ["string", "null"],
+          "required": true,
+          "maxLength": 255
+        },
+        "organizationTracked": { "type": "boolean", "required": true },
+        "displayOrder": {
+          "type": ["number", "null"],
+          "required": true,
+          "minimum": -140737488355328,
+          "maximum": 140737488355327
+        },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "projectId": { "type": "string", "required": true, "format": "uuid" },
         "stx": {
@@ -616,6 +634,11 @@
       "description": "Decerno deficio cupio spiculum depono.",
       "keywords": "amplitudo atrox speciosus",
       "color": "#e305dd",
+      "mode": "secondary",
+      "slug": "feature",
+      "icon": null,
+      "organizationTracked": false,
+      "displayOrder": null,
       "publicAt": null,
       "tenantId": "1c1z4m",
       "projectId": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
@@ -1997,6 +2020,15 @@
               "id": { "type": "string", "required": true },
               "name": { "type": "string", "required": true },
               "color": {
+                "type": ["string", "null"],
+                "required": true
+              },
+              "mode": {
+                "type": "string",
+                "required": true,
+                "enum": ["primary", "secondary", "epic"]
+              },
+              "icon": {
                 "type": ["string", "null"],
                 "required": true
               },
