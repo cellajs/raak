@@ -9,7 +9,7 @@ export { hierarchy, roles } from './config/config.default';
 
 // Label modes and primary-label constraints
 export { labelColorTokens, labelModes, labelSlug, primaryLabelLimits } from './config/labels-config';
-export type { LabelColorToken, LabelMode } from './config/labels-config';
+export type { LabelColorToken, LabelMode, PrimaryLabelDefinition } from './config/labels-config';
 
 // Bound guard facade: these ARE the app singleton's methods (arrow fields, so binding is
 // preserved), re-exported for the two highest-frequency checks. Everything else stays on
@@ -59,6 +59,7 @@ export type {
   MenuSection,
   NullableAncestorType,
   OrganizationFlags,
+  OrganizationSetupConfig,
   ProductEntityType,
   RootChannelType,
   SeenTrackedProductType,

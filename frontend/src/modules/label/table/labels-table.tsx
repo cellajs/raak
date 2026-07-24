@@ -72,6 +72,9 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
     ...(entity === 'workspace' ? { workspaceId: entityId } : { projectId: entityId }),
     organizationId,
     tenantId,
+    // The management table handles free-form tags; primary labels are managed via org
+    // settings (setupConfig) and epic labels get their own UI.
+    mode: 'secondary',
     ...search,
     limit,
   });

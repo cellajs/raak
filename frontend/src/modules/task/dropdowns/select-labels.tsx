@@ -106,7 +106,8 @@ export const SelectLabels = ({
 
   const labels = useQueries({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
-    combine: (results) => results.flatMap((r) => r.data?.items ?? []),
+    // The task label picker only offers secondary labels; primary/epic labels have dedicated UI.
+    combine: (results) => results.flatMap((r) => r.data?.items ?? []).filter((l) => l.mode === 'secondary'),
   });
 
   const inputRef = useRef<HTMLInputElement>(null);

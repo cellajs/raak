@@ -567,6 +567,27 @@ export type Organization = {
   organizationFlags: {
     [key: string]: unknown;
   };
+  setupConfig: {
+    primaryLabels: Array<{
+      slug: string;
+      name: string;
+      color:
+        | 'red'
+        | 'orange'
+        | 'amber'
+        | 'yellow'
+        | 'green'
+        | 'emerald'
+        | 'teal'
+        | 'sky'
+        | 'blue'
+        | 'indigo'
+        | 'violet'
+        | 'pink'
+        | 'slate';
+      icon: string | null;
+    }>;
+  };
   included: {
     membership?: MembershipBase;
     counts?: {
@@ -4339,6 +4360,27 @@ export type UpdateOrganizationData = {
     organizationFlags?: {
       [key: string]: unknown;
     };
+    setupConfig?: {
+      primaryLabels?: Array<{
+        slug: string;
+        name: string;
+        color:
+          | 'red'
+          | 'orange'
+          | 'amber'
+          | 'yellow'
+          | 'green'
+          | 'emerald'
+          | 'teal'
+          | 'sky'
+          | 'blue'
+          | 'indigo'
+          | 'violet'
+          | 'pink'
+          | 'slate';
+        icon: string | null;
+      }>;
+    };
   };
   path: {
     tenantId: string;
@@ -6564,6 +6606,7 @@ export type GetLabelsData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
+    mode?: 'primary' | 'secondary' | 'epic';
     projectId?: string;
     workspaceId?: string;
   };
@@ -6754,6 +6797,7 @@ export type UpdateLabelData = {
       slug?: string;
       icon?: string | null;
       displayOrder?: number;
+      organizationTracked?: boolean;
     };
     stx: StxBase;
   };

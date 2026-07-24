@@ -257,4 +257,10 @@ export interface RequiredConfig<T extends ConfigStringArrays = ConfigStringArray
 
   // Organization defaults
   defaultOrganizationFlags: Record<string, boolean>;
+
+  /**
+   * Default per-organization setup, layered under each org's stored `setupConfig` jsonb.
+   * Forks define the concrete shape; the app type is derived from the config value.
+   */
+  defaultSetupConfig: Record<string, unknown>;
 }

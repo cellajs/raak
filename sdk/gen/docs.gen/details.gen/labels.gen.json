@@ -244,6 +244,11 @@
           "offset": { "type": "string", "required": false },
           "limit": { "type": "string", "required": false },
           "seqCursor": { "type": "string", "required": false },
+          "mode": {
+            "type": "string",
+            "required": false,
+            "enum": ["primary", "secondary", "epic"]
+          },
           "projectId": { "type": "string", "required": false, "maxLength": 50 },
           "workspaceId": { "type": "string", "required": false, "maxLength": 50 }
         }
@@ -1235,7 +1240,8 @@
                 "required": false,
                 "maxLength": 255
               },
-              "displayOrder": { "type": "number", "required": false }
+              "displayOrder": { "type": "number", "required": false },
+              "organizationTracked": { "type": "boolean", "required": false }
             }
           },
           "stx": {

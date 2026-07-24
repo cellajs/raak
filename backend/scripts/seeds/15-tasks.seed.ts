@@ -14,6 +14,7 @@ import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
 import { TaskStatus, TaskVariant } from '#/modules/task/task-properties';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
 import { nanoid } from 'shared/utils/nanoid';
+import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
 import { mockLabel } from '#/modules/label/label-mocks';
 import { mockChannelMembership } from '#/modules/memberships/memberships-mocks';
 import { mockProject } from '#/modules/project/project-mocks';
@@ -216,6 +217,18 @@ const tasksSeed = async () => {
 
       allOrgLabels.push(...projectLabels);
       labelsPerProjectMap.set(projectId, projectLabels);
+
+      // Tracked primary label set per project, provisioned from the org's setupConfig defaults.
+      // Kept out of labelsPerProjectMap: task label arrays reference secondary labels only.
+      allOrgLabels.push(
+        ...buildPrimaryLabelRows({
+          entries: appConfig.defaultSetupConfig.primaryLabels,
+          projectId,
+          organizationId: organization.id,
+          tenantId: organization.tenantId,
+          createdBy: getRandomMember(),
+        }).map((row) => ({ ...row, id: mockUuid() })),
+      );
     }
 
     // Phase D: Batch-insert all labels for this org

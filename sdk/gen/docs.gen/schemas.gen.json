@@ -1370,6 +1370,62 @@
           "required": true,
           "properties": {}
         },
+        "setupConfig": {
+          "type": "object",
+          "required": true,
+          "properties": {
+            "primaryLabels": {
+              "type": "array",
+              "required": true,
+              "minItems": 1,
+              "maxItems": 6,
+              "itemType": "object",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "name": {
+                    "type": "string",
+                    "required": true,
+                    "minLength": 2,
+                    "maxLength": 255
+                  },
+                  "color": {
+                    "type": "string",
+                    "required": true,
+                    "enum": [
+                      "red",
+                      "orange",
+                      "amber",
+                      "yellow",
+                      "green",
+                      "emerald",
+                      "teal",
+                      "sky",
+                      "blue",
+                      "indigo",
+                      "violet",
+                      "pink",
+                      "slate"
+                    ]
+                  },
+                  "icon": {
+                    "required": true,
+                    "anyOf": [
+                      { "type": "string", "required": false, "maxLength": 255 },
+                      { "type": "null", "required": false }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "included": {
           "type": "object",
           "required": true,
@@ -1548,6 +1604,28 @@
       "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
       "chatSupport": true,
       "organizationFlags": {},
+      "setupConfig": {
+        "primaryLabels": [
+          {
+            "slug": "feature",
+            "name": "Feature",
+            "color": "amber",
+            "icon": "star"
+          },
+          {
+            "slug": "chore",
+            "name": "Chore",
+            "color": "slate",
+            "icon": "bolt"
+          },
+          {
+            "slug": "bug",
+            "name": "Bug",
+            "color": "red",
+            "icon": "bug"
+          }
+        ]
+      },
       "publishedAt": "2024-12-25T15:04:42.969Z",
       "publicAt": null,
       "createdAt": "2024-12-25T15:04:42.969Z",

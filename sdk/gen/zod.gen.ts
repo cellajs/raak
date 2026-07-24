@@ -496,6 +496,41 @@ export const zOrganization = z.object({
   welcomeText: z.string().max(1000000).nullable(),
   chatSupport: z.boolean(),
   organizationFlags: z.record(z.string(), z.unknown()),
+  setupConfig: z.object({
+    primaryLabels: z
+      .array(
+        z.object({
+          slug: z
+            .string()
+            .min(1)
+            .max(255)
+            .regex(/^[a-z0-9][a-z0-9-]*$/),
+          name: z
+            .string()
+            .min(2)
+            .max(255)
+            .regex(/^[\p{L}\d\-., '&()]+$/u),
+          color: z.enum([
+            'red',
+            'orange',
+            'amber',
+            'yellow',
+            'green',
+            'emerald',
+            'teal',
+            'sky',
+            'blue',
+            'indigo',
+            'violet',
+            'pink',
+            'slate',
+          ]),
+          icon: z.string().max(255).nullable(),
+        }),
+      )
+      .min(1)
+      .max(6),
+  }),
   included: z.object({
     membership: zMembershipBase.optional(),
     counts: z
@@ -1688,6 +1723,44 @@ export const zUpdateOrganizationBody = z.object({
   welcomeText: z.string().max(1000000).nullish(),
   chatSupport: z.boolean().optional(),
   organizationFlags: z.record(z.string(), z.unknown()).optional(),
+  setupConfig: z
+    .object({
+      primaryLabels: z
+        .array(
+          z.object({
+            slug: z
+              .string()
+              .min(1)
+              .max(255)
+              .regex(/^[a-z0-9][a-z0-9-]*$/),
+            name: z
+              .string()
+              .min(2)
+              .max(255)
+              .regex(/^[\p{L}\d\-., '&()]+$/u),
+            color: z.enum([
+              'red',
+              'orange',
+              'amber',
+              'yellow',
+              'green',
+              'emerald',
+              'teal',
+              'sky',
+              'blue',
+              'indigo',
+              'violet',
+              'pink',
+              'slate',
+            ]),
+            icon: z.string().max(255).nullable(),
+          }),
+        )
+        .min(1)
+        .max(6)
+        .optional(),
+    })
+    .optional(),
 });
 
 export const zUpdateOrganizationPath = z.object({
@@ -2709,6 +2782,7 @@ export const zGetLabelsQuery = z.object({
     .string()
     .regex(/^\d+,\d+$/)
     .optional(),
+  mode: z.enum(['primary', 'secondary', 'epic']).optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
 });
@@ -2774,6 +2848,7 @@ export const zUpdateLabelBody = z.object({
     slug: z.string().max(255).optional(),
     icon: z.string().max(255).nullish(),
     displayOrder: z.number().optional(),
+    organizationTracked: z.boolean().optional(),
   }),
   stx: zStxBase,
 });

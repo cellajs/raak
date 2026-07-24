@@ -2345,6 +2345,64 @@
             "type": "object",
             "properties": {}
           },
+          "setupConfig": {
+            "type": "object",
+            "properties": {
+              "primaryLabels": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 255,
+                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    },
+                    "color": {
+                      "type": "string",
+                      "enum": [
+                        "red",
+                        "orange",
+                        "amber",
+                        "yellow",
+                        "green",
+                        "emerald",
+                        "teal",
+                        "sky",
+                        "blue",
+                        "indigo",
+                        "violet",
+                        "pink",
+                        "slate"
+                      ]
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 255
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["slug", "name", "color", "icon"]
+                },
+                "minItems": 1,
+                "maxItems": 6
+              }
+            },
+            "required": ["primaryLabels"]
+          },
           "included": {
             "type": "object",
             "properties": {
@@ -2477,6 +2535,7 @@
           "welcomeText",
           "chatSupport",
           "organizationFlags",
+          "setupConfig",
           "included"
         ],
         "description": "The main channel entity is an organization.",
@@ -2501,6 +2560,28 @@
           "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
           "chatSupport": true,
           "organizationFlags": {},
+          "setupConfig": {
+            "primaryLabels": [
+              {
+                "slug": "feature",
+                "name": "Feature",
+                "color": "amber",
+                "icon": "star"
+              },
+              {
+                "slug": "chore",
+                "name": "Chore",
+                "color": "slate",
+                "icon": "bolt"
+              },
+              {
+                "slug": "bug",
+                "name": "Bug",
+                "color": "red",
+                "icon": "bug"
+              }
+            ]
+          },
           "publishedAt": "2024-12-25T15:04:42.969Z",
           "publicAt": null,
           "createdAt": "2024-12-25T15:04:42.969Z",
@@ -8877,6 +8958,28 @@
                           "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
                           "chatSupport": true,
                           "organizationFlags": {},
+                          "setupConfig": {
+                            "primaryLabels": [
+                              {
+                                "slug": "feature",
+                                "name": "Feature",
+                                "color": "amber",
+                                "icon": "star"
+                              },
+                              {
+                                "slug": "chore",
+                                "name": "Chore",
+                                "color": "slate",
+                                "icon": "bolt"
+                              },
+                              {
+                                "slug": "bug",
+                                "name": "Bug",
+                                "color": "red",
+                                "icon": "bug"
+                              }
+                            ]
+                          },
                           "publishedAt": "2024-12-25T15:04:42.969Z",
                           "publicAt": null,
                           "createdAt": "2024-12-25T15:04:42.969Z",
@@ -8976,6 +9079,28 @@
                       "welcomeText": "Welcome to Conroy, Kerluke and Rowe!",
                       "chatSupport": false,
                       "organizationFlags": {},
+                      "setupConfig": {
+                        "primaryLabels": [
+                          {
+                            "slug": "feature",
+                            "name": "Feature",
+                            "color": "amber",
+                            "icon": "star"
+                          },
+                          {
+                            "slug": "chore",
+                            "name": "Chore",
+                            "color": "slate",
+                            "icon": "bolt"
+                          },
+                          {
+                            "slug": "bug",
+                            "name": "Bug",
+                            "color": "red",
+                            "icon": "bug"
+                          }
+                        ]
+                      },
                       "publishedAt": "2024-04-18T21:12:59.543Z",
                       "publicAt": null,
                       "createdAt": "2024-04-18T21:12:59.543Z",
@@ -9050,6 +9175,28 @@
                       "welcomeText": "Welcome to Lemke, Bode and Reichel-Klocko!",
                       "chatSupport": false,
                       "organizationFlags": {},
+                      "setupConfig": {
+                        "primaryLabels": [
+                          {
+                            "slug": "feature",
+                            "name": "Feature",
+                            "color": "amber",
+                            "icon": "star"
+                          },
+                          {
+                            "slug": "chore",
+                            "name": "Chore",
+                            "color": "slate",
+                            "icon": "bolt"
+                          },
+                          {
+                            "slug": "bug",
+                            "name": "Bug",
+                            "color": "red",
+                            "icon": "bug"
+                          }
+                        ]
+                      },
                       "publishedAt": "2024-02-24T16:36:46.247Z",
                       "publicAt": null,
                       "createdAt": "2024-02-24T16:36:46.247Z",
@@ -9378,6 +9525,28 @@
                       "welcomeText": "Welcome to Anderson - Ferry!",
                       "chatSupport": true,
                       "organizationFlags": {},
+                      "setupConfig": {
+                        "primaryLabels": [
+                          {
+                            "slug": "feature",
+                            "name": "Feature",
+                            "color": "amber",
+                            "icon": "star"
+                          },
+                          {
+                            "slug": "chore",
+                            "name": "Chore",
+                            "color": "slate",
+                            "icon": "bolt"
+                          },
+                          {
+                            "slug": "bug",
+                            "name": "Bug",
+                            "color": "red",
+                            "icon": "bug"
+                          }
+                        ]
+                      },
                       "publishedAt": "2024-11-21T01:19:53.533Z",
                       "publicAt": null,
                       "createdAt": "2024-11-21T01:19:53.533Z",
@@ -9452,6 +9621,28 @@
                       "welcomeText": "Welcome to Wiegand, Harber and Stark-Abshire!",
                       "chatSupport": false,
                       "organizationFlags": {},
+                      "setupConfig": {
+                        "primaryLabels": [
+                          {
+                            "slug": "feature",
+                            "name": "Feature",
+                            "color": "amber",
+                            "icon": "star"
+                          },
+                          {
+                            "slug": "chore",
+                            "name": "Chore",
+                            "color": "slate",
+                            "icon": "bolt"
+                          },
+                          {
+                            "slug": "bug",
+                            "name": "Bug",
+                            "color": "red",
+                            "icon": "bug"
+                          }
+                        ]
+                      },
                       "publishedAt": "2024-10-29T04:35:17.725Z",
                       "publicAt": null,
                       "createdAt": "2024-10-29T04:35:17.725Z",
@@ -9619,6 +9810,28 @@
                   "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
                   "chatSupport": true,
                   "organizationFlags": {},
+                  "setupConfig": {
+                    "primaryLabels": [
+                      {
+                        "slug": "feature",
+                        "name": "Feature",
+                        "color": "amber",
+                        "icon": "star"
+                      },
+                      {
+                        "slug": "chore",
+                        "name": "Chore",
+                        "color": "slate",
+                        "icon": "bolt"
+                      },
+                      {
+                        "slug": "bug",
+                        "name": "Bug",
+                        "color": "red",
+                        "icon": "bug"
+                      }
+                    ]
+                  },
                   "publishedAt": "2024-12-25T15:04:42.969Z",
                   "publicAt": null,
                   "createdAt": "2024-12-25T15:04:42.969Z",
@@ -9806,6 +10019,63 @@
                   "organizationFlags": {
                     "type": "object",
                     "properties": {}
+                  },
+                  "setupConfig": {
+                    "type": "object",
+                    "properties": {
+                      "primaryLabels": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "slug": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 255,
+                              "pattern": "^[a-z0-9][a-z0-9-]*$"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 2,
+                              "maxLength": 255,
+                              "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                            },
+                            "color": {
+                              "type": "string",
+                              "enum": [
+                                "red",
+                                "orange",
+                                "amber",
+                                "yellow",
+                                "green",
+                                "emerald",
+                                "teal",
+                                "sky",
+                                "blue",
+                                "indigo",
+                                "violet",
+                                "pink",
+                                "slate"
+                              ]
+                            },
+                            "icon": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 255
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": ["slug", "name", "color", "icon"]
+                        },
+                        "minItems": 1,
+                        "maxItems": 6
+                      }
+                    }
                   }
                 }
               }
@@ -9841,6 +10111,28 @@
                   "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
                   "chatSupport": true,
                   "organizationFlags": {},
+                  "setupConfig": {
+                    "primaryLabels": [
+                      {
+                        "slug": "feature",
+                        "name": "Feature",
+                        "color": "amber",
+                        "icon": "star"
+                      },
+                      {
+                        "slug": "chore",
+                        "name": "Chore",
+                        "color": "slate",
+                        "icon": "bolt"
+                      },
+                      {
+                        "slug": "bug",
+                        "name": "Bug",
+                        "color": "red",
+                        "icon": "bug"
+                      }
+                    ]
+                  },
                   "publishedAt": "2024-12-25T15:04:42.969Z",
                   "publicAt": null,
                   "createdAt": "2024-12-25T15:04:42.969Z",
@@ -16379,6 +16671,15 @@
           {
             "schema": {
               "type": "string",
+              "enum": ["primary", "secondary", "epic"]
+            },
+            "required": false,
+            "name": "mode",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "maxLength": 50
             },
             "required": false,
@@ -16791,6 +17092,9 @@
                       },
                       "displayOrder": {
                         "type": "number"
+                      },
+                      "organizationTracked": {
+                        "type": "boolean"
                       }
                     }
                   },

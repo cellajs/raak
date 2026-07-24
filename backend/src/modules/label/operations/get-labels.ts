@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { count, ilike, isNull, type SQL, sql } from 'drizzle-orm';
+import { count, eq, ilike, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -23,7 +23,7 @@ export async function getLabelsOp(
   input: GetLabelsInput,
 ): Promise<OperationResult<{ items: (LabelModel & { usedCount: number })[]; total: number }>> {
   const { projectId, workspaceId, ...queryInfo } = input;
-  const { q, sort, order, offset, limit, seqCursor } = queryInfo;
+  const { q, sort, order, offset, limit, seqCursor, mode } = queryInfo;
   const organizationId = ctx.var.organization.id;
 
   // Resolve the explicit channel narrowing (if any) from the request.
@@ -54,9 +54,9 @@ export async function getLabelsOp(
   const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
   // Delta reads discard `total`; org-wide unfiltered reads use the O(1) channel counter; everything
-  // narrower (search / project-scoped / row-scoped 'own') falls back to the exact COUNT(*).
+  // narrower (search / mode / project-scoped / row-scoped 'own') falls back to the exact COUNT(*).
   const isDelta = !!seqCursor;
-  const counterEligible = scopeWhere.kind === 'all' && !q?.trim() && !seqCursor;
+  const counterEligible = scopeWhere.kind === 'all' && !q?.trim() && !seqCursor && !mode;
 
   const result = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;
@@ -74,6 +74,7 @@ export async function getLabelsOp(
 
     // Add more filters
     if (q) labelsFilters.push(ilike(labelsTable.name, `%${q}%`));
+    if (mode) labelsFilters.push(eq(labelsTable.mode, mode));
 
     const labelsSubquery = buildLabelsListQuery(readCtx, { filters: labelsFilters }).as('labels');
 

@@ -34,6 +34,18 @@ export type LabelColorToken = (typeof labelColorTokens)[number];
 export const primaryLabelLimits = { min: 1, max: 6 } as const;
 
 /**
+ * One entry of an organization's primary label set (setupConfig.primaryLabels). Array order
+ * is display and hotkey order; the first entry is the default for new tasks. Slug is the
+ * tracking identity that links provisioned per-project rows back to their setupConfig entry.
+ */
+export interface PrimaryLabelDefinition {
+  slug: string;
+  name: string;
+  color: LabelColorToken;
+  icon: string | null;
+}
+
+/**
  * Normalize a label name into its slug identity: lowercase, spaces to dashes, stripped of
  * characters outside [a-z0-9-]. Slugs key organization tracking and cross-project matching;
  * name stays free-form for display.

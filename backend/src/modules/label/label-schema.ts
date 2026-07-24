@@ -76,6 +76,8 @@ export const labelContract = evolutionContract.product('label', {
     slug: z.string().max(maxLength.field),
     icon: iconNameSchema.nullable(),
     displayOrder: z.number(),
+    // Setting true relinks a primary label to its setupConfig entry (server re-syncs fields)
+    organizationTracked: z.boolean(),
   },
 });
 
@@ -86,6 +88,7 @@ export const labelListQuerySchema = paginationQuerySchema
   .extend({
     sort: z.enum(['name', 'usedCount']).default('name').optional(),
     order: z.enum(['asc', 'desc']).default('asc').optional(),
+    mode: z.enum(labelModes).optional(),
     projectId: z.string().max(maxLength.id).optional(),
     workspaceId: z.string().max(maxLength.id).optional(),
   })

@@ -8,6 +8,7 @@ import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { findLabelsByOrg, findLabelsByStxMutationId, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
+import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
@@ -41,6 +42,14 @@ export async function createLabelsOp(
 
   if (labelRestrictions !== 0 && currentCount + input.length > labelRestrictions) {
     return { success: false, error: 'restrict_by_org', status: 429 };
+  }
+
+  // Creating primary/epic labels requires project-admin authority (project update permission)
+  const managedProjectIds = [
+    ...new Set(input.filter((item) => item.mode !== 'secondary').map((item) => item.projectId)),
+  ];
+  for (const managedProjectId of managedProjectIds) {
+    await getValidChannel(ctx, managedProjectId, 'project', 'update');
   }
 
   // Fetch existing labels in org for duplicate check and color matching

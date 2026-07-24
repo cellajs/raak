@@ -18,12 +18,14 @@ import { DeleteOrganizations } from '~/modules/organization/delete-organizations
 import type { EnrichedOrganization } from '~/modules/organization/types';
 import { UpdateOrganizationDetailsForm } from '~/modules/organization/update-organization-details-form';
 import { UpdateOrganizationForm } from '~/modules/organization/update-organization-form';
+import { UpdatePrimaryLabelsForm } from '~/modules/organization/update-primary-labels-form';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 
 const tabs = [
   { id: 'general', label: 'c:general' },
   { id: 'details', label: 'c:details' },
+  { id: 'task-types', label: 'c:primary_labels' },
   // { id: 'subscription', label: 'c:subscription' },
   { id: 'delete-organization', label: 'c:delete_resource', resource: 'c:organization' },
 ];
@@ -108,6 +110,17 @@ function OrganizationSettings({ organization }: { organization: EnrichedOrganiza
             </CardHeader>
             <CardContent>
               <UpdateOrganizationDetailsForm organization={organization} callback={callback} />
+            </CardContent>
+          </Card>
+        </AsideAnchor>
+
+        <AsideAnchor id="task-types" extraOffset>
+          <Card id="update-primary-labels">
+            <CardHeader>
+              <CardTitle>{t('c:primary_labels')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UpdatePrimaryLabelsForm organization={organization} />
             </CardContent>
           </Card>
         </AsideAnchor>
