@@ -6,14 +6,15 @@ import { focusTask, focusWhenMounted } from '~/modules/task/helpers/focus-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { TaskStatus, TaskVariant } from '~/modules/task/task-properties';
+import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { getSchemaDefaults } from '~/query/basic/create-optimistic';
 
 export const createTaskFormSchema = z.object({
   ...zCreateTasksBody.element.omit({ stx: true }).shape,
   status: z.enum(TaskStatus),
-  variant: z.enum(TaskVariant),
+  // Empty until the form resolves the project's default primary label (first by displayOrder)
+  primaryLabelId: z.string(),
   assignedTo: z.array(zUserMinimalBase),
   labels: z.array(zLabel),
 });
@@ -24,7 +25,6 @@ export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;
 export const newTaskFormDefaults: NewTaskFormValues = {
   ...getSchemaDefaults(createTaskFormSchema),
   status: TaskStatus.Unstarted,
-  variant: TaskVariant.Chore,
 };
 
 export const newTaskFormIsDirty = ({ assignedTo, labels, description }: NewTaskFormValues) =>
@@ -53,7 +53,6 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
     id,
     status: draftStatus,
     displayOrder: getDraftDisplayOrder(draftStatus, project.id),
-    variant: TaskVariant.Feature,
     projectId: project.id,
     organizationId: project.organizationId,
     _draft: true,

@@ -493,7 +493,7 @@ export type Task = {
   expandable: boolean;
   summary: string;
   summaryLength: number;
-  points: number | null;
+  primaryLabelId: string;
   displayOrder: number;
   status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
   statusChangedAt: string;
@@ -510,7 +510,14 @@ export type Task = {
     icon: string | null;
     projectId: string;
   }>;
-  variant: 1 | 2 | 3;
+  primaryLabel: {
+    id: string;
+    name: string;
+    color: string | null;
+    mode: 'primary' | 'secondary' | 'epic';
+    icon: string | null;
+    projectId: string;
+  } | null;
   assignedTo: Array<UserMinimalBase>;
   createdBy: {
     id: string;
@@ -3817,7 +3824,7 @@ export type GetPublicTasksData = {
   path?: never;
   query: {
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'variant' | 'updatedAt' | 'createdAt';
+    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: string;
     limit?: string;
@@ -6266,7 +6273,7 @@ export type GetTasksData = {
   };
   query?: {
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'variant' | 'updatedAt' | 'createdAt';
+    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: string;
     limit?: string;
@@ -6325,10 +6332,9 @@ export type CreateTasksData = {
     name?: string;
     description: string | null;
     projectId: string;
-    points?: number | null;
     id: string;
     status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
-    variant: 1 | 2 | 3;
+    primaryLabelId?: string;
     displayOrder?: number;
     labels?: Array<string>;
     assignedTo?: Array<string>;
@@ -6463,8 +6469,7 @@ export type UpdateTaskData = {
       name?: string;
       description?: string | null;
       status?: number;
-      variant?: number;
-      points?: number | null;
+      primaryLabelId?: string;
       displayOrder?: number;
       labels?: {
         add?: Array<string>;

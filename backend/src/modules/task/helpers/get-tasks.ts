@@ -57,7 +57,6 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
   const orderColumn = seqCursor
     ? asc(tasksTable.seq)
     : getOrderColumn(sort, tasksTable.status, order, {
-        variant: tasksTable.variant,
         status: tasksTable.status,
         projectId: tasksTable.projectId,
         createdAt: tasksTable.createdAt,

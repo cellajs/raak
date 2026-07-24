@@ -1,9 +1,11 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
+import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { getOrgEntityCount } from '#/modules/entities/entities-queries';
+import { findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { findTasksByStxMutationId, insertTasks } from '#/modules/task/task-queries';
@@ -48,15 +50,36 @@ export async function createTasksOp(
     return { success: false, error: 'restrict_by_org', status: 429 };
   }
 
+  // Resolve primary labels per project: validate provided ids, default to first by displayOrder
+  const projectIds = [...new Set(input.map((item) => item.projectId))];
+  const primaryLabelRows = await tenantRead(ctx, (readCtx) => findLivePrimaryLabels(readCtx, { projectIds }));
+  const primariesByProject = new Map<string, typeof primaryLabelRows>();
+  for (const row of primaryLabelRows) {
+    primariesByProject.set(row.projectId, [...(primariesByProject.get(row.projectId) ?? []), row]);
+  }
+
   // Prepare tasks for insert
   const tasksToInsert = await Promise.all(
     input.map(async ({ stx, id, ...taskInfo }) => {
       const descriptionText = String(taskInfo.description ?? '');
       const derived = await deriveDescriptionProps(descriptionText);
 
+      const projectPrimaries = primariesByProject.get(taskInfo.projectId) ?? [];
+      // Unknown/missing ids fall back to the project default (graceful for offline replays)
+      const primaryLabelId = projectPrimaries.some((l) => l.id === taskInfo.primaryLabelId)
+        ? (taskInfo.primaryLabelId as string)
+        : projectPrimaries[0]?.id;
+      if (!primaryLabelId) {
+        throw new AppError(400, 'invalid_request', 'warn', {
+          entityType: 'task',
+          meta: { reason: 'Project has no primary labels' },
+        });
+      }
+
       const task = {
         ...taskInfo,
         id,
+        primaryLabelId,
         entityType: 'task' as const,
         description: descriptionText,
         ...derived,

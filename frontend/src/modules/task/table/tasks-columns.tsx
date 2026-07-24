@@ -11,15 +11,10 @@ import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { TriggerRef } from '~/modules/common/dialoger/use-dialoger';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
-import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
-import {
-  pointsOptionsByValue,
-  statusOptionsByValue,
-  TaskVariant,
-  variantOptions,
-} from '~/modules/task/task-properties';
+import { statusOptionsByValue } from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -131,17 +126,17 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         minBreakpoint: 'sm',
       },
       {
-        key: 'variant',
+        key: 'primaryLabel',
         name: t('c:type'),
-        sortable: true,
         minBreakpoint: 'sm',
         renderCell: ({ row }) => {
-          const type = variantOptions.find((v) => v.value === row.variant);
-          if (!type) return null;
+          if (!row.primaryLabel) return null;
           return (
             <>
-              <span className="mr-2 inline-flex shrink-0">{type.icon()}</span>
-              <span className="in-data-[is-compact=true]:hidden truncate">{t(`c:${type.type}`)}</span>
+              <span className="mr-2 inline-flex shrink-0">
+                <PrimaryLabelIcon label={row.primaryLabel} />
+              </span>
+              <span className="in-data-[is-compact=true]:hidden truncate">{row.primaryLabel.name}</span>
             </>
           );
         },
@@ -191,30 +186,6 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
           return 3;
         },
         renderCell: (props) => <SummaryCell {...props} navigate={navigate} setTriggerRef={setTriggerRef} />,
-      },
-      {
-        key: 'points',
-        name: t('c:points'),
-        minBreakpoint: 'sm',
-        width: 100,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          if (row.variant === TaskVariant.Bug) return null;
-
-          const points = row.points === null ? null : pointsOptionsByValue[row.points];
-
-          return (
-            <>
-              {points === null ? (
-                <NotSelectedIcon className="mr-2 size-4 fill-current opacity-80" aria-hidden="true" />
-              ) : (
-                <points.icon className="mr-2 size-4 shrink-0 fill-current" aria-hidden="true" />
-              )}
-              {points && <span className="in-data-[is-compact=true]:hidden">{points.label}</span>}
-            </>
-          );
-        },
-        modes: { compact: { width: 50 } },
       },
       {
         key: 'assignedTo',

@@ -14,7 +14,7 @@ import { PopConfirm } from '~/modules/common/popconfirm';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { TaskVariantButton } from '~/modules/task/card/task-variant-button';
+import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { DeleteTask } from '~/modules/task/delete-task';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import type { Task } from '~/modules/task/types';
@@ -103,7 +103,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
 
   return (
     <div className="flex w-full flex-row justify-between py-1">
-      <TaskVariantButton task={task} isSheet={isSheet} />
+      <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       <div className="ml-1 flex w-full flex-row items-center gap-1">
         {task.createdBy && (
           <>

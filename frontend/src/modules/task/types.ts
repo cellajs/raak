@@ -4,7 +4,7 @@ import type { z } from 'zod';
 import type { EnrichedProject } from '~/modules/project/types';
 import type { SectionsValue } from '~/modules/task/board/task-board-store';
 import type { tasksTableSearchSchema } from '~/modules/task/search-params-schemas';
-import type { statusOptions, variantOptions } from '~/modules/task/task-properties';
+import type { statusOptions } from '~/modules/task/task-properties';
 import type { DraggableItemData } from '~/utils/get-draggable-item-data';
 
 export type Task = GetTaskResponse & { _draft?: boolean };
@@ -49,13 +49,7 @@ export interface TaskProps {
   isFocused: boolean;
   isSheet?: boolean;
 }
-/**
- * Selectable points values. `Task['points']` stays `number | null` (the backend contract is a
- * full int), so this is the set the UI offers, not a guarantee about stored values.
- */
-export type TaskPointsType = 0 | 1 | 2 | 3 | null;
 export type TaskStatusType = (typeof statusOptions)[number]['value'];
-export type TaskVariantType = (typeof variantOptions)[number]['value'];
 
 export type DropTarget<T> = Omit<DropTargetRecord, 'data'> & {
   data: T;

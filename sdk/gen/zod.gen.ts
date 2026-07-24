@@ -424,7 +424,7 @@ export const zTask = z.object({
   expandable: z.boolean(),
   summary: z.string().max(1000000),
   summaryLength: z.int().gte(-2147483648).lte(2147483647),
-  points: z.int().gte(-2147483648).lte(2147483647).nullable(),
+  primaryLabelId: z.uuid(),
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
   status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
   statusChangedAt: z.string(),
@@ -443,7 +443,16 @@ export const zTask = z.object({
       projectId: z.string(),
     }),
   ),
-  variant: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  primaryLabel: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      color: z.string().nullable(),
+      mode: z.enum(['primary', 'secondary', 'epic']),
+      icon: z.string().nullable(),
+      projectId: z.string(),
+    })
+    .nullable(),
   assignedTo: z.array(zUserMinimalBase),
   createdBy: z
     .object({
@@ -1492,10 +1501,7 @@ export const zGetPublicTaskResponse = zTask;
 
 export const zGetPublicTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z
-    .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
-    .optional()
-    .default('createdAt'),
+  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
@@ -2622,10 +2628,7 @@ export const zGetTasksPath = z.object({
 
 export const zGetTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z
-    .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
-    .optional()
-    .default('createdAt'),
+  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
@@ -2653,7 +2656,6 @@ export const zCreateTasksBody = z
       name: z.string().max(255).optional(),
       description: z.string().max(1000000).nullable(),
       projectId: z.uuid(),
-      points: z.int().gte(-2147483648).lte(2147483647).nullish(),
       id: z.uuid(),
       status: z.union([
         z.literal(6),
@@ -2664,7 +2666,7 @@ export const zCreateTasksBody = z
         z.literal(1),
         z.literal(0),
       ]),
-      variant: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+      primaryLabelId: z.uuid().optional(),
       displayOrder: z.number().optional(),
       labels: z.array(z.string()).optional(),
       assignedTo: z.array(z.string()).optional(),
@@ -2708,8 +2710,7 @@ export const zUpdateTaskBody = z.object({
     name: z.string().max(255).optional(),
     description: z.string().max(1000000).nullish(),
     status: z.int().optional(),
-    variant: z.int().optional(),
-    points: z.int().nullish(),
+    primaryLabelId: z.uuid().optional(),
     displayOrder: z.number().optional(),
     labels: z
       .object({

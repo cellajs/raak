@@ -1,9 +1,10 @@
-import { and, count, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { PrimaryLabelDefinition } from 'shared';
 import { defaultOrder, orderGap } from 'shared/utils/display-order';
 import type { AuthContext, DbContext } from '#/core/context';
 import { createServerStx } from '#/core/stx';
-import { type InsertLabelModel, labelsTable } from '#/modules/label/label-db';
+import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
+import { tasksTable } from '#/modules/task/task-db';
 import { getValidChannel } from '#/permissions';
 import { getIsoDate } from '#/utils/iso-date';
 
@@ -53,6 +54,62 @@ interface PropagateSetupConfigLabelsOpts {
 }
 
 /**
+ * Live primary labels for a set of projects, ordered by displayOrder (default first).
+ * Must run inside a tenant context (labels are FORCE-RLS).
+ */
+export const findLivePrimaryLabels = async (
+  ctx: DbContext,
+  { projectIds }: { projectIds: string[] },
+): Promise<LabelModel[]> => {
+  if (projectIds.length === 0) return [];
+  const { db } = ctx.var;
+  return db
+    .select()
+    .from(labelsTable)
+    .where(
+      and(inArray(labelsTable.projectId, projectIds), eq(labelsTable.mode, 'primary'), isNull(labelsTable.deletedAt)),
+    )
+    .orderBy(asc(labelsTable.displayOrder));
+};
+
+/** Slug of a label row by id (any mode or deletion state); null when the row is unknown. */
+export const findLabelSlugById = async (ctx: DbContext, id: string): Promise<string | null> => {
+  const { db } = ctx.var;
+  const [row] = await db.select({ slug: labelsTable.slug }).from(labelsTable).where(eq(labelsTable.id, id)).limit(1);
+  return row?.slug ?? null;
+};
+
+/**
+ * Reassign tasks referencing soft-deleted primary labels to their project's default
+ * (first remaining live primary by displayOrder). Runs synchronously in the delete
+ * transaction because tasks.primaryLabelId is NOT NULL; server-origin stx write.
+ */
+export const reassignTasksFromDeletedPrimaries = async (
+  ctx: DbContext,
+  { deletedPrimaryIds, updatedBy }: { deletedPrimaryIds: string[]; updatedBy: string },
+): Promise<void> => {
+  if (deletedPrimaryIds.length === 0) return;
+  const { db } = ctx.var;
+  await db
+    .update(tasksTable)
+    .set({
+      primaryLabelId: sql`(
+        SELECT l.id FROM labels l
+        WHERE l.project_id = ${tasksTable.projectId}
+          AND l.mode = 'primary'
+          AND l.deleted_at IS NULL
+          AND NOT (l.id = ANY(${deletedPrimaryIds}::uuid[]))
+        ORDER BY l.display_order ASC NULLS LAST
+        LIMIT 1
+      )`,
+      updatedAt: getIsoDate(),
+      updatedBy,
+      stx: sql`stx - 'changedFields'`,
+    })
+    .where(inArray(tasksTable.primaryLabelId, deletedPrimaryIds));
+};
+
+/**
  * Filter a permitted delete set by the primary-label rules: deleting a primary label
  * requires project-admin authority, and a project must always keep at least one live
  * primary label. Rejected ids are added to `rejected`; the returned array is the ids
@@ -62,8 +119,8 @@ export const filterPrimaryLabelDeletes = async (
   ctx: AuthContext,
   ids: string[],
   rejected: Set<string>,
-): Promise<string[]> => {
-  if (ids.length === 0) return ids;
+): Promise<{ allowedIds: string[]; deletedPrimaryIds: string[] }> => {
+  if (ids.length === 0) return { allowedIds: ids, deletedPrimaryIds: [] };
   const { db } = ctx.var;
 
   const rows = await db
@@ -95,7 +152,10 @@ export const filterPrimaryLabelDeletes = async (
     }
   }
 
-  return ids.filter((id) => !rejected.has(id));
+  const allowedIds = ids.filter((id) => !rejected.has(id));
+  const allowedSet = new Set(allowedIds);
+  const deletedPrimaryIds = [...primariesByProject.values()].flat().filter((id) => allowedSet.has(id));
+  return { allowedIds, deletedPrimaryIds };
 };
 
 /**

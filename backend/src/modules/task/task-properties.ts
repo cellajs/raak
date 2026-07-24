@@ -7,9 +7,3 @@ export enum TaskStatus {
   Reviewed = 1,
   Accepted = 0,
 }
-
-export enum TaskVariant {
-  Feature = 1,
-  Chore = 2,
-  Bug = 3,
-}

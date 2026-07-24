@@ -2032,10 +2032,9 @@
             "minimum": -2147483648,
             "maximum": 2147483647
           },
-          "points": {
-            "type": ["integer", "null"],
-            "minimum": -2147483648,
-            "maximum": 2147483647
+          "primaryLabelId": {
+            "type": "string",
+            "format": "uuid"
           },
           "displayOrder": {
             "type": "number",
@@ -2100,9 +2099,37 @@
               "required": ["id", "name", "color", "mode", "icon", "projectId"]
             }
           },
-          "variant": {
-            "type": "integer",
-            "enum": [1, 2, 3]
+          "primaryLabel": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": ["string", "null"]
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": ["primary", "secondary", "epic"]
+                  },
+                  "icon": {
+                    "type": ["string", "null"]
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["id", "name", "color", "mode", "icon", "projectId"]
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "assignedTo": {
             "type": "array",
@@ -2174,7 +2201,7 @@
           "expandable",
           "summary",
           "summaryLength",
-          "points",
+          "primaryLabelId",
           "displayOrder",
           "status",
           "statusChangedAt",
@@ -2184,7 +2211,7 @@
           "organizationId",
           "projectId",
           "labels",
-          "variant",
+          "primaryLabel",
           "assignedTo",
           "createdBy",
           "updatedBy",
@@ -2200,18 +2227,17 @@
           "expandable": true,
           "summary": "Vinum vereor sollicito abbas demulceo.",
           "summaryLength": 313,
-          "variant": 3,
-          "points": 12,
-          "displayOrder": 170.96,
-          "status": 0,
+          "primaryLabelId": "e1e221dd-882e-4add-a4ec-8a93379050b0",
+          "displayOrder": 76.02,
+          "status": 1,
           "statusChangedAt": "2024-02-04T01:33:42.885Z",
-          "checkboxCount": 0,
-          "checkedCount": 5,
-          "attachmentCount": 4,
-          "labels": ["82eadd4e-c8a9-4337-9905-0b0812db19a5", "31473678-8585-4846-8a17-c3d599e7096c"],
-          "assignedTo": ["27dd6201-a0d8-468a-a323-19498e4bff65", "18c606d3-6797-4652-9e1b-a1149334ba09"],
-          "publicAt": null,
-          "tenantId": "nase66",
+          "checkboxCount": 9,
+          "checkedCount": 4,
+          "attachmentCount": 0,
+          "labels": ["a5431473-6788-4585-a846-a17c3d599e70", "6c0d27dd-6201-4a0d-b868-a32319498e4b"],
+          "assignedTo": ["65918c60-6d36-4797-a652-e1ba1149334b", "0957a4c6-237f-43b0-98a1-40aebca91ac4"],
+          "publicAt": "2024-11-08T16:57:31.379Z",
+          "tenantId": "na87ow",
           "projectId": "46c222d9-8561-4f60-a76a-97e8fd23e552",
           "createdAt": "2024-02-04T01:33:42.885Z",
           "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
@@ -2219,10 +2245,10 @@
           "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
           "deletedAt": null,
           "deletedBy": null,
-          "seq": 236,
+          "seq": 314,
           "stx": {
-            "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
-            "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
+            "mutationId": "d8eb4aa0-3ef4-4c0d-a11f-393576dce1bd",
+            "sourceId": "b59d920f-efcf-4baf-8655-8e12ed45d364",
             "fieldTimestamps": {}
           }
         },
@@ -8228,18 +8254,17 @@
                   "expandable": true,
                   "summary": "Vinum vereor sollicito abbas demulceo.",
                   "summaryLength": 313,
-                  "variant": 3,
-                  "points": 12,
-                  "displayOrder": 170.96,
-                  "status": 0,
+                  "primaryLabelId": "e1e221dd-882e-4add-a4ec-8a93379050b0",
+                  "displayOrder": 76.02,
+                  "status": 1,
                   "statusChangedAt": "2024-02-04T01:33:42.885Z",
-                  "checkboxCount": 0,
-                  "checkedCount": 5,
-                  "attachmentCount": 4,
-                  "labels": ["82eadd4e-c8a9-4337-9905-0b0812db19a5", "31473678-8585-4846-8a17-c3d599e7096c"],
-                  "assignedTo": ["27dd6201-a0d8-468a-a323-19498e4bff65", "18c606d3-6797-4652-9e1b-a1149334ba09"],
-                  "publicAt": null,
-                  "tenantId": "nase66",
+                  "checkboxCount": 9,
+                  "checkedCount": 4,
+                  "attachmentCount": 0,
+                  "labels": ["a5431473-6788-4585-a846-a17c3d599e70", "6c0d27dd-6201-4a0d-b868-a32319498e4b"],
+                  "assignedTo": ["65918c60-6d36-4797-a652-e1ba1149334b", "0957a4c6-237f-43b0-98a1-40aebca91ac4"],
+                  "publicAt": "2024-11-08T16:57:31.379Z",
+                  "tenantId": "na87ow",
                   "projectId": "46c222d9-8561-4f60-a76a-97e8fd23e552",
                   "createdAt": "2024-02-04T01:33:42.885Z",
                   "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
@@ -8247,10 +8272,10 @@
                   "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 236,
+                  "seq": 314,
                   "stx": {
-                    "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
-                    "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
+                    "mutationId": "d8eb4aa0-3ef4-4c0d-a11f-393576dce1bd",
+                    "sourceId": "b59d920f-efcf-4baf-8655-8e12ed45d364",
                     "fieldTimestamps": {}
                   }
                 }
@@ -8301,7 +8326,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["projectId", "status", "createdBy", "variant", "updatedAt", "createdAt"],
+              "enum": ["projectId", "status", "createdBy", "updatedAt", "createdAt"],
               "default": "createdAt"
             },
             "required": false,
@@ -8403,18 +8428,21 @@
                       "expandable": false,
                       "summary": "Bis adulatio valde deleniti consectetur soluta careo textor tempus cruciamentum utrum decor deduco sono carpo.",
                       "summaryLength": 37,
-                      "variant": 0,
-                      "points": 1,
-                      "displayOrder": 626.56,
+                      "primaryLabelId": "310a2c62-023c-45c1-8f02-022b375859b5",
+                      "displayOrder": 651.07,
                       "status": 0,
                       "statusChangedAt": "2024-04-22T02:37:53.965Z",
                       "checkboxCount": 8,
-                      "checkedCount": 2,
-                      "attachmentCount": 0,
-                      "labels": [],
-                      "assignedTo": [],
-                      "publicAt": "2024-10-19T01:33:55.316Z",
-                      "tenantId": "cr3z05",
+                      "checkedCount": 5,
+                      "attachmentCount": 5,
+                      "labels": [
+                        "c7d983b8-08f2-4878-96ac-a2f7c845b65f",
+                        "a889487d-facb-448d-847e-03630ad45bb8",
+                        "8d5f36ef-1cee-41ae-893f-2d3461a1445d"
+                      ],
+                      "assignedTo": ["4e25ff02-941e-4b64-a18b-3b08d93e4bc7", "afdcc382-de9f-40d2-83b1-1064da3505aa"],
+                      "publicAt": null,
+                      "tenantId": "mmjb28",
                       "projectId": "61dd2177-453d-4850-b5cb-9d8405cf3826",
                       "createdAt": "2024-04-22T02:37:53.965Z",
                       "createdBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
@@ -8422,10 +8450,10 @@
                       "updatedBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 23,
+                      "seq": 497,
                       "stx": {
-                        "mutationId": "22b37585-9b53-4a2b-aedf-c7d983b808f2",
-                        "sourceId": "786aca2f-7c84-45b6-95f5-a889487dfacb",
+                        "mutationId": "5dcbb7c3-4fef-4862-b148-8ba7c2931d1c",
+                        "sourceId": "b3e1ffd3-330b-448a-8fd5-4ff0204f5b34",
                         "fieldTimestamps": {}
                       }
                     },
@@ -8438,18 +8466,17 @@
                       "expandable": true,
                       "summary": "Vos nemo solitudo demum demoror deleniti sollers adamo praesentium pecus.",
                       "summaryLength": 234,
-                      "variant": 0,
-                      "points": 2,
-                      "displayOrder": 901.05,
-                      "status": 1,
+                      "primaryLabelId": "362e5852-7c3d-4b31-b53e-b736391bb402",
+                      "displayOrder": 814.65,
+                      "status": 4,
                       "statusChangedAt": "2024-12-08T07:02:10.789Z",
-                      "checkboxCount": 5,
-                      "checkedCount": 2,
-                      "attachmentCount": 0,
-                      "labels": ["c3db3153-eb73-4639-a1bb-402cdc692975"],
-                      "assignedTo": ["58762ead-0e49-4bb9-afa1-38ca8b61706f"],
+                      "checkboxCount": 4,
+                      "checkedCount": 3,
+                      "attachmentCount": 1,
+                      "labels": ["75985876-2ead-40e4-99bb-9fa138ca8b61", "06f8553f-2677-4316-b55a-cfe941862644"],
+                      "assignedTo": ["e5ca0100-4bf6-4f73-800b-3c569921660e"],
                       "publicAt": null,
-                      "tenantId": "b8z4fg",
+                      "tenantId": "nz7w9n",
                       "projectId": "524b9d48-480a-498d-8e57-e5a9d564e857",
                       "createdAt": "2024-12-08T07:02:10.789Z",
                       "createdBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
@@ -8457,10 +8484,10 @@
                       "updatedBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 233,
+                      "seq": 323,
                       "stx": {
-                        "mutationId": "31655acf-e941-4862-b644-c6e5ca01004b",
-                        "sourceId": "6f7300b3-c569-4921-9660-e16af3e4aa72",
+                        "mutationId": "725ebb2e-f208-4aec-80e0-83050ad10330",
+                        "sourceId": "0b1d930a-4764-4f5f-9328-6a0b1bca2c40",
                         "fieldTimestamps": {}
                       }
                     }
@@ -15296,11 +15323,6 @@
                       "type": "string",
                       "format": "uuid"
                     },
-                    "points": {
-                      "type": ["integer", "null"],
-                      "minimum": -2147483648,
-                      "maximum": 2147483647
-                    },
                     "id": {
                       "type": "string",
                       "format": "uuid"
@@ -15309,9 +15331,9 @@
                       "type": "integer",
                       "enum": [6, 5, 4, 3, 2, 1, 0]
                     },
-                    "variant": {
-                      "type": "integer",
-                      "enum": [1, 2, 3]
+                    "primaryLabelId": {
+                      "type": "string",
+                      "format": "uuid"
                     },
                     "displayOrder": {
                       "type": "number"
@@ -15332,7 +15354,7 @@
                       "$ref": "#/components/schemas/StxBase"
                     }
                   },
-                  "required": ["description", "projectId", "id", "status", "variant", "stx"]
+                  "required": ["description", "projectId", "id", "status", "stx"]
                 },
                 "minItems": 1,
                 "maxItems": 50
@@ -15385,18 +15407,21 @@
                       "expandable": false,
                       "summary": "Ipsa alienus admoneo creo asporto amita sol certus cogito supplanto.",
                       "summaryLength": 459,
-                      "variant": 1,
-                      "points": 4,
-                      "displayOrder": 155.93,
-                      "status": 1,
+                      "primaryLabelId": "44424ddc-25f8-42c1-b38c-a887751adbdb",
+                      "displayOrder": 16.24,
+                      "status": 3,
                       "statusChangedAt": "2024-04-18T21:12:59.543Z",
-                      "checkboxCount": 9,
-                      "checkedCount": 5,
-                      "attachmentCount": 4,
-                      "labels": [],
-                      "assignedTo": ["f82c138c-a887-4751-aadb-dbf08b9af3e6"],
-                      "publicAt": "2024-12-06T04:15:55.110Z",
-                      "tenantId": "m36um7",
+                      "checkboxCount": 7,
+                      "checkedCount": 3,
+                      "attachmentCount": 3,
+                      "labels": [
+                        "3e691ea1-2d93-4d0a-8059-eb59fada0542",
+                        "137456cc-6ee2-456c-93c2-d5a11957ca42",
+                        "bc1ddcec-d065-4676-a6c7-644024d1a2df"
+                      ],
+                      "assignedTo": ["c75bedf7-a5e9-4543-aa04-d8b64877e7af"],
+                      "publicAt": "2024-09-01T00:22:41.448Z",
+                      "tenantId": "cb37kj",
                       "projectId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
                       "createdAt": "2024-04-18T21:12:59.543Z",
                       "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
@@ -15404,10 +15429,10 @@
                       "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 432,
+                      "seq": 392,
                       "stx": {
-                        "mutationId": "0a059eb5-9fad-4a05-9421-137456cc6ee2",
-                        "sourceId": "6c3c2d5a-1195-47ca-9425-bc1ddcecd065",
+                        "mutationId": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                        "sourceId": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
                         "fieldTimestamps": {}
                       }
                     },
@@ -15420,18 +15445,21 @@
                       "expandable": false,
                       "summary": "Coniuratio virga advoco adicio tamen acidus animus spes.",
                       "summaryLength": 367,
-                      "variant": 0,
-                      "points": 8,
-                      "displayOrder": 156.42,
-                      "status": 4,
+                      "primaryLabelId": "3092c5fd-1fb3-41ba-a52c-2db09b47a24f",
+                      "displayOrder": 277.54,
+                      "status": 0,
                       "statusChangedAt": "2024-02-24T16:36:46.247Z",
-                      "checkboxCount": 3,
-                      "checkedCount": 5,
-                      "attachmentCount": 4,
-                      "labels": [],
-                      "assignedTo": ["b31ba52c-2db0-49b4-b7a2-4f941b71cc76", "330afc0f-8565-4ad5-a27c-313a69d63770"],
+                      "checkboxCount": 7,
+                      "checkedCount": 2,
+                      "attachmentCount": 0,
+                      "labels": [
+                        "c76d330a-fc0f-4856-85ad-527c313a69d6",
+                        "7708656d-9331-43e1-b03b-e7d699b0a6b4",
+                        "210ffbad-a306-46ea-8097-b1067735b3b4"
+                      ],
+                      "assignedTo": [],
                       "publicAt": null,
-                      "tenantId": "bfum88",
+                      "tenantId": "e9ul9q",
                       "projectId": "6ebef5b6-6832-410f-bb7a-21be26ba4ee7",
                       "createdAt": "2024-02-24T16:36:46.247Z",
                       "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
@@ -15439,10 +15467,10 @@
                       "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 35,
+                      "seq": 426,
                       "stx": {
-                        "mutationId": "3e103be7-d699-4b0a-96b4-d210ffbada30",
-                        "sourceId": "6ea097b1-0677-435b-b3b4-34d64d94bd33",
+                        "mutationId": "33c3593f-8f02-4f43-a5e5-25b6609c3410",
+                        "sourceId": "35183b38-5c47-4726-95f6-59b29008dbf4",
                         "fieldTimestamps": {}
                       }
                     }
@@ -15496,18 +15524,21 @@
                       "expandable": false,
                       "summary": "Ipsa alienus admoneo creo asporto amita sol certus cogito supplanto.",
                       "summaryLength": 459,
-                      "variant": 1,
-                      "points": 4,
-                      "displayOrder": 155.93,
-                      "status": 1,
+                      "primaryLabelId": "44424ddc-25f8-42c1-b38c-a887751adbdb",
+                      "displayOrder": 16.24,
+                      "status": 3,
                       "statusChangedAt": "2024-04-18T21:12:59.543Z",
-                      "checkboxCount": 9,
-                      "checkedCount": 5,
-                      "attachmentCount": 4,
-                      "labels": [],
-                      "assignedTo": ["f82c138c-a887-4751-aadb-dbf08b9af3e6"],
-                      "publicAt": "2024-12-06T04:15:55.110Z",
-                      "tenantId": "m36um7",
+                      "checkboxCount": 7,
+                      "checkedCount": 3,
+                      "attachmentCount": 3,
+                      "labels": [
+                        "3e691ea1-2d93-4d0a-8059-eb59fada0542",
+                        "137456cc-6ee2-456c-93c2-d5a11957ca42",
+                        "bc1ddcec-d065-4676-a6c7-644024d1a2df"
+                      ],
+                      "assignedTo": ["c75bedf7-a5e9-4543-aa04-d8b64877e7af"],
+                      "publicAt": "2024-09-01T00:22:41.448Z",
+                      "tenantId": "cb37kj",
                       "projectId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
                       "createdAt": "2024-04-18T21:12:59.543Z",
                       "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
@@ -15515,10 +15546,10 @@
                       "updatedBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 432,
+                      "seq": 392,
                       "stx": {
-                        "mutationId": "0a059eb5-9fad-4a05-9421-137456cc6ee2",
-                        "sourceId": "6c3c2d5a-1195-47ca-9425-bc1ddcecd065",
+                        "mutationId": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                        "sourceId": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
                         "fieldTimestamps": {}
                       }
                     },
@@ -15531,18 +15562,21 @@
                       "expandable": false,
                       "summary": "Coniuratio virga advoco adicio tamen acidus animus spes.",
                       "summaryLength": 367,
-                      "variant": 0,
-                      "points": 8,
-                      "displayOrder": 156.42,
-                      "status": 4,
+                      "primaryLabelId": "3092c5fd-1fb3-41ba-a52c-2db09b47a24f",
+                      "displayOrder": 277.54,
+                      "status": 0,
                       "statusChangedAt": "2024-02-24T16:36:46.247Z",
-                      "checkboxCount": 3,
-                      "checkedCount": 5,
-                      "attachmentCount": 4,
-                      "labels": [],
-                      "assignedTo": ["b31ba52c-2db0-49b4-b7a2-4f941b71cc76", "330afc0f-8565-4ad5-a27c-313a69d63770"],
+                      "checkboxCount": 7,
+                      "checkedCount": 2,
+                      "attachmentCount": 0,
+                      "labels": [
+                        "c76d330a-fc0f-4856-85ad-527c313a69d6",
+                        "7708656d-9331-43e1-b03b-e7d699b0a6b4",
+                        "210ffbad-a306-46ea-8097-b1067735b3b4"
+                      ],
+                      "assignedTo": [],
                       "publicAt": null,
-                      "tenantId": "bfum88",
+                      "tenantId": "e9ul9q",
                       "projectId": "6ebef5b6-6832-410f-bb7a-21be26ba4ee7",
                       "createdAt": "2024-02-24T16:36:46.247Z",
                       "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
@@ -15550,10 +15584,10 @@
                       "updatedBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 35,
+                      "seq": 426,
                       "stx": {
-                        "mutationId": "3e103be7-d699-4b0a-96b4-d210ffbada30",
-                        "sourceId": "6ea097b1-0677-435b-b3b4-34d64d94bd33",
+                        "mutationId": "33c3593f-8f02-4f43-a5e5-25b6609c3410",
+                        "sourceId": "35183b38-5c47-4726-95f6-59b29008dbf4",
                         "fieldTimestamps": {}
                       }
                     }
@@ -15633,7 +15667,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["projectId", "status", "createdBy", "variant", "updatedAt", "createdAt"],
+              "enum": ["projectId", "status", "createdBy", "updatedAt", "createdAt"],
               "default": "createdAt"
             },
             "required": false,
@@ -15744,18 +15778,21 @@
                       "expandable": false,
                       "summary": "Bis adulatio valde deleniti consectetur soluta careo textor tempus cruciamentum utrum decor deduco sono carpo.",
                       "summaryLength": 37,
-                      "variant": 0,
-                      "points": 1,
-                      "displayOrder": 626.56,
+                      "primaryLabelId": "310a2c62-023c-45c1-8f02-022b375859b5",
+                      "displayOrder": 651.07,
                       "status": 0,
                       "statusChangedAt": "2024-04-22T02:37:53.965Z",
                       "checkboxCount": 8,
-                      "checkedCount": 2,
-                      "attachmentCount": 0,
-                      "labels": [],
-                      "assignedTo": [],
-                      "publicAt": "2024-10-19T01:33:55.316Z",
-                      "tenantId": "cr3z05",
+                      "checkedCount": 5,
+                      "attachmentCount": 5,
+                      "labels": [
+                        "c7d983b8-08f2-4878-96ac-a2f7c845b65f",
+                        "a889487d-facb-448d-847e-03630ad45bb8",
+                        "8d5f36ef-1cee-41ae-893f-2d3461a1445d"
+                      ],
+                      "assignedTo": ["4e25ff02-941e-4b64-a18b-3b08d93e4bc7", "afdcc382-de9f-40d2-83b1-1064da3505aa"],
+                      "publicAt": null,
+                      "tenantId": "mmjb28",
                       "projectId": "61dd2177-453d-4850-b5cb-9d8405cf3826",
                       "createdAt": "2024-04-22T02:37:53.965Z",
                       "createdBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
@@ -15763,10 +15800,10 @@
                       "updatedBy": "8311b19c-0c7b-4407-9f3f-ae036ec0e79b",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 23,
+                      "seq": 497,
                       "stx": {
-                        "mutationId": "22b37585-9b53-4a2b-aedf-c7d983b808f2",
-                        "sourceId": "786aca2f-7c84-45b6-95f5-a889487dfacb",
+                        "mutationId": "5dcbb7c3-4fef-4862-b148-8ba7c2931d1c",
+                        "sourceId": "b3e1ffd3-330b-448a-8fd5-4ff0204f5b34",
                         "fieldTimestamps": {}
                       }
                     },
@@ -15779,18 +15816,17 @@
                       "expandable": true,
                       "summary": "Vos nemo solitudo demum demoror deleniti sollers adamo praesentium pecus.",
                       "summaryLength": 234,
-                      "variant": 0,
-                      "points": 2,
-                      "displayOrder": 901.05,
-                      "status": 1,
+                      "primaryLabelId": "362e5852-7c3d-4b31-b53e-b736391bb402",
+                      "displayOrder": 814.65,
+                      "status": 4,
                       "statusChangedAt": "2024-12-08T07:02:10.789Z",
-                      "checkboxCount": 5,
-                      "checkedCount": 2,
-                      "attachmentCount": 0,
-                      "labels": ["c3db3153-eb73-4639-a1bb-402cdc692975"],
-                      "assignedTo": ["58762ead-0e49-4bb9-afa1-38ca8b61706f"],
+                      "checkboxCount": 4,
+                      "checkedCount": 3,
+                      "attachmentCount": 1,
+                      "labels": ["75985876-2ead-40e4-99bb-9fa138ca8b61", "06f8553f-2677-4316-b55a-cfe941862644"],
+                      "assignedTo": ["e5ca0100-4bf6-4f73-800b-3c569921660e"],
                       "publicAt": null,
-                      "tenantId": "b8z4fg",
+                      "tenantId": "nz7w9n",
                       "projectId": "524b9d48-480a-498d-8e57-e5a9d564e857",
                       "createdAt": "2024-12-08T07:02:10.789Z",
                       "createdBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
@@ -15798,10 +15834,10 @@
                       "updatedBy": "e2be80a9-4499-49c5-84d9-e01bd8d50725",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "seq": 233,
+                      "seq": 323,
                       "stx": {
-                        "mutationId": "31655acf-e941-4862-b644-c6e5ca01004b",
-                        "sourceId": "6f7300b3-c569-4921-9660-e16af3e4aa72",
+                        "mutationId": "725ebb2e-f208-4aec-80e0-83050ad10330",
+                        "sourceId": "0b1d930a-4764-4f5f-9328-6a0b1bca2c40",
                         "fieldTimestamps": {}
                       }
                     }
@@ -16018,18 +16054,17 @@
                   "expandable": true,
                   "summary": "Vinum vereor sollicito abbas demulceo.",
                   "summaryLength": 313,
-                  "variant": 3,
-                  "points": 12,
-                  "displayOrder": 170.96,
-                  "status": 0,
+                  "primaryLabelId": "e1e221dd-882e-4add-a4ec-8a93379050b0",
+                  "displayOrder": 76.02,
+                  "status": 1,
                   "statusChangedAt": "2024-02-04T01:33:42.885Z",
-                  "checkboxCount": 0,
-                  "checkedCount": 5,
-                  "attachmentCount": 4,
-                  "labels": ["82eadd4e-c8a9-4337-9905-0b0812db19a5", "31473678-8585-4846-8a17-c3d599e7096c"],
-                  "assignedTo": ["27dd6201-a0d8-468a-a323-19498e4bff65", "18c606d3-6797-4652-9e1b-a1149334ba09"],
-                  "publicAt": null,
-                  "tenantId": "nase66",
+                  "checkboxCount": 9,
+                  "checkedCount": 4,
+                  "attachmentCount": 0,
+                  "labels": ["a5431473-6788-4585-a846-a17c3d599e70", "6c0d27dd-6201-4a0d-b868-a32319498e4b"],
+                  "assignedTo": ["65918c60-6d36-4797-a652-e1ba1149334b", "0957a4c6-237f-43b0-98a1-40aebca91ac4"],
+                  "publicAt": "2024-11-08T16:57:31.379Z",
+                  "tenantId": "na87ow",
                   "projectId": "46c222d9-8561-4f60-a76a-97e8fd23e552",
                   "createdAt": "2024-02-04T01:33:42.885Z",
                   "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
@@ -16037,10 +16072,10 @@
                   "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 236,
+                  "seq": 314,
                   "stx": {
-                    "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
-                    "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
+                    "mutationId": "d8eb4aa0-3ef4-4c0d-a11f-393576dce1bd",
+                    "sourceId": "b59d920f-efcf-4baf-8655-8e12ed45d364",
                     "fieldTimestamps": {}
                   }
                 }
@@ -16151,11 +16186,9 @@
                       "status": {
                         "type": "integer"
                       },
-                      "variant": {
-                        "type": "integer"
-                      },
-                      "points": {
-                        "type": ["integer", "null"]
+                      "primaryLabelId": {
+                        "type": "string",
+                        "format": "uuid"
                       },
                       "displayOrder": {
                         "type": "number"
@@ -16230,18 +16263,17 @@
                   "expandable": true,
                   "summary": "Vinum vereor sollicito abbas demulceo.",
                   "summaryLength": 313,
-                  "variant": 3,
-                  "points": 12,
-                  "displayOrder": 170.96,
-                  "status": 0,
+                  "primaryLabelId": "e1e221dd-882e-4add-a4ec-8a93379050b0",
+                  "displayOrder": 76.02,
+                  "status": 1,
                   "statusChangedAt": "2024-02-04T01:33:42.885Z",
-                  "checkboxCount": 0,
-                  "checkedCount": 5,
-                  "attachmentCount": 4,
-                  "labels": ["82eadd4e-c8a9-4337-9905-0b0812db19a5", "31473678-8585-4846-8a17-c3d599e7096c"],
-                  "assignedTo": ["27dd6201-a0d8-468a-a323-19498e4bff65", "18c606d3-6797-4652-9e1b-a1149334ba09"],
-                  "publicAt": null,
-                  "tenantId": "nase66",
+                  "checkboxCount": 9,
+                  "checkedCount": 4,
+                  "attachmentCount": 0,
+                  "labels": ["a5431473-6788-4585-a846-a17c3d599e70", "6c0d27dd-6201-4a0d-b868-a32319498e4b"],
+                  "assignedTo": ["65918c60-6d36-4797-a652-e1ba1149334b", "0957a4c6-237f-43b0-98a1-40aebca91ac4"],
+                  "publicAt": "2024-11-08T16:57:31.379Z",
+                  "tenantId": "na87ow",
                   "projectId": "46c222d9-8561-4f60-a76a-97e8fd23e552",
                   "createdAt": "2024-02-04T01:33:42.885Z",
                   "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
@@ -16249,10 +16281,10 @@
                   "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "seq": 236,
+                  "seq": 314,
                   "stx": {
-                    "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
-                    "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
+                    "mutationId": "d8eb4aa0-3ef4-4c0d-a11f-393576dce1bd",
+                    "sourceId": "b59d920f-efcf-4baf-8655-8e12ed45d364",
                     "fieldTimestamps": {}
                   }
                 }

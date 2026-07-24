@@ -3,10 +3,9 @@ import type { UserMinimalBase } from 'sdk';
 import { type DropdownData, useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { SelectLabels } from '~/modules/task/dropdowns/select-labels';
 import { SelectMembers } from '~/modules/task/dropdowns/select-members';
-import { SelectPoints } from '~/modules/task/dropdowns/select-points';
+import { SelectPrimaryLabel } from '~/modules/task/dropdowns/select-primary-label';
 import { SelectStatus } from '~/modules/task/dropdowns/select-status';
-import { SelectVariant } from '~/modules/task/dropdowns/select-variant';
-import type { TaskLabel, TaskPointsType, TaskStatusType, TaskVariantType } from '~/modules/task/types';
+import type { TaskLabel, TaskStatusType } from '~/modules/task/types';
 
 /** Props shared by every task-field dropdown, independent of which field is edited. */
 type CommonDropdownProps = {
@@ -25,7 +24,6 @@ type CommonDropdownProps = {
 /** Discriminated on `dropdownType` so each branch narrows without a cast. */
 export type HandleDropdownProps = CommonDropdownProps &
   (
-    | { dropdownType: 'points'; value: number | null; onChange: (v: TaskPointsType) => void }
     | {
         dropdownType: 'labels';
         value: TaskLabel[];
@@ -40,7 +38,7 @@ export type HandleDropdownProps = CommonDropdownProps &
         onChange: (v: UserMinimalBase[]) => void;
       }
     | { dropdownType: 'status'; value: TaskStatusType; onChange: (v: TaskStatusType) => void }
-    | { dropdownType: 'variant'; value: TaskVariantType; onChange: (v: TaskVariantType) => void }
+    | { dropdownType: 'primaryLabel'; value: string; projectId: string; onChange: (v: string) => void }
   );
 
 export function handleTaskDropdownClick(props: HandleDropdownProps) {
@@ -54,9 +52,7 @@ export function handleTaskDropdownClick(props: HandleDropdownProps) {
 
   let component: React.ReactElement;
 
-  if (props.dropdownType === 'points') {
-    component = <SelectPoints value={props.value} onChange={props.onChange} taskId={taskId} triggerWidth={width} />;
-  } else if (props.dropdownType === 'labels') {
+  if (props.dropdownType === 'labels') {
     component = (
       <SelectLabels
         value={props.value}
@@ -80,7 +76,9 @@ export function handleTaskDropdownClick(props: HandleDropdownProps) {
   } else if (props.dropdownType === 'status') {
     component = <SelectStatus value={props.value} onChange={props.onChange} taskId={taskId} triggerWidth={width} />;
   } else {
-    component = <SelectVariant value={props.value} onChange={props.onChange} taskId={taskId} />;
+    component = (
+      <SelectPrimaryLabel value={props.value} projectId={props.projectId} onChange={props.onChange} taskId={taskId} />
+    );
   }
 
   return useDropdowner.getState().create(component, options);

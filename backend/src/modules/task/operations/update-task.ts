@@ -1,7 +1,9 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
+import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantContext } from '#/db/tenant-context';
+import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
 import {
   type DerivedDescriptionProps,
   deriveDescriptionProps,
@@ -93,6 +95,32 @@ export async function updateTaskOp(
         entity.createdBy && memberSet.has(entity.createdBy as string) ? (entity.createdBy as string) : user.id;
       // Strip labels because they are project-scoped.
       updateValues.labels = [];
+
+      // Remap the primary label into the target project: explicit op first, then matching
+      // slug, then the target's default (first live primary by displayOrder).
+      const targetPrimaries = await findLivePrimaryLabels(txCtx, { projectIds: [newProjectId] });
+      const requestedId = resolved.values.primaryLabelId as string | undefined;
+      const currentSlug = await findLabelSlugById(txCtx, entity.primaryLabelId);
+      const target =
+        targetPrimaries.find((l) => l.id === requestedId) ??
+        targetPrimaries.find((l) => l.slug === currentSlug) ??
+        targetPrimaries[0];
+      if (!target) {
+        throw new AppError(400, 'invalid_request', 'warn', {
+          entityType: 'task',
+          meta: { reason: 'Target project has no primary labels' },
+        });
+      }
+      updateValues.primaryLabelId = target.id;
+    } else if ('primaryLabelId' in resolved.values) {
+      // Validate the new primary label is a live primary of the task's project
+      const projectPrimaries = await findLivePrimaryLabels(txCtx, { projectIds: [entity.projectId] });
+      if (!projectPrimaries.some((l) => l.id === resolved.values.primaryLabelId)) {
+        throw new AppError(400, 'invalid_request', 'warn', {
+          entityType: 'task',
+          meta: { reason: 'Primary label does not belong to the task project' },
+        });
+      }
     }
 
     if (resolved.values.description !== undefined) {
