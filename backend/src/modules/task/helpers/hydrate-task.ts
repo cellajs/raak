@@ -35,6 +35,7 @@ const mapTask = (
     updatedBy: task.updatedBy ? (userMap.get(task.updatedBy) ?? null) : null,
     assignedTo,
     labels,
+    primaryLabel: labelMap.get(task.primaryLabelId) ?? null,
   };
 };
 
@@ -55,7 +56,7 @@ export const getTaskRelations = async (ctx: AuthContext, { tasks }: { tasks: Tas
   const userIds = Array.from(
     new Set(tasks.flatMap((t) => [t.createdBy, t.updatedBy, ...t.assignedTo].filter((u) => u !== null))),
   );
-  const labelIds = Array.from(new Set(tasks.flatMap((t) => t.labels)));
+  const labelIds = Array.from(new Set(tasks.flatMap((t) => [...t.labels, t.primaryLabelId])));
   return findTaskRelations(ctx, { userIds, labelIds });
 };
 
@@ -71,6 +72,7 @@ export const hydrateTaskLite = (
   stx: task.stx,
   labels: [],
   assignedTo: [],
+  primaryLabel: null,
   createdBy: null,
   updatedBy: toUserMinimalBase(currentUser),
 });

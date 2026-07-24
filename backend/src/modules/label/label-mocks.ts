@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { labelSlug } from 'shared';
 import {
   generateMockChannelIdColumns,
   MOCK_REF_DATE,
@@ -33,14 +34,21 @@ export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
     ]);
     const channelIds = generateMockChannelIdColumns('relatable');
 
+    const name = suffix ? `${baseName}-${suffix}` : baseName;
+
     return {
       id: mockUuid(),
       entityType: 'label' as const,
-      name: suffix ? `${baseName}-${suffix}` : baseName,
+      name,
       description: faker.lorem.sentence(),
       keywords: faker.lorem.words(3),
       // Specific columns
       color: faker.color.rgb().toLowerCase(),
+      mode: 'secondary' as const,
+      slug: labelSlug(name),
+      icon: null,
+      organizationTracked: false,
+      displayOrder: null,
       // Base product column: labels are not publicly readable
       publicAt: null,
       // Channel entity columns

@@ -1,6 +1,14 @@
 import type { ConfigMode, RequiredConfig, S3ConfigInput } from '../src/config-builder/types';
 import { nonEmpty } from '../src/config-builder/utils';
 import { hierarchy } from './hierarchy-config';
+import type { PrimaryLabelDefinition } from './labels-config';
+
+/** Default primary label set; the annotation keeps the derived type wide (any token/icon). */
+const defaultPrimaryLabels: PrimaryLabelDefinition[] = [
+  { slug: 'feature', name: 'Feature', color: 'amber', icon: 'star' },
+  { slug: 'chore', name: 'Chore', color: 'slate', icon: 'bolt' },
+  { slug: 'bug', name: 'Bug', color: 'red', icon: 'bug' },
+];
 
 // Re-export for external consumers
 export { roles, hierarchy } from './hierarchy-config';
@@ -161,7 +169,7 @@ export const config = {
   // once at cutover (upstream moved v1 → v2 with this migration).
   cookieVersion: 'v2',
   /** Persisted client query-cache shape - bump on breaking cached entity changes */
-  clientCacheVersion: 'v6-batch-presigned-urls',
+  clientCacheVersion: 'v7-primary-labels',
 
   // Feature flags
 
@@ -390,4 +398,13 @@ export const config = {
 
   /** Default per-organization feature flags, layered under each org's own `organizationFlags`. */
   defaultOrganizationFlags: {},
+
+  /**
+   * Default per-organization setup, layered under each org's stored `setupConfig`.
+   * `primaryLabels` (min 1, max 6) is provisioned as tracked primary label rows into every
+   * new project; array order is display order and the first entry is the default for new tasks.
+   */
+  defaultSetupConfig: {
+    primaryLabels: defaultPrimaryLabels,
+  },
 } satisfies RequiredConfig;

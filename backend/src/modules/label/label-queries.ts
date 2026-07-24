@@ -1,7 +1,17 @@
 import { and, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { appConfig } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { labelsTable } from '#/modules/label/label-db';
+
+/**
+ * Counter key holding host references to a label, written by CDC per embedded id
+ * as `e:c:<hostProduct>` (see cdc getCountDeltas). Derived from the same embedding
+ * config so reader and writer cannot drift apart.
+ */
+export const labelUsedCountKey = `e:c:${
+  appConfig.productEmbeddings.find((e) => e.embeddedProduct === 'label')?.hostProduct ?? 'task'
+}`;
 
 interface FindLabelsByStxMutationIdOpts {
   mutationId: string;
@@ -79,7 +89,7 @@ interface FindLabelUsedCountOpts {
 export const findLabelUsedCount = async (ctx: DbContext, { labelId }: FindLabelUsedCountOpts) => {
   const { db } = ctx.var;
   const [counters] = await db
-    .select({ usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>'e:task')::int, 0)` })
+    .select({ usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>${labelUsedCountKey})::int, 0)` })
     .from(channelCountersTable)
     .where(eq(channelCountersTable.channelKey, labelId))
     .limit(1);
@@ -92,7 +102,9 @@ export const buildLabelsListQuery = (ctx: AuthContext, { filters }: { filters: S
   return db
     .select({
       ...getColumns(labelsTable),
-      usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>'e:task')::int, 0)`.as('used_count'),
+      usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>${labelUsedCountKey})::int, 0)`.as(
+        'used_count',
+      ),
     })
     .from(labelsTable)
     .leftJoin(channelCountersTable, sql`${channelCountersTable.channelKey} = ${labelsTable.id}::text`)

@@ -1,11 +1,19 @@
 import { z } from '@hono/zod-openapi';
 import { getColumns } from 'drizzle-orm';
+import { labelModes } from 'shared';
 import { schemaTags } from '#/core/openapi-helpers';
 import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  iconNameSchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { pick } from '#/utils/pick';
 
 const labelInsertSchema = createInsertSchema(labelsTable);
@@ -19,6 +27,10 @@ const labelCreateSchema = labelInsertSchema
   .extend({
     id: validUuidSchema,
     color: z.string().max(maxLength.field).nullable(),
+    mode: z.enum(labelModes).default('secondary'),
+    slug: z.string().max(maxLength.field).optional(),
+    icon: iconNameSchema.nullable().optional(),
+    displayOrder: z.number().optional(),
   });
 
 export const labelSchema = z
@@ -28,6 +40,7 @@ export const labelSchema = z
       createdBy: true,
       updatedBy: true,
     }).shape,
+    mode: z.enum(labelModes),
     stx: stxBaseSchema,
     usedCount: z.number().int().min(0).optional(),
   })
@@ -42,6 +55,8 @@ export const labelEmbeddedSchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string().nullable(),
+  mode: z.enum(labelModes),
+  icon: z.string().nullable(),
   projectId: z.string(),
 });
 
@@ -58,6 +73,11 @@ export const labelContract = evolutionContract.product('label', {
   updateOps: {
     name: z.string().max(maxLength.field),
     color: z.string().max(maxLength.field).nullable(),
+    slug: z.string().max(maxLength.field),
+    icon: iconNameSchema.nullable(),
+    displayOrder: z.number(),
+    // Setting true relinks a primary label to its setupConfig entry (server re-syncs fields)
+    organizationTracked: z.boolean(),
   },
 });
 
@@ -68,6 +88,7 @@ export const labelListQuerySchema = paginationQuerySchema
   .extend({
     sort: z.enum(['name', 'usedCount']).default('name').optional(),
     order: z.enum(['asc', 'desc']).default('asc').optional(),
+    mode: z.enum(labelModes).optional(),
     projectId: z.string().max(maxLength.id).optional(),
     workspaceId: z.string().max(maxLength.id).optional(),
   })

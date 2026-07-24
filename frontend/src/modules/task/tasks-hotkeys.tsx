@@ -214,13 +214,6 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
 
     // A switch keeps each call matched to the right discriminated-union member — no cast.
     switch (field) {
-      case 'points':
-        return handleTaskDropdownClick({
-          ...base,
-          dropdownType: 'points',
-          value: targetTask.points,
-          onChange: handlers.onPointsChange,
-        });
       case 'labels':
         return handleTaskDropdownClick({
           ...base,
@@ -244,22 +237,22 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
           value: targetTask.status,
           onChange: handlers.onStatusChange,
         });
-      case 'variant':
+      case 'primaryLabel':
         return handleTaskDropdownClick({
           ...base,
-          dropdownType: 'variant',
-          value: targetTask.variant,
-          onChange: handlers.onVariantChange,
+          dropdownType: 'primaryLabel',
+          value: targetTask.primaryLabelId,
+          projectId: targetTask.projectId,
+          onChange: handlers.onPrimaryLabelChange,
         });
     }
   };
 
   const actionHotkeys: HotkeyItem[] = [
     ['A', () => hotKeyPress('assignedTo')],
-    ['I', () => hotKeyPress('points')],
     ['L', () => hotKeyPress('labels')],
     ['S', () => hotKeyPress('status')],
-    ['T', () => hotKeyPress('variant')],
+    ['T', () => hotKeyPress('primaryLabel')],
     ['N', handleNKeyDown],
   ];
 

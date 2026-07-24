@@ -115,13 +115,14 @@ export const labelsQueryOptions = ({
   q = '',
   projectId,
   workspaceId,
+  mode,
   sort = 'name',
   order = 'desc',
   limit = appConfig.requestLimits.labels,
   organizationId,
   tenantId,
 }: LabelsListParams) => {
-  const filters = { q, sort, order, projectId, workspaceId };
+  const filters = { q, sort, order, mode, projectId, workspaceId };
   const requestQuery = { ...filters, limit: String(limit) };
 
   return infiniteQueryOptions({

@@ -1,7 +1,7 @@
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { mockTask } from '#/modules/task/task-mocks';
 import { registerBenchSeed } from '../registry';
-import { CORE_ID_VARIANTS, ORG_ID, projectId, TENANT_ID, taskId, userId } from './ids';
+import { CORE_ID_VARIANTS, labelId, ORG_ID, projectId, TENANT_ID, taskId, userId } from './ids';
 import { TOTAL_PROJECTS } from './project.bench';
 
 export const TOTAL_TASKS = 500;
@@ -34,7 +34,8 @@ export const loadtestTask = (index: number): InsertTaskModel => {
     summary: '',
     summaryLength: 0,
     expandable: false,
-    variant: 1,
+    // Deterministic per-project id; no label row is seeded, so hydration returns primaryLabel null
+    primaryLabelId: labelId(index % TOTAL_PROJECTS),
     status: 5,
     displayOrder: index + 1,
     labels: [],

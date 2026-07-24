@@ -4,6 +4,7 @@ import { CheckIcon, ChevronDownIcon, DotIcon } from 'lucide-react';
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
+import { labelSlug } from 'shared';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
@@ -105,7 +106,8 @@ export const SelectLabels = ({
 
   const labels = useQueries({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
-    combine: (results) => results.flatMap((r) => r.data?.items ?? []),
+    // The task label picker only offers secondary labels; primary/epic labels have dedicated UI.
+    combine: (results) => results.flatMap((r) => r.data?.items ?? []).filter((l) => l.mode === 'secondary'),
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -206,6 +208,10 @@ export const SelectLabels = ({
     const newLabelData = {
       id: generateId(),
       name: value,
+      // Ad-hoc created labels are always secondary; primary/epic labels are managed elsewhere.
+      mode: 'secondary' as const,
+      slug: labelSlug(value),
+      icon: null,
       color: matchedLabelColor ?? fallbackColor,
       keywords: '',
       projectId,

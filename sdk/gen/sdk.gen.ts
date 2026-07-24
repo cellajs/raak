@@ -3065,6 +3065,7 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
  * @param {string | null=} options.body.welcomeText - `string | null` (optional)
  * @param {boolean=} options.body.chatSupport - `boolean` (optional)
  * @param {object=} options.body.organizationFlags - `object` (optional)
+ * @param {object=} options.body.setupConfig - `object` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const updateOrganization = <ThrowOnError extends boolean = true>(
@@ -4481,6 +4482,7 @@ export const deleteLabels = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.mode - `enum` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @param {string=} options.query.workspaceid - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429

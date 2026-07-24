@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import { labelSlug } from 'shared';
 import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
@@ -7,6 +8,7 @@ import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { findLabelsByOrg, findLabelsByStxMutationId, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
+import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
@@ -42,6 +44,14 @@ export async function createLabelsOp(
     return { success: false, error: 'restrict_by_org', status: 429 };
   }
 
+  // Creating primary/epic labels requires project-admin authority (project update permission)
+  const managedProjectIds = [
+    ...new Set(input.filter((item) => item.mode !== 'secondary').map((item) => item.projectId)),
+  ];
+  for (const managedProjectId of managedProjectIds) {
+    await getValidChannel(ctx, managedProjectId, 'project', 'update');
+  }
+
   // Fetch existing labels in org for duplicate check and color matching
   const existingLabels = await tenantRead(ctx, (readCtx) => findLabelsByOrg(readCtx));
 
@@ -53,6 +63,7 @@ export async function createLabelsOp(
 
     const label = {
       ...labelInfo,
+      slug: labelInfo.slug ?? labelSlug(labelInfo.name ?? 'New label'),
       entityType: 'label' as const,
       tenantId: organization.tenantId,
       organizationId: organization.id,

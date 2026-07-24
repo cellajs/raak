@@ -1,52 +1,60 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Label } from 'sdk';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
-import type { SelectVariantProps } from '~/modules/task/dropdowns/types';
+import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
+import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
+import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
-import { variantOptions } from '~/modules/task/task-properties';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList, ComboboxSearchInput } from '~/modules/ui/combobox';
 import { Kbd } from '~/modules/ui/kbd';
 import { cn } from '~/utils/cn';
 import { inNumbersArray } from '~/utils/in-numbers-array';
 
-type VariantOption = (typeof variantOptions)[number];
-
-export const SelectVariant = ({ value: currentVariant, onChange, taskId, className = '' }: SelectVariantProps) => {
+/** Dropdown to pick a task's primary label (task type) from the project's primary set. */
+export const SelectPrimaryLabel = ({
+  value: currentId,
+  projectId,
+  onChange,
+  taskId,
+  className = '',
+}: SelectPrimaryLabelProps) => {
   const { t } = useTranslation();
+  const primaryLabels = usePrimaryLabels(projectId);
 
-  // Live cache subscription reflects remote SSE variant changes while open.
+  // Live cache subscription reflects remote SSE primary label changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
-  const liveVariant = liveTask?.variant ?? currentVariant;
+  const liveId = liveTask?.primaryLabelId ?? currentId;
 
-  // Derived during render, without a useState/useEffect copy of liveVariant.
-  const selectedType = variantOptions.find((v) => v.value === liveVariant);
+  // Derived during render, without a useState/useEffect copy of liveId.
+  const selected = primaryLabels.find((label) => label.id === liveId) ?? null;
 
   const [searchValue, setSearchValue] = useState('');
   const isSearching = searchValue.length > 0;
 
-  const commit = (variant: VariantOption) => {
-    if (liveVariant !== variant.value) onChange(variant.value);
+  const commit = (label: Label) => {
+    if (liveId !== label.id) onChange(label.id);
     setSearchValue('');
     useDropdowner.getState().remove();
   };
 
   return (
-    <Combobox<VariantOption>
+    <Combobox<Label>
       inline
       openOnInputClick={false}
-      items={variantOptions}
-      itemToStringLabel={(item) => t(`c:${item.labelKey}`)}
-      itemToStringValue={(item) => item.type}
-      value={selectedType ?? null}
+      items={primaryLabels}
+      itemToStringLabel={(item) => item.name}
+      itemToStringValue={(item) => item.id}
+      value={selected}
       onValueChange={(item) => {
         if (item) commit(item);
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: 1-3 selects the corresponding variant
-        if (inNumbersArray(3, value)) {
-          const variant = variantOptions[Number.parseInt(value, 10) - 1];
-          if (variant) commit(variant);
+        // Digit hotkey: selects the corresponding primary label by display order
+        if (inNumbersArray(primaryLabels.length, value)) {
+          const label = primaryLabels[Number.parseInt(value, 10) - 1];
+          if (label) commit(label);
           return;
         }
         setSearchValue(value);
@@ -63,16 +71,16 @@ export const SelectVariant = ({ value: currentVariant, onChange, taskId, classNa
         />
         {!isSearching && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">T</Kbd>}
         <ComboboxList className="p-1">
-          {(variant: VariantOption) => {
-            const index = variantOptions.findIndex((v) => v.value === variant.value);
+          {(label: Label) => {
+            const index = primaryLabels.findIndex((l) => l.id === label.id);
             return (
               <ComboboxItem
-                key={variant.value}
-                value={variant}
+                key={label.id}
+                value={label}
                 className="group flex w-full items-center gap-2 rounded-md leading-normal"
               >
-                <div>{variant.icon()}</div>
-                <div className="grow">{t(`c:${variant.labelKey}`)}</div>
+                <PrimaryLabelIcon label={label} />
+                <div className="grow">{label.name}</div>
                 {!isSearching && <span className="mx-1 text-xs opacity-50 max-sm:hidden">{index + 1}</span>}
               </ComboboxItem>
             );

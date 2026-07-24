@@ -571,6 +571,24 @@
           "required": true,
           "maxLength": 255
         },
+        "mode": {
+          "type": "string",
+          "required": true,
+          "enum": ["primary", "secondary", "epic"]
+        },
+        "slug": { "type": "string", "required": true, "maxLength": 255 },
+        "icon": {
+          "type": ["string", "null"],
+          "required": true,
+          "maxLength": 255
+        },
+        "organizationTracked": { "type": "boolean", "required": true },
+        "displayOrder": {
+          "type": ["number", "null"],
+          "required": true,
+          "minimum": -140737488355328,
+          "maximum": 140737488355327
+        },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "projectId": { "type": "string", "required": true, "format": "uuid" },
         "stx": {
@@ -616,6 +634,11 @@
       "description": "Decerno deficio cupio spiculum depono.",
       "keywords": "amplitudo atrox speciosus",
       "color": "#e305dd",
+      "mode": "secondary",
+      "slug": "feature",
+      "icon": null,
+      "organizationTracked": false,
+      "displayOrder": null,
       "publicAt": null,
       "tenantId": "1c1z4m",
       "projectId": "e50ec4cb-3130-4248-a1d7-4aa2d67fc4b4",
@@ -1347,6 +1370,62 @@
           "required": true,
           "properties": {}
         },
+        "setupConfig": {
+          "type": "object",
+          "required": true,
+          "properties": {
+            "primaryLabels": {
+              "type": "array",
+              "required": true,
+              "minItems": 1,
+              "maxItems": 6,
+              "itemType": "object",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "required": true,
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "name": {
+                    "type": "string",
+                    "required": true,
+                    "minLength": 2,
+                    "maxLength": 255
+                  },
+                  "color": {
+                    "type": "string",
+                    "required": true,
+                    "enum": [
+                      "red",
+                      "orange",
+                      "amber",
+                      "yellow",
+                      "green",
+                      "emerald",
+                      "teal",
+                      "sky",
+                      "blue",
+                      "indigo",
+                      "violet",
+                      "pink",
+                      "slate"
+                    ]
+                  },
+                  "icon": {
+                    "required": true,
+                    "anyOf": [
+                      { "type": "string", "required": false, "maxLength": 255 },
+                      { "type": "null", "required": false }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "included": {
           "type": "object",
           "required": true,
@@ -1525,6 +1604,28 @@
       "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
       "chatSupport": true,
       "organizationFlags": {},
+      "setupConfig": {
+        "primaryLabels": [
+          {
+            "slug": "feature",
+            "name": "Feature",
+            "color": "amber",
+            "icon": "star"
+          },
+          {
+            "slug": "chore",
+            "name": "Chore",
+            "color": "slate",
+            "icon": "bolt"
+          },
+          {
+            "slug": "bug",
+            "name": "Bug",
+            "color": "red",
+            "icon": "bug"
+          }
+        ]
+      },
       "publishedAt": "2024-12-25T15:04:42.969Z",
       "publicAt": null,
       "createdAt": "2024-12-25T15:04:42.969Z",
@@ -1949,12 +2050,7 @@
           "minimum": -2147483648,
           "maximum": 2147483647
         },
-        "points": {
-          "type": ["integer", "null"],
-          "required": true,
-          "minimum": -2147483648,
-          "maximum": 2147483647
-        },
+        "primaryLabelId": { "type": "string", "required": true, "format": "uuid" },
         "displayOrder": {
           "type": "number",
           "required": true,
@@ -2000,14 +2096,46 @@
                 "type": ["string", "null"],
                 "required": true
               },
+              "mode": {
+                "type": "string",
+                "required": true,
+                "enum": ["primary", "secondary", "epic"]
+              },
+              "icon": {
+                "type": ["string", "null"],
+                "required": true
+              },
               "projectId": { "type": "string", "required": true }
             }
           }
         },
-        "variant": {
-          "type": "integer",
+        "primaryLabel": {
           "required": true,
-          "enum": [1, 2, 3]
+          "anyOf": [
+            {
+              "type": "object",
+              "required": false,
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "color": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "mode": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["primary", "secondary", "epic"]
+                },
+                "icon": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "projectId": { "type": "string", "required": true }
+              }
+            },
+            { "type": "null", "required": false }
+          ]
         },
         "assignedTo": {
           "type": "array",
@@ -2114,18 +2242,17 @@
       "expandable": true,
       "summary": "Vinum vereor sollicito abbas demulceo.",
       "summaryLength": 313,
-      "variant": 3,
-      "points": 12,
-      "displayOrder": 170.96,
-      "status": 0,
+      "primaryLabelId": "e1e221dd-882e-4add-a4ec-8a93379050b0",
+      "displayOrder": 76.02,
+      "status": 1,
       "statusChangedAt": "2024-02-04T01:33:42.885Z",
-      "checkboxCount": 0,
-      "checkedCount": 5,
-      "attachmentCount": 4,
-      "labels": ["82eadd4e-c8a9-4337-9905-0b0812db19a5", "31473678-8585-4846-8a17-c3d599e7096c"],
-      "assignedTo": ["27dd6201-a0d8-468a-a323-19498e4bff65", "18c606d3-6797-4652-9e1b-a1149334ba09"],
-      "publicAt": null,
-      "tenantId": "nase66",
+      "checkboxCount": 9,
+      "checkedCount": 4,
+      "attachmentCount": 0,
+      "labels": ["a5431473-6788-4585-a846-a17c3d599e70", "6c0d27dd-6201-4a0d-b868-a32319498e4b"],
+      "assignedTo": ["65918c60-6d36-4797-a652-e1ba1149334b", "0957a4c6-237f-43b0-98a1-40aebca91ac4"],
+      "publicAt": "2024-11-08T16:57:31.379Z",
+      "tenantId": "na87ow",
       "projectId": "46c222d9-8561-4f60-a76a-97e8fd23e552",
       "createdAt": "2024-02-04T01:33:42.885Z",
       "createdBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
@@ -2133,10 +2260,10 @@
       "updatedBy": "364ebe3c-a53a-4483-ad22-412836f74a04",
       "deletedAt": null,
       "deletedBy": null,
-      "seq": 236,
+      "seq": 314,
       "stx": {
-        "mutationId": "f3b08a14-0aeb-4ca9-a1ac-453da433bead",
-        "sourceId": "eb4aa03e-f4c0-4d11-9f39-3576dce1bd9b",
+        "mutationId": "d8eb4aa0-3ef4-4c0d-a11f-393576dce1bd",
+        "sourceId": "b59d920f-efcf-4baf-8655-8e12ed45d364",
         "fieldTimestamps": {}
       }
     }
