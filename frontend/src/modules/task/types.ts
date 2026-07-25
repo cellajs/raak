@@ -43,7 +43,7 @@ export type TaskCounts = {
   acceptedCutOff: number;
 };
 
-export type TaskSearch = z.infer<typeof tasksTableSearchSchema>;
+export type BoardSearch = z.infer<typeof tasksTableSearchSchema>;
 
 export type TaskState = 'collapsed' | 'editing' | 'expanded';
 

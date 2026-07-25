@@ -5,13 +5,13 @@ import { useSearchParams } from '~/hooks/use-search-params';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
+import { BoardSearch } from '~/modules/task/board-search';
 import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { useReadOnlyHide } from '~/modules/task/hooks/use-read-only';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
 import { deriveTasksQueryParams } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { TaskSearch } from '~/modules/task/task-search';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
 import { Button } from '~/modules/ui/button';
 import { WorkspaceActionButtons } from '~/modules/workspace/header/action-buttons';
@@ -77,7 +77,7 @@ export const BoardHeader = ({
         </Button>
       )}
 
-      <TaskSearch clearSelection={clearSelection} toggleFocus={toggleSearchFocus}>
+      <BoardSearch clearSelection={clearSelection} toggleFocus={toggleSearchFocus}>
         {' '}
         {typeof total === 'number' && searchQuery && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
@@ -85,7 +85,7 @@ export const BoardHeader = ({
             <span>{t('c:found')}</span>
           </div>
         )}
-      </TaskSearch>
+      </BoardSearch>
 
       {!searchQuery && !searchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
 

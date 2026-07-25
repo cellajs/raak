@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import { count, ilike, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { count, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -72,8 +72,13 @@ export async function getLabelsOp(
     // Restrict to the caller's readable scope unless org-wide (kind 'all').
     if (scopeWhere.kind === 'where') labelsFilters.push(scopeWhere.where);
 
-    // Add more filters
-    if (q) labelsFilters.push(ilike(labelsTable.name, `%${q}%`));
+    // Tokenized search over name + description-derived keywords, mirroring task keyword
+    // matching: every word must hit (AND across words, OR across columns per word).
+    const searchWords = q?.trim().toLowerCase().split(/\s+/).filter(Boolean) ?? [];
+    for (const word of searchWords) {
+      const wordFilter = or(ilike(labelsTable.name, `%${word}%`), ilike(labelsTable.keywords, `%${word}%`));
+      if (wordFilter) labelsFilters.push(wordFilter);
+    }
     if (modes?.length) labelsFilters.push(inArray(labelsTable.mode, modes));
 
     const labelsSubquery = buildLabelsListQuery(readCtx, { filters: labelsFilters }).as('labels');

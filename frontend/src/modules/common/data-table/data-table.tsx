@@ -54,6 +54,8 @@ interface DataTableProps<TData> extends ForwardedGridProps<TData> {
   fetchMore?: () => Promise<unknown>;
   /** Accepted for consumer API symmetry; not used by DataTable. */
   limit?: number;
+  /** Skip the all-loaded end indicator (embedded tables where it is visual noise). */
+  hideEndIndicator?: boolean;
   /** When this value changes, internal column widths are reset (re-measured from column defaults). */
   resetWidthsKey?: string | number | boolean;
   className?: string;
@@ -91,6 +93,7 @@ export const DataTable = <TData,>({
   NoRowsComponent,
   fetchMore,
   limit,
+  hideEndIndicator,
   resetWidthsKey,
   className,
   readOnly,
@@ -197,6 +200,7 @@ export const DataTable = <TData,>({
               hasNextPage={hasNextPage}
               isFetching={isFetching}
               isFetchMoreError={!!error}
+              hideEndIndicator={hideEndIndicator}
               fetchMore={!enableVirtualization ? fetchMore : undefined}
             />
           )}

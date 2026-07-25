@@ -11,13 +11,13 @@ import { Badge } from '~/modules/ui/badge';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/modules/ui/input-group';
 import { cn } from '~/utils/cn';
 
-interface TaskSearchProps {
+interface BoardSearchProps {
   children?: React.ReactNode;
   clearSelection: () => void;
   toggleFocus: () => void;
 }
 
-export const TaskSearch = ({ children, clearSelection, toggleFocus }: TaskSearchProps) => {
+export const BoardSearch = ({ children, clearSelection, toggleFocus }: BoardSearchProps) => {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
 
@@ -85,7 +85,7 @@ export const TaskSearch = ({ children, clearSelection, toggleFocus }: TaskSearch
 
       <InputGroupInput
         ref={inputRef}
-        name="tasksSearch"
+        name="boardSearch"
         onFocus={toggleFocus}
         onBlur={toggleFocus}
         placeholder={t('c:search_in_resource', {

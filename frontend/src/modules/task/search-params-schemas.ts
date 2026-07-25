@@ -12,6 +12,8 @@ export const taskSearchDefaults = { q: '', view: 'board', sort: 'createdAt', ord
 const baseTaskViewSchema = z.object({
   taskSheetId: z.string().optional(),
   userSheetId: z.string().optional(),
+  /** Label whose page is open in the labels board panel (replaces the panel's table). */
+  labelPageId: z.string().optional(),
   view: taskViewSchema.optional(),
 });
 

@@ -1,9 +1,11 @@
 import { TagIcon } from 'lucide-react';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from '~/hooks/use-search-params';
 import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { Spinner } from '~/modules/common/spinner';
+import { LabelPage } from '~/modules/label/label-page';
 import type { BaseLabelsTableProps } from '~/modules/label/table/labels-table';
 import { PanelDragHandleButton } from '~/modules/task/panel/panel-drag-handle-button';
 import { LABELS_PANEL_ID } from '~/modules/task/types';
@@ -18,6 +20,8 @@ const LabelsTable = lazyNamed(() => import('~/modules/label/table/labels-table')
 export const LabelsPanel = ({ entity, entityId }: BaseLabelsTableProps) => {
   const { t } = useTranslation();
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[LABELS_PANEL_ID]);
+  const { search } = useSearchParams<{ labelPageId?: string }>({});
+  const labelPageId = search.labelPageId;
 
   return (
     <BoardPanelContent
@@ -47,7 +51,11 @@ export const LabelsPanel = ({ entity, entityId }: BaseLabelsTableProps) => {
 
         <div className="flex h-full flex-col overflow-y-auto p-2">
           <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
-            <LabelsTable entity={entity} entityId={entityId} variant="panel" />
+            {labelPageId ? (
+              <LabelPage labelId={labelPageId} entity={entity} entityId={entityId} />
+            ) : (
+              <LabelsTable entity={entity} entityId={entityId} />
+            )}
           </Suspense>
         </div>
       </div>

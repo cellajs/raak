@@ -12,7 +12,7 @@ import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 import { type BoardResizablePanel, EXPLAINER_PANEL_ID, LABELS_PANEL_ID } from '~/modules/task/types';
 
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
-  const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
+  const { projectSlug, labelPageId } = useSearch({ strict: false }) as { projectSlug?: string; labelPageId?: string };
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
   const alertsSeen = useAlertStore((s) => s.alertsSeen);
@@ -51,6 +51,14 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     },
     [boardId, panels, setPanelOrder, updateMembership],
   );
+
+  /** Opening a label page expands and reveals the labels panel (deep links, filter jumps) */
+  const lastExpandedLabelPage = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!labelPageId || labelPageId === lastExpandedLabelPage.current) return;
+    lastExpandedLabelPage.current = labelPageId;
+    boardLayoutRef.current?.expandAndScrollToPanel(LABELS_PANEL_ID);
+  }, [labelPageId]);
 
   /** Scroll to project panel when projectSlug changes (not on panel reorder) */
   const lastScrolledSlug = useRef<string | undefined>(undefined);

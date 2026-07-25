@@ -1,31 +1,25 @@
-import { DotIcon, StickyNoteIcon } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { DotIcon, ListFilterIcon, StickyNoteIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
-import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
-import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { SpriteIcon } from '~/modules/common/icons/sprite-icon';
+import { useLabelFilterToggle } from '~/modules/label/label-filter';
 import { isLabelColorToken, labelPalette } from '~/modules/label/label-palette';
-import type { LabelRow, LabelsTableVariant } from '~/modules/label/table/labels-table';
-import { findProjectByIdOrSlug } from '~/modules/project/query';
-import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
+import type { LabelRow } from '~/modules/label/table/labels-table';
+import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
-export const useColumns = (variant: LabelsTableVariant = 'default') => {
-  const { tenantId } = useOrganizationLayoutContext();
+export const useColumns = () => {
   const { t } = useTranslation();
+  const { isActive, toggle } = useLabelFilterToggle();
 
   return useMemo(() => {
     const cols: ColumnOrColumnGroup<LabelRow>[] = [
-      CheckboxColumn,
       {
         key: 'color',
         name: t('c:color'),
-        minBreakpoint: variant === 'panel' ? undefined : 'md',
-        width: 60,
-
+        width: 44,
         renderCell: ({ row }) =>
           row.icon ? (
             // Epics (and any label carrying an icon) render their icon, palette-tinted
@@ -44,13 +38,38 @@ export const useColumns = (variant: LabelsTableVariant = 'default') => {
       {
         key: 'name',
         name: t('c:name'),
-        minWidth: 160,
+        minWidth: 120,
         sortable: true,
         resizable: true,
-        editable: true,
-        renderCell: ({ row }) => t(row.name),
-        renderEditCell: ({ row, onRowChange }) => (
-          <EditCellInput value={row.name} onChange={(e) => onRowChange({ ...row, name: e.target.value })} autoFocus />
+        renderCell: ({ row, tabIndex }) => (
+          <Link
+            to="."
+            replace={false}
+            resetScroll={false}
+            search={(prev) => ({ ...prev, labelPageId: row.id })}
+            tabIndex={tabIndex}
+            className="w-full truncate text-left decoration-foreground/30 underline-offset-3 outline-0 ring-0 hover:underline"
+          >
+            {row.name}
+          </Link>
+        ),
+      },
+      {
+        key: 'filter',
+        name: '',
+        width: 44,
+        renderCell: ({ row, tabIndex }) => (
+          <Button
+            variant="ghost"
+            size="xs"
+            tabIndex={tabIndex}
+            aria-label={t('c:filter_by_resource', { resource: row.name })}
+            aria-pressed={isActive(row.name)}
+            onClick={() => toggle(row.name)}
+            className={cn('opacity-60 hover:opacity-100', isActive(row.name) && 'text-primary opacity-100')}
+          >
+            <ListFilterIcon />
+          </Button>
         ),
       },
       {
@@ -65,39 +84,7 @@ export const useColumns = (variant: LabelsTableVariant = 'default') => {
           </>
         ),
       },
-      {
-        key: 'projects',
-        name: t('c:project_other'),
-        // Hidden by default in the narrow board panel (toggleable via column view)
-        hidden: variant === 'panel',
-        minBreakpoint: 'sm',
-        width: 120,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          const childProjects = row.projectIds
-            .map((id) => findProjectByIdOrSlug(id, tenantId))
-            .filter((p): p is NonNullable<typeof p> => !!p);
-          if (!childProjects.length) return null;
-          return (
-            <AvatarGroup limit={3}>
-              <AvatarGroupList>
-                {childProjects.map((project) => (
-                  <EntityAvatar
-                    type="project"
-                    key={project.id}
-                    id={project.id}
-                    name={project.name}
-                    url={project.thumbnailUrl}
-                    className="h-8 w-8 text-xs"
-                  />
-                ))}
-              </AvatarGroupList>
-              <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
-            </AvatarGroup>
-          );
-        },
-      },
     ];
     return cols;
-  }, [variant]);
+  }, [isActive, toggle, t]);
 };

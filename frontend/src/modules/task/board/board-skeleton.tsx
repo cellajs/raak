@@ -13,9 +13,9 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { PageTab } from '~/modules/common/page/tab-nav';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { BoardSearch } from '~/modules/task/board-search';
 import { formatSectionLabel, normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { TaskSearch } from '~/modules/task/task-search';
 import { statusSectionColors } from '~/modules/task/task-styles';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
@@ -86,7 +86,7 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
   return (
     <>
       <div className="z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2">
-        <TaskSearch clearSelection={() => {}} toggleFocus={() => {}} />
+        <BoardSearch clearSelection={() => {}} toggleFocus={() => {}} />
 
         <TableCount count={0} label="c:task" className="mr-3" />
 

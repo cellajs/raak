@@ -68,7 +68,7 @@ export function WorkspaceBoardTabs({
       {isLabelsTab && workspace ? (
         <Suspense>
           <div className="p-2">
-            <LabelsTable entity="workspace" entityId={workspace.id} variant="panel" />
+            <LabelsTable entity="workspace" entityId={workspace.id} />
           </div>
         </Suspense>
       ) : (
