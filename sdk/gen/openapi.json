@@ -17124,6 +17124,10 @@
                       "displayOrder": {
                         "type": "number"
                       },
+                      "description": {
+                        "type": ["string", "null"],
+                        "maxLength": 1000000
+                      },
                       "organizationTracked": {
                         "type": "boolean"
                       }

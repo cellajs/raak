@@ -6802,6 +6802,7 @@ export type UpdateLabelData = {
       slug?: string;
       icon?: string | null;
       displayOrder?: number;
+      description?: string | null;
       organizationTracked?: boolean;
     };
     stx: StxBase;

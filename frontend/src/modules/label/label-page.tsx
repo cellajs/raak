@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { ArrowLeftIcon, ListFilterIcon, Trash2Icon } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useSearchParams } from '~/hooks/use-search-params';
@@ -18,6 +18,9 @@ import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
+import { lazyNamed } from '~/utils/lazy-named';
+
+const LabelDescriptionForm = lazyNamed(() => import('~/modules/label/label-description-form'), 'LabelDescriptionForm');
 
 type LabelPageProps = BaseLabelsTableProps & { labelId: string };
 
@@ -143,6 +146,15 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
           <Trash2Icon />
         </Button>
       </div>
+
+      {/* Epic documentation: collaborative description editor (epics only) */}
+      {label.mode === 'epic' && (
+        <div className="grow overflow-y-auto">
+          <Suspense fallback={<Spinner className="my-8 h-6 w-6 opacity-50" noDelay />}>
+            <LabelDescriptionForm label={label} />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 };

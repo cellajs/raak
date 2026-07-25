@@ -76,6 +76,8 @@ export const labelContract = evolutionContract.product('label', {
     slug: z.string().max(maxLength.field),
     icon: iconNameSchema.nullable(),
     displayOrder: z.number(),
+    // Epic documentation; the update op rejects description edits on other modes
+    description: z.string().max(maxLength.html).nullable(),
     // Setting true relinks a primary label to its setupConfig entry (server re-syncs fields)
     organizationTracked: z.boolean(),
   },

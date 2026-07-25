@@ -6,6 +6,7 @@ import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { Spinner } from '~/modules/common/spinner';
 import { LabelPage } from '~/modules/label/label-page';
+import { NewEpicButton } from '~/modules/label/new-epic-button';
 import type { BaseLabelsTableProps } from '~/modules/label/table/labels-table';
 import { PanelDragHandleButton } from '~/modules/task/panel/panel-drag-handle-button';
 import { LABELS_PANEL_ID } from '~/modules/task/types';
@@ -47,6 +48,7 @@ export const LabelsPanel = ({ entity, entityId }: BaseLabelsTableProps) => {
             <div className="truncate">{t('c:label_other')}</div>
           </PanelDragHandleButton>
           <div className="grow" />
+          <NewEpicButton entity={entity} entityId={entityId} />
         </div>
 
         <div className="flex h-full flex-col overflow-y-auto p-2">

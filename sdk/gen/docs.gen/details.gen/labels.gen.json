@@ -1237,6 +1237,11 @@
                 "maxLength": 255
               },
               "displayOrder": { "type": "number", "required": false },
+              "description": {
+                "type": ["string", "null"],
+                "required": false,
+                "maxLength": 1000000
+              },
               "organizationTracked": { "type": "boolean", "required": false }
             }
           },

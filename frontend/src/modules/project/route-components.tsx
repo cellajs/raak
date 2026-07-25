@@ -18,7 +18,10 @@ export const ProjectRouteComponent = () => {
   return (
     <Suspense fallback={<Spinner className="mt-[45vh] h-10 w-10" />}>
       {!!appConfig.yjsUrl && (
-        <YjsTokenFetcher entityType="task" tenantId={tenantId} organizationId={project.organizationId} />
+        <>
+          <YjsTokenFetcher entityType="task" tenantId={tenantId} organizationId={project.organizationId} />
+          <YjsTokenFetcher entityType="label" tenantId={tenantId} organizationId={project.organizationId} />
+        </>
       )}
       <ProjectPage
         key={project.slug}

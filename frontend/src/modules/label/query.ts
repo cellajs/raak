@@ -20,6 +20,7 @@ import {
 } from 'sdk';
 import { zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
+import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
@@ -68,6 +69,10 @@ registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, cha
   });
 });
 export const labelQueryKeys = keys;
+
+// During an active collab session the Y.Doc owns these fields; SSE patches are suppressed
+// so remote materializations can't fight the local editor state.
+registerYjsOwnedFields('label', ['description', 'keywords']);
 
 const labelsMutationKeyBase = ['label'] as const;
 const handleError = createResourceError('label');

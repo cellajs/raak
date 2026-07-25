@@ -2849,6 +2849,7 @@ export const zUpdateLabelBody = z.object({
     slug: z.string().max(255).optional(),
     icon: z.string().max(255).nullish(),
     displayOrder: z.number().optional(),
+    description: z.string().max(1000000).nullish(),
     organizationTracked: z.boolean().optional(),
   }),
   stx: zStxBase,

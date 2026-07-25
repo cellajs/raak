@@ -45,6 +45,7 @@
   "move_project.text": "Move this project to a different workspace within your organization.",
   "move_task": "Move task",
   "move_up": "Move up",
+  "new_epic": "New epic",
   "no_projects.text": "to start your first project.",
   "no_tasks.text": "to get started.",
   "older_accepted_table_only": "The {{count}} accepted tasks are only visible in the table view.",
