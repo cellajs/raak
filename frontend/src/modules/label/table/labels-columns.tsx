@@ -6,11 +6,14 @@ import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import type { LabelRow } from '~/modules/label/table/labels-table';
+import { SpriteIcon } from '~/modules/common/icons/sprite-icon';
+import { isLabelColorToken, labelPalette } from '~/modules/label/label-palette';
+import type { LabelRow, LabelsTableVariant } from '~/modules/label/table/labels-table';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
+import { cn } from '~/utils/cn';
 
-export const useColumns = () => {
+export const useColumns = (variant: LabelsTableVariant = 'default') => {
   const { tenantId } = useOrganizationLayoutContext();
   const { t } = useTranslation();
 
@@ -20,14 +23,23 @@ export const useColumns = () => {
       {
         key: 'color',
         name: t('c:color'),
-        minBreakpoint: 'md',
+        minBreakpoint: variant === 'panel' ? undefined : 'md',
         width: 60,
 
-        renderCell: ({ row }) => (
-          <div className="flex w-full justify-center">
-            <DotIcon className="size-5.5 rounded-md" style={{ background: row.color || undefined }} strokeWidth={0} />
-          </div>
-        ),
+        renderCell: ({ row }) =>
+          row.icon ? (
+            // Epics (and any label carrying an icon) render their icon, palette-tinted
+            <div className="flex w-full justify-center">
+              <SpriteIcon
+                name={row.icon}
+                className={cn('icon-lg', isLabelColorToken(row.color) && labelPalette[row.color].icon)}
+              />
+            </div>
+          ) : (
+            <div className="flex w-full justify-center">
+              <DotIcon className="size-5.5 rounded-md" style={{ background: row.color || undefined }} strokeWidth={0} />
+            </div>
+          ),
       },
       {
         key: 'name',
@@ -56,7 +68,8 @@ export const useColumns = () => {
       {
         key: 'projects',
         name: t('c:project_other'),
-
+        // Hidden by default in the narrow board panel (toggleable via column view)
+        hidden: variant === 'panel',
         minBreakpoint: 'sm',
         width: 120,
         placeholderValue: '-',
@@ -86,5 +99,5 @@ export const useColumns = () => {
       },
     ];
     return cols;
-  }, []);
+  }, [variant]);
 };

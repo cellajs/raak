@@ -2783,7 +2783,7 @@ export const zGetLabelsQuery = z.object({
     .string()
     .regex(/^\d+,\d+$/)
     .optional(),
-  mode: z.enum(['primary', 'secondary', 'epic']).optional(),
+  modes: z.string().optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
 });

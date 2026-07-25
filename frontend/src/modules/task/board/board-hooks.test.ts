@@ -17,6 +17,8 @@ const makeProjectPanel = (projectId: string, displayOrder: number, panelId = pro
 // A local, non-project panel (explainer). Used to stand in for any order-only board column.
 const makeExtraPanel = (panelId: string): BoardResizablePanel => ({ kind: 'explainer', panelId });
 
+const makeLabelsPanel = (panelId = 'labels'): BoardResizablePanel => ({ kind: 'labels', panelId });
+
 describe('getPanelDisplayOrder', () => {
   it('reads server-owned membership.displayOrder for project panels', () => {
     expect(getPanelDisplayOrder(makeProjectPanel('a', 42))).toBe(42);
@@ -26,8 +28,11 @@ describe('getPanelDisplayOrder', () => {
     expect(getPanelDisplayOrder(makeExtraPanel('explainer'), { explainer: 7 })).toBe(7);
   });
 
-  it('returns undefined when neither source has an order', () => {
-    expect(getPanelDisplayOrder(makeExtraPanel('explainer'))).toBeUndefined();
+  it('falls back to the kind default when neither source has an order', () => {
+    // Explainer leads the board, labels trails it; local orders override both
+    expect(getPanelDisplayOrder(makeExtraPanel('explainer'))).toBe(-1_000_000);
+    expect(getPanelDisplayOrder(makeLabelsPanel())).toBe(1_000_000);
+    expect(getPanelDisplayOrder(makeLabelsPanel(), { labels: 15 })).toBe(15);
   });
 
   it('prefers server-owned order over local override for project panels', () => {
@@ -52,14 +57,14 @@ describe('sortPanelsByOrder', () => {
     expect(sorted.map((p) => p.panelId)).toEqual(['explainer', 'b', 'ai-chat', 'a']);
   });
 
-  it('parks panels without any order at the end, preserving incoming relative order', () => {
+  it('anchors kind defaults: explainer leads, labels trails, unknown kinds park at the end', () => {
     const panels = [
       makeProjectPanel('a', 30),
+      makeLabelsPanel(),
       makeExtraPanel('explainer'),
-      makeExtraPanel('ai-chat'),
       makeProjectPanel('b', 10),
     ];
-    expect(sortPanelsByOrder(panels).map((p) => p.panelId)).toEqual(['b', 'a', 'explainer', 'ai-chat']);
+    expect(sortPanelsByOrder(panels).map((p) => p.panelId)).toEqual(['explainer', 'b', 'a', 'labels']);
   });
 
   it('keeps split panels grouped via their shared membership order', () => {

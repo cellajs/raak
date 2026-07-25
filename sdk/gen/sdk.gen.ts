@@ -4482,7 +4482,7 @@ export const deleteLabels = <ThrowOnError extends boolean = true>(
  * @param {string=} options.query.offset - `string` (optional)
  * @param {string=} options.query.limit - `string` (optional)
  * @param {string=} options.query.seqcursor - `string` (optional)
- * @param {enum=} options.query.mode - `enum` (optional)
+ * @param {string=} options.query.modes - `string` (optional)
  * @param {string=} options.query.projectid - `string` (optional)
  * @param {string=} options.query.workspaceid - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429

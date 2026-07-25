@@ -23,6 +23,8 @@ export type LabelsSearch = z.infer<typeof labelsSearchSchema>;
 
 export type LabelsEntityType = 'project' | 'workspace';
 export type BaseLabelsTableProps = { entity: LabelsEntityType; entityId: string };
+/** 'panel' renders inside a (narrow) board panel: compact column defaults. */
+export type LabelsTableVariant = 'default' | 'panel';
 export type LabelRow = Label & { siblingIds: string[]; projectIds: string[] };
 
 /** Stable row key getter function - defined outside component to prevent re-renders */
@@ -30,7 +32,11 @@ function rowKeyGetter(row: LabelRow) {
   return row.id;
 }
 
-const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
+const LabelsTable = ({
+  entity,
+  entityId,
+  variant = 'default',
+}: BaseLabelsTableProps & { variant?: LabelsTableVariant }) => {
   const { t } = useTranslation();
 
   const { organization, tenantId } = useOrganizationLayoutContext();
@@ -46,7 +52,7 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
 
   // Build columns
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const columnsFromHook = useColumns();
+  const columnsFromHook = useColumns(variant);
   const [hiddenOverrides, setHiddenOverrides] = useState<Record<string, boolean>>({});
   const columns = useMemo(
     () =>
@@ -72,9 +78,9 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
     ...(entity === 'workspace' ? { workspaceId: entityId } : { projectId: entityId }),
     organizationId,
     tenantId,
-    // The management table handles free-form tags; primary labels are managed via org
-    // settings (setupConfig) and epic labels get their own UI.
-    mode: 'secondary',
+    // The table handles free-form tags and epics; primary labels are managed via org
+    // settings (setupConfig).
+    modes: 'secondary,epic',
     ...search,
     limit,
   });
@@ -91,16 +97,18 @@ const LabelsTable = ({ entity, entityId }: BaseLabelsTableProps) => {
     select: ({ pages }) => pages.flatMap(({ items }) => items),
   });
 
-  // Deduplicate labels by name, aggregating counts and collecting sibling IDs.
+  // Deduplicate secondary labels by name, aggregating counts and collecting sibling IDs.
+  // Epics are concrete per-project rows and never group across projects.
   const rows = useMemo(() => {
     if (!fetchedRows) return [];
     const labelMap = new Map<string, LabelRow>();
 
     for (const label of fetchedRows) {
-      const existing = labelMap.get(label.name);
+      const groupKey = label.mode === 'epic' ? label.id : label.name;
+      const existing = labelMap.get(groupKey);
 
       if (!existing) {
-        labelMap.set(label.name, { ...label, siblingIds: [label.id], projectIds: [label.projectId] });
+        labelMap.set(groupKey, { ...label, siblingIds: [label.id], projectIds: [label.projectId] });
       } else {
         existing.usedCount = (existing.usedCount ?? 0) + (label.usedCount ?? 0);
         existing.siblingIds = [...existing.siblingIds, label.id];

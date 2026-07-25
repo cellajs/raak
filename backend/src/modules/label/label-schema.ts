@@ -88,7 +88,12 @@ export const labelListQuerySchema = paginationQuerySchema
   .extend({
     sort: z.enum(['name', 'usedCount']).default('name').optional(),
     order: z.enum(['asc', 'desc']).default('asc').optional(),
-    mode: z.enum(labelModes).optional(),
+    // Comma-separated label modes, e.g. ?modes=secondary,epic
+    modes: z
+      .string()
+      .optional()
+      .transform((val) => (val ? val.split(',').map((s) => s.trim()) : undefined))
+      .pipe(z.array(z.enum(labelModes)).optional()),
     projectId: z.string().max(maxLength.id).optional(),
     workspaceId: z.string().max(maxLength.id).optional(),
   })

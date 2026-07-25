@@ -1,8 +1,8 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import type { VariantProps } from 'class-variance-authority';
-import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, TagIcon, UsersIcon } from 'lucide-react';
-import { Suspense, useRef } from 'react';
+import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
@@ -23,12 +23,10 @@ import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
 import { flattenInfiniteData } from '~/query/basic/flatten';
-import { lazyNamed } from '~/utils/lazy-named';
-
-const LabelsTable = lazyNamed(() => import('~/modules/label/table/labels-table'), 'LabelsTable');
 
 /**
- * Action buttons for the workspace header, including create project, manage labels, and workspace settings.
+ * Action buttons for the workspace header, including create project and workspace settings.
+ * Labels are managed in the always-present labels board panel.
  */
 export const WorkspaceActionButtons = () => {
   const { t } = useTranslation();
@@ -51,7 +49,6 @@ export const WorkspaceActionButtons = () => {
 
   const refs = {
     add: useRef(null),
-    labels: useRef(null),
     workspace: useRef(null),
     project: useRef(null),
   };
@@ -72,22 +69,6 @@ export const WorkspaceActionButtons = () => {
       },
     );
 
-  const openLabelsSheet = () =>
-    useSheeter.getState().create(
-      <div className="container w-full">
-        <Suspense>
-          <LabelsTable entity={'workspace'} entityId={workspace.id} />
-        </Suspense>
-      </div>,
-      {
-        id: 'workspace-labels',
-        triggerRef: refs.labels,
-        side: 'right',
-        className: 'max-w-full lg:max-w-4xl',
-        title: t('c:manage_resource', { resource: t('c:label_other').toLowerCase() }),
-      },
-    );
-
   const actions = [
     {
       key: 'add',
@@ -96,14 +77,6 @@ export const WorkspaceActionButtons = () => {
       onClick: createNewProject,
       ref: refs.add,
       variant: 'plain',
-    },
-    {
-      key: 'labels',
-      icon: <TagIcon />,
-      label: t('c:manage_resource', { resource: t('c:label_other').toLowerCase() }),
-      onClick: openLabelsSheet,
-      ref: refs.labels,
-      variant: 'outline',
     },
     {
       key: 'workspace',

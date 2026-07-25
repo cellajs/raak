@@ -8,14 +8,22 @@ import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
+/** Default anchors for panels the server doesn't own: the explainer leads the board, the
+ *  labels panel trails it. Finite values keep the fractional reorder math working when a
+ *  neighboring panel is dragged against them; user reorders (local orders) override. */
+const kindDefaultOrders: Partial<Record<BoardResizablePanel['kind'], number>> = {
+  explainer: -1_000_000,
+  labels: 1_000_000,
+};
+
 /** Resolve a panel's displayOrder.
- *  Server-owned (project membership) wins; otherwise fall back to local store. */
+ *  Server-owned (project membership) wins; then the local store; then the kind default. */
 export function getPanelDisplayOrder(
   panel: BoardResizablePanel,
   localOrders: Record<string, number> = {},
 ): number | undefined {
   const membershipOrder = panel.kind === 'project' ? panel.project.membership?.displayOrder : undefined;
-  return membershipOrder ?? localOrders[panel.panelId];
+  return membershipOrder ?? localOrders[panel.panelId] ?? kindDefaultOrders[panel.kind];
 }
 
 /** Sort panels by their resolved displayOrder. Panels without an order keep their

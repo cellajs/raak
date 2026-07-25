@@ -1,5 +1,5 @@
 import { Link, useMatchRoute, useParams } from '@tanstack/react-router';
-import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
+import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, PlusIcon, SettingsIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -98,9 +98,6 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
               <span className="ml-1 max-xl:hidden">
                 {t('c:add_resource', { resource: t('c:project').toLowerCase() })}
               </span>
-            </Button>
-            <Button className="max-md:hidden" variant="outline">
-              <TagIcon />
             </Button>
             <Button className="max-md:hidden" variant="outline">
               <SettingsIcon />

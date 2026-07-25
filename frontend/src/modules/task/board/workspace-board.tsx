@@ -3,12 +3,13 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import { LabelsPanel } from '~/modules/label/labels-panel';
 import { useMemberUpdateMutation } from '~/modules/memberships/query-mutations';
 import { computePanelReorder, useBoardPanels } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ExplainerPanel } from '~/modules/task/panel/explainer-panel';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
-import { type BoardResizablePanel, EXPLAINER_PANEL_ID } from '~/modules/task/types';
+import { type BoardResizablePanel, EXPLAINER_PANEL_ID, LABELS_PANEL_ID } from '~/modules/task/types';
 
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
   const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
@@ -17,10 +18,13 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
   const alertsSeen = useAlertStore((s) => s.alertsSeen);
   const showExplainer = !!workspace && !alertsSeen.includes('welcome-text');
 
-  const extraPanels = useMemo((): BoardResizablePanel[] | undefined => {
-    if (!showExplainer) return undefined;
-    return [{ kind: 'explainer', panelId: EXPLAINER_PANEL_ID }];
-  }, [showExplainer]);
+  const extraPanels = useMemo(
+    (): BoardResizablePanel[] => [
+      ...(showExplainer ? [{ kind: 'explainer' as const, panelId: EXPLAINER_PANEL_ID }] : []),
+      ...(workspace ? [{ kind: 'labels' as const, panelId: LABELS_PANEL_ID }] : []),
+    ],
+    [showExplainer, workspace],
+  );
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
@@ -72,7 +76,11 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
     >
       {(panelId) => {
         const panel = panels.find((c) => c.panelId === panelId);
-        if (panel?.kind !== 'project') return <ExplainerPanel />;
+        if (!panel) return null;
+        if (panel.kind === 'labels') {
+          return workspace ? <LabelsPanel entity="workspace" entityId={workspace.id} /> : null;
+        }
+        if (panel.kind === 'explainer') return <ExplainerPanel />;
         return <ProjectBoardPanel project={panel.project} sectionFilters={panel.sectionFilters} />;
       }}
     </BoardLayout>

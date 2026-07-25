@@ -6611,7 +6611,7 @@ export type GetLabelsData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    mode?: 'primary' | 'secondary' | 'epic';
+    modes?: string;
     projectId?: string;
     workspaceId?: string;
   };
