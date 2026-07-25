@@ -8,7 +8,7 @@ import { labelSlug } from 'shared';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { deduplicateLabels } from '~/modules/label/deduplicate-labels';
+import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
 import { projectsListQueryOptions } from '~/modules/project/query';

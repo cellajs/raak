@@ -1,6 +1,6 @@
 import { createFileRoute, stripSearchParams } from '@tanstack/react-router';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
-import { combinedTaskSearchSchema, taskSearchDefaults } from '~/modules/task/search-params-schemas';
+import { boardSearchDefaults, boardSearchSchema } from '~/modules/task/search-params-schemas';
 import { WorkspaceRouteComponent } from '~/modules/workspace/route-components';
 import { workspaceRouteBeforeLoad } from '~/modules/workspace/route-logic';
 import { createErrorComponent } from '~/routes/-route-utils';
@@ -10,9 +10,9 @@ import { appTitle } from '~/utils/app-title';
  * Main workspace page with details and navigation.
  */
 export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/workspace/$slug')({
-  validateSearch: combinedTaskSearchSchema,
+  validateSearch: boardSearchSchema,
   // Absence means default: params equal to the default view are stripped from the URL
-  search: { middlewares: [stripSearchParams(taskSearchDefaults)] },
+  search: { middlewares: [stripSearchParams(boardSearchDefaults)] },
   staticData: {
     isAuth: true,
     floatingNavButtons: { left: 'menu' },

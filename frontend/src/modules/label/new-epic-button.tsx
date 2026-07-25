@@ -7,7 +7,7 @@ import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useLabelCreateMutation } from '~/modules/label/query';
-import type { BaseLabelsTableProps } from '~/modules/label/table/labels-table';
+import type { LabelsScopeProps } from '~/modules/label/types';
 import { findProjectByIdOrSlug, projectsListQueryOptions } from '~/modules/project/query';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
@@ -18,7 +18,7 @@ import { COALESCED } from '~/query/offline/prepared-mutation';
  * project-homed, so the workspace panel offers a project picker; targets are limited to
  * projects the user administers (the backend enforces the same authority).
  */
-export const NewEpicButton = ({ entity, entityId }: BaseLabelsTableProps) => {
+export const NewEpicButton = ({ entity, entityId }: LabelsScopeProps) => {
   const { t } = useTranslation();
   const { organization, tenantId } = useOrganizationLayoutContext();
   const { setSearch } = useSearchParams<{ labelPageId?: string }>({});

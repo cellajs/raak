@@ -1,29 +1,26 @@
 import type { Label } from 'sdk';
+import { patchDescriptionCaches } from '~/modules/common/blocknote/description-cache';
 import { labelQueryKeys, useLabelUpdateMutation } from '~/modules/label/query';
-import { cacheUpdate } from '~/query/basic/cache-mutations';
 import { findInCache } from '~/query/basic/find-in-list-cache';
-import type { ItemData } from '~/query/basic/types';
-import { queryClient } from '~/query/query-client';
 
 /**
- * Returns `updateData(description)` — the epic-description persistence policy, kept out of
- * the editor component. Mirrors the task variant:
+ * Returns `updateData(description, collaborative)` — the epic-description persistence policy,
+ * kept out of the editor component. Mirrors the task variant:
  * - collaborative (Yjs): the relay owns backend persistence, so this only patches the caches
  *   optimistically; the relay's materialization arrives via SSE with authoritative values.
  * - non-collaborative: persists via the standard update mutation (offline queue, HLC).
  */
-export const useLabelDescriptionUpdate = (label: Label, collaborative: boolean) => {
+export const useLabelDescriptionUpdate = (label: Label) => {
   const { mutateAsync: updateLabel } = useLabelUpdateMutation(label.tenantId, label.organizationId);
-  const orgKey = labelQueryKeys.list.org(label.organizationId);
 
-  return async (description: string) => {
+  return async (description: string, collaborative: boolean) => {
     if (collaborative) {
-      const patch = { description, updatedAt: new Date().toISOString() };
-      queryClient.setQueryData<Label>(labelQueryKeys.detail.byId(label.id), (old) =>
-        old ? { ...old, ...patch } : undefined,
+      patchDescriptionCaches(
+        'label',
+        label.id,
+        { detailKey: labelQueryKeys.detail.byId(label.id), listKey: labelQueryKeys.list.org(label.organizationId) },
+        { description, updatedAt: new Date().toISOString() },
       );
-      const cached = findInCache<Label>('label', label.id);
-      if (cached) cacheUpdate(orgKey, [{ ...cached, ...patch } as ItemData]);
       return;
     }
 

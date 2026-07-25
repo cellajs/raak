@@ -11,11 +11,11 @@ import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { deriveTasksQueryParams, fetchTasksForExport } from '~/modules/task/query';
 import type { ResolvedTaskTableProps } from '~/modules/task/table/tasks-table';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
-import type { BoardSearch as BoardSearchType, Task } from '~/modules/task/types';
+import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
 import { DisplayOptions } from '~/modules/workspace/header/display-options';
 
-type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchType>, 'setSearch' | 'queryKey'> &
+type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'> &
   Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & {
     isCompact: boolean;
     setIsCompact: (isCompact: boolean) => void;

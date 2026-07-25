@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon, ListFilterIcon, Trash2Icon } from 'lucide-react';
+import { ArrowLeftIcon, Trash2Icon } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { Spinner } from '~/modules/common/spinner';
-import { useLabelFilterToggle } from '~/modules/label/label-filter';
+import { findLabelGroup } from '~/modules/label/group-labels';
+import { LabelFilterButton } from '~/modules/label/label-filter';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import {
   labelQueryOptions,
@@ -13,16 +14,15 @@ import {
   useLabelDeleteMutation,
   useLabelUpdateMutation,
 } from '~/modules/label/query';
-import type { BaseLabelsTableProps } from '~/modules/label/table/labels-table';
+import type { LabelsScopeProps } from '~/modules/label/types';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
-import { cn } from '~/utils/cn';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelDescriptionForm = lazyNamed(() => import('~/modules/label/label-description-form'), 'LabelDescriptionForm');
 
-type LabelPageProps = BaseLabelsTableProps & { labelId: string };
+type LabelPageProps = LabelsScopeProps & { labelId: string };
 
 /**
  * In-panel label page: back navigation, in-place rename, filter-by toggle and delete.
@@ -35,7 +35,6 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
   const organizationId = organization.id;
 
   const { setSearch } = useSearchParams<{ labelPageId?: string }>({});
-  const { isActive, toggle } = useLabelFilterToggle();
 
   const { data: label, isLoading } = useQuery(labelQueryOptions(labelId, organizationId, tenantId));
 
@@ -53,9 +52,7 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
 
   const siblingIds = useMemo(() => {
     if (!label) return [];
-    if (label.mode === 'epic') return [label.id];
-    const siblings = (allLabels ?? []).filter((l) => l.mode === label.mode && l.name === label.name).map((l) => l.id);
-    return siblings.length ? siblings : [label.id];
+    return findLabelGroup(allLabels ?? [], label.id)?.siblingIds ?? [label.id];
   }, [label, allLabels]);
 
   const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
@@ -126,16 +123,7 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
 
         {label.mode === 'epic' && <Badge variant="secondary">{t('c:epic')}</Badge>}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('c:filter_by_resource', { resource: label.name })}
-          aria-pressed={isActive(label.name)}
-          onClick={() => toggle(label.name)}
-          className={cn('opacity-60 hover:opacity-100', isActive(label.name) && 'text-primary opacity-100')}
-        >
-          <ListFilterIcon />
-        </Button>
+        <LabelFilterButton name={label.name} />
         <Button
           variant="ghost"
           size="icon"

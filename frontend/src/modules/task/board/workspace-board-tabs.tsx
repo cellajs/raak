@@ -8,13 +8,10 @@ import { ScrollReset } from '~/modules/common/scroll-reset';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { sortByMembership } from '~/modules/task/helpers/board-helpers';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
-import { LABELS_PANEL_ID } from '~/modules/task/types';
+import { LABELS_PANEL_ID, LABELS_TAB_SLUG } from '~/modules/task/types';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelsTable = lazyNamed(() => import('~/modules/label/table/labels-table'), 'LabelsTable');
-
-/** Sentinel projectSlug for the mobile Labels tab; '~' can never appear in a real slug. */
-const LABELS_TAB_SLUG = '~labels';
 
 export function WorkspaceBoardTabs({
   projects,

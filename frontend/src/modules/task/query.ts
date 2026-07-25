@@ -4,9 +4,9 @@ import type { CreateTasksData, GetTasksData, StxBase, UpdateTaskData, UserMinima
 import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
 import { zTask } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
+import { deriveDescriptionCounts } from '~/modules/common/blocknote/derive-description-props';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { labelQueryKeys } from '~/modules/label/query';
-import { deriveDescriptionCounts } from '~/modules/task/helpers/derive-description-props';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';

@@ -18,7 +18,7 @@ import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import type { BoardSearch, ProjectResizablePanel, Task } from '~/modules/task/types';
+import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/task/types';
 import { useCurrentUser } from '~/modules/user/user-store';
 
 interface TasksHotkeysProps {
@@ -35,7 +35,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(tenantId, organization.id);
 
-  const search = useSearch({ strict: false }) as BoardSearch;
+  const search = useSearch({ strict: false }) as BoardSearchParams;
 
   const taskSheetId = search.taskSheetId;
   const isSheetOpen = !!taskSheetId;

@@ -6,6 +6,8 @@ import { isDebugMode } from '~/env';
 const maxEntries = 200;
 
 interface LabelRecencyState {
+  // Keyed by NAME, not slug/id: the picker suggests across the cross-project name group,
+  // and it only serves secondary labels (whose create-on-type names are slug-shaped anyway).
   usageMap: Record<string, number>; // "orgId:labelName" → epoch ms
   trackUsage: (organizationId: string, names: string[]) => void;
   getScore: (organizationId: string, name: string) => number;

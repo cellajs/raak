@@ -20,6 +20,9 @@ export const EXPLAINER_PANEL_ID = 'explainer';
  *  collapse-state key, so this string value must not change. */
 export const LABELS_PANEL_ID = 'labels';
 
+/** Sentinel projectSlug for the mobile Labels tab; '~' can never appear in a real slug. */
+export const LABELS_TAB_SLUG = '~labels';
+
 /** A board column: either a project panel (optionally a section-filtered split of one) or a
  *  local, non-project panel (explainer, labels). The `kind` discriminant replaces
  *  the old "any panel without a project is the explainer" heuristic. */
@@ -43,7 +46,7 @@ export type TaskCounts = {
   acceptedCutOff: number;
 };
 
-export type BoardSearch = z.infer<typeof tasksTableSearchSchema>;
+export type BoardSearchParams = z.infer<typeof tasksTableSearchSchema>;
 
 export type TaskState = 'collapsed' | 'editing' | 'expanded';
 

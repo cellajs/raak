@@ -9,6 +9,7 @@ import type { Attachment } from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { deriveDescriptionProps } from '~/modules/common/blocknote/derive-description-props';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
@@ -25,7 +26,6 @@ import {
   newTaskFormIsDirty,
   toggleCreateTaskForm,
 } from '~/modules/task/helpers/create-task';
-import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';

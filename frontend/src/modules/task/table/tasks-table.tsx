@@ -16,7 +16,7 @@ import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
 import { TableProjectsContext, useColumns } from '~/modules/task/table/tasks-columns';
 import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
-import type { BoardSearch, Task } from '~/modules/task/types';
+import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 const LIMIT = appConfig.requestLimits.tasksTable;
@@ -36,7 +36,7 @@ export type ResolvedTaskTableProps = Omit<TaskTableProps, 'projects'> & { projec
 
 export function TasksTable({ projects: projectsProp, workspace, publicView, organization, tenantId }: TaskTableProps) {
   const { t } = useTranslation();
-  const { search, setSearch } = useSearchParams<BoardSearch>({});
+  const { search, setSearch } = useSearchParams<BoardSearchParams>({});
 
   // Fetch projects for workspace tables; use provided projects for single-project tables
   const { data: fetchedData } = useInfiniteQuery({

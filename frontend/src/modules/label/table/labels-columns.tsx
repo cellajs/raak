@@ -1,18 +1,16 @@
 import { Link } from '@tanstack/react-router';
-import { DotIcon, ListFilterIcon, StickyNoteIcon } from 'lucide-react';
+import { DotIcon, StickyNoteIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { SpriteIcon } from '~/modules/common/icons/sprite-icon';
-import { useLabelFilterToggle } from '~/modules/label/label-filter';
+import { LabelFilterButton } from '~/modules/label/label-filter';
 import { isLabelColorToken, labelPalette } from '~/modules/label/label-palette';
-import type { LabelRow } from '~/modules/label/table/labels-table';
-import { Button } from '~/modules/ui/button';
+import type { LabelRow } from '~/modules/label/types';
 import { cn } from '~/utils/cn';
 
 export const useColumns = () => {
   const { t } = useTranslation();
-  const { isActive, toggle } = useLabelFilterToggle();
 
   return useMemo(() => {
     const cols: ColumnOrColumnGroup<LabelRow>[] = [
@@ -58,19 +56,7 @@ export const useColumns = () => {
         key: 'filter',
         name: '',
         width: 44,
-        renderCell: ({ row, tabIndex }) => (
-          <Button
-            variant="ghost"
-            size="xs"
-            tabIndex={tabIndex}
-            aria-label={t('c:filter_by_resource', { resource: row.name })}
-            aria-pressed={isActive(row.name)}
-            onClick={() => toggle(row.name)}
-            className={cn('opacity-60 hover:opacity-100', isActive(row.name) && 'text-primary opacity-100')}
-          >
-            <ListFilterIcon />
-          </Button>
-        ),
+        renderCell: ({ row, tabIndex }) => <LabelFilterButton name={row.name} size="xs" tabIndex={tabIndex} />,
       },
       {
         key: 'usedCount',
@@ -86,5 +72,5 @@ export const useColumns = () => {
       },
     ];
     return cols;
-  }, [isActive, toggle, t]);
+  }, [t]);
 };
