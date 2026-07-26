@@ -4,11 +4,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project, Workspace } from 'sdk';
 import { appConfig } from 'shared';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
+import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
@@ -60,10 +62,14 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const [isCompact, setIsCompact] = useState(true);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
+  // Highlight mode ('=' prefix): fetch unfiltered and tint matches client-side, like the board
+  const { highlight } = parseSearchQuery(q);
+  const effectiveSearch = highlight ? { ...search, q: '' } : search;
+
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const queryOptions = queryParams
-    ? tasksTableQueryOptions({ ...search, ...queryParams })
-    : publicTasksTableQueryOptions({ ...search, projectId: projects[0]?.id });
+    ? tasksTableQueryOptions({ ...effectiveSearch, ...queryParams })
+    : publicTasksTableQueryOptions({ ...effectiveSearch, projectId: projects[0]?.id });
 
   // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
   const { data, error, isLoading, isFetching, fetchNextPage, hasNextPage } = useInfiniteQuery(queryOptions as any) as {
@@ -87,8 +93,15 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   // runs a per-task text search.
   const rows = useMemo(() => {
     if (!fetchedRows) return undefined;
-    return isOnline ? fetchedRows : fetchedRows.filter((row) => searchFilterFunction(search, row));
-  }, [fetchedRows, isOnline, search]);
+    return isOnline || highlight ? fetchedRows : fetchedRows.filter((row) => searchFilterFunction(search, row));
+  }, [fetchedRows, isOnline, highlight, search]);
+
+  // Tint matches among the loaded rows in highlight mode (search-filter strips the marker)
+  const rowClass = useMemo(
+    () =>
+      highlight ? (row: Task) => (searchFilterFunction(search, row) ? searchHighlightRowClass : undefined) : undefined,
+    [highlight, search],
+  );
 
   // isFetching already includes next page fetch scenario
   const fetchMore = useCallback(async () => {
@@ -123,7 +136,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
       <div className="flex h-full flex-col gap-4">
         <TasksTableBar
           selected={selected}
-          searchVars={{ ...search, limit }}
+          searchVars={{ ...effectiveSearch, limit }}
           columns={columns}
           setColumns={setColumns}
           projects={projects}
@@ -145,9 +158,10 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
             error,
             isLoading,
             isFetching,
-            isFiltered: !!q,
+            isFiltered: !highlight && !!q,
             hasNextPage,
             fetchMore,
+            rowClass,
             selectedRows: selectedRowIds,
             onSelectedRowsChange,
             isRowSelectionDisabled,

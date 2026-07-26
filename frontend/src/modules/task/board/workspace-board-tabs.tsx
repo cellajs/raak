@@ -11,7 +11,7 @@ import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 import { LABELS_PANEL_ID, LABELS_TAB_SLUG } from '~/modules/task/types';
 import { lazyNamed } from '~/utils/lazy-named';
 
-const LabelsTable = lazyNamed(() => import('~/modules/label/table/labels-table'), 'LabelsTable');
+const LabelList = lazyNamed(() => import('~/modules/label/label-list'), 'LabelList');
 
 export function WorkspaceBoardTabs({
   projects,
@@ -64,9 +64,7 @@ export function WorkspaceBoardTabs({
       {workspace && <PageTabNav fallbackToFirst={!projectSlug} tabs={projectTabs} className="max-sm:border-t" />}
       {isLabelsTab && workspace ? (
         <Suspense>
-          <div className="p-2">
-            <LabelsTable entity="workspace" entityId={workspace.id} />
-          </div>
+          <LabelList entity="workspace" entityId={workspace.id} />
         </Suspense>
       ) : (
         <Suspense>

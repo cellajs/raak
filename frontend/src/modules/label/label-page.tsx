@@ -89,7 +89,7 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
   };
 
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-2 p-2">
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" aria-label={t('c:back')} onClick={goBack}>
           <ArrowLeftIcon className="icon-sm" />

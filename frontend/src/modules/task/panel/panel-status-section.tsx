@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { ChevronDownIcon, InfoIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
@@ -44,7 +45,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky
     return isIced ? expandIced : expandAccepted;
   });
 
-  const showTotal = !q?.trim().length || q?.trim().startsWith('=');
+  const { highlight: isHighlightSearch, effectiveQ } = parseSearchQuery(q);
+  const showTotal = !effectiveQ.length || isHighlightSearch;
 
   // Glow the section button when count increases while collapsed
   const prevCountRef = useRef(count);

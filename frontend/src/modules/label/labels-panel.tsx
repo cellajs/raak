@@ -10,7 +10,7 @@ import { LocalPanelShell } from '~/modules/task/panel/local-panel-shell';
 import { LABELS_PANEL_ID } from '~/modules/task/types';
 import { lazyNamed } from '~/utils/lazy-named';
 
-const LabelsTable = lazyNamed(() => import('~/modules/label/table/labels-table'), 'LabelsTable');
+const LabelList = lazyNamed(() => import('~/modules/label/label-list'), 'LabelList');
 
 /**
  * Always-present board panel hosting the labels table (secondary tags + epics).
@@ -28,12 +28,12 @@ export const LabelsPanel = ({ entity, entityId }: LabelsScopeProps) => {
       title={t('c:label_other')}
       headerActions={<NewEpicButton entity={entity} entityId={entityId} />}
     >
-      <div className="flex h-full flex-col overflow-y-auto p-2">
+      <div className="flex min-h-0 flex-1 flex-col">
         <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
           {labelPageId ? (
             <LabelPage labelId={labelPageId} entity={entity} entityId={entityId} />
           ) : (
-            <LabelsTable entity={entity} entityId={entityId} />
+            <LabelList entity={entity} entityId={entityId} />
           )}
         </Suspense>
       </div>

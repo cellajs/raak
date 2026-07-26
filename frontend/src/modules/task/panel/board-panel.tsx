@@ -1,5 +1,6 @@
 import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, useRef } from 'react';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { z } from 'zod';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
@@ -59,7 +60,7 @@ export const BoardPanel = memo(function BoardPanel({
   const filteredTasks = useMemo(() => {
     const matchedTasks = fetchedTasks.filter((task) => searchFilterFunction(search, task));
 
-    const isHighlightMode = search.q?.trim().startsWith('=') && search.q?.trim().replace('=', '').length;
+    const isHighlightMode = parseSearchQuery(search.q).highlight;
     return isHighlightMode
       ? fetchedTasks.map((task) =>
           matchedTasks.some(({ id }) => id === task.id) ? { ...task, isMatchingSearch: true } : task,

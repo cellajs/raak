@@ -1,5 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import { count, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -74,7 +75,8 @@ export async function getLabelsOp(
 
     // Tokenized search over name + description-derived keywords, mirroring task keyword
     // matching: every word must hit (AND across words, OR across columns per word).
-    const searchWords = q?.trim().toLowerCase().split(/\s+/).filter(Boolean) ?? [];
+    // parseSearchQuery strips the '=' highlight marker so marked queries behave like plain ones.
+    const searchWords = parseSearchQuery(q).effectiveQ.toLowerCase().split(/\s+/).filter(Boolean);
     for (const word of searchWords) {
       const wordFilter = or(ilike(labelsTable.name, `%${word}%`), ilike(labelsTable.keywords, `%${word}%`));
       if (wordFilter) labelsFilters.push(wordFilter);
