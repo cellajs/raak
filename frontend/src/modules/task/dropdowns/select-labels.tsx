@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQueries } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
-import { CheckIcon, ChevronDownIcon, DotIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, TagIcon } from 'lucide-react';
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
@@ -51,11 +51,7 @@ const renderLabelItem = (
       value={label.name}
       className="group flex w-full items-center gap-2 rounded-md leading-normal"
     >
-      <DotIcon
-        className="mr-1 ml-0.5 size-2.5 rounded-md text-background"
-        style={{ background: label.color || undefined }}
-        strokeWidth={6}
-      />
+      <TagIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
       <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
       <span className="pointer-events-none flex size-4 items-center justify-center">
         {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}

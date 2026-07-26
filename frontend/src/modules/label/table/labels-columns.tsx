@@ -1,13 +1,10 @@
 import { Link } from '@tanstack/react-router';
-import { DotIcon, StickyNoteIcon } from 'lucide-react';
+import { FlagIcon, StickyNoteIcon, TagIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
-import { SpriteIcon } from '~/modules/common/icons/sprite-icon';
 import { LabelFilterButton } from '~/modules/label/label-filter';
-import { isLabelColorToken, labelPalette } from '~/modules/label/label-palette';
 import type { LabelRow } from '~/modules/label/types';
-import { cn } from '~/utils/cn';
 
 export const useColumns = () => {
   const { t } = useTranslation();
@@ -15,23 +12,19 @@ export const useColumns = () => {
   return useMemo(() => {
     const cols: ColumnOrColumnGroup<LabelRow>[] = [
       {
-        key: 'color',
-        name: t('c:color'),
+        // Mode marker: tags vs epics. Label color stays in the data model but not in the UI.
+        key: 'mode',
+        name: '',
         width: 44,
-        renderCell: ({ row }) =>
-          row.icon ? (
-            // Epics (and any label carrying an icon) render their icon, palette-tinted
-            <div className="flex w-full justify-center">
-              <SpriteIcon
-                name={row.icon}
-                className={cn('icon-lg', isLabelColorToken(row.color) && labelPalette[row.color].icon)}
-              />
-            </div>
-          ) : (
-            <div className="flex w-full justify-center">
-              <DotIcon className="size-5.5 rounded-md" style={{ background: row.color || undefined }} strokeWidth={0} />
-            </div>
-          ),
+        renderCell: ({ row }) => (
+          <div className="flex w-full justify-center">
+            {row.mode === 'epic' ? (
+              <FlagIcon className="icon-md opacity-70" aria-label={t('c:epic')} />
+            ) : (
+              <TagIcon className="icon-md opacity-50" aria-label={t('c:label')} />
+            )}
+          </div>
+        ),
       },
       {
         key: 'name',

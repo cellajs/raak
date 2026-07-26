@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon, Trash2Icon } from 'lucide-react';
+import { ArrowLeftIcon, FlagIcon, TagIcon, Trash2Icon } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
@@ -7,7 +7,6 @@ import { useSearchParams } from '~/hooks/use-search-params';
 import { Spinner } from '~/modules/common/spinner';
 import { findLabelGroup } from '~/modules/label/group-labels';
 import { LabelFilterButton } from '~/modules/label/label-filter';
-import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import {
   labelQueryOptions,
   labelsQueryOptions,
@@ -96,7 +95,11 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
           <ArrowLeftIcon className="icon-sm" />
         </Button>
 
-        {label.icon && <PrimaryLabelIcon label={label} className="icon-md" />}
+        {label.mode === 'epic' ? (
+          <FlagIcon className="icon-md shrink-0 opacity-70" aria-hidden="true" />
+        ) : (
+          <TagIcon className="icon-md shrink-0 opacity-50" aria-hidden="true" />
+        )}
 
         {editingName !== null ? (
           <Input
