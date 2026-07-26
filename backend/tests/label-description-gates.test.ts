@@ -19,6 +19,8 @@ setTestConfig({ enabledAuthStrategies: ['passkey'] });
 const projectId = generateId();
 const epicLabelId = generateId();
 const secondaryLabelId = generateId();
+const promotableLabelId = generateId();
+const primaryLabelId = generateId();
 
 const descriptionBlocks = JSON.stringify([
   {
@@ -89,6 +91,8 @@ describe('Label description gates (epic documentation)', async () => {
     await db.insert(labelsTable).values([
       { ...baseLabel, id: epicLabelId, name: 'Checkout revamp', slug: 'checkout-revamp', mode: 'epic' },
       { ...baseLabel, id: secondaryLabelId, name: 'urgent', slug: 'urgent', mode: 'secondary' },
+      { ...baseLabel, id: promotableLabelId, name: 'payments', slug: 'payments', mode: 'secondary' },
+      { ...baseLabel, id: primaryLabelId, name: 'Bug', slug: 'bug', mode: 'primary' },
     ]);
   });
 
@@ -137,5 +141,42 @@ describe('Label description gates (epic documentation)', async () => {
       headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
     });
     expect(response.status).toBe(200);
+  });
+
+  it('requires project-admin authority to promote a tag to an epic', async () => {
+    const { response } = await call(updateLabel, {
+      path: path(promotableLabelId),
+      body: updateOps({ mode: 'epic' }),
+      headers: { ...defaultHeaders, Cookie: member.sessionCookie },
+    });
+    expect(response.status).toBe(403);
+  });
+
+  it('promotes a tag to an epic (and back) for an admin', async () => {
+    const promote = await call(updateLabel, {
+      path: path(promotableLabelId),
+      body: updateOps({ mode: 'epic' }),
+      headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
+    });
+    expect(promote.response.status).toBe(200);
+
+    const [promoted] = await db.select().from(labelsTable).where(eq(labelsTable.id, promotableLabelId));
+    expect(promoted.mode).toBe('epic');
+
+    const demote = await call(updateLabel, {
+      path: path(promotableLabelId),
+      body: updateOps({ mode: 'secondary' }),
+      headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
+    });
+    expect(demote.response.status).toBe(200);
+  });
+
+  it('never changes mode on a primary label, even for an admin', async () => {
+    const { response } = await call(updateLabel, {
+      path: path(primaryLabelId),
+      body: updateOps({ mode: 'epic' }),
+      headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
+    });
+    expect(response.status).toBe(403);
   });
 });

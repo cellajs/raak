@@ -5,9 +5,9 @@ import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
 /**
- * Filter-by-label toggle over the shared board search: setting the search `q` to a label's
- * name filters tasks (backend matches label names into an array-overlap filter) and the
- * labels panel simultaneously. Toggling the same name again clears the filter.
+ * Filter-by-label toggle over the shared board search. It writes the '=' highlight form
+ * of the label name, so tasks carrying the label (and the label's own tile) get tinted
+ * across the board instead of hiding everything else. Toggling the same name clears it.
  */
 export const useLabelFilterToggle = () => {
   const { search, setSearch } = useSearchParams<{ q?: string }>({});
@@ -15,8 +15,8 @@ export const useLabelFilterToggle = () => {
 
   return {
     activeFilter,
-    isActive: (name: string) => activeFilter === name,
-    toggle: (name: string) => setSearch({ q: activeFilter === name ? '' : name }),
+    isActive: (name: string) => activeFilter === `=${name}`,
+    toggle: (name: string) => setSearch({ q: activeFilter === `=${name}` ? '' : `=${name}` }),
   };
 };
 
@@ -27,7 +27,7 @@ interface LabelFilterButtonProps {
   className?: string;
 }
 
-/** Toggle button for filtering the board by a label's name (table column + label page). */
+/** Toggle button for highlighting a label across the board (label tile + label page). */
 export const LabelFilterButton = ({ name, size = 'icon', tabIndex, className }: LabelFilterButtonProps) => {
   const { t } = useTranslation();
   const { isActive, toggle } = useLabelFilterToggle();
@@ -39,7 +39,12 @@ export const LabelFilterButton = ({ name, size = 'icon', tabIndex, className }: 
       tabIndex={tabIndex}
       aria-label={t('c:filter_by_resource', { resource: name })}
       aria-pressed={isActive(name)}
-      onClick={() => toggle(name)}
+      onClick={(event) => {
+        // Rendered inside the tile's Link: the toggle must not navigate to the label page
+        event.preventDefault();
+        event.stopPropagation();
+        toggle(name);
+      }}
       className={cn('opacity-60 hover:opacity-100', isActive(name) && 'text-primary opacity-100', className)}
     >
       <ListFilterIcon />

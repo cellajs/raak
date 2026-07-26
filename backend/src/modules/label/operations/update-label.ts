@@ -42,8 +42,19 @@ export async function updateLabelOp(
       });
     }
 
-    // Managing primary/epic labels otherwise requires project-admin authority (project update permission)
-    if (before.mode !== 'secondary' && !descriptionOnly) {
+    // Primary rows are the org's task types; their mode never changes (the schema already
+    // limits transitions to secondary <-> epic)
+    const modeChange = 'mode' in (rawOps ?? {});
+    if (modeChange && before.mode === 'primary') {
+      throw new AppError(403, 'forbidden', 'warn', {
+        entityType: 'label',
+        meta: { reason: 'Primary labels cannot change mode' },
+      });
+    }
+
+    // Managing primary/epic labels, and promoting a tag to an epic, requires project-admin
+    // authority (project update permission)
+    if ((before.mode !== 'secondary' || modeChange) && !descriptionOnly) {
       await getValidChannel(txCtx, before.projectId, 'project', 'update');
     }
 

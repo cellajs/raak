@@ -27,7 +27,14 @@ export const LABELS_TAB_SLUG = '~labels';
  *  local, non-project panel (explainer, labels). The `kind` discriminant replaces
  *  the old "any panel without a project is the explainer" heuristic. */
 export type BoardResizablePanel =
-  | { kind: 'project'; project: EnrichedProject; sectionFilters?: SectionsValue; panelId: string }
+  | {
+      kind: 'project';
+      project: EnrichedProject;
+      sectionFilters?: SectionsValue;
+      /** Index within the project's viewSections; seeds a distinct default order per split panel. */
+      sectionIndex?: number;
+      panelId: string;
+    }
   | { kind: 'explainer'; panelId: string }
   | { kind: 'labels'; panelId: string };
 

@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { ArrowLeftIcon, FlagIcon, TagIcon, Trash2Icon } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isUnconditionalCan } from 'shared';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { Spinner } from '~/modules/common/spinner';
@@ -14,9 +15,11 @@ import {
   useLabelUpdateMutation,
 } from '~/modules/label/query';
 import type { LabelsScopeProps } from '~/modules/label/types';
+import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
+import { Switch } from '~/modules/ui/switch';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelDescriptionForm = lazyNamed(() => import('~/modules/label/label-description-form'), 'LabelDescriptionForm');
@@ -56,6 +59,10 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
 
   const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
   const deleteLabels = useLabelDeleteMutation(tenantId, organizationId);
+
+  // Tag <-> epic transitions require project-admin authority (backend enforces the same)
+  const project = label ? findProjectByIdOrSlug(label.projectId, tenantId) : undefined;
+  const canManageEpic = label?.mode !== 'primary' && isUnconditionalCan(project?.can?.project?.update);
 
   const [editingName, setEditingName] = useState<string | null>(null);
 
@@ -137,6 +144,24 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
           <Trash2Icon />
         </Button>
       </div>
+
+      {/* Tag <-> epic switch (project admins): promoting acts on this row only; name-group
+          siblings in other projects stay tags. Enabling reveals the description below. */}
+      {canManageEpic && (
+        <div className="flex items-center gap-2 px-2">
+          <Switch
+            id={`epic-switch-${label.id}`}
+            checked={label.mode === 'epic'}
+            onCheckedChange={(checked) =>
+              updateLabel.mutate({ id: label.id, ops: { mode: checked ? 'epic' : 'secondary' } })
+            }
+            aria-label={t('c:epic')}
+          />
+          <label htmlFor={`epic-switch-${label.id}`} className="cursor-pointer select-none text-sm leading-none">
+            {t('c:epic')}
+          </label>
+        </div>
+      )}
 
       {/* Epic documentation: collaborative description editor (epics only) */}
       {label.mode === 'epic' && (

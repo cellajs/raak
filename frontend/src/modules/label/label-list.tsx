@@ -12,6 +12,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
+import { LabelFilterButton } from '~/modules/label/label-filter';
 import { labelsQueryOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsScopeProps } from '~/modules/label/types';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
@@ -88,6 +89,7 @@ export const LabelList = ({ entity, entityId }: LabelsScopeProps) => {
                 <TagIcon className="icon-md shrink-0 opacity-50" aria-hidden="true" />
               )}
               <span className="grow truncate">{row.name}</span>
+              <LabelFilterButton name={row.name} size="xs" tabIndex={-1} />
               {entity === 'workspace' && row.projectIds.length > 1 && (
                 <AvatarGroup limit={3}>
                   <AvatarGroupList>

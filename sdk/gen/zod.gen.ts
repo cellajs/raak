@@ -2850,6 +2850,7 @@ export const zUpdateLabelBody = z.object({
     icon: z.string().max(255).nullish(),
     displayOrder: z.number().optional(),
     description: z.string().max(1000000).nullish(),
+    mode: z.enum(['secondary', 'epic']).optional(),
     organizationTracked: z.boolean().optional(),
   }),
   stx: zStxBase,

@@ -91,10 +91,11 @@ export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: 
     if (!viewSections?.length) return [{ kind: 'project', project, panelId: project.id }];
 
     // If split filters exist, create a panel for each status
-    return viewSections.map((sectionCriteria) => ({
+    return viewSections.map((sectionCriteria, sectionIndex) => ({
       kind: 'project',
       project,
       sectionFilters: sectionCriteria,
+      sectionIndex,
       panelId: makePanelKey(project.id, sectionCriteria),
     }));
   });

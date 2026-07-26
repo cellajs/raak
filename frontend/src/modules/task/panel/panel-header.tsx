@@ -1,7 +1,5 @@
-import { Link } from '@tanstack/react-router';
-import { FunnelIcon, PlusIcon } from 'lucide-react';
+import { FunnelIcon, PlusIcon, SquareCheckBigIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -27,8 +25,6 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
   const boardId = useBoardStore((state) => state.activeBoardId)!;
   const boardType = useBoardStore((state) => state.activeBoardType)!;
 
-  const { organization, tenantId } = useOrganizationLayoutContext();
-
   const isInWorkspace = boardType === 'workspace';
 
   const panelsSectionView = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);
@@ -52,11 +48,6 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
   const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[project.id] !== undefined);
 
   const toggleCreateForm = () => toggleCreateTaskForm(project);
-
-  const projectLinkProps = {
-    to: '/$tenantId/$organizationSlug/project/$slug' as const,
-    params: { slug: project.slug, organizationSlug: organization.slug, tenantId },
-  };
 
   // Build leading slot
   const leadingSlot = (() => {
@@ -115,16 +106,15 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
         );
       }
 
-      // In project view: show funnel icon + label.
+      // In project view: funnel icon + section label as the drag handle.
       return (
-        <Button
-          variant="ghost"
-          disabled={!isInWorkspace}
+        <PanelDragHandleButton
+          name={formatSectionLabel(sectionFilters)}
+          fallbackLabel={formatSectionLabel(sectionFilters)}
           className={cn(
             'flex h-auto items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
             isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
           )}
-          render={<Link {...projectLinkProps} draggable={false} />}
         >
           <div className={cn('flex justify-center', 'min-w-8')}>
             <FunnelIcon className="h-4 w-4 shrink-0" />
@@ -134,40 +124,52 @@ export const TaskPanelHeader = ({ project, sectionFilters }: Pick<BoardPanelProp
               <span>{formatSectionLabel(sectionFilters)}</span>
             </div>
           )}
-        </Button>
+        </PanelDragHandleButton>
       );
     }
 
-    return null;
+    // Unsplit panel in project view: generic tasks handle; project identity lives in the page header.
+    return (
+      <PanelDragHandleButton
+        name={t('c:task_other')}
+        fallbackLabel={t('c:task_other')}
+        className={cn(
+          'flex h-auto items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
+          isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
+        )}
+      >
+        <div className={cn('flex justify-center', 'min-w-8')}>
+          <SquareCheckBigIcon className="h-4 w-4 shrink-0" />
+        </div>
+        {!isCollapsed && <div className="truncate font-semibold leading-6">{t('c:task_other')}</div>}
+      </PanelDragHandleButton>
+    );
   })();
 
   // Build actions slot
-  const actionsSlot =
-    !isCollapsed && isInWorkspace ? (
-      <>
-        {isReadOnly && (
-          <Badge variant="plain" className="font-normal text-xs opacity-75">
-            {t('c:read_only')}
-          </Badge>
-        )}
-        {isPrimary && <PanelProjectActions project={project} className="h-8 px-2" />}
-        {!isReadOnly && (
-          <Button
-            data-form-dirty={hasDraft}
-            variant="plain"
-            size="xs"
-            className="relative hidden rounded sm:inline-flex"
-            onClick={toggleCreateForm}
-          >
-            <Badge className="absolute -top-1 -right-1 z-100 flex in-data-[form-dirty=false]:hidden h-2 w-2 justify-center p-0" />
-            <PlusIcon
-              className={cn('size-4.5', 'transition-transform duration-200', isCreateFormOpen && 'rotate-45')}
-            />
-            <span className="ml-1">{t('c:task')}</span>
-          </Button>
-        )}
-      </>
-    ) : undefined;
+  const actionsSlot = !isCollapsed ? (
+    <>
+      {isReadOnly && (
+        <Badge variant="plain" className="font-normal text-xs opacity-75">
+          {t('c:read_only')}
+        </Badge>
+      )}
+      {isInWorkspace && isPrimary && <PanelProjectActions project={project} className="h-8 px-2" />}
+      {!isReadOnly && (
+        <Button
+          data-form-dirty={hasDraft}
+          variant="plain"
+          size="xs"
+          className="relative hidden rounded sm:inline-flex"
+          onClick={toggleCreateForm}
+        >
+          <Badge className="absolute -top-1 -right-1 z-100 flex in-data-[form-dirty=false]:hidden h-2 w-2 justify-center p-0" />
+          <PlusIcon className={cn('size-4.5', 'transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
+          <span className="ml-1">{t('c:task')}</span>
+        </Button>
+      )}
+    </>
+  ) : undefined;
 
   return (
     <BoardPanelHeader className="bg-card" leading={leadingSlot} actions={actionsSlot} isCollapsed={!!isCollapsed} />

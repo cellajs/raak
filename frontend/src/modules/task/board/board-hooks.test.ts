@@ -14,6 +14,19 @@ const makeProjectPanel = (projectId: string, displayOrder: number, panelId = pro
   } as unknown as EnrichedProject,
 });
 
+// A section-filtered split panel of a project (sectionIndex seeds its default order offset)
+const makeSplitPanel = (
+  projectId: string,
+  displayOrder: number,
+  sectionIndex: number,
+  panelId: string,
+): BoardResizablePanel => ({
+  ...makeProjectPanel(projectId, displayOrder, panelId),
+  kind: 'project',
+  sectionFilters: { status: [sectionIndex] },
+  sectionIndex,
+});
+
 // A local, non-project panel (explainer). Used to stand in for any order-only board column.
 const makeExtraPanel = (panelId: string): BoardResizablePanel => ({ kind: 'explainer', panelId });
 

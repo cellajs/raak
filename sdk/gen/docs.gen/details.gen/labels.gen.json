@@ -1242,6 +1242,11 @@
                 "required": false,
                 "maxLength": 1000000
               },
+              "mode": {
+                "type": "string",
+                "required": false,
+                "enum": ["secondary", "epic"]
+              },
               "organizationTracked": { "type": "boolean", "required": false }
             }
           },

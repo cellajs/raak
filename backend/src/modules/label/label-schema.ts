@@ -78,6 +78,8 @@ export const labelContract = evolutionContract.product('label', {
     displayOrder: z.number(),
     // Epic documentation; the update op rejects description edits on other modes
     description: z.string().max(maxLength.html).nullable(),
+    // Tag <-> epic transitions (admin-gated in the op); primary rows never change mode
+    mode: z.enum(['secondary', 'epic']),
     // Setting true relinks a primary label to its setupConfig entry (server re-syncs fields)
     organizationTracked: z.boolean(),
   },

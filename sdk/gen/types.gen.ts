@@ -6803,6 +6803,7 @@ export type UpdateLabelData = {
       icon?: string | null;
       displayOrder?: number;
       description?: string | null;
+      mode?: 'secondary' | 'epic';
       organizationTracked?: boolean;
     };
     stx: StxBase;

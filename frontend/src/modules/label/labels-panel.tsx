@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { Spinner } from '~/modules/common/spinner';
 import { LabelPage } from '~/modules/label/label-page';
-import { NewEpicButton } from '~/modules/label/new-epic-button';
 import type { LabelsScopeProps } from '~/modules/label/types';
 import { LocalPanelShell } from '~/modules/task/panel/local-panel-shell';
 import { LABELS_PANEL_ID } from '~/modules/task/types';
@@ -22,12 +21,7 @@ export const LabelsPanel = ({ entity, entityId }: LabelsScopeProps) => {
   const labelPageId = search.labelPageId;
 
   return (
-    <LocalPanelShell
-      panelId={LABELS_PANEL_ID}
-      icon={<TagIcon />}
-      title={t('c:label_other')}
-      headerActions={<NewEpicButton entity={entity} entityId={entityId} />}
-    >
+    <LocalPanelShell panelId={LABELS_PANEL_ID} icon={<TagIcon />} title={t('c:label_other')}>
       <div className="flex min-h-0 flex-1 flex-col">
         <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
           {labelPageId ? (

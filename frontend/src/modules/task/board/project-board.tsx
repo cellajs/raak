@@ -1,8 +1,9 @@
 import { useSearch } from '@tanstack/react-router';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
+import { useBoardStore } from '~/modules/common/board/board-store';
 import { LabelsPanel } from '~/modules/label/labels-panel';
-import { useBoardPanels } from '~/modules/task/board/board-hooks';
+import { computePanelReorder, useBoardPanels } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 import { type BoardResizablePanel, LABELS_PANEL_ID } from '~/modules/task/types';
@@ -17,6 +18,20 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
     [publicView],
   );
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
+
+  const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
+
+  // All reorders on a single-project board persist device-locally: membership displayOrder
+  // is owned by the workspace board and must not change from here.
+  const handlePanelReorder = useCallback(
+    (newOrder: string[], sourcePanelId: string) => {
+      const localOrders = useBoardStore.getState().boardPanelOrders[boardId];
+      const result = computePanelReorder(panels, localOrders, newOrder, sourcePanelId, { persist: 'local' });
+      if (result?.kind !== 'local') return;
+      setPanelOrder(boardId, result.panelId, result.displayOrder);
+    },
+    [boardId, panels, setPanelOrder],
+  );
 
   /** Opening a label page expands and reveals the labels panel (deep links, filter jumps) */
   const lastExpandedLabelPage = useRef<string | undefined>(undefined);
@@ -34,6 +49,8 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       defaultLayout={defaultLayout}
       onLayoutChanged={handleLayoutChanged}
       autoHeight
+      reorderable={!publicView}
+      onPanelReorder={handlePanelReorder}
     >
       {(panelId) => {
         const col = panels.find((c) => c.panelId === panelId);

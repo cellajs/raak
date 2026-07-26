@@ -42,7 +42,6 @@ export const BoardPanel = memo(function BoardPanel({
   const isMobile = useBreakpointBelow('sm');
   const { search } = useSearchParams<BoardSearchProps>({});
   const boardId = useBoardStore((state) => state.activeBoardId)!;
-  const boardType = useBoardStore((state) => state.activeBoardType)!;
 
   // Mobile FAB: auto-hide on scroll, show draft badge
   const { isVisible: showFab } = useScrollVisibility(isMobile);
@@ -134,9 +133,7 @@ export const BoardPanel = memo(function BoardPanel({
         </div>
       ) : (
         <div className="flex h-full flex-col">
-          {(boardType !== 'project' || sectionFilters) && (
-            <TaskPanelHeader project={project} sectionFilters={sectionFilters} />
-          )}
+          <TaskPanelHeader project={project} sectionFilters={sectionFilters} />
           <div
             ref={panelRef}
             data-highlighted={highlightProject ? 'true' : undefined}
