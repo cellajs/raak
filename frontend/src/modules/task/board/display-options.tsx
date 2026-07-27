@@ -28,7 +28,9 @@ const DisplayOptions = ({ className = '' }: Props) => {
   const { view = 'board' } = useSearch({ from: fromRoute }) as { view?: 'board' | 'table' };
 
   const currentValue = view || 'board';
-  const [hoveredValue, setHoveredValue] = useState<string | null>(currentValue || null);
+  // Null means "not hovering": the tooltip and hover resets fall back to the live currentValue,
+  // so a view change while unhovered can't leave a stale captured value behind.
+  const [hoveredValue, setHoveredValue] = useState<string | null>(null);
 
   const handleItemChange = (value: string | string[]) => {
     if (typeof value === 'string') {
@@ -37,7 +39,7 @@ const DisplayOptions = ({ className = '' }: Props) => {
   };
 
   return (
-    <TooltipButton toolTipContent={t(`c:${hoveredValue}_view`)}>
+    <TooltipButton toolTipContent={t(`c:${hoveredValue ?? currentValue}_view`)}>
       <ToggleGroup
         type="single"
         variant="merged"
@@ -50,9 +52,9 @@ const DisplayOptions = ({ className = '' }: Props) => {
             key={value}
             value={value}
             onMouseEnter={() => setHoveredValue(value)}
-            onMouseLeave={() => setHoveredValue(currentValue)}
+            onMouseLeave={() => setHoveredValue(null)}
             onFocus={() => setHoveredValue(value)}
-            onBlur={() => setHoveredValue(currentValue)}
+            onBlur={() => setHoveredValue(null)}
           >
             {value === 'board' && <SquareKanbanIcon />}
             {value === 'table' && <Rows4Icon />}

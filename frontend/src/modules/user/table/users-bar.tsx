@@ -1,4 +1,4 @@
-import { MailIcon, SquareXIcon, TrashIcon } from 'lucide-react';
+import { MailIcon, TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColumnsView } from '~/modules/common/data-table/columns-view';
@@ -16,6 +16,7 @@ import type { BaseTableBarProps, CallbackArgs } from '~/modules/common/data-tabl
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { FocusView } from '~/modules/common/focus-view';
 import { SelectRole } from '~/modules/common/form-fields/select-role';
+import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { DeleteUsers } from '~/modules/user/delete-users';
@@ -93,7 +94,7 @@ export const UsersTableBar = ({
 
     createDialog(<DeleteUsers dialog users={selected} callback={callback} />, {
       id: 'delete-users',
-      triggerRef: inviteButtonRef,
+      triggerRef: deleteButtonRef,
       className: 'max-w-xl',
       title: t('c:delete'),
       description: t('c:confirm.delete_resource', {
@@ -109,33 +110,15 @@ export const UsersTableBar = ({
         {/* Table filter bar */}
         <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
           <FilterBarActions>
-            {selected.length > 0 ? (
-              <>
-                <TableBarButton
-                  ref={deleteButtonRef}
-                  variant="destructive"
-                  onClick={openDeleteDialog}
-                  className="relative"
-                  badge={selected.length}
-                  icon={TrashIcon}
-                  label="c:delete"
-                />
-
-                <TableBarButton variant="ghost" onClick={clearSelection} icon={SquareXIcon} label="c:clear" />
-              </>
-            ) : (
-              !isFiltered && (
-                <TableBarButton
-                  ref={inviteButtonRef}
-                  icon={MailIcon}
-                  label="c:invite"
-                  onClick={() => openInviteDialog()}
-                />
-              )
+            {!isFiltered && (
+              <TableBarButton
+                ref={inviteButtonRef}
+                icon={MailIcon}
+                label="c:invite"
+                onClick={() => openInviteDialog()}
+              />
             )}
-            {selected.length === 0 && (
-              <TableCount count={total} label="c:user" isFiltered={isFiltered} onResetFilters={onResetFilters} />
-            )}
+            <TableCount count={total} label="c:user" isFiltered={isFiltered} onResetFilters={onResetFilters} />
           </FilterBarActions>
 
           <div className="sm:grow" />
@@ -158,6 +141,17 @@ export const UsersTableBar = ({
         {/* Focus view */}
         <FocusView iconOnly />
       </TableBarContainer>
+
+      {/* Floating actions for the current selection */}
+      <SelectionActionBar count={selected.length} onClear={clearSelection}>
+        <TableBarButton
+          ref={deleteButtonRef}
+          variant="destructive"
+          onClick={openDeleteDialog}
+          icon={TrashIcon}
+          label="c:delete"
+        />
+      </SelectionActionBar>
 
       {/* Container for embedded dialog */}
       <div ref={inviteContainerRef} className="empty:hidden" />

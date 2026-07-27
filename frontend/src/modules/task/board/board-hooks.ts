@@ -3,16 +3,20 @@ import { getOrderBetween } from 'shared/utils/display-order';
 import { useShallow } from 'zustand/react/shallow';
 import type { BoardLayoutPanel } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
+import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
 /** Default anchors for panels the server doesn't own: the explainer leads the board, the
- *  labels panel trails it. Finite values keep the fractional reorder math working when a
- *  neighboring panel is dragged against them; user reorders (local orders) override. */
-const kindDefaultOrders: Partial<Record<BoardResizablePanel['kind'], number>> = {
+ *  labels panel trails it, and project panels without an enriched membership (e.g. the
+ *  single-project board) sit in between. Finite values keep the fractional reorder math working
+ *  when a neighboring panel is dragged against them; user reorders (local orders) override. */
+const kindDefaultOrders: Record<BoardResizablePanel['kind'], number> = {
   explainer: -1_000_000,
+  project: 0,
   labels: 1_000_000,
 };
 
@@ -31,13 +35,30 @@ export function getPanelDisplayOrder(
   if (localOrder !== undefined) return localOrder;
 
   if (panel.kind === 'project') {
-    const membershipOrder = panel.project.membership?.displayOrder;
-    if (membershipOrder === undefined) return undefined;
-    if (panel.sectionFilters) return membershipOrder + (panel.sectionIndex ?? 0) * splitSectionOrderStep;
-    return membershipOrder;
+    const anchor = panel.project.membership?.displayOrder ?? kindDefaultOrders.project;
+    if (panel.sectionFilters) return anchor + (panel.sectionIndex ?? 0) * splitSectionOrderStep;
+    return anchor;
   }
 
   return kindDefaultOrders[panel.kind];
+}
+
+/** The non-project ("local") panels a board shows, in canonical order: the explainer leads and
+ *  the labels panel trails (the kind default orders below re-sort them anyway). Single source of
+ *  truth shared by the live boards and the loading skeleton so the two never disagree on which
+ *  local panels exist. The explainer appears only when its welcome text is unseen; the labels
+ *  panel appears on every board except an anonymous public view. */
+export function buildBoardExtraPanels({
+  showExplainer = false,
+  publicView = false,
+}: {
+  showExplainer?: boolean;
+  publicView?: boolean;
+} = {}): BoardResizablePanel[] {
+  const panels: BoardResizablePanel[] = [];
+  if (showExplainer) panels.push({ kind: 'explainer', panelId: EXPLAINER_PANEL_ID });
+  if (!publicView) panels.push({ kind: 'labels', panelId: LABELS_PANEL_ID });
+  return panels;
 }
 
 /** Sort panels by their resolved displayOrder. Panels without an order keep their
@@ -110,8 +131,7 @@ export function computePanelReorder(
   // Float collision — skip; a rebalance pass would be needed to recover.
   if (newDisplayOrder === null) return null;
 
-  const sourceProject =
-    sourcePanel.kind === 'project' && !sourcePanel.sectionFilters ? sourcePanel.project : undefined;
+  const sourceProject = sourcePanel.kind === 'project' && !sourcePanel.sectionFilters ? sourcePanel.project : undefined;
   if (options?.persist !== 'local' && sourceProject?.membership) {
     if (newDisplayOrder === sourceProject.membership.displayOrder) return null;
     return {

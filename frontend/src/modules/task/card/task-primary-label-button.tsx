@@ -1,6 +1,6 @@
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
+import { useReadOnlyInert } from '~/modules/project/use-read-only';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
-import { useReadOnlyInert } from '~/modules/task/hooks/use-read-only';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';

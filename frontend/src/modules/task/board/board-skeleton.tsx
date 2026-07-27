@@ -1,70 +1,90 @@
 import { Link, useMatchRoute, useParams } from '@tanstack/react-router';
-import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, PlusIcon, SettingsIcon } from 'lucide-react';
+import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { nanoid } from 'shared/utils/nanoid';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { COLLAPSED_PANEL_MIN_WIDTH, PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
+import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { PageTab } from '~/modules/common/page/tab-nav';
-import type { EnrichedProject } from '~/modules/project/types';
-import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { buildBoardExtraPanels, sortPanelsByOrder } from '~/modules/task/board/board-hooks';
+import { DisplayOptions } from '~/modules/task/board/display-options';
+import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { BoardSearch } from '~/modules/task/board-search';
 import { formatSectionLabel, normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { statusSectionColors } from '~/modules/task/task-styles';
+import { statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
+import type { BoardResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
-import { DisplayOptions } from '~/modules/workspace/header/display-options';
 import { cn } from '~/utils/cn';
 
-type SkeletonPanel = { panelId: string; project?: EnrichedProject; sectionFilters?: SectionsValue };
+/** The mobile placeholder column carries no project or kind; desktop columns are real board panels. */
+type SkeletonColumn = { kind: 'mobile'; panelId: string } | BoardResizablePanel;
 
 interface BoardSkeletonProps {
   boardId: string;
   projects?: Project[];
   projectPage?: boolean;
+  publicView?: boolean;
+  /** Suppress the top task bar when a real `BoardHeader` already renders above the skeleton. */
+  withHeader?: boolean;
   rowCount?: number;
   rowHeight?: number;
 }
 
 /**
- * Render skeleton per panel based on the current board layout
+ * Render skeleton per panel based on the current board layout. Project panels get task-row
+ * placeholders; the labels and getting-started panels render through their real `LocalPanelShell`
+ * frame so their header, collapsed handle and persisted width match the live board exactly.
  */
-export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...prop }: BoardSkeletonProps) => {
+export const BoardSkeleton = ({
+  boardId,
+  projects = [],
+  projectPage = false,
+  publicView = false,
+  withHeader = true,
+  rowCount,
+  rowHeight,
+}: BoardSkeletonProps) => {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
   const isMobile = useBreakpointBelow('sm');
 
-  const isInWorkspace = matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
+  const isInWorkspace = !!matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
   const panelStateMap = useTaskBoardStore((state) => state.panelData[boardId]);
+  const panelCollapseState = useBoardStore((state) => state.panelCollapseState);
+  const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
+  const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
 
-  // Skeleton columns need only an id, plus a project/filters when drawing a project header.
-  // Project panels from prepareBoardPanels satisfy this; the mobile placeholder has neither.
-  const panels: SkeletonPanel[] = useMemo(
-    () => (isMobile ? [{ panelId: 'mobilePanel' }] : prepareBoardPanels(projects, panelStateMap)),
-    [panelStateMap, projects, isMobile],
-  );
+  // Match the live board's local-panel set so the skeleton shows the same labels / explainer columns.
+  const alertsSeen = useAlertStore((s) => s.alertsSeen);
+  const showExplainer = isInWorkspace && !alertsSeen.includes('welcome-text');
+  const extraPanels = useMemo(() => buildBoardExtraPanels({ showExplainer, publicView }), [showExplainer, publicView]);
+
+  const panels: SkeletonColumn[] = useMemo(() => {
+    if (isMobile) return [{ kind: 'mobile', panelId: 'mobilePanel' }];
+    return sortPanelsByOrder([...prepareBoardPanels(projects, panelStateMap), ...extraPanels], localOrders);
+  }, [isMobile, projects, panelStateMap, extraPanels, localOrders]);
 
   const minContainerWidth = useMemo(() => {
     if (!panels.length) return 0;
 
-    const regularPanelCount = panels.filter(
-      ({ panelId }) => !useBoardStore.getState().panelCollapseState[panelId],
-    ).length;
+    const regularPanelCount = panels.filter(({ panelId }) => !panelCollapseState[panelId]).length;
     const collapsedPanelCount = panels.length - regularPanelCount;
 
     const regularPanelsSize = regularPanelCount * PANEL_MIN_WIDTH;
     const collapsedPanelsSize = collapsedPanelCount * COLLAPSED_PANEL_MIN_WIDTH;
 
     return regularPanelsSize + collapsedPanelsSize;
-  }, [panels]);
-
-  const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
+  }, [panels, panelCollapseState]);
 
   const defaultSizes = useMemo(
     () =>
@@ -83,72 +103,118 @@ export const BoardSkeleton = ({ boardId, projects = [], projectPage = false, ...
     activeOptions: { exact: false, includeSearch: true },
   }));
 
-  return (
-    <>
-      <div className="z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2">
-        <BoardSearch clearSelection={() => {}} toggleFocus={() => {}} />
-
-        <TableCount count={0} label="c:task" className="mr-3" />
-
-        {isInWorkspace ? (
+  const renderColumn = (panel: SkeletonColumn) => {
+    switch (panel.kind) {
+      case 'mobile':
+        return (
           <>
-            <Button className="max-md:hidden" variant="plain">
-              <PlusIcon />
-              <span className="ml-1 max-md:hidden xl:hidden">{t('c:add')}</span>
-              <span className="ml-1 max-xl:hidden">
-                {t('c:add_resource', { resource: t('c:project').toLowerCase() })}
-              </span>
-            </Button>
-            <Button className="max-md:hidden" variant="outline">
-              <SettingsIcon />
-            </Button>
-
-            <Button variant="ghost" className="md:hidden">
-              <EllipsisVerticalIcon />
-            </Button>
+            {isInWorkspace && <StickyMobilePanelHeader projectTabs={projectTabs} />}
+            <PanelBodySkeleton rowCount={rowCount} rowHeight={rowHeight} />
           </>
-        ) : projects.length ? (
-          <>
-            <div className="hidden grow sm:block" />
-            <Button variant="plain" data-form-dirty={false} className="relative hidden rounded sm:inline-flex">
-              <PlusIcon className="size-4.5" />
-              <span className="ml-1">{t('c:task')}</span>
-            </Button>
-            <Button variant="ghost" className="max-sm:hidden">
-              <EllipsisVerticalIcon />
-            </Button>
-          </>
-        ) : null}
-
-        <DisplayOptions className="max-sm:hidden" />
-
-        <Button variant={'outline'} className={cn('flex max-lg:hidden')}>
-          <ExpandIcon />
-        </Button>
-      </div>
-      <div className="flex h-full flex-row gap-2" style={{ minWidth: minContainerWidth }}>
-        {panels.map(({ panelId, project, sectionFilters }) => (
-          <div
-            key={panelId}
-            className="flex h-full flex-col"
-            style={{
-              minWidth: `${COLLAPSED_PANEL_MIN_WIDTH}px`,
-              ...(defaultSizes[panelId] ? { width: `${defaultSizes[panelId]}px` } : {}),
-            }}
+        );
+      case 'labels':
+        return (
+          <LocalPanelShell
+            panelId={panel.panelId}
+            icon={<TagIcon />}
+            title={t('c:label_other')}
+            windowScroll={projectPage}
           >
-            {project && (!projectPage || sectionFilters) && (
+            <LocalPanelBodySkeleton />
+          </LocalPanelShell>
+        );
+      case 'explainer':
+        return (
+          <LocalPanelShell
+            panelId={panel.panelId}
+            icon={<InfoIcon />}
+            title={t('c:getting_started')}
+            windowScroll={projectPage}
+          >
+            <LocalPanelBodySkeleton />
+          </LocalPanelShell>
+        );
+      default:
+        return (
+          <>
+            {(!projectPage || panel.sectionFilters) && (
               <PanelHeaderSkeleton
                 boardId={boardId}
-                panelId={panelId}
-                project={project}
-                sectionFilters={sectionFilters}
+                panelId={panel.panelId}
+                project={panel.project}
+                sectionFilters={panel.sectionFilters}
                 projectPage={projectPage}
               />
             )}
-            {isInWorkspace && isMobile && <StickyMobilePanelHeader projectTabs={projectTabs} />}
-            <PanelBodySkeleton {...prop} />
-          </div>
-        ))}
+            <PanelBodySkeleton rowCount={rowCount} rowHeight={rowHeight} />
+          </>
+        );
+    }
+  };
+
+  return (
+    <>
+      {withHeader && (
+        <div className={taskBarClass}>
+          <BoardSearch toggleFocus={() => {}} />
+
+          <TableCount count={0} label="c:task" className="mr-3" />
+
+          {isInWorkspace ? (
+            <>
+              <Button className="max-md:hidden" variant="plain">
+                <PlusIcon />
+                <span className="ml-1 max-md:hidden xl:hidden">{t('c:add')}</span>
+                <span className="ml-1 max-xl:hidden">
+                  {t('c:add_resource', { resource: t('c:project').toLowerCase() })}
+                </span>
+              </Button>
+              <Button className="max-md:hidden" variant="outline">
+                <SettingsIcon />
+              </Button>
+
+              <Button variant="ghost" className="md:hidden">
+                <EllipsisVerticalIcon />
+              </Button>
+            </>
+          ) : projects.length ? (
+            <>
+              <div className="hidden grow sm:block" />
+              <Button variant="plain" data-form-dirty={false} className="relative hidden rounded sm:inline-flex">
+                <PlusIcon className="size-4.5" />
+                <span className="ml-1">{t('c:task')}</span>
+              </Button>
+              <Button variant="ghost" className="max-sm:hidden">
+                <EllipsisVerticalIcon />
+              </Button>
+            </>
+          ) : null}
+
+          <DisplayOptions className="max-sm:hidden" />
+
+          <Button variant={'outline'} className={cn('flex max-lg:hidden')}>
+            <ExpandIcon />
+          </Button>
+        </div>
+      )}
+      <div className="flex h-full flex-row gap-2" style={{ minWidth: minContainerWidth }}>
+        {panels.map((panel) => {
+          const { panelId } = panel;
+          const isCollapsed = !!panelCollapseState[panelId];
+          const width = isCollapsed ? COLLAPSED_PANEL_MIN_WIDTH : defaultSizes[panelId];
+          return (
+            <div
+              key={panelId}
+              className="flex h-full flex-col"
+              style={{
+                minWidth: `${COLLAPSED_PANEL_MIN_WIDTH}px`,
+                ...(width ? { width: `${width}px` } : {}),
+              }}
+            >
+              {renderColumn(panel)}
+            </div>
+          );
+        })}
       </div>
     </>
   );
@@ -196,7 +262,7 @@ const StickyMobilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) =>
   );
 };
 
-const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: Omit<BoardSkeletonProps, 'projects' | 'boardId'>) => {
+const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: { rowHeight?: number; rowCount?: number }) => {
   const renderRowHeight = rowHeight - 8;
   return (
     <div className="flex w-full flex-col overflow-auto border opacity-100 transition-opacity duration-300">
@@ -210,6 +276,18 @@ const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: Omit<BoardSkeleton
         </div>
       ))}
       <div className={`flex h-8 w-full justify-start gap-1 rounded-none ${statusSectionColors.iced.fill} ring-inset`} />
+    </div>
+  );
+};
+
+/** Placeholder rows for a local panel body (labels / getting-started), shown inside its real shell. */
+const LocalPanelBodySkeleton = () => {
+  return (
+    <div className="flex flex-1 flex-col gap-2 p-2">
+      {Array.from({ length: 6 }).map((_, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
+        <Skeleton key={index} className="h-10 w-full rounded" />
+      ))}
     </div>
   );
 };
@@ -237,55 +315,59 @@ const PanelHeaderSkeleton = ({
   })();
 
   return (
-    <div className="space-between z-50 flex min-h-13 flex-row items-center gap-2 rounded-lg rounded-b-none border border-b-0 bg-background p-2 max-sm:hidden">
-      {tenantId && (
-        <div
-          className={cn(
-            buttonVariants({ variant: 'ghost' }),
-            'flex h-auto items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
-            isCollapsed ? 'w-full justify-center' : 'justify-start',
-          )}
-        >
-          {!projectPage && isPrimary && (
-            <EntityAvatar
-              className="h-8 w-8"
-              id={project.id}
-              type="project"
-              name={project.name}
-              url={project.thumbnailUrl}
-            />
-          )}
-          {(projectPage || !isPrimary) && sectionFilters && (
-            <div className={cn('flex justify-center', (projectPage || !isPrimary) && 'min-w-8')}>
-              <FunnelIcon className="h-4 w-4 shrink-0" />
-            </div>
-          )}
-          {!isCollapsed && (
-            <div className="truncate font-semibold leading-6">
-              {isPrimary && !projectPage && project.name}
-              {(!isPrimary || projectPage) && sectionFilters && (
-                <span className={!projectPage ? 'pr-1 italic' : ''}>{formatSectionLabel(sectionFilters)}</span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+    <BoardPanelHeader
+      className="bg-background"
+      isCollapsed={!!isCollapsed}
+      leading={
+        tenantId && (
+          <div
+            className={cn(
+              buttonVariants({ variant: 'ghost' }),
+              'flex h-auto items-center justify-start gap-2 truncate p-0 hover:bg-transparent',
+              isCollapsed ? 'w-full justify-center' : 'justify-start',
+            )}
+          >
+            {!projectPage && isPrimary && (
+              <EntityAvatar
+                className="h-8 w-8"
+                id={project.id}
+                type="project"
+                name={project.name}
+                url={project.thumbnailUrl}
+              />
+            )}
+            {(projectPage || !isPrimary) && sectionFilters && (
+              <div className={cn('flex justify-center', (projectPage || !isPrimary) && 'min-w-8')}>
+                <FunnelIcon className="h-4 w-4 shrink-0" />
+              </div>
+            )}
+            {!isCollapsed && (
+              <div className="truncate font-semibold leading-6">
+                {isPrimary && !projectPage && project.name}
+                {(!isPrimary || projectPage) && sectionFilters && (
+                  <span className={!projectPage ? 'pr-1 italic' : ''}>{formatSectionLabel(sectionFilters)}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      }
+      actions={
+        !projectPage && (
+          <>
+            {isPrimary && (
+              <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label="Project options">
+                <EllipsisVerticalIcon />
+              </Button>
+            )}
+            <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
+              <PlusIcon className="size-4.5 transition-transform duration-200" />
 
-      {!isCollapsed && !projectPage && (
-        <>
-          <div className="hidden grow sm:block" />
-          {isPrimary && (
-            <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label="Project options">
-              <EllipsisVerticalIcon />
+              <span className="ml-1">{t('c:task')}</span>
             </Button>
-          )}
-          <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
-            <PlusIcon className="size-4.5 transition-transform duration-200" />
-
-            <span className="ml-1">{t('c:task')}</span>
-          </Button>
-        </>
-      )}
-    </div>
+          </>
+        )
+      }
+    />
   );
 };

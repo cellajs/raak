@@ -12,17 +12,6 @@ export type Task = GetTaskResponse & { _draft?: boolean };
 /** Embedded label shape as it appears on a task (subset of full Label). */
 export type TaskLabel = NonNullable<Task['labels']>[number];
 
-/** Stable id for the explainer ("getting started") panel. Also a persisted board-layout /
- *  collapse-state key, so this string value must not change. */
-export const EXPLAINER_PANEL_ID = 'explainer';
-
-/** Stable id for the always-present labels panel. Also a persisted board-layout /
- *  collapse-state key, so this string value must not change. */
-export const LABELS_PANEL_ID = 'labels';
-
-/** Sentinel projectSlug for the mobile Labels tab; '~' can never appear in a real slug. */
-export const LABELS_TAB_SLUG = '~labels';
-
 /** A board column: either a project panel (optionally a section-filtered split of one) or a
  *  local, non-project panel (explainer, labels). The `kind` discriminant replaces
  *  the old "any panel without a project is the explainer" heuristic. */

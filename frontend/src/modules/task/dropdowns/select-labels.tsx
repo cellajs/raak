@@ -12,6 +12,15 @@ import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
 import { projectsListQueryOptions } from '~/modules/project/query';
+import {
+  ComboboxHotkeyHint,
+  comboboxActionButtonClass,
+  comboboxInputPinClass,
+  comboboxScrollClass,
+  comboboxShellClass,
+  HotkeyIndexBadge,
+  matchDigitHotkey,
+} from '~/modules/task/dropdowns/combobox-scaffold';
 import type { SelectLabelsProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
@@ -26,16 +35,20 @@ import {
   ComboboxList,
   ComboboxSearchInput,
 } from '~/modules/ui/combobox';
-import { Kbd } from '~/modules/ui/kbd';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { COALESCED } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
-import { inNumbersArray } from '~/utils/in-numbers-array';
 
 // Sentinel prefix for the "create label" row's Combobox value, so it can't
 // collide with a real label name when selection flows through onValueChange.
 const CREATE_SENTINEL_PREFIX = '__create__';
+
+// The task label picker only offers secondary labels; primary/epic labels have dedicated UI.
+// Module-scoped so its identity is stable: an inline combine rebuilds `labels` every render,
+// cascading through the projectLabels / initLabels memos that depend on it by reference.
+const combineSecondaryLabels = (results: { data?: { items: Label[] } }[]): Label[] =>
+  results.flatMap((r) => r.data?.items ?? []).filter((l) => l.mode === 'secondary');
 
 const renderLabelItem = (
   label: Label | TaskLabel,
@@ -49,16 +62,17 @@ const renderLabelItem = (
     <ComboboxItem
       key={label.id}
       value={label.name}
-      className="group flex w-full items-center gap-2 rounded-md leading-normal"
+      className={cn(
+        'group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal',
+        isSelected && 'font-medium',
+      )}
     >
       <TagIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
       <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
       <span className="pointer-events-none flex size-4 items-center justify-center">
         {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
       </span>
-      {!searchValue && hotkeyIndex !== undefined && (
-        <span className="mx-1 text-sm opacity-50 max-sm:hidden sm:text-xs">{hotkeyIndex + 1}</span>
-      )}
+      <HotkeyIndexBadge index={searchValue ? undefined : hotkeyIndex} />
     </ComboboxItem>
   );
 };
@@ -70,6 +84,7 @@ export const SelectLabels = ({
   onChange,
   taskId,
   triggerWidth = 320,
+  initialSelectedCollapsed,
 }: SelectLabelsProps) => {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
@@ -102,8 +117,7 @@ export const SelectLabels = ({
 
   const labels = useQueries({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
-    // The task label picker only offers secondary labels; primary/epic labels have dedicated UI.
-    combine: (results) => results.flatMap((r) => r.data?.items ?? []).filter((l) => l.mode === 'secondary'),
+    combine: combineSecondaryLabels,
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -113,7 +127,7 @@ export const SelectLabels = ({
   const [selectedLabels, setSelectedLabels] = useLiveSelection(taskId, (t) => t.labels, currentLabels);
 
   const [searchValue, setSearchValue] = useState('');
-  const [selectedCollapsed, setSelectedCollapsed] = useState(!isMobile);
+  const [selectedCollapsed, setSelectedCollapsed] = useState(initialSelectedCollapsed ?? !isMobile);
 
   const { trackUsage, getScore } = useLabelRecencyStore();
 
@@ -242,8 +256,9 @@ export const SelectLabels = ({
       inputValue={searchValue}
       onInputValueChange={(value) => {
         // Digit hotkey: pick suggested label by 1-based index
-        if (inNumbersArray(suggestedLabels.length < 8 ? suggestedLabels.length : 8, value)) {
-          handleSelectClick(suggestedLabels[Number.parseInt(value, 10) - 1]?.name);
+        const hotkeyLabel = matchDigitHotkey(suggestedLabels, value, { max: 8 });
+        if (hotkeyLabel) {
+          handleSelectClick(hotkeyLabel.name);
           return;
         }
         // Replace spaces with dashes only when there's content
@@ -252,15 +267,12 @@ export const SelectLabels = ({
       }}
       filter={() => true}
     >
-      <div
-        className="relative overflow-y-auto rounded-lg sm:max-h-[44vh] sm:w-(--trigger-width)"
-        style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}
-      >
+      <div className={comboboxShellClass} style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}>
         <ComboboxSearchInput
           ref={inputRef}
           autoFocus={!isMobile}
           value={searchValue}
-          wrapClassName="max-sm:border-b-0 max-sm:mb-4"
+          wrapClassName={comboboxInputPinClass}
           className="min-h-10 leading-normal"
           placeholder={
             visibleLabels.length
@@ -271,13 +283,13 @@ export const SelectLabels = ({
           }
           showClear={false}
         />
-        {!searchValue && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">L</Kbd>}
+        <ComboboxHotkeyHint searching={!!searchValue}>L</ComboboxHotkeyHint>
         {!searchValue && selectedLabels.length > 0 && (
           <button
             type="button"
             aria-expanded={!selectedCollapsed}
             aria-controls="select-labels-selected-group"
-            className="mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 pointer-coarse:px-3 px-2 pointer-coarse:py-2 py-1.5 pointer-coarse:text-sm text-muted-foreground text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+            className="mx-1 mt-1 flex w-[calc(100%-0.5rem)] shrink-0 items-center gap-2 pointer-coarse:px-3 px-2 pointer-coarse:py-2 py-1.5 pointer-coarse:text-sm text-muted-foreground text-xs outline-hidden hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
             onClick={() => setSelectedCollapsed(!selectedCollapsed)}
           >
             {t('c:selected')}
@@ -286,13 +298,19 @@ export const SelectLabels = ({
             <ChevronDownIcon className={cn('size-3.5 transition-transform', !selectedCollapsed && 'rotate-180')} />
           </button>
         )}
-        <ScrollArea>
+        <ScrollArea className={comboboxScrollClass}>
           <ComboboxList className="p-1!">
             {searchValue ? (
-              <ComboboxGroup>
-                <ComboboxGroupLabel>{t('c:results')}</ComboboxGroupLabel>
-                {searchResults.map((label) => renderLabelItem(label, selectedLabels, projectId, searchValue))}
-              </ComboboxGroup>
+              searchResults.length > 0 ? (
+                <ComboboxGroup>
+                  <ComboboxGroupLabel>{t('c:results')}</ComboboxGroupLabel>
+                  {searchResults.map((label) => renderLabelItem(label, selectedLabels, projectId, searchValue))}
+                </ComboboxGroup>
+              ) : (
+                <div className="flex items-center justify-center p-1.5 text-center text-muted-foreground/50 text-sm">
+                  {t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}
+                </div>
+              )
             ) : (
               <>
                 {selectedLabels.length > 0 && !selectedCollapsed && (
@@ -311,7 +329,7 @@ export const SelectLabels = ({
             {searchValue.trim() !== '' && !projectLabels.some(({ name }) => name === searchValue) && (
               <ComboboxItem
                 value={`${CREATE_SENTINEL_PREFIX}${searchValue}`}
-                className="flex justify-center text-sm sm:text-xs"
+                className={cn(comboboxActionButtonClass, 'mt-1')}
               >
                 {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
                 <Badge className="ml-2 flex px-2 py-0" variant="plain">

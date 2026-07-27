@@ -112,7 +112,9 @@ function BlockNote({
     heading: { levels: headingLevels },
     trailingBlock,
     dictionary: getDictionary(),
-    extensions: [checkedExtension(), ...(extensions ?? [])],
+    // Caller extensions first: BlockNote keeps the first extension per key and silently drops
+    // duplicates, so a caller-provided checkedExtension (e.g. persisted: true) must win over the default.
+    extensions: [...(extensions ?? []), checkedExtension()],
     resolveFileUrl: createResolveFileUrl({ baseFilePanelProps }),
   };
 

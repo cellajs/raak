@@ -7,6 +7,7 @@ import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { projectQueryOptions, useProjectUpdateMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
+import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
 
@@ -30,6 +31,8 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
   const isAdmin = project.membership?.role === 'admin';
 
   const updateProject = useProjectUpdateMutation();
+
+  useTaskDropMonitor(tenantId, organizationId);
 
   const coverUpdateCallback = (bannerUrl: string) => {
     updateProject.mutate(

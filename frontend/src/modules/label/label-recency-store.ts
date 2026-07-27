@@ -1,7 +1,7 @@
-import { appConfig } from 'shared';
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { isDebugMode } from '~/env';
+import { idbKvStorage } from '~/query/idb-kv-storage';
 
 const maxEntries = 200;
 
@@ -12,6 +12,7 @@ interface LabelRecencyState {
   trackUsage: (organizationId: string, names: string[]) => void;
   getScore: (organizationId: string, name: string) => number;
   clear: () => void;
+  reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
 
 export const useLabelRecencyStore = create<LabelRecencyState>()(
@@ -34,10 +35,12 @@ export const useLabelRecencyStore = create<LabelRecencyState>()(
           }),
         getScore: (organizationId, name) => get().usageMap[`${organizationId}:${name}`] ?? 0,
         clear: () => set({ usageMap: {} }),
+        reset: () => set({ usageMap: {} }),
       }),
       {
-        name: `${appConfig.slug}-label-recency`,
-        storage: createJSONStorage(() => localStorage),
+        name: 'label-recency',
+        skipHydration: true,
+        storage: createJSONStorage(() => idbKvStorage('label-recency')),
         partialize: (state) => ({ usageMap: state.usageMap }),
       },
     ),

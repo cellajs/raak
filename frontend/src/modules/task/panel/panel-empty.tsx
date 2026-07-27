@@ -2,7 +2,7 @@ import { useMatchRoute } from '@tanstack/react-router';
 import { PalmtreeIcon, SearchIcon, UndoIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
-import { useReadOnlyHide } from '~/modules/task/hooks/use-read-only';
+import { useReadOnlyHide } from '~/modules/project/use-read-only';
 
 export const TaskPanelEmpty = ({ projectId }: { projectId?: string }) => {
   const { t } = useTranslation();

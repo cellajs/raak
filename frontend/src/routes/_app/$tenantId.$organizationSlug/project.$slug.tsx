@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/project/
   validateSearch: boardSearchSchema,
   // Absence means default: params equal to the default view are stripped from the URL
   search: { middlewares: [stripSearchParams(boardSearchDefaults)] },
-  onLeave: resetTaskInteraction,
+  onLeave: () => resetTaskInteraction(),
   beforeLoad: projectRouteBeforeLoad,
   head: ({ match }) => {
     const name = match.context.project?.name;

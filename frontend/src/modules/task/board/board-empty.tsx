@@ -39,7 +39,7 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
   return (
     <div data-board-empty>
       <ContentPlaceholder
-        className="h-[calc(100vh-4rem-4rem)] md:h-[calc(100vh-4.88rem)]"
+        className="h-[calc(100vh-var(--board-mobile-offset))] md:h-[calc(100vh-var(--board-offset-md))]"
         icon={BirdIcon}
         title="c:no_resource_yet"
         titleProps={{ resource: t('c:project_other').toLowerCase() }}

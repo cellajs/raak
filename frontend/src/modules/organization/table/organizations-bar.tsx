@@ -1,4 +1,4 @@
-import { MailboxIcon, PlusIcon, SquareXIcon } from 'lucide-react';
+import { MailboxIcon, PlusIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
@@ -12,6 +12,7 @@ import { TableSearch } from '~/modules/common/data-table/table-search';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { FocusView } from '~/modules/common/focus-view';
+import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { SheetTabs } from '~/modules/common/sheet-tabs';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
@@ -93,40 +94,24 @@ export const OrganizationsTableBar = ({
       {/* Filter bar */}
       <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
         <FilterBarActions>
-          {selected.length > 0 ? (
-            <>
-              <TableBarButton
-                ref={newsletterButtonRef}
-                onClick={openNewsletterSheet}
-                label="c:newsletter"
-                icon={MailboxIcon}
-                badge={selected.length}
-                className="relative"
-              />
-              <TableBarButton variant="ghost" onClick={clearSelection} icon={SquareXIcon} label="c:clear" />
-            </>
-          ) : (
-            !isFiltered && (
-              <TableBarButton
-                label="c:create"
-                icon={PlusIcon}
-                onClick={() => {
-                  createDialog(<CreateOrganizationForm callback={onCreateOrganization} />, {
-                    id: 'create-organization',
-                    triggerRef: createButtonRef,
-                    className: 'md:max-w-2xl',
-                    title: t('c:create_resource', { resource: t('c:organization').toLowerCase() }),
-                    titleContent: (
-                      <UnsavedBadge title={t('c:create_resource', { resource: t('c:organization').toLowerCase() })} />
-                    ),
-                  });
-                }}
-              />
-            )
+          {!isFiltered && (
+            <TableBarButton
+              label="c:create"
+              icon={PlusIcon}
+              onClick={() => {
+                createDialog(<CreateOrganizationForm callback={onCreateOrganization} />, {
+                  id: 'create-organization',
+                  triggerRef: createButtonRef,
+                  className: 'md:max-w-2xl',
+                  title: t('c:create_resource', { resource: t('c:organization').toLowerCase() }),
+                  titleContent: (
+                    <UnsavedBadge title={t('c:create_resource', { resource: t('c:organization').toLowerCase() })} />
+                  ),
+                });
+              }}
+            />
           )}
-          {selected.length === 0 && (
-            <TableCount count={total} label="c:organization" isFiltered={isFiltered} onResetFilters={onResetFilters} />
-          )}
+          <TableCount count={total} label="c:organization" isFiltered={isFiltered} onResetFilters={onResetFilters} />
         </FilterBarActions>
 
         <div className="sm:grow" />
@@ -150,6 +135,16 @@ export const OrganizationsTableBar = ({
 
       {/* Focus view */}
       <FocusView iconOnly />
+
+      {/* Floating actions for the current selection */}
+      <SelectionActionBar count={selected.length} onClear={clearSelection}>
+        <TableBarButton
+          ref={newsletterButtonRef}
+          onClick={openNewsletterSheet}
+          label="c:newsletter"
+          icon={MailboxIcon}
+        />
+      </SelectionActionBar>
     </TableBarContainer>
   );
 };

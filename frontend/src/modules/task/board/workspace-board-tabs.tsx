@@ -5,13 +5,15 @@ import type { Project } from 'sdk';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { type PageTab, PageTabNav } from '~/modules/common/page/tab-nav';
 import { ScrollReset } from '~/modules/common/scroll-reset';
+// LabelList is eager (always-present panel); LabelPage stays lazy (opened on demand, heavier).
+import { LabelList } from '~/modules/label/label-list';
+import { LABELS_PANEL_ID, LABELS_TAB_SLUG } from '~/modules/label/types';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { sortByMembership } from '~/modules/task/helpers/board-helpers';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
-import { LABELS_PANEL_ID, LABELS_TAB_SLUG } from '~/modules/task/types';
 import { lazyNamed } from '~/utils/lazy-named';
 
-const LabelList = lazyNamed(() => import('~/modules/label/label-list'), 'LabelList');
+const LabelPage = lazyNamed(() => import('~/modules/label/label-page'), 'LabelPage');
 
 export function WorkspaceBoardTabs({
   projects,
@@ -19,7 +21,7 @@ export function WorkspaceBoardTabs({
   publicView,
 }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
   const { t } = useTranslation();
-  const { projectSlug } = useSearch({ strict: false });
+  const { projectSlug, labelPageId } = useSearch({ strict: false });
 
   // Sort projects by membership displayOrder (same as desktop board)
   const sorted = sortByMembership(projects);
@@ -64,7 +66,12 @@ export function WorkspaceBoardTabs({
       {workspace && <PageTabNav fallbackToFirst={!projectSlug} tabs={projectTabs} className="max-sm:border-t" />}
       {isLabelsTab && workspace ? (
         <Suspense>
-          <LabelList entity="workspace" entityId={workspace.id} />
+          {/* Same branching as the desktop LabelsPanel: an open label page replaces the list */}
+          {labelPageId ? (
+            <LabelPage labelId={labelPageId} entity="workspace" entityId={workspace.id} />
+          ) : (
+            <LabelList entity="workspace" entityId={workspace.id} />
+          )}
         </Suspense>
       ) : (
         <Suspense>

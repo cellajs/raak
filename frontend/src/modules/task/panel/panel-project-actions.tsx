@@ -1,20 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
-import {
-  ArrowRightIcon,
-  EllipsisVerticalIcon,
-  MergeIcon,
-  SettingsIcon,
-  SplitIcon,
-  SquareSplitHorizontalIcon,
-  UsersIcon,
-} from 'lucide-react';
+import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, SquareSplitHorizontalIcon, UsersIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
-import { SplitProjectPanelDialog } from '~/modules/project/split-project-panel';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { TaskStatus } from '~/modules/task/task-properties';
@@ -42,21 +32,6 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
   const projectWorkspace = projectMembership?.workspaceId
     ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId)
     : undefined;
-
-  const splitProjectPanels = () => {
-    useDialoger
-      .getState()
-      .create(
-        <SplitProjectPanelDialog boardId={boardId} projectId={project.id} panelsSectionView={panelsSectionView} />,
-        {
-          id: `split-${boardId}`,
-          triggerRef: projectButtonRef,
-          title: t('c:split'),
-          description: t('c:split.text'),
-          className: 'max-w-2xl',
-        },
-      );
-  };
 
   return (
     <DropdownMenu>
@@ -116,48 +91,28 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
           </DropdownMenuItem>
         )}
 
-        {boardType === 'project' && (
-          <>
-            <DropdownMenuItem onClick={splitProjectPanels} className="flex items-center gap-2">
-              <SplitIcon />
-              <span>{t('c:split')}</span>
-            </DropdownMenuItem>
-            {panelsSectionView && (
-              <DropdownMenuItem
-                onClick={() => dropPanelSections(boardId, project.id)}
-                className="flex items-center gap-2"
-              >
-                <MergeIcon />
-                <span>{t('c:merge')}</span>
-              </DropdownMenuItem>
-            )}
-          </>
-        )}
-
-        {boardType === 'workspace' && (
-          <DropdownMenuItem
-            onClick={() =>
-              panelsSectionView
-                ? dropPanelSections(boardId, project.id)
-                : setPanelSections(boardId, project.id, [
-                    {
-                      status: [
-                        TaskStatus.Accepted,
-                        TaskStatus.Reviewed,
-                        TaskStatus.Delivered,
-                        TaskStatus.Finished,
-                        TaskStatus.Started,
-                      ],
-                    },
-                    { status: [TaskStatus.Unstarted, TaskStatus.Iced] },
-                  ])
-            }
-            className="flex items-center gap-2"
-          >
-            <SquareSplitHorizontalIcon />
-            {panelsSectionView ? <span>{t('c:merge')}</span> : <span>{t('c:split')}</span>}
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          onClick={() =>
+            panelsSectionView
+              ? dropPanelSections(boardId, project.id)
+              : setPanelSections(boardId, project.id, [
+                  {
+                    status: [
+                      TaskStatus.Accepted,
+                      TaskStatus.Reviewed,
+                      TaskStatus.Delivered,
+                      TaskStatus.Finished,
+                      TaskStatus.Started,
+                    ],
+                  },
+                  { status: [TaskStatus.Unstarted, TaskStatus.Iced] },
+                ])
+          }
+          className="flex items-center gap-2"
+        >
+          <SquareSplitHorizontalIcon />
+          {panelsSectionView ? <span>{t('c:merge')}</span> : <span>{t('c:split')}</span>}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

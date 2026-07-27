@@ -125,14 +125,21 @@ export const normalizePanelWidths = (storedLayout: Record<string, number>, curre
   return layout;
 };
 
+/** Board identity of the last `resetTaskInteraction` call, to skip same-board re-entries. */
+let lastInteractionBoardKey: string | null = null;
+
 /**
  * Reset all task interaction state (selection, focus, draft tasks) and per-task card view state.
  * Called from route guards on entering / leaving a workspace or project, so stale UI (e.g. the
- * bulk-remove button) never leaks across boards and the card-state map can't grow unbounded.
- * Adding a new field to `useTaskInteractionStore` is automatically covered as long as it is
- * included in that store's `initialState`.
+ * floating selection bar) never leaks across boards and the card-state map can't grow unbounded.
+ * `beforeLoad` also reruns on search-param-only navigations (e.g. typing in board search); pass
+ * the board's `boardKey` so those same-board re-entries keep the selection. Calling without a
+ * key (route `onLeave`) always resets. Adding a new field to `useTaskInteractionStore` is
+ * automatically covered as long as it is included in that store's `initialState`.
  */
-export const resetTaskInteraction = () => {
+export const resetTaskInteraction = (boardKey?: string) => {
+  if (boardKey && boardKey === lastInteractionBoardKey) return;
+  lastInteractionBoardKey = boardKey ?? null;
   useTaskInteractionStore.getState().reset();
   useTaskCardStore.getState().reset();
 };

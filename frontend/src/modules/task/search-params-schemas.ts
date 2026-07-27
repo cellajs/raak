@@ -1,5 +1,6 @@
 import { zGetTasksQuery } from 'sdk/zod.gen';
 import { z } from 'zod';
+import { labelPanelSearchSchema } from '~/modules/label/search-params-schemas';
 
 const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board');
 
@@ -12,9 +13,8 @@ export const boardSearchDefaults = { q: '', view: 'board', sort: 'createdAt', or
 const baseTaskViewSchema = z.object({
   taskSheetId: z.string().optional(),
   userSheetId: z.string().optional(),
-  /** Label whose page is open in the labels board panel (replaces the panel's table). */
-  labelPageId: z.string().optional(),
   view: taskViewSchema.optional(),
+  ...labelPanelSearchSchema.shape,
 });
 
 // Search schemas, some are also used in project routes

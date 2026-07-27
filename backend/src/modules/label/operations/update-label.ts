@@ -31,10 +31,11 @@ export async function updateLabelOp(
   const updated = await tenantContext(ctx, async (txCtx) => {
     const { entity: before } = await getValidProduct(txCtx, id, 'label', 'update');
 
-    // Epic documentation is collaborative: any project member may edit an epic's description,
-    // so description-only ops skip the project-admin gate below. Other modes never accept it.
+    // Epic documentation and secondary <-> epic transitions are member-level: any project
+    // member may document an epic or toggle a label's epic mode. Ops limited to those fields
+    // skip the project-admin gate below. Only epics accept a description.
     const opsKeys = Object.keys(rawOps ?? {});
-    const descriptionOnly = opsKeys.length > 0 && opsKeys.every((key) => key === 'description');
+    const memberLevelOnly = opsKeys.length > 0 && opsKeys.every((key) => key === 'description' || key === 'mode');
     if ('description' in (rawOps ?? {}) && before.mode !== 'epic') {
       throw new AppError(403, 'forbidden', 'warn', {
         entityType: 'label',
@@ -52,9 +53,9 @@ export async function updateLabelOp(
       });
     }
 
-    // Managing primary/epic labels, and promoting a tag to an epic, requires project-admin
+    // Other edits on primary/epic labels (identity, appearance) require project-admin
     // authority (project update permission)
-    if ((before.mode !== 'secondary' || modeChange) && !descriptionOnly) {
+    if (before.mode !== 'secondary' && !memberLevelOnly) {
       await getValidChannel(txCtx, before.projectId, 'project', 'update');
     }
 

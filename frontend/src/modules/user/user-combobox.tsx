@@ -16,6 +16,7 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
+  ComboboxItemIndicator,
   ComboboxList,
   ComboboxPrimitive,
   ComboboxSearchInput,
@@ -208,6 +209,7 @@ export const UserCombobox = ({ value, onValueChange, channel }: Props) => {
                             <span className="group-data-[already-member=true]:hidden group-data-[was-selected=true]:hidden max-sm:hidden">
                               {email}
                             </span>
+                            <ComboboxItemIndicator />
                           </div>
                         </ComboboxItem>
                       );

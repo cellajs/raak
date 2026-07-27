@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDownIcon, TagIcon, UserXIcon, XIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,7 @@ import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/
 import { Spinner } from '~/modules/common/spinner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
+import { useProjectMembers } from '~/modules/project/use-project-members';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   createTaskFormSchema,
@@ -29,7 +30,6 @@ import {
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
-import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
@@ -111,8 +111,17 @@ const CreateTaskForm = ({
     if (!watchedPrimaryLabelId && primaryLabels[0]) form.setValue('primaryLabelId', primaryLabels[0].id);
   }, [watchedPrimaryLabelId, primaryLabels, form.setValue]);
 
-  const updateAttachments = useCallback((data: Attachment[]) => setAttachments(data), []);
-  const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, updateAttachments);
+  // Watch the dirty-check inputs: newTaskFormIsDirty JSON.parses the description, so key the
+  // computation to field changes instead of reading form.getValues() every render.
+  const [watchedAssignedTo, watchedLabels, watchedDescription] = useWatch({
+    control: form.control,
+    name: ['assignedTo', 'labels', 'description'],
+  });
+  const isDirty =
+    form.isDirty &&
+    newTaskFormIsDirty({ assignedTo: watchedAssignedTo, labels: watchedLabels, description: watchedDescription });
+
+  const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, setAttachments);
 
   const handleCloseForm = () => {
     if (isDialog) useDialoger.getState().remove();
@@ -172,16 +181,12 @@ const CreateTaskForm = ({
     setTimeout(() => onStatusChange?.(status));
   };
 
-  const handleFormClick = useCallback(() => {
+  const handleFormClick = () => {
     if (isDialog || isFocused || isMobile) return;
     focusTask(formId);
-  }, [isDialog, isFocused, isMobile]);
+  };
 
   if (form.loading) return null;
-
-  // Compute once per render — newTaskFormIsDirty JSON.parses the description, and it's read at
-  // several JSX sites below.
-  const isDirty = form.isDirty && newTaskFormIsDirty(form.getValues());
 
   return (
     <motion.div
@@ -194,8 +199,7 @@ const CreateTaskForm = ({
           handleCloseForm();
         }
       }}
-      style={{ overflow: isExiting ? 'hidden' : undefined }}
-      className={isDialog ? 'flex min-h-0 grow flex-col' : undefined}
+      className={cn(isExiting && 'overflow-hidden', isDialog && 'flex min-h-0 grow flex-col')}
     >
       <Form {...form}>
         <form
@@ -209,9 +213,11 @@ const CreateTaskForm = ({
             className,
             'flex flex-col gap-2 sm:p-3 sm:pl-11',
             isDialog && 'min-h-0 grow',
-            !isDialog && 'border-b border-l-2 border-l-transparent',
+            !isDialog &&
+              'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-[3px] before:rounded-full before:bg-primary before:opacity-0',
+            !isDialog && isFocused && 'before:opacity-100',
             isFocused
-              ? 'is-focused border-l-primary focus-visible:outline-none focus-visible:ring-0'
+              ? 'is-focused focus-visible:outline-none focus-visible:ring-0'
               : 'focus-visible:ring-1 focus-visible:ring-ring',
           )}
         >
@@ -254,11 +260,11 @@ const CreateTaskForm = ({
                           tabIndex={0}
                           size="sm"
                           value={label.id}
-                          className="group grow font-normal"
+                          className="group min-w-0 flex-1 shrink font-normal"
                           key={label.id}
                         >
                           <PrimaryLabelIcon label={label} />
-                          <span className="ml-2 opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
+                          <span className="ml-2 min-w-0 truncate opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
                             {label.name}
                           </span>
                         </ToggleGroupItem>
@@ -307,7 +313,6 @@ const CreateTaskForm = ({
                               >
                                 <Badge
                                   variant="outline"
-                                  key={id}
                                   className="h-6 border-0 px-1 font-normal text-[.75rem] text-sm shadow-none last:mr-0"
                                 >
                                   {name}

@@ -20,7 +20,7 @@
 }
 /* started */
 [data-status="4"] {
-  --glow-color-rgb: 170, 175, 181;
+  --glow-color-rgb: 245, 158, 11; /* amber-500 */
 }
 /* unstarted */
 [data-status="5"] {

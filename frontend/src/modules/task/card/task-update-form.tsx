@@ -3,9 +3,9 @@ import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative-blocknote';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
+import { useProjectMembers } from '~/modules/project/use-project-members';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
@@ -59,9 +59,11 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
         description={task.description}
         updateData={updateData}
         waitingFallback={
-          // Faded read-only preview while waiting for WS sync (avoids empty flash)
+          // Faded read-only preview while waiting for WS sync (avoids empty flash).
+          // noGutter: the wrapper already applies taskDescriptionGutterStyle, so the preview
+          // aligns with the editor that replaces it and the swap causes no reflow.
           <div className="pointer-events-none select-none opacity-50">
-            <TaskCardContentExpanded task={task} />
+            <TaskCardContentExpanded task={task} noGutter />
           </div>
         }
         editable

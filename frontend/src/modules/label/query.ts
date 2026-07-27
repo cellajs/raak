@@ -36,6 +36,7 @@ import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepar
 import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
+import { invalidateEmbeddingHosts, propagateEmbeddedProduct } from '~/query/realtime/propagation';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
@@ -77,7 +78,8 @@ registerYjsOwnedFields('label', ['description', 'keywords']);
 const labelsMutationKeyBase = ['label'] as const;
 const handleError = createResourceError('label');
 
-const findLabelInCache = createCacheFinder<Label>('label');
+/** Look up a cached label entity by id across the org's label lists. */
+export const findLabelInCache = createCacheFinder<Label>('label');
 
 export const labelQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
@@ -225,6 +227,8 @@ const labelUpdateOptions = (
       const optimisticLabel = { ...previousLabel, ...ops, updatedAt: new Date().toISOString() };
       cacheUpdate(orgKey, [optimisticLabel]);
       queryClient.setQueryData(keys.detail.byId(id), optimisticLabel);
+      // Refresh embedded copies on host products (e.g. task.labels) from the optimistic row
+      propagateEmbeddedProduct('label', [id], 'update');
     }
     return { previousLabel };
   },
@@ -233,6 +237,9 @@ const labelUpdateOptions = (
     if (context?.previousLabel) {
       cacheUpdate(keys.list.org(variables.organizationId), [context.previousLabel]);
       queryClient.setQueryData(keys.detail.byId(context.previousLabel.id), context.previousLabel);
+      // Embedded copies carry the optimistic edit and its newer updatedAt beats the restored
+      // row in the propagation guard, so hosts recover through a refetch
+      invalidateEmbeddingHosts('label', variables.organizationId);
     }
   },
   onSuccess: (updatedLabel, variables) => {
@@ -261,12 +268,16 @@ const labelDeleteOptions = (
     await queryClient.cancelQueries({ queryKey: orgKey });
     cacheRemove(orgKey, labels);
     removeDetailQueriesById(queryClient, keys.detail.base, labelIds);
+    // Strip embedded copies from host products (e.g. task.labels) so chips disappear immediately
+    propagateEmbeddedProduct('label', labelIds, 'remove');
     return { deletedLabels: labels };
   },
-  onError: (_err, _variables, context) => {
+  onError: (_err, variables, context) => {
     handleError('delete');
     // Restore each row into its canonical home list only (updates in place elsewhere), never filtered lists.
     if (context?.deletedLabels) insertEntitiesIntoHome(queryClient, context.deletedLabels);
+    // Propagation cannot re-insert stripped embedded copies, so hosts recover through a refetch
+    invalidateEmbeddingHosts('label', variables.organizationId);
   },
   onSettled: (_data, error, variables) => {
     if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
@@ -298,6 +309,7 @@ export const useLabelUpdateMutation = (tenantId: string, organizationId: string)
         const optimisticLabel = { ...cached, ...ops, updatedAt: new Date().toISOString() };
         cacheUpdate(keys.list.org(organizationId), [optimisticLabel]);
         queryClient.setQueryData(keys.detail.byId(id), optimisticLabel);
+        propagateEmbeddedProduct('label', [id], 'update');
       }
       return { kind: 'coalesced' };
     }

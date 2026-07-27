@@ -1,11 +1,10 @@
-import { onlineManager } from '@tanstack/react-query';
-import { getProject, type Project } from 'sdk';
+import { getProject } from 'sdk';
+import { labelsCanonicalOptions } from '~/modules/label/query';
 import { findProjectByIdOrSlug, projectQueryKeys, projectQueryOptions } from '~/modules/project/query';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
-import { fetchSlugCacheId } from '~/query/basic/fetch-slug-cache-id';
+import { tasksCanonicalOptions } from '~/modules/task/query';
+import { resolveChannelBySlug } from '~/query/basic/resolve-channel-by-slug';
 import { queryClient } from '~/query/query-client';
-import { redirectOnMissing } from '~/utils/redirect-on-missing';
-import { rewriteUrlToSlug } from '~/utils/rewrite-url-to-slug';
 
 type ProjectRouteBeforeLoadArgs = {
   params: { tenantId: string; slug: string };
@@ -17,43 +16,29 @@ type ProjectRouteBeforeLoadArgs = {
  * Resolves the project by slug or ID, seeds caches, and rewrites the URL to use the slug.
  */
 export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBeforeLoadArgs) => {
-  // Reset on every entry, including project-to-project switches (onLeave does not fire when only params change).
-  resetTaskInteraction();
+  // Reset on entering another project (onLeave does not fire when only params change); keyed so
+  // search-param-only navigations within the same project keep the selection.
+  resetTaskInteraction(`project:${params.tenantId}:${params.slug}`);
 
   const { slug, tenantId } = params;
   const organizationId = context.organization.id;
 
-  const isOnline = onlineManager.isOnline();
+  const projectData = await resolveChannelBySlug({
+    idOrSlug: slug,
+    tenantId,
+    findInCache: findProjectByIdOrSlug,
+    detailQueryOptions: (id) => projectQueryOptions(id, organizationId, tenantId),
+    fetchBySlug: () => getProject({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
+    slugFetchCacheKey: projectQueryKeys.detail.byId,
+    params,
+    buildSlugOverrides: (entity) => ({ slug: entity.slug }),
+    routeTo: '/$tenantId/$organizationSlug/project/$slug',
+  });
 
-  // Resolve slug to ID via list cache (from menu), or fetch if not cached
-  const cached = findProjectByIdOrSlug(slug, tenantId);
-  const projectId = cached?.id;
-
-  let projectData: Project | undefined;
-
-  if (projectId) {
-    const options = projectQueryOptions(projectId, organizationId, tenantId);
-
-    // Seed detail cache from list cache so ensureQueryData returns immediately
-    // instead of blocking on a fetch. It will still revalidate in background if stale.
-    if (cached && !queryClient.getQueryData(options.queryKey)) {
-      queryClient.setQueryData(options.queryKey, cached);
-    }
-
-    projectData =
-      queryClient.getQueryData(options.queryKey) ?? (isOnline ? await queryClient.ensureQueryData(options) : undefined);
-  } else if (isOnline) {
-    // Not in cache, fetch by slug.
-    projectData = await fetchSlugCacheId(
-      () => getProject({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
-      projectQueryKeys.detail.byId,
-    );
-  }
-
-  redirectOnMissing(projectData);
-
-  // Rewrite URL to use slug if user navigated with ID (parent handles organizationId)
-  rewriteUrlToSlug(params, { slug: projectData.slug }, '/$tenantId/$organizationSlug/project/$slug');
+  // Warm the canonical task and label lists together so the board and its always-present labels
+  // panel don't waterfall on mount (labels otherwise render a beat after tasks). Fire-and-forget.
+  queryClient.prefetchQuery(tasksCanonicalOptions({ organizationId, tenantId, projectId: projectData.id }));
+  queryClient.prefetchQuery(labelsCanonicalOptions({ organizationId, tenantId, projectId: projectData.id }));
 
   return { project: projectData };
 };

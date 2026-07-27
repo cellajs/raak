@@ -1,8 +1,7 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon, FlagIcon, TagIcon, Trash2Icon } from 'lucide-react';
+import { ArrowLeftIcon, Trash2Icon } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { isUnconditionalCan } from 'shared';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { Spinner } from '~/modules/common/spinner';
@@ -15,23 +14,24 @@ import {
   useLabelUpdateMutation,
 } from '~/modules/label/query';
 import type { LabelsScopeProps } from '~/modules/label/types';
-import { findProjectByIdOrSlug } from '~/modules/project/query';
+import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
+import { ScrollArea } from '~/modules/ui/scroll-area';
 import { Switch } from '~/modules/ui/switch';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelDescriptionForm = lazyNamed(() => import('~/modules/label/label-description-form'), 'LabelDescriptionForm');
 
-type LabelPageProps = LabelsScopeProps & { labelId: string };
+type LabelPageProps = LabelsScopeProps & { labelId: string; windowScroll?: boolean };
 
 /**
  * In-panel label page: back navigation, in-place rename, filter-by toggle and delete.
  * Secondary labels represent their cross-project name group (edits fan out over siblings);
  * epics are single per-project rows. Epic documentation (description) renders below.
  */
-export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
+export const LabelPage = ({ labelId, entity, entityId, windowScroll }: LabelPageProps) => {
   const { t } = useTranslation();
   const { organization, tenantId } = useOrganizationLayoutContext();
   const organizationId = organization.id;
@@ -60,9 +60,10 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
   const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
   const deleteLabels = useLabelDeleteMutation(tenantId, organizationId);
 
-  // Tag <-> epic transitions require project-admin authority (backend enforces the same)
-  const project = label ? findProjectByIdOrSlug(label.projectId, tenantId) : undefined;
-  const canManageEpic = label?.mode !== 'primary' && isUnconditionalCan(project?.can?.project?.update);
+  // Tag <-> epic transitions are member-level (backend enforces the same); read-only
+  // viewers (guest membership or public access) keep the switch hidden
+  const isReadOnly = useIsProjectReadOnly(label?.projectId);
+  const canManageEpic = label?.mode !== 'primary' && !isReadOnly;
 
   const [editingName, setEditingName] = useState<string | null>(null);
 
@@ -95,19 +96,54 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
     goBack();
   };
 
+  const body = (
+    <>
+      {/* Tag <-> epic switch (any project member): promoting acts on this row only; name-group
+          siblings in other projects stay tags. Enabling reveals the description below. */}
+      {canManageEpic && (
+        <div className="flex items-center gap-2 border-b p-2 pl-3">
+          <Switch
+            id={`epic-switch-${label.id}`}
+            checked={label.mode === 'epic'}
+            onCheckedChange={(checked) =>
+              updateLabel.mutate({ id: label.id, ops: { mode: checked ? 'epic' : 'secondary' } })
+            }
+            aria-label={t('c:epic')}
+          />
+          <label htmlFor={`epic-switch-${label.id}`} className="cursor-pointer select-none pl-1 text-sm leading-none">
+            {t('c:epic')}
+          </label>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('c:remove')}
+            onClick={onDelete}
+            className="ml-auto shrink-0 opacity-60 hover:text-destructive hover:opacity-100"
+          >
+            <Trash2Icon />
+          </Button>
+        </div>
+      )}
+
+      {/* Epic documentation: collaborative description editor (epics only) */}
+      {label.mode === 'epic' && (
+        <Suspense fallback={<Spinner className="my-8 h-6 w-6 opacity-50" noDelay />}>
+          <LabelDescriptionForm label={label} />
+        </Suspense>
+      )}
+    </>
+  );
+
   return (
-    <div className="flex h-full flex-col gap-2 p-2">
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" aria-label={t('c:back')} onClick={goBack}>
+    <div className="flex h-full flex-col">
+      {/* Rows carry their own inner padding (none outside) so bottom borders span full width */}
+      <div className="flex items-center gap-1 border-b p-2">
+        <Button variant="ghost" size="icon" aria-label={t('c:back')} onClick={goBack} className="shrink-0">
           <ArrowLeftIcon className="icon-sm" />
         </Button>
 
-        {label.mode === 'epic' ? (
-          <FlagIcon className="icon-md shrink-0 opacity-70" aria-hidden="true" />
-        ) : (
-          <TagIcon className="icon-md shrink-0 opacity-50" aria-hidden="true" />
-        )}
-
+        {/* Edit and display boxes share height, padding and border so the swap causes no layout
+            shift; w-auto keeps the input's preferred flex size content-based like the button's */}
         {editingName !== null ? (
           <Input
             value={editingName}
@@ -118,13 +154,13 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
               if (event.key === 'Enter') commitName();
               if (event.key === 'Escape') setEditingName(null);
             }}
-            className="h-8 grow font-semibold"
+            className="h-8 w-auto grow px-1 font-semibold"
           />
         ) : (
           <button
             type="button"
             onClick={() => setEditingName(label.name)}
-            className="grow truncate rounded-md p-1 text-left font-semibold hover:bg-accent/50"
+            className="h-8 grow truncate rounded-md border border-transparent px-1 text-left font-semibold hover:bg-accent/50"
             title={t('c:edit')}
           >
             {label.name}
@@ -133,44 +169,12 @@ export const LabelPage = ({ labelId, entity, entityId }: LabelPageProps) => {
 
         {label.mode === 'epic' && <Badge variant="secondary">{t('c:epic')}</Badge>}
 
-        <LabelFilterButton name={label.name} />
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('c:remove')}
-          onClick={onDelete}
-          className="opacity-60 hover:text-destructive hover:opacity-100"
-        >
-          <Trash2Icon />
-        </Button>
+        <LabelFilterButton name={label.name} className="shrink-0" />
       </div>
 
-      {/* Tag <-> epic switch (project admins): promoting acts on this row only; name-group
-          siblings in other projects stay tags. Enabling reveals the description below. */}
-      {canManageEpic && (
-        <div className="flex items-center gap-2 px-2">
-          <Switch
-            id={`epic-switch-${label.id}`}
-            checked={label.mode === 'epic'}
-            onCheckedChange={(checked) =>
-              updateLabel.mutate({ id: label.id, ops: { mode: checked ? 'epic' : 'secondary' } })
-            }
-            aria-label={t('c:epic')}
-          />
-          <label htmlFor={`epic-switch-${label.id}`} className="cursor-pointer select-none text-sm leading-none">
-            {t('c:epic')}
-          </label>
-        </div>
-      )}
-
-      {/* Epic documentation: collaborative description editor (epics only) */}
-      {label.mode === 'epic' && (
-        <div className="grow overflow-y-auto">
-          <Suspense fallback={<Spinner className="my-8 h-6 w-6 opacity-50" noDelay />}>
-            <LabelDescriptionForm label={label} />
-          </Suspense>
-        </div>
-      )}
+      {/* With windowScroll the page scrolls the whole panel; otherwise everything below the
+          pinned name row scrolls together */}
+      {windowScroll ? <div className="flex-1">{body}</div> : <ScrollArea className="min-h-0 flex-1">{body}</ScrollArea>}
     </div>
   );
 };

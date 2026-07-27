@@ -4,14 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
+import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { Spinner } from '~/modules/common/spinner';
-import { LocalPanelShell } from '~/modules/task/panel/local-panel-shell';
-import { EXPLAINER_PANEL_ID } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
-import { ScrollArea, ScrollBar } from '~/modules/ui/scroll-area';
+import { ScrollArea } from '~/modules/ui/scroll-area';
+
+/** Stable id for the explainer ("getting started") panel. Also a persisted board-layout /
+ *  collapse-state key, so this string value must not change. */
+export const EXPLAINER_PANEL_ID = 'explainer';
 
 /**
- * Explainer panel content for task board showing organization welcome text.
+ * Explainer panel content for a board showing organization welcome text.
  */
 export const ExplainerPanel = () => {
   const { t } = useTranslation();
@@ -33,7 +36,6 @@ export const ExplainerPanel = () => {
       }
     >
       <ScrollArea id={'explainer-scrollarea'} className="h-full">
-        <ScrollBar />
         <div className="select-text p-4">
           <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
             <BlockNoteFullHtml

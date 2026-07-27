@@ -1,14 +1,11 @@
-import { onlineManager } from '@tanstack/react-query';
-import { getWorkspace, type Workspace } from 'sdk';
+import { getWorkspace } from 'sdk';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { findWorkspaceByIdOrSlug, workspaceQueryKeys, workspaceQueryOptions } from '~/modules/workspace/query';
-import { fetchSlugCacheId } from '~/query/basic/fetch-slug-cache-id';
+import { resolveChannelBySlug } from '~/query/basic/resolve-channel-by-slug';
 import { queryClient } from '~/query/query-client';
-import { redirectOnMissing } from '~/utils/redirect-on-missing';
-import { rewriteUrlToSlug } from '~/utils/rewrite-url-to-slug';
 
 type WorkspaceRouteBeforeLoadArgs = {
   params: { tenantId: string; slug: string };
@@ -22,43 +19,24 @@ type WorkspaceRouteBeforeLoadArgs = {
  * and prefetches projects, labels and tasks so views don't waterfall.
  */
 export const workspaceRouteBeforeLoad = async ({ params, context, search }: WorkspaceRouteBeforeLoadArgs) => {
-  // Reset on every entry, including workspace-to-workspace switches (onLeave does not fire when only params change).
-  resetTaskInteraction();
+  // Reset on entering another workspace (onLeave does not fire when only params change); keyed so
+  // search-param-only navigations within the same workspace keep the selection.
+  resetTaskInteraction(`workspace:${params.tenantId}:${params.slug}`);
 
   const { slug, tenantId } = params;
   const organizationId = context.organization.id;
 
-  const isOnline = onlineManager.isOnline();
-
-  // Resolve slug to ID via list cache (from menu), or fetch if not cached
-  const cached = findWorkspaceByIdOrSlug(slug, tenantId);
-  const workspaceId = cached?.id;
-
-  let workspace: Workspace | undefined;
-
-  if (workspaceId) {
-    const options = workspaceQueryOptions(workspaceId, organizationId, tenantId);
-
-    // Seed detail cache from list cache so ensureQueryData returns immediately
-    // instead of blocking on a fetch. It will still revalidate in background if stale.
-    if (cached && !queryClient.getQueryData(options.queryKey)) {
-      queryClient.setQueryData(options.queryKey, cached);
-    }
-
-    workspace =
-      queryClient.getQueryData(options.queryKey) ?? (isOnline ? await queryClient.ensureQueryData(options) : undefined);
-  } else if (isOnline) {
-    // Not in cache: fetch by slug.
-    workspace = await fetchSlugCacheId(
-      () => getWorkspace({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
-      workspaceQueryKeys.detail.byId,
-    );
-  }
-
-  redirectOnMissing(workspace);
-
-  // Rewrite URL to use slug if user navigated with ID (parent handles organizationId)
-  rewriteUrlToSlug(params, { slug: workspace.slug }, '/$tenantId/$organizationSlug/workspace/$slug');
+  const workspace = await resolveChannelBySlug({
+    idOrSlug: slug,
+    tenantId,
+    findInCache: findWorkspaceByIdOrSlug,
+    detailQueryOptions: (id) => workspaceQueryOptions(id, organizationId, tenantId),
+    fetchBySlug: () => getWorkspace({ path: { id: slug, organizationId, tenantId }, query: { slug: true } }),
+    slugFetchCacheKey: workspaceQueryKeys.detail.byId,
+    params,
+    buildSlugOverrides: (entity) => ({ slug: entity.slug }),
+    routeTo: '/$tenantId/$organizationSlug/workspace/$slug',
+  });
 
   // Prefetch projects and tasks so views (board/table) don't waterfall. Labels are project-homed,
   // so they are prefetched per project in the loop below (alongside the per-project task queries).

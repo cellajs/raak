@@ -36,9 +36,13 @@ export const UserCell = ({
 
   const setTriggerRef = sheeter.getState().setTriggerRef;
 
+  // While compacted the name is visually hidden, so surface it via the compact-scoped table tooltip.
+  const compactTooltip =
+    compactable && user.name ? { 'data-tooltip': 'compact', 'data-tooltip-content': user.name } : undefined;
+
   if (readOnly) {
     return (
-      <div className={cn('flex items-center gap-2', className)}>
+      <div className={cn('flex items-center gap-2', className)} {...compactTooltip}>
         <EntityAvatar type="user" className="h-8 w-8" id={user.id} name={user.name} url={user.thumbnailUrl} />
         <span className={cn('truncate', { [compactUserNameClass]: compactable })}>{user.name || '-'}</span>
       </div>
@@ -53,6 +57,7 @@ export const UserCell = ({
       className={className}
       tabIndex={tabIndex}
       draggable={false}
+      {...compactTooltip}
       onClick={(e) => {
         if (!onlineManager.isOnline()) {
           e.preventDefault();

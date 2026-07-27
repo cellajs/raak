@@ -6,10 +6,18 @@ import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { Member } from '~/modules/memberships/types';
+import { useProjectMembers } from '~/modules/project/use-project-members';
+import {
+  ComboboxHotkeyHint,
+  comboboxActionButtonClass,
+  comboboxScrollClass,
+  comboboxShellClass,
+  HotkeyIndexBadge,
+  matchDigitHotkey,
+} from '~/modules/task/dropdowns/combobox-scaffold';
 import type { SelectMembersProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
-import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import {
   Combobox,
   ComboboxEmpty,
@@ -18,9 +26,7 @@ import {
   ComboboxList,
   ComboboxSearchInput,
 } from '~/modules/ui/combobox';
-import { Kbd } from '~/modules/ui/kbd';
 import { ScrollArea } from '~/modules/ui/scroll-area';
-import { inNumbersArray } from '~/utils/in-numbers-array';
 
 export const SelectMembers = ({
   value: currentAssigned,
@@ -106,32 +112,28 @@ export const SelectMembers = ({
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        const membersNum = projectMembers.length;
         // Digit hotkey: select by 1-based index in the first 6 members
-        if (!showAll && inNumbersArray(membersNum < 6 ? membersNum : 6, value)) {
-          const target = projectMembers[Number.parseInt(value, 10) - 1];
-          if (target) toggleMember(target.id);
+        const target = matchDigitHotkey(projectMembers, value, { max: 6, enabled: !showAll });
+        if (target) {
+          toggleMember(target.id);
           return;
         }
         setSearchValue(value);
       }}
       filter={() => true}
     >
-      <div
-        className="relative rounded-lg sm:max-h-[44vh] sm:w-(--trigger-width)"
-        style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}
-      >
+      <div className={comboboxShellClass} style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}>
         <ComboboxSearchInput
           ref={inputRef}
           autoFocus
           value={searchValue}
-          wrapClassName="max-sm:hidden"
+          wrapClassName="shrink-0 max-sm:hidden"
           className="min-h-10 rounded-none leading-normal focus-visible:ring-transparent"
           placeholder={t('c:assign_to')}
           showClear={false}
         />
-        {!searchValue.length && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">A</Kbd>}
-        <ScrollArea>
+        <ComboboxHotkeyHint searching={!!searchValue.length}>A</ComboboxHotkeyHint>
+        <ScrollArea className={comboboxScrollClass}>
           <ComboboxList className="p-1">
             {(user: UserMinimalBase) => {
               const index = showedMembers.findIndex((m) => m.id === user.id);
@@ -139,7 +141,7 @@ export const SelectMembers = ({
                 <ComboboxItem
                   key={user.id}
                   value={user}
-                  className="group flex w-full items-center gap-2 rounded-md leading-normal"
+                  className="group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal"
                 >
                   <EntityAvatar
                     type="user"
@@ -150,25 +152,25 @@ export const SelectMembers = ({
                   />
                   <div className="grow">{user.name}</div>
                   <ComboboxItemIndicator className="text-success" />
-                  {!searchValue.length && !showAll && (
-                    <span className="mx-1 text-xs opacity-50 max-sm:hidden">{index + 1}</span>
-                  )}
+                  <HotkeyIndexBadge index={!searchValue.length && !showAll ? index : undefined} />
                 </ComboboxItem>
               );
             }}
           </ComboboxList>
           <ComboboxEmpty>{t('c:no_resource_found', { resource: t('c:member_other').toLowerCase() })}</ComboboxEmpty>
           {projectMembers.length > 5 && !searchValue.length && (
-            <button
-              type="button"
-              className="flex w-full items-center justify-center rounded-sm py-1.5 text-sm opacity-80 hover:bg-accent hover:opacity-100"
-              onClick={() => {
-                setShowAll(!showAll);
-                if (inputRef.current && !isMobile) inputRef.current.focus();
-              }}
-            >
-              <span className="text-sm sm:text-xs">{showAll ? t('c:show_less') : t('c:show_all')}</span>
-            </button>
+            <div className="p-1 pt-0">
+              <button
+                type="button"
+                className={comboboxActionButtonClass}
+                onClick={() => {
+                  setShowAll(!showAll);
+                  if (inputRef.current && !isMobile) inputRef.current.focus();
+                }}
+              >
+                {showAll ? t('c:show_less') : t('c:show_all')}
+              </button>
+            </div>
           )}
         </ScrollArea>
       </div>

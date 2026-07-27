@@ -1,20 +1,21 @@
-import { SquareXIcon, TrashIcon } from 'lucide-react';
+import { TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { useTaskDeleteMutation } from '~/modules/task/query';
-import type { Task } from '~/modules/task/types';
-import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 
 interface TaskSelectedButtonsProps {
-  selectedTasks: Task[];
+  selectedTaskIds: string[];
   clearSelection: () => void;
   organizationId: string;
   tenantId: string;
 }
 
+/** Floating action bar for tasks selected on the board or table: remove + clear. */
 export const TaskSelectedButtons = ({
-  selectedTasks,
+  selectedTaskIds,
   clearSelection,
   organizationId,
   tenantId,
@@ -22,33 +23,25 @@ export const TaskSelectedButtons = ({
   const { t } = useTranslation();
   const { mutateAsync: tasksDeleteMutation } = useTaskDeleteMutation(tenantId, organizationId);
 
-  // Return null if no tasks are selected
-  if (!selectedTasks.length) return null;
-
   const onRemove = async () => {
+    // Resolve fresh entities from the query cache at action time; list queries overlap, so dedupe by id
+    const idSet = new Set(selectedTaskIds);
+    const tasksToDelete = [
+      ...new Map(cachedTasks().flatMap((task) => (idSet.has(task.id) ? [[task.id, task] as const] : []))).values(),
+    ];
     // Backend handles label counter side-effects (usedCount decrement + auto-delete) atomically
-    await tasksDeleteMutation({ tasksToDelete: selectedTasks });
+    await tasksDeleteMutation({ tasksToDelete });
     clearSelection();
   };
 
   return (
-    <div className="inline-flex items-center gap-2 align-center">
-      <TooltipButton toolTipContent={t('c:remove_task')}>
-        <Button variant="destructive" className="relative" onClick={onRemove}>
-          <Badge className="absolute -top-1.5 -right-2 flex min-w-5 justify-center px-1 py-0 shadow-sm">
-            {selectedTasks.length}
-          </Badge>
+    <SelectionActionBar count={selectedTaskIds.length} onClear={clearSelection}>
+      <TooltipButton toolTipContent={t('c:remove_task')} side="top">
+        <Button variant="destructive" onClick={onRemove}>
           <TrashIcon />
-          <span className="ml-1 max-md:hidden">{t('c:remove')}</span>
+          <span className="ml-1">{t('c:remove')}</span>
         </Button>
       </TooltipButton>
-
-      <TooltipButton toolTipContent={t('c:clear_selection')}>
-        <Button variant="ghost" className="relative" onClick={clearSelection}>
-          <SquareXIcon />
-          <span className="ml-1 max-lg:hidden">{t('c:clear')}</span>
-        </Button>
-      </TooltipButton>
-    </div>
+    </SelectionActionBar>
   );
 };

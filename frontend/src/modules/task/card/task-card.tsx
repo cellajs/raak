@@ -11,6 +11,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { FocusTrap } from '~/modules/common/focus-trap';
+import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskCardContentCollapsed } from '~/modules/task/card/card-content-collapsed';
@@ -20,10 +21,9 @@ import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskUpdateForm } from '~/modules/task/card/task-update-form';
-import { isTaskData } from '~/modules/task/helpers/drag-and-drop';
+import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { toggleTaskCheckbox } from '~/modules/task/helpers/toggle-checkbox';
-import { useIsProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
@@ -147,9 +147,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         const { data: sourceData } = source;
         if (!isTaskData(sourceData)) return false;
         if (sourceData.type !== 'task' || sourceData.item.status !== task.status) return false;
-        // Block drops from other projects into a read-only project
-        if (sourceData.item.projectId !== task.projectId && isReadOnly) return false;
-        return true;
+        return canDropTaskIntoProject(sourceData.item.projectId, task.projectId);
       },
       getIsSticky: () => true,
       getData: ({ input }) =>
@@ -205,18 +203,22 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         tabIndex={0}
         ref={taskRef}
         className={cn(
-          `group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent to-100% py-0 pl-0.5 sm:py-0 ${task.isMatchingSearch ? `${isFocused ? 'bg-green-500/20 hover:bg-green-500/30!' : 'bg-green-300/20 hover:bg-green-300/30!'}` : ''}`,
+          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent to-100% py-0 sm:py-0',
+          task.isMatchingSearch &&
+            (isFocused ? 'bg-green-500/20 hover:bg-green-500/30!' : 'bg-green-300/20 hover:bg-green-300/30!'),
           effectiveState !== 'collapsed' ? 'is-expanded' : 'is-collapsed',
           dragging ? 'opacity-30' : 'opacity-100',
           !isSheet && 'focus-visible:is-focused focus-visible:outline-none focus-visible:ring-0',
           isFocused && !isSheet && 'is-focused',
-          isSheet ? 'min-h-[calc(100vh-3rem)] p-3 pt-0 sm:min-h-[calc(100vh-3.25rem)]' : 'hover:bg-card/20',
+          isSheet
+            ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]'
+            : 'hover:bg-card/20',
           taskCardVariants({ status: task.status }),
         )}
       >
         <CardContent
           id={`${task.id}-content`}
-          className="space-between relative flex flex-col border-primary p-1.5! group-[.is-focused]/task:-ml-0.5 group-[.is-focused]/task:border-l-2 sm:px-2!"
+          className="space-between relative flex flex-col p-1.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-[.is-focused]/task:before:opacity-100 max-sm:px-2.5! sm:px-2! sm:before:-left-px"
         >
           <SeenMark
             productId={task.id}

@@ -3,20 +3,17 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { BoardLayout, type BoardLayoutHandle } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { LabelsPanel } from '~/modules/label/labels-panel';
-import { computePanelReorder, useBoardPanels } from '~/modules/task/board/board-hooks';
+import { LABELS_PANEL_ID } from '~/modules/label/types';
+import { buildBoardExtraPanels, computePanelReorder, useBoardPanels } from '~/modules/task/board/board-hooks';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
-import { type BoardResizablePanel, LABELS_PANEL_ID } from '~/modules/task/types';
 
 export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardProps) {
   const { labelPageId } = useSearch({ strict: false }) as { labelPageId?: string };
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
   // Anonymous public views get no label management panel
-  const extraPanels = useMemo(
-    (): BoardResizablePanel[] | undefined => (publicView ? undefined : [{ kind: 'labels', panelId: LABELS_PANEL_ID }]),
-    [publicView],
-  );
+  const extraPanels = useMemo(() => buildBoardExtraPanels({ publicView }), [publicView]);
   const { panels, layoutPanels, defaultLayout, handleLayoutChanged } = useBoardPanels(boardId, projects, extraPanels);
 
   const setPanelOrder = useBoardStore((state) => state.setPanelOrder);
@@ -54,7 +51,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
     >
       {(panelId) => {
         const col = panels.find((c) => c.panelId === panelId);
-        if (col?.kind === 'labels') return <LabelsPanel entity="project" entityId={boardId} />;
+        if (col?.kind === 'labels') return <LabelsPanel entity="project" entityId={boardId} windowScroll />;
         if (col?.kind !== 'project') return null;
 
         return (

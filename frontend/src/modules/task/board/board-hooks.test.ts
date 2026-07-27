@@ -14,17 +14,24 @@ const makeProjectPanel = (projectId: string, displayOrder: number, panelId = pro
   } as unknown as EnrichedProject,
 });
 
-// A section-filtered split panel of a project (sectionIndex seeds its default order offset)
+// A section-filtered split panel of a project (sectionIndex seeds its default order offset).
+// Section values are irrelevant to ordering, so filters stay empty.
 const makeSplitPanel = (
   projectId: string,
   displayOrder: number,
   sectionIndex: number,
   panelId: string,
 ): BoardResizablePanel => ({
-  ...makeProjectPanel(projectId, displayOrder, panelId),
   kind: 'project',
-  sectionFilters: { status: [sectionIndex] },
+  panelId,
+  sectionFilters: { status: [] },
   sectionIndex,
+  project: {
+    id: projectId,
+    tenantId: 't',
+    organizationId: 'o',
+    membership: { id: `m-${projectId}`, displayOrder },
+  } as unknown as EnrichedProject,
 });
 
 // A local, non-project panel (explainer). Used to stand in for any order-only board column.
@@ -48,8 +55,24 @@ describe('getPanelDisplayOrder', () => {
     expect(getPanelDisplayOrder(makeLabelsPanel(), { labels: 15 })).toBe(15);
   });
 
-  it('prefers server-owned order over local override for project panels', () => {
-    expect(getPanelDisplayOrder(makeProjectPanel('a', 42), { a: 999 })).toBe(42);
+  it('anchors a project panel without enriched membership mid-board, ahead of labels', () => {
+    const bare: BoardResizablePanel = {
+      kind: 'project',
+      panelId: 'p',
+      project: { id: 'p', tenantId: 't', organizationId: 'o' } as unknown as EnrichedProject,
+    };
+    expect(getPanelDisplayOrder(bare)).toBe(0);
+  });
+
+  it('prefers a device-local override over the server-owned order', () => {
+    expect(getPanelDisplayOrder(makeProjectPanel('a', 42), { a: 999 })).toBe(999);
+  });
+
+  it('seeds split panels with distinct per-section offsets from the membership anchor', () => {
+    expect(getPanelDisplayOrder(makeSplitPanel('a', 20, 0, 'a-s0'))).toBe(20);
+    expect(getPanelDisplayOrder(makeSplitPanel('a', 20, 1, 'a-s1'))).toBe(20.001);
+    // Local override beats the seeded order
+    expect(getPanelDisplayOrder(makeSplitPanel('a', 20, 1, 'a-s1'), { 'a-s1': 5 })).toBe(5);
   });
 });
 
@@ -80,13 +103,18 @@ describe('sortPanelsByOrder', () => {
     expect(sortPanelsByOrder(panels).map((p) => p.panelId)).toEqual(['explainer', 'b', 'a', 'labels']);
   });
 
-  it('keeps split panels grouped via their shared membership order', () => {
+  it('keeps split panels grouped at their membership anchor by default', () => {
     const panels = [
-      makeProjectPanel('a', 20, 'a-status-started'),
-      makeProjectPanel('a', 20, 'a-status-finished'),
+      makeSplitPanel('a', 20, 0, 'a-status-started'),
+      makeSplitPanel('a', 20, 1, 'a-status-finished'),
       makeProjectPanel('b', 10),
     ];
     expect(sortPanelsByOrder(panels).map((p) => p.panelId)).toEqual(['b', 'a-status-started', 'a-status-finished']);
+  });
+
+  it('lets a local order pull one split panel away from its siblings', () => {
+    const panels = [makeSplitPanel('a', 20, 0, 'a-s0'), makeSplitPanel('a', 20, 1, 'a-s1'), makeProjectPanel('b', 10)];
+    expect(sortPanelsByOrder(panels, { 'a-s1': 5 }).map((p) => p.panelId)).toEqual(['a-s1', 'b', 'a-s0']);
   });
 });
 
@@ -126,5 +154,30 @@ describe('computePanelReorder', () => {
     const panels = [makeProjectPanel('a', 10), makeProjectPanel('b', 20), makeProjectPanel('c', 30)];
     // b stays between a and c → getOrderBetween(10, 30) === 20 === b's current order
     expect(computePanelReorder(panels, undefined, ['a', 'b', 'c'], 'b')).toBeNull();
+  });
+
+  it('produces a local order for a split panel, never a membership update', () => {
+    const panels = [makeSplitPanel('a', 10, 0, 'a-s0'), makeSplitPanel('a', 10, 1, 'a-s1'), makeProjectPanel('b', 30)];
+    // Drag a's second split panel past b
+    const result = computePanelReorder(panels, undefined, ['a-s0', 'b', 'a-s1'], 'a-s1');
+    expect(result).toMatchObject({ kind: 'local', panelId: 'a-s1' });
+    if (result?.kind === 'local') expect(result.displayOrder).toBeGreaterThan(30);
+  });
+
+  it('allows dropping another panel between two split siblings (seeded orders leave a gap)', () => {
+    const panels = [makeSplitPanel('a', 10, 0, 'a-s0'), makeSplitPanel('a', 10, 1, 'a-s1'), makeProjectPanel('b', 30)];
+    const result = computePanelReorder(panels, undefined, ['a-s0', 'b', 'a-s1'], 'b');
+    expect(result).toMatchObject({ kind: 'membership', projectId: 'b' });
+    if (result?.kind === 'membership') {
+      expect(result.displayOrder).toBeGreaterThan(10);
+      expect(result.displayOrder).toBeLessThan(10.001);
+    }
+  });
+
+  it('forces a local order for an unsplit project panel when persist is local', () => {
+    const panels = [makeProjectPanel('a', 10), makeLabelsPanel()];
+    const result = computePanelReorder(panels, undefined, ['labels', 'a'], 'a', { persist: 'local' });
+    expect(result).toMatchObject({ kind: 'local', panelId: 'a' });
+    if (result?.kind === 'local') expect(result.displayOrder).toBeGreaterThan(1_000_000);
   });
 });

@@ -1,10 +1,12 @@
 import { useSearch } from '@tanstack/react-router';
 import type { Project } from 'sdk';
+import { useShallow } from 'zustand/react/shallow';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
@@ -14,7 +16,6 @@ import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
-import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -30,7 +31,7 @@ interface TasksHotkeysProps {
 type StrictBoardPanel = ProjectResizablePanel;
 
 export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
-  const { panelData } = useTaskBoardStore();
+  const boardPanelData = useTaskBoardStore(useShallow((state) => state.panelData[boardId]));
   const { tenantId, organization } = useOrganizationLayoutContext();
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(tenantId, organization.id);
@@ -66,7 +67,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   // Resolve the focused task and its panel's rendered task list (shared by vertical nav handlers).
   const resolveVerticalNavContext = () => {
     if (!projects.length) return null;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, panelData[boardId]);
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, boardPanelData);
     const currentTask = currentActiveTask();
     if (!currentTask) return null;
 
@@ -74,7 +75,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     if (currentTaskCard?.dataset.state === 'editing') return null;
 
     const currentPanel = findCurrentPanel(allPanels, currentTask.projectId, currentTask.status) ?? allPanels[0];
-    const { expandAccepted, expandIced } = panelData[boardId]?.[currentPanel.project.id]?.prefs || defaultPanelPrefs;
+    const { expandAccepted, expandIced } = boardPanelData?.[currentPanel.project.id]?.prefs || defaultPanelPrefs;
     const visibleTasks = prepareBoardTasks(getVisiblePanelTasks(currentPanel), expandAccepted, expandIced);
 
     return { currentTask, visibleTasks };
@@ -136,7 +137,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   // Left/Right focuses the first visible task in the target panel.
   const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length) return;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, panelData[boardId]);
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, boardPanelData);
     const currentTask = currentActiveTask();
 
     const currentPanelIndex = allPanels.findIndex(
@@ -149,7 +150,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     const nextPanel = allPanels[currentPanelIndex + direction];
     if (!nextPanel) return;
 
-    const { expandAccepted, expandIced } = panelData[boardId]?.[nextPanel.project.id]?.prefs || defaultPanelPrefs;
+    const { expandAccepted, expandIced } = boardPanelData?.[nextPanel.project.id]?.prefs || defaultPanelPrefs;
     const visibleTasks = prepareBoardTasks(getVisiblePanelTasks(nextPanel), expandAccepted, expandIced);
     const targetTaskId = getFirstViewportTaskId(nextPanel.project.id, visibleTasks) ?? visibleTasks[0]?.id;
     if (targetTaskId) setTaskCardFocus(targetTaskId);

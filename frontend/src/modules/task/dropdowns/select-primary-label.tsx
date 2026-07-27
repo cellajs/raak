@@ -4,12 +4,11 @@ import type { Label } from 'sdk';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
+import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-scaffold';
 import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList, ComboboxSearchInput } from '~/modules/ui/combobox';
-import { Kbd } from '~/modules/ui/kbd';
 import { cn } from '~/utils/cn';
-import { inNumbersArray } from '~/utils/in-numbers-array';
 
 /** Dropdown to pick a task's primary label (task type) from the project's primary set. */
 export const SelectPrimaryLabel = ({
@@ -52,9 +51,9 @@ export const SelectPrimaryLabel = ({
       inputValue={searchValue}
       onInputValueChange={(value) => {
         // Digit hotkey: selects the corresponding primary label by display order
-        if (inNumbersArray(primaryLabels.length, value)) {
-          const label = primaryLabels[Number.parseInt(value, 10) - 1];
-          if (label) commit(label);
+        const label = matchDigitHotkey(primaryLabels, value);
+        if (label) {
+          commit(label);
           return;
         }
         setSearchValue(value);
@@ -69,19 +68,15 @@ export const SelectPrimaryLabel = ({
           placeholder={t('c:select_resource', { resource: t('c:type').toLowerCase() })}
           showClear={false}
         />
-        {!isSearching && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">T</Kbd>}
+        <ComboboxHotkeyHint searching={isSearching}>T</ComboboxHotkeyHint>
         <ComboboxList className="p-1">
           {(label: Label) => {
             const index = primaryLabels.findIndex((l) => l.id === label.id);
             return (
-              <ComboboxItem
-                key={label.id}
-                value={label}
-                className="group flex w-full items-center gap-2 rounded-md leading-normal"
-              >
+              <ComboboxItem key={label.id} value={label} className="group flex h-9 w-full items-center gap-2 pr-2">
                 <PrimaryLabelIcon label={label} />
                 <div className="grow">{label.name}</div>
-                {!isSearching && <span className="mx-1 text-xs opacity-50 max-sm:hidden">{index + 1}</span>}
+                <HotkeyIndexBadge index={isSearching ? undefined : index} />
               </ComboboxItem>
             );
           }}

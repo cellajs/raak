@@ -29,18 +29,18 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   const isMobile = useBreakpointBelow('sm');
   const boardId = useBoardStore((state) => state.activeBoardId)!;
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
-  const hasSelectedTasks = useTaskInteractionStore((s) => s.selectedTasks.length > 0);
+  const hasSelectedTasks = useTaskInteractionStore((s) => s.selectedTaskIds.length > 0);
   const toggleStatusView = useTaskBoardStore(({ togglePanelSectionExpandState }) => togglePanelSectionExpandState);
 
-  // Scroll machinery (virtualizer/viewport refs, sticky sections, section-toggle + create-form /
+  // Scroll machinery (virtualizer/viewport refs, section-toggle + create-form /
   // new-task scroll-into-view). Kept in a hook so this component stays layout-only.
-  const { virtualizerRef, scrollViewportRef, handleSectionToggle, stickyAccepted, stickyIced } = usePanelScrolling({
+  const { virtualizerRef, scrollViewportRef, handleSectionToggle } = usePanelScrolling({
     projectId: project.id,
-    boardId,
     tasks,
     isMobile,
     windowScroll: !!windowScroll,
   });
+  const sectionWindowMode = isMobile || !!windowScroll;
 
   const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced;
 
@@ -54,13 +54,14 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
     });
   };
 
-  // Build status section slots (always rendered inline, sticky when conditions met)
+  // Build status section slots (sticky at their edge, shown/hidden by scroll direction)
   const topSlot = counts.showAccepted ? (
     <PanelStatusSection
       type={'accepted'}
       counts={counts}
       projectId={project.id}
-      isSticky={stickyAccepted}
+      scrollRef={scrollViewportRef}
+      windowMode={sectionWindowMode}
       onToggle={handleSectionToggle}
     />
   ) : undefined;
@@ -70,7 +71,8 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
       type={'iced'}
       counts={counts}
       projectId={project.id}
-      isSticky={stickyIced}
+      scrollRef={scrollViewportRef}
+      windowMode={sectionWindowMode}
       onToggle={handleSectionToggle}
     />
   ) : undefined;
@@ -98,7 +100,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
     >
       {isMobile || windowScroll ? (
         <div className="mb-10 flex h-full flex-col" id={`tasks-list-${project.id}`}>
-          {/* Accepted section (mobile/windowScroll, always inline, no sticky) */}
+          {/* Accepted section (window-scroll sticky, direction-based visibility) */}
           {topSlot}
 
           {hasContent ? (
@@ -114,18 +116,21 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
             <TaskPanelEmpty projectId={project.id} />
           )}
 
-          {/* Iced section (mobile/windowScroll, always inline, no sticky) */}
+          {/* Iced section (window-scroll sticky, direction-based visibility) */}
           {bottomSlot}
         </div>
       ) : (
+        // h-auto/min-h-full override the content div's inline height:100% so it spans the full
+        // scroll content: it is the sticky section headers' containing block, and a
+        // viewport-height block would stop them pinning after one viewport of scrolling.
         <ScrollArea
           id={project.id}
           className="mx-[-.05rem] min-h-0 flex-1"
           viewportRef={scrollViewportRef}
-          viewportClassName="[&>div]:!flex [&>div]:!flex-col [&>div]:!grow"
+          viewportClassName="[&>div]:!flex [&>div]:!flex-col [&>div]:!grow [&>div]:!h-auto [&>div]:!min-h-full"
           disableTrackClick
         >
-          {/* Accepted section: inline, sticky when active + expanded + intersecting */}
+          {/* Accepted section: sticky top, shown when scrolling up or resting at the top */}
           {topSlot}
 
           {/* Fallback container for create task form */}
@@ -154,7 +159,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
             )}
           </div>
 
-          {/* Iced section: inline, sticky when active + expanded + intersecting */}
+          {/* Iced section: sticky bottom, shown when scrolling down or resting at the bottom */}
           {bottomSlot}
         </ScrollArea>
       )}

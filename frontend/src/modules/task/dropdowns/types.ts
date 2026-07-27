@@ -18,6 +18,12 @@ export type SelectLabelsProps = DropdownLayoutProps & {
   projectId: string;
   workspaceId?: string;
   onChange: (labels: TaskLabel[]) => void;
+  /**
+   * Initial collapsed state of the "Selected" section. Defaults to collapsed on
+   * desktop and expanded on mobile. Openers where the selected labels are already
+   * visible (e.g. an expanded mobile task card) pass `true` to open it collapsed.
+   */
+  initialSelectedCollapsed?: boolean;
 };
 
 export type SelectMembersProps = DropdownLayoutProps & {

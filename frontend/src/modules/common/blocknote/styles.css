@@ -260,6 +260,14 @@ li:has(.is-focused) {
   justify-content: space-between;
 }
 
+/* Normalize menu icons to the app's standard size. BlockNote's shadcn theme resets any icon without a
+   size-* class to its raw attribute width (react-icons 18px, lucide 24px) via an unlayered
+   `.bn-shadcn svg:not([class*="size-"]) { width: revert }` rule, so !important is required to win. */
+.slash-menu-item svg {
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
 .slash-menu-item-badge {
   font-size: 0.8rem;
   min-width: 1rem;

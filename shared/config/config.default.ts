@@ -54,6 +54,9 @@ export const config = {
    */
   productEmbeddings: [
     { embeddedProduct: 'label', hostProduct: 'task', hostColumn: 'labels' },
+    // Hydrated single reference: no physical column, the wire object derives from
+    // primaryLabelId. Cache-hint fan-out only; CDC cleanup and counters skip it.
+    { embeddedProduct: 'label', hostProduct: 'task', hostColumn: 'primaryLabel' },
   ] as readonly {
     readonly embeddedProduct: (typeof hierarchy.productTypes)[number];
     readonly hostProduct: (typeof hierarchy.productTypes)[number];

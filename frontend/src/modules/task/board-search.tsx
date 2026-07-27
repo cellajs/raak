@@ -13,11 +13,10 @@ import { cn } from '~/utils/cn';
 
 interface BoardSearchProps {
   children?: React.ReactNode;
-  clearSelection: () => void;
   toggleFocus: () => void;
 }
 
-export const BoardSearch = ({ children, clearSelection, toggleFocus }: BoardSearchProps) => {
+export const BoardSearch = ({ children, toggleFocus }: BoardSearchProps) => {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
 
@@ -95,11 +94,7 @@ export const BoardSearch = ({ children, clearSelection, toggleFocus }: BoardSear
         })}
         className={'h-10 w-full border-0 pl-0! shadow-none'}
         value={inputValue}
-        onChange={(e) => {
-          const searchValue = e.target.value;
-          if (searchValue.length) clearSelection();
-          setInputValue(searchValue);
-        }}
+        onChange={(e) => setInputValue(e.target.value)}
       />
 
       <InputGroupAddon className="pr-2" align="inline-end">

@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/workspac
     isAuth: true,
     floatingNavButtons: { left: 'menu' },
   },
-  onLeave: resetTaskInteraction,
+  onLeave: () => resetTaskInteraction(),
   beforeLoad: workspaceRouteBeforeLoad,
   head: ({ match }) => {
     const name = match.context.workspace?.name;

@@ -15,6 +15,7 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
+  ComboboxItemIndicator,
   ComboboxList,
   ComboboxPrimitive,
   ComboboxSearchInput,
@@ -22,6 +23,13 @@ import {
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+
+// Module-scoped: this component re-renders per keystroke, so an inline object would rebuild every render.
+const dropdownVariants = {
+  hidden: { opacity: 0, y: -5, scale: 0.98 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.1 } },
+  exit: { opacity: 0, y: -5, scale: 0.98, transition: { duration: 0.1 } },
+};
 
 interface Props {
   value: ChannelBase[];
@@ -55,12 +63,6 @@ export const ProjectSuggestionCombobox = ({
   });
   const projects = flattenInfiniteData<EnrichedProject>(data);
 
-  const variants = {
-    hidden: { opacity: 0, y: -5, scale: 0.98 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.1 } },
-    exit: { opacity: 0, y: -5, scale: 0.98, transition: { duration: 0.1 } },
-  };
-
   // Mirror selection back to value (multi). Compare by id since identities can differ.
   const selectedIds = new Set(value.map((v) => v.id));
   const selected = projects.filter((p) => selectedIds.has(p.id));
@@ -85,7 +87,7 @@ export const ProjectSuggestionCombobox = ({
       <ComboboxPrimitive.Trigger
         nativeButton={false}
         render={
-          <div className="hover:transparent relative flex min-h-12 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border border-input bg-background p-1.5 pr-10 active:translate-y-0!" />
+          <div className="relative flex min-h-12 w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border border-input bg-background p-1.5 pr-10 active:translate-y-0!" />
         }
       >
         {value.length > 0 ? (
@@ -127,7 +129,7 @@ export const ProjectSuggestionCombobox = ({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  variants={variants}
+                  variants={dropdownVariants}
                   className="h-full"
                 >
                   {debouncedSearchQuery.length ? (
@@ -150,7 +152,7 @@ export const ProjectSuggestionCombobox = ({
                 </motion.div>
               ) : (
                 projects.length > 0 && (
-                  <motion.div key="results" initial="hidden" animate="visible" exit="exit" variants={variants}>
+                  <motion.div key="results" initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
                     {projects.map((project) => {
                       const { id, entityType, name, thumbnailUrl } = project;
                       const isSelected = value.some((v) => v.id === id);
@@ -192,6 +194,7 @@ export const ProjectSuggestionCombobox = ({
                                   : (assignedWorkspace?.name ?? t('c:in_another_workspace'))}
                               </span>
                             </Badge>
+                            <ComboboxItemIndicator />
                           </div>
                         </ComboboxItem>
                       );

@@ -10,7 +10,7 @@ import type { MenuSectionOptions } from '~/modules/navigation/menu-sheet/section
 import { CreateOrganizationForm } from '~/modules/organization/create-organization-form';
 import { findOrganizationByIdOrSlug } from '~/modules/organization/query';
 import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
-import { router } from '~/routes/router';
+import { getRouter } from '~/routes/-router-instance';
 
 /**
  * Create new organization from the menu.
@@ -19,7 +19,7 @@ function createOrganizationAction(triggerRef: RefObject<HTMLButtonElement | null
   const callback = (args: CallbackArgs<Organization>) => {
     if (args.status === 'success') {
       useDialoger.getState().remove('create-organization');
-      router.navigate({
+      getRouter().navigate({
         to: '/$tenantId/$organizationSlug/organization/members',
         params: { tenantId: args.data.tenantId, organizationSlug: args.data.slug },
       });
@@ -43,7 +43,7 @@ const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>) 
     // Find organization from react-query cache to get slug
     const organization = findOrganizationByIdOrSlug(organizationId, tenantId);
 
-    router.navigate({
+    getRouter().navigate({
       to: '/$tenantId/$organizationSlug/workspace/$slug',
       params: { slug, organizationSlug: organization?.slug ?? organizationId, tenantId },
     });

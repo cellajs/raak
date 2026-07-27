@@ -27,7 +27,11 @@ export const newTaskFormDefaults: NewTaskFormValues = {
   status: TaskStatus.Unstarted,
 };
 
-export const newTaskFormIsDirty = ({ assignedTo, labels, description }: NewTaskFormValues) =>
+export const newTaskFormIsDirty = ({
+  assignedTo,
+  labels,
+  description,
+}: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
 // Handles logic for showing or hiding task creation form via Zustand draft state

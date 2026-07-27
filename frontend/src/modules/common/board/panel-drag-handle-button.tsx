@@ -1,3 +1,4 @@
+import { GripVerticalIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePanelDragHandle } from '~/modules/common/board/board-drag';
@@ -11,15 +12,25 @@ interface PanelDragHandleButtonProps {
   fallbackLabel?: string;
   /** Per-panel layout classes (collapsed vs expanded shape). */
   className?: string;
-  children: ReactNode;
+  /** Leading icon or avatar; when the board is reorderable it swaps to a drag grip on hover. */
+  icon: ReactNode;
+  /** Trailing label content (kept visible on hover). */
+  children?: ReactNode;
 }
 
 /**
  * A panel header / collapsed-slot button wired as a keyboard-accessible drag handle.
  * Consumes the board's drag context (null when the board isn't reorderable) and applies the
- * shared grab-cursor + sortable ARIA. Per-panel layout is supplied via `className`.
+ * shared grab-cursor + sortable ARIA. Per-panel layout is supplied via `className`. On hover the
+ * leading `icon` cross-fades to a drag grip so the handle reads as draggable.
  */
-export const PanelDragHandleButton = ({ name, fallbackLabel, className, children }: PanelDragHandleButtonProps) => {
+export const PanelDragHandleButton = ({
+  name,
+  fallbackLabel,
+  className,
+  icon,
+  children,
+}: PanelDragHandleButtonProps) => {
   const { t } = useTranslation();
   const panelDrag = usePanelDragHandle();
 
@@ -28,7 +39,7 @@ export const PanelDragHandleButton = ({ name, fallbackLabel, className, children
       type="button"
       variant="ghost"
       ref={panelDrag?.registerHandle}
-      className={cn(className, panelDrag && 'cursor-grab active:cursor-grabbing')}
+      className={cn(className, panelDrag && 'group/drag cursor-grab active:cursor-grabbing')}
       aria-roledescription={panelDrag ? t('c:sortable') : undefined}
       aria-label={
         panelDrag
@@ -38,6 +49,14 @@ export const PanelDragHandleButton = ({ name, fallbackLabel, className, children
       onKeyDown={panelDrag?.onKeyDown}
       onClick={panelDrag?.onToggleCollapsed}
     >
+      <span className="relative inline-flex shrink-0 items-center justify-center">
+        <span className={cn('inline-flex', panelDrag && 'transition-opacity group-hover/drag:opacity-0')}>{icon}</span>
+        {panelDrag && (
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover/drag:opacity-100">
+            <GripVerticalIcon className="size-4 shrink-0" />
+          </span>
+        )}
+      </span>
       {children}
     </Button>
   );

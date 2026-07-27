@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Attachment } from 'sdk';
-import { useProjectPublicity } from '~/modules/task/hooks/use-project-publicity';
+import { useProjectPublicity } from '~/modules/project/use-project-publicity';
 
 /**
  * Base props for the task attachment upload panel, shared by the create and update forms.

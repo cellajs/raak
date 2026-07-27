@@ -30,6 +30,8 @@ export type HandleDropdownProps = CommonDropdownProps &
         projectId: string;
         workspaceId?: string;
         onChange: (v: TaskLabel[]) => void;
+        /** Open the "Selected" section collapsed even on mobile (labels already visible). */
+        initialSelectedCollapsed?: boolean;
       }
     | {
         dropdownType: 'assignedTo';
@@ -61,6 +63,7 @@ export function handleTaskDropdownClick(props: HandleDropdownProps) {
         onChange={props.onChange}
         taskId={taskId}
         triggerWidth={width}
+        initialSelectedCollapsed={props.initialSelectedCollapsed}
       />
     );
   } else if (props.dropdownType === 'assignedTo') {

@@ -45,8 +45,8 @@ const buildStx = (fieldNames: string[]) => {
 
 const updateOps = (ops: Record<string, unknown>) => ({ ops, stx: buildStx(Object.keys(ops)) });
 
-// Covers the epic-description rules on updateLabelOp: only epics carry a description,
-// description-only ops skip the project-admin gate (any project member documents an epic),
+// Covers the epic gates on updateLabelOp: only epics carry a description, member-level ops
+// (documenting an epic, toggling secondary <-> epic mode) skip the project-admin gate,
 // and identity edits on epics stay admin-only.
 describe('Label description gates (epic documentation)', async () => {
   const call = await createAppClient();
@@ -143,20 +143,11 @@ describe('Label description gates (epic documentation)', async () => {
     expect(response.status).toBe(200);
   });
 
-  it('requires project-admin authority to promote a tag to an epic', async () => {
-    const { response } = await call(updateLabel, {
-      path: path(promotableLabelId),
-      body: updateOps({ mode: 'epic' }),
-      headers: { ...defaultHeaders, Cookie: member.sessionCookie },
-    });
-    expect(response.status).toBe(403);
-  });
-
-  it('promotes a tag to an epic (and back) for an admin', async () => {
+  it('lets a project member promote a tag to an epic (and back)', async () => {
     const promote = await call(updateLabel, {
       path: path(promotableLabelId),
       body: updateOps({ mode: 'epic' }),
-      headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
+      headers: { ...defaultHeaders, Cookie: member.sessionCookie },
     });
     expect(promote.response.status).toBe(200);
 
@@ -166,9 +157,18 @@ describe('Label description gates (epic documentation)', async () => {
     const demote = await call(updateLabel, {
       path: path(promotableLabelId),
       body: updateOps({ mode: 'secondary' }),
-      headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
+      headers: { ...defaultHeaders, Cookie: member.sessionCookie },
     });
     expect(demote.response.status).toBe(200);
+  });
+
+  it('still rejects a member combining a mode toggle with an identity edit on an epic', async () => {
+    const { response } = await call(updateLabel, {
+      path: path(epicLabelId),
+      body: updateOps({ mode: 'secondary', name: 'Sneaky rename' }),
+      headers: { ...defaultHeaders, Cookie: member.sessionCookie },
+    });
+    expect(response.status).toBe(403);
   });
 
   it('never changes mode on a primary label, even for an admin', async () => {

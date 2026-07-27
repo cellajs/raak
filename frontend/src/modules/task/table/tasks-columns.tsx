@@ -22,6 +22,21 @@ import { Button } from '~/modules/ui/button';
 import { UserCell } from '~/modules/user/user-cell';
 import { dateShort } from '~/utils/date-short';
 
+// The creator/updater cells parse the same row object on every render; under virtualization that
+// re-fires on scroll for rows already on screen. Cache the parse per user object: a row's identity
+// from the query cache changes only when the row updates, so this runs once per distinct value.
+type ParsedUserCell = ReturnType<typeof zUserMinimalBase.parse>;
+const userCellCache = new WeakMap<object, ParsedUserCell | null>();
+const parseUserCell = (value: unknown): ParsedUserCell | null => {
+  if (!value || typeof value !== 'object') return null;
+  const cached = userCellCache.get(value);
+  if (cached !== undefined) return cached;
+  const result = zUserMinimalBase.safeParse(value);
+  const user = result.success ? result.data : null;
+  userCellCache.set(value, user);
+  return user;
+};
+
 function SummaryCell({
   row,
   tabIndex,
@@ -95,6 +110,8 @@ function ProjectCell({
       params={{ slug: project.slug, organizationSlug: organization.slug, tenantId }}
       tabIndex={tabIndex}
       className="group flex items-center space-x-2 truncate outline-0 ring-0"
+      data-tooltip="compact"
+      data-tooltip-content={project.name}
     >
       <EntityAvatar
         type="project"
@@ -133,7 +150,11 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
           if (!row.primaryLabel) return null;
           return (
             <>
-              <span className="mr-2 inline-flex shrink-0">
+              <span
+                className="mr-2 inline-flex shrink-0"
+                data-tooltip="compact"
+                data-tooltip-content={row.primaryLabel.name}
+              >
                 <PrimaryLabelIcon label={row.primaryLabel} />
               </span>
               <span className="in-data-[is-compact=true]:hidden truncate">{row.primaryLabel.name}</span>
@@ -142,10 +163,24 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         },
         width: 140,
         modes: {
-          compact: { width: 50 },
+          compact: { width: 32, minWidth: 32 },
           // On mobile the type icon merges into the summary cell (icon-only via the slot's data-is-compact)
           mobile: { merge: { into: 'summary', side: 'left' } },
         },
+      },
+      {
+        key: 'summary',
+        name: t('c:summary'),
+        minWidth: 280,
+        resizable: true,
+        wrapText: 3,
+        estimateLines: (row) => {
+          const len = row.summaryLength ?? 0;
+          if (len <= 50) return 1;
+          if (len <= 100) return 2;
+          return 3;
+        },
+        renderCell: (props) => <SummaryCell {...props} navigate={navigate} setTriggerRef={setTriggerRef} />,
       },
       {
         key: 'status',
@@ -174,20 +209,6 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         },
       },
       {
-        key: 'summary',
-        name: t('c:summary'),
-        minWidth: 280,
-        resizable: true,
-        wrapText: 3,
-        estimateLines: (row) => {
-          const len = row.summaryLength ?? 0;
-          if (len <= 50) return 1;
-          if (len <= 100) return 2;
-          return 3;
-        },
-        renderCell: (props) => <SummaryCell {...props} navigate={navigate} setTriggerRef={setTriggerRef} />,
-      },
-      {
         key: 'assignedTo',
         name: t('c:assigned_to'),
         hidden: true,
@@ -196,21 +217,27 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         renderCell: ({ row }) => {
           if (!row.assignedTo.length) return null;
           return (
-            <AvatarGroup limit={3}>
-              <AvatarGroupList>
-                {row.assignedTo.map((user) => (
-                  <EntityAvatar
-                    type="user"
-                    key={user.id}
-                    id={user.id}
-                    name={user.name}
-                    url={user.thumbnailUrl}
-                    className="h-8 w-8 text-xs"
-                  />
-                ))}
-              </AvatarGroupList>
-              <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
-            </AvatarGroup>
+            <span
+              className="inline-flex"
+              data-tooltip="compact"
+              data-tooltip-content={row.assignedTo.map((user) => user.name).join(', ')}
+            >
+              <AvatarGroup limit={3}>
+                <AvatarGroupList>
+                  {row.assignedTo.map((user) => (
+                    <EntityAvatar
+                      type="user"
+                      key={user.id}
+                      id={user.id}
+                      name={user.name}
+                      url={user.thumbnailUrl}
+                      className="h-8 w-8 text-xs"
+                    />
+                  ))}
+                </AvatarGroupList>
+                <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
+              </AvatarGroup>
+            </span>
           );
         },
       },
@@ -294,9 +321,8 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         width: 180,
         placeholderValue: '-',
         renderCell: ({ row, tabIndex }) => {
-          const result = zUserMinimalBase.safeParse(row.createdBy);
-          if (!result.success) return null;
-          const user = result.data;
+          const user = parseUserCell(row.createdBy);
+          if (!user) return null;
           return <UserCell compactable user={user} tabIndex={tabIndex} />;
         },
         // Compact toggle: creator avatar merges inline before the created date
@@ -317,12 +343,12 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         width: 180,
         placeholderValue: '-',
         renderCell: ({ row, tabIndex }) => {
-          const result = zUserMinimalBase.safeParse(row.updatedBy);
-          if (!result.success) return null;
-          const user = result.data;
+          const user = parseUserCell(row.updatedBy);
+          if (!user) return null;
           return <UserCell compactable user={user} tabIndex={tabIndex} />;
         },
-        modes: { compact: { width: 50 } },
+        // Compact toggle: updater avatar merges inline before the updated date
+        modes: { compact: { merge: { into: 'updatedAt', side: 'left' } } },
       },
       {
         key: 'updatedAt',

@@ -1,7 +1,16 @@
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import { defaultOrder } from 'shared/utils/display-order';
+import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import type { PanelDraggableData, Task, TaskDraggableData } from '~/modules/task/types';
+
+/**
+ * Whether a task from `sourceProjectId` may be dropped into `targetProjectId`: same-project
+ * reorders are always allowed; cross-project drops are blocked into a read-only target.
+ * Single source of this rule for both the card and panel drop targets.
+ */
+export const canDropTaskIntoProject = (sourceProjectId: string, targetProjectId: string): boolean =>
+  sourceProjectId === targetProjectId || !isProjectReadOnly(targetProjectId);
 
 export const isPanelData = (data: Record<string | symbol, unknown>): data is PanelDraggableData => {
   return data.dragItem === true && typeof data.type === 'string' && data.type === 'panel';

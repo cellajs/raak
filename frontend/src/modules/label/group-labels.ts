@@ -9,7 +9,7 @@ import type { LabelRow } from '~/modules/label/types';
  * `preferredProjectId` picks which sibling represents a group (e.g. the current project's copy).
  */
 export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: string } = {}): LabelRow[] => {
-  const rowMap = new Map<string, LabelRow>();
+  const rowMap = new Map<string, Omit<LabelRow, 'nameLower' | 'keywordsLower'>>();
 
   for (const label of labels) {
     const groupKey = label.mode === 'epic' ? label.id : label.name;
@@ -34,7 +34,11 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
     rowMap.set(groupKey, preferNew ? { ...label, ...aggregates } : { ...existing, ...aggregates });
   }
 
-  return Array.from(rowMap.values());
+  return Array.from(rowMap.values(), (row) => ({
+    ...row,
+    nameLower: row.name.toLowerCase(),
+    keywordsLower: row.keywords.toLowerCase(),
+  }));
 };
 
 /** The group row containing a given label id, if any (epics are their own group). */

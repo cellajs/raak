@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { useRouter } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import type { Project, Workspace } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -15,7 +16,6 @@ import { ProjectBoard } from '~/modules/task/board/project-board';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardTabs } from '~/modules/task/board/workspace-board-tabs';
 import { flattenInfiniteData } from '~/query/basic/flatten';
-import { router } from '~/routes/router';
 
 export interface BoardProps {
   boardId: string;
@@ -32,6 +32,7 @@ export type ResolvedBoardProps = Omit<BoardProps, 'projects'> & { projects: Enri
  */
 export function Board({ boardId, projects: projectsProp, workspace, publicView }: BoardProps) {
   const isMobile = useBreakpointBelow('sm');
+  const router = useRouter();
   const setActiveBoard = useBoardStore((state) => state.setActiveBoard);
 
   // Preload BlockNoteFullHtml so expanding a task card doesn't show a spinner
@@ -52,10 +53,10 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
 
   // Close the mobile create-task dialog on navigation. One board-level subscription
   // instead of one per PanelProjectActions instance (which registered N per board).
-  useEffect(() => router.subscribe('onBeforeLoad', () => useDialoger.getState().remove('create-task')), []);
+  useEffect(() => router.subscribe('onBeforeLoad', () => useDialoger.getState().remove('create-task')), [router]);
 
   const BoardView = (() => {
-    if (isLoadingProjects) return <BoardSkeleton boardId={boardId} />;
+    if (isLoadingProjects) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} />;
     if (!projects.length) return <BoardEmpty workspace={workspace} publicView={publicView} />;
     if (isMobile) return <WorkspaceBoardTabs projects={projects} workspace={workspace} publicView={publicView} />;
     if (!workspace) return <ProjectBoard boardId={boardId} projects={projects} publicView={publicView} />;

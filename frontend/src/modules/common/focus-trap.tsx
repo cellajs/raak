@@ -74,12 +74,14 @@ export function FocusTrap({
     if (initialFocus) {
       queueMicrotask(() => {
         if (trap.contains(document.activeElement) && document.activeElement !== trap) return;
+        // preventScroll: portaled content (e.g. dropdown popups) may still sit at (0,0)
+        // when this runs, so a scrolling focus would jump the page to the top.
         if (typeof initialFocus === 'object' && initialFocus.current) {
-          initialFocus.current.focus();
+          initialFocus.current.focus({ preventScroll: true });
           return;
         }
         const focusable = getFocusableElements(trap);
-        (focusable[0] ?? trap).focus();
+        (focusable[0] ?? trap).focus({ preventScroll: true });
       });
     }
 
@@ -102,7 +104,9 @@ export function FocusTrap({
       if (!trap || !target || trap.contains(target)) return;
       if (target.hasAttribute('data-focus-guard')) return;
       const focusable = getFocusableElements(trap);
-      (focusable[0] ?? trap).focus();
+      // preventScroll: this redirect pulls focus back involuntarily, so it must not
+      // scroll the page (which would jump when the trapped content is off-screen).
+      (focusable[0] ?? trap).focus({ preventScroll: true });
     }
 
     document.addEventListener('focusin', onFocusIn);
