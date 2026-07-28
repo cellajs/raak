@@ -54,14 +54,14 @@ interface CreateTaskFormProps {
   onStatusChange?: (status: TaskStatusType) => void;
 }
 
-const CreateTaskForm = ({
+function CreateTaskForm({
   projectId,
   organizationId,
   className,
   dialog: isDialog,
   onSuccess,
   onStatusChange,
-}: CreateTaskFormProps) => {
+}: CreateTaskFormProps) {
   const { t } = useTranslation();
   const user = useCurrentUser();
 
@@ -111,8 +111,7 @@ const CreateTaskForm = ({
     if (!watchedPrimaryLabelId && primaryLabels[0]) form.setValue('primaryLabelId', primaryLabels[0].id);
   }, [watchedPrimaryLabelId, primaryLabels, form.setValue]);
 
-  // Watch the dirty-check inputs: newTaskFormIsDirty JSON.parses the description, so key the
-  // computation to field changes instead of reading form.getValues() every render.
+  // Field watchers key the JSON-based dirty check to relevant changes.
   const [watchedAssignedTo, watchedLabels, watchedDescription] = useWatch({
     control: form.control,
     name: ['assignedTo', 'labels', 'description'],
@@ -132,7 +131,6 @@ const CreateTaskForm = ({
   };
 
   const onSubmit = async (values: NewTaskFormValues) => {
-    // Get cached tasks
     const tasks = cachedTasks();
 
     // Only add user if task start and it's not already assigned
@@ -490,6 +488,6 @@ const CreateTaskForm = ({
       </Form>
     </motion.div>
   );
-};
+}
 
 export { CreateTaskForm };

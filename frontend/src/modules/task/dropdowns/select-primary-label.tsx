@@ -11,13 +11,13 @@ import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList, ComboboxSearchInpu
 import { cn } from '~/utils/cn';
 
 /** Dropdown to pick a task's primary label (task type) from the project's primary set. */
-export const SelectPrimaryLabel = ({
+export function SelectPrimaryLabel({
   value: currentId,
   projectId,
   onChange,
   taskId,
   className = '',
-}: SelectPrimaryLabelProps) => {
+}: SelectPrimaryLabelProps) {
   const { t } = useTranslation();
   const primaryLabels = usePrimaryLabels(projectId);
 
@@ -85,4 +85,4 @@ export const SelectPrimaryLabel = ({
       </div>
     </Combobox>
   );
-};
+}

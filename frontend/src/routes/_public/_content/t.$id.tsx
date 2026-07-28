@@ -14,7 +14,9 @@ import { SpinnerPage } from '~/routes/-route-utils';
 // component and the (non-split) pendingComponent. The splitter only hoists shared local
 // bindings, not shared imports, into a shared chunk, so referencing the SpinnerPage
 // import directly from both props strips it from the main chunk (ReferenceError).
-const TaskLinkSpinner = () => <SpinnerPage />;
+function TaskLinkSpinner() {
+  return <SpinnerPage />;
+}
 
 /**
  * Task link resolver route.

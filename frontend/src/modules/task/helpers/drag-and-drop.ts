@@ -12,13 +12,16 @@ import type { PanelDraggableData, Task, TaskDraggableData } from '~/modules/task
 export const canDropTaskIntoProject = (sourceProjectId: string, targetProjectId: string): boolean =>
   sourceProjectId === targetProjectId || !isProjectReadOnly(targetProjectId);
 
+/** Checks whether drag data represents a board panel. */
 export const isPanelData = (data: Record<string | symbol, unknown>): data is PanelDraggableData => {
   return data.dragItem === true && typeof data.type === 'string' && data.type === 'panel';
 };
+/** Checks whether drag data represents a task card. */
 export const isTaskData = (data: Record<string | symbol, unknown>): data is TaskDraggableData => {
   return data.dragItem === true && typeof data.displayOrder === 'number' && data.type === 'task';
 };
 
+/** Returns the edge and target order. */
 export const getEdgeAndTargetOrder = (target: Task, source: Task, passedEdge: Edge, tasks: Task[]) => {
   // Determine the calculated edge based on status change
   const isStatusChanged = target.status !== source.status;

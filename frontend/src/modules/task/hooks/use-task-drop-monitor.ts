@@ -146,13 +146,11 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
             // Exit early if no valid drop target exists
             if (!taskTargetData && !columnTargetData) return;
 
-            // Handle column drop
             if (columnTargetData && !taskTargetData) {
               const {
                 item: { tasks, projectId },
               } = columnTargetData;
 
-              // Determine the new order based on task status within the column
               const order = getNewTaskOrder(sourceStatus, tasks);
 
               await changeProject({
@@ -173,7 +171,6 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
               const pragmaticEdge = extractClosestEdge(taskTargetData);
               if (!pragmaticEdge) throw new Error('Invalid drop edge');
 
-              // Calculate new order
               const { targetOrder, edge } = getEdgeAndTargetOrder(targetTask, sourceItem, pragmaticEdge, tasks);
               const newOrder = getRelativeTaskOrder(edge, tasks, targetOrder, sourceId, sourceStatus);
 

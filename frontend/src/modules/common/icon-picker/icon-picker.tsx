@@ -23,7 +23,7 @@ interface IconPickerProps {
  * entity icons. Matches on name and lucide tag synonyms. Import lazily; the search index
  * is bundled into this chunk.
  */
-export const IconPicker = ({ value, onChange, className }: IconPickerProps) => {
+export function IconPicker({ value, onChange, className }: IconPickerProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
 
@@ -60,4 +60,4 @@ export const IconPicker = ({ value, onChange, className }: IconPickerProps) => {
       )}
     </div>
   );
-};
+}

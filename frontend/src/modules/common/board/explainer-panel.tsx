@@ -16,7 +16,7 @@ export const EXPLAINER_PANEL_ID = 'explainer';
 /**
  * Explainer panel content for a board showing organization welcome text.
  */
-export const ExplainerPanel = () => {
+export function ExplainerPanel() {
   const { t } = useTranslation();
 
   const { organization, tenantId } = useOrganizationLayoutContext();
@@ -50,4 +50,4 @@ export const ExplainerPanel = () => {
       </ScrollArea>
     </LocalPanelShell>
   );
-};
+}

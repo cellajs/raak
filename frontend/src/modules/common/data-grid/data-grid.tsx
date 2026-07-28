@@ -389,7 +389,6 @@ export function DataGrid<R, SR = unknown, K extends Key = Key>(props: DataGridPr
   const rowSelectionMode: RowSelectionMode = rawRowSelectionMode ?? 'none';
   const isCellSelectionEnabled = cellSelectionMode !== 'none';
 
-  // Get current breakpoint for responsive features
   const currentBreakpoint = useCurrentBreakpoint();
 
   // 'compact' = user density toggle, 'mobile' = viewport-driven (xs, hardcoded).
@@ -471,10 +470,8 @@ export function DataGrid<R, SR = unknown, K extends Key = Key>(props: DataGridPr
   // while a pragmatic-dnd drag is in progress.
   useDragAutoScroll(gridRef, enableDragAutoScroll);
 
-  // Track each column's rendered (flex-resolved) width via the always-present
-  // measuring cells, so width-aware `estimateLines` sizes wrapped rows against the
-  // real column width rather than its declared minimum. Only wrap-text tables pay
-  // for the observer; row-height changes never alter column widths, so no loop.
+  // Measuring cells expose flex-resolved widths so wrapped-row estimates follow resizing.
+  // Only wrap-text tables install the observer.
   const [renderedColumnWidths, setRenderedColumnWidths] = useState<ReadonlyMap<string, number>>(emptyColumnWidths);
   const wrapTextEnabled = hasWrapTextColumns(columns);
   useLayoutEffect(() => {

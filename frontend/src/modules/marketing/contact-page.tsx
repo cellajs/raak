@@ -29,6 +29,7 @@ if (appConfig.company.tel)
     text: appConfig.company.tel,
   });
 
+/** Renders the contact page. */
 export function ContactPage() {
   const { t } = useTranslation();
 

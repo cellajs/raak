@@ -25,6 +25,7 @@ const baseTaskViewSchema = z.object({
 });
 
 // Search schemas, some are also used in project routes
+/** Validates URL search parameters for tasks table. */
 export const tasksTableSearchSchema = zGetTasksQuery
   .pick({ q: true, sort: true, order: true, matchMode: true })
   .extend({
@@ -33,9 +34,11 @@ export const tasksTableSearchSchema = zGetTasksQuery
     order: z.enum(['asc', 'desc']).optional().default('desc'),
   });
 
+/** Validates URL search parameters for tasks board. */
 export const tasksBoardSearchSchema = zGetTasksQuery.pick({ q: true, matchMode: true }).extend({
   projectSlug: z.string().optional(),
   ...baseTaskViewSchema.shape,
 });
 
+/** Validates URL search parameters for board. */
 export const boardSearchSchema = z.object({ ...tasksBoardSearchSchema.shape, ...tasksTableSearchSchema.shape });

@@ -45,7 +45,7 @@ interface BoardSkeletonProps {
  * placeholders; the labels and getting-started panels render through their real `LocalPanelShell`
  * frame so their header, collapsed handle and persisted width match the live board exactly.
  */
-export const BoardSkeleton = ({
+export function BoardSkeleton({
   boardId,
   projects = [],
   projectPage = false,
@@ -53,7 +53,7 @@ export const BoardSkeleton = ({
   withHeader = true,
   rowCount,
   rowHeight,
-}: BoardSkeletonProps) => {
+}: BoardSkeletonProps) {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
   const isMobile = useBreakpointBelow('sm');
@@ -218,10 +218,10 @@ export const BoardSkeleton = ({
       </div>
     </>
   );
-};
+}
 
-const StickyMobilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) => {
-  // Stable per-instance id — a fresh layoutId per render would break the shared-layout underline animation
+function StickyMobilePanelHeader({ projectTabs }: { projectTabs: PageTab[] }) {
+  // A stable instance ID preserves the shared-layout underline animation.
   const layoutId = useRef(nanoid()).current;
   return (
     <div className="z-80 block gap-1 border-b bg-background/75 text-center backdrop-blur-xs [scrollbar-width:none] max-sm:overflow-x-auto max-sm:border-t [&::-webkit-scrollbar]:hidden">
@@ -260,9 +260,9 @@ const StickyMobilePanelHeader = ({ projectTabs }: { projectTabs: PageTab[] }) =>
       </div>
     </div>
   );
-};
+}
 
-const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: { rowHeight?: number; rowCount?: number }) => {
+function PanelBodySkeleton({ rowHeight = 88, rowCount = 12 }: { rowHeight?: number; rowCount?: number }) {
   const renderRowHeight = rowHeight - 8;
   return (
     <div className="flex w-full flex-col overflow-auto border opacity-100 transition-opacity duration-300">
@@ -278,10 +278,10 @@ const PanelBodySkeleton = ({ rowHeight = 88, rowCount = 12 }: { rowHeight?: numb
       <div className={`flex h-8 w-full justify-start gap-1 rounded-none ${statusSectionColors.iced.fill} ring-inset`} />
     </div>
   );
-};
+}
 
 /** Placeholder rows for a local panel body (labels / getting-started), shown inside its real shell. */
-const LocalPanelBodySkeleton = () => {
+function LocalPanelBodySkeleton() {
   return (
     <div className="flex flex-1 flex-col gap-2 p-2">
       {Array.from({ length: 6 }).map((_, index) => (
@@ -290,25 +290,21 @@ const LocalPanelBodySkeleton = () => {
       ))}
     </div>
   );
-};
+}
 
-const PanelHeaderSkeleton = ({
+function PanelHeaderSkeleton({
   boardId,
   panelId,
   projectPage,
   project,
   sectionFilters,
-}: { panelId: string; projectPage: boolean; boardId: string } & Pick<
-  BoardPanelProps,
-  'project' | 'sectionFilters'
->) => {
+}: { panelId: string; projectPage: boolean; boardId: string } & Pick<BoardPanelProps, 'project' | 'sectionFilters'>) {
   const { t } = useTranslation();
   const { tenantId } = useParams({ strict: false });
 
   const panelsSectionView = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
-  // Check if its primary panel
   const isPrimary = (() => {
     if (!panelsSectionView?.length) return true;
     return panelsSectionView[0] === sectionFilters;
@@ -370,4 +366,4 @@ const PanelHeaderSkeleton = ({
       }
     />
   );
-};
+}

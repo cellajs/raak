@@ -31,7 +31,7 @@ interface LegalAsideProps {
  * Legal Aside Component that shows collapsible subjects with section navigation.
  * Receives sections from config.
  */
-export const LegalAside = ({ subjects, currentSubject, className }: LegalAsideProps) => {
+export function LegalAside({ subjects, currentSubject, className }: LegalAsideProps) {
   const { t } = useTranslation();
 
   const isMobile = useBreakpointBelow('sm');
@@ -54,7 +54,6 @@ export const LegalAside = ({ subjects, currentSubject, className }: LegalAsidePr
     setExpanded((prev) => (prev === id ? null : id));
   };
 
-  // Get current section from scroll spy store
   const spySection = useCurrentSection();
   const currentSection = spySection || 'overview';
 
@@ -146,4 +145,4 @@ export const LegalAside = ({ subjects, currentSubject, className }: LegalAsidePr
       })}
     </div>
   );
-};
+}

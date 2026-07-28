@@ -68,6 +68,7 @@ const measureImageBlobSize = (blob: Blob): Promise<{ width: number; height: numb
     image.src = url;
   });
 
+/** Renders the uppy file panel. */
 export function UppyFilePanel({
   onComplete,
   onError,

@@ -3,10 +3,8 @@ import { getSearchableTextFromBlocks } from 'shared/blocknote';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 
-// Parsing the BlockNote description JSON is the expensive part of the filter (it runs per task on
-// every keystroke / cache event in board mode and the offline table filter). Cache it keyed by the
-// task object: react-query structural-shares unchanged tasks, so this hits across renders, and a
-// WeakMap needs no manual eviction — entries are GC'd once a task object leaves the cache.
+// Cache parsed descriptions by task identity. React Query preserves unchanged references,
+// and the WeakMap releases tasks after cache eviction.
 const descriptionTextCache = new WeakMap<Task, string>();
 const getDescriptionText = (task: Task): string => {
   const cached = descriptionTextCache.get(task);

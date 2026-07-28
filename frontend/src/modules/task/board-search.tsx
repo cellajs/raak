@@ -16,7 +16,8 @@ interface BoardSearchProps {
   toggleFocus: () => void;
 }
 
-export const BoardSearch = ({ children, toggleFocus }: BoardSearchProps) => {
+/** Renders the board search component. */
+export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();
 
@@ -129,4 +130,4 @@ export const BoardSearch = ({ children, toggleFocus }: BoardSearchProps) => {
       </InputGroupAddon>
     </InputGroup>
   );
-};
+}

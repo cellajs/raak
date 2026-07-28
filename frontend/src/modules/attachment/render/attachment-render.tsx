@@ -38,7 +38,7 @@ interface AttachmentRenderProps {
  * Pure presentational component for rendering attachments.
  * Expects a valid URL - URL resolution should happen at a higher level.
  */
-export const AttachmentRender = ({
+export function AttachmentRender({
   url,
   type,
   filename,
@@ -49,7 +49,7 @@ export const AttachmentRender = ({
   containerClassName,
   onPanStateToggle,
   onBackdropClick,
-}: AttachmentRenderProps) => {
+}: AttachmentRenderProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const { download, isInProgress } = useDownloader();
@@ -112,4 +112,4 @@ export const AttachmentRender = ({
       </Suspense>
     </div>
   );
-};
+}

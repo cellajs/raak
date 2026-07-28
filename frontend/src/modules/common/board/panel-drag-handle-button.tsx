@@ -24,13 +24,7 @@ interface PanelDragHandleButtonProps {
  * shared grab-cursor + sortable ARIA. Per-panel layout is supplied via `className`. On hover the
  * leading `icon` cross-fades to a drag grip so the handle reads as draggable.
  */
-export const PanelDragHandleButton = ({
-  name,
-  fallbackLabel,
-  className,
-  icon,
-  children,
-}: PanelDragHandleButtonProps) => {
+export function PanelDragHandleButton({ name, fallbackLabel, className, icon, children }: PanelDragHandleButtonProps) {
   const { t } = useTranslation();
   const panelDrag = usePanelDragHandle();
 
@@ -60,4 +54,4 @@ export const PanelDragHandleButton = ({
       {children}
     </Button>
   );
-};
+}

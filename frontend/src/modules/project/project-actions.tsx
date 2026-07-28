@@ -55,6 +55,7 @@ export const openProjectSettingsSheet = (
   );
 };
 
+/** Creates a project and opens its page. */
 export const createNewProject = () => {
   const title = t('c:add_resource', { resource: t('c:project').toLowerCase() });
   useDialoger.getState().create(<AddProjects dialog />, {

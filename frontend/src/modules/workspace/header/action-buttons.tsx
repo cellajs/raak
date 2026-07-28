@@ -28,7 +28,7 @@ import { flattenInfiniteData } from '~/query/basic/flatten';
  * Action buttons for the workspace header, including create project and workspace settings.
  * Labels are managed in the always-present labels board panel.
  */
-export const WorkspaceActionButtons = () => {
+export function WorkspaceActionButtons() {
   const { t } = useTranslation();
 
   const { workspace: initialWorkspace } = useWorkspaceContext();
@@ -138,4 +138,4 @@ export const WorkspaceActionButtons = () => {
       </DropdownMenu>
     </>
   );
-};
+}

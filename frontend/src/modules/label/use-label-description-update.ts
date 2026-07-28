@@ -4,11 +4,8 @@ import { labelQueryKeys, useLabelUpdateMutation } from '~/modules/label/query';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 
 /**
- * Returns `updateData(description, collaborative)` — the epic-description persistence policy,
- * kept out of the editor component. Mirrors the task variant:
- * - collaborative (Yjs): the relay owns backend persistence, so this only patches the caches
- *   optimistically; the relay's materialization arrives via SSE with authoritative values.
- * - non-collaborative: persists via the standard update mutation (offline queue, HLC).
+ * Returns the epic-description update policy.
+ * Collaborative edits patch caches while Yjs persists; other edits use the update mutation.
  */
 export const useLabelDescriptionUpdate = (label: Label) => {
   const { mutateAsync: updateLabel } = useLabelUpdateMutation(label.tenantId, label.organizationId);

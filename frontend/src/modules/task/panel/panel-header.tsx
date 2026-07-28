@@ -19,11 +19,11 @@ import { cn } from '~/utils/cn';
 /**
  * Header component for task board panels in desktop view. Displays project name/avatar or section filters, along with actions like creating a new task or accessing project actions.
  */
-export const TaskPanelHeader = ({
+export function TaskPanelHeader({
   project,
   sectionFilters,
   publicView,
-}: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView'>) => {
+}: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView'>) {
   const { t } = useTranslation();
 
   const boardId = useBoardStore((state) => state.activeBoardId)!;
@@ -42,7 +42,6 @@ export const TaskPanelHeader = ({
     return newTaskFormIsDirty(dirtyForm);
   });
 
-  // Check if its primary panel
   const isPrimary = (() => {
     if (!panelsSectionView?.length) return true;
     return panelsSectionView[0] === sectionFilters;
@@ -53,7 +52,6 @@ export const TaskPanelHeader = ({
 
   const toggleCreateForm = () => toggleCreateTaskForm(project);
 
-  // Build leading slot
   const leadingSlot = (() => {
     if (isInWorkspace && isPrimary) {
       return (
@@ -158,7 +156,6 @@ export const TaskPanelHeader = ({
     );
   })();
 
-  // Build actions slot
   const actionsSlot = !isCollapsed ? (
     <>
       {isReadOnly && (
@@ -186,4 +183,4 @@ export const TaskPanelHeader = ({
   return (
     <BoardPanelHeader className="bg-card" leading={leadingSlot} actions={actionsSlot} isCollapsed={!!isCollapsed} />
   );
-};
+}

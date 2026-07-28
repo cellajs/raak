@@ -5,19 +5,15 @@ import type { Task } from '~/modules/task/types';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 
 /**
- * Returns `updateData(description, collaborative)` — the task-description persistence policy,
- * kept out of the editor component. Handles both modes:
- * - collaborative (Yjs): the relay owns backend persistence, so this only patches the caches
- *   optimistically (summary/counts) for the card views that render from cache, not the Y.Doc.
- * - non-collaborative: persists via the standard update mutation (offline queue, HLC, optimistic).
+ * Returns the task-description update policy.
+ * Collaborative edits patch caches while Yjs persists; other edits use the update mutation.
  */
 export const useTaskDescriptionUpdate = (task: Task) => {
   const { mutateAsync: updateDesc } = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
   return async (description: string, collaborative: boolean) => {
     if (collaborative) {
-      // Cache-only optimistic derive; the relay materializes the session (≤3s) and SSE
-      // delivers authoritative values moments later.
+      // Patch cache-derived fields until the relay persists authoritative values.
       const derived = await deriveDescriptionProps(description);
       patchDescriptionCaches(
         'task',

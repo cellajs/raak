@@ -9,18 +9,13 @@ interface UseSectionEdgeVisibilityOptions {
   edge: 'top' | 'bottom';
   /** Ref to the scrollable viewport (desktop ScrollArea viewport) */
   scrollRef: RefObject<HTMLElement | null>;
-  /** When true, track window scroll instead of the viewport element (mobile/windowScroll) */
+  /** Uses window scrolling when true and the viewport element when false. */
   windowMode: boolean;
 }
 
 /**
- * Scroll-direction visibility for one sticky status section header, mirroring
- * the floating-nav pattern: show when scrolling towards the header's edge, hide
- * when scrolling away, and force-show while resting at that edge so the header
- * never leaves a gap in the inline layout. A flip requires two same-direction
- * scroll events: the virtualizer's shift compensation produces single-event
- * reversals that must not read as a gesture, while real gestures (trackpad,
- * wheel bursts) emit many events and confirm within a frame or two.
+ * Shows a sticky status header while scrolling toward its edge and hides it while leaving.
+ * Two same-direction events prevent virtualizer corrections from resembling gestures.
  */
 export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSectionEdgeVisibilityOptions) {
   const [visible, setVisible] = useState(edge === 'top');

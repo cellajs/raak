@@ -18,7 +18,8 @@ interface MenuItemEditProps {
   icon?: IconComponent;
 }
 
-export const MenuItemEdit = ({ item, icon: Icon }: MenuItemEditProps) => {
+/** Renders the menu item edit component. */
+export function MenuItemEdit({ item, icon: Icon }: MenuItemEditProps) {
   const { t } = useTranslation();
 
   const { mutate: updateMembership, status } = useMemberUpdateMutation();
@@ -86,7 +87,7 @@ export const MenuItemEdit = ({ item, icon: Icon }: MenuItemEditProps) => {
       </div>
     </motion.div>
   );
-};
+}
 
 interface MenuItemEditButtonProps {
   icon: React.ElementType;

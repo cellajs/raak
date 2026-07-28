@@ -12,7 +12,8 @@ const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), '
 
 const projectApi = getRouteApi('/_app/$tenantId/$organizationSlug/project/$slug');
 
-export const ProjectRouteComponent = () => {
+/** Renders the routed project view. */
+export function ProjectRouteComponent() {
   const { project, organization, tenantId } = projectApi.useRouteContext();
   const { view } = projectApi.useSearch();
   return (
@@ -42,4 +43,4 @@ export const ProjectRouteComponent = () => {
       </ProjectPage>
     </Suspense>
   );
-};
+}

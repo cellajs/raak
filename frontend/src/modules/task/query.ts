@@ -35,7 +35,7 @@ import { createResourceError } from '~/utils/resource-error';
 export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
 export type BaseTasksQueryParam = Pick<GetTasksParam, 'workspaceId' | 'projectId' | 'organizationId' | 'tenantId'>;
 
-/** Derive task query params from entity objects instead of constructing manually */
+/** Derives task query parameters directly from entity objects. */
 export const deriveTasksQueryParams = (
   workspace?: { id: string; organizationId: string; tenantId: string },
   project?: { id: string; organizationId: string; tenantId: string },
@@ -79,10 +79,7 @@ export type TasksInfiniteQueryData = InfiniteQueryData<Task>;
 
 // --- Query keys ---
 
-/**
- * Filters for task list queries. Derived from the SDK query type so `sort`/`order`/`matchMode`
- * carry the API's literal unions instead of bare `string`.
- */
+/** Retains API literal unions for task-list sorting and matching filters. */
 type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
 /** Separate key space for public (unauthenticated) task queries */
 type PublicTaskListFilters = TaskListFilters & { publicAt: true };
@@ -152,6 +149,7 @@ const handleError = createResourceError('task');
 /** Find a task in detail or list cache. */
 const findTaskInCache = createCacheFinder<Task>('task');
 
+/** Returns the cursor for the next page of tasks. */
 export const getTasksNextPageParam: GetNextPageParamFunction<PageParams, TasksQueryData> = (lastPage, allPages) => {
   const { total } = lastPage;
   const fetchedCount = allPages.reduce((acc, page) => acc + page.items.length, 0);
@@ -159,10 +157,8 @@ export const getTasksNextPageParam: GetNextPageParamFunction<PageParams, TasksQu
   return { page: allPages.length, offset: fetchedCount };
 };
 
-// Shared by the interactive hooks and the offline-replay defaults, so a mutation resumed from
-// persistence reconstructs the same request from durable variables alone. The optimistic-only
-// fields (fullLabels/fullAssignedTo/isSheet/summary/summaryLength) are stripped before the request,
-// and the `?? createStxFor*` fallback keeps queues persisted before stx became durable replayable.
+// Shared mutation functions rebuild requests from durable variables for interactive and offline replay.
+// Optimistic UI fields are removed before SDK operations.
 
 const createTaskMutationFn = async (vars: TaskCreateFullVars) => {
   const {
@@ -271,6 +267,7 @@ const applyOptimisticTaskUpdate = (
   return { previousTask };
 };
 
+/** Builds React Query options for task. */
 export const taskQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: taskKeys.detail.byId(id),
@@ -309,12 +306,10 @@ export const tasksCanonicalOptions = ({
   });
 };
 
-/** Default sort/order/match for the tasks table, single-sourced so the options factory and the
- *  lightweight count snapshot (use-tasks-total) can't drift on their query key. */
+/** Shares task-table defaults between query options and count snapshots. */
 export const tasksTableQueryDefaults = { sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
 
-/** The tasks-table infinite query key. Extracted so use-tasks-total can read the key directly
- *  instead of building the whole options object (queryFn/getNextPageParam closures) to discard it. */
+/** Builds the task-table key without constructing query functions. */
 export const tasksTableQueryKey = ({
   q,
   sort = tasksTableQueryDefaults.sort,
@@ -326,6 +321,7 @@ export const tasksTableQueryKey = ({
 }: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) =>
   taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, matchMode, q });
 
+/** Builds React Query options for tasks table. */
 export const tasksTableQueryOptions = ({
   q,
   sort = tasksTableQueryDefaults.sort,
@@ -519,6 +515,7 @@ const taskDeleteOptions = (
   },
 });
 
+/** Provides the React Query mutation for task create. */
 export const useTaskCreateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(taskCreateOptions(queryClient));
@@ -532,6 +529,7 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
+/** Provides the React Query mutation for task update. */
 export const useTaskUpdateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(taskUpdateOptions(queryClient));
@@ -559,6 +557,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
+/** Provides the React Query mutation for task delete. */
 export const useTaskDeleteMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(taskDeleteOptions(queryClient));

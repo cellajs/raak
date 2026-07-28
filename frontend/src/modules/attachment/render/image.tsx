@@ -42,6 +42,7 @@ function ControlButton({ tooltipContent, onClick, icon, className }: ControlButt
   );
 }
 
+/** Adds pan and zoom behavior to the image viewer. */
 export function ReactPanZoom({
   image,
   alt,

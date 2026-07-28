@@ -24,7 +24,7 @@ class WebGLRenderer {
     // Rendering task
     this.renderTask = renderTask || NOOP;
 
-    // The sync object used to synchronize with GPU commands.
+    // Synchronizes rendering with GPU commands.
     this.sync = null;
 
     // The start time of the current performance measurement.

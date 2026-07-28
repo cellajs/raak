@@ -404,6 +404,7 @@ interface PanelGroupProps {
   children: ReactNode;
 }
 
+/** Renders the resizable panel group component. */
 export function ResizablePanelGroup({
   id,
   defaultLayout,
@@ -925,6 +926,7 @@ interface PanelProps {
   [key: `data-${string}`]: string | undefined;
 }
 
+/** Renders the resizable panel. */
 export function ResizablePanel({
   id,
   minWidth,
@@ -994,6 +996,7 @@ interface SeparatorProps {
   [key: `data-${string}`]: string | undefined;
 }
 
+/** Renders the resizable separator component. */
 export function ResizableSeparator({ index, className, children, ...rest }: SeparatorProps) {
   const ctx = useContext(PanelGroupContext);
   const dragCtx = useContext(SeparatorDragContext);

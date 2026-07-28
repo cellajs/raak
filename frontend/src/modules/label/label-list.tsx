@@ -58,7 +58,7 @@ const useLabelRows = (labels: Label[], highlight: boolean, words: string[]) =>
  * into, mirroring the task board), then filters modes/search client-side. That keeps a label a
  * user just created visible immediately in the tab that created it, without a refetch.
  */
-const ProjectLabelList = ({ entityId, windowScroll }: LabelListScopeProps) => {
+function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   const { organization, tenantId } = useOrganizationLayoutContext();
   const { search } = useSearchParams<{ q?: string }>({});
   const { highlight, effectiveQ } = parseSearchQuery(search.q);
@@ -81,7 +81,7 @@ const ProjectLabelList = ({ entityId, windowScroll }: LabelListScopeProps) => {
       windowScroll={windowScroll}
     />
   );
-};
+}
 
 /**
  * Workspace scope aggregates labels across the workspace's projects. Labels are project-homed, so it
@@ -89,7 +89,7 @@ const ProjectLabelList = ({ entityId, windowScroll }: LabelListScopeProps) => {
  * useQueries and groups client-side, mirroring the label picker (select-labels). A just-created
  * label therefore shows immediately in the creating tab here too.
  */
-const WorkspaceLabelList = ({ entityId, windowScroll }: LabelListScopeProps) => {
+function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   const { organization, tenantId } = useOrganizationLayoutContext();
   const { search } = useSearchParams<{ q?: string }>({});
   const { highlight, effectiveQ } = parseSearchQuery(search.q);
@@ -120,7 +120,7 @@ const WorkspaceLabelList = ({ entityId, windowScroll }: LabelListScopeProps) => 
       windowScroll={windowScroll}
     />
   );
-};
+}
 
 type LabelListViewProps = {
   entity: LabelsScope;
@@ -132,13 +132,10 @@ type LabelListViewProps = {
 };
 
 /**
- * Tile list for the labels panel (secondary tags + epics), styled after the task panel's
- * list body: semantic ul/li rows, scrolled internally or by the page (windowScroll). Each
- * tile leads with a select checkbox (task-card style); the rest of the tile opens the label
- * page via a stretched link. The shared board search filters it; a '=' query highlights
- * matches instead of filtering.
+ * Renders selectable tag and epic tiles using internal or page scrolling.
+ * Standard searches filter rows; '=' queries highlight matches.
  */
-const LabelListView = ({ entity, rows, isLoading, highlight, highlightWords, windowScroll }: LabelListViewProps) => {
+function LabelListView({ entity, rows, isLoading, highlight, highlightWords, windowScroll }: LabelListViewProps) {
   const { t } = useTranslation();
   const { tenantId } = useOrganizationLayoutContext();
 
@@ -223,12 +220,13 @@ const LabelListView = ({ entity, rows, isLoading, highlight, highlightWords, win
   // With windowScroll the panel grows with content and the page scrolls; otherwise scroll internally
   if (windowScroll) return <div className="flex-1">{body}</div>;
   return <ScrollArea className="min-h-0 flex-1">{body}</ScrollArea>;
-};
+}
 
 /** Labels panel body: canonical per-project list at project scope, aggregated list at workspace scope. */
-export const LabelList = ({ entity, entityId, windowScroll }: LabelsScopeProps & { windowScroll?: boolean }) =>
-  entity === 'workspace' ? (
+export function LabelList({ entity, entityId, windowScroll }: LabelsScopeProps & { windowScroll?: boolean }) {
+  return entity === 'workspace' ? (
     <WorkspaceLabelList entityId={entityId} windowScroll={windowScroll} />
   ) : (
     <ProjectLabelList entityId={entityId} windowScroll={windowScroll} />
   );
+}

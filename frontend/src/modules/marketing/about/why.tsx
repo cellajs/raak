@@ -5,6 +5,7 @@ import { whyDarkSlides, whyItems, whyLightSlides } from '~/modules/marketing/mar
 import { lazyNamed } from '~/utils/lazy-named';
 
 const DeviceMockup = lazyNamed(() => import('~/modules/marketing/device-mockup'), 'DeviceMockup');
+/** Renders the product-benefits section. */
 export function Why() {
   const { t } = useTranslation();
 

@@ -15,6 +15,7 @@ import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelPage = lazyNamed(() => import('~/modules/label/label-page'), 'LabelPage');
 
+/** Renders the workspace board tabs component. */
 export function WorkspaceBoardTabs({
   projects,
   workspace,
@@ -23,7 +24,6 @@ export function WorkspaceBoardTabs({
   const { t } = useTranslation();
   const { projectSlug, labelPageId } = useSearch({ strict: false });
 
-  // Sort projects by membership displayOrder (same as desktop board)
   const sorted = sortByMembership(projects);
 
   const showLabelsTab = !!workspace && !publicView;
@@ -32,7 +32,6 @@ export function WorkspaceBoardTabs({
   // Finding project based on query parameter, default first project
   const currentProject = sorted.find((p) => p.slug === projectSlug) || sorted[0];
 
-  // Set active panel to the current mobile tab
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
   useEffect(() => {
     setActivePanel(isLabelsTab ? LABELS_PANEL_ID : currentProject.id);

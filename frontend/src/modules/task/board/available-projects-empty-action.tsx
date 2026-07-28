@@ -18,7 +18,7 @@ interface AvailableProjectsEmptyActionProps {
  * Empty-board action shown when the user can add existing organization projects
  * that are not assigned to a workspace yet.
  */
-export const AvailableProjectsEmptyAction = ({ workspace, fallback }: AvailableProjectsEmptyActionProps) => {
+export function AvailableProjectsEmptyAction({ workspace, fallback }: AvailableProjectsEmptyActionProps) {
   const { t } = useTranslation();
 
   const { data, isPending } = useInfiniteQuery(
@@ -45,4 +45,4 @@ export const AvailableProjectsEmptyAction = ({ workspace, fallback }: AvailableP
       </Button>
     </div>
   );
-};
+}

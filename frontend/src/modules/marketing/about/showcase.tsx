@@ -32,6 +32,7 @@ function CellaShare({ cellaLoc, totalLoc }: { cellaLoc: number; totalLoc: number
   );
 }
 
+/** Renders the showcase component. */
 export function Showcase() {
   const { t } = useTranslation();
 

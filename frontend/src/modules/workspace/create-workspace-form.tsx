@@ -39,7 +39,7 @@ interface CreateWorkspaceFormProps {
   callback?: (workspace: Workspace) => void;
 }
 
-const CreateWorkspaceForm = ({ callback, dialog: isDialog }: CreateWorkspaceFormProps) => {
+function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceFormProps) {
   const { t } = useTranslation();
 
   const query = useInfiniteQuery(organizationsListQueryOptions({}));
@@ -169,6 +169,6 @@ const CreateWorkspaceForm = ({ callback, dialog: isDialog }: CreateWorkspaceForm
       </form>
     </Form>
   );
-};
+}
 
 export { CreateWorkspaceForm };

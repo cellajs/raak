@@ -5,7 +5,7 @@ import type { TaskCounts } from '~/modules/task/types';
 /**
  * Task-specific collapsed panel mapping TaskCounts to the generic CollapsedPanelView.
  */
-export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
+export function TaskPanelCollapsed({ counts }: { counts: TaskCounts }) {
   const sections: CollapsedSection[] = [];
 
   if (counts.showAccepted) {
@@ -29,4 +29,4 @@ export const TaskPanelCollapsed = ({ counts }: { counts: TaskCounts }) => {
   const mainCount = counts.total - counts.iced - counts.accepted;
 
   return <CollapsedPanelView mainCount={mainCount} sections={sections} />;
-};
+}

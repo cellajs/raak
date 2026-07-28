@@ -60,6 +60,7 @@ type CarouselProps =
       saveInSearchParams?: never; // Disallowed when isDialog is false
     });
 
+/** Renders the attachments carousel component. */
 export function AttachmentsCarousel({
   items,
   isDialog = false,

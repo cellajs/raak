@@ -25,14 +25,14 @@ interface FloatingNavButtonProps {
 /**
  * Floating navigation button - a circular FAB-style button.
  */
-export const FloatingNavButton = ({
+export function FloatingNavButton({
   id,
   icon: Icon,
   onClick,
   ariaLabel,
   className,
   direction = 'right',
-}: FloatingNavButtonProps) => {
+}: FloatingNavButtonProps) {
   return (
     <Button
       id={id}
@@ -51,4 +51,4 @@ export const FloatingNavButton = ({
       <Icon className="icon-xl" />
     </Button>
   );
-};
+}

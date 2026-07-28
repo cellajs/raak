@@ -8,6 +8,7 @@ import { buildBoardExtraPanels, computePanelReorder, useBoardPanels } from '~/mo
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
+/** Renders the project board component. */
 export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardProps) {
   const { labelPageId } = useSearch({ strict: false }) as { labelPageId?: string };
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);

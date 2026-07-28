@@ -36,6 +36,7 @@ export type TaskTableProps = {
 
 export type ResolvedTaskTableProps = Omit<TaskTableProps, 'projects'> & { projects: Project[] };
 
+/** Renders the tasks table. */
 export function TasksTable({ projects: projectsProp, workspace, publicView, organization, tenantId }: TaskTableProps) {
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<BoardSearchParams>({});
@@ -56,7 +57,6 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const { q, sort, order } = search;
   const limit = LIMIT;
 
-  // Build columns (frozen; project cells read `projects` reactively via TableProjectsContext)
   const [columns, setColumns] = useColumns({ hideProject: !workspace, organization, tenantId });
   const [selected, setSelected] = useState<Task[]>([]);
   const [isCompact, setIsCompact] = useState(true);
@@ -88,9 +88,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     return data.pages.flatMap(({ items }) => items);
   }, [data]);
   const isOnline = useOnlineManager();
-  // Keep a stable reference (and skip re-filtering) when nothing changed, so DataTable's
-  // memoized Rows don't re-render each parent render — especially offline, where the filter
-  // runs a per-task text search.
+  // Stable row references prevent memoized rows from rerendering on unchanged offline filters.
   const rows = useMemo(() => {
     if (!fetchedRows) return undefined;
     return isOnline || highlight ? fetchedRows : fetchedRows.filter((row) => searchFilterFunction(search, row));

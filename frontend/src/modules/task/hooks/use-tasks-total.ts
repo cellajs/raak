@@ -25,6 +25,7 @@ const subscribeToTaskCache = (onStoreChange: () => void) =>
     if (Array.isArray(key) && key[0] === 'task') onStoreChange();
   });
 
+/** Provides tasks total state and actions. */
 export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQueryParam) => {
   const { search } = useSearchParams<{ q?: string }>({});
   const isPublicView = !queryParams;
@@ -74,7 +75,6 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
         );
       }
 
-      // Return total from last page
       return queryData.pages[queryData.pages.length - 1].total;
     },
   );

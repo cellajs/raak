@@ -22,6 +22,7 @@ export const marketingNavConfig = [
 
 const socials = [{ title: 'Social', href: appConfig.company.socialUrl, icon: CloudIcon }];
 
+/** Lists the link sections shown in the marketing footer. */
 export const footerSections = [
   {
     title: 'c:product',
@@ -104,12 +105,14 @@ export const counts = [
 export const whyItems = [{ id: 'simple' }, { id: 'automation' }, { id: 'instant' }];
 
 // Slides for light and dark themes
+/** Lists the light-theme slides for the product-benefits section. */
 export const whyLightSlides = [
   { id: nanoid(), url: '/static/marketing/screenshots/board.png' },
   { id: nanoid(), url: '/static/marketing/screenshots/table.png' },
   { id: nanoid(), url: '/static/marketing/screenshots/task.png' },
 ];
 
+/** Lists the dark-theme slides for the product-benefits section. */
 export const whyDarkSlides = [
   { id: nanoid(), url: '/static/marketing/screenshots/board-dark.png' },
   { id: nanoid(), url: '/static/marketing/screenshots/table-dark.png' },
@@ -121,9 +124,12 @@ export const whyDarkSlides = [
  ************************************************************************************************/
 
 export const featuresPageItems: InfoGridItem[] = [];
+/** Maps feature category values to icons. */
 export const featureCategoryIcons = {} as const;
 
+/** Lists the synchronization features shown on the marketing page. */
 export const syncPageItems: InfoGridItem[] = [];
+/** Maps sync category values to icons. */
 export const syncCategoryIcons = {
   sync: ZapIcon,
 } as const;

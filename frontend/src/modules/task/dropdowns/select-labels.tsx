@@ -78,7 +78,8 @@ const renderLabelItem = (
   );
 };
 
-export const SelectLabels = ({
+/** Renders the labels selector. */
+export function SelectLabels({
   value: currentLabels,
   projectId,
   workspaceId: workspaceIdProp,
@@ -86,7 +87,7 @@ export const SelectLabels = ({
   taskId,
   triggerWidth = 320,
   initialSelectedCollapsed,
-}: SelectLabelsProps) => {
+}: SelectLabelsProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const { tenantId, organization } = useOrganizationLayoutContext();
@@ -210,8 +211,7 @@ export const SelectLabels = ({
   const handleCreateClick = async (value: string): Promise<void> => {
     setSearchValue('');
 
-    // `value` is the typed name; resolve identity through its slug so an existing label with the
-    // same slug (regardless of display name) is reused rather than duplicated.
+    // Resolve the typed name through its slug to reuse an existing label identity.
     const slug = labelSlug(value);
     const existingLabel = projectLabels.find((label) => label.slug === slug);
     if (existingLabel) return handleSelectClick(existingLabel.slug);
@@ -353,4 +353,4 @@ export const SelectLabels = ({
       </div>
     </Combobox>
   );
-};
+}

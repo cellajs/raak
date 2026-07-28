@@ -3,6 +3,7 @@ import type { Task } from '~/modules/task/types';
 
 type CheckedState = boolean | 'indeterminate';
 
+/** Handles task select. */
 export const handleTaskSelect = (state: CheckedState, task: Task) => {
   const selectedTaskIds = useTaskInteractionStore.getState().selectedTaskIds;
   const setSelectedTaskIds = useTaskInteractionStore.getState().setSelectedTaskIds;

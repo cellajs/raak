@@ -15,7 +15,7 @@ import { LABELS_PANEL_ID } from '~/modules/label/types';
  * Always-present board panel hosting the labels table (secondary tags + epics).
  * Collapsible, resizable and movable like other panels; defaults to the end of the board.
  */
-export const LabelsPanel = ({ entity, entityId, windowScroll }: LabelsScopeProps & { windowScroll?: boolean }) => {
+export function LabelsPanel({ entity, entityId, windowScroll }: LabelsScopeProps & { windowScroll?: boolean }) {
   const { t } = useTranslation();
   const { search } = useSearchParams<{ labelPageId?: string }>({});
   const labelPageId = search.labelPageId;
@@ -38,4 +38,4 @@ export const LabelsPanel = ({ entity, entityId, windowScroll }: LabelsScopeProps
       </div>
     </LocalPanelShell>
   );
-};
+}

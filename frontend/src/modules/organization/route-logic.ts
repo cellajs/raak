@@ -11,6 +11,7 @@ type OrganizationLayoutBeforeLoadArgs = {
   cause: 'preload' | 'enter' | 'stay';
 };
 
+/** Loads and authorizes the organization route context. */
 export const organizationLayoutBeforeLoad = async ({ params, cause }: OrganizationLayoutBeforeLoadArgs) => {
   // TODO [#12] Revalidate on initial entry; child useSuspenseQuery handles search param changes.
   const shouldRevalidate = cause === 'enter';

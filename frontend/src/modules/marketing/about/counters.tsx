@@ -6,6 +6,7 @@ import { counts } from '~/modules/marketing/marketing-config';
 import { publicCountsQueryOptions } from '~/modules/marketing/query';
 import { Card, CardContent, CardHeader, CardTitle } from '~/modules/ui/card';
 
+/** Provides count up state and actions. */
 export function useCountUp(start: number, end: number, duration = 1500) {
   const [value, setValue] = useState(start);
   useEffect(() => {
@@ -30,6 +31,7 @@ function CountUp({ start, end }: { start: number; end: number }) {
 
 const countsLength = counts.length;
 
+/** Renders the counters component. */
 export function Counters() {
   const { t } = useTranslation();
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0 });

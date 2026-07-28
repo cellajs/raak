@@ -16,7 +16,8 @@ import { FloatingNav, type FloatingNavItem } from '~/modules/navigation/floating
 import { Button } from '~/modules/ui/button';
 import { Drawer, DrawerContent, DrawerTitle } from '~/modules/ui/drawer';
 
-export const MarketingNav = () => {
+/** Renders the marketing nav component. */
+export function MarketingNav() {
   const { t } = useTranslation();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -184,4 +185,4 @@ export const MarketingNav = () => {
       </Drawer>
     </>
   );
-};
+}

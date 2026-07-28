@@ -24,7 +24,8 @@ interface MoveProjectFormProps {
   onSuccess?: () => void;
 }
 
-export const MoveProjectForm = ({ project, workspaces, onSuccess }: MoveProjectFormProps) => {
+/** Renders the move project form. */
+export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectFormProps) {
   const { t } = useTranslation();
 
   const options = workspaces.map(({ id: value, name: label, thumbnailUrl: url }) => ({ value, label, url })) || [];
@@ -92,4 +93,4 @@ export const MoveProjectForm = ({ project, workspaces, onSuccess }: MoveProjectF
       </form>
     </Form>
   );
-};
+}

@@ -31,7 +31,7 @@ type LabelPageProps = LabelsScopeProps & { labelId: string; windowScroll?: boole
  * Secondary labels represent their cross-project name group (edits fan out over siblings);
  * epics are single per-project rows. Epic documentation (description) renders below.
  */
-export const LabelPage = ({ labelId, entity, entityId, windowScroll }: LabelPageProps) => {
+export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPageProps) {
   const { t } = useTranslation();
   const { organization, tenantId } = useOrganizationLayoutContext();
   const organizationId = organization.id;
@@ -182,4 +182,4 @@ export const LabelPage = ({ labelId, entity, entityId, windowScroll }: LabelPage
       {windowScroll ? <div className="flex-1">{body}</div> : <ScrollArea className="min-h-0 flex-1">{body}</ScrollArea>}
     </div>
   );
-};
+}

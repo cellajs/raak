@@ -21,7 +21,7 @@ interface Props {
   sheet?: boolean;
 }
 
-const UpdateWorkspaceForm = ({ workspace, callback, sheet: isSheet }: Props) => {
+function UpdateWorkspaceForm({ workspace, callback, sheet: isSheet }: Props) {
   const { t } = useTranslation();
 
   const { mutate, isPending } = useUpdateWorkspaceMutation();
@@ -75,6 +75,6 @@ const UpdateWorkspaceForm = ({ workspace, callback, sheet: isSheet }: Props) => 
       </form>
     </Form>
   );
-};
+}
 
 export { UpdateWorkspaceForm };

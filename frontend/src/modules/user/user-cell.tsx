@@ -23,13 +23,7 @@ const compactUserNameClass = 'in-data-[is-compact=true]:sr-only';
 /**
  * Render a user cell with avatar and name, wrapped in a link to open user sheet.
  */
-export const UserCell = ({
-  user,
-  tabIndex,
-  compactable,
-  className,
-  readOnly,
-}: BaseProps & { user: UserMinimalBase }) => {
+export function UserCell({ user, tabIndex, compactable, className, readOnly }: BaseProps & { user: UserMinimalBase }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const cellRef = useRef<HTMLButtonElement | null>(null);
@@ -94,4 +88,4 @@ export const UserCell = ({
       </span>
     </Button>
   );
-};
+}

@@ -6,8 +6,7 @@ import { idbKvStorage } from '~/query/idb-kv-storage';
 const maxEntries = 200;
 
 interface LabelRecencyState {
-  // Keyed by SLUG: the picker suggests across the cross-project slug group, so recency tracks the
-  // group identity (stable across renames) rather than a per-project row id or display name.
+  // Slugs preserve recency across project rows and label renames.
   usageMap: Record<string, number>; // "orgId:labelSlug" → epoch ms
   trackUsage: (organizationId: string, slugs: string[]) => void;
   getScore: (organizationId: string, slug: string) => number;
@@ -15,6 +14,7 @@ interface LabelRecencyState {
   reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
 
+/** Provides access to recently selected label state. */
 export const useLabelRecencyStore = create<LabelRecencyState>()(
   devtools(
     persist(

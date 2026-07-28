@@ -4,6 +4,7 @@ import { type Attachment, type CreateAttachmentsData, type CreateAttachmentsResp
 import type { ApiError } from '~/lib/api';
 import { createStxForCreate } from '~/query/offline/stx-utils';
 
+/** Provides upload attachments state and actions. */
 export const useUploadAttachments = () => {
   const { mutate } = useMutation<
     CreateAttachmentsResponse,

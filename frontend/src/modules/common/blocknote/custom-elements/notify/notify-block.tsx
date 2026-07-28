@@ -16,6 +16,7 @@ import {
 } from '~/modules/ui/dropdown-menu';
 
 // Schema config is shared with the Yjs relay's server-side seeder; see shared/blocknote-schema-configs.
+/** Defines the custom BlockNote notification block. */
 export const notifyBlock = createReactBlockSpec(notifyConfig, {
   render: ({ block, editor, contentRef }) => {
     const [open, setOpen] = useState(false);
@@ -76,6 +77,7 @@ const insertSlashNotifyItem = (editor: CustomBlockNoteEditor) => ({
 });
 
 // Side menu item to insert Notify block
+/** Inserts a notification block from the editor side menu. */
 export const insertSideNotifyItem = (): BlockTypeSelectItem & { oneInstanceOnly?: boolean } => ({
   name: 'Notify',
   type: 'notify',
@@ -83,4 +85,5 @@ export const insertSideNotifyItem = (): BlockTypeSelectItem & { oneInstanceOnly?
 });
 
 // Gets all default slash menu items and `insertNotify` item.
+/** Returns the slash notify slash item. */
 export const getSlashNotifySlashItem = (editor: CustomBlockNoteEditor) => insertSlashNotifyItem(editor);

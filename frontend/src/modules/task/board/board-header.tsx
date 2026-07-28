@@ -19,11 +19,11 @@ import { cn } from '~/utils/cn';
  * Header component for the task board, including search, task count and action buttons.
  * Used for both project boards and workspace boards, with conditional rendering based on context.
  */
-export const BoardHeader = ({
+export function BoardHeader({
   projects,
   workspace,
   publicView,
-}: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) => {
+}: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
   const { t, i18n } = useTranslation();
   const isInWorkspace = !!workspace;
 
@@ -83,4 +83,4 @@ export const BoardHeader = ({
       <FocusView iconOnly />
     </div>
   );
-};
+}

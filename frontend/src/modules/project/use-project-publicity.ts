@@ -4,6 +4,7 @@ import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { findProjectByIdOrSlug, projectQueryKeys } from '~/modules/project/query';
 import { queryClient } from '~/query/query-client';
 
+/** Provides project publicity state and actions. */
 export const useProjectPublicity = (projectId: string) => {
   const matchRoute = useMatchRoute();
   const { tenantId } = useOrganizationLayoutContext();

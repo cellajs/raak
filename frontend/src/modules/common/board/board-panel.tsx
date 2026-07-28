@@ -9,6 +9,7 @@ interface BoardPanelHeaderProps {
   className?: string;
 }
 
+/** Renders the board panel header. */
 export function BoardPanelHeader({ leading, title, actions, isCollapsed, className }: BoardPanelHeaderProps) {
   return (
     <div
@@ -42,6 +43,7 @@ interface BoardPanelBodyProps {
   onFocusCapture?: () => void;
 }
 
+/** Renders the board panel body component. */
 export function BoardPanelBody({
   children,
   hasSelection,
@@ -89,6 +91,7 @@ interface CollapsedPanelViewProps {
 
 const EMPTY_SECTIONS: CollapsedSection[] = [];
 
+/** Renders the collapsed panel view component. */
 export function CollapsedPanelView({ mainCount, sections = EMPTY_SECTIONS, className }: CollapsedPanelViewProps) {
   const topSections = sections.filter((s) => s.position === 'top');
   const bottomSections = sections.filter((s) => s.position === 'bottom');

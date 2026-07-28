@@ -47,4 +47,5 @@ function EntityAvatarBase({ type, id, name, icon: Icon, url, className, ...props
   );
 }
 
+/** Renders an entity avatar from its name, icon, or image. */
 export const EntityAvatar = memo(EntityAvatarBase);

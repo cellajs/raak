@@ -93,15 +93,8 @@ export type PanelReorderResult =
   | null;
 
 /**
- * Pure fractional-order computation for a panel drag-reorder. Resolves neighbor orders via the
- * same comparator used to render, so server-owned and local-only panels reorder uniformly.
- * Returns null (skip) for: unknown source, single panel (no anchor), float collision, or an
- * unchanged membership order. The caller performs the actual persistence.
- *
- * Persistence target: an unsplit project panel updates its server-owned membership order;
- * split panels and local-only panels persist a device-local order. `persist: 'local'` forces
- * the local path for every panel (single-project boards, where membership order is owned by
- * the workspace board and must not change).
+ * Computes fractional panel order using the render comparator.
+ * Unsplit projects persist membership order; split and local panels persist device-local order.
  */
 export function computePanelReorder(
   panels: BoardResizablePanel[],
@@ -124,11 +117,11 @@ export function computePanelReorder(
   const prevOrder = orderAt(sourceIdx - 1);
   const nextOrder = orderAt(sourceIdx + 1);
 
-  // Single panel — no anchor to reorder against.
+  // A single panel has no anchor for reordering.
   if (prevOrder == null && nextOrder == null) return null;
 
   const newDisplayOrder = getOrderBetween(prevOrder ?? undefined, nextOrder ?? undefined);
-  // Float collision — skip; a rebalance pass would be needed to recover.
+  // A float collision requires a future rebalance pass.
   if (newDisplayOrder === null) return null;
 
   const sourceProject = sourcePanel.kind === 'project' && !sourcePanel.sectionFilters ? sourcePanel.project : undefined;

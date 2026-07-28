@@ -13,7 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { cn } from '~/utils/cn';
 
-export const PanelProjectActions = ({ project, className }: { project: EnrichedProject; className?: string }) => {
+/** Renders the panel project actions component. */
+export function PanelProjectActions({ project, className }: { project: EnrichedProject; className?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -116,4 +117,4 @@ export const PanelProjectActions = ({ project, className }: { project: EnrichedP
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
+}

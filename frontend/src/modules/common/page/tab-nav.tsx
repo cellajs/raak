@@ -93,7 +93,7 @@ interface Props {
 /**
  * Horizontal page tab navigation
  */
-export const PageTabNav = ({
+export function PageTabNav({
   tabs: explicitTabs,
   parentRouteId,
   filterTabIds,
@@ -102,7 +102,7 @@ export const PageTabNav = ({
   avatar,
   fallbackToFirst,
   className,
-}: Props) => {
+}: Props) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm', false);
   const { hasStarted } = useMountedState();
@@ -195,4 +195,4 @@ export const PageTabNav = ({
       </div>
     </StickyBox>
   );
-};
+}

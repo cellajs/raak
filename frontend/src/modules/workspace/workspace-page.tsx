@@ -24,7 +24,7 @@ interface Props {
 /**
  * Workspace page with drag-and-drop task management.
  */
-const WorkspacePage = ({ workspaceId, organizationId, tenantId, children }: Props) => {
+function WorkspacePage({ workspaceId, organizationId, tenantId, children }: Props) {
   const { data } = useSuspenseQuery(workspaceQueryOptions(workspaceId, organizationId, tenantId));
   const workspace = data as typeof data & ChannelEnrichment;
 
@@ -40,6 +40,6 @@ const WorkspacePage = ({ workspaceId, organizationId, tenantId, children }: Prop
       {children}
     </FocusViewContainer>
   );
-};
+}
 
 export { WorkspacePage };

@@ -11,7 +11,7 @@ interface TaskContentCollapsedProps {
 /**
  * TaskContentCollapsed is responsible for rendering the task content in its "collapsed" state, which shows a summary only as main content.
  */
-export const TaskCardContentCollapsed = ({ task }: TaskContentCollapsedProps) => {
+export function TaskCardContentCollapsed({ task }: TaskContentCollapsedProps) {
   return (
     <div className="flex w-full flex-row gap-1">
       <TaskPrimaryLabelButton task={task} />
@@ -22,4 +22,4 @@ export const TaskCardContentCollapsed = ({ task }: TaskContentCollapsedProps) =>
       </div>
     </div>
   );
-};
+}

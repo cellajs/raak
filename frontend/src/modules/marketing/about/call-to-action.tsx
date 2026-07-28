@@ -4,6 +4,7 @@ import { appConfig } from 'shared';
 import { contactFormHandler } from '~/modules/common/contact-form/contact-form-handler';
 import { Button } from '~/modules/ui/button';
 
+/** Renders the call to action component. */
 export function CallToAction() {
   const { t } = useTranslation();
 

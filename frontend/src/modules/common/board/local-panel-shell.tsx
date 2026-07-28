@@ -21,14 +21,7 @@ interface LocalPanelShellProps {
  * collapsed icon handle, pinned header with drag handle + title + optional actions, and a
  * body slot. Collapse/resize/drag persistence rides the generic panel stores via panelId.
  */
-export const LocalPanelShell = ({
-  panelId,
-  icon,
-  title,
-  headerActions,
-  windowScroll,
-  children,
-}: LocalPanelShellProps) => {
+export function LocalPanelShell({ panelId, icon, title, headerActions, windowScroll, children }: LocalPanelShellProps) {
   const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
   return (
@@ -68,4 +61,4 @@ export const LocalPanelShell = ({
       </BoardPanelBody>
     </BoardPanelContent>
   );
-};
+}

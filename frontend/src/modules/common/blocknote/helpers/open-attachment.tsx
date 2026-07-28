@@ -3,10 +3,10 @@ import { openAttachmentDialog } from '~/modules/attachment/dialog/open-attachmen
 import { resolveAttachmentUrl } from '~/modules/attachment/helpers/resolve-url';
 import type { CustomBlockNoteEditor } from '~/modules/common/blocknote/types';
 
-/** Collected media block plus the attachment id used to resolve its full-size variant on open. */
+/** Collected media block plus the attachment ID for resolving its full-size variant. */
 type MediaBlock = CarouselItemData & { attachmentId?: string };
 
-// `clickedSrc` picks the carousel's start index; otherwise it opens at the first media block.
+/** Opens editor media in a carousel starting at the clicked attachment. */
 export const openAttachment = async (
   editor: CustomBlockNoteEditor,
   blockNoteRef: React.RefObject<HTMLDivElement | null>,

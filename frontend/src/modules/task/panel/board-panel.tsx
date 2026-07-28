@@ -33,6 +33,7 @@ export interface BoardPanelProps {
 
 type BoardSearchProps = z.infer<typeof tasksBoardSearchSchema>;
 
+/** Renders the board panel. */
 export const BoardPanel = memo(function BoardPanel({
   fetchedTasks,
   project,

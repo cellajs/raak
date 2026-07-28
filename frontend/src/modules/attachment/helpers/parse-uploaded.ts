@@ -5,6 +5,7 @@ import { generateId } from 'shared/utils/entity-id';
 import type { UploadedUppyFile } from '~/modules/common/uploader/types';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 
+/** Parses uploaded attachments. */
 export const parseUploadedAttachments = (
   result: UploadedUppyFile<'attachment'>,
   organizationId: string,

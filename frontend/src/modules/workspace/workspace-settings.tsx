@@ -13,7 +13,8 @@ import { DeleteWorkspaces } from '~/modules/workspace/delete-workspaces';
 import { UpdateWorkspaceForm } from '~/modules/workspace/update-workspace-form';
 import { workspacesListQueryOptions } from './query';
 
-export const WorkspaceSettings = ({ workspace, sheet: isSheet }: { workspace: Workspace; sheet?: boolean }) => {
+/** Renders the workspace settings component. */
+export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Workspace; sheet?: boolean }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -101,4 +102,4 @@ export const WorkspaceSettings = ({ workspace, sheet: isSheet }: { workspace: Wo
       </Card>
     </div>
   );
-};
+}

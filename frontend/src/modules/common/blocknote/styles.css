@@ -212,14 +212,8 @@ li:has(.is-focused) {
   width: 100%;
 }
 
-/* Sized image (intrinsic dimensions stored). The decorator (blocknote-config.ts) gives it an inline
-   aspect-ratio, which reserves the box before the image loads; this muted fill is the placeholder
-   shown until the image paints over it, so there is no reflow and no broken-image flash. The two
-   display modes are set on BlockNote's file-block wrapper:
-   - static-responsive: the user resized the image, so the wrapper carries an inline px width; cap it
-     to the container so it shrinks (by aspect ratio) when it cannot fit.
-   - fully-responsive: no resize, so the wrapper is shrink-to-fit and the fixed-ratio image would
-     overflow; force it to fill the container instead (matched by the inline "fit-content" width). */
+/* Intrinsic aspect ratios reserve media space before loading. Resized wrappers cap to the
+   container; untouched fit-content wrappers fill the available width. */
 .bn-visual-media[style*="aspect-ratio"] {
   background-color: var(--muted);
 }

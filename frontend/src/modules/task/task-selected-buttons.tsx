@@ -14,12 +14,12 @@ interface TaskSelectedButtonsProps {
 }
 
 /** Floating action bar for tasks selected on the board or table: remove + clear. */
-export const TaskSelectedButtons = ({
+export function TaskSelectedButtons({
   selectedTaskIds,
   clearSelection,
   organizationId,
   tenantId,
-}: TaskSelectedButtonsProps) => {
+}: TaskSelectedButtonsProps) {
   const { t } = useTranslation();
   const { mutateAsync: tasksDeleteMutation } = useTaskDeleteMutation(tenantId, organizationId);
 
@@ -44,4 +44,4 @@ export const TaskSelectedButtons = ({
       </TooltipButton>
     </SelectionActionBar>
   );
-};
+}

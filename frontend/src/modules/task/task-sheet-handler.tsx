@@ -12,7 +12,7 @@ import { taskKeys } from '~/modules/task/query';
 import { Badge } from '~/modules/ui/badge';
 import { queryClient } from '~/query/query-client';
 
-const TaskSheetTitle = ({ taskId }: { taskId: string }) => {
+function TaskSheetTitle({ taskId }: { taskId: string }) {
   const { t } = useTranslation();
   const projectId = cachedTasks().find((task) => task.id === taskId)?.projectId;
   const isReadOnly = useIsProjectReadOnly(projectId);
@@ -27,7 +27,7 @@ const TaskSheetTitle = ({ taskId }: { taskId: string }) => {
       )}
     </span>
   );
-};
+}
 
 /**
  * Handles opening/closing the task sheet based on URL search params.

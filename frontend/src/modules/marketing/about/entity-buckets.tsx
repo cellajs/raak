@@ -18,10 +18,8 @@ import { useTranslation } from 'react-i18next';
 import type { IconComponent } from '~/modules/common/icons/types';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 
-// A conceptual illustration of Cella's selective sync: structural entities (no sync) and
-// content entities (opt-in sync) both live in the same REST/Postgres/React Query foundation.
-// The wrapper is an open-top "U" to signal this is conceptual, not a closed system. A toggle
-// swaps between example app configs to show the same split holds for different entity setups.
+// Illustrates structural and synchronized entities sharing one application foundation.
+// The toggle demonstrates the same split across example configurations.
 
 type Entity = { Icon: IconComponent; label: string };
 
@@ -82,7 +80,7 @@ const tileVariants = {
 } as const;
 
 // Single entity: icon over label. Stacks one-per-line on mobile, sits in a row on larger screens.
-const EntityTile = ({ Icon, label }: Entity) => {
+function EntityTile({ Icon, label }: Entity) {
   const { t } = useTranslation();
   return (
     <motion.div variants={tileVariants} className="flex w-full min-w-0 flex-1 flex-col items-center gap-2 text-center">
@@ -92,11 +90,11 @@ const EntityTile = ({ Icon, label }: Entity) => {
       <div className="w-full truncate text-muted-foreground text-xs">{t(label)}</div>
     </motion.div>
   );
-};
+}
 
 // Dashed primary border, echoing the flowing dashes in the sync diagram. Measured in real
 // pixels so the rounded rect tracks the card at any breakpoint. `animated` makes the dashes flow.
-const DashedBorder = ({ animated = false }: { animated?: boolean }) => {
+function DashedBorder({ animated = false }: { animated?: boolean }) {
   const ref = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
@@ -130,11 +128,11 @@ const DashedBorder = ({ animated = false }: { animated?: boolean }) => {
       )}
     </svg>
   );
-};
+}
 
 // One category card. Both buckets get a dashed primary border; `animated` makes the synced
 // bucket's dashes flow. Entities crossfade (keyed by config) when the active app config changes.
-const Bucket = ({
+function Bucket({
   title,
   config,
   entities,
@@ -144,7 +142,7 @@ const Bucket = ({
   config: ConfigKey;
   entities: Entity[];
   animated?: boolean;
-}) => {
+}) {
   const { t } = useTranslation();
   return (
     <div className="relative flex min-w-0 flex-col rounded-2xl bg-background px-2 py-4 sm:px-6 sm:py-6">
@@ -166,13 +164,13 @@ const Bucket = ({
       </AnimatePresence>
     </div>
   );
-};
+}
 
 /**
  * Conceptual two-bucket illustration of selective sync, wrapped in an open-top container.
  * A toggle swaps between example app configs to show the split holds for different setups.
  */
-export const EntityBuckets = () => {
+export function EntityBuckets() {
   const { t } = useTranslation();
   const [config, setConfig] = useState<ConfigKey>('todo');
   // "Try me" hint nudges the user to interact; hidden as soon as they switch config.
@@ -226,4 +224,4 @@ export const EntityBuckets = () => {
       </div>
     </div>
   );
-};
+}

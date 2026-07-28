@@ -6,6 +6,7 @@ import { computePanelLayoutSplit } from '~/modules/task/helpers/board-helpers';
 import type { Task } from '~/modules/task/types';
 import { idbKvStorage } from '~/query/idb-kv-storage';
 
+/** Defines the initial board panel preferences. */
 export const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
 
 type PanelPrefs = typeof defaultPanelPrefs;
@@ -45,6 +46,7 @@ const ensurePanel = (board: TaskBoardState['panelData'][string], projectId: stri
   return board[projectId];
 };
 
+/** Provides access to shared task-board state. */
 export const useTaskBoardStore = create<TaskBoardState>()(
   devtools(
     persist(
@@ -52,8 +54,8 @@ export const useTaskBoardStore = create<TaskBoardState>()(
         ...initStore,
 
         setPanelSections: (boardId, projectId, sections) => {
-          // Recompute the generic board layout from a pure helper and persist it OUTSIDE the immer
-          // recipe below — reaching into another store mid-recipe is a side effect during drafting.
+          // Persist the generic board layout before entering the Immer recipe,
+          // since accessing another store during drafting introduces a side effect.
           const currentViewSections = useTaskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
           const currentLayout = useBoardStore.getState().boardLayouts[boardId] ?? {};
           const nextLayout = computePanelLayoutSplit(currentLayout, projectId, sections, currentViewSections);
