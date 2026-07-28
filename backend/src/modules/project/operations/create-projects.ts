@@ -1,15 +1,19 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
+import { tenantContext } from '#/db/tenant-context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/helpers/check-slug';
+import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
+import { insertLabels } from '#/modules/label/label-queries';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
+import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
+import { resolveProjectWorkspaceId } from '#/modules/project/helpers/project-membership-workspace';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
-import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
@@ -34,7 +38,9 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
   const user = ctx.var.user;
   const organization = ctx.var.organization;
 
-  const { entity: workspace } = await getValidChannel(ctx, workspaceId, 'workspace', 'read');
+  // Guarded resolution: rejects a workspace in a different organization than the request context,
+  // keeping a new project's membership org-consistent with the workspace it is filed under.
+  const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
 
   // Check if adding is allowed based on the organization's restrictions
   const currentProjectsCount = await getOrgEntityCount(ctx, organization.id, 'project');
@@ -84,13 +90,28 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
 
   log.info('Projects created', { count: projectRecords.length, ids: projectIds });
 
+  // Provision the organization's primary label set into each new project as tracked rows.
+  const { setupConfig } = withSetupConfigDefaults(organization);
+  const primaryLabelRows = projectRecords.flatMap((project) =>
+    buildPrimaryLabelRows({
+      entries: setupConfig.primaryLabels,
+      projectId: project.id,
+      organizationId: organization.id,
+      tenantId: organization.tenantId,
+      createdBy: user.id,
+    }),
+  );
+  if (primaryLabelRows.length > 0) {
+    await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: primaryLabelRows }));
+  }
+
   // Insert memberships for each project
   const membershipInserts = projectRecords.map((project) => ({
     userId: user.id,
     createdBy: user.id,
     role: 'admin' as const,
     entity: { ...project, tenantId: organization.tenantId },
-    extraFields: { workspaceId: workspace.id },
+    extraFields: { workspaceId: resolvedWorkspaceId },
   }));
 
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });

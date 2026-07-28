@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDownIcon, TagIcon, UserXIcon, XIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -9,13 +9,16 @@ import type { Attachment } from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { deriveDescriptionProps } from '~/modules/common/blocknote/derive-description-props';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { BlockNoteContentFormField as BlockNoteContent } from '~/modules/common/form-fields/blocknote';
 import { Spinner } from '~/modules/common/spinner';
-import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
+import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
+import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
+import { useProjectMembers } from '~/modules/project/use-project-members';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
   createTaskFormSchema,
@@ -24,23 +27,14 @@ import {
   newTaskFormIsDirty,
   toggleCreateTaskForm,
 } from '~/modules/task/helpers/create-task';
-import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
-import { useProjectMembers } from '~/modules/task/hooks/use-project-members';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import {
-  pointsOptionsByValue,
-  statusOptionsByValue,
-  TaskStatus,
-  TaskVariant,
-  variantOptions,
-  variantOptionsByValue,
-} from '~/modules/task/task-properties';
+import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Badge } from '~/modules/ui/badge';
@@ -108,11 +102,26 @@ const CreateTaskForm = ({
 
   // Subscribe for render: the form only re-renders when isDirty *toggles*, so
   // render-time form.getValues() reads of these fields go stale once dirty
-  const watchedVariant = useWatch({ control: form.control, name: 'variant' });
   const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
-  const updateAttachments = useCallback((data: Attachment[]) => setAttachments(data), []);
-  const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, updateAttachments);
+  // Default the primary label to the project's first entry once the set has loaded
+  const primaryLabels = usePrimaryLabels(projectId);
+  const watchedPrimaryLabelId = useWatch({ control: form.control, name: 'primaryLabelId' });
+  useEffect(() => {
+    if (!watchedPrimaryLabelId && primaryLabels[0]) form.setValue('primaryLabelId', primaryLabels[0].id);
+  }, [watchedPrimaryLabelId, primaryLabels, form.setValue]);
+
+  // Watch the dirty-check inputs: newTaskFormIsDirty JSON.parses the description, so key the
+  // computation to field changes instead of reading form.getValues() every render.
+  const [watchedAssignedTo, watchedLabels, watchedDescription] = useWatch({
+    control: form.control,
+    name: ['assignedTo', 'labels', 'description'],
+  });
+  const isDirty =
+    form.isDirty &&
+    newTaskFormIsDirty({ assignedTo: watchedAssignedTo, labels: watchedLabels, description: watchedDescription });
+
+  const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, setAttachments);
 
   const handleCloseForm = () => {
     if (isDialog) useDialoger.getState().remove();
@@ -136,6 +145,8 @@ const CreateTaskForm = ({
       // Task variables
       ...values,
       id: defaultId,
+      // Empty until primaries load; the server then falls back to the project default
+      primaryLabelId: values.primaryLabelId || undefined,
       labels: values.labels.map(({ id }) => id),
       assignedTo: fullAssignedTo.map(({ id }) => id),
       displayOrder: getNewTaskOrder(values.status, tasks, projectId),
@@ -160,8 +171,8 @@ const CreateTaskForm = ({
       // Creates never coalesce, so this always resolves to the created task; the guard narrows the type.
       .then((createdTask) => createdTask !== COALESCED && onSuccess?.(createdTask))
       .catch(() => {
-        const { description, status, variant, points, fullLabels: labels, fullAssignedTo: assignedTo } = newTask;
-        setForm(formId, { description, status, variant, points, labels, assignedTo });
+        const { description, status, fullLabels: labels, fullAssignedTo: assignedTo } = newTask;
+        setForm(formId, { description, status, primaryLabelId: values.primaryLabelId, labels, assignedTo });
       });
   };
 
@@ -170,16 +181,12 @@ const CreateTaskForm = ({
     setTimeout(() => onStatusChange?.(status));
   };
 
-  const handleFormClick = useCallback(() => {
+  const handleFormClick = () => {
     if (isDialog || isFocused || isMobile) return;
     focusTask(formId);
-  }, [isDialog, isFocused, isMobile]);
+  };
 
   if (form.loading) return null;
-
-  // Compute once per render — newTaskFormIsDirty JSON.parses the description, and it's read at
-  // several JSX sites below.
-  const isDirty = form.isDirty && newTaskFormIsDirty(form.getValues());
 
   return (
     <motion.div
@@ -192,8 +199,7 @@ const CreateTaskForm = ({
           handleCloseForm();
         }
       }}
-      style={{ overflow: isExiting ? 'hidden' : undefined }}
-      className={isDialog ? 'flex min-h-0 grow flex-col' : undefined}
+      className={cn(isExiting && 'overflow-hidden', isDialog && 'flex min-h-0 grow flex-col')}
     >
       <Form {...form}>
         <form
@@ -207,9 +213,11 @@ const CreateTaskForm = ({
             className,
             'flex flex-col gap-2 sm:p-3 sm:pl-11',
             isDialog && 'min-h-0 grow',
-            !isDialog && 'border-b border-l-2 border-l-transparent',
+            !isDialog &&
+              'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-[3px] before:rounded-full before:bg-primary before:opacity-0',
+            !isDialog && isFocused && 'before:opacity-100',
             isFocused
-              ? 'is-focused border-l-primary focus-visible:outline-none focus-visible:ring-0'
+              ? 'is-focused focus-visible:outline-none focus-visible:ring-0'
               : 'focus-visible:ring-1 focus-visible:ring-ring',
           )}
         >
@@ -233,7 +241,7 @@ const CreateTaskForm = ({
 
           <FormField
             control={form.control}
-            name="variant"
+            name="primaryLabelId"
             render={({ field: { value, onChange } }) => {
               return (
                 <FormItem>
@@ -242,23 +250,22 @@ const CreateTaskForm = ({
                       type="single"
                       variant="merged"
                       className="w-full gap-0"
-                      value={variantOptionsByValue[value].type}
+                      value={value}
                       onValueChange={(newValue: string | string[]) => {
-                        const selected = variantOptions.find((o) => o.type === newValue);
-                        if (selected) onChange(selected.value);
+                        if (typeof newValue === 'string' && newValue) onChange(newValue);
                       }}
                     >
-                      {variantOptions.map((variant) => (
+                      {primaryLabels.map((label) => (
                         <ToggleGroupItem
                           tabIndex={0}
                           size="sm"
-                          value={variant.type}
-                          className="group grow font-normal"
-                          key={variant.type}
+                          value={label.id}
+                          className="group min-w-0 flex-1 shrink font-normal"
+                          key={label.id}
                         >
-                          {variant.icon()}
-                          <span className="ml-2 opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
-                            {t(`c:${variant.labelKey}`)}
+                          <PrimaryLabelIcon label={label} />
+                          <span className="ml-2 min-w-0 truncate opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
+                            {label.name}
                           </span>
                         </ToggleGroupItem>
                       ))}
@@ -269,56 +276,6 @@ const CreateTaskForm = ({
               );
             }}
           />
-
-          {watchedVariant !== TaskVariant.Bug && (
-            <FormField
-              control={form.control}
-              name="points"
-              render={({ field: { onChange, value } }) => {
-                const selectedPoints = value !== null && value !== undefined ? pointsOptionsByValue[value] : null;
-                return (
-                  <FormItem>
-                    <FormControl>
-                      <Button
-                        aria-label="Set points"
-                        variant="input"
-                        size="sm"
-                        className="relative flex justify-start gap-2"
-                        id={`points-${formId}`}
-                        type="button"
-                        onClick={({ currentTarget }) =>
-                          handleTaskDropdownClick({
-                            dropdownType: 'points',
-                            value: value ?? null,
-                            onChange,
-                            triggerId: currentTarget.id,
-                            triggerRef: { current: currentTarget },
-                            triggerWidth: currentTarget.clientWidth,
-                          })
-                        }
-                      >
-                        {selectedPoints !== null ? (
-                          <>
-                            <selectedPoints.icon className="size-4 fill-current" aria-hidden="true" />
-
-                            {selectedPoints.label}
-                          </>
-                        ) : (
-                          <>
-                            <NotSelectedIcon className="size-4" aria-hidden="true" />
-                            <span className="font-normal opacity-75">
-                              {t('c:set_resource', { resource: t('c:points').toLowerCase() })}
-                            </span>
-                          </>
-                        )}
-                      </Button>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-          )}
 
           <FormField
             control={form.control}
@@ -356,7 +313,6 @@ const CreateTaskForm = ({
                               >
                                 <Badge
                                   variant="outline"
-                                  key={id}
                                   className="h-6 border-0 px-1 font-normal text-[.75rem] text-sm shadow-none last:mr-0"
                                 >
                                   {name}

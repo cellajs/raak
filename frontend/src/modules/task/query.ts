@@ -4,9 +4,9 @@ import type { CreateTasksData, GetTasksData, StxBase, UpdateTaskData, UserMinima
 import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
 import { zTask } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
+import { deriveDescriptionCounts } from '~/modules/common/blocknote/derive-description-props';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
-import { labelQueryKeys } from '~/modules/label/query';
-import { deriveDescriptionCounts } from '~/modules/task/helpers/derive-description-props';
+import { findLabelInCache, labelQueryKeys } from '~/modules/label/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
@@ -225,6 +225,13 @@ const applyOptimisticTaskUpdate = (
         // Only apply scalar values directly, AWSet deltas use fullLabels/fullAssignedTo.
         (optimisticUpdates as Record<string, unknown>)[key] = value;
       }
+    }
+
+    // primaryLabel is a server-hydrated object; rebuild it from the cached label row so
+    // the card and table update before the response lands (onSuccess merges server truth).
+    if (typeof mergedOps.primaryLabelId === 'string') {
+      const freshPrimary = findLabelInCache(mergedOps.primaryLabelId);
+      if (freshPrimary) optimisticUpdates.primaryLabel = freshPrimary;
     }
 
     // When description changes, derive all virtual props optimistically.
@@ -459,6 +466,13 @@ const taskUpdateOptions = (
       mutatedKeys,
       skipKeys: isProjectMove ? [] : ['labels', 'assignedTo'],
     });
+
+    // The lite response path answers primaryLabel: null, so a merged response must never
+    // supply it; rebuild the derived object from the cached label row the id points at.
+    if (!isProjectMove && typeof variables.ops?.primaryLabelId === 'string') {
+      const freshPrimary = findLabelInCache(variables.ops.primaryLabelId);
+      if (freshPrimary) merged.primaryLabel = freshPrimary;
+    }
     cacheUpdate(orgKey, [merged]);
     queryClient.setQueryData<Task>(detailKey, (old) => (old ? { ...old, ...merged } : old));
 

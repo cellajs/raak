@@ -4,7 +4,7 @@ import type { z } from 'zod';
 import type { EnrichedProject } from '~/modules/project/types';
 import type { SectionsValue } from '~/modules/task/board/task-board-store';
 import type { tasksTableSearchSchema } from '~/modules/task/search-params-schemas';
-import type { statusOptions, variantOptions } from '~/modules/task/task-properties';
+import type { statusOptions } from '~/modules/task/task-properties';
 import type { DraggableItemData } from '~/utils/get-draggable-item-data';
 
 export type Task = GetTaskResponse & { _draft?: boolean };
@@ -12,16 +12,20 @@ export type Task = GetTaskResponse & { _draft?: boolean };
 /** Embedded label shape as it appears on a task (subset of full Label). */
 export type TaskLabel = NonNullable<Task['labels']>[number];
 
-/** Stable id for the explainer ("getting started") panel. Also a persisted board-layout /
- *  collapse-state key, so this string value must not change. */
-export const EXPLAINER_PANEL_ID = 'explainer';
-
 /** A board column: either a project panel (optionally a section-filtered split of one) or a
- *  local, non-project panel (currently just the explainer). The `kind` discriminant replaces
+ *  local, non-project panel (explainer, labels). The `kind` discriminant replaces
  *  the old "any panel without a project is the explainer" heuristic. */
 export type BoardResizablePanel =
-  | { kind: 'project'; project: EnrichedProject; sectionFilters?: SectionsValue; panelId: string }
-  | { kind: 'explainer'; panelId: string };
+  | {
+      kind: 'project';
+      project: EnrichedProject;
+      sectionFilters?: SectionsValue;
+      /** Index within the project's viewSections; seeds a distinct default order per split panel. */
+      sectionIndex?: number;
+      panelId: string;
+    }
+  | { kind: 'explainer'; panelId: string }
+  | { kind: 'labels'; panelId: string };
 
 /** The project variant of a board panel (what `prepareBoardPanels` always produces). */
 export type ProjectResizablePanel = Extract<BoardResizablePanel, { kind: 'project' }>;
@@ -38,7 +42,7 @@ export type TaskCounts = {
   acceptedCutOff: number;
 };
 
-export type TaskSearch = z.infer<typeof tasksTableSearchSchema>;
+export type BoardSearchParams = z.infer<typeof tasksTableSearchSchema>;
 
 export type TaskState = 'collapsed' | 'editing' | 'expanded';
 
@@ -49,13 +53,7 @@ export interface TaskProps {
   isFocused: boolean;
   isSheet?: boolean;
 }
-/**
- * Selectable points values. `Task['points']` stays `number | null` (the backend contract is a
- * full int), so this is the set the UI offers, not a guarantee about stored values.
- */
-export type TaskPointsType = 0 | 1 | 2 | 3 | null;
 export type TaskStatusType = (typeof statusOptions)[number]['value'];
-export type TaskVariantType = (typeof variantOptions)[number]['value'];
 
 export type DropTarget<T> = Omit<DropTargetRecord, 'data'> & {
   data: T;

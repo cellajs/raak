@@ -3,8 +3,21 @@ import { t } from 'i18next';
 import { appConfig } from 'shared';
 import { isCDNUrl } from 'shared/utils/is-cdn-url';
 import { maxLength } from '#/db/utils/constraints';
+import lucideIconNames from '#json/lucide-icon-names.json';
 
 export { maxLength };
+
+const lucideIconNameSet = new Set<string>(lucideIconNames);
+
+/**
+ * Schema for a lucide icon name. Validated against the generated sprite name list
+ * (json/lucide-icon-names.json, regenerated via `pnpm --filter frontend gen:icons`)
+ * so stored icons always resolve in the client sprite.
+ */
+export const iconNameSchema = z
+  .string()
+  .max(maxLength.field)
+  .refine((name) => lucideIconNameSet.has(name), { message: 'Unknown lucide icon name' });
 
 /** Schema to use boolean parameters (transform string to boolean) */
 export const booleanTransformSchema = z

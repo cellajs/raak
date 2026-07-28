@@ -1,6 +1,7 @@
 import { type CSSProperties, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-scaffold';
 import type { SelectStatusProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { statusOptions, statusOptionsByValue } from '~/modules/task/task-properties';
@@ -14,8 +15,6 @@ import {
   ComboboxList,
   ComboboxSearchInput,
 } from '~/modules/ui/combobox';
-import { Kbd } from '~/modules/ui/kbd';
-import { inNumbersArray } from '~/utils/in-numbers-array';
 
 type StatusOption = (typeof statusOptions)[number];
 
@@ -52,8 +51,9 @@ export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWi
       inputValue={searchValue}
       onInputValueChange={(value) => {
         // Digit hotkey: 1-7 selects status by index
-        if (inNumbersArray(7, value)) {
-          commit(Number.parseInt(value, 10) - 1);
+        const status = matchDigitHotkey(statusOptions, value, { max: 7 });
+        if (status) {
+          commit(status.value);
           return;
         }
         setSearchValue(value);
@@ -71,7 +71,7 @@ export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWi
           placeholder={t('c:select_resource', { resource: t('c:status').toLowerCase() })}
           showClear={false}
         />
-        {!searchValue.length && <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">S</Kbd>}
+        <ComboboxHotkeyHint searching={!!searchValue.length}>S</ComboboxHotkeyHint>
         <ComboboxList className="p-1">
           {(status: StatusOption) => {
             const index = statusOptions.findIndex((s) => s.value === status.value);
@@ -79,14 +79,14 @@ export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWi
               <ComboboxItem
                 key={status.value}
                 value={status}
-                className="group flex w-full items-center gap-2 rounded-md leading-normal"
+                className="group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal"
               >
                 <status.icon
                   className={`size-4 fill-current group-hover:opacity-100 ${statusFillColors[status.value]}`}
                 />
                 <div className="grow">{t(`c:${status.status}`)}</div>
                 <ComboboxItemIndicator className="text-success" />
-                {!searchValue && <span className="mx-1 text-xs opacity-50 max-sm:hidden">{index + 1}</span>}
+                <HotkeyIndexBadge index={searchValue ? undefined : index} />
               </ComboboxItem>
             );
           }}

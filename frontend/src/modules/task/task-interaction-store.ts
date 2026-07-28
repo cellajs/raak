@@ -4,8 +4,15 @@ import { immer } from 'zustand/middleware/immer';
 import type { Task } from '~/modules/task/types';
 
 interface TaskInteractionState {
-  selectedTasks: Task[];
-  setSelectedTasks: (tasks: Task[]) => void;
+  /** Ids of tasks selected on the board or table; entities resolve from the query cache at action time. */
+  selectedTaskIds: string[];
+  setSelectedTaskIds: (ids: string[]) => void;
+  /**
+   * Ids of label rows selected in the labels panel. Task and label selection are mutually exclusive
+   * (checkboxes of the other kind disable), so the board header's remove button acts on one kind.
+   */
+  selectedLabelIds: string[];
+  setSelectedLabelIds: (ids: string[]) => void;
   focusedTaskId: string | null;
   setFocusedTaskId: (taskId: string | null) => void;
   /**
@@ -19,8 +26,12 @@ interface TaskInteractionState {
   reset: () => void;
 }
 
-const initialState: Pick<TaskInteractionState, 'selectedTasks' | 'focusedTaskId' | 'draftTasks'> = {
-  selectedTasks: [],
+const initialState: Pick<
+  TaskInteractionState,
+  'selectedTaskIds' | 'selectedLabelIds' | 'focusedTaskId' | 'draftTasks'
+> = {
+  selectedTaskIds: [],
+  selectedLabelIds: [],
   focusedTaskId: null,
   draftTasks: {},
 };
@@ -33,9 +44,14 @@ export const useTaskInteractionStore = create<TaskInteractionState>()(
   devtools(
     immer((set) => ({
       ...initialState,
-      setSelectedTasks: (tasks) => {
+      setSelectedTaskIds: (ids) => {
         set((state) => {
-          state.selectedTasks = tasks;
+          state.selectedTaskIds = ids;
+        });
+      },
+      setSelectedLabelIds: (ids) => {
+        set((state) => {
+          state.selectedLabelIds = ids;
         });
       },
       setFocusedTaskId: (id) => {

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { type UseFormProps, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { ChannelBase, Organization, Workspace } from 'sdk';
@@ -29,6 +29,11 @@ const formSchema = z.object({
   tenantId: z.string().min(1),
 });
 type FormValues = z.infer<typeof formSchema>;
+
+// Programmatic field writes (org/tenant/name defaults) must not mark the form dirty or touched,
+// but still revalidate so `isValid` stays accurate.
+const keepPristine = { shouldDirty: false, shouldTouch: false, shouldValidate: true } as const;
+
 interface CreateWorkspaceFormProps {
   dialog?: boolean;
   callback?: (workspace: Workspace) => void;
@@ -40,13 +45,11 @@ const CreateWorkspaceForm = ({ callback, dialog: isDialog }: CreateWorkspaceForm
   const query = useInfiniteQuery(organizationsListQueryOptions({}));
   const items = flattenInfiniteData<Organization>(query.data);
 
-  const formOptions: UseFormProps<FormValues> = useMemo(() => {
-    return {
-      mode: 'onTouched',
-      resolver: zodResolver(formSchema),
-      defaultValues: { name: '', organizationId: '', tenantId: '' },
-    };
-  }, []);
+  const formOptions: UseFormProps<FormValues> = {
+    mode: 'onTouched',
+    resolver: zodResolver(formSchema),
+    defaultValues: { name: '', organizationId: '', tenantId: '' },
+  };
 
   // Form with draft in local storage
   const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });
@@ -78,46 +81,26 @@ const CreateWorkspaceForm = ({ callback, dialog: isDialog }: CreateWorkspaceForm
 
   const organizationCreated = (args: CallbackArgs<Organization>) => {
     if (args.status === 'success') {
-      form.setValue('organizationId', args.data.id, {
-        shouldDirty: false,
-        shouldTouch: false,
-        shouldValidate: true,
-      });
-      form.setValue('tenantId', args.data.tenantId, {
-        shouldDirty: false,
-        shouldTouch: false,
-        shouldValidate: true,
-      });
+      form.setValue('organizationId', args.data.id, keepPristine);
+      form.setValue('tenantId', args.data.tenantId, keepPristine);
 
       const currentName = form.getValues('name');
       if (!touchedFields.name && !currentName) {
-        form.setValue('name', args.data.name, {
-          shouldDirty: false,
-          shouldTouch: false,
-          shouldValidate: true,
-        });
+        form.setValue('name', args.data.name, keepPristine);
       }
     }
   };
 
   const onOrganizationSelect = useCallback(
     (selectedOrg: ChannelBase) => {
-      form.setValue('tenantId', selectedOrg.tenantId, {
-        shouldDirty: false,
-        shouldTouch: false,
-        shouldValidate: true,
-      });
+      form.setValue('tenantId', selectedOrg.tenantId, keepPristine);
 
       const currentName = form.getValues('name');
       if (!touchedFields.name && !currentName) {
-        form.setValue('name', selectedOrg.name, {
-          shouldDirty: false,
-          shouldTouch: false,
-          shouldValidate: true,
-        });
+        form.setValue('name', selectedOrg.name, keepPristine);
       }
     },
-    [form, touchedFields.name],
+    [form.setValue, form.getValues, touchedFields.name],
   );
 
   // Async queries mean single-org defaults are not available at first render.
@@ -125,13 +108,9 @@ const CreateWorkspaceForm = ({ callback, dialog: isDialog }: CreateWorkspaceForm
     if (items.length !== 1 || organizationId) return;
 
     const selectedOrg = items[0];
-    form.setValue('organizationId', selectedOrg.id, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: true,
-    });
+    form.setValue('organizationId', selectedOrg.id, keepPristine);
     onOrganizationSelect(selectedOrg);
-  }, [items, organizationId, form, onOrganizationSelect]);
+  }, [items, organizationId, form.setValue, onOrganizationSelect]);
 
   // Alert if no organizations exist (wait for query to finish loading first)
   if (!query.isLoading && !form.getValues('organizationId') && !items.length)

@@ -2,8 +2,10 @@ import { appConfig } from 'shared';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
+import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import { useSeenStore } from '~/modules/seen/seen-store';
+import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { useUIStore } from '~/modules/ui/ui-store';
 import { userStore } from '~/modules/user/user-store';
 import { bindAppDb, closeAppDb } from '~/query/app-db';
@@ -12,7 +14,16 @@ import { useSyncStore } from '~/query/realtime/sync-store';
 
 /** Persisted zustand stores that live in `appdb.kv` (per-user; in-memory while signed out).
  *  Each exposes a uniform `reset()` so {@link unbind} can drop in-memory state on sign-out. */
-const appKvStores = [useSeenStore, useSyncStore, useNavigationStore, useDraftStore, useAlertStore, useBoardStore];
+const appKvStores = [
+  useSeenStore,
+  useSyncStore,
+  useNavigationStore,
+  useDraftStore,
+  useAlertStore,
+  useBoardStore,
+  useTaskBoardStore,
+  useLabelRecencyStore,
+];
 
 let boundOwner: string | null = null;
 let readyPromise: Promise<void> = Promise.resolve();

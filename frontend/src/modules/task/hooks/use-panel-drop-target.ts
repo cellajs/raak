@@ -4,8 +4,7 @@ import {
   autoScrollWindowForElements,
 } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import { isTaskData } from '~/modules/task/helpers/drag-and-drop';
-import { isProjectReadOnly } from '~/modules/task/hooks/use-read-only';
+import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import type { Task } from '~/modules/task/types';
 
 interface UsePanelDropTargetOptions {
@@ -40,9 +39,7 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
       }),
       canDrop: ({ source: { data } }) => {
         if (!isTaskData(data)) return false;
-        // Block drops from other projects into a read-only project
-        if (data.item.projectId !== projectId && isProjectReadOnly(projectId)) return false;
-        return true;
+        return canDropTaskIntoProject(data.item.projectId, projectId);
       },
       onDragEnter: ({ source: { data } }) => {
         if (!isTaskData(data) || data.item.projectId === projectId) return;

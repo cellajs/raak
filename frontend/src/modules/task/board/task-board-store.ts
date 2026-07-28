@@ -1,10 +1,10 @@
-import { appConfig } from 'shared';
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { computePanelLayoutSplit } from '~/modules/task/helpers/board-helpers';
 import type { Task } from '~/modules/task/types';
+import { idbKvStorage } from '~/query/idb-kv-storage';
 
 export const defaultPanelPrefs = { expandAccepted: false, expandIced: false };
 
@@ -26,7 +26,14 @@ interface TaskBoardState {
     status: TogglableStatusType,
     newState?: boolean,
   ) => void;
+
+  reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
+
+// Default state values
+const initStore: Pick<TaskBoardState, 'panelData'> = {
+  panelData: {},
+};
 
 const ensureBoard = (state: TaskBoardState, boardId: string) => {
   if (!state.panelData[boardId]) state.panelData[boardId] = {};
@@ -42,7 +49,7 @@ export const useTaskBoardStore = create<TaskBoardState>()(
   devtools(
     persist(
       immer((set) => ({
-        panelData: {},
+        ...initStore,
 
         setPanelSections: (boardId, projectId, sections) => {
           // Recompute the generic board layout from a pure helper and persist it OUTSIDE the immer
@@ -80,11 +87,14 @@ export const useTaskBoardStore = create<TaskBoardState>()(
             else panel.prefs.expandAccepted = next;
           });
         },
+
+        reset: () => set(initStore),
       })),
       {
         version: 1,
-        name: `${appConfig.slug}-task-board`,
-        storage: createJSONStorage(() => localStorage),
+        name: 'task-board',
+        skipHydration: true,
+        storage: createJSONStorage(() => idbKvStorage('task-board')),
       },
     ),
   ),

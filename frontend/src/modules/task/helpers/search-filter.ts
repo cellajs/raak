@@ -1,6 +1,7 @@
 import type { Block } from '@blocknote/core';
 import { getSearchableTextFromBlocks } from 'shared/blocknote';
-import type { Task, TaskSearch } from '~/modules/task/types';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
+import type { BoardSearchParams, Task } from '~/modules/task/types';
 
 // Parsing the BlockNote description JSON is the expensive part of the filter (it runs per task on
 // every keystroke / cache event in board mode and the offline table filter). Cache it keyed by the
@@ -21,14 +22,13 @@ const getDescriptionText = (task: Task): string => {
  * Search filter function for tasks based on search parameters.
  */
 export const searchFilterFunction = (
-  searchParams: { q?: string; matchMode?: TaskSearch['matchMode'] },
+  searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] },
   task: Task,
 ): boolean => {
   const { q: searchQuery, matchMode = 'all' } = searchParams;
 
-  // Normalize query
-  const trimmed = searchQuery?.trim().toLowerCase();
-  const rawQuery = trimmed?.startsWith('=') ? trimmed.slice(1) : trimmed;
+  // Normalize query ('=' highlight marker stripped; match logic is mode-agnostic)
+  const rawQuery = parseSearchQuery(searchQuery).effectiveQ.toLowerCase();
 
   // Always allow empty query or create-task
   if (!rawQuery || task.id.startsWith('create-task')) return true;

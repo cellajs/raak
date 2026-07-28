@@ -493,7 +493,7 @@ export type Task = {
   expandable: boolean;
   summary: string;
   summaryLength: number;
-  points: number | null;
+  primaryLabelId: string;
   displayOrder: number;
   status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
   statusChangedAt: string;
@@ -505,10 +505,21 @@ export type Task = {
   labels: Array<{
     id: string;
     name: string;
+    slug: string;
     color: string | null;
+    mode: 'primary' | 'secondary' | 'epic';
+    icon: string | null;
     projectId: string;
   }>;
-  variant: 1 | 2 | 3;
+  primaryLabel: {
+    id: string;
+    name: string;
+    slug: string;
+    color: string | null;
+    mode: 'primary' | 'secondary' | 'epic';
+    icon: string | null;
+    projectId: string;
+  } | null;
   assignedTo: Array<UserMinimalBase>;
   createdBy: {
     id: string;
@@ -564,6 +575,27 @@ export type Organization = {
   chatSupport: boolean;
   organizationFlags: {
     [key: string]: unknown;
+  };
+  setupConfig: {
+    primaryLabels: Array<{
+      slug: string;
+      name: string;
+      color:
+        | 'red'
+        | 'orange'
+        | 'amber'
+        | 'yellow'
+        | 'green'
+        | 'emerald'
+        | 'teal'
+        | 'sky'
+        | 'blue'
+        | 'indigo'
+        | 'violet'
+        | 'pink'
+        | 'slate';
+      icon: string | null;
+    }>;
   };
   included: {
     membership?: MembershipBase;
@@ -698,9 +730,13 @@ export type Attachment = {
    */
   convertedKey: string | null;
   /**
-   * Storage object key for the generated thumbnail; null when none.
+   * Storage object key for the generated thumbnail (mid-size preview); null when none.
    */
   thumbnailKey: string | null;
+  /**
+   * Storage object key for the tiny (grid-cell) image thumbnail; null when none.
+   */
+  thumbnailTinyKey: string | null;
   projectId: string;
   organizationId: string;
   viewCount?: number;
@@ -745,6 +781,11 @@ export type Label = {
   publicAt: string | null;
   seq: number;
   color: string | null;
+  mode: 'primary' | 'secondary' | 'epic';
+  slug: string;
+  icon: string | null;
+  organizationTracked: boolean;
+  displayOrder: number | null;
   organizationId: string;
   projectId: string;
   stx: StxBase;
@@ -3789,7 +3830,7 @@ export type GetPublicTasksData = {
   path?: never;
   query: {
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'variant' | 'updatedAt' | 'createdAt';
+    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: string;
     limit?: string;
@@ -4331,6 +4372,27 @@ export type UpdateOrganizationData = {
     chatSupport?: boolean;
     organizationFlags?: {
       [key: string]: unknown;
+    };
+    setupConfig?: {
+      primaryLabels?: Array<{
+        slug: string;
+        name: string;
+        color:
+          | 'red'
+          | 'orange'
+          | 'amber'
+          | 'yellow'
+          | 'green'
+          | 'emerald'
+          | 'teal'
+          | 'sky'
+          | 'blue'
+          | 'indigo'
+          | 'violet'
+          | 'pink'
+          | 'slate';
+        icon: string | null;
+      }>;
     };
   };
   path: {
@@ -5513,9 +5575,13 @@ export type CreateAttachmentsData = {
      */
     convertedKey?: string | null;
     /**
-     * Storage object key for the generated thumbnail; null when none.
+     * Storage object key for the generated thumbnail (mid-size preview); null when none.
      */
     thumbnailKey?: string | null;
+    /**
+     * Storage object key for the tiny (grid-cell) image thumbnail; null when none.
+     */
+    thumbnailTinyKey?: string | null;
     projectId: string;
     stx: StxBase;
   }>;
@@ -5597,7 +5663,7 @@ export type GetPresignedUrlsData = {
   body: {
     items: Array<{
       attachmentId: string;
-      variant?: 'original' | 'thumbnail' | 'converted';
+      variant?: 'original' | 'thumbnail' | 'thumbnail-tiny' | 'converted';
     }>;
   };
   path: {
@@ -5644,7 +5710,7 @@ export type GetPresignedUrlsResponses = {
   200: {
     data: Array<{
       attachmentId: string;
-      variant: 'original' | 'thumbnail' | 'converted';
+      variant: 'original' | 'thumbnail' | 'thumbnail-tiny' | 'converted';
       url: string;
     }>;
     /**
@@ -6217,7 +6283,7 @@ export type GetTasksData = {
   };
   query?: {
     q?: string;
-    sort?: 'projectId' | 'status' | 'createdBy' | 'variant' | 'updatedAt' | 'createdAt';
+    sort?: 'projectId' | 'status' | 'createdBy' | 'updatedAt' | 'createdAt';
     order?: 'asc' | 'desc';
     offset?: string;
     limit?: string;
@@ -6276,10 +6342,9 @@ export type CreateTasksData = {
     name?: string;
     description: string | null;
     projectId: string;
-    points?: number | null;
     id: string;
     status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
-    variant: 1 | 2 | 3;
+    primaryLabelId?: string;
     displayOrder?: number;
     labels?: Array<string>;
     assignedTo?: Array<string>;
@@ -6414,8 +6479,7 @@ export type UpdateTaskData = {
       name?: string;
       description?: string | null;
       status?: number;
-      variant?: number;
-      points?: number | null;
+      primaryLabelId?: string;
       displayOrder?: number;
       labels?: {
         add?: Array<string>;
@@ -6557,6 +6621,7 @@ export type GetLabelsData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
+    modes?: string;
     projectId?: string;
     workspaceId?: string;
   };
@@ -6610,6 +6675,10 @@ export type CreateLabelsData = {
     projectId: string;
     id: string;
     color: string | null;
+    mode?: 'primary' | 'secondary' | 'epic';
+    slug?: string;
+    icon?: string | null;
+    displayOrder?: number;
     stx: StxBase;
   }>;
   path: {
@@ -6740,6 +6809,12 @@ export type UpdateLabelData = {
     ops: {
       name?: string;
       color?: string | null;
+      slug?: string;
+      icon?: string | null;
+      displayOrder?: number;
+      description?: string | null;
+      mode?: 'secondary' | 'epic';
+      organizationTracked?: boolean;
     };
     stx: StxBase;
   };

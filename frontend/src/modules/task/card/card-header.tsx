@@ -1,6 +1,5 @@
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
-import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
@@ -14,7 +13,7 @@ import { PopConfirm } from '~/modules/common/popconfirm';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { TaskVariantButton } from '~/modules/task/card/task-variant-button';
+import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { DeleteTask } from '~/modules/task/delete-task';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import type { Task } from '~/modules/task/types';
@@ -30,10 +29,9 @@ interface TaskCardHeaderProps {
 
 export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useUserStore();
   const isOnline = useOnlineManager();
-  const expandButtonRef = useRef<HTMLAnchorElement | null>(null);
-  const optionsTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const shareLink = `${appConfig.backendUrl}/t/${task.id}`;
 
@@ -41,17 +39,19 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
 
   const relativeDate = useRelativeDate(task.createdAt, user?.language || 'en', 'ago');
 
-  const openOptionsDropdown = () => {
-    if (!optionsTriggerRef.current) return;
+  const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const { create } = useDropdowner.getState();
     const isMobile = window.innerWidth < 640;
+    // Anchor the dropdown to the clicked element. The button carries no `id`, because a
+    // caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
+    const triggerRef = { current: currentTarget };
 
     const handleDeleteClick = () => {
       const { update, remove } = useDropdowner.getState();
       update({
         kind: 'panel',
         content: (
-          <PopConfirm title={t('c:delete_confirm.text', { name: `"${truncateMiddle(task.name, 50)}"` })}>
+          <PopConfirm title={t('c:delete_confirm.text', { name: `"${truncateMiddle(task.name, 20)}"` })}>
             <DeleteTask task={task} callback={remove} onCancel={remove} />
           </PopConfirm>
         ),
@@ -60,6 +60,26 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
 
     create(
       <>
+        {!isSheet && (
+          <DropdownActionItem
+            isMobile={isMobile}
+            icon={Maximize2Icon}
+            onSelect={() => {
+              // Bring focus back to the options trigger when the sheet closes
+              useSheeter.getState().setTriggerRef(task.id, triggerRef);
+              focusTask(null);
+              navigate({
+                to: '.',
+                resetScroll: false,
+                replace: false,
+                search: (prev) => ({ ...prev, taskSheetId: task.id }),
+              });
+              useDropdowner.getState().remove();
+            }}
+          >
+            {t('c:expand')}
+          </DropdownActionItem>
+        )}
         <DropdownActionItem
           isMobile={isMobile}
           icon={CopyIcon}
@@ -80,7 +100,6 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
         >
           {t('c:copy_as_link')}
         </DropdownActionItem>
-        {isMobile && <div className="my-1 h-px bg-border" />}
         <DropdownActionItem
           isMobile={isMobile}
           icon={TrashIcon}
@@ -94,16 +113,18 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
       {
         id: `task-options-${task.id}`,
         triggerId: `task-options-btn-${task.id}${isSheet ? '-sheet' : ''}`,
-        triggerRef: optionsTriggerRef,
+        triggerRef,
         align: 'end',
         kind: 'menu',
+        // Match the task panel header's ellipsis menu width.
+        popupClassName: 'min-w-48',
       },
     );
   };
 
   return (
     <div className="flex w-full flex-row justify-between py-1">
-      <TaskVariantButton task={task} isSheet={isSheet} />
+      <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       <div className="ml-1 flex w-full flex-row items-center gap-1">
         {task.createdBy && (
           <>
@@ -122,7 +143,7 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
               sideOffset={5}
               hideWhenDetached
             >
-              <span className="ml-1 text-center text-sm opacity-50">
+              <span className="ml-1 text-center text-xs opacity-50">
                 {isOnline ? relativeDate : t('c:update_on_online')}
               </span>
             </TooltipButton>
@@ -132,11 +153,9 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
         <div className="grow" />
 
         <div className="flex flex-row items-center gap-1 opacity-0 transition-opacity group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100">
-          <TooltipButton toolTipContent={t('c:options')} side="bottom" sideOffset={5} hideWhenDetached>
+          <TooltipButton toolTipContent={t('c:options')} side="bottom" sideOffset={5}>
             <Button
-              ref={optionsTriggerRef}
-              id={`task-options-btn-${task.id}${isSheet ? '-sheet' : ''}`}
-              onClick={openOptionsDropdown}
+              onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
               aria-label="Task options"
               variant="ghost"
               className="h-8 w-8 data-dropdowner-active:bg-accent/50"
@@ -145,32 +164,6 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
               <EllipsisVerticalIcon className="icon-sm" />
             </Button>
           </TooltipButton>
-
-          {!isSheet && (
-            <TooltipButton toolTipContent={t('c:expand')} side="bottom" sideOffset={5} hideWhenDetached>
-              <Button
-                variant="ghost"
-                size="xs"
-                className="h-8 w-8"
-                render={
-                  <Link
-                    to="."
-                    ref={expandButtonRef}
-                    resetScroll={false}
-                    search={(prev) => ({ ...prev, taskSheetId: task.id })}
-                    replace={false}
-                    onClick={() => {
-                      // Store trigger to bring focus back
-                      useSheeter.getState().setTriggerRef(task.id, expandButtonRef);
-                      focusTask(null);
-                    }}
-                  />
-                }
-              >
-                <Maximize2Icon className="icon-sm" />
-              </Button>
-            </TooltipButton>
-          )}
 
           {!isSheet && (
             <TooltipButton toolTipContent={t('c:close')} side="bottom" sideOffset={5} hideWhenDetached>

@@ -3,7 +3,7 @@ import { getNewStatusTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { TaskStatus } from '~/modules/task/task-properties';
-import type { Task, TaskLabel, TaskPointsType, TaskStatusType, TaskVariantType } from '~/modules/task/types';
+import type { Task, TaskLabel, TaskStatusType } from '~/modules/task/types';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { computeArrayDelta } from '~/query/offline/array-delta';
@@ -21,14 +21,6 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
   const { taskMutation, user } = deps;
 
   const baseTaskInfo = { id: task.id };
-
-  const onPointsChange = (newPoints: TaskPointsType) => {
-    if (task.points === newPoints) return;
-    taskMutation.mutate({
-      ...baseTaskInfo,
-      ops: { points: newPoints },
-    });
-  };
 
   // Track last-applied labels across calls so consecutive clicks in the same
   // dropdown session compute deltas against the previous selection, not the
@@ -94,20 +86,19 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
     });
   };
 
-  const onVariantChange = (newVariant: TaskVariantType) => {
-    if (task.variant === newVariant) return;
+  const onPrimaryLabelChange = (newPrimaryLabelId: string) => {
+    if (task.primaryLabelId === newPrimaryLabelId) return;
     taskMutation.mutate({
       ...baseTaskInfo,
-      ops: { variant: newVariant },
+      ops: { primaryLabelId: newPrimaryLabelId },
     });
   };
 
   return {
-    onPointsChange,
     onLabelsChange,
     onAssignedToChange,
     onStatusChange,
-    onVariantChange,
+    onPrimaryLabelChange,
   };
 }
 

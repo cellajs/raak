@@ -10,6 +10,7 @@ export {
   excludeArchivedQuerySchema,
   fullResponseQuerySchema,
   type IncludeOption,
+  iconNameSchema,
   idInOrgParamSchema,
   idInTenantOrgParamSchema,
   idsBodySchema,

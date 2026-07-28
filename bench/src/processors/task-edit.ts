@@ -7,7 +7,7 @@ export { authenticate } from './auth';
 let iterCount = 0;
 
 /**
- * Builds task edit payloads (assignedTo, variant, status, description) and
+ * Builds task edit payloads (assignedTo, displayOrder, status, description) and
  * sets context variables for the YAML scenario flow.
  */
 export function buildTaskEditPayload(context: { vars: Record<string, unknown> }, _events: unknown, done: () => void) {

@@ -3,19 +3,62 @@ import { getOrderBetween } from 'shared/utils/display-order';
 import { useShallow } from 'zustand/react/shallow';
 import type { BoardLayoutPanel } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
+import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
+/** Default anchors for panels the server doesn't own: the explainer leads the board, the
+ *  labels panel trails it, and project panels without an enriched membership (e.g. the
+ *  single-project board) sit in between. Finite values keep the fractional reorder math working
+ *  when a neighboring panel is dragged against them; user reorders (local orders) override. */
+const kindDefaultOrders: Record<BoardResizablePanel['kind'], number> = {
+  explainer: -1_000_000,
+  project: 0,
+  labels: 1_000_000,
+};
+
+/** Gap between the seeded default orders of a project's split panels. Small enough to keep the
+ *  group at its membership anchor, large enough for `getOrderBetween` to fit drops in between. */
+const splitSectionOrderStep = 0.001;
+
 /** Resolve a panel's displayOrder.
- *  Server-owned (project membership) wins; otherwise fall back to local store. */
+ *  A device-local order (set by drag) wins; then the server-owned membership order (split panels
+ *  offset it by sectionIndex so siblings get distinct, insertable orders); then the kind default. */
 export function getPanelDisplayOrder(
   panel: BoardResizablePanel,
   localOrders: Record<string, number> = {},
 ): number | undefined {
-  const membershipOrder = panel.kind === 'project' ? panel.project.membership?.displayOrder : undefined;
-  return membershipOrder ?? localOrders[panel.panelId];
+  const localOrder = localOrders[panel.panelId];
+  if (localOrder !== undefined) return localOrder;
+
+  if (panel.kind === 'project') {
+    const anchor = panel.project.membership?.displayOrder ?? kindDefaultOrders.project;
+    if (panel.sectionFilters) return anchor + (panel.sectionIndex ?? 0) * splitSectionOrderStep;
+    return anchor;
+  }
+
+  return kindDefaultOrders[panel.kind];
+}
+
+/** The non-project ("local") panels a board shows, in canonical order: the explainer leads and
+ *  the labels panel trails (the kind default orders below re-sort them anyway). Single source of
+ *  truth shared by the live boards and the loading skeleton so the two never disagree on which
+ *  local panels exist. The explainer appears only when its welcome text is unseen; the labels
+ *  panel appears on every board except an anonymous public view. */
+export function buildBoardExtraPanels({
+  showExplainer = false,
+  publicView = false,
+}: {
+  showExplainer?: boolean;
+  publicView?: boolean;
+} = {}): BoardResizablePanel[] {
+  const panels: BoardResizablePanel[] = [];
+  if (showExplainer) panels.push({ kind: 'explainer', panelId: EXPLAINER_PANEL_ID });
+  if (!publicView) panels.push({ kind: 'labels', panelId: LABELS_PANEL_ID });
+  return panels;
 }
 
 /** Sort panels by their resolved displayOrder. Panels without an order keep their
@@ -54,12 +97,18 @@ export type PanelReorderResult =
  * same comparator used to render, so server-owned and local-only panels reorder uniformly.
  * Returns null (skip) for: unknown source, single panel (no anchor), float collision, or an
  * unchanged membership order. The caller performs the actual persistence.
+ *
+ * Persistence target: an unsplit project panel updates its server-owned membership order;
+ * split panels and local-only panels persist a device-local order. `persist: 'local'` forces
+ * the local path for every panel (single-project boards, where membership order is owned by
+ * the workspace board and must not change).
  */
 export function computePanelReorder(
   panels: BoardResizablePanel[],
   localOrders: Record<string, number> | undefined,
   newOrder: string[],
   sourcePanelId: string,
+  options?: { persist?: 'auto' | 'local' },
 ): PanelReorderResult {
   const sourcePanel = panels.find((p) => p.panelId === sourcePanelId);
   if (!sourcePanel) return null;
@@ -82,8 +131,8 @@ export function computePanelReorder(
   // Float collision — skip; a rebalance pass would be needed to recover.
   if (newDisplayOrder === null) return null;
 
-  const sourceProject = sourcePanel.kind === 'project' ? sourcePanel.project : undefined;
-  if (sourceProject?.membership) {
+  const sourceProject = sourcePanel.kind === 'project' && !sourcePanel.sectionFilters ? sourcePanel.project : undefined;
+  if (options?.persist !== 'local' && sourceProject?.membership) {
     if (newDisplayOrder === sourceProject.membership.displayOrder) return null;
     return {
       kind: 'membership',
@@ -95,7 +144,7 @@ export function computePanelReorder(
     };
   }
 
-  // Local-only panel (explainer, ai-chat, …).
+  // Split panel or local-only panel (explainer, labels, …): device-local order.
   return { kind: 'local', panelId: sourcePanelId, displayOrder: newDisplayOrder };
 }
 

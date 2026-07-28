@@ -61,7 +61,7 @@ describe('Task seq reads', async () => {
       organizationId: tenant.organization.id,
       projectId,
       summary: '',
-      variant: 1,
+      primaryLabelId: crypto.randomUUID(),
       displayOrder: 1,
       status: TaskStatus.Unstarted,
       stx: mockStxBase(),

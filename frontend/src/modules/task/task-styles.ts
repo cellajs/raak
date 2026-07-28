@@ -53,6 +53,9 @@ export const statusFillColors = {
  */
 export const taskDescriptionGutterStyle = 'pl-1 sm:pl-9 pb-4';
 
+/** Shared shell classes for the board/table top bar (search, count, actions). */
+export const taskBarClass = 'z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2';
+
 /**
  * Faint accepted/iced section-bar colors, shared by the collapsed-panel sections and the board
  * skeleton so the accepted (green) / iced (sky) hue lives in one place. The interactive toggle

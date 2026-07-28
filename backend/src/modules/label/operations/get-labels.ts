@@ -1,5 +1,6 @@
 import type { z } from '@hono/zod-openapi';
-import { count, ilike, isNull, type SQL, sql } from 'drizzle-orm';
+import { count, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
@@ -23,7 +24,7 @@ export async function getLabelsOp(
   input: GetLabelsInput,
 ): Promise<OperationResult<{ items: (LabelModel & { usedCount: number })[]; total: number }>> {
   const { projectId, workspaceId, ...queryInfo } = input;
-  const { q, sort, order, offset, limit, seqCursor } = queryInfo;
+  const { q, sort, order, offset, limit, seqCursor, modes } = queryInfo;
   const organizationId = ctx.var.organization.id;
 
   // Resolve the explicit channel narrowing (if any) from the request.
@@ -54,9 +55,9 @@ export async function getLabelsOp(
   const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
   // Delta reads discard `total`; org-wide unfiltered reads use the O(1) channel counter; everything
-  // narrower (search / project-scoped / row-scoped 'own') falls back to the exact COUNT(*).
+  // narrower (search / modes / project-scoped / row-scoped 'own') falls back to the exact COUNT(*).
   const isDelta = !!seqCursor;
-  const counterEligible = scopeWhere.kind === 'all' && !q?.trim() && !seqCursor;
+  const counterEligible = scopeWhere.kind === 'all' && !q?.trim() && !seqCursor && !modes?.length;
 
   const result = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;
@@ -72,8 +73,15 @@ export async function getLabelsOp(
     // Restrict to the caller's readable scope unless org-wide (kind 'all').
     if (scopeWhere.kind === 'where') labelsFilters.push(scopeWhere.where);
 
-    // Add more filters
-    if (q) labelsFilters.push(ilike(labelsTable.name, `%${q}%`));
+    // Tokenized search over name + description-derived keywords, mirroring task keyword
+    // matching: every word must hit (AND across words, OR across columns per word).
+    // parseSearchQuery strips the '=' highlight marker so marked queries behave like plain ones.
+    const searchWords = parseSearchQuery(q).effectiveQ.toLowerCase().split(/\s+/).filter(Boolean);
+    for (const word of searchWords) {
+      const wordFilter = or(ilike(labelsTable.name, `%${word}%`), ilike(labelsTable.keywords, `%${word}%`));
+      if (wordFilter) labelsFilters.push(wordFilter);
+    }
+    if (modes?.length) labelsFilters.push(inArray(labelsTable.mode, modes));
 
     const labelsSubquery = buildLabelsListQuery(readCtx, { filters: labelsFilters }).as('labels');
 

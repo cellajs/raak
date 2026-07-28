@@ -52,10 +52,10 @@ function buildAssignedToEdit(): EditPayload {
   };
 }
 
-function buildVariantEdit(): EditPayload {
+function buildDisplayOrderEdit(): EditPayload {
   return {
-    ops: { variant: randomChoice([1, 2, 3]) },
-    stx: buildStx(['variant']),
+    ops: { displayOrder: Math.random() * 1000 },
+    stx: buildStx(['displayOrder']),
   };
 }
 
@@ -87,7 +87,7 @@ function buildDescriptionEdit(): EditPayload {
  */
 export const allEditBuilders: EditBuilder[] = [
   buildAssignedToEdit,
-  buildVariantEdit,
+  buildDisplayOrderEdit,
   buildStatusEdit,
   buildDescriptionEdit,
 ];

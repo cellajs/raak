@@ -1,6 +1,6 @@
 import { BlockNoteMinimalHtml } from '~/modules/common/blocknote/minimal-html';
+import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { TaskCardFooter } from '~/modules/task/card/card-footer';
-import { variantOptionsByValue } from '~/modules/task/task-properties';
 import { taskCardVariants } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
@@ -18,7 +18,9 @@ export const TaskCardDragPreview = ({ task }: { task: Task }) => {
     >
       <CardContent className="space-between flex flex-col p-4">
         <div className="flex w-full flex-row gap-1">
-          <div className="-ml-0.5">{variantOptionsByValue[task.variant]?.icon() ?? null}</div>
+          <div className="-ml-0.5">
+            <PrimaryLabelIcon label={task.primaryLabel} />
+          </div>
 
           <BlockNoteMinimalHtml html={task.summary} className="m-1 inline leading-none opacity-80" />
         </div>

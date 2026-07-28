@@ -58,6 +58,7 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
       fetchedTasks={panelTasks}
       project={project}
       projectFetchedCount={data.items.length}
+      publicView={publicView}
       sectionFilters={sectionFilters}
       windowScroll={windowScroll}
     />

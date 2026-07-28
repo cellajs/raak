@@ -10,29 +10,26 @@ const db = unsafeInternalAdminDb!;
 import { getTextFromBlock } from 'shared/blocknote';
 import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
+import { labelsTable } from '#/modules/label/label-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { generateCover } from '#/modules/task/helpers/canvas';
 import { taskRedirectRoutes } from '#/modules/task/redirect-routes';
 import { tasksTable } from '#/modules/task/task-db';
-import { TaskVariant } from '#/modules/task/task-properties';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { type UserModel, usersTable } from '#/modules/user/user-db';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
 
-const getTaskType = (variant: TaskVariant) => {
-  switch (variant) {
-    case TaskVariant.Feature:
-      return 'Feature';
-    case TaskVariant.Bug:
-      return 'Bug';
-    case TaskVariant.Chore:
-      return 'Chore';
-    default:
-      return 'Task';
-  }
+/** Display name of a task's primary label (task type); falls back to 'Task'. */
+const getTaskType = async (primaryLabelId: string) => {
+  const [label] = await db
+    .select({ name: labelsTable.name })
+    .from(labelsTable)
+    .where(eq(labelsTable.id, primaryLabelId))
+    .limit(1);
+  return label?.name ?? 'Task';
 };
 
 app.openapi(taskRedirectRoutes.resolveTaskLink, async (ctx) => {
@@ -159,7 +156,7 @@ app.openapi(taskRedirectRoutes.redirectToTask, async (ctx) => {
     ...(sameYear ? {} : { year: 'numeric' }),
   });
 
-  const taskType = getTaskType(task.variant);
+  const taskType = await getTaskType(task.primaryLabelId);
   const taskTitle = `${taskType} in ${project.name || 'Project'} - ${formattedDate}${createdBy ? ` by ${createdBy.name}` : ''}`;
   const taskDescription = fullText.length > 200 ? `${fullText.slice(0, 197)}...` : fullText;
 

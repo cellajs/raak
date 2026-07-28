@@ -64,7 +64,7 @@ function BlockNote({
   className = '',
   defaultValue = '', // stringified blocks
   trailingBlock = true,
-  clickOpensPreview = false, // click on FileBlock opens preview when not editable
+  clickOpensPreview = false, // click on media opens preview; while editing, only direct media hits
   dense = false,
   // Editor functional
   headingLevels = [1, 2, 3],
@@ -112,7 +112,9 @@ function BlockNote({
     heading: { levels: headingLevels },
     trailingBlock,
     dictionary: getDictionary(),
-    extensions: [checkedExtension(), ...(extensions ?? [])],
+    // Caller extensions first: BlockNote keeps the first extension per key and silently drops
+    // duplicates, so a caller-provided checkedExtension (e.g. persisted: true) must win over the default.
+    extensions: [...(extensions ?? []), checkedExtension()],
     resolveFileUrl: createResolveFileUrl({ baseFilePanelProps }),
   };
 
@@ -175,9 +177,12 @@ function BlockNote({
   });
 
   const handleClick: MouseEventHandler = (event) => {
-    if (!clickOpensPreview || editable) return;
+    if (!clickOpensPreview) return;
 
-    const media = findClickedMedia(event.target as HTMLElement, { includeWrapped: true });
+    // While editing, only a direct hit on the media element opens the carousel; file blocks,
+    // captions, resize handles and empty gutter keep their normal editing behavior. When read-only,
+    // wrapped file blocks without a preview also open.
+    const media = findClickedMedia(event.target as HTMLElement, { includeWrapped: !editable });
     if (!media) return;
 
     event.preventDefault();

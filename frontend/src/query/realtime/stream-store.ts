@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { isDebugMode } from '~/env';
 import { reportCriticalError } from '~/lib/tracing';
-import { setSyncStreamLive } from '~/query/basic/sync-stale-config';
+import { setSyncStreamHealthy } from '~/query/basic/sync-stale-config';
 import { type CatchupViewRequest, useSyncStore } from '~/query/realtime/sync-store';
 import { handleAppStreamNotification } from './app-stream-handler';
 import { catchupEntityTypes, processAppCatchup } from './catchup-processor';
@@ -596,9 +596,11 @@ export const appStreamManager = new StreamManager('AppStream', {
   processNotification: (notification) => handleAppStreamNotification(notification as AppStreamNotification),
 });
 
-// Mirror app-stream liveness into the low-level basic-layer flag so `syncStaleTime` can read it
+// Mirror app-stream health into the low-level basic-layer flag so `syncStaleTime` can read it
 // without importing this (realtime) module. Inverts a `query/basic` -> `query/realtime` dependency.
-appStreamManager.useStore.subscribe((s) => setSyncStreamLive(s.state === 'live'));
+// Any non-error state is healthy: catchup reconciles on every (re)connect, so only a failing
+// stream drops sync-managed queries to the time-based fallback.
+appStreamManager.useStore.subscribe((s) => setSyncStreamHealthy(s.state !== 'error'));
 
 /**
  * Wait for the first stream catchup after page load (resolves on catchup or failure).

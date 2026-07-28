@@ -220,6 +220,29 @@ describe('catchup processor (view-driven)', () => {
     expect(useSyncStore.getState().getOrgSeq('org-1', 'attachment')).toBe(42);
   });
 
+  it('a caught-up view (frontier <= cursor) neither fetches nor invalidates the cached list', async () => {
+    // The reload invariant: after cache restore the cursor already sits at the frontier, so
+    // catchup must confirm "nothing new" without refetching the warm list. Uses a fresh org so
+    // the module-level count tracker treats this as a first sight (no count-drift comparison).
+    const keys = createEntityKeys<Record<string, never>>('attachment');
+    const deltaFetch = vi.fn(async () => ({ items: [], total: 0 }));
+    registerEntityQueryKeys('attachment', keys, deltaFetch);
+
+    useSyncStore.getState().setOrgTenantId('org-caughtup', 'tenant-1');
+    useSyncStore.getState().setOrgSeq('org-caughtup', 'attachment', 6);
+    queryClient.setQueryData(keys.list.org('org-caughtup'), { items: [], total: 0 });
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    // Server frontier equals the ingested cursor: no new sequence positions since last sync.
+    await processAppCatchup(okViewResponse(6, 0, 'org-caughtup:attachment'));
+
+    expect(deltaFetch).not.toHaveBeenCalled();
+    expect(invalidateSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: keys.list.org('org-caughtup') }),
+    );
+    expect(useSyncStore.getState().getOrgSeq('org-caughtup', 'attachment')).toBe(6);
+  });
+
   it('an opaque view falls back to invalidation of cached lists, no numbers consumed', async () => {
     const keys = createEntityKeys<Record<string, never>>('attachment');
     const deltaFetch = vi.fn(async () => ({ items: [], total: 0 }));

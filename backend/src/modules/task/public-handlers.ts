@@ -29,7 +29,10 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
   }
 
-  const publicCtx = { var: { db: unsafeInternalAdminDb!, userId: '', organizationId: '' } } as AuthContext;
+  // Relation reads (labels incl. the primary label) are org-scoped, so carry the task's org.
+  const publicCtx = {
+    var: { db: unsafeInternalAdminDb!, userId: '', organizationId: mainTask.organizationId },
+  } as AuthContext;
   const [users, labels] = await getTaskRelations(publicCtx, { tasks: [mainTask] });
 
   const taskResponse = hydrateTask(mainTask, users, labels);

@@ -1,15 +1,18 @@
 import { useSearch } from '@tanstack/react-router';
 import dayjs from 'dayjs';
 import { ChevronDownIcon, InfoIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
+import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/modules/user/user-store';
+import { cn } from '~/utils/cn';
 import { dateMini } from '~/utils/date-mini';
 
 interface PanelStatusSectionProps {
@@ -17,17 +20,30 @@ interface PanelStatusSectionProps {
   counts: TaskCounts;
   projectId: string;
   onToggle?: (newState: boolean, type: TogglableStatusType) => void;
-  /** When true, the section becomes sticky (pinned to top/bottom while scrolling) */
-  isSticky?: boolean;
+  /** Ref to the panel's scrollable viewport, for scroll-direction visibility */
+  scrollRef: RefObject<HTMLElement | null>;
+  /** When true, visibility tracks window scroll instead of the viewport element */
+  windowMode: boolean;
 }
 
 /**
  * A section header for "Accepted" or "Iced" tasks within a project panel.
  * Displays the count of tasks in that status, and allows toggling visibility.
+ * The header is sticky at its edge (accepted top, iced bottom) and animates
+ * in/out based on scroll direction, like the floating nav buttons. Visibility
+ * state lives here so scroll flips re-render only this header, not the panel.
  */
-export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky = false }: PanelStatusSectionProps) {
+export function PanelStatusSection({
+  type,
+  counts,
+  projectId,
+  onToggle,
+  scrollRef,
+  windowMode,
+}: PanelStatusSectionProps) {
   const { t } = useTranslation();
   const language = useUserStore((state) => state.user?.language);
+  const isVisible = useSectionEdgeVisibility({ edge: type === 'iced' ? 'bottom' : 'top', scrollRef, windowMode });
 
   const togglePanelSectionExpandState = useTaskBoardStore((state) => state.togglePanelSectionExpandState);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
@@ -44,7 +60,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky
     return isIced ? expandIced : expandAccepted;
   });
 
-  const showTotal = !q?.trim().length || q?.trim().startsWith('=');
+  const { highlight: isHighlightSearch, effectiveQ } = parseSearchQuery(q);
+  const showTotal = !effectiveQ.length || isHighlightSearch;
 
   // Glow the section button when count increases while collapsed
   const prevCountRef = useRef(count);
@@ -61,47 +78,81 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, isSticky
     togglePanelSectionExpandState(boardId, projectId, type);
   };
 
-  if (!active) return null;
+  // Publish the accepted bar's pinned height as a sticky-stack offset on the panel content,
+  // so card headers (StickyBox) pin below the bar and glide with its show/hide transition.
+  // The registered variable transitions here on the host; consumers track the animating
+  // value through calc(). Set imperatively to avoid re-rendering the panel's cards.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isIced) return;
+    const wrapper = wrapperRef.current;
+    const host = wrapper?.parentElement;
+    if (!host) return;
+    // Fold in the page-level nav offset (mobile tabs) so consumers stack below both bars
+    const navPx = Number.parseFloat(getComputedStyle(wrapper).getPropertyValue('--sticky-stack-nav')) || 0;
+    host.style.transition = '--sticky-stack-top 300ms ease-in-out';
+    host.style.setProperty('--sticky-stack-top', `${navPx + (isVisible ? wrapper.offsetHeight : 0)}px`);
+    return () => {
+      host.style.removeProperty('--sticky-stack-top');
+      host.style.removeProperty('transition');
+    };
+  }, [isVisible, isIced, active]);
 
-  const stickyClasses = isSticky ? `sticky z-20 ${isIced ? 'bottom-0' : 'top-0'}` : '';
+  if (!active) return null;
 
   return (
     <>
-      <Button
-        id={`section-${type}-${projectId}`}
-        onClick={handleToggleClick}
-        variant="ghost"
-        size="sm"
-        className={`relative -mt-[.05rem] flex w-full shrink-0 justify-start gap-1 rounded-none px-1.5 text-xs ring-inset focus-visible:ring-offset-0 sm:px-2 ${stickyClasses}
-        ${
-          isIced
-            ? 'border-b-sky-500/10 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 max-sm:border-b dark:bg-sky-950 dark:text-sky-500 dark:hover:bg-sky-900 dark:hover:text-sky-400'
-            : 'border-t border-t-transparent border-b border-b-green-500/10 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 dark:bg-green-950 dark:text-green-500 dark:hover:bg-green-900 dark:hover:text-green-400'
-        }`}
-      >
-        <div className="flex gap-1.5">
-          <span className="min-w-8 text-center">{count}</span>
-          <span>{t(`c:${type}`).toLowerCase()}</span>
-        </div>
-        {!isIced && (
-          <div className="flex gap-1">
-            <span>{t('c:since')}</span>
-            <span>{dateMini(dayjs().subtract(boardAcceptedCutOff, 'day').toISOString(), language || 'en')}</span>
-            {counts.accepted !== counts.acceptedCutOff && showTotal && (
-              <div className="text-xs">
-                <span className="mr-2 ml-1">•</span>
-                <span>
-                  {counts.accepted + counts.acceptedCutOff} {t('c:in_total')}
-                </span>
-              </div>
-            )}
-          </div>
+      {/* The wrapper stays sticky and clips the sliding button: overflow-clip does not create a
+          scroll container (sticky keeps working) and stops the translated button from extending
+          the panel's scrollable overflow, which would churn scrollHeight during the animation. */}
+      <div
+        ref={wrapperRef}
+        className={cn(
+          'pointer-events-none sticky z-20 -mt-[.05rem] shrink-0 overflow-clip',
+          // Accepted pins below a page-level sticky nav (mobile tabs); iced pins to the bottom
+          isIced ? 'bottom-0' : 'top-(--sticky-stack-nav)',
         )}
-        <ChevronDownIcon
-          data-rotate={showStatus}
-          className="absolute right-4 transition-transform data-[rotate=true]:rotate-180"
-        />
-      </Button>
+      >
+        <Button
+          id={`section-${type}-${projectId}`}
+          onClick={handleToggleClick}
+          variant="ghost"
+          size="sm"
+          className={cn(
+            'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-all duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
+            // Hidden state slides the button toward its sticky edge
+            isVisible
+              ? 'pointer-events-auto translate-y-0 opacity-100'
+              : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
+            isIced
+              ? 'border-b-sky-500/10 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 max-sm:border-b dark:bg-sky-950 dark:text-sky-500 dark:hover:bg-sky-900 dark:hover:text-sky-400'
+              : 'border-t border-t-transparent border-b border-b-green-500/10 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 dark:bg-green-950 dark:text-green-500 dark:hover:bg-green-900 dark:hover:text-green-400',
+          )}
+        >
+          <div className="flex gap-1.5">
+            <span className="min-w-8 text-center">{count}</span>
+            <span>{t(`c:${type}`).toLowerCase()}</span>
+          </div>
+          {!isIced && (
+            <div className="flex gap-1">
+              <span>{t('c:since')}</span>
+              <span>{dateMini(dayjs().subtract(boardAcceptedCutOff, 'day').toISOString(), language || 'en')}</span>
+              {counts.accepted !== counts.acceptedCutOff && showTotal && (
+                <div className="text-xs">
+                  <span className="mr-2 ml-1">•</span>
+                  <span>
+                    {counts.accepted + counts.acceptedCutOff} {t('c:in_total')}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          <ChevronDownIcon
+            data-rotate={showStatus}
+            className="absolute right-4 transition-transform data-[rotate=true]:rotate-180"
+          />
+        </Button>
+      </div>
       {hasOnlyOlderAccepted && showStatus && (
         <div className="flex gap-4 border-b border-b-green-500/10 bg-green-50 px-4 py-5 text-green-500/70 text-xs dark:bg-green-950">
           <InfoIcon className="inline-block" />

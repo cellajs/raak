@@ -6,14 +6,14 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { handleTaskSelect } from '~/modules/task/helpers/task-selection';
-import { useReadOnlyHide, useReadOnlyInert } from '~/modules/task/hooks/use-read-only';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
-import { pointsOptionsByValue, statusOptionsByValue, TaskStatus, TaskVariant } from '~/modules/task/task-properties';
+import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
+import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import { statusButtonVariants } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -36,6 +36,8 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   const readOnlyHide = useReadOnlyHide(task.projectId);
 
   const taskState = useTaskCardStore((s) => s.states[task.id] ?? 'collapsed');
+  // Task and label selection are mutually exclusive so the board header's remove button targets one kind
+  const hasSelectedLabels = useTaskInteractionStore((s) => s.selectedLabelIds.length > 0);
   // On mobile, expanded/editing cards move labels onto their own line above the footer,
   // freeing horizontal space to reveal the select checkbox and status dropdown sub-button.
   const isExpandedMobile = isMobile && taskState !== 'collapsed';
@@ -52,25 +54,19 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       ? t('c:status_updated_at', { when: statusChangedRelative })
       : t('c:status_updated_on', { when: statusChangedRelative });
 
-  const selectedPoints = task.points !== null && task.points !== undefined ? pointsOptionsByValue[task.points] : null;
-
   const onDropdownOpen = (currentTarget: EventTarget & HTMLButtonElement, dropdownType: DropdownsType) => {
     const base = { triggerId: currentTarget.id, triggerRef: { current: currentTarget }, taskId: task.id };
 
-    if (dropdownType === 'points') {
-      handleTaskDropdownClick({
-        ...base,
-        dropdownType,
-        value: task.points,
-        onChange: handlers.onPointsChange,
-      });
-    } else if (dropdownType === 'labels') {
+    if (dropdownType === 'labels') {
       handleTaskDropdownClick({
         ...base,
         dropdownType,
         value: task.labels,
         projectId: task.projectId,
         onChange: handlers.onLabelsChange,
+        // Selected labels are already on screen (desktop footer, or an expanded mobile card),
+        // so open the "Selected" section collapsed instead of the mobile-expanded default.
+        initialSelectedCollapsed: !isMobile || isExpandedMobile,
       });
     } else if (dropdownType === 'assignedTo') {
       handleTaskDropdownClick({
@@ -83,7 +79,13 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
     } else if (dropdownType === 'status') {
       handleTaskDropdownClick({ ...base, dropdownType, value: task.status, onChange: handlers.onStatusChange });
     } else {
-      handleTaskDropdownClick({ ...base, dropdownType, value: task.variant, onChange: handlers.onVariantChange });
+      handleTaskDropdownClick({
+        ...base,
+        dropdownType: 'primaryLabel',
+        value: task.primaryLabelId,
+        projectId: task.projectId,
+        onChange: handlers.onPrimaryLabelChange,
+      });
     }
   };
 
@@ -98,7 +100,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       {...readOnlyInert}
     >
       {task.labels.length > 0 ? (
-        isMobile ? (
+        isMobile && !isExpandedMobile ? (
           <div className="flex flex-wrap items-center gap-0.5 truncate font-xs text-[.75rem]">
             <Badge
               variant="outline"
@@ -161,27 +163,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               readOnlyHide,
             )}
             checked={isSelected}
+            disabled={hasSelectedLabels}
             onCheckedChange={(checked) => handleTaskSelect(checked, task)}
           />
         )}
-        {task.variant !== TaskVariant.Bug && (
-          <Button
-            id={`points-${task.id}${isSheet ? '-sheet' : ''}`}
-            onClick={({ currentTarget }) => onDropdownOpen(currentTarget, 'points')}
-            aria-label="Set points"
-            variant="ghost"
-            size="xs"
-            className="relative opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
-            {...readOnlyInert}
-          >
-            {selectedPoints === null || selectedPoints === undefined ? (
-              <NotSelectedIcon className="size-4 fill-current opacity-70" aria-hidden="true" />
-            ) : (
-              <selectedPoints.icon className="size-4 fill-current" aria-hidden="true" />
-            )}
-          </Button>
-        )}
-
         {/* Labels are rendered above on mobile when expanded */}
         {!isExpandedMobile && labelsButton}
         <div className="ml-auto flex">

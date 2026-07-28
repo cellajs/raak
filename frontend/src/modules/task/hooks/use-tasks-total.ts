@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryKey } from '~/modules/task/public-query';
@@ -53,13 +54,25 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
         }, 0);
       }
 
+      // Highlight mode fetches unfiltered (q stripped from the request), so mirror the
+      // table's effective key and count the matches among loaded pages, like board mode.
+      const { highlight } = parseSearchQuery(search.q);
+      const effectiveSearch = highlight ? { ...search, q: '' } : search;
+
       const queryKey = queryParams
-        ? tasksTableQueryKey({ ...search, ...queryParams })
-        : publicTasksTableQueryKey({ ...search, projectId: scopeFilters.projectId! });
+        ? tasksTableQueryKey({ ...effectiveSearch, ...queryParams })
+        : publicTasksTableQueryKey({ ...effectiveSearch, projectId: scopeFilters.projectId! });
 
       const queryData = queryClient.getQueryData<TasksInfiniteQueryData>(queryKey);
 
       if (!queryData?.pages.length) return null;
+
+      if (highlight) {
+        return queryData.pages.reduce(
+          (total, page) => total + page.items.filter((task) => searchFilterFunction(search, task)).length,
+          0,
+        );
+      }
 
       // Return total from last page
       return queryData.pages[queryData.pages.length - 1].total;

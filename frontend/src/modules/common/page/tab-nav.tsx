@@ -129,6 +129,7 @@ export const PageTabNav = ({
 
   return (
     <StickyBox
+      publishVar="--sticky-stack-nav"
       className={cn('group/sticky z-80 block gap-1 border-b bg-background/75 text-center backdrop-blur-xs', className)}
     >
       <div className="absolute left-0 hidden h-full items-center sm:group-data-[sticky=true]/sticky:flex">

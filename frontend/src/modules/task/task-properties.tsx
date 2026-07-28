@@ -1,6 +1,3 @@
-import { BoltIcon, BugIcon, StarIcon } from 'lucide-react';
-import type { SVGProps } from 'react';
-import { PointsIcon } from '~/modules/task/dropdowns/point-icons/points-icon';
 import { AcceptedIcon } from '~/modules/task/dropdowns/status-icons/accepted';
 import { DeliveredIcon } from '~/modules/task/dropdowns/status-icons/delivered';
 import { FinishedIcon } from '~/modules/task/dropdowns/status-icons/finished';
@@ -23,15 +20,6 @@ export enum TaskStatus {
 }
 
 /**
- * Task variant as enum.
- */
-export enum TaskVariant {
-  Feature = 1,
-  Chore = 2,
-  Bug = 3,
-}
-
-/**
  * Number of days after which accepted tasks on the board are automatically moved to the backlog.
  * This is a soft rule to keep the board tidy, not a hard cutoff.
  */
@@ -51,43 +39,9 @@ export const statusOptions = [
 ] as const;
 
 /**
- * Task variant options as array with metadata for rendering.
- */
-export const variantOptions = [
-  {
-    value: TaskVariant.Feature,
-    type: 'Feature',
-    labelKey: 'feature',
-    icon: () => <StarIcon className="shrink-0 fill-amber-400 text-amber-500" />,
-  },
-  {
-    value: TaskVariant.Chore,
-    type: 'Chore',
-    labelKey: 'chore',
-    icon: () => <BoltIcon className="shrink-0 fill-slate-400 text-slate-500" />,
-  },
-  {
-    value: TaskVariant.Bug,
-    type: 'Bug',
-    labelKey: 'bug',
-    icon: () => <BugIcon className="fill-red-400 text-red-500" />,
-  },
-] as const;
-
-/**
- * Task point options with metadata for rendering. `value` is the stored points number.
- */
-export const pointsOptions = [
-  { value: 0, label: '0', icon: (props: SVGProps<SVGSVGElement>) => <PointsIcon level={0} {...props} /> },
-  { value: 1, label: '1', icon: (props: SVGProps<SVGSVGElement>) => <PointsIcon level={1} {...props} /> },
-  { value: 2, label: '2', icon: (props: SVGProps<SVGSVGElement>) => <PointsIcon level={2} {...props} /> },
-  { value: 3, label: '3', icon: (props: SVGProps<SVGSVGElement>) => <PointsIcon level={3} {...props} /> },
-] as const;
-
-/**
- * Value-keyed lookups for the option arrays. Prefer these over positional indexing
- * (`statusOptions[value]`, `variantOptions[value - 1]`), which only works while the array
- * order happens to match the enum values and breaks silently on reorder.
+ * Value-keyed lookup for the status options. Prefer this over positional indexing
+ * (`statusOptions[value]`), which only works while the array order happens to match
+ * the enum values and breaks silently on reorder.
  */
 const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> =>
   Object.fromEntries(options.map((o) => [o.value, o]));
@@ -96,8 +50,3 @@ export const statusOptionsByValue = byValue(statusOptions) as Record<
   (typeof statusOptions)[number]['value'],
   (typeof statusOptions)[number]
 >;
-export const variantOptionsByValue = byValue(variantOptions) as Record<
-  (typeof variantOptions)[number]['value'],
-  (typeof variantOptions)[number]
->;
-export const pointsOptionsByValue = byValue(pointsOptions) as Record<number, (typeof pointsOptions)[number]>;

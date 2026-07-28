@@ -1,5 +1,6 @@
 import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, useRef } from 'react';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { z } from 'zod';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
@@ -25,6 +26,7 @@ export interface BoardPanelProps {
   fetchedTasks: Task[];
   project: EnrichedProject;
   projectFetchedCount: number;
+  publicView?: boolean;
   sectionFilters?: SectionsValue;
   windowScroll?: boolean;
 }
@@ -35,13 +37,13 @@ export const BoardPanel = memo(function BoardPanel({
   fetchedTasks,
   project,
   projectFetchedCount,
+  publicView,
   sectionFilters,
   windowScroll,
 }: BoardPanelProps) {
   const isMobile = useBreakpointBelow('sm');
   const { search } = useSearchParams<BoardSearchProps>({});
   const boardId = useBoardStore((state) => state.activeBoardId)!;
-  const boardType = useBoardStore((state) => state.activeBoardType)!;
 
   // Mobile FAB: auto-hide on scroll, show draft badge
   const { isVisible: showFab } = useScrollVisibility(isMobile);
@@ -59,12 +61,11 @@ export const BoardPanel = memo(function BoardPanel({
   const filteredTasks = useMemo(() => {
     const matchedTasks = fetchedTasks.filter((task) => searchFilterFunction(search, task));
 
-    const isHighlightMode = search.q?.trim().startsWith('=') && search.q?.trim().replace('=', '').length;
-    return isHighlightMode
-      ? fetchedTasks.map((task) =>
-          matchedTasks.some(({ id }) => id === task.id) ? { ...task, isMatchingSearch: true } : task,
-        )
-      : matchedTasks;
+    const isHighlightMode = parseSearchQuery(search.q).highlight;
+    if (!isHighlightMode) return matchedTasks;
+
+    const matchedIds = new Set(matchedTasks.map(({ id }) => id));
+    return fetchedTasks.map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task));
   }, [fetchedTasks, search.q, search.matchMode]);
 
   // Sort tasks and filter out accepted and iced based of config
@@ -119,7 +120,7 @@ export const BoardPanel = memo(function BoardPanel({
             variant="secondary"
             onClick={() => createTaskAction(project.id, project.organizationId)}
             aria-label="Create task"
-            className={`fixed right-4 bottom-4 z-105 h-14 w-14 transform rounded-full bg-secondary shadow-xl transition-all duration-300 ease-in-out hover:bg-secondary active:scale-95 ${
+            className={`fixed right-4 bottom-4 z-105 h-14 w-14 transform rounded-full bg-secondary shadow-xl transition-all duration-300 ease-in-out hover:bg-secondary active:scale-95 group-[.selection-active]/body:pointer-events-none group-[.selection-active]/body:-bottom-12 group-[.selection-active]/body:scale-50 group-[.selection-active]/body:opacity-0 ${
               showFab ? 'opacity-100' : 'pointer-events-none -bottom-12 scale-50 opacity-0'
             }`}
           >
@@ -133,9 +134,7 @@ export const BoardPanel = memo(function BoardPanel({
         </div>
       ) : (
         <div className="flex h-full flex-col">
-          {(boardType !== 'project' || sectionFilters) && (
-            <TaskPanelHeader project={project} sectionFilters={sectionFilters} />
-          )}
+          <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
           <div
             ref={panelRef}
             data-highlighted={highlightProject ? 'true' : undefined}

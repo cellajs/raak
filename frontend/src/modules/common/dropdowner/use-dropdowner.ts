@@ -21,6 +21,8 @@ export type DropdownData = {
    * between a button onClick and a popover dismiss to debounce.
    */
   programmatic?: boolean;
+  /** Extra classes merged onto a 'menu' popup, e.g. to widen its default min-width. */
+  popupClassName?: string;
 };
 
 export type InternalDropdown = DropdownData & {

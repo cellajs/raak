@@ -34,6 +34,7 @@ type ForwardedGridProps<TData> = Pick<
   | 'onRowReparent'
   | 'canDropRow'
   | 'renderRowDragPreview'
+  | 'rowClass'
   | 'enableStickyHeader'
   | 'enableDragAutoScroll'
   | 'onRowsChange'

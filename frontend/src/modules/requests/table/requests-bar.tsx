@@ -1,4 +1,4 @@
-import { PartyPopperIcon, SquareXIcon, TrashIcon } from 'lucide-react';
+import { PartyPopperIcon, TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Request } from 'sdk';
@@ -13,6 +13,7 @@ import { TableSearch } from '~/modules/common/data-table/table-search';
 import type { BaseTableBarProps, CallbackArgs } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { FocusView } from '~/modules/common/focus-view';
+import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { DeleteRequests } from '~/modules/requests/delete-requests';
 import { fetchRequestsForExport, requestsKeys, useSendApprovalInviteMutation } from '~/modules/requests/query';
@@ -115,33 +116,7 @@ export const RequestsTableBar = ({
       {/* Filter bar */}
       <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
         <FilterBarActions>
-          {selected.length > 0 && (
-            <>
-              {selectedToWaitlist.length > 0 && (
-                <TableBarButton
-                  badge={selectedToWaitlist.length}
-                  variant="success"
-                  className="relative"
-                  label="c:invite"
-                  icon={PartyPopperIcon}
-                  onClick={approveSelectedRequests}
-                />
-              )}
-              <TableBarButton
-                ref={deleteButtonRef}
-                variant="destructive"
-                icon={TrashIcon}
-                label="c:remove"
-                badge={selected.length}
-                className="relative"
-                onClick={openDeleteDialog}
-              />
-              <TableBarButton variant="ghost" onClick={clearSelection} icon={SquareXIcon} label="c:clear" />
-            </>
-          )}
-          {selected.length === 0 && (
-            <TableCount count={total} label="c:request" isFiltered={isFiltered} onResetFilters={onResetFilters} />
-          )}
+          <TableCount count={total} label="c:request" isFiltered={isFiltered} onResetFilters={onResetFilters} />
         </FilterBarActions>
 
         <div className="sm:grow" />
@@ -164,6 +139,27 @@ export const RequestsTableBar = ({
 
       {/* Focus view */}
       <FocusView iconOnly />
+
+      {/* Floating actions for the current selection */}
+      <SelectionActionBar count={selected.length} onClear={clearSelection}>
+        {selectedToWaitlist.length > 0 && (
+          <TableBarButton
+            badge={selectedToWaitlist.length < selected.length ? selectedToWaitlist.length : undefined}
+            variant="success"
+            className="relative"
+            label="c:invite"
+            icon={PartyPopperIcon}
+            onClick={approveSelectedRequests}
+          />
+        )}
+        <TableBarButton
+          ref={deleteButtonRef}
+          variant="destructive"
+          icon={TrashIcon}
+          label="c:remove"
+          onClick={openDeleteDialog}
+        />
+      </SelectionActionBar>
     </TableBarContainer>
   );
 };

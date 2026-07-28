@@ -6,26 +6,36 @@ import type { Organization, Project } from 'sdk';
 import { zUserMinimalBase } from 'sdk/zod.gen';
 import { BlockNoteMinimalHtml } from '~/modules/common/blocknote/minimal-html';
 import type { RenderCellProps } from '~/modules/common/data-grid';
-import { SelectColumn } from '~/modules/common/data-grid';
+import { estimateWrappedLines, SelectColumn } from '~/modules/common/data-grid';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { TriggerRef } from '~/modules/common/dialoger/use-dialoger';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
-import { NotSelectedIcon } from '~/modules/task/dropdowns/point-icons/not-selected';
-import {
-  pointsOptionsByValue,
-  statusOptionsByValue,
-  TaskVariant,
-  variantOptions,
-} from '~/modules/task/task-properties';
+import { statusOptionsByValue } from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button } from '~/modules/ui/button';
 import { UserCell } from '~/modules/user/user-cell';
 import { dateShort } from '~/utils/date-short';
+
+// The creator/updater cells parse the same row object on every render; under virtualization that
+// re-fires on scroll for rows already on screen. Cache the parse per user object: a row's identity
+// from the query cache changes only when the row updates, so this runs once per distinct value.
+type ParsedUserCell = ReturnType<typeof zUserMinimalBase.parse>;
+const userCellCache = new WeakMap<object, ParsedUserCell | null>();
+const parseUserCell = (value: unknown): ParsedUserCell | null => {
+  if (!value || typeof value !== 'object') return null;
+  const cached = userCellCache.get(value);
+  if (cached !== undefined) return cached;
+  const result = zUserMinimalBase.safeParse(value);
+  const user = result.success ? result.data : null;
+  userCellCache.set(value, user);
+  return user;
+};
 
 function SummaryCell({
   row,
@@ -100,6 +110,8 @@ function ProjectCell({
       params={{ slug: project.slug, organizationSlug: organization.slug, tenantId }}
       tabIndex={tabIndex}
       className="group flex items-center space-x-2 truncate outline-0 ring-0"
+      data-tooltip="compact"
+      data-tooltip-content={project.name}
     >
       <EntityAvatar
         type="project"
@@ -131,25 +143,74 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         minBreakpoint: 'sm',
       },
       {
-        key: 'variant',
+        key: 'primaryLabel',
         name: t('c:type'),
-        sortable: true,
         minBreakpoint: 'sm',
         renderCell: ({ row }) => {
-          const type = variantOptions.find((v) => v.value === row.variant);
-          if (!type) return null;
+          if (!row.primaryLabel) return null;
           return (
             <>
-              <span className="mr-2 inline-flex shrink-0">{type.icon()}</span>
-              <span className="in-data-[is-compact=true]:hidden truncate">{t(`c:${type.type}`)}</span>
+              <span
+                className="mr-2 inline-flex shrink-0"
+                data-tooltip="compact"
+                data-tooltip-content={row.primaryLabel.name}
+              >
+                <PrimaryLabelIcon label={row.primaryLabel} />
+              </span>
+              <span className="in-data-[is-compact=true]:hidden truncate">{row.primaryLabel.name}</span>
             </>
           );
         },
         width: 140,
         modes: {
-          compact: { width: 50 },
+          compact: { width: 32, minWidth: 32 },
           // On mobile the type icon merges into the summary cell (icon-only via the slot's data-is-compact)
           mobile: { merge: { into: 'summary', side: 'left' } },
+        },
+      },
+      {
+        key: 'summary',
+        name: t('c:summary'),
+        minWidth: 280,
+        resizable: true,
+        wrapText: 3,
+        estimateLines: (row, { width }) => estimateWrappedLines(row.summaryLength ?? 0, width),
+        renderCell: (props) => <SummaryCell {...props} navigate={navigate} setTriggerRef={setTriggerRef} />,
+      },
+      {
+        key: 'todos',
+        name: t('c:todo_other'),
+        minBreakpoint: 'sm',
+        width: 70,
+        placeholderValue: '-',
+        renderCell: ({ row }) => {
+          const checked = row.checkedCount ?? 0;
+          const total = row.checkboxCount ?? 0;
+          if (total === 0) return null;
+          return (
+            <div className="inline-flex items-center gap-1">
+              <span className="text-success">{checked}</span>
+              <span className="opacity-50">/</span>
+              <span>{total}</span>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'attachments',
+        name: t('c:attachment_other'),
+        minBreakpoint: 'sm',
+        width: 70,
+        placeholderValue: '-',
+        renderCell: ({ row }) => {
+          const count = row.attachmentCount ?? 0;
+          if (count === 0) return null;
+          return (
+            <div className="inline-flex items-center gap-1">
+              <PaperclipIcon className="icon-xs -rotate-45 opacity-50" />
+              <span className="">{count}</span>
+            </div>
+          );
         },
       },
       {
@@ -179,44 +240,6 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         },
       },
       {
-        key: 'summary',
-        name: t('c:summary'),
-        minWidth: 280,
-        resizable: true,
-        wrapText: 3,
-        estimateLines: (row) => {
-          const len = row.summaryLength ?? 0;
-          if (len <= 50) return 1;
-          if (len <= 100) return 2;
-          return 3;
-        },
-        renderCell: (props) => <SummaryCell {...props} navigate={navigate} setTriggerRef={setTriggerRef} />,
-      },
-      {
-        key: 'points',
-        name: t('c:points'),
-        minBreakpoint: 'sm',
-        width: 100,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          if (row.variant === TaskVariant.Bug) return null;
-
-          const points = row.points === null ? null : pointsOptionsByValue[row.points];
-
-          return (
-            <>
-              {points === null ? (
-                <NotSelectedIcon className="mr-2 size-4 fill-current opacity-80" aria-hidden="true" />
-              ) : (
-                <points.icon className="mr-2 size-4 shrink-0 fill-current" aria-hidden="true" />
-              )}
-              {points && <span className="in-data-[is-compact=true]:hidden">{points.label}</span>}
-            </>
-          );
-        },
-        modes: { compact: { width: 50 } },
-      },
-      {
         key: 'assignedTo',
         name: t('c:assigned_to'),
         hidden: true,
@@ -225,21 +248,27 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         renderCell: ({ row }) => {
           if (!row.assignedTo.length) return null;
           return (
-            <AvatarGroup limit={3}>
-              <AvatarGroupList>
-                {row.assignedTo.map((user) => (
-                  <EntityAvatar
-                    type="user"
-                    key={user.id}
-                    id={user.id}
-                    name={user.name}
-                    url={user.thumbnailUrl}
-                    className="h-8 w-8 text-xs"
-                  />
-                ))}
-              </AvatarGroupList>
-              <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
-            </AvatarGroup>
+            <span
+              className="inline-flex"
+              data-tooltip="compact"
+              data-tooltip-content={row.assignedTo.map((user) => user.name).join(', ')}
+            >
+              <AvatarGroup limit={3}>
+                <AvatarGroupList>
+                  {row.assignedTo.map((user) => (
+                    <EntityAvatar
+                      type="user"
+                      key={user.id}
+                      id={user.id}
+                      name={user.name}
+                      url={user.thumbnailUrl}
+                      className="h-8 w-8 text-xs"
+                    />
+                  ))}
+                </AvatarGroupList>
+                <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
+              </AvatarGroup>
+            </span>
           );
         },
       },
@@ -280,42 +309,6 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         modes: { compact: { width: 50 } },
       },
       {
-        key: 'todos',
-        name: t('c:todo_other'),
-        minBreakpoint: 'sm',
-        width: 80,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          const checked = row.checkedCount ?? 0;
-          const total = row.checkboxCount ?? 0;
-          if (total === 0) return null;
-          return (
-            <div className="inline-flex items-center gap-1">
-              <span className="text-success">{checked}</span>
-              <span className="opacity-50">/</span>
-              <span>{total}</span>
-            </div>
-          );
-        },
-      },
-      {
-        key: 'attachments',
-        name: t('c:attachment_other'),
-        minBreakpoint: 'sm',
-        width: 100,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          const count = row.attachmentCount ?? 0;
-          if (count === 0) return null;
-          return (
-            <div className="inline-flex items-center gap-1">
-              <PaperclipIcon className="icon-xs -rotate-45 opacity-50" />
-              <span className="">{count}</span>
-            </div>
-          );
-        },
-      },
-      {
         key: 'createdBy',
         name: t('c:created_by'),
         sortable: true,
@@ -323,9 +316,8 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         width: 180,
         placeholderValue: '-',
         renderCell: ({ row, tabIndex }) => {
-          const result = zUserMinimalBase.safeParse(row.createdBy);
-          if (!result.success) return null;
-          const user = result.data;
+          const user = parseUserCell(row.createdBy);
+          if (!user) return null;
           return <UserCell compactable user={user} tabIndex={tabIndex} />;
         },
         // Compact toggle: creator avatar merges inline before the created date
@@ -346,12 +338,12 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         width: 180,
         placeholderValue: '-',
         renderCell: ({ row, tabIndex }) => {
-          const result = zUserMinimalBase.safeParse(row.updatedBy);
-          if (!result.success) return null;
-          const user = result.data;
+          const user = parseUserCell(row.updatedBy);
+          if (!user) return null;
           return <UserCell compactable user={user} tabIndex={tabIndex} />;
         },
-        modes: { compact: { width: 50 } },
+        // Compact toggle: updater avatar merges inline before the updated date
+        modes: { compact: { merge: { into: 'updatedAt', side: 'left' } } },
       },
       {
         key: 'updatedAt',

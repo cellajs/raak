@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
 import { t } from 'i18next';
-import { appConfig, type OrganizationFlags, roles } from 'shared';
+import { appConfig, labelColorTokens, type OrganizationFlags, primaryLabelLimits, roles } from 'shared';
 import { schemaTags } from '#/core/openapi-helpers';
 import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
@@ -9,6 +9,7 @@ import { organizationsTable } from '#/modules/organization/organization-db';
 import {
   booleanTransformSchema,
   excludeArchivedQuerySchema,
+  iconNameSchema,
   includeQuerySchema,
   languageSchema,
   maxLength,
@@ -38,6 +39,32 @@ export const organizationFlagsSchema = z.object(
   ) as { [K in keyof OrganizationFlags]: z.ZodBoolean },
 );
 
+/** One primary label definition in an organization's setupConfig. */
+const primaryLabelDefinitionSchema = z.object({
+  slug: z
+    .string()
+    .min(1)
+    .max(maxLength.field)
+    .regex(/^[a-z0-9][a-z0-9-]*$/),
+  name: validNameSchema,
+  color: z.enum(labelColorTokens),
+  icon: z.union([iconNameSchema, z.null()]),
+});
+
+/**
+ * Per-organization setup config (fork-shaped). `primaryLabels` is replaced wholesale on
+ * update; array order is display order and the first entry is the default for new tasks.
+ */
+export const setupConfigSchema = z.object({
+  primaryLabels: z
+    .array(primaryLabelDefinitionSchema)
+    .min(primaryLabelLimits.min)
+    .max(primaryLabelLimits.max)
+    .refine((entries) => new Set(entries.map((e) => e.slug)).size === entries.length, {
+      message: 'Duplicate primary label slugs',
+    }),
+});
+
 export const organizationSchema = z
   .object({
     ...createSelectSchema(organizationsTable).shape,
@@ -45,6 +72,7 @@ export const organizationSchema = z
     updatedBy: userMinimalBaseSchema.nullable(),
     languages: z.array(languageSchema).min(1),
     organizationFlags: organizationFlagsSchema,
+    setupConfig: setupConfigSchema,
     included: organizationIncludedSchema,
   })
   .openapi('Organization', {
@@ -77,6 +105,8 @@ export const organizationContract = evolutionContract.channel('organization', {
     welcomeText: z.string().max(maxLength.html).nullable(),
     // Partial per key: a single flag can be toggled; the update query merges via jsonb ||
     organizationFlags: organizationFlagsSchema.partial(),
+    // Partial per key: top-level keys merge via jsonb ||, so primaryLabels replaces wholesale
+    setupConfig: setupConfigSchema.partial(),
   })
     .pick({
       slug: true,
@@ -95,6 +125,7 @@ export const organizationContract = evolutionContract.channel('organization', {
       welcomeText: true,
       chatSupport: true,
       organizationFlags: true,
+      setupConfig: true,
     })
     .partial(),
 });

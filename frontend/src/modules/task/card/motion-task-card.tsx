@@ -12,9 +12,7 @@ import type { TaskProps } from '~/modules/task/types';
  */
 export const MotionTaskCard = memo(function MotionTaskCard({ task }: { task: TaskProps['task'] }) {
   const state = useTaskCardStore((s) => s.states[task.id] ?? 'collapsed');
-  const isSelected = useTaskInteractionStore(
-    (s) => s.selectedTasks.length > 0 && s.selectedTasks.some(({ id }) => id === task.id),
-  );
+  const isSelected = useTaskInteractionStore((s) => s.selectedTaskIds.includes(task.id));
   const isFocused = useTaskInteractionStore((s) => s.focusedTaskId === task.id);
 
   return (

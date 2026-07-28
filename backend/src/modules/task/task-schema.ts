@@ -6,7 +6,7 @@ import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schem
 import { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import { tasksTable } from '#/modules/task/task-db';
 import { mockTaskResponse } from '#/modules/task/task-mocks';
-import { TaskStatus, TaskVariant } from '#/modules/task/task-properties';
+import { TaskStatus } from '#/modules/task/task-properties';
 import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
@@ -22,12 +22,12 @@ export const taskSchema = z
       createdBy: true,
       assignedTo: true,
       updatedBy: true,
-      variant: true,
       stx: true,
     }).shape,
     labels: z.array(labelEmbeddedSchema),
+    // Hydrated from primaryLabelId; null only when the referenced row is missing from the relation set
+    primaryLabel: z.union([labelEmbeddedSchema, z.null()]),
     status: z.enum(TaskStatus),
-    variant: z.enum(TaskVariant),
     assignedTo: z.array(userMinimalBaseSchema),
     createdBy: z.object({ ...userMinimalBaseSchema.shape }).nullable(),
     updatedBy: z.object({ ...userMinimalBaseSchema.shape }).nullable(),
@@ -44,12 +44,12 @@ const taskCreateSchema = taskInsertSchema
     name: true,
     description: true,
     projectId: true,
-    points: true,
   })
   .extend({
     id: validUuidSchema,
     status: z.enum(TaskStatus),
-    variant: z.enum(TaskVariant),
+    // Optional on the wire: the server falls back to the project's default primary label
+    primaryLabelId: validUuidSchema.optional(),
     displayOrder: z.number().optional(),
     labels: z.array(z.string()).optional(),
     assignedTo: z.array(z.string()).optional(),
@@ -62,8 +62,7 @@ export const taskContract = evolutionContract.product('task', {
     name: z.string().max(maxLength.field),
     description: z.string().max(maxLength.html).nullable(),
     status: z.number().int(),
-    variant: z.number().int(),
-    points: z.number().int().nullable(),
+    primaryLabelId: validUuidSchema,
     displayOrder: z.number(),
     labels: arrayDeltaSchema,
     assignedTo: arrayDeltaSchema,
@@ -77,10 +76,7 @@ export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 /** Base schema without refinement - use this when you need .omit()/.pick() */
 export const taskListQueryBaseSchema = paginationQuerySchema.extend({
   matchMode: z.enum(['all', 'any']).default('all').optional(),
-  sort: z
-    .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
-    .default('createdAt')
-    .optional(),
+  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt').optional(),
   order: z.enum(['asc', 'desc']).default('asc').optional(),
   acceptedCutOff: z.coerce.number().positive().optional(),
   projectId: z.string().max(maxLength.id).optional(),

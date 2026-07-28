@@ -201,6 +201,19 @@
 }
 
 @layer base {
+  /* Viewport offsets for full-height board surfaces (consumed via calc(100vh - var(...))).
+     One place to update when app chrome heights change; breakpoint switching stays in the
+     Tailwind classes that consume these. */
+  :root {
+    --board-offset-sm: 4rem; /* app chrome above the board row (sm and up) */
+    --board-offset-md: 4.88rem; /* taller app chrome from md up */
+    --board-mobile-offset: 8rem; /* app chrome + floating bottom nav on mobile */
+    --board-panel-offset: 146px; /* chrome above a project panel body: md board offset (78px) + 68px panel header row */
+    --local-panel-offset: 78px; /* chrome above a local panel frame (its header renders inside the frame) */
+    --task-sheet-offset: 3rem; /* sheet chrome above a task card rendered in a sheet */
+    --task-sheet-offset-sm: 3.25rem;
+  }
+
   /* Theme tokens */
   :root,
   .bn-container.bn-shadcn {
@@ -349,4 +362,22 @@
     animation: none;
     opacity: 0;
   }
+}
+
+/* Sticky stacking offset published by pinned section bars (see sticky-box.tsx).
+   Registered so the publisher can transition the variable itself: consumers track the
+   animating value through calc() while their own `top` never transitions, keeping
+   stuck/released mode switches instant. */
+@property --sticky-stack-top {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+/* Page-level sticky nav height (published by PageTabNav), the level above section bars.
+   Section publishers fold it into --sticky-stack-top; the accepted bar consumes it directly. */
+@property --sticky-stack-nav {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
 }

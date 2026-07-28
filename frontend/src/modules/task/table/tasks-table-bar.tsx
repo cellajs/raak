@@ -5,17 +5,19 @@ import { Export } from '~/modules/common/data-table/export';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { FocusView } from '~/modules/common/focus-view';
+import { DisplayOptions } from '~/modules/task/board/display-options';
+import { BoardSearch } from '~/modules/task/board-search';
 import { configureForExport } from '~/modules/task/helpers/export-helpers';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { deriveTasksQueryParams, fetchTasksForExport } from '~/modules/task/query';
 import type { ResolvedTaskTableProps } from '~/modules/task/table/tasks-table';
-import { TaskSearch } from '~/modules/task/task-search';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
-import type { Task, TaskSearch as TaskSearchType } from '~/modules/task/types';
+import { taskBarClass } from '~/modules/task/task-styles';
+import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
-import { DisplayOptions } from '~/modules/workspace/header/display-options';
+import { cn } from '~/utils/cn';
 
-type TasksTableBarProps = Omit<BaseTableBarProps<Task, TaskSearchType>, 'setSearch' | 'queryKey'> &
+type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'> &
   Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & {
     isCompact: boolean;
     setIsCompact: (isCompact: boolean) => void;
@@ -56,24 +58,22 @@ export const TasksTableBar = ({
   const toggleSearchFocus = () => setSearchFocused((prev) => !prev);
 
   return (
-    <div className="z-85 flex items-center gap-2 bg-background max-sm:justify-between max-sm:p-2">
-      {!searchFocused && (
-        <TaskSelectedButtons
-          selectedTasks={selected}
-          clearSelection={clearSelection}
-          organizationId={queryParams?.organizationId ?? ''}
-          tenantId={queryParams?.tenantId ?? ''}
-        />
-      )}
+    <div className={cn(taskBarClass, 'gap-2')}>
+      <TaskSelectedButtons
+        selectedTaskIds={selected.map(({ id }) => id)}
+        clearSelection={clearSelection}
+        organizationId={queryParams?.organizationId ?? ''}
+        tenantId={queryParams?.tenantId ?? ''}
+      />
 
-      <TaskSearch clearSelection={clearSelection} toggleFocus={toggleSearchFocus}>
+      <BoardSearch toggleFocus={toggleSearchFocus}>
         {typeof total === 'number' && searchVars.q && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
             <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>
             <span>{t('c:found')}</span>
           </div>
         )}
-      </TaskSearch>
+      </BoardSearch>
 
       {!searchFocused && !searchVars.q && <TableCount count={total} label="c:task" className="mr-3" />}
       <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns}>

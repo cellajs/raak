@@ -151,6 +151,62 @@
                     "required": true,
                     "properties": {}
                   },
+                  "setupConfig": {
+                    "type": "object",
+                    "required": true,
+                    "properties": {
+                      "primaryLabels": {
+                        "type": "array",
+                        "required": true,
+                        "minItems": 1,
+                        "maxItems": 6,
+                        "itemType": "object",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "slug": {
+                              "type": "string",
+                              "required": true,
+                              "minLength": 1,
+                              "maxLength": 255
+                            },
+                            "name": {
+                              "type": "string",
+                              "required": true,
+                              "minLength": 2,
+                              "maxLength": 255
+                            },
+                            "color": {
+                              "type": "string",
+                              "required": true,
+                              "enum": [
+                                "red",
+                                "orange",
+                                "amber",
+                                "yellow",
+                                "green",
+                                "emerald",
+                                "teal",
+                                "sky",
+                                "blue",
+                                "indigo",
+                                "violet",
+                                "pink",
+                                "slate"
+                              ]
+                            },
+                            "icon": {
+                              "required": true,
+                              "anyOf": [
+                                { "type": "string", "required": false, "maxLength": 255 },
+                                { "type": "null", "required": false }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
                   "included": {
                     "type": "object",
                     "required": true,
@@ -341,6 +397,28 @@
               "welcomeText": "Welcome to Conroy, Kerluke and Rowe!",
               "chatSupport": false,
               "organizationFlags": {},
+              "setupConfig": {
+                "primaryLabels": [
+                  {
+                    "slug": "feature",
+                    "name": "Feature",
+                    "color": "amber",
+                    "icon": "star"
+                  },
+                  {
+                    "slug": "chore",
+                    "name": "Chore",
+                    "color": "slate",
+                    "icon": "bolt"
+                  },
+                  {
+                    "slug": "bug",
+                    "name": "Bug",
+                    "color": "red",
+                    "icon": "bug"
+                  }
+                ]
+              },
               "publishedAt": "2024-04-18T21:12:59.543Z",
               "publicAt": null,
               "createdAt": "2024-04-18T21:12:59.543Z",
@@ -406,6 +484,28 @@
               "welcomeText": "Welcome to Lemke, Bode and Reichel-Klocko!",
               "chatSupport": false,
               "organizationFlags": {},
+              "setupConfig": {
+                "primaryLabels": [
+                  {
+                    "slug": "feature",
+                    "name": "Feature",
+                    "color": "amber",
+                    "icon": "star"
+                  },
+                  {
+                    "slug": "chore",
+                    "name": "Chore",
+                    "color": "slate",
+                    "icon": "bolt"
+                  },
+                  {
+                    "slug": "bug",
+                    "name": "Bug",
+                    "color": "red",
+                    "icon": "bug"
+                  }
+                ]
+              },
               "publishedAt": "2024-02-24T16:36:46.247Z",
               "publicAt": null,
               "createdAt": "2024-02-24T16:36:46.247Z",
@@ -777,6 +877,62 @@
                     "required": true,
                     "properties": {}
                   },
+                  "setupConfig": {
+                    "type": "object",
+                    "required": true,
+                    "properties": {
+                      "primaryLabels": {
+                        "type": "array",
+                        "required": true,
+                        "minItems": 1,
+                        "maxItems": 6,
+                        "itemType": "object",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "slug": {
+                              "type": "string",
+                              "required": true,
+                              "minLength": 1,
+                              "maxLength": 255
+                            },
+                            "name": {
+                              "type": "string",
+                              "required": true,
+                              "minLength": 2,
+                              "maxLength": 255
+                            },
+                            "color": {
+                              "type": "string",
+                              "required": true,
+                              "enum": [
+                                "red",
+                                "orange",
+                                "amber",
+                                "yellow",
+                                "green",
+                                "emerald",
+                                "teal",
+                                "sky",
+                                "blue",
+                                "indigo",
+                                "violet",
+                                "pink",
+                                "slate"
+                              ]
+                            },
+                            "icon": {
+                              "required": true,
+                              "anyOf": [
+                                { "type": "string", "required": false, "maxLength": 255 },
+                                { "type": "null", "required": false }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
                   "included": {
                     "type": "object",
                     "required": true,
@@ -956,6 +1112,28 @@
               "welcomeText": "Welcome to Anderson - Ferry!",
               "chatSupport": true,
               "organizationFlags": {},
+              "setupConfig": {
+                "primaryLabels": [
+                  {
+                    "slug": "feature",
+                    "name": "Feature",
+                    "color": "amber",
+                    "icon": "star"
+                  },
+                  {
+                    "slug": "chore",
+                    "name": "Chore",
+                    "color": "slate",
+                    "icon": "bolt"
+                  },
+                  {
+                    "slug": "bug",
+                    "name": "Bug",
+                    "color": "red",
+                    "icon": "bug"
+                  }
+                ]
+              },
               "publishedAt": "2024-11-21T01:19:53.533Z",
               "publicAt": null,
               "createdAt": "2024-11-21T01:19:53.533Z",
@@ -1021,6 +1199,28 @@
               "welcomeText": "Welcome to Wiegand, Harber and Stark-Abshire!",
               "chatSupport": false,
               "organizationFlags": {},
+              "setupConfig": {
+                "primaryLabels": [
+                  {
+                    "slug": "feature",
+                    "name": "Feature",
+                    "color": "amber",
+                    "icon": "star"
+                  },
+                  {
+                    "slug": "chore",
+                    "name": "Chore",
+                    "color": "slate",
+                    "icon": "bolt"
+                  },
+                  {
+                    "slug": "bug",
+                    "name": "Bug",
+                    "color": "red",
+                    "icon": "bug"
+                  }
+                ]
+              },
               "publishedAt": "2024-10-29T04:35:17.725Z",
               "publicAt": null,
               "createdAt": "2024-10-29T04:35:17.725Z",
@@ -1292,6 +1492,62 @@
               "required": true,
               "properties": {}
             },
+            "setupConfig": {
+              "type": "object",
+              "required": true,
+              "properties": {
+                "primaryLabels": {
+                  "type": "array",
+                  "required": true,
+                  "minItems": 1,
+                  "maxItems": 6,
+                  "itemType": "object",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "slug": {
+                        "type": "string",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 255
+                      },
+                      "name": {
+                        "type": "string",
+                        "required": true,
+                        "minLength": 2,
+                        "maxLength": 255
+                      },
+                      "color": {
+                        "type": "string",
+                        "required": true,
+                        "enum": [
+                          "red",
+                          "orange",
+                          "amber",
+                          "yellow",
+                          "green",
+                          "emerald",
+                          "teal",
+                          "sky",
+                          "blue",
+                          "indigo",
+                          "violet",
+                          "pink",
+                          "slate"
+                        ]
+                      },
+                      "icon": {
+                        "required": true,
+                        "anyOf": [
+                          { "type": "string", "required": false, "maxLength": 255 },
+                          { "type": "null", "required": false }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "included": {
               "type": "object",
               "required": true,
@@ -1465,6 +1721,28 @@
           "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
           "chatSupport": true,
           "organizationFlags": {},
+          "setupConfig": {
+            "primaryLabels": [
+              {
+                "slug": "feature",
+                "name": "Feature",
+                "color": "amber",
+                "icon": "star"
+              },
+              {
+                "slug": "chore",
+                "name": "Chore",
+                "color": "slate",
+                "icon": "bolt"
+              },
+              {
+                "slug": "bug",
+                "name": "Bug",
+                "color": "red",
+                "icon": "bug"
+              }
+            ]
+          },
           "publishedAt": "2024-12-25T15:04:42.969Z",
           "publicAt": null,
           "createdAt": "2024-12-25T15:04:42.969Z",
@@ -1718,6 +1996,62 @@
               "required": true,
               "properties": {}
             },
+            "setupConfig": {
+              "type": "object",
+              "required": true,
+              "properties": {
+                "primaryLabels": {
+                  "type": "array",
+                  "required": true,
+                  "minItems": 1,
+                  "maxItems": 6,
+                  "itemType": "object",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "slug": {
+                        "type": "string",
+                        "required": true,
+                        "minLength": 1,
+                        "maxLength": 255
+                      },
+                      "name": {
+                        "type": "string",
+                        "required": true,
+                        "minLength": 2,
+                        "maxLength": 255
+                      },
+                      "color": {
+                        "type": "string",
+                        "required": true,
+                        "enum": [
+                          "red",
+                          "orange",
+                          "amber",
+                          "yellow",
+                          "green",
+                          "emerald",
+                          "teal",
+                          "sky",
+                          "blue",
+                          "indigo",
+                          "violet",
+                          "pink",
+                          "slate"
+                        ]
+                      },
+                      "icon": {
+                        "required": true,
+                        "anyOf": [
+                          { "type": "string", "required": false, "maxLength": 255 },
+                          { "type": "null", "required": false }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "included": {
               "type": "object",
               "required": true,
@@ -1891,6 +2225,28 @@
           "welcomeText": "Welcome to Spencer, Pouros and Bergnaum!",
           "chatSupport": true,
           "organizationFlags": {},
+          "setupConfig": {
+            "primaryLabels": [
+              {
+                "slug": "feature",
+                "name": "Feature",
+                "color": "amber",
+                "icon": "star"
+              },
+              {
+                "slug": "chore",
+                "name": "Chore",
+                "color": "slate",
+                "icon": "bolt"
+              },
+              {
+                "slug": "bug",
+                "name": "Bug",
+                "color": "red",
+                "icon": "bug"
+              }
+            ]
+          },
           "publishedAt": "2024-12-25T15:04:42.969Z",
           "publicAt": null,
           "createdAt": "2024-12-25T15:04:42.969Z",
@@ -2069,6 +2425,62 @@
             "type": "object",
             "required": false,
             "properties": {}
+          },
+          "setupConfig": {
+            "type": "object",
+            "required": false,
+            "properties": {
+              "primaryLabels": {
+                "type": "array",
+                "required": false,
+                "minItems": 1,
+                "maxItems": 6,
+                "itemType": "object",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string",
+                      "required": true,
+                      "minLength": 1,
+                      "maxLength": 255
+                    },
+                    "name": {
+                      "type": "string",
+                      "required": true,
+                      "minLength": 2,
+                      "maxLength": 255
+                    },
+                    "color": {
+                      "type": "string",
+                      "required": true,
+                      "enum": [
+                        "red",
+                        "orange",
+                        "amber",
+                        "yellow",
+                        "green",
+                        "emerald",
+                        "teal",
+                        "sky",
+                        "blue",
+                        "indigo",
+                        "violet",
+                        "pink",
+                        "slate"
+                      ]
+                    },
+                    "icon": {
+                      "required": true,
+                      "anyOf": [
+                        { "type": "string", "required": false, "maxLength": 255 },
+                        { "type": "null", "required": false }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "required": false,

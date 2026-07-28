@@ -16,6 +16,13 @@ import {
 import type { CustomBlock } from '~/modules/common/blocknote/types';
 import { useUIStore } from '~/modules/ui/ui-store';
 
+// DOMPurify's default URI policy strips `blob:` URLs, but the read-only render resolves locally
+// cached images to same-origin `blob:` object URLs (the live editor keeps them because it renders
+// DOM without sanitizing). Extend the default scheme allow-list with `blob` so those images are not
+// dropped; `blob:` is same-origin and safe as a media source. All other schemes keep the default.
+const ALLOWED_URI_REGEXP =
+  /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i;
+
 interface BlockNoteFullHtmlProps {
   id: string;
   defaultValue: string;
@@ -153,7 +160,7 @@ function BlockNoteFullHtml({
         // click-to-expand task Card, so without this the user can't highlight/copy the text.
         className="bn-static-editor bn-default-styles select-text"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: input is sanitized via DOMPurify before render
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderState.html) }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderState.html, { ALLOWED_URI_REGEXP }) }}
       />
     </div>
   );

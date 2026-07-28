@@ -1,4 +1,5 @@
 import { and, arrayOverlaps, asc, desc, eq, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { z } from 'zod';
 import type { AuthContext } from '#/core/context';
 import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
@@ -18,7 +19,9 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
  */
 export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo: QueryInfo) => {
   const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
-  const trimmedQuery = q?.trim();
+  // Highlight-mode clients ('=' prefix) fetch unfiltered; stripping here keeps stray marked
+  // queries behaving like their plain form.
+  const { effectiveQ: trimmedQuery } = parseSearchQuery(q);
 
   // Get users and labels data in parallel
   const [tasksUsers, tasksLabels] = await Promise.all([
@@ -30,8 +33,7 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
   const tasksSearchFilters: SQL[] = [];
 
   if (trimmedQuery) {
-    const normalizedQuery = trimmedQuery.startsWith('=') ? trimmedQuery.slice(1).trim() : trimmedQuery;
-    const searchKeywords = normalizedQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    const searchKeywords = trimmedQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
     if (searchKeywords.length > 0) {
       const filtersByKeyword = searchKeywords.map((word) => {
@@ -57,7 +59,6 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
   const orderColumn = seqCursor
     ? asc(tasksTable.seq)
     : getOrderColumn(sort, tasksTable.status, order, {
-        variant: tasksTable.variant,
         status: tasksTable.status,
         projectId: tasksTable.projectId,
         createdAt: tasksTable.createdAt,

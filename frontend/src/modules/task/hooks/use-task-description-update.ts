@@ -1,34 +1,30 @@
-import { deriveDescriptionProps } from '~/modules/task/helpers/derive-description-props';
+import { deriveDescriptionProps } from '~/modules/common/blocknote/derive-description-props';
+import { patchDescriptionCaches } from '~/modules/common/blocknote/description-cache';
 import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
-import { cacheUpdate } from '~/query/basic/cache-mutations';
 import { findInCache } from '~/query/basic/find-in-list-cache';
-import type { ItemData } from '~/query/basic/types';
-import { queryClient } from '~/query/query-client';
 
 /**
- * Returns `updateData(description)` — the task-description persistence policy, kept out of the
- * editor component. Handles both modes:
+ * Returns `updateData(description, collaborative)` — the task-description persistence policy,
+ * kept out of the editor component. Handles both modes:
  * - collaborative (Yjs): the relay owns backend persistence, so this only patches the caches
  *   optimistically (summary/counts) for the card views that render from cache, not the Y.Doc.
  * - non-collaborative: persists via the standard update mutation (offline queue, HLC, optimistic).
  */
-export const useTaskDescriptionUpdate = (task: Task, collaborative: boolean) => {
+export const useTaskDescriptionUpdate = (task: Task) => {
   const { mutateAsync: updateDesc } = useTaskUpdateMutation(task.tenantId, task.organizationId);
-  const orgKey = taskKeys.list.org(task.organizationId);
 
-  return async (description: string) => {
+  return async (description: string, collaborative: boolean) => {
     if (collaborative) {
-      // The Yjs relay owns backend persistence in collab mode (it materializes the
-      // session ≤3s after edits) — no mutation fires on blur. Sync the caches with a
-      // cache-only optimistic derive so collapsed/expanded card views (which render
-      // from the query cache, not the Y.Doc) show fresh summary/counts instantly;
-      // the relay's materialization arrives via SSE moments later with authoritative values.
+      // Cache-only optimistic derive; the relay materializes the session (≤3s) and SSE
+      // delivers authoritative values moments later.
       const derived = await deriveDescriptionProps(description);
-      const patch = { description, ...derived, updatedAt: new Date().toISOString() };
-      queryClient.setQueryData<Task>(taskKeys.detail.byId(task.id), (old) => (old ? { ...old, ...patch } : undefined));
-      const cached = findInCache<Task>('task', task.id);
-      if (cached) cacheUpdate(orgKey, [{ ...cached, ...patch } as ItemData]);
+      patchDescriptionCaches(
+        'task',
+        task.id,
+        { detailKey: taskKeys.detail.byId(task.id), listKey: taskKeys.list.org(task.organizationId) },
+        { description, ...derived, updatedAt: new Date().toISOString() },
+      );
       return;
     }
 

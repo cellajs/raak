@@ -19,7 +19,10 @@ export const WorkspaceRouteComponent = () => {
   return (
     <Suspense fallback={<Spinner className="mt-[45vh] h-10 w-10" />}>
       {!!appConfig.yjsUrl && (
-        <YjsTokenFetcher entityType="task" tenantId={tenantId} organizationId={workspace.organizationId} />
+        <>
+          <YjsTokenFetcher entityType="task" tenantId={tenantId} organizationId={workspace.organizationId} />
+          <YjsTokenFetcher entityType="label" tenantId={tenantId} organizationId={workspace.organizationId} />
+        </>
       )}
       <WorkspacePage
         key={workspace.slug}

@@ -424,7 +424,7 @@ export const zTask = z.object({
   expandable: z.boolean(),
   summary: z.string().max(1000000),
   summaryLength: z.int().gte(-2147483648).lte(2147483647),
-  points: z.int().gte(-2147483648).lte(2147483647).nullable(),
+  primaryLabelId: z.uuid(),
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
   status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
   statusChangedAt: z.string(),
@@ -437,11 +437,24 @@ export const zTask = z.object({
     z.object({
       id: z.string(),
       name: z.string(),
+      slug: z.string(),
       color: z.string().nullable(),
+      mode: z.enum(['primary', 'secondary', 'epic']),
+      icon: z.string().nullable(),
       projectId: z.string(),
     }),
   ),
-  variant: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  primaryLabel: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      color: z.string().nullable(),
+      mode: z.enum(['primary', 'secondary', 'epic']),
+      icon: z.string().nullable(),
+      projectId: z.string(),
+    })
+    .nullable(),
   assignedTo: z.array(zUserMinimalBase),
   createdBy: z
     .object({
@@ -494,6 +507,41 @@ export const zOrganization = z.object({
   welcomeText: z.string().max(1000000).nullable(),
   chatSupport: z.boolean(),
   organizationFlags: z.record(z.string(), z.unknown()),
+  setupConfig: z.object({
+    primaryLabels: z
+      .array(
+        z.object({
+          slug: z
+            .string()
+            .min(1)
+            .max(255)
+            .regex(/^[a-z0-9][a-z0-9-]*$/),
+          name: z
+            .string()
+            .min(2)
+            .max(255)
+            .regex(/^[\p{L}\d\-., '&()]+$/u),
+          color: z.enum([
+            'red',
+            'orange',
+            'amber',
+            'yellow',
+            'green',
+            'emerald',
+            'teal',
+            'sky',
+            'blue',
+            'indigo',
+            'violet',
+            'pink',
+            'slate',
+          ]),
+          icon: z.string().max(255).nullable(),
+        }),
+      )
+      .min(1)
+      .max(6),
+  }),
   included: z.object({
     membership: zMembershipBase.optional(),
     counts: z
@@ -600,6 +648,7 @@ export const zAttachment = z.object({
   originalKey: z.string().max(2048),
   convertedKey: z.string().max(2048).nullable(),
   thumbnailKey: z.string().max(2048).nullable(),
+  thumbnailTinyKey: z.string().max(2048).nullable(),
   projectId: z.uuid(),
   organizationId: z.uuid(),
   viewCount: z.int().gte(0).optional(),
@@ -644,6 +693,11 @@ export const zLabel = z.object({
   publicAt: z.string().nullable(),
   seq: z.int().gte(-9007199254740991).lte(9007199254740991),
   color: z.string().max(255).nullable(),
+  mode: z.enum(['primary', 'secondary', 'epic']),
+  slug: z.string().max(255),
+  icon: z.string().max(255).nullable(),
+  organizationTracked: z.boolean(),
+  displayOrder: z.number().gte(-140737488355328).lte(140737488355327).nullable(),
   organizationId: z.uuid(),
   projectId: z.uuid(),
   stx: zStxBase,
@@ -1450,10 +1504,7 @@ export const zGetPublicTaskResponse = zTask;
 
 export const zGetPublicTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z
-    .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
-    .optional()
-    .default('createdAt'),
+  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
@@ -1681,6 +1732,44 @@ export const zUpdateOrganizationBody = z.object({
   welcomeText: z.string().max(1000000).nullish(),
   chatSupport: z.boolean().optional(),
   organizationFlags: z.record(z.string(), z.unknown()).optional(),
+  setupConfig: z
+    .object({
+      primaryLabels: z
+        .array(
+          z.object({
+            slug: z
+              .string()
+              .min(1)
+              .max(255)
+              .regex(/^[a-z0-9][a-z0-9-]*$/),
+            name: z
+              .string()
+              .min(2)
+              .max(255)
+              .regex(/^[\p{L}\d\-., '&()]+$/u),
+            color: z.enum([
+              'red',
+              'orange',
+              'amber',
+              'yellow',
+              'green',
+              'emerald',
+              'teal',
+              'sky',
+              'blue',
+              'indigo',
+              'violet',
+              'pink',
+              'slate',
+            ]),
+            icon: z.string().max(255).nullable(),
+          }),
+        )
+        .min(1)
+        .max(6)
+        .optional(),
+    })
+    .optional(),
 });
 
 export const zUpdateOrganizationPath = z.object({
@@ -2272,6 +2361,7 @@ export const zCreateAttachmentsBody = z
       convertedContentType: z.string().max(255).nullish(),
       convertedKey: z.string().max(2048).nullish(),
       thumbnailKey: z.string().max(2048).nullish(),
+      thumbnailTinyKey: z.string().max(2048).nullish(),
       projectId: z.uuid(),
       stx: zStxBase,
     }),
@@ -2302,7 +2392,7 @@ export const zGetPresignedUrlsBody = z.object({
     .array(
       z.object({
         attachmentId: z.uuid(),
-        variant: z.enum(['original', 'thumbnail', 'converted']).optional().default('original'),
+        variant: z.enum(['original', 'thumbnail', 'thumbnail-tiny', 'converted']).optional().default('original'),
       }),
     )
     .min(1)
@@ -2321,7 +2411,7 @@ export const zGetPresignedUrlsResponse = z.object({
   data: z.array(
     z.object({
       attachmentId: z.uuid(),
-      variant: z.enum(['original', 'thumbnail', 'converted']),
+      variant: z.enum(['original', 'thumbnail', 'thumbnail-tiny', 'converted']),
       url: z.string(),
     }),
   ),
@@ -2542,10 +2632,7 @@ export const zGetTasksPath = z.object({
 
 export const zGetTasksQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z
-    .enum(['projectId', 'status', 'createdBy', 'variant', 'updatedAt', 'createdAt'])
-    .optional()
-    .default('createdAt'),
+  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
@@ -2573,7 +2660,6 @@ export const zCreateTasksBody = z
       name: z.string().max(255).optional(),
       description: z.string().max(1000000).nullable(),
       projectId: z.uuid(),
-      points: z.int().gte(-2147483648).lte(2147483647).nullish(),
       id: z.uuid(),
       status: z.union([
         z.literal(6),
@@ -2584,7 +2670,7 @@ export const zCreateTasksBody = z
         z.literal(1),
         z.literal(0),
       ]),
-      variant: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+      primaryLabelId: z.uuid().optional(),
       displayOrder: z.number().optional(),
       labels: z.array(z.string()).optional(),
       assignedTo: z.array(z.string()).optional(),
@@ -2628,8 +2714,7 @@ export const zUpdateTaskBody = z.object({
     name: z.string().max(255).optional(),
     description: z.string().max(1000000).nullish(),
     status: z.int().optional(),
-    variant: z.int().optional(),
-    points: z.int().nullish(),
+    primaryLabelId: z.uuid().optional(),
     displayOrder: z.number().optional(),
     labels: z
       .object({
@@ -2702,6 +2787,7 @@ export const zGetLabelsQuery = z.object({
     .string()
     .regex(/^\d+,\d+$/)
     .optional(),
+  modes: z.string().optional(),
   projectId: z.string().max(50).optional(),
   workspaceId: z.string().max(50).optional(),
 });
@@ -2721,6 +2807,10 @@ export const zCreateLabelsBody = z
       projectId: z.uuid(),
       id: z.uuid(),
       color: z.string().max(255).nullable(),
+      mode: z.enum(['primary', 'secondary', 'epic']).optional().default('secondary'),
+      slug: z.string().max(255).optional(),
+      icon: z.string().max(255).nullish(),
+      displayOrder: z.number().optional(),
       stx: zStxBase,
     }),
   )
@@ -2760,6 +2850,12 @@ export const zUpdateLabelBody = z.object({
   ops: z.object({
     name: z.string().max(255).optional(),
     color: z.string().max(255).nullish(),
+    slug: z.string().max(255).optional(),
+    icon: z.string().max(255).nullish(),
+    displayOrder: z.number().optional(),
+    description: z.string().max(1000000).nullish(),
+    mode: z.enum(['secondary', 'epic']).optional(),
+    organizationTracked: z.boolean().optional(),
   }),
   stx: zStxBase,
 });

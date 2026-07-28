@@ -11,9 +11,10 @@ import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
 import { createServerStx } from '#/core/stx';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
-import { TaskStatus, TaskVariant } from '#/modules/task/task-properties';
+import { TaskStatus } from '#/modules/task/task-properties';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
 import { nanoid } from 'shared/utils/nanoid';
+import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
 import { mockLabel } from '#/modules/label/label-mocks';
 import { mockChannelMembership } from '#/modules/memberships/memberships-mocks';
 import { mockProject } from '#/modules/project/project-mocks';
@@ -184,6 +185,7 @@ const tasksSeed = async () => {
     // Phase C: Prepare labels for all inserted projects
     const allOrgLabels: InsertLabelModel[] = [];
     const labelsPerProjectMap = new Map<string, InsertLabelModel[]>();
+    const primaryLabelsPerProjectMap = new Map<string, string[]>();
 
     for (const { insertProject, memberUserIds } of projectEntries) {
       const projectId = insertProject.id!;
@@ -216,6 +218,18 @@ const tasksSeed = async () => {
 
       allOrgLabels.push(...projectLabels);
       labelsPerProjectMap.set(projectId, projectLabels);
+
+      // Tracked primary label set per project, provisioned from the org's setupConfig defaults.
+      // Kept out of labelsPerProjectMap: task label arrays reference secondary labels only.
+      const primaryRows = buildPrimaryLabelRows({
+        entries: appConfig.defaultSetupConfig.primaryLabels,
+        projectId,
+        organizationId: organization.id,
+        tenantId: organization.tenantId,
+        createdBy: getRandomMember(),
+      }).map((row) => ({ ...row, id: mockUuid() }));
+      allOrgLabels.push(...primaryRows);
+      primaryLabelsPerProjectMap.set(projectId, primaryRows.map((row) => row.id));
     }
 
     // Phase D: Batch-insert all labels for this org
@@ -286,8 +300,7 @@ const tasksSeed = async () => {
           displayOrder: index * 10,
           status: isOldAccepted ? TaskStatus.Accepted : Math.floor(Math.random() * 7),
           statusChangedAt: isOldAccepted ? oldDate : mockPastIsoDate(),
-          variant: faker.helpers.arrayElement([TaskVariant.Feature, TaskVariant.Chore, TaskVariant.Bug]),
-          points: Math.floor(Math.random() * 4),
+          primaryLabelId: faker.helpers.arrayElement(primaryLabelsPerProjectMap.get(projectId) ?? [mockUuid()]),
           description,
           checkboxCount,
           checkedCount,

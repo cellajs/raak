@@ -28,8 +28,9 @@ export const tasksTable = snakeCase.table(
     expandable: boolean().default(false).notNull(),
     summary: varchar({ length: maxLength.html }).notNull(),
     summaryLength: integer().default(0).notNull(),
-    variant: integer().notNull(),
-    points: integer(),
+    // Exactly one primary label (task type) per task; a per-project labels row with mode 'primary'.
+    // No FK: labels are soft-deleted and delete flows reassign references synchronously.
+    primaryLabelId: uuid().notNull(),
     displayOrder: doublePrecision().notNull(),
     status: integer().notNull(),
     statusChangedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
@@ -51,6 +52,7 @@ export const tasksTable = snakeCase.table(
     index('tasks_created_by_index').on(table.createdBy),
     index('tasks_updated_by_index').on(table.updatedBy),
     index('tasks_project_status_index').on(table.projectId, table.status),
+    index('tasks_primary_label_id_index').on(table.primaryLabelId),
     index('idx_tasks_labels_gin').using('gin', table.labels),
     index('idx_tasks_assigned_to_gin').using('gin', table.assignedTo),
     foreignKey({

@@ -957,7 +957,9 @@ export function ResizablePanel({
       ref={setRef}
       className={className}
       data-panel={id}
-      style={{ overflow: 'hidden', position: 'relative', flexShrink: 0 }}
+      // clip, not hidden: hidden would make this a scroll container that captures the
+      // panel's sticky elements, which must pin to the window in window-scroll boards
+      style={{ overflow: 'clip', position: 'relative', flexShrink: 0 }}
       {...rest}
     >
       <div className="h-full" style={{ opacity: 'var(--content-opacity, 1)' }}>
