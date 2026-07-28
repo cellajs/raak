@@ -33,7 +33,7 @@ import type {
 // picker (textColorSelect: false), so only bold/italic/underline/strike/code stay reachable.
 const { textColor: _textColor, backgroundColor: _backgroundColor, ...safeStyleSpecs } = defaultStyleSpecs;
 
-/** Read a media block's stored intrinsic dimensions and user-resized width (all default 0/undefined). */
+/** Read a media block's stored intrinsic dimensions and user-resized width (all default 0 when unset). */
 const readImageSize = (props: Record<string, unknown>) => ({
   width: typeof props.width === 'number' ? props.width : 0,
   height: typeof props.height === 'number' ? props.height : 0,
@@ -42,11 +42,11 @@ const readImageSize = (props: Record<string, unknown>) => ({
 
 /**
  * Reserve the aspect-ratio box on the rendered img so the placeholder (styles.css) and the loaded
- * image are the same box: no reflow, no broken-image flash. Two display modes, matching the wrapper
- * width set by BlockNote/CSS: fully-responsive (no resize) fills the container, and static-responsive
- * (previewWidth) keeps that width and only shrinks to fit. In the editor the img always fills its
- * wrapper (width:100%); in the static read-only render there is no wrapper, so a resized image needs
- * its previewWidth applied directly. Unknown dimensions leave the default behavior intact.
+ * image are the same box: no reflow, no broken-image flash. The two display modes match the wrapper
+ * width: fully-responsive (no resize) fills the container, static-responsive (previewWidth) keeps that
+ * width and only shrinks to fit. In the editor the img fills its wrapper (width:100%); the static
+ * read-only export has no wrapper, so a resized image applies its previewWidth directly. Unknown
+ * dimensions leave the default output intact.
  */
 const applyImageBox = (dom: HTMLElement | DocumentFragment, props: Record<string, unknown>, isStatic: boolean) => {
   const { width, height, previewWidth } = readImageSize(props);
@@ -60,16 +60,16 @@ const applyImageBox = (dom: HTMLElement | DocumentFragment, props: Record<string
 };
 
 /**
- * Decorate BlockNote's default image spec: the node spec (config/propSchema) is untouched so it stays
- * in lockstep with the Yjs relay's server schema, and both the live-editor render and the static HTML
- * export reserve the aspect-ratio box. Keeping the vanilla (DOM) block means it renders in the core
+ * Decorate BlockNote's default image spec to reserve the aspect-ratio box in both the live-editor
+ * render and the static read-only export. The node spec (config/propSchema) is untouched, so it stays
+ * in lockstep with the Yjs relay's server schema, and the vanilla (DOM) block renders in the core
  * headless editor used for read-only content, which a React block cannot.
  */
 const withImageBox = (spec: typeof defaultBlockSpecs.image) => {
   type Render = typeof spec.implementation.render;
   type ToExternalHTML = NonNullable<typeof spec.implementation.toExternalHTML>;
   // BlockNote types render/toExternalHTML with a `this` context the underlying implementation reads
-  // (blockContentDOMAttributes, propSchema); keep them as methods and forward `this`.
+  // (blockContentDOMAttributes, propSchema); keep them methods and forward `this`.
   const baseRender = spec.implementation.render as (...args: Parameters<Render>) => ReturnType<Render>;
   const baseToExternalHTML = spec.implementation.toExternalHTML as
     | ((...args: Parameters<ToExternalHTML>) => ReturnType<ToExternalHTML>)
