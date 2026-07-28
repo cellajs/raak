@@ -576,6 +576,7 @@ function toCatchupViews(views: readonly CatchupViewRequest[]): CatchupView[] {
   return accepted;
 }
 
+/** Coordinates the application event stream and catch-up lifecycle. */
 export const appStreamManager = new StreamManager('AppStream', {
   endpoint: `${appConfig.backendUrl}/entities/app/stream`,
   withCredentials: true,
@@ -596,10 +597,8 @@ export const appStreamManager = new StreamManager('AppStream', {
   processNotification: (notification) => handleAppStreamNotification(notification as AppStreamNotification),
 });
 
-// Mirror app-stream health into the low-level basic-layer flag so `syncStaleTime` can read it
-// without importing this (realtime) module. Inverts a `query/basic` -> `query/realtime` dependency.
-// Any non-error state is healthy: catchup reconciles on every (re)connect, so only a failing
-// stream drops sync-managed queries to the time-based fallback.
+// Mirror stream health into the basic layer without introducing a circular dependency.
+// Catch-up reconciles every connection, so only errors enable time-based freshness.
 appStreamManager.useStore.subscribe((s) => setSyncStreamHealthy(s.state !== 'error'));
 
 /**

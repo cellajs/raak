@@ -22,12 +22,12 @@ interface LabelSelectedButtonsProps {
 }
 
 /** Floating action bar for label rows selected in the labels panel: remove + clear. */
-export const LabelSelectedButtons = ({
+export function LabelSelectedButtons({
   selectedLabelIds,
   clearSelection,
   organizationId,
   tenantId,
-}: LabelSelectedButtonsProps) => {
+}: LabelSelectedButtonsProps) {
   const { t } = useTranslation();
   const deleteLabels = useLabelDeleteMutation(tenantId, organizationId);
 
@@ -61,4 +61,4 @@ export const LabelSelectedButtons = ({
       </TooltipButton>
     </SelectionActionBar>
   );
-};
+}

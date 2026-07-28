@@ -97,6 +97,7 @@ const withImageBox = (spec: typeof defaultBlockSpecs.image) => {
 
 // Base custom schema: block/inline configs are shared with the Yjs relay's
 // server-side seeder (shared/blocknote-schema-configs); only renders live here.
+/** Defines the BlockNote schema used by the editor. */
 export const customSchema = BlockNoteSchema.create({ styleSpecs: safeStyleSpecs }).extend({
   blockSpecs: {
     // Media blocks gain the attachment entity reference; keep in lockstep with the
@@ -118,6 +119,7 @@ export const customSchema = BlockNoteSchema.create({ styleSpecs: safeStyleSpecs 
 });
 
 // Blocks to which can be switched by sidemenu btn or in formatting toolbar
+/** Lists the custom block types available from the formatting toolbar. */
 export const customBlockTypeSwitchItems: CustomBlockTypes[] = [
   'heading',
   'paragraph',
@@ -147,6 +149,7 @@ export const customSlashIndexedItems: SlashIndexedItems = [
 ];
 
 // Generate the complete Slash menu items list
+/** Returns the slash menu items. */
 export const getSlashMenuItems = (
   editor: CustomBlockNoteEditor,
   allowedTypes: CustomBlockTypes[],

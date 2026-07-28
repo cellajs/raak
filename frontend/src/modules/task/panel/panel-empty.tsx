@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { useReadOnlyHide } from '~/modules/project/use-read-only';
 
-export const TaskPanelEmpty = ({ projectId }: { projectId?: string }) => {
+/** Renders the task panel empty component. */
+export function TaskPanelEmpty({ projectId }: { projectId?: string }) {
   const { t } = useTranslation();
 
   const matchRoute = useMatchRoute();
@@ -45,4 +46,4 @@ export const TaskPanelEmpty = ({ projectId }: { projectId?: string }) => {
       />
     </>
   );
-};
+}

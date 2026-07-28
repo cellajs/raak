@@ -18,7 +18,8 @@ import {
 
 type StatusOption = (typeof statusOptions)[number];
 
-export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWidth = 240 }: SelectStatusProps) => {
+/** Renders the status selector. */
+export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWidth = 240 }: SelectStatusProps) {
   const { t } = useTranslation();
 
   // Live cache subscription reflects remote SSE status changes while open.
@@ -95,4 +96,4 @@ export const SelectStatus = ({ value: currentStatus, onChange, taskId, triggerWi
       </div>
     </Combobox>
   );
-};
+}

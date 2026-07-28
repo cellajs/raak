@@ -26,7 +26,8 @@ interface ThumbnailCellProps {
   tabIndex: number;
 }
 
-export const ThumbnailCell = ({ row, tabIndex }: ThumbnailCellProps) => {
+/** Renders the thumbnail table cell. */
+export function ThumbnailCell({ row, tabIndex }: ThumbnailCellProps) {
   const { id, filename, contentType, groupId } = row;
   const navigate = useNavigate();
   const setTriggerRef = useDialoger((state) => state.setTriggerRef);
@@ -59,9 +60,9 @@ export const ThumbnailCell = ({ row, tabIndex }: ThumbnailCellProps) => {
       {badge}
     </Button>
   );
-};
+}
 
-const SyncStatusBadge = ({ attachmentId }: { attachmentId: string }) => {
+function SyncStatusBadge({ attachmentId }: { attachmentId: string }) {
   const { t } = useTranslation();
   const { hasLocalBlob, isUploaded, isUploading, isFailed, isPending, isLocalOnly } = useBlobUploadStatus(attachmentId);
 
@@ -96,14 +97,15 @@ const SyncStatusBadge = ({ attachmentId }: { attachmentId: string }) => {
       {icon}
     </div>
   );
-};
+}
 
 interface DownloadCellProps {
   row: Attachment;
   tabIndex: number;
 }
 
-export const DownloadCell = ({ row, tabIndex }: DownloadCellProps) => {
+/** Renders the download table cell. */
+export function DownloadCell({ row, tabIndex }: DownloadCellProps) {
   const { t } = useTranslation();
   const { download, error, isInProgress } = useDownloader();
 
@@ -148,7 +150,7 @@ export const DownloadCell = ({ row, tabIndex }: DownloadCellProps) => {
       {isInProgress ? <Spinner className="size-4 text-foreground/80" noDelay /> : <DownloadIcon />}
     </Button>
   );
-};
+}
 
 interface EllipsisCellProps {
   row: Attachment;
@@ -157,7 +159,8 @@ interface EllipsisCellProps {
   canDelete: boolean;
 }
 
-export const EllipsisCell = ({ row, tabIndex, canDelete }: EllipsisCellProps) => {
+/** Renders the ellipsis table cell. */
+export function EllipsisCell({ row, tabIndex, canDelete }: EllipsisCellProps) {
   // Delete is the only option; without it there is no menu to offer.
   if (!canDelete) return null;
 
@@ -180,4 +183,4 @@ export const EllipsisCell = ({ row, tabIndex, canDelete }: EllipsisCellProps) =>
   ];
 
   return <TableEllipsis row={row} tabIndex={tabIndex} options={ellipsisOptions} />;
-};
+}

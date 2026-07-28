@@ -8,8 +8,8 @@ import { queryClient } from '~/query/query-client';
 /**
  * Optimistically apply a description patch to an entity's detail and org list caches.
  * Used while a collab session owns persistence: card/list views render from the query
- * cache, not the Y.Doc, so they need the patch immediately; the relay's materialization
- * arrives via SSE moments later with authoritative values.
+ * cache, not the Y.Doc, so they need the patch immediately; the relay's persisted update
+ * arrives via SSE with authoritative values.
  */
 export const patchDescriptionCaches = (
   entityType: ProductEntityType,

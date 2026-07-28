@@ -25,7 +25,8 @@ import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type OrganizationsTableBarProps = BaseTableBarProps<EnrichedOrganization, OrganizationsRouteSearchParams>;
 
-export const OrganizationsTableBar = ({
+/** Renders the action and filter toolbar for the organizations table. */
+export function OrganizationsTableBar({
   selected,
   queryKey,
   searchVars,
@@ -33,7 +34,7 @@ export const OrganizationsTableBar = ({
   columns,
   setColumns,
   clearSelection,
-}: OrganizationsTableBarProps) => {
+}: OrganizationsTableBarProps) {
   const { t } = useTranslation();
 
   const removeDialog = useDialoger((state) => state.remove);
@@ -147,4 +148,4 @@ export const OrganizationsTableBar = ({
       </SelectionActionBar>
     </TableBarContainer>
   );
-};
+}

@@ -29,6 +29,7 @@ interface TaskCardFooterProps {
   isSheet?: boolean;
 }
 
+/** Renders the task card footer. */
 export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, isSheet = false }: TaskCardFooterProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
@@ -64,8 +65,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
         value: task.labels,
         projectId: task.projectId,
         onChange: handlers.onLabelsChange,
-        // Selected labels are already on screen (desktop footer, or an expanded mobile card),
-        // so open the "Selected" section collapsed instead of the mobile-expanded default.
+        // Collapse the selected section when the card already shows its selected labels.
         initialSelectedCollapsed: !isMobile || isExpandedMobile,
       });
     } else if (dropdownType === 'assignedTo') {

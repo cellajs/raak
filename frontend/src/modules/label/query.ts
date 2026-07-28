@@ -69,10 +69,11 @@ registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, cha
     query: { seqCursor, projectId: channelId, limit: String(SYNC_CHUNK_SIZE) },
   });
 });
+/** Defines React Query cache keys for label. */
 export const labelQueryKeys = keys;
 
-// During an active collab session the Y.Doc owns these fields; SSE patches are suppressed
-// so remote materializations can't fight the local editor state.
+// During an active collaboration session, suppress remote persisted values for Yjs-owned
+// fields so they cannot conflict with local editor state.
 registerYjsOwnedFields('label', ['description', 'keywords']);
 
 const labelsMutationKeyBase = ['label'] as const;
@@ -81,6 +82,7 @@ const handleError = createResourceError('label');
 /** Look up a cached label entity by id across the org's label lists. */
 export const findLabelInCache = createCacheFinder<Label>('label');
 
+/** Builds React Query options for label. */
 export const labelQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
@@ -118,6 +120,7 @@ export const labelsCanonicalOptions = ({
   });
 };
 
+/** Builds React Query options for labels. */
 export const labelsQueryOptions = ({
   q = '',
   projectId,
@@ -284,6 +287,7 @@ const labelDeleteOptions = (
   },
 });
 
+/** Provides the React Query mutation for label create. */
 export const useLabelCreateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(labelCreateOptions(queryClient));
@@ -297,6 +301,7 @@ export const useLabelCreateMutation = (tenantId: string, organizationId: string)
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
+/** Provides the React Query mutation for label update. */
 export const useLabelUpdateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(labelUpdateOptions(queryClient));
@@ -321,6 +326,7 @@ export const useLabelUpdateMutation = (tenantId: string, organizationId: string)
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
+/** Provides the React Query mutation for label delete. */
 export const useLabelDeleteMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(labelDeleteOptions(queryClient));

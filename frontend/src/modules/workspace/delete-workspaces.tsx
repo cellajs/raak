@@ -9,7 +9,7 @@ interface Props {
   callback?: (workspace: Workspace[]) => void;
 }
 
-const DeleteWorkspaces = ({ workspaces, callback, dialog: isDialog }: Props) => {
+function DeleteWorkspaces({ workspaces, callback, dialog: isDialog }: Props) {
   const removeDialog = () => useDialoger.getState().remove();
 
   const { mutate: deleteWorkspaces, isPending } = useWorkspaceDeleteMutation();
@@ -30,6 +30,6 @@ const DeleteWorkspaces = ({ workspaces, callback, dialog: isDialog }: Props) => 
     );
 
   return <DeleteForm onDelete={onDelete} onCancel={removeDialog} pending={isPending} />;
-};
+}
 
 export { DeleteWorkspaces };

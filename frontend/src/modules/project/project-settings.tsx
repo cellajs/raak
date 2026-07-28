@@ -18,7 +18,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/mod
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-export const ProjectSettings = ({ sheet: isSheet, project }: { sheet?: boolean; project: EnrichedProject }) => {
+/** Renders the project settings component. */
+export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; project: EnrichedProject }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { tenantId } = useOrganizationLayoutContext();
@@ -160,4 +161,4 @@ export const ProjectSettings = ({ sheet: isSheet, project }: { sheet?: boolean; 
       )}
     </div>
   );
-};
+}

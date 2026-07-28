@@ -5,11 +5,13 @@ const taskCardSelector = '[data-task-card-id][data-project-id][data-status]:not(
 
 const coarsePointerQuery = '(pointer: coarse)';
 
+/** Checks whether the active input device uses coarse pointer controls. */
 export const isCoarsePointerDevice = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia(coarsePointerQuery).matches;
 };
 
+/** Resolves mobile task drop indicator. */
 export const resolveMobileTaskDropIndicator = ({
   clientX,
   clientY,
@@ -38,8 +40,7 @@ export const resolveMobileTaskDropIndicator = ({
       clientX >= rect.left - 24 && clientX <= rect.right + 24 && clientY >= rect.top && clientY <= rect.bottom,
   );
 
-  // Single pass for the nearest card (strict `<` keeps the first DOM-order card on ties),
-  // instead of sorting the whole set on every pointer move / scroll.
+  // A single pass finds the nearest card; strict `<` keeps DOM order for ties.
   const pool = overlappingCards.length ? overlappingCards : cards;
   let candidate: { element: HTMLElement; rect: DOMRect } | undefined;
   let candidateDistance = Number.POSITIVE_INFINITY;

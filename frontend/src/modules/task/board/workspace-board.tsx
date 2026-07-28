@@ -11,6 +11,7 @@ import { buildBoardExtraPanels, computePanelReorder, useBoardPanels } from '~/mo
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
+/** Renders the workspace board component. */
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
   const { projectSlug, labelPageId } = useSearch({ strict: false }) as { projectSlug?: string; labelPageId?: string };
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);

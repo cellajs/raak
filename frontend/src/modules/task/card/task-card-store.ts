@@ -15,6 +15,7 @@ interface TaskCardState {
   reset: () => void;
 }
 
+/** Provides access to shared task-card interaction state. */
 export const useTaskCardStore = create<TaskCardState>()(
   devtools(
     (set) => ({

@@ -82,10 +82,8 @@ function SummaryCell({
 }
 
 /**
- * Reactive source of the table's projects. The column definitions are frozen at first render
- * (useState), and DataTable's Rows are memoized — so the project cell reads projects from context
- * instead of a frozen closure. Without this, a cold load whose projects fetch lands after the table
- * mounts would show raw project ids forever.
+ * Supplies current projects to memoized cells.
+ * Context keeps cold-load updates visible after column definitions are frozen.
  */
 export const TableProjectsContext = createContext<Project[]>([]);
 
@@ -127,14 +125,14 @@ function ProjectCell({
   );
 }
 
+/** Builds the column definitions for the enclosing table. */
 export const useColumns = (opts?: { hideProject?: boolean; organization?: Organization; tenantId?: string }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const setTriggerRef = useDialoger((state) => state.setTriggerRef);
 
-  // Built once (useState lazy init) so column-management state (reorder/hide/resize) is preserved.
-  // Values closed over here that could change (projects) are read reactively in their cells instead.
+  // Build once to preserve column-management state; changing project data comes from context.
   return useState<ColumnOrColumnGroup<Task>[]>(() => {
     const cols: ColumnOrColumnGroup<Task>[] = [
       {

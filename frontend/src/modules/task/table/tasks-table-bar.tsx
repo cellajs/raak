@@ -23,7 +23,8 @@ type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setS
     setIsCompact: (isCompact: boolean) => void;
   };
 
-export const TasksTableBar = ({
+/** Renders the action and filter toolbar for the tasks table. */
+export function TasksTableBar({
   selected,
   searchVars,
   columns,
@@ -34,7 +35,7 @@ export const TasksTableBar = ({
   publicView,
   isCompact,
   setIsCompact,
-}: TasksTableBarProps) => {
+}: TasksTableBarProps) {
   const { t, i18n } = useTranslation();
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal('table', queryParams);
@@ -97,4 +98,4 @@ export const TasksTableBar = ({
       <FocusView iconOnly />
     </div>
   );
-};
+}

@@ -32,6 +32,7 @@ const keys = createEntityKeys<WorkspaceFilters>('workspace');
 // Register query keys for dynamic lookup in stream handlers
 registerEntityQueryKeys('workspace', keys);
 
+/** Defines React Query cache keys for workspace. */
 export const workspaceQueryKeys = keys;
 
 const findWorkspaceInCache = createCacheFinder<Workspace>('workspace');

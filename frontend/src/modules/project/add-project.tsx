@@ -16,7 +16,7 @@ interface AddProjectsProps {
   mode?: 'create' | 'select' | null;
 }
 
-const AddProjects = ({ mode: baseMode }: AddProjectsProps) => {
+function AddProjects({ mode: baseMode }: AddProjectsProps) {
   //organization, callback, dialog: isDialog,
   const { t } = useTranslation();
 
@@ -125,6 +125,6 @@ const AddProjects = ({ mode: baseMode }: AddProjectsProps) => {
       </AnimatePresence>
     </MotionConfig>
   );
-};
+}
 
 export { AddProjects };

@@ -9,7 +9,7 @@ interface Props {
   callback?: (project: Project[]) => void;
 }
 
-const DeleteProjects = ({ projects, callback, dialog: isDialog }: Props) => {
+function DeleteProjects({ projects, callback, dialog: isDialog }: Props) {
   const removeDialog = () => useDialoger.getState().remove();
   const organizationId = projects[0].organizationId;
   const tenantId = projects[0].tenantId;
@@ -29,6 +29,6 @@ const DeleteProjects = ({ projects, callback, dialog: isDialog }: Props) => {
   };
 
   return <DeleteForm onDelete={onDelete} onCancel={removeDialog} pending={isPending} />;
-};
+}
 
 export { DeleteProjects };

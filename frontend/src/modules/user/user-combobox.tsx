@@ -30,7 +30,8 @@ interface Props {
   channel: ChannelBase & { organizationId?: string };
 }
 
-export const UserCombobox = ({ value, onValueChange, channel }: Props) => {
+/** Renders the user combobox component. */
+export function UserCombobox({ value, onValueChange, channel }: Props) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const nameLabel = t('c:name').toLowerCase();
@@ -223,4 +224,4 @@ export const UserCombobox = ({ value, onValueChange, channel }: Props) => {
       </ComboboxContent>
     </Combobox>
   );
-};
+}

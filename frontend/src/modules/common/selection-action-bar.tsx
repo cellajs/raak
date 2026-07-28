@@ -23,7 +23,7 @@ interface SelectionActionBarProps {
  * transformed ancestors cannot trap it. While visible it sets the `selection-active` body class
  * so FABs and the mobile bottom nav animate out of its way.
  */
-export const SelectionActionBar = ({ count, onClear, children }: SelectionActionBarProps) => {
+export function SelectionActionBar({ count, onClear, children }: SelectionActionBarProps) {
   const { t } = useTranslation();
 
   useBodyClass({ 'selection-active': count > 0 });
@@ -53,4 +53,4 @@ export const SelectionActionBar = ({ count, onClear, children }: SelectionAction
     </AnimatePresence>,
     document.body,
   );
-};
+}

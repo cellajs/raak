@@ -33,6 +33,7 @@ function FocusGuard({ onFocus }: { onFocus: (e: React.FocusEvent) => void }) {
   return <span tabIndex={0} onFocus={onFocus} aria-hidden data-focus-guard="" style={guardStyle} />;
 }
 
+/** Renders the focus trap component. */
 export function FocusTrap({
   children,
   mainElementId,

@@ -10,7 +10,7 @@ import { Button } from '~/modules/ui/button';
  * label dropdown. Shared by the collapsed card content and the expanded card header.
  * `group-data-[sheet]` is a no-op outside a sheet, so the collapsed (non-sheet) case is unaffected.
  */
-export const TaskPrimaryLabelButton = ({ task, isSheet = false }: { task: Task; isSheet?: boolean }) => {
+export function TaskPrimaryLabelButton({ task, isSheet = false }: { task: Task; isSheet?: boolean }) {
   const { onPrimaryLabelChange } = useTaskFieldHandlers(task);
   const readOnlyInert = useReadOnlyInert(task.projectId);
 
@@ -37,4 +37,4 @@ export const TaskPrimaryLabelButton = ({ task, isSheet = false }: { task: Task; 
       <PrimaryLabelIcon label={task.primaryLabel} />
     </Button>
   );
-};
+}

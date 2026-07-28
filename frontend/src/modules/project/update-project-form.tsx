@@ -27,7 +27,7 @@ interface Props {
   callback?: (project: Project) => void;
 }
 
-const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet }: Props) => {
+function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet }: Props) {
   const { t } = useTranslation();
 
   const organizationId = project.organizationId;
@@ -123,6 +123,6 @@ const UpdateProjectForm = ({ project, callback, dialog: isDialog, sheet: isSheet
       </form>
     </Form>
   );
-};
+}
 
 export { UpdateProjectForm };

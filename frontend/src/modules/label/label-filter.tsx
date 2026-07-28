@@ -5,9 +5,8 @@ import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
 /**
- * Filter-by-label toggle over the shared board search. It writes the '=' highlight form
- * of the label name, so tasks carrying the label (and the label's own tile) get tinted
- * across the board instead of hiding everything else. Toggling the same name clears it.
+ * Toggles the board search's '=' highlight query for a label.
+ * Matching tasks and label tiles are tinted; toggling the same name clears the query.
  */
 export const useLabelFilterToggle = () => {
   const { search, setSearch } = useSearchParams<{ q?: string }>({});
@@ -28,7 +27,7 @@ interface LabelFilterButtonProps {
 }
 
 /** Toggle button for highlighting a label across the board (label tile + label page). */
-export const LabelFilterButton = ({ name, size = 'icon', tabIndex, className }: LabelFilterButtonProps) => {
+export function LabelFilterButton({ name, size = 'icon', tabIndex, className }: LabelFilterButtonProps) {
   const { t } = useTranslation();
   const { isActive, toggle } = useLabelFilterToggle();
 
@@ -50,4 +49,4 @@ export const LabelFilterButton = ({ name, size = 'icon', tabIndex, className }: 
       <ListFilterIcon />
     </Button>
   );
-};
+}

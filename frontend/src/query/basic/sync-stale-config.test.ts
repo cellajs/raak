@@ -8,11 +8,7 @@ import {
 
 const FIVE_MINUTES = 5 * 60 * 1000;
 
-/**
- * `syncStaleTime` is the freshness contract for catchup-managed product queries: catchup owns
- * freshness while the stream is healthy, and route-loader prefetches must trust an already-synced
- * cache instead of refetching it on reload.
- */
+/** Verifies that healthy catch-up state keeps restored product queries fresh across reloads. */
 describe('syncStaleTime freshness contract', () => {
   // Module-level flags are shared; reset to the healthy default around each case.
   beforeEach(() => {

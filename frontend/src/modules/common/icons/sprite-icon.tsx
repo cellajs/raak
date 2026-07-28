@@ -16,20 +16,22 @@ export interface SpriteIconProps extends Omit<LucideProps, 'size' | 'ref'> {
  * The `lucide` class opts into the global icon defaults (rem-based size); stroke styling is
  * applied here since LucideProvider context does not reach sprite symbols.
  */
-export const SpriteIcon = ({ name, className, strokeWidth, ...props }: SpriteIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={strokeWidth ?? appConfig.theme.strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    role="img"
-    aria-label={name}
-    className={cn('lucide', className)}
-    {...props}
-  >
-    <use href={`${spriteUrl}#${name}`} />
-  </svg>
-);
+export function SpriteIcon({ name, className, strokeWidth, ...props }: SpriteIconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth ?? appConfig.theme.strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role="img"
+      aria-label={name}
+      className={cn('lucide', className)}
+      {...props}
+    >
+      <use href={`${spriteUrl}#${name}`} />
+    </svg>
+  );
+}

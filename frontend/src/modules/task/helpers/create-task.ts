@@ -10,6 +10,7 @@ import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { getSchemaDefaults } from '~/query/basic/create-optimistic';
 
+/** Validates create-task form values. */
 export const createTaskFormSchema = z.object({
   ...zCreateTasksBody.element.omit({ stx: true }).shape,
   status: z.enum(TaskStatus),
@@ -22,11 +23,13 @@ export const createTaskFormSchema = z.object({
 export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;
 
 // Derive defaults from schema, override only intentional UX choices
+/** Builds the default values for a new-task form. */
 export const newTaskFormDefaults: NewTaskFormValues = {
   ...getSchemaDefaults(createTaskFormSchema),
   status: TaskStatus.Unstarted,
 };
 
+/** Checks whether a new-task form contains unsaved values. */
 export const newTaskFormIsDirty = ({
   assignedTo,
   labels,
@@ -35,6 +38,7 @@ export const newTaskFormIsDirty = ({
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
 // Handles logic for showing or hiding task creation form via Zustand draft state
+/** Toggles create task form. */
 export const toggleCreateTaskForm = (project: { id: string; organizationId: string; tenantId: string }) => {
   const id = `create-task-${project.id}`;
   const store = useTaskInteractionStore.getState();

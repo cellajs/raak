@@ -15,14 +15,13 @@ interface TaskSheetProps {
   organizationId: string | undefined;
 }
 
-const TaskSheet = ({ id, organizationId }: TaskSheetProps) => {
+function TaskSheet({ id, organizationId }: TaskSheetProps) {
   const isOnline = useOnlineManager();
   const { tenantId } = useParams({ strict: false });
   const { t } = useTranslation();
 
-  // Query task — pick options conditionally, but call useQuery unconditionally (rules of hooks:
-  // the params can appear/disappear during the sheet's lifetime). Cast because useQuery can't
-  // take the union of the two factories' queryKey types (same pattern as ProjectBoardPanel).
+  // Select public or authenticated options before the unconditional hook call.
+  // The cast bridges the factories' incompatible query-key types.
   const queryOpts =
     organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
   const { data: task, isLoading, isError } = useQuery(queryOpts as ReturnType<typeof taskQueryOptions>);
@@ -57,6 +56,6 @@ const TaskSheet = ({ id, organizationId }: TaskSheetProps) => {
       <TaskCard task={task} state={taskState} isSelected={false} isFocused={true} isSheet />
     </div>
   );
-};
+}
 
 export { TaskSheet };

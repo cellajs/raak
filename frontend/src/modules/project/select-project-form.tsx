@@ -29,7 +29,8 @@ interface SelectProjectFormProps {
   callback?: () => void;
 }
 
-export const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ dialog: isDialog, callback }) => {
+/** Lets users assign existing projects to the current workspace. */
+export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectFormProps) {
   const { t } = useTranslation();
   const { workspace, organization } = useWorkspaceContext();
 
@@ -139,4 +140,4 @@ export const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ dialog: is
       </form>
     </Form>
   );
-};
+}

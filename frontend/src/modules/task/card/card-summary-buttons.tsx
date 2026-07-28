@@ -5,7 +5,7 @@ import type { Task } from '~/modules/task/types';
 /**
  * SummaryButtons component displays a concise overview of a task's details, such as the number of checklist items completed and total, as well as the count of media attachments. It also indicates if the task has expandable content. This component is designed to be shown on task cards in a compact form, providing quick insights without needing to open the task details.
  */
-export const TaskCardSummaryButtons = ({ task }: { task: Task }) => {
+export function TaskCardSummaryButtons({ task }: { task: Task }) {
   const attachmentsCount = task.attachmentCount ?? 0;
 
   const checkedCount = task.checkedCount ?? 0;
@@ -35,4 +35,4 @@ export const TaskCardSummaryButtons = ({ task }: { task: Task }) => {
       {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-sm opacity-15">#{task.displayOrder}</span>}
     </>
   );
-};
+}

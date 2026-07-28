@@ -23,7 +23,9 @@ import {
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { cn } from '~/utils/cn';
 
+/** Defines the minimum width of an expanded board panel. */
 export const PANEL_MIN_WIDTH = 300;
+/** Defines the minimum width of a collapsed board panel. */
 export const COLLAPSED_PANEL_MIN_WIDTH = 50;
 
 export interface BoardLayoutPanel {
@@ -54,6 +56,7 @@ interface BoardLayoutProps {
 }
 
 // Panel widths are pixel-based (not percentage); the wrapping ScrollArea adds auto-scroll during drag-and-drop.
+/** Renders the shared board layout. */
 export function BoardLayout({
   boardId,
   panels,
@@ -194,10 +197,8 @@ export function BoardLayout({
     </ResizablePanelGroup>
   );
 
-  // Window-scroll mode (autoHeight): no horizontal ScrollArea, because any ancestor with
-  // overflow-x: scroll is a scroll container that captures the panels' sticky elements
-  // (section bars, card headers), which must pin to the window scrollport instead.
-  // overflow-x: clip cuts horizontal overflow without creating a scroll container.
+  // Window-scroll mode clips horizontal overflow without creating a scroll container,
+  // allowing section bars and card headers to remain sticky to the window.
   if (autoHeight) {
     return <div className={cn('overflow-x-clip transition', className)}>{panelGroup}</div>;
   }

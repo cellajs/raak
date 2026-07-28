@@ -23,7 +23,8 @@ import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type RequestsTableBarProps = BaseTableBarProps<Request, RequestsRouteSearchParams>;
 
-export const RequestsTableBar = ({
+/** Renders the action and filter toolbar for the requests table. */
+export function RequestsTableBar({
   selected,
   queryKey,
   searchVars,
@@ -31,7 +32,7 @@ export const RequestsTableBar = ({
   columns,
   setColumns,
   clearSelection,
-}: RequestsTableBarProps) => {
+}: RequestsTableBarProps) {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
 
@@ -162,4 +163,4 @@ export const RequestsTableBar = ({
       </SelectionActionBar>
     </TableBarContainer>
   );
-};
+}

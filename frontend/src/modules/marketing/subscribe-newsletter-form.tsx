@@ -7,6 +7,7 @@ import { toaster } from '~/modules/common/toaster/toaster';
 import { useCreateRequestMutation } from '~/modules/requests/query';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '~/modules/ui/input-group';
 
+/** Renders the subscribe newsletter form. */
 export function SubscribeNewsletterForm() {
   const { t } = useTranslation();
   const formRef = useRef<HTMLFormElement>(null);

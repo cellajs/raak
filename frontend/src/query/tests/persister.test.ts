@@ -178,7 +178,6 @@ describe('per-query IDB persister', () => {
       await persister.persistClient(makePersistedClient([q1, q2]));
       await persister.flush();
 
-      // Update task query only
       const q1Updated = makeQuery('["task","list","org-1"]', 'task', 3000, [{ id: 't1' }, { id: 't2' }]);
       await persister.persistClient(makePersistedClient([q1Updated, q2]));
       await persister.flush();
@@ -425,9 +424,8 @@ describe('session persister survives reload', () => {
   });
 
   it('registers no beforeunload teardown that would wipe the session cache on reload', () => {
-    // Regression: a `beforeunload` handler cannot tell a reload from a tab close, so wiring the
-    // session teardown there deleted the cache on every refresh. Closed tabs are reclaimed by
-    // cleanupOrphanedSessions (age) instead.
+    // `beforeunload` cannot distinguish reloads from closed tabs. Age-based orphan cleanup
+    // preserves reload caches while reclaiming closed sessions.
     expect(importTimeWindowEvents).not.toContain('beforeunload');
   });
 });

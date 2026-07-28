@@ -68,10 +68,8 @@ class AttachmentStorageService {
   }
 
   /**
-   * Stable blob URL for an attachment variant, cached per attachment. Repeated calls return the same
-   * URL (until the underlying blob changes), so a consumer that re-resolves on every render (e.g.
-   * BlockNote re-mounting an image node on resize) reuses the already-decoded image instead of
-   * reloading it. The service revokes the URL when the blob changes; callers must not revoke it.
+   * Returns a cached blob URL that remains stable until attachment data changes.
+   * The service owns URL revocation.
    */
   async getSharedBlobUrl(attachmentId: string, variant: BlobVariant, useFallback = true): Promise<string | null> {
     const key = `${attachmentId}::${variant}::${useFallback ? 'fb' : 'nf'}`;

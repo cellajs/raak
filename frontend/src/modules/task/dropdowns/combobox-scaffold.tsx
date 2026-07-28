@@ -68,7 +68,7 @@ export function ComboboxHotkeyHint({ searching, children }: { searching: boolean
 
 /**
  * Numbered hint badge for a combobox item's 1-based hotkey position. Pass `undefined` for `index`
- * to hide it, e.g. while searching or once digit hotkeys no longer apply to that item.
+ * to hide it while searching or when digit hotkeys do not apply to that item.
  */
 export function HotkeyIndexBadge({ index }: { index: number | undefined }) {
   if (index === undefined) return null;

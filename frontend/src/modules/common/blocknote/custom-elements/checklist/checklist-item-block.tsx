@@ -78,6 +78,7 @@ const checklistExtensions = createExtension({
 // Schema config is shared with the Yjs relay's server-side seeder; see shared/blocknote-schema-configs.
 export { checklistItemConfig };
 
+/** Defines the custom BlockNote checklist item. */
 export const checklistItemBlock = createReactBlockSpec(
   checklistItemConfig,
   {
@@ -105,6 +106,7 @@ export const checklistItemBlock = createReactBlockSpec(
 );
 
 // Slash menu item that inserts a checklistItem with a pre-generated checkboxId.
+/** Returns the checklist slash item. */
 export const getChecklistSlashItem = (editor: CustomBlockNoteEditor) => ({
   title: 'Todos',
   key: 'checklistItem',
@@ -120,6 +122,7 @@ export const getChecklistSlashItem = (editor: CustomBlockNoteEditor) => ({
 });
 
 // Side menu item for block type switching
+/** Inserts a checklist item from the editor side menu. */
 export const insertSideChecklistItem = (): BlockTypeSelectItem & { oneInstanceOnly?: boolean } => ({
   name: 'Todos',
   type: 'checklistItem' as const,

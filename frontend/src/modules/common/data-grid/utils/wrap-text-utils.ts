@@ -26,10 +26,8 @@ export function resolveWrapTextLines(wrapText: Maybe<number | boolean>): number 
 }
 
 /**
- * Estimate how many lines a text of `textLength` characters wraps to at a given
- * rendered column width. Deterministic and width-aware: derives a chars-per-line
- * budget from the width so estimates track column resizing and viewport size
- * instead of assuming a fixed column width.
+ * Estimates wrapped lines from text length and rendered column width.
+ * The width-derived character budget follows column and viewport resizing.
  */
 export function estimateWrappedLines(
   textLength: number,
@@ -84,6 +82,7 @@ export function tierToHeight(
   return Math.max(baseHeight, tier * lineHeight + padding);
 }
 
+/** Computes wrap text row height. */
 export function computeWrapTextRowHeight<R>(
   baseHeight: number,
   columns: readonly CalculatedColumn<R, unknown>[],

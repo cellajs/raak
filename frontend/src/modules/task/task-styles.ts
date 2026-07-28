@@ -1,6 +1,7 @@
 import { cva } from 'class-variance-authority';
 
 // Glow colors per status live in card-glow.css ([data-status] sets --glow-color-rgb)
+/** Defines the style variants for task card. */
 export const taskCardVariants = cva('task-card', {
   variants: {
     status: {
@@ -15,6 +16,7 @@ export const taskCardVariants = cva('task-card', {
   },
 });
 
+/** Defines the style variants for status button. */
 export const statusButtonVariants = cva(
   [
     'border-[rgb(var(--sc)_/_0.4)] bg-[rgb(var(--sc)_/_0.03)]',
@@ -37,6 +39,7 @@ export const statusButtonVariants = cva(
   },
 );
 
+/** Maps task statuses to their fill color classes. */
 export const statusFillColors = {
   0: 'fill-green-500',
   1: 'fill-orange-500',

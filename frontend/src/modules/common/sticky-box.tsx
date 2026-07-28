@@ -52,6 +52,7 @@ type StickyBoxProps = Omit<ComponentProps<'div'>, 'ref'> & {
  * tracking the ancestor bar's show/hide transition.
  */
 const STACK_VARS = ['--sticky-stack-nav', '--sticky-stack-top'] as const;
+/** Renders the sticky box component. */
 export function StickyBox({
   enabled = true,
   offsetTop = 0,

@@ -25,6 +25,7 @@ interface PanelProps {
   windowScroll?: boolean;
 }
 
+/** Renders the task panel content component. */
 export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks, counts, windowScroll }: PanelProps) {
   const isMobile = useBreakpointBelow('sm');
   const boardId = useBoardStore((state) => state.activeBoardId)!;

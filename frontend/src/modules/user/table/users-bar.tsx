@@ -26,7 +26,8 @@ import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type UsersTableBarProps = BaseTableBarProps<BaseUser, UsersRouteSearchParams>;
 
-export const UsersTableBar = ({
+/** Renders the action and filter toolbar for the users table. */
+export function UsersTableBar({
   selected,
   queryKey,
   searchVars,
@@ -34,7 +35,7 @@ export const UsersTableBar = ({
   columns,
   setColumns,
   clearSelection,
-}: UsersTableBarProps) => {
+}: UsersTableBarProps) {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
 
@@ -157,4 +158,4 @@ export const UsersTableBar = ({
       <div ref={inviteContainerRef} className="empty:hidden" />
     </>
   );
-};
+}

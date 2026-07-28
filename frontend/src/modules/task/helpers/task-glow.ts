@@ -13,6 +13,7 @@ const triggerGlow = (el: HTMLElement, className: string) => {
   });
 };
 
+/** Triggers section glow. */
 export const triggerSectionGlow = (type: 'iced' | 'accepted', projectId: string) => {
   const id = `section-${type}-${projectId}`;
   // Element may not be in DOM yet after optimistic update, retry once after a frame.
@@ -24,6 +25,7 @@ export const triggerSectionGlow = (type: 'iced' | 'accepted', projectId: string)
   else requestAnimationFrame(attempt);
 };
 
+/** Triggers task glow. */
 export const triggerTaskGlow = (taskId: string) => {
   const el = document.getElementById(taskId);
   if (!el || el.hasAttribute('data-suppress-glow')) return;

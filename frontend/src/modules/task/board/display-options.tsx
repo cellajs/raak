@@ -10,7 +10,7 @@ interface Props {
   className?: string;
 }
 
-const DisplayOptions = ({ className = '' }: Props) => {
+function DisplayOptions({ className = '' }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
@@ -64,6 +64,6 @@ const DisplayOptions = ({ className = '' }: Props) => {
       </ToggleGroup>
     </TooltipButton>
   );
-};
+}
 
 export { DisplayOptions };

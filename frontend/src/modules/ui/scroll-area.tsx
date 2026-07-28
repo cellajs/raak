@@ -3,6 +3,7 @@ import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
 import * as React from 'react';
 import { cn } from '~/utils/cn';
 
+/** Renders the styled scroll area primitive. */
 export function ScrollArea({
   className,
   children,
@@ -89,6 +90,7 @@ export function ScrollArea({
   );
 }
 
+/** Renders the styled scroll bar primitive. */
 export function ScrollBar({
   className,
   orientation = 'vertical',

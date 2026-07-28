@@ -4,14 +4,8 @@ const syncTrustedStaleTime = Number.POSITIVE_INFINITY;
 /** Fallback staleTime when the sync stream cannot be trusted (5 minutes). */
 const syncFallbackStaleTime = 5 * 60 * 1000;
 
-/**
- * Mirror stream health below the realtime layer so stale-time logic avoids a circular import.
- * The realtime store pushes state through `setSyncStreamHealthy`. Healthy means the stream is
- * not in a hard-error state: disconnected, connecting, catching-up, and live all count, because
- * catchup reconciles the cache on every (re)connect. Only a failing stream falls back to time,
- * so route-loader prefetches trust already-synced lists instead of refetching them on reload.
- * Starts trusted so the first prefetch after reload does not race the stream to `connecting`.
- */
+// Mirror stream health below realtime to avoid a circular import. Catch-up reconciles
+// every connection, so only a hard stream error enables time-based freshness.
 let syncStreamHealthy = true;
 
 // Cleared on a delivery shortfall (a promised seq that never arrived), restored on a clean
@@ -23,9 +17,11 @@ export const setSyncStreamHealthy = (healthy: boolean): void => {
   syncStreamHealthy = healthy;
 };
 
+/** Marks synchronized delivery as trusted for the current session. */
 export const setSyncDeliveryTrusted = (trusted: boolean): void => {
   syncDeliveryTrusted = trusted;
 };
+/** Reports whether synchronized delivery is trusted for the current session. */
 export const isSyncDeliveryTrusted = (): boolean => syncDeliveryTrusted;
 
 /**

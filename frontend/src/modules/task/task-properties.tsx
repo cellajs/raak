@@ -46,6 +46,7 @@ export const statusOptions = [
 const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> =>
   Object.fromEntries(options.map((o) => [o.value, o]));
 
+/** Indexes status options by value. */
 export const statusOptionsByValue = byValue(statusOptions) as Record<
   (typeof statusOptions)[number]['value'],
   (typeof statusOptions)[number]

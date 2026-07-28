@@ -32,7 +32,8 @@ import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type MembersTableBarProps = MembersTableWrapperProps & BaseTableBarProps<Member, MembersRouteSearchParams>;
 
-export const MembersTableBar = ({
+/** Renders the action and filter toolbar for the members table. */
+export function MembersTableBar({
   channel,
   selected,
   searchVars,
@@ -42,7 +43,7 @@ export const MembersTableBar = ({
   setColumns,
   isSheet = false,
   clearSelection,
-}: MembersTableBarProps) => {
+}: MembersTableBarProps) {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
 
@@ -204,4 +205,4 @@ export const MembersTableBar = ({
       <div ref={inviteContainerRef} className="empty:hidden" />
     </>
   );
-};
+}

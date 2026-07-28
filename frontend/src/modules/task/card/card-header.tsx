@@ -27,7 +27,8 @@ interface TaskCardHeaderProps {
   isSheet?: boolean;
 }
 
-export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) => {
+/** Renders the task card header. */
+export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useUserStore();
@@ -184,4 +185,4 @@ export const TaskCardHeader = ({ task, isSheet = false }: TaskCardHeaderProps) =
       </div>
     </div>
   );
-};
+}

@@ -40,14 +40,15 @@ interface Props {
   onChange: (items: ChannelBase[]) => void;
 }
 
-export const ProjectSuggestionCombobox = ({
+/** Renders the project suggestion combobox component. */
+export function ProjectSuggestionCombobox({
   value,
   workspaceId,
   tenantId,
   targetOrgId,
   organizationName,
   onChange,
-}: Props) => {
+}: Props) {
   const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -208,4 +209,4 @@ export const ProjectSuggestionCombobox = ({
       </ComboboxContent>
     </Combobox>
   );
-};
+}

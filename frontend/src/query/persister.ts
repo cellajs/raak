@@ -456,7 +456,5 @@ export async function cleanupOrphanedSessions(): Promise<void> {
 // Advertise this tab's liveness for mutation-record ownership (see "Per-tab mutation ownership").
 holdMutationOwnershipLock();
 
-// A tab-close cleanup is intentionally NOT wired to `beforeunload`: that event also fires on a
-// plain reload, so tearing down here wiped the session cache on every refresh. A genuinely closed
-// tab's scope is reclaimed by `cleanupOrphanedSessions` (age plus mutation-lock liveness) on a
-// later startup, so the session cache survives refresh while closed tabs are still collected.
+// `beforeunload` also fires on reload, so orphan cleanup uses age and mutation-lock
+// liveness to preserve refresh caches while reclaiming closed tabs.

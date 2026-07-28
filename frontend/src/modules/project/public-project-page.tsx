@@ -3,13 +3,8 @@ import type { GetPublicProjectResponse } from 'sdk';
 import { PageHeader } from '~/modules/common/page/header';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 
-export const PublicProjectPage = ({
-  project,
-  children,
-}: {
-  project: GetPublicProjectResponse;
-  children: ReactNode;
-}) => {
+/** Renders the public project page. */
+export function PublicProjectPage({ project, children }: { project: GetPublicProjectResponse; children: ReactNode }) {
   return (
     <>
       <TaskSheetHandler />
@@ -17,4 +12,4 @@ export const PublicProjectPage = ({
       <div className="group/project flex flex-col p-0 sm:gap-2 sm:p-3 md:gap-3">{children}</div>
     </>
   );
-};
+}

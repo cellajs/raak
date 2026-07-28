@@ -10,7 +10,8 @@ interface HeroProps {
   chips?: string[];
 }
 
-export const Hero = ({ title, text, children, chips }: HeroProps) => {
+/** Renders the hero component. */
+export function Hero({ title, text, children, chips }: HeroProps) {
   const { t } = useTranslation();
   const { theme } = useUIStore();
   const { ref, inView } = useInView({
@@ -58,7 +59,7 @@ export const Hero = ({ title, text, children, chips }: HeroProps) => {
       <BackgroundCurve />
     </section>
   );
-};
+}
 
 /**
  * Decorative SVG curve at the edge of a gradient section.
@@ -69,13 +70,13 @@ export const Hero = ({ title, text, children, chips }: HeroProps) => {
  *                   'top': curve at section top (content → gradient).
  * @param height - CSS height value, e.g. clamp(). Controls curve depth.
  */
-export const BackgroundCurve = ({
+export function BackgroundCurve({
   height = 'clamp(3rem, 8vw, 8rem)',
   position = 'bottom',
 }: {
   height?: string;
   position?: 'top' | 'bottom';
-}) => {
+}) {
   const isTop = position === 'top';
 
   return (
@@ -92,4 +93,4 @@ export const BackgroundCurve = ({
       />
     </svg>
   );
-};
+}

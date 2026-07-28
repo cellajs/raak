@@ -22,7 +22,8 @@ import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type AttachmentsTableBarProps = AttachmentsTableProps & BaseTableBarProps<Attachment, AttachmentsRouteSearchParams>;
 
-export const AttachmentsTableBar = ({
+/** Renders the action and filter toolbar for the attachments table. */
+export function AttachmentsTableBar({
   channel,
   selected,
   searchVars,
@@ -33,7 +34,7 @@ export const AttachmentsTableBar = ({
   isSheet = false,
   canUpload = false,
   queryKey,
-}: AttachmentsTableBarProps) => {
+}: AttachmentsTableBarProps) {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
   const { open } = useAttachmentsUploadDialog(channel.tenantId, channel.id);
@@ -122,4 +123,4 @@ export const AttachmentsTableBar = ({
       )}
     </>
   );
-};
+}

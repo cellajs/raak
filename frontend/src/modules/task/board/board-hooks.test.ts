@@ -34,7 +34,7 @@ const makeSplitPanel = (
   } as unknown as EnrichedProject,
 });
 
-// A local, non-project panel (explainer). Used to stand in for any order-only board column.
+// A local non-project panel representing any order-only board column.
 const makeExtraPanel = (panelId: string): BoardResizablePanel => ({ kind: 'explainer', panelId });
 
 const makeLabelsPanel = (panelId = 'labels'): BoardResizablePanel => ({ kind: 'labels', panelId });

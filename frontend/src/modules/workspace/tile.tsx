@@ -15,7 +15,7 @@ import { getChannelRoute } from '~/utils/channel-route';
  * by `membership.workspaceId`. React Query memoizes the `select` per subscriber, so each
  * tile only re-renders when its own slice changes. There are no N per-workspace project fetches.
  */
-export const WorkspaceTile = ({ entity }: { entity: Workspace }) => {
+export function WorkspaceTile({ entity }: { entity: Workspace }) {
   const { t } = useTranslation();
   const { to, params } = getChannelRoute(entity);
 
@@ -70,4 +70,4 @@ export const WorkspaceTile = ({ entity }: { entity: Workspace }) => {
       </Card>
     </Link>
   );
-};
+}

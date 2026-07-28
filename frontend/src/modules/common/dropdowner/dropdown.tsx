@@ -6,7 +6,8 @@ import { FocusTrap } from '~/modules/common/focus-trap';
 import { Popover, PopoverContent } from '~/modules/ui/popover';
 import { cn } from '~/utils/cn';
 
-export const DropdownerDropdown = ({ dropdown }: { dropdown: InternalDropdown }) => {
+/** Renders the dropdowner dropdown component. */
+export function DropdownerDropdown({ dropdown }: { dropdown: InternalDropdown }) {
   const triggerEl = dropdown.triggerRef?.current;
 
   // Portaled content (popup positioning, combobox autofocus) can jump the document scroll
@@ -63,9 +64,9 @@ export const DropdownerDropdown = ({ dropdown }: { dropdown: InternalDropdown })
 
   if (dropdown.kind === 'menu') return <MenuDropdown dropdown={dropdown} triggerEl={triggerEl} />;
   return <PanelDropdown dropdown={dropdown} triggerEl={triggerEl} />;
-};
+}
 
-const MenuDropdown = ({ dropdown, triggerEl }: { dropdown: InternalDropdown; triggerEl: HTMLElement }) => {
+function MenuDropdown({ dropdown, triggerEl }: { dropdown: InternalDropdown; triggerEl: HTMLElement }) {
   const triggerFocusRef = useLatestRef(triggerEl);
 
   const onOpenChange = (nextOpen: boolean) => {
@@ -89,9 +90,9 @@ const MenuDropdown = ({ dropdown, triggerEl }: { dropdown: InternalDropdown; tri
       </Menu.Portal>
     </Menu.Root>
   );
-};
+}
 
-const PanelDropdown = ({ dropdown, triggerEl }: { dropdown: InternalDropdown; triggerEl: HTMLElement }) => {
+function PanelDropdown({ dropdown, triggerEl }: { dropdown: InternalDropdown; triggerEl: HTMLElement }) {
   const triggerFocusRef = useLatestRef(triggerEl);
 
   const onOpenChange = (nextOpen: boolean) => {
@@ -107,4 +108,4 @@ const PanelDropdown = ({ dropdown, triggerEl }: { dropdown: InternalDropdown; tr
       </PopoverContent>
     </Popover>
   );
-};
+}

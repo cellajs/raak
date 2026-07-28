@@ -28,13 +28,14 @@ import {
 } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
-export const SelectMembers = ({
+/** Renders the members selector. */
+export function SelectMembers({
   value: currentAssigned,
   projectId,
   onChange,
   taskId,
   triggerWidth = 320,
-}: SelectMembersProps) => {
+}: SelectMembersProps) {
   const { t } = useTranslation();
   const { tenantId, organization } = useOrganizationLayoutContext();
 
@@ -95,10 +96,8 @@ export const SelectMembers = ({
       items={showedMembers}
       itemToStringLabel={(item) => item.name}
       itemToStringValue={(item) => item.id}
-      // base-ui defaults to Object.is for value/item comparison. Our `value` entries
-      // (UserMinimalBase from task.assignedTo) and `items` (Member from members query)
-      // are distinct objects, so without this the indicator never shows selection and
-      // clicking a "selected" item appends a duplicate instead of toggling off.
+      // Values and items have different object shapes, so compare IDs to keep selection
+      // indicators and toggling aligned.
       isItemEqualToValue={(item, value) => item.id === value.id}
       value={selectedMembers}
       onValueChange={(items) => {
@@ -176,4 +175,4 @@ export const SelectMembers = ({
       </div>
     </Combobox>
   );
-};
+}

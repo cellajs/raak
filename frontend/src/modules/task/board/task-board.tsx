@@ -46,13 +46,12 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   const projects = projectsProp ?? flattenInfiniteData<Project>(fetchedData);
   const isLoadingProjects = !projectsProp && isPending;
 
-  // Set the active board in the store
   useEffect(() => {
     setActiveBoard(boardId, workspace ? 'workspace' : 'project');
   }, [boardId, workspace, setActiveBoard]);
 
-  // Close the mobile create-task dialog on navigation. One board-level subscription
-  // instead of one per PanelProjectActions instance (which registered N per board).
+  // One board-level subscription closes the mobile create-task dialog on navigation,
+  // avoiding one subscription per panel action.
   useEffect(() => router.subscribe('onBeforeLoad', () => useDialoger.getState().remove('create-task')), [router]);
 
   const BoardView = (() => {

@@ -2,6 +2,7 @@ import type { Project } from 'sdk';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 
+/** Applies print-friendly configuration before exporting a task table. */
 export const configureForExport = (tasks: Task[], projects: Omit<Project, 'counts'>[]): Task[] => {
   const parser = new DOMParser();
 

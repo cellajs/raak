@@ -10,9 +10,8 @@ interface LabelPaletteEntry {
 }
 
 /**
- * Theme-aware class triples per curated label color token. Primary labels store the token
- * (not hex) in `label.color`; secondary labels still carry legacy free-hex values, so check
- * with isLabelColorToken before resolving.
+ * Theme-aware class triples per curated label color token.
+ * Secondary labels may contain free-form hex values and require a token check.
  */
 export const labelPalette: Record<LabelColorToken, LabelPaletteEntry> = {
   red: {
@@ -82,6 +81,6 @@ export const labelPalette: Record<LabelColorToken, LabelPaletteEntry> = {
   },
 };
 
-/** Narrow a stored label color to a curated palette token (legacy labels carry free hex). */
+/** Narrows a stored label color to a curated palette token. */
 export const isLabelColorToken = (color: string | null | undefined): color is LabelColorToken =>
   color != null && color in labelPalette;

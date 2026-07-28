@@ -364,10 +364,8 @@
   }
 }
 
-/* Sticky stacking offset published by pinned section bars (see sticky-box.tsx).
-   Registered so the publisher can transition the variable itself: consumers track the
-   animating value through calc() while their own `top` never transitions, keeping
-   stuck/released mode switches instant. */
+/* Pinned section bars animate this registered offset. Consumers follow it through calc()
+   while their own top property switches immediately. */
 @property --sticky-stack-top {
   syntax: "<length>";
   inherits: true;

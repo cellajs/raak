@@ -12,6 +12,7 @@ interface BoardEmptyProps {
   publicView?: boolean;
 }
 
+/** Renders the board empty component. */
 export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
   const { t } = useTranslation();
   const isTablet = useBreakpointBelow('md');

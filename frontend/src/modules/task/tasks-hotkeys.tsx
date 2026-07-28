@@ -30,6 +30,7 @@ interface TasksHotkeysProps {
 
 type StrictBoardPanel = ProjectResizablePanel;
 
+/** Registers keyboard navigation and actions for task views. */
 export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const boardPanelData = useTaskBoardStore(useShallow((state) => state.panelData[boardId]));
   const { tenantId, organization } = useOrganizationLayoutContext();
@@ -213,7 +214,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     const handlers = buildFieldHandlers(targetTask, { taskMutation, user });
     const base = { triggerId, triggerRef: { current: trigger }, taskId: targetTask.id };
 
-    // A switch keeps each call matched to the right discriminated-union member — no cast.
+    // The switch keeps each call matched to its discriminated-union member without a cast.
     switch (field) {
       case 'labels':
         return handleTaskDropdownClick({

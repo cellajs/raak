@@ -49,6 +49,7 @@ const keys = createEntityKeys<ProjectFilters>('project');
 // Register query keys for dynamic lookup in stream handlers
 registerEntityQueryKeys('project', keys);
 
+/** Defines React Query cache keys for project. */
 export const projectQueryKeys = {
   ...keys,
   detail: {
@@ -122,6 +123,7 @@ export const projectQueryOptions = (id: string, organizationId: string, tenantId
   });
 
 // Query Options to get a public project by id or slug
+/** Builds React Query options for public project. */
 export const publicProjectQueryOptions = (id: string, bySlug = false) =>
   queryOptions({
     queryKey: projectQueryKeys.detail.public(id),
@@ -211,6 +213,7 @@ export const useProjectDeleteMutation = () => {
   });
 };
 
+/** Provides the React Query mutation for assign project. */
 export const useAssignProjectMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -256,6 +259,7 @@ export const useAssignProjectMutation = () => {
   });
 };
 
+/** Provides the React Query mutation for project move. */
 export const useProjectMoveMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;

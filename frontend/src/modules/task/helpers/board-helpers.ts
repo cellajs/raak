@@ -10,6 +10,7 @@ import type { ProjectResizablePanel, Task } from '~/modules/task/types';
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
 
+/** Prepares board tasks. */
 export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced: boolean) => {
   return tasks
     .filter(
@@ -21,6 +22,7 @@ export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced
     .sort(sortTaskOrder);
 };
 
+/** Builds the stable state key for a board panel. */
 export const makePanelKey = (projectId: string, section: SectionsValue) => {
   const keyParts = Object.entries(section)
     .map(([key, values]) => {
@@ -34,18 +36,15 @@ export const makePanelKey = (projectId: string, section: SectionsValue) => {
 };
 
 /**
- * Whether a board-layout key belongs to a project — either the project's single-panel key
- * (`projectId`) or one of its split-panel keys (`makePanelKey` → `${projectId}-…`). Precise
- * prefix match, unlike a substring test which false-positives when one id is a substring of another.
+ * Checks whether a board-layout key identifies a project's base or split panel.
+ * Exact prefixes prevent collisions between IDs containing one another.
  */
 const layoutKeyBelongsToProject = (layoutKey: string, projectId: string) =>
   layoutKey === projectId || layoutKey.startsWith(`${projectId}-`);
 
 /**
- * Recompute the board-layout widths for a project whose panel is being (re)split into `sections`.
- * `currentViewSections` is the project's existing split (undefined = single panel): when absent the
- * project's keys collapse to one `projectId` entry keeping their total width + position; otherwise the
- * project's width is divided evenly across the new section-panel keys. Pure — the caller persists it.
+ * Recomputes project panel widths after sections change.
+ * A single panel retains total width and position; split panels divide that width evenly.
  */
 export const computePanelLayoutSplit = (
   layout: Record<string, number>,
@@ -82,6 +81,7 @@ export const sortByMembership = (projects: EnrichedProject[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
 
+/** Prepares board panels. */
 export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: BoardPanelData | undefined) => {
   const sortedProjects = sortByMembership(projects);
 
@@ -101,6 +101,7 @@ export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: 
   });
 };
 
+/** Formats section label for display. */
 export const formatSectionLabel = (filters: SectionsValue): string => {
   return Object.entries(filters)
     .map(([key, values]) => {
@@ -114,6 +115,7 @@ export const formatSectionLabel = (filters: SectionsValue): string => {
     .join('\n');
 };
 
+/** Normalizes panel widths. */
 export const normalizePanelWidths = (storedLayout: Record<string, number>, currentProjectIds: string[]) => {
   const layout: Record<string, number> = {};
 

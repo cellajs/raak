@@ -221,9 +221,8 @@ describe('catchup processor (view-driven)', () => {
   });
 
   it('a caught-up view (frontier <= cursor) neither fetches nor invalidates the cached list', async () => {
-    // The reload invariant: after cache restore the cursor already sits at the frontier, so
-    // catchup must confirm "nothing new" without refetching the warm list. Uses a fresh org so
-    // the module-level count tracker treats this as a first sight (no count-drift comparison).
+    // Reload contract: a cursor at the frontier confirms the warm cache without refetching.
+    // A fresh organization avoids count-drift comparison in the module-level tracker.
     const keys = createEntityKeys<Record<string, never>>('attachment');
     const deltaFetch = vi.fn(async () => ({ items: [], total: 0 }));
     registerEntityQueryKeys('attachment', keys, deltaFetch);

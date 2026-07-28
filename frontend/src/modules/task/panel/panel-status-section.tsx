@@ -22,7 +22,7 @@ interface PanelStatusSectionProps {
   onToggle?: (newState: boolean, type: TogglableStatusType) => void;
   /** Ref to the panel's scrollable viewport, for scroll-direction visibility */
   scrollRef: RefObject<HTMLElement | null>;
-  /** When true, visibility tracks window scroll instead of the viewport element */
+  /** Uses window scrolling when true and the viewport element when false. */
   windowMode: boolean;
 }
 
