@@ -1,17 +1,16 @@
 # Architecture
 
-This document is the system-level tour of a Cella app and the starting point for the rest of the architecture documentation.
+This document explains the basics of Cella.
 
 ### TL;DR
 
 Cella is a **full-stack TypeScript project template for collaborative, content-rich web apps**. Most
 feature work follows a familiar path: store rows in PostgreSQL, expose API endpoints, and read them
-in React. Live updates, offline support, and tenant isolation build on that path. One configuration
-describes the app's data types, how they relate, and the behavior Cella generates for them.
+in React. Live updates, offline support, and tenant isolation build on that path.
 
 ## Overview
 
-This diagram shows the normal production topology of a Cella app. Your own setup could be different since you can choose to add or remove workers. You can even **'cohost' them into a single backend VM**.
+This diagram shows a full production stack of a Cella app. Your own setup could be different since for example Yjs is optional. You can also **'cohost' CDC and Yjs into a single backend VM**.
 
 ```
    ┌──────────────┐                          ┌──────────────────────────────┐
@@ -104,7 +103,9 @@ Backend modules define Hono routes with Zod schemas. Those routes produce an Ope
 
 Operational concerns follow the same modular shape. Node services share OpenTelemetry setup for traces, metrics, and logs. PostgreSQL CDC and Yjs collaboration are independent workers with health and shutdown contracts. Pulumi deploys the services to Scaleway, with GitHub Actions providing the delivery path. See [Observability](./OTEL.md) and the [infrastructure guide](../infra/README.md) for those deeper views.
 
-The test suite covers ordinary feature behavior as well as the seams that make this architecture safe: generated contracts, permission parity, cross-scope access, database constraints, sync catchup, and offline replay. See [Testing](./TESTING.md) for the available test modes.
+The test suite covers ordinary feature behavior and the cross-system behavior that protects this
+architecture: generated contracts, permission parity, cross-scope access, database constraints,
+sync catchup, and offline replay. See [Testing](./TESTING.md) for the available test modes.
 
 ## Repository map
 
