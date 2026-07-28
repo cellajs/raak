@@ -8,6 +8,7 @@ import type { CustomBlockNoteEditor, IconType } from '~/modules/common/blocknote
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -34,20 +35,22 @@ export const notifyBlock = createReactBlockSpec(notifyConfig, {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent>
-            <DropdownMenuLabel>Notify Type</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {notifyTypes.map(({ icon: Icon, title, value }) => {
-              return (
-                <DropdownMenuItem
-                  key={value}
-                  className="flex min-h-8 flex-row gap-2 p-1"
-                  onClick={() => editor.updateBlock(block, { type: 'notify', props: { type: value } })}
-                >
-                  {<Icon className={'notify-icon'} data-notify-icon-type={value} />}
-                  <span className="text-sm">{title}</span>
-                </DropdownMenuItem>
-              );
-            })}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Notify Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifyTypes.map(({ icon: Icon, title, value }) => {
+                return (
+                  <DropdownMenuItem
+                    key={value}
+                    className="flex min-h-8 flex-row gap-2 p-1"
+                    onClick={() => editor.updateBlock(block, { type: 'notify', props: { type: value } })}
+                  >
+                    {<Icon className={'notify-icon'} data-notify-icon-type={value} />}
+                    <span className="text-sm">{title}</span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
         {/*Rich text field for user to type in*/}

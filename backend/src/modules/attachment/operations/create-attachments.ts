@@ -44,6 +44,7 @@ export async function createAttachmentsOp(ctx: AuthContext, rawInput: CreateAtta
       convertedKey: att.convertedKey || null,
       convertedContentType: att.convertedContentType || null,
       thumbnailKey: att.thumbnailKey || null,
+      thumbnailTinyKey: att.thumbnailTinyKey || null,
       groupId: att.groupId || null,
       // cella change: Raak attachments may be hosted by a task.
       taskId: att.taskId || null,

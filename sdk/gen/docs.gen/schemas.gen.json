@@ -155,7 +155,13 @@
         "thumbnailKey": {
           "type": ["string", "null"],
           "required": true,
-          "description": "Storage object key for the generated thumbnail; null when none.",
+          "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
+          "maxLength": 2048
+        },
+        "thumbnailTinyKey": {
+          "type": ["string", "null"],
+          "required": true,
+          "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
           "maxLength": 2048
         },
         "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -188,6 +194,7 @@
       "originalKey": "uploads/x7d6csd6xo4nqwl7k09e163g/rightfully_lest_noted.mp3",
       "convertedKey": null,
       "thumbnailKey": null,
+      "thumbnailTinyKey": null,
       "createdAt": "2024-10-12T12:26:26.417Z",
       "createdBy": "0de893f1-dbbf-43d7-b4da-932e8fed4f40",
       "updatedAt": "2024-10-12T12:26:26.417Z",
@@ -2092,6 +2099,7 @@
             "properties": {
               "id": { "type": "string", "required": true },
               "name": { "type": "string", "required": true },
+              "slug": { "type": "string", "required": true },
               "color": {
                 "type": ["string", "null"],
                 "required": true
@@ -2118,6 +2126,7 @@
               "properties": {
                 "id": { "type": "string", "required": true },
                 "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
                 "color": {
                   "type": ["string", "null"],
                   "required": true

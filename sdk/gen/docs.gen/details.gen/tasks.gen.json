@@ -100,6 +100,7 @@
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
                   "color": {
                     "type": ["string", "null"],
                     "required": true
@@ -126,6 +127,7 @@
                   "properties": {
                     "id": { "type": "string", "required": true },
                     "name": { "type": "string", "required": true },
+                    "slug": { "type": "string", "required": true },
                     "color": {
                       "type": ["string", "null"],
                       "required": true
@@ -429,6 +431,7 @@
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
                         "color": {
                           "type": ["string", "null"],
                           "required": true
@@ -455,6 +458,7 @@
                         "properties": {
                           "id": { "type": "string", "required": true },
                           "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
                           "color": {
                             "type": ["string", "null"],
                             "required": true
@@ -1010,6 +1014,7 @@
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
                         "color": {
                           "type": ["string", "null"],
                           "required": true
@@ -1036,6 +1041,7 @@
                         "properties": {
                           "id": { "type": "string", "required": true },
                           "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
                           "color": {
                             "type": ["string", "null"],
                             "required": true
@@ -1413,6 +1419,7 @@
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
                         "color": {
                           "type": ["string", "null"],
                           "required": true
@@ -1439,6 +1446,7 @@
                         "properties": {
                           "id": { "type": "string", "required": true },
                           "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
                           "color": {
                             "type": ["string", "null"],
                             "required": true
@@ -1750,6 +1758,7 @@
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
+                        "slug": { "type": "string", "required": true },
                         "color": {
                           "type": ["string", "null"],
                           "required": true
@@ -1776,6 +1785,7 @@
                         "properties": {
                           "id": { "type": "string", "required": true },
                           "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
                           "color": {
                             "type": ["string", "null"],
                             "required": true
@@ -2294,6 +2304,7 @@
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
                   "color": {
                     "type": ["string", "null"],
                     "required": true
@@ -2320,6 +2331,7 @@
                   "properties": {
                     "id": { "type": "string", "required": true },
                     "name": { "type": "string", "required": true },
+                    "slug": { "type": "string", "required": true },
                     "color": {
                       "type": ["string", "null"],
                       "required": true
@@ -2619,6 +2631,7 @@
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
+                  "slug": { "type": "string", "required": true },
                   "color": {
                     "type": ["string", "null"],
                     "required": true
@@ -2645,6 +2658,7 @@
                   "properties": {
                     "id": { "type": "string", "required": true },
                     "name": { "type": "string", "required": true },
+                    "slug": { "type": "string", "required": true },
                     "color": {
                       "type": ["string", "null"],
                       "required": true

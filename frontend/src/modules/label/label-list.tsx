@@ -41,10 +41,14 @@ const combinePanelLabels = (results: { data?: { items: Label[] }; isLoading: boo
 
 type LabelListScopeProps = { entityId: string; windowScroll?: boolean };
 
-/** Group labels into rows, then filter (or, in highlight mode, keep all and tint later). */
+/** Newest-first by creation, mirroring the tasks table's default order. */
+const byCreatedAtDesc = (a: LabelRow, b: LabelRow) =>
+  a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
+
+/** Group labels into rows and sort newest-first, then filter (or, in highlight mode, keep all and tint later). */
 const useLabelRows = (labels: Label[], highlight: boolean, words: string[]) =>
   useMemo(() => {
-    const grouped = groupLabelRows(labels);
+    const grouped = groupLabelRows(labels).sort(byCreatedAtDesc);
     if (highlight || !words.length) return grouped;
     return grouped.filter((row) => matchesSearch(row, words));
   }, [labels, highlight, words]);

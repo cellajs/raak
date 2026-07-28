@@ -6,7 +6,7 @@ import type { Organization, Project } from 'sdk';
 import { zUserMinimalBase } from 'sdk/zod.gen';
 import { BlockNoteMinimalHtml } from '~/modules/common/blocknote/minimal-html';
 import type { RenderCellProps } from '~/modules/common/data-grid';
-import { SelectColumn } from '~/modules/common/data-grid';
+import { estimateWrappedLines, SelectColumn } from '~/modules/common/data-grid';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { TriggerRef } from '~/modules/common/dialoger/use-dialoger';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
@@ -174,13 +174,44 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         minWidth: 280,
         resizable: true,
         wrapText: 3,
-        estimateLines: (row) => {
-          const len = row.summaryLength ?? 0;
-          if (len <= 50) return 1;
-          if (len <= 100) return 2;
-          return 3;
-        },
+        estimateLines: (row, { width }) => estimateWrappedLines(row.summaryLength ?? 0, width),
         renderCell: (props) => <SummaryCell {...props} navigate={navigate} setTriggerRef={setTriggerRef} />,
+      },
+      {
+        key: 'todos',
+        name: t('c:todo_other'),
+        minBreakpoint: 'sm',
+        width: 70,
+        placeholderValue: '-',
+        renderCell: ({ row }) => {
+          const checked = row.checkedCount ?? 0;
+          const total = row.checkboxCount ?? 0;
+          if (total === 0) return null;
+          return (
+            <div className="inline-flex items-center gap-1">
+              <span className="text-success">{checked}</span>
+              <span className="opacity-50">/</span>
+              <span>{total}</span>
+            </div>
+          );
+        },
+      },
+      {
+        key: 'attachments',
+        name: t('c:attachment_other'),
+        minBreakpoint: 'sm',
+        width: 70,
+        placeholderValue: '-',
+        renderCell: ({ row }) => {
+          const count = row.attachmentCount ?? 0;
+          if (count === 0) return null;
+          return (
+            <div className="inline-flex items-center gap-1">
+              <PaperclipIcon className="icon-xs -rotate-45 opacity-50" />
+              <span className="">{count}</span>
+            </div>
+          );
+        },
       },
       {
         key: 'status',
@@ -276,42 +307,6 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
           <ProjectCell row={row} tabIndex={tabIndex} organization={opts?.organization} tenantId={opts?.tenantId} />
         ),
         modes: { compact: { width: 50 } },
-      },
-      {
-        key: 'todos',
-        name: t('c:todo_other'),
-        minBreakpoint: 'sm',
-        width: 80,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          const checked = row.checkedCount ?? 0;
-          const total = row.checkboxCount ?? 0;
-          if (total === 0) return null;
-          return (
-            <div className="inline-flex items-center gap-1">
-              <span className="text-success">{checked}</span>
-              <span className="opacity-50">/</span>
-              <span>{total}</span>
-            </div>
-          );
-        },
-      },
-      {
-        key: 'attachments',
-        name: t('c:attachment_other'),
-        minBreakpoint: 'sm',
-        width: 100,
-        placeholderValue: '-',
-        renderCell: ({ row }) => {
-          const count = row.attachmentCount ?? 0;
-          if (count === 0) return null;
-          return (
-            <div className="inline-flex items-center gap-1">
-              <PaperclipIcon className="icon-xs -rotate-45 opacity-50" />
-              <span className="">{count}</span>
-            </div>
-          );
-        },
       },
       {
         key: 'createdBy',

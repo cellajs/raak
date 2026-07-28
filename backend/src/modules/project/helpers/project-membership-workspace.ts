@@ -42,6 +42,16 @@ function isProjectMembershipTarget(
 
 export async function resolveProjectWorkspaceId(ctx: AuthContext, workspaceId: string): Promise<string> {
   const { entity } = await getValidChannel(ctx, workspaceId, 'workspace', 'read');
+  // A project may only be assigned to a workspace in the same organization as the request context.
+  // Without this guard a user with cross-org read access could link a project into a foreign-org
+  // workspace, producing a membership whose organizationId (the project's org) mismatches the
+  // workspace's org and later fails org-scoped reads (e.g. labels) with a spurious 404.
+  if (entity.organizationId !== ctx.var.organization.id) {
+    throw new AppError(403, 'forbidden', 'warn', {
+      entityType: 'workspace',
+      meta: { action: 'assign', reason: 'cross_organization' },
+    });
+  }
   return entity.id;
 }
 

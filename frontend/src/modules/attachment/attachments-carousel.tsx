@@ -205,6 +205,7 @@ export function AttachmentsCarousel({
                 filename={filename}
                 altName={i18n.t('c:attachment')}
                 onPanStateToggle={toggleWatchDrag}
+                onBackdropClick={isDialog ? () => removeDialog() : undefined}
               />
             </CarouselItem>
           );

@@ -45,6 +45,29 @@ const basicBlockTypes = {
   },
 };
 
+/**
+ * Read an image blob's intrinsic pixel size locally. Offline-first: it decodes the blob the user
+ * picked, so it needs no network and no server-side metadata, and returns null if it cannot decode.
+ */
+const measureImageBlobSize = (blob: Blob): Promise<{ width: number; height: number } | null> =>
+  new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      const size =
+        image.naturalWidth > 0 && image.naturalHeight > 0
+          ? { width: image.naturalWidth, height: image.naturalHeight }
+          : null;
+      URL.revokeObjectURL(url);
+      resolve(size);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    image.src = url;
+  });
+
 export function UppyFilePanel({
   onComplete,
   onError,
@@ -69,6 +92,8 @@ export function UppyFilePanel({
   latestOnCompleteRef.current = onComplete;
   const latestOnErrorRef = useRef(onError);
   latestOnErrorRef.current = onError;
+  // Intrinsic image dimensions measured from the local blob during upload, keyed by attachment id.
+  const imageSizesRef = useRef(new Map<string, { width: number; height: number }>());
 
   const blockType = block && block.type in basicBlockTypes ? (block.type as keyof typeof basicBlockTypes) : 'file';
   const uppyOptions: CustomUppyOpt = useMemo(
@@ -115,6 +140,13 @@ export function UppyFilePanel({
 
             latestOnErrorRef.current?.(error);
           })
+          .on('file-added', async (file) => {
+            // Measure the intrinsic size from the local blob during upload so it is ready when the
+            // block is set below, letting the block reserve the correct box before the image loads.
+            if (!file.type?.startsWith('image/') || !file.meta.attachmentId || !(file.data instanceof Blob)) return;
+            const size = await measureImageBlobSize(file.data);
+            if (size) imageSizesRef.current.set(file.meta.attachmentId, size);
+          })
           .on('transloadit:complete', (assembly) => {
             if (assembly?.error) throw new Error(assembly?.error);
 
@@ -126,11 +158,21 @@ export function UppyFilePanel({
             if (!currentBlock) return;
 
             for (const attachment of attachments) {
-              // Private → display reference by attachment id (presigned); public → cloud key (CDN).
-              // attachmentId is the canonical entity linkage a host entity derives its references from.
-              const url = mediaMode === 'private-attachment' ? attachment.id : attachment.originalKey;
+              // Private → display reference by attachment id (presigned, resolved per-type in
+              // resolveBlockNoteFileRef). Public → cloud key (CDN): images use the mid-size thumbnail,
+              // other types the converted variant, so inline descriptions never load the full-size file.
+              const publicKey =
+                currentBlock.type === 'image'
+                  ? attachment.thumbnailKey || attachment.convertedKey || attachment.originalKey
+                  : attachment.convertedKey || attachment.originalKey;
+              const url = mediaMode === 'private-attachment' ? attachment.id : publicKey;
               editor.updateBlock(currentBlock, {
-                props: { name: attachment.filename, url, attachmentId: attachment.id },
+                props: {
+                  name: attachment.filename,
+                  url,
+                  attachmentId: attachment.id,
+                  ...imageSizesRef.current.get(attachment.id),
+                },
               });
             }
 

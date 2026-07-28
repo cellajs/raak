@@ -54,6 +54,7 @@ export const labelSchema = z
 export const labelEmbeddedSchema = z.object({
   id: z.string(),
   name: z.string(),
+  slug: z.string(),
   color: z.string().nullable(),
   mode: z.enum(labelModes),
   icon: z.string().nullable(),

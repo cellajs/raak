@@ -40,7 +40,7 @@ export const LabelPage = ({ labelId, entity, entityId, windowScroll }: LabelPage
 
   const { data: label, isLoading } = useQuery(labelQueryOptions(labelId, organizationId, tenantId));
 
-  // Same list query as the panel table (cache-shared): resolves the name group's siblings
+  // Same list query as the panel table (cache-shared): resolves the slug group's siblings
   const listOptions = labelsQueryOptions({
     ...(entity === 'workspace' ? { workspaceId: entityId } : { projectId: entityId }),
     organizationId,
@@ -56,6 +56,11 @@ export const LabelPage = ({ labelId, entity, entityId, windowScroll }: LabelPage
     if (!label) return [];
     return findLabelGroup(allLabels ?? [], label.id)?.siblingIds ?? [label.id];
   }, [label, allLabels]);
+
+  // Slug groups collapse across projects for display, but epics keep per-row identity: rename and
+  // delete act on this one epic, never its same-slug siblings in other projects. Secondary tags are
+  // one logical label, so they operate on the whole group.
+  const editSiblingIds = label && label.mode === 'epic' ? [label.id] : siblingIds;
 
   const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
   const deleteLabels = useLabelDeleteMutation(tenantId, organizationId);
@@ -86,12 +91,12 @@ export const LabelPage = ({ labelId, entity, entityId, windowScroll }: LabelPage
     const name = editingName?.trim();
     setEditingName(null);
     if (!name || name === label.name) return;
-    // Secondary name-groups rename every sibling row; epics rename their single row
-    for (const siblingId of siblingIds) updateLabel.mutate({ id: siblingId, ops: { name } });
+    // Secondary slug-groups rename every sibling row; epics rename their single row
+    for (const siblingId of editSiblingIds) updateLabel.mutate({ id: siblingId, ops: { name } });
   };
 
   const onDelete = async () => {
-    const rows = (allLabels ?? []).filter((l) => siblingIds.includes(l.id));
+    const rows = (allLabels ?? []).filter((l) => editSiblingIds.includes(l.id));
     await deleteLabels.mutateAsync(rows.length ? rows : [label]);
     goBack();
   };

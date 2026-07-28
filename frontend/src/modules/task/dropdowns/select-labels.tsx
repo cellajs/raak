@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQueries } from '@tanstack/react-query';
 import { useMatch } from '@tanstack/react-router';
-import { CheckIcon, ChevronDownIcon, TagIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, FlagIcon, TagIcon } from 'lucide-react';
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
@@ -44,11 +44,11 @@ import { cn } from '~/utils/cn';
 // collide with a real label name when selection flows through onValueChange.
 const CREATE_SENTINEL_PREFIX = '__create__';
 
-// The task label picker only offers secondary labels; primary/epic labels have dedicated UI.
+// The task label picker offers secondary tags and epics; primary labels have dedicated task-card UI.
 // Module-scoped so its identity is stable: an inline combine rebuilds `labels` every render,
 // cascading through the projectLabels / initLabels memos that depend on it by reference.
-const combineSecondaryLabels = (results: { data?: { items: Label[] } }[]): Label[] =>
-  results.flatMap((r) => r.data?.items ?? []).filter((l) => l.mode === 'secondary');
+const combineTaskLabels = (results: { data?: { items: Label[] } }[]): Label[] =>
+  results.flatMap((r) => r.data?.items ?? []).filter((l) => l.mode !== 'primary');
 
 const renderLabelItem = (
   label: Label | TaskLabel,
@@ -57,17 +57,18 @@ const renderLabelItem = (
   searchValue: string,
   hotkeyIndex?: number,
 ) => {
-  const isSelected = selectedLabels.some((l) => l.name === label.name);
+  const isSelected = selectedLabels.some((l) => l.slug === label.slug);
+  const LabelModeIcon = label.mode === 'epic' ? FlagIcon : TagIcon;
   return (
     <ComboboxItem
       key={label.id}
-      value={label.name}
+      value={label.slug}
       className={cn(
         'group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal',
         isSelected && 'font-medium',
       )}
     >
-      <TagIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
+      <LabelModeIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
       <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
       <span className="pointer-events-none flex size-4 items-center justify-center">
         {isSelected && <CheckIcon className="pointer-coarse:size-5 size-4 text-success" />}
@@ -117,7 +118,7 @@ export const SelectLabels = ({
 
   const labels = useQueries({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
-    combine: combineSecondaryLabels,
+    combine: combineTaskLabels,
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -149,11 +150,11 @@ export const SelectLabels = ({
 
   // Top 8 labels by recency → usedCount → name, excluding already-selected
   const suggestedLabels = useMemo(() => {
-    const selectedNames = new Set(selectedLabels.map((l) => l.name));
+    const selectedSlugs = new Set(selectedLabels.map((l) => l.slug));
     return initLabels
-      .filter((l) => !selectedNames.has(l.name))
+      .filter((l) => !selectedSlugs.has(l.slug))
       .sort((a, b) => {
-        const recency = getScore(organizationId, b.name) - getScore(organizationId, a.name);
+        const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
         if (recency !== 0) return recency;
         const usage = (b.usedCount ?? 0) - (a.usedCount ?? 0);
         if (usage !== 0) return usage;
@@ -172,6 +173,8 @@ export const SelectLabels = ({
     onChange(updatedLabels);
   };
 
+  // For non-create rows `value` is the picked label's slug (the ComboboxItem value); the slug is the
+  // cross-project group identity, so a suggested representative resolves to this project's own row.
   const handleSelectClick = async (value?: string | null): Promise<void> => {
     if (!value) return;
 
@@ -184,7 +187,7 @@ export const SelectLabels = ({
 
     if (inputRef.current && !isMobile) inputRef.current.focus();
 
-    const existingLabel = selectedLabels.find((label) => label.name === value);
+    const existingLabel = selectedLabels.find((label) => label.slug === value);
     if (existingLabel) {
       const updatedLabels = selectedLabels.filter((label) => label.id !== existingLabel.id);
       setSelectedLabels(updatedLabels);
@@ -192,12 +195,12 @@ export const SelectLabels = ({
       return;
     }
 
-    const newLabel = projectLabels.find((label) => label.name === value);
+    const newLabel = projectLabels.find((label) => label.slug === value);
     if (newLabel) {
       const updatedLabels = getItemsSortedByName([...selectedLabels, newLabel]);
       setSelectedLabels(updatedLabels);
       updateTaskLabels(updatedLabels);
-      trackUsage(organizationId, [newLabel.name]);
+      trackUsage(organizationId, [newLabel.slug]);
       return;
     }
 
@@ -207,12 +210,15 @@ export const SelectLabels = ({
   const handleCreateClick = async (value: string): Promise<void> => {
     setSearchValue('');
 
-    const existingLabel = projectLabels.find(({ name }) => name === value);
-    if (existingLabel) return handleSelectClick(value);
+    // `value` is the typed name; resolve identity through its slug so an existing label with the
+    // same slug (regardless of display name) is reused rather than duplicated.
+    const slug = labelSlug(value);
+    const existingLabel = projectLabels.find((label) => label.slug === slug);
+    if (existingLabel) return handleSelectClick(existingLabel.slug);
 
     if (inputRef.current && !isMobile) inputRef.current.focus();
 
-    const matchedLabelColor = labels.find(({ name }) => name === value)?.color;
+    const matchedLabelColor = labels.find((label) => label.slug === slug)?.color;
     const fallbackColor = labelColors[Math.floor(Math.random() * labelColors.length)];
 
     const newLabelData = {
@@ -220,7 +226,7 @@ export const SelectLabels = ({
       name: value,
       // Ad-hoc created labels are always secondary; primary/epic labels are managed elsewhere.
       mode: 'secondary' as const,
-      slug: labelSlug(value),
+      slug,
       icon: null,
       color: matchedLabelColor ?? fallbackColor,
       keywords: '',
@@ -244,7 +250,7 @@ export const SelectLabels = ({
     const finalLabels = updatedLabels.map((l) => (l.id === newLabel.id ? createdLabel : l));
     setSelectedLabels(finalLabels);
     updateTaskLabels(finalLabels);
-    trackUsage(organizationId, [value]);
+    trackUsage(organizationId, [newLabelData.slug]);
   };
 
   return (
@@ -258,7 +264,7 @@ export const SelectLabels = ({
         // Digit hotkey: pick suggested label by 1-based index
         const hotkeyLabel = matchDigitHotkey(suggestedLabels, value, { max: 8 });
         if (hotkeyLabel) {
-          handleSelectClick(hotkeyLabel.name);
+          handleSelectClick(hotkeyLabel.slug);
           return;
         }
         // Replace spaces with dashes only when there's content
@@ -326,7 +332,7 @@ export const SelectLabels = ({
                 </ComboboxGroup>
               </>
             )}
-            {searchValue.trim() !== '' && !projectLabels.some(({ name }) => name === searchValue) && (
+            {searchValue.trim() !== '' && !projectLabels.some((l) => l.slug === labelSlug(searchValue)) && (
               <ComboboxItem
                 value={`${CREATE_SENTINEL_PREFIX}${searchValue}`}
                 className={cn(comboboxActionButtonClass, 'mt-1')}

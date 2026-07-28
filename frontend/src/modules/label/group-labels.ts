@@ -3,16 +3,19 @@ import type { Label } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
 
 /**
- * Group labels into visible rows: secondary tags group by name across projects (aggregating
- * usedCount and collecting sibling ids), epics stay concrete per-project rows. The single
- * source of the grouping rule; the panel table, label page and picker all derive from it.
- * `preferredProjectId` picks which sibling represents a group (e.g. the current project's copy).
+ * Group labels into visible rows by slug: rows sharing a slug across projects collapse into one
+ * (aggregating usedCount and collecting sibling ids), so a workspace shows a single row per label.
+ * Slug is the stable cross-project identity; it survives renames, where the display name does not.
+ * The single source of the display grouping rule; the panel table, label page and picker all derive
+ * from it. Operations keep their own identity: rename/delete on epics act per row (id), so merged
+ * display never cascades a mutation across another project's epic. `preferredProjectId` picks which
+ * sibling represents a group (e.g. the current project's copy).
  */
 export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: string } = {}): LabelRow[] => {
   const rowMap = new Map<string, Omit<LabelRow, 'nameLower' | 'keywordsLower'>>();
 
   for (const label of labels) {
-    const groupKey = label.mode === 'epic' ? label.id : label.name;
+    const groupKey = label.slug;
     const existing = rowMap.get(groupKey);
 
     if (!existing) {
@@ -41,7 +44,7 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
   }));
 };
 
-/** The group row containing a given label id, if any (epics are their own group). */
+/** The group row containing a given label id, if any (matched through its slug siblings). */
 export const findLabelGroup = (labels: Label[], labelId: string): LabelRow | undefined =>
   groupLabelRows(labels).find((row) => row.siblingIds.includes(labelId));
 
@@ -55,7 +58,7 @@ export const deduplicateLabels = (labels: Label[], preferredProjectId: string, o
 
   return rows.sort((a, b) => {
     if (getScore && organizationId) {
-      const diff = getScore(organizationId, b.name) - getScore(organizationId, a.name);
+      const diff = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
       if (diff !== 0) return diff;
     }
     return a.name.localeCompare(b.name);

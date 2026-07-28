@@ -218,7 +218,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       >
         <CardContent
           id={`${task.id}-content`}
-          className="space-between relative flex flex-col p-1.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-[.is-focused]/task:before:opacity-100 max-sm:px-2.5! sm:px-2! sm:before:-left-px"
+          className="space-between relative flex flex-col p-1.5! px-2.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
         >
           <SeenMark
             productId={task.id}

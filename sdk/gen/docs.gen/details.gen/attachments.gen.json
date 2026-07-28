@@ -167,7 +167,13 @@
                   "thumbnailKey": {
                     "type": ["string", "null"],
                     "required": true,
-                    "description": "Storage object key for the generated thumbnail; null when none.",
+                    "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
+                    "maxLength": 2048
+                  },
+                  "thumbnailTinyKey": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
                     "maxLength": 2048
                   },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -201,6 +207,7 @@
               "originalKey": "uploads/31mz5oaqf10oe7y51pr5lcu4/vice.mar",
               "convertedKey": null,
               "thumbnailKey": null,
+              "thumbnailTinyKey": null,
               "createdAt": "2024-11-21T01:19:53.533Z",
               "createdBy": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "updatedAt": "2024-11-21T01:19:53.533Z",
@@ -235,6 +242,7 @@
               "originalKey": "uploads/co9kzp2r8sr1z8uzj99km4ai/bah_oof_truthfully.css",
               "convertedKey": null,
               "thumbnailKey": null,
+              "thumbnailTinyKey": null,
               "createdAt": "2024-10-29T04:35:17.725Z",
               "createdBy": "772a771f-c150-465e-9635-46594859fc3d",
               "updatedAt": "2024-10-29T04:35:17.725Z",
@@ -494,7 +502,13 @@
                   "thumbnailKey": {
                     "type": ["string", "null"],
                     "required": true,
-                    "description": "Storage object key for the generated thumbnail; null when none.",
+                    "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
+                    "maxLength": 2048
+                  },
+                  "thumbnailTinyKey": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
                     "maxLength": 2048
                   },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -539,6 +553,7 @@
               "originalKey": "uploads/37irnjjhhc4mupuqz0iqmny8/ugh_besides.svgz",
               "convertedKey": null,
               "thumbnailKey": null,
+              "thumbnailTinyKey": null,
               "createdAt": "2024-04-18T21:12:59.543Z",
               "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "updatedAt": "2024-04-18T21:12:59.543Z",
@@ -573,6 +588,7 @@
               "originalKey": "uploads/q63pob5r5tp1lpahn69ym92q/instead_volleyball.jpe",
               "convertedKey": null,
               "thumbnailKey": null,
+              "thumbnailTinyKey": null,
               "createdAt": "2024-02-24T16:36:46.247Z",
               "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
               "updatedAt": "2024-02-24T16:36:46.247Z",
@@ -758,7 +774,13 @@
                   "thumbnailKey": {
                     "type": ["string", "null"],
                     "required": true,
-                    "description": "Storage object key for the generated thumbnail; null when none.",
+                    "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
+                    "maxLength": 2048
+                  },
+                  "thumbnailTinyKey": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
                     "maxLength": 2048
                   },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -803,6 +825,7 @@
               "originalKey": "uploads/37irnjjhhc4mupuqz0iqmny8/ugh_besides.svgz",
               "convertedKey": null,
               "thumbnailKey": null,
+              "thumbnailTinyKey": null,
               "createdAt": "2024-04-18T21:12:59.543Z",
               "createdBy": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "updatedAt": "2024-04-18T21:12:59.543Z",
@@ -837,6 +860,7 @@
               "originalKey": "uploads/q63pob5r5tp1lpahn69ym92q/instead_volleyball.jpe",
               "convertedKey": null,
               "thumbnailKey": null,
+              "thumbnailTinyKey": null,
               "createdAt": "2024-02-24T16:36:46.247Z",
               "createdBy": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
               "updatedAt": "2024-02-24T16:36:46.247Z",
@@ -961,7 +985,13 @@
             "thumbnailKey": {
               "type": ["string", "null"],
               "required": false,
-              "description": "Storage object key for the generated thumbnail; null when none.",
+              "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
+              "maxLength": 2048
+            },
+            "thumbnailTinyKey": {
+              "type": ["string", "null"],
+              "required": false,
+              "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
               "maxLength": 2048
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -1122,7 +1152,7 @@
                   "variant": {
                     "type": "string",
                     "required": true,
-                    "enum": ["original", "thumbnail", "converted"]
+                    "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"]
                   },
                   "url": { "type": "string", "required": true }
                 }
@@ -1220,7 +1250,7 @@
                 "variant": {
                   "type": "string",
                   "required": false,
-                  "enum": ["original", "thumbnail", "converted"]
+                  "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"]
                 }
               }
             }
@@ -1393,7 +1423,13 @@
             "thumbnailKey": {
               "type": ["string", "null"],
               "required": true,
-              "description": "Storage object key for the generated thumbnail; null when none.",
+              "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
+              "maxLength": 2048
+            },
+            "thumbnailTinyKey": {
+              "type": ["string", "null"],
+              "required": true,
+              "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
               "maxLength": 2048
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -1421,6 +1457,7 @@
           "originalKey": "uploads/x7d6csd6xo4nqwl7k09e163g/rightfully_lest_noted.mp3",
           "convertedKey": null,
           "thumbnailKey": null,
+          "thumbnailTinyKey": null,
           "createdAt": "2024-10-12T12:26:26.417Z",
           "createdBy": "0de893f1-dbbf-43d7-b4da-932e8fed4f40",
           "updatedAt": "2024-10-12T12:26:26.417Z",
@@ -1653,7 +1690,13 @@
             "thumbnailKey": {
               "type": ["string", "null"],
               "required": true,
-              "description": "Storage object key for the generated thumbnail; null when none.",
+              "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
+              "maxLength": 2048
+            },
+            "thumbnailTinyKey": {
+              "type": ["string", "null"],
+              "required": true,
+              "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
               "maxLength": 2048
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -1681,6 +1724,7 @@
           "originalKey": "uploads/x7d6csd6xo4nqwl7k09e163g/rightfully_lest_noted.mp3",
           "convertedKey": null,
           "thumbnailKey": null,
+          "thumbnailTinyKey": null,
           "createdAt": "2024-10-12T12:26:26.417Z",
           "createdBy": "0de893f1-dbbf-43d7-b4da-932e8fed4f40",
           "updatedAt": "2024-10-12T12:26:26.417Z",

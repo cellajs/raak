@@ -5,7 +5,7 @@ import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { findWorkspaceByIdOrSlug, workspaceQueryKeys, workspaceQueryOptions } from '~/modules/workspace/query';
 import { resolveChannelBySlug } from '~/query/basic/resolve-channel-by-slug';
-import { queryClient } from '~/query/query-client';
+import { cacheRestored, queryClient } from '~/query/query-client';
 
 type WorkspaceRouteBeforeLoadArgs = {
   params: { tenantId: string; slug: string };
@@ -41,6 +41,9 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
   // Prefetch projects and tasks so views (board/table) don't waterfall. Labels are project-homed,
   // so they are prefetched per project in the loop below (alongside the per-project task queries).
   // Board uses excludeArchived='true' as a separate cache key, so prefetch both variants.
+  // Await cache restore first so already-synced lists are visible and these prefetches no-op;
+  // without it a reload races restore, sees an empty cache, and refetches every project's tasks.
+  await cacheRestored;
   queryClient.prefetchInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
   queryClient.prefetchInfiniteQuery(
     projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),

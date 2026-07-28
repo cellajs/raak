@@ -32,13 +32,20 @@ export const LabelSelectedButtons = ({
   const deleteLabels = useLabelDeleteMutation(tenantId, organizationId);
 
   const onRemove = async () => {
-    // A row aggregates same-name labels across projects; removing it removes the whole group.
+    // A secondary row aggregates same-slug labels across projects; removing it removes the whole
+    // group. Epics keep per-row identity even when their slug-group shows as one row, so removing
+    // one deletes only the selected epic, not its same-slug siblings in other projects.
     // Groups are re-derived from the cache at action time so stale selection snapshots can't leak in.
     const labels = cachedLabels();
     const byId = new Map(labels.map((label) => [label.id, label]));
     const toDelete = selectedLabelIds.flatMap((selectedId) => {
       const row = findLabelGroup(labels, selectedId);
-      return row ? row.siblingIds.flatMap((id) => byId.get(id) ?? []) : [];
+      if (!row) return [];
+      if (row.mode === 'epic') {
+        const selected = byId.get(selectedId);
+        return selected ? [selected] : [];
+      }
+      return row.siblingIds.flatMap((id) => byId.get(id) ?? []);
     });
     await deleteLabels.mutateAsync(toDelete);
     clearSelection();

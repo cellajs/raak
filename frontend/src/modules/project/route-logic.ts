@@ -4,7 +4,7 @@ import { findProjectByIdOrSlug, projectQueryKeys, projectQueryOptions } from '~/
 import { resetTaskInteraction } from '~/modules/task/helpers/board-helpers';
 import { tasksCanonicalOptions } from '~/modules/task/query';
 import { resolveChannelBySlug } from '~/query/basic/resolve-channel-by-slug';
-import { queryClient } from '~/query/query-client';
+import { cacheRestored, queryClient } from '~/query/query-client';
 
 type ProjectRouteBeforeLoadArgs = {
   params: { tenantId: string; slug: string };
@@ -37,6 +37,9 @@ export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBe
 
   // Warm the canonical task and label lists together so the board and its always-present labels
   // panel don't waterfall on mount (labels otherwise render a beat after tasks). Fire-and-forget.
+  // Await cache restore first so an already-synced list is visible and these prefetches no-op;
+  // without it a reload races restore, sees an empty cache, and refetches everything.
+  await cacheRestored;
   queryClient.prefetchQuery(tasksCanonicalOptions({ organizationId, tenantId, projectId: projectData.id }));
   queryClient.prefetchQuery(labelsCanonicalOptions({ organizationId, tenantId, projectId: projectData.id }));
 

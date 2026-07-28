@@ -10,10 +10,10 @@ import { insertLabels } from '#/modules/label/label-queries';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
+import { resolveProjectWorkspaceId } from '#/modules/project/helpers/project-membership-workspace';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
-import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
@@ -38,7 +38,9 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
   const user = ctx.var.user;
   const organization = ctx.var.organization;
 
-  const { entity: workspace } = await getValidChannel(ctx, workspaceId, 'workspace', 'read');
+  // Guarded resolution: rejects a workspace in a different organization than the request context,
+  // keeping a new project's membership org-consistent with the workspace it is filed under.
+  const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
 
   // Check if adding is allowed based on the organization's restrictions
   const currentProjectsCount = await getOrgEntityCount(ctx, organization.id, 'project');
@@ -109,7 +111,7 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
     createdBy: user.id,
     role: 'admin' as const,
     entity: { ...project, tenantId: organization.tenantId },
-    extraFields: { workspaceId: workspace.id },
+    extraFields: { workspaceId: resolvedWorkspaceId },
   }));
 
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
