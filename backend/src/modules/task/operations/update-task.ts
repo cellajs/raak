@@ -81,7 +81,7 @@ export async function updateTaskOp(
     // When projectId changes, validate membership and clean up project-scoped fields
     if ('projectId' in resolved.values && resolved.values.projectId !== entity.projectId) {
       const newProjectId = resolved.values.projectId as string;
-      const userIdsToCheck = [...(entity.assignedTo as string[]), entity.createdBy as string].filter(Boolean);
+      const userIdsToCheck = (entity.assignedTo as string[]).filter(Boolean);
       const projectMembers = await findProjectMemberUserIds(txCtx, {
         projectId: newProjectId,
         userIds: userIdsToCheck,
@@ -90,9 +90,8 @@ export async function updateTaskOp(
 
       // Remove assignees not in the target project
       updateValues.assignedTo = (entity.assignedTo as string[]).filter((uid) => memberSet.has(uid));
-      // Reassign creator if they're not a member of the target project
-      updateValues.createdBy =
-        entity.createdBy && memberSet.has(entity.createdBy as string) ? (entity.createdBy as string) : user.id;
+      // createdBy is an org-level audit field, not project-scoped, and is immutable at the DB level.
+      // Leave it on the original creator across a move.
       // Strip labels because they are project-scoped.
       updateValues.labels = [];
 

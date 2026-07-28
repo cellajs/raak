@@ -42,7 +42,7 @@
     background-color: transparent;
   }
   20% {
-    background-color: rgba(var(--glow-color-rgb), var(--glow-opacity, 0.5));
+    background-color: rgba(var(--glow-color-rgb), var(--glow-opacity, 0.35));
   }
   100% {
     background-color: transparent;
@@ -59,11 +59,13 @@
   --glow-opacity: 0.35;
 }
 
-.animate-highlight-flash {
+/* Driven by a data attribute (not a class) so a React re-render of the card cannot clobber it:
+   React reconciles className but leaves attributes it does not manage untouched. */
+[data-highlight-flash] {
   animation: highlight-flash 1s ease-out forwards;
 }
 
 /* Suppress glow on board cards while their sheet is open */
-[data-suppress-glow].animate-highlight-flash {
+[data-suppress-glow][data-highlight-flash] {
   animation: none;
 }

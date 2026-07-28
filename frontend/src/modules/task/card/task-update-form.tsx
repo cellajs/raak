@@ -1,5 +1,7 @@
+import type { RefObject } from 'react';
 import { isUnconditionalCan } from 'shared';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import type { BlockNoteContentApi } from '~/modules/common/blocknote/blocknote-editor';
 import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative-blocknote';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
@@ -20,6 +22,12 @@ const checkboxExtensions = [checkedExtension({ persisted: true })];
 
 interface TaskUpdateFormProps {
   task: Task;
+  /** Exposes the editor's imperative API to the parent slot (handoff, warm-on-hover, checkbox toggle). */
+  contentApiRef?: RefObject<BlockNoteContentApi | null>;
+  /** True when this is the focused editing editor; false when it is only warmed behind the static view. */
+  active?: boolean;
+  /** Fires once the editor is mounted. */
+  onEditorReady?: () => void;
 }
 
 /**
@@ -27,7 +35,7 @@ interface TaskUpdateFormProps {
  * CollaborativeBlockNote owns the Yjs gates and fallback, this wires task specifics
  * (permission, members, attachments, card-state handlers, cache policy).
  */
-export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
+export function TaskUpdateForm({ task, contentApiRef, active = true, onEditorReady }: TaskUpdateFormProps) {
   const { tenantId } = useOrganizationLayoutContext();
 
   const project = findProjectByIdOrSlug(task.projectId, tenantId);
@@ -58,6 +66,8 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
         canEdit={canEdit}
         description={task.description}
         updateData={updateData}
+        contentApiRef={contentApiRef}
+        onEditorReady={onEditorReady}
         waitingFallback={
           // Faded read-only preview while waiting for WS sync (avoids empty flash).
           // noGutter: the wrapper already applies taskDescriptionGutterStyle, so the preview
@@ -67,7 +77,7 @@ export function TaskUpdateForm({ task }: TaskUpdateFormProps) {
           </div>
         }
         editable
-        autoFocus
+        autoFocus={active}
         members={projectMembers}
         className={expandedStyle}
         dense

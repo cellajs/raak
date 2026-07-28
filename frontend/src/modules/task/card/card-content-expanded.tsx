@@ -16,6 +16,14 @@ interface TaskCardContentExpandedProps {
    * doubled and the preview lines up pixel-for-pixel with the editor that replaces it.
    */
   noGutter?: boolean;
+  /** Fires once the static description HTML is computed, letting the parent defer the edit->static swap. */
+  onReady?: () => void;
+  /**
+   * Description content that overrides `task.description`. Set by the edit->static handoff to the
+   * editor's just-committed content, so the swap paints the final edit even before the cache settles
+   * (the relay materializes and re-patches the cache moments later with the same content).
+   */
+  descriptionOverride?: string;
 }
 
 /**
@@ -24,21 +32,28 @@ interface TaskCardContentExpandedProps {
  * We intentionally do NOT apply `inert` here even in read-only mode. `inert` blocks
  * text selection in the entire subtree, preventing read-only users from copying the description.
  */
-export function TaskCardContentExpanded({ task, noGutter }: TaskCardContentExpandedProps) {
+export function TaskCardContentExpanded({
+  task,
+  noGutter,
+  onReady,
+  descriptionOverride,
+}: TaskCardContentExpandedProps) {
   const { tenantId } = useOrganizationLayoutContext();
 
-  if (!task.description) return null;
+  const description = descriptionOverride ?? task.description;
+  if (!description) return null;
 
   return (
     <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
       <BlockNoteFullHtml
         id={`blocknote-${task.id}`}
-        defaultValue={task.description}
+        defaultValue={description}
         className={noGutter ? staticEditorBase : expandedStyle}
         dense
         clickOpensPreview
         tenantId={tenantId}
         organizationId={task.organizationId}
+        onReady={onReady}
       />
     </Suspense>
   );

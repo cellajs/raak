@@ -32,6 +32,8 @@ interface BlockNoteFullHtmlProps {
   /** Needed to resolve private (id-referenced) inline media via presigned URLs. */
   tenantId?: string;
   organizationId?: string;
+  /** Fires once when the description HTML has been computed (first non-empty paint). */
+  onReady?: () => void;
 }
 
 /**
@@ -80,6 +82,7 @@ function BlockNoteFullHtml({
   clickOpensPreview = false,
   tenantId: propTenantId,
   organizationId: propOrganizationId,
+  onReady,
 }: BlockNoteFullHtmlProps) {
   const mode = useUIStore((state) => state.mode);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,6 +91,17 @@ function BlockNoteFullHtml({
     html: '',
     mediaItems: [],
   });
+
+  // Signal readiness once, on the first non-empty paint, so a caller can defer swapping to this view.
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+  const readyFiredRef = useRef(false);
+  useEffect(() => {
+    if (renderState.html && !readyFiredRef.current) {
+      readyFiredRef.current = true;
+      onReadyRef.current?.();
+    }
+  }, [renderState.html]);
 
   // blocksToFullHTML internally calls flushSync, which cannot run during render
   // or during React's commit phase (useLayoutEffect). We use useEffect + queueMicrotask

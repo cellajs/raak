@@ -1,13 +1,17 @@
-const triggerGlow = (el: HTMLElement, className: string) => {
-  requestAnimationFrame(() => {
-    const cleanup = () => el.classList.remove(className);
+// Trigger the flash via a data attribute (see card-glow.css). A class would be wiped whenever React
+// reconciles the element's className on re-render; an attribute React does not manage survives.
+const GLOW_ATTR = 'data-highlight-flash';
 
-    if (el.classList.contains(className)) {
+const triggerGlow = (el: HTMLElement) => {
+  requestAnimationFrame(() => {
+    const cleanup = () => el.removeAttribute(GLOW_ATTR);
+
+    if (el.hasAttribute(GLOW_ATTR)) {
       cleanup();
-      void el.offsetWidth; // Force reflow before re-adding
+      void el.offsetWidth; // Force reflow before re-adding so a repeat glow restarts
     }
 
-    el.classList.add(className);
+    el.setAttribute(GLOW_ATTR, '');
     el.addEventListener('animationend', cleanup, { once: true });
     el.addEventListener('animationcancel', cleanup, { once: true });
   });
@@ -19,7 +23,7 @@ export const triggerSectionGlow = (type: 'iced' | 'accepted', projectId: string)
   // Element may not be in DOM yet after optimistic update, retry once after a frame.
   const attempt = () => {
     const el = document.getElementById(id);
-    if (el) triggerGlow(el, 'animate-highlight-flash');
+    if (el) triggerGlow(el);
   };
   if (document.getElementById(id)) attempt();
   else requestAnimationFrame(attempt);
@@ -35,12 +39,12 @@ export const triggerTaskGlow = (taskId: string) => {
     const observer = new MutationObserver(() => {
       if (el.dataset.state !== 'editing') {
         observer.disconnect();
-        triggerGlow(el, 'animate-highlight-flash');
+        triggerGlow(el);
       }
     });
     observer.observe(el, { attributes: true, attributeFilter: ['data-state'] });
     return;
   }
 
-  triggerGlow(el, 'animate-highlight-flash');
+  triggerGlow(el);
 };

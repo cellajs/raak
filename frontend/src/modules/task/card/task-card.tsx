@@ -14,17 +14,14 @@ import { FocusTrap } from '~/modules/common/focus-trap';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
-import { TaskCardContentCollapsed } from '~/modules/task/card/card-content-collapsed';
-import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
+import { CardDescriptionSlot } from '~/modules/task/card/card-description-slot';
 import { TaskCardDragPreview } from '~/modules/task/card/card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
+import { PreserveDescriptionHeight } from '~/modules/task/card/preserve-description-height';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import { TaskUpdateForm } from '~/modules/task/card/task-update-form';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
-import { toggleTaskCheckbox } from '~/modules/task/helpers/toggle-checkbox';
-import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
@@ -47,7 +44,6 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
   const taskRef = useRef<HTMLDivElement>(null);
   const expandedAtRef = useRef<number>(0);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
-  const { mutate: mutateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
   const mobileClosestEdge = useMobileTaskDragIndicatorStore((store) =>
     store.indicator?.taskId === task.id ? store.indicator.edge : null,
   );
@@ -74,17 +70,6 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     // Ignore clicks that are text selection (user dragged to highlight) within this card
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0 && taskRef.current?.contains(selection.anchorNode)) return;
-
-    // Intercept checkbox clicks in expanded state: toggle data directly, stay expanded.
-    if (state === 'expanded' && !isReadOnly) {
-      const wrapper = clickTarget.closest('.checklist-checkbox-wrapper') ?? clickTarget.closest('.checklist-item');
-      const checkboxId = wrapper?.querySelector<HTMLInputElement>('input.checklist-checkbox')?.dataset.checkboxId;
-      if (checkboxId && task.description) {
-        event.preventDefault();
-        toggleTaskCheckbox(task, checkboxId, mutateTask);
-        return;
-      }
-    }
 
     // Ignore clicks on interactive elements
     const interactive = clickTarget.closest(
@@ -236,13 +221,9 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
               <TaskCardHeader task={task} isSheet={isSheet} />
             </StickyBox>
           )}
-          {effectiveState === 'collapsed' ? (
-            <TaskCardContentCollapsed task={task} />
-          ) : effectiveState === 'editing' ? (
-            <TaskUpdateForm task={task} />
-          ) : (
-            <TaskCardContentExpanded task={task} />
-          )}
+          <PreserveDescriptionHeight>
+            <CardDescriptionSlot task={task} state={effectiveState} isReadOnly={isReadOnly} />
+          </PreserveDescriptionHeight>
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />
         </CardContent>
         {dropIndicatorEdge && <DropIndicator edge={dropIndicatorEdge} gap={0.25} />}

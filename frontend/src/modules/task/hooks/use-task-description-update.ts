@@ -1,5 +1,6 @@
 import { deriveDescriptionProps } from '~/modules/common/blocknote/derive-description-props';
 import { patchDescriptionCaches } from '~/modules/common/blocknote/description-cache';
+import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { taskKeys, useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { findInCache } from '~/query/basic/find-in-list-cache';
@@ -21,6 +22,9 @@ export const useTaskDescriptionUpdate = (task: Task) => {
         { detailKey: taskKeys.detail.byId(task.id), listKey: taskKeys.list.org(task.organizationId) },
         { description, ...derived, updatedAt: new Date().toISOString() },
       );
+      // Match label/status edits: the standard mutation glows via query.ts, but the collaborative
+      // path patches caches directly. triggerTaskGlow defers itself until the card leaves editing.
+      triggerTaskGlow(task.id);
       return;
     }
 
