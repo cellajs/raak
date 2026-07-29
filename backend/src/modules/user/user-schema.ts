@@ -8,7 +8,7 @@ import { languageSchema, paginationQuerySchema, validCDNUrlSchema, validNameSche
 import { userBaseSchema } from '#/schemas/user-schema-base';
 import { mockUserResponse } from './user-mocks';
 
-export const enabledOAuthProvidersEnum = z.enum([...appConfig.enabledOAuthProviders] as [
+export const enabledOAuthProvidersSchema = z.enum([...appConfig.enabledOAuthProviders] as [
   EnabledOAuthProvider,
   ...EnabledOAuthProvider[],
 ]);

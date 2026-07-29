@@ -10,8 +10,8 @@ import {
   batchResponseSchema,
   excludeArchivedQuerySchema,
   includeQuerySchema,
-  maxLength,
   paginationQuerySchema,
+  validIdSchema,
   validNameSchema,
   validTempIdSchema,
 } from '#/schemas';
@@ -62,7 +62,7 @@ export const workspaceUpdateBodySchema = workspaceContract.updateBodySchema;
 export const workspaceListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder'),
   order: z.enum(['asc', 'desc']).default('asc'),
-  organizationId: z.string().max(maxLength.id).optional(),
+  organizationId: validIdSchema.optional(),
   role: z.enum(roles.all).optional(),
   excludeArchived: excludeArchivedQuerySchema,
   include: includeQuerySchema,

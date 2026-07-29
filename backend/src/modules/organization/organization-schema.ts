@@ -8,7 +8,6 @@ import { membershipBaseSchema } from '#/modules/memberships/memberships-schema';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { setupConfigSchema } from '#/modules/organization/setup-config-schema';
 import {
-  booleanTransformSchema,
   excludeArchivedQuerySchema,
   includeQuerySchema,
   languageSchema,
@@ -16,6 +15,7 @@ import {
   noDuplicateSlugsRefine,
   paginationQuerySchema,
   validCDNUrlSchema,
+  validIdSchema,
   validNameSchema,
   validSlugSchema,
   validTempIdSchema,
@@ -113,15 +113,10 @@ export const organizationCreateBodySchema = organizationContract.createItemSchem
 
 export const organizationUpdateBodySchema = organizationContract.updateBodySchema;
 
-export const organizationQuerySchema = z.object({
-  slug: booleanTransformSchema.optional(),
-  include: includeQuerySchema,
-});
-
 export const organizationListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder'),
   order: z.enum(['asc', 'desc']).default('asc'),
-  relatableUserId: z.string().max(maxLength.id).optional(),
+  relatableUserId: validIdSchema.optional(),
   role: z.enum(roles.all).optional(),
   excludeArchived: excludeArchivedQuerySchema,
   include: includeQuerySchema,

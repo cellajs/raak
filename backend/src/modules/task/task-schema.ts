@@ -7,7 +7,14 @@ import { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import { tasksTable } from '#/modules/task/task-db';
 import { mockTaskResponse } from '#/modules/task/task-mocks';
 import { TaskStatus } from '#/modules/task/task-properties';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validIdSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
 const taskRelationIdsSchema = validUuidSchema
@@ -86,8 +93,8 @@ export const taskListQueryBaseSchema = paginationQuerySchema.extend({
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),
-  projectId: z.string().max(maxLength.id).optional(),
-  workspaceId: z.string().max(maxLength.id).optional(),
+  projectId: validIdSchema.optional(),
+  workspaceId: validIdSchema.optional(),
 });
 
 export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !data.projectId || !data.workspaceId, {

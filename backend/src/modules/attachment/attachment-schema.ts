@@ -3,7 +3,14 @@ import { schemaTags } from '#/core/openapi-helpers';
 import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema, describeFields } from '#/db/utils/drizzle-schema';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validIdSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 import { mockAttachmentResponse } from './attachment-mocks';
 
@@ -84,7 +91,7 @@ const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'crea
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
   sort: attachmentSortKeys.default('createdAt'),
   // cella change: Raak attachment lists can be narrowed to a project.
-  projectId: z.string().max(maxLength.id).optional(),
+  projectId: validIdSchema.optional(),
 });
 
 /** Selectable stored-file variants. Mirrors the frontend `BlobVariant`. */

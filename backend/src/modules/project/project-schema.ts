@@ -11,10 +11,10 @@ import {
   batchResponseSchema,
   excludeArchivedQuerySchema,
   includeQuerySchema,
-  maxLength,
   noDuplicateSlugsRefine,
   paginationQuerySchema,
   validCDNUrlSchema,
+  validIdSchema,
   validNameSchema,
   validSlugSchema,
   validTempIdSchema,
@@ -91,16 +91,16 @@ export const projectCreateBodySchema = projectContract.createItemSchema
 
 export const projectCreateResponseSchema = batchResponseSchema(projectWithMembershipSchema);
 
-export const workspaceIdQuery = z.object({ workspaceId: z.string().max(maxLength.id) });
+export const workspaceIdQuerySchema = z.object({ workspaceId: validIdSchema });
 
 export const projectUpdateBodySchema = projectContract.updateBodySchema;
 
 export const projectListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder'),
   order: z.enum(['asc', 'desc']).default('asc'),
-  organizationId: z.string().max(maxLength.id).optional(),
-  workspaceId: z.string().max(maxLength.id).optional(),
-  relatableUserId: z.string().max(maxLength.id).optional(),
+  organizationId: validIdSchema.optional(),
+  workspaceId: validIdSchema.optional(),
+  relatableUserId: validIdSchema.optional(),
   role: z.enum(roles.all).optional(),
   excludeArchived: excludeArchivedQuerySchema,
   include: includeQuerySchema,

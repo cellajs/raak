@@ -12,6 +12,7 @@ import {
   maxLength,
   paginationQuerySchema,
   stxBaseSchema,
+  validIdSchema,
   validUuidSchema,
 } from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
@@ -100,8 +101,8 @@ export const labelListQuerySchema = paginationQuerySchema
       .optional()
       .transform((val) => (val ? val.split(',').map((s) => s.trim()) : undefined))
       .pipe(z.array(z.enum(labelModes)).optional()),
-    projectId: z.string().max(maxLength.id).optional(),
-    workspaceId: z.string().max(maxLength.id).optional(),
+    projectId: validIdSchema.optional(),
+    workspaceId: validIdSchema.optional(),
   })
   .refine((data) => !data.projectId || !data.workspaceId, {
     message: 'Only one of projectId or workspaceId can be provided',

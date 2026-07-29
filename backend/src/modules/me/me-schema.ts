@@ -6,7 +6,7 @@ import { passkeySchema, webAuthnAssertionSchema } from '#/modules/auth/passkeys/
 import { sessionsTable } from '#/modules/auth/sessions-db';
 import { totpCreateBodySchema } from '#/modules/auth/totps/totps-schema';
 import { inactiveMembershipSchema } from '#/modules/memberships/memberships-schema';
-import { enabledOAuthProvidersEnum, userSchema } from '#/modules/user/user-schema';
+import { enabledOAuthProvidersSchema, userSchema } from '#/modules/user/user-schema';
 import { booleanTransformSchema, validUuidSchema } from '#/schemas';
 import { channelBaseSchema } from '#/schemas/entity-base';
 import { mockMeAuthResponse, mockMeResponse, mockUploadTokenResponse } from './me-mocks';
@@ -28,7 +28,7 @@ export const meSchema = z
 
 export const meAuthDataSchema = z
   .object({
-    enabledOAuth: z.array(enabledOAuthProvidersEnum),
+    enabledOAuth: z.array(enabledOAuthProvidersSchema),
     hasTotp: z.boolean(),
     sessions: z.array(sessionSchema.extend({ expiresAt: z.string() })),
     passkeys: z.array(passkeySchema),
