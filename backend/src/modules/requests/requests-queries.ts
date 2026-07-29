@@ -24,16 +24,17 @@ export const findUserByEmail = async (ctx: DbContext, { email }: FindUserByEmail
 
 interface FindExistingRequestOpts {
   email: string;
-  types: RequestModel['type'][];
+  type: RequestModel['type'];
 }
 
-/** Check for existing unique requests by email and types. */
-export const findExistingRequest = async (ctx: DbContext, { email, types }: FindExistingRequestOpts) => {
+/** Check for an existing unique request by normalized email and type. */
+export const findExistingRequest = async (ctx: DbContext, { email, type }: FindExistingRequestOpts) => {
   const { db } = ctx.var;
   const [existing] = await db
     .select()
     .from(requestsTable)
-    .where(and(eq(requestsTable.email, email), inArray(requestsTable.type, types)));
+    .where(and(eq(requestsTable.email, email), eq(requestsTable.type, type)))
+    .limit(1);
   return existing;
 };
 

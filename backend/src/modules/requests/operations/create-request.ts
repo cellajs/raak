@@ -30,8 +30,8 @@ export async function createRequestOp(ctx: AuthContext, input: CreateRequestInpu
 
   // Check if not duplicate for unique requests
   if (uniqueRequests.includes(type)) {
-    const existingRequest = await findExistingRequest(ctx, { email: normalizedEmail, types: uniqueRequests });
-    if (existingRequest?.type === type) throw new AppError(409, 'request_exists', 'info');
+    const existingRequest = await findExistingRequest(ctx, { email: normalizedEmail, type });
+    if (existingRequest) throw new AppError(409, 'request_exists', 'info');
   }
 
   const createdRequest = await insertRequest(ctx, { email: normalizedEmail, type, message });
