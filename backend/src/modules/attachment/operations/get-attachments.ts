@@ -4,9 +4,10 @@ import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
+import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import type { attachmentListQuerySchema } from '#/modules/attachment/attachment-schema';
-import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
+import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
 import { findProjectById } from '#/modules/task/task-queries';
 import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
@@ -113,10 +114,13 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     const totalSource: ListTotalSource = isDelta
       ? { kind: 'pageLength' }
       : counterEligible
-        ? { kind: 'counter', ctx: readCtx, channelKey: organizationId, entityType: 'attachment' }
+        ? {
+            kind: 'counter',
+            getTotal: () => getOrgEntityCount(readCtx, organizationId, 'attachment'),
+          }
         : {
             kind: 'exact',
-            count: async () => {
+            getTotal: async () => {
               const [{ total }] = await db.select({ total: count() }).from(attachmentsTable).where(whereClause);
               return total;
             },

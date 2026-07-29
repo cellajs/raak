@@ -1,9 +1,9 @@
 import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
 import type { EntityRole, OrganizationFlags, OrganizationSetupConfig } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
+import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
-import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationFlagsSelect, setupConfigSelect } from '#/modules/organization/helpers/select';
 import { organizationsTable } from '#/modules/organization/organization-db';
@@ -154,7 +154,7 @@ export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: Get
 
   const totalSource: ListTotalSource = {
     kind: 'exact',
-    count: async () => {
+    getTotal: async () => {
       if (isSystemAdmin) {
         const [{ total }] = await db
           .select({ total: count() })

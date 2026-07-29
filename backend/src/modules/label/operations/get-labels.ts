@@ -5,7 +5,8 @@ import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
-import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
+import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
+import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { buildLabelsListQuery } from '#/modules/label/label-queries';
@@ -105,10 +106,13 @@ export async function getLabelsOp(
     const totalSource: ListTotalSource = isDelta
       ? { kind: 'pageLength' }
       : counterEligible
-        ? { kind: 'counter', ctx: readCtx, channelKey: organizationId, entityType: 'label' }
+        ? {
+            kind: 'counter',
+            getTotal: () => getOrgEntityCount(readCtx, organizationId, 'label'),
+          }
         : {
             kind: 'exact',
-            count: async () => {
+            getTotal: async () => {
               const [{ total }] = await db.select({ total: count() }).from(labelsSubquery);
               return total;
             },

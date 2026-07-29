@@ -1,7 +1,7 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
-import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
+import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -215,7 +215,7 @@ export const findTasksPaginated = async (
     ? { kind: 'pageLength' }
     : {
         kind: 'exact',
-        count: async () => {
+        getTotal: async () => {
           const [{ total }] = await db.select({ total: count() }).from(tasksTable).where(filters);
           return total;
         },
