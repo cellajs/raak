@@ -50,7 +50,6 @@
   "older_accepted_table_only": "The {{count}} accepted tasks are only visible in the table view.",
   "onboarding_completed": "Great! Let's build stuff!",
   "onboarding_completed.text": "Have a look around to explore the features of {{appName}}.",
-  "onboarding_demo_ready.text": "Create personal workspaces, add projects, and manage tasks with your team.",
   "onboarding_welcome": "Welcome to {{appName}}",
   "onboarding_welcome.text": "A high density workspace for tasks. 🚀 Work fast - have fun!",
   "organization_required.text": "An organization is required for workspaces. Please create an organization first or ask to be invited to an existing organization.",
