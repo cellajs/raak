@@ -2,6 +2,7 @@ import { and, count, eq, ilike, inArray, isNull, lte, or, type SQL, sql } from '
 import { alias } from 'drizzle-orm/pg-core';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
+import { resolveListTotal } from '#/db/utils/list-total';
 import { tokensTable } from '#/modules/auth/tokens-db';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
@@ -243,7 +244,7 @@ export const findInactiveMembershipForUser = async (ctx: AuthContext, { id }: Fi
   return membership;
 };
 
-interface GetMembersListOpts {
+interface FindMembersPaginatedOpts {
   organizationId: string;
   entityId: string;
   entityType: ChannelEntityType;
@@ -257,7 +258,7 @@ interface GetMembersListOpts {
 }
 
 /** Get paginated members list with total count for an entity. */
-export const getMembersList = async (ctx: DbContext, opts: GetMembersListOpts) => {
+export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPaginatedOpts) => {
   const { db } = ctx.var;
   const { organizationId, entityId, entityType, q, sort, order, offset, limit, role, userIds } = opts;
 
@@ -299,13 +300,18 @@ export const getMembersList = async (ctx: DbContext, opts: GetMembersListOpts) =
     .innerJoin(membershipsTable, eq(membershipsTable.userId, usersTable.id))
     .where(and(...membersFilters, or(...$or)));
 
-  const [{ total }] = await db.select({ total: count() }).from(membersQuery.as('members'));
-  const items = await membersQuery
+  const itemsQuery = membersQuery
     .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 
-  return { items, total };
+  return resolveListTotal(itemsQuery, {
+    kind: 'exact',
+    getTotal: async () => {
+      const [{ total }] = await db.select({ total: count() }).from(membersQuery.as('members'));
+      return total;
+    },
+  });
 };
 
 interface FindMemberPreviewsByChannelsOpts {
@@ -376,7 +382,7 @@ export const findMemberPreviewsByChannels = async (
   return previews;
 };
 
-interface GetPendingMembershipsListOpts {
+interface FindPendingMembershipsPaginatedOpts {
   organizationId: string;
   entityId: string;
   sort?: 'createdAt';
@@ -386,7 +392,7 @@ interface GetPendingMembershipsListOpts {
 }
 
 /** Get paginated pending memberships list with total count. */
-export const getPendingMembershipsList = async (ctx: DbContext, opts: GetPendingMembershipsListOpts) => {
+export const findPendingMembershipsPaginated = async (ctx: DbContext, opts: FindPendingMembershipsPaginatedOpts) => {
   const { db } = ctx.var;
   const { organizationId, entityId, sort, order, offset, limit } = opts;
 
@@ -416,11 +422,18 @@ export const getPendingMembershipsList = async (ctx: DbContext, opts: GetPending
     .from(table)
     .leftJoin(usersTable, eq(usersTable.id, table.userId))
     .leftJoin(tokensTable, and(eq(tokensTable.inactiveMembershipId, table.id), eq(tokensTable.type, 'invitation')))
-    .where(and(eq(table.channelId, entityId), eq(table.organizationId, organizationId)))
-    .orderBy(...orderBy);
+    .where(and(eq(table.channelId, entityId), eq(table.organizationId, organizationId)));
 
-  const [{ total }] = await db.select({ total: count() }).from(pendingMembershipsQuery.as('pendingMemberships'));
-  const rawItems = await pendingMembershipsQuery.limit(limit).offset(offset);
+  const itemsQuery = pendingMembershipsQuery
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
 
-  return { rawItems, total };
+  return resolveListTotal(itemsQuery, {
+    kind: 'exact',
+    getTotal: async () => {
+      const [{ total }] = await db.select({ total: count() }).from(pendingMembershipsQuery.as('pendingMemberships'));
+      return total;
+    },
+  });
 };

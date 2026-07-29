@@ -1,5 +1,6 @@
 import { and, count, eq, getColumns, inArray, type SQL, sql } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
+import { resolveListTotal } from '#/db/utils/list-total';
 import { type RequestModel, requestsTable } from '#/modules/requests/requests-db';
 import { emailsTable } from '#/modules/user/emails-db';
 import { userSelect } from '#/modules/user/helpers/select';
@@ -55,24 +56,7 @@ export const insertRequest = async (ctx: DbContext, { email, type, message }: In
   return created;
 };
 
-interface BuildRequestsListOpts {
-  filter?: SQL;
-}
-
-/** Build the requests list query with wasInvited computed column. Returns a subquery. */
-export const buildRequestsListQuery = (ctx: DbContext, { filter }: BuildRequestsListOpts) => {
-  const { db } = ctx.var;
-  const { tokenId, ...requestsSelect } = getColumns(requestsTable);
-  return db
-    .select({
-      ...requestsSelect,
-      wasInvited: sql<boolean>`(${requestsTable.tokenId} IS NOT NULL)::boolean`.as('wasInvited'),
-    })
-    .from(requestsTable)
-    .where(filter);
-};
-
-interface GetRequestsListOpts {
+interface FindRequestsPaginatedOpts {
   filter?: SQL;
   sort?: 'type' | 'id' | 'createdAt' | 'email';
   order?: 'asc' | 'desc';
@@ -81,12 +65,10 @@ interface GetRequestsListOpts {
 }
 
 /** Get paginated requests list with total count. */
-export const getRequestsList = async (ctx: DbContext, opts: GetRequestsListOpts) => {
+export const findRequestsPaginated = async (ctx: DbContext, opts: FindRequestsPaginatedOpts) => {
   const { db } = ctx.var;
   const { filter, sort, order, limit, offset } = opts;
-  const requestsQuery = buildRequestsListQuery(ctx, { filter });
-
-  const [{ total }] = await db.select({ total: count() }).from(requestsQuery.as('requests'));
+  const { tokenId, ...requestsSelect } = getColumns(requestsTable);
 
   const orderBy = getOrderColumns({
     sort,
@@ -102,14 +84,24 @@ export const getRequestsList = async (ctx: DbContext, opts: GetRequestsListOpts)
     tieBreaker: requestsTable.id,
   });
 
-  const items = await db
-    .select()
-    .from(requestsQuery.as('requests'))
+  const itemsQuery = db
+    .select({
+      ...requestsSelect,
+      wasInvited: sql<boolean>`(${requestsTable.tokenId} IS NOT NULL)::boolean`.as('wasInvited'),
+    })
+    .from(requestsTable)
+    .where(filter)
     .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 
-  return { items, total };
+  return resolveListTotal(itemsQuery, {
+    kind: 'exact',
+    getTotal: async () => {
+      const [{ total }] = await db.select({ total: count() }).from(requestsTable).where(filter);
+      return total;
+    },
+  });
 };
 
 interface DeleteRequestsByIdsOpts {

@@ -1,6 +1,7 @@
 import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from 'drizzle-orm';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
+import { resolveListTotal } from '#/db/utils/list-total';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -109,7 +110,7 @@ export const insertProjectMembership = async (ctx: DbContext, { values }: Insert
   return membership;
 };
 
-interface GetProjectsListOpts {
+interface FindProjectsPaginatedOpts {
   userId: string;
   q?: string;
   sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
@@ -124,7 +125,7 @@ interface GetProjectsListOpts {
 }
 
 /** Get paginated list of projects with total count, membership, optional entity counts. */
-export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProjectsListOpts) => {
+export const findProjectsPaginated = async ({ var: { db } }: DbContext, opts: FindProjectsPaginatedOpts) => {
   const { userId, q, sort, order, offset, limit, organizationId, workspaceId, excludeArchived, role, includeCounts } =
     opts;
 
@@ -152,15 +153,11 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
     ...(workspaceId ? [eq(membershipsTable.workspaceId, workspaceId)] : []),
   ];
 
-  // Count total
   const baseQuery = db
     .select({ projectId: projectsTable.id })
     .from(projectsTable)
     .innerJoin(membershipsTable, membershipOn)
-    .where(and(...projectWhere))
-    .as('base');
-
-  const [{ total }] = await db.select({ total: count() }).from(baseQuery);
+    .where(and(...projectWhere));
 
   const orderBy = getOrderColumns({
     sort,
@@ -196,7 +193,7 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
     ) as typeof query;
   }
 
-  const projects = await query
+  const itemsQuery = query
     .leftJoin(createdByUser, eq(createdByUser.id, projectsTable.createdBy))
     .leftJoin(updatedByUser, eq(updatedByUser.id, projectsTable.updatedBy))
     .where(and(...projectWhere))
@@ -204,5 +201,11 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
     .limit(limit)
     .offset(offset);
 
-  return { projects, total };
+  return resolveListTotal(itemsQuery, {
+    kind: 'exact',
+    getTotal: async () => {
+      const [{ total }] = await db.select({ total: count() }).from(baseQuery.as('projects'));
+      return total;
+    },
+  });
 };

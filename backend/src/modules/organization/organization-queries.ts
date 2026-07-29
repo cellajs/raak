@@ -73,7 +73,7 @@ export const deleteOrganizationsByIds = async (ctx: AuthContext, { ids }: Delete
     .where(and(inArray(organizationsTable.id, ids), eq(organizationsTable.tenantId, tenantId)));
 };
 
-interface GetOrganizationsListOpts {
+interface FindOrganizationsPaginatedOpts {
   isSystemAdmin: boolean;
   targetUserId: string;
   q?: string;
@@ -87,7 +87,7 @@ interface GetOrganizationsListOpts {
 }
 
 /** Get paginated list of organizations with conditional joins based on admin status. */
-export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: GetOrganizationsListOpts) => {
+export const findOrganizationsPaginated = async ({ var: { db } }: DbContext, opts: FindOrganizationsPaginatedOpts) => {
   const { isSystemAdmin, targetUserId, q, sort, order, offset, limit, excludeArchived, role, includeCounts } = opts;
 
   const entityType = 'organization';

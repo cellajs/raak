@@ -1,6 +1,6 @@
 import type { AuthContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
-import { getProjectsList } from '#/modules/project/project-queries';
+import { findProjectsPaginated } from '#/modules/project/project-queries';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
 
 interface GetProjectsInput {
@@ -27,7 +27,7 @@ export async function getProjectsOp(ctx: AuthContext, input: GetProjectsInput) {
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');
 
-  const { projects: projectResults, total } = await getProjectsList(ctx, {
+  const { items: projectResults, total } = await findProjectsPaginated(ctx, {
     userId: targetUserId,
     ...queryParams,
     includeCounts,

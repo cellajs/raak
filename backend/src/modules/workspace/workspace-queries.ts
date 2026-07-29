@@ -1,5 +1,6 @@
 import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
+import { resolveListTotal } from '#/db/utils/list-total';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -46,7 +47,7 @@ export const deleteWorkspacesByIds = async (ctx: AuthContext, { ids }: DeleteWor
     .where(and(inArray(workspacesTable.id, ids), eq(workspacesTable.organizationId, organizationId)));
 };
 
-interface GetWorkspacesListOpts {
+interface FindWorkspacesPaginatedOpts {
   userId: string;
   q?: string;
   sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
@@ -60,7 +61,7 @@ interface GetWorkspacesListOpts {
 }
 
 /** Get paginated list of workspaces with total count, membership, optional entity counts. */
-export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWorkspacesListOpts) => {
+export const findWorkspacesPaginated = async ({ var: { db } }: DbContext, opts: FindWorkspacesPaginatedOpts) => {
   const { userId, q, sort, order, offset, limit, organizationId, excludeArchived, role, includeCounts } = opts;
 
   const entityType = 'workspace';
@@ -86,15 +87,11 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
     ...(organizationId ? [eq(workspacesTable.organizationId, organizationId)] : []),
   ];
 
-  // Count total
   const baseQuery = db
     .select({ workspaceId: workspacesTable.id })
     .from(workspacesTable)
     .innerJoin(membershipsTable, membershipOn)
-    .where(and(...workspaceWhere))
-    .as('base');
-
-  const [{ total }] = await db.select({ total: count() }).from(baseQuery);
+    .where(and(...workspaceWhere));
 
   const countData = includeCounts ? getChannelCountsSelect(entityType) : null;
 
@@ -130,7 +127,7 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
     ) as typeof query;
   }
 
-  const workspaces = await query
+  const itemsQuery = query
     .leftJoin(createdByUser, eq(createdByUser.id, workspacesTable.createdBy))
     .leftJoin(updatedByUser, eq(updatedByUser.id, workspacesTable.updatedBy))
     .where(and(...workspaceWhere))
@@ -138,5 +135,11 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
     .limit(limit)
     .offset(offset);
 
-  return { workspaces, total };
+  return resolveListTotal(itemsQuery, {
+    kind: 'exact',
+    getTotal: async () => {
+      const [{ total }] = await db.select({ total: count() }).from(baseQuery.as('workspaces'));
+      return total;
+    },
+  });
 };

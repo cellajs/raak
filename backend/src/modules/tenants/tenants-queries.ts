@@ -1,10 +1,11 @@
 import { and, count, eq, type SQL, sql } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
+import { resolveListTotal } from '#/db/utils/list-total';
 import { domainsTable } from '#/modules/domains/domains-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { getOrderColumns } from '#/utils/order-column';
 
-interface GetTenantsListOpts {
+interface FindTenantsPaginatedOpts {
   filters: SQL[];
   sort?: 'name' | 'createdAt';
   order?: 'asc' | 'desc';
@@ -13,7 +14,7 @@ interface GetTenantsListOpts {
 }
 
 /** Get paginated tenants with domain counts. */
-export const getTenantsList = async (ctx: DbContext, opts: GetTenantsListOpts) => {
+export const findTenantsPaginated = async (ctx: DbContext, opts: FindTenantsPaginatedOpts) => {
   const { db } = ctx.var;
   const { filters, sort, order, limit, offset } = opts;
   const whereClause = and(...filters);
@@ -36,33 +37,36 @@ export const getTenantsList = async (ctx: DbContext, opts: GetTenantsListOpts) =
     .groupBy(domainsTable.tenantId)
     .as('domains_count_sq');
 
-  const [tenants, [{ total }]] = await Promise.all([
-    db
-      .select({
-        id: tenantsTable.id,
-        name: tenantsTable.name,
-        status: tenantsTable.status,
-        restrictions: tenantsTable.restrictions,
-        authStrategies: tenantsTable.authStrategies,
-        createdBy: tenantsTable.createdBy,
-        subscriptionId: tenantsTable.subscriptionId,
-        subscriptionStatus: tenantsTable.subscriptionStatus,
-        subscriptionPlan: tenantsTable.subscriptionPlan,
-        subscriptionData: tenantsTable.subscriptionData,
-        domainsCount: sql<number>`coalesce(${domainsCountSq.count}, 0)`.mapWith(Number),
-        createdAt: tenantsTable.createdAt,
-        updatedAt: tenantsTable.updatedAt,
-      })
-      .from(tenantsTable)
-      .leftJoin(domainsCountSq, eq(tenantsTable.id, domainsCountSq.tenantId))
-      .where(whereClause)
-      .orderBy(...orderBy)
-      .limit(limit)
-      .offset(offset),
-    db.select({ total: count() }).from(tenantsTable).where(whereClause),
-  ]);
+  const itemsQuery = db
+    .select({
+      id: tenantsTable.id,
+      name: tenantsTable.name,
+      status: tenantsTable.status,
+      restrictions: tenantsTable.restrictions,
+      authStrategies: tenantsTable.authStrategies,
+      createdBy: tenantsTable.createdBy,
+      subscriptionId: tenantsTable.subscriptionId,
+      subscriptionStatus: tenantsTable.subscriptionStatus,
+      subscriptionPlan: tenantsTable.subscriptionPlan,
+      subscriptionData: tenantsTable.subscriptionData,
+      domainsCount: sql<number>`coalesce(${domainsCountSq.count}, 0)`.mapWith(Number),
+      createdAt: tenantsTable.createdAt,
+      updatedAt: tenantsTable.updatedAt,
+    })
+    .from(tenantsTable)
+    .leftJoin(domainsCountSq, eq(tenantsTable.id, domainsCountSq.tenantId))
+    .where(whereClause)
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
 
-  return { items: tenants, total };
+  return resolveListTotal(itemsQuery, {
+    kind: 'exact',
+    getTotal: async () => {
+      const [{ total }] = await db.select({ total: count() }).from(tenantsTable).where(whereClause);
+      return total;
+    },
+  });
 };
 
 interface FindTenantByIdOpts {

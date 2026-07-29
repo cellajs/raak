@@ -1,7 +1,7 @@
 import type { AuthContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
-import { getWorkspacesList } from '#/modules/workspace/workspace-queries';
+import { findWorkspacesPaginated } from '#/modules/workspace/workspace-queries';
 
 interface GetWorkspacesInput {
   q?: string;
@@ -22,7 +22,7 @@ export async function getWorkspacesOp(ctx: AuthContext, input: GetWorkspacesInpu
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');
 
-  const { workspaces: workspaceResults, total } = await getWorkspacesList(ctx, {
+  const { items: workspaceResults, total } = await findWorkspacesPaginated(ctx, {
     userId: user.id,
     ...queryOpts,
     includeCounts,
