@@ -2,7 +2,9 @@
 
 ## Access policies: elevation vs. self rows
 
-Policies define CRUD permissions per role within each context. Values: `1` = allowed, `0` = denied. Any action omitted defaults to `0` (denied), so a row only needs to list the actions it grants.
+Policies define CRUD permissions per role within each context. Values: `1` = allowed, `0` = denied, `'own'` = allowed only for the entity's creator. Any action omitted defaults to `0` (denied), so a row only needs to list the actions it grants.
+
+`'own'` scopes a grant to the implicit owner relation: the engine allows the action only when `entity.createdBy === userId`. Use it for actions a role may take on rows it created but not on others' (e.g. `attachment` under `organization`, where a member can `read: 'own'` their own uploads but not the whole org's).
 
 For a context entity (organization, workspace, project), its policy has two kinds of rows:
 

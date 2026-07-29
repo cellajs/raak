@@ -100,26 +100,26 @@
         },
         "example": {
           "user": {
-            "id": "caad4530-7189-4ad0-8822-372adc47fa07",
+            "id": "b0b37ce7-7136-4b90-8970-aee863ab7334",
             "entityType": "user",
-            "name": "Donald McClure",
-            "firstName": "Donald",
-            "lastName": "McClure",
-            "email": "donald.mcclure57@yahoo.com",
-            "slug": "donaldmcclure74",
+            "name": "Alicia Fritsch DVM",
+            "firstName": "Alicia",
+            "lastName": "Fritsch",
+            "email": "alicia_fritsch@hotmail.com",
+            "slug": "aliciafritsch34",
             "description": null,
             "thumbnailUrl": null,
             "bannerUrl": null,
             "language": "en",
             "newsletter": true,
             "mfaRequired": false,
-            "userFlags": {},
-            "createdAt": "2024-07-14T11:38:21.926Z",
-            "updatedAt": "2024-07-14T11:38:21.926Z",
+            "userFlags": { "finishedOnboarding": false },
+            "createdAt": "2024-05-02T20:53:18.498Z",
+            "updatedAt": "2024-05-02T20:53:18.498Z",
             "updatedBy": null,
-            "lastStartedAt": "2024-07-14T11:38:21.926Z",
-            "lastSignInAt": "2024-07-14T11:38:21.926Z",
-            "lastSeenAt": "2024-07-14T11:38:21.926Z"
+            "lastStartedAt": "2024-05-02T20:53:18.498Z",
+            "lastSignInAt": "2024-05-02T20:53:18.498Z",
+            "lastSeenAt": "2024-05-02T20:53:18.498Z"
           },
           "isSystemAdmin": false
         }
@@ -257,24 +257,24 @@
         "example": {
           "id": "3c6f6c47-89c3-4946-870e-f4ee338ae389",
           "entityType": "user",
-          "name": "Cathy Hodkiewicz",
-          "firstName": "Cathy",
-          "lastName": "Hodkiewicz",
-          "email": "cathy.hodkiewicz@hotmail.com",
-          "slug": "cathyhodkiewicz17",
+          "name": "Jake Senger",
+          "firstName": "Jake",
+          "lastName": "Senger",
+          "email": "jake_senger@hotmail.com",
+          "slug": "jakesenger90",
           "description": null,
           "thumbnailUrl": null,
           "bannerUrl": null,
           "language": "en",
           "newsletter": false,
           "mfaRequired": false,
-          "userFlags": {},
-          "createdAt": "2024-12-13T10:04:17.464Z",
-          "updatedAt": "2024-12-13T10:04:17.464Z",
+          "userFlags": { "finishedOnboarding": false },
+          "createdAt": "2024-06-15T02:53:22.776Z",
+          "updatedAt": "2024-06-15T02:53:22.776Z",
           "updatedBy": null,
-          "lastStartedAt": "2024-12-13T10:04:17.464Z",
-          "lastSignInAt": "2024-12-13T10:04:17.464Z",
-          "lastSeenAt": "2024-12-13T10:04:17.464Z"
+          "lastStartedAt": "2024-06-15T02:53:22.776Z",
+          "lastSignInAt": "2024-06-15T02:53:22.776Z",
+          "lastSeenAt": "2024-06-15T02:53:22.776Z"
         }
       },
       {
@@ -508,24 +508,24 @@
         "example": {
           "id": "3c6f6c47-89c3-4946-870e-f4ee338ae389",
           "entityType": "user",
-          "name": "Cathy Hodkiewicz",
-          "firstName": "Cathy",
-          "lastName": "Hodkiewicz",
-          "email": "cathy.hodkiewicz@hotmail.com",
-          "slug": "cathyhodkiewicz17",
+          "name": "Jake Senger",
+          "firstName": "Jake",
+          "lastName": "Senger",
+          "email": "jake_senger@hotmail.com",
+          "slug": "jakesenger90",
           "description": null,
           "thumbnailUrl": null,
           "bannerUrl": null,
           "language": "en",
           "newsletter": false,
           "mfaRequired": false,
-          "userFlags": {},
-          "createdAt": "2024-12-13T10:04:17.464Z",
-          "updatedAt": "2024-12-13T10:04:17.464Z",
+          "userFlags": { "finishedOnboarding": false },
+          "createdAt": "2024-06-15T02:53:22.776Z",
+          "updatedAt": "2024-06-15T02:53:22.776Z",
           "updatedBy": null,
-          "lastStartedAt": "2024-12-13T10:04:17.464Z",
-          "lastSignInAt": "2024-12-13T10:04:17.464Z",
-          "lastSeenAt": "2024-12-13T10:04:17.464Z"
+          "lastStartedAt": "2024-06-15T02:53:22.776Z",
+          "lastSignInAt": "2024-06-15T02:53:22.776Z",
+          "lastSeenAt": "2024-06-15T02:53:22.776Z"
         }
       },
       {
@@ -919,21 +919,27 @@
                 "bannerUrl": null
               },
               "inactiveMembership": {
-                "id": "2a1c2b30-5fd0-40a8-a60e-842d5fdb0c04",
+                "id": "33bb76f4-56ce-4cd0-9331-f680165d54a9",
                 "channelType": "organization",
-                "channelId": "8664dbe2-7b90-429b-a8d6-05c4e745f502",
-                "email": "wilfred.halvorson44@hotmail.com",
-                "userId": "6fd95285-52d9-45de-b10d-8a4e316d3ad2",
-                "tokenId": "dc3036bd-bd6a-4ea8-8385-228db2dcc869",
-                "role": "guest",
+                "channelId": "6fd95285-52d9-45de-b10d-8a4e316d3ad2",
+                "email": "christine5@yahoo.com",
+                "userId": "fdad27c1-21b8-4610-ac73-58603f33f5e5",
+                "tokenId": "915e1951-a439-40dc-9303-6bdbd6aea838",
+                "role": "member",
                 "rejectedAt": null,
                 "remindedAt": null,
                 "createdAt": "2024-11-13T15:29:06.546Z",
-                "createdBy": "3c595dbd-7273-4cf3-8035-df6a8e52c42b",
-                "organizationId": "33bb76f4-56ce-4cd0-9331-f680165d54a9",
-                "workspaceId": "825afcfd-ad27-4c12-81b8-610c7358603f",
-                "projectId": "3f5e59d4-e502-4132-8e0d-915e1951a439",
-                "tenantId": "test01"
+                "createdBy": {
+                  "id": "228db2dc-c869-402a-b1c2-b305fd00a860",
+                  "name": "Stacy Monahan",
+                  "slug": "stacy.monahan13",
+                  "thumbnailUrl": null,
+                  "entityType": "user"
+                },
+                "organizationId": "6fd95285-52d9-45de-b10d-8a4e316d3ad2",
+                "workspaceId": null,
+                "projectId": null,
+                "tenantId": "i5coyr"
               }
             },
             {
@@ -949,21 +955,27 @@
                 "bannerUrl": null
               },
               "inactiveMembership": {
-                "id": "0f2bc924-4327-49ee-ab9f-cd1b1f1e8741",
+                "id": "c2a25f30-823d-40d7-af0c-f6c90c7756a6",
                 "channelType": "organization",
-                "channelId": "513f16c2-bcb0-4324-943e-d19331643c06",
-                "email": "marquis_wyman-senger41@hotmail.com",
-                "userId": "745044ce-0a11-4cc4-84d6-fece04b9aca9",
-                "tokenId": "221aad91-1de2-4e38-93b7-dcc8a33619bf",
+                "channelId": "745044ce-0a11-4cc4-84d6-fece04b9aca9",
+                "email": "preston_king81@hotmail.com",
+                "userId": "ca0c17be-8d73-40a0-95e9-9f5949340302",
+                "tokenId": "7dee4eb2-c5eb-4722-91aa-d911de2e383b",
                 "role": "admin",
                 "rejectedAt": null,
                 "remindedAt": null,
                 "createdAt": "2024-04-11T17:15:50.993Z",
-                "createdBy": "2cff0319-02f4-4691-97de-0e52a19930c6",
-                "organizationId": "c2a25f30-823d-40d7-af0c-f6c90c7756a6",
-                "workspaceId": "7ef9bfca-0c17-4be8-8d73-0a05e99f5949",
-                "projectId": "40302515-5a0c-4427-9dd4-7dee4eb2c5eb",
-                "tenantId": "test01"
+                "createdBy": {
+                  "id": "dcc8a336-19bf-450f-b2bc-92443279eeb9",
+                  "name": "Joshua Morar",
+                  "slug": "joshua.morar34",
+                  "thumbnailUrl": null,
+                  "entityType": "user"
+                },
+                "organizationId": "745044ce-0a11-4cc4-84d6-fece04b9aca9",
+                "workspaceId": null,
+                "projectId": null,
+                "tenantId": "gwylqy"
               }
             }
           ],

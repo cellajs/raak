@@ -1,13 +1,9 @@
 import { faker } from '@faker-js/faker';
 import { UniqueEnforcer } from 'enforce-unique';
-import { hierarchy } from 'shared';
-import slugify from 'slugify';
 import {
-  generateMockFullCounts,
-  MOCK_REF_DATE,
-  type MockEntityCounts,
-  type MockMembershipCounts,
+  generateMockChannelCounts,
   mockBatchResponse,
+  mockChannelColumns,
   mockPaginated,
   mockPastIsoDate,
   mockTenantId,
@@ -35,26 +31,16 @@ const generateWorkspaceBase = (
   organizationId: string,
   tenantId: string,
 ) => {
-  const slug = slugify(name, { lower: true, strict: true });
-
   return {
-    id,
-    entityType: 'workspace' as const,
-    name,
-    slug,
-    description: faker.lorem.sentence(),
-    thumbnailUrl: null,
-    bannerUrl: null,
-    tenantId,
+    ...mockChannelColumns('workspace', {
+      id,
+      name,
+      createdAt,
+      updatedAt: createdAt,
+      tenantId,
+      channelIds: { organizationId },
+    }),
     organizationId,
-    createdAt,
-    publishedAt: createdAt,
-    publicAt: null,
-    createdBy: null,
-    updatedAt: createdAt,
-    updatedBy: null,
-    // Generated column in the live schema (channelPathColumn); mocks mirror the SQL rule.
-    path: hierarchy.computeChannelPath('workspace', { id, organizationId }),
   };
 };
 
@@ -78,47 +64,35 @@ export const mockWorkspaceResponse = (
 ): WorkspaceModel & {
   included: {
     membership: MembershipBaseModel;
-    counts: {
-      membership: MockMembershipCounts;
-      entities: MockEntityCounts;
-    };
+    counts: ReturnType<typeof generateMockChannelCounts>;
   };
 } =>
   withFakerSeed(key, () => {
-    const refDate = MOCK_REF_DATE;
-    const createdAt = faker.date.past({ refDate }).toISOString();
+    const createdAt = mockPastIsoDate();
     const workspaceId = mockUuid();
     const organizationId = mockUuid();
 
     // Generate base workspace fields
-    const base = generateWorkspaceBase(
-      workspaceId,
-      faker.company.buzzNoun(),
-      createdAt,
-      organizationId,
-      mockTenantId(),
-    );
+    const tenantId = mockTenantId();
+    const base = generateWorkspaceBase(workspaceId, faker.company.buzzNoun(), createdAt, organizationId, tenantId);
 
     // Generate membership base with the workspace ID
-    const membership = mockMembershipBase(`${key}:membership`);
-    membership.workspaceId = workspaceId;
-    membership.organizationId = organizationId;
+    const membership = mockMembershipBase(`${key}:membership`, {
+      channelType: 'workspace',
+      channelId: workspaceId,
+      channelIds: { workspaceId, organizationId },
+      tenantId,
+    });
 
     return {
       ...base,
       included: {
         membership,
-        counts: generateMockFullCounts(`${key}:counts`),
+        counts: generateMockChannelCounts('workspace', `${key}:counts`),
       },
     };
   });
 
-/**
- * Generates a paginated mock workspace list response for getWorkspaces endpoint.
- */
 export const mockPaginatedWorkspacesResponse = (count = 2) => mockPaginated(mockWorkspaceResponse, count);
 
-/**
- * Generates a batch mock workspace response for createWorkspaces endpoint.
- */
 export const mockBatchWorkspacesResponse = (count = 1) => mockBatchResponse(mockWorkspaceResponse, count);

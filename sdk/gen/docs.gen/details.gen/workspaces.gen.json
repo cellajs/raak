@@ -187,34 +187,33 @@
         "example": {
           "data": [
             {
+              "createdAt": "2024-04-18T21:12:59.543Z",
               "id": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "entityType": "workspace",
-              "name": "markets",
-              "slug": "markets",
-              "description": "Suadeo colo benigne id abduco supplanto asporto nam curatio.",
+              "tenantId": "hoiny6",
+              "name": "schemas",
+              "updatedAt": "2024-04-18T21:12:59.543Z",
+              "slug": "schemas",
               "thumbnailUrl": null,
               "bannerUrl": null,
-              "tenantId": "oiny6r",
-              "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
-              "createdAt": "2024-04-18T21:12:59.543Z",
+              "createdBy": null,
+              "updatedBy": null,
               "publishedAt": "2024-04-18T21:12:59.543Z",
               "publicAt": null,
-              "createdBy": null,
-              "updatedAt": "2024-04-18T21:12:59.543Z",
-              "updatedBy": null,
               "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+              "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
               "included": {
                 "membership": {
                   "id": "1f366272-953c-486d-81dc-ee61f43478a1",
-                  "tenantId": "t4n7co",
-                  "channelType": "organization",
-                  "channelId": "b5c28e6f-552e-42e4-940d-66f5ab0174ab",
-                  "userId": "8ed7182a-e09f-41c6-9302-0e59a26ff7ac",
+                  "tenantId": "hoiny6",
+                  "channelType": "workspace",
+                  "channelId": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
+                  "userId": "d1a35ab5-c28e-46f5-852e-2e440d66f5ab",
                   "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
                   "workspaceId": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
-                  "projectId": "e58d6d29-bb39-4ec0-ba90-09959141d96f",
+                  "projectId": null,
                   "role": "guest",
-                  "displayOrder": 68,
+                  "displayOrder": 95,
                   "muted": false,
                   "archived": false
                 },
@@ -226,18 +225,8 @@
                     "pending": 49,
                     "total": 287
                   },
-                  "entities": {
-                    "workspace": 294,
-                    "project": 327,
-                    "task": 491,
-                    "label": 182,
-                    "attachment": 106
-                  },
-                  "activity": {
-                    "task": { "created": 1734375421781, "updated": 1734852237831 },
-                    "label": { "created": 1735599495073, "updated": 1735660940149 },
-                    "attachment": { "created": 1735612448476, "updated": 1735686286283 }
-                  }
+                  "entities": {},
+                  "activity": {}
                 }
               }
             }
@@ -589,34 +578,33 @@
         "example": {
           "items": [
             {
+              "createdAt": "2024-11-21T01:19:53.533Z",
               "id": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "entityType": "workspace",
-              "name": "users",
-              "slug": "users",
-              "description": "Deduco occaecati cubicularis.",
+              "tenantId": "yx645y",
+              "name": "functionalities",
+              "updatedAt": "2024-11-21T01:19:53.533Z",
+              "slug": "functionalities",
               "thumbnailUrl": null,
               "bannerUrl": null,
-              "tenantId": "x645yb",
-              "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
-              "createdAt": "2024-11-21T01:19:53.533Z",
+              "createdBy": null,
+              "updatedBy": null,
               "publishedAt": "2024-11-21T01:19:53.533Z",
               "publicAt": null,
-              "createdBy": null,
-              "updatedAt": "2024-11-21T01:19:53.533Z",
-              "updatedBy": null,
               "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
+              "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
               "included": {
                 "membership": {
                   "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
-                  "tenantId": "u87zf2",
-                  "channelType": "organization",
-                  "channelId": "20b96706-4bb8-48b2-94b6-b50c11f65b04",
-                  "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
+                  "tenantId": "yx645y",
+                  "channelType": "workspace",
+                  "channelId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
+                  "userId": "d33f6120-b967-4064-bbb8-8b24b6b50c11",
                   "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
                   "workspaceId": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
-                  "projectId": "0a981093-3a7d-43f1-9c6e-b31fa361d13c",
-                  "role": "member",
-                  "displayOrder": 45,
+                  "projectId": null,
+                  "role": "guest",
+                  "displayOrder": 74,
                   "muted": false,
                   "archived": false
                 },
@@ -628,50 +616,39 @@
                     "pending": 21,
                     "total": 159
                   },
-                  "entities": {
-                    "workspace": 188,
-                    "project": 390,
-                    "task": 423,
-                    "label": 413,
-                    "attachment": 435
-                  },
-                  "activity": {
-                    "task": { "created": 1733370282291, "updated": 1735128143248 },
-                    "label": { "created": 1733565564277, "updated": 1735168180029 },
-                    "attachment": { "created": 1734721622144, "updated": 1734885164232 }
-                  }
+                  "entities": {},
+                  "activity": {}
                 }
               }
             },
             {
+              "createdAt": "2024-10-29T04:35:17.725Z",
               "id": "772a771f-c150-465e-9635-46594859fc3d",
               "entityType": "workspace",
-              "name": "partnerships",
-              "slug": "partnerships",
-              "description": "Auxilium non sui desino.",
+              "tenantId": "pa56tp",
+              "name": "initiatives",
+              "updatedAt": "2024-10-29T04:35:17.725Z",
+              "slug": "initiatives",
               "thumbnailUrl": null,
               "bannerUrl": null,
-              "tenantId": "a56tpd",
-              "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
-              "createdAt": "2024-10-29T04:35:17.725Z",
+              "createdBy": null,
+              "updatedBy": null,
               "publishedAt": "2024-10-29T04:35:17.725Z",
               "publicAt": null,
-              "createdBy": null,
-              "updatedAt": "2024-10-29T04:35:17.725Z",
-              "updatedBy": null,
               "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
+              "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
               "included": {
                 "membership": {
                   "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
-                  "tenantId": "lwj64z",
-                  "channelType": "organization",
-                  "channelId": "98ecacac-fb1f-4e61-87c6-f9a972b2e7dd",
-                  "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
+                  "tenantId": "pa56tp",
+                  "channelType": "workspace",
+                  "channelId": "772a771f-c150-465e-9635-46594859fc3d",
+                  "userId": "9e822f98-ecac-4acf-ab1f-e617c6f9a972",
                   "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
                   "workspaceId": "772a771f-c150-465e-9635-46594859fc3d",
-                  "projectId": "df2537a5-a4fb-431f-b142-7dc7188dc589",
+                  "projectId": null,
                   "role": "member",
-                  "displayOrder": 94,
+                  "displayOrder": 23,
                   "muted": false,
                   "archived": false
                 },
@@ -683,18 +660,8 @@
                     "pending": 36,
                     "total": 229
                   },
-                  "entities": {
-                    "workspace": 1,
-                    "project": 272,
-                    "task": 153,
-                    "label": 264,
-                    "attachment": 40
-                  },
-                  "activity": {
-                    "task": { "created": 1733726254960, "updated": null },
-                    "label": { "created": 1734360916085, "updated": 1734642373436 },
-                    "attachment": { "created": 1733237028784, "updated": 1733632033336 }
-                  }
+                  "entities": {},
+                  "activity": {}
                 }
               }
             }
@@ -944,34 +911,33 @@
           "contentType": "application/json"
         },
         "example": {
+          "createdAt": "2024-03-18T14:19:46.053Z",
           "id": "37b34924-612e-454b-9d73-98fa9290dee1",
           "entityType": "workspace",
-          "name": "systems",
-          "slug": "systems",
-          "description": "Cena armarium strues sopor decimus aeneus.",
+          "tenantId": "wa0h3y",
+          "name": "solutions",
+          "updatedAt": "2024-03-18T14:19:46.053Z",
+          "slug": "solutions",
           "thumbnailUrl": null,
           "bannerUrl": null,
-          "tenantId": "a0h3yt",
-          "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
-          "createdAt": "2024-03-18T14:19:46.053Z",
+          "createdBy": null,
+          "updatedBy": null,
           "publishedAt": "2024-03-18T14:19:46.053Z",
           "publicAt": null,
-          "createdBy": null,
-          "updatedAt": "2024-03-18T14:19:46.053Z",
-          "updatedBy": null,
           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
+          "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
           "included": {
             "membership": {
               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
-              "tenantId": "ecya0r",
-              "channelType": "organization",
-              "channelId": "61543dc3-4ff9-4b4a-b374-26052338523b",
-              "userId": "c808c467-cf5d-4669-8838-4b717284ce03",
+              "tenantId": "wa0h3y",
+              "channelType": "workspace",
+              "channelId": "37b34924-612e-454b-9d73-98fa9290dee1",
+              "userId": "65f40c61-543d-4c34-8ff9-b4a374260523",
               "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
               "workspaceId": "37b34924-612e-454b-9d73-98fa9290dee1",
-              "projectId": "d1cde593-a0b4-4c2c-8fb9-787cfc9ece2a",
-              "role": "guest",
-              "displayOrder": 94,
+              "projectId": null,
+              "role": "admin",
+              "displayOrder": 80,
               "muted": false,
               "archived": false
             },
@@ -983,18 +949,8 @@
                 "pending": 11,
                 "total": 324
               },
-              "entities": {
-                "workspace": 153,
-                "project": 417,
-                "task": 65,
-                "label": 122,
-                "attachment": 365
-              },
-              "activity": {
-                "task": { "created": 1734373779411, "updated": 1734981731354 },
-                "label": { "created": 1734305717599, "updated": null },
-                "attachment": { "created": 1734021177645, "updated": 1734180931753 }
-              }
+              "entities": {},
+              "activity": {}
             }
           }
         }
@@ -1236,34 +1192,33 @@
           "contentType": "application/json"
         },
         "example": {
+          "createdAt": "2024-03-18T14:19:46.053Z",
           "id": "37b34924-612e-454b-9d73-98fa9290dee1",
           "entityType": "workspace",
-          "name": "systems",
-          "slug": "systems",
-          "description": "Cena armarium strues sopor decimus aeneus.",
+          "tenantId": "wa0h3y",
+          "name": "solutions",
+          "updatedAt": "2024-03-18T14:19:46.053Z",
+          "slug": "solutions",
           "thumbnailUrl": null,
           "bannerUrl": null,
-          "tenantId": "a0h3yt",
-          "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
-          "createdAt": "2024-03-18T14:19:46.053Z",
+          "createdBy": null,
+          "updatedBy": null,
           "publishedAt": "2024-03-18T14:19:46.053Z",
           "publicAt": null,
-          "createdBy": null,
-          "updatedAt": "2024-03-18T14:19:46.053Z",
-          "updatedBy": null,
           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
+          "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
           "included": {
             "membership": {
               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
-              "tenantId": "ecya0r",
-              "channelType": "organization",
-              "channelId": "61543dc3-4ff9-4b4a-b374-26052338523b",
-              "userId": "c808c467-cf5d-4669-8838-4b717284ce03",
+              "tenantId": "wa0h3y",
+              "channelType": "workspace",
+              "channelId": "37b34924-612e-454b-9d73-98fa9290dee1",
+              "userId": "65f40c61-543d-4c34-8ff9-b4a374260523",
               "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
               "workspaceId": "37b34924-612e-454b-9d73-98fa9290dee1",
-              "projectId": "d1cde593-a0b4-4c2c-8fb9-787cfc9ece2a",
-              "role": "guest",
-              "displayOrder": 94,
+              "projectId": null,
+              "role": "admin",
+              "displayOrder": 80,
               "muted": false,
               "archived": false
             },
@@ -1275,18 +1230,8 @@
                 "pending": 11,
                 "total": 324
               },
-              "entities": {
-                "workspace": 153,
-                "project": 417,
-                "task": 65,
-                "label": 122,
-                "attachment": 365
-              },
-              "activity": {
-                "task": { "created": 1734373779411, "updated": 1734981731354 },
-                "label": { "created": 1734305717599, "updated": null },
-                "attachment": { "created": 1734021177645, "updated": 1734180931753 }
-              }
+              "entities": {},
+              "activity": {}
             }
           }
         }

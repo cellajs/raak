@@ -19,7 +19,15 @@
           },
           "contentType": "application/json"
         },
-        "example": { "user": 150, "organization": 12 }
+        "example": {
+          "user": 404,
+          "organization": 303,
+          "workspace": 387,
+          "project": 306,
+          "task": 366,
+          "label": 248,
+          "attachment": 365
+        }
       },
       {
         "status": 400,

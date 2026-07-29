@@ -1,13 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { UniqueEnforcer } from 'enforce-unique';
-import { hierarchy } from 'shared';
-import slugify from 'slugify';
 import {
   MOCK_REF_DATE,
   mockBatchResponse,
-  mockNanoid,
+  mockChannelColumns,
   mockPaginated,
   mockPastIsoDate,
+  mockTenantId,
   mockUuid,
   withFakerSeed,
 } from '#/mocks';
@@ -26,26 +25,21 @@ const projectName = new UniqueEnforcer();
  * @param organizationId - Parent organization ID
  */
 const generateProjectBase = (id: string, name: string, createdAt: string, organizationId: string, tenantId: string) => {
-  const slug = slugify(name, { lower: true, strict: true });
+  const publicAt = faker.datatype.boolean()
+    ? faker.date.between({ from: new Date(createdAt), to: MOCK_REF_DATE }).toISOString()
+    : null;
 
   return {
-    id,
-    entityType: 'project' as const,
-    name,
-    slug,
-    description: faker.lorem.sentence(),
-    thumbnailUrl: null,
-    bannerUrl: null,
-    publicAt: faker.datatype.boolean() ? faker.date.past({ refDate: createdAt }).toISOString() : null,
-    tenantId,
+    ...mockChannelColumns('project', {
+      id,
+      name,
+      createdAt,
+      updatedAt: createdAt,
+      tenantId,
+      publicAt,
+      channelIds: { organizationId },
+    }),
     organizationId,
-    createdAt,
-    publishedAt: createdAt,
-    createdBy: null,
-    updatedAt: createdAt,
-    updatedBy: null,
-    // Generated column in the live schema (channelPathColumn); mocks mirror the SQL rule.
-    path: hierarchy.computeChannelPath('project', { id, organizationId }),
   };
 };
 
@@ -57,7 +51,7 @@ const generateProjectBase = (id: string, name: string, createdAt: string, organi
 export const mockProject = (suffix?: string): InsertProjectModel => {
   const baseName = faker.commerce.productName();
   const name = suffix ? `${baseName} ${suffix}` : projectName.enforce(() => baseName);
-  return generateProjectBase(mockUuid(), name, mockPastIsoDate(), mockUuid(), mockNanoid());
+  return generateProjectBase(mockUuid(), name, mockPastIsoDate(), mockUuid(), mockTenantId());
 };
 
 /**
@@ -72,19 +66,21 @@ export const mockProjectResponse = (
   };
 } =>
   withFakerSeed(key, () => {
-    const refDate = MOCK_REF_DATE;
-    const createdAt = faker.date.past({ refDate }).toISOString();
+    const createdAt = mockPastIsoDate();
     const projectId = mockUuid();
     const organizationId = mockUuid();
-    const tenantId = mockNanoid();
+    const tenantId = mockTenantId();
 
     // Generate base project fields
     const base = generateProjectBase(projectId, faker.commerce.productName(), createdAt, organizationId, tenantId);
 
     // Generate membership base with the project ID
-    const membership = mockMembershipBase(`${key}:membership`);
-    membership.projectId = projectId;
-    membership.organizationId = organizationId;
+    const membership = mockMembershipBase(`${key}:membership`, {
+      channelType: 'project',
+      channelId: projectId,
+      channelIds: { projectId, organizationId },
+      tenantId,
+    });
 
     return {
       ...base,
@@ -94,12 +90,6 @@ export const mockProjectResponse = (
     };
   });
 
-/**
- * Generates a paginated mock project list response for getProjects endpoint.
- */
 export const mockPaginatedProjectsResponse = (count = 2) => mockPaginated(mockProjectResponse, count);
 
-/**
- * Generates a batch mock project response for createProjects endpoint.
- */
 export const mockBatchProjectsResponse = (count = 1) => mockBatchResponse(mockProjectResponse, count);
