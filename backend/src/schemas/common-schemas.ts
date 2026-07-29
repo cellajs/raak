@@ -253,10 +253,28 @@ export const validNameSchema = z
 
 /** Schema for a valid email */
 export const validEmailSchema = z
-  .email({ message: t('error:invalid_email') })
-  .min(4, t('error:invalid_between_num', { name: 'Email', min: 4, max: maxLength.field }))
-  .max(maxLength.field, t('error:invalid_between_num', { name: 'Email', min: 4, max: maxLength.field }))
-  .transform((str) => str.toLowerCase().trim());
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(
+    z
+      .email({ message: t('error:invalid_email') })
+      .min(4, t('error:invalid_between_num', { name: 'Email', min: 4, max: maxLength.field }))
+      .max(maxLength.field, t('error:invalid_between_num', { name: 'Email', min: 4, max: maxLength.field })),
+  );
+
+/** Schema for a canonical DNS hostname containing at least one dot. */
+export const validDomainSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(
+    z
+      .hostname({ message: t('error:invalid_domain') })
+      .min(4, t('error:invalid_between_num', { name: 'Domain', min: 4, max: maxLength.field }))
+      .max(maxLength.field, t('error:invalid_between_num', { name: 'Domain', min: 4, max: maxLength.field }))
+      .refine((domain) => domain.includes('.') && !domain.endsWith('.'), t('error:invalid_domain')),
+  );
 
 /** Schema for a valid slug: string between 2 and max field length, allowing alphanumeric and hyphens */
 export const validSlugSchema = z
@@ -278,15 +296,5 @@ export const validCDNUrlSchema = z
   .superRefine(refineWithType((url: string) => isCDNUrl(url), 'invalid_cdn_url'))
   .transform((str) => str.trim());
 
-/** Schema for an array of valid domains */
-export const validDomainsSchema = z
-  .array(
-    z
-      .string()
-      .min(4, t('error:invalid_between_num', { name: 'Domain', min: 4, max: maxLength.field }))
-      .max(maxLength.field, t('error:invalid_between_num', { name: 'Domain', min: 4, max: maxLength.field }))
-      .regex(/^[a-z0-9][a-z0-9.-]*\.[a-z0-9][a-z0-9.-]*[a-z0-9]$/i, { message: t('error:invalid_domain') })
-      .superRefine(refineWithType((s) => /^[a-z0-9].*[a-z0-9]$/i.test(s) && s.includes('.'), 'invalid_domain'))
-      .transform((str) => str.toLowerCase().trim()),
-  )
-  .optional();
+/** Schema for an optional array of canonical DNS hostnames. */
+export const validDomainsSchema = validDomainSchema.array().optional();

@@ -1,6 +1,6 @@
 import { appConfig } from 'shared';
 import { describe, expect, it } from 'vitest';
-import { booleanTransformSchema, paginationQuerySchema } from './common-schemas';
+import { booleanTransformSchema, paginationQuerySchema, validDomainSchema, validEmailSchema } from './common-schemas';
 
 describe('booleanTransformSchema', () => {
   it.each([
@@ -57,6 +57,27 @@ describe('paginationQuerySchema', () => {
     'rejects invalid sequence cursor %s',
     (seqCursor) => {
       expect(paginationQuerySchema.safeParse({ seqCursor }).success).toBe(false);
+    },
+  );
+});
+
+describe('normalized input schemas', () => {
+  it('normalizes an email before validating it', () => {
+    expect(validEmailSchema.parse(' User@Example.COM ')).toBe('user@example.com');
+  });
+
+  it.each(['not-email', 'user@example', `a@${'b'.repeat(254)}.com`])('rejects invalid email %s', (email) => {
+    expect(validEmailSchema.safeParse(email).success).toBe(false);
+  });
+
+  it('normalizes a domain before validating it', () => {
+    expect(validDomainSchema.parse(' Example.COM ')).toBe('example.com');
+  });
+
+  it.each(['localhost', 'a bad!.com', '-example.com', 'example-.com', 'example..com', 'example.com.'])(
+    'rejects invalid or non-canonical domain %s',
+    (domain) => {
+      expect(validDomainSchema.safeParse(domain).success).toBe(false);
     },
   );
 });
