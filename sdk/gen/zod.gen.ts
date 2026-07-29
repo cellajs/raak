@@ -642,8 +642,8 @@ export const zAttachment = z.object({
   size: z.string().max(255),
   keys: z.object({
     original: z.string(),
+    preview: z.string().optional(),
     thumbnail: z.string().optional(),
-    'thumbnail-tiny': z.string().optional(),
     converted: z.string().optional(),
   }),
   projectId: z.uuid(),
@@ -2351,8 +2351,8 @@ export const zCreateAttachmentsBody = z
       size: z.string().max(255),
       keys: z.object({
         original: z.string(),
+        preview: z.string().optional(),
         thumbnail: z.string().optional(),
-        'thumbnail-tiny': z.string().optional(),
         converted: z.string().optional(),
       }),
       bucketName: z.string().max(255),
@@ -2391,7 +2391,7 @@ export const zGetPresignedUrlsBody = z.object({
     .array(
       z.object({
         attachmentId: z.uuid(),
-        variant: z.enum(['original', 'thumbnail', 'thumbnail-tiny', 'converted']).optional().default('original'),
+        variant: z.enum(['original', 'preview', 'thumbnail', 'converted']).optional().default('original'),
       }),
     )
     .min(1)
@@ -2410,7 +2410,7 @@ export const zGetPresignedUrlsResponse = z.object({
   data: z.array(
     z.object({
       attachmentId: z.uuid(),
-      variant: z.enum(['original', 'thumbnail', 'thumbnail-tiny', 'converted']),
+      variant: z.enum(['original', 'preview', 'thumbnail', 'converted']),
       url: z.string(),
     }),
   ),

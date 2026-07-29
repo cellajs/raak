@@ -76,7 +76,7 @@ describe('parseUploadedAttachments', () => {
     expect(attachment.id).toBe('att-uuid-1');
     expect(attachment.keys.converted).toBe('files/holiday.webp');
     expect(attachment.convertedContentType).toBe('image/webp');
-    expect(attachment.keys.thumbnail).toBe('files/holiday-thumb.png');
+    expect(attachment.keys.preview).toBe('files/holiday-thumb.png');
   });
 
   it('groups a multi-file upload under one groupId, and leaves a single upload ungrouped', () => {

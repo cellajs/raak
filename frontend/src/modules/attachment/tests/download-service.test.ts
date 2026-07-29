@@ -224,7 +224,7 @@ describe('downloadService — auth fail-fast (401/403)', () => {
       makeAttachment({
         keys: {
           original: 'files/orig.png',
-          thumbnail: 'files/thumb.png',
+          preview: 'files/thumb.png',
           converted: 'files/conv.png',
         },
       }),
@@ -250,7 +250,7 @@ describe('downloadService — auth fail-fast (401/403)', () => {
       makeAttachment({
         keys: {
           original: 'files/orig.png',
-          thumbnail: 'files/thumb.png',
+          preview: 'files/thumb.png',
           converted: 'files/conv.png',
         },
       }),

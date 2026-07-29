@@ -21,8 +21,8 @@ import { mockAttachmentResponse } from './attachment-mocks';
  */
 export const attachmentKeysSchema = z.object({
   original: z.string(),
+  preview: z.string().optional(),
   thumbnail: z.string().optional(),
-  'thumbnail-tiny': z.string().optional(),
   converted: z.string().optional(),
 });
 export type AttachmentKeys = z.infer<typeof attachmentKeysSchema>;
@@ -111,7 +111,7 @@ export const attachmentListQuerySchema = paginationQuerySchema.extend({
 });
 
 /** Selectable stored-file variants. Mirrors the frontend `BlobVariant`. */
-export const attachmentVariantSchema = z.enum(['original', 'thumbnail', 'thumbnail-tiny', 'converted']);
+export const attachmentVariantSchema = z.enum(['original', 'preview', 'thumbnail', 'converted']);
 
 /**
  * Body schema for the batch presigned URLs endpoint. Callers reference private

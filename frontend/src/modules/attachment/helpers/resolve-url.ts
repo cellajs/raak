@@ -78,13 +78,13 @@ export async function resolveBlockNoteFileRef(ref: string, ctx: RefContext = {})
   if (!ref.length) return '';
 
   // Attachment ids are UUIDs (no slashes); public cloud keys contain slashes. Public image blocks
-  // already store the mid-size thumbnail key at upload time, so no variant choice is needed here.
+  // already store the mid-size preview key at upload time, so no variant choice is needed here.
   if (ref.includes('/')) return getPublicFileUrl(ref);
 
-  // Private attachment referenced by id. Inline images use the lighter mid-size thumbnail; other
+  // Private attachment referenced by id. Inline images use the lighter mid-size preview; other
   // types (video, audio, documents) keep the converted variant so they stay playable/readable.
   const cached = findAttachmentInCache(ref);
-  const variant: CloudFileVariant = cached?.contentType?.startsWith('image/') ? 'thumbnail' : 'converted';
+  const variant: CloudFileVariant = cached?.contentType?.startsWith('image/') ? 'preview' : 'converted';
 
   // Prefer a stable local blob URL, else resolve a presigned URL by id.
   const localUrl = await attachmentStorage.getSharedBlobUrl(ref, variant, true);

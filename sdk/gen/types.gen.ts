@@ -693,8 +693,8 @@ export type Attachment = {
    */
   keys: {
     original: string;
+    preview?: string;
     thumbnail?: string;
-    'thumbnail-tiny'?: string;
     converted?: string;
   };
   projectId: string;
@@ -5538,8 +5538,8 @@ export type CreateAttachmentsData = {
     size: string;
     keys: {
       original: string;
+      preview?: string;
       thumbnail?: string;
-      'thumbnail-tiny'?: string;
       converted?: string;
     };
     bucketName: string;
@@ -5635,7 +5635,7 @@ export type GetPresignedUrlsData = {
   body: {
     items: Array<{
       attachmentId: string;
-      variant?: 'original' | 'thumbnail' | 'thumbnail-tiny' | 'converted';
+      variant?: 'original' | 'preview' | 'thumbnail' | 'converted';
     }>;
   };
   path: {
@@ -5682,7 +5682,7 @@ export type GetPresignedUrlsResponses = {
   200: {
     data: Array<{
       attachmentId: string;
-      variant: 'original' | 'thumbnail' | 'thumbnail-tiny' | 'converted';
+      variant: 'original' | 'preview' | 'thumbnail' | 'converted';
       url: string;
     }>;
     /**

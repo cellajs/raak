@@ -118,8 +118,8 @@
           "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
           "properties": {
             "original": { "type": "string", "required": true },
+            "preview": { "type": "string", "required": false },
             "thumbnail": { "type": "string", "required": false },
-            "thumbnail-tiny": { "type": "string", "required": false },
             "converted": { "type": "string", "required": false }
           }
         },

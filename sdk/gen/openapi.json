@@ -2919,10 +2919,10 @@
               "original": {
                 "type": "string"
               },
-              "thumbnail": {
+              "preview": {
                 "type": "string"
               },
-              "thumbnail-tiny": {
+              "thumbnail": {
                 "type": "string"
               },
               "converted": {
@@ -13443,10 +13443,10 @@
                         "original": {
                           "type": "string"
                         },
-                        "thumbnail": {
+                        "preview": {
                           "type": "string"
                         },
-                        "thumbnail-tiny": {
+                        "thumbnail": {
                           "type": "string"
                         },
                         "converted": {
@@ -13956,7 +13956,7 @@
                         },
                         "variant": {
                           "type": "string",
-                          "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"],
+                          "enum": ["original", "preview", "thumbnail", "converted"],
                           "default": "original"
                         }
                       },
@@ -13990,7 +13990,7 @@
                           },
                           "variant": {
                             "type": "string",
-                            "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"]
+                            "enum": ["original", "preview", "thumbnail", "converted"]
                           },
                           "url": {
                             "type": "string"

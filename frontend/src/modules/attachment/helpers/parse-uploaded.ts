@@ -82,9 +82,9 @@ export const parseUploadedAttachments = (
       // Check the tiny image thumbnail before the generic thumb_ mapping: both share the thumb_ prefix
       // but write different keys, so the specific case must win.
       if (step === 'thumb_image_tiny') {
-        if (url) target.keys['thumbnail-tiny'] = url;
-      } else if (step.startsWith('thumb_')) {
         if (url) target.keys.thumbnail = url;
+      } else if (step.startsWith('thumb_')) {
+        if (url) target.keys.preview = url;
       }
     }
   }

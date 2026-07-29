@@ -130,8 +130,8 @@
                     "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
                     "properties": {
                       "original": { "type": "string", "required": true },
+                      "preview": { "type": "string", "required": false },
                       "thumbnail": { "type": "string", "required": false },
-                      "thumbnail-tiny": { "type": "string", "required": false },
                       "converted": { "type": "string", "required": false }
                     }
                   },
@@ -442,8 +442,8 @@
                     "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
                     "properties": {
                       "original": { "type": "string", "required": true },
+                      "preview": { "type": "string", "required": false },
                       "thumbnail": { "type": "string", "required": false },
-                      "thumbnail-tiny": { "type": "string", "required": false },
                       "converted": { "type": "string", "required": false }
                     }
                   },
@@ -691,8 +691,8 @@
                     "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
                     "properties": {
                       "original": { "type": "string", "required": true },
+                      "preview": { "type": "string", "required": false },
                       "thumbnail": { "type": "string", "required": false },
-                      "thumbnail-tiny": { "type": "string", "required": false },
                       "converted": { "type": "string", "required": false }
                     }
                   },
@@ -884,8 +884,8 @@
               "required": true,
               "properties": {
                 "original": { "type": "string", "required": true },
+                "preview": { "type": "string", "required": false },
                 "thumbnail": { "type": "string", "required": false },
-                "thumbnail-tiny": { "type": "string", "required": false },
                 "converted": { "type": "string", "required": false }
               }
             },
@@ -1073,7 +1073,7 @@
                   "variant": {
                     "type": "string",
                     "required": true,
-                    "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"]
+                    "enum": ["original", "preview", "thumbnail", "converted"]
                   },
                   "url": { "type": "string", "required": true }
                 }
@@ -1171,7 +1171,7 @@
                 "variant": {
                   "type": "string",
                   "required": false,
-                  "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"]
+                  "enum": ["original", "preview", "thumbnail", "converted"]
                 }
               }
             }
@@ -1307,8 +1307,8 @@
               "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
               "properties": {
                 "original": { "type": "string", "required": true },
+                "preview": { "type": "string", "required": false },
                 "thumbnail": { "type": "string", "required": false },
-                "thumbnail-tiny": { "type": "string", "required": false },
                 "converted": { "type": "string", "required": false }
               }
             },
@@ -1542,8 +1542,8 @@
               "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
               "properties": {
                 "original": { "type": "string", "required": true },
+                "preview": { "type": "string", "required": false },
                 "thumbnail": { "type": "string", "required": false },
-                "thumbnail-tiny": { "type": "string", "required": false },
                 "converted": { "type": "string", "required": false }
               }
             },

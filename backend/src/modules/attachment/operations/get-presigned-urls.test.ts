@@ -31,7 +31,7 @@ const attachmentA = {
   bucketName: 'private-bucket',
   keys: {
     original: 'org/attachments/original/a.jpg',
-    thumbnail: 'org/attachments/thumbnail/a.jpg',
+    preview: 'org/attachments/preview/a.jpg',
   },
 };
 const attachmentB = {
@@ -63,9 +63,9 @@ describe('getPresignedUrlsOp: fail-closed batch signing', () => {
 
     const res = await getPresignedUrlsOp(ctx, {
       items: [
-        { attachmentId: 'att-a', variant: 'thumbnail' },
+        { attachmentId: 'att-a', variant: 'preview' },
         { attachmentId: 'att-b', variant: 'original' },
-        { attachmentId: 'att-a', variant: 'thumbnail' },
+        { attachmentId: 'att-a', variant: 'preview' },
       ],
     });
 
@@ -76,8 +76,8 @@ describe('getPresignedUrlsOp: fail-closed batch signing', () => {
       data: [
         {
           attachmentId: 'att-a',
-          variant: 'thumbnail',
-          url: `https://signed.example/${attachmentA.keys.thumbnail}`,
+          variant: 'preview',
+          url: `https://signed.example/${attachmentA.keys.preview}`,
         },
         {
           attachmentId: 'att-b',
