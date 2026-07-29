@@ -6,7 +6,7 @@ import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
 interface InsertWorkspacesOpts {
@@ -98,11 +98,18 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
 
   const countData = includeCounts ? getChannelCountsSelect(entityType) : null;
 
-  const orderColumn = getOrderColumn(sort, workspacesTable.id, order, {
-    id: workspacesTable.id,
-    name: workspacesTable.name,
-    createdAt: workspacesTable.createdAt,
-    displayOrder: membershipsTable.displayOrder,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'displayOrder',
+    defaultOrder: 'asc',
+    columns: {
+      id: workspacesTable.id,
+      name: workspacesTable.name,
+      createdAt: workspacesTable.createdAt,
+      displayOrder: membershipsTable.displayOrder,
+    },
+    tieBreaker: workspacesTable.id,
   });
 
   const { createdBy: _cb, updatedBy: _mb, ...workspaceCols } = getColumns(workspacesTable);
@@ -127,7 +134,7 @@ export const getWorkspacesList = async ({ var: { db } }: DbContext, opts: GetWor
     .leftJoin(createdByUser, eq(createdByUser.id, workspacesTable.createdBy))
     .leftJoin(updatedByUser, eq(updatedByUser.id, workspacesTable.updatedBy))
     .where(and(...workspaceWhere))
-    .orderBy(orderColumn)
+    .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 

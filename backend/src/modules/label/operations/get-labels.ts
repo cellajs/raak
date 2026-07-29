@@ -15,7 +15,7 @@ import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-qu
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
@@ -89,12 +89,17 @@ export async function getLabelsOp(
     // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
     const orderBy = seqCursor
       ? [sql`seq asc`, sql`id asc`]
-      : [
-          getOrderColumn(sort, sql`name`, order, {
+      : getOrderColumns({
+          sort,
+          order,
+          defaultSort: 'name',
+          defaultOrder: 'asc',
+          columns: {
             name: sql`name`,
             usedCount: sql`used_count`,
-          }),
-        ];
+          },
+          tieBreaker: sql`id`,
+        });
 
     const itemsQuery = db
       .select()

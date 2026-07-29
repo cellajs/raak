@@ -8,7 +8,7 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationFlagsSelect, setupConfigSelect } from '#/modules/organization/helpers/select';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
 /** Count organizations in a tenant. */
@@ -110,12 +110,19 @@ export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: Get
   // Org-only filters belong in WHERE (safe for both admin + non-admin)
   const orgWhere: SQL[] = [...(q ? [ilike(organizationsTable.name, prepareStringForILikeFilter(q))] : [])];
 
-  const orderColumn = getOrderColumn(sort, organizationsTable.id, order, {
-    id: organizationsTable.id,
-    name: organizationsTable.name,
-    createdAt: organizationsTable.createdAt,
-    userRole: membershipsTable.role,
-    displayOrder: membershipsTable.displayOrder,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'displayOrder',
+    defaultOrder: 'asc',
+    columns: {
+      id: organizationsTable.id,
+      name: organizationsTable.name,
+      createdAt: organizationsTable.createdAt,
+      userRole: membershipsTable.role,
+      displayOrder: membershipsTable.displayOrder,
+    },
+    tieBreaker: organizationsTable.id,
   });
 
   // System admins see all orgs they have RLS access to (via createdBy or membership)
@@ -148,7 +155,7 @@ export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: Get
     .leftJoin(createdByUser, eq(createdByUser.id, organizationsTable.createdBy))
     .leftJoin(updatedByUser, eq(updatedByUser.id, organizationsTable.updatedBy))
     .where(and(...orgWhere))
-    .orderBy(orderColumn)
+    .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 

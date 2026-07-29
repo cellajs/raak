@@ -85,8 +85,8 @@ export const labelUpdateStxBodySchema = labelContract.updateBodySchema;
 
 export const labelListQuerySchema = paginationQuerySchema
   .extend({
-    sort: z.enum(['name', 'usedCount']).default('name').optional(),
-    order: z.enum(['asc', 'desc']).default('asc').optional(),
+    sort: z.enum(['name', 'usedCount']).default('name'),
+    order: z.enum(['asc', 'desc']).default('asc'),
     // Comma-separated label modes, e.g. ?modes=secondary,epic
     modes: z
       .string()

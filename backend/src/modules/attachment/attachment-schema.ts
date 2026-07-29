@@ -82,7 +82,7 @@ export const attachmentCreateResponseSchema = batchResponseSchema(attachmentSche
 const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'createdAt', 'contentType']);
 
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
-  sort: attachmentSortKeys.default('createdAt').optional(),
+  sort: attachmentSortKeys.default('createdAt'),
   // cella change: Raak attachment lists can be narrowed to a project.
   projectId: z.string().max(maxLength.id).optional(),
 });

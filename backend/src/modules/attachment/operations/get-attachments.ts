@@ -14,7 +14,7 @@ import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } fro
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
@@ -74,13 +74,18 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
   const orderBy = seqCursor
     ? [asc(attachmentsTable.seq), asc(attachmentsTable.id)]
-    : [
-        getOrderColumn(sort, attachmentsTable.createdAt, order, {
+    : getOrderColumns({
+        sort,
+        order,
+        defaultSort: 'createdAt',
+        defaultOrder: 'desc',
+        columns: {
           name: attachmentsTable.name,
           createdAt: attachmentsTable.createdAt,
           contentType: attachmentsTable.contentType,
-        }),
-      ];
+        },
+        tieBreaker: attachmentsTable.id,
+      });
 
   // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted attachments
   const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;

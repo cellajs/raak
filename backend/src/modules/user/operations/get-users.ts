@@ -7,7 +7,7 @@ import { userCountersTable } from '#/modules/user/user-counters-db';
 import { usersTable } from '#/modules/user/user-db';
 import { buildUsersListQuery, countUsersList } from '#/modules/user/user-queries';
 import type { userListQuerySchema } from '#/modules/user/user-schema';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
 type GetUsersInput = z.infer<typeof userListQuerySchema>;
@@ -35,18 +35,28 @@ export async function getUsersOp(ctx: AuthContext, input: GetUsersInput) {
     );
   }
 
-  const orderColumn = getOrderColumn(sort, usersTable.id, order, {
-    id: usersTable.id,
-    name: usersTable.name,
-    email: usersTable.email,
-    createdAt: usersTable.createdAt,
-    lastSeenAt: sql`(SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id})`,
-    role: systemRolesTable.role,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'createdAt',
+    defaultOrder: 'desc',
+    columns: {
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      createdAt: usersTable.createdAt,
+      lastSeenAt: sql`(SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id})`,
+      role: systemRolesTable.role,
+    },
+    tieBreaker: usersTable.id,
   });
 
   const total = await countUsersList(ctx, { filters });
   const usersQuery = buildUsersListQuery(ctx, { filters });
-  const result = await usersQuery.orderBy(orderColumn).limit(limit).offset(offset);
+  const result = await usersQuery
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
 
   return { items: result, total };
 }

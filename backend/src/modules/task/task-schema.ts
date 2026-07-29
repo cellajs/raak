@@ -76,9 +76,9 @@ export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
 /** Base schema without refinement - use this when you need .omit()/.pick() */
 export const taskListQueryBaseSchema = paginationQuerySchema.extend({
-  matchMode: z.enum(['all', 'any']).default('all').optional(),
-  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt').optional(),
-  order: z.enum(['asc', 'desc']).default('asc').optional(),
+  matchMode: z.enum(['all', 'any']).default('all'),
+  sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
+  order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),
   projectId: z.string().max(maxLength.id).optional(),
   workspaceId: z.string().max(maxLength.id).optional(),

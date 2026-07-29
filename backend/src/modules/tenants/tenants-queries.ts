@@ -1,7 +1,8 @@
-import { and, asc, count, desc, eq, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, type SQL, sql } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
 import { domainsTable } from '#/modules/domains/domains-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
+import { getOrderColumns } from '#/utils/order-column';
 
 interface GetTenantsListOpts {
   filters: SQL[];
@@ -17,8 +18,17 @@ export const getTenantsList = async (ctx: DbContext, opts: GetTenantsListOpts) =
   const { filters, sort, order, limit, offset } = opts;
   const whereClause = and(...filters);
 
-  const orderColumn = sort === 'name' ? tenantsTable.name : tenantsTable.createdAt;
-  const orderDirection = order === 'asc' ? asc : desc;
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'createdAt',
+    defaultOrder: 'desc',
+    columns: {
+      name: tenantsTable.name,
+      createdAt: tenantsTable.createdAt,
+    },
+    tieBreaker: tenantsTable.id,
+  });
 
   const domainsCountSq = db
     .select({ tenantId: domainsTable.tenantId, count: count().as('domains_count') })
@@ -46,7 +56,7 @@ export const getTenantsList = async (ctx: DbContext, opts: GetTenantsListOpts) =
       .from(tenantsTable)
       .leftJoin(domainsCountSq, eq(tenantsTable.id, domainsCountSq.tenantId))
       .where(whereClause)
-      .orderBy(orderDirection(orderColumn))
+      .orderBy(...orderBy)
       .limit(limit)
       .offset(offset),
     db.select({ total: count() }).from(tenantsTable).where(whereClause),

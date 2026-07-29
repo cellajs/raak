@@ -1,7 +1,7 @@
 import { and, count, type SQL } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
 import { activitiesTable } from '#/modules/activities/activities-db';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 
 interface BuildActivitiesListOpts {
   filters: SQL[];
@@ -12,17 +12,24 @@ interface BuildActivitiesListOpts {
 /** Build the activities list query with filters and ordering. Returns a subquery. */
 export const buildActivitiesListQuery = (ctx: DbContext, { filters, sort, order }: BuildActivitiesListOpts) => {
   const { db } = ctx.var;
-  const orderColumn = getOrderColumn(sort, activitiesTable.createdAt, order, {
-    createdAt: activitiesTable.createdAt,
-    type: activitiesTable.type,
-    tableName: activitiesTable.tableName,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'createdAt',
+    defaultOrder: 'desc',
+    columns: {
+      createdAt: activitiesTable.createdAt,
+      type: activitiesTable.type,
+      tableName: activitiesTable.tableName,
+    },
+    tieBreaker: activitiesTable.id,
   });
 
   return db
     .select()
     .from(activitiesTable)
     .where(and(...filters))
-    .orderBy(orderColumn);
+    .orderBy(...orderBy);
 };
 
 /** Count total activities matching the list query. */

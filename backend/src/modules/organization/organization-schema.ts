@@ -119,8 +119,8 @@ export const organizationQuerySchema = z.object({
 });
 
 export const organizationListQuerySchema = paginationQuerySchema.extend({
-  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder').optional(),
-  order: z.enum(['asc', 'desc']).default('asc').optional(),
+  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder'),
+  order: z.enum(['asc', 'desc']).default('asc'),
   relatableUserId: z.string().max(maxLength.id).optional(),
   role: z.enum(roles.all).optional(),
   excludeArchived: excludeArchivedQuerySchema,

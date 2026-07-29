@@ -7,7 +7,7 @@ import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
 /** Insert projects and return the created rows. */
@@ -162,11 +162,18 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
 
   const [{ total }] = await db.select({ total: count() }).from(baseQuery);
 
-  const orderColumn = getOrderColumn(sort, projectsTable.id, order, {
-    id: projectsTable.id,
-    name: projectsTable.name,
-    createdAt: projectsTable.createdAt,
-    displayOrder: membershipsTable.displayOrder,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'displayOrder',
+    defaultOrder: 'asc',
+    columns: {
+      id: projectsTable.id,
+      name: projectsTable.name,
+      createdAt: projectsTable.createdAt,
+      displayOrder: membershipsTable.displayOrder,
+    },
+    tieBreaker: projectsTable.id,
   });
 
   const countData = includeCounts ? getChannelCountsSelect(entityType) : null;
@@ -193,7 +200,7 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
     .leftJoin(createdByUser, eq(createdByUser.id, projectsTable.createdBy))
     .leftJoin(updatedByUser, eq(updatedByUser.id, projectsTable.updatedBy))
     .where(and(...projectWhere))
-    .orderBy(orderColumn)
+    .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 

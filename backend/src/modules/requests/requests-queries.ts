@@ -4,7 +4,7 @@ import { type RequestModel, requestsTable } from '#/modules/requests/requests-db
 import { emailsTable } from '#/modules/user/emails-db';
 import { userSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 
 interface FindUserByEmailOpts {
   email: string;
@@ -88,14 +88,26 @@ export const getRequestsList = async (ctx: DbContext, opts: GetRequestsListOpts)
 
   const [{ total }] = await db.select({ total: count() }).from(requestsQuery.as('requests'));
 
-  const orderColumn = getOrderColumn(sort, requestsTable.id, order, {
-    id: requestsTable.id,
-    email: requestsTable.email,
-    createdAt: requestsTable.createdAt,
-    type: requestsTable.type,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'createdAt',
+    defaultOrder: 'desc',
+    columns: {
+      id: requestsTable.id,
+      email: requestsTable.email,
+      createdAt: requestsTable.createdAt,
+      type: requestsTable.type,
+    },
+    tieBreaker: requestsTable.id,
   });
 
-  const items = await db.select().from(requestsQuery.as('requests')).orderBy(orderColumn).limit(limit).offset(offset);
+  const items = await db
+    .select()
+    .from(requestsQuery.as('requests'))
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
 
   return { items, total };
 };

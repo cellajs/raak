@@ -39,7 +39,7 @@ export const activitySchema = z
 
 /** Query schema for filtering and paginating activities */
 export const activityListQuerySchema = paginationQuerySchema.extend({
-  sort: z.enum(['createdAt', 'type', 'tableName']).default('createdAt').optional(),
+  sort: z.enum(['createdAt', 'type', 'tableName']).default('createdAt'),
   userId: activitySchema.shape.userId,
   entityType: entityTypeSchema.optional(),
   resourceType: resourceTypeSchema.optional(),

@@ -11,7 +11,7 @@ import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
 import { memberSelect, userBaseSelect } from '#/modules/user/helpers/select';
 import { userCountersTable } from '#/modules/user/user-counters-db';
 import { usersTable } from '#/modules/user/user-db';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
 interface CountMembershipsByChannelOpts {
@@ -274,13 +274,20 @@ export const getMembersList = async (ctx: DbContext, opts: GetMembersListOpts) =
   if (role) membersFilters.push(eq(membershipsTable.role, role));
   if (userIds) membersFilters.push(inArray(usersTable.id, userIds.split(',')));
 
-  const orderColumn = getOrderColumn(sort, usersTable.id, order, {
-    id: usersTable.id,
-    name: usersTable.name,
-    email: usersTable.email,
-    createdAt: usersTable.createdAt,
-    lastSeenAt: sql`(SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id})`,
-    role: membershipsTable.role,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'createdAt',
+    defaultOrder: 'desc',
+    columns: {
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      createdAt: usersTable.createdAt,
+      lastSeenAt: sql`(SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id})`,
+      role: membershipsTable.role,
+    },
+    tieBreaker: usersTable.id,
   });
 
   const membersQuery = db
@@ -293,7 +300,10 @@ export const getMembersList = async (ctx: DbContext, opts: GetMembersListOpts) =
     .where(and(...membersFilters, or(...$or)));
 
   const [{ total }] = await db.select({ total: count() }).from(membersQuery.as('members'));
-  const items = await membersQuery.orderBy(orderColumn).limit(limit).offset(offset);
+  const items = await membersQuery
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
 
   return { items, total };
 };
@@ -381,7 +391,14 @@ export const getPendingMembershipsList = async (ctx: DbContext, opts: GetPending
   const { organizationId, entityId, sort, order, offset, limit } = opts;
 
   const table = inactiveMembershipsTable;
-  const orderColumn = getOrderColumn(sort, table.createdAt, order, { createdAt: table.createdAt });
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    defaultSort: 'createdAt',
+    defaultOrder: 'desc',
+    columns: { createdAt: table.createdAt },
+    tieBreaker: table.id,
+  });
 
   const pendingMembershipsQuery = db
     .select({
@@ -400,7 +417,7 @@ export const getPendingMembershipsList = async (ctx: DbContext, opts: GetPending
     .leftJoin(usersTable, eq(usersTable.id, table.userId))
     .leftJoin(tokensTable, and(eq(tokensTable.inactiveMembershipId, table.id), eq(tokensTable.type, 'invitation')))
     .where(and(eq(table.channelId, entityId), eq(table.organizationId, organizationId)))
-    .orderBy(orderColumn);
+    .orderBy(...orderBy);
 
   const [{ total }] = await db.select({ total: count() }).from(pendingMembershipsQuery.as('pendingMemberships'));
   const rawItems = await pendingMembershipsQuery.limit(limit).offset(offset);
