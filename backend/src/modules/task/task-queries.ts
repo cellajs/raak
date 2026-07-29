@@ -1,5 +1,6 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
+import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
 import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
@@ -25,6 +26,7 @@ export const findTasksByStxMutationId = async (ctx: AuthContext, { mutationId }:
 /** Insert tasks and return the created rows. Silently skips duplicates (PK conflict). */
 export const insertTasks = async (ctx: DbContext, { tasks }: { tasks: InsertTaskModel[] }) => {
   const { db } = ctx.var;
+  await inheritPublicAtFromProject(ctx, tasks);
   return db.insert(tasksTable).values(tasks).onConflictDoNothing().returning();
 };
 
