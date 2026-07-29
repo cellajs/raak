@@ -52,8 +52,6 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
-  // Row-local public read: return the project's tasks whose OWN publicAt is set (published + public),
-  // independent of the project's public status. Each task owns its visibility.
   const publicCtx = {
     var: { db: unsafeInternalAdminDb!, userId: '', organizationId: project.organizationId },
   } as AuthContext;

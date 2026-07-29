@@ -31,7 +31,6 @@ defineBackendModule({
     );
   },
   onMutation: {
-    // Provision the organization's primary label set into each newly created project as tracked rows.
     'project.created': async (ctx, { after = [] }) => {
       const organization = ctx.var.organization;
       if (!after.length || !organization) return;

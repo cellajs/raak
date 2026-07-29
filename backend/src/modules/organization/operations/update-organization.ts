@@ -46,7 +46,6 @@ export async function updateOrganizationOp(
   // Rows store organizationFlags/setupConfig sparse; merge config defaults under the stored bag
   const updatedOrganizationRecord = withOrganizationDefaults(updatedRecord);
 
-  // Fire in-request mutation handlers (e.g. the label module fans primary-label edits to child rows).
   await dispatchMutation(ctx, 'organization.updated', {
     before: [withOrganizationDefaults(organization)],
     after: [updatedOrganizationRecord],

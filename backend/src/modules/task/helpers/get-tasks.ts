@@ -87,7 +87,6 @@ export const getTasks = async (
     acceptedCutOffFilter,
     // Hide tombstones for normal reads; on seqCursor delta sync they flow through so caches can drop them
     seqCursor ? undefined : isNull(tasksTable.deletedAt),
-    // Public reads: only publicly-shared, published tasks (row-local publicAt, independent of the project).
     opts?.publicOnly ? and(isNotNull(tasksTable.publicAt), publishedRowsPredicate(tasksTable)) : undefined,
   );
 
