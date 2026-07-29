@@ -1,13 +1,11 @@
-import type { PrimaryLabelDefinition } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import { tenantContext } from '#/db/tenant-context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
-import { propagateSetupConfigLabels } from '#/modules/label/helpers/primary-labels';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withOrganizationDefaults } from '#/modules/organization/helpers/select';
+import { onOrganizationUpdated } from '#/modules/organization/organization-hooks';
 import { updateOrganization } from '#/modules/organization/organization-queries';
 import { organizationContract } from '#/modules/organization/organization-schema';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
@@ -45,20 +43,11 @@ export async function updateOrganizationOp(
 
   const values = { ...input, updatedAt: getIsoDate(), updatedBy: user.id };
   const updatedRecord = await updateOrganization(ctx, { id: organization.id, values });
-  // Rows store organizationFlags sparse; merge config defaults under the stored bag
+  // Rows store organizationFlags/setupConfig sparse; merge config defaults under the stored bag
   const updatedOrganizationRecord = withOrganizationDefaults(updatedRecord);
 
-  // Fan edited primary label definitions out to still-tracked rows across the org's projects.
-  const primaryLabels = (input.setupConfig as { primaryLabels?: PrimaryLabelDefinition[] } | undefined)?.primaryLabels;
-  if (primaryLabels) {
-    await tenantContext(ctx, (txCtx) =>
-      propagateSetupConfigLabels(txCtx, {
-        entries: primaryLabels,
-        organizationId: organization.id,
-        updatedBy: user.id,
-      }),
-    );
-  }
+  // Fork hook: react to setupConfig changes (no-op in cella) before cache invalidation.
+  await onOrganizationUpdated(ctx, { organization: updatedOrganizationRecord, input });
 
   invalidateCache.org(tenantId, organization.id);
 

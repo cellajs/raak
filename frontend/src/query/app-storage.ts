@@ -2,18 +2,24 @@ import { appConfig } from 'shared';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
-import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import { useSeenStore } from '~/modules/seen/seen-store';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { useUIStore } from '~/modules/ui/ui-store';
 import { userStore } from '~/modules/user/user-store';
 import { bindAppDb, closeAppDb } from '~/query/app-db';
+import { forkAppKvStores } from '~/query/fork-app-kv-stores';
 import { resetPersisters } from '~/query/persister';
 import { useSyncStore } from '~/query/realtime/sync-store';
 
+/** Minimal contract a per-user kv store must satisfy to join {@link appKvStores}: hydrate on bind, reset on sign-out. */
+export interface AppKvStore {
+  persist: { rehydrate: () => void | Promise<void> };
+  getState: () => { reset: () => void };
+}
+
 /** Persisted zustand stores that live in `appdb.kv` (per-user; in-memory while signed out).
- *  Each exposes a uniform `reset()` so {@link unbind} can drop in-memory state on sign-out. */
+ *  Each exposes a uniform `reset()` so {@link unbind} can drop in-memory state on sign-out.
+ *  Forks append their own stores via {@link forkAppKvStores}. */
 const appKvStores = [
   useSeenStore,
   useSyncStore,
@@ -21,8 +27,7 @@ const appKvStores = [
   useDraftStore,
   useAlertStore,
   useBoardStore,
-  useTaskBoardStore,
-  useLabelRecencyStore,
+  ...forkAppKvStores,
 ];
 
 let boundOwner: string | null = null;
@@ -81,6 +86,7 @@ export function appStorageReady(): Promise<void> {
   return readyPromise;
 }
 
+// TODO can we get rid of ithis?
 /** One-time, best-effort GC of pre-appdb client storage (hard cutover, no migration). */
 function gcLegacyStorage(): void {
   const flag = `${appConfig.slug}-storage-gc-v2`;

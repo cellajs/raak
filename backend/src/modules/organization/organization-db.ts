@@ -31,9 +31,8 @@ export const organizationsTable = snakeCase.table(
       .$type<OrganizationFlags>()
       .notNull()
       .default({} as OrganizationFlags),
-    // Per-org setup (e.g. the primary label set); shape + defaults declared in
-    // `appConfig.defaultSetupConfig`. Stored sparse like organizationFlags: reads merge
-    // config defaults under the stored bag (see helpers/select).
+    // Per-org setup config; fork-shaped defaults declared in `appConfig.defaultSetupConfig`.
+    // Stored sparse like organizationFlags: reads merge config defaults under the stored bag.
     setupConfig: jsonb().$type<Partial<OrganizationSetupConfig>>().notNull().default({}),
   },
   (table) => [

@@ -64,6 +64,11 @@ export default defineConfig({
       'json/text-blocks.json',
       'locales/en/about.json',
       'locales/en/app.json',
+      'backend/src/modules/organization/setup-config-schema.ts',
+      'backend/src/modules/organization/organization-hooks.ts',
+      'backend/src/mocks/fork-product-mocks.ts',
+      'frontend/src/query/fork-app-kv-stores.ts',
+      'frontend/src/modules/organization/organization-settings-sections.tsx',
     ],
   },
 });

@@ -37,7 +37,7 @@ interface UpdateOrganizationOpts {
   };
 }
 
-/** Update an organization by ID and return the updated row. Merges organizationFlags and setupConfig via jsonb || if provided. */
+/** Update an organization by ID and return the updated row. Merges organizationFlags/setupConfig via jsonb || if provided. */
 export const updateOrganization = async (ctx: AuthContext, { id, values }: UpdateOrganizationOpts) => {
   const { db, tenantId } = ctx.var;
   const { organizationFlags, setupConfig, ...rest } = values;
@@ -124,7 +124,7 @@ export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: Get
   const { createdBy: _cb, updatedBy: _mb, ...orgCols } = getColumns(organizationsTable);
   const selectShape = {
     ...orgCols,
-    // Rows store organizationFlags and setupConfig sparse; merge config defaults under the stored bags
+    // Rows store organizationFlags/setupConfig sparse; merge config defaults under the stored bag
     organizationFlags: organizationFlagsSelect,
     setupConfig: setupConfigSelect,
     ...auditUserSelect,
