@@ -1,5 +1,8 @@
+import type { PrimaryLabelDefinition } from 'shared';
 import { uuidv7 } from 'uuidv7';
+import { tenantContext } from '#/db/tenant-context';
 import { defineBackendModule } from '#/lib/module';
+import { propagateSetupConfigLabels } from '#/modules/label/helpers/primary-labels';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
 
 defineBackendModule({
@@ -21,5 +24,21 @@ defineBackendModule({
       { ops: { description }, stx: { mutationId: uuidv7(), sourceId: 'yjs-relay', fieldTimestamps: {} } },
       { serverOrigin: true },
     );
+  },
+  onMutation: {
+    // Fan edited primary-label definitions out to still-tracked rows across the org's projects,
+    // matched by slug. Only fires when the update body carried primaryLabels.
+    'organization.updated': async (ctx, { after, input }) => {
+      const primaryLabels = (input?.setupConfig as { primaryLabels?: PrimaryLabelDefinition[] } | undefined)
+        ?.primaryLabels;
+      if (!primaryLabels || !after) return;
+      await tenantContext(ctx, (txCtx) =>
+        propagateSetupConfigLabels(txCtx, {
+          entries: primaryLabels,
+          organizationId: after.id as string,
+          updatedBy: ctx.var.user.id,
+        }),
+      );
+    },
   },
 });

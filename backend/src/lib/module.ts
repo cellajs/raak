@@ -1,5 +1,6 @@
-import type { ProductEntityType } from 'shared';
+import type { ProductEntityType, TrackedEventType } from 'shared';
 import { type ModuleConfig, registerModule } from 'shared/module-registry';
+import type { MutationHandler } from '#/lib/mutation-bus';
 import type { YjsMaterializer } from '#/modules/yjs/yjs-materializers';
 
 /**
@@ -12,6 +13,12 @@ export interface BackendModule extends ModuleConfig {
   entity?: ProductEntityType;
   /** Yjs collab-session materializer for `entity` (indexed by yjs-materializers). */
   yjsMaterializer?: YjsMaterializer;
+  /**
+   * Synchronous, in-request reactions to entity/resource mutations, keyed by `<type>.<verb>`
+   * (indexed by the mutation bus). A module may react to any tracked type, including ones it does
+   * not own; multiple modules may react to the same event.
+   */
+  onMutation?: Partial<Record<TrackedEventType, MutationHandler>>;
 }
 
 const backendModules: BackendModule[] = [];
@@ -23,7 +30,7 @@ const listeners: ((module: BackendModule) => void)[] = [];
  * in the module's `*-module.ts`.
  */
 export function defineBackendModule(module: BackendModule): void {
-  const { entity: _entity, yjsMaterializer: _yjsMaterializer, ...metadata } = module;
+  const { entity: _entity, yjsMaterializer: _yjsMaterializer, onMutation: _onMutation, ...metadata } = module;
   registerModule(metadata);
   backendModules.push(module);
   for (const listener of listeners) listener(module);
