@@ -818,6 +818,7 @@
                   "createdAt": { "type": "string", "required": true },
                   "createdBy": {
                     "required": true,
+                    "description": "Minimal user data for references, or null when no user is available.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -840,7 +841,8 @@
                         "ref": "#/components/schemas/UserMinimalBase"
                       },
                       { "type": "null", "required": false }
-                    ]
+                    ],
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   }
                 }
               }

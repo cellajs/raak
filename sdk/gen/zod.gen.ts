@@ -14,6 +14,11 @@ export const zUserMinimalBase = z.object({
 });
 
 /**
+ * Minimal user data for references, or null when no user is available.
+ */
+export const zNullableUserMinimalBase = zUserMinimalBase.nullable();
+
+/**
  * Base user schema with essential fields for identification and display.
  */
 export const zUserBase = z.object({
@@ -53,8 +58,8 @@ export const zProductBase = z.object({
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   description: z.string().nullable(),
-  createdBy: zUserMinimalBase.nullable(),
-  updatedBy: zUserMinimalBase.nullable(),
+  createdBy: zNullableUserMinimalBase,
+  updatedBy: zNullableUserMinimalBase,
   entityType: z.enum(['task', 'label', 'attachment']),
   keywords: z.string(),
 });
@@ -87,6 +92,16 @@ export const zStxBase = z.object({
 });
 
 /**
+ * Sync transaction metadata, or null when an event has no sync transaction.
+ */
+export const zNullableStxBase = zStxBase.nullable();
+
+/**
+ * Boolean query value accepted as a boolean or its lowercase string representation.
+ */
+export const zBooleanQueryValue = z.union([z.enum(['true', 'false']), z.boolean()]).default('false');
+
+/**
  * Realtime notification delivered via SSE for entity and membership changes.
  */
 export const zStreamNotification = z.object({
@@ -101,7 +116,7 @@ export const zStreamNotification = z.object({
   path: z.string().nullable(),
   seq: z.int().nullable(),
   channelId: z.string().nullable(),
-  stx: zStxBase.nullable(),
+  stx: zNullableStxBase,
   batchUntilSeq: z.int().nullable(),
   count: z.int().nullable(),
   spreadWindow: z.int().nullable(),
@@ -280,7 +295,7 @@ export const zInactiveMembership = z.object({
   role: z.enum(['admin', 'member', 'guest']),
   rejectedAt: z.string().nullable(),
   remindedAt: z.string().nullable(),
-  createdBy: zUserMinimalBase.nullable(),
+  createdBy: zNullableUserMinimalBase,
   organizationId: z.uuid(),
   workspaceId: z.uuid().nullable(),
   projectId: z.uuid().nullable(),
@@ -352,8 +367,8 @@ export const zProject = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zUserMinimalBase.nullable(),
-  updatedBy: zUserMinimalBase.nullable(),
+  createdBy: zNullableUserMinimalBase,
+  updatedBy: zNullableUserMinimalBase,
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -456,8 +471,8 @@ export const zTask = z.object({
     })
     .nullable(),
   assignedTo: z.array(zUserMinimalBase),
-  createdBy: zUserMinimalBase.nullable(),
-  updatedBy: zUserMinimalBase.nullable(),
+  createdBy: zNullableUserMinimalBase,
+  updatedBy: zNullableUserMinimalBase,
   stx: zStxBase,
 });
 
@@ -474,8 +489,8 @@ export const zOrganization = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zUserMinimalBase.nullable(),
-  updatedBy: zUserMinimalBase.nullable(),
+  createdBy: zNullableUserMinimalBase,
+  updatedBy: zNullableUserMinimalBase,
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -573,8 +588,8 @@ export const zWorkspace = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zUserMinimalBase.nullable(),
-  updatedBy: zUserMinimalBase.nullable(),
+  createdBy: zNullableUserMinimalBase,
+  updatedBy: zNullableUserMinimalBase,
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -611,8 +626,8 @@ export const zAttachment = z.object({
   stx: zStxBase,
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
-  createdBy: zUserMinimalBase.nullable(),
-  updatedBy: zUserMinimalBase.nullable(),
+  createdBy: zNullableUserMinimalBase,
+  updatedBy: zNullableUserMinimalBase,
   deletedAt: z.string().nullable(),
   deletedBy: z.uuid().nullable(),
   publicAt: z.string().nullable(),
@@ -987,10 +1002,7 @@ export const zDeleteMyMembershipQuery = z.object({
 export const zDeleteMyMembershipResponse = z.void();
 
 export const zGetUploadTokenQuery = z.object({
-  publicBucket: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  publicBucket: zBooleanQueryValue.optional(),
   organizationId: z.uuid().optional(),
   templateId: z.enum(['avatar', 'cover', 'attachment']),
 });
@@ -1161,10 +1173,7 @@ export const zSendNewsletterBody = z.object({
 });
 
 export const zSendNewsletterQuery = z.object({
-  toSelf: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  toSelf: zBooleanQueryValue.optional(),
 });
 
 /**
@@ -1453,10 +1462,7 @@ export const zGetUserPath = z.object({
 });
 
 export const zGetUserQuery = z.object({
-  slug: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  slug: zBooleanQueryValue.optional(),
 });
 
 /**
@@ -1473,10 +1479,7 @@ export const zGetPublicProjectPath = z.object({
 });
 
 export const zGetPublicProjectQuery = z.object({
-  slug: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  slug: zBooleanQueryValue.optional(),
 });
 
 /**
@@ -1683,10 +1686,7 @@ export const zGetOrganizationPath = z.object({
 });
 
 export const zGetOrganizationQuery = z.object({
-  slug: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  slug: zBooleanQueryValue.optional(),
   include: z.string().optional(),
 });
 
@@ -1880,10 +1880,7 @@ export const zGetWorkspacePath = z.object({
 });
 
 export const zGetWorkspaceQuery = z.object({
-  slug: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  slug: zBooleanQueryValue.optional(),
   include: z.string().optional(),
 });
 
@@ -2056,10 +2053,7 @@ export const zGetProjectPath = z.object({
 });
 
 export const zGetProjectQuery = z.object({
-  slug: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  slug: zBooleanQueryValue.optional(),
   include: z.string().optional(),
 });
 
@@ -2447,10 +2441,7 @@ export const zUpdateAttachmentPath = z.object({
 });
 
 export const zUpdateAttachmentQuery = z.object({
-  fullResponse: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  fullResponse: zBooleanQueryValue.optional(),
 });
 
 /**
@@ -2600,7 +2591,7 @@ export const zGetPendingMembershipsResponse = z.object({
       thumbnailUrl: z.string().nullable(),
       role: z.enum(['admin', 'member', 'guest']).nullable(),
       createdAt: z.string(),
-      createdBy: zUserMinimalBase.nullable(),
+      createdBy: zNullableUserMinimalBase,
     }),
   ),
   total: z.number(),
@@ -2748,10 +2739,7 @@ export const zUpdateTaskPath = z.object({
 });
 
 export const zUpdateTaskQuery = z.object({
-  fullResponse: z
-    .union([z.enum(['true', 'false']), z.boolean()])
-    .optional()
-    .default('false'),
+  fullResponse: zBooleanQueryValue.optional(),
 });
 
 /**

@@ -395,6 +395,18 @@
         },
         "x-tags": ["base", "users", "cella"]
       },
+      "NullableUserMinimalBase": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/UserMinimalBase"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Minimal user data for references, or null when no user is available.",
+        "x-tags": ["base", "users", "cella"]
+      },
       "UserBase": {
         "type": "object",
         "properties": {
@@ -534,24 +546,10 @@
             "type": ["string", "null"]
           },
           "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "entityType": {
             "type": "string",
@@ -710,6 +708,32 @@
         },
         "x-tags": ["base", "cella"]
       },
+      "NullableStxBase": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/StxBase"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Sync transaction metadata, or null when an event has no sync transaction.",
+        "x-tags": ["base", "cella"]
+      },
+      "BooleanQueryValue": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": ["true", "false"]
+          },
+          {
+            "type": "boolean"
+          }
+        ],
+        "default": "false",
+        "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
+        "x-tags": ["base", "cella"]
+      },
       "StreamNotification": {
         "type": "object",
         "properties": {
@@ -758,15 +782,7 @@
             "description": "Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)"
           },
           "stx": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/StxBase"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Sync transaction metadata for HLC conflict resolution"
+            "$ref": "#/components/schemas/NullableStxBase"
           },
           "batchUntilSeq": {
             "type": ["integer", "null"],
@@ -1487,14 +1503,7 @@
             "type": ["string", "null"]
           },
           "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "organizationId": {
             "type": "string",
@@ -1562,30 +1571,23 @@
             "type": ["string", "null"]
           },
           "params": {
-            "anyOf": [
-              {
+            "type": ["object", "null"],
+            "properties": {
+              "auth": {
                 "type": "object",
                 "properties": {
-                  "auth": {
-                    "type": "object",
-                    "properties": {
-                      "key": {
-                        "type": "string"
-                      },
-                      "expires": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["key"]
+                  "key": {
+                    "type": "string"
+                  },
+                  "expires": {
+                    "type": "string"
                   }
                 },
-                "required": ["auth"],
-                "additionalProperties": {}
-              },
-              {
-                "type": "null"
+                "required": ["key"]
               }
-            ]
+            },
+            "required": ["auth"],
+            "additionalProperties": {}
           }
         },
         "required": ["publicBucket", "sub", "s3", "signature", "params"],
@@ -1771,24 +1773,10 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "publishedAt": {
             "type": ["string", "null"]
@@ -2115,39 +2103,32 @@
             }
           },
           "primaryLabel": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "slug": {
-                    "type": "string"
-                  },
-                  "color": {
-                    "type": ["string", "null"]
-                  },
-                  "mode": {
-                    "type": "string",
-                    "enum": ["primary", "secondary", "epic"]
-                  },
-                  "icon": {
-                    "type": ["string", "null"]
-                  },
-                  "projectId": {
-                    "type": "string"
-                  }
-                },
-                "required": ["id", "name", "slug", "color", "mode", "icon", "projectId"]
+            "type": ["object", "null"],
+            "properties": {
+              "id": {
+                "type": "string"
               },
-              {
-                "type": "null"
+              "name": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "color": {
+                "type": ["string", "null"]
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["primary", "secondary", "epic"]
+              },
+              "icon": {
+                "type": ["string", "null"]
+              },
+              "projectId": {
+                "type": "string"
               }
-            ]
+            },
+            "required": ["id", "name", "slug", "color", "mode", "icon", "projectId"]
           },
           "assignedTo": {
             "type": "array",
@@ -2156,24 +2137,10 @@
             }
           },
           "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "stx": {
             "$ref": "#/components/schemas/StxBase"
@@ -2286,24 +2253,10 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "publishedAt": {
             "type": ["string", "null"]
@@ -2402,15 +2355,8 @@
                       ]
                     },
                     "icon": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "maxLength": 255
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": ["string", "null"],
+                      "maxLength": 255
                     }
                   },
                   "required": ["slug", "name", "color", "icon"]
@@ -2693,24 +2639,10 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "publishedAt": {
             "type": ["string", "null"]
@@ -2897,24 +2829,10 @@
             "maxLength": 1000000
           },
           "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "deletedAt": {
             "type": ["string", "null"]
@@ -5467,18 +5385,10 @@
         "parameters": [
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "publicBucket",
             "in": "query"
           },
@@ -6367,18 +6277,10 @@
         "parameters": [
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "toSelf",
             "in": "query"
           }
@@ -7989,18 +7891,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           }
@@ -8108,18 +8002,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           }
@@ -9813,18 +9699,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -10113,15 +9991,8 @@
                               ]
                             },
                             "icon": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "maxLength": 255
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
+                              "type": ["string", "null"],
+                              "maxLength": 255
                             }
                           },
                           "required": ["slug", "name", "color", "icon"]
@@ -11015,18 +10886,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -12040,18 +11903,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -14232,18 +14087,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "fullResponse",
             "in": "query"
           }
@@ -15239,14 +15086,7 @@
                             "type": "string"
                           },
                           "createdBy": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/components/schemas/UserMinimalBase"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                            "$ref": "#/components/schemas/NullableUserMinimalBase"
                           }
                         },
                         "required": ["id", "email", "thumbnailUrl", "role", "createdAt", "createdBy"]
@@ -16216,18 +16056,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["true", "false"]
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "fullResponse",
             "in": "query"
           }

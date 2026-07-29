@@ -65,6 +65,7 @@
                   "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
                   "createdBy": {
                     "required": true,
+                    "description": "Minimal user data for references, or null when no user is available.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -87,10 +88,12 @@
                         "ref": "#/components/schemas/UserMinimalBase"
                       },
                       { "type": "null", "required": false }
-                    ]
+                    ],
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "updatedBy": {
                     "required": true,
+                    "description": "Minimal user data for references, or null when no user is available.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -113,7 +116,8 @@
                         "ref": "#/components/schemas/UserMinimalBase"
                       },
                       { "type": "null", "required": false }
-                    ]
+                    ],
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "deletedAt": {
                     "type": ["string", "null"],
@@ -412,6 +416,7 @@
                   "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
                   "createdBy": {
                     "required": true,
+                    "description": "Minimal user data for references, or null when no user is available.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -434,10 +439,12 @@
                         "ref": "#/components/schemas/UserMinimalBase"
                       },
                       { "type": "null", "required": false }
-                    ]
+                    ],
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "updatedBy": {
                     "required": true,
+                    "description": "Minimal user data for references, or null when no user is available.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -460,7 +467,8 @@
                         "ref": "#/components/schemas/UserMinimalBase"
                       },
                       { "type": "null", "required": false }
-                    ]
+                    ],
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "deletedAt": {
                     "type": ["string", "null"],
@@ -696,6 +704,7 @@
                   "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
                   "createdBy": {
                     "required": true,
+                    "description": "Minimal user data for references, or null when no user is available.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -718,10 +727,12 @@
                         "ref": "#/components/schemas/UserMinimalBase"
                       },
                       { "type": "null", "required": false }
-                    ]
+                    ],
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "updatedBy": {
                     "required": true,
+                    "description": "Minimal user data for references, or null when no user is available.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -744,7 +755,8 @@
                         "ref": "#/components/schemas/UserMinimalBase"
                       },
                       { "type": "null", "required": false }
-                    ]
+                    ],
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "deletedAt": {
                     "type": ["string", "null"],
@@ -1361,6 +1373,7 @@
             "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
             "createdBy": {
               "required": true,
+              "description": "Minimal user data for references, or null when no user is available.",
               "anyOf": [
                 {
                   "type": "object",
@@ -1383,10 +1396,12 @@
                   "ref": "#/components/schemas/UserMinimalBase"
                 },
                 { "type": "null", "required": false }
-              ]
+              ],
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "updatedBy": {
               "required": true,
+              "description": "Minimal user data for references, or null when no user is available.",
               "anyOf": [
                 {
                   "type": "object",
@@ -1409,7 +1424,8 @@
                   "ref": "#/components/schemas/UserMinimalBase"
                 },
                 { "type": "null", "required": false }
-              ]
+              ],
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "deletedAt": {
               "type": ["string", "null"],
@@ -1640,6 +1656,7 @@
             "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
             "createdBy": {
               "required": true,
+              "description": "Minimal user data for references, or null when no user is available.",
               "anyOf": [
                 {
                   "type": "object",
@@ -1662,10 +1679,12 @@
                   "ref": "#/components/schemas/UserMinimalBase"
                 },
                 { "type": "null", "required": false }
-              ]
+              ],
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "updatedBy": {
               "required": true,
+              "description": "Minimal user data for references, or null when no user is available.",
               "anyOf": [
                 {
                   "type": "object",
@@ -1688,7 +1707,8 @@
                   "ref": "#/components/schemas/UserMinimalBase"
                 },
                 { "type": "null", "required": false }
-              ]
+              ],
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "deletedAt": {
               "type": ["string", "null"],
@@ -1861,6 +1881,7 @@
         "properties": {
           "fullResponse": {
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "anyOf": [
               {
                 "type": "string",
@@ -1868,7 +1889,8 @@
                 "enum": ["true", "false"]
               },
               { "type": "boolean", "required": false }
-            ]
+            ],
+            "ref": "#/components/schemas/BooleanQueryValue"
           }
         }
       },
