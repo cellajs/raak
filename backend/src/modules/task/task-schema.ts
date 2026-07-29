@@ -15,7 +15,7 @@ import {
   validIdSchema,
   validUuidSchema,
 } from '#/schemas';
-import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
 const taskRelationIdsSchema = validUuidSchema
   .array()
@@ -42,8 +42,8 @@ export const taskSchema = z
     primaryLabel: z.union([labelEmbeddedSchema, z.null()]),
     status: z.enum(TaskStatus),
     assignedTo: z.array(userMinimalBaseSchema),
-    createdBy: z.object({ ...userMinimalBaseSchema.shape }).nullable(),
-    updatedBy: z.object({ ...userMinimalBaseSchema.shape }).nullable(),
+    createdBy: nullableUserMinimalBaseSchema,
+    updatedBy: nullableUserMinimalBaseSchema,
     stx: stxBaseSchema,
   })
   .openapi('Task', {

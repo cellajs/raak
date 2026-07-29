@@ -51,7 +51,7 @@ export const streamNotificationSchema = z
       .string()
       .nullable()
       .describe('Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)'),
-    stx: stxBaseSchema.nullable().describe('Sync transaction metadata for HLC conflict resolution'),
+    stx: z.union([stxBaseSchema, z.null()]).describe('Sync transaction metadata for HLC conflict resolution'),
     batchUntilSeq: z
       .number()
       .int()

@@ -11,7 +11,7 @@ import {
   validIdSchema,
   validUuidSchema,
 } from '#/schemas';
-import { userBaseSchema, userMinimalBaseSchema } from '#/schemas/user-schema-base';
+import { nullableUserMinimalBaseSchema, userBaseSchema } from '#/schemas/user-schema-base';
 import { mockInactiveMembershipResponse, mockMembershipBase, mockMembershipResponse } from './memberships-mocks';
 
 /** Schema for entity roles enum - uses literal types from appConfig */
@@ -36,7 +36,7 @@ export const inactiveMembershipSchema = z
     // Override enum columns with explicit schemas to preserve literal types
     role: entityRoleSchema,
     channelType: channelEntityTypeSchema,
-    createdBy: userMinimalBaseSchema.nullable(),
+    createdBy: nullableUserMinimalBaseSchema,
   })
   .openapi('InactiveMembership', {
     description: 'A membership record for a user who has not yet accepted an invitation.',
@@ -93,5 +93,5 @@ export const pendingMembershipSchema = z.object({
   thumbnailUrl: userBaseSchema.shape.thumbnailUrl.nullable(),
   role: membershipSchema.shape.role.nullable(),
   createdAt: membershipSchema.shape.createdAt,
-  createdBy: userMinimalBaseSchema.nullable(),
+  createdBy: nullableUserMinimalBaseSchema,
 });

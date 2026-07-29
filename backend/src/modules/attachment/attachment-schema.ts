@@ -11,7 +11,7 @@ import {
   validIdSchema,
   validUuidSchema,
 } from '#/schemas';
-import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import { nullableUserMinimalBaseSchema } from '#/schemas/user-minimal-base';
 import { mockAttachmentResponse } from './attachment-mocks';
 
 // Attachment-specific field docs, applied to both generated schemas so they reach every CRUD surface.
@@ -31,8 +31,8 @@ const attachmentSelectSchema = describeFields(createSelectSchema(attachmentsTabl
 export const attachmentSchema = z
   .object({
     ...attachmentSelectSchema.shape,
-    createdBy: userMinimalBaseSchema.nullable(),
-    updatedBy: userMinimalBaseSchema.nullable(),
+    createdBy: nullableUserMinimalBaseSchema,
+    updatedBy: nullableUserMinimalBaseSchema,
     stx: stxBaseSchema,
     viewCount: z.number().int().min(0).optional(),
   })

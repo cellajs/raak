@@ -22,7 +22,7 @@ import {
   validUrlSchema,
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
-import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import { nullableUserMinimalBaseSchema } from '#/schemas/user-minimal-base';
 import { mockOrganizationResponse } from './organization-mocks';
 
 const organizationIncludedSchema = channelIncludedSchema('organization');
@@ -42,8 +42,8 @@ export const organizationFlagsSchema = z.object(
 export const organizationSchema = z
   .object({
     ...createSelectSchema(organizationsTable).shape,
-    createdBy: userMinimalBaseSchema.nullable(),
-    updatedBy: userMinimalBaseSchema.nullable(),
+    createdBy: nullableUserMinimalBaseSchema,
+    updatedBy: nullableUserMinimalBaseSchema,
     languages: z.array(languageSchema).min(1),
     organizationFlags: organizationFlagsSchema,
     setupConfig: setupConfigSchema,
