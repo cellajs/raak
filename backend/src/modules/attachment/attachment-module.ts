@@ -1,6 +1,5 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { defineBackendModule } from '#/lib/module';
-import { attachmentsTable } from '#/modules/attachment/attachment-db';
+import { softDeleteAttachmentsByTaskIds } from '#/modules/attachment/attachment-queries';
 
 defineBackendModule({
   name: 'attachments',
@@ -15,17 +14,11 @@ defineBackendModule({
     'task.deleted': async (ctx, { before = [] }) => {
       if (!before.length) return;
       const [{ deletedAt, deletedBy }] = before as { deletedAt: string; deletedBy: string }[];
-      const taskIds = before.map((task) => task.id as string);
-      await ctx.var.db
-        .update(attachmentsTable)
-        .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
-        .where(
-          and(
-            inArray(attachmentsTable.taskId, taskIds),
-            eq(attachmentsTable.organizationId, ctx.var.organizationId),
-            isNull(attachmentsTable.deletedAt),
-          ),
-        );
+      await softDeleteAttachmentsByTaskIds(ctx, {
+        taskIds: before.map((task) => task.id as string),
+        deletedAt,
+        deletedBy,
+      });
     },
   },
 });

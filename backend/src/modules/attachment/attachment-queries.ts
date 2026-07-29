@@ -75,6 +75,30 @@ export const deleteAttachmentsByIds = async (
     );
 };
 
+interface SoftDeleteAttachmentsByTaskIdsOpts {
+  taskIds: string[];
+  deletedBy: string;
+  deletedAt: string;
+}
+
+/** Soft-delete attachments owned by the given tasks (host relation), reusing the tasks' deletion stamps. */
+export const softDeleteAttachmentsByTaskIds = async (
+  ctx: AuthContext,
+  { taskIds, deletedAt, deletedBy }: SoftDeleteAttachmentsByTaskIdsOpts,
+) => {
+  const { db, organizationId } = ctx.var;
+  return db
+    .update(attachmentsTable)
+    .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
+    .where(
+      and(
+        inArray(attachmentsTable.taskId, taskIds),
+        eq(attachmentsTable.organizationId, organizationId),
+        isNull(attachmentsTable.deletedAt),
+      ),
+    );
+};
+
 interface FindAttachmentByKeyOpts {
   key: string;
 }
