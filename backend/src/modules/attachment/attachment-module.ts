@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { republishedProjects } from '#/db/utils/cascade-public-at';
 import { defineBackendModule } from '#/lib/module';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
@@ -25,6 +25,23 @@ defineBackendModule({
             and(eq(attachmentsTable.projectId, id), sql`${attachmentsTable.publicAt} IS DISTINCT FROM ${publicAt}`),
           );
       }
+    },
+    // Lifecycle cascade: soft-delete a deleted task's attachments (host relation), reusing the
+    // tasks' deletedAt/deletedBy. Runs inside the task-delete transaction (dispatched with txCtx).
+    'task.deleted': async (ctx, { before = [] }) => {
+      if (!before.length) return;
+      const [{ deletedAt, deletedBy }] = before as { deletedAt: string; deletedBy: string }[];
+      const taskIds = before.map((task) => task.id as string);
+      await ctx.var.db
+        .update(attachmentsTable)
+        .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
+        .where(
+          and(
+            inArray(attachmentsTable.taskId, taskIds),
+            eq(attachmentsTable.organizationId, ctx.var.organizationId),
+            isNull(attachmentsTable.deletedAt),
+          ),
+        );
     },
   },
 });
