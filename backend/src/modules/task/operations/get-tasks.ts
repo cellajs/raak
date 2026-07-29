@@ -1,7 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { getTasks } from '#/modules/task/helpers/get-tasks';
 import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-queries';
@@ -14,7 +13,7 @@ type GetTasksInput = z.infer<typeof taskListQuerySchema>;
 export async function getTasksOp(
   ctx: AuthContext,
   input: GetTasksInput,
-): Promise<OperationResult<Awaited<ReturnType<typeof getTasks>>>> {
+): Promise<Awaited<ReturnType<typeof getTasks>>> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const organizationId = ctx.var.organization.id;
 
@@ -43,16 +42,14 @@ export async function getTasksOp(
 
   // Tasks always require an explicit project scope (no org-wide aggregate read).
   if (!projectIds || projectIds.length === 0) {
-    return { success: true, data: { items: [], total: 0 } };
+    return { items: [], total: 0 };
   }
   const scopedProjectIds = projectIds;
 
   // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted tasks
   const read = queryInfo.seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
-  const response = await read(ctx, async (readCtx) => {
+  return read(ctx, async (readCtx) => {
     return getTasks(readCtx, scopedProjectIds, queryInfo);
   });
-
-  return { success: true, data: response };
 }

@@ -2,7 +2,6 @@ import type { z } from '@hono/zod-openapi';
 import { and, asc, count, eq, getColumns, ilike, isNull, or, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
@@ -44,8 +43,7 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   const scopeWhere = buildCollectionReadWhere(readFilter, attachmentsTable, attachmentsTable.projectId, actor);
 
   if (scopeWhere.kind === 'none') {
-    const data = { items: [], total: 0 };
-    return { success: true, data } as OperationResult<typeof data>;
+    return { items: [], total: 0 };
   }
 
   const filters: SQL[] = [eq(attachmentsTable.organizationId, organizationId)];
@@ -131,6 +129,5 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   });
 
   const items = coalesceAuditUsers(rawItems);
-  const data = { items, total };
-  return { success: true, data } as OperationResult<typeof data>;
+  return { items, total };
 }

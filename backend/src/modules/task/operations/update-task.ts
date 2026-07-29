@@ -1,7 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import type { OperationResult } from '#/core/operation-result';
 import { tenantContext } from '#/db/tenant-context';
 import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
 import {
@@ -27,7 +26,7 @@ export async function updateTaskOp(
   id: string,
   input: UpdateTaskInput,
   opts: { fullResponse?: boolean; serverOrigin?: boolean },
-): Promise<OperationResult<ReturnTask>> {
+): Promise<ReturnTask> {
   const { ops: rawOps = {}, stx } = input;
   const { fullResponse, serverOrigin } = opts;
   const user = ctx.var.user;
@@ -141,5 +140,5 @@ export async function updateTaskOp(
     return hydrateTask(updatedTaskRecord, users, labels);
   });
 
-  return { success: true, data: taskResponse };
+  return taskResponse;
 }

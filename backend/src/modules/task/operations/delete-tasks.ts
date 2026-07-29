@@ -1,15 +1,11 @@
 import type { AuthContext } from '#/core/context';
-import type { OperationResult } from '#/core/operation-result';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { deleteTasksByIds } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { getIsoDate } from '#/utils/iso-date';
 
-export async function deleteTasksOp(
-  ctx: AuthContext,
-  ids: string[],
-): Promise<OperationResult<{ data: []; rejectedIds: string[] }>> {
+export async function deleteTasksOp(ctx: AuthContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
   const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'task', ids);
   const deletedAt = getIsoDate();
   const deletedBy = ctx.var.user.id;
@@ -21,5 +17,5 @@ export async function deleteTasksOp(
     await dispatchMutation(txCtx, 'task.deleted', { before: tasksToDelete });
   });
 
-  return { success: true, data: { data: [], rejectedIds } };
+  return { data: [], rejectedIds };
 }

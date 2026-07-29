@@ -3,7 +3,6 @@ import { count, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
@@ -23,7 +22,7 @@ type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 export async function getLabelsOp(
   ctx: AuthContext,
   input: GetLabelsInput,
-): Promise<OperationResult<{ items: (LabelModel & { usedCount: number })[]; total: number }>> {
+): Promise<{ items: (LabelModel & { usedCount: number })[]; total: number }> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const { q, sort, order, offset, limit, seqCursor, modes } = queryInfo;
   const organizationId = ctx.var.organization.id;
@@ -49,7 +48,7 @@ export async function getLabelsOp(
   const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, labelsTable.projectId, actor);
 
   if (scopeWhere.kind === 'none') {
-    return { success: true, data: { items: [], total: 0 } };
+    return { items: [], total: 0 };
   }
 
   // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted labels
@@ -125,5 +124,5 @@ export async function getLabelsOp(
     return resolveListTotal(itemsQuery, totalSource);
   });
 
-  return { success: true, data: result };
+  return result;
 }

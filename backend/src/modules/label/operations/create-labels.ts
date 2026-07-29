@@ -1,7 +1,7 @@
 import type { z } from '@hono/zod-openapi';
 import { labelSlug } from 'shared';
 import type { AuthContext } from '#/core/context';
-import type { OperationResult } from '#/core/operation-result';
+import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
@@ -20,14 +20,14 @@ type CreateLabelsInput = z.infer<typeof labelCreateManyStxBodySchema>;
 export async function createLabelsOp(
   ctx: AuthContext,
   rawInput: CreateLabelsInput,
-): Promise<OperationResult<{ data: LabelModel[]; rejectedIds: string[] }>> {
+): Promise<{ data: LabelModel[]; rejectedIds: string[] }> {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
   const { organization, tenant } = ctx.var;
   const labelRestrictions = tenant.restrictions.quotas.label;
 
   if (labelRestrictions !== 0 && input.length > labelRestrictions) {
-    return { success: false, error: 'restrict_by_org', status: 429 };
+    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'label' });
   }
 
   // Idempotency check
@@ -35,7 +35,7 @@ export async function createLabelsOp(
   const existing = await checkIdempotency(batchStxId, () =>
     tenantRead(ctx, (readCtx) => findLabelsByStxMutationId(readCtx, { mutationId: batchStxId })),
   );
-  if (existing) return { success: true, data: { data: existing, rejectedIds: [] } };
+  if (existing) return { data: existing, rejectedIds: [] };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
   const currentCount = await getOrganizationEntityCount(ctx, {
@@ -44,7 +44,7 @@ export async function createLabelsOp(
   });
 
   if (labelRestrictions !== 0 && currentCount + input.length > labelRestrictions) {
-    return { success: false, error: 'restrict_by_org', status: 429 };
+    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'label' });
   }
 
   // Creating primary/epic labels requires project-admin authority (project update permission)
@@ -83,5 +83,5 @@ export async function createLabelsOp(
 
   log.info('Labels created', { count: labelRecords.length });
 
-  return { success: true, data: { data: labelRecords, rejectedIds: [] } };
+  return { data: labelRecords, rejectedIds: [] };
 }

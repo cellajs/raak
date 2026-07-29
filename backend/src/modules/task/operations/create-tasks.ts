@@ -1,7 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
@@ -22,14 +21,14 @@ type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
 export async function createTasksOp(
   ctx: AuthContext,
   rawInput: CreateTasksInput,
-): Promise<OperationResult<{ data: ReturnTask[]; rejectedIds: string[] }>> {
+): Promise<{ data: ReturnTask[]; rejectedIds: string[] }> {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = rawInput.map((item) => taskContract.normalizeCreateItem(item));
   const organization = ctx.var.organization;
   const taskRestrictions = ctx.var.tenant.restrictions.quotas.task;
 
   if (taskRestrictions !== 0 && input.length > taskRestrictions) {
-    return { success: false, error: 'restrict_by_org', status: 429 };
+    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
   }
 
   // Idempotency check
@@ -41,7 +40,7 @@ export async function createTasksOp(
       return hydrateTasks(tasks, users, labels);
     }),
   );
-  if (existing) return { success: true, data: { data: existing, rejectedIds: [] } };
+  if (existing) return { data: existing, rejectedIds: [] };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
   const currentTasksCount = await getOrganizationEntityCount(ctx, {
@@ -50,7 +49,7 @@ export async function createTasksOp(
   });
 
   if (taskRestrictions !== 0 && currentTasksCount + input.length > taskRestrictions) {
-    return { success: false, error: 'restrict_by_org', status: 429 };
+    throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
   }
 
   // Resolve primary labels per project: validate provided ids, default to first by displayOrder
@@ -110,5 +109,5 @@ export async function createTasksOp(
 
   log.info('Tasks created', { count: createdTasks.length });
 
-  return { success: true, data: { data: taskResponses, rejectedIds: [] } };
+  return { data: taskResponses, rejectedIds: [] };
 }

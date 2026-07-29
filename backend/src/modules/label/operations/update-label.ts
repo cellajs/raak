@@ -1,7 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import type { OperationResult } from '#/core/operation-result';
 import { tenantContext } from '#/db/tenant-context';
 import type { LabelModel } from '#/modules/label/label-db';
 import { updateLabel } from '#/modules/label/label-queries';
@@ -23,7 +22,7 @@ export async function updateLabelOp(
   id: string,
   input: UpdateLabelInput,
   opts: { serverOrigin?: boolean } = {},
-): Promise<OperationResult<LabelModel>> {
+): Promise<LabelModel> {
   const { ops: rawOps, stx } = input;
   const { serverOrigin } = opts;
 
@@ -104,5 +103,5 @@ export async function updateLabelOp(
     return updateLabel(txCtx, { id, values });
   });
 
-  return { success: true, data: updated };
+  return updated;
 }
