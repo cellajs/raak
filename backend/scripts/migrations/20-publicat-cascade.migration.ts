@@ -1,22 +1,22 @@
 import type { SideEffectBlock, SideEffectProducer } from '../types';
 
 /**
- * publicAt cascade: denormalizes a project's `public_at` onto its child products so row-local
+ * publicAt distribution: a child product's `public_at` mirrors its parent project's, so row-local
  * public read (`publicRead()`) reflects "public because the parent project is public".
  *
- * Public read is row-local: a row is publicly readable only when its OWN `public_at` is set.
- * Tasks and attachments declare `publicRead()` and are served under a public project (public
- * share links), so their `public_at` must mirror the project's. This keeps single-row reads,
- * collection SQL and CDC in agreement without a read-time join.
+ * Public read is row-local: a row is publicly readable only when its OWN `public_at` is set. Tasks
+ * and attachments declare `publicRead()` and are served under a public project (public share
+ * links), so their `public_at` must mirror the project's, keeping single-row reads, collection SQL
+ * and CDC in agreement without a read-time join.
  *
- * Three parts:
- *   1. one-time BACKFILL of existing rows,
- *   2. an AFTER UPDATE trigger on `projects` that cascades (un)publish to children,
- *   3. a BEFORE INSERT trigger on each child that inherits the parent's `public_at` at creation
- *      (covers rows created after the project went public, across every insert path).
+ * This distribution is owned by the server runtime: the mutation bus cascades a project's
+ * `public_at` change onto its children (task/attachment `onMutation['project.updated']`), and the
+ * insert helpers inherit it on child create (`inheritPublicAtFromProject`), so the cascaded writes
+ * carry `stx` and sync. This migration backfills existing rows once and drops the former
+ * trigger-based distribution.
  *
- * Children: tasks, attachments, the product entities with `publicRead()` whose home channel is
- * the project. Extend both lists here if another public product entity is added.
+ * Children: tasks, attachments, the product entities with `publicRead()` whose home channel is the
+ * project. Extend the list here if another public product entity is added.
  */
 function run(): SideEffectBlock {
   const children = ['tasks', 'attachments'] as const;
@@ -31,73 +31,35 @@ WHERE c.project_id = p.id
     )
     .join('\n--> statement-breakpoint\n');
 
-  const cascadeUpdates = children
-    .map(
-      (child) => `  UPDATE ${child}
-    SET public_at = NEW.public_at
-    WHERE project_id = NEW.id AND public_at IS DISTINCT FROM NEW.public_at;`,
-    )
-    .join('\n');
-
-  const insertTriggers = children
-    .map(
-      (child) => `DROP TRIGGER IF EXISTS trg_inherit_public_at_${child} ON ${child};
---> statement-breakpoint
-CREATE TRIGGER trg_inherit_public_at_${child}
-  BEFORE INSERT ON ${child}
-  FOR EACH ROW
-  EXECUTE FUNCTION inherit_public_at_from_project();`,
-    )
+  const dropInheritTriggers = children
+    .map((child) => `DROP TRIGGER IF EXISTS trg_inherit_public_at_${child} ON ${child};`)
     .join('\n--> statement-breakpoint\n');
 
-  const migrationSql = `-- publicAt cascade: project.public_at → child products (tasks, attachments)
--- Row-local public read requires each child to carry its own public_at, mirroring its project.
+  const migrationSql = `-- publicAt distribution is owned by the server runtime (mutation bus + insert helpers).
+-- Backfill existing rows once, then drop the former trigger-based cascade/inherit.
 
--- 1. One-time backfill of existing rows.
+-- 1. One-time backfill of existing rows (idempotent).
 ${backfill}
 --> statement-breakpoint
 
--- 2. Cascade on project (un)publish. Fires only when public_at actually changes; rewrites only
---    children whose value differs (cheap, idempotent).
-CREATE OR REPLACE FUNCTION cascade_public_at_from_project() RETURNS trigger AS $$
-BEGIN
-  IF NEW.public_at IS DISTINCT FROM OLD.public_at THEN
-${cascadeUpdates}
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
---> statement-breakpoint
+-- 2. Drop the former cascade + inherit triggers and their functions.
 DROP TRIGGER IF EXISTS trg_cascade_public_at_from_project ON projects;
 --> statement-breakpoint
-CREATE TRIGGER trg_cascade_public_at_from_project
-  AFTER UPDATE OF public_at ON projects
-  FOR EACH ROW
-  EXECUTE FUNCTION cascade_public_at_from_project();
+DROP FUNCTION IF EXISTS cascade_public_at_from_project();
 --> statement-breakpoint
-
--- 3. Inherit the parent project's public_at on child insert, unless the caller set it explicitly.
-CREATE OR REPLACE FUNCTION inherit_public_at_from_project() RETURNS trigger AS $$
-BEGIN
-  IF NEW.public_at IS NULL AND NEW.project_id IS NOT NULL THEN
-    SELECT p.public_at INTO NEW.public_at FROM projects p WHERE p.id = NEW.project_id;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+${dropInheritTriggers}
 --> statement-breakpoint
-${insertTriggers}
-`;
+DROP FUNCTION IF EXISTS inherit_public_at_from_project();`;
 
   return {
     tag: 'publicat_cascade',
-    title: 'publicAt cascade — project.public_at → child products (tasks, attachments)',
+    title: 'publicAt distribution moved to runtime; backfill + drop former triggers',
     sql: migrationSql,
-    notes: [`Cascade sources: projects → ${children.join(', ')}`],
+    notes: [`Dropped trigger-based cascade/inherit for: ${children.join(', ')}`],
   };
 }
 
 export const sideEffect: SideEffectProducer = {
-  name: 'publicAt cascade',
+  name: 'publicAt distribution (runtime)',
   produce: run,
 };
