@@ -60,7 +60,8 @@ export const workspaceCreateResponseSchema = batchResponseSchema(workspaceWithMe
 export const workspaceUpdateBodySchema = workspaceContract.updateBodySchema;
 
 export const workspaceListQuerySchema = paginationQuerySchema.extend({
-  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder').optional(),
+  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder'),
+  order: z.enum(['asc', 'desc']).default('asc'),
   organizationId: z.string().max(maxLength.id).optional(),
   role: z.enum(roles.all).optional(),
   excludeArchived: excludeArchivedQuerySchema,

@@ -110,8 +110,8 @@ const limitRefine = (value: number) => value > 0 && value <= limitMax;
 /** Schema for pagination query parameters */
 export const paginationQuerySchema = z.object({
   q: z.string().max(maxLength.field).optional(), // Optional search query
-  sort: z.enum(['createdAt']).default('createdAt').optional(), // Sorting field
-  order: z.enum(['asc', 'desc']).default('desc').optional(), // Sorting order
+  sort: z.enum(['createdAt']).default('createdAt'), // Sorting field
+  order: z.enum(['asc', 'desc']).default('desc'), // Sorting order
   // Pagination offset
   offset: z
     .string()

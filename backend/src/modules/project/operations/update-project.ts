@@ -32,7 +32,7 @@ export async function updateProjectOp(ctx: AuthContext, id: string, rawInput: Re
 
   // Get updated counts
   const [counts, taskStatusCounts] = await Promise.all([
-    getChannelCounts(ctx, 'project', updatedProjectRecord.id),
+    getChannelCounts(ctx, { entityType: 'project', entityId: updatedProjectRecord.id }),
     getTaskStatusCounts(ctx, updatedProjectRecord.id),
   ]);
 

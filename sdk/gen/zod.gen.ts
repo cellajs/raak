@@ -1858,7 +1858,7 @@ export const zCreateWorkspacesResponse = z.object({
 export const zGetWorkspacesQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
-  order: z.enum(['asc', 'desc']).optional().default('desc'),
+  order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z
@@ -2029,7 +2029,7 @@ export const zCreateProjectsResponse = z.object({
 export const zGetProjectsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
-  order: z.enum(['asc', 'desc']).optional().default('desc'),
+  order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().optional(),
   limit: z.string().optional(),
   seqCursor: z

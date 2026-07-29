@@ -66,7 +66,7 @@ export const membershipUpdateBodySchema = z.object({
 export const memberListQuerySchema = paginationQuerySchema.extend({
   entityId: validIdSchema,
   entityType: channelEntityTypeSchema,
-  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).default('createdAt').optional(),
+  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).default('createdAt'),
   role: z.enum(roles.all).optional(),
   userIds: z.string().optional(),
 });
@@ -74,7 +74,7 @@ export const memberListQuerySchema = paginationQuerySchema.extend({
 export const pendingMembershipListQuerySchema = paginationQuerySchema.extend({
   entityId: validIdSchema,
   entityType: channelEntityTypeSchema,
-  sort: z.enum(['createdAt']).default('createdAt').optional(),
+  sort: z.enum(['createdAt']).default('createdAt'),
 });
 
 export const pendingMembershipSchema = z.object({

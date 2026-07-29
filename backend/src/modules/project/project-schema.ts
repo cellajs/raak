@@ -96,7 +96,8 @@ export const workspaceIdQuery = z.object({ workspaceId: z.string().max(maxLength
 export const projectUpdateBodySchema = projectContract.updateBodySchema;
 
 export const projectListQuerySchema = paginationQuerySchema.extend({
-  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder').optional(),
+  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).default('displayOrder'),
+  order: z.enum(['asc', 'desc']).default('asc'),
   organizationId: z.string().max(maxLength.id).optional(),
   workspaceId: z.string().max(maxLength.id).optional(),
   relatableUserId: z.string().max(maxLength.id).optional(),

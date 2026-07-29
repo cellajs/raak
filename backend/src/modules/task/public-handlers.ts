@@ -19,7 +19,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   if (!id) throw new AppError(404, 'not_found', 'warn');
 
   // Get main task
-  const mainTask = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'task', id);
+  const mainTask = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, { entityType: 'task', identifier: id });
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Drafts are never publicly readable: they read as absent to non-authors (the anonymous caller).
@@ -49,7 +49,10 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
 
   // Public reads intentionally bypass tenant status checks from tenantGuard. Resolve the project
   // for org scoping only; the project's own publicAt does not gate the list.
-  const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
+  const project = await resolveEntity(
+    { var: { db: unsafeInternalAdminDb! } },
+    { entityType: 'project', identifier: projectId },
+  );
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
   const publicCtx = {

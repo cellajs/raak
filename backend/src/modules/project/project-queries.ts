@@ -1,20 +1,22 @@
 import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from 'drizzle-orm';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
+import { resolveListTotal } from '#/db/utils/list-total';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
+interface InsertProjectsOpts {
+  projects: (typeof projectsTable.$inferInsert)[];
+}
+
 /** Insert projects and return the created rows. */
-export const insertProjects = async (
-  ctx: DbContext,
-  { projects }: { projects: (typeof projectsTable.$inferInsert)[] },
-) => {
+export const insertProjects = async (ctx: DbContext, { projects }: InsertProjectsOpts) => {
   const { db } = ctx.var;
   return db.insert(projectsTable).values(projects).returning();
 };
@@ -109,7 +111,7 @@ export const insertProjectMembership = async (ctx: DbContext, { values }: Insert
   return membership;
 };
 
-interface GetProjectsListOpts {
+interface FindProjectsPaginatedOpts {
   userId: string;
   q?: string;
   sort?: 'id' | 'name' | 'createdAt' | 'displayOrder';
@@ -124,7 +126,8 @@ interface GetProjectsListOpts {
 }
 
 /** Get paginated list of projects with total count, membership, optional entity counts. */
-export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProjectsListOpts) => {
+export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPaginatedOpts) => {
+  const { db } = ctx.var;
   const { userId, q, sort, order, offset, limit, organizationId, workspaceId, excludeArchived, role, includeCounts } =
     opts;
 
@@ -152,21 +155,23 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
     ...(workspaceId ? [eq(membershipsTable.workspaceId, workspaceId)] : []),
   ];
 
-  // Count total
   const baseQuery = db
     .select({ projectId: projectsTable.id })
     .from(projectsTable)
     .innerJoin(membershipsTable, membershipOn)
-    .where(and(...projectWhere))
-    .as('base');
+    .where(and(...projectWhere));
 
-  const [{ total }] = await db.select({ total: count() }).from(baseQuery);
-
-  const orderColumn = getOrderColumn(sort, projectsTable.id, order, {
-    id: projectsTable.id,
-    name: projectsTable.name,
-    createdAt: projectsTable.createdAt,
-    displayOrder: membershipsTable.displayOrder,
+  const orderBy = getOrderColumns({
+    sort,
+    order,
+    fallback: ['displayOrder', 'asc'],
+    columns: {
+      id: projectsTable.id,
+      name: projectsTable.name,
+      createdAt: projectsTable.createdAt,
+      displayOrder: membershipsTable.displayOrder,
+    },
+    tieBreaker: projectsTable.id,
   });
 
   const countData = includeCounts ? getChannelCountsSelect(entityType) : null;
@@ -189,13 +194,19 @@ export const getProjectsList = async ({ var: { db } }: DbContext, opts: GetProje
     ) as typeof query;
   }
 
-  const projects = await query
+  const itemsQuery = query
     .leftJoin(createdByUser, eq(createdByUser.id, projectsTable.createdBy))
     .leftJoin(updatedByUser, eq(updatedByUser.id, projectsTable.updatedBy))
     .where(and(...projectWhere))
-    .orderBy(orderColumn)
+    .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 
-  return { projects, total };
+  return resolveListTotal(itemsQuery, {
+    kind: 'exact',
+    getTotal: async () => {
+      const [{ total }] = await db.select({ total: count() }).from(baseQuery.as('projects'));
+      return total;
+    },
+  });
 };

@@ -5,7 +5,8 @@ import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
-import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
+import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
+import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { buildLabelsListQuery } from '#/modules/label/label-queries';
@@ -14,7 +15,7 @@ import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-qu
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
-import { getOrderColumn } from '#/utils/order-column';
+import { getOrderColumns } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
@@ -88,12 +89,16 @@ export async function getLabelsOp(
     // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
     const orderBy = seqCursor
       ? [sql`seq asc`, sql`id asc`]
-      : [
-          getOrderColumn(sort, sql`name`, order, {
+      : getOrderColumns({
+          sort,
+          order,
+          fallback: ['name', 'asc'],
+          columns: {
             name: sql`name`,
             usedCount: sql`used_count`,
-          }),
-        ];
+          },
+          tieBreaker: sql`id`,
+        });
 
     const itemsQuery = db
       .select()
@@ -105,10 +110,13 @@ export async function getLabelsOp(
     const totalSource: ListTotalSource = isDelta
       ? { kind: 'pageLength' }
       : counterEligible
-        ? { kind: 'counter', ctx: readCtx, channelKey: organizationId, entityType: 'label' }
+        ? {
+            kind: 'counter',
+            getTotal: () => getOrganizationEntityCount(readCtx, { organizationId, entityType: 'label' }),
+          }
         : {
             kind: 'exact',
-            count: async () => {
+            getTotal: async () => {
               const [{ total }] = await db.select({ total: count() }).from(labelsSubquery);
               return total;
             },

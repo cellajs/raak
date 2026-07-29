@@ -10711,7 +10711,7 @@
             "schema": {
               "type": "string",
               "enum": ["asc", "desc"],
-              "default": "desc"
+              "default": "asc"
             },
             "required": false,
             "name": "order",
@@ -11775,7 +11775,7 @@
             "schema": {
               "type": "string",
               "enum": ["asc", "desc"],
-              "default": "desc"
+              "default": "asc"
             },
             "required": false,
             "name": "order",

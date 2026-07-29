@@ -23,5 +23,5 @@ export const requestCreateBodySchema = z.object({
 });
 
 export const requestListQuerySchema = paginationQuerySchema.extend({
-  sort: z.enum(['id', 'email', 'type', 'createdAt']).default('createdAt').optional(),
+  sort: z.enum(['id', 'email', 'type', 'createdAt']).default('createdAt'),
 });

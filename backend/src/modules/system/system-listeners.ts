@@ -2,7 +2,7 @@ import { appConfig } from 'shared';
 import { baseDb } from '#/db/db';
 import { type ActivityEvent, activityBus, getEventData } from '#/lib/activity-bus';
 import { sendAccountSecurityEmail } from '#/modules/auth/general/helpers/send-account-security-email';
-import { findUserById } from '#/modules/system/system-queries';
+import { findUserById } from '#/modules/user/user-queries';
 import { log } from '#/utils/logger';
 
 const securityEmailType = {

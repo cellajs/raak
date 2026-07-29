@@ -1,7 +1,7 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
-import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
+import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -23,8 +23,12 @@ export const findTasksByStxMutationId = async (ctx: AuthContext, { mutationId }:
     .where(and(sql`${tasksTable.stx}->>'mutationId' = ${mutationId}`, eq(tasksTable.organizationId, organizationId)));
 };
 
+interface InsertTasksOpts {
+  tasks: InsertTaskModel[];
+}
+
 /** Insert tasks and return the created rows. Silently skips duplicates (PK conflict). */
-export const insertTasks = async (ctx: DbContext, { tasks }: { tasks: InsertTaskModel[] }) => {
+export const insertTasks = async (ctx: DbContext, { tasks }: InsertTasksOpts) => {
   const { db } = ctx.var;
   await inheritPublicAtFromProject(ctx, tasks);
   return db.insert(tasksTable).values(tasks).onConflictDoNothing().returning();
@@ -166,7 +170,7 @@ interface FindTaskRelationsOpts {
 }
 
 /** Fetch users and labels referenced by one or more tasks (by ID lookups). */
-export const findTaskRelations = (ctx: AuthContext, { userIds, labelIds }: FindTaskRelationsOpts) => {
+export const findTaskRelations = async (ctx: AuthContext, { userIds, labelIds }: FindTaskRelationsOpts) => {
   const { db, organizationId } = ctx.var;
   return Promise.all([
     userIds.length > 0
@@ -215,7 +219,7 @@ export const findTasksPaginated = async (
     ? { kind: 'pageLength' }
     : {
         kind: 'exact',
-        count: async () => {
+        getTotal: async () => {
           const [{ total }] = await db.select({ total: count() }).from(tasksTable).where(filters);
           return total;
         },
@@ -224,8 +228,12 @@ export const findTasksPaginated = async (
   return resolveListTotal(itemsQuery, totalSource);
 };
 
+interface CountTasksByStatusOpts {
+  projectId: string;
+}
+
 /** Count tasks grouped by status for a single project. */
-export const countTasksByStatus = async (ctx: DbContext, projectId: string) => {
+export const countTasksByStatus = async (ctx: DbContext, { projectId }: CountTasksByStatusOpts) => {
   const { db } = ctx.var;
   return db
     .select({
