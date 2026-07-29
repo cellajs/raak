@@ -141,8 +141,8 @@ async function handleSyncStep1(ctx: DocContext, ws: WebSocket, clientStateVector
     fullState = storedState;
   }
 
-  // The durable entity description (e.g. task.description) anchors both the fresh-session seed and
-  // the materialize baseline below. Load it once, lazily, and reuse.
+  // The durable entity description (the entity's stored description) anchors both the fresh-session
+  // seed and the materialize baseline below. Load it once, lazily, and reuse.
   let durableDescription: string | null | undefined;
   const getDurableDescription = async () => {
     if (durableDescription === undefined) durableDescription = await loadEntityDescription(ctx);
@@ -166,7 +166,7 @@ async function handleSyncStep1(ctx: DocContext, ws: WebSocket, clientStateVector
   // row (yjs_documents.state) and the entity description are separate stores that can diverge: an
   // image url can be saved to the Y.Doc row but not yet materialized into the description. Anchoring
   // the baseline on the Y.Doc would mark that content as already materialized and permanently suppress
-  // the corrective write, dropping the url from the description. Anchoring on the description instead
+  // the corrective write, dropping the url from the description. Anchoring on the durable description
   // keeps unchanged rejoins from POSTing, while a divergence forces the next save window to heal it.
   const collabForBaseline = getCollab(ctx.entityType, ctx.entityId);
   if (collabForBaseline && !collabForBaseline.lastMaterializedJson) {

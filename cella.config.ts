@@ -36,10 +36,15 @@ export default defineConfig({
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
-      // Attachment module carries raak's task-host/project scoping
+      // Attachment module carries raak's task-host/project scoping and tiny-thumbnail variant.
+      // Pin the table definition and Zod contract that declare those columns alongside the
+      // queries/operations that read them, so the fork owns the whole feature coherently.
+      'backend/src/modules/attachment/attachment-db.ts',
+      'backend/src/modules/attachment/attachment-schema.ts',
       'backend/src/modules/attachment/attachment-queries.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
+      'backend/src/modules/attachment/operations/get-presigned-urls.ts',
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',

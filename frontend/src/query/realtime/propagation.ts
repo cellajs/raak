@@ -18,9 +18,8 @@ type PropagationHintInput = {
 
 /**
  * Patch stale embedded-product references across every host column this fork's
- * productEmbeddings config declares for the changed product (e.g. one label hint covers
- * both task.labels and task.primaryLabel). The hint's own host fields are advisory:
- * local config is the authority on where this client caches embedded copies.
+ * productEmbeddings config declares for the changed product. The hint's own host fields are
+ * advisory: local config is the authority on where this client caches embedded copies.
  * Used by live SSE handlers, catchup after delta fetches, and optimistic mutation hooks.
  */
 export function propagateEmbeddings(hint: PropagationHintInput): void {

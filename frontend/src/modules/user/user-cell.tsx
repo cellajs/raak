@@ -30,7 +30,7 @@ export function UserCell({ user, tabIndex, compactable, className, readOnly }: B
 
   const setTriggerRef = sheeter.getState().setTriggerRef;
 
-  // While compacted the name is visually hidden, so surface it via the compact-scoped table tooltip.
+  // While compacted the name is visually hidden, so the compact-scoped table tooltip shows it.
   const compactTooltip =
     compactable && user.name ? { 'data-tooltip': 'compact', 'data-tooltip-content': user.name } : undefined;
 

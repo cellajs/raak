@@ -5,7 +5,7 @@ import { findUserByUnsubscribeToken, updateNewsletter } from '#/modules/me/me-qu
 import { verifyUnsubscribeToken } from '#/utils/unsubscribe-token';
 
 // The link is opened directly by the browser from an email, so failures redirect to a
-// frontend error page (willRedirect + errorPagePath) rather than returning a JSON body.
+// frontend error page (willRedirect + errorPagePath); the handler does not return a JSON body.
 const errorPage = { willRedirect: true, meta: { errorPagePath: '/auth/error' } } as const;
 
 export async function unsubscribeMeOp(ctx: AuthContext, token: string) {

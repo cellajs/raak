@@ -960,7 +960,7 @@ export function ResizablePanel({
       className={className}
       data-panel={id}
       // clip, not hidden: hidden would make this a scroll container that captures the
-      // panel's sticky elements, which must pin to the window in window-scroll boards
+      // panel's sticky elements, which must pin to the window in window-scroll layouts
       style={{ overflow: 'clip', position: 'relative', flexShrink: 0 }}
       {...rest}
     >

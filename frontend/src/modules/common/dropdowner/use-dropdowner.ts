@@ -44,7 +44,7 @@ interface DropdownStoreState {
   get: () => InternalDropdown | null;
 }
 
-/** Provides actions for opening and closing dropdown surfaces. */
+/** Provides actions for opening and closing the dropdown. */
 export const useDropdowner = create<DropdownStoreState>((set, get) => ({
   dropdown: null,
   lastRemovedTriggerId: null,

@@ -35,7 +35,7 @@ type ResolveChannelBySlugConfig<
 };
 
 /**
- * Resolves a channel entity (organization, project, workspace, ...) from a route param that may be
+ * Resolves a channel entity (e.g. organization) from a route param that may be
  * an id or a slug. Reads the list cache, seeds and reads the detail cache, falls back to a slug
  * fetch when no id is cached, redirects to /home when nothing resolves, and rewrites the URL to
  * the canonical slug.

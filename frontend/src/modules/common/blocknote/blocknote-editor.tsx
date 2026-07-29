@@ -42,7 +42,7 @@ import { useUIStore } from '~/modules/ui/ui-store';
 import { getRouter } from '~/routes/-router-instance';
 
 /**
- * Bundle for collaborative mode: Yjs wiring (provider, fragment, cursor user) + entity identity for SSE
+ * Bundle for collaborative mode: Yjs connection (provider, fragment, cursor user) + entity identity for SSE
  * suppression while editing. Presence of this bundle switches the editor into collaborative mode;
  * the relay persists session state to the entity row.
  */
@@ -135,7 +135,7 @@ function BlockNote({
     heading: { levels: headingLevels },
     trailingBlock,
     dictionary: getDictionary(),
-    // Caller extensions first: BlockNote keeps the first extension per key and silently drops
+    // Caller extensions first: BlockNote keeps the first extension per key and drops later
     // duplicates, so a caller-provided checkedExtension (e.g. persisted: true) must win over the default.
     extensions: [...(extensions ?? []), checkedExtension()],
     resolveFileUrl: createResolveFileUrl({ baseFilePanelProps }),

@@ -33,8 +33,8 @@ function resolveEmbeddings(): ReadonlyMap<ProductEntityType, ResolvedEmbedding[]
 
     const hostColumn = columns[hostColumnName];
     if (!hostColumn) {
-      // Hydrated single-reference embedding (e.g. task.primaryLabel from primaryLabelId): no
-      // physical array column to clean; the entry exists for client cache hints, and delete
+      // Hydrated single-reference embedding: the host exposes an id column (`${hostColumnName}Id`)
+      // and no physical array column to clean. The entry exists for client cache hints, and delete
       // flows reassign the id column synchronously.
       if (columns[`${hostColumnName}Id`]) continue;
       throw new Error(`productEmbeddings: column "${hostColumnName}" not found on "${hostProduct}" table`);

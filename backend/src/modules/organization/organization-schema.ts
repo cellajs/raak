@@ -9,7 +9,6 @@ import { organizationsTable } from '#/modules/organization/organization-db';
 import {
   booleanTransformSchema,
   excludeArchivedQuerySchema,
-  iconNameSchema,
   includeQuerySchema,
   languageSchema,
   maxLength,
@@ -22,6 +21,7 @@ import {
   validUrlSchema,
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
+import { iconNameSchema } from '#/schemas/icon-name-schema';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 import { mockOrganizationResponse } from './organization-mocks';
 

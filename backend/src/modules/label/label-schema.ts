@@ -6,14 +6,8 @@ import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
-import {
-  batchResponseSchema,
-  iconNameSchema,
-  maxLength,
-  paginationQuerySchema,
-  stxBaseSchema,
-  validUuidSchema,
-} from '#/schemas';
+import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import { iconNameSchema } from '#/schemas/icon-name-schema';
 import { pick } from '#/utils/pick';
 
 const labelInsertSchema = createInsertSchema(labelsTable);
