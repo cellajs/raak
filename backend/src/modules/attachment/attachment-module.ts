@@ -1,10 +1,30 @@
-import { registerModule } from 'shared/module-registry';
+import { and, eq, sql } from 'drizzle-orm';
+import { republishedProjects } from '#/db/utils/cascade-public-at';
+import { defineBackendModule } from '#/lib/module';
+import { attachmentsTable } from '#/modules/attachment/attachment-db';
+import { getIsoDate } from '#/utils/iso-date';
 
-registerModule({
+defineBackendModule({
   name: 'attachments',
   owner: 'cella',
   scope: ['frontend', 'backend'],
   description: `Endpoints for managing file based attachments (such as images, PDFs, and documents) linked to
     entities such as organizations or users. Files are uploaded directly by the client, while the API handles
     metadata registration, linking, access, and preview utilities.`,
+  onMutation: {
+    // Cascade a project's public_at change onto its child attachments (row-local public read).
+    // Server-origin write so the change syncs; runs inside updateProjectOp's transaction.
+    'project.updated': async (ctx, { before = [], after = [] }) => {
+      const updatedAt = getIsoDate();
+      const updatedBy = ctx.var.user.id;
+      for (const { id, publicAt } of republishedProjects(before, after)) {
+        await ctx.var.db
+          .update(attachmentsTable)
+          .set({ publicAt, updatedAt, updatedBy, stx: sql`stx - 'changedFields'` })
+          .where(
+            and(eq(attachmentsTable.projectId, id), sql`${attachmentsTable.publicAt} IS DISTINCT FROM ${publicAt}`),
+          );
+      }
+    },
+  },
 });
