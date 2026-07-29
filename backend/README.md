@@ -39,5 +39,5 @@ trailing order expressions. API schemas should keep defaulted sort and order fie
 input; the query helper applies the effective fallback.
 
 When a query defect affects behavior, add a focused regression test beside the query or in
-`backend/tests`. Database invariants such as uniqueness still need a schema constraint and generated
+`backend/tests`. Database uniqueness requirements still need a schema constraint and generated
 migration; an application lookup alone is not concurrency-safe.
