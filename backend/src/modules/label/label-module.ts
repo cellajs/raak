@@ -7,6 +7,9 @@ import { insertLabels } from '#/modules/label/label-queries';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
 
+const primaryLabelsOf = (row: Record<string, unknown> | undefined): PrimaryLabelDefinition[] | undefined =>
+  (row?.setupConfig as { primaryLabels?: PrimaryLabelDefinition[] } | undefined)?.primaryLabels;
+
 defineBackendModule({
   name: 'labels',
   owner: 'app',
@@ -29,32 +32,35 @@ defineBackendModule({
   },
   onMutation: {
     // Provision the organization's primary label set into each newly created project as tracked rows.
-    'project.created': async (ctx, { after }) => {
+    'project.created': async (ctx, { after = [] }) => {
       const organization = ctx.var.organization;
-      if (!after || !organization) return;
+      if (!after.length || !organization) return;
       const { setupConfig } = withSetupConfigDefaults(organization);
-      const rows = buildPrimaryLabelRows({
-        entries: setupConfig.primaryLabels,
-        projectId: after.id as string,
-        organizationId: organization.id,
-        tenantId: organization.tenantId,
-        createdBy: ctx.var.user.id,
-      });
-      if (rows.length > 0) await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: rows }));
-    },
-    // Fan edited primary-label definitions out to still-tracked rows across the org's projects,
-    // matched by slug. Only fires when the update body carried primaryLabels.
-    'organization.updated': async (ctx, { after, input }) => {
-      const primaryLabels = (input?.setupConfig as { primaryLabels?: PrimaryLabelDefinition[] } | undefined)
-        ?.primaryLabels;
-      if (!primaryLabels || !after) return;
-      await tenantContext(ctx, (txCtx) =>
-        propagateSetupConfigLabels(txCtx, {
-          entries: primaryLabels,
-          organizationId: after.id as string,
-          updatedBy: ctx.var.user.id,
+      const rows = after.flatMap((project) =>
+        buildPrimaryLabelRows({
+          entries: setupConfig.primaryLabels,
+          projectId: project.id as string,
+          organizationId: organization.id,
+          tenantId: organization.tenantId,
+          createdBy: ctx.var.user.id,
         }),
       );
+      if (rows.length) await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: rows }));
+    },
+    // Fan edited primary-label definitions out to still-tracked rows across the org's projects,
+    // matched by slug. Diff-driven: only fires for orgs whose primaryLabels actually changed.
+    'organization.updated': async (ctx, { before = [], after = [] }) => {
+      for (const [index, org] of after.entries()) {
+        const nextLabels = primaryLabelsOf(org);
+        if (!nextLabels || JSON.stringify(primaryLabelsOf(before[index])) === JSON.stringify(nextLabels)) continue;
+        await tenantContext(ctx, (txCtx) =>
+          propagateSetupConfigLabels(txCtx, {
+            entries: nextLabels,
+            organizationId: org.id as string,
+            updatedBy: ctx.var.user.id,
+          }),
+        );
+      }
     },
   },
 });

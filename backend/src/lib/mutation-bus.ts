@@ -3,14 +3,14 @@ import type { AuthContext } from '#/core/context';
 import { onBackendModuleRegister } from '#/lib/module';
 
 /**
- * Payload for a mutation event. `before`/`after` are the entity rows around the write; `input` is
- * the normalized request body on creates/updates. Fields are absent when they don't apply (no
- * `after` on delete, no `before` on create).
+ * Batch payload: the rows the event is about. cella ops work in batches, so the bus does too.
+ * `before`/`after` are index-aligned for updates; a create carries `after`, a delete carries
+ * `before` (the deleted rows, which already hold the op's `deletedAt`/`deletedBy`). Handlers
+ * narrow rows to their entity type.
  */
 export interface MutationPayload {
-  before?: Record<string, unknown>;
-  after?: Record<string, unknown>;
-  input?: Record<string, unknown>;
+  before?: Record<string, unknown>[];
+  after?: Record<string, unknown>[];
   /**
    * True when the write originates from Yjs materialization (server-origin). Handlers that would
    * double-process on those re-writes should return early.

@@ -47,7 +47,10 @@ export async function updateOrganizationOp(
   const updatedOrganizationRecord = withOrganizationDefaults(updatedRecord);
 
   // Fire in-request mutation handlers (e.g. the label module fans primary-label edits to child rows).
-  await dispatchMutation(ctx, 'organization.updated', { after: updatedOrganizationRecord, input });
+  await dispatchMutation(ctx, 'organization.updated', {
+    before: [withOrganizationDefaults(organization)],
+    after: [updatedOrganizationRecord],
+  });
 
   invalidateCache.org(tenantId, organization.id);
 

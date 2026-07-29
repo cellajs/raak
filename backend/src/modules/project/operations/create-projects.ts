@@ -87,8 +87,8 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
 
   log.info('Projects created', { count: projectRecords.length, ids: projectIds });
 
-  // Let the label module provision the organization's primary label set into each new project.
-  for (const project of projectRecords) await dispatchMutation(ctx, 'project.created', { after: project });
+  // Let the label module provision the organization's primary label set into the new projects.
+  await dispatchMutation(ctx, 'project.created', { after: projectRecords });
 
   // Insert memberships for each project
   const membershipInserts = projectRecords.map((project) => ({
