@@ -250,7 +250,6 @@ export const config = {
     projects: 40,
     pages: 100,
     tasks: 1000,
-    // TODO [#17], tasksTable looks lke hack
     tasksTable: 80,
     pendingMemberships: 20,
   },
