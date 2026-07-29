@@ -77,7 +77,7 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
         id: attachmentIds.ownedByA,
         name: 'owned by A',
         filename: 'a.png',
-        originalKey: `${projectId}/a.png`,
+        keys: { original: `${projectId}/a.png` },
         createdBy: memberA.id,
       },
       {
@@ -85,7 +85,7 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
         id: attachmentIds.ownedByB,
         name: 'owned by B',
         filename: 'b.png',
-        originalKey: `${projectId}/b.png`,
+        keys: { original: `${projectId}/b.png` },
         createdBy: memberB.id,
       },
       {
@@ -93,7 +93,7 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
         id: attachmentIds.ownedByAdmin,
         name: 'owned by admin',
         filename: 'admin.png',
-        originalKey: `${projectId}/admin.png`,
+        keys: { original: `${projectId}/admin.png` },
         createdBy: tenant.user.id,
       },
     ]);

@@ -124,29 +124,16 @@
                     "maxLength": 255
                   },
                   "size": { "type": "string", "required": true, "maxLength": 255 },
-                  "originalKey": {
-                    "type": "string",
+                  "keys": {
+                    "type": "object",
                     "required": true,
-                    "description": "Storage object key for the original uploaded file.",
-                    "maxLength": 2048
-                  },
-                  "convertedKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the converted variant; null when none.",
-                    "maxLength": 2048
-                  },
-                  "thumbnailKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
-                    "maxLength": 2048
-                  },
-                  "thumbnailTinyKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
-                    "maxLength": 2048
+                    "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
+                    "properties": {
+                      "original": { "type": "string", "required": true },
+                      "preview": { "type": "string", "required": false },
+                      "thumbnail": { "type": "string", "required": false },
+                      "converted": { "type": "string", "required": false }
+                    }
                   },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
@@ -201,10 +188,7 @@
               "contentType": "application/vnd.oasis.opendocument.presentation",
               "convertedContentType": null,
               "size": "7555316",
-              "originalKey": "uploads/pubibp4ljoerjtgyu7cndg4f/finally_wherever_nasalise.php",
-              "convertedKey": null,
-              "thumbnailKey": null,
-              "thumbnailTinyKey": null,
+              "keys": { "original": "uploads/pubibp4ljoerjtgyu7cndg4f/finally_wherever_nasalise.php" },
               "projectId": "f54ea01d-336a-43f3-90f2-043315ebed4a",
               "organizationId": "eacb4a6c-0fe2-412f-9507-96fe85592b8e"
             },
@@ -248,10 +232,7 @@
               "contentType": "application/x-7z-compressed",
               "convertedContentType": null,
               "size": "1767423",
-              "originalKey": "uploads/pv1fvu0uyumluud11ppu88to/buzzing_brr_hm.rmi",
-              "convertedKey": null,
-              "thumbnailKey": null,
-              "thumbnailTinyKey": null,
+              "keys": { "original": "uploads/pv1fvu0uyumluud11ppu88to/buzzing_brr_hm.rmi" },
               "projectId": "4859fc3d-4ffc-4d93-bda6-f4757fd00cc2",
               "organizationId": "c65b1a01-eb42-42db-8633-9b813cf84d75"
             }
@@ -455,29 +436,16 @@
                     "maxLength": 255
                   },
                   "size": { "type": "string", "required": true, "maxLength": 255 },
-                  "originalKey": {
-                    "type": "string",
+                  "keys": {
+                    "type": "object",
                     "required": true,
-                    "description": "Storage object key for the original uploaded file.",
-                    "maxLength": 2048
-                  },
-                  "convertedKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the converted variant; null when none.",
-                    "maxLength": 2048
-                  },
-                  "thumbnailKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
-                    "maxLength": 2048
-                  },
-                  "thumbnailTinyKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
-                    "maxLength": 2048
+                    "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
+                    "properties": {
+                      "original": { "type": "string", "required": true },
+                      "preview": { "type": "string", "required": false },
+                      "thumbnail": { "type": "string", "required": false },
+                      "converted": { "type": "string", "required": false }
+                    }
                   },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
@@ -543,10 +511,7 @@
               "contentType": "application/ogg",
               "convertedContentType": null,
               "size": "2405024",
-              "originalKey": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml",
-              "convertedKey": null,
-              "thumbnailKey": null,
-              "thumbnailTinyKey": null,
+              "keys": { "original": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml" },
               "projectId": "55b68dde-9bc4-4a07-a5e7-b48057f53a0c",
               "organizationId": "a26b695c-c9ed-49cd-b1f5-5c6487a8af2c"
             },
@@ -590,10 +555,7 @@
               "contentType": "audio/opus",
               "convertedContentType": null,
               "size": "8358566",
-              "originalKey": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4",
-              "convertedKey": null,
-              "thumbnailKey": null,
-              "thumbnailTinyKey": null,
+              "keys": { "original": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4" },
               "projectId": "044316a1-c906-4c0e-9632-932306ebef5b",
               "organizationId": "683210fb-7a21-4be2-86ba-4ee7e27d3697"
             }
@@ -723,29 +685,16 @@
                     "maxLength": 255
                   },
                   "size": { "type": "string", "required": true, "maxLength": 255 },
-                  "originalKey": {
-                    "type": "string",
+                  "keys": {
+                    "type": "object",
                     "required": true,
-                    "description": "Storage object key for the original uploaded file.",
-                    "maxLength": 2048
-                  },
-                  "convertedKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the converted variant; null when none.",
-                    "maxLength": 2048
-                  },
-                  "thumbnailKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
-                    "maxLength": 2048
-                  },
-                  "thumbnailTinyKey": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
-                    "maxLength": 2048
+                    "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
+                    "properties": {
+                      "original": { "type": "string", "required": true },
+                      "preview": { "type": "string", "required": false },
+                      "thumbnail": { "type": "string", "required": false },
+                      "converted": { "type": "string", "required": false }
+                    }
                   },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
                   "organizationId": { "type": "string", "required": true, "format": "uuid" },
@@ -811,10 +760,7 @@
               "contentType": "application/ogg",
               "convertedContentType": null,
               "size": "2405024",
-              "originalKey": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml",
-              "convertedKey": null,
-              "thumbnailKey": null,
-              "thumbnailTinyKey": null,
+              "keys": { "original": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml" },
               "projectId": "55b68dde-9bc4-4a07-a5e7-b48057f53a0c",
               "organizationId": "a26b695c-c9ed-49cd-b1f5-5c6487a8af2c"
             },
@@ -858,10 +804,7 @@
               "contentType": "audio/opus",
               "convertedContentType": null,
               "size": "8358566",
-              "originalKey": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4",
-              "convertedKey": null,
-              "thumbnailKey": null,
-              "thumbnailTinyKey": null,
+              "keys": { "original": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4" },
               "projectId": "044316a1-c906-4c0e-9632-932306ebef5b",
               "organizationId": "683210fb-7a21-4be2-86ba-4ee7e27d3697"
             }
@@ -936,11 +879,15 @@
               "maxLength": 255
             },
             "size": { "type": "string", "required": true, "maxLength": 255 },
-            "originalKey": {
-              "type": "string",
+            "keys": {
+              "type": "object",
               "required": true,
-              "description": "Storage object key for the original uploaded file.",
-              "maxLength": 2048
+              "properties": {
+                "original": { "type": "string", "required": true },
+                "preview": { "type": "string", "required": false },
+                "thumbnail": { "type": "string", "required": false },
+                "converted": { "type": "string", "required": false }
+              }
             },
             "bucketName": { "type": "string", "required": true, "maxLength": 255 },
             "publicBucket": {
@@ -963,24 +910,6 @@
               "required": false,
               "description": "MIME type of the server-converted variant; null when none.",
               "maxLength": 255
-            },
-            "convertedKey": {
-              "type": ["string", "null"],
-              "required": false,
-              "description": "Storage object key for the converted variant; null when none.",
-              "maxLength": 2048
-            },
-            "thumbnailKey": {
-              "type": ["string", "null"],
-              "required": false,
-              "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
-              "maxLength": 2048
-            },
-            "thumbnailTinyKey": {
-              "type": ["string", "null"],
-              "required": false,
-              "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
-              "maxLength": 2048
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
             "publicAt": {
@@ -1144,7 +1073,7 @@
                   "variant": {
                     "type": "string",
                     "required": true,
-                    "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"]
+                    "enum": ["original", "preview", "thumbnail", "converted"]
                   },
                   "url": { "type": "string", "required": true }
                 }
@@ -1242,7 +1171,7 @@
                 "variant": {
                   "type": "string",
                   "required": false,
-                  "enum": ["original", "thumbnail", "thumbnail-tiny", "converted"]
+                  "enum": ["original", "preview", "thumbnail", "converted"]
                 }
               }
             }
@@ -1372,29 +1301,16 @@
               "maxLength": 255
             },
             "size": { "type": "string", "required": true, "maxLength": 255 },
-            "originalKey": {
-              "type": "string",
+            "keys": {
+              "type": "object",
               "required": true,
-              "description": "Storage object key for the original uploaded file.",
-              "maxLength": 2048
-            },
-            "convertedKey": {
-              "type": ["string", "null"],
-              "required": true,
-              "description": "Storage object key for the converted variant; null when none.",
-              "maxLength": 2048
-            },
-            "thumbnailKey": {
-              "type": ["string", "null"],
-              "required": true,
-              "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
-              "maxLength": 2048
-            },
-            "thumbnailTinyKey": {
-              "type": ["string", "null"],
-              "required": true,
-              "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
-              "maxLength": 2048
+              "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
+              "properties": {
+                "original": { "type": "string", "required": true },
+                "preview": { "type": "string", "required": false },
+                "thumbnail": { "type": "string", "required": false },
+                "converted": { "type": "string", "required": false }
+              }
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
@@ -1443,10 +1359,7 @@
           "contentType": "application/x-sh",
           "convertedContentType": null,
           "size": "5480456",
-          "originalKey": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text",
-          "convertedKey": null,
-          "thumbnailKey": null,
-          "thumbnailTinyKey": null,
+          "keys": { "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text" },
           "projectId": "8fed4f40-cfd7-4da0-a6a8-c118563b74fa",
           "organizationId": "91eb1a57-81a6-485a-87ee-9b7e9b6c234f"
         }
@@ -1623,29 +1536,16 @@
               "maxLength": 255
             },
             "size": { "type": "string", "required": true, "maxLength": 255 },
-            "originalKey": {
-              "type": "string",
+            "keys": {
+              "type": "object",
               "required": true,
-              "description": "Storage object key for the original uploaded file.",
-              "maxLength": 2048
-            },
-            "convertedKey": {
-              "type": ["string", "null"],
-              "required": true,
-              "description": "Storage object key for the converted variant; null when none.",
-              "maxLength": 2048
-            },
-            "thumbnailKey": {
-              "type": ["string", "null"],
-              "required": true,
-              "description": "Storage object key for the generated thumbnail (mid-size preview); null when none.",
-              "maxLength": 2048
-            },
-            "thumbnailTinyKey": {
-              "type": ["string", "null"],
-              "required": true,
-              "description": "Storage object key for the tiny (grid-cell) image thumbnail; null when none.",
-              "maxLength": 2048
+              "description": "Storage object keys per variant, keyed by variant name; only generated variants are present.",
+              "properties": {
+                "original": { "type": "string", "required": true },
+                "preview": { "type": "string", "required": false },
+                "thumbnail": { "type": "string", "required": false },
+                "converted": { "type": "string", "required": false }
+              }
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
             "organizationId": { "type": "string", "required": true, "format": "uuid" },
@@ -1694,10 +1594,7 @@
           "contentType": "application/x-sh",
           "convertedContentType": null,
           "size": "5480456",
-          "originalKey": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text",
-          "convertedKey": null,
-          "thumbnailKey": null,
-          "thumbnailTinyKey": null,
+          "keys": { "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text" },
           "projectId": "8fed4f40-cfd7-4da0-a6a8-c118563b74fa",
           "organizationId": "91eb1a57-81a6-485a-87ee-9b7e9b6c234f"
         }
@@ -1778,7 +1675,6 @@
             "required": true,
             "properties": {
               "name": { "type": "string", "required": false, "maxLength": 255 },
-              "originalKey": { "type": "string", "required": false },
               "publicAt": {
                 "type": ["string", "null"],
                 "required": false

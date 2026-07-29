@@ -126,8 +126,7 @@ export const removeAttachments = async (
 
   // Find attachments that are NOT in the description
   const attachmentsToRemove = attachments.filter(
-    ({ convertedKey, originalKey }) =>
-      !urls.some((url) => (convertedKey && url.includes(convertedKey)) || url.includes(originalKey)),
+    ({ keys }) => !urls.some((url) => (keys.converted && url.includes(keys.converted)) || url.includes(keys.original)),
   );
 
   // Soft-delete unused attachments so the tombstones propagate to clients via delta sync

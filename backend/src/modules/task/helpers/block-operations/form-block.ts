@@ -24,10 +24,10 @@ export const formParagraphBlock = (text: string): Block => {
 
 export const formFileBlocks = async (attachments: (typeof attachmentsTable.$inferInsert & { id: string })[]) => {
   const result = await Promise.all(
-    attachments.map(async ({ id, filename, originalKey, contentType }) => {
+    attachments.map(async ({ id, filename, keys, contentType }) => {
       const prefix = contentType.split('/')[0];
       const fileType = typeMap[prefix] ?? 'file';
-      return [formFileBlock(id, fileType, filename, originalKey), formParagraphBlock('')];
+      return [formFileBlock(id, fileType, filename, keys?.original ?? ''), formParagraphBlock('')];
     }),
   );
 

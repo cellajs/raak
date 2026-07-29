@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
@@ -100,27 +100,6 @@ export const softDeleteAttachmentsByTaskIds = async (
     );
 };
 
-interface FindAttachmentByKeyOpts {
-  key: string;
-}
-
-/** Find an attachment by any of its S3 keys (original, thumbnail, converted). Already tenant-scoped via RLS. */
-export const findAttachmentByKey = async (ctx: DbContext, { key }: FindAttachmentByKeyOpts) => {
-  const { db } = ctx.var;
-  const [att] = await db
-    .select()
-    .from(attachmentsTable)
-    .where(
-      or(
-        eq(attachmentsTable.originalKey, key),
-        eq(attachmentsTable.thumbnailKey, key),
-        eq(attachmentsTable.convertedKey, key),
-      ),
-    )
-    .limit(1);
-  return att;
-};
-
 interface FindAttachmentsByIdsOpts {
   ids: string[];
 }
@@ -147,8 +126,7 @@ export const findAttachmentKeysByTaskId = async (ctx: DbContext, { taskId }: Fin
   return db
     .select({
       id: attachmentsTable.id,
-      convertedKey: attachmentsTable.convertedKey,
-      originalKey: attachmentsTable.originalKey,
+      keys: attachmentsTable.keys,
     })
     .from(attachmentsTable)
     .where(eq(attachmentsTable.taskId, taskId));
