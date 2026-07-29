@@ -3,7 +3,7 @@ import { activityActions, appConfig, trackedEventTypes } from 'shared';
 import { createSelectSchema } from '#/db/utils/drizzle-schema';
 import { activitiesTable } from '#/modules/activities/activities-db';
 import { entityTypeSchema, paginationQuerySchema } from '#/schemas';
-import { stxBaseSchema } from '#/schemas/sync-transaction-schemas';
+import { nullableStxBaseSchema } from '#/schemas/sync-transaction-schemas';
 import { mockActivityResponse } from './activities-mocks';
 
 /** Schema for activity actions enum - uses literal types from activityActions */
@@ -26,8 +26,7 @@ export const activitySchema = z
     type: activityEventTypeSchema,
     // Override jsonb columns with properly typed schemas to avoid generic types in OpenAPI
     changedFields: z.array(z.string()).nullable(),
-    // A union generates proper anyOf in OpenAPI and avoids an allOf intersection.
-    stx: z.union([stxBaseSchema, z.null()]),
+    stx: nullableStxBaseSchema,
   })
   .openapi('Activity', {
     description: 'An auditable event recording an entity change, used for sync and history.',

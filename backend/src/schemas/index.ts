@@ -72,5 +72,5 @@ export {
   batchResponseSchema,
   paginationSchema,
 } from './success-response-schemas';
-export { type StxBase, stxBaseSchema } from './sync-transaction-schemas';
+export { nullableStxBaseSchema, type StxBase, stxBaseSchema } from './sync-transaction-schemas';
 export { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from './user-minimal-base';

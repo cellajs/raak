@@ -39,7 +39,7 @@ export const taskSchema = z
     }).shape,
     labels: z.array(labelEmbeddedSchema),
     // Hydrated from primaryLabelId; null only when the referenced row is missing from the relation set
-    primaryLabel: z.union([labelEmbeddedSchema, z.null()]),
+    primaryLabel: labelEmbeddedSchema.nullable(),
     status: z.enum(TaskStatus),
     assignedTo: z.array(userMinimalBaseSchema),
     createdBy: nullableUserMinimalBaseSchema,

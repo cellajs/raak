@@ -45,18 +45,16 @@ export const uploadTokenSchema = z
     sub: z.string(),
     s3: z.boolean(),
     signature: z.string().nullable(),
-    params: z.union([
-      z
-        .object({
-          auth: z.object({
-            key: z.string(),
-            expires: z.string().optional(),
-          }),
-          // Allow additional arbitrary keys with any type in params
-        })
-        .catchall(z.any()),
-      z.null(),
-    ]),
+    params: z
+      .object({
+        auth: z.object({
+          key: z.string(),
+          expires: z.string().optional(),
+        }),
+        // Allow additional arbitrary keys with any type in params
+      })
+      .catchall(z.any())
+      .nullable(),
   })
   .openapi('UploadToken', {
     description: 'A signed token authorizing file uploads to the configured storage provider.',

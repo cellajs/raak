@@ -23,4 +23,9 @@ export const userMinimalBaseSchema = z
   });
 
 /** Nullable minimal-user reference that preserves nullability in generated OpenAPI clients. */
-export const nullableUserMinimalBaseSchema = z.union([userMinimalBaseSchema, z.null()]);
+export const nullableUserMinimalBaseSchema = z
+  .union([userMinimalBaseSchema, z.null()])
+  .openapi('NullableUserMinimalBase', {
+    description: 'Minimal user data for references, or null when no user is available.',
+    'x-tags': schemaTags('base', 'users', 'cella'),
+  });

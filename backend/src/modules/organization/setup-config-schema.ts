@@ -8,7 +8,7 @@ const primaryLabelDefinitionSchema = z.object({
   slug: labelSlugSchema,
   name: validNameSchema,
   color: z.enum(labelColorTokens),
-  icon: z.union([iconNameSchema, z.null()]),
+  icon: iconNameSchema.nullable(),
 });
 
 /**
