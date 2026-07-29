@@ -1656,7 +1656,7 @@ export const deleteMyMembership = <ThrowOnError extends boolean = true>(
  * **GET /me/upload-token** ·· [getUploadToken](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/upload-token) ·· [getUploadToken](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/upload-token) ·· _me_cella_
  *
  * @param {getUploadTokenData} options
- * @param {string | boolean=} options.query.publicbucket - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.publicbucket - `enum | boolean` (optional)
  * @param {string=} options.query.organizationid - `string` (optional)
  * @param {enum} options.query.templateid - `enum`
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -2037,7 +2037,7 @@ export const updateUser = <ThrowOnError extends boolean = true>(
  * **POST /system/newsletter** ·· [sendNewsletter](https://www.raak.dev/docs/operations?operationTag=system#tag/system/POST/system/newsletter) ·· [sendNewsletter](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/system/newsletter) ·· _system_cella_
  *
  * @param {sendNewsletterData} options
- * @param {string | boolean=} options.query.toself - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.toself - `enum | boolean` (optional)
  * @param {any[]=} options.body.organizationIds - `any[]` (optional)
  * @param {any[]=} options.body.roles - `any[]` (optional)
  * @param {string=} options.body.subject - `string` (optional)
@@ -2627,7 +2627,7 @@ export const getUsers = <ThrowOnError extends boolean = true>(
  *
  * @param {getUserData} options
  * @param {string} options.path.relatableuserid - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.slug - `enum | boolean` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getUser = <ThrowOnError extends boolean = true>(
@@ -2664,7 +2664,7 @@ export const getUser = <ThrowOnError extends boolean = true>(
  *
  * @param {getPublicProjectData} options
  * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.slug - `enum | boolean` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const getPublicProject = <ThrowOnError extends boolean = true>(
@@ -3010,7 +3010,7 @@ export const getOrganizations = <ThrowOnError extends boolean = true>(
  * @param {getOrganizationData} options
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.slug - `enum | boolean` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -3236,7 +3236,7 @@ export const getWorkspaces = <ThrowOnError extends boolean = true>(
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
  * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.slug - `enum | boolean` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -3450,7 +3450,7 @@ export const getProjects = <ThrowOnError extends boolean = true>(
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
  * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.slug - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.slug - `enum | boolean` (optional)
  * @param {string=} options.query.include - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -3906,7 +3906,7 @@ export const getAttachment = <ThrowOnError extends boolean = true>(
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
  * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.fullresponse - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.fullresponse - `enum | boolean` (optional)
  * @param {object=} options.body.ops - `object` (optional)
  * @param {any=} options.body.stx - `any` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
@@ -4389,7 +4389,7 @@ export const getTask = <ThrowOnError extends boolean = true>(
  * @param {string} options.path.tenantid - `string`
  * @param {string} options.path.organizationid - `string`
  * @param {string} options.path.id - `string`
- * @param {string | boolean=} options.query.fullresponse - `string | boolean` (optional)
+ * @param {enum | boolean=} options.query.fullresponse - `enum | boolean` (optional)
  * @param {object=} options.body.ops - `object` (optional)
  * @param {any=} options.body.stx - `any` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429

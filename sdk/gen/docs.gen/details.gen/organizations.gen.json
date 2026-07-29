@@ -42,44 +42,56 @@
                     "maxLength": 2048
                   },
                   "createdBy": {
-                    "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references.",
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": false,
+                        "description": "Minimal user data for references.",
+                        "properties": {
+                          "id": { "type": "string", "required": true },
+                          "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
+                          "thumbnailUrl": {
+                            "type": ["string", "null"],
+                            "required": true
+                          },
+                          "entityType": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["user"]
+                          }
+                        },
+                        "ref": "#/components/schemas/UserMinimalBase"
                       },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    },
-                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                      { "type": "null", "required": false }
+                    ]
                   },
                   "updatedBy": {
-                    "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references.",
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": false,
+                        "description": "Minimal user data for references.",
+                        "properties": {
+                          "id": { "type": "string", "required": true },
+                          "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
+                          "thumbnailUrl": {
+                            "type": ["string", "null"],
+                            "required": true
+                          },
+                          "entityType": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["user"]
+                          }
+                        },
+                        "ref": "#/components/schemas/UserMinimalBase"
                       },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    },
-                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                      { "type": "null", "required": false }
+                    ]
                   },
                   "publishedAt": {
                     "type": ["string", "null"],
@@ -164,12 +176,7 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "slug": {
-                              "type": "string",
-                              "required": true,
-                              "minLength": 1,
-                              "maxLength": 255
-                            },
+                            "slug": { "type": "string", "required": true, "maxLength": 255 },
                             "name": {
                               "type": "string",
                               "required": true,
@@ -768,44 +775,56 @@
                     "maxLength": 2048
                   },
                   "createdBy": {
-                    "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references.",
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": false,
+                        "description": "Minimal user data for references.",
+                        "properties": {
+                          "id": { "type": "string", "required": true },
+                          "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
+                          "thumbnailUrl": {
+                            "type": ["string", "null"],
+                            "required": true
+                          },
+                          "entityType": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["user"]
+                          }
+                        },
+                        "ref": "#/components/schemas/UserMinimalBase"
                       },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    },
-                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                      { "type": "null", "required": false }
+                    ]
                   },
                   "updatedBy": {
-                    "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references.",
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": false,
+                        "description": "Minimal user data for references.",
+                        "properties": {
+                          "id": { "type": "string", "required": true },
+                          "name": { "type": "string", "required": true },
+                          "slug": { "type": "string", "required": true },
+                          "thumbnailUrl": {
+                            "type": ["string", "null"],
+                            "required": true
+                          },
+                          "entityType": {
+                            "type": "string",
+                            "required": true,
+                            "enum": ["user"]
+                          }
+                        },
+                        "ref": "#/components/schemas/UserMinimalBase"
                       },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    },
-                    "extendsRef": "#/components/schemas/UserMinimalBase"
+                      { "type": "null", "required": false }
+                    ]
                   },
                   "publishedAt": {
                     "type": ["string", "null"],
@@ -890,12 +909,7 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "slug": {
-                              "type": "string",
-                              "required": true,
-                              "minLength": 1,
-                              "maxLength": 255
-                            },
+                            "slug": { "type": "string", "required": true, "maxLength": 255 },
                             "name": {
                               "type": "string",
                               "required": true,
@@ -1383,44 +1397,56 @@
               "maxLength": 2048
             },
             "createdBy": {
-              "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": false,
+                  "description": "Minimal user data for references.",
+                  "properties": {
+                    "id": { "type": "string", "required": true },
+                    "name": { "type": "string", "required": true },
+                    "slug": { "type": "string", "required": true },
+                    "thumbnailUrl": {
+                      "type": ["string", "null"],
+                      "required": true
+                    },
+                    "entityType": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["user"]
+                    }
+                  },
+                  "ref": "#/components/schemas/UserMinimalBase"
                 },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "extendsRef": "#/components/schemas/UserMinimalBase"
+                { "type": "null", "required": false }
+              ]
             },
             "updatedBy": {
-              "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": false,
+                  "description": "Minimal user data for references.",
+                  "properties": {
+                    "id": { "type": "string", "required": true },
+                    "name": { "type": "string", "required": true },
+                    "slug": { "type": "string", "required": true },
+                    "thumbnailUrl": {
+                      "type": ["string", "null"],
+                      "required": true
+                    },
+                    "entityType": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["user"]
+                    }
+                  },
+                  "ref": "#/components/schemas/UserMinimalBase"
                 },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "extendsRef": "#/components/schemas/UserMinimalBase"
+                { "type": "null", "required": false }
+              ]
             },
             "publishedAt": {
               "type": ["string", "null"],
@@ -1505,12 +1531,7 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "slug": {
-                        "type": "string",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 255
-                      },
+                      "slug": { "type": "string", "required": true, "maxLength": 255 },
                       "name": {
                         "type": "string",
                         "required": true,
@@ -1842,7 +1863,14 @@
         "properties": {
           "slug": {
             "required": false,
-            "anyOf": [{ "type": "string", "required": false }, { "type": "boolean", "required": false }]
+            "anyOf": [
+              {
+                "type": "string",
+                "required": false,
+                "enum": ["true", "false"]
+              },
+              { "type": "boolean", "required": false }
+            ]
           },
           "include": { "type": "string", "required": false }
         }
@@ -1887,44 +1915,56 @@
               "maxLength": 2048
             },
             "createdBy": {
-              "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": false,
+                  "description": "Minimal user data for references.",
+                  "properties": {
+                    "id": { "type": "string", "required": true },
+                    "name": { "type": "string", "required": true },
+                    "slug": { "type": "string", "required": true },
+                    "thumbnailUrl": {
+                      "type": ["string", "null"],
+                      "required": true
+                    },
+                    "entityType": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["user"]
+                    }
+                  },
+                  "ref": "#/components/schemas/UserMinimalBase"
                 },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "extendsRef": "#/components/schemas/UserMinimalBase"
+                { "type": "null", "required": false }
+              ]
             },
             "updatedBy": {
-              "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": false,
+                  "description": "Minimal user data for references.",
+                  "properties": {
+                    "id": { "type": "string", "required": true },
+                    "name": { "type": "string", "required": true },
+                    "slug": { "type": "string", "required": true },
+                    "thumbnailUrl": {
+                      "type": ["string", "null"],
+                      "required": true
+                    },
+                    "entityType": {
+                      "type": "string",
+                      "required": true,
+                      "enum": ["user"]
+                    }
+                  },
+                  "ref": "#/components/schemas/UserMinimalBase"
                 },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "extendsRef": "#/components/schemas/UserMinimalBase"
+                { "type": "null", "required": false }
+              ]
             },
             "publishedAt": {
               "type": ["string", "null"],
@@ -2009,12 +2049,7 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "slug": {
-                        "type": "string",
-                        "required": true,
-                        "minLength": 1,
-                        "maxLength": 255
-                      },
+                      "slug": { "type": "string", "required": true, "maxLength": 255 },
                       "name": {
                         "type": "string",
                         "required": true,
@@ -2439,12 +2474,7 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "slug": {
-                      "type": "string",
-                      "required": true,
-                      "minLength": 1,
-                      "maxLength": 255
-                    },
+                    "slug": { "type": "string", "required": true, "maxLength": 255 },
                     "name": {
                       "type": "string",
                       "required": true,

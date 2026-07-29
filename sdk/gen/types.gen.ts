@@ -55,14 +55,8 @@ export type ProductBase = {
   createdAt: string;
   updatedAt: string | null;
   description: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: UserMinimalBase | null;
+  updatedBy: UserMinimalBase | null;
   entityType: 'task' | 'label' | 'attachment';
   keywords: string;
 };
@@ -138,10 +132,10 @@ export type StreamNotification = {
    * Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)
    */
   channelId: string | null;
-  stx: StxBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  /**
+   * Sync transaction metadata for HLC conflict resolution
+   */
+  stx: StxBase | null;
   /**
    * Last sequence position for a batched notification — client should fetch range
    */
@@ -334,10 +328,7 @@ export type InactiveMembership = {
   role: 'admin' | 'member' | 'guest';
   rejectedAt: string | null;
   remindedAt: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: UserMinimalBase | null;
   organizationId: string;
   workspaceId: string | null;
   projectId: string | null;
@@ -419,14 +410,8 @@ export type Project = {
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: UserMinimalBase | null;
+  updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
   publicAt: string | null;
   path: string | null;
@@ -521,20 +506,8 @@ export type Task = {
     projectId: string;
   } | null;
   assignedTo: Array<UserMinimalBase>;
-  createdBy: {
-    id: string;
-    name: string;
-    slug: string;
-    thumbnailUrl: string | null;
-    entityType: 'user';
-  } | null;
-  updatedBy: {
-    id: string;
-    name: string;
-    slug: string;
-    thumbnailUrl: string | null;
-    entityType: 'user';
-  } | null;
+  createdBy: UserMinimalBase | null;
+  updatedBy: UserMinimalBase | null;
   stx: StxBase;
 };
 
@@ -551,14 +524,8 @@ export type Organization = {
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: UserMinimalBase | null;
+  updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
   publicAt: string | null;
   path: string | null;
@@ -646,14 +613,8 @@ export type Workspace = {
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: UserMinimalBase | null;
+  updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
   publicAt: string | null;
   path: string | null;
@@ -692,14 +653,8 @@ export type Attachment = {
   stx: StxBase;
   description: string | null;
   keywords: string;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: UserMinimalBase | null;
+  updatedBy: UserMinimalBase | null;
   deletedAt: string | null;
   deletedBy: string | null;
   publicAt: string | null;
@@ -2254,7 +2209,7 @@ export type GetUploadTokenData = {
   body?: never;
   path?: never;
   query: {
-    publicBucket?: string | boolean;
+    publicBucket?: 'true' | 'false' | boolean;
     organizationId?: string;
     templateId: 'avatar' | 'cover' | 'attachment';
   };
@@ -2841,7 +2796,7 @@ export type SendNewsletterData = {
   };
   path?: never;
   query?: {
-    toSelf?: string | boolean;
+    toSelf?: 'true' | 'false' | boolean;
   };
   url: '/system/newsletter';
 };
@@ -3682,7 +3637,7 @@ export type GetUserData = {
     relatableUserId: string;
   };
   query?: {
-    slug?: string | boolean;
+    slug?: 'true' | 'false' | boolean;
   };
   url: '/users/users/{relatableUserId}';
 };
@@ -3733,7 +3688,7 @@ export type GetPublicProjectData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    slug?: 'true' | 'false' | boolean;
   };
   url: '/public/projects/{id}';
 };
@@ -4309,7 +4264,7 @@ export type GetOrganizationData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    slug?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/{tenantId}/organizations/{id}';
@@ -4658,7 +4613,7 @@ export type GetWorkspaceData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    slug?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/workspaces/{id}';
@@ -4998,7 +4953,7 @@ export type GetProjectData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    slug?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/projects/{id}';
@@ -5793,7 +5748,7 @@ export type UpdateAttachmentData = {
     id: string;
   };
   query?: {
-    fullResponse?: string | boolean;
+    fullResponse?: 'true' | 'false' | boolean;
   };
   url: '/{tenantId}/{organizationId}/attachments/{id}';
 };
@@ -6200,10 +6155,7 @@ export type GetPendingMembershipsResponses = {
       thumbnailUrl: string | null;
       role: 'admin' | 'member' | 'guest' | null;
       createdAt: string;
-      createdBy: UserMinimalBase &
-        ({
-          [key: string]: unknown;
-        } | null);
+      createdBy: UserMinimalBase | null;
     }>;
     total: number;
   };
@@ -6480,7 +6432,7 @@ export type UpdateTaskData = {
     ops: {
       name?: string;
       description?: string | null;
-      status?: number;
+      status?: 6 | 5 | 4 | 3 | 2 | 1 | 0;
       primaryLabelId?: string;
       displayOrder?: number;
       labels?: {
@@ -6502,7 +6454,7 @@ export type UpdateTaskData = {
     id: string;
   };
   query?: {
-    fullResponse?: string | boolean;
+    fullResponse?: 'true' | 'false' | boolean;
   };
   url: '/{tenantId}/{organizationId}/tasks/{id}';
 };

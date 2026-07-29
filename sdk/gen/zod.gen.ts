@@ -53,8 +53,8 @@ export const zProductBase = z.object({
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   description: z.string().nullable(),
-  createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   entityType: z.enum(['task', 'label', 'attachment']),
   keywords: z.string(),
 });
@@ -101,7 +101,7 @@ export const zStreamNotification = z.object({
   path: z.string().nullable(),
   seq: z.int().nullable(),
   channelId: z.string().nullable(),
-  stx: zStxBase.and(z.record(z.string(), z.unknown())).nullable(),
+  stx: zStxBase.nullable(),
   batchUntilSeq: z.int().nullable(),
   count: z.int().nullable(),
   spreadWindow: z.int().nullable(),
@@ -280,7 +280,7 @@ export const zInactiveMembership = z.object({
   role: z.enum(['admin', 'member', 'guest']),
   rejectedAt: z.string().nullable(),
   remindedAt: z.string().nullable(),
-  createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
+  createdBy: zUserMinimalBase.nullable(),
   organizationId: z.uuid(),
   workspaceId: z.uuid().nullable(),
   projectId: z.uuid().nullable(),
@@ -352,8 +352,8 @@ export const zProject = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -456,24 +456,8 @@ export const zTask = z.object({
     })
     .nullable(),
   assignedTo: z.array(zUserMinimalBase),
-  createdBy: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string(),
-      thumbnailUrl: z.string().nullable(),
-      entityType: z.enum(['user']),
-    })
-    .nullable(),
-  updatedBy: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string(),
-      thumbnailUrl: z.string().nullable(),
-      entityType: z.enum(['user']),
-    })
-    .nullable(),
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   stx: zStxBase,
 });
 
@@ -490,8 +474,8 @@ export const zOrganization = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -511,11 +495,7 @@ export const zOrganization = z.object({
     primaryLabels: z
       .array(
         z.object({
-          slug: z
-            .string()
-            .min(1)
-            .max(255)
-            .regex(/^[a-z0-9][a-z0-9-]*$/),
+          slug: z.string().max(255),
           name: z
             .string()
             .min(2)
@@ -593,8 +573,8 @@ export const zWorkspace = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -631,8 +611,8 @@ export const zAttachment = z.object({
   stx: zStxBase,
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
-  createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
-  updatedBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   deletedAt: z.string().nullable(),
   deletedBy: z.uuid().nullable(),
   publicAt: z.string().nullable(),
@@ -713,7 +693,7 @@ export const zGetAuthHealthResponse = z.object({
 });
 
 export const zCheckEmailBody = z.object({
-  email: z.email(),
+  email: z.email().min(4).max(255),
 });
 
 /**
@@ -776,7 +756,7 @@ export const zResendInvitationWithTokenResponse = z.void();
 export const zSignOutResponse = z.void();
 
 export const zSendMagicLinkBody = z.object({
-  email: z.email(),
+  email: z.email().min(4).max(255),
 });
 
 /**
@@ -841,7 +821,7 @@ export const zDeletePasskeyResponse = z.void();
 
 export const zGeneratePasskeyChallengeBody = z.object({
   type: z.enum(['authentication', 'mfa', 'registration']),
-  email: z.string().max(255).optional(),
+  email: z.email().min(4).max(255).optional(),
 });
 
 /**
@@ -858,7 +838,7 @@ export const zSignInWithPasskeyBody = z.object({
   authenticatorObject: z.string(),
   signature: z.string(),
   type: z.enum(['authentication', 'mfa']),
-  email: z.string().max(255).optional(),
+  email: z.email().min(4).max(255).optional(),
 });
 
 /**
@@ -1007,8 +987,11 @@ export const zDeleteMyMembershipQuery = z.object({
 export const zDeleteMyMembershipResponse = z.void();
 
 export const zGetUploadTokenQuery = z.object({
-  publicBucket: z.union([z.string(), z.boolean()]).optional().default('false'),
-  organizationId: z.string().optional(),
+  publicBucket: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
+  organizationId: z.uuid().optional(),
   templateId: z.enum(['avatar', 'cover', 'attachment']),
 });
 
@@ -1107,7 +1090,7 @@ export const zPostAppCatchupResponse = z.object({
 });
 
 export const zSystemInviteBody = z.object({
-  emails: z.array(z.email()).min(1).max(50),
+  emails: z.array(z.email().min(4).max(255)).min(1).max(50),
 });
 
 /**
@@ -1168,14 +1151,20 @@ export const zUpdateUserPath = z.object({
 export const zUpdateUserResponse = zUser;
 
 export const zSendNewsletterBody = z.object({
-  organizationIds: z.array(z.string().max(50)),
-  roles: z.array(z.enum(['admin', 'member', 'guest'])).min(1),
+  organizationIds: z.array(z.uuid()).max(50),
+  roles: z
+    .array(z.enum(['admin', 'member', 'guest']))
+    .min(1)
+    .max(3),
   subject: z.string().max(255),
   content: z.string().max(1000000),
 });
 
 export const zSendNewsletterQuery = z.object({
-  toSelf: z.union([z.string(), z.boolean()]).optional().default('false'),
+  toSelf: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -1187,8 +1176,8 @@ export const zGetTenantsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['createdAt', 'name']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -1289,7 +1278,7 @@ export const zCreateDomainBody = z.object({
     .string()
     .min(4)
     .max(255)
-    .regex(/^[a-z0-9].*[a-z0-9]$/),
+    .regex(/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/),
 });
 
 export const zCreateDomainPath = z.object({
@@ -1391,8 +1380,8 @@ export const zGetRequestsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'email', 'type', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -1408,7 +1397,7 @@ export const zGetRequestsResponse = z.object({
 });
 
 export const zCreateRequestBody = z.object({
-  email: z.email().max(255),
+  email: z.email().min(4).max(255),
   type: z.enum(['waitlist', 'newsletter', 'contact']),
   message: z.string().max(255).nullable(),
 });
@@ -1435,8 +1424,8 @@ export const zGetUsersQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -1464,7 +1453,10 @@ export const zGetUserPath = z.object({
 });
 
 export const zGetUserQuery = z.object({
-  slug: z.union([z.string(), z.boolean()]).optional().default('false'),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -1481,7 +1473,10 @@ export const zGetPublicProjectPath = z.object({
 });
 
 export const zGetPublicProjectQuery = z.object({
-  slug: z.union([z.string(), z.boolean()]).optional().default('false'),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -1506,8 +1501,8 @@ export const zGetPublicTasksQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -1662,8 +1657,8 @@ export const zGetOrganizationsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -1688,7 +1683,10 @@ export const zGetOrganizationPath = z.object({
 });
 
 export const zGetOrganizationQuery = z.object({
-  slug: z.union([z.string(), z.boolean()]).optional().default('false'),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
   include: z.string().optional(),
 });
 
@@ -1737,11 +1735,7 @@ export const zUpdateOrganizationBody = z.object({
       primaryLabels: z
         .array(
           z.object({
-            slug: z
-              .string()
-              .min(1)
-              .max(255)
-              .regex(/^[a-z0-9][a-z0-9-]*$/),
+            slug: z.string().max(255),
             name: z
               .string()
               .min(2)
@@ -1859,8 +1853,8 @@ export const zGetWorkspacesQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -1886,7 +1880,10 @@ export const zGetWorkspacePath = z.object({
 });
 
 export const zGetWorkspaceQuery = z.object({
-  slug: z.union([z.string(), z.boolean()]).optional().default('false'),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
   include: z.string().optional(),
 });
 
@@ -2030,8 +2027,8 @@ export const zGetProjectsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -2059,7 +2056,10 @@ export const zGetProjectPath = z.object({
 });
 
 export const zGetProjectQuery = z.object({
-  slug: z.union([z.string(), z.boolean()]).optional().default('false'),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
   include: z.string().optional(),
 });
 
@@ -2328,8 +2328,8 @@ export const zGetAttachmentsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['name', 'createdAt', 'contentType']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -2447,7 +2447,10 @@ export const zUpdateAttachmentPath = z.object({
 });
 
 export const zUpdateAttachmentQuery = z.object({
-  fullResponse: z.union([z.string(), z.boolean()]).optional().default('false'),
+  fullResponse: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -2540,8 +2543,8 @@ export const zGetMembersQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -2576,8 +2579,8 @@ export const zGetPendingMembershipsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -2597,7 +2600,7 @@ export const zGetPendingMembershipsResponse = z.object({
       thumbnailUrl: z.string().nullable(),
       role: z.enum(['admin', 'member', 'guest']).nullable(),
       createdAt: z.string(),
-      createdBy: zUserMinimalBase.and(z.record(z.string(), z.unknown())).nullable(),
+      createdBy: zUserMinimalBase.nullable(),
     }),
   ),
   total: z.number(),
@@ -2636,8 +2639,8 @@ export const zGetTasksQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)
@@ -2674,8 +2677,8 @@ export const zCreateTasksBody = z
       ]),
       primaryLabelId: z.uuid().optional(),
       displayOrder: z.number().optional(),
-      labels: z.array(z.string()).optional(),
-      assignedTo: z.array(z.string()).optional(),
+      labels: z.array(z.uuid()).max(50).optional(),
+      assignedTo: z.array(z.uuid()).max(50).optional(),
       stx: zStxBase,
     }),
   )
@@ -2715,22 +2718,24 @@ export const zUpdateTaskBody = z.object({
   ops: z.object({
     name: z.string().max(255).optional(),
     description: z.string().max(1000000).nullish(),
-    status: z.int().optional(),
+    status: z
+      .union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)])
+      .optional(),
     primaryLabelId: z.uuid().optional(),
     displayOrder: z.number().optional(),
     labels: z
       .object({
-        add: z.array(z.string()).optional().default([]),
-        remove: z.array(z.string()).optional().default([]),
+        add: z.array(z.uuid()).max(50).optional().default([]),
+        remove: z.array(z.uuid()).max(50).optional().default([]),
       })
       .optional(),
     assignedTo: z
       .object({
-        add: z.array(z.string()).optional().default([]),
-        remove: z.array(z.string()).optional().default([]),
+        add: z.array(z.uuid()).max(50).optional().default([]),
+        remove: z.array(z.uuid()).max(50).optional().default([]),
       })
       .optional(),
-    projectId: z.string().max(50).optional(),
+    projectId: z.uuid().optional(),
     publicAt: z.string().nullish(),
   }),
   stx: zStxBase,
@@ -2743,7 +2748,10 @@ export const zUpdateTaskPath = z.object({
 });
 
 export const zUpdateTaskQuery = z.object({
-  fullResponse: z.union([z.string(), z.boolean()]).optional().default('false'),
+  fullResponse: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -2784,8 +2792,8 @@ export const zGetLabelsQuery = z.object({
   q: z.string().max(255).optional(),
   sort: z.enum(['name', 'usedCount']).optional().default('name'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().optional(),
-  limit: z.string().optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
   seqCursor: z
     .string()
     .regex(/^\d+,\d+$/)

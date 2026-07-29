@@ -534,22 +534,22 @@
             "type": ["string", "null"]
           },
           "createdBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
           "updatedBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
@@ -758,15 +758,15 @@
             "description": "Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)"
           },
           "stx": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/StxBase"
               },
               {
-                "type": ["object", "null"],
-                "description": "Sync transaction metadata for HLC conflict resolution"
+                "type": "null"
               }
-            ]
+            ],
+            "description": "Sync transaction metadata for HLC conflict resolution"
           },
           "batchUntilSeq": {
             "type": ["integer", "null"],
@@ -1487,12 +1487,12 @@
             "type": ["string", "null"]
           },
           "createdBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
@@ -1771,22 +1771,22 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
           "updatedBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
@@ -2156,48 +2156,24 @@
             }
           },
           "createdBy": {
-            "type": ["object", "null"],
-            "properties": {
-              "id": {
-                "type": "string"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserMinimalBase"
               },
-              "name": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "thumbnailUrl": {
-                "type": ["string", "null"]
-              },
-              "entityType": {
-                "type": "string",
-                "enum": ["user"]
+              {
+                "type": "null"
               }
-            },
-            "required": ["id", "name", "slug", "thumbnailUrl", "entityType"]
+            ]
           },
           "updatedBy": {
-            "type": ["object", "null"],
-            "properties": {
-              "id": {
-                "type": "string"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserMinimalBase"
               },
-              "name": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "thumbnailUrl": {
-                "type": ["string", "null"]
-              },
-              "entityType": {
-                "type": "string",
-                "enum": ["user"]
+              {
+                "type": "null"
               }
-            },
-            "required": ["id", "name", "slug", "thumbnailUrl", "entityType"]
+            ]
           },
           "stx": {
             "$ref": "#/components/schemas/StxBase"
@@ -2310,22 +2286,22 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
           "updatedBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
@@ -2399,9 +2375,7 @@
                   "properties": {
                     "slug": {
                       "type": "string",
-                      "minLength": 1,
-                      "maxLength": 255,
-                      "pattern": "^[a-z0-9][a-z0-9-]*$"
+                      "maxLength": 255
                     },
                     "name": {
                       "type": "string",
@@ -2719,22 +2693,22 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
           "updatedBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
@@ -2923,22 +2897,22 @@
             "maxLength": 1000000
           },
           "createdBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
           "updatedBy": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/UserMinimalBase"
               },
               {
-                "type": ["object", "null"]
+                "type": "null"
               }
             ]
           },
@@ -3413,7 +3387,9 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "format": "email"
+                    "format": "email",
+                    "minLength": 4,
+                    "maxLength": 255
                   }
                 },
                 "required": ["email"]
@@ -3817,7 +3793,9 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "format": "email"
+                    "format": "email",
+                    "minLength": 4,
+                    "maxLength": 255
                   }
                 },
                 "required": ["email"]
@@ -4255,6 +4233,8 @@
                   },
                   "email": {
                     "type": "string",
+                    "format": "email",
+                    "minLength": 4,
                     "maxLength": 255
                   }
                 },
@@ -4346,6 +4326,8 @@
                   },
                   "email": {
                     "type": "string",
+                    "format": "email",
+                    "minLength": 4,
                     "maxLength": 255
                   }
                 },
@@ -5487,7 +5469,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -5501,7 +5484,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "required": false,
             "name": "organizationId",
@@ -6075,7 +6059,9 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "format": "email"
+                      "format": "email",
+                      "minLength": 4,
+                      "maxLength": 255
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -6383,7 +6369,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -6407,8 +6394,9 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "maxLength": 50
-                    }
+                      "format": "uuid"
+                    },
+                    "maxItems": 50
                   },
                   "roles": {
                     "type": "array",
@@ -6416,7 +6404,8 @@
                       "type": "string",
                       "enum": ["admin", "member", "guest"]
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 3
                   },
                   "subject": {
                     "type": "string",
@@ -6503,7 +6492,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -6511,7 +6501,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -6967,9 +6958,10 @@
                 "properties": {
                   "domain": {
                     "type": "string",
+                    "format": "hostname",
                     "minLength": 4,
                     "maxLength": 255,
-                    "pattern": "^[a-z0-9].*[a-z0-9]$"
+                    "pattern": "^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$"
                   }
                 },
                 "required": ["domain"]
@@ -7382,8 +7374,9 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "maxLength": 255,
-                    "format": "email"
+                    "format": "email",
+                    "minLength": 4,
+                    "maxLength": 255
                   },
                   "type": {
                     "type": "string",
@@ -7483,7 +7476,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -7491,7 +7485,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -7777,7 +7772,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -7785,7 +7781,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -7994,7 +7991,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -8112,7 +8110,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -8370,7 +8369,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -8378,7 +8378,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -9475,7 +9476,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -9483,7 +9485,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -9812,7 +9815,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -10082,9 +10086,7 @@
                           "properties": {
                             "slug": {
                               "type": "string",
-                              "minLength": 1,
-                              "maxLength": 255,
-                              "pattern": "^[a-z0-9][a-z0-9-]*$"
+                              "maxLength": 255
                             },
                             "name": {
                               "type": "string",
@@ -10731,7 +10733,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -10739,7 +10742,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -11013,7 +11017,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -11795,7 +11800,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -11803,7 +11809,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -12035,7 +12042,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -13282,7 +13290,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -13290,7 +13299,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -14224,7 +14234,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -14398,9 +14409,9 @@
                     "type": "array",
                     "items": {
                       "type": "string",
+                      "format": "email",
                       "minLength": 4,
-                      "maxLength": 255,
-                      "format": "email"
+                      "maxLength": 255
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -14881,7 +14892,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -14889,7 +14901,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -15151,7 +15164,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -15159,7 +15173,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -15224,12 +15239,12 @@
                             "type": "string"
                           },
                           "createdBy": {
-                            "allOf": [
+                            "anyOf": [
                               {
                                 "$ref": "#/components/schemas/UserMinimalBase"
                               },
                               {
-                                "type": ["object", "null"]
+                                "type": "null"
                               }
                             ]
                           }
@@ -15385,14 +15400,18 @@
                     "labels": {
                       "type": "array",
                       "items": {
-                        "type": "string"
-                      }
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "maxItems": 50
                     },
                     "assignedTo": {
                       "type": "array",
                       "items": {
-                        "type": "string"
-                      }
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "maxItems": 50
                     },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
@@ -15730,7 +15749,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -15738,7 +15758,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -16197,7 +16218,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "enum": ["true", "false"]
                 },
                 {
                   "type": "boolean"
@@ -16228,7 +16250,8 @@
                         "maxLength": 1000000
                       },
                       "status": {
-                        "type": "integer"
+                        "type": "integer",
+                        "enum": [6, 5, 4, 3, 2, 1, 0]
                       },
                       "primaryLabelId": {
                         "type": "string",
@@ -16243,15 +16266,19 @@
                           "add": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           },
                           "remove": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           }
                         }
@@ -16262,22 +16289,26 @@
                           "add": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           },
                           "remove": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           }
                         }
                       },
                       "projectId": {
                         "type": "string",
-                        "maxLength": 50
+                        "format": "uuid"
                       },
                       "publicAt": {
                         "type": ["string", "null"]
@@ -16724,7 +16755,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -16732,7 +16764,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
