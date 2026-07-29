@@ -69,12 +69,17 @@ export const deleteDomain = async (ctx: AuthContext, { id }: FindDomainOpts) => 
 
 interface UpdateDomainOpts {
   id: string;
-  values: Partial<typeof domainsTable.$inferInsert>;
+  values: Pick<typeof domainsTable.$inferInsert, 'lastCheckedAt'> &
+    Partial<Pick<typeof domainsTable.$inferInsert, 'verified' | 'verifiedAt'>>;
 }
 
-/** Update a domain by ID and return the updated row. */
-export const updateDomain = async (ctx: DbContext, { id, values }: UpdateDomainOpts) => {
-  const { db } = ctx.var;
-  const [updated] = await db.update(domainsTable).set(values).where(eq(domainsTable.id, id)).returning();
+/** Update a domain by ID and tenant, then return the updated row. */
+export const updateDomain = async (ctx: AuthContext, { id, values }: UpdateDomainOpts) => {
+  const { db, tenantId } = ctx.var;
+  const [updated] = await db
+    .update(domainsTable)
+    .set(values)
+    .where(and(eq(domainsTable.id, id), eq(domainsTable.tenantId, tenantId)))
+    .returning();
   return updated;
 };
