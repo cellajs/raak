@@ -92,8 +92,7 @@ export async function getLabelsOp(
       : getOrderColumns({
           sort,
           order,
-          defaultSort: 'name',
-          defaultOrder: 'asc',
+          fallback: ['name', 'asc'],
           columns: {
             name: sql`name`,
             usedCount: sql`used_count`,

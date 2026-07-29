@@ -100,8 +100,7 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'displayOrder',
-    defaultOrder: 'asc',
+    fallback: ['displayOrder', 'asc'],
     columns: {
       id: workspacesTable.id,
       name: workspacesTable.name,

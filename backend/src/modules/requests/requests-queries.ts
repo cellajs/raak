@@ -3,6 +3,7 @@ import type { DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { type RequestModel, requestsTable } from '#/modules/requests/requests-db';
 import { getOrderColumns } from '#/utils/order-column';
+import { pick } from '#/utils/pick';
 
 interface FindExistingRequestOpts {
   email: string;
@@ -54,14 +55,8 @@ export const findRequestsPaginated = async (ctx: DbContext, opts: FindRequestsPa
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'createdAt',
-    defaultOrder: 'desc',
-    columns: {
-      id: requestsTable.id,
-      email: requestsTable.email,
-      createdAt: requestsTable.createdAt,
-      type: requestsTable.type,
-    },
+    fallback: ['createdAt', 'desc'],
+    columns: pick(requestsTable, ['id', 'email', 'createdAt', 'type']),
     tieBreaker: requestsTable.id,
   });
 

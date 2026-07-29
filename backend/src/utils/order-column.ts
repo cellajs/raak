@@ -1,26 +1,32 @@
 import { type AnyColumn, asc, desc, type SQL, type SQLWrapper } from 'drizzle-orm';
 
+type OrderDirection = 'asc' | 'desc';
+
+interface GetOrderColumnsOpts<T extends Record<string, AnyColumn | SQLWrapper>, U extends keyof T> {
+  sort: U | undefined;
+  order: OrderDirection | undefined;
+  fallback: readonly [sort: U, order: OrderDirection];
+  columns: T;
+  tieBreaker?: AnyColumn | SQLWrapper;
+  append?: SQL[];
+}
+
 /**
  * Resolve API sorting to deterministic Drizzle `.orderBy()` expressions.
  */
 export const getOrderColumns = <T extends Record<string, AnyColumn | SQLWrapper>, U extends keyof T>({
   sort,
   order,
-  defaultSort,
-  defaultOrder,
+  fallback,
   columns,
   tieBreaker,
-}: {
-  sort: U | undefined;
-  order: 'asc' | 'desc' | undefined;
-  defaultSort: U;
-  defaultOrder: 'asc' | 'desc';
-  columns: T;
-  tieBreaker?: AnyColumn | SQLWrapper;
-}): SQL[] => {
-  const orderFunc = (order ?? defaultOrder) === 'asc' ? asc : desc;
-  const selected = columns[sort ?? defaultSort] ?? columns[defaultSort];
+  append = [],
+}: GetOrderColumnsOpts<T, U>): SQL[] => {
+  const [fallbackSort, fallbackOrder] = fallback;
+  const orderFunc = (order ?? fallbackOrder) === 'asc' ? asc : desc;
+  const selected = columns[sort ?? fallbackSort] ?? columns[fallbackSort];
   const primaryOrder = orderFunc(selected);
+  const stableOrder = tieBreaker && selected !== tieBreaker ? [orderFunc(tieBreaker)] : [];
 
-  return tieBreaker && selected !== tieBreaker ? [primaryOrder, orderFunc(tieBreaker)] : [primaryOrder];
+  return [primaryOrder, ...stableOrder, ...append];
 };

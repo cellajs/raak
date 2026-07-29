@@ -4,6 +4,7 @@ import { resolveListTotal } from '#/db/utils/list-total';
 import { domainsTable } from '#/modules/domains/domains-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { getOrderColumns } from '#/utils/order-column';
+import { pick } from '#/utils/pick';
 
 interface FindTenantsPaginatedOpts {
   filters: SQL[];
@@ -22,12 +23,8 @@ export const findTenantsPaginated = async (ctx: DbContext, opts: FindTenantsPagi
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'createdAt',
-    defaultOrder: 'desc',
-    columns: {
-      name: tenantsTable.name,
-      createdAt: tenantsTable.createdAt,
-    },
+    fallback: ['createdAt', 'desc'],
+    columns: pick(tenantsTable, ['name', 'createdAt']),
     tieBreaker: tenantsTable.id,
   });
 

@@ -10,6 +10,7 @@ import { TaskStatus } from '#/modules/task/task-properties';
 import { findLabelsByProjects, findProjectMembers, findTasksPaginated } from '#/modules/task/task-queries';
 import { taskListQueryBaseSchema } from '#/modules/task/task-schema';
 import { getOrderColumns } from '#/utils/order-column';
+import { pick } from '#/utils/pick';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
@@ -64,23 +65,13 @@ export const getTasks = async (
   // Id tiebreak keeps ordering stable when per-context counters collide across projects.
   const orderBy = seqCursor
     ? [asc(tasksTable.seq), asc(tasksTable.id)]
-    : [
-        ...getOrderColumns({
-          sort,
-          order,
-          defaultSort: 'createdAt',
-          defaultOrder: 'asc',
-          columns: {
-            status: tasksTable.status,
-            projectId: tasksTable.projectId,
-            createdAt: tasksTable.createdAt,
-            createdBy: tasksTable.createdBy,
-            updatedAt: tasksTable.updatedAt,
-          },
-        }),
-        desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)),
-        asc(tasksTable.id),
-      ];
+    : getOrderColumns({
+        sort,
+        order,
+        fallback: ['createdAt', 'asc'],
+        columns: pick(tasksTable, ['status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
+        append: [desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)), asc(tasksTable.id)],
+      });
 
   // Exclude accepted tasks older than cutoff directly in WHERE (avoids separate query + notInArray)
   const acceptedCutOffFilter = acceptedCutOff

@@ -164,8 +164,7 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'displayOrder',
-    defaultOrder: 'asc',
+    fallback: ['displayOrder', 'asc'],
     columns: {
       id: projectsTable.id,
       name: projectsTable.name,

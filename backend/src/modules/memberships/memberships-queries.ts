@@ -297,8 +297,7 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'createdAt',
-    defaultOrder: 'desc',
+    fallback: ['createdAt', 'desc'],
     columns: {
       id: usersTable.id,
       name: usersTable.name,
@@ -419,8 +418,7 @@ export const findPendingMembershipsPaginated = async (ctx: DbContext, opts: Find
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'createdAt',
-    defaultOrder: 'desc',
+    fallback: ['createdAt', 'desc'],
     columns: { createdAt: table.createdAt },
     tieBreaker: table.id,
   });

@@ -15,6 +15,7 @@ import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumns } from '#/utils/order-column';
+import { pick } from '#/utils/pick';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
@@ -77,13 +78,8 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     : getOrderColumns({
         sort,
         order,
-        defaultSort: 'createdAt',
-        defaultOrder: 'desc',
-        columns: {
-          name: attachmentsTable.name,
-          createdAt: attachmentsTable.createdAt,
-          contentType: attachmentsTable.contentType,
-        },
+        fallback: ['createdAt', 'desc'],
+        columns: pick(attachmentsTable, ['name', 'createdAt', 'contentType']),
         tieBreaker: attachmentsTable.id,
       });
 

@@ -119,8 +119,7 @@ export const findOrganizationsPaginated = async (ctx: DbContext, opts: FindOrgan
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'displayOrder',
-    defaultOrder: 'asc',
+    fallback: ['displayOrder', 'asc'],
     columns: {
       id: organizationsTable.id,
       name: organizationsTable.name,

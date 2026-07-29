@@ -30,8 +30,7 @@ export const findUsersPaginated = async (ctx: DbContext, opts: FindUsersPaginate
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'createdAt',
-    defaultOrder: 'desc',
+    fallback: ['createdAt', 'desc'],
     columns: {
       id: usersTable.id,
       name: usersTable.name,

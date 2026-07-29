@@ -32,9 +32,11 @@ Paginated queries own their filters, ordering, limit, offset, and total strategy
 - Use `exact` for filtered or otherwise narrower collections.
 
 Run item and total reads through `resolveListTotal` so independent reads execute concurrently.
-Every offset-paginated query must use `getOrderColumns` with an explicit default sort, default
-direction, allowlisted columns, and a unique tie-breaker. API schemas should keep defaulted sort and
-order fields optional on input; the query helper applies the effective defaults.
+Every offset-paginated query must use `getOrderColumns` with a `[sort, direction]` fallback,
+allowlisted columns, and a unique tie-breaker. Use `pick(table, keys)` for direct table-column
+allowlists and an explicit map for aliases, joins, or SQL expressions. Use `append` for fixed
+trailing order expressions. API schemas should keep defaulted sort and order fields optional on
+input; the query helper applies the effective fallback.
 
 When a query defect affects behavior, add a focused regression test beside the query or in
 `backend/tests`. Database invariants such as uniqueness still need a schema constraint and generated

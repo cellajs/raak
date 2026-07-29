@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 import { getOrderColumns } from './order-column';
@@ -11,12 +11,11 @@ const columns = {
 const id = sql.identifier('id');
 
 describe('getOrderColumns', () => {
-  it('uses explicit defaults and appends a same-direction tie-breaker', () => {
+  it('uses the fallback and appends a same-direction tie-breaker', () => {
     const orderBy = getOrderColumns({
       sort: undefined,
       order: undefined,
-      defaultSort: 'createdAt',
-      defaultOrder: 'desc',
+      fallback: ['createdAt', 'desc'],
       columns,
       tieBreaker: id,
     });
@@ -28,11 +27,28 @@ describe('getOrderColumns', () => {
     const orderBy = getOrderColumns({
       sort: 'name',
       order: 'asc',
-      defaultSort: 'createdAt',
-      defaultOrder: 'desc',
+      fallback: ['createdAt', 'desc'],
       columns,
     });
 
     expect(dialect.sqlToQuery(orderBy[0]).sql).toBe('"name" asc');
+  });
+
+  it('appends fixed trailing expressions after the stable order', () => {
+    const updatedAt = sql.identifier('updated_at');
+    const orderBy = getOrderColumns({
+      sort: 'name',
+      order: 'desc',
+      fallback: ['createdAt', 'asc'],
+      columns,
+      tieBreaker: id,
+      append: [desc(updatedAt)],
+    });
+
+    expect(orderBy.map((expression) => dialect.sqlToQuery(expression).sql)).toEqual([
+      '"name" desc',
+      '"id" desc',
+      '"updated_at" desc',
+    ]);
   });
 });

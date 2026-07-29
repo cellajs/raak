@@ -3,6 +3,7 @@ import type { DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { activitiesTable } from '#/modules/activities/activities-db';
 import { getOrderColumns } from '#/utils/order-column';
+import { pick } from '#/utils/pick';
 
 interface FindActivitiesPaginatedOpts {
   filters: SQL[];
@@ -22,13 +23,8 @@ export const findActivitiesPaginated = (
   const orderBy = getOrderColumns({
     sort,
     order,
-    defaultSort: 'createdAt',
-    defaultOrder: 'desc',
-    columns: {
-      createdAt: activitiesTable.createdAt,
-      type: activitiesTable.type,
-      tableName: activitiesTable.tableName,
-    },
+    fallback: ['createdAt', 'desc'],
+    columns: pick(activitiesTable, ['createdAt', 'type', 'tableName']),
     tieBreaker: activitiesTable.id,
   });
 
