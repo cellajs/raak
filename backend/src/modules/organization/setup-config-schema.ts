@@ -1,15 +1,11 @@
 import { z } from '@hono/zod-openapi';
 import { labelColorTokens, primaryLabelLimits } from 'shared';
-import { maxLength, validNameSchema } from '#/schemas';
+import { labelSlugSchema, validNameSchema } from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
 
 /** One primary label definition in an organization's setupConfig. */
 const primaryLabelDefinitionSchema = z.object({
-  slug: z
-    .string()
-    .min(1)
-    .max(maxLength.field)
-    .regex(/^[a-z0-9][a-z0-9-]*$/),
+  slug: labelSlugSchema,
   name: validNameSchema,
   color: z.enum(labelColorTokens),
   icon: z.union([iconNameSchema, z.null()]),

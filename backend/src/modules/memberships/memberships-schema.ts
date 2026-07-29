@@ -4,7 +4,13 @@ import { schemaTags } from '#/core/openapi-helpers';
 import { createSelectSchema } from '#/db/utils/drizzle-schema';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
-import { channelEntityTypeSchema, paginationQuerySchema, validEmailSchema, validIdSchema } from '#/schemas';
+import {
+  channelEntityTypeSchema,
+  paginationQuerySchema,
+  validEmailSchema,
+  validIdSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { userBaseSchema, userMinimalBaseSchema } from '#/schemas/user-schema-base';
 import { mockInactiveMembershipResponse, mockMembershipBase, mockMembershipResponse } from './memberships-mocks';
 
@@ -68,7 +74,11 @@ export const memberListQuerySchema = paginationQuerySchema.extend({
   entityType: channelEntityTypeSchema,
   sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).default('createdAt'),
   role: z.enum(roles.all).optional(),
-  userIds: z.string().optional(),
+  userIds: z
+    .string()
+    .transform((value) => value.split(',').map((id) => id.trim()))
+    .pipe(validUuidSchema.array().min(1).max(50))
+    .optional(),
 });
 
 export const pendingMembershipListQuerySchema = paginationQuerySchema.extend({

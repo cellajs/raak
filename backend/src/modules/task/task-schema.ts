@@ -10,6 +10,12 @@ import { TaskStatus } from '#/modules/task/task-properties';
 import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
 import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
 
+const taskRelationIdsSchema = validUuidSchema
+  .array()
+  .max(50)
+  .refine((ids) => new Set(ids).size === ids.length, 'Relation IDs must be unique');
+const taskRelationDeltaSchema = arrayDeltaSchema(validUuidSchema);
+
 const taskInsertSchema = createInsertSchema(tasksTable, {
   description: z.string().max(maxLength.html).nullable(),
 });
@@ -51,8 +57,8 @@ const taskCreateSchema = taskInsertSchema
     // Optional on the wire: the server falls back to the project's default primary label
     primaryLabelId: validUuidSchema.optional(),
     displayOrder: z.number().optional(),
-    labels: z.array(z.string()).optional(),
-    assignedTo: z.array(z.string()).optional(),
+    labels: taskRelationIdsSchema.optional(),
+    assignedTo: taskRelationIdsSchema.optional(),
   });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seams for task */
@@ -61,12 +67,12 @@ export const taskContract = evolutionContract.product('task', {
   updateOps: {
     name: z.string().max(maxLength.field),
     description: z.string().max(maxLength.html).nullable(),
-    status: z.number().int(),
+    status: z.enum(TaskStatus),
     primaryLabelId: validUuidSchema,
     displayOrder: z.number(),
-    labels: arrayDeltaSchema,
-    assignedTo: arrayDeltaSchema,
-    projectId: z.string().max(maxLength.id),
+    labels: taskRelationDeltaSchema,
+    assignedTo: taskRelationDeltaSchema,
+    projectId: validUuidSchema,
     publicAt: z.string().nullable(),
   },
 });

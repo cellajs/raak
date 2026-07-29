@@ -1,6 +1,7 @@
 import { appConfig } from 'shared';
 import { describe, expect, it } from 'vitest';
 import { booleanTransformSchema, paginationQuerySchema, validDomainSchema, validEmailSchema } from './common-schemas';
+import { labelSlugSchema } from './label-slug-schema';
 
 describe('booleanTransformSchema', () => {
   it.each([
@@ -80,4 +81,12 @@ describe('normalized input schemas', () => {
       expect(validDomainSchema.safeParse(domain).success).toBe(false);
     },
   );
+
+  it('canonicalizes label slugs with the shared label normalizer', () => {
+    expect(labelSlugSchema.parse(' Bug Fix! ')).toBe('bug-fix');
+  });
+
+  it.each(['!!!', '---'])('rejects an empty normalized label slug from %s', (slug) => {
+    expect(labelSlugSchema.safeParse(slug).success).toBe(false);
+  });
 });

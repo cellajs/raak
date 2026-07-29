@@ -52,6 +52,7 @@ export {
   type OperationErrorCode,
   registerAllErrorResponses,
 } from './error-response-schemas';
+export { labelSlugSchema } from './label-slug-schema';
 export { mapEntitiesToSchema } from './map-entities-to-schema';
 export {
   type AppCatchupResponse,

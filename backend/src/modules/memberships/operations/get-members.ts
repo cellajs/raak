@@ -12,7 +12,7 @@ interface GetMembersInput {
   offset: number;
   limit: number;
   role?: EntityRole;
-  userIds?: string;
+  userIds?: string[];
 }
 
 export async function getMembersOp(ctx: AuthContext, input: GetMembersInput) {

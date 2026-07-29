@@ -6,7 +6,14 @@ import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  labelSlugSchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
 import { pick } from '#/utils/pick';
 
@@ -22,7 +29,7 @@ const labelCreateSchema = labelInsertSchema
     id: validUuidSchema,
     color: z.string().max(maxLength.field).nullable(),
     mode: z.enum(labelModes).default('secondary'),
-    slug: z.string().max(maxLength.field).optional(),
+    slug: labelSlugSchema.optional(),
     icon: iconNameSchema.nullable().optional(),
     displayOrder: z.number().optional(),
   });
@@ -68,7 +75,7 @@ export const labelContract = evolutionContract.product('label', {
   updateOps: {
     name: z.string().max(maxLength.field),
     color: z.string().max(maxLength.field).nullable(),
-    slug: z.string().max(maxLength.field),
+    slug: labelSlugSchema,
     icon: iconNameSchema.nullable(),
     displayOrder: z.number(),
     // Epic documentation; the update op rejects description edits on other modes
