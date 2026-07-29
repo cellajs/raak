@@ -23,10 +23,7 @@ export interface ResolveOptions {
 }
 
 /** Cloud-key fields needed to build a URL without consulting the react-query cache. */
-type AttachmentMeta = Pick<
-  Attachment,
-  'originalKey' | 'convertedKey' | 'thumbnailKey' | 'thumbnailTinyKey' | 'publicBucket' | 'organizationId' | 'tenantId'
->;
+type AttachmentMeta = Pick<Attachment, 'keys' | 'publicBucket' | 'organizationId' | 'tenantId'>;
 
 /**
  * Core URL resolution: local blob first, then cloud fallback. Pure, with no React hooks.

@@ -172,7 +172,7 @@ export const config = {
   // once at cutover (upstream moved v1 → v2 with this migration).
   cookieVersion: 'v2',
   /** Persisted client query-cache shape - bump on breaking cached entity changes */
-  clientCacheVersion: 'v8-label-slug',
+  clientCacheVersion: 'v9-attachment-keys',
 
   // Feature flags
 

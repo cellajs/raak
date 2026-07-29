@@ -76,7 +76,7 @@ describe('Task host cascade (attachments follow their task)', async () => {
         id: attachmentIds.hostedByDeleted1,
         name: 'hosted 1',
         filename: 'h1.png',
-        originalKey: `${projectId}/h1.png`,
+        keys: { original: `${projectId}/h1.png` },
         taskId: deletedTaskId,
       },
       {
@@ -84,7 +84,7 @@ describe('Task host cascade (attachments follow their task)', async () => {
         id: attachmentIds.hostedByDeleted2,
         name: 'hosted 2',
         filename: 'h2.png',
-        originalKey: `${projectId}/h2.png`,
+        keys: { original: `${projectId}/h2.png` },
         taskId: deletedTaskId,
       },
       {
@@ -92,7 +92,7 @@ describe('Task host cascade (attachments follow their task)', async () => {
         id: attachmentIds.hostedBySurviving,
         name: 'other task',
         filename: 'other.png',
-        originalKey: `${projectId}/other.png`,
+        keys: { original: `${projectId}/other.png` },
         taskId: survivingTaskId,
       },
       {
@@ -100,7 +100,7 @@ describe('Task host cascade (attachments follow their task)', async () => {
         id: attachmentIds.unhosted,
         name: 'unhosted',
         filename: 'unhosted.png',
-        originalKey: `${projectId}/unhosted.png`,
+        keys: { original: `${projectId}/unhosted.png` },
         taskId: null,
       },
     ]);

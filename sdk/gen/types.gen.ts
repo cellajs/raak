@@ -689,21 +689,14 @@ export type Attachment = {
   convertedContentType: string | null;
   size: string;
   /**
-   * Storage object key for the original uploaded file.
+   * Storage object keys per variant, keyed by variant name; only generated variants are present.
    */
-  originalKey: string;
-  /**
-   * Storage object key for the converted variant; null when none.
-   */
-  convertedKey: string | null;
-  /**
-   * Storage object key for the generated thumbnail (mid-size preview); null when none.
-   */
-  thumbnailKey: string | null;
-  /**
-   * Storage object key for the tiny (grid-cell) image thumbnail; null when none.
-   */
-  thumbnailTinyKey: string | null;
+  keys: {
+    original: string;
+    thumbnail?: string;
+    'thumbnail-tiny'?: string;
+    converted?: string;
+  };
   projectId: string;
   organizationId: string;
   viewCount?: number;
@@ -5543,10 +5536,12 @@ export type CreateAttachmentsData = {
      */
     contentType: string;
     size: string;
-    /**
-     * Storage object key for the original uploaded file.
-     */
-    originalKey: string;
+    keys: {
+      original: string;
+      thumbnail?: string;
+      'thumbnail-tiny'?: string;
+      converted?: string;
+    };
     bucketName: string;
     /**
      * When true, the file is stored in the public bucket and served from the CDN without a presigned URL.
@@ -5558,18 +5553,6 @@ export type CreateAttachmentsData = {
      * MIME type of the server-converted variant; null when none.
      */
     convertedContentType?: string | null;
-    /**
-     * Storage object key for the converted variant; null when none.
-     */
-    convertedKey?: string | null;
-    /**
-     * Storage object key for the generated thumbnail (mid-size preview); null when none.
-     */
-    thumbnailKey?: string | null;
-    /**
-     * Storage object key for the tiny (grid-cell) image thumbnail; null when none.
-     */
-    thumbnailTinyKey?: string | null;
     projectId: string;
     publicAt?: string | null;
     stx: StxBase;
@@ -5770,7 +5753,6 @@ export type UpdateAttachmentData = {
   body: {
     ops: {
       name?: string;
-      originalKey?: string;
       publicAt?: string | null;
     };
     stx: StxBase;

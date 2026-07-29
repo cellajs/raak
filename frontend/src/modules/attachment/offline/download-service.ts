@@ -252,7 +252,7 @@ class AttachmentDownloadService {
       return;
     }
 
-    if (!attachment.originalKey) {
+    if (!attachment.keys?.original) {
       await downloadQueue.transition(attachmentId, 'skipped', SKIP_REASON_NO_ORIGINAL_KEY);
       return;
     }
