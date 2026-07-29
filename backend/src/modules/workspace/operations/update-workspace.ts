@@ -20,7 +20,10 @@ export async function updateWorkspaceOp(ctx: AuthContext, id: string, rawInput: 
 
   log.info('Workspace updated', { workspaceId: updatedWorkspaceRecord.id });
 
-  const counts = await getChannelCounts(ctx, workspace.entityType, workspace.id);
+  const counts = await getChannelCounts(ctx, {
+    entityType: workspace.entityType,
+    entityId: workspace.id,
+  });
   const workspaceWithAudit = await withAuditUser(ctx, updatedWorkspaceRecord, user);
   const included = { ...(membership && { membership: toMembershipBase(membership) }), counts };
 

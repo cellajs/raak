@@ -1,6 +1,6 @@
 import type { AuthContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
-import { getOrgEntityCount } from '#/modules/entities/entities-queries';
+import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { generateUniqueSlug } from '#/modules/entities/helpers/generate-slug';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
@@ -22,7 +22,10 @@ export async function createWorkspacesOp(ctx: AuthContext, rawItems: CreateWorks
   const user = ctx.var.user;
   const organization = ctx.var.organization;
 
-  const currentWorkspacesCount = await getOrgEntityCount(ctx, organization.id, 'workspace');
+  const currentWorkspacesCount = await getOrganizationEntityCount(ctx, {
+    organizationId: organization.id,
+    entityType: 'workspace',
+  });
   const workspaceRestrictions = ctx.var.tenant.restrictions.quotas.workspace;
   const availableSlots = workspaceRestrictions === 0 ? items.length : workspaceRestrictions - currentWorkspacesCount;
 

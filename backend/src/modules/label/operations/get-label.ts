@@ -2,7 +2,7 @@ import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantRead } from '#/db/tenant-context';
 import type { LabelModel } from '#/modules/label/label-db';
-import { findLabelUsedCount } from '#/modules/label/label-queries';
+import { getLabelUsedCount } from '#/modules/label/label-queries';
 import { getValidProduct } from '#/permissions/get-valid-product';
 
 export async function getLabelOp(
@@ -11,7 +11,7 @@ export async function getLabelOp(
 ): Promise<OperationResult<LabelModel & { usedCount: number }>> {
   const { label, usedCount } = await tenantRead(ctx, async (readCtx) => {
     const { entity: label } = await getValidProduct(readCtx, id, 'label', 'read');
-    const usedCount = await findLabelUsedCount(readCtx, { labelId: id });
+    const usedCount = await getLabelUsedCount(readCtx, { labelId: id });
     return { label, usedCount };
   });
 

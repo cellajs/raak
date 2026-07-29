@@ -246,11 +246,10 @@ app.openapi(authGeneralRoutes.resendInvitationWithToken, async (ctx) => {
     ] as keyof typeof inactiveMembership;
     if (!inactiveMembership[entityIdColumnKey]) throw new AppError(400, 'invalid_request', 'error');
     // Internal resolve: getting entity info for email template (no permission check needed)
-    const entity = await resolveEntity(
-      ctx,
-      inactiveMembership.channelType,
-      inactiveMembership[entityIdColumnKey] as string,
-    );
+    const entity = await resolveEntity(ctx, {
+      entityType: inactiveMembership.channelType,
+      identifier: inactiveMembership[entityIdColumnKey] as string,
+    });
 
     if (!entity) throw new AppError(400, 'invalid_request', 'error');
 

@@ -4,7 +4,7 @@ import type { AuthContext } from '#/core/context';
 import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
-import { getOrgEntityCount } from '#/modules/entities/entities-queries';
+import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { findLabelsByOrg, findLabelsByStxMutationId, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
@@ -38,7 +38,10 @@ export async function createLabelsOp(
   if (existing) return { success: true, data: { data: existing, rejectedIds: [] } };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
-  const currentCount = await getOrgEntityCount(ctx, organization.id, 'label');
+  const currentCount = await getOrganizationEntityCount(ctx, {
+    organizationId: organization.id,
+    entityType: 'label',
+  });
 
   if (labelRestrictions !== 0 && currentCount + input.length > labelRestrictions) {
     return { success: false, error: 'restrict_by_org', status: 429 };

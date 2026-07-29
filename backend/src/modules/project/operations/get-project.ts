@@ -15,7 +15,7 @@ export async function getProjectOp(ctx: AuthContext, id: string, opts: { bySlug?
   const includeMembership = include.includes('membership');
 
   const [counts, taskStatusCounts, projectWithAudit] = await Promise.all([
-    includeCounts ? getChannelCounts(ctx, 'project', project.id) : undefined,
+    includeCounts ? getChannelCounts(ctx, { entityType: 'project', entityId: project.id }) : undefined,
     includeCounts ? getTaskStatusCounts(ctx, project.id) : undefined,
     withAuditUser(ctx, project, user),
   ]);

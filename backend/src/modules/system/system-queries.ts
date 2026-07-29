@@ -48,8 +48,12 @@ export const findPendingInvitationTokens = async (ctx: DbContext, { emails }: Fi
     );
 };
 
+interface InsertTokensOpts {
+  tokens: (typeof tokensTable.$inferInsert)[];
+}
+
 /** Insert invitation tokens and return created rows. */
-export const insertTokens = async (ctx: DbContext, { tokens }: { tokens: (typeof tokensTable.$inferInsert)[] }) => {
+export const insertTokens = async (ctx: DbContext, { tokens }: InsertTokensOpts) => {
   const { db } = ctx.var;
   return db.insert(tokensTable).values(tokens).returning();
 };

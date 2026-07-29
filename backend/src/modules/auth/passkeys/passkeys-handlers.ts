@@ -11,8 +11,8 @@ import {
   findAuthUserById,
   findCredentialIdsByUser,
   findRemainingMfaMethods,
-  findUserByCredentialId,
   findUserByEmail,
+  findUserIdByCredentialId,
   insertPasskey,
 } from '#/modules/auth/auth-queries';
 import { deleteAuthCookie, getAuthCookie, setAuthCookie } from '#/modules/auth/general/helpers/cookie';
@@ -152,7 +152,7 @@ app.openapi(authPasskeysRoutes.signInWithPasskey, async (ctx) => {
 
   // If no user found by email, try to find by credentialId (supports conditional mediation / discoverable credentials)
   if (!user) {
-    const passkeyRecord = await findUserByCredentialId(ctx, { credentialId: passkeyData.credentialId });
+    const passkeyRecord = await findUserIdByCredentialId(ctx, { credentialId: passkeyData.credentialId });
 
     if (passkeyRecord) {
       user = await findAuthUserById(ctx, { userId: passkeyRecord.userId });

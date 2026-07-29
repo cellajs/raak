@@ -25,11 +25,12 @@ export const findAttachmentsByStxMutationId = async (
     );
 };
 
+interface InsertAttachmentsOpts {
+  attachments: (typeof attachmentsTable.$inferInsert)[];
+}
+
 /** Insert attachments and return the created rows. Silently skips duplicates (PK conflict). */
-export const insertAttachments = async (
-  ctx: DbContext,
-  { attachments }: { attachments: (typeof attachmentsTable.$inferInsert)[] },
-) => {
+export const insertAttachments = async (ctx: DbContext, { attachments }: InsertAttachmentsOpts) => {
   const { db } = ctx.var;
   await inheritPublicAtFromProject(ctx, attachments);
   return db.insert(attachmentsTable).values(attachments).onConflictDoNothing().returning();
@@ -129,12 +130,12 @@ export const findAttachmentKeysByTaskId = async (ctx: DbContext, { taskId }: Fin
     .where(eq(attachmentsTable.taskId, taskId));
 };
 
-interface FindAttachmentViewCountOpts {
+interface GetAttachmentViewCountOpts {
   entityId: string;
 }
 
 /** Get an attachment's view count from product counters. */
-export const findAttachmentViewCount = async (ctx: DbContext, { entityId }: FindAttachmentViewCountOpts) => {
+export const getAttachmentViewCount = async (ctx: DbContext, { entityId }: GetAttachmentViewCountOpts) => {
   const { db } = ctx.var;
   const [counters] = await db
     .select({ viewCount: productCountersTable.viewCount })

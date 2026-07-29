@@ -7,7 +7,7 @@ import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import type { attachmentListQuerySchema } from '#/modules/attachment/attachment-schema';
-import { getOrgEntityCount } from '#/modules/entities/entities-queries';
+import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
 import { findProjectById } from '#/modules/task/task-queries';
 import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
@@ -121,7 +121,7 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
       : counterEligible
         ? {
             kind: 'counter',
-            getTotal: () => getOrgEntityCount(readCtx, organizationId, 'attachment'),
+            getTotal: () => getOrganizationEntityCount(readCtx, { organizationId, entityType: 'attachment' }),
           }
         : {
             kind: 'exact',

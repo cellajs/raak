@@ -6,7 +6,7 @@ import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
-import { getOrgEntityCount } from '#/modules/entities/entities-queries';
+import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { buildLabelsListQuery } from '#/modules/label/label-queries';
@@ -113,7 +113,7 @@ export async function getLabelsOp(
       : counterEligible
         ? {
             kind: 'counter',
-            getTotal: () => getOrgEntityCount(readCtx, organizationId, 'label'),
+            getTotal: () => getOrganizationEntityCount(readCtx, { organizationId, entityType: 'label' }),
           }
         : {
             kind: 'exact',

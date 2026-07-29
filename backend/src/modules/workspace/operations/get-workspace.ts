@@ -19,7 +19,7 @@ export async function getWorkspaceOp(ctx: AuthContext, id: string, opts: GetWork
   const includeMembership = include.includes('membership');
 
   const [counts, workspaceWithAudit] = await Promise.all([
-    includeCounts ? getChannelCounts(ctx, 'workspace', workspace.id) : undefined,
+    includeCounts ? getChannelCounts(ctx, { entityType: 'workspace', entityId: workspace.id }) : undefined,
     withAuditUser(ctx, workspace, user),
   ]);
 

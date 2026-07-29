@@ -4,7 +4,7 @@ import { AppError } from '#/core/error';
 import type { OperationResult } from '#/core/operation-result';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
-import { getOrgEntityCount } from '#/modules/entities/entities-queries';
+import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTasks } from '#/modules/task/helpers/hydrate-task';
@@ -44,7 +44,10 @@ export async function createTasksOp(
   if (existing) return { success: true, data: { data: existing, rejectedIds: [] } };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
-  const currentTasksCount = await getOrgEntityCount(ctx, organization.id, 'task');
+  const currentTasksCount = await getOrganizationEntityCount(ctx, {
+    organizationId: organization.id,
+    entityType: 'task',
+  });
 
   if (taskRestrictions !== 0 && currentTasksCount + input.length > taskRestrictions) {
     return { success: false, error: 'restrict_by_org', status: 429 };

@@ -2,7 +2,7 @@ import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
-import { getOrgEntityCount } from '#/modules/entities/entities-queries';
+import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/helpers/check-slug';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
@@ -40,7 +40,10 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
 
   // Check if adding is allowed based on the organization's restrictions
-  const currentProjectsCount = await getOrgEntityCount(ctx, organization.id, 'project');
+  const currentProjectsCount = await getOrganizationEntityCount(ctx, {
+    organizationId: organization.id,
+    entityType: 'project',
+  });
   const projectRestrictions = ctx.var.tenant.restrictions.quotas.project;
 
   const availableSlots = projectRestrictions === 0 ? items.length : projectRestrictions - currentProjectsCount;

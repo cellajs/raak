@@ -11,11 +11,12 @@ import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/he
 import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
+interface InsertProjectsOpts {
+  projects: (typeof projectsTable.$inferInsert)[];
+}
+
 /** Insert projects and return the created rows. */
-export const insertProjects = async (
-  ctx: DbContext,
-  { projects }: { projects: (typeof projectsTable.$inferInsert)[] },
-) => {
+export const insertProjects = async (ctx: DbContext, { projects }: InsertProjectsOpts) => {
   const { db } = ctx.var;
   return db.insert(projectsTable).values(projects).returning();
 };
@@ -125,7 +126,8 @@ interface FindProjectsPaginatedOpts {
 }
 
 /** Get paginated list of projects with total count, membership, optional entity counts. */
-export const findProjectsPaginated = async ({ var: { db } }: DbContext, opts: FindProjectsPaginatedOpts) => {
+export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPaginatedOpts) => {
+  const { db } = ctx.var;
   const { userId, q, sort, order, offset, limit, organizationId, workspaceId, excludeArchived, role, includeCounts } =
     opts;
 

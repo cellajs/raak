@@ -32,8 +32,12 @@ export const findLabelsByOrg = async (ctx: AuthContext) => {
   return db.select().from(labelsTable).where(eq(labelsTable.organizationId, organizationId));
 };
 
+interface InsertLabelsOpts {
+  labels: (typeof labelsTable.$inferInsert)[];
+}
+
 /** Insert labels and return the created rows. Silently skips duplicates (PK conflict). */
-export const insertLabels = async (ctx: DbContext, { labels }: { labels: (typeof labelsTable.$inferInsert)[] }) => {
+export const insertLabels = async (ctx: DbContext, { labels }: InsertLabelsOpts) => {
   const { db } = ctx.var;
   return db.insert(labelsTable).values(labels).onConflictDoNothing().returning();
 };
@@ -81,12 +85,12 @@ export const deleteCountersByKeys = async (ctx: DbContext, { keys }: DeleteCount
   return db.delete(channelCountersTable).where(inArray(channelCountersTable.channelKey, keys));
 };
 
-interface FindLabelUsedCountOpts {
+interface GetLabelUsedCountOpts {
   labelId: string;
 }
 
 /** Get a label's used count from context counters. */
-export const findLabelUsedCount = async (ctx: DbContext, { labelId }: FindLabelUsedCountOpts) => {
+export const getLabelUsedCount = async (ctx: DbContext, { labelId }: GetLabelUsedCountOpts) => {
   const { db } = ctx.var;
   const [counters] = await db
     .select({ usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>${labelUsedCountKey})::int, 0)` })
@@ -96,8 +100,12 @@ export const findLabelUsedCount = async (ctx: DbContext, { labelId }: FindLabelU
   return counters?.usedCount ?? 0;
 };
 
+interface BuildLabelsListQueryOpts {
+  filters: SQL[];
+}
+
 /** Build the labels list query with counter join and filters. Returns a subquery. */
-export const buildLabelsListQuery = (ctx: AuthContext, { filters }: { filters: SQL[] }) => {
+export const buildLabelsListQuery = (ctx: AuthContext, { filters }: BuildLabelsListQueryOpts) => {
   const { db, organizationId } = ctx.var;
   return db
     .select({

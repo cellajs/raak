@@ -11,8 +11,12 @@ import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/he
 import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
+interface CountOrganizationsByTenantOpts {
+  tenantId: string;
+}
+
 /** Count organizations in a tenant. */
-export const countOrgsInTenant = async (ctx: DbContext, tenantId: string) => {
+export const countOrganizationsByTenant = async (ctx: DbContext, { tenantId }: CountOrganizationsByTenantOpts) => {
   const { db } = ctx.var;
   const [result] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -21,11 +25,12 @@ export const countOrgsInTenant = async (ctx: DbContext, tenantId: string) => {
   return result?.count ?? 0;
 };
 
+interface InsertOrganizationsOpts {
+  orgs: (typeof organizationsTable.$inferInsert)[];
+}
+
 /** Insert organizations and return the created rows. */
-export const insertOrganizations = async (
-  ctx: DbContext,
-  { orgs }: { orgs: (typeof organizationsTable.$inferInsert)[] },
-) => {
+export const insertOrganizations = async (ctx: DbContext, { orgs }: InsertOrganizationsOpts) => {
   const { db } = ctx.var;
   return db.insert(organizationsTable).values(orgs).returning();
 };
@@ -87,7 +92,8 @@ interface FindOrganizationsPaginatedOpts {
 }
 
 /** Get paginated list of organizations with conditional joins based on admin status. */
-export const findOrganizationsPaginated = async ({ var: { db } }: DbContext, opts: FindOrganizationsPaginatedOpts) => {
+export const findOrganizationsPaginated = async (ctx: DbContext, opts: FindOrganizationsPaginatedOpts) => {
+  const { db } = ctx.var;
   const { isSystemAdmin, targetUserId, q, sort, order, offset, limit, excludeArchived, role, includeCounts } = opts;
 
   const entityType = 'organization';

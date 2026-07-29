@@ -13,7 +13,7 @@ const statusNames = Object.entries(TaskStatus)
  * Used in getProject (single entity) handler.
  */
 export const getTaskStatusCounts = async (ctx: DbContext, projectId: string): Promise<TaskStatusCounts> => {
-  const rows = await countTasksByStatus(ctx, projectId);
+  const rows = await countTasksByStatus(ctx, { projectId });
 
   // Build object with all statuses defaulting to 0
   const result: Record<string, number> = {};

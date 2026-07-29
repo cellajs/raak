@@ -42,12 +42,12 @@ export const insertDomain = async (ctx: AuthContext, { domain }: InsertDomainOpt
   return created;
 };
 
-interface FindDomainOpts {
+interface FindDomainByIdOpts {
   id: string;
 }
 
 /** Find a domain by ID and tenant. */
-export const findDomain = async (ctx: AuthContext, { id }: FindDomainOpts) => {
+export const findDomainById = async (ctx: AuthContext, { id }: FindDomainByIdOpts) => {
   const { db, tenantId } = ctx.var;
   const [domain] = await db
     .select()
@@ -57,8 +57,12 @@ export const findDomain = async (ctx: AuthContext, { id }: FindDomainOpts) => {
   return domain;
 };
 
+interface DeleteDomainOpts {
+  id: string;
+}
+
 /** Delete a domain by ID and tenant. Returns the deleted row. */
-export const deleteDomain = async (ctx: AuthContext, { id }: FindDomainOpts) => {
+export const deleteDomain = async (ctx: AuthContext, { id }: DeleteDomainOpts) => {
   const { db, tenantId } = ctx.var;
   const [deleted] = await db
     .delete(domainsTable)

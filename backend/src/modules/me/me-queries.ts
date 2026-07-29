@@ -153,11 +153,13 @@ export const findPendingInvitations = async (ctx: DbContext, { userId }: FindPen
   return results.flat();
 };
 
+interface UpdateNewsletterOpts {
+  userId: string;
+  newsletter: boolean;
+}
+
 /** Update a user's newsletter preference. Used in unauthenticated unsubscribe flow. */
-export const updateNewsletter = async (
-  ctx: DbContext,
-  { userId, newsletter }: { userId: string; newsletter: boolean },
-) => {
+export const updateNewsletter = async (ctx: DbContext, { userId, newsletter }: UpdateNewsletterOpts) => {
   const { db } = ctx.var;
   return db.update(usersTable).set({ newsletter }).where(eq(usersTable.id, userId));
 };

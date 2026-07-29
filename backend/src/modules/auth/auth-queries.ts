@@ -39,12 +39,12 @@ export const findCredentialIdsByUser = async (ctx: DbContext, { userId }: FindCr
     .where(eq(passkeysTable.userId, userId));
 };
 
-interface FindUserByCredentialIdOpts {
+interface FindUserIdByCredentialIdOpts {
   credentialId: string;
 }
 
 /** Find the user ID that owns a given passkey credential. */
-export const findUserByCredentialId = async (ctx: DbContext, { credentialId }: FindUserByCredentialIdOpts) => {
+export const findUserIdByCredentialId = async (ctx: DbContext, { credentialId }: FindUserIdByCredentialIdOpts) => {
   const { db } = ctx.var;
   const [record] = await db
     .select({ userId: passkeysTable.userId })

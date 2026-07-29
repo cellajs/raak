@@ -15,7 +15,8 @@ interface InsertWorkspacesOpts {
 }
 
 /** Insert workspaces and return the created rows. */
-export const insertWorkspaces = async ({ var: { db } }: DbContext, { workspaces }: InsertWorkspacesOpts) => {
+export const insertWorkspaces = async (ctx: DbContext, { workspaces }: InsertWorkspacesOpts) => {
+  const { db } = ctx.var;
   return db.insert(workspacesTable).values(workspaces).returning();
 };
 
@@ -61,7 +62,8 @@ interface FindWorkspacesPaginatedOpts {
 }
 
 /** Get paginated list of workspaces with total count, membership, optional entity counts. */
-export const findWorkspacesPaginated = async ({ var: { db } }: DbContext, opts: FindWorkspacesPaginatedOpts) => {
+export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspacesPaginatedOpts) => {
+  const { db } = ctx.var;
   const { userId, q, sort, order, offset, limit, organizationId, excludeArchived, role, includeCounts } = opts;
 
   const entityType = 'workspace';
