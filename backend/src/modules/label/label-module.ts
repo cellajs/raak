@@ -16,7 +16,7 @@ defineBackendModule({
   description: `Endpoints for managing labels, which are lightweight, user defined tags assigned to tasks.
     Labels help categorize and filter tasks (for example client, api, or backend). They exist at the
     project level and are available to all members of the project.`,
-  entity: 'label',
+  productEntity: 'label',
   yjsMaterializer: updateLabelOp,
   onMutation: {
     'project.created': async (ctx, { after = [] }) => {

@@ -9,9 +9,9 @@ import type { YjsMaterializer } from '#/modules/yjs/yjs-materializers';
  * capabilities in one place instead of calling a separate register* function per subsystem.
  */
 export interface BackendModule extends ModuleConfig {
-  /** The product entity this module owns, keying the capabilities below. */
-  entity?: ProductEntityType;
-  /** Yjs collab-session materializer for `entity` (indexed by yjs-materializers). */
+  /** The product entity this module owns; keys its product-scoped capabilities below. */
+  productEntity?: ProductEntityType;
+  /** Yjs collab-session materializer for `productEntity` (indexed by yjs-materializers). */
   yjsMaterializer?: YjsMaterializer;
   /**
    * Synchronous, in-request reactions to entity/resource mutations, keyed by `<type>.<verb>`
@@ -30,7 +30,12 @@ const listeners: ((module: BackendModule) => void)[] = [];
  * in the module's `*-module.ts`.
  */
 export function defineBackendModule(module: BackendModule): void {
-  const { entity: _entity, yjsMaterializer: _yjsMaterializer, onMutation: _onMutation, ...metadata } = module;
+  const {
+    productEntity: _productEntity,
+    yjsMaterializer: _yjsMaterializer,
+    onMutation: _onMutation,
+    ...metadata
+  } = module;
   registerModule(metadata);
   backendModules.push(module);
   for (const listener of listeners) listener(module);
