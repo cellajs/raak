@@ -2729,6 +2729,7 @@ export const zUpdateTaskBody = z.object({
       })
       .optional(),
     projectId: z.string().max(50).optional(),
+    publicAt: z.string().nullish(),
   }),
   stx: zStxBase,
 });

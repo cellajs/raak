@@ -16260,6 +16260,9 @@
                       "projectId": {
                         "type": "string",
                         "maxLength": 50
+                      },
+                      "publicAt": {
+                        "type": ["string", "null"]
                       }
                     }
                   },

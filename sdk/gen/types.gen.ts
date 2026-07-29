@@ -6490,6 +6490,7 @@ export type UpdateTaskData = {
         remove?: Array<string>;
       };
       projectId?: string;
+      publicAt?: string | null;
     };
     stx: StxBase;
   };

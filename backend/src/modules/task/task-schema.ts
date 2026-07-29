@@ -67,6 +67,9 @@ export const taskContract = evolutionContract.product('task', {
     labels: arrayDeltaSchema,
     assignedTo: arrayDeltaSchema,
     projectId: z.string().max(maxLength.id),
+    // Make public (date) / make private (null): per-task, client-driven, row-local visibility.
+    // Independent of the parent project's publicAt (no cascade); inherited only at create time.
+    publicAt: z.string().nullable(),
   },
 });
 
