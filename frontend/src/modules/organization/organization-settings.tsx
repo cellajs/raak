@@ -15,18 +15,19 @@ import { toaster } from '~/modules/common/toaster/toaster';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteOrganizations } from '~/modules/organization/delete-organizations';
+import { organizationSettingsSections } from '~/modules/organization/organization-settings-sections';
 import type { EnrichedOrganization } from '~/modules/organization/types';
 import { UpdateOrganizationDetailsForm } from '~/modules/organization/update-organization-details-form';
 import { UpdateOrganizationForm } from '~/modules/organization/update-organization-form';
-import { UpdatePrimaryLabelsForm } from '~/modules/organization/update-primary-labels-form';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 
+// Built-in tabs, plus any fork-provided section tabs spliced in before the danger zone.
 const tabs = [
   { id: 'general', label: 'c:general' },
   { id: 'details', label: 'c:details' },
-  { id: 'task-types', label: 'c:primary_labels' },
   // { id: 'subscription', label: 'c:subscription' },
+  ...organizationSettingsSections.map(({ id, label, resource }) => ({ id, label, ...(resource && { resource }) })),
   { id: 'delete-organization', label: 'c:delete_resource', resource: 'c:organization' },
 ];
 
@@ -114,16 +115,16 @@ function OrganizationSettings({ organization }: { organization: EnrichedOrganiza
           </Card>
         </AsideAnchor>
 
-        <AsideAnchor id="task-types" extraOffset>
-          <Card id="update-primary-labels">
-            <CardHeader>
-              <CardTitle>{t('c:primary_labels')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UpdatePrimaryLabelsForm organization={organization} />
-            </CardContent>
-          </Card>
-        </AsideAnchor>
+        {organizationSettingsSections.map((section) => (
+          <AsideAnchor key={section.id} id={section.id} extraOffset>
+            <Card id={section.id}>
+              <CardHeader>
+                <CardTitle>{t(section.label)}</CardTitle>
+              </CardHeader>
+              <CardContent>{section.render(organization)}</CardContent>
+            </Card>
+          </AsideAnchor>
+        ))}
 
         {/* <AsideAnchor id="subscription" extraOffset>
           <Card>
