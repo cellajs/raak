@@ -22,8 +22,8 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Public reads intentionally bypass tenant status checks from tenantGuard.
-  // Anonymous engine check: publicRead() makes the task readable once its own
-  // publicAt is set (denormalized from the parent project via create path + cascade trigger).
+  // Anonymous engine check: publicRead() makes the task readable once its own publicAt is set
+  // (inherited from the parent project at create time, then row-local — no cascade).
   const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
   if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
@@ -43,21 +43,17 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
 app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const { projectId, ...queryInfo } = ctx.req.valid('query');
 
-  // Public reads intentionally bypass tenant status checks from tenantGuard.
+  // Public reads intentionally bypass tenant status checks from tenantGuard. Resolve the project
+  // for org scoping only; the project's own publicAt does not gate the list.
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
-  // The project must itself be public (publicRead() → project.publicAt set); its
-  // tasks inherit that publicity via the publicAt cascade, so one project check gates the list.
-  const projectSubject = buildSubject('project', project, { id: project.id, row: project });
-  if (!checkAccess({ anonymous: true }, 'read', projectSubject).allowed) {
-    throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
-  }
-
+  // Row-local public read: return the project's tasks whose OWN publicAt is set (published + public),
+  // independent of the project's public status. Each task owns its visibility.
   const publicCtx = {
     var: { db: unsafeInternalAdminDb!, userId: '', organizationId: project.organizationId },
   } as AuthContext;
-  const response = await getTasks(publicCtx, [project.id], queryInfo);
+  const response = await getTasks(publicCtx, [project.id], queryInfo, { publicOnly: true });
   return ctx.json(response, 200);
 });
 
