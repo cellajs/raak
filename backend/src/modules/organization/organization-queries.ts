@@ -1,8 +1,9 @@
-import { and, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
 import type { EntityRole, OrganizationFlags, OrganizationSetupConfig } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
+import { type ListTotalSource, resolveListTotal } from '#/modules/entities/helpers/list-total';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationFlagsSelect, setupConfigSelect } from '#/modules/organization/helpers/select';
 import { organizationsTable } from '#/modules/organization/organization-db';
@@ -129,7 +130,6 @@ export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: Get
     setupConfig: setupConfigSelect,
     ...auditUserSelect,
     ...(countData && { counts: countData.countsSelect }),
-    total: sql<number>`count(*) over()`.mapWith(Number),
   } as const;
 
   // Admins use LEFT JOIN; regular users use INNER JOIN on memberships.
@@ -144,11 +144,35 @@ export const getOrganizationsList = async ({ var: { db } }: DbContext, opts: Get
     ) as typeof query;
   }
 
-  return query
+  const itemsQuery = query
     .leftJoin(createdByUser, eq(createdByUser.id, organizationsTable.createdBy))
     .leftJoin(updatedByUser, eq(updatedByUser.id, organizationsTable.updatedBy))
     .where(and(...orgWhere))
     .orderBy(orderColumn)
     .limit(limit)
     .offset(offset);
+
+  const totalSource: ListTotalSource = {
+    kind: 'exact',
+    count: async () => {
+      if (isSystemAdmin) {
+        const [{ total }] = await db
+          .select({ total: count() })
+          .from(organizationsTable)
+          .where(and(...orgWhere));
+        return total;
+      }
+
+      const baseQuery = db
+        .select({ id: organizationsTable.id })
+        .from(organizationsTable)
+        .innerJoin(membershipsTable, membershipOn)
+        .where(and(...orgWhere))
+        .as('organizations');
+      const [{ total }] = await db.select({ total: count() }).from(baseQuery);
+      return total;
+    },
+  };
+
+  return resolveListTotal(itemsQuery, totalSource);
 };
