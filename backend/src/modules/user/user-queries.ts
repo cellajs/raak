@@ -17,7 +17,7 @@ interface FindUsersPaginatedOpts {
 }
 
 /** Find a paginated user list with role data and its exact total. */
-export const findUsersPaginated = (ctx: DbContext, opts: FindUsersPaginatedOpts) => {
+export const findUsersPaginated = async (ctx: DbContext, opts: FindUsersPaginatedOpts) => {
   const { db } = ctx.var;
   const { filters, sort, order, limit, offset } = opts;
   const usersQuerySelect = { ...memberSelect, role: systemRolesTable.role };
