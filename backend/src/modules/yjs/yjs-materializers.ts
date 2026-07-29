@@ -19,7 +19,7 @@ export type YjsMaterializer = (
 const materializers = new Map<ProductEntityType, YjsMaterializer>();
 
 onBackendModuleRegister((module) => {
-  if (module.entity && module.yjsMaterializer) materializers.set(module.entity, module.yjsMaterializer);
+  if (module.productEntity && module.yjsMaterializer) materializers.set(module.productEntity, module.yjsMaterializer);
 });
 
 export function getYjsMaterializer(entityType: ProductEntityType): YjsMaterializer | undefined {
