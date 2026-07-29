@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
 import { appConfig } from 'shared';
 import { and, eq } from 'drizzle-orm';
 
@@ -317,6 +318,8 @@ const tasksSeed = async () => {
 
     // Phase F: Batch-insert all tasks for this org (chunked)
     tasksCount += allOrgTasks.length;
+    // Seeds bypass insertTasks, so inherit public_at from the parent project here (runtime owner).
+    await inheritPublicAtFromProject({ var: { db } }, allOrgTasks);
     for (let i = 0; i < allOrgTasks.length; i += insertBatchSize) {
       await db.insert(tasksTable).values(allOrgTasks.slice(i, i + insertBatchSize)).onConflictDoNothing();
     }

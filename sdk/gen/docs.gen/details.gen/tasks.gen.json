@@ -2895,7 +2895,11 @@
                   "remove": { "type": "array", "required": false, "itemType": "string" }
                 }
               },
-              "projectId": { "type": "string", "required": false, "maxLength": 50 }
+              "projectId": { "type": "string", "required": false, "maxLength": 50 },
+              "publicAt": {
+                "type": ["string", "null"],
+                "required": false
+              }
             }
           },
           "stx": {

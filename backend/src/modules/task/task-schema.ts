@@ -67,6 +67,7 @@ export const taskContract = evolutionContract.product('task', {
     labels: arrayDeltaSchema,
     assignedTo: arrayDeltaSchema,
     projectId: z.string().max(maxLength.id),
+    publicAt: z.string().nullable(),
   },
 });
 

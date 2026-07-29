@@ -2363,6 +2363,7 @@ export const zCreateAttachmentsBody = z
       thumbnailKey: z.string().max(2048).nullish(),
       thumbnailTinyKey: z.string().max(2048).nullish(),
       projectId: z.uuid(),
+      publicAt: z.string().nullish(),
       stx: zStxBase,
     }),
   )
@@ -2434,6 +2435,7 @@ export const zUpdateAttachmentBody = z.object({
   ops: z.object({
     name: z.string().max(255).optional(),
     originalKey: z.string().optional(),
+    publicAt: z.string().nullish(),
   }),
   stx: zStxBase,
 });
@@ -2729,6 +2731,7 @@ export const zUpdateTaskBody = z.object({
       })
       .optional(),
     projectId: z.string().max(50).optional(),
+    publicAt: z.string().nullish(),
   }),
   stx: zStxBase,
 });

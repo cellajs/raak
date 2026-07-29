@@ -16,10 +16,12 @@ setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
 const publicProjectId = generateId();
 const privateProjectId = generateId();
-const taskInPublicProject = generateId();
-const taskInPrivateProject = generateId();
+const publicTaskId = generateId();
+const privateTaskId = generateId();
+const publicTaskInPrivateProjectId = generateId();
 
-// Covers permission-engine publicRead grants for anonymous project and task reads.
+// publicAt is row-local: a product is publicly readable from its OWN publicAt, independent of its
+// project. A public task in a private project is readable; a private task is not.
 describe('Public read routes (engine-resolved grants, anonymous actor)', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;
@@ -50,6 +52,7 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
       },
     ]);
 
+    const publicAt = new Date().toISOString();
     const baseTask = {
       tenantId: tenant.tenantId,
       organizationId: tenant.organization.id,
@@ -61,58 +64,59 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
       createdBy: tenant.user.id,
     };
     await db.insert(tasksTable).values([
-      { ...baseTask, id: taskInPublicProject, name: 'task in public project', projectId: publicProjectId },
-      { ...baseTask, id: taskInPrivateProject, name: 'task in private project', projectId: privateProjectId },
+      { ...baseTask, id: publicTaskId, name: 'public task', projectId: publicProjectId, publicAt },
+      { ...baseTask, id: privateTaskId, name: 'private task', projectId: privateProjectId, publicAt: null },
+      {
+        ...baseTask,
+        id: publicTaskInPrivateProjectId,
+        name: 'public task, private project',
+        projectId: privateProjectId,
+        publicAt,
+      },
     ]);
   });
 
   afterAll(async () => {
-    await db.delete(tasksTable).where(inArray(tasksTable.id, [taskInPublicProject, taskInPrivateProject]));
+    await db
+      .delete(tasksTable)
+      .where(inArray(tasksTable.id, [publicTaskId, privateTaskId, publicTaskInPrivateProjectId]));
     await db.delete(projectsTable).where(inArray(projectsTable.id, [publicProjectId, privateProjectId]));
     await clearSecurityTestData();
   });
 
   it('Q1: public project GET follows the public read grant', async () => {
-    const publicResult = await call(getPublicProject, {
-      path: { id: publicProjectId },
-      headers: defaultHeaders,
-    });
+    const publicResult = await call(getPublicProject, { path: { id: publicProjectId }, headers: defaultHeaders });
     expect(publicResult.response.status).toBe(200);
 
-    const privateResult = await call(getPublicProject, {
-      path: { id: privateProjectId },
-      headers: defaultHeaders,
-    });
+    const privateResult = await call(getPublicProject, { path: { id: privateProjectId }, headers: defaultHeaders });
     expect(privateResult.response.status).toBe(403);
   });
 
-  it('Q2: public task GET follows the PARENT project publicAt (publicParent)', async () => {
-    const publicResult = await call(getPublicTask, {
-      path: { id: taskInPublicProject },
-      headers: defaultHeaders,
-    });
+  it("Q2: public task GET follows the task's own publicAt, independent of the project", async () => {
+    const publicResult = await call(getPublicTask, { path: { id: publicTaskId }, headers: defaultHeaders });
     expect(publicResult.response.status).toBe(200);
 
-    const privateResult = await call(getPublicTask, {
-      path: { id: taskInPrivateProject },
+    const privateResult = await call(getPublicTask, { path: { id: privateTaskId }, headers: defaultHeaders });
+    expect(privateResult.response.status).toBe(403);
+
+    // Decoupled: a public task in a private project is readable
+    const decoupledResult = await call(getPublicTask, {
+      path: { id: publicTaskInPrivateProjectId },
       headers: defaultHeaders,
     });
-    expect(privateResult.response.status).toBe(403);
+    expect(decoupledResult.response.status).toBe(200);
   });
 
-  it('Q3: public task list is gated by the parent project', async () => {
-    const publicResult = await call(getPublicTasks, {
-      query: { projectId: publicProjectId },
-      headers: defaultHeaders,
-    });
-    expect(publicResult.response.status).toBe(200);
-    const data = publicResult.data as { items: { id: string }[] } | undefined;
-    expect((data?.items ?? []).map(({ id }) => id)).toEqual([taskInPublicProject]);
+  it("Q3: public task list filters by each task's own publicAt, not the project", async () => {
+    const publicList = await call(getPublicTasks, { query: { projectId: publicProjectId }, headers: defaultHeaders });
+    expect(publicList.response.status).toBe(200);
+    const publicItems = (publicList.data as { items: { id: string }[] } | undefined)?.items ?? [];
+    expect(publicItems.map(({ id }) => id)).toEqual([publicTaskId]);
 
-    const privateResult = await call(getPublicTasks, {
-      query: { projectId: privateProjectId },
-      headers: defaultHeaders,
-    });
-    expect(privateResult.response.status).toBe(403);
+    // Private project: no project gate; returns only its own public tasks
+    const privateList = await call(getPublicTasks, { query: { projectId: privateProjectId }, headers: defaultHeaders });
+    expect(privateList.response.status).toBe(200);
+    const privateItems = (privateList.data as { items: { id: string }[] } | undefined)?.items ?? [];
+    expect(privateItems.map(({ id }) => id)).toEqual([publicTaskInPrivateProjectId]);
   });
 });

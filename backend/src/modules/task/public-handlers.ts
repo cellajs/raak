@@ -1,4 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { isUnpublishedDraft } from 'shared';
 import type { AuthContext, Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { unsafeInternalAdminDb } from '#/db/db';
@@ -21,9 +22,12 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   const mainTask = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'task', id);
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
+  // Drafts are never publicly readable: they read as absent to non-authors (the anonymous caller).
+  if (isUnpublishedDraft(mainTask)) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
+
   // Public reads intentionally bypass tenant status checks from tenantGuard.
-  // Anonymous engine check: publicRead() makes the task readable once its own
-  // publicAt is set (denormalized from the parent project via create path + cascade trigger).
+  // Anonymous engine check: publicRead() makes the task readable once its own publicAt is set
+  // (inherited from the parent project at create time, then row-local — no cascade).
   const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
   if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
@@ -43,21 +47,15 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
 app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const { projectId, ...queryInfo } = ctx.req.valid('query');
 
-  // Public reads intentionally bypass tenant status checks from tenantGuard.
+  // Public reads intentionally bypass tenant status checks from tenantGuard. Resolve the project
+  // for org scoping only; the project's own publicAt does not gate the list.
   const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'project', projectId);
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-
-  // The project must itself be public (publicRead() → project.publicAt set); its
-  // tasks inherit that publicity via the publicAt cascade, so one project check gates the list.
-  const projectSubject = buildSubject('project', project, { id: project.id, row: project });
-  if (!checkAccess({ anonymous: true }, 'read', projectSubject).allowed) {
-    throw new AppError(403, 'forbidden', 'warn', { entityType: 'project' });
-  }
 
   const publicCtx = {
     var: { db: unsafeInternalAdminDb!, userId: '', organizationId: project.organizationId },
   } as AuthContext;
-  const response = await getTasks(publicCtx, [project.id], queryInfo);
+  const response = await getTasks(publicCtx, [project.id], queryInfo, { publicOnly: true });
   return ctx.json(response, 200);
 });
 

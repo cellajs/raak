@@ -13529,6 +13529,9 @@
                       "type": "string",
                       "format": "uuid"
                     },
+                    "publicAt": {
+                      "type": ["string", "null"]
+                    },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
                     }
@@ -14238,6 +14241,9 @@
                       },
                       "originalKey": {
                         "type": "string"
+                      },
+                      "publicAt": {
+                        "type": ["string", "null"]
                       }
                     }
                   },
@@ -16260,6 +16266,9 @@
                       "projectId": {
                         "type": "string",
                         "maxLength": 50
+                      },
+                      "publicAt": {
+                        "type": ["string", "null"]
                       }
                     }
                   },

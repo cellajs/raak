@@ -5583,6 +5583,7 @@ export type CreateAttachmentsData = {
      */
     thumbnailTinyKey?: string | null;
     projectId: string;
+    publicAt?: string | null;
     stx: StxBase;
   }>;
   path: {
@@ -5782,6 +5783,7 @@ export type UpdateAttachmentData = {
     ops: {
       name?: string;
       originalKey?: string;
+      publicAt?: string | null;
     };
     stx: StxBase;
   };
@@ -6490,6 +6492,7 @@ export type UpdateTaskData = {
         remove?: Array<string>;
       };
       projectId?: string;
+      publicAt?: string | null;
     };
     stx: StxBase;
   };

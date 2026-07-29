@@ -1,4 +1,5 @@
 import type { SeedScript } from '../types';
+import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
 import { faker } from '@faker-js/faker';
 import { appConfig } from 'shared';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
@@ -99,6 +100,8 @@ export const attachmentsSeed = async () => {
       }),
     );
 
+    // Seeds bypass insertAttachments, so inherit public_at from the parent project here.
+    await inheritPublicAtFromProject({ var: { db } }, records);
     await db.insert(attachmentsTable).values(records).onConflictDoNothing();
     totalCreated += records.length;
   }

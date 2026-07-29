@@ -1,7 +1,8 @@
-import { and, arrayOverlaps, asc, desc, eq, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, eq, ilike, inArray, isNotNull, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { z } from 'zod';
 import type { AuthContext } from '#/core/context';
+import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { getDateFromToday } from '#/modules/task/helpers/utils';
 import { tasksTable } from '#/modules/task/task-db';
@@ -17,7 +18,12 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
 /**
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
-export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo: QueryInfo) => {
+export const getTasks = async (
+  ctx: AuthContext,
+  projectIds: string[],
+  queryInfo: QueryInfo,
+  opts?: { publicOnly?: boolean },
+) => {
   const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
   // Highlight-mode clients ('=' prefix) fetch unfiltered; stripping here keeps stray marked
   // queries behaving like their plain form.
@@ -81,6 +87,7 @@ export const getTasks = async (ctx: AuthContext, projectIds: string[], queryInfo
     acceptedCutOffFilter,
     // Hide tombstones for normal reads; on seqCursor delta sync they flow through so caches can drop them
     seqCursor ? undefined : isNull(tasksTable.deletedAt),
+    opts?.publicOnly ? and(isNotNull(tasksTable.publicAt), publishedRowsPredicate(tasksTable)) : undefined,
   );
 
   // Non-delta reads fetch the page and its exact COUNT(*) in parallel; delta reads skip the count.
