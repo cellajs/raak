@@ -995,6 +995,10 @@
               "maxLength": 2048
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": false
+            },
             "stx": {
               "type": "object",
               "required": true,
@@ -1809,7 +1813,11 @@
             "required": true,
             "properties": {
               "name": { "type": "string", "required": false, "maxLength": 255 },
-              "originalKey": { "type": "string", "required": false }
+              "originalKey": { "type": "string", "required": false },
+              "publicAt": {
+                "type": ["string", "null"],
+                "required": false
+              }
             }
           },
           "stx": {

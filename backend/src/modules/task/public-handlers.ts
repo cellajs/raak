@@ -1,4 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { isUnpublishedDraft } from 'shared';
 import type { AuthContext, Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { unsafeInternalAdminDb } from '#/db/db';
@@ -20,6 +21,9 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   // Get main task
   const mainTask = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, 'task', id);
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
+
+  // Drafts are never publicly readable: they read as absent to non-authors (the anonymous caller).
+  if (isUnpublishedDraft(mainTask)) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Public reads intentionally bypass tenant status checks from tenantGuard.
   // Anonymous engine check: publicRead() makes the task readable once its own publicAt is set

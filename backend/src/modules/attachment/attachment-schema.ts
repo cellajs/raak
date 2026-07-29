@@ -54,6 +54,8 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     thumbnailTinyKey: true,
     // cella change: Raak attachments are scoped to a project parent context.
     projectId: true,
+    // Make public (date) at create (e.g. from the S3 upload flow); else inherited from the project.
+    publicAt: true,
   })
   .extend({
     id: validUuidSchema,
@@ -65,6 +67,8 @@ export const attachmentContract = evolutionContract.product('attachment', {
   updateOps: {
     name: z.string().max(maxLength.field),
     originalKey: z.string(),
+    // Make public (date) / make private (null): per-attachment, row-local visibility.
+    publicAt: z.string().nullable(),
   },
 });
 
