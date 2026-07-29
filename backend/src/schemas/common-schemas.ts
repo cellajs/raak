@@ -261,20 +261,30 @@ export const validEmailSchema = z
       .email({ message: t('error:invalid_email') })
       .min(4, t('error:invalid_between_num', { name: 'Email', min: 4, max: maxLength.field }))
       .max(maxLength.field, t('error:invalid_between_num', { name: 'Email', min: 4, max: maxLength.field })),
-  );
+  )
+  .openapi({ type: 'string', format: 'email', minLength: 4, maxLength: maxLength.field });
 
 /** Schema for a canonical DNS hostname containing at least one dot. */
+const canonicalDomainPattern =
+  /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
 export const validDomainSchema = z
   .string()
   .trim()
   .toLowerCase()
   .pipe(
     z
-      .hostname({ message: t('error:invalid_domain') })
+      .string()
       .min(4, t('error:invalid_between_num', { name: 'Domain', min: 4, max: maxLength.field }))
       .max(maxLength.field, t('error:invalid_between_num', { name: 'Domain', min: 4, max: maxLength.field }))
-      .refine((domain) => domain.includes('.') && !domain.endsWith('.'), t('error:invalid_domain')),
-  );
+      .regex(canonicalDomainPattern, { message: t('error:invalid_domain') }),
+  )
+  .openapi({
+    type: 'string',
+    format: 'hostname',
+    minLength: 4,
+    maxLength: maxLength.field,
+    pattern: canonicalDomainPattern.source,
+  });
 
 /** Schema for a valid slug: string between 2 and max field length, allowing alphanumeric and hyphens */
 export const validSlugSchema = z
