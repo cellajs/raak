@@ -119,33 +119,27 @@
               }
             },
             "primaryLabel": {
+              "type": ["object", "null"],
               "required": true,
-              "anyOf": [
-                {
-                  "type": "object",
-                  "required": false,
-                  "properties": {
-                    "id": { "type": "string", "required": true },
-                    "name": { "type": "string", "required": true },
-                    "slug": { "type": "string", "required": true },
-                    "color": {
-                      "type": ["string", "null"],
-                      "required": true
-                    },
-                    "mode": {
-                      "type": "string",
-                      "required": true,
-                      "enum": ["primary", "secondary", "epic"]
-                    },
-                    "icon": {
-                      "type": ["string", "null"],
-                      "required": true
-                    },
-                    "projectId": { "type": "string", "required": true }
-                  }
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "color": {
+                  "type": ["string", "null"],
+                  "required": true
                 },
-                { "type": "null", "required": false }
-              ]
+                "mode": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["primary", "secondary", "epic"]
+                },
+                "icon": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "projectId": { "type": "string", "required": true }
+              }
             },
             "assignedTo": {
               "type": "array",
@@ -175,38 +169,14 @@
             "createdBy": {
               "type": ["object", "null"],
               "required": true,
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              }
+              "description": "Minimal user data for references, or null when no user is available.",
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              }
+              "description": "Minimal user data for references, or null when no user is available.",
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "stx": {
               "type": "object",
@@ -450,33 +420,27 @@
                     }
                   },
                   "primaryLabel": {
+                    "type": ["object", "null"],
                     "required": true,
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "required": false,
-                        "properties": {
-                          "id": { "type": "string", "required": true },
-                          "name": { "type": "string", "required": true },
-                          "slug": { "type": "string", "required": true },
-                          "color": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "mode": {
-                            "type": "string",
-                            "required": true,
-                            "enum": ["primary", "secondary", "epic"]
-                          },
-                          "icon": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "projectId": { "type": "string", "required": true }
-                        }
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "color": {
+                        "type": ["string", "null"],
+                        "required": true
                       },
-                      { "type": "null", "required": false }
-                    ]
+                      "mode": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["primary", "secondary", "epic"]
+                      },
+                      "icon": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "projectId": { "type": "string", "required": true }
+                    }
                   },
                   "assignedTo": {
                     "type": "array",
@@ -506,38 +470,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "stx": {
                     "type": "object",
@@ -1033,33 +973,27 @@
                     }
                   },
                   "primaryLabel": {
+                    "type": ["object", "null"],
                     "required": true,
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "required": false,
-                        "properties": {
-                          "id": { "type": "string", "required": true },
-                          "name": { "type": "string", "required": true },
-                          "slug": { "type": "string", "required": true },
-                          "color": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "mode": {
-                            "type": "string",
-                            "required": true,
-                            "enum": ["primary", "secondary", "epic"]
-                          },
-                          "icon": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "projectId": { "type": "string", "required": true }
-                        }
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "color": {
+                        "type": ["string", "null"],
+                        "required": true
                       },
-                      { "type": "null", "required": false }
-                    ]
+                      "mode": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["primary", "secondary", "epic"]
+                      },
+                      "icon": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "projectId": { "type": "string", "required": true }
+                    }
                   },
                   "assignedTo": {
                     "type": "array",
@@ -1089,38 +1023,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "stx": {
                     "type": "object",
@@ -1438,33 +1348,27 @@
                     }
                   },
                   "primaryLabel": {
+                    "type": ["object", "null"],
                     "required": true,
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "required": false,
-                        "properties": {
-                          "id": { "type": "string", "required": true },
-                          "name": { "type": "string", "required": true },
-                          "slug": { "type": "string", "required": true },
-                          "color": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "mode": {
-                            "type": "string",
-                            "required": true,
-                            "enum": ["primary", "secondary", "epic"]
-                          },
-                          "icon": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "projectId": { "type": "string", "required": true }
-                        }
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "color": {
+                        "type": ["string", "null"],
+                        "required": true
                       },
-                      { "type": "null", "required": false }
-                    ]
+                      "mode": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["primary", "secondary", "epic"]
+                      },
+                      "icon": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "projectId": { "type": "string", "required": true }
+                    }
                   },
                   "assignedTo": {
                     "type": "array",
@@ -1494,38 +1398,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "stx": {
                     "type": "object",
@@ -1777,33 +1657,27 @@
                     }
                   },
                   "primaryLabel": {
+                    "type": ["object", "null"],
                     "required": true,
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "required": false,
-                        "properties": {
-                          "id": { "type": "string", "required": true },
-                          "name": { "type": "string", "required": true },
-                          "slug": { "type": "string", "required": true },
-                          "color": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "mode": {
-                            "type": "string",
-                            "required": true,
-                            "enum": ["primary", "secondary", "epic"]
-                          },
-                          "icon": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "projectId": { "type": "string", "required": true }
-                        }
+                    "properties": {
+                      "id": { "type": "string", "required": true },
+                      "name": { "type": "string", "required": true },
+                      "slug": { "type": "string", "required": true },
+                      "color": {
+                        "type": ["string", "null"],
+                        "required": true
                       },
-                      { "type": "null", "required": false }
-                    ]
+                      "mode": {
+                        "type": "string",
+                        "required": true,
+                        "enum": ["primary", "secondary", "epic"]
+                      },
+                      "icon": {
+                        "type": ["string", "null"],
+                        "required": true
+                      },
+                      "projectId": { "type": "string", "required": true }
+                    }
                   },
                   "assignedTo": {
                     "type": "array",
@@ -1833,38 +1707,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "properties": {
-                      "id": { "type": "string", "required": true },
-                      "name": { "type": "string", "required": true },
-                      "slug": { "type": "string", "required": true },
-                      "thumbnailUrl": {
-                        "type": ["string", "null"],
-                        "required": true
-                      },
-                      "entityType": {
-                        "type": "string",
-                        "required": true,
-                        "enum": ["user"]
-                      }
-                    }
+                    "description": "Minimal user data for references, or null when no user is available.",
+                    "ref": "#/components/schemas/NullableUserMinimalBase"
                   },
                   "stx": {
                     "type": "object",
@@ -2065,8 +1915,20 @@
             },
             "primaryLabelId": { "type": "string", "required": false, "format": "uuid" },
             "displayOrder": { "type": "number", "required": false },
-            "labels": { "type": "array", "required": false, "itemType": "string" },
-            "assignedTo": { "type": "array", "required": false, "itemType": "string" },
+            "labels": {
+              "type": "array",
+              "required": false,
+              "maxItems": 50,
+              "itemType": "string",
+              "format": "uuid"
+            },
+            "assignedTo": {
+              "type": "array",
+              "required": false,
+              "maxItems": 50,
+              "itemType": "string",
+              "format": "uuid"
+            },
             "stx": {
               "type": "object",
               "required": true,
@@ -2323,33 +2185,27 @@
               }
             },
             "primaryLabel": {
+              "type": ["object", "null"],
               "required": true,
-              "anyOf": [
-                {
-                  "type": "object",
-                  "required": false,
-                  "properties": {
-                    "id": { "type": "string", "required": true },
-                    "name": { "type": "string", "required": true },
-                    "slug": { "type": "string", "required": true },
-                    "color": {
-                      "type": ["string", "null"],
-                      "required": true
-                    },
-                    "mode": {
-                      "type": "string",
-                      "required": true,
-                      "enum": ["primary", "secondary", "epic"]
-                    },
-                    "icon": {
-                      "type": ["string", "null"],
-                      "required": true
-                    },
-                    "projectId": { "type": "string", "required": true }
-                  }
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "color": {
+                  "type": ["string", "null"],
+                  "required": true
                 },
-                { "type": "null", "required": false }
-              ]
+                "mode": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["primary", "secondary", "epic"]
+                },
+                "icon": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "projectId": { "type": "string", "required": true }
+              }
             },
             "assignedTo": {
               "type": "array",
@@ -2379,38 +2235,14 @@
             "createdBy": {
               "type": ["object", "null"],
               "required": true,
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              }
+              "description": "Minimal user data for references, or null when no user is available.",
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              }
+              "description": "Minimal user data for references, or null when no user is available.",
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "stx": {
               "type": "object",
@@ -2650,33 +2482,27 @@
               }
             },
             "primaryLabel": {
+              "type": ["object", "null"],
               "required": true,
-              "anyOf": [
-                {
-                  "type": "object",
-                  "required": false,
-                  "properties": {
-                    "id": { "type": "string", "required": true },
-                    "name": { "type": "string", "required": true },
-                    "slug": { "type": "string", "required": true },
-                    "color": {
-                      "type": ["string", "null"],
-                      "required": true
-                    },
-                    "mode": {
-                      "type": "string",
-                      "required": true,
-                      "enum": ["primary", "secondary", "epic"]
-                    },
-                    "icon": {
-                      "type": ["string", "null"],
-                      "required": true
-                    },
-                    "projectId": { "type": "string", "required": true }
-                  }
+              "properties": {
+                "id": { "type": "string", "required": true },
+                "name": { "type": "string", "required": true },
+                "slug": { "type": "string", "required": true },
+                "color": {
+                  "type": ["string", "null"],
+                  "required": true
                 },
-                { "type": "null", "required": false }
-              ]
+                "mode": {
+                  "type": "string",
+                  "required": true,
+                  "enum": ["primary", "secondary", "epic"]
+                },
+                "icon": {
+                  "type": ["string", "null"],
+                  "required": true
+                },
+                "projectId": { "type": "string", "required": true }
+              }
             },
             "assignedTo": {
               "type": "array",
@@ -2706,38 +2532,14 @@
             "createdBy": {
               "type": ["object", "null"],
               "required": true,
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              }
+              "description": "Minimal user data for references, or null when no user is available.",
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              }
+              "description": "Minimal user data for references, or null when no user is available.",
+              "ref": "#/components/schemas/NullableUserMinimalBase"
             },
             "stx": {
               "type": "object",
@@ -2859,7 +2661,16 @@
         "properties": {
           "fullResponse": {
             "required": false,
-            "anyOf": [{ "type": "string", "required": false }, { "type": "boolean", "required": false }]
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
+            "anyOf": [
+              {
+                "type": "string",
+                "required": false,
+                "enum": ["true", "false"]
+              },
+              { "type": "boolean", "required": false }
+            ],
+            "ref": "#/components/schemas/BooleanQueryValue"
           }
         }
       },
@@ -2876,26 +2687,54 @@
                 "required": false,
                 "maxLength": 1000000
               },
-              "status": { "type": "integer", "required": false },
+              "status": {
+                "type": "integer",
+                "required": false,
+                "enum": [6, 5, 4, 3, 2, 1, 0]
+              },
               "primaryLabelId": { "type": "string", "required": false, "format": "uuid" },
               "displayOrder": { "type": "number", "required": false },
               "labels": {
                 "type": "object",
                 "required": false,
                 "properties": {
-                  "add": { "type": "array", "required": false, "itemType": "string" },
-                  "remove": { "type": "array", "required": false, "itemType": "string" }
+                  "add": {
+                    "type": "array",
+                    "required": false,
+                    "maxItems": 50,
+                    "itemType": "string",
+                    "format": "uuid"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "required": false,
+                    "maxItems": 50,
+                    "itemType": "string",
+                    "format": "uuid"
+                  }
                 }
               },
               "assignedTo": {
                 "type": "object",
                 "required": false,
                 "properties": {
-                  "add": { "type": "array", "required": false, "itemType": "string" },
-                  "remove": { "type": "array", "required": false, "itemType": "string" }
+                  "add": {
+                    "type": "array",
+                    "required": false,
+                    "maxItems": 50,
+                    "itemType": "string",
+                    "format": "uuid"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "required": false,
+                    "maxItems": 50,
+                    "itemType": "string",
+                    "format": "uuid"
+                  }
                 }
               },
-              "projectId": { "type": "string", "required": false, "maxLength": 50 },
+              "projectId": { "type": "string", "required": false, "format": "uuid" },
               "publicAt": {
                 "type": ["string", "null"],
                 "required": false

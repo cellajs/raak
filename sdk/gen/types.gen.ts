@@ -16,6 +16,11 @@ export type UserMinimalBase = {
 };
 
 /**
+ * Minimal user data for references, or null when no user is available.
+ */
+export type NullableUserMinimalBase = UserMinimalBase | null;
+
+/**
  * Base user schema with essential fields for identification and display.
  */
 export type UserBase = {
@@ -55,14 +60,8 @@ export type ProductBase = {
   createdAt: string;
   updatedAt: string | null;
   description: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: NullableUserMinimalBase;
+  updatedBy: NullableUserMinimalBase;
   entityType: 'task' | 'label' | 'attachment';
   keywords: string;
 };
@@ -106,6 +105,16 @@ export type StxBase = {
 };
 
 /**
+ * Sync transaction metadata, or null when an event has no sync transaction.
+ */
+export type NullableStxBase = StxBase | null;
+
+/**
+ * Boolean query value accepted as a boolean or its lowercase string representation.
+ */
+export type BooleanQueryValue = 'true' | 'false' | boolean;
+
+/**
  * Realtime notification delivered via SSE for entity and membership changes.
  */
 export type StreamNotification = {
@@ -138,10 +147,7 @@ export type StreamNotification = {
    * Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)
    */
   channelId: string | null;
-  stx: StxBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  stx: NullableStxBase;
   /**
    * Last sequence position for a batched notification — client should fetch range
    */
@@ -334,10 +340,7 @@ export type InactiveMembership = {
   role: 'admin' | 'member' | 'guest';
   rejectedAt: string | null;
   remindedAt: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: NullableUserMinimalBase;
   organizationId: string;
   workspaceId: string | null;
   projectId: string | null;
@@ -419,14 +422,8 @@ export type Project = {
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: NullableUserMinimalBase;
+  updatedBy: NullableUserMinimalBase;
   publishedAt: string | null;
   publicAt: string | null;
   path: string | null;
@@ -521,20 +518,8 @@ export type Task = {
     projectId: string;
   } | null;
   assignedTo: Array<UserMinimalBase>;
-  createdBy: {
-    id: string;
-    name: string;
-    slug: string;
-    thumbnailUrl: string | null;
-    entityType: 'user';
-  } | null;
-  updatedBy: {
-    id: string;
-    name: string;
-    slug: string;
-    thumbnailUrl: string | null;
-    entityType: 'user';
-  } | null;
+  createdBy: NullableUserMinimalBase;
+  updatedBy: NullableUserMinimalBase;
   stx: StxBase;
 };
 
@@ -551,14 +536,8 @@ export type Organization = {
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: NullableUserMinimalBase;
+  updatedBy: NullableUserMinimalBase;
   publishedAt: string | null;
   publicAt: string | null;
   path: string | null;
@@ -646,14 +625,8 @@ export type Workspace = {
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: NullableUserMinimalBase;
+  updatedBy: NullableUserMinimalBase;
   publishedAt: string | null;
   publicAt: string | null;
   path: string | null;
@@ -692,14 +665,8 @@ export type Attachment = {
   stx: StxBase;
   description: string | null;
   keywords: string;
-  createdBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
-  updatedBy: UserMinimalBase &
-    ({
-      [key: string]: unknown;
-    } | null);
+  createdBy: NullableUserMinimalBase;
+  updatedBy: NullableUserMinimalBase;
   deletedAt: string | null;
   deletedBy: string | null;
   publicAt: string | null;
@@ -2254,7 +2221,10 @@ export type GetUploadTokenData = {
   body?: never;
   path?: never;
   query: {
-    publicBucket?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    publicBucket?: BooleanQueryValue;
     organizationId?: string;
     templateId: 'avatar' | 'cover' | 'attachment';
   };
@@ -2841,7 +2811,10 @@ export type SendNewsletterData = {
   };
   path?: never;
   query?: {
-    toSelf?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    toSelf?: BooleanQueryValue;
   };
   url: '/system/newsletter';
 };
@@ -3682,7 +3655,10 @@ export type GetUserData = {
     relatableUserId: string;
   };
   query?: {
-    slug?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    slug?: BooleanQueryValue;
   };
   url: '/users/users/{relatableUserId}';
 };
@@ -3733,7 +3709,10 @@ export type GetPublicProjectData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    slug?: BooleanQueryValue;
   };
   url: '/public/projects/{id}';
 };
@@ -4309,7 +4288,10 @@ export type GetOrganizationData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    slug?: BooleanQueryValue;
     include?: string;
   };
   url: '/{tenantId}/organizations/{id}';
@@ -4658,7 +4640,10 @@ export type GetWorkspaceData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    slug?: BooleanQueryValue;
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/workspaces/{id}';
@@ -4998,7 +4983,10 @@ export type GetProjectData = {
     id: string;
   };
   query?: {
-    slug?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    slug?: BooleanQueryValue;
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/projects/{id}';
@@ -5793,7 +5781,10 @@ export type UpdateAttachmentData = {
     id: string;
   };
   query?: {
-    fullResponse?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    fullResponse?: BooleanQueryValue;
   };
   url: '/{tenantId}/{organizationId}/attachments/{id}';
 };
@@ -6200,10 +6191,7 @@ export type GetPendingMembershipsResponses = {
       thumbnailUrl: string | null;
       role: 'admin' | 'member' | 'guest' | null;
       createdAt: string;
-      createdBy: UserMinimalBase &
-        ({
-          [key: string]: unknown;
-        } | null);
+      createdBy: NullableUserMinimalBase;
     }>;
     total: number;
   };
@@ -6480,7 +6468,7 @@ export type UpdateTaskData = {
     ops: {
       name?: string;
       description?: string | null;
-      status?: number;
+      status?: 6 | 5 | 4 | 3 | 2 | 1 | 0;
       primaryLabelId?: string;
       displayOrder?: number;
       labels?: {
@@ -6502,7 +6490,10 @@ export type UpdateTaskData = {
     id: string;
   };
   query?: {
-    fullResponse?: string | boolean;
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    fullResponse?: BooleanQueryValue;
   };
   url: '/{tenantId}/{organizationId}/tasks/{id}';
 };

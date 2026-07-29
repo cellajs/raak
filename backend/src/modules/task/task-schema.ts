@@ -7,8 +7,21 @@ import { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import { tasksTable } from '#/modules/task/task-db';
 import { mockTaskResponse } from '#/modules/task/task-mocks';
 import { TaskStatus } from '#/modules/task/task-properties';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
-import { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import {
+  batchResponseSchema,
+  maxLength,
+  paginationQuerySchema,
+  stxBaseSchema,
+  validIdSchema,
+  validUuidSchema,
+} from '#/schemas';
+import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/user-minimal-base';
+
+const taskRelationIdsSchema = validUuidSchema
+  .array()
+  .max(50)
+  .refine((ids) => new Set(ids).size === ids.length, 'Relation IDs must be unique');
+const taskRelationDeltaSchema = arrayDeltaSchema(validUuidSchema);
 
 const taskInsertSchema = createInsertSchema(tasksTable, {
   description: z.string().max(maxLength.html).nullable(),
@@ -26,11 +39,11 @@ export const taskSchema = z
     }).shape,
     labels: z.array(labelEmbeddedSchema),
     // Hydrated from primaryLabelId; null only when the referenced row is missing from the relation set
-    primaryLabel: z.union([labelEmbeddedSchema, z.null()]),
+    primaryLabel: labelEmbeddedSchema.nullable(),
     status: z.enum(TaskStatus),
     assignedTo: z.array(userMinimalBaseSchema),
-    createdBy: z.object({ ...userMinimalBaseSchema.shape }).nullable(),
-    updatedBy: z.object({ ...userMinimalBaseSchema.shape }).nullable(),
+    createdBy: nullableUserMinimalBaseSchema,
+    updatedBy: nullableUserMinimalBaseSchema,
     stx: stxBaseSchema,
   })
   .openapi('Task', {
@@ -51,8 +64,8 @@ const taskCreateSchema = taskInsertSchema
     // Optional on the wire: the server falls back to the project's default primary label
     primaryLabelId: validUuidSchema.optional(),
     displayOrder: z.number().optional(),
-    labels: z.array(z.string()).optional(),
-    assignedTo: z.array(z.string()).optional(),
+    labels: taskRelationIdsSchema.optional(),
+    assignedTo: taskRelationIdsSchema.optional(),
   });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seams for task */
@@ -61,12 +74,12 @@ export const taskContract = evolutionContract.product('task', {
   updateOps: {
     name: z.string().max(maxLength.field),
     description: z.string().max(maxLength.html).nullable(),
-    status: z.number().int(),
+    status: z.enum(TaskStatus),
     primaryLabelId: validUuidSchema,
     displayOrder: z.number(),
-    labels: arrayDeltaSchema,
-    assignedTo: arrayDeltaSchema,
-    projectId: z.string().max(maxLength.id),
+    labels: taskRelationDeltaSchema,
+    assignedTo: taskRelationDeltaSchema,
+    projectId: validUuidSchema,
     publicAt: z.string().nullable(),
   },
 });
@@ -80,8 +93,8 @@ export const taskListQueryBaseSchema = paginationQuerySchema.extend({
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),
-  projectId: z.string().max(maxLength.id).optional(),
-  workspaceId: z.string().max(maxLength.id).optional(),
+  projectId: validIdSchema.optional(),
+  workspaceId: validIdSchema.optional(),
 });
 
 export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !data.projectId || !data.workspaceId, {

@@ -880,22 +880,8 @@
                       "createdBy": {
                         "type": ["object", "null"],
                         "required": true,
-                        "description": "Minimal user data for references.",
-                        "properties": {
-                          "id": { "type": "string", "required": true },
-                          "name": { "type": "string", "required": true },
-                          "slug": { "type": "string", "required": true },
-                          "thumbnailUrl": {
-                            "type": ["string", "null"],
-                            "required": true
-                          },
-                          "entityType": {
-                            "type": "string",
-                            "required": true,
-                            "enum": ["user"]
-                          }
-                        },
-                        "extendsRef": "#/components/schemas/UserMinimalBase"
+                        "description": "Minimal user data for references, or null when no user is available.",
+                        "ref": "#/components/schemas/NullableUserMinimalBase"
                       },
                       "organizationId": { "type": "string", "required": true, "format": "uuid" },
                       "workspaceId": {
@@ -1196,25 +1182,19 @@
               "required": true
             },
             "params": {
+              "type": ["object", "null"],
               "required": true,
-              "anyOf": [
-                {
+              "properties": {
+                "auth": {
                   "type": "object",
-                  "required": false,
+                  "required": true,
                   "properties": {
-                    "auth": {
-                      "type": "object",
-                      "required": true,
-                      "properties": {
-                        "key": { "type": "string", "required": true },
-                        "expires": { "type": "string", "required": false }
-                      }
-                    }
-                  },
-                  "additionalProperties": { "type": "object", "required": false }
-                },
-                { "type": "null", "required": false }
-              ]
+                    "key": { "type": "string", "required": true },
+                    "expires": { "type": "string", "required": false }
+                  }
+                }
+              },
+              "additionalProperties": { "type": "object", "required": false }
             }
           },
           "ref": "#/components/schemas/UploadToken",
@@ -1278,9 +1258,18 @@
         "properties": {
           "publicBucket": {
             "required": false,
-            "anyOf": [{ "type": "string", "required": false }, { "type": "boolean", "required": false }]
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
+            "anyOf": [
+              {
+                "type": "string",
+                "required": false,
+                "enum": ["true", "false"]
+              },
+              { "type": "boolean", "required": false }
+            ],
+            "ref": "#/components/schemas/BooleanQueryValue"
           },
-          "organizationId": { "type": "string", "required": false },
+          "organizationId": { "type": "string", "required": false, "format": "uuid" },
           "templateId": {
             "type": "string",
             "required": true,

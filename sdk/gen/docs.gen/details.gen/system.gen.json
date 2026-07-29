@@ -85,7 +85,9 @@
             "minItems": 1,
             "maxItems": 50,
             "itemType": "string",
-            "format": "email"
+            "format": "email",
+            "minLength": 4,
+            "maxLength": 255
           }
         },
         "required": true,
@@ -433,7 +435,16 @@
         "properties": {
           "toSelf": {
             "required": false,
-            "anyOf": [{ "type": "string", "required": false }, { "type": "boolean", "required": false }]
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
+            "anyOf": [
+              {
+                "type": "string",
+                "required": false,
+                "enum": ["true", "false"]
+              },
+              { "type": "boolean", "required": false }
+            ],
+            "ref": "#/components/schemas/BooleanQueryValue"
           }
         }
       },
@@ -443,13 +454,15 @@
           "organizationIds": {
             "type": "array",
             "required": true,
+            "maxItems": 50,
             "itemType": "string",
-            "maxLength": 50
+            "format": "uuid"
           },
           "roles": {
             "type": "array",
             "required": true,
             "minItems": 1,
+            "maxItems": 3,
             "itemType": "string",
             "enum": ["admin", "member", "guest"]
           },

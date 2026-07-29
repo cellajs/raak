@@ -395,6 +395,18 @@
         },
         "x-tags": ["base", "users", "cella"]
       },
+      "NullableUserMinimalBase": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/UserMinimalBase"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Minimal user data for references, or null when no user is available.",
+        "x-tags": ["base", "users", "cella"]
+      },
       "UserBase": {
         "type": "object",
         "properties": {
@@ -534,24 +546,10 @@
             "type": ["string", "null"]
           },
           "createdBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "entityType": {
             "type": "string",
@@ -710,6 +708,32 @@
         },
         "x-tags": ["base", "cella"]
       },
+      "NullableStxBase": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/StxBase"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Sync transaction metadata, or null when an event has no sync transaction.",
+        "x-tags": ["base", "cella"]
+      },
+      "BooleanQueryValue": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": ["true", "false"]
+          },
+          {
+            "type": "boolean"
+          }
+        ],
+        "default": "false",
+        "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
+        "x-tags": ["base", "cella"]
+      },
       "StreamNotification": {
         "type": "object",
         "properties": {
@@ -758,15 +782,7 @@
             "description": "Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)"
           },
           "stx": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StxBase"
-              },
-              {
-                "type": ["object", "null"],
-                "description": "Sync transaction metadata for HLC conflict resolution"
-              }
-            ]
+            "$ref": "#/components/schemas/NullableStxBase"
           },
           "batchUntilSeq": {
             "type": ["integer", "null"],
@@ -1487,14 +1503,7 @@
             "type": ["string", "null"]
           },
           "createdBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "organizationId": {
             "type": "string",
@@ -1562,30 +1571,23 @@
             "type": ["string", "null"]
           },
           "params": {
-            "anyOf": [
-              {
+            "type": ["object", "null"],
+            "properties": {
+              "auth": {
                 "type": "object",
                 "properties": {
-                  "auth": {
-                    "type": "object",
-                    "properties": {
-                      "key": {
-                        "type": "string"
-                      },
-                      "expires": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["key"]
+                  "key": {
+                    "type": "string"
+                  },
+                  "expires": {
+                    "type": "string"
                   }
                 },
-                "required": ["auth"],
-                "additionalProperties": {}
-              },
-              {
-                "type": "null"
+                "required": ["key"]
               }
-            ]
+            },
+            "required": ["auth"],
+            "additionalProperties": {}
           }
         },
         "required": ["publicBucket", "sub", "s3", "signature", "params"],
@@ -1771,24 +1773,10 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "publishedAt": {
             "type": ["string", "null"]
@@ -2115,39 +2103,32 @@
             }
           },
           "primaryLabel": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "slug": {
-                    "type": "string"
-                  },
-                  "color": {
-                    "type": ["string", "null"]
-                  },
-                  "mode": {
-                    "type": "string",
-                    "enum": ["primary", "secondary", "epic"]
-                  },
-                  "icon": {
-                    "type": ["string", "null"]
-                  },
-                  "projectId": {
-                    "type": "string"
-                  }
-                },
-                "required": ["id", "name", "slug", "color", "mode", "icon", "projectId"]
+            "type": ["object", "null"],
+            "properties": {
+              "id": {
+                "type": "string"
               },
-              {
-                "type": "null"
+              "name": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "color": {
+                "type": ["string", "null"]
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["primary", "secondary", "epic"]
+              },
+              "icon": {
+                "type": ["string", "null"]
+              },
+              "projectId": {
+                "type": "string"
               }
-            ]
+            },
+            "required": ["id", "name", "slug", "color", "mode", "icon", "projectId"]
           },
           "assignedTo": {
             "type": "array",
@@ -2156,48 +2137,10 @@
             }
           },
           "createdBy": {
-            "type": ["object", "null"],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "thumbnailUrl": {
-                "type": ["string", "null"]
-              },
-              "entityType": {
-                "type": "string",
-                "enum": ["user"]
-              }
-            },
-            "required": ["id", "name", "slug", "thumbnailUrl", "entityType"]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "type": ["object", "null"],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "thumbnailUrl": {
-                "type": ["string", "null"]
-              },
-              "entityType": {
-                "type": "string",
-                "enum": ["user"]
-              }
-            },
-            "required": ["id", "name", "slug", "thumbnailUrl", "entityType"]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "stx": {
             "$ref": "#/components/schemas/StxBase"
@@ -2310,24 +2253,10 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "publishedAt": {
             "type": ["string", "null"]
@@ -2399,9 +2328,7 @@
                   "properties": {
                     "slug": {
                       "type": "string",
-                      "minLength": 1,
-                      "maxLength": 255,
-                      "pattern": "^[a-z0-9][a-z0-9-]*$"
+                      "maxLength": 255
                     },
                     "name": {
                       "type": "string",
@@ -2428,15 +2355,8 @@
                       ]
                     },
                     "icon": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "maxLength": 255
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": ["string", "null"],
+                      "maxLength": 255
                     }
                   },
                   "required": ["slug", "name", "color", "icon"]
@@ -2719,24 +2639,10 @@
             "maxLength": 2048
           },
           "createdBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "publishedAt": {
             "type": ["string", "null"]
@@ -2923,24 +2829,10 @@
             "maxLength": 1000000
           },
           "createdBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "updatedBy": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": ["object", "null"]
-              }
-            ]
+            "$ref": "#/components/schemas/NullableUserMinimalBase"
           },
           "deletedAt": {
             "type": ["string", "null"]
@@ -3413,7 +3305,9 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "format": "email"
+                    "format": "email",
+                    "minLength": 4,
+                    "maxLength": 255
                   }
                 },
                 "required": ["email"]
@@ -3817,7 +3711,9 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "format": "email"
+                    "format": "email",
+                    "minLength": 4,
+                    "maxLength": 255
                   }
                 },
                 "required": ["email"]
@@ -4255,6 +4151,8 @@
                   },
                   "email": {
                     "type": "string",
+                    "format": "email",
+                    "minLength": 4,
                     "maxLength": 255
                   }
                 },
@@ -4346,6 +4244,8 @@
                   },
                   "email": {
                     "type": "string",
+                    "format": "email",
+                    "minLength": 4,
                     "maxLength": 255
                   }
                 },
@@ -5485,23 +5385,17 @@
         "parameters": [
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "publicBucket",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "required": false,
             "name": "organizationId",
@@ -6075,7 +5969,9 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "format": "email"
+                      "format": "email",
+                      "minLength": 4,
+                      "maxLength": 255
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -6381,17 +6277,10 @@
         "parameters": [
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "toSelf",
             "in": "query"
           }
@@ -6407,8 +6296,9 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "maxLength": 50
-                    }
+                      "format": "uuid"
+                    },
+                    "maxItems": 50
                   },
                   "roles": {
                     "type": "array",
@@ -6416,7 +6306,8 @@
                       "type": "string",
                       "enum": ["admin", "member", "guest"]
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 3
                   },
                   "subject": {
                     "type": "string",
@@ -6503,7 +6394,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -6511,7 +6403,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -6967,9 +6860,10 @@
                 "properties": {
                   "domain": {
                     "type": "string",
+                    "format": "hostname",
                     "minLength": 4,
                     "maxLength": 255,
-                    "pattern": "^[a-z0-9].*[a-z0-9]$"
+                    "pattern": "^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$"
                   }
                 },
                 "required": ["domain"]
@@ -7382,8 +7276,9 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "maxLength": 255,
-                    "format": "email"
+                    "format": "email",
+                    "minLength": 4,
+                    "maxLength": 255
                   },
                   "type": {
                     "type": "string",
@@ -7483,7 +7378,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -7491,7 +7387,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -7777,7 +7674,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -7785,7 +7683,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -7992,17 +7891,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           }
@@ -8110,17 +8002,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           }
@@ -8370,7 +8255,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -8378,7 +8264,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -9475,7 +9362,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -9483,7 +9371,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -9810,17 +9699,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -10082,9 +9964,7 @@
                           "properties": {
                             "slug": {
                               "type": "string",
-                              "minLength": 1,
-                              "maxLength": 255,
-                              "pattern": "^[a-z0-9][a-z0-9-]*$"
+                              "maxLength": 255
                             },
                             "name": {
                               "type": "string",
@@ -10111,15 +9991,8 @@
                               ]
                             },
                             "icon": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "maxLength": 255
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
+                              "type": ["string", "null"],
+                              "maxLength": 255
                             }
                           },
                           "required": ["slug", "name", "color", "icon"]
@@ -10731,7 +10604,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -10739,7 +10613,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -11011,17 +10886,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -11795,7 +11663,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -11803,7 +11672,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -12033,17 +11903,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -13282,7 +13145,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -13290,7 +13154,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -14222,17 +14087,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "fullResponse",
             "in": "query"
           }
@@ -14398,9 +14256,9 @@
                     "type": "array",
                     "items": {
                       "type": "string",
+                      "format": "email",
                       "minLength": 4,
-                      "maxLength": 255,
-                      "format": "email"
+                      "maxLength": 255
                     },
                     "minItems": 1,
                     "maxItems": 50
@@ -14881,7 +14739,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -14889,7 +14748,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -15151,7 +15011,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -15159,7 +15020,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -15224,14 +15086,7 @@
                             "type": "string"
                           },
                           "createdBy": {
-                            "allOf": [
-                              {
-                                "$ref": "#/components/schemas/UserMinimalBase"
-                              },
-                              {
-                                "type": ["object", "null"]
-                              }
-                            ]
+                            "$ref": "#/components/schemas/NullableUserMinimalBase"
                           }
                         },
                         "required": ["id", "email", "thumbnailUrl", "role", "createdAt", "createdBy"]
@@ -15385,14 +15240,18 @@
                     "labels": {
                       "type": "array",
                       "items": {
-                        "type": "string"
-                      }
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "maxItems": 50
                     },
                     "assignedTo": {
                       "type": "array",
                       "items": {
-                        "type": "string"
-                      }
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "maxItems": 50
                     },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
@@ -15730,7 +15589,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -15738,7 +15598,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",
@@ -16195,17 +16056,10 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "default": "false"
+              "$ref": "#/components/schemas/BooleanQueryValue"
             },
             "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "fullResponse",
             "in": "query"
           }
@@ -16228,7 +16082,8 @@
                         "maxLength": 1000000
                       },
                       "status": {
-                        "type": "integer"
+                        "type": "integer",
+                        "enum": [6, 5, 4, 3, 2, 1, 0]
                       },
                       "primaryLabelId": {
                         "type": "string",
@@ -16243,15 +16098,19 @@
                           "add": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           },
                           "remove": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           }
                         }
@@ -16262,22 +16121,26 @@
                           "add": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           },
                           "remove": {
                             "type": "array",
                             "items": {
-                              "type": "string"
+                              "type": "string",
+                              "format": "uuid"
                             },
+                            "maxItems": 50,
                             "default": []
                           }
                         }
                       },
                       "projectId": {
                         "type": "string",
-                        "maxLength": 50
+                        "format": "uuid"
                       },
                       "publicAt": {
                         "type": ["string", "null"]
@@ -16724,7 +16587,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "offset",
@@ -16732,7 +16596,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\d+$"
             },
             "required": false,
             "name": "limit",

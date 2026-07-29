@@ -14,7 +14,7 @@ import {
   projectSchema,
   projectUpdateBodySchema,
   projectWithMembershipSchema,
-  workspaceIdQuery,
+  workspaceIdQuerySchema,
 } from '#/modules/project/project-schema';
 import {
   batchResponseSchema,
@@ -42,7 +42,7 @@ const projectRoutes = {
       'Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.',
     request: {
       params: tenantOrgParamSchema,
-      query: workspaceIdQuery,
+      query: workspaceIdQuerySchema,
       body: { required: true, content: { 'application/json': { schema: projectCreateBodySchema } } },
     },
     responses: {
@@ -154,7 +154,7 @@ const projectRoutes = {
       "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
     request: {
       params: idInTenantOrgParamSchema,
-      query: workspaceIdQuery,
+      query: workspaceIdQuerySchema,
     },
     responses: {
       200: {
@@ -210,7 +210,7 @@ const projectRoutes = {
     operationId: 'moveProjectToWorkspace',
     summary: 'Move project between workspaces',
     description: 'Moves a project from one workspace to another.',
-    request: { params: idInTenantOrgParamSchema, query: workspaceIdQuery },
+    request: { params: idInTenantOrgParamSchema, query: workspaceIdQuerySchema },
     responses: {
       200: {
         description: 'Moved project',

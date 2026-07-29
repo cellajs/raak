@@ -273,7 +273,7 @@ interface FindMembersPaginatedOpts {
   offset: number;
   limit: number;
   role?: EntityRole;
-  userIds?: string;
+  userIds?: string[];
 }
 
 /** Get paginated members list with total count for an entity. */
@@ -292,7 +292,7 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
   ];
 
   if (role) membersFilters.push(eq(membershipsTable.role, role));
-  if (userIds) membersFilters.push(inArray(usersTable.id, userIds.split(',')));
+  if (userIds?.length) membersFilters.push(inArray(usersTable.id, userIds));
 
   const orderBy = getOrderColumns({
     sort,
