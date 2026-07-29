@@ -1,7 +1,5 @@
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
-import { tenantContext } from '#/db/tenant-context';
-import { dispatchMutation } from '#/lib/mutation-bus';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
@@ -28,13 +26,7 @@ export async function updateProjectOp(ctx: AuthContext, id: string, rawInput: Re
   }
 
   const values = { ...input, updatedAt: getIsoDate(), updatedBy: user.id };
-  // Update the project and cascade a public_at change onto its children in one transaction, so
-  // publish/unpublish and the child rewrite commit together (replaces the AFTER UPDATE trigger).
-  const updatedProjectRecord = await tenantContext(ctx, async (txCtx) => {
-    const record = await updateProject(txCtx, { id: project.id, values });
-    await dispatchMutation(txCtx, 'project.updated', { before: [project], after: [record] });
-    return record;
-  });
+  const updatedProjectRecord = await updateProject(ctx, { id: project.id, values });
 
   log.info('Project updated', { projectId: updatedProjectRecord.id });
 

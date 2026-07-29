@@ -1,10 +1,6 @@
-import { and, eq, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
-import { republishedProjects } from '#/db/utils/cascade-public-at';
 import { defineBackendModule } from '#/lib/module';
 import { updateTaskOp } from '#/modules/task/operations/update-task';
-import { tasksTable } from '#/modules/task/task-db';
-import { getIsoDate } from '#/utils/iso-date';
 
 defineBackendModule({
   name: 'tasks',
@@ -24,20 +20,5 @@ defineBackendModule({
       { ops: { description }, stx: { mutationId: uuidv7(), sourceId: 'yjs-relay', fieldTimestamps: {} } },
       { fullResponse: false, serverOrigin: true },
     );
-  },
-  onMutation: {
-    // Cascade a project's public_at change onto its child tasks (row-local public read). Server-origin
-    // write (stx minus changedFields) so the change syncs, unlike the former DB trigger; runs inside
-    // updateProjectOp's transaction (dispatched with txCtx) so publish and cascade commit together.
-    'project.updated': async (ctx, { before = [], after = [] }) => {
-      const updatedAt = getIsoDate();
-      const updatedBy = ctx.var.user.id;
-      for (const { id, publicAt } of republishedProjects(before, after)) {
-        await ctx.var.db
-          .update(tasksTable)
-          .set({ publicAt, updatedAt, updatedBy, stx: sql`stx - 'changedFields'` })
-          .where(and(eq(tasksTable.projectId, id), sql`${tasksTable.publicAt} IS DISTINCT FROM ${publicAt}`));
-      }
-    },
   },
 });
