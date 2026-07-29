@@ -52,59 +52,15 @@
         },
         "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
         "createdBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "updatedBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "deletedAt": {
@@ -297,59 +253,15 @@
           "required": true
         },
         "createdBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "updatedBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "entityType": {
@@ -454,37 +366,9 @@
           "description": "Channel entity ID for grouping (e.g. projectId for tasks in unseen counts)"
         },
         "stx": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Sync transaction metadata, or null when an event has no sync transaction.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
-              "properties": {
-                "mutationId": {
-                  "type": "string",
-                  "required": true,
-                  "description": "Unique mutation ID",
-                  "maxLength": 36
-                },
-                "sourceId": {
-                  "type": "string",
-                  "required": true,
-                  "description": "Tab/instance identifier for echo prevention",
-                  "maxLength": 64
-                },
-                "fieldTimestamps": {
-                  "type": "object",
-                  "required": true,
-                  "description": "Per-field HLC timestamps for scalar fields being changed",
-                  "additionalProperties": { "type": "string", "required": false }
-                }
-              },
-              "ref": "#/components/schemas/StxBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableStxBase"
         },
         "batchUntilSeq": {
@@ -1070,31 +954,9 @@
           "required": true
         },
         "createdBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
@@ -1310,59 +1172,15 @@
           "maxLength": 2048
         },
         "createdBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "updatedBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "publishedAt": {
@@ -1761,59 +1579,15 @@
           "maxLength": 2048
         },
         "createdBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "updatedBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "publishedAt": {
@@ -2233,59 +2007,15 @@
           }
         },
         "createdBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "updatedBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "stx": {
@@ -2708,59 +2438,15 @@
           "maxLength": 2048
         },
         "createdBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "updatedBy": {
+          "type": ["object", "null"],
           "required": true,
           "description": "Minimal user data for references, or null when no user is available.",
-          "anyOf": [
-            {
-              "type": "object",
-              "required": false,
-              "description": "Minimal user data for references.",
-              "properties": {
-                "id": { "type": "string", "required": true },
-                "name": { "type": "string", "required": true },
-                "slug": { "type": "string", "required": true },
-                "thumbnailUrl": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
-                "entityType": {
-                  "type": "string",
-                  "required": true,
-                  "enum": ["user"]
-                }
-              },
-              "ref": "#/components/schemas/UserMinimalBase"
-            },
-            { "type": "null", "required": false }
-          ],
           "ref": "#/components/schemas/NullableUserMinimalBase"
         },
         "publishedAt": {
