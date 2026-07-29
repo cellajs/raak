@@ -26,7 +26,7 @@ export const upsertLastStarted = async (ctx: AuthContext, { lastStartedAt }: Ups
 };
 
 /** Select a user by ID with activity timestamps (from user_counters). */
-export const findUserById = async (ctx: AuthContext) => {
+export const findCurrentUser = async (ctx: AuthContext) => {
   const { db, userId } = ctx.var;
   const [user] = await db.select(userSelect).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   return user;

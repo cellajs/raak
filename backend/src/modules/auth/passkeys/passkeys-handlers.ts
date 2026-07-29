@@ -8,10 +8,8 @@ import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
 import {
   disableMfa,
-  findAuthUserById,
   findCredentialIdsByUser,
   findRemainingMfaMethods,
-  findUserByEmail,
   findUserIdByCredentialId,
   insertPasskey,
 } from '#/modules/auth/auth-queries';
@@ -24,6 +22,7 @@ import { parseAndValidatePasskeyAttestation, validatePasskey } from '#/modules/a
 import { passkeysTable } from '#/modules/auth/passkeys/passkeys-db';
 import { authPasskeysRoutes } from '#/modules/auth/passkeys/passkeys-routes';
 import type { UserModel } from '#/modules/user/user-db';
+import { findUserByEmail, findUserById } from '#/modules/user/user-queries';
 import { defaultHook } from '#/utils/default-hook';
 import { TimeSpan } from '#/utils/time-span';
 
@@ -155,7 +154,7 @@ app.openapi(authPasskeysRoutes.signInWithPasskey, async (ctx) => {
     const passkeyRecord = await findUserIdByCredentialId(ctx, { credentialId: passkeyData.credentialId });
 
     if (passkeyRecord) {
-      user = await findAuthUserById(ctx, { userId: passkeyRecord.userId });
+      user = await findUserById(ctx, { id: passkeyRecord.userId });
     }
   }
 

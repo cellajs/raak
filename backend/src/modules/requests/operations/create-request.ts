@@ -4,7 +4,8 @@ import { AppError } from '#/core/error';
 import { mailer } from '#/lib/mailer';
 import { sendMatrixMessage } from '#/lib/notifications/send-matrix-message';
 import type { RequestModel } from '#/modules/requests/requests-db';
-import { findExistingRequest, findUserByEmail, insertRequest } from '#/modules/requests/requests-queries';
+import { findExistingRequest, insertRequest } from '#/modules/requests/requests-queries';
+import { findUserByEmail } from '#/modules/user/user-queries';
 import { requestInfoEmail, requestResponseEmail } from '../../../../emails';
 
 // These requests are only allowed to be created if user has none yet

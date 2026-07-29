@@ -2,26 +2,7 @@ import { and, count, eq, getColumns, inArray, type SQL, sql } from 'drizzle-orm'
 import type { DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { type RequestModel, requestsTable } from '#/modules/requests/requests-db';
-import { emailsTable } from '#/modules/user/emails-db';
-import { userSelect } from '#/modules/user/helpers/select';
-import { usersTable } from '#/modules/user/user-db';
 import { getOrderColumns } from '#/utils/order-column';
-
-interface FindUserByEmailOpts {
-  email: string;
-}
-
-/** Find a user by email (via emailsTable join). */
-export const findUserByEmail = async (ctx: DbContext, { email }: FindUserByEmailOpts) => {
-  const { db } = ctx.var;
-  const [user] = await db
-    .select(userSelect)
-    .from(usersTable)
-    .leftJoin(emailsTable, eq(usersTable.id, emailsTable.userId))
-    .where(eq(emailsTable.email, email))
-    .limit(1);
-  return user;
-};
 
 interface FindExistingRequestOpts {
   email: string;
