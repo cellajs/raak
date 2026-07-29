@@ -1,5 +1,6 @@
 import type { ProductEntityType } from 'shared';
 import type { AuthContext } from '#/core/context';
+import { onBackendModuleRegister } from '#/lib/module';
 
 export interface YjsMaterializeInput {
   entityId: string;
@@ -16,10 +17,11 @@ export type YjsMaterializer = (ctx: AuthContext, input: YjsMaterializeInput) => 
 
 const materializers = new Map<ProductEntityType, YjsMaterializer>();
 
-/** Register the materializer for an entity type. Call at module load time (e.g. in the entity's module file). */
-export function registerYjsMaterializer(entityType: ProductEntityType, materializer: YjsMaterializer): void {
-  materializers.set(entityType, materializer);
-}
+// Index the materializer each backend module declares (see defineBackendModule); replaces the
+// former registerYjsMaterializer call.
+onBackendModuleRegister((module) => {
+  if (module.entity && module.yjsMaterializer) materializers.set(module.entity, module.yjsMaterializer);
+});
 
 export function getYjsMaterializer(entityType: ProductEntityType): YjsMaterializer | undefined {
   return materializers.get(entityType);
