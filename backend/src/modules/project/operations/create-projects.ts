@@ -1,15 +1,12 @@
 import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
-import { tenantContext } from '#/db/tenant-context';
+import { dispatchMutation } from '#/lib/mutation-bus';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getOrgEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/helpers/check-slug';
-import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
-import { insertLabels } from '#/modules/label/label-queries';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
-import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
 import { resolveProjectWorkspaceId } from '#/modules/project/helpers/project-membership-workspace';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
@@ -90,20 +87,8 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
 
   log.info('Projects created', { count: projectRecords.length, ids: projectIds });
 
-  // Provision the organization's primary label set into each new project as tracked rows.
-  const { setupConfig } = withSetupConfigDefaults(organization);
-  const primaryLabelRows = projectRecords.flatMap((project) =>
-    buildPrimaryLabelRows({
-      entries: setupConfig.primaryLabels,
-      projectId: project.id,
-      organizationId: organization.id,
-      tenantId: organization.tenantId,
-      createdBy: user.id,
-    }),
-  );
-  if (primaryLabelRows.length > 0) {
-    await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: primaryLabelRows }));
-  }
+  // Let the label module provision the organization's primary label set into each new project.
+  for (const project of projectRecords) await dispatchMutation(ctx, 'project.created', { after: project });
 
   // Insert memberships for each project
   const membershipInserts = projectRecords.map((project) => ({

@@ -2,8 +2,10 @@ import type { PrimaryLabelDefinition } from 'shared';
 import { uuidv7 } from 'uuidv7';
 import { tenantContext } from '#/db/tenant-context';
 import { defineBackendModule } from '#/lib/module';
-import { propagateSetupConfigLabels } from '#/modules/label/helpers/primary-labels';
+import { buildPrimaryLabelRows, propagateSetupConfigLabels } from '#/modules/label/helpers/primary-labels';
+import { insertLabels } from '#/modules/label/label-queries';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
+import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
 
 defineBackendModule({
   name: 'labels',
@@ -26,6 +28,20 @@ defineBackendModule({
     );
   },
   onMutation: {
+    // Provision the organization's primary label set into each newly created project as tracked rows.
+    'project.created': async (ctx, { after }) => {
+      const organization = ctx.var.organization;
+      if (!after || !organization) return;
+      const { setupConfig } = withSetupConfigDefaults(organization);
+      const rows = buildPrimaryLabelRows({
+        entries: setupConfig.primaryLabels,
+        projectId: after.id as string,
+        organizationId: organization.id,
+        tenantId: organization.tenantId,
+        createdBy: ctx.var.user.id,
+      });
+      if (rows.length > 0) await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: rows }));
+    },
     // Fan edited primary-label definitions out to still-tracked rows across the org's projects,
     // matched by slug. Only fires when the update body carried primaryLabels.
     'organization.updated': async (ctx, { after, input }) => {
