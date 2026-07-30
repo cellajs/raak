@@ -6,7 +6,7 @@ import type { YjsMaterializer } from '#/modules/yjs/yjs-materializers';
 /**
  * A backend module's registration: shared metadata plus backend-only capabilities. Subsystems
  * build their own index from these via {@link onBackendModuleRegister}, so a module declares its
- * capabilities in one place instead of calling a separate register* function per subsystem.
+ * capabilities in one place and each subsystem projects the ones it owns.
  */
 export interface BackendModule extends ModuleConfig {
   /** The product entity this module owns; keys its product-scoped capabilities below. */

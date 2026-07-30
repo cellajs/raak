@@ -132,12 +132,12 @@ export const findAttachmentKeysByTaskId = async (ctx: DbContext, { taskId }: Fin
     .where(eq(attachmentsTable.taskId, taskId));
 };
 
-interface GetAttachmentViewCountOpts {
+interface FindAttachmentViewCountOpts {
   entityId: string;
 }
 
-/** Get an attachment's view count from product counters. */
-export const getAttachmentViewCount = async (ctx: DbContext, { entityId }: GetAttachmentViewCountOpts) => {
+/** Find an attachment's view count from product counters. */
+export const findAttachmentViewCount = async (ctx: DbContext, { entityId }: FindAttachmentViewCountOpts) => {
   const { db } = ctx.var;
   const [counters] = await db
     .select({ viewCount: productCountersTable.viewCount })
