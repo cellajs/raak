@@ -1,6 +1,5 @@
 import type { AuthContext } from '#/core/context';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
-import { dispatchMutation } from '#/lib/mutation-bus';
 import { deleteTasksByIds } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { getIsoDate } from '#/utils/iso-date';
@@ -10,11 +9,10 @@ export async function deleteTasksOp(ctx: AuthContext, ids: string[]): Promise<{ 
   const deletedAt = getIsoDate();
   const deletedBy = ctx.var.user.id;
 
+  // Attachment cleanup for the deleted tasks' host arrays is handled asynchronously by
+  // the CDC worker's owned-embedding GC (avoids attachment row locks during the request).
   await tenantContextIncludingDeleted(ctx, async (txCtx) => {
-    const tasksToDelete = await deleteTasksByIds(txCtx, { ids: allowedIds, deletedAt, deletedBy });
-    // Lifecycle cascade: the attachment module soft-deletes the tasks' attachments in the same
-    // transaction; the deleted task rows carry the deletedAt/deletedBy for it to reuse.
-    await dispatchMutation(txCtx, 'task.deleted', { before: tasksToDelete });
+    await deleteTasksByIds(txCtx, { ids: allowedIds, deletedAt, deletedBy });
   });
 
   return { data: [], rejectedIds };

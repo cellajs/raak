@@ -315,6 +315,27 @@
         "pnpm check"
       ],
       "summary": "attachments' per-variant originalKey/convertedKey/thumbnailKey/thumbnailTinyKey columns collapse into one keys jsonb map (AttachmentKeys: { original, preview?, thumbnail?, converted? }); selectVariantKey becomes keys[variant] ?? keys.original. Variant vocabulary realigned: mid-size thumbnail->preview, grid-cell thumbnail-tiny->thumbnail (attachmentVariantSchema/BlobVariant = original|preview|thumbnail|converted). Wire-breaking: clientCacheVersion bumped to v8-attachment-keys. DB: drop the four *_key columns, add keys jsonb with a jsonb_build_object backfill (thumbnail_key->preview, thumbnail_tiny_key->thumbnail). Manual: field-specific rename plus a data-preserving migration, no codemod. Apps that home attachments on a product entity keep their own taskId/projectId columns."
+    },
+    {
+      "id": "20260730T1009-owned-host-embedding",
+      "version": "next",
+      "title": "Product host FKs move to owned embeddings",
+      "kind": "manual",
+      "syncBreaking": false,
+      "clientCacheBump": false,
+      "script": null,
+      "roots": [
+        "backend/src",
+        "backend/drizzle",
+        "frontend/src",
+        "shared"
+      ],
+      "requires": [
+        "pnpm generate",
+        "pnpm sdk",
+        "pnpm check"
+      ],
+      "summary": "Child-side product-to-product host FK columns (taskId-style) are deprecated in favor of host-side id arrays registered as lifecycle 'owned' productEmbeddings. The template machinery (owned-embedding GC in the CDC worker, attachmentId media-block refs, derive-description-core collection, propagation id-array patching) already ships and activates on the first 'owned' entry. Template-side this is docs-only: apps without a host FK are unaffected; apps with one flip on their own schedule (host array + GIN, backfill from FK, drop FK and in-request cascades, own cache bump, feat!)."
     }
   ]
 }

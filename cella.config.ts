@@ -38,14 +38,12 @@ export default defineConfig({
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
-      'backend/src/modules/attachment/attachment-db.ts',
+      // Attachment pins carry only the projectId/publicAt fork axis since the owned-embedding
+      // flip removed the task strand; db/mocks/module/queries/presigned converged to upstream.
       'backend/src/modules/attachment/attachment-schema.ts',
       'backend/src/modules/attachment/attachment-queries.ts',
-      'backend/src/modules/attachment/attachment-mocks.ts',
-      'backend/src/modules/attachment/attachment-module.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
-      'backend/src/modules/attachment/operations/get-presigned-urls.ts',
       'backend/scripts/seeds/20-attachment.seed.ts',
       'frontend/src/modules/attachment/query.ts',
       'frontend/src/modules/attachment/helpers/parse-uploaded.ts',

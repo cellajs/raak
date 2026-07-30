@@ -74,30 +74,6 @@ export const deleteAttachmentsByIds = async (
     );
 };
 
-interface SoftDeleteAttachmentsByTaskIdsOpts {
-  taskIds: string[];
-  deletedBy: string;
-  deletedAt: string;
-}
-
-/** Soft-delete attachments owned by the given tasks (host relation), reusing the tasks' deletion stamps. */
-export const softDeleteAttachmentsByTaskIds = async (
-  ctx: AuthContext,
-  { taskIds, deletedAt, deletedBy }: SoftDeleteAttachmentsByTaskIdsOpts,
-) => {
-  const { db, organizationId } = ctx.var;
-  return db
-    .update(attachmentsTable)
-    .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
-    .where(
-      and(
-        inArray(attachmentsTable.taskId, taskIds),
-        eq(attachmentsTable.organizationId, organizationId),
-        isNull(attachmentsTable.deletedAt),
-      ),
-    );
-};
-
 interface FindAttachmentsByIdsOpts {
   ids: string[];
 }
@@ -112,22 +88,6 @@ export const findAttachmentsByIds = async (ctx: DbContext, { ids }: FindAttachme
     .select()
     .from(attachmentsTable)
     .where(and(inArray(attachmentsTable.id, ids), isNull(attachmentsTable.deletedAt)));
-};
-
-interface FindAttachmentKeysByTaskIdOpts {
-  taskId: string;
-}
-
-/** Find attachment IDs and S3 keys owned by a task (host relation, e.g. for description sync). */
-export const findAttachmentKeysByTaskId = async (ctx: DbContext, { taskId }: FindAttachmentKeysByTaskIdOpts) => {
-  const { db } = ctx.var;
-  return db
-    .select({
-      id: attachmentsTable.id,
-      keys: attachmentsTable.keys,
-    })
-    .from(attachmentsTable)
-    .where(eq(attachmentsTable.taskId, taskId));
 };
 
 interface FindAttachmentViewCountOpts {

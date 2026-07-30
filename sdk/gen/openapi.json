@@ -2067,10 +2067,12 @@
             "minimum": -2147483648,
             "maximum": 2147483647
           },
-          "attachmentCount": {
-            "type": "integer",
-            "minimum": -2147483648,
-            "maximum": 2147483647
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           "organizationId": {
             "type": "string",
@@ -2177,7 +2179,7 @@
           "statusChangedAt",
           "checkboxCount",
           "checkedCount",
-          "attachmentCount",
+          "attachments",
           "organizationId",
           "projectId",
           "labels",
@@ -2229,27 +2231,8 @@
           "statusChangedAt": "2024-11-03T10:38:49.857Z",
           "checkboxCount": 8,
           "checkedCount": 3,
-          "attachmentCount": 2,
-          "labels": [
-            {
-              "id": "4c6237f3-b08a-4140-8aeb-ca91ac453da4",
-              "name": "bug",
-              "slug": "bug",
-              "color": "#ef2ba2",
-              "mode": "secondary",
-              "icon": null,
-              "projectId": "2875b7a9-0025-4d44-a2ac-8fe3c75bf66e"
-            },
-            {
-              "id": "3bead8eb-4aa0-43ef-b4c0-d11f393576dc",
-              "name": "feature",
-              "slug": "feature",
-              "color": "#aa7cad",
-              "mode": "secondary",
-              "icon": null,
-              "projectId": "a803c815-49ac-4025-b0fa-7afb55b72554"
-            }
-          ],
+          "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
+          "labels": [],
           "assignedTo": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
@@ -2879,10 +2862,6 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
-          "taskId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "publicBucket": {
             "type": "boolean",
             "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
@@ -2961,7 +2940,6 @@
           "deletedBy",
           "publicAt",
           "seq",
-          "taskId",
           "publicBucket",
           "bucketName",
           "groupId",
@@ -3008,7 +2986,6 @@
           "seq": 354,
           "publicBucket": false,
           "bucketName": "attachments",
-          "taskId": null,
           "groupId": null,
           "filename": "ick_thoroughly_coincide.text",
           "contentType": "application/x-sh",
@@ -8264,27 +8241,8 @@
                   "statusChangedAt": "2024-11-03T10:38:49.857Z",
                   "checkboxCount": 8,
                   "checkedCount": 3,
-                  "attachmentCount": 2,
-                  "labels": [
-                    {
-                      "id": "4c6237f3-b08a-4140-8aeb-ca91ac453da4",
-                      "name": "bug",
-                      "slug": "bug",
-                      "color": "#ef2ba2",
-                      "mode": "secondary",
-                      "icon": null,
-                      "projectId": "2875b7a9-0025-4d44-a2ac-8fe3c75bf66e"
-                    },
-                    {
-                      "id": "3bead8eb-4aa0-43ef-b4c0-d11f393576dc",
-                      "name": "feature",
-                      "slug": "feature",
-                      "color": "#aa7cad",
-                      "mode": "secondary",
-                      "icon": null,
-                      "projectId": "a803c815-49ac-4025-b0fa-7afb55b72554"
-                    }
-                  ],
+                  "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
+                  "labels": [],
                   "assignedTo": [],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
@@ -8481,7 +8439,7 @@
                       "statusChangedAt": "2024-01-16T07:26:20.219Z",
                       "checkboxCount": 8,
                       "checkedCount": 0,
-                      "attachmentCount": 1,
+                      "attachments": [],
                       "labels": [
                         {
                           "id": "93095c24-27b6-45be-9e9b-5a30ea3c071d",
@@ -8547,7 +8505,7 @@
                       "statusChangedAt": "2024-11-27T15:18:06.081Z",
                       "checkboxCount": 9,
                       "checkedCount": 3,
-                      "attachmentCount": 0,
+                      "attachments": [],
                       "labels": [
                         {
                           "id": "036e4f85-c837-49f0-87f4-6ef29ba47773",
@@ -13290,7 +13248,6 @@
                       "seq": 467,
                       "publicBucket": false,
                       "bucketName": "attachments",
-                      "taskId": null,
                       "groupId": null,
                       "filename": "finally_wherever_nasalise.php",
                       "contentType": "application/vnd.oasis.opendocument.presentation",
@@ -13336,7 +13293,6 @@
                       "seq": 309,
                       "publicBucket": false,
                       "bucketName": "attachments",
-                      "taskId": null,
                       "groupId": null,
                       "filename": "buzzing_brr_hm.rmi",
                       "contentType": "application/x-7z-compressed",
@@ -13467,10 +13423,6 @@
                       "type": ["string", "null"],
                       "format": "uuid"
                     },
-                    "taskId": {
-                      "type": ["string", "null"],
-                      "format": "uuid"
-                    },
                     "convertedContentType": {
                       "type": ["string", "null"],
                       "maxLength": 255,
@@ -13565,7 +13517,6 @@
                       "seq": 57,
                       "publicBucket": false,
                       "bucketName": "attachments",
-                      "taskId": null,
                       "groupId": null,
                       "filename": "inasmuch.xhtml",
                       "contentType": "application/ogg",
@@ -13611,7 +13562,6 @@
                       "seq": 205,
                       "publicBucket": false,
                       "bucketName": "attachments",
-                      "taskId": null,
                       "groupId": null,
                       "filename": "victoriously.mp4",
                       "contentType": "audio/opus",
@@ -13698,7 +13648,6 @@
                       "seq": 57,
                       "publicBucket": false,
                       "bucketName": "attachments",
-                      "taskId": null,
                       "groupId": null,
                       "filename": "inasmuch.xhtml",
                       "contentType": "application/ogg",
@@ -13744,7 +13693,6 @@
                       "seq": 205,
                       "publicBucket": false,
                       "bucketName": "attachments",
-                      "taskId": null,
                       "groupId": null,
                       "filename": "victoriously.mp4",
                       "contentType": "audio/opus",
@@ -14138,7 +14086,6 @@
                   "seq": 354,
                   "publicBucket": false,
                   "bucketName": "attachments",
-                  "taskId": null,
                   "groupId": null,
                   "filename": "ick_thoroughly_coincide.text",
                   "contentType": "application/x-sh",
@@ -14294,7 +14241,6 @@
                   "seq": 354,
                   "publicBucket": false,
                   "bucketName": "attachments",
-                  "taskId": null,
                   "groupId": null,
                   "filename": "ick_thoroughly_coincide.text",
                   "contentType": "application/x-sh",
@@ -15480,10 +15426,10 @@
                       "statusChangedAt": "2024-05-08T15:34:56.983Z",
                       "checkboxCount": 8,
                       "checkedCount": 8,
-                      "attachmentCount": 2,
+                      "attachments": ["a5e9543a-04d8-4b64-a877-e7af93a55139"],
                       "labels": [
                         {
-                          "id": "5e9543a0-4d8b-4648-b77e-7af93a551398",
+                          "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
                           "name": "bug",
                           "slug": "bug",
                           "color": "#fbad8c",
@@ -15492,20 +15438,36 @@
                           "projectId": "5ae7135b-a2a5-441e-9a44-72b689abbc79"
                         },
                         {
-                          "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                          "id": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
                           "name": "feature",
                           "slug": "feature",
                           "color": "#993e32",
                           "mode": "secondary",
                           "icon": null,
                           "projectId": "6ed6b697-0fd2-422a-a20b-77dfc43c1a4b"
+                        },
+                        {
+                          "id": "5c23f98e-3315-409d-a3bf-a6839be9d514",
+                          "name": "low priority",
+                          "slug": "low-priority",
+                          "color": "#c3faec",
+                          "mode": "secondary",
+                          "icon": null,
+                          "projectId": "a520bd8f-b898-4d92-b238-d158b572741b"
                         }
                       ],
                       "assignedTo": [
                         {
-                          "id": "a30d4ca6-d013-498d-9e9a-3cc34af79ac5",
+                          "id": "29955bb3-62d7-4390-b69f-3101343008a1",
                           "name": "Erling Hane-Pfeffer",
                           "slug": "erling_hane-pfeffer53",
+                          "thumbnailUrl": null,
+                          "entityType": "user"
+                        },
+                        {
+                          "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
+                          "name": "Maxine Gutkowski",
+                          "slug": "maxine_gutkowski63",
                           "thumbnailUrl": null,
                           "entityType": "user"
                         }
@@ -15563,7 +15525,7 @@
                       "statusChangedAt": "2024-03-01T09:29:28.225Z",
                       "checkboxCount": 9,
                       "checkedCount": 4,
-                      "attachmentCount": 1,
+                      "attachments": [],
                       "labels": [
                         {
                           "id": "b3b434d6-4d94-4bd3-b3c3-593f8f02f435",
@@ -15678,10 +15640,10 @@
                       "statusChangedAt": "2024-05-08T15:34:56.983Z",
                       "checkboxCount": 8,
                       "checkedCount": 8,
-                      "attachmentCount": 2,
+                      "attachments": ["a5e9543a-04d8-4b64-a877-e7af93a55139"],
                       "labels": [
                         {
-                          "id": "5e9543a0-4d8b-4648-b77e-7af93a551398",
+                          "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
                           "name": "bug",
                           "slug": "bug",
                           "color": "#fbad8c",
@@ -15690,20 +15652,36 @@
                           "projectId": "5ae7135b-a2a5-441e-9a44-72b689abbc79"
                         },
                         {
-                          "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                          "id": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
                           "name": "feature",
                           "slug": "feature",
                           "color": "#993e32",
                           "mode": "secondary",
                           "icon": null,
                           "projectId": "6ed6b697-0fd2-422a-a20b-77dfc43c1a4b"
+                        },
+                        {
+                          "id": "5c23f98e-3315-409d-a3bf-a6839be9d514",
+                          "name": "low priority",
+                          "slug": "low-priority",
+                          "color": "#c3faec",
+                          "mode": "secondary",
+                          "icon": null,
+                          "projectId": "a520bd8f-b898-4d92-b238-d158b572741b"
                         }
                       ],
                       "assignedTo": [
                         {
-                          "id": "a30d4ca6-d013-498d-9e9a-3cc34af79ac5",
+                          "id": "29955bb3-62d7-4390-b69f-3101343008a1",
                           "name": "Erling Hane-Pfeffer",
                           "slug": "erling_hane-pfeffer53",
+                          "thumbnailUrl": null,
+                          "entityType": "user"
+                        },
+                        {
+                          "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
+                          "name": "Maxine Gutkowski",
+                          "slug": "maxine_gutkowski63",
                           "thumbnailUrl": null,
                           "entityType": "user"
                         }
@@ -15761,7 +15739,7 @@
                       "statusChangedAt": "2024-03-01T09:29:28.225Z",
                       "checkboxCount": 9,
                       "checkedCount": 4,
-                      "attachmentCount": 1,
+                      "attachments": [],
                       "labels": [
                         {
                           "id": "b3b434d6-4d94-4bd3-b3c3-593f8f02f435",
@@ -16015,7 +15993,7 @@
                       "statusChangedAt": "2024-01-16T07:26:20.219Z",
                       "checkboxCount": 8,
                       "checkedCount": 0,
-                      "attachmentCount": 1,
+                      "attachments": [],
                       "labels": [
                         {
                           "id": "93095c24-27b6-45be-9e9b-5a30ea3c071d",
@@ -16081,7 +16059,7 @@
                       "statusChangedAt": "2024-11-27T15:18:06.081Z",
                       "checkboxCount": 9,
                       "checkedCount": 3,
-                      "attachmentCount": 0,
+                      "attachments": [],
                       "labels": [
                         {
                           "id": "036e4f85-c837-49f0-87f4-6ef29ba47773",
@@ -16368,27 +16346,8 @@
                   "statusChangedAt": "2024-11-03T10:38:49.857Z",
                   "checkboxCount": 8,
                   "checkedCount": 3,
-                  "attachmentCount": 2,
-                  "labels": [
-                    {
-                      "id": "4c6237f3-b08a-4140-8aeb-ca91ac453da4",
-                      "name": "bug",
-                      "slug": "bug",
-                      "color": "#ef2ba2",
-                      "mode": "secondary",
-                      "icon": null,
-                      "projectId": "2875b7a9-0025-4d44-a2ac-8fe3c75bf66e"
-                    },
-                    {
-                      "id": "3bead8eb-4aa0-43ef-b4c0-d11f393576dc",
-                      "name": "feature",
-                      "slug": "feature",
-                      "color": "#aa7cad",
-                      "mode": "secondary",
-                      "icon": null,
-                      "projectId": "a803c815-49ac-4025-b0fa-7afb55b72554"
-                    }
-                  ],
+                  "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
+                  "labels": [],
                   "assignedTo": [],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
@@ -16623,27 +16582,8 @@
                   "statusChangedAt": "2024-11-03T10:38:49.857Z",
                   "checkboxCount": 8,
                   "checkedCount": 3,
-                  "attachmentCount": 2,
-                  "labels": [
-                    {
-                      "id": "4c6237f3-b08a-4140-8aeb-ca91ac453da4",
-                      "name": "bug",
-                      "slug": "bug",
-                      "color": "#ef2ba2",
-                      "mode": "secondary",
-                      "icon": null,
-                      "projectId": "2875b7a9-0025-4d44-a2ac-8fe3c75bf66e"
-                    },
-                    {
-                      "id": "3bead8eb-4aa0-43ef-b4c0-d11f393576dc",
-                      "name": "feature",
-                      "slug": "feature",
-                      "color": "#aa7cad",
-                      "mode": "secondary",
-                      "icon": null,
-                      "projectId": "a803c815-49ac-4025-b0fa-7afb55b72554"
-                    }
-                  ],
+                  "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
+                  "labels": [],
                   "assignedTo": [],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",

@@ -1,6 +1,7 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
+import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -241,4 +242,33 @@ export const countTasksByStatus = async (ctx: DbContext, { projectId }: CountTas
     .from(tasksTable)
     .where(eq(tasksTable.projectId, projectId))
     .groupBy(tasksTable.status);
+};
+
+interface FilterExistingAttachmentIdsOpts {
+  ids: string[];
+  organizationId: string;
+}
+
+/**
+ * Narrow candidate attachment ids to live rows in this organization. Guards the derived
+ * task.attachments host array against doctored or stale ids from client-authored blocks.
+ */
+export const filterExistingAttachmentIds = async (
+  ctx: DbContext,
+  { ids, organizationId }: FilterExistingAttachmentIdsOpts,
+) => {
+  if (ids.length === 0) return [];
+  const { db } = ctx.var;
+  const rows = await db
+    .select({ id: attachmentsTable.id })
+    .from(attachmentsTable)
+    .where(
+      and(
+        inArray(attachmentsTable.id, ids),
+        eq(attachmentsTable.organizationId, organizationId),
+        isNull(attachmentsTable.deletedAt),
+      ),
+    );
+  const found = new Set(rows.map((row) => row.id));
+  return ids.filter((id) => found.has(id));
 };
