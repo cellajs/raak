@@ -2,8 +2,6 @@ import { OpenAPIRegistry, OpenApiGeneratorV31 } from '@asteasolutions/zod-to-ope
 import { z } from '@hono/zod-openapi';
 import { describe, expect, it } from 'vitest';
 import { uploadTokenSchema } from '#/modules/me/me-schema';
-import { setupConfigSchema } from '#/modules/organization/setup-config-schema';
-import { taskSchema } from '#/modules/task/task-schema';
 import { booleanTransformSchema } from './common-schemas';
 import { streamNotificationSchema } from './stream-schemas';
 import { nullableStxBaseSchema, stxBaseSchema } from './sync-transaction-schemas';
@@ -23,9 +21,7 @@ registry.register(
     flag: booleanTransformSchema.optional(),
   }),
 );
-registry.register('Task', taskSchema);
 registry.register('UploadToken', uploadTokenSchema);
-registry.register('SetupConfigFixture', setupConfigSchema);
 registry.register('StreamNotification', streamNotificationSchema);
 
 const schemas = new OpenApiGeneratorV31(registry.definitions).generateComponents().components?.schemas ?? {};
@@ -59,25 +55,9 @@ describe('OpenAPI composition conventions', () => {
 
   it('uses nullable type arrays for inline primitives and objects', () => {
     expect(schemas).toMatchObject({
-      Task: {
-        properties: {
-          primaryLabel: { type: ['object', 'null'] },
-        },
-      },
       UploadToken: {
         properties: {
           params: { type: ['object', 'null'] },
-        },
-      },
-      SetupConfigFixture: {
-        properties: {
-          primaryLabels: {
-            items: {
-              properties: {
-                icon: { type: ['string', 'null'] },
-              },
-            },
-          },
         },
       },
     });
