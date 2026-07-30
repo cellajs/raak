@@ -12,11 +12,11 @@ const warn = vi.mocked(log.warn);
 
 /**
  * Raw pgoutput rows are snake_case. Injecting `published_at: null` simulates EXACTLY the
- * misconfiguration the guard exists for: a fork added `publishedColumn` but did not
+ * misconfiguration the guard exists for: an app added `publishedColumn` but did not
  * regenerate the publication, so draft rows leak into the stream.
  *
  * raak note: attachment is project-homed (ancestor chain project → organization), so the
- * row must carry `project_id` — otherwise `warnMissingAncestors` fires an extra warning per
+ * row must carry `project_id`, otherwise `warnMissingAncestors` fires an extra warning per
  * edit and drowns the draft-guard warning this suite asserts on.
  */
 function attachmentRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
