@@ -229,7 +229,7 @@ One row-lifecycle check runs **before** the engine on every row path: unpublishe
 Two independent axes, easily confused:
 
 - **Draft** (`publishedAt`, an opt-in product column): a product is a draft (author-only, outside the sync stream) until published. Publish is one-way; there is no unpublish. Channel `publishedAt` is a separate thing (`defaultNow`, gates setup and invites), not a read gate.
-- **Visibility** (`publicAt`): make public / make private, row-local and client-driven. A row is publicly readable only when its own `publicAt` is set. It is inherited from the parent project at create time, then independent (no cascade). Make private acts per row, channel, or batch.
+- **Visibility** (`publicAt`): make public / make private, row-local and client-driven. A row is publicly readable only when its own `publicAt` is set. The server never derives it: the client sends `publicAt` on create and the backend trusts the value (omitted means private). The template client stamps the cached parent's `publicAt` as the sensible default; an app client may choose any per-product value. After create the row owns its value (no cascade). Make private acts per row, channel, or batch.
 
 Anonymous read therefore requires the row's own `publicAt` to be set, and (for entities that carry the draft column) `publishedAt` to be set.
 
@@ -255,7 +255,7 @@ A bare `undefined` WHERE would leak the table, which is exactly the bug this sha
 | Member with `update: 'own'` edits a row they created | Allowed, `grantedBy: relation` (`own`) |
 | Member with `update: 'own'` edits someone else's row | Denied. The UI optimistically enables the control; the backend rejects on save |
 | Actor reads a row whose `publicAt` is set (entity declares `publicRead()`) | Allowed, `grantedBy: public` — single-row, in lists, and over SSE alike. Anonymous actors included |
-| Row's parent is public but the row itself is not | Denied. Publication is row-local and never cascades: a row is public only if its OWN `publicAt` is set. Children inherit the parent's `publicAt` at create time, then own it. Make public / make private acts per row (or batch), not through the parent |
+| Row's parent is public but the row itself is not | Denied. Publication is row-local and never cascades: a row is public only if its OWN `publicAt` is set. The client stamps the parent's `publicAt` as the default at create time; after that the row owns its value. Make public / make private acts per row (or batch), not through the parent |
 | System admin acts on any single row | Allowed, `grantedBy: systemAdmin`, short-circuited before membership lookup |
 | System admin without an org membership lists a collection | Every row in the org. The bypass applies to the collection path too |
 | Membership role has no policy row for the subject | Denies every action for that membership |
