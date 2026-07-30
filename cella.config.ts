@@ -38,9 +38,6 @@ export default defineConfig({
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
-      // Attachment product-host cluster: raak homes attachments on task/project (taskId/projectId
-      // columns, project-scoped queries, renamed Transloadit steps). Scaffolding pins to unwind
-      // once cella ships a configurable attachment host seam.
       'backend/src/modules/attachment/attachment-db.ts',
       'backend/src/modules/attachment/attachment-schema.ts',
       'backend/src/modules/attachment/attachment-queries.ts',
@@ -53,8 +50,6 @@ export default defineConfig({
       'frontend/src/modules/attachment/query.ts',
       'frontend/src/modules/attachment/helpers/parse-uploaded.ts',
       'frontend/src/modules/attachment/tests/parse-uploaded.test.ts',
-      // Registration points: raak registers its own modules/ids here. Unpin when cella ships a
-      // fork registration seam (fork-modules.ts, bench id registry).
       'backend/src/modules.ts',
       'bench/src/seeds/ids.ts',
       'backend/src/routes.ts',
