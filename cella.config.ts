@@ -36,9 +36,6 @@ export default defineConfig({
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
-      // Attachment module carries raak's task-host/project scoping and tiny-thumbnail variant.
-      // Pin the table definition and Zod contract that declare those columns alongside the
-      // queries/operations that read them, so the fork owns the whole feature coherently.
       'backend/src/modules/attachment/attachment-db.ts',
       'backend/src/modules/attachment/attachment-schema.ts',
       'backend/src/modules/attachment/attachment-queries.ts',
@@ -58,16 +55,14 @@ export default defineConfig({
       'frontend/src/styling/gradients.css',
       'frontend/src/modules/home/home-page.tsx',
       'frontend/src/modules/home/onboarding/onboarding-config.ts',
-      'frontend/src/modules/home/onboarding/onboarding-seed.ts',
       'frontend/src/modules/common/logo.tsx',
       'frontend/src/modules/user/user-profile-content.tsx',
       'json/text-blocks.json',
       'locales/en/about.json',
       'locales/en/app.json',
       'backend/src/modules/organization/setup-config-schema.ts',
-      'backend/src/modules/organization/organization-hooks.ts',
-      'backend/src/mocks/fork-product-mocks.ts',
-      'frontend/src/query/fork-app-kv-stores.ts',
+      'backend/src/mocks/app-product-mocks.ts',
+      'frontend/src/query/extra-local-user-stores.ts',
       'frontend/src/modules/organization/organization-settings-sections.tsx',
     ],
   },
