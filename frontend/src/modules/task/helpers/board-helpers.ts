@@ -2,6 +2,7 @@ import { PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
@@ -10,16 +11,27 @@ import type { ProjectResizablePanel, Task } from '~/modules/task/types';
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
 
-/** Prepares board tasks. */
+/** Prepares board tasks. The open create-form draft is exempt from the accepted/iced collapse. */
 export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced: boolean) => {
   return tasks
     .filter(
-      ({ status }) =>
-        (showAccepted && status === accepted) ||
-        (showIced && status === iced) ||
-        (status !== accepted && status !== iced),
+      (task) =>
+        isDraftTask(task) ||
+        (showAccepted && task.status === accepted) ||
+        (showIced && task.status === iced) ||
+        (task.status !== accepted && task.status !== iced),
     )
     .sort(sortTaskOrder);
+};
+
+/**
+ * Picks the split section that hosts a project's create-form draft: the section matching the
+ * draft's status, else the first. Guarantees exactly one panel renders the open form even when
+ * no section filter matches. Returns null for an unsplit project (its single panel hosts).
+ */
+export const resolveDraftHostSection = (viewSections: SectionsValue[] | undefined, status: Task['status']) => {
+  if (!viewSections?.length) return null;
+  return viewSections.find((section) => section.status.includes(status)) ?? viewSections[0];
 };
 
 /** Builds the stable state key for a board panel. */

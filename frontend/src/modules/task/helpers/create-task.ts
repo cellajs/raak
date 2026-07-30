@@ -1,7 +1,10 @@
 import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
+import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
+import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
 import { focusTask, focusWhenMounted } from '~/modules/task/helpers/focus-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -9,6 +12,21 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { getSchemaDefaults } from '~/query/basic/create-optimistic';
+
+/** Expands the panel (and accepted/iced section) that will host the create-task form. */
+export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus) => {
+  const boardId = useBoardStore.getState().activeBoardId;
+  if (!boardId) return;
+
+  const viewSections = useTaskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
+  const hostSection = resolveDraftHostSection(viewSections, draftStatus);
+  const panelId = hostSection ? makePanelKey(projectId, hostSection) : projectId;
+  useBoardStore.getState().togglePanelCollapsedState(panelId, false);
+
+  const { togglePanelSectionExpandState } = useTaskBoardStore.getState();
+  if (draftStatus === TaskStatus.Accepted) togglePanelSectionExpandState(boardId, projectId, 'accepted', true);
+  if (draftStatus === TaskStatus.Iced) togglePanelSectionExpandState(boardId, projectId, 'iced', true);
+};
 
 /** Validates create-task form values. */
 export const createTaskFormSchema = z.object({
@@ -77,6 +95,7 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
   // ProjectBoardPanel merges this draft into the task list.
   focusTask(id);
   store.setDraftTask(project.id, formTask);
+  revealDraftHostPanel(project.id, formTask.status);
 
   // Focus the form element and trigger glow after React renders
   focusWhenMounted(id);

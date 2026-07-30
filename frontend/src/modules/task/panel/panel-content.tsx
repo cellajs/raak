@@ -4,16 +4,16 @@ import { Virtualizer, WindowVirtualizer } from 'virtua';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { BoardPanelBody } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { MotionTaskCard } from '~/modules/task/card/motion-task-card';
 import { DraftTaskItem } from '~/modules/task/draft-task-item';
+import { revealDraftHostPanel } from '~/modules/task/helpers/create-task';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { usePanelScrolling } from '~/modules/task/hooks/use-panel-scrolling';
 import { TaskPanelEmpty } from '~/modules/task/panel/panel-empty';
 import { PanelStatusSection } from '~/modules/task/panel/panel-status-section';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { TaskStatus } from '~/modules/task/task-properties';
+import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
@@ -28,10 +28,8 @@ interface PanelProps {
 /** Renders the task panel content component. */
 export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks, counts, windowScroll }: PanelProps) {
   const isMobile = useBreakpointBelow('sm');
-  const boardId = useBoardStore((state) => state.activeBoardId)!;
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
   const hasSelectedTasks = useTaskInteractionStore((s) => s.selectedTaskIds.length > 0);
-  const toggleStatusView = useTaskBoardStore(({ togglePanelSectionExpandState }) => togglePanelSectionExpandState);
 
   // Scroll machinery (virtualizer/viewport refs, section-toggle + create-form /
   // new-task scroll-into-view). Kept in a hook so this component stays layout-only.
@@ -46,8 +44,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced;
 
   const onStatusChange = (newStatus: TaskStatus) => {
-    if (newStatus === TaskStatus.Accepted) toggleStatusView(boardId, project.id, 'accepted', true);
-    if (newStatus === TaskStatus.Iced) toggleStatusView(boardId, project.id, 'iced', true);
+    revealDraftHostPanel(project.id, newStatus);
 
     useTaskInteractionStore.getState().updateDraftTask(project.id, {
       status: newStatus,

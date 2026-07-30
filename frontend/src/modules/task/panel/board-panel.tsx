@@ -12,6 +12,7 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
 import { createTaskAction } from '~/modules/task/helpers/create-task-action';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { TaskPanelCollapsed } from '~/modules/task/panel/panel-collapsed';
@@ -58,9 +59,9 @@ export const BoardPanel = memo(function BoardPanel({
     return state.panelCollapseState[panelId];
   });
 
-  // Filter tasks based on search and filters
+  // Filter tasks based on search and filters; the open create-form draft always stays visible
   const filteredTasks = useMemo(() => {
-    const matchedTasks = fetchedTasks.filter((task) => searchFilterFunction(search, task));
+    const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || searchFilterFunction(search, task));
 
     const isHighlightMode = parseSearchQuery(search.q).highlight;
     if (!isHighlightMode) return matchedTasks;
