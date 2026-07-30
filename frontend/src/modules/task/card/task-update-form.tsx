@@ -49,12 +49,12 @@ export function TaskUpdateForm({ task, contentApiRef, active = true, onEditorRea
     useTaskCardStore.getState().setTaskState(task.id, 'expanded');
   };
 
-  // Uploaded attachments belong to this task (host relation)
+  // Task linkage for uploads rides the description's attachmentId block props.
   const baseFilePanel = useTaskFilePanelProps(
     task.projectId,
     tenantId,
     task.organizationId,
-    attachmentsCreationCallback({ ...task, taskId: task.id }),
+    attachmentsCreationCallback({ ...task }),
   );
 
   return (

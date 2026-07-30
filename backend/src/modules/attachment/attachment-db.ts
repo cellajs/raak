@@ -14,10 +14,8 @@ export const attachmentsTable = snakeCase.table(
   'attachments',
   {
     ...productColumns('attachment'),
-    // Soft reference to the owning task (nullable, no FK, like embedded id arrays):
-    // plain data, never permission indirection. deleteTasksOp owns the lifecycle
-    // cascade; attachments without a task (taskId null) live at project level.
-    taskId: uuid(),
+    // Bytes live in the public S3 bucket and are served from the CDN. Storage placement only:
+    // row readability for non-members is the separate `publicAt` permission grant.
     publicBucket: boolean().notNull().default(false),
     bucketName: varchar({ length: maxLength.field }).notNull(),
     /** Upload batch grouping (multi-file uploads shown as one carousel), not ownership. */
@@ -44,7 +42,6 @@ export const attachmentsTable = snakeCase.table(
     index('attachments_created_by_index').on(table.createdBy),
     index('attachments_updated_by_index').on(table.updatedBy),
     index('attachments_group_id_index').on(table.groupId),
-    index('attachments_task_id_index').on(table.taskId),
     foreignKey({
       columns: [table.tenantId, table.organizationId],
       foreignColumns: [organizationsTable.tenantId, organizationsTable.id],

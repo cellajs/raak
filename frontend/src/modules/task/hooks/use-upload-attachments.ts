@@ -17,23 +17,13 @@ export const useUploadAttachments = () => {
   });
 
   const attachmentsCreationCallback =
-    ({
-      organizationId,
-      tenantId,
-      projectId,
-      taskId,
-    }: {
-      organizationId: string;
-      tenantId: string;
-      projectId: string;
-      taskId?: string;
-    }) =>
+    ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) =>
     (attachments: Attachment[]) => {
-      // The panel parses uploads org-scoped only; add raak's linkage (projectId is required,
-      // taskId ties the attachment to its owning task) before persisting. Stamp publicAt from the
-      // parent project so the attachment inherits its project's publicity at create time.
+      // The panel parses uploads org-scoped only; add raak's required projectId before
+      // persisting (task linkage lives in the description's attachmentId block props).
+      // Stamp publicAt from the parent project so the attachment inherits its publicity.
       const publicAt = getProjectPublicAt(projectId, tenantId);
-      const createdAttachments = attachments.map((att) => ({ ...att, projectId, taskId, publicAt }));
+      const createdAttachments = attachments.map((att) => ({ ...att, projectId, publicAt }));
 
       const stx = createStxForCreate();
       // Body is array with stx embedded in each item

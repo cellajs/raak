@@ -24,7 +24,6 @@ export const mockAttachment = (key = 'attachment:default'): AttachmentModel =>
       ...mockProductColumns('attachment', { name: filename, description: null }),
       publicBucket: false,
       bucketName: 'attachments',
-      taskId: null,
       groupId: null,
       filename,
       contentType: faker.system.mimeType(),

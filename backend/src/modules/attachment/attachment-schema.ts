@@ -70,8 +70,6 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     bucketName: true,
     publicBucket: true,
     groupId: true,
-    // fork: Raak attachments may be hosted by a task.
-    taskId: true,
     convertedContentType: true,
     // fork: Raak attachments are scoped to a project parent context.
     projectId: true,

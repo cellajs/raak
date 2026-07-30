@@ -94,11 +94,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "taskId": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "format": "uuid"
-                  },
                   "publicBucket": {
                     "type": "boolean",
                     "required": true,
@@ -182,7 +177,6 @@
               "seq": 467,
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "finally_wherever_nasalise.php",
               "contentType": "application/vnd.oasis.opendocument.presentation",
@@ -226,7 +220,6 @@
               "seq": 309,
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "buzzing_brr_hm.rmi",
               "contentType": "application/x-7z-compressed",
@@ -406,11 +399,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "taskId": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "format": "uuid"
-                  },
                   "publicBucket": {
                     "type": "boolean",
                     "required": true,
@@ -505,7 +493,6 @@
               "seq": 57,
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "inasmuch.xhtml",
               "contentType": "application/ogg",
@@ -549,7 +536,6 @@
               "seq": 205,
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "victoriously.mp4",
               "contentType": "audio/opus",
@@ -655,11 +641,6 @@
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
                   },
-                  "taskId": {
-                    "type": ["string", "null"],
-                    "required": true,
-                    "format": "uuid"
-                  },
                   "publicBucket": {
                     "type": "boolean",
                     "required": true,
@@ -754,7 +735,6 @@
               "seq": 57,
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "inasmuch.xhtml",
               "contentType": "application/ogg",
@@ -798,7 +778,6 @@
               "seq": 205,
               "publicBucket": false,
               "bucketName": "attachments",
-              "taskId": null,
               "groupId": null,
               "filename": "victoriously.mp4",
               "contentType": "audio/opus",
@@ -896,11 +875,6 @@
               "description": "When true, the file is stored in the public bucket and served from the CDN without a presigned URL."
             },
             "groupId": {
-              "type": ["string", "null"],
-              "required": false,
-              "format": "uuid"
-            },
-            "taskId": {
               "type": ["string", "null"],
               "required": false,
               "format": "uuid"
@@ -1271,11 +1245,6 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "taskId": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "publicBucket": {
               "type": "boolean",
               "required": true,
@@ -1353,7 +1322,6 @@
           "seq": 354,
           "publicBucket": false,
           "bucketName": "attachments",
-          "taskId": null,
           "groupId": null,
           "filename": "ick_thoroughly_coincide.text",
           "contentType": "application/x-sh",
@@ -1506,11 +1474,6 @@
               "minimum": -9007199254740991,
               "maximum": 9007199254740991
             },
-            "taskId": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "publicBucket": {
               "type": "boolean",
               "required": true,
@@ -1588,7 +1551,6 @@
           "seq": 354,
           "publicBucket": false,
           "bucketName": "attachments",
-          "taskId": null,
           "groupId": null,
           "filename": "ick_thoroughly_coincide.text",
           "contentType": "application/x-sh",

@@ -46,7 +46,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       statusChangedAt: base.createdAt,
       checkboxCount,
       checkedCount: faker.number.int({ min: 0, max: checkboxCount }),
-      attachmentCount: faker.number.int({ min: 0, max: 5 }),
+      attachments: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       labels: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       assignedTo: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 2 } }),
       publicAt,

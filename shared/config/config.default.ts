@@ -57,6 +57,9 @@ export const config = {
     // Hydrated single reference: no physical column, the wire object derives from
     // primaryLabelId. Cache-hint fan-out only; CDC cleanup and counters skip it.
     { embeddedProduct: 'label', hostProduct: 'task', hostColumn: 'primaryLabel' },
+    // Owned lifecycle: task.attachments is derived from description media blocks;
+    // CDC garbage-collects attachment rows no live task references.
+    { embeddedProduct: 'attachment', hostProduct: 'task', hostColumn: 'attachments', lifecycle: 'owned' },
   ] as readonly {
     readonly embeddedProduct: (typeof hierarchy.productTypes)[number];
     readonly hostProduct: (typeof hierarchy.productTypes)[number];
@@ -172,7 +175,7 @@ export const config = {
   // once at cutover (upstream moved v1 → v2 with this migration).
   cookieVersion: 'v2',
   /** Persisted client query-cache shape - bump on breaking cached entity changes */
-  clientCacheVersion: 'v9-attachment-keys',
+  clientCacheVersion: 'v10-task-attachments',
 
   // Feature flags
 

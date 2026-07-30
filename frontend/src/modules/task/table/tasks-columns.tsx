@@ -201,7 +201,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         width: 70,
         placeholderValue: '-',
         renderCell: ({ row }) => {
-          const count = row.attachmentCount ?? 0;
+          const count = row.attachments?.length ?? 0;
           if (count === 0) return null;
           return (
             <div className="inline-flex items-center gap-1">

@@ -136,7 +136,8 @@ export const TASK_DERIVED_DESCRIPTION_FIELDS = [
   'expandable',
   'checkboxCount',
   'checkedCount',
-  'attachmentCount',
+  'attachments',
+  'keywords',
 ] as const;
 
 // Register Yjs-owned fields; SSE updates skip these while a Yjs editor is active.

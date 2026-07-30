@@ -82,11 +82,6 @@
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
         },
-        "taskId": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
         "publicBucket": {
           "type": "boolean",
           "required": true,
@@ -169,7 +164,6 @@
       "seq": 354,
       "publicBucket": false,
       "bucketName": "attachments",
-      "taskId": null,
       "groupId": null,
       "filename": "ick_thoroughly_coincide.text",
       "contentType": "application/x-sh",
@@ -1923,11 +1917,11 @@
           "minimum": -2147483648,
           "maximum": 2147483647
         },
-        "attachmentCount": {
-          "type": "integer",
+        "attachments": {
+          "type": "array",
           "required": true,
-          "minimum": -2147483648,
-          "maximum": 2147483647
+          "itemType": "string",
+          "format": "uuid"
         },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "projectId": { "type": "string", "required": true, "format": "uuid" },
@@ -2094,27 +2088,8 @@
       "statusChangedAt": "2024-11-03T10:38:49.857Z",
       "checkboxCount": 8,
       "checkedCount": 3,
-      "attachmentCount": 2,
-      "labels": [
-        {
-          "id": "4c6237f3-b08a-4140-8aeb-ca91ac453da4",
-          "name": "bug",
-          "slug": "bug",
-          "color": "#ef2ba2",
-          "mode": "secondary",
-          "icon": null,
-          "projectId": "2875b7a9-0025-4d44-a2ac-8fe3c75bf66e"
-        },
-        {
-          "id": "3bead8eb-4aa0-43ef-b4c0-d11f393576dc",
-          "name": "feature",
-          "slug": "feature",
-          "color": "#aa7cad",
-          "mode": "secondary",
-          "icon": null,
-          "projectId": "a803c815-49ac-4025-b0fa-7afb55b72554"
-        }
-      ],
+      "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
+      "labels": [],
       "assignedTo": [],
       "projectId": "b0812db1-9a54-4314-b736-788585846a17",
       "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",

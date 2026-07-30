@@ -20,35 +20,38 @@ describe('deriveDescriptionCounts', () => {
       expandable: true,
       checkboxCount: 2,
       checkedCount: 1,
-      attachmentCount: 0,
+      attachments: [],
     });
   });
 
-  it('counts nested children depth-first', () => {
+  it('counts nested children depth-first and collects attachment ids', () => {
     const description = JSON.stringify([
       block('paragraph', {}, [
         block('checklistItem', { checkboxId: 'a', checked: true }, [
           block('checklistItem', { checkboxId: 'b', checked: true }),
         ]),
-        block('image', { url: 'https://x/img.png' }),
+        block('image', { url: 'https://x/img.png', attachmentId: 'att-1' }),
       ]),
     ]);
     expect(deriveDescriptionCounts(description)).toEqual({
       expandable: false,
       checkboxCount: 2,
       checkedCount: 2,
-      attachmentCount: 1,
+      attachments: ['att-1'],
     });
   });
 
-  it('counts only media blocks with a non-empty url', () => {
+  it('collects only media blocks with an attachment reference, unique in document order', () => {
     const description = JSON.stringify([
-      block('image', { url: 'https://x/a.png' }),
-      block('video', { url: '  ' }),
+      block('image', { url: 'https://x/a.png', attachmentId: 'att-1' }),
+      // External media URL without an attachment row contributes no id
+      block('video', { url: 'https://x/clip.mp4' }),
       block('audio', {}),
-      block('file', { url: 'https://x/b.pdf' }),
+      block('file', { url: 'https://x/b.pdf', attachmentId: 'att-2' }),
+      // Duplicate reference stays unique
+      block('image', { url: 'https://x/a.png', attachmentId: 'att-1' }),
     ]);
-    expect(deriveDescriptionCounts(description)).toMatchObject({ attachmentCount: 2, expandable: true });
+    expect(deriveDescriptionCounts(description)).toMatchObject({ attachments: ['att-1', 'att-2'], expandable: true });
   });
 
   it('returns zeroed counts for invalid JSON', () => {
@@ -56,7 +59,7 @@ describe('deriveDescriptionCounts', () => {
       expandable: false,
       checkboxCount: 0,
       checkedCount: 0,
-      attachmentCount: 0,
+      attachments: [],
     });
   });
 });
