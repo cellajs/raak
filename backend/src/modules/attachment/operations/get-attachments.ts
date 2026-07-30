@@ -24,13 +24,13 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   const organizationId = ctx.var.organization.id;
   const { q, sort, order, limit, offset, seqCursor, projectId } = input;
 
-  // cella change: Validate an explicitly requested project exists before scoping the read to it.
+  // fork: Validate an explicitly requested project exists before scoping the read to it.
   if (projectId) {
     const project = await tenantRead(ctx, (readCtx) => findProjectById(readCtx, { projectId }));
     if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
   }
 
-  // cella change: Resolve the caller's readable scope (unconditional projects + row-conditional
+  // fork: Resolve the caller's readable scope (unconditional projects + row-conditional
   // slices, e.g. `read: 'own'`) and compile it to a single row predicate.
   const actor = actorFrom(ctx);
   const readFilter = resolveCollectionReadFilter(

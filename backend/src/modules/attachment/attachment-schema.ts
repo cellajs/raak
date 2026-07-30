@@ -70,10 +70,10 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     bucketName: true,
     publicBucket: true,
     groupId: true,
-    // cella change: Raak attachments may be hosted by a task.
+    // fork: Raak attachments may be hosted by a task.
     taskId: true,
     convertedContentType: true,
-    // cella change: Raak attachments are scoped to a project parent context.
+    // fork: Raak attachments are scoped to a project parent context.
     projectId: true,
     publicAt: true,
   })
@@ -106,7 +106,7 @@ const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'crea
 
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
   sort: attachmentSortKeys.default('createdAt'),
-  // cella change: Raak attachment lists can be narrowed to a project.
+  // fork: Raak attachment lists can be narrowed to a project.
   projectId: validIdSchema.optional(),
 });
 
