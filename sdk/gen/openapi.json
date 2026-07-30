@@ -15388,6 +15388,9 @@
                       },
                       "maxItems": 50
                     },
+                    "publicAt": {
+                      "type": ["string", "null"]
+                    },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
                     }

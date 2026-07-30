@@ -6320,6 +6320,7 @@ export type CreateTasksData = {
     displayOrder?: number;
     labels?: Array<string>;
     assignedTo?: Array<string>;
+    publicAt?: string | null;
     stx: StxBase;
   }>;
   path: {

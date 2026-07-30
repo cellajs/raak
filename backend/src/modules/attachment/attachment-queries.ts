@@ -1,6 +1,5 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
-import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
 
@@ -32,7 +31,6 @@ interface InsertAttachmentsOpts {
 /** Insert attachments and return the created rows. Silently skips duplicates (PK conflict). */
 export const insertAttachments = async (ctx: DbContext, { attachments }: InsertAttachmentsOpts) => {
   const { db } = ctx.var;
-  await inheritPublicAtFromProject(ctx, attachments);
   return db.insert(attachmentsTable).values(attachments).onConflictDoNothing().returning();
 };
 

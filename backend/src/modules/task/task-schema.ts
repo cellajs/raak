@@ -66,6 +66,8 @@ const taskCreateSchema = taskInsertSchema
     displayOrder: z.number().optional(),
     labels: taskRelationIdsSchema.optional(),
     assignedTo: taskRelationIdsSchema.optional(),
+    // Client sets publicity per task (stamped from the project's publicAt on create); omitted -> private.
+    publicAt: z.string().nullable().optional(),
   });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seams for task */

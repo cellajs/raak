@@ -7,6 +7,7 @@ import { appConfig } from 'shared';
 import { deriveDescriptionCounts } from '~/modules/common/blocknote/derive-description-props';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { findLabelInCache, labelQueryKeys } from '~/modules/label/query';
+import { getProjectPublicAt } from '~/modules/project/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
@@ -521,9 +522,16 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
   const mutation = useMutation(taskCreateOptions(queryClient));
 
   // Inject org context + stx so a replay reuses the original mutation id and timestamps; callers pass the task data.
+  // Stamp publicAt from the parent project so a new task inherits its project's publicity at create time.
   const prepare = (input: TaskCreateMutationFnVariables): PreparedVars<TaskCreateFullVars> => ({
     kind: 'run',
-    vars: { tenantId, organizationId, ...input, stx: createStxForCreate() },
+    vars: {
+      tenantId,
+      organizationId,
+      ...input,
+      publicAt: getProjectPublicAt(input.projectId, tenantId),
+      stx: createStxForCreate(),
+    },
   });
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
