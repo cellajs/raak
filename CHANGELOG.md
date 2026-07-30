@@ -1,5 +1,58 @@
 # Changelog
 
+## [0.1.0](https://github.com/cellajs/raak/compare/0.0.9...0.1.0) (2026-07-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* derive task.attachments from description media blocks, drop attachment.taskId ([#94](https://github.com/cellajs/raak/issues/94))
+* **attachment:** collapse variant *Key columns into a single keys jsonb map ([#87](https://github.com/cellajs/raak/issues/87))
+* label modes with per-org primary labels, epics data model, full lucide icon set ([#75](https://github.com/cellajs/raak/issues/75))
+
+### 🎉 New features
+
+* derive task.attachments from description media blocks, drop attachment.taskId ([#94](https://github.com/cellajs/raak/issues/94)) ([fd1733c](https://github.com/cellajs/raak/commit/fd1733c0931467b5bf3c2b1e246e4c01d11dc4a8))
+* label modes with per-org primary labels, epics data model, full lucide icon set ([#75](https://github.com/cellajs/raak/issues/75)) ([9ac095f](https://github.com/cellajs/raak/commit/9ac095fa834e74ecc02934a8f71bcdcb90f8626e))
+
+
+### 🐞 Bug fixes
+
+* align docs for permissions ([416a2a7](https://github.com/cellajs/raak/commit/416a2a72c697e026110426f5e66b578db6480f9f))
+* alignment fixes cella ([f36b684](https://github.com/cellajs/raak/commit/f36b684df77e6cc20317149065c7f00a22a7f7b7))
+* **backend:** standardize schema validation contracts ([#85](https://github.com/cellajs/raak/issues/85)) ([f444530](https://github.com/cellajs/raak/commit/f4445304633e7dbf9b14c48503bff38df392d95b))
+* description handling ([ea6fe89](https://github.com/cellajs/raak/commit/ea6fe89dc4642f897ba1dd121cbd8f628c068a57))
+* draft visibility ([8471f2c](https://github.com/cellajs/raak/commit/8471f2c4ba4606e1129ff7c3be9349c506aebf40))
+* tests ([b870c43](https://github.com/cellajs/raak/commit/b870c4347ba81d6cd6f0150bd2e65e255cffaba2))
+* update cella.config.ts ([e1356c2](https://github.com/cellajs/raak/commit/e1356c2a2a4bf594ca1877b78689f32042b64c67))
+
+
+### 🔧 Small improvements
+
+* **attachment:** align Transloadit step names with variant vocabulary + fix seed/docs ([#88](https://github.com/cellajs/raak/issues/88)) ([1adbcb3](https://github.com/cellajs/raak/commit/1adbcb35f1b499706f824a3a5589eda34e58066e))
+* **attachment:** collapse variant *Key columns into a single keys jsonb map ([#87](https://github.com/cellajs/raak/issues/87)) ([5267202](https://github.com/cellajs/raak/commit/5267202c84c92e98da6cc3df4e5e5f19f37ec4b0))
+* **backend:** honest + deterministic module hub (defineBackendModule) ([#83](https://github.com/cellajs/raak/issues/83)) ([f75f5ab](https://github.com/cellajs/raak/commit/f75f5ab255e57fb14d29c3d6387ddd142f483af9))
+* **backend:** module capability hub + synchronous mutation bus ([#81](https://github.com/cellajs/raak/issues/81)) ([e16bed3](https://github.com/cellajs/raak/commit/e16bed34b8e61132f1bb12664ef7a9ad974da6e9))
+* **backend:** move task-delete attachment cascade into attachment-queries ([#82](https://github.com/cellajs/raak/issues/82)) ([cdbb5e1](https://github.com/cellajs/raak/commit/cdbb5e1651a59463d49e29797d1cb9056e522dac))
+* **backend:** standardize query module conventions ([#84](https://github.com/cellajs/raak/issues/84)) ([0072a2d](https://github.com/cellajs/raak/commit/0072a2dd51a9a1a7787a80eafe0d13c86522bf41))
+* **frontend:** align component and comment style ([#77](https://github.com/cellajs/raak/issues/77)) ([502ced5](https://github.com/cellajs/raak/commit/502ced5cf9a173ff26575b6dff31e27e2a66fae4))
+* mocks ([e94157c](https://github.com/cellajs/raak/commit/e94157c60d2300e26e3a6b61d61df071c325043a))
+* **publicat:** client-driven publicAt, drop project-inherit helper ([#90](https://github.com/cellajs/raak/issues/90)) ([5677541](https://github.com/cellajs/raak/commit/5677541c652815302c33ab11f1be6a0d0a3a1998))
+
+
+### 🧹 Chores
+
+* **cella:** shrink sync friction: pins/ignores, fork markers, cella-sync skill ([#92](https://github.com/cellajs/raak/issues/92)) ([8606d0a](https://github.com/cellajs/raak/commit/8606d0a89a834f77bbfaa2f6d0c6ea26acec5ee0))
+* cleanup TODOS ([#86](https://github.com/cellajs/raak/issues/86)) ([ae877f9](https://github.com/cellajs/raak/commit/ae877f9bbad57082accf4a02e8aff5a79790e244))
+* converge with cella after upstream raak-alignment (cella[#981](https://github.com/cellajs/raak/issues/981)) ([#93](https://github.com/cellajs/raak/issues/93)) ([3603d84](https://github.com/cellajs/raak/commit/3603d841410ee572b4ad4ee68372577c85c91750))
+* converge with cella after upstream raak-alignment (cellajs/cella[#981](https://github.com/cellajs/raak/issues/981)) ([3603d84](https://github.com/cellajs/raak/commit/3603d841410ee572b4ad4ee68372577c85c91750))
+* remove OperationRresult redundancy ([4b96d78](https://github.com/cellajs/raak/commit/4b96d7848282d359f7c004701be10a1899585d79))
+* remove unused onboarding seed ([d22f133](https://github.com/cellajs/raak/commit/d22f1330ef7f8e8bccd3882982311989a014ca04))
+* sync upstream cella v0.6.0 (e1a6ee5b) ([#80](https://github.com/cellajs/raak/issues/80)) ([fba4daa](https://github.com/cellajs/raak/commit/fba4daabecb626f8f024400bbeb741f6448e82ca))
+* sync upstream cella v0.6.0 (e4fc8988) ([#78](https://github.com/cellajs/raak/issues/78)) ([d15cd12](https://github.com/cellajs/raak/commit/d15cd1212bce63fae3ac1bf15ebce0d96ceb2417))
+* sync upstream cella v0.6.0 (edb112c2) ([#79](https://github.com/cellajs/raak/issues/79)) ([b1b8cea](https://github.com/cellajs/raak/commit/b1b8cea6d01adffc21f9afd5232875197b7a972e))
+* sync upstream cella v0.6.1 (3829feb1) ([#91](https://github.com/cellajs/raak/issues/91)) ([8eec6f9](https://github.com/cellajs/raak/commit/8eec6f94d9679f59232f5ed8a62cd163bb9745ff))
+* sync upstream cella v0.6.1 (42e4a651) ([#89](https://github.com/cellajs/raak/issues/89)) ([d71a458](https://github.com/cellajs/raak/commit/d71a458dc00dc21013d97ee035764eb88739c163))
+
 ## [0.0.9](https://github.com/cellajs/raak/compare/0.0.8...0.0.9) (2026-07-23)
 
 
