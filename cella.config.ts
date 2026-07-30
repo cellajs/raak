@@ -32,16 +32,31 @@ export default defineConfig({
       'frontend/src/modules/common/bg-animation',
       'frontend/src/routes/routeTree.gen.ts',
       '.github/release-please-manifest.json',
+      '.github/release-please-config.json',
+      'CLAUDE.md',
     ],
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
+      // Attachment product-host cluster: raak homes attachments on task/project (taskId/projectId
+      // columns, project-scoped queries, renamed Transloadit steps). Scaffolding pins to unwind
+      // once cella ships a configurable attachment host seam.
       'backend/src/modules/attachment/attachment-db.ts',
       'backend/src/modules/attachment/attachment-schema.ts',
       'backend/src/modules/attachment/attachment-queries.ts',
+      'backend/src/modules/attachment/attachment-mocks.ts',
+      'backend/src/modules/attachment/attachment-module.ts',
       'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
       'backend/src/modules/attachment/operations/get-presigned-urls.ts',
+      'backend/scripts/seeds/20-attachment.seed.ts',
+      'frontend/src/modules/attachment/query.ts',
+      'frontend/src/modules/attachment/helpers/parse-uploaded.ts',
+      'frontend/src/modules/attachment/tests/parse-uploaded.test.ts',
+      // Registration points: raak registers its own modules/ids here. Unpin when cella ships a
+      // fork registration seam (fork-modules.ts, bench id registry).
+      'backend/src/modules.ts',
+      'bench/src/seeds/ids.ts',
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
       'frontend/public/favicon.ico',
@@ -53,6 +68,7 @@ export default defineConfig({
       'frontend/src/alert-config.tsx',
       'frontend/src/list-queries-config.tsx',
       'frontend/src/styling/gradients.css',
+      'frontend/src/styling/tailwind.css',
       'frontend/src/modules/home/home-page.tsx',
       'frontend/src/modules/home/onboarding/onboarding-config.ts',
       'frontend/src/modules/common/logo.tsx',

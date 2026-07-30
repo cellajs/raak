@@ -9,9 +9,9 @@ import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 export const parseUploadedAttachments = (
   result: UploadedUppyFile<'attachment'>,
   organizationId: string,
-  // cella change: attachments have project as their parent context, so they require a projectId
+  // fork: attachments have project as their parent context, so they require a projectId
   projectId?: string,
-  // cella change: the owning task. Uploaded from a task form, the attachment belongs to that task.
+  // fork: the owning task. Uploaded from a task form, the attachment belongs to that task.
   taskId?: string,
 ): Attachment[] => {
   // Process original files
@@ -48,10 +48,10 @@ export const parseUploadedAttachments = (
       bucketName: user_meta?.bucketName,
       keys: { original: url ?? '' },
       groupId,
-      // cella change: taskId required
+      // fork: taskId required
       taskId,
       organizationId,
-      // cella change: projectId required
+      // fork: projectId required
       projectId,
     });
 

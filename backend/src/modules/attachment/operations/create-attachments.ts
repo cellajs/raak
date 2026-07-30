@@ -47,7 +47,7 @@ export async function createAttachmentsOp(ctx: AuthContext, rawInput: CreateAtta
       ...att,
       convertedContentType: att.convertedContentType || null,
       groupId: att.groupId || null,
-      // cella change: Raak attachments may be hosted by a task.
+      // fork: Raak attachments may be hosted by a task.
       taskId: att.taskId || null,
       tenantId: organization.tenantId,
       organizationId: organization.id,
@@ -58,7 +58,7 @@ export async function createAttachmentsOp(ctx: AuthContext, rawInput: CreateAtta
 
     canCreateEntity(ctx, {
       entityType: 'attachment',
-      // cella change: Raak attachment creation requires the project context.
+      // fork: Raak attachment creation requires the project context.
       channelIds: { organization: organization.id, project: att.projectId },
     });
     return attachment;
