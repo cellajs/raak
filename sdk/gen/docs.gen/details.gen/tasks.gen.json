@@ -2286,6 +2286,10 @@
               "itemType": "string",
               "format": "uuid"
             },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": false
+            },
             "stx": {
               "type": "object",
               "required": true,

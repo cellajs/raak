@@ -1,5 +1,4 @@
 import type { SeedScript } from '../types';
-import { inheritPublicAtFromProject } from '#/db/utils/inherit-public-at';
 import { faker } from '@faker-js/faker';
 import { appConfig } from 'shared';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
@@ -47,7 +46,9 @@ export const attachmentsSeed = async () => {
 
   // Fetch all seeded organizations (need tenantId + id for FK constraints)
   const organizations = await db.select({ id: organizationsTable.id, tenantId: organizationsTable.tenantId }).from(organizationsTable);
-  const projects = await db.select({ id: projectsTable.id, organizationId: projectsTable.organizationId }).from(projectsTable);
+  const projects = await db
+    .select({ id: projectsTable.id, organizationId: projectsTable.organizationId, publicAt: projectsTable.publicAt })
+    .from(projectsTable);
 
   if (!organizations.length) {
     spinner.fail('No organizations found → run organization seed first');
@@ -55,8 +56,10 @@ export const attachmentsSeed = async () => {
   }
 
   const projectIdsByOrganization = new Map<string, string[]>();
+  const publicAtByProject = new Map<string, string | null>();
 
   for (const project of projects) {
+    publicAtByProject.set(project.id, project.publicAt);
     const projectIds = projectIdsByOrganization.get(project.organizationId);
     if (projectIds) projectIds.push(project.id);
     else projectIdsByOrganization.set(project.organizationId, [project.id]);
@@ -76,12 +79,15 @@ export const attachmentsSeed = async () => {
     const records = SEED_FILES.map((file, i) =>
       withFakerSeed(`attachment:seed:${org.id}:${i}`, () => {
         const createdAt = faker.date.recent({ days: 30 }).toISOString();
+        const projectId = projectIds[i % projectIds.length];
         return {
           id: mockUuid(),
           entityType: 'attachment' as const,
           tenantId: org.tenantId,
           organizationId: org.id,
-          projectId: projectIds[i % projectIds.length],
+          projectId,
+          // Mirror the parent project's publicity locally (no runtime inherit helper in seeds).
+          publicAt: publicAtByProject.get(projectId) ?? null,
           createdAt,
           updatedAt: createdAt,
           createdBy: defaultAdminUser.id,
@@ -100,8 +106,6 @@ export const attachmentsSeed = async () => {
       }),
     );
 
-    // Seeds bypass insertAttachments, so inherit public_at from the parent project here.
-    await inheritPublicAtFromProject({ var: { db } }, records);
     await db.insert(attachmentsTable).values(records).onConflictDoNothing();
     totalCreated += records.length;
   }

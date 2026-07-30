@@ -2673,6 +2673,7 @@ export const zCreateTasksBody = z
       displayOrder: z.number().optional(),
       labels: z.array(z.uuid()).max(50).optional(),
       assignedTo: z.array(z.uuid()).max(50).optional(),
+      publicAt: z.string().nullish(),
       stx: zStxBase,
     }),
   )

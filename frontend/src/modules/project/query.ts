@@ -69,6 +69,10 @@ export const findProjectByIdOrSlug = (idOrSlug: string, tenantId: string): Enric
     | EnrichedProject
     | undefined;
 
+/** Reads the cached project's `publicAt` so a new task/attachment inherits its project's publicity at create time. */
+export const getProjectPublicAt = (projectId: string, tenantId: string): string | null =>
+  findProjectByIdOrSlug(projectId, tenantId)?.publicAt ?? null;
+
 type ProjectsListParams = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'> & {
   limit?: number;
 };
