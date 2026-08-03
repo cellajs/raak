@@ -2400,6 +2400,30 @@
             },
             "required": ["primaryLabels"]
           },
+          "toolsConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "order": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "hidden": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
           "included": {
             "type": "object",
             "properties": {
@@ -2533,6 +2557,7 @@
           "chatSupport",
           "organizationFlags",
           "setupConfig",
+          "toolsConfig",
           "included"
         ],
         "description": "The main channel entity is an organization.",
@@ -2585,6 +2610,7 @@
               }
             ]
           },
+          "toolsConfig": {},
           "included": {
             "membership": {
               "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",
@@ -9069,6 +9095,7 @@
                               }
                             ]
                           },
+                          "toolsConfig": {},
                           "included": {
                             "membership": {
                               "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",
@@ -9190,6 +9217,7 @@
                           }
                         ]
                       },
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "1f366272-953c-486d-81dc-ee61f43478a1",
@@ -9286,6 +9314,7 @@
                           }
                         ]
                       },
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "cf273cfa-8287-4b04-b641-897816829f30",
@@ -9638,6 +9667,7 @@
                           }
                         ]
                       },
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
@@ -9734,6 +9764,7 @@
                           }
                         ]
                       },
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
@@ -9916,6 +9947,7 @@
                       }
                     ]
                   },
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",
@@ -10145,6 +10177,30 @@
                         "maxItems": 6
                       }
                     }
+                  },
+                  "toolsConfig": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "order": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "hidden": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "settings": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -10208,6 +10264,7 @@
                       }
                     ]
                   },
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",

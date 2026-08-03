@@ -7,16 +7,40 @@ import { getFlag } from './args'
 const IAM_BASE = 'https://api.scaleway.com/iam/v1alpha1'
 const ACCOUNT_BASE = 'https://api.scaleway.com/account/v3'
 
+/** Permission sets that decrypt or enumerate secret values/metadata. */
+const SECRET_PERMISSION_SETS = new Set(['SecretManagerSecretAccess', 'SecretManagerReadOnly', 'SecretManagerFullAccess'])
+
+/**
+ * Whether an EXTRA (unexpected) permission set on the VM key is benign. A
+ * read-only set is drift worth surfacing but not a deploy-blocker — the VM
+ * policy is bootstrap-owned (CI can't reconcile it; see vm-iam.ts
+ * `ignoreChanges: ['rules']`), so failing on it would only wedge deploys until
+ * a manual bootstrap Apply, without reducing any real risk. Any NON-read-only
+ * extra set (a write/broad grant) is a genuine escalation on the VM key and
+ * stays fatal: an operator must strip it (bootstrap Apply / remove a
+ * manually-attached policy).
+ */
+const isBenignExtraSet = (set: string): boolean => set.endsWith('ReadOnly')
+
 export interface AssertVmGrantsOptions {
   secretKey: string
   /** Either an explicit id, or a name to resolve via IAM list-applications. */
   applicationId?: string
   applicationName?: string
+  /** Legacy name tried when `applicationName` resolves to nothing (pre-migration stacks). */
+  fallbackApplicationName?: string
   projectId: string
   /** Resolved from projectId when omitted. */
   organizationId?: string
   /** Permission sets the VM must hold. Defaults to the canonical VM set. */
   required?: readonly string[]
+  /**
+   * Exact CEL condition every secret-granting rule must carry (REQ-9,
+   * built by vmSecretCondition). IAM conditions only narrow an allow, so a
+   * single unconditioned secret rule on this app silently un-scopes the
+   * conditioned one — that is a FAILURE here, not a warning.
+   */
+  requiredSecretCondition?: string
   /** Injected for tests; defaults to global fetch. */
   fetchImpl?: FetchLike
   /** Injected for tests; defaults to console.info. */
@@ -29,6 +53,8 @@ export interface AssertVmGrantsResult {
   missing: string[]
   /** Permission sets granted beyond the required set: privilege drift, fails the check. */
   extra: string[]
+  /** Secret-grant rules whose condition deviates from the required one (union semantics: ONE unconditioned rule un-scopes everything). */
+  unconditionedSecretRules: string[]
 }
 
 function scwGet<T>(fetchImpl: FetchLike, secretKey: string, url: string): Promise<T> {
@@ -142,11 +168,37 @@ export async function fetchAppPermissionSetsByName(opts: {
   return (await fetchGrantedPermissionSets(fetchImpl, opts.secretKey, organizationId, applicationId)).sort()
 }
 
+/** Every rule (permission sets + condition) granted to an application across its policies. */
+export async function fetchGrantedRules(
+  fetchImpl: FetchLike,
+  secretKey: string,
+  organizationId: string,
+  applicationId: string,
+): Promise<Array<{ policyName: string; permissionSets: string[]; condition: string }>> {
+  const groupIds = await fetchApplicationGroupIds(fetchImpl, secretKey, organizationId, applicationId)
+  const policies = await listOrganizationPolicies(fetchImpl, secretKey, organizationId)
+  const bound = policies.filter((policy) => policy.application_id === applicationId || (policy.group_id !== undefined && groupIds.has(policy.group_id)))
+  const collected: Array<{ policyName: string; permissionSets: string[]; condition: string }> = []
+  for (const policy of bound) {
+    const { rules = [] } = await scwGet<{ rules?: Array<{ permission_set_names?: string[]; condition?: string }> }>(
+      fetchImpl,
+      secretKey,
+      `${IAM_BASE}/rules?policy_id=${policy.id}&page_size=100`,
+    )
+    for (const rule of rules) {
+      collected.push({ policyName: policy.name, permissionSets: rule.permission_set_names ?? [], condition: rule.condition ?? '' })
+    }
+  }
+  return collected
+}
+
 /**
  * Collect the union of permission set names granted to an application across all
  * its IAM policies and their rules, then verify it EQUALS the required set:
  * missing sets break secret hydration, extra sets are privilege drift beyond the
  * minimal VM profile (a write grant on this key widens every VM's blast radius).
+ * With `requiredSecretCondition`, additionally verify every secret-granting rule
+ * carries EXACTLY that condition (string equality against the shared builder).
  */
 export async function assertVmGrants(opts: AssertVmGrantsOptions): Promise<AssertVmGrantsResult> {
   const fetchImpl = resolveFetch(opts.fetchImpl)
@@ -157,22 +209,49 @@ export async function assertVmGrants(opts: AssertVmGrantsOptions): Promise<Asser
   let applicationId = opts.applicationId
   if (!applicationId && opts.applicationName) {
     applicationId = (await resolveApplicationIdByName(fetchImpl, opts.secretKey, organizationId, opts.applicationName)) ?? undefined
+    // Per-mode names (`<slug>-<mode>-vm-reader`) are canonical; a pre-migration
+    // stack still runs on the legacy `<slug>-vm-reader` app, so fall back by
+    // stripping the mode segment rather than failing the deploy.
+    if (!applicationId && opts.fallbackApplicationName) {
+      applicationId = (await resolveApplicationIdByName(fetchImpl, opts.secretKey, organizationId, opts.fallbackApplicationName)) ?? undefined
+      if (applicationId) log(`~ IAM application '${opts.applicationName}' not found; verified legacy '${opts.fallbackApplicationName}' instead (run "Migrate IAM model")`)
+    }
     if (!applicationId) throw new Error(`IAM application '${opts.applicationName}' not found in organization ${organizationId}`)
   }
   if (!applicationId) throw new Error('assertVmGrants: provide applicationId or applicationName')
 
-  const granted = new Set(await fetchGrantedPermissionSets(fetchImpl, opts.secretKey, organizationId, applicationId))
+  const rules = await fetchGrantedRules(fetchImpl, opts.secretKey, organizationId, applicationId)
+  const granted = new Set(rules.flatMap((rule) => rule.permissionSets))
 
   const requiredSet = new Set(required)
   const missing = required.filter((r) => !granted.has(r))
   const extra = [...granted].filter((g) => !requiredSet.has(g)).sort()
-  if (missing.length === 0 && extra.length === 0) {
-    log(`✓ VM reader grant verified — exactly the ${required.length} required permission sets, nothing more`)
-  } else {
-    if (missing.length > 0) log(`✗ VM reader grant INCOMPLETE — missing: ${missing.join(', ')}`)
-    if (extra.length > 0) log(`✗ VM reader grant TOO BROAD — extra: ${extra.join(', ')}`)
+  const extraBenign = extra.filter(isBenignExtraSet)
+  const extraFatal = extra.filter((set) => !isBenignExtraSet(set))
+
+  const unconditionedSecretRules: string[] = []
+  if (opts.requiredSecretCondition) {
+    for (const rule of rules) {
+      if (!rule.permissionSets.some((set) => SECRET_PERMISSION_SETS.has(set))) continue
+      if (rule.condition !== opts.requiredSecretCondition) {
+        unconditionedSecretRules.push(`${rule.policyName} [${rule.permissionSets.join(', ')}] condition='${rule.condition || '(none)'}'`)
+      }
+    }
   }
-  return { ok: missing.length === 0 && extra.length === 0, granted: [...granted].sort(), missing, extra }
+
+  // Missing sets break hydration; a NON-read-only extra set is an escalation;
+  // an un-scoped secret rule leaks secrets — all fatal. Extra READ-ONLY sets
+  // are surfaced as a warning but do not block (see isBenignExtraSet).
+  const ok = missing.length === 0 && extraFatal.length === 0 && unconditionedSecretRules.length === 0
+  if (missing.length > 0) log(`✗ VM reader grant INCOMPLETE — missing: ${missing.join(', ')}`)
+  if (extraFatal.length > 0) log(`✗ VM reader grant TOO BROAD — extra write/broad grant(s): ${extraFatal.join(', ')}`)
+  for (const entry of unconditionedSecretRules) log(`✗ VM secret rule NOT path-scoped (union semantics un-scope the conditioned rule): ${entry}`)
+  if (extraBenign.length > 0) log(`⚠ VM reader has extra read-only grant(s) (benign drift; reconcile via a bootstrap "Apply infra change" / "Migrate IAM model"): ${extraBenign.join(', ')}`)
+  if (ok) {
+    const conditionNote = opts.requiredSecretCondition ? ', secret rules path-conditioned' : ''
+    log(`✓ VM reader grant verified — required permission sets present, no escalation${conditionNote}`)
+  }
+  return { ok, granted: [...granted].sort(), missing, extra, unconditionedSecretRules }
 }
 
 // Standalone entry point.
@@ -187,11 +266,21 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     throw new Error('Required: SCW_SECRET_KEY, --application-id or --application-name, --project-id')
   }
 
-  const result = await assertVmGrants({ secretKey, applicationId, applicationName, projectId, organizationId })
+  const fallbackApplicationName = getFlag(argv, '--fallback-application-name') ?? undefined
+  const requiredSecretCondition = getFlag(argv, '--secret-condition') ?? undefined
+  const requiredSetsCsv = getFlag(argv, '--required-sets')
+  const required = requiredSetsCsv ? requiredSetsCsv.split(',').map((set) => set.trim()).filter(Boolean) : undefined
+  const result = await assertVmGrants({ secretKey, applicationId, applicationName, projectId, organizationId, fallbackApplicationName, requiredSecretCondition, required })
   if (!result.ok) {
+    // Only fatal problems reach here (ok is false): missing sets, a write/broad
+    // escalation, or an un-scoped secret rule. Benign read-only extras were
+    // warned about but never set ok=false.
     const problems = [
       result.missing.length > 0 ? `missing required permission sets: ${result.missing.join(', ')}` : '',
-      result.extra.length > 0 ? `granted EXTRA permission sets beyond the minimal VM profile: ${result.extra.join(', ')}` : '',
+      result.extra.filter((set) => !set.endsWith('ReadOnly')).length > 0
+        ? `granted EXTRA write/broad permission sets beyond the minimal VM profile: ${result.extra.filter((set) => !set.endsWith('ReadOnly')).join(', ')}`
+        : '',
+      result.unconditionedSecretRules.length > 0 ? `secret rules without the required path condition: ${result.unconditionedSecretRules.join('; ')}` : '',
     ].filter(Boolean)
     throw new Error(
       `VM reader application ${applicationId ?? applicationName} ${problems.join('; ')}. ` +

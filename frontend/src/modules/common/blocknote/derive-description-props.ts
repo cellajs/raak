@@ -8,7 +8,8 @@ import {
 import { blocksToHTML } from '~/modules/common/blocknote/helpers/blocknote-helpers';
 import type { CustomBlock } from '~/modules/common/blocknote/types';
 
-// attachmentCount is presentation-only (attachments.length); the wire object carries none.
+// fork: attachmentCount is presentation-only (attachments.length) since task.attachments is an
+// owned embedding derived from the description media blocks; the wire object carries no count.
 export type DerivedDescriptionCounts = Omit<DescriptionCounts, 'attachmentCount'>;
 
 export type DerivedDescriptionProps = DerivedDescriptionCounts & {

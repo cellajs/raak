@@ -32,6 +32,9 @@ export const appServices = defineServices({
     // Private ACL-guarded LB frontend: in-network consumers (cdc) dial a stable
     // address that follows every cutover.
     internalRoute: true,
+    // Attachment uploads + presigned URLs are signed with the backend's own
+    // per-deploy service key (replaces the retired s3 managed key).
+    s3Access: true,
     // Per-service VM size (required on every service).
     instanceType: { production: 'DEV1-S', staging: 'DEV1-S' },
     env: {
@@ -146,6 +149,9 @@ export const appServices = defineServices({
     // The SPA proxy reads no app secret: no standard env, no .env files.
     includeStandardEnv: false,
     includeEnvFile: false,
+    // singleVM: run the Caddy container on the host VM (no in-process fold
+    // possible for a non-Node runtime); its LB pool follows the host cutover.
+    placement: 'host',
     instanceType: 'DEV1-S',
     env: {
       FRONTEND_CSP: '${FRONTEND_CSP}',

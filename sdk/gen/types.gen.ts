@@ -576,6 +576,15 @@ export type Organization = {
       icon: string | null;
     }>;
   };
+  toolsConfig: {
+    [key: string]: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+      settings?: {
+        [key: string]: unknown;
+      };
+    };
+  };
   included: {
     membership?: MembershipBase;
     counts?: {
@@ -4367,6 +4376,15 @@ export type UpdateOrganizationData = {
           | 'slate';
         icon: string | null;
       }>;
+    };
+    toolsConfig?: {
+      [key: string]: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+        settings?: {
+          [key: string]: unknown;
+        };
+      };
     };
   };
   path: {

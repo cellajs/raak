@@ -16,6 +16,9 @@
     "20260723T2257-deploy-engine-waves",
     "20260729T0922-app-product-mocks",
     "20260730T0425-boot-image-rename",
-    "20260730T0624-attachment-keys-map"
+    "20260730T0624-attachment-keys-map",
+    "20260730T0858-frontend-module-placements",
+    "20260730T1009-owned-host-embedding",
+    "20260730T1258-cella-config-into-cella-folder"
   ]
 }

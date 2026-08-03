@@ -1,6 +1,13 @@
-import { registerModule } from 'shared/module-registry';
+import { defineFrontendModule } from '~/lib/module';
+import type { EnrichedProject } from '~/modules/project/types';
 
-registerModule({
+declare module '~/lib/placements' {
+  interface ChannelEntityByType {
+    project: EnrichedProject;
+  }
+}
+
+defineFrontendModule({
   name: 'projects',
   owner: 'app',
   scope: ['frontend'],

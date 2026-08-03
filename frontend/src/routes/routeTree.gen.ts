@@ -20,6 +20,7 @@ import { Route as PublicContentRouteRouteImport } from './_public/_content/route
 import { Route as PublicAuthRouteRouteImport } from './_public/auth/route'
 import { Route as PublicErrorRouteImport } from './_public/error'
 import { Route as AppTenantIdOrganizationSlugRouteRouteImport } from './_app/$tenantId.$organizationSlug/route'
+import { Route as AppSystemToolRouteImport } from './_app/system/$tool'
 import { Route as AppSystemOrganizationsRouteImport } from './_app/system/organizations'
 import { Route as AppSystemRequestsRouteImport } from './_app/system/requests'
 import { Route as AppSystemTenantsRouteImport } from './_app/system/tenants'
@@ -43,6 +44,7 @@ import { Route as PublicContentTIdRouteImport } from './_public/_content/t.$id'
 import { Route as PublicMarketingLegalIndexRouteImport } from './_public/_marketing/legal.index'
 import { Route as PublicMarketingLegalSubjectRouteImport } from './_public/_marketing/legal.$subject'
 import { Route as PublicAuthEmailVerificationReasonRouteImport } from './_public/auth/email-verification.$reason'
+import { Route as AppTenantIdOrganizationSlugOrganizationToolRouteImport } from './_app/$tenantId.$organizationSlug/organization/$tool'
 import { Route as AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport } from './_app/$tenantId.$organizationSlug/organization/attachments'
 import { Route as AppTenantIdOrganizationSlugOrganizationMembersRouteImport } from './_app/$tenantId.$organizationSlug/organization/members'
 import { Route as AppTenantIdOrganizationSlugOrganizationSettingsRouteImport } from './_app/$tenantId.$organizationSlug/organization/settings'
@@ -105,6 +107,11 @@ const AppTenantIdOrganizationSlugRouteRoute =
     path: '/$tenantId/$organizationSlug',
     getParentRoute: () => AppRouteRoute,
   } as any)
+const AppSystemToolRoute = AppSystemToolRouteImport.update({
+  id: '/$tool',
+  path: '/$tool',
+  getParentRoute: () => AppSystemRouteRoute,
+} as any)
 const AppSystemOrganizationsRoute = AppSystemOrganizationsRouteImport.update({
   id: '/organizations',
   path: '/organizations',
@@ -228,6 +235,12 @@ const PublicAuthEmailVerificationReasonRoute =
     path: '/email-verification/$reason',
     getParentRoute: () => PublicAuthRouteRoute,
   } as any)
+const AppTenantIdOrganizationSlugOrganizationToolRoute =
+  AppTenantIdOrganizationSlugOrganizationToolRouteImport.update({
+    id: '/$tool',
+    path: '/$tool',
+    getParentRoute: () => AppTenantIdOrganizationSlugOrganizationRouteRoute,
+  } as any)
 const AppTenantIdOrganizationSlugOrganizationAttachmentsRoute =
   AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport.update({
     id: '/attachments',
@@ -287,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/error': typeof PublicErrorRoute
   '/$tenantId/$organizationSlug': typeof AppTenantIdOrganizationSlugRouteRouteWithChildren
   '/docs': typeof PublicContentDocsRouteRouteWithChildren
+  '/system/$tool': typeof AppSystemToolRoute
   '/system/organizations': typeof AppSystemOrganizationsRoute
   '/system/requests': typeof AppSystemRequestsRoute
   '/system/tenants': typeof AppSystemTenantsRoute
@@ -309,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/docs/': typeof PublicContentDocsIndexRoute
   '/legal/': typeof PublicMarketingLegalIndexRoute
+  '/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   '/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
   '/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
@@ -327,6 +342,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof AppWelcomeRoute
   '/error': typeof PublicErrorRoute
   '/$tenantId/$organizationSlug': typeof AppTenantIdOrganizationSlugRouteRouteWithChildren
+  '/system/$tool': typeof AppSystemToolRoute
   '/system/organizations': typeof AppSystemOrganizationsRoute
   '/system/requests': typeof AppSystemRequestsRoute
   '/system/tenants': typeof AppSystemTenantsRoute
@@ -349,6 +365,7 @@ export interface FileRoutesByTo {
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/docs': typeof PublicContentDocsIndexRoute
   '/legal': typeof PublicMarketingLegalIndexRoute
+  '/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   '/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
   '/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
@@ -372,6 +389,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/$tenantId/$organizationSlug': typeof AppTenantIdOrganizationSlugRouteRouteWithChildren
   '/_public/_content/docs': typeof PublicContentDocsRouteRouteWithChildren
+  '/_app/system/$tool': typeof AppSystemToolRoute
   '/_app/system/organizations': typeof AppSystemOrganizationsRoute
   '/_app/system/requests': typeof AppSystemRequestsRoute
   '/_app/system/tenants': typeof AppSystemTenantsRoute
@@ -394,6 +412,7 @@ export interface FileRoutesById {
   '/_public/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
   '/_public/_content/docs/': typeof PublicContentDocsIndexRoute
   '/_public/_marketing/legal/': typeof PublicMarketingLegalIndexRoute
+  '/_app/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   '/_app/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/_app/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
   '/_app/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
@@ -415,6 +434,7 @@ export interface FileRouteTypes {
     | '/error'
     | '/$tenantId/$organizationSlug'
     | '/docs'
+    | '/system/$tool'
     | '/system/organizations'
     | '/system/requests'
     | '/system/tenants'
@@ -437,6 +457,7 @@ export interface FileRouteTypes {
     | '/auth/email-verification/$reason'
     | '/docs/'
     | '/legal/'
+    | '/$tenantId/$organizationSlug/organization/$tool'
     | '/$tenantId/$organizationSlug/organization/attachments'
     | '/$tenantId/$organizationSlug/organization/members'
     | '/$tenantId/$organizationSlug/organization/settings'
@@ -455,6 +476,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/error'
     | '/$tenantId/$organizationSlug'
+    | '/system/$tool'
     | '/system/organizations'
     | '/system/requests'
     | '/system/tenants'
@@ -477,6 +499,7 @@ export interface FileRouteTypes {
     | '/auth/email-verification/$reason'
     | '/docs'
     | '/legal'
+    | '/$tenantId/$organizationSlug/organization/$tool'
     | '/$tenantId/$organizationSlug/organization/attachments'
     | '/$tenantId/$organizationSlug/organization/members'
     | '/$tenantId/$organizationSlug/organization/settings'
@@ -499,6 +522,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/$tenantId/$organizationSlug'
     | '/_public/_content/docs'
+    | '/_app/system/$tool'
     | '/_app/system/organizations'
     | '/_app/system/requests'
     | '/_app/system/tenants'
@@ -521,6 +545,7 @@ export interface FileRouteTypes {
     | '/_public/auth/email-verification/$reason'
     | '/_public/_content/docs/'
     | '/_public/_marketing/legal/'
+    | '/_app/$tenantId/$organizationSlug/organization/$tool'
     | '/_app/$tenantId/$organizationSlug/organization/attachments'
     | '/_app/$tenantId/$organizationSlug/organization/members'
     | '/_app/$tenantId/$organizationSlug/organization/settings'
@@ -614,6 +639,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$tenantId/$organizationSlug'
       preLoaderRoute: typeof AppTenantIdOrganizationSlugRouteRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/_app/system/$tool': {
+      id: '/_app/system/$tool'
+      path: '/$tool'
+      fullPath: '/system/$tool'
+      preLoaderRoute: typeof AppSystemToolRouteImport
+      parentRoute: typeof AppSystemRouteRoute
     }
     '/_app/system/organizations': {
       id: '/_app/system/organizations'
@@ -776,6 +808,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAuthEmailVerificationReasonRouteImport
       parentRoute: typeof PublicAuthRouteRoute
     }
+    '/_app/$tenantId/$organizationSlug/organization/$tool': {
+      id: '/_app/$tenantId/$organizationSlug/organization/$tool'
+      path: '/$tool'
+      fullPath: '/$tenantId/$organizationSlug/organization/$tool'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationToolRouteImport
+      parentRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRoute
+    }
     '/_app/$tenantId/$organizationSlug/organization/attachments': {
       id: '/_app/$tenantId/$organizationSlug/organization/attachments'
       path: '/attachments'
@@ -836,6 +875,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppSystemRouteRouteChildren {
+  AppSystemToolRoute: typeof AppSystemToolRoute
   AppSystemOrganizationsRoute: typeof AppSystemOrganizationsRoute
   AppSystemRequestsRoute: typeof AppSystemRequestsRoute
   AppSystemTenantsRoute: typeof AppSystemTenantsRoute
@@ -843,6 +883,7 @@ interface AppSystemRouteRouteChildren {
 }
 
 const AppSystemRouteRouteChildren: AppSystemRouteRouteChildren = {
+  AppSystemToolRoute: AppSystemToolRoute,
   AppSystemOrganizationsRoute: AppSystemOrganizationsRoute,
   AppSystemRequestsRoute: AppSystemRequestsRoute,
   AppSystemTenantsRoute: AppSystemTenantsRoute,
@@ -854,6 +895,7 @@ const AppSystemRouteRouteWithChildren = AppSystemRouteRoute._addFileChildren(
 )
 
 interface AppTenantIdOrganizationSlugOrganizationRouteRouteChildren {
+  AppTenantIdOrganizationSlugOrganizationToolRoute: typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   AppTenantIdOrganizationSlugOrganizationAttachmentsRoute: typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   AppTenantIdOrganizationSlugOrganizationMembersRoute: typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
   AppTenantIdOrganizationSlugOrganizationSettingsRoute: typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
@@ -861,6 +903,8 @@ interface AppTenantIdOrganizationSlugOrganizationRouteRouteChildren {
 
 const AppTenantIdOrganizationSlugOrganizationRouteRouteChildren: AppTenantIdOrganizationSlugOrganizationRouteRouteChildren =
   {
+    AppTenantIdOrganizationSlugOrganizationToolRoute:
+      AppTenantIdOrganizationSlugOrganizationToolRoute,
     AppTenantIdOrganizationSlugOrganizationAttachmentsRoute:
       AppTenantIdOrganizationSlugOrganizationAttachmentsRoute,
     AppTenantIdOrganizationSlugOrganizationMembersRoute:

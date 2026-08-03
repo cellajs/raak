@@ -20,7 +20,7 @@ export default defineConfig({
     // NOTE: Modules with `app` owner are also ignored, including their public static asset folder
     ignored: [
       'README.md',
-      'cella.manifest.json',
+      'cella/cella.manifest.json',
       'infra/compose.gen.yml',
       'infra/Pulumi.production.yaml',
       'infra/Pulumi.staging.yaml',
@@ -56,6 +56,7 @@ export default defineConfig({
       'frontend/public/favicon.svg',
       'frontend/public/thumbnail.png',
       'frontend/src/nav-config.tsx',
+      'frontend/src/placement-config.ts',
       'frontend/src/routes-config.tsx',
       'frontend/src/menu-config.tsx',
       'frontend/src/alert-config.tsx',
@@ -72,7 +73,6 @@ export default defineConfig({
       'backend/src/modules/organization/setup-config-schema.ts',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',
-      'frontend/src/modules/organization/organization-settings-sections.tsx',
     ],
   },
 });
