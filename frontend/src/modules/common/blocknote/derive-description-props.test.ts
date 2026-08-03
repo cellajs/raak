@@ -9,6 +9,8 @@ const block = (type: string, props: Record<string, unknown> = {}, children: unkn
   children,
 });
 
+// fork: expectations carry `attachments` (the owned-embedding id list derived from media blocks)
+// where the template counts them, matching this fork's DerivedDescriptionCounts shape.
 describe('deriveDescriptionCounts', () => {
   it('counts checklist items including checked state', () => {
     const description = JSON.stringify([

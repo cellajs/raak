@@ -36,6 +36,8 @@ interface Props {
 
 /** Renders the form for updating organization details. */
 export function UpdateOrganizationDetailsForm({ organization, callback, sheet: isSheet }: Props) {
+  // fork: no baseFilePanelProps here. Attachments are scoped to a project and created from task
+  // description media blocks, so an organization-scoped editor has nowhere to persist uploads.
   const { t } = useTranslation();
   const { mutate, isPending } = useOrganizationUpdateMutation();
 

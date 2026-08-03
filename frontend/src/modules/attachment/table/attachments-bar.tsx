@@ -33,6 +33,8 @@ export function AttachmentsTableBar({
   isSheet = false,
   queryKey,
 }: AttachmentsTableBarProps) {
+  // fork: no upload button and no canUpload prop. Attachments are created from task description
+  // media blocks (owned embedding), so a channel-level upload has no target to write into.
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
   const resolveCan = useResolveCan();

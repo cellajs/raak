@@ -32,8 +32,6 @@
 }
 
 /* Disabled inputs swallow mouse events entirely; let clicks fall through to the wrapper so
-   click-intercepts (e.g. the expanded task card's checkbox toggle) still receive them. */
-/* Disabled inputs swallow mouse events entirely; let clicks fall through to the wrapper so
    click-intercepts (e.g. an expanded card's checkbox toggle) still receive them. */
 .checklist-checkbox:disabled {
   pointer-events: none;

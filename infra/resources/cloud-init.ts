@@ -7,8 +7,10 @@ export interface CloudInitParams {
   service: string
   /** Docker compose profile to bring up (equals the service slug). */
   profile: string
-  /** Run the one-shot `migrate` companion before the app (expand-before-cutover). */
-  runMigrate: boolean
+  /** Compose services the boot runner starts (the service plus any collocated containers). */
+  startServices: string[]
+  /** Run the one-shot release companion before the app (expand-before-cutover). */
+  runRelease: boolean
   /** Release SHA baked into this generation (also the compose image tag). */
   releaseSha: string
   /** Fully-resolved static .env body written to /opt/app/.env (includes `<SVC>_TAG`). */
@@ -40,6 +42,10 @@ export interface CloudInitParams {
   region: string
   /** Dedicated Object Storage bucket for boot diagnostics. */
   bootDiagBucket: string
+  /** v2: single-access handoff secret id for this service's minted key. */
+  handoffSecretId?: string
+  /** v2 + s3Access: export the service key as S3_* env into .env.runtime. */
+  exportS3Env?: boolean
   /** Deploy trace context baked into the boot plan (absent outside a deploy run). */
   traceparent?: string
 }
@@ -93,6 +99,7 @@ function bootPlan(p: CloudInitParams): string {
     schemaVersion: supportedSchemaVersion,
     service: p.service,
     profile: p.profile,
+    ...(p.startServices.length > 0 ? { services: p.startServices as [string, ...string[]] } : {}),
     releaseSha: p.releaseSha,
     ...(p.traceparent ? { traceparent: p.traceparent } : {}),
     imageContract: supportedImageContract,
@@ -102,13 +109,17 @@ function bootPlan(p: CloudInitParams): string {
       scwAccessKeyFile: paths.accessKey,
       scwSecretKeyFile: paths.secretKey,
     },
+    ...(p.handoffSecretId
+      ? { serviceKeyHandoff: { secretId: p.handoffSecretId, cacheFile: `${paths.etcDir}/service-key.json` } }
+      : {}),
+    ...(p.exportS3Env ? { exportS3Env: true } : {}),
     bootDiagnostics: {
       bucket: p.bootDiagBucket,
       logFile: '/var/log/infra-boot.log',
     },
     releaseCommand: {
-      enabled: p.runMigrate,
-      command: ['docker', 'compose', '--profile', p.profile, 'run', '--rm', 'migrate'],
+      enabled: p.runRelease,
+      command: ['docker', 'compose', '--profile', p.profile, 'run', '--rm', `${p.profile}-release`],
     },
     docker: { composeFile: '/opt/app/compose.yml' },
     files: {

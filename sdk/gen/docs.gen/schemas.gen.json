@@ -1297,6 +1297,23 @@
             }
           }
         },
+        "toolsConfig": {
+          "type": "object",
+          "required": true,
+          "additionalProperties": {
+            "type": "object",
+            "required": false,
+            "properties": {
+              "order": { "type": "array", "required": false, "itemType": "string" },
+              "hidden": { "type": "array", "required": false, "itemType": "string" },
+              "settings": {
+                "type": "object",
+                "required": false,
+                "additionalProperties": { "type": "object", "required": false }
+              }
+            }
+          }
+        },
         "included": {
           "type": "object",
           "required": true,
@@ -1503,6 +1520,7 @@
           }
         ]
       },
+      "toolsConfig": {},
       "included": {
         "membership": {
           "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",

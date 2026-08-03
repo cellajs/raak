@@ -1,6 +1,14 @@
-import { registerModule } from 'shared/module-registry';
+import type { Workspace } from 'sdk';
+import { defineFrontendModule } from '~/lib/module';
+import type { ChannelEnrichment } from '~/modules/entities/types';
 
-registerModule({
+declare module '~/lib/placements' {
+  interface ChannelEntityByType {
+    workspace: Workspace & ChannelEnrichment;
+  }
+}
+
+defineFrontendModule({
   name: 'workspaces',
   owner: 'app',
   scope: ['frontend'],

@@ -39,7 +39,8 @@ export interface AttachmentsTableProps {
   isSheet?: boolean;
 }
 
-// Attachments are uploaded through task descriptions; this table only browses and manages them.
+// fork: attachments are created from task description media blocks (owned embedding), so this
+// table browses and manages only and carries no upload affordance or canUpload override.
 function AttachmentsTable({ channel, isSheet = false }: AttachmentsTableProps) {
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<AttachmentsRouteSearchParams>({ saveDataInSearch: !isSheet });

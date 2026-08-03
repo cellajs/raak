@@ -61,7 +61,13 @@ Three design rules carry the model:
 
 1. **Create-then-replace.** A release never mutates a running server. Each deploy provisions a new immutable **generation** per service, moves load-balancer traffic once the new generation provably serves the expected version, then destroys the displaced one. Rollback is a revert commit through the same forward path.
 2. **Content-addressed identity.** A generation's id is a hash of the release SHA plus its static config, so re-running a deploy is a no-op and a manual `pulumi up` can never create a divergent generation identity. Rollout state lives in one S3 **control object** that both the deploy command and the Pulumi program read.
-3. **Descending-privilege credentials.** Three keys, each creating the next: a short-lived bootstrap key (password manager only), a project-scoped CI deploy key (GitHub Environment), and a read-only VM reader key (baked into servers). No privileged key lives on a laptop or a VM.
+3. **Least-privilege credentials, per mode.** All principals are per app×mode (`<slug>-<mode>-…`), collected in one IAM group. The load-bearing boundary: **the CI key can never write IAM** — a single IAM-write action self-escalates to full admin (OWASP CICD-SEC-6 / NIST AC-6 territory), so identity administration stays a transient human action. The tiers:
+   - **bootstrap key** — human-pasted, IAMManager-grade, used once per wizard/migration run and revoked at the end. Never standing.
+   - **admin app** — the standing human principal: Object Storage `s3:*` (via bucket policies) + read-only on every infra surface, so `pulumi preview --refresh` and teardown work. No IAM write. Its key lives in Secret Manager (`admin-key`), never in git or GitHub.
+   - **CI deploy app** — project-scoped writes for routine deploys; no IAM writes except one *conditioned* `IAMApplicationManager` rule (`resource.id in [service app ids]`) that lets it rotate service keys every deploy and provably nothing else.
+   - **per-service VM apps + boot app** — each service VM signs with its own per-deploy key, path-conditioned to its own + shared secret folders (`resource.name.startsWith`). Cloud-init carries only the **boot key** (registry pull, boot-diag write, handoff read); the real service key arrives via a **single-access** Secret Manager bundle — a consumed bundle on first boot is an interception signal and halts the VM. Reboots reuse the on-disk cached pair.
+
+   Bucket policies are deny-by-default for everyone not listed (including org admins — the org Owner can always edit/delete a bucket policy, that right is inherent). Uploads buckets are versioned and the CI statements exclude `s3:DeleteObjectVersion`, so a leaked CI key cannot destroy state history or user-data versions. Secret folders are the security boundary: `/<slug>-<mode>/<service>/`, `/shared/`, `/handoff/`, `/engine/` (engine credentials are unreadable from VMs). Existing stacks adopt all of this via `pnpm infra` → **Migrate IAM model**.
 
 ## Observability
 
@@ -96,6 +102,10 @@ Each check reports one of `ok | warn | missing | error | unknown`, where `unknow
 ```
 
 Check `id`s are stable identifiers (`tooling.pulumi`, `config.stackState`, `identity.project`, `github.environment`, `state.bucket`, `state.lock`, `rollout`, `secrets.required`, `live.<service>`, `dns.zone`). The evaluator is a pure function of gathered facts, so the mapping from facts to verdicts is unit-tested in isolation.
+
+## Teardown
+
+There is no teardown command, on purpose. Destroying a stack is a rare, irreversible operation that needs owner-tier credentials the descending-privilege model deliberately keeps off laptops and out of CI — the CI deploy key can create but not delete the database or VPC, and the state-bucket policy denies it `DeleteBucket`. So you do it yourself, by hand, in the Scaleway console. See **Teardown** in [../cella/DEPLOYMENT.md](../cella/DEPLOYMENT.md) for the order.
 
 ## Extending
 

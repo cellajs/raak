@@ -537,6 +537,14 @@ export const zOrganization = z.object({
       .min(1)
       .max(6),
   }),
+  toolsConfig: z.record(
+    z.string(),
+    z.object({
+      order: z.array(z.string()).optional(),
+      hidden: z.array(z.string()).optional(),
+      settings: z.record(z.string(), z.unknown()).optional(),
+    }),
+  ),
   included: z.object({
     membership: zMembershipBase.optional(),
     counts: z
@@ -1764,6 +1772,16 @@ export const zUpdateOrganizationBody = z.object({
         .max(6)
         .optional(),
     })
+    .optional(),
+  toolsConfig: z
+    .record(
+      z.string(),
+      z.object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+        settings: z.record(z.string(), z.unknown()).optional(),
+      }),
+    )
     .optional(),
 });
 
