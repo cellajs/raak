@@ -8,7 +8,6 @@ import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
 import {
   batchResponseSchema,
-  labelSlugSchema,
   maxLength,
   paginationQuerySchema,
   stxBaseSchema,
@@ -16,6 +15,7 @@ import {
   validUuidSchema,
 } from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
+import { labelSlugSchema } from '#/schemas/label-slug-schema';
 import { pick } from '#/utils/pick';
 
 const labelInsertSchema = createInsertSchema(labelsTable);

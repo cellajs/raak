@@ -20,7 +20,7 @@ import {
   validTempIdSchema,
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
-import { nullableUserMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
 
 /** Task status counts for accepted/iced cutoff display */
 const taskStatusCountsSchema = z.object({

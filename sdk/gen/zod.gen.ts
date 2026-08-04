@@ -14,9 +14,15 @@ export const zUserMinimalBase = z.object({
 });
 
 /**
- * Minimal user data for references, or null when no user is available.
+ * Minimal organization data for references.
  */
-export const zNullableUserMinimalBase = zUserMinimalBase.nullable();
+export const zOrganizationMinimalBase = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  thumbnailUrl: z.string().nullable(),
+  entityType: z.enum(['organization']),
+});
 
 /**
  * Base user schema with essential fields for identification and display.
@@ -58,8 +64,8 @@ export const zProductBase = z.object({
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   description: z.string().nullable(),
-  createdBy: zNullableUserMinimalBase,
-  updatedBy: zNullableUserMinimalBase,
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   entityType: z.enum(['task', 'label', 'attachment']),
   keywords: z.string(),
 });
@@ -92,11 +98,6 @@ export const zStxBase = z.object({
 });
 
 /**
- * Sync transaction metadata, or null when an event has no sync transaction.
- */
-export const zNullableStxBase = zStxBase.nullable();
-
-/**
  * Boolean query value accepted as a boolean or its lowercase string representation.
  */
 export const zBooleanQueryValue = z.union([z.enum(['true', 'false']), z.boolean()]).default('false');
@@ -116,7 +117,7 @@ export const zStreamNotification = z.object({
   path: z.string().nullable(),
   seq: z.int().nullable(),
   channelId: z.string().nullable(),
-  stx: zNullableStxBase,
+  stx: zStxBase.nullable(),
   batchUntilSeq: z.int().nullable(),
   count: z.int().nullable(),
   spreadWindow: z.int().nullable(),
@@ -295,7 +296,7 @@ export const zInactiveMembership = z.object({
   role: z.enum(['admin', 'member', 'guest']),
   rejectedAt: z.string().nullable(),
   remindedAt: z.string().nullable(),
-  createdBy: zNullableUserMinimalBase,
+  createdBy: zUserMinimalBase.nullable(),
   organizationId: z.uuid(),
   workspaceId: z.uuid().nullable(),
   projectId: z.uuid().nullable(),
@@ -343,6 +344,15 @@ export const zTenant = z.object({
 });
 
 /**
+ * A tenant together with the single organization it holds.
+ */
+export const zTenantWithOrganization = zTenant.and(
+  z.object({
+    organization: zOrganizationMinimalBase.nullable(),
+  }),
+);
+
+/**
  * A contact or waitlist submission from an unauthenticated user.
  */
 export const zRequest = z.object({
@@ -367,8 +377,8 @@ export const zProject = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zNullableUserMinimalBase,
-  updatedBy: zNullableUserMinimalBase,
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -471,8 +481,8 @@ export const zTask = z.object({
     })
     .nullable(),
   assignedTo: z.array(zUserMinimalBase),
-  createdBy: zNullableUserMinimalBase,
-  updatedBy: zNullableUserMinimalBase,
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   stx: zStxBase,
 });
 
@@ -489,8 +499,8 @@ export const zOrganization = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zNullableUserMinimalBase,
-  updatedBy: zNullableUserMinimalBase,
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -596,8 +606,8 @@ export const zWorkspace = z.object({
   slug: z.string().max(255),
   thumbnailUrl: z.string().max(2048).nullable(),
   bannerUrl: z.string().max(2048).nullable(),
-  createdBy: zNullableUserMinimalBase,
-  updatedBy: zNullableUserMinimalBase,
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
@@ -634,8 +644,8 @@ export const zAttachment = z.object({
   stx: zStxBase,
   description: z.string().max(1000000).nullable(),
   keywords: z.string().max(1000000),
-  createdBy: zNullableUserMinimalBase,
-  updatedBy: zNullableUserMinimalBase,
+  createdBy: zUserMinimalBase.nullable(),
+  updatedBy: zUserMinimalBase.nullable(),
   deletedAt: z.string().nullable(),
   deletedBy: z.uuid().nullable(),
   publicAt: z.string().nullable(),
@@ -1207,7 +1217,7 @@ export const zGetTenantsQuery = z.object({
  * Tenants list
  */
 export const zGetTenantsResponse = z.object({
-  items: z.array(zTenant),
+  items: z.array(zTenantWithOrganization),
   total: z.number(),
 });
 
@@ -2610,7 +2620,7 @@ export const zGetPendingMembershipsResponse = z.object({
       thumbnailUrl: z.string().nullable(),
       role: z.enum(['admin', 'member', 'guest']).nullable(),
       createdAt: z.string(),
-      createdBy: zNullableUserMinimalBase,
+      createdBy: zUserMinimalBase.nullable(),
     }),
   ),
   total: z.number(),

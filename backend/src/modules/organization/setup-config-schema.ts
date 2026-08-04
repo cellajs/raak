@@ -1,7 +1,8 @@
 import { z } from '@hono/zod-openapi';
 import { labelColorTokens, primaryLabelLimits } from 'shared';
-import { labelSlugSchema, validNameSchema } from '#/schemas';
+import { validNameSchema } from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
+import { labelSlugSchema } from '#/schemas/label-slug-schema';
 
 /** One primary label definition in an organization's setupConfig. */
 const primaryLabelDefinitionSchema = z.object({

@@ -51,8 +51,13 @@ export {
   errorResponses,
   registerAllErrorResponses,
 } from './error-response-schemas';
-export { labelSlugSchema } from './label-slug-schema';
 export { mapEntitiesToSchema } from './map-entities-to-schema';
+export {
+  nullableOrganizationMinimalBaseSchema,
+  nullableUserMinimalBaseSchema,
+  organizationMinimalBaseSchema,
+  userMinimalBaseSchema,
+} from './minimal-base';
 export {
   type AppCatchupResponse,
   appCatchupResponseSchema,
@@ -72,4 +77,3 @@ export {
   paginationSchema,
 } from './success-response-schemas';
 export { nullableStxBaseSchema, type StxBase, stxBaseSchema } from './sync-transaction-schemas';
-export { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from './user-minimal-base';
