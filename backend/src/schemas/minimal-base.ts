@@ -27,8 +27,8 @@ export const userMinimalBaseSchema = minimalBaseSchema('user').openapi('UserMini
 });
 
 /**
- * Nullable minimal-user reference. Deliberately unnamed so it emits an inline
- * `anyOf: [$ref, {type: 'null'}]` at each use site instead of a separate component schema.
+ * Nullable minimal-user reference. Deliberately unnamed so each use site emits an inline
+ * `anyOf: [$ref, {type: 'null'}]` with no separate component schema.
  * Do not replace with `.nullable()`: zod-to-openapi emits a contradictory allOf for nullable refs.
  */
 export const nullableUserMinimalBaseSchema = z.union([userMinimalBaseSchema, z.null()]);

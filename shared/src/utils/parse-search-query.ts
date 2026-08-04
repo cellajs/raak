@@ -1,6 +1,6 @@
 /**
  * Parse a board search query. A leading '=' switches search from filtering to highlighting:
- * consumers show all rows and tint the matches instead of hiding the rest. `effectiveQ` is
+ * consumers keep every row visible and tint the matches. `effectiveQ` is
  * the query with the marker stripped; `highlight` is only true when content follows it.
  * Single source for the marker so frontend views and backend list filters stay in sync.
  */
