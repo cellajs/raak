@@ -5,6 +5,7 @@ import type { Organization } from 'sdk';
 import { FocusViewContainer } from '~/modules/common/focus-view';
 import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
+import { ProjectSettingsSheetHandler } from '~/modules/project/project-settings-sheet-handler';
 import { projectQueryOptions, useProjectUpdateMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
@@ -54,6 +55,7 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
         coverUpdateCallback={coverUpdateCallback}
       />
       <TaskSheetHandler />
+      <ProjectSettingsSheetHandler />
       <TasksHotkeys boardId={project.id} projects={[project]} type="project" />
       <FocusViewContainer className="group/project max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
         {children}

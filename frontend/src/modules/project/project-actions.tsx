@@ -4,7 +4,6 @@ import type { Project } from 'sdk';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
-import { ChannelSettingsSheet } from '~/modules/entities/channel-settings-sheet';
 import { MembersTable } from '~/modules/memberships/members-table/members-table';
 import { AddProjects } from '~/modules/project/add-project';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -33,26 +32,18 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
 };
 
 /**
- * Opens the project settings sheet.
+ * Opens the URL-driven project settings sheet by setting its search param
+ * (see `ProjectSettingsSheetHandler`), so the sheet is deep-linkable and survives refresh.
  */
-export const openProjectSettingsSheet = (
-  project: EnrichedProject,
-  triggerRef?: RefObject<HTMLButtonElement | null>,
-) => {
-  useSheeter.getState().create(
-    <div className="container w-full">
-      <ChannelSettingsSheet entity={project} />
-    </div>,
-    {
-      id: 'update-project',
-      triggerRef: triggerRef || fallbackContentRef,
-      side: 'right',
-      className: 'max-w-full lg:max-w-4xl',
-      title: t('c:resource_settings', { resource: t('c:project') }),
-      titleContent: <UnsavedBadge title={t('c:resource_settings', { resource: t('c:project') })} />,
-      description: t('c:project_settings.text', { name: project.name }),
-    },
-  );
+export const openProjectSettingsSheet = (project: EnrichedProject) => {
+  // Dynamic import to avoid a circular dependency: router -> route files -> this module
+  void import('~/routes/router').then(({ router }) => {
+    router.navigate({
+      to: '.',
+      resetScroll: false,
+      search: (prev) => ({ ...prev, projectSettingsId: project.id }),
+    });
+  });
 };
 
 /** Creates a project and opens its page. */

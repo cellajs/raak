@@ -83,10 +83,7 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
           </DropdownMenuItem>
         )}
         {projectMembership && (
-          <DropdownMenuItem
-            onClick={() => openProjectSettingsSheet(project, projectButtonRef)}
-            className="flex items-center gap-2"
-          >
+          <DropdownMenuItem onClick={() => openProjectSettingsSheet(project)} className="flex items-center gap-2">
             <SettingsIcon />
             <span>{t('c:resource_settings', { resource: t('c:project') })}</span>
           </DropdownMenuItem>

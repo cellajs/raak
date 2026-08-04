@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import { FocusViewContainer } from '~/modules/common/focus-view';
 import type { ChannelEnrichment } from '~/modules/entities/types';
+import { ProjectSettingsSheetHandler } from '~/modules/project/project-settings-sheet-handler';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
@@ -10,6 +11,7 @@ import type { boardSearchSchema } from '~/modules/task/search-params-schemas';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
 import { workspaceQueryOptions } from '~/modules/workspace/query';
+import { WorkspaceSettingsSheetHandler } from '~/modules/workspace/workspace-settings-sheet-handler';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 export type WorkspaceSearch = z.infer<typeof boardSearchSchema>;
@@ -36,6 +38,8 @@ function WorkspacePage({ workspaceId, organizationId, tenantId, children }: Prop
   return (
     <FocusViewContainer className="group/workspace h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
       <TaskSheetHandler />
+      <WorkspaceSettingsSheetHandler />
+      <ProjectSettingsSheetHandler />
       <TasksHotkeys boardId={workspace.id} projects={projects} type="workspace" />
       {children}
     </FocusViewContainer>

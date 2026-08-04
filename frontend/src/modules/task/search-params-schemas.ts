@@ -41,4 +41,10 @@ export const tasksBoardSearchSchema = zGetTasksQuery.pick({ q: true, matchMode: 
 });
 
 /** Validates URL search parameters for board. */
-export const boardSearchSchema = z.object({ ...tasksBoardSearchSchema.shape, ...tasksTableSearchSchema.shape });
+export const boardSearchSchema = z.object({
+  ...tasksBoardSearchSchema.shape,
+  ...tasksTableSearchSchema.shape,
+  // URL-driven settings sheets on board surfaces (deep-linkable, survive refresh)
+  projectSettingsId: z.string().optional(),
+  workspaceSettingsId: z.string().optional(),
+});

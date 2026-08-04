@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import type { Project, Workspace } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { ToolCard } from '~/modules/common/tool-card';
 import { ToolsArrangementCard } from '~/modules/entities/tools-arrangement-card';
 import { DeleteProjects } from '~/modules/project/delete-projects';
@@ -18,7 +17,17 @@ import { Button } from '~/modules/ui/button';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-const closeSettingsSheet = () => useSheeter.getState().remove('update-project');
+/** Closes the URL-driven project settings sheet by clearing its search param. */
+function useCloseSettingsSheet() {
+  const navigate = useNavigate();
+  return () =>
+    navigate({
+      to: '.',
+      replace: true,
+      resetScroll: false,
+      search: (prev) => ({ ...prev, projectSettingsId: undefined }),
+    });
+}
 
 /** General project form body (name, slug, visuals). */
 export function ProjectGeneralForm({ project }: { project: EnrichedProject }) {
@@ -30,6 +39,7 @@ export function ProjectWorkspaceCard({ project }: { project: EnrichedProject }) 
   const { t } = useTranslation();
   const { tenantId } = useOrganizationLayoutContext();
   const boardType = useBoardStore((state) => state.activeBoardType);
+  const closeSettingsSheet = useCloseSettingsSheet();
 
   const { data: workspacesData } = useInfiniteQuery({
     ...workspacesListQueryOptions({ organizationId: project.organizationId }),
@@ -71,6 +81,7 @@ export function ProjectMembershipCard({ project }: { project: EnrichedProject })
   const { t } = useTranslation();
   const { tenantId } = useOrganizationLayoutContext();
   const boardType = useBoardStore((state) => state.activeBoardType);
+  const closeSettingsSheet = useCloseSettingsSheet();
 
   const { isLeavingProject, leaveProject } = useProjectMembershipActions({
     boardType,
@@ -119,19 +130,17 @@ export function ProjectDeleteDialog({ project }: { project: EnrichedProject }) {
   const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
 
   const callback = (deletedProjects: Project[]) => {
-    closeSettingsSheet();
-
-    // If the deleted project is the currently selected one, clear the search param
-    // so the board defaults to the first remaining project
+    // Clearing the settings param closes the sheet; the slug also clears when the deleted
+    // project is the selected one, so the board defaults to the first remaining project
     const deletedSlugs = new Set(deletedProjects.map(({ slug }) => slug));
-    if (projectSlug && deletedSlugs.has(projectSlug)) {
-      navigate({
-        to: '.',
-        params: true,
-        resetScroll: false,
-        search: (prev) => ({ ...prev, projectSlug: undefined }),
-      });
-    }
+    const clearSlug = !!projectSlug && deletedSlugs.has(projectSlug);
+    navigate({
+      to: '.',
+      params: true,
+      replace: true,
+      resetScroll: false,
+      search: (prev) => ({ ...prev, projectSettingsId: undefined, ...(clearSlug && { projectSlug: undefined }) }),
+    });
   };
 
   return <DeleteProjects dialog projects={[project]} callback={callback} />;

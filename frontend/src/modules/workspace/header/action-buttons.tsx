@@ -1,14 +1,11 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { VariantProps } from 'class-variance-authority';
 import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
-import { UnsavedBadge } from '~/modules/common/unsaved-badge';
-import { ChannelSettingsSheet } from '~/modules/entities/channel-settings-sheet';
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -30,6 +27,7 @@ import { flattenInfiniteData } from '~/query/basic/flatten';
  */
 export function WorkspaceActionButtons() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const { workspace: initialWorkspace } = useWorkspaceContext();
 
@@ -53,21 +51,13 @@ export function WorkspaceActionButtons() {
     project: useRef(null),
   };
 
+  // Opens the URL-driven workspace settings sheet (see WorkspaceSettingsSheetHandler)
   const openPreferencesSheet = () =>
-    useSheeter.getState().create(
-      <div className="container w-full">
-        <ChannelSettingsSheet entity={workspace} />
-      </div>,
-      {
-        id: 'update-workspace',
-        triggerRef: refs.workspace,
-        side: 'right',
-        className: 'max-w-full lg:max-w-4xl',
-        title: t('c:resource_settings', { resource: t('c:workspace') }),
-        titleContent: <UnsavedBadge title={t('c:resource_settings', { resource: t('c:workspace') })} />,
-        description: t('c:workspace_settings.text', { name: workspace.name }),
-      },
-    );
+    navigate({
+      to: '.',
+      resetScroll: false,
+      search: (prev) => ({ ...prev, workspaceSettingsId: workspace.id }),
+    });
 
   const actions = [
     {

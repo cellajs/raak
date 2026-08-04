@@ -6,7 +6,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
 import { appConfig } from 'shared';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { ToolCard } from '~/modules/common/tool-card';
 import { ToolsArrangementCard } from '~/modules/entities/tools-arrangement-card';
 import type { ChannelEnrichment } from '~/modules/entities/types';
@@ -16,8 +15,6 @@ import { useUpdateWorkspaceMutation, workspacesListQueryOptions } from '~/module
 import { UpdateWorkspaceForm } from '~/modules/workspace/update-workspace-form';
 
 type EnrichedWorkspace = Workspace & ChannelEnrichment;
-
-const closeSettingsSheet = () => useSheeter.getState().remove('update-workspace');
 
 /** General workspace form body, redirecting to the new slug after a slug-changing update. */
 export function WorkspaceGeneralForm({ workspace }: { workspace: EnrichedWorkspace }) {
@@ -36,6 +33,9 @@ export function WorkspaceGeneralForm({ workspace }: { workspace: EnrichedWorkspa
               slug: updatedWorkspace.slug,
               organizationSlug: updatedWorkspace.organizationId,
             },
+            // The settings sheet is URL-driven by workspace id, so keeping search params
+            // across the slug redirect keeps it open
+            search: true,
             replace: true,
           });
         }
@@ -75,10 +75,8 @@ export function WorkspaceDangerCard({ workspace }: { workspace: EnrichedWorkspac
   });
   const canDelete = workspaces.length > 1;
 
-  const callback = () => {
-    closeSettingsSheet();
-    navigate({ to: appConfig.defaultRedirectPath, replace: true });
-  };
+  // Leaving the board route unmounts the URL-sheet handler, which closes the sheet
+  const callback = () => navigate({ to: appConfig.defaultRedirectPath, replace: true });
 
   const openDeleteDialog = () => {
     useDialoger.getState().create(<DeleteWorkspaces dialog workspaces={[workspace]} callback={callback} />, {
