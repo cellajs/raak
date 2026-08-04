@@ -1876,6 +1876,30 @@
             "type": "string",
             "format": "uuid"
           },
+          "toolsConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "order": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "hidden": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
           "included": {
             "type": "object",
             "properties": {
@@ -2018,6 +2042,7 @@
           "publicAt",
           "path",
           "organizationId",
+          "toolsConfig",
           "included"
         ],
         "description": "A project that organizes tasks and members within an organization.",
@@ -2037,6 +2062,7 @@
           "publicAt": "2024-12-29T10:59:08.044Z",
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+          "toolsConfig": {},
           "included": {
             "membership": {
               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -2833,6 +2859,30 @@
             "type": "string",
             "format": "uuid"
           },
+          "toolsConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "order": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "hidden": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
           "included": {
             "type": "object",
             "properties": {
@@ -2899,6 +2949,7 @@
           "publicAt",
           "path",
           "organizationId",
+          "toolsConfig",
           "included"
         ],
         "description": "A personal workspace that groups projects and tasks within an organization.",
@@ -2918,6 +2969,7 @@
           "publicAt": null,
           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+          "toolsConfig": {},
           "included": {
             "membership": {
               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
@@ -8251,6 +8303,7 @@
                     "publicAt": "2024-12-29T10:59:08.044Z",
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                    "toolsConfig": {},
                     "included": {
                       "membership": {
                         "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -8286,6 +8339,7 @@
                   "publicAt": "2024-12-29T10:59:08.044Z",
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -10618,6 +10672,7 @@
                           "publicAt": null,
                           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
                           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+                          "toolsConfig": {},
                           "included": {
                             "membership": {
                               "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
@@ -10687,6 +10742,7 @@
                       "publicAt": null,
                       "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "1f366272-953c-486d-81dc-ee61f43478a1",
@@ -10995,6 +11051,7 @@
                       "publicAt": null,
                       "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
                       "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
@@ -11039,6 +11096,7 @@
                       "publicAt": null,
                       "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
                       "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
@@ -11178,6 +11236,7 @@
                   "publicAt": null,
                   "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
                   "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
@@ -11282,6 +11341,30 @@
                     "minLength": 2,
                     "maxLength": 255,
                     "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                  },
+                  "toolsConfig": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "order": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "hidden": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "settings": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -11312,6 +11395,7 @@
                   "publicAt": null,
                   "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
                   "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
@@ -11617,6 +11701,7 @@
                           "publicAt": "2024-12-29T10:59:08.044Z",
                           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                          "toolsConfig": {},
                           "included": {
                             "membership": {
                               "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -11675,6 +11760,7 @@
                       "publicAt": "2024-06-12T19:42:36.076Z",
                       "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "1f366272-953c-486d-81dc-ee61f43478a1",
@@ -11990,6 +12076,7 @@
                       "publicAt": null,
                       "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
                       "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
@@ -12023,6 +12110,7 @@
                       "publicAt": null,
                       "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
                       "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
+                      "toolsConfig": {},
                       "included": {
                         "membership": {
                           "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
@@ -12151,6 +12239,7 @@
                   "publicAt": "2024-12-29T10:59:08.044Z",
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -12261,6 +12350,30 @@
                   },
                   "publicAt": {
                     "type": ["string", "null"]
+                  },
+                  "toolsConfig": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "order": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "hidden": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "settings": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -12291,6 +12404,7 @@
                   "publicAt": "2024-12-29T10:59:08.044Z",
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -12551,6 +12665,7 @@
                     "publicAt": "2024-12-29T10:59:08.044Z",
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                    "toolsConfig": {},
                     "included": {
                       "membership": {
                         "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -12586,6 +12701,7 @@
                   "publicAt": "2024-12-29T10:59:08.044Z",
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -12837,6 +12953,7 @@
                     "publicAt": "2024-12-29T10:59:08.044Z",
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                    "toolsConfig": {},
                     "included": {
                       "membership": {
                         "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -12872,6 +12989,7 @@
                   "publicAt": "2024-12-29T10:59:08.044Z",
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -13132,6 +13250,7 @@
                     "publicAt": "2024-12-29T10:59:08.044Z",
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                    "toolsConfig": {},
                     "included": {
                       "membership": {
                         "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -13167,6 +13286,7 @@
                   "publicAt": "2024-12-29T10:59:08.044Z",
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+                  "toolsConfig": {},
                   "included": {
                     "membership": {
                       "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",

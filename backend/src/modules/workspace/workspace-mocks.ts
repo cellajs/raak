@@ -41,6 +41,7 @@ const generateWorkspaceBase = (
       channelIds: { organizationId },
     }),
     organizationId,
+    toolsConfig: {},
   };
 };
 

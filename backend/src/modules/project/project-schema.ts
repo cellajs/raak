@@ -21,6 +21,7 @@ import {
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
 import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
+import { toolsConfigSchema } from '#/schemas/tools-config';
 
 /** Task status counts for accepted/iced cutoff display */
 const taskStatusCountsSchema = z.object({
@@ -45,6 +46,7 @@ export const projectSchema = z
     updatedBy: nullableUserMinimalBaseSchema,
     createdAt: z.string(),
     updatedAt: z.string().nullable(),
+    toolsConfig: toolsConfigSchema,
     included: projectIncludedSchema,
   })
   .openapi('Project', {
@@ -71,6 +73,8 @@ export const projectContract = evolutionContract.channel('project', {
     thumbnailUrl: validCDNUrlSchema.nullable(),
     bannerUrl: validCDNUrlSchema.nullable(),
     publicAt: z.string().nullable(),
+    // toolsConfig merges via jsonb || on update: each listed slot key is replaced wholesale
+    toolsConfig: toolsConfigSchema,
   })
     .pick({
       slug: true,
@@ -78,6 +82,7 @@ export const projectContract = evolutionContract.channel('project', {
       thumbnailUrl: true,
       bannerUrl: true,
       publicAt: true,
+      toolsConfig: true,
     })
     .partial(),
 });

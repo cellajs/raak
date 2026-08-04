@@ -1,4 +1,5 @@
-import { foreignKey, index, snakeCase, unique, uuid } from 'drizzle-orm/pg-core';
+import { foreignKey, index, jsonb, snakeCase, unique, uuid } from 'drizzle-orm/pg-core';
+import type { ToolsConfig } from 'shared/tools-config';
 import { channelColumns } from '#/db/utils/channel-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
@@ -11,6 +12,7 @@ export const projectsTable = snakeCase.table(
   {
     ...channelColumns('project'),
     organizationId: uuid().notNull(),
+    toolsConfig: jsonb().$type<ToolsConfig>().notNull().default({}),
   },
   (table) => [
     index('projects_name_index').on(table.name.desc()),

@@ -439,6 +439,15 @@ export type Project = {
   publicAt: string | null;
   path: string | null;
   organizationId: string;
+  toolsConfig: {
+    [key: string]: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+      settings?: {
+        [key: string]: unknown;
+      };
+    };
+  };
   included: {
     membership?: MembershipBase;
     counts?: {
@@ -651,6 +660,15 @@ export type Workspace = {
   publicAt: string | null;
   path: string | null;
   organizationId: string;
+  toolsConfig: {
+    [key: string]: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+      settings?: {
+        [key: string]: unknown;
+      };
+    };
+  };
   included: {
     membership?: MembershipBase;
     counts?: {
@@ -4711,6 +4729,15 @@ export type GetWorkspaceResponse = GetWorkspaceResponses[keyof GetWorkspaceRespo
 export type UpdateWorkspaceData = {
   body?: {
     name?: string;
+    toolsConfig?: {
+      [key: string]: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+        settings?: {
+          [key: string]: unknown;
+        };
+      };
+    };
   };
   path: {
     tenantId: string;
@@ -5058,6 +5085,15 @@ export type UpdateProjectData = {
     thumbnailUrl?: string | null;
     bannerUrl?: string | null;
     publicAt?: string | null;
+    toolsConfig?: {
+      [key: string]: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+        settings?: {
+          [key: string]: unknown;
+        };
+      };
+    };
   };
   path: {
     tenantId: string;

@@ -1,5 +1,6 @@
 import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from 'drizzle-orm';
 import type { ChannelEntityType, EntityRole } from 'shared';
+import type { ToolsConfig } from 'shared/tools-config';
 import type { AuthContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
@@ -23,15 +24,25 @@ export const insertProjects = async (ctx: DbContext, { projects }: InsertProject
 
 interface UpdateProjectOpts {
   id: string;
-  values: Partial<typeof projectsTable.$inferInsert>;
+  values: Partial<typeof projectsTable.$inferInsert> & { toolsConfig?: ToolsConfig };
 }
 
-/** Update a project by ID and return the updated row. */
+/** Update a project by ID and return the updated row. Merges toolsConfig via jsonb || if provided. */
 export const updateProject = async (ctx: AuthContext, { id, values }: UpdateProjectOpts) => {
   const { db, organizationId } = ctx.var;
+  const { toolsConfig, ...rest } = values;
+
+  const updateData = {
+    ...rest,
+    // Top-level jsonb merge: each listed slot key replaces that slot's stored arrangement wholesale
+    ...(toolsConfig && {
+      toolsConfig: sql`${projectsTable.toolsConfig} || ${JSON.stringify(toolsConfig)}::jsonb`,
+    }),
+  };
+
   const [updated] = await db
     .update(projectsTable)
-    .set(values)
+    .set(updateData)
     .where(and(eq(projectsTable.id, id), eq(projectsTable.organizationId, organizationId)))
     .returning();
   return updated;

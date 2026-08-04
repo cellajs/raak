@@ -1,4 +1,5 @@
 import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
+import type { ToolsConfig } from 'shared/tools-config';
 import type { AuthContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
@@ -22,15 +23,25 @@ export const insertWorkspaces = async (ctx: DbContext, { workspaces }: InsertWor
 
 interface UpdateWorkspaceOpts {
   id: string;
-  values: Partial<typeof workspacesTable.$inferInsert>;
+  values: Partial<typeof workspacesTable.$inferInsert> & { toolsConfig?: ToolsConfig };
 }
 
-/** Update a workspace by ID and return the updated row. */
+/** Update a workspace by ID and return the updated row. Merges toolsConfig via jsonb || if provided. */
 export const updateWorkspace = async (ctx: AuthContext, { id, values }: UpdateWorkspaceOpts) => {
   const { db, organizationId } = ctx.var;
+  const { toolsConfig, ...rest } = values;
+
+  const updateData = {
+    ...rest,
+    // Top-level jsonb merge: each listed slot key replaces that slot's stored arrangement wholesale
+    ...(toolsConfig && {
+      toolsConfig: sql`${workspacesTable.toolsConfig} || ${JSON.stringify(toolsConfig)}::jsonb`,
+    }),
+  };
+
   const [updated] = await db
     .update(workspacesTable)
-    .set(values)
+    .set(updateData)
     .where(and(eq(workspacesTable.id, id), eq(workspacesTable.organizationId, organizationId)))
     .returning();
   return updated;

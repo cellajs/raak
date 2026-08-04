@@ -383,6 +383,14 @@ export const zProject = z.object({
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
   organizationId: z.uuid(),
+  toolsConfig: z.record(
+    z.string(),
+    z.object({
+      order: z.array(z.string()).optional(),
+      hidden: z.array(z.string()).optional(),
+      settings: z.record(z.string(), z.unknown()).optional(),
+    }),
+  ),
   included: z.object({
     membership: zMembershipBase.optional(),
     counts: z
@@ -612,6 +620,14 @@ export const zWorkspace = z.object({
   publicAt: z.string().nullable(),
   path: z.string().nullable(),
   organizationId: z.uuid(),
+  toolsConfig: z.record(
+    z.string(),
+    z.object({
+      order: z.array(z.string()).optional(),
+      hidden: z.array(z.string()).optional(),
+      settings: z.record(z.string(), z.unknown()).optional(),
+    }),
+  ),
   included: z.object({
     membership: zMembershipBase.optional(),
     counts: z
@@ -1925,6 +1941,16 @@ export const zUpdateWorkspaceBody = z.object({
     .max(255)
     .regex(/^[\p{L}\d\-., '&()]+$/u)
     .optional(),
+  toolsConfig: z
+    .record(
+      z.string(),
+      z.object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+        settings: z.record(z.string(), z.unknown()).optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const zUpdateWorkspacePath = z.object({
@@ -2107,6 +2133,16 @@ export const zUpdateProjectBody = z.object({
   thumbnailUrl: z.string().max(2048).nullish(),
   bannerUrl: z.string().max(2048).nullish(),
   publicAt: z.string().nullish(),
+  toolsConfig: z
+    .record(
+      z.string(),
+      z.object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+        settings: z.record(z.string(), z.unknown()).optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const zUpdateProjectPath = z.object({

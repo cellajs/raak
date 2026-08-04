@@ -4,9 +4,9 @@ import type { Project } from 'sdk';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
+import { ChannelSettingsSheet } from '~/modules/entities/channel-settings-sheet';
 import { MembersTable } from '~/modules/memberships/members-table/members-table';
 import { AddProjects } from '~/modules/project/add-project';
-import { ProjectSettings } from '~/modules/project/project-settings';
 import type { EnrichedProject } from '~/modules/project/types';
 import { fallbackContentRef } from '~/utils/fallback-content-ref';
 
@@ -41,7 +41,7 @@ export const openProjectSettingsSheet = (
 ) => {
   useSheeter.getState().create(
     <div className="container w-full">
-      <ProjectSettings project={project} sheet />
+      <ChannelSettingsSheet entity={project} />
     </div>,
     {
       id: 'update-project',

@@ -40,6 +40,7 @@ const generateProjectBase = (id: string, name: string, createdAt: string, organi
       channelIds: { organizationId },
     }),
     organizationId,
+    toolsConfig: {},
   };
 };
 

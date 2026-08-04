@@ -8,6 +8,7 @@ import type { Project } from 'sdk';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
+import { ChannelSettingsSheet } from '~/modules/entities/channel-settings-sheet';
 import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -21,7 +22,6 @@ import {
 } from '~/modules/ui/dropdown-menu';
 import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
-import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 /**
@@ -56,7 +56,7 @@ export function WorkspaceActionButtons() {
   const openPreferencesSheet = () =>
     useSheeter.getState().create(
       <div className="container w-full">
-        <WorkspaceSettings workspace={workspace} sheet />
+        <ChannelSettingsSheet entity={workspace} />
       </div>,
       {
         id: 'update-workspace',

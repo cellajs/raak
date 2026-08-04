@@ -8,7 +8,7 @@ import { getValidChannel } from '#/permissions/get-valid-channel';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
-export async function updateWorkspaceOp(ctx: AuthContext, id: string, rawInput: { name?: string }) {
+export async function updateWorkspaceOp(ctx: AuthContext, id: string, rawInput: Record<string, unknown>) {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = workspaceContract.normalizeBody(rawInput);
   const user = ctx.var.user;

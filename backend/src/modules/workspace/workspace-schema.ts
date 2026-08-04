@@ -17,6 +17,7 @@ import {
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
 import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
+import { toolsConfigSchema } from '#/schemas/tools-config';
 
 const workspaceIncludedSchema = channelIncludedSchema('workspace');
 
@@ -27,6 +28,7 @@ export const workspaceSchema = z
     updatedBy: nullableUserMinimalBaseSchema,
     createdAt: z.string(),
     updatedAt: z.string().nullable(),
+    toolsConfig: toolsConfigSchema,
     included: workspaceIncludedSchema,
   })
   .openapi('Workspace', {
@@ -47,8 +49,10 @@ export const workspaceContract = evolutionContract.channel('workspace', {
   }),
   updateBody: createInsertSchema(workspacesTable, {
     name: validNameSchema,
+    // toolsConfig merges via jsonb || on update: each listed slot key is replaced wholesale
+    toolsConfig: toolsConfigSchema,
   })
-    .pick({ name: true })
+    .pick({ name: true, toolsConfig: true })
     .partial(),
 });
 

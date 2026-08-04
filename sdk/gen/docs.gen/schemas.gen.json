@@ -1652,6 +1652,23 @@
           "required": true
         },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
+        "toolsConfig": {
+          "type": "object",
+          "required": true,
+          "additionalProperties": {
+            "type": "object",
+            "required": false,
+            "properties": {
+              "order": { "type": "array", "required": false, "itemType": "string" },
+              "hidden": { "type": "array", "required": false, "itemType": "string" },
+              "settings": {
+                "type": "object",
+                "required": false,
+                "additionalProperties": { "type": "object", "required": false }
+              }
+            }
+          }
+        },
         "included": {
           "type": "object",
           "required": true,
@@ -1836,6 +1853,7 @@
       "publicAt": "2024-12-29T10:59:08.044Z",
       "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
       "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
+      "toolsConfig": {},
       "included": {
         "membership": {
           "id": "7cc1a79c-529d-4170-b3b6-98fefa138887",
@@ -2590,6 +2608,23 @@
           "required": true
         },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
+        "toolsConfig": {
+          "type": "object",
+          "required": true,
+          "additionalProperties": {
+            "type": "object",
+            "required": false,
+            "properties": {
+              "order": { "type": "array", "required": false, "itemType": "string" },
+              "hidden": { "type": "array", "required": false, "itemType": "string" },
+              "settings": {
+                "type": "object",
+                "required": false,
+                "additionalProperties": { "type": "object", "required": false }
+              }
+            }
+          }
+        },
         "included": {
           "type": "object",
           "required": true,
@@ -2714,6 +2749,7 @@
       "publicAt": null,
       "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
       "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
+      "toolsConfig": {},
       "included": {
         "membership": {
           "id": "48ecb222-aa6b-468b-a67a-704e7dddbbd4",
