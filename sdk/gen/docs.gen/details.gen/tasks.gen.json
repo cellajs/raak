@@ -169,14 +169,14 @@
             "createdBy": {
               "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references, or null when no user is available.",
-              "ref": "#/components/schemas/NullableUserMinimalBase"
+              "ref": "#/components/schemas/UserMinimalBase",
+              "refDescription": "Minimal user data for references."
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references, or null when no user is available.",
-              "ref": "#/components/schemas/NullableUserMinimalBase"
+              "ref": "#/components/schemas/UserMinimalBase",
+              "refDescription": "Minimal user data for references."
             },
             "stx": {
               "type": "object",
@@ -492,14 +492,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "stx": {
                     "type": "object",
@@ -1122,14 +1122,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "stx": {
                     "type": "object",
@@ -1574,14 +1574,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "stx": {
                     "type": "object",
@@ -1980,14 +1980,14 @@
                   "createdBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
-                    "description": "Minimal user data for references, or null when no user is available.",
-                    "ref": "#/components/schemas/NullableUserMinimalBase"
+                    "ref": "#/components/schemas/UserMinimalBase",
+                    "refDescription": "Minimal user data for references."
                   },
                   "stx": {
                     "type": "object",
@@ -2609,14 +2609,14 @@
             "createdBy": {
               "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references, or null when no user is available.",
-              "ref": "#/components/schemas/NullableUserMinimalBase"
+              "ref": "#/components/schemas/UserMinimalBase",
+              "refDescription": "Minimal user data for references."
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references, or null when no user is available.",
-              "ref": "#/components/schemas/NullableUserMinimalBase"
+              "ref": "#/components/schemas/UserMinimalBase",
+              "refDescription": "Minimal user data for references."
             },
             "stx": {
               "type": "object",
@@ -2928,14 +2928,14 @@
             "createdBy": {
               "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references, or null when no user is available.",
-              "ref": "#/components/schemas/NullableUserMinimalBase"
+              "ref": "#/components/schemas/UserMinimalBase",
+              "refDescription": "Minimal user data for references."
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
-              "description": "Minimal user data for references, or null when no user is available.",
-              "ref": "#/components/schemas/NullableUserMinimalBase"
+              "ref": "#/components/schemas/UserMinimalBase",
+              "refDescription": "Minimal user data for references."
             },
             "stx": {
               "type": "object",

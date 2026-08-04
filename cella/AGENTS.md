@@ -107,6 +107,8 @@ The permission system in `backend/src/permissions/` provides: the `checkAccess*`
 - **Schema evolution (lenses)**: breaking wire-shape changes to product entities ship as append-only lens modules in `shared/src/schema-evolution/`; never edit a shipped module. Until the first lens ships, bump `appConfig.clientCacheVersion` in the same PR as any breaking change to a cached entity's wire shape (`schema-bust-gate` CI enforces this). Playbook: [Schema evolution](/docs/page/architecture/schema-evolution).
 - **Lens seams (new entity modules)**: build update bodies with `createUpdateSchema(entityType, shape)`, create bodies with `widenBodySchema(entityType, schema)`, resolve updates via `resolveUpdateOps(entityType, …)`, and map create items through `normalizeCreateItem(entityType, item)`. These carry the lens widening/normalization; skipping them breaks version tolerance for that entity.
 
+<!-- fork: section authored here alongside the owned-host-embedding migration; pending a PR to cella, after which this delta disappears. -->
+
 ## Cross-product references
 
 Relationships between products are data, never permission indirection (permissions and public

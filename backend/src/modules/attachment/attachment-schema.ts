@@ -11,7 +11,7 @@ import {
   validIdSchema,
   validUuidSchema,
 } from '#/schemas';
-import { nullableUserMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
 import { mockAttachmentResponse } from './attachment-mocks';
 
 /**

@@ -7,7 +7,8 @@ export type { ConfigMode } from './src/config-builder/types';
 // Entity hierarchy & roles
 export { hierarchy, roles } from './config/config.default';
 
-// Label modes and primary-label constraints
+// fork: label modes and primary-label constraints. `shared/config/*` has no subpath export, so
+// app-owned config reaches consumers through this barrel until upstream ships an app-config stub.
 export { labelColorTokens, labelModes, labelSlug, primaryLabelLimits } from './config/labels-config';
 export type { LabelColorToken, LabelMode, PrimaryLabelDefinition } from './config/labels-config';
 

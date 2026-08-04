@@ -15,7 +15,7 @@ import {
   validIdSchema,
   validUuidSchema,
 } from '#/schemas';
-import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/minimal-base';
 
 const taskRelationIdsSchema = validUuidSchema
   .array()

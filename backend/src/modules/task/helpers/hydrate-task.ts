@@ -7,7 +7,7 @@ import { findTaskRelations } from '#/modules/task/task-queries';
 import type { taskSchema } from '#/modules/task/task-schema';
 import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
 import { toUserMinimalBase } from '#/modules/user/helpers/audit-user';
-import type { userMinimalBaseSchema } from '#/schemas/user-minimal-base';
+import type { userMinimalBaseSchema } from '#/schemas/minimal-base';
 
 type UserMinimalBaseSchemas = z.infer<typeof userMinimalBaseSchema>;
 type Labels = z.infer<typeof labelEmbeddedSchema>;
