@@ -1,4 +1,4 @@
-# CDC Throughput — measures CDC pipeline lag under increasing write load.
+# CDC Throughput: measures CDC pipeline lag under increasing write load.
 #
 # Same task edit payloads as task-edit, but a heavier sustained profile to push
 # the CDC pipeline. The CDC health poller runs automatically for every scenario,

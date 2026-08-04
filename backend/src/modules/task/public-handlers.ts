@@ -27,7 +27,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
 
   // Public reads intentionally bypass tenant status checks from tenantGuard.
   // Anonymous engine check: publicRead() makes the task readable once its own publicAt is set
-  // (inherited from the parent project at create time, then row-local — no cascade).
+  // (inherited from the parent project at create time, then row-local; no cascade).
   const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
   if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });

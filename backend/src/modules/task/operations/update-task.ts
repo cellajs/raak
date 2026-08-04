@@ -33,7 +33,7 @@ export async function updateTaskOp(
   // Pre-compute description metadata outside the transaction to avoid holding a DB
   // connection during CPU-intensive BlockNote HTML conversion + keyword extraction.
   // A cleared description derives empty counts and an empty attachments array, so the
-  // CDC worker can garbage-collect the previously referenced attachments.
+  // CDC worker garbage-collects attachments the description no longer references.
   let derivedDescription: DerivedDescriptionProps | undefined;
   let parsedBlocks: ParsedBlock[] | undefined;
   if ('description' in rawOps) {
@@ -54,8 +54,7 @@ export async function updateTaskOp(
     const { entity } = await getValidProduct(txCtx, id, 'task', 'update');
 
     // Server-origin writes (Yjs description materialization) carry no client field
-    // timestamps, so they stamp a fresh server HLC for every changed scalar instead of
-    // resolving against client HLCs.
+    // timestamps, so every changed scalar gets a fresh server HLC.
     const resolved = serverOrigin
       ? taskContract.resolveServerUpdateOps(entity, rawOps)
       : taskContract.resolveUpdateOps(entity, rawOps, stx);

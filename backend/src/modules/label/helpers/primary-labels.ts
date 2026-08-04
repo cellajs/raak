@@ -145,8 +145,8 @@ export const filterPrimaryLabelDeletes = async (
       .select({ liveCount: count() })
       .from(labelsTable)
       .where(and(eq(labelsTable.projectId, projectId), eq(labelsTable.mode, 'primary'), isNull(labelsTable.deletedAt)));
-    // A project keeps at least one live primary label; reject the whole batch for the project
-    // rather than silently keeping an arbitrary subset.
+    // A project keeps at least one live primary label; when the batch would drop below that,
+    // every primary id in the batch for this project is rejected (no partial keep).
     if (liveCount - primaryIds.length < 1) {
       for (const id of primaryIds) rejected.add(id);
     }

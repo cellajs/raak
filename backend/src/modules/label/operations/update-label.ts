@@ -59,7 +59,7 @@ export async function updateLabelOp(
     }
 
     // Server-origin writes (Yjs description materialization) carry no client field timestamps,
-    // so they stamp a fresh server HLC per changed scalar instead of resolving client HLCs.
+    // so each changed scalar gets a fresh server HLC.
     const resolved = serverOrigin
       ? labelContract.resolveServerUpdateOps(before, rawOps)
       : labelContract.resolveUpdateOps(before, rawOps, stx);
