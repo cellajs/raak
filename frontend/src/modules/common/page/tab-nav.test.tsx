@@ -8,8 +8,12 @@ const fakeRoute = (over: Record<string, unknown>) => ({ children: [], options: {
 const routesById: Record<string, unknown> = {};
 vi.mock('~/routes/-router-instance', () => ({ getRouter: () => ({ routesById }) }));
 
+import type { TKey } from '~/lib/i18n-locales';
 import { defineFrontendModule } from '~/lib/module';
-import { resolveNavTabs } from '~/modules/common/page/tab-nav';
+import { type GuardNavTabsOptions, guardNavTabs, resolveNavTabs } from '~/modules/common/page/tab-nav';
+
+// Fixtures use synthetic labels that are not real translation keys.
+const key = (s: string) => s as TKey;
 
 // Tools register once (the registry is process-global); tests re-seed only the routes.
 defineFrontendModule({
@@ -18,16 +22,16 @@ defineFrontendModule({
   scope: ['frontend'],
   description: 'Registry tab test module.',
   tools: [
-    { slot: 'organization.tabs', id: 'reports', label: 'c:reports', order: 15, render: () => null },
+    { slot: 'organization.tabs', id: 'reports', label: key('c:reports'), order: 15, render: () => null },
     {
       slot: 'organization.tabs',
       id: 'reports-admin',
-      label: 'c:reports',
+      label: key('c:reports'),
       order: 16,
       visibleTo: ['organization.admin'],
       render: () => null,
     },
-    { slot: 'system.tabs', id: 'audit', label: 'c:audit', order: 5, render: () => null },
+    { slot: 'system.tabs', id: 'audit', label: key('c:audit'), order: 5, render: () => null },
   ],
 });
 
@@ -36,12 +40,12 @@ function seedRoutes(id: string, tabsSlot: string) {
   const members = fakeRoute({
     path: 'members',
     fullPath: `${id}/members`,
-    options: { staticData: { navTab: { id: 'members', label: 'c:members', order: 10 } } },
+    options: { staticData: { navTab: { id: 'members', label: key('c:members'), order: 10 } } },
   });
   const settings = fakeRoute({
     path: 'settings',
     fullPath: `${id}/settings`,
-    options: { staticData: { navTab: { id: 'settings', label: 'c:settings', order: 20, requires: 'update' } } },
+    options: { staticData: { navTab: { id: 'settings', label: key('c:settings'), order: 20, requires: 'update' } } },
   });
   const toolHost = fakeRoute({ path: '$tool', fullPath: `${id}/$tool` });
   routesById[id] = fakeRoute({ children: [members, settings, toolHost], options: { staticData: { tabsSlot } } });
@@ -96,5 +100,58 @@ describe('resolveNavTabs merges route-file and registry tabs', () => {
     seedRoutes('/system', 'system.tabs');
     // settings (requires update) drops without a grant; the registry system tab still appears
     expect(resolveNavTabs('/system').map((tab) => tab.id)).toEqual(['audit', 'members']);
+  });
+});
+
+describe('guardNavTabs forwards bare-parent and disabled-tab navigations in beforeLoad', () => {
+  beforeEach(() => {
+    for (const key of Object.keys(routesById)) delete routesById[key];
+    seedRoutes('/org', 'organization.tabs');
+  });
+
+  type Match = { routeId: string; fullPath: string; params: unknown };
+
+  /** Runs the guard, returning the thrown redirect's navigation options (undefined = passed). */
+  function runGuard(matches: Match[], options?: GuardNavTabsOptions) {
+    try {
+      guardNavTabs(matches, '/org', options);
+    } catch (thrown) {
+      return (thrown as { options: Record<string, unknown> }).options;
+    }
+  }
+
+  const parentMatch: Match = { routeId: '/org', fullPath: '/org', params: {} };
+
+  it('lands a bare parent navigation on the first resolved tab, preserving location parts', () => {
+    const options = runGuard([parentMatch]);
+    expect(options?.to).toBe('/org/members');
+    expect(options).toMatchObject({ replace: true, search: true, hash: true, params: true });
+  });
+
+  it('prefers defaultTabId when resolved, routing registry tabs through the $tool host', () => {
+    const options = runGuard([parentMatch], { defaultTabId: 'reports' });
+    expect(options?.to).toBe('/org/$tool');
+    const params = options?.params as (prev: Record<string, string>) => Record<string, string>;
+    expect(params({ tenantId: 't' })).toEqual({ tenantId: 't', tool: 'reports' });
+  });
+
+  it('falls back to the first resolved tab when defaultTabId is hidden by stored arrangement', () => {
+    const options = runGuard([parentMatch], { defaultTabId: 'reports', slotConfig: { hidden: ['reports'] } });
+    expect(options?.to).toBe('/org/members');
+  });
+
+  it('forwards off a route tab hidden by stored arrangement, and passes enabled tabs through', () => {
+    const membersMatch: Match = { routeId: '/org/members', fullPath: '/org/members', params: {} };
+    expect(runGuard([parentMatch, membersMatch])).toBeUndefined();
+    // With members hidden the landing becomes the registry reports tab, via the $tool host
+    const options = runGuard([parentMatch, membersMatch], { slotConfig: { hidden: ['members'] } });
+    expect(options?.to).toBe('/org/$tool');
+  });
+
+  it('forwards off a registry tab hidden by stored arrangement, matched on the $tool param', () => {
+    const toolMatch: Match = { routeId: '/org/$tool', fullPath: '/org/$tool', params: { tool: 'reports' } };
+    expect(runGuard([parentMatch, toolMatch])).toBeUndefined();
+    const options = runGuard([parentMatch, toolMatch], { slotConfig: { hidden: ['reports'] } });
+    expect(options?.to).toBe('/org/members');
   });
 });

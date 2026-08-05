@@ -1,7 +1,12 @@
 import { Link } from '@tanstack/react-router';
 import { Trans, useTranslation } from 'react-i18next';
+import type { TKey } from '~/lib/i18n-locales';
 import { faqsData } from '~/modules/marketing/marketing-config';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~/modules/ui/accordion';
+
+// Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
+// union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
+type AboutKey = Extract<TKey, `about:${string}`>;
 
 /** Renders the frequently asked questions section. */
 export function FAQ() {
@@ -10,8 +15,8 @@ export function FAQ() {
     <div className="mx-auto max-w-3xl">
       <Accordion className="w-full">
         {faqsData.map((faq, index) => {
-          const question = `about:faq.question_${index + 1}`;
-          const answer = `about:faq.answer_${index + 1}`;
+          const question = `about:faq.question_${index + 1}` as TKey;
+          const answer = `about:faq.answer_${index + 1}` as AboutKey;
 
           return (
             <AccordionItem key={faq.id} value={faq.id}>

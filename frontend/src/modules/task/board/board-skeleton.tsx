@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { nanoid } from 'shared/utils/nanoid';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import type { TKey } from '~/lib/i18n-locales';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { COLLAPSED_PANEL_MIN_WIDTH, PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
@@ -97,7 +98,8 @@ export function BoardSkeleton({
 
   const projectTabs: PageTab[] = projects.map((project) => ({
     id: project.id,
-    label: project.name,
+    // Project names are display strings, not keys; PageTabNav's t() falls back to the raw name.
+    label: project.name as TKey,
     path: '/$tenantId/$organizationSlug/workspace/$slug',
     search: { projectSlug: project.slug },
     activeOptions: { exact: false, includeSearch: true },

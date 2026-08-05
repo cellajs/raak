@@ -2,6 +2,7 @@ import { useMatchRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { Grid2X2Icon, Rows4Icon, SquareKanbanIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TKey } from '~/lib/i18n-locales';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { cn } from '~/utils/cn';
@@ -39,7 +40,7 @@ function DisplayOptions({ className = '' }: Props) {
   };
 
   return (
-    <TooltipButton toolTipContent={t(`c:${hoveredValue ?? currentValue}_view`)}>
+    <TooltipButton toolTipContent={t(`c:${hoveredValue ?? currentValue}_view` as TKey)}>
       <ToggleGroup
         type="single"
         variant="merged"

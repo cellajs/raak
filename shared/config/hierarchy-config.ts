@@ -19,7 +19,7 @@ export const roles = createRoleRegistry(['admin', 'member', 'guest'] as const);
  */
 export const hierarchy = createEntityHierarchy(roles)
   .user()
-  .channel('organization', { parent: null, roles: ['admin', 'member'], })
+  .channel('organization', { parent: null, roles: ['admin', 'member'] })
   .channel('workspace', { parent: 'organization', roles: roles.all })
   .channel('project', { parent: 'organization', roles: roles.all })
   .product('task', { parent: 'project' })

@@ -59,6 +59,7 @@
     "start": "pnpm -r --parallel start",
     "stop": "pnpm -r --parallel --stream stop",
     "story": "pnpm --filter frontend storybook",
+    "style": "node shared/scripts/check-style.ts",
     "test": "pnpm test:full",
     "test:core": "pnpm docker:test && cross-env TEST_MODE=core vitest run --silent=passed-only",
     "test:core:verbose": "pnpm docker:test && cross-env TEST_MODE=core vitest run",

@@ -1,10 +1,20 @@
 import { ArrowUpRightIcon, CalendarCheckIcon, MailIcon, MapPinIcon, PhoneCallIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
+import type { TKey } from '~/lib/i18n-locales';
 import { ContactForm } from '~/modules/common/contact-form/contact-form';
+import type { IconComponent } from '~/modules/common/icons/types';
 import { MarketingLayout } from '~/modules/marketing/layout';
 
-const methods = [
+interface ContactMethod {
+  icon: IconComponent;
+  title: TKey;
+  link: string;
+  /** Either a translation key or a raw display value (e.g. an address, email, or phone number). */
+  text: string;
+}
+
+const methods: ContactMethod[] = [
   {
     icon: MapPinIcon,
     title: 'c:visit',
@@ -58,7 +68,7 @@ export function ContactPage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {t(method.text)}
+                    {t(method.text as TKey)}
                     <ArrowUpRightIcon className="-mt-2 ml-1 inline-block text-primary opacity-50 group-hover:opacity-100" />
                   </a>
                 </p>

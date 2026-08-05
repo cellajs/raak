@@ -1,7 +1,6 @@
 import { appConfig } from '../src/config-builder/app-config';
 import { configurePermissions } from '../src/permissions/policy-matrix';
 
-
 /**
  * Grant scoping for PRODUCT entities (optional). When a role list is configured, a product
  * membership grant of a role NOT in the list speaks only for rows HOMED at its own channel
@@ -62,7 +61,7 @@ export const { policyMatrix, publicReadGrants } = configurePermissions(
         publicRead();
         channels.organization.admin({ create: 1, read: 1, update: 1, delete: 1 });
         channels.organization.member({ create: 0, read: 0, update: 0, delete: 0 });
-        
+
         channels.project.admin({ create: 1, read: 1, update: 1, delete: 1 });
         channels.project.member({ create: 1, read: 1, update: 1, delete: 1 });
         channels.project.guest({ create: 0, read: 1, update: 0, delete: 0 });

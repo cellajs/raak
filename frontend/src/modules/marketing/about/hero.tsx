@@ -1,13 +1,18 @@
 import { Trans, useTranslation } from 'react-i18next';
 import { useInView } from 'react-intersection-observer';
+import type { TKey } from '~/lib/i18n-locales';
 import { useUIStore } from '~/modules/ui/ui-store';
 import { cn } from '~/utils/cn';
 
+// Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
+// union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
+type AboutKey = Extract<TKey, `about:${string}`>;
+
 interface HeroProps {
-  title: string;
+  title: TKey;
   children: React.ReactNode;
-  text?: string;
-  chips?: string[];
+  text?: AboutKey;
+  chips?: TKey[];
 }
 
 /** Renders the hero component. */

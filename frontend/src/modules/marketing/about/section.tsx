@@ -1,10 +1,15 @@
 import { Trans, useTranslation } from 'react-i18next';
+import type { TKey } from '~/lib/i18n-locales';
+
+// Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
+// union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
+type AboutKey = Extract<TKey, `about:${string}`>;
 
 interface AboutSectionProps {
   /** When set, renders a `spy-<sectionId>` anchor for scroll-spy nav (used on the about page). */
   sectionId?: string;
-  title?: string;
-  text?: string;
+  title?: TKey;
+  text?: AboutKey;
   /** Optional components to interpolate into `text` (e.g. links) via <Trans>. */
   textComponents?: readonly React.ReactElement[] | Record<string, React.ReactElement>;
   children?: React.ReactNode;
@@ -12,8 +17,8 @@ interface AboutSectionProps {
 }
 
 interface AboutSectionHeaderProps {
-  title?: string;
-  text?: string;
+  title?: TKey;
+  text?: AboutKey;
   textComponents?: readonly React.ReactElement[] | Record<string, React.ReactElement>;
   className?: string;
 }

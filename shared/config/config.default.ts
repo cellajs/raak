@@ -11,10 +11,9 @@ const defaultPrimaryLabels: PrimaryLabelDefinition[] = [
 ];
 
 // Re-export for external consumers
-export { roles, hierarchy } from './hierarchy-config';
+export { hierarchy, roles } from './hierarchy-config';
 
 export const config = {
-
   // Entity data model, derived from the hierarchy: the builder in hierarchy-config.ts is the
   // single declaration of the entity taxonomy.
 
@@ -142,7 +141,6 @@ export const config = {
   // split (one service per process). cdc co-hosting forfeits API blue-green.
   singleVM: false as boolean,
 
-
   /** About page URL */
   aboutUrl: '/about',
   /** Status page URL for uptime monitoring */
@@ -165,7 +163,7 @@ export const config = {
   securityEmail: 'info@cellajs.com',
 
   // Mode & flags
-  
+
   /** Runtime mode - overridden per environment file */
   mode: 'development' as ConfigMode,
   /** Enable maintenance mode (blocks all requests) */
@@ -328,8 +326,7 @@ export const config = {
       sidebarWidthCollapsed: '4rem',
       sheetPanelWidth: '20rem',
     },
-    colors: {
-    },
+    colors: {},
     strokeWidth: 1.5,
     screenSizes: {
       xs: '420px',

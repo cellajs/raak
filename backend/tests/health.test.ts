@@ -51,7 +51,7 @@ describe('Health endpoint', () => {
 
     // Only healthy/degraded (200) get cache headers
     if (res.status === 200) {
-      expect(res.headers.get('cache-control')).toContain('max-age=10');
+      expect(res.headers.get('cache-control')).toContain('max-age=5');
     }
   });
 

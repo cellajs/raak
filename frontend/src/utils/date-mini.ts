@@ -1,5 +1,7 @@
 import dayjs from 'dayjs';
-import { locale } from '~/../../locales';
+// fork: upstream removed the locales barrel and mini-time data as dead code; raak's task cards
+// still use dateMini/useRelativeDate, so the strings live in a fork-owned module.
+import { locale } from '~/utils/mini-time-locale';
 
 const second = 1e3;
 const minute = 6e4;
