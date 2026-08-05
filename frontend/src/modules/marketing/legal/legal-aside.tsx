@@ -7,6 +7,7 @@ import { nanoid } from 'shared/utils/nanoid';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useCurrentSection } from '~/hooks/use-scroll-spy';
 import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
+import type { TKey } from '~/lib/i18n-locales';
 import type { LegalSubject } from '~/modules/auth/legal/legal-config';
 import type { LegalSection } from '~/modules/auth/legal/legal-types';
 import { Button, buttonVariants } from '~/modules/ui/button';
@@ -90,7 +91,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
                 }
               >
                 <div className="absolute left-[0.53rem] h-1 w-1 rounded-full bg-muted-foreground/30 group-data-[expanded=true]/subject:bg-muted-foreground/60" />
-                <span className="truncate">{t(label)}</span>
+                <span className="truncate">{t(label as TKey)}</span>
                 <ChevronDownIcon className="invisible ml-auto size-4 opacity-40 transition-transform duration-200 group-hover:visible group-data-[expanded=true]/subject:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent keepMounted className="overflow-hidden data-closed:hidden">

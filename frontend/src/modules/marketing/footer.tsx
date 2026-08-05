@@ -3,9 +3,10 @@ import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { isCDNUrl } from 'shared/utils/is-cdn-url';
+import type { TKey } from '~/lib/i18n-locales';
 import { Logo } from '~/modules/common/logo';
 import { BackgroundCurve } from '~/modules/marketing/about/hero';
-import { footerSections, legalLinks } from '~/modules/marketing/marketing-config';
+import { type FooterLink, footerSections, legalLinks } from '~/modules/marketing/marketing-config';
 import { SubscribeNewsletterForm } from '~/modules/marketing/subscribe-newsletter-form';
 
 const currentYear = new Date().getFullYear();
@@ -67,7 +68,9 @@ export function MarketingFooter() {
   const { t } = useTranslation();
   const sectionClass = 'rich-gradient dark-gradient relative min-h-[30vw] pt-[15vw]';
   const statusUrl = appConfig.statusUrl?.trim();
-  const legalFooterLinks = statusUrl ? [...legalLinks, { title: 'c:status', href: statusUrl }] : legalLinks;
+  const legalFooterLinks: FooterLink[] = statusUrl
+    ? [...legalLinks, { title: 'c:status' as TKey, href: statusUrl }]
+    : legalLinks;
 
   return (
     <div className="relative">

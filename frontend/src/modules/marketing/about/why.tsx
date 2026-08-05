@@ -1,10 +1,15 @@
 import { Suspense } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import type { TKey } from '~/lib/i18n-locales';
 import { Spinner } from '~/modules/common/spinner';
 import { whyDarkSlides, whyItems, whyLightSlides } from '~/modules/marketing/marketing-config';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const DeviceMockup = lazyNamed(() => import('~/modules/marketing/device-mockup'), 'DeviceMockup');
+
+// Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
+// union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
+type AboutKey = Extract<TKey, `about:${string}`>;
 /** Renders the product-benefits section. */
 export function Why() {
   const { t } = useTranslation();
@@ -14,8 +19,8 @@ export function Why() {
       <div className="w-full lg:w-5/12">
         <div className="flex flex-wrap">
           {whyItems.map((item, index) => {
-            const title = `about:why.title_${index + 1}`;
-            const text = `about:why.text_${index + 1}`;
+            const title = `about:why.title_${index + 1}` as TKey;
+            const text = `about:why.text_${index + 1}` as AboutKey;
 
             return (
               <div className="w-full" key={item.id}>

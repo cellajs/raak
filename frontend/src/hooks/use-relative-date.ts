@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import type { locale } from '~/../../locales';
 import { dateMini } from '~/utils/date-mini';
+// fork: mini-time strings moved to a fork-owned module (see date-mini.ts).
+import type { locale } from '~/utils/mini-time-locale';
 
 const minute = 6e4;
 const hour = 36e5;

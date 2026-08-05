@@ -1,7 +1,7 @@
 import { useSearch } from '@tanstack/react-router';
 import { Suspense, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
+import type { TKey } from '~/lib/i18n-locales';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { type PageTab, PageTabNav } from '~/modules/common/page/tab-nav';
 import { ScrollReset } from '~/modules/common/scroll-reset';
@@ -21,7 +21,6 @@ export function WorkspaceBoardTabs({
   workspace,
   publicView,
 }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
-  const { t } = useTranslation();
   const { projectSlug, labelPageId } = useSearch({ strict: false });
 
   const sorted = sortByMembership(projects);
@@ -41,7 +40,8 @@ export function WorkspaceBoardTabs({
     ...sorted.map(
       (project: Project): PageTab => ({
         id: project.id,
-        label: project.name,
+        // Project names are display strings, not keys; PageTabNav's t() falls back to the raw name.
+        label: project.name as TKey,
         path: '/$tenantId/$organizationSlug/workspace/$slug',
         search: { projectSlug: project.slug },
         activeOptions: { exact: false, includeSearch: true },
@@ -51,7 +51,7 @@ export function WorkspaceBoardTabs({
       ? [
           {
             id: LABELS_PANEL_ID,
-            label: t('c:label_other'),
+            label: 'c:label_other',
             path: '/$tenantId/$organizationSlug/workspace/$slug',
             search: { projectSlug: LABELS_TAB_SLUG },
             activeOptions: { exact: false, includeSearch: true },

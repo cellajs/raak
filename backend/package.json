@@ -73,7 +73,6 @@
     "html-to-text": "^10.0.0",
     "i18next": "^26.3.6",
     "isbot": "^5.2.1",
-    "locales": "workspace:*",
     "lru-cache": "^11.5.2",
     "maxmind": "^5.0.0",
     "nanoid": "^6.0.0",

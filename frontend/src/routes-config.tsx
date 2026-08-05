@@ -8,6 +8,9 @@ export type ChannelRouteEntry = {
   paramName: string;
   /** Default search params for this entity route */
   search?: Record<string, string>;
+  /** Preferred landing tab id when the layout route is visited without a tab; falls back to the
+   *  first tab the channel's arrangement resolves when absent or disabled. */
+  defaultTabId?: string;
   /** When shown as a subitem, navigate to a parent entity's route. */
   subitemOf?: { entityType: ChannelEntityType; searchParam: string };
 };
@@ -21,8 +24,9 @@ export type ChannelRouteEntry = {
  */
 export const channelRouteConfig = {
   organization: {
-    path: '/$tenantId/$organizationSlug/organization/attachments',
+    path: '/$tenantId/$organizationSlug/organization',
     paramName: 'organizationSlug',
+    defaultTabId: 'attachments',
   },
   workspace: {
     path: '/$tenantId/$organizationSlug/workspace/$slug',

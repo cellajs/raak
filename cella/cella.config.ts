@@ -69,6 +69,7 @@ export default defineConfig({
       'json/text-blocks.json',
       'locales/en/about.json',
       'locales/en/app.json',
+      'locales/nl/about.json',
       'backend/src/modules/organization/setup-config-schema.ts',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',

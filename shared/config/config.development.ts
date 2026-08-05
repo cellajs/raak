@@ -23,5 +23,4 @@ export const development = {
     publicBucket: 'cella-shared-public',
     privateBucket: 'cella-shared-private',
   },
-  
 } satisfies DeepPartial<typeof _default>;
