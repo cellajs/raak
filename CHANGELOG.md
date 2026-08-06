@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/cellajs/raak/compare/0.1.2...0.1.3) (2026-08-06)
+
+
+### 🐞 Bug fixes
+
+* read empty boot-diag prefix as evidence, not a listing failure ([#107](https://github.com/cellajs/raak/issues/107)) ([b60bfa3](https://github.com/cellajs/raak/commit/b60bfa3c7fcdd039f46d1efae8cbc955a982f952))
+
 ## [0.1.2](https://github.com/cellajs/raak/compare/0.1.1...0.1.2) (2026-08-06)
 
 
