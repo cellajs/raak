@@ -3,7 +3,7 @@ import { confirm } from '@inquirer/prompts';
 import { deriveInfra } from '../../lib/naming';
 import { adoptOrphanedPolicy } from '../../lib/scaleway/adopt-orphaned-policy';
 import { adoptOrphanedSecrets } from '../../lib/scaleway/adopt-orphaned-secrets';
-import { buildProviderEnv } from '../../lib/scaleway/bootstrap-scw-env';
+import { buildProviderEnv, stateKeyOverrideFromEnv } from '../../lib/scaleway/bootstrap-scw-env';
 import { resolveOrganizationId } from '../../lib/scaleway/scaleway-iam';
 import { parseOrphanedDeletes, pruneOrphanedDeletes, runPulumiUpWithHint } from '../../lib/stack/pulumi-up';
 import { pc, warningMark } from '../../lib/utils/cli-output';
@@ -62,7 +62,13 @@ export async function runApply(context: InfraContext): Promise<void> {
     `${pc.yellow(pc.bold('\u26A0  Keep this run in the foreground.'))} ${pc.dim('If it is interrupted, re-run "Apply infra change" to converge.')}`,
   );
 
-  const applyEnv = buildProviderEnv(infraDir, { accessKey: bootAccess, secretKey: bootSecret, projectId, passphrase });
+  const applyEnv = buildProviderEnv(infraDir, {
+    accessKey: bootAccess,
+    secretKey: bootSecret,
+    projectId,
+    passphrase,
+    ...stateKeyOverrideFromEnv(),
+  });
 
   const { appConfig } = context;
   pulumiLoginAndSelect(infraDir, applyEnv, appConfig, targetStack);
