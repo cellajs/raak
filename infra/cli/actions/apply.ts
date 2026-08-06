@@ -62,12 +62,13 @@ export async function runApply(context: InfraContext): Promise<void> {
     `${pc.yellow(pc.bold('\u26A0  Keep this run in the foreground.'))} ${pc.dim('If it is interrupted, re-run "Apply infra change" to converge.')}`,
   );
 
+  const stateOverride = stateKeyOverrideFromEnv();
   const applyEnv = buildProviderEnv(infraDir, {
     accessKey: bootAccess,
     secretKey: bootSecret,
     projectId,
     passphrase,
-    ...stateKeyOverrideFromEnv(),
+    ...stateOverride,
   });
 
   const { appConfig } = context;
@@ -75,10 +76,11 @@ export async function runApply(context: InfraContext): Promise<void> {
 
   // Lock the stack through the control bucket to exclude concurrent operators and CI.
   // Exit paths release it; abandoned locks expire or can be cleared with "Unlock".
+  // The lock object lives in the state bucket, so the state-identity override applies.
   const stackLock = await acquireStackLockOrExit({
     appConfig,
-    accessKey: bootAccess,
-    secretKey: bootSecret,
+    accessKey: stateOverride.stateAccessKey ?? bootAccess,
+    secretKey: stateOverride.stateSecretKey ?? bootSecret,
     stack: targetStack,
     operation: 'apply',
   });
