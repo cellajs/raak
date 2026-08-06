@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2](https://github.com/cellajs/raak/compare/0.1.1...0.1.2) (2026-08-06)
+
+
+### 🎉 New features
+
+* primary labels table ([#104](https://github.com/cellajs/raak/issues/104)) ([6fd922a](https://github.com/cellajs/raak/commit/6fd922a2ed617f40bbf41b1199424401f30138f2))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.8.2 (83b95fb0) ([#106](https://github.com/cellajs/raak/issues/106)) ([855d7aa](https://github.com/cellajs/raak/commit/855d7aae410ca7e985acb75f5dc480d648b4541a))
+
 ## [0.1.1](https://github.com/cellajs/raak/compare/0.1.0...0.1.1) (2026-08-06)
 
 
