@@ -84,7 +84,8 @@ export function TabsArrangementCard({ entity, parentRouteId, persist }: TabsArra
     },
     {
       key: 'label',
-      name: '',
+      // fork: header the name column with the reusable '{{resource}} name' key
+      name: t('c:resource_name', { resource: t('c:tab') }),
       minWidth: 160,
       renderCell: ({ row }) => (
         <span className="truncate text-sm">

@@ -1,11 +1,7 @@
 import { defineFrontendModule } from '~/lib/module';
-import { ToolCard } from '~/modules/common/tool-card';
 import { lazyNamed } from '~/utils/lazy-named';
 
-const UpdatePrimaryLabelsForm = lazyNamed(
-  () => import('~/modules/organization/update-primary-labels-form'),
-  'UpdatePrimaryLabelsForm',
-);
+const PrimaryLabelsCard = lazyNamed(() => import('~/modules/organization/primary-labels-card'), 'PrimaryLabelsCard');
 
 defineFrontendModule({
   name: 'labels',
@@ -15,14 +11,10 @@ defineFrontendModule({
   tools: [
     {
       slot: 'organization.settings',
-      id: 'update-primary-labels',
+      id: 'task-types',
       label: 'c:primary_labels',
       visibleTo: ['organization.admin'],
-      render: (organization) => (
-        <ToolCard label="c:primary_labels" id="update-primary-labels">
-          <UpdatePrimaryLabelsForm organization={organization} />
-        </ToolCard>
-      ),
+      render: (organization) => <PrimaryLabelsCard organization={organization} />,
     },
   ],
 });
