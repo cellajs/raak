@@ -16,14 +16,14 @@ const { runtimeSecretsConfig } = await import('../../config/runtime-secrets.conf
 const backendEnvSource = readFileSync(resolve(__dirname, '../../../backend/src/env.ts'), 'utf-8');
 const cdcEnvSource = readFileSync(resolve(__dirname, '../../../cdc/src/env.ts'), 'utf-8');
 const yjsEnvSource = readFileSync(resolve(__dirname, '../../../yjs/src/env.ts'), 'utf-8');
-// Workers inherit shared declarations (DATABASE_SSL_CA, MAPLE_SECRET_INGEST_KEY) from
-// workerEnvBase, so its source counts as declared for cdc/yjs.
 const workerEnvBaseSource = readFileSync(resolve(__dirname, '../../../shared/src/utils/worker-env.ts'), 'utf-8');
 
+// The worker env schemas extend workerEnvBase, so shared declarations (e.g.
+// DATABASE_SSL_CA) count as declared for cdc and yjs.
 const envSources = {
   backend: backendEnvSource,
-  cdc: cdcEnvSource + workerEnvBaseSource,
-  yjs: yjsEnvSource + workerEnvBaseSource,
+  cdc: `${workerEnvBaseSource}\n${cdcEnvSource}`,
+  yjs: `${workerEnvBaseSource}\n${yjsEnvSource}`,
 } as const;
 
 describe('runtime secret registry', () => {
