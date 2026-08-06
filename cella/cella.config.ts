@@ -15,7 +15,7 @@ export default defineConfig({
 
   // File overrides
   overrides: {
-    // Paths the fork fully owns — never synced (existing or new)
+    // Paths the fork fully owns: never synced (existing or new)
     // NOTE: package.jsons, lockfiles, this file are always ignored
     // NOTE: Modules with `app` owner are also ignored, including their public static asset folder
     ignored: [
@@ -33,6 +33,9 @@ export default defineConfig({
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
       'CLAUDE.md',
+      // Deleted in the owned-embedding flip (PR #94): raak has no non-task upload path, so the
+      // helper has no callers here; upstream keeps evolving it for its org-scoped file panel.
+      'frontend/src/modules/attachment/helpers/persist-attachments.ts',
     ],
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
@@ -62,11 +65,8 @@ export default defineConfig({
       'frontend/src/list-queries-config.tsx',
       'frontend/src/styling/gradients.css',
       'frontend/src/styling/tailwind.css',
-      'frontend/src/modules/home/home-page.tsx',
       'frontend/src/modules/home/onboarding/onboarding-config.ts',
       'frontend/src/modules/common/logo.tsx',
-      'frontend/src/modules/user/user-profile-content.tsx',
-      'json/text-blocks.json',
       'locales/en/about.json',
       'locales/en/app.json',
       'locales/nl/about.json',

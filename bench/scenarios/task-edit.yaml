@@ -1,4 +1,4 @@
-# Task Edit step-up — looping VUs find the throughput ceiling.
+# Task Edit step-up: looping VUs find the throughput ceiling.
 #
 # Each VU loops 5 times, cycling through edit types (assignedTo, variant, status, description).
 # Steps up: 50 → 100 → 125 arrivals/s (~625 req/s peak).
