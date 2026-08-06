@@ -108,8 +108,11 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
     }
 
     if (pending.action === 'accepted-open') {
-      // Bring the tail of the accepted block into view, only when none of it is visible.
-      // Wait one frame for the virtualizer to lay out the newly-added items.
+      // Mirror iced-open: center the boundary (last accepted) so the top half of the viewport
+      // shows accepted tasks, and glow it to preserve orientation. An 'align: nearest' nudge
+      // would park the row at the top edge, hidden behind the sticky accepted bar. Wait one
+      // frame for the virtualizer to lay out the newly-added items; skip when part of the
+      // accepted block is already in view.
       requestAnimationFrame(() => {
         const v = virtualizerRef.current;
         if (!v) return;
@@ -117,7 +120,9 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
         const lastAccepted = boundary === -1 ? tasksRef.current.length - 1 : boundary - 1;
         if (lastAccepted < 0) return;
         if (v.findItemIndex(v.scrollOffset) <= lastAccepted) return;
-        v.scrollToIndex(lastAccepted, { align: 'nearest', smooth: false });
+        v.scrollToIndex(lastAccepted, { align: 'center', smooth: false });
+        const acceptedTask = tasksRef.current[lastAccepted];
+        if (acceptedTask) requestAnimationFrame(() => triggerTaskGlow(acceptedTask.id));
       });
       return;
     }
