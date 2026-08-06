@@ -304,6 +304,11 @@ export async function runDeploy(
     } catch (err) {
       telemetry?.event(deployEvents.rolloutFailed, { error: errorMessage(err) }, { severity: 'error' });
       fx.info('[deploy] rollout failed; collecting boot diagnostics');
+      if (!iamV2) {
+        fx.info(
+          '[deploy] legacy IAM model: VM boot-diag uploads are denied (the VM key has no Object Storage permission set), so diagnostics below are expected to be empty. Read the VM serial console in the Scaleway web console, and run the infra CLI "Migrate IAM model" to restore this channel.',
+        );
+      }
       await fx
         .bootDiagnostics(startedAtIso)
         .catch((diagErr) => fx.info(`[deploy] boot diagnostics failed: ${errorMessage(diagErr)}`));
