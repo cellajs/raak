@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.1](https://github.com/cellajs/raak/compare/0.1.0...0.1.1) (2026-08-06)
+
+
+### 🧹 Chores
+
+* salvage seam housekeeping from [#99](https://github.com/cellajs/raak/issues/99) ([#102](https://github.com/cellajs/raak/issues/102)) ([d67a837](https://github.com/cellajs/raak/commit/d67a83792f9872e69dda142c38a4ad211ac5cdeb))
+* sync upstream cella ([#98](https://github.com/cellajs/raak/issues/98)) ([3235a43](https://github.com/cellajs/raak/commit/3235a4348db87dd51d4abdddb0ec8e11b8784d34))
+* sync upstream cella ff08151 ([8a5b585](https://github.com/cellajs/raak/commit/8a5b585dc6afa5d467e2e23c44096d27abc70380))
+* sync upstream cella v0.8.1 (bbb9a42b) ([#101](https://github.com/cellajs/raak/issues/101)) ([466b7a3](https://github.com/cellajs/raak/commit/466b7a3beb34c91aad16e8ebdbdbb764dd40590b))
+* sync upstream cella v0.8.2 (ccfe7df9) ([#103](https://github.com/cellajs/raak/issues/103)) ([1394d1c](https://github.com/cellajs/raak/commit/1394d1c65b24060d08b2cc1731040b0ef1139e41))
+* sync with cella 0.7.0 (frontend placements, cella/ folder, IAM v2) ([#95](https://github.com/cellajs/raak/issues/95)) ([8a5b585](https://github.com/cellajs/raak/commit/8a5b585dc6afa5d467e2e23c44096d27abc70380))
+* sync with cella upstream (82c76167..2e18afc1, 0.8.0) ([#100](https://github.com/cellajs/raak/issues/100)) ([4161cad](https://github.com/cellajs/raak/commit/4161cadbb3284d31480789bbcd5445accef16693))
+* sync with cella upstream (ff08151a..82c76167) ([3235a43](https://github.com/cellajs/raak/commit/3235a4348db87dd51d4abdddb0ec8e11b8784d34))
+* sync with cella upstream (ff08151a..82c76167) ([#97](https://github.com/cellajs/raak/issues/97)) ([4fec911](https://github.com/cellajs/raak/commit/4fec9114077c9a76c3d7b9aa60d2421d3a6e799d))
+
 ## [0.1.0](https://github.com/cellajs/raak/compare/0.0.9...0.1.0) (2026-07-30)
 
 
