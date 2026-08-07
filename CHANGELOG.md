@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/cellajs/raak/compare/0.1.5...0.1.6) (2026-08-07)
+
+
+### 🐞 Bug fixes
+
+* diag renders the boot transcript, not the events bundle ([#113](https://github.com/cellajs/raak/issues/113)) ([4166696](https://github.com/cellajs/raak/commit/41666967bb0a4fa16c0209558d2b7e6257e3b1f6))
+
 ## [0.1.5](https://github.com/cellajs/raak/compare/0.1.4...0.1.5) (2026-08-07)
 
 
