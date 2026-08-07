@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4](https://github.com/cellajs/raak/compare/0.1.3...0.1.4) (2026-08-07)
+
+
+### 🐞 Bug fixes
+
+* **infra:** adopt IAM model v2 stack config, add state-identity override ([#109](https://github.com/cellajs/raak/issues/109)) ([8c13f3a](https://github.com/cellajs/raak/commit/8c13f3a278fc5e89e1d8cf1204e3ce203d9fd052))
+
+
+### 🧹 Chores
+
+* retrigger release-please (push event dropped in Actions outage) ([f3bcd3f](https://github.com/cellajs/raak/commit/f3bcd3f16f4e943170d7ea48c07df408c5746ffa))
+
 ## [0.1.3](https://github.com/cellajs/raak/compare/0.1.2...0.1.3) (2026-08-06)
 
 
