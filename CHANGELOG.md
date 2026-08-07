@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/cellajs/raak/compare/0.1.4...0.1.5) (2026-08-07)
+
+
+### 🐞 Bug fixes
+
+* make pending backfill migrations survive prod RLS, add lost backfills ([#111](https://github.com/cellajs/raak/issues/111)) ([10a395c](https://github.com/cellajs/raak/commit/10a395ccbf2867188f0d0565be507eae31310996))
+
 ## [0.1.4](https://github.com/cellajs/raak/compare/0.1.3...0.1.4) (2026-08-07)
 
 
