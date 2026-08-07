@@ -48,7 +48,9 @@ export function selectDiagnostics(keys: string[], service: string): DiagSelectio
   const sorted = [...keys].sort();
   const markers = sorted.filter((k) => new RegExp(`^${svc}-(stage|[0-9])`).test(k)).slice(-30);
   const stageDetailKeys = sorted.filter((k) => k.startsWith(`${service}-stage-`)).slice(-10);
-  const latestFull = sorted.filter((k) => new RegExp(`^${svc}-[0-9]{8}T`).test(k)).at(-1);
+  // Pin to -boot.log: the sibling -events.jsonl sorts after it and would win
+  // .at(-1), replacing the readable transcript with raw OTLP records.
+  const latestFull = sorted.filter((k) => new RegExp(`^${svc}-[0-9]{8}T.*-boot\\.log$`).test(k)).at(-1);
   // Reconciler failure captures: <svc>-failed-* (slot logs), <svc>-pull-failed-*
   // (docker pull/auth stderr) and <svc>-migrate-failed-* (one-shot migrator
   // output). Keep the few most recent.
