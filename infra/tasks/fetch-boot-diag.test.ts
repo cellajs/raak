@@ -68,6 +68,14 @@ describe('selectDiagnostics', () => {
     expect(sel.latestFull).toBeUndefined();
   });
 
+  it('prefers the boot transcript over the sibling events bundle', () => {
+    const sel = selectDiagnostics(
+      ['backend-20260807T081154Z-boot.log', 'backend-20260807T081154Z-events.jsonl'],
+      'backend',
+    );
+    expect(sel.latestFull).toBe('backend-20260807T081154Z-boot.log');
+  });
+
   it('caps stage details at the 10 most recent', () => {
     const many = Array.from({ length: 15 }, (_, i) => `backend-stage-${String(i).padStart(2, '0')}-x`);
     const sel = selectDiagnostics(many, 'backend');
