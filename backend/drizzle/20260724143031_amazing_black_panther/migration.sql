@@ -1,3 +1,9 @@
+-- RLS off during the backfill: the migrate role has no BYPASSRLS on managed
+-- Postgres, and statements reading existing rows (the labels NOT EXISTS, the
+-- tasks UPDATE joining labels) also apply the tenant SELECT policies, which
+-- match zero rows in a migration session.
+ALTER TABLE "labels" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "tasks" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "tasks" ADD COLUMN "primary_label_id" uuid;--> statement-breakpoint
 INSERT INTO "labels" (id, entity_type, tenant_id, organization_id, project_id, name, slug, color, icon, mode, organization_tracked, display_order, created_at, stx)
 SELECT gen_random_uuid(), 'label', p.tenant_id, p.organization_id, p.id, v.name, v.slug, v.color, v.icon, 'primary', true, v.display_order, now(),
@@ -20,4 +26,8 @@ UPDATE "tasks" t SET "primary_label_id" = (
 ALTER TABLE "tasks" ALTER COLUMN "primary_label_id" SET NOT NULL;--> statement-breakpoint
 ALTER TABLE "tasks" DROP COLUMN "variant";--> statement-breakpoint
 ALTER TABLE "tasks" DROP COLUMN "points";--> statement-breakpoint
-CREATE INDEX "tasks_primary_label_id_index" ON "tasks" ("primary_label_id");
+CREATE INDEX "tasks_primary_label_id_index" ON "tasks" ("primary_label_id");--> statement-breakpoint
+ALTER TABLE "tasks" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "tasks" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "labels" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "labels" FORCE ROW LEVEL SECURITY;
