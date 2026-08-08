@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/cellajs/raak/compare/0.1.6...0.1.7) (2026-08-08)
+
+
+### 🐞 Bug fixes
+
+* yjs answers the LB's host-less health probe ([#115](https://github.com/cellajs/raak/issues/115)) ([ab2485c](https://github.com/cellajs/raak/commit/ab2485ce1cdec6eb357366311532b265960c6e84))
+
 ## [0.1.6](https://github.com/cellajs/raak/compare/0.1.5...0.1.6) (2026-08-07)
 
 
