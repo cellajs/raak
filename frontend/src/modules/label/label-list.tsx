@@ -194,13 +194,13 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
           {/* Single-cell grid stacks count and avatars in the same right-aligned spot, so the
               hover swap never shifts the filter button */}
           <div className="grid shrink-0 justify-items-end *:col-start-1 *:row-start-1">
-            <span className="self-center text-muted-foreground/50 text-xs tabular-nums group-focus-within/labelTile:invisible group-hover/labelTile:invisible">
+            <span className="self-center text-muted-foreground/50 text-xs tabular-nums transition-opacity duration-200 group-focus-within/labelTile:opacity-0 group-hover/labelTile:opacity-0 motion-reduce:transition-none">
               {row.usedCount}
             </span>
             {entity === 'workspace' && row.projectIds.length > 0 && (
               <AvatarGroup
                 limit={3}
-                className="invisible group-focus-within/labelTile:visible group-hover/labelTile:visible"
+                className="opacity-0 transition-opacity duration-200 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100 motion-reduce:transition-none"
               >
                 <AvatarGroupList>
                   {row.projectIds
