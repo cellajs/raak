@@ -44,16 +44,15 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
   // Await cache restore first so already-synced lists are visible and these prefetches no-op;
   // without it a reload races restore, sees an empty cache, and refetches every project's tasks.
   await cacheRestored;
-  queryClient.prefetchInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
+  const projectsQueryOptions = projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' });
+  const projectsPrefetch = queryClient.prefetchInfiniteQuery(projectsQueryOptions);
   queryClient.prefetchInfiniteQuery(
     projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),
   );
 
-  // Prefetch per-project canonical task queries when projects are already cached
-  const cachedProjects = queryClient.getQueryData(
-    projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }).queryKey,
-  );
-  if (cachedProjects) {
+  const prefetchPerProjectQueries = () => {
+    const cachedProjects = queryClient.getQueryData(projectsQueryOptions.queryKey);
+    if (!cachedProjects) return;
     const allProjects = cachedProjects.pages.flatMap((p) => p.items);
     const isMobile = window.innerWidth < 640;
 
@@ -66,7 +65,10 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
       queryClient.prefetchQuery(tasksCanonicalOptions({ organizationId, tenantId, projectId: project.id }));
       queryClient.prefetchQuery(labelsCanonicalOptions({ organizationId, tenantId, projectId: project.id }));
     }
-  }
+  };
+
+  if (queryClient.getQueryData(projectsQueryOptions.queryKey)) prefetchPerProjectQueries();
+  else projectsPrefetch.then(prefetchPerProjectQueries);
 
   return { workspace };
 };
