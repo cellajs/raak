@@ -197,7 +197,7 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
             <span className="self-center text-muted-foreground/50 text-xs tabular-nums group-focus-within/labelTile:invisible group-hover/labelTile:invisible">
               {row.usedCount}
             </span>
-            {entity === 'workspace' && row.projectIds.length > 1 && (
+            {entity === 'workspace' && row.projectIds.length > 0 && (
               <AvatarGroup
                 limit={3}
                 className="invisible group-focus-within/labelTile:visible group-hover/labelTile:visible"
