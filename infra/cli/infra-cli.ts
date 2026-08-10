@@ -13,7 +13,6 @@ import { failWithHint, pc, printHeader, warningMark } from '../lib/utils/cli-out
 import { infraDir } from '../lib/utils/paths';
 import { runApply } from './actions/apply';
 import { exposureOverlayPath, runExposeDatabase, runUnexposeDatabase } from './actions/db-exposure';
-import { runMigrateIam } from './actions/migrate-iam';
 import { runPreview } from './actions/preview';
 import { runResetDatabase } from './actions/reset-database';
 import { runRotatePassphrase } from './actions/rotate-passphrase';
@@ -120,10 +119,9 @@ async function loadContext(): Promise<InfraContext> {
     throw new Error('SCW_PROJECT_ID is not set — add it to backend/.env before running the infra CLI.');
   }
 
-  // Bootstrap creates the operator application and writes its id to backend/.env.
-  // Bootstrapped stacks require it for operator access to CI-scoped buckets.
-  const adminApplicationId =
-    process.env.SCW_ADMIN_APPLICATION_ID?.trim() || process.env.SCW_OPERATOR_APPLICATION_ID?.trim();
+  // Bootstrap creates the admin application and writes its id to backend/.env.
+  // Bootstrapped stacks require it for admin access to CI-scoped buckets.
+  const adminApplicationId = process.env.SCW_ADMIN_APPLICATION_ID?.trim();
   if (!adminApplicationId && state === 'bootstrapped') {
     console.warn(
       'SCW_ADMIN_APPLICATION_ID is not set — admin bucket-policy statements will be dropped on the next up. Run "Rotate keys" to create the admin app.',
@@ -217,7 +215,7 @@ async function chooseKeysAction(): Promise<Exclude<CliMode, 'status'> | 'back'> 
       {
         name: 'Rotate keys',
         value: 'rotate',
-        description: 'Replace the CI deploy and VM reader keys with fresh ones.',
+        description: 'Replace the CI deploy key with a fresh one.',
       },
       {
         name: 'Rotate passphrase',
@@ -228,11 +226,6 @@ async function chooseKeysAction(): Promise<Exclude<CliMode, 'status'> | 'back'> 
         name: 'Manage runtime secrets',
         value: 'secrets',
         description: 'List, set, rotate, or delete the runtime secrets.',
-      },
-      {
-        name: 'Migrate IAM model',
-        value: 'migrate-iam',
-        description: 'Adopt per-mode/per-service principals (v2), or clean up legacy ones afterwards.',
       },
       backChoice,
     ],
@@ -364,11 +357,6 @@ if (mode === 'unlock') {
 
 if (mode === 'teardown') {
   await runTeardown(context);
-  process.exit(0);
-}
-
-if (mode === 'migrate-iam') {
-  await runMigrateIam(context);
   process.exit(0);
 }
 

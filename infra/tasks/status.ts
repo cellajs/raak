@@ -9,7 +9,7 @@ import { deriveInfra } from '../lib/naming';
 import { operatorManagedRuntimeSecrets } from '../lib/runtime-secrets';
 import { resolveProjectId } from '../lib/scaleway/bootstrap-scw-env';
 import { createSecretManagerClient } from '../lib/scaleway/scaleway-secret-manager';
-import { secretManagerPath } from '../lib/scaleway/vm-reader-secret';
+import { secretManagerPath } from '../lib/scaleway/secret-paths';
 import { serviceEndpoints } from '../lib/services';
 import {
   detectComputeDeferred,
@@ -251,8 +251,7 @@ export async function gatherInputs(ctx: StatusContext): Promise<StatusInputs> {
     hasDomain,
     credentialsAvailable,
     projectId,
-    adminAppId:
-      process.env.SCW_ADMIN_APPLICATION_ID?.trim() || process.env.SCW_OPERATOR_APPLICATION_ID?.trim() || undefined,
+    adminAppId: process.env.SCW_ADMIN_APPLICATION_ID?.trim() || undefined,
     github,
     stateBucketExists: scaleway.stateBucketExists,
     lock: scaleway.lock,
