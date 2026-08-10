@@ -191,26 +191,36 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
             </span>
             {row.mode === 'epic' && <Badge variant="secondary">{t('c:epic')}</Badge>}
           </Link>
-          {entity === 'workspace' && row.projectIds.length > 1 && (
-            <AvatarGroup limit={3}>
-              <AvatarGroupList>
-                {row.projectIds
-                  .map((id) => findProjectByIdOrSlug(id, tenantId))
-                  .filter((project) => !!project)
-                  .map((project) => (
-                    <EntityAvatar
-                      type="project"
-                      key={project.id}
-                      id={project.id}
-                      name={project.name}
-                      url={project.thumbnailUrl}
-                      className="h-6 w-6 text-xs"
-                    />
-                  ))}
-              </AvatarGroupList>
-              <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
-            </AvatarGroup>
-          )}
+          {/* Single-cell grid stacks count and avatars in the same right-aligned spot, so the
+              hover swap never shifts the filter button */}
+          <div className="grid shrink-0 justify-items-end *:col-start-1 *:row-start-1">
+            <span className="self-center text-muted-foreground/50 text-xs tabular-nums group-focus-within/labelTile:invisible group-hover/labelTile:invisible">
+              {row.usedCount}
+            </span>
+            {entity === 'workspace' && row.projectIds.length > 1 && (
+              <AvatarGroup
+                limit={3}
+                className="invisible group-focus-within/labelTile:visible group-hover/labelTile:visible"
+              >
+                <AvatarGroupList>
+                  {row.projectIds
+                    .map((id) => findProjectByIdOrSlug(id, tenantId))
+                    .filter((project) => !!project)
+                    .map((project) => (
+                      <EntityAvatar
+                        type="project"
+                        key={project.id}
+                        id={project.id}
+                        name={project.name}
+                        url={project.thumbnailUrl}
+                        className="h-6 w-6 text-xs"
+                      />
+                    ))}
+                </AvatarGroupList>
+                <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
+              </AvatarGroup>
+            )}
+          </div>
           <LabelFilterButton name={row.name} size="xs" tabIndex={-1} className="relative z-10" />
         </li>
       ))}
