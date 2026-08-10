@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.8](https://github.com/cellajs/raak/compare/0.1.7...0.1.8) (2026-08-10)
+
+
+### 🐞 Bug fixes
+
+* **infra:** adopt cella [#1021](https://github.com/cellajs/raak/issues/1021)/[#1022](https://github.com/cellajs/raak/issues/1022) IAM fixes — unconditioned key-mint, singleVM secret scope, cdc hostname ([df6f646](https://github.com/cellajs/raak/commit/df6f646fb4a818b38de3083713d3bdc796f28f97))
+* **infra:** adopt cella [#1021](https://github.com/cellajs/raak/issues/1021)/[#1022](https://github.com/cellajs/raak/issues/1022) IAM fixes ([#119](https://github.com/cellajs/raak/issues/119)) ([df6f646](https://github.com/cellajs/raak/commit/df6f646fb4a818b38de3083713d3bdc796f28f97))
+* label tiles show used count at rest, project avatars on hover ([#117](https://github.com/cellajs/raak/issues/117)) ([c4fc5ab](https://github.com/cellajs/raak/commit/c4fc5abda41f1f2421ee005fafbe7465fbffd62a))
+
 ## [0.1.7](https://github.com/cellajs/raak/compare/0.1.6...0.1.7) (2026-08-08)
 
 
