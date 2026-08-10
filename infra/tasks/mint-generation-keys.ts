@@ -2,7 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import { principalNames } from '../lib/scaleway/principals';
 import { createSecretManagerClient } from '../lib/scaleway/scaleway-secret-manager';
 import { scwFetch, scwSend } from '../lib/scaleway/scw-fetch';
-import { handoffServicePath } from '../lib/scaleway/vm-reader-secret';
+import { handoffServicePath } from '../lib/scaleway/secret-paths';
 import { isMain } from '../lib/utils/is-main';
 import { getFlag } from './args';
 
@@ -54,9 +54,7 @@ async function resolveAppId(secretKey: string, organizationId: string, name: str
   );
   const app = applications.find((a) => a.name === name);
   if (!app)
-    throw new Error(
-      `mint-generation-keys: IAM application '${name}' not found — run the infra CLI "Migrate IAM model" / bootstrap first.`,
-    );
+    throw new Error(`mint-generation-keys: IAM application '${name}' not found — run the infra CLI bootstrap first.`);
   return app.id;
 }
 

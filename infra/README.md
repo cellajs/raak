@@ -18,7 +18,7 @@ Infra CLI makes is easy to set up a full-stack app on European cloud provider [S
 
 **Releases can't break what is running.** Every release starts on fresh servers and traffic only moves once the new version provably serves.
 
-**Secure by default.** No need to log into a machine. Credentials descend in privilege (bootstrap → CI deploy → VM reader), key rotation is a menu action.
+**Secure by default.** No need to log into a machine. Credentials descend in privilege (bootstrap → CI deploy → per-deploy VM keys), key rotation is a menu action.
 
 **Observable by default.** Every deploy emits an OpenTelemetry trace with audit and error events; VMs report boot progress and crash logs to the same stream.
 
@@ -53,7 +53,7 @@ verify SHAs, publish frontend entry files, smoke checks
 one final stack update reaps every displaced generation
 ```
 
-**Manage** is the same `pnpm infra` entrypoint on an existing stack: instead of the wizard it opens an operator menu for day-2 work. From there you re-sync config and GitHub Environment secrets (Resume), rotate the CI and VM reader keys or the Pulumi passphrase, run a privileged `pulumi up` for protected infra (database, VPC, private network), preview drift, manage runtime secrets in Secret Manager (list, set, rotate, delete), run database actions (reset, seed, temporary public exposure), and clear a stale stack lock. See [cella/DEPLOYMENT.md](../cella/DEPLOYMENT.md#advanced-operations) for the step-by-steps.
+**Manage** is the same `pnpm infra` entrypoint on an existing stack: instead of the wizard it opens an operator menu for day-2 work. From there you re-sync config and GitHub Environment secrets (Resume), rotate the CI deploy key or the Pulumi passphrase, run a privileged `pulumi up` for protected infra (database, VPC, private network), preview drift, manage runtime secrets in Secret Manager (list, set, rotate, delete), run database actions (reset, seed, temporary public exposure), and clear a stale stack lock. See [cella/DEPLOYMENT.md](../cella/DEPLOYMENT.md#advanced-operations) for the step-by-steps.
 
 ## Core philosophy
 
@@ -67,7 +67,7 @@ Three design rules carry the model:
    - **CI deploy app** — project-scoped writes for routine deploys; no IAM writes except one *conditioned* `IAMApplicationManager` rule (`resource.id in [service app ids]`) that lets it rotate service keys every deploy and provably nothing else.
    - **per-service VM apps + boot app** — each service VM signs with its own per-deploy key, path-conditioned to its own + shared secret folders (`resource.name.startsWith`). Cloud-init carries only the **boot key** (registry pull, boot-diag write, handoff read); the real service key arrives via a **single-access** Secret Manager bundle — a consumed bundle on first boot is an interception signal and halts the VM. Reboots reuse the on-disk cached pair.
 
-   Bucket policies are deny-by-default for everyone not listed (including org admins — the org Owner can always edit/delete a bucket policy, that right is inherent). Uploads buckets are versioned and the CI statements exclude `s3:DeleteObjectVersion`, so a leaked CI key cannot destroy state history or user-data versions. Secret folders are the security boundary: `/<slug>-<mode>/<service>/`, `/shared/`, `/handoff/`, `/engine/` (engine credentials are unreadable from VMs). Existing stacks adopt all of this via `pnpm infra` → **Migrate IAM model**.
+   Bucket policies are deny-by-default for everyone not listed (including org admins — the org Owner can always edit/delete a bucket policy, that right is inherent). Uploads buckets are versioned and the CI statements exclude `s3:DeleteObjectVersion`, so a leaked CI key cannot destroy state history or user-data versions. Secret folders are the security boundary: `/<slug>-<mode>/<service>/`, `/shared/`, `/handoff/`, `/engine/` (engine credentials are unreadable from VMs).
 
 ## Observability
 

@@ -55,24 +55,24 @@ describe('storage module', () => {
     }
   });
 
-  it('boot diagnostics bucket grants VM write to boot-diag/ only, never public read', () => {
+  it('boot diagnostics bucket grants the boot app write to boot-diag/ only, never public read', () => {
     const policies = h.resources.filter((r) => /bucketPolicy/i.test(r.type));
     const policy = policies.find((p) => p.name === 'boot-diag-policy');
     expect(policy).toBeDefined();
     const policyJson = String(policy?.inputs.policy ?? '');
     expect(policyJson).not.toMatch(/"Principal"\s*:\s*"\*"/);
-    expect(policyJson).toMatch(/VmWriteBootDiagnostics/);
+    expect(policyJson).toMatch(/BootWriteBootDiagnostics/);
     expect(policyJson).toMatch(/application_id:/);
     expect(policyJson).toMatch(/s3:PutObject/);
     expect(policyJson).toMatch(/boot-diag\/*/);
     const parsed = JSON.parse(policyJson) as {
       Statement: Array<{ Sid: string; Action: string[]; Resource: string[] }>;
     };
-    const vmWrite = parsed.Statement.find((s) => s.Sid === 'VmWriteBootDiagnostics');
-    expect(vmWrite?.Action).toEqual(['s3:PutObject']);
+    const bootWrite = parsed.Statement.find((s) => s.Sid === 'BootWriteBootDiagnostics');
+    expect(bootWrite?.Action).toEqual(['s3:PutObject']);
     // Derive the bucket name from the captured resource so this holds for any app slug.
     const bootDiagBucketName = String(h.resources.find((r) => r.name === 'boot-diag-bucket')?.inputs.name ?? '');
-    expect(vmWrite?.Resource).toEqual([`${bootDiagBucketName}/boot-diag/*`]);
+    expect(bootWrite?.Resource).toEqual([`${bootDiagBucketName}/boot-diag/*`]);
   });
 
   it('upload buckets restrict CORS allowedOrigins (no wildcard)', () => {
