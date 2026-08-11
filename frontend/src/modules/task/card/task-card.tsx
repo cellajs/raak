@@ -142,13 +142,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
           allowedEdges: ['top', 'bottom'],
         }),
       onDrag: ({ self: { data: selfData }, source: { data: sourceData } }) => {
-        if (
-          !isTaskData(sourceData) ||
-          !isTaskData(selfData) ||
-          sourceData.item.id === task.id ||
-          sourceData.item.projectId !== task.projectId
-        )
-          return;
+        if (!isTaskData(sourceData) || !isTaskData(selfData) || sourceData.item.id === task.id) return;
         setClosestEdge(extractClosestEdge(selfData));
       },
       onDragLeave: dragEnd,
