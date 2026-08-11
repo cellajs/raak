@@ -5,6 +5,8 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
+import { isCoarsePointerDevice } from '~/modules/task/helpers/mobile-drag-indicator';
+import { scrollStatusIntoView } from '~/modules/task/helpers/panel-scroll-registry';
 import type { Task } from '~/modules/task/types';
 
 interface UsePanelDropTargetOptions {
@@ -44,6 +46,11 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
       onDragEnter: ({ source: { data } }) => {
         if (!isTaskData(data) || data.item.projectId === projectId) return;
         setHighlightProject(true);
+        // Bring this panel's source-status band into view so the drag gets between-card drop
+        // targets; fires once per panel entry (moving over child cards keeps the panel in the
+        // drop chain). Skipped on coarse pointers: they resolve drops via the rect-derived
+        // mobile indicator, and a window scroll mid-touch-drag would yank the page.
+        if (!isCoarsePointerDevice()) scrollStatusIntoView(projectId, data.item.status);
       },
       onDragLeave: () => setHighlightProject(false),
       onDrop: () => setHighlightProject(false),

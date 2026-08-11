@@ -3,7 +3,7 @@ import type { VirtualizerHandle } from 'virtua';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
-import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
+import { registerPanelScroller, registerPanelStatusScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { usePanelAutoScroll } from '~/modules/task/hooks/use-panel-drop-target';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -50,6 +50,29 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
       const index = tasksRef.current.findIndex((t) => t.id === taskId);
       if (index === -1) return;
       virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
+    });
+  }, [projectId]);
+
+  // Register a status scroller so a cross-project drag can bring the source-status band into
+  // view, giving the drag between-card drop targets. Skips when any same-status card is already
+  // visible: scrolling away from usable drop targets under a held drag would disorient.
+  // Instant scroll: a smooth traversal mounts and measures every card along the way (see the
+  // iced-open note below).
+  useEffect(() => {
+    return registerPanelStatusScroller(projectId, (status) => {
+      const virtualizer = virtualizerRef.current;
+      if (!virtualizer) return;
+      const tasks = tasksRef.current;
+      const targetIndex = getTargetIndexByStatus(tasks, status);
+      if (targetIndex === -1) return;
+
+      const startIndex = virtualizer.findItemIndex(virtualizer.scrollOffset);
+      const endIndex = virtualizer.findItemIndex(virtualizer.scrollOffset + virtualizer.viewportSize);
+      for (let i = Math.max(0, startIndex); i <= endIndex && i < tasks.length; i++) {
+        if (tasks[i].status === status && !isDraftTask(tasks[i])) return;
+      }
+
+      virtualizer.scrollToIndex(targetIndex, { align: 'center', smooth: false });
     });
   }, [projectId]);
 
