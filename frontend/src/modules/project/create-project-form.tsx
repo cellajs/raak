@@ -5,7 +5,7 @@ import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zCreateProjectsBody } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
@@ -16,7 +16,7 @@ import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 
-const formSchema = zCreateProjectsBody.element.omit({ id: true }).extend({ workspaceId: z.string() });
+const formSchema = zCreateProjectsBody.element.omit({ id: true });
 type FormValues = z.infer<typeof formSchema>;
 interface CreateProjectFormProps {
   callback?: () => void;
@@ -37,7 +37,6 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
         name: '',
         slug: '',
         publicAt: null,
-        workspaceId: workspace.id,
       },
     }),
     [],
@@ -52,12 +51,11 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
   const { mutate: create, isPending } = useProjectCreateMutation();
 
   const onSubmit = (values: FormValues) => {
-    const { workspaceId, ...itemBody } = values;
     create(
       {
         path: { organizationId: workspace.organizationId, tenantId: workspace.tenantId },
-        body: [{ ...itemBody, id: `temp-${generateId()}` }],
-        query: { workspaceId },
+        body: [{ ...values, id: `temp-${generateId()}` }],
+        query: { workspaceId: workspace.id },
       },
       {
         onSuccess: async (createdProject) => {
