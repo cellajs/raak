@@ -69,7 +69,7 @@ No script - manual.
      tools: [
        {
          slot: 'organization.settings',
-         id: 'task-types',
+         id: 'update-primary-labels',
          label: 'c:primary_labels',
          visibleTo: ['organization.admin'],
          render: (organization) => <PrimaryLabelsCard organization={organization} />,
