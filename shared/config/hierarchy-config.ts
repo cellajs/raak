@@ -1,4 +1,4 @@
-import { createEntityHierarchy, createRoleRegistry } from '../src/config-builder/entity-hierarchy';
+import { createEntityHierarchy, createRoleRegistry } from '../src/config-builder/entity-hierarchy.ts';
 
 // Role registry
 

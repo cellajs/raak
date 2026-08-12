@@ -18,6 +18,7 @@
     "deploy-service": "tsx tasks/deploy-service.ts",
     "destroy": "pulumi destroy",
     "diag": "tsx tasks/diag.ts",
+    "engine-gate": "bash scripts/engine-gate.sh",
     "ensure-state-bucket": "tsx tasks/ensure-state-bucket.ts",
     "fetch-boot-diag": "tsx tasks/fetch-boot-diag.ts",
     "install-pulumi-providers": "tsx tasks/install-pulumi-providers.ts",

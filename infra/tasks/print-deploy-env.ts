@@ -3,11 +3,18 @@ import { deriveInfra } from '../lib/naming';
 import {
   BACKEND_S3_PERMISSION_SETS,
   BOOT_PROJECT_PERMISSION_SETS,
+  CI_RULE_SHAPES,
   SERVICE_SECRET_PERMISSION_SETS,
 } from '../lib/scaleway/permissions';
 import { principalNames } from '../lib/scaleway/principals';
 import { bootKeyCondition, serviceKeyCondition } from '../lib/scaleway/secret-paths';
-import { deployedServices, enabledServices, secretScopeSlugs, serviceEndpoints } from '../lib/services';
+import {
+  appStorageNeeds,
+  deployedServices,
+  enabledServices,
+  secretScopeSlugs,
+  serviceEndpoints,
+} from '../lib/services';
 import { isMain } from '../lib/utils/is-main';
 import { getFlag } from './args';
 
@@ -92,7 +99,9 @@ export function buildDeployEnv(appConfig: Cfg, opts: { imageTag?: string } = {})
     pulumi_stack: appConfig.mode,
     region: appConfig.s3.region,
     registry_ns: naming.registryNamespace,
-    frontend_bucket: naming.frontendBucket,
+    // Empty when the registry implies no SPA bucket (frontend-less app); the
+    // deploy skips asset upload + entry publish on ''.
+    frontend_bucket: appStorageNeeds(enabled).spaBucket ? naming.frontendBucket : '',
     state_bucket: naming.pulumiStateBucket,
     // One assertion row per principal (exact sets + exact condition, built by
     // the same shared builders the Pulumi program uses so the deploy's
@@ -112,6 +121,15 @@ export function buildDeployEnv(appConfig: Cfg, opts: { imageTag?: string } = {})
         app: principalNames(appConfig.slug, appConfig.mode).boot,
         sets: [...BOOT_PROJECT_PERMISSION_SETS, ...SERVICE_SECRET_PERMISSION_SETS],
         condition: bootKeyCondition(appConfig.slug, appConfig.mode),
+      },
+      // The CI app asserts its own grant too: exact set union (missing sets
+      // fail deploys later and non-read-only extras are an escalation).
+      // condition '' skips the secret-condition check — CI rules are
+      // unconditioned by design (see CI_RULE_SHAPES).
+      {
+        app: principalNames(appConfig.slug, appConfig.mode).ciDeploy,
+        sets: CI_RULE_SHAPES.flatMap((shape) => [...shape.permissionSets]),
+        condition: '',
       },
     ]),
     enabled_services_json: JSON.stringify(enabledServiceRows),

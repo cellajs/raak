@@ -207,6 +207,8 @@ export async function runDeploy(
       );
     })();
     const frontendReady = (async () => {
+      // No SPA bucket (frontend-less registry): nothing to build or upload.
+      if (!env.frontend_bucket) return;
       if (!opts.distDir) {
         await step('Build frontend', () =>
           fx.exec('pnpm', ['--filter', 'frontend', 'build'], {
@@ -291,7 +293,11 @@ export async function runDeploy(
     }
 
     await step('Verify public versions', async () => {
-      const rows: RolloutRow[] = [...JSON.parse(env.primary_rollout_matrix), ...JSON.parse(env.roll_rest_matrix)];
+      // Every LB-exposed service, not just the VM-owning rollout rows:
+      // co-hosted and collocated followers are repointed by cutover without
+      // their own version probe, so they gate here too, before the new entry
+      // files publish.
+      const rows: RolloutRow[] = JSON.parse(env.enabled_services_json);
       for (const row of rows) {
         if (!row.health_url) continue;
         const ok = await fx.verifyVersion(`${row.health_url.replace(/\/$/, '')}${healthContract.path}`, opts.sha);
@@ -300,18 +306,22 @@ export async function runDeploy(
     });
 
     // Strictly after rollout verification: users only load the new entry
-    // files once every service already serves the new release.
-    await step('Publish frontend entry files', () =>
-      fx.publishEntryFiles({ distDir, bucket: env.frontend_bucket, region: env.region }),
-    );
+    // files once every service already serves the new release. Skipped for a
+    // frontend-less registry (no SPA bucket).
+    if (env.frontend_bucket) {
+      await step('Publish frontend entry files', () =>
+        fx.publishEntryFiles({ distDir, bucket: env.frontend_bucket, region: env.region }),
+      );
+    }
     await step('Smoke tests', () =>
       fx.task('smoke', [
         '--sha',
         opts.sha,
         '--services-json',
         env.enabled_services_json,
-        '--dist',
-        resolve(distDir, 'index.html'),
+        // A provided-but-unreadable --dist is a hard failure in smoke, so a
+        // frontend-less registry omits it instead of pointing at nothing.
+        ...(env.frontend_bucket ? ['--dist', resolve(distDir, 'index.html')] : []),
       ]),
     );
   } catch (err) {
@@ -392,19 +402,21 @@ function createRealEffects(): DeployEffects {
     async initTelemetry({ mode, sha }) {
       let config = otlpConfigFromEnv();
       if (!config) {
-        const { mapleKeyFromSecretManager } = await import('../lib/telemetry/maple-key');
-        const key = await mapleKeyFromSecretManager().catch((err) => {
-          console.warn(`[deploy] maple ingest key lookup failed: ${errorMessage(err)}`);
+        const [{ sinkIngestKeyFromSecretManager }, { telemetrySink }] = await Promise.all([
+          import('../lib/telemetry/sink-key'),
+          import('../config/telemetry.config'),
+        ]);
+        const key = await sinkIngestKeyFromSecretManager().catch((err) => {
+          console.warn(`[deploy] telemetry ingest key lookup failed: ${errorMessage(err)}`);
           return undefined;
         });
         if (key) {
-          config = { endpoint: 'https://ingest.maple.dev/v1', headers: { 'x-maple-ingest-key': key } };
+          config = { endpoint: telemetrySink.endpoint, headers: { [telemetrySink.keyHeader]: key } };
           // In-process consumers (black-box replay on failure) resolve via env.
-          process.env.MAPLE_SECRET_INGEST_KEY ??= key;
+          process.env[telemetrySink.keyEnvVar] ??= key;
         }
       }
-      if (!config)
-        console.info('[deploy] telemetry export disabled (no OTLP endpoint or maple ingest key); black box only');
+      if (!config) console.info('[deploy] telemetry export disabled (no OTLP endpoint or ingest key); black box only');
       initDeployTelemetry({
         mode,
         sha,
