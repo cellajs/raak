@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.8.8](https://github.com/cellajs/cella/compare/0.8.7...0.8.8) (2026-08-12)
+
+
+### 🎉 New features
+
+* **infra:** P3 — status provider registry, generic store outputs, config-owned telemetry sink ([#1036](https://github.com/cellajs/cella/issues/1036)) ([6a8484f](https://github.com/cellajs/cella/commit/6a8484f71e8ecf2e5a14381151794ef3d4f37c3b))
+
+## [0.8.7](https://github.com/cellajs/cella/compare/0.8.6...0.8.7) (2026-08-11)
+
+
+### 🎉 New features
+
+* **infra:** P2 — external stores + optional app object storage ([#1034](https://github.com/cellajs/cella/issues/1034)) ([d09a693](https://github.com/cellajs/cella/commit/d09a6938fb5bab6dc029478ffa11d2c5afeb4b96))
+
+
+### 🐞 Bug fixes
+
+* **config:** explicit .ts import extensions for Vite 8 'native' config loader ([#1033](https://github.com/cellajs/cella/issues/1033)) ([f599554](https://github.com/cellajs/cella/commit/f599554b897635fb3f057d63d3efb9818c496084))
+
+## [0.8.6](https://github.com/cellajs/cella/compare/0.8.5...0.8.6) (2026-08-11)
+
+
+### 🐞 Bug fixes
+
+* **infra:** correctness batch — apex derivation, teardown lock, engine gate, redis posture ([#1030](https://github.com/cellajs/cella/issues/1030)) ([7a01592](https://github.com/cellajs/cella/commit/7a01592bcc874ba173c7aed442f2bcca1cb2b7fd))
+* **infra:** deploy-path guardrails — mint staging, per-rule drift, CI assert row, follower gate ([#1032](https://github.com/cellajs/cella/issues/1032)) ([50723d5](https://github.com/cellajs/cella/commit/50723d5a828448941f9369040476c9d3fcb1b693))
+
+## [0.8.5](https://github.com/cellajs/cella/compare/0.8.4...0.8.5) (2026-08-11)
+
+
+### 🔧 Small improvements
+
+* **infra:** trim sweep — converge dedup, orphan-adoption removal, status compression ([#1028](https://github.com/cellajs/cella/issues/1028)) ([c9daca6](https://github.com/cellajs/cella/commit/c9daca6231f6e4b04ae8f95f9fe6c784db55d26b))
+
+## [0.8.4](https://github.com/cellajs/cella/compare/0.8.3...0.8.4) (2026-08-10)
+
+
+### 🐞 Bug fixes
+
+* **infra:** release the apply stack lock on every exit + secret-paths rename ([#1025](https://github.com/cellajs/cella/issues/1025)) ([7aac0ab](https://github.com/cellajs/cella/commit/7aac0ab315c5c17e8a2c3b20cea551f17d1b53c8))
+* **infra:** tolerate migration-owned privilege drift on managed postgres ([#1027](https://github.com/cellajs/cella/issues/1027)) ([2c51730](https://github.com/cellajs/cella/commit/2c5173088e540d4bbac7e26784deb852b8e12224))
+
 ## [0.8.3](https://github.com/cellajs/cella/compare/0.8.2...0.8.3) (2026-08-10)
 
 

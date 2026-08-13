@@ -1,5 +1,5 @@
-import { appConfig } from '../src/config-builder/app-config';
-import { configurePermissions } from '../src/permissions/policy-matrix';
+import { appConfig } from '../src/config-builder/app-config.ts';
+import { configurePermissions } from '../src/permissions/policy-matrix.ts';
 
 /**
  * Grant scoping for PRODUCT entities (optional). When a role list is configured, a product
