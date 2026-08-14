@@ -866,7 +866,7 @@ export type CheckEmailResponse = CheckEmailResponses[keyof CheckEmailResponses];
 export type InvokeTokenData = {
   body?: never;
   path: {
-    type: 'email-verification' | 'oauth-verification' | 'invitation' | 'confirm-mfa' | 'magic';
+    type: 'email-verification' | 'oauth-verification' | 'invitation' | 'magic';
     token: string;
   };
   query?: never;
@@ -905,7 +905,7 @@ export type InvokeTokenError = InvokeTokenErrors[keyof InvokeTokenErrors];
 export type GetTokenDataData = {
   body?: never;
   path: {
-    type: 'email-verification' | 'oauth-verification' | 'invitation' | 'confirm-mfa' | 'magic';
+    type: 'email-verification' | 'oauth-verification' | 'invitation' | 'magic';
     id: string;
   };
   query?: never;
@@ -1148,6 +1148,7 @@ export type SignOutResponse = SignOutResponses[keyof SignOutResponses];
 export type SendMagicLinkData = {
   body: {
     email: string;
+    redirect?: string;
   };
   path?: never;
   query?: never;
@@ -1379,8 +1380,21 @@ export type SignInWithTotpResponse = SignInWithTotpResponses[keyof SignInWithTot
 
 export type CreatePasskeyData = {
   body: {
-    attestationObject: string;
-    clientDataJSON: string;
+    attestation: {
+      id: string;
+      rawId: string;
+      response: {
+        clientDataJSON: string;
+        attestationObject: string;
+        authenticatorData?: string;
+        transports?: Array<'ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb'>;
+        publicKeyAlgorithm?: number;
+        publicKey?: string;
+      };
+      authenticatorAttachment?: 'cross-platform' | 'platform';
+      clientExtensionResults?: unknown;
+      type: 'public-key';
+    };
     nameOnDevice: string;
   };
   path?: never;
@@ -1526,7 +1540,7 @@ export type GeneratePasskeyChallengeResponses = {
    * Challenge generated
    */
   200: {
-    challengeBase64: string;
+    challenge: string;
     credentialIds: Array<string>;
   };
 };
@@ -1536,10 +1550,19 @@ export type GeneratePasskeyChallengeResponse =
 
 export type SignInWithPasskeyData = {
   body: {
-    credentialId: string;
-    clientDataJSON: string;
-    authenticatorObject: string;
-    signature: string;
+    assertion: {
+      id: string;
+      rawId: string;
+      response: {
+        clientDataJSON: string;
+        authenticatorData: string;
+        signature: string;
+        userHandle?: string;
+      };
+      authenticatorAttachment?: 'cross-platform' | 'platform';
+      clientExtensionResults?: unknown;
+      type: 'public-key';
+    };
     type: 'authentication' | 'mfa';
     email?: string;
   };
@@ -1972,10 +1995,17 @@ export type UpdateMeResponse = UpdateMeResponses[keyof UpdateMeResponses];
 export type ToggleMfaData = {
   body?: {
     passkeyData?: {
-      credentialId: string;
-      clientDataJSON: string;
-      authenticatorObject: string;
-      signature: string;
+      id: string;
+      rawId: string;
+      response: {
+        clientDataJSON: string;
+        authenticatorData: string;
+        signature: string;
+        userHandle?: string;
+      };
+      authenticatorAttachment?: 'cross-platform' | 'platform';
+      clientExtensionResults?: unknown;
+      type: 'public-key';
     };
     totpCode?: string;
     mfaRequired: boolean;

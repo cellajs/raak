@@ -40,6 +40,8 @@ export const loadtestTask = (index: number): InsertTaskModel => {
     displayOrder: index + 1,
     labels: [],
     assignedTo: [],
+    // mockTask invents attachment ids; no media blocks are seeded, so hosts start empty
+    attachments: [],
     organizationId: ORG_ID,
     projectId: projectId(index % TOTAL_PROJECTS),
     createdBy: userId(index),
@@ -49,12 +51,12 @@ export const loadtestTask = (index: number): InsertTaskModel => {
   };
 };
 
-// Seeds after projects (order 110): tasks FK-reference a project. `labels` and
-// `assigned_to` are native Postgres arrays (see `pgArrayColumns`).
+// Seeds after projects (order 110): tasks FK-reference a project. `labels`,
+// `assigned_to` and `attachments` are native Postgres arrays (see `pgArrayColumns`).
 registerBenchSeed({
   table: 'tasks',
   order: 120,
-  pgArrayColumns: ['labels', 'assigned_to'],
+  pgArrayColumns: ['labels', 'assigned_to', 'attachments'],
   idVariant: CORE_ID_VARIANTS.task,
   rows: ({ now }) => Array.from({ length: TOTAL_TASKS }, (_, i) => ({ ...loadtestTask(i), createdAt: now, seq: 0 })),
 });
