@@ -6,7 +6,7 @@ import { baseDb as db } from '#/db/db';
 import { resetOrganizationMockEnforcers } from '#/modules/organization/organization-mocks';
 import { resetUserMockEnforcers } from '#/modules/user/user-mocks';
 
-type AuthStrategy = 'passkey' | 'oauth' | 'totp';
+type AuthStrategy = 'passkey' | 'oauth' | 'totp' | 'magic';
 type OAuthProvider = 'github' | 'google' | 'microsoft';
 
 type ConfigOverride = {
@@ -111,15 +111,16 @@ export const rateLimiterHelpersMock = async (importOriginal: () => Promise<Recor
 };
 
 /**
- * Mock factory for Arctic library.
- * Use at top level: vi.mock('arctic', arcticMock)
+ * Mock factory for the oauth4webapi library.
+ * Use at top level: vi.mock('oauth4webapi', oauth4webapiMock)
  */
-export const arcticMock = async () => {
-  const actual = await vi.importActual('arctic');
+export const oauth4webapiMock = async () => {
+  const actual = await vi.importActual('oauth4webapi');
   return {
     ...actual,
-    generateState: () => `mock-state-${Math.random().toString(36).substring(7)}`,
-    generateCodeVerifier: () => `mock-code-verifier-${Math.random().toString(36).substring(7)}`,
+    generateRandomState: () => `mock-state-${Math.random().toString(36).substring(7)}`,
+    generateRandomCodeVerifier: () => `mock-code-verifier-${Math.random().toString(36).substring(7)}`,
+    generateRandomNonce: () => `mock-nonce-${Math.random().toString(36).substring(7)}`,
   };
 };
 

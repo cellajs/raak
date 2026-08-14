@@ -261,9 +261,9 @@ describe('isEmptyPrefixLs', () => {
 
 describe('emptyBootDiagGuidance', () => {
   it('names both known causes and embeds the serial-console marker for the slug', () => {
-    const lines = emptyBootDiagGuidance('raak');
-    expect(lines.join('\n')).toContain('::raak::');
-    expect(lines.join('\n')).toContain('Migrate IAM model');
+    const lines = emptyBootDiagGuidance('cella');
+    expect(lines.join('\n')).toContain('::cella::');
+    expect(lines.join('\n')).toContain('ObjectStorageObjectsWrite');
   });
 });
 
