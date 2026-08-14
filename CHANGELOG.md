@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.10](https://github.com/cellajs/raak/compare/0.1.9...0.1.10) (2026-08-14)
+
+
+### 🎉 New features
+
+* between-card drop indicators for cross-project task drags ([#124](https://github.com/cellajs/raak/issues/124)) ([d589a4c](https://github.com/cellajs/raak/commit/d589a4ca88ba1e9139277da09c6d42b60b54bf20))
+
+
+### 🐞 Bug fixes
+
+* **project:** create project in the workspace from route context, not the persisted draft ([#122](https://github.com/cellajs/raak/issues/122)) ([8a71522](https://github.com/cellajs/raak/commit/8a7152223eac3b9f463ceb738827d779f1d7a846))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.8.8 (2d5ed6f3) ([#125](https://github.com/cellajs/raak/issues/125)) ([c27f106](https://github.com/cellajs/raak/commit/c27f10640fe44f051b8f5c6daa12cc6ccac6769b))
+* sync upstream cella v0.9.0 (5dc9921f) ([#126](https://github.com/cellajs/raak/issues/126)) ([e136678](https://github.com/cellajs/raak/commit/e136678acf7f42ffd011179ac6a0df92b592911d))
+* sync upstream cella v0.9.1 (c2288183) ([#127](https://github.com/cellajs/raak/issues/127)) ([89887f0](https://github.com/cellajs/raak/commit/89887f0d8c3c60def4359ae6b3764f2a6e46fef4))
+
 ## [0.1.9](https://github.com/cellajs/raak/compare/0.1.8...0.1.9) (2026-08-10)
 
 
