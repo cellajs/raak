@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/cellajs/raak/compare/0.1.10...0.1.11) (2026-08-15)
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.9.2 (f84a4560) ([#128](https://github.com/cellajs/raak/issues/128)) ([35ed54a](https://github.com/cellajs/raak/commit/35ed54a24638d839ff2ce79a1c89dacda8259d5a))
+
 ## [0.1.10](https://github.com/cellajs/raak/compare/0.1.9...0.1.10) (2026-08-14)
 
 
