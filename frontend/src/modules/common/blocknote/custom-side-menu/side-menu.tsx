@@ -7,9 +7,7 @@ import { ResetBlockTypeItem } from '~/modules/common/blocknote/custom-side-menu/
 import type { CustomBlockNoteMenuProps } from '~/modules/common/blocknote/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 
-// in this menu we have only drag button
-/** Renders the custom side menu component. */
-export function CustomSideMenu({ editor, allowedTypes, headingLevels }: CustomBlockNoteMenuProps) {
+export function CustomSideMenu({ editor, allowedTypes, headingLevels, titleLevel }: CustomBlockNoteMenuProps) {
   return (
     <SideMenuController
       sideMenu={(props) => {
@@ -19,6 +17,8 @@ export function CustomSideMenu({ editor, allowedTypes, headingLevels }: CustomBl
           selector: (state) => state?.block,
         });
         if (block === undefined) return null;
+        // Forced-title mode: the title block gets no drag handle or type menu (TypeCellOS/BlockNote#709).
+        if (titleLevel !== undefined && block.id === editor.document[0]?.id) return null;
         return (
           <SideMenu {...props}>
             <DragHandle
@@ -28,6 +28,7 @@ export function CustomSideMenu({ editor, allowedTypes, headingLevels }: CustomBl
               editor={editor}
               allowedTypes={allowedTypes}
               headingLevels={headingLevels}
+              titleLevel={titleLevel}
             />
           </SideMenu>
         );
@@ -36,8 +37,7 @@ export function CustomSideMenu({ editor, allowedTypes, headingLevels }: CustomBl
   );
 }
 
-// Keep drag mousedown separate from Base UI's menu trigger.
-// Controlled click-only state prevents dragging from opening the menu.
+// Controlled click-only state keeps a drag mousedown from opening Base UI's menu.
 function DragHandle({
   sideMenu,
   block,
@@ -45,6 +45,7 @@ function DragHandle({
   editor,
   allowedTypes,
   headingLevels,
+  titleLevel,
 }: {
   // biome-ignore lint/suspicious/noExplicitAny: BlockNote extension instance type is not exported
   sideMenu: any;
@@ -54,6 +55,7 @@ function DragHandle({
   editor: CustomBlockNoteMenuProps['editor'];
   allowedTypes: CustomBlockNoteMenuProps['allowedTypes'];
   headingLevels: CustomBlockNoteMenuProps['headingLevels'];
+  titleLevel: CustomBlockNoteMenuProps['titleLevel'];
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isDragging = useRef(false);
@@ -102,9 +104,7 @@ function DragHandle({
     <DropdownMenu
       open={menuOpen}
       onOpenChange={(open, details) => {
-        // Ignore trigger-initiated events ('trigger-press'); our onClick
-        // handles all opens and closes. Only respond to external dismiss
-        // events like escape-key and outside-press.
+        // onClick handles every open and close, so only external dismiss events (escape, outside press) apply here.
         if (details.reason === 'trigger-press') return;
         setMenuOpen(open);
         if (!open) sideMenu.unfreezeMenu();
@@ -116,7 +116,12 @@ function DragHandle({
         side="left"
         className="bn-menu-dropdown bn-drag-handle-menu"
       >
-        <ResetBlockTypeItem editor={editor} allowedTypes={allowedTypes} headingLevels={headingLevels} />
+        <ResetBlockTypeItem
+          editor={editor}
+          allowedTypes={allowedTypes}
+          headingLevels={headingLevels}
+          titleLevel={titleLevel}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

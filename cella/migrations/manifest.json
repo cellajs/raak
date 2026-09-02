@@ -441,6 +441,192 @@
     "pnpm check"
    ],
    "summary": "Planned generation roll: replacementStrategy values lb-overlap->start-first / exclusive->stop-first, lbPathBegin->pathPrefix (field + emitted x-service key), genId fingerprint key runMigrate->runRelease (deliberately re-rolls every generation on first deploy), flat db* stack outputs retired in favor of storeOutputs.<storeId>.<key> (db-exposure/seed CLI reads the primary store entry). Fork change is three seds in infra/config/services.config.ts plus any fork-local reader of the retired outputs; regenerate compose.gen.yml."
+  },
+  {
+   "id": "20260816T0704-dev-port-offsets",
+   "version": "next",
+   "title": "Dev service ports become one config knob (devPorts)",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "shared/config",
+    "backend/src",
+    "cdc/src",
+    "yjs/src",
+    "mcp/src",
+    "frontend/vite.config.ts"
+   ],
+   "requires": [
+    "pnpm check"
+   ],
+   "summary": "Service listen ports and Vite proxy targets default from a single devPorts block in config.default.ts (api 4000, cdcHealth 4001, yjs 4002, mcp 4003) instead of five hardcodes; PORT-style env vars still override. Not sync-breaking and defaults are unchanged, but forks must add an offset devPorts override (paired with their frontendUrl port) to stop parallel stacks colliding on :4000, where the first backend up answers every fork's /api proxy. Also drop stale PORT= lines from backend/.env."
+  },
+  {
+   "id": "20260817T1053-product-view-count-helpers",
+   "version": "next",
+   "title": "Product view-count helpers move to the entities module",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src"
+   ],
+   "requires": [
+    "pnpm check"
+   ],
+   "summary": "findAttachmentViewCount is deleted; the shared findProductViewCount / productViewCountSelect / productViewCountJoin (entities-queries.ts) and productViewCountSchema (entities-schema.ts) replace the per-module copies, and the attachment module is rewritten onto them. No DB or wire change. Forks: swap imports (opts key entityId->productId), replace inline coalesce-select/leftJoin/schema fields with the helpers, delete fork-local duplicates like findItemViewCount. Apps that PIN the attachment module must hand-apply the rewrite or their pinned copy silently keeps the deleted-export pattern."
+  },
+  {
+   "id": "20260817T1055-tools-config-channel-columns",
+   "version": "next",
+   "title": "toolsConfig moves into channelColumns()",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm sdk",
+    "pnpm check"
+   ],
+   "summary": "The toolsConfig jsonb column (sparse, NOT NULL DEFAULT '{}') moves from organizations into the shared channelColumns() factory; mockChannelColumns mirrors it. Additive DB change: every fork channel table gains tools_config on the next pnpm generate (dormant where unused; no backfill). CRITICAL: apps that hand-copied the column per 20260730T0858 step 5 must DELETE their local declaration \u2014 a leftover explicit key after the spread silently wins with no TS error. Supersedes the hand-copy instruction in 20260730T0858."
+  },
+  {
+   "id": "20260817T1447-remove-filter-tab-ids",
+   "version": "next",
+   "title": "Remove the filterTabIds allow-list from nav tabs",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "frontend/src"
+   ],
+   "requires": [
+    "pnpm check"
+   ],
+   "summary": "PageTabNav/resolveNavTabs lose the filterTabIds prop: an imperative allow-list with zero template consumers that the nav-tab guards never honored, so allow-list-hidden tabs stayed URL-reachable and could become the landing tab. Apps passing it must express each gate declaratively before syncing: navTab.requires + grants for permission gates, visibleTo + pairs for role gates on registry tabs, or placementOverrides/route removal for hard removal. Compile error at sync until call sites are migrated."
+  },
+  {
+   "id": "20260817T2052-comment-budget",
+   "version": "next",
+   "title": "Comment budget: delete comments that restate their own code",
+   "kind": "codemod",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": "trim-comment-budget.ts",
+   "roots": [
+    "frontend/src",
+    "backend/src",
+    "shared",
+    "cdc/src",
+    "yjs/src",
+    "infra"
+   ],
+   "requires": [
+    "pnpm lint:fix",
+    "pnpm check"
+   ],
+   "summary": "check-frontend-style.ts loses the export-description rule, which required a JSDoc on every exported function and const and so produced hundreds of docs paraphrasing their own identifier. cella/AGENTS.md gains a Comment budget (members, locals, JSX, no-repeats) governing which comments earn their place. trim-comment-budget.ts deletes the docs the old rule produced under two conservative rules, name-restating and boilerplate, protecting tool directives, @tag JSDoc, TODO/FIXME, fork: markers, .stories. files and generated trees. A third duplicate rule is report-only: it cannot tell a copied note from the same local pattern recurring. Comment-only, so an app may skip it, at the cost of comment-only conflicts in shared files on the next sync."
+  },
+  {
+   "id": "20260821T1532-app-table-classifications-and-jobs",
+   "version": "next",
+   "title": "App table classifications and scheduled jobs register from app-owned code",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/scripts/migrations",
+    "backend/tests"
+   ],
+   "requires": [
+    "pnpm check"
+   ],
+   "summary": "backend/src/tables.ts (pinned) gains appPartitionConfigs, appFullCrudTables and appReadOnlyTables; the partman and RLS migrations, the verify block and partman-parity.test.ts merge them after cella's entries. defineBackendModule gains a jobs slot ({ name, start }) that main.api.ts starts under the migration-owner guard and stops on shutdown; scheduleDbMaintenance is the first registrant. Apps move their partition/grant entries into tables.ts and their cron jobs onto the module, then drop the edits to the four cella-owned files."
+  },
+  {
+   "id": "20260828T1711-formlabel-help-popover",
+   "version": "next",
+   "title": "FormDescription removed: field help moves into a FormLabel popover",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "frontend/src"
+   ],
+   "requires": [
+    "pnpm check"
+   ],
+   "summary": "field.tsx no longer exports FormDescription; FormLabel gains a help prop rendering a question-mark popover. Fork call sites move description content into help={...} on the sibling FormLabel and drop the import; bare description paragraphs switch to FieldDescription (now a plain <p>, collapse behavior gone)."
+  },
+  {
+   "id": "20260828T2030-elevated-grants-root-roles",
+   "version": "next",
+   "title": "Per-channel elevatedGrants and explicit rootRoles",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "shared",
+    "backend/src",
+    "frontend/src"
+   ],
+   "requires": [
+    "pnpm check",
+    "pnpm test:core"
+   ],
+   "summary": "Global elevatedRoles export removed: channels declare elevated (compiled to hierarchy.elevatedGrants ${channelType}:${role} keys); an empty set makes non-home grants home-scoped, so forks must declare elevation to keep subtree reads. resolveParentMembershipRole splits into resolveAssociatedMembershipRole and a throwing resolveRootMembershipRole; channels auto-creating root membership rows declare a complete rootRoles map. Tests inject elevation via elevateAcross."
+  },
+  {
+   "id": "20260828T2157-notifications-module",
+   "version": "next",
+   "title": "Notifications module: inbox, mentions and email digest",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "frontend/src",
+    "locales"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm sdk",
+    "pnpm check"
+   ],
+   "summary": "New dormant-by-default notifications module: per-recipient inbox (partitioned notifications table + notification_preferences), mention derivation, permission/mute-filtered fan-out, instant mention email, daily/weekly digest job. Product modules opt in via a notifications source declaration on defineBackendModule (mentionable/loadRows/writeMentions/resolveRecipients/resolveContextId/loadPreview/loadContextNames/resolveEmailLink). Apps run pnpm generate for the tables, add the bell to their pinned nav-config, and (if they forked notifications before) reconcile onto the cella module with item_id renamed to context_id."
+  },
+  {
+   "id": "20260831T1533-web-push",
+   "version": "next",
+   "title": "Web Push for notifications; Periodic Background Sync retired",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "frontend/src",
+    "shared/config"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm sdk",
+    "pnpm check"
+   ],
+   "summary": "New push module: push_subscriptions table (unique-endpoint upsert, grants only, no CDC), /push subscribe/unsubscribe/VAPID routes, sender delivering {t:'notif', activityId, channelId, type} to offline subscribers of fresh notification rows (online users subtracted via their SSE user channel; 404/410 prunes, 429 backs off). Settings card gains a per-device toggle; SW gains push/notificationclick/pushsubscriptionchange and loses the periodicsync badge path. Double-gated: has.push config flag AND VAPID_* env keys. Apps run pnpm generate, set keys + flag to enable, and verify on desktop Chrome plus an installed iOS PWA."
   }
  ]
 }

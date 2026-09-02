@@ -31,8 +31,6 @@ import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { InfiniteQueryData, PageParams, QueryData, QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
-// --- Types ---
-
 export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
 export type BaseTasksQueryParam = Pick<GetTasksParam, 'workspaceId' | 'projectId' | 'organizationId' | 'tenantId'>;
 
@@ -77,8 +75,6 @@ type TasksDeleteFullVars = QueryOrgContext & TasksDeleteMutationFnVariables & { 
 
 export type TasksQueryData = QueryData<Task>;
 export type TasksInfiniteQueryData = InfiniteQueryData<Task>;
-
-// --- Query keys ---
 
 /** Retains API literal unions for task-list sorting and matching filters. */
 type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
@@ -146,12 +142,8 @@ registerYjsOwnedFields('task', ['description', ...TASK_DERIVED_DESCRIPTION_FIELD
 const tasksMutationKeyBase = ['task'] as const;
 const handleError = createResourceError('task');
 
-// --- Helpers ---
-
-/** Find a task in detail or list cache. */
 const findTaskInCache = createCacheFinder<Task>('task');
 
-/** Returns the cursor for the next page of tasks. */
 export const getTasksNextPageParam: GetNextPageParamFunction<PageParams, TasksQueryData> = (lastPage, allPages) => {
   const { total } = lastPage;
   const fetchedCount = allPages.reduce((acc, page) => acc + page.items.length, 0);
@@ -269,7 +261,6 @@ const applyOptimisticTaskUpdate = (
   return { previousTask };
 };
 
-/** Builds React Query options for task. */
 export const taskQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: taskKeys.detail.byId(id),
@@ -323,7 +314,6 @@ export const tasksTableQueryKey = ({
 }: Omit<GetTasksParam, 'acceptedCutOff' | 'tenantId'>) =>
   taskKeys.list.filtered(organizationId, { projectId, workspaceId, sort, order, matchMode, q });
 
-/** Builds React Query options for tasks table. */
 export const tasksTableQueryOptions = ({
   q,
   sort = tasksTableQueryDefaults.sort,

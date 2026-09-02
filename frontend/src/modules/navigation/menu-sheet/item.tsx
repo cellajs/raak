@@ -19,7 +19,6 @@ interface MenuSheetItemProps {
   className?: string;
 }
 
-/** Renders the menu sheet item component. */
 export function MenuSheetItem({ item, icon: Icon, className }: MenuSheetItemProps) {
   const { t } = useTranslation();
 
@@ -30,15 +29,16 @@ export function MenuSheetItem({ item, icon: Icon, className }: MenuSheetItemProp
   const canAccess = offlineAccess ? (isOnline ? true : !item.membership.archived) : true;
   const isSubitem = !item.submenu;
 
-  // Unseen count for grouping contexts and their parents.
-  // When detailedMenu is on, sub-items show their own badges so skip parent-level aggregation.
-  let channelIds: string | string[] | undefined;
-  if (seenGroupingChannelTypes.has(item.entityType)) channelIds = item.id;
-  else if (!detailedMenu && item.submenu?.length) channelIds = item.submenu.map((sub) => sub.id);
+  // Own count for grouping channels, plus submenu aggregation when sub-rows don't render their own badges
+  // (detailedMenu off, or an archived item whose submenu is never rendered).
+  const aggregateSubmenu = !!item.submenu?.length && (!detailedMenu || !!item.membership.archived);
+  const channelIds = [
+    ...(seenGroupingChannelTypes.has(item.entityType) ? [item.id] : []),
+    ...(aggregateSubmenu && item.submenu ? item.submenu.map((sub) => sub.id) : []),
+  ];
   const unseenCount = useUnseenCount(channelIds);
   const showBadge = unseenCount > 0 && !item.membership.muted;
 
-  // Build route path for the entity
   const { to, params, search } = getChannelRoute(item, isSubitem);
 
   return (
@@ -92,16 +92,15 @@ export function MenuSheetItem({ item, icon: Icon, className }: MenuSheetItemProp
         </div>
         <div className="pointer-events-none text-muted-foreground text-xs">
           <span className="absolute opacity-0 transition-opacity duration-100 ease-in-out group-hover/menuItem:delay-300 sm:group-hover/menuItem:opacity-100">
-            {item.submenu?.length
-              ? `${item.submenu?.length} ${t(item.submenu?.length > 1 ? item.submenu[0].entityType : item.submenu[0].entityType).toLowerCase()}`
-              : item.membership.role
-                ? t(item.membership.role)
-                : ''}
+            {item.membership.role ? t(item.membership.role) : ''}
+            {!detailedMenu && item.submenu?.length
+              ? `${item.membership.role ? ' · ' : ''}${item.submenu.length} ${t(item.submenu[0].entityType, { count: item.submenu.length }).toLowerCase()}`
+              : ''}
           </span>
         </div>
       </div>
       {showBadge && (
-        <span className="mr-3 flex h-4 min-w-4 shrink-0 items-center justify-center self-center rounded-full bg-background px-1 font-bold text-[0.6rem] text-primary leading-none">
+        <span className="mr-3 flex h-4 min-w-4 shrink-0 items-center justify-center self-center rounded-full bg-primary px-1 font-bold text-[0.6rem] text-primary-foreground leading-none">
           {unseenCount > 99 ? '99+' : unseenCount}
         </span>
       )}

@@ -18,7 +18,6 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   // Validate request
   if (!id) throw new AppError(404, 'not_found', 'warn');
 
-  // Get main task
   const mainTask = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, { entityType: 'task', identifier: id });
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 

@@ -18,7 +18,6 @@ import { DeleteTask } from '~/modules/task/delete-task';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
-import { useUserStore } from '~/modules/user/user-store';
 import { dateShort } from '~/utils/date-short';
 import { truncateMiddle } from '~/utils/truncate-middle';
 
@@ -27,18 +26,16 @@ interface TaskCardHeaderProps {
   isSheet?: boolean;
 }
 
-/** Renders the task card header. */
 export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useUserStore();
   const isOnline = useOnlineManager();
 
   const shareLink = `${appConfig.backendUrl}/t/${task.id}`;
 
   const { copyToClipboard } = useCopyToClipboard(2000);
 
-  const relativeDate = useRelativeDate(task.createdAt, user?.language || 'en', 'ago');
+  const relativeDate = useRelativeDate(task.createdAt, 'ago');
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const { create } = useDropdowner.getState();

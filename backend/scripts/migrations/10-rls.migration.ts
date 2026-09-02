@@ -1,6 +1,6 @@
 import { getTableName } from 'drizzle-orm';
 import { appConfig } from 'shared';
-import { entityTables } from '#/tables';
+import { appFullCrudTables, appReadOnlyTables, entityTables } from '#/tables';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { yjsDocumentsTable } from '#/modules/yjs/yjs-db';
@@ -54,11 +54,15 @@ export function classifyRlsTables(): { rlsTables: string[]; fullCrudTables: stri
     'rate_limits',
     'channel_counters',
     'seen_by',
+    'notifications',
+    'notification_preferences',
+    'push_subscriptions',
     'product_counters',
     'domains',
     'tenants',
+    ...appFullCrudTables,
   ];
-  const readOnlyTables = ['system_roles', 'activities'];
+  const readOnlyTables = ['system_roles', 'activities', ...appReadOnlyTables];
 
   return { rlsTables, fullCrudTables, readOnlyTables };
 }
@@ -103,7 +107,7 @@ ${readOnlyTables.map((t) => `    GRANT SELECT ON ${t} TO runtime_role;`).join('\
     RAISE NOTICE 'RLS setup complete.';
   EXCEPTION WHEN OTHERS THEN
     -- Fail LOUDLY: swallowing this rolled back ownership, FORCE RLS and every grant in
-    -- one silent NOTICE — the app then boots with no table grants (every request 403s)
+    -- one silent NOTICE: the app then boots with no table grants (every request 403s)
     -- or, worse, without enforced RLS.
     RAISE EXCEPTION 'RLS setup failed: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
   END;
@@ -112,7 +116,7 @@ END $$;
 
   return {
     tag: 'rls_setup',
-    title: 'RLS — ownership, FORCE RLS, grants',
+    title: 'RLS, ownership, FORCE RLS, grants',
     sql: migrationSql,
     notes: [`RLS tables: ${rlsTables.join(', ')}`],
   };

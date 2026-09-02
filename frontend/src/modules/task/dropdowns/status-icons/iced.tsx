@@ -1,7 +1,6 @@
 import type { SVGProps } from 'react';
 import { STATUS_ICON_STROKE_WIDTH } from '~/modules/task/dropdowns/status-icons/constants';
 
-/** Renders the iced icon. */
 export function IcedIcon({ ...props }: SVGProps<SVGSVGElement>) {
   return (
     <svg width="1em" height="1em" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-label="Iced" {...props}>

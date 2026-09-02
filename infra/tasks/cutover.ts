@@ -1,6 +1,4 @@
-// The canonical strategy vocabulary lives on the Compose model (`x-service`
-// metadata). types.ts is Pulumi-free, so the pure core can import it directly
-// without duplicating the unions.
+// The canonical strategy vocabulary lives on the Compose model (`x-service`); types.ts is Pulumi-free, so the pure core imports it without duplicating the unions.
 import type { DrainPolicy, ReplacementStrategy } from '../compose/types';
 import { type FetchLike, resolveFetch } from '../lib/utils/fetch-like';
 import { isRecord } from '../lib/utils/guards';
@@ -26,8 +24,7 @@ export async function contractBackend(setServers: SetServersFn, newIps: string[]
   await setServers(newIps);
 }
 
-// The sequencer: orders the rollout steps over injected effects. Never touches
-// the network or a subprocess itself; that is the entrypoint's job.
+// The sequencer: orders the rollout steps over injected effects. The entrypoint owns all network and subprocess calls.
 
 export interface CutoverPlan {
   service: string;
@@ -44,11 +41,11 @@ export interface CutoverPlan {
   // Injected effects
   /** Gate: resolves true once the new generation serves the expected SHA. Required. */
   healthGate: HealthGateFn;
-  /** lb-overlap: replace the LB backend server list atomically. Required for lb-overlap. */
+  /** start-first: replace the LB backend server list atomically. Required for start-first. */
   setServers?: SetServersFn;
-  /** lb-overlap: read the current LB server list for idempotent resume. */
+  /** start-first: read the current LB server list for idempotent resume. */
   getServers?: GetServersFn;
-  /** lb-overlap: run health/version polling after attaching the new generation to the LB. */
+  /** start-first: run health/version polling after attaching the new generation to the LB. */
   healthAfterExpand?: boolean;
 
   sleep?: (ms: number) => Promise<void>;
@@ -64,8 +61,8 @@ export interface CutoverResult {
 }
 
 /**
- * Health-gates a provisioned service generation and moves traffic according to its cutover plan.
- * Injected probes and load-balancer writes keep sequencing deterministic and testable.
+ * Health-gate a provisioned service generation and move traffic according to its cutover plan.
+ * Injected probes and load-balancer writes keep the sequencing deterministic and testable.
  * @see infra/tasks/README.md
  */
 export async function sequenceCutover(plan: CutoverPlan): Promise<CutoverResult> {
@@ -78,9 +75,7 @@ export async function sequenceCutover(plan: CutoverPlan): Promise<CutoverResult>
   };
 
   if (plan.strategy === 'stop-first') {
-    // cdc: no LB, no overlap. The new worker is warm and idle-contending for the
-    // slot; the old worker must release it first (deploy-service.ts destroys the
-    // old generation and re-gates health after this returns).
+    // cdc has no LB and no overlap: the new worker contends for the slot the old one must release first, and deploy-service.ts destroys the old generation and re-gates health after this returns.
     record('health-gate new generation (process up)');
     if (!(await plan.healthGate())) return { ok: false, aborted: 'unhealthy', steps };
     record('new generation ready to acquire slot');
@@ -92,26 +87,28 @@ export async function sequenceCutover(plan: CutoverPlan): Promise<CutoverResult>
     if (!(await plan.healthGate())) return { ok: false, aborted: 'unhealthy', steps };
   }
 
-  if (!plan.setServers) throw new Error(`cutover: lb-overlap service '${plan.service}' requires a setServers effect`);
+  if (!plan.setServers) throw new Error(`cutover: start-first service '${plan.service}' requires a setServers effect`);
   const setServers = plan.setServers;
 
   const sameIps = (actual: string[], expected: string[]) => {
     const normalize = (ips: string[]) => [...ips].sort().join(',');
     return normalize(actual) === normalize(expected);
   };
-  // Reconcile any live pool through safe `[old, new]` overlap to the verified `[new]` state.
-  // Idempotent server updates also correct empty, stale, or same-generation pools.
+  // Reconcile any live pool through `[old, new]` overlap to the verified `[new]` state; the idempotent server updates also correct empty, stale, or same-generation pools.
   const overlap = [...new Set([...plan.oldIps, ...plan.newIps])];
   let live = plan.getServers ? await plan.getServers() : plan.oldIps;
   record(`observed LB server list: ${live.join(',') || '<empty>'}`);
 
-  // Phase 1: ensure the overlap is attached before verifying, unless the live
-  // list is already exactly the desired `[new]` (a prior run contracted it).
+  // Phase 1: attach the overlap before verifying, unless a prior run already contracted the live list to exactly `[new]`.
   if (!sameIps(live, plan.newIps)) {
     if (sameIps(live, overlap)) {
       record('LB already expanded to [old, new]');
     } else {
-      record(`expand LB to [old, new] (${overlap.length} server(s)); was ${live.join(',') || '<empty>'}`);
+      record(
+        plan.oldIps.length === 0
+          ? `set LB to [new] (no old generation); was ${live.join(',') || '<empty>'}`
+          : `expand LB to [old, new] (${overlap.length} server(s)); was ${live.join(',') || '<empty>'}`,
+      );
       await setServers(overlap);
     }
     live = overlap;
@@ -122,8 +119,7 @@ export async function sequenceCutover(plan: CutoverPlan): Promise<CutoverResult>
     if (!(await plan.healthGate())) return { ok: false, aborted: 'unhealthy', steps };
   }
 
-  // Phase 2: contract to the new generation only (verified above). Idempotent:
-  // skipped only when the live list is already exactly `[new]`.
+  // Phase 2: contract to the verified new generation only, skipped when the live list is already exactly `[new]`.
   if (!sameIps(live, plan.newIps)) {
     record('contract LB to [new]');
     await contractBackend(setServers, plan.newIps);
@@ -132,8 +128,11 @@ export async function sequenceCutover(plan: CutoverPlan): Promise<CutoverResult>
     record('LB already serving [new]');
   }
 
-  record(`drain old generation for ${plan.drainSeconds}s (drainPolicy=${plan.drainPolicy ?? 'requests'})`);
-  if (plan.drainSeconds > 0) await sleep(plan.drainSeconds * 1000);
+  // Nothing drains when no old generation was behind the LB (first deploy, or an exclusive host whose old VM is already destroyed).
+  if (plan.oldIps.length > 0) {
+    record(`drain old generation for ${plan.drainSeconds}s (drainPolicy=${plan.drainPolicy ?? 'requests'})`);
+    if (plan.drainSeconds > 0) await sleep(plan.drainSeconds * 1000);
+  }
 
   return { ok: true, steps };
 }
@@ -216,9 +215,7 @@ export function createLbGetServers(opts: LbSetServersOptions): GetServersFn {
   };
 }
 
-// Standalone entry point: wires the live effects and runs the cutover. The
-// `pulumi up` create/destroy bookends are CI-orchestrated around this call
-// (see .github/workflows/deploy.yml), keeping subprocess calls out of the core.
+// Standalone entry point: builds the live effects and runs the cutover. CI orchestrates the `pulumi up` create/destroy bookends around this call.
 
 function parseIps(raw: string | undefined): string[] {
   return (raw ?? '')
@@ -262,15 +259,14 @@ if (isMain(import.meta.url)) {
     return outcome.ok;
   };
 
-  // Both LB effects are built together inside the one validated block, so the
-  // flags are read (and checked) exactly once.
+  // Both LB effects are built in the one validated block, so the flags are read and checked exactly once.
   let setServers: SetServersFn | undefined;
   let getServers: GetServersFn | undefined;
   if (strategy === 'start-first') {
     const zone = getFlag(argv, '--lb-zone');
     const backendId = getFlag(argv, '--backend-id');
     if (!zone || !backendId || !secretKey) {
-      process.stderr.write('lb-overlap requires: --lb-zone, --backend-id, SCW_SECRET_KEY\n');
+      process.stderr.write('start-first requires: --lb-zone, --backend-id, SCW_SECRET_KEY\n');
       process.exit(2);
     }
     setServers = createLbSetServers({ secretKey, zone, backendId });
@@ -292,7 +288,7 @@ if (isMain(import.meta.url)) {
   if (!result.ok) {
     process.stderr.write(
       `::error::Cutover of ${service} to ${sha} aborted (${result.aborted}). ` +
-        'The previous generation is still serving — no outage. See the new generation logs (serial console) for the cause.\n',
+        'The previous generation is still serving: no outage. See the new generation logs (serial console) for the cause.\n',
     );
     process.exit(1);
   }

@@ -5,27 +5,15 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: (PrecacheEntry | string)[];
 };
 
-// Periodic Background Sync API (Chromium-only), not yet in lib.dom.
-interface PeriodicSyncEvent extends ExtendableEvent {
-  readonly tag: string;
-}
-declare global {
-  interface ServiceWorkerGlobalScopeEventMap {
-    periodicsync: PeriodicSyncEvent;
-  }
-}
 declare const __BACKEND_URL__: string;
 
-// Exclude a same-origin backend prefix from the SPA navigation fallback so OAuth and
-// download navigations retain network responses; cross-origin backends never match it.
+// Excludes a same-origin backend prefix from the SPA navigation fallback so OAuth and downloads hit the network.
 const apiPathPrefix = new URL(__BACKEND_URL__, self.location.origin).pathname.replace(/\/+$/, '');
 const navigationDenylist = apiPathPrefix
   ? [new RegExp(`^${apiPathPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`)]
   : [];
 
-// Serwist wires precaching (manifest injected by vite-plugin-pwa), the offline app-shell
-// navigation fallback, and runtime caching. `skipWaiting: false` keeps the update prompt
-// contract: Serwist itself listens for the client's `{type: 'SKIP_WAITING'}` message.
+// `skipWaiting: false` keeps the update prompt: Serwist listens for the client's `{type: 'SKIP_WAITING'}` message.
 const serwist = new Serwist({
   precacheEntries: self.__WB_MANIFEST,
   skipWaiting: false,
@@ -39,10 +27,7 @@ const serwist = new Serwist({
   },
   runtimeCaching: [
     {
-      // Cache runtime docs data after its first visit so the section works offline.
-      // These files keep stable names with per-release content; the app appends a
-      // ?v=<sha> param to their fetches, so each release keys fresh cache entries
-      // while stale-while-revalidate serves them stale-first within a release.
+      // Docs files keep stable names per release; the app appends ?v=<sha> so each release keys fresh cache entries.
       matcher: ({ url }) =>
         url.origin === self.location.origin &&
         (url.pathname.startsWith('/static/docs.gen/') || url.pathname === '/static/openapi.json'),
@@ -52,9 +37,7 @@ const serwist = new Serwist({
       }),
     },
     {
-      // Syntax-highlight grammar/theme chunks are excluded from the precache (globIgnores
-      // in vite.config.ts). Content-hashed and immutable, so cache-first is safe; this
-      // keeps highlighting working offline after a language loads once.
+      // Grammar/theme chunks are excluded from the precache (globIgnores in vite.config.ts) and content-hashed.
       matcher: ({ url }) => url.origin === self.location.origin && /^\/assets\/grammars-/.test(url.pathname),
       handler: new CacheFirst({
         cacheName: 'grammars',
@@ -64,38 +47,87 @@ const serwist = new Serwist({
   ],
 });
 
-// Chromium-only (Chrome 80+, Edge). Fires at browser-determined intervals.
-// Fetches the real unseen count from the server so badge stays accurate.
+// English-only titles by design: the payload carries ids and a type, never localized content, so
+// the closed-app toast stays generic and the app renders the localized inbox on open.
+const pushTitles: Record<string, string> = {
+  mention: 'You were mentioned',
+  reply: 'New reply',
+  comment: 'New comment',
+};
 
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'unseen-badge-sync') {
-    event.waitUntil(updateBadge());
+/** { t: 'notif', activityId, channelId, type } from push-sender.ts; anything else is dropped. */
+interface NotificationPushData {
+  t: string;
+  activityId: string;
+  channelId: string;
+  type: string;
+}
+
+self.addEventListener('push', (event) => {
+  let data: NotificationPushData | null = null;
+  try {
+    data = event.data?.json() ?? null;
+  } catch {
+    // Not our payload; showing nothing is safe because we never send opaque pushes.
   }
+  if (data?.t !== 'notif') return;
+  event.waitUntil(handleNotificationPush(data));
 });
 
-serwist.addEventListeners();
+async function handleNotificationPush(data: NotificationPushData): Promise<void> {
+  // Visible notification first (userVisibleOnly contract), collapsed per channel by tag: a
+  // burst edits one toast in place.
+  await self.registration.showNotification(pushTitles[data.type] ?? 'New notification', {
+    tag: `notif-${data.channelId}`,
+    data: { activityId: data.activityId },
+  });
+  await updateUnreadBadge();
+}
 
-async function updateBadge() {
+/** Recount hint: the push carries no number; the API recount is authoritative and cheap. */
+async function updateUnreadBadge(): Promise<void> {
   try {
-    const res = await fetch(`${__BACKEND_URL__}/unseen/counts`, { credentials: 'include' });
+    const res = await fetch(`${__BACKEND_URL__}/notifications?limit=1`, { credentials: 'include' });
     if (!res.ok) return;
-
-    const data: Record<string, Record<string, number>> = await res.json();
-
-    // Sum all unseen counts across all contexts and entity types
-    let total = 0;
-    for (const channelCounts of Object.values(data)) {
-      for (const count of Object.values(channelCounts)) {
-        total += count;
-      }
-    }
-
-    if (total > 0) {
-      (self.navigator as Navigator).setAppBadge(total);
-    } else {
-      (self.navigator as Navigator).clearAppBadge();
-    }
+    const { unreadCount }: { unreadCount: number } = await res.json();
+    if (unreadCount > 0) (self.navigator as Navigator).setAppBadge(unreadCount);
+    else (self.navigator as Navigator).clearAppBadge();
   } catch {
-    // Network error or auth expired, silently ignore.
+    // Network error or expired auth: leave the badge unchanged.
   }
 }
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(focusOrOpenApp());
+});
+
+async function focusOrOpenApp(): Promise<void> {
+  const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const existing = clientList[0];
+  if (existing) await existing.focus();
+  else await self.clients.openWindow('/');
+}
+
+// The push service rotated the subscription: re-subscribe with the same key and re-register, or
+// the device silently stops receiving until the user toggles push off and on again.
+self.addEventListener('pushsubscriptionchange', ((event: ExtendableEvent & { oldSubscription?: PushSubscription }) => {
+  event.waitUntil(resubscribe(event.oldSubscription));
+}) as EventListener);
+
+async function resubscribe(oldSubscription?: PushSubscription): Promise<void> {
+  try {
+    const applicationServerKey = oldSubscription?.options.applicationServerKey ?? undefined;
+    const subscription = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+    await fetch(`${__BACKEND_URL__}/push/subscriptions`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+  } catch {
+    // Re-subscribe failed (offline, permission revoked); the settings toggle recovers it.
+  }
+}
+
+serwist.addEventListeners();

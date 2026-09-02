@@ -1,12 +1,17 @@
 import type { z } from '@hono/zod-openapi';
-import { and, asc, count, eq, getColumns, ilike, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, getColumns, ilike, isNull, or, type SQL } from 'drizzle-orm';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
+import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import type { attachmentListQuerySchema } from '#/modules/attachment/attachment-schema';
-import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
+import {
+  getOrganizationEntityCount,
+  productViewCountJoin,
+  productViewCountSelect,
+} from '#/modules/entities/entities-queries';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
 import { findProjectById } from '#/modules/task/task-queries';
 import { auditUserSelect, coalesceAuditUsers, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
@@ -14,7 +19,6 @@ import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 import { getOrderColumns } from '#/utils/order-column';
-import { pick } from '#/utils/pick';
 import { seqCursorFilters } from '#/utils/seq-cursor';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
@@ -30,8 +34,8 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
   }
 
-  // fork: Resolve the caller's readable scope (unconditional projects + row-conditional
-  // slices, e.g. `read: 'own'`) and compile it to a single row predicate.
+  // fork: project-homed attachments: the readable scope narrows to the requested project and
+  // compiles against the project column as the home column.
   const actor = actorFrom(ctx);
   const readFilter = resolveCollectionReadFilter(
     ctx.var.memberships,
@@ -51,12 +55,16 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
   // Restrict to the caller's readable scope unless org-wide (kind 'all').
   if (scopeWhere.kind === 'where') filters.push(scopeWhere.where);
 
-  // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
+  // Hide tombstones for normal reads; delta sync passes them through so caches can drop rows.
   if (!seqCursor) {
     filters.push(isNull(attachmentsTable.deletedAt));
   }
 
-  // Sequence-based delta sync filter
+  // Unpublished drafts stay out of every read, deltas included. A no-op for attachments, which
+  // carry no publishedAt; kept as the pattern app-specific entity operations copy.
+  const publishedOnly = publishedRowsPredicate(attachmentsTable);
+  if (publishedOnly) filters.push(publishedOnly);
+
   filters.push(...seqCursorFilters(attachmentsTable.seq, seqCursor));
 
   if (q?.trim()) {
@@ -70,26 +78,28 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
     );
   }
 
-  // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
   const orderBy = seqCursor
     ? [asc(attachmentsTable.seq), asc(attachmentsTable.id)]
     : getOrderColumns({
         sort,
         order,
         fallback: ['createdAt', 'desc'],
-        columns: pick(attachmentsTable, ['name', 'createdAt', 'contentType']),
+        columns: {
+          name: attachmentsTable.name,
+          createdAt: attachmentsTable.createdAt,
+          contentType: attachmentsTable.contentType,
+        },
         tieBreaker: attachmentsTable.id,
       });
 
-  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted attachments
   const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
 
-  // Delta reads discard `total`; org-wide unfiltered reads use the O(1) channel counter; everything
-  // narrower (search / row-scoped 'own') falls back to the exact COUNT(*).
+  // Delta reads discard `total`; an org-wide read with no search maps to the pre-computed
+  // `e:c:attachment` channel counter; anything narrower needs COUNT(*).
   const isDelta = !!seqCursor;
-  const counterEligible = scopeWhere.kind === 'all' && !q?.trim() && !seqCursor;
+  const counterEligible = !isDelta && scopeWhere.kind === 'all' && !q?.trim();
 
-  const { items: rawItems, total } = await read(ctx, async (readCtx) => {
+  const { rawItems, total } = await read(ctx, async (readCtx) => {
     const { db } = readCtx.var;
     const { createdBy: _cb, updatedBy: _mb, ...attachmentCols } = getColumns(attachmentsTable);
 
@@ -99,10 +109,10 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
       .select({
         ...attachmentCols,
         ...auditUserSelect,
-        viewCount: sql<number>`coalesce(${productCountersTable.viewCount}, 0)`.as('view_count'),
+        viewCount: productViewCountSelect(),
       })
       .from(attachmentsTable)
-      .leftJoin(productCountersTable, eq(productCountersTable.productId, attachmentsTable.id))
+      .leftJoin(productCountersTable, productViewCountJoin(attachmentsTable.id))
       .leftJoin(createdByUser, eq(createdByUser.id, attachmentsTable.createdBy))
       .leftJoin(updatedByUser, eq(updatedByUser.id, attachmentsTable.updatedBy))
       .where(whereClause)
@@ -125,7 +135,9 @@ export async function getAttachmentsOp(ctx: AuthContext, input: GetAttachmentsIn
             },
           };
 
-    return resolveListTotal(itemsQuery, totalSource);
+    const { items: rawItems, total } = await resolveListTotal(itemsQuery, totalSource);
+
+    return { rawItems, total };
   });
 
   const items = coalesceAuditUsers(rawItems);

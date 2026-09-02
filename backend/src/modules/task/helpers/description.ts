@@ -14,6 +14,17 @@ import { extractKeywords } from '#/utils/extract-keywords';
 // Reuse a single editor instance; schema construction is expensive, conversions are stateless.
 const editor = ServerBlockNoteEditor.create();
 
+type InlineItem = { type: string; props?: { name?: unknown }; text?: string; styles?: Record<string, unknown> };
+
+/** The default server schema has no mention inline spec, so mentions become their display text for the summary. */
+const flattenMentions = (block: ParsedBlock): ParsedBlock => {
+  if (!Array.isArray(block.content)) return block;
+  const content = (block.content as InlineItem[]).map((item) =>
+    item.type === 'mention' ? { type: 'text', text: `@${String(item.props?.name ?? '')}`, styles: {} } : item,
+  );
+  return { ...block, content } as ParsedBlock;
+};
+
 /** Loose block type for parsed JSON, including custom block types outside @blocknote/core's Block union. */
 export type ParsedBlock = DescriptionBlock;
 
@@ -62,7 +73,7 @@ export const deriveDescriptionProps = async (
     // Custom block types (e.g. checklistItem) aren't in the server schema; extract text directly.
     result.summary = blockPlainText(source);
   } else {
-    const html = await editor.blocksToHTMLLossy([source as unknown as Block]);
+    const html = await editor.blocksToHTMLLossy([flattenMentions(source) as unknown as Block]);
     result.summary = html.replace(/^<p[^>]*>(.*)<\/p>$/s, '$1');
   }
 

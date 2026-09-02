@@ -1,5 +1,7 @@
 import type { QueryKey } from '@tanstack/react-query';
 import { ArrowDownAZIcon, CalendarIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
+import type { ChannelEntityType } from 'shared';
 import type { TKey } from '~/lib/i18n-locales';
 import { TableBarContainer } from '~/modules/common/data-table/table-bar-container';
 import { TableCount } from '~/modules/common/data-table/table-count';
@@ -14,6 +16,7 @@ import { FocusView } from '~/modules/common/focus-view';
 import { SelectRole } from '~/modules/common/form-fields/select-role';
 import { SelectSort } from '~/modules/common/form-fields/select-sort';
 import type { IconComponent } from '~/modules/common/icons/types';
+import { GRID_PREVIEW_LIMIT } from '~/modules/entities/entity-grid/grid';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type EntityGridBarSearch = {
@@ -22,7 +25,6 @@ type EntityGridBarSearch = {
   role?: string;
 };
 
-/** Sort option for the entity grid bar. Apps pass their own set via the `sortOptions` prop. */
 export type EntityGridSortOption = {
   name: TKey;
   icon: IconComponent;
@@ -37,23 +39,40 @@ const entityGridSortOptions: readonly EntityGridSortOption[] = [
 type Props = {
   queryKey: QueryKey;
   label: TKey;
+  /** Channel entity the grid lists; scopes the role filter to that entity's role vocabulary. */
+  entityType: ChannelEntityType;
   searchVars: EntityGridBarSearch;
   setSearch: (search: EntityGridBarSearch) => void;
   isSheet?: boolean;
   focusView?: boolean;
   /** Sort options shown in the bar; defaults to alphabetical + created date. */
   sortOptions?: readonly EntityGridSortOption[];
+  /** Slot for surface actions (e.g. a create button), rendered before the count while unfiltered. */
+  actions?: ReactNode;
+  /** Always-rendered slot for a grid/table view toggle, placed after the filter bar. */
+  viewToggle?: ReactNode;
+  /**
+   * Show the role filter (default true). Discovery-scoped grids pass false: a role filter
+   * collapses the backend scope to membership-only rows.
+   */
+  roleFilter?: boolean;
+  /** Render the bar even at or below GRID_PREVIEW_LIMIT while unfiltered (default false). */
+  alwaysShow?: boolean;
 };
 
-/** Renders the entity grid bar component. */
 export function EntityGridBar({
   queryKey,
   label,
+  entityType,
   searchVars,
   setSearch,
   isSheet,
   focusView,
   sortOptions = entityGridSortOptions,
+  actions,
+  viewToggle,
+  roleFilter = true,
+  alwaysShow = false,
 }: Props) {
   const { q, sort, role } = searchVars;
 
@@ -61,8 +80,10 @@ export function EntityGridBar({
 
   const isFiltered = !!q;
 
-  // Hide the bar when there are 3 or fewer items and no filters are active
-  if (!isFiltered && (total ?? 0) <= 3) return null;
+  // Hide the bar at or below the preview count while unfiltered; the actions slot stays rendered
+  if (!alwaysShow && !isFiltered && (total ?? 0) <= GRID_PREVIEW_LIMIT) {
+    return actions ? <div className="flex items-center">{actions}</div> : null;
+  }
 
   const onSearch = (searchString: string) => setSearch({ q: searchString });
   const onSortChange = (sort: string) => setSearch({ sort });
@@ -73,9 +94,9 @@ export function EntityGridBar({
 
   return (
     <TableBarContainer searchVars={searchVars} offsetTop={isSheet ? 0 : 48}>
-      {/* Filter Bar */}
       <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
         <FilterBarActions>
+          {!isFiltered && actions}
           <TableCount count={total} label={label} isFiltered={isFiltered} onResetFilters={onResetFilters} />
         </FilterBarActions>
         <div className="sm:grow" />
@@ -89,16 +110,19 @@ export function EntityGridBar({
             className="h-10"
             sortOptions={sortOptions}
           />
-          <SelectRole
-            entity
-            value={role === undefined ? 'all' : role}
-            onChange={onRoleChange}
-            className="h-10 sm:min-w-32"
-          />
+          {roleFilter && (
+            <SelectRole
+              entityType={entityType}
+              value={role === undefined ? 'all' : role}
+              onChange={onRoleChange}
+              className="h-10 sm:min-w-32"
+            />
+          )}
         </FilterBarFilters>
       </TableFilterBar>
 
-      {/* Focus view */}
+      {viewToggle}
+
       {focusView && <FocusView iconOnly />}
     </TableBarContainer>
   );

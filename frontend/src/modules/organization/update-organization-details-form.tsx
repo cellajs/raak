@@ -34,7 +34,6 @@ interface Props {
   callback?: (args: CallbackArgs<Organization>) => void;
 }
 
-/** Renders the form for updating organization details. */
 export function UpdateOrganizationDetailsForm({ organization, callback, sheet: isSheet }: Props) {
   // fork: no baseFilePanelProps here. Attachments are scoped to a project and created from task
   // description media blocks, so an organization-scoped editor has nowhere to persist uploads.
@@ -51,7 +50,6 @@ export function UpdateOrganizationDetailsForm({ organization, callback, sheet: i
   const formContainerId = 'update-organization-details';
   const form = useFormWithDraft<FormValues>(`${formContainerId}-${organization.id}`, { formOptions, formContainerId });
 
-  // Prevent data loss
   useBeforeUnload(form.isDirty);
 
   const onSubmit = (body: FormValues) => {

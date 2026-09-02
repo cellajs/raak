@@ -21,7 +21,6 @@ export const isTaskData = (data: Record<string | symbol, unknown>): data is Task
   return data.dragItem === true && typeof data.displayOrder === 'number' && data.type === 'task';
 };
 
-/** Returns the edge and target order. */
 export const getEdgeAndTargetOrder = (target: Task, source: Task, passedEdge: Edge, tasks: Task[]) => {
   // Determine the calculated edge based on status change
   const isStatusChanged = target.status !== source.status;

@@ -20,7 +20,6 @@ interface Props {
 // so BaseEntityGrid infers a Project-compatible generic without a full cast.
 const tileComponent = ChannelGridTile as typeof ChannelGridTile & ((props: { entity: Project }) => React.JSX.Element);
 
-/** Renders the projects grid. */
 export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedView: initialLimitedView }: Props) {
   const [expanded, setExpanded] = useState(false);
   const limitedView = initialLimitedView && !expanded;
@@ -48,6 +47,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedV
           queryKey={queryOptions.queryKey}
           searchVars={baseSearch}
           label={'c:project'}
+          entityType="project"
           setSearch={setSearch}
           isSheet={!focusView}
           focusView={focusView}

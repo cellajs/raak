@@ -17,7 +17,6 @@ interface FindLabelsByStxMutationIdOpts {
   mutationId: string;
 }
 
-/** Find labels by their STX mutation ID (idempotency check). */
 export const findLabelsByStxMutationId = async (ctx: AuthContext, { mutationId }: FindLabelsByStxMutationIdOpts) => {
   const { db, organizationId } = ctx.var;
   return db
@@ -79,7 +78,6 @@ interface DeleteCountersByKeysOpts {
   keys: string[];
 }
 
-/** Delete context counters by keys. */
 export const deleteCountersByKeys = async (ctx: DbContext, { keys }: DeleteCountersByKeysOpts) => {
   const { db } = ctx.var;
   return db.delete(channelCountersTable).where(inArray(channelCountersTable.channelKey, keys));

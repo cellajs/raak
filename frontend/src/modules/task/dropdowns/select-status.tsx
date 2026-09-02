@@ -18,7 +18,6 @@ import {
 
 type StatusOption = (typeof statusOptions)[number];
 
-/** Renders the status selector. */
 export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWidth = 240 }: SelectStatusProps) {
   const { t } = useTranslation();
 

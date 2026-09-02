@@ -14,7 +14,6 @@ interface FindTasksByStxMutationIdOpts {
   mutationId: string;
 }
 
-/** Find tasks by their STX mutation ID (idempotency check). */
 export const findTasksByStxMutationId = async (ctx: AuthContext, { mutationId }: FindTasksByStxMutationIdOpts) => {
   const { db, organizationId } = ctx.var;
   return db
@@ -71,7 +70,6 @@ interface FindProjectsByWorkspaceOpts {
   workspaceId: string;
 }
 
-/** Find projects accessible via a workspace for a given user. */
 export const findProjectsByWorkspace = async (ctx: AuthContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
   const { db, organizationId, userId } = ctx.var;
   return db
@@ -96,7 +94,6 @@ interface FindProjectByIdOpts {
   projectId: string;
 }
 
-/** Find a single project by ID. */
 export const findProjectById = async (ctx: AuthContext, { projectId }: FindProjectByIdOpts) => {
   const { db, organizationId } = ctx.var;
   const [project] = await db
@@ -112,7 +109,6 @@ interface FindProjectMemberUserIdsOpts {
   userIds: string[];
 }
 
-/** Find project members whose user IDs are in the given list (used for move-to-project). */
 export const findProjectMemberUserIds = async (
   ctx: AuthContext,
   { projectId, userIds }: FindProjectMemberUserIdsOpts,
@@ -231,7 +227,6 @@ interface CountTasksByStatusOpts {
   projectId: string;
 }
 
-/** Count tasks grouped by status for a single project. */
 export const countTasksByStatus = async (ctx: DbContext, { projectId }: CountTasksByStatusOpts) => {
   const { db } = ctx.var;
   return db

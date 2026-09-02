@@ -1,3 +1,4 @@
+import type { QueryKey } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { BirdIcon, SearchIcon } from 'lucide-react';
 import type { ComponentType } from 'react';
@@ -6,6 +7,10 @@ import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { InfiniteLoader } from '~/modules/common/data-table/infinite-loader';
 import { EntityGridSkeleton } from '~/modules/entities/entity-grid';
 import { Button } from '~/modules/ui/button';
+import { useListQueryTotal } from '~/query/basic/use-list-query-total';
+
+/** limitedView shows at most this many tiles, and {@link EntityGridBar} hides itself at or below it when unfiltered. */
+export const GRID_PREVIEW_LIMIT = 3;
 
 type BaseEntityGridProps<TEntity extends { id: string }> = {
   label: TKey;
@@ -14,7 +19,6 @@ type BaseEntityGridProps<TEntity extends { id: string }> = {
   entities?: TEntity[];
   tileComponent: ComponentType<{ entity: TEntity }>;
 
-  // skeleton
   /** Approximate height of each tile in px, passed to skeleton (default: 180) */
   skeletonHeight?: number;
 
@@ -30,16 +34,16 @@ type BaseEntityGridProps<TEntity extends { id: string }> = {
   // empty-state logic
   isFiltered: boolean;
 
-  // limited view mode
-  /** When true, only show up to 3 items with a "Show all" button */
+  /** When true, only show up to {@link GRID_PREVIEW_LIMIT} items with a "Show all" button */
   limitedView?: boolean;
-  /** Callback to expand from limited view to full view */
   onExpand?: () => void;
+  /** List query key; with limitedView, sources the server total for the "Show all (N)" button. */
+  queryKey?: QueryKey;
 };
 
-/**
- * Displays a paginated grid of entity tiles with loading and empty states.
- */
+// Total subscriptions need a key unconditionally; this one never matches a cached list.
+const noTotalKey: QueryKey = ['entity-grid', 'no-total'];
+
 export function BaseEntityGrid<TEntity extends { id: string }>({
   label,
   entities,
@@ -53,7 +57,10 @@ export function BaseEntityGrid<TEntity extends { id: string }>({
   isFiltered,
   limitedView,
   onExpand,
+  queryKey,
 }: BaseEntityGridProps<TEntity>) {
+  const total = useListQueryTotal(queryKey ?? noTotalKey);
+
   const fetchMore = async () => {
     if (!hasNextPage || isLoading || isFetching) return;
     await fetchNextPage();
@@ -77,9 +84,9 @@ export function BaseEntityGrid<TEntity extends { id: string }>({
     );
   }
 
-  // In limited view mode, show at most 3 items
-  const isLimited = limitedView && entities.length > 3;
-  const visibleEntities = isLimited ? entities.slice(0, 3) : entities;
+  const isLimited = limitedView && entities.length > GRID_PREVIEW_LIMIT;
+  const visibleEntities = isLimited ? entities.slice(0, GRID_PREVIEW_LIMIT) : entities;
+  const showAllCount = total !== null && total > GRID_PREVIEW_LIMIT ? ` (${total})` : '';
 
   return (
     <div className="mb-12">
@@ -92,7 +99,7 @@ export function BaseEntityGrid<TEntity extends { id: string }>({
       {isLimited ? (
         <div className="mt-4 flex justify-center">
           <Button variant="ghost" onClick={onExpand}>
-            {t('c:show_all')}
+            {`${t('c:show_all')}${showAllCount}`}
           </Button>
         </div>
       ) : (

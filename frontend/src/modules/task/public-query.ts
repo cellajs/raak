@@ -6,7 +6,6 @@ import { getTasksNextPageParam, taskKeys, tasksTableQueryDefaults } from '~/modu
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
 
-/** Builds React Query options for public task. */
 export const publicTaskQueryOptions = (id: string) =>
   queryOptions({
     queryKey: taskKeys.detail.public(id),
@@ -15,7 +14,6 @@ export const publicTaskQueryOptions = (id: string) =>
     staleTime: 0,
   });
 
-/** Builds React Query options for public tasks board. */
 export const publicTasksBoardQueryOptions = (projectId: string) => {
   return queryOptions({
     queryKey: taskKeys.publicList.filtered({ projectId, publicAt: true as const }),
@@ -47,7 +45,6 @@ export const publicTasksTableQueryKey = ({
 }: PublicTasksTableParams) =>
   taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, publicAt: true as const });
 
-/** Builds React Query options for public tasks table. */
 export const publicTasksTableQueryOptions = ({
   q,
   sort = tasksTableQueryDefaults.sort,

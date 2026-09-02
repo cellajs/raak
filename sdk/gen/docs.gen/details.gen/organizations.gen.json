@@ -61,6 +61,18 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "toolsConfig": {
+                    "type": "object",
+                    "required": true,
+                    "additionalProperties": {
+                      "type": "object",
+                      "required": false,
+                      "properties": {
+                        "order": { "type": "array", "required": false, "itemType": "string" },
+                        "hidden": { "type": "array", "required": false, "itemType": "string" }
+                      }
+                    }
+                  },
                   "path": {
                     "type": ["string", "null"],
                     "required": true
@@ -172,18 +184,6 @@
                       }
                     }
                   },
-                  "toolsConfig": {
-                    "type": "object",
-                    "required": true,
-                    "additionalProperties": {
-                      "type": "object",
-                      "required": false,
-                      "properties": {
-                        "order": { "type": "array", "required": false, "itemType": "string" },
-                        "hidden": { "type": "array", "required": false, "itemType": "string" }
-                      }
-                    }
-                  },
                   "included": {
                     "type": "object",
                     "required": true,
@@ -245,6 +245,17 @@
                             }
                           },
                           "entities": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "workspace": { "type": "number", "required": true },
+                              "project": { "type": "number", "required": true },
+                              "task": { "type": "number", "required": true },
+                              "label": { "type": "number", "required": true },
+                              "attachment": { "type": "number", "required": true }
+                            }
+                          },
+                          "entitiesSelf": {
                             "type": "object",
                             "required": true,
                             "properties": {
@@ -367,6 +378,7 @@
               "updatedBy": null,
               "publishedAt": "2024-04-18T21:12:59.543Z",
               "publicAt": null,
+              "toolsConfig": {},
               "path": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "shortName": "Conroy,",
               "country": "Singapore",
@@ -402,7 +414,6 @@
                   }
                 ]
               },
-              "toolsConfig": {},
               "included": {
                 "membership": {
                   "id": "1f366272-953c-486d-81dc-ee61f43478a1",
@@ -433,6 +444,13 @@
                     "label": 182,
                     "attachment": 106
                   },
+                  "entitiesSelf": {
+                    "workspace": 209,
+                    "project": 326,
+                    "task": 351,
+                    "label": 118,
+                    "attachment": 61
+                  },
                   "activity": {
                     "task": { "created": 1734375421781, "updated": 1734852237831 },
                     "label": { "created": 1735599495073, "updated": 1735660940149 },
@@ -455,6 +473,7 @@
               "updatedBy": null,
               "publishedAt": "2024-02-24T16:36:46.247Z",
               "publicAt": null,
+              "toolsConfig": {},
               "path": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
               "shortName": "Lemke,",
               "country": "Pakistan",
@@ -490,7 +509,6 @@
                   }
                 ]
               },
-              "toolsConfig": {},
               "included": {
                 "membership": {
                   "id": "cf273cfa-8287-4b04-b641-897816829f30",
@@ -520,6 +538,13 @@
                     "task": 122,
                     "label": 493,
                     "attachment": 383
+                  },
+                  "entitiesSelf": {
+                    "workspace": 207,
+                    "project": 53,
+                    "task": 7,
+                    "label": 38,
+                    "attachment": 286
                   },
                   "activity": {
                     "task": { "created": 1733935270933, "updated": null },
@@ -766,6 +791,18 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "toolsConfig": {
+                    "type": "object",
+                    "required": true,
+                    "additionalProperties": {
+                      "type": "object",
+                      "required": false,
+                      "properties": {
+                        "order": { "type": "array", "required": false, "itemType": "string" },
+                        "hidden": { "type": "array", "required": false, "itemType": "string" }
+                      }
+                    }
+                  },
                   "path": {
                     "type": ["string", "null"],
                     "required": true
@@ -877,18 +914,6 @@
                       }
                     }
                   },
-                  "toolsConfig": {
-                    "type": "object",
-                    "required": true,
-                    "additionalProperties": {
-                      "type": "object",
-                      "required": false,
-                      "properties": {
-                        "order": { "type": "array", "required": false, "itemType": "string" },
-                        "hidden": { "type": "array", "required": false, "itemType": "string" }
-                      }
-                    }
-                  },
                   "included": {
                     "type": "object",
                     "required": true,
@@ -950,6 +975,17 @@
                             }
                           },
                           "entities": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {
+                              "workspace": { "type": "number", "required": true },
+                              "project": { "type": "number", "required": true },
+                              "task": { "type": "number", "required": true },
+                              "label": { "type": "number", "required": true },
+                              "attachment": { "type": "number", "required": true }
+                            }
+                          },
+                          "entitiesSelf": {
                             "type": "object",
                             "required": true,
                             "properties": {
@@ -1061,6 +1097,7 @@
               "updatedBy": null,
               "publishedAt": "2024-11-21T01:19:53.533Z",
               "publicAt": null,
+              "toolsConfig": {},
               "path": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "shortName": "Anderson",
               "country": "Bahamas",
@@ -1096,7 +1133,6 @@
                   }
                 ]
               },
-              "toolsConfig": {},
               "included": {
                 "membership": {
                   "id": "1008ac1a-ccec-476f-9baf-e65971876f04",
@@ -1127,6 +1163,13 @@
                     "label": 413,
                     "attachment": 435
                   },
+                  "entitiesSelf": {
+                    "workspace": 82,
+                    "project": 2,
+                    "task": 354,
+                    "label": 177,
+                    "attachment": 250
+                  },
                   "activity": {
                     "task": { "created": 1733370282291, "updated": 1735128143248 },
                     "label": { "created": 1733565564277, "updated": 1735168180029 },
@@ -1149,6 +1192,7 @@
               "updatedBy": null,
               "publishedAt": "2024-10-29T04:35:17.725Z",
               "publicAt": null,
+              "toolsConfig": {},
               "path": "772a771f-c150-465e-9635-46594859fc3d",
               "shortName": "Wiegand,",
               "country": "Argentina",
@@ -1184,7 +1228,6 @@
                   }
                 ]
               },
-              "toolsConfig": {},
               "included": {
                 "membership": {
                   "id": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
@@ -1214,6 +1257,13 @@
                     "task": 153,
                     "label": 264,
                     "attachment": 40
+                  },
+                  "entitiesSelf": {
+                    "workspace": 0,
+                    "project": 140,
+                    "task": 116,
+                    "label": 78,
+                    "attachment": 16
                   },
                   "activity": {
                     "task": { "created": 1733726254960, "updated": null },
@@ -1360,6 +1410,18 @@
               "type": ["string", "null"],
               "required": true
             },
+            "toolsConfig": {
+              "type": "object",
+              "required": true,
+              "additionalProperties": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
+              }
+            },
             "path": {
               "type": ["string", "null"],
               "required": true
@@ -1471,18 +1533,6 @@
                 }
               }
             },
-            "toolsConfig": {
-              "type": "object",
-              "required": true,
-              "additionalProperties": {
-                "type": "object",
-                "required": false,
-                "properties": {
-                  "order": { "type": "array", "required": false, "itemType": "string" },
-                  "hidden": { "type": "array", "required": false, "itemType": "string" }
-                }
-              }
-            },
             "included": {
               "type": "object",
               "required": true,
@@ -1544,6 +1594,17 @@
                       }
                     },
                     "entities": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "workspace": { "type": "number", "required": true },
+                        "project": { "type": "number", "required": true },
+                        "task": { "type": "number", "required": true },
+                        "label": { "type": "number", "required": true },
+                        "attachment": { "type": "number", "required": true }
+                      }
+                    },
+                    "entitiesSelf": {
                       "type": "object",
                       "required": true,
                       "properties": {
@@ -1649,6 +1710,7 @@
           "updatedBy": null,
           "publishedAt": "2024-12-25T15:04:42.969Z",
           "publicAt": null,
+          "toolsConfig": {},
           "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
           "shortName": "Spencer,",
           "country": "Sweden",
@@ -1684,7 +1746,6 @@
               }
             ]
           },
-          "toolsConfig": {},
           "included": {
             "membership": {
               "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",
@@ -1714,6 +1775,13 @@
                 "task": 47,
                 "label": 21,
                 "attachment": 451
+              },
+              "entitiesSelf": {
+                "workspace": 119,
+                "project": 105,
+                "task": 14,
+                "label": 15,
+                "attachment": 333
               },
               "activity": {
                 "task": { "created": 1734107615547, "updated": 1734969019663 },
@@ -1851,6 +1919,18 @@
               "type": ["string", "null"],
               "required": true
             },
+            "toolsConfig": {
+              "type": "object",
+              "required": true,
+              "additionalProperties": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
+              }
+            },
             "path": {
               "type": ["string", "null"],
               "required": true
@@ -1962,18 +2042,6 @@
                 }
               }
             },
-            "toolsConfig": {
-              "type": "object",
-              "required": true,
-              "additionalProperties": {
-                "type": "object",
-                "required": false,
-                "properties": {
-                  "order": { "type": "array", "required": false, "itemType": "string" },
-                  "hidden": { "type": "array", "required": false, "itemType": "string" }
-                }
-              }
-            },
             "included": {
               "type": "object",
               "required": true,
@@ -2035,6 +2103,17 @@
                       }
                     },
                     "entities": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {
+                        "workspace": { "type": "number", "required": true },
+                        "project": { "type": "number", "required": true },
+                        "task": { "type": "number", "required": true },
+                        "label": { "type": "number", "required": true },
+                        "attachment": { "type": "number", "required": true }
+                      }
+                    },
+                    "entitiesSelf": {
                       "type": "object",
                       "required": true,
                       "properties": {
@@ -2140,6 +2219,7 @@
           "updatedBy": null,
           "publishedAt": "2024-12-25T15:04:42.969Z",
           "publicAt": null,
+          "toolsConfig": {},
           "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
           "shortName": "Spencer,",
           "country": "Sweden",
@@ -2175,7 +2255,6 @@
               }
             ]
           },
-          "toolsConfig": {},
           "included": {
             "membership": {
               "id": "944446b5-40a7-4cf9-8c88-be1e3ce27710",
@@ -2205,6 +2284,13 @@
                 "task": 47,
                 "label": 21,
                 "attachment": 451
+              },
+              "entitiesSelf": {
+                "workspace": 119,
+                "project": 105,
+                "task": 14,
+                "label": 15,
+                "attachment": 333
               },
               "activity": {
                 "task": { "created": 1734107615547, "updated": 1734969019663 },

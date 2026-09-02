@@ -381,6 +381,9 @@ export const zProject = z.object({
   updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
+  toolsConfig: z
+    .union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())])
+    .nullable(),
   path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
@@ -395,6 +398,11 @@ export const zProject = z.object({
           total: z.number(),
         }),
         entities: z.object({
+          task: z.number(),
+          label: z.number(),
+          attachment: z.number(),
+        }),
+        entitiesSelf: z.object({
           task: z.number(),
           label: z.number(),
           attachment: z.number(),
@@ -453,6 +461,7 @@ export const zTask = z.object({
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
   status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
   statusChangedAt: z.string(),
+  mentions: z.array(z.string()),
   checkboxCount: z.int().gte(-2147483648).lte(2147483647),
   checkedCount: z.int().gte(-2147483648).lte(2147483647),
   attachments: z.array(z.uuid()),
@@ -503,6 +512,13 @@ export const zOrganization = z.object({
   updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
+  toolsConfig: z.record(
+    z.string(),
+    z.object({
+      order: z.array(z.string()).optional(),
+      hidden: z.array(z.string()).optional(),
+    }),
+  ),
   path: z.string().nullable(),
   shortName: z.string().max(255).nullable(),
   country: z.string().max(255).nullable(),
@@ -547,13 +563,6 @@ export const zOrganization = z.object({
       .min(1)
       .max(6),
   }),
-  toolsConfig: z.record(
-    z.string(),
-    z.object({
-      order: z.array(z.string()).optional(),
-      hidden: z.array(z.string()).optional(),
-    }),
-  ),
   included: z.object({
     membership: zMembershipBase.optional(),
     counts: z
@@ -566,6 +575,13 @@ export const zOrganization = z.object({
           total: z.number(),
         }),
         entities: z.object({
+          workspace: z.number(),
+          project: z.number(),
+          task: z.number(),
+          label: z.number(),
+          attachment: z.number(),
+        }),
+        entitiesSelf: z.object({
           workspace: z.number(),
           project: z.number(),
           task: z.number(),
@@ -609,6 +625,9 @@ export const zWorkspace = z.object({
   updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
+  toolsConfig: z
+    .union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())])
+    .nullable(),
   path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
@@ -623,6 +642,7 @@ export const zWorkspace = z.object({
           total: z.number(),
         }),
         entities: z.record(z.string(), z.unknown()),
+        entitiesSelf: z.record(z.string(), z.unknown()),
         activity: z.record(z.string(), z.unknown()),
       })
       .optional(),
@@ -947,6 +967,7 @@ export const zGetMeResponse = zMe;
 
 export const zUpdateMeBody = z.object({
   bannerUrl: z.string().max(2048).nullish(),
+  description: z.string().max(1000000).nullish(),
   firstName: z
     .string()
     .min(2)
@@ -1178,6 +1199,7 @@ export const zDeleteUsersResponse = z.object({
 
 export const zUpdateUserBody = z.object({
   bannerUrl: z.string().max(2048).nullish(),
+  description: z.string().max(1000000).nullish(),
   firstName: z
     .string()
     .min(2)
@@ -1508,6 +1530,112 @@ export const zGetUserResponse = zUserBase.and(
   }),
 );
 
+export const zGetNotificationsQuery = z.object({
+  unread: z.enum(['true', 'false']).optional(),
+  limit: z.int().gte(1).lte(100).optional().default(30),
+  before: z.string().optional(),
+});
+
+/**
+ * Notifications and unread count
+ */
+export const zGetNotificationsResponse = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      createdAt: z.string(),
+      type: z.enum(['mention', 'comment', 'reply']),
+      entityType: z.enum(['task', 'label', 'attachment']),
+      subjectId: z.string(),
+      contextId: z.string().nullable(),
+      channelId: z.string(),
+      channelType: z.string(),
+      organizationId: z.string(),
+      tenantId: z.string(),
+      actorId: z.string().nullable(),
+      readAt: z.string().nullable(),
+    }),
+  ),
+  unreadCount: z.int().gte(0),
+});
+
+export const zMarkNotificationsReadBody = z.object({
+  ids: z.array(z.string().max(50)).max(200).optional(),
+  contextId: z.string().max(50).optional(),
+});
+
+/**
+ * Number of notifications marked read
+ */
+export const zMarkNotificationsReadResponse = z.object({
+  updated: z.int().gte(0),
+});
+
+/**
+ * Notification preferences
+ */
+export const zGetNotificationPreferencesResponse = z.object({
+  mentionEmail: z.boolean(),
+  commentEmail: z.boolean(),
+  digest: z.enum(['off', 'daily', 'weekly']),
+});
+
+export const zUpdateNotificationPreferencesBody = z.object({
+  mentionEmail: z.boolean().optional(),
+  commentEmail: z.boolean().optional(),
+  digest: z.enum(['off', 'daily', 'weekly']).optional(),
+});
+
+/**
+ * Updated notification preferences
+ */
+export const zUpdateNotificationPreferencesResponse = z.object({
+  mentionEmail: z.boolean(),
+  commentEmail: z.boolean(),
+  digest: z.enum(['off', 'daily', 'weekly']),
+});
+
+export const zUnsubscribeNotificationsQuery = z.object({
+  user: z.string().max(50),
+  category: z.enum(['digest', 'mention', 'comment']),
+  token: z.string(),
+});
+
+/**
+ * VAPID public key
+ */
+export const zGetPushVapidResponse = z.object({
+  publicKey: z.string().nullable(),
+});
+
+export const zDeletePushSubscriptionQuery = z.object({
+  endpoint: z.url().max(2048),
+});
+
+/**
+ * Number of subscriptions removed
+ */
+export const zDeletePushSubscriptionResponse = z.object({
+  deleted: z.int().gte(0),
+});
+
+export const zCreatePushSubscriptionBody = z.object({
+  endpoint: z.url().max(2048),
+  expirationTime: z.number().nullish(),
+  keys: z.object({
+    p256dh: z.string().min(1).max(512),
+    auth: z.string().min(1).max(512),
+  }),
+});
+
+/**
+ * Stored subscription
+ */
+export const zCreatePushSubscriptionResponse = z.object({
+  id: z.string(),
+  endpoint: z.string(),
+});
+
 export const zGetPublicProjectPath = z.object({
   id: z.string().max(50),
 });
@@ -1658,6 +1786,13 @@ export const zCreateOrganizationsResponse = z.object({
                   total: z.number(),
                 }),
                 entities: z.object({
+                  workspace: z.number(),
+                  project: z.number(),
+                  task: z.number(),
+                  label: z.number(),
+                  attachment: z.number(),
+                }),
+                entitiesSelf: z.object({
                   workspace: z.number(),
                   project: z.number(),
                   task: z.number(),
@@ -1879,6 +2014,7 @@ export const zCreateWorkspacesResponse = z.object({
                   total: z.number(),
                 }),
                 entities: z.record(z.string(), z.unknown()),
+                entitiesSelf: z.record(z.string(), z.unknown()),
                 activity: z.record(z.string(), z.unknown()),
               })
               .optional(),
@@ -2026,6 +2162,11 @@ export const zCreateProjectsResponse = z.object({
                   label: z.number(),
                   attachment: z.number(),
                 }),
+                entitiesSelf: z.object({
+                  task: z.number(),
+                  label: z.number(),
+                  attachment: z.number(),
+                }),
                 activity: z.object({
                   task: z.object({
                     created: z.number().nullable(),
@@ -2166,6 +2307,11 @@ export const zAssignProjectWorkspaceResponse = zProject.and(
               label: z.number(),
               attachment: z.number(),
             }),
+            entitiesSelf: z.object({
+              task: z.number(),
+              label: z.number(),
+              attachment: z.number(),
+            }),
             activity: z.object({
               task: z.object({
                 created: z.number().nullable(),
@@ -2223,6 +2369,11 @@ export const zRemoveProjectWorkspaceResponse = zProject.and(
               total: z.number(),
             }),
             entities: z.object({
+              task: z.number(),
+              label: z.number(),
+              attachment: z.number(),
+            }),
+            entitiesSelf: z.object({
               task: z.number(),
               label: z.number(),
               attachment: z.number(),
@@ -2288,6 +2439,11 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
               total: z.number(),
             }),
             entities: z.object({
+              task: z.number(),
+              label: z.number(),
+              attachment: z.number(),
+            }),
+            entitiesSelf: z.object({
               task: z.number(),
               label: z.number(),
               attachment: z.number(),
@@ -2400,8 +2556,8 @@ export const zCreateAttachmentsBody = z
       publicBucket: z.boolean().optional(),
       groupId: z.uuid().nullish(),
       convertedContentType: z.string().max(255).nullish(),
-      projectId: z.uuid(),
       publicAt: z.string().nullish(),
+      projectId: z.string().max(50),
       stx: zStxBase,
     }),
   )
@@ -2575,7 +2731,10 @@ export const zGetMembersPath = z.object({
 
 export const zGetMembersQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
+  sort: z
+    .enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt', 'lastPostedAt'])
+    .optional()
+    .default('lastSeenAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().regex(/^\d+$/).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
@@ -2586,6 +2745,7 @@ export const zGetMembersQuery = z.object({
   entityId: z.string().max(50),
   entityType: z.enum(['organization', 'workspace', 'project']),
   role: z.enum(['admin', 'member', 'guest']).optional(),
+  include: z.string().optional(),
   userIds: z.string().optional(),
 });
 
@@ -2598,6 +2758,20 @@ export const zGetMembersResponse = z.object({
       z.object({
         lastSeenAt: z.string().nullable(),
         membership: zMembershipBase,
+        counts: z
+          .object({
+            memberships: z.object({
+              workspace: z.number().optional(),
+              project: z.number().optional(),
+            }),
+            products: z.object({
+              attachment: z.number(),
+            }),
+            activity: z.object({
+              attachment: z.number().nullable(),
+            }),
+          })
+          .optional(),
       }),
     ),
   ),
@@ -2630,6 +2804,7 @@ export const zGetPendingMembershipsResponse = z.object({
   items: z.array(
     z.object({
       id: z.string(),
+      tokenId: z.string().nullable(),
       email: z.email(),
       thumbnailUrl: z.string().nullable(),
       role: z.enum(['admin', 'member', 'guest']).nullable(),
@@ -2639,6 +2814,17 @@ export const zGetPendingMembershipsResponse = z.object({
   ),
   total: z.number(),
 });
+
+export const zResendPendingInvitationPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Invitation resent
+ */
+export const zResendPendingInvitationResponse = z.void();
 
 export const zDeleteTasksBody = z.object({
   ids: z.array(z.string()).min(1).max(100),

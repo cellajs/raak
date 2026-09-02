@@ -8,7 +8,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~/
 // union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
 type AboutKey = Extract<TKey, `about:${string}`>;
 
-/** Renders the frequently asked questions section. */
 export function FAQ() {
   const { t } = useTranslation();
   return (

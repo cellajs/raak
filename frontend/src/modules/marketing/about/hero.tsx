@@ -15,7 +15,6 @@ interface HeroProps {
   chips?: TKey[];
 }
 
-/** Renders the hero component. */
 export function Hero({ title, text, children, chips }: HeroProps) {
   const { t } = useTranslation();
   const { theme } = useUIStore();

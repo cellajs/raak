@@ -7,8 +7,7 @@ import { fakeConfig } from '../helpers/fake-config';
 const caddyfile = readFileSync(resolve(__dirname, '../../caddy/Caddyfile'), 'utf-8');
 const dockerfile = readFileSync(resolve(__dirname, '../../caddy/Dockerfile'), 'utf-8');
 
-// Derived from the canonical fixture so the negative assertion below stays
-// configuration-independent (the point is "no bucket is hardcoded", not "not this slug").
+// Derived from the canonical fixture so the negative assertion below asserts "no bucket is hardcoded", not "not this slug".
 const frontendBucket = deriveInfra(fakeConfig()).naming.frontendBucket;
 
 // Pins the Caddyfile contract the rollout and smoke tests depend on.
@@ -37,8 +36,7 @@ describe('frontend Caddyfile', () => {
   });
 
   it('exposes X-App-Version bound to {$RELEASE_SHA} env', () => {
-    // The rollout verifier asserts X-App-Version == GITHUB_SHA. If this
-    // breaks, every deploy will hang for 5 minutes and then fail.
+    // The rollout verifier asserts X-App-Version == GITHUB_SHA; breaking it hangs every deploy for 5 minutes before failing.
     expect(caddyfile).toMatch(/X-App-Version\s+"\{\$RELEASE_SHA\}"/);
   });
 
@@ -59,13 +57,15 @@ describe('frontend Caddyfile', () => {
 
   it('long-caches content-hashed /assets/* only', () => {
     expect(caddyfile).toMatch(/@assets\s+path\s+\/assets\/\*\s*\n/);
-    expect(caddyfile).toMatch(/Cache-Control\s+"public,\s*max-age=31536000,\s*immutable"/);
+    // `>` sets the header with defer, which is what makes it replace the Cache-Control S3 returns;
+    // without it the response carries the field twice.
+    expect(caddyfile).toMatch(/header >Cache-Control\s+"public,\s*max-age=31536000,\s*immutable"/);
   });
 
   it('short-caches stable-named /static/* (docs.gen etc. change per release)', () => {
     // Marking /static/* immutable froze docs data in browser caches for a year.
     expect(caddyfile).toMatch(/@static\s+path\s+\/static\/\*/);
-    expect(caddyfile).toMatch(/@static\s+path[^{]*\{\s*\n\s*header Cache-Control "public, max-age=3600"/);
+    expect(caddyfile).toMatch(/@static\s+path[^{]*\{\s*\n\s*header >Cache-Control "public, max-age=3600"/);
   });
 
   it('reverse-proxies to the {$ORIGIN_HOST} env, not a hardcoded bucket', () => {
@@ -98,8 +98,7 @@ describe('frontend Caddy Dockerfile', () => {
   });
 
   it('pins a minor version of the upstream caddy image', () => {
-    // `caddy:latest` would make the image rebuild silently when upstream tags
-    // move; pin to a real version. Update intentionally, never implicitly.
+    // `caddy:latest` rebuilds the image whenever upstream tags move, so pin a real version and update it deliberately.
     expect(dockerfile).toMatch(/^FROM\s+caddy:2\.\d+/m);
   });
 });

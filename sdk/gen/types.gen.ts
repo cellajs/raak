@@ -150,7 +150,7 @@ export type StreamNotification = {
   channelId: string | null;
   stx: StxBase | null;
   /**
-   * Last sequence position for a batched notification — client should fetch range
+   * Last sequence position for a batched notification: client should fetch range
    */
   batchUntilSeq: number | null;
   /**
@@ -437,6 +437,15 @@ export type Project = {
   updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
   publicAt: string | null;
+  toolsConfig:
+    | string
+    | number
+    | boolean
+    | null
+    | {
+        [key: string]: unknown;
+      }
+    | Array<unknown>;
   path: string | null;
   organizationId: string;
   included: {
@@ -450,6 +459,11 @@ export type Project = {
         total: number;
       };
       entities: {
+        task: number;
+        label: number;
+        attachment: number;
+      };
+      entitiesSelf: {
         task: number;
         label: number;
         attachment: number;
@@ -505,6 +519,7 @@ export type Task = {
   displayOrder: number;
   status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
   statusChangedAt: string;
+  mentions: Array<string>;
   checkboxCount: number;
   checkedCount: number;
   attachments: Array<string>;
@@ -551,6 +566,12 @@ export type Organization = {
   updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
   publicAt: string | null;
+  toolsConfig: {
+    [key: string]: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+  };
   path: string | null;
   shortName: string | null;
   country: string | null;
@@ -587,12 +608,6 @@ export type Organization = {
       icon: string | null;
     }>;
   };
-  toolsConfig: {
-    [key: string]: {
-      order?: Array<string>;
-      hidden?: Array<string>;
-    };
-  };
   included: {
     membership?: MembershipBase;
     counts?: {
@@ -604,6 +619,13 @@ export type Organization = {
         total: number;
       };
       entities: {
+        workspace: number;
+        project: number;
+        task: number;
+        label: number;
+        attachment: number;
+      };
+      entitiesSelf: {
         workspace: number;
         project: number;
         task: number;
@@ -646,6 +668,15 @@ export type Workspace = {
   updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
   publicAt: string | null;
+  toolsConfig:
+    | string
+    | number
+    | boolean
+    | null
+    | {
+        [key: string]: unknown;
+      }
+    | Array<unknown>;
   path: string | null;
   organizationId: string;
   included: {
@@ -659,6 +690,9 @@ export type Workspace = {
         total: number;
       };
       entities: {
+        [key: string]: unknown;
+      };
+      entitiesSelf: {
         [key: string]: unknown;
       };
       activity: {
@@ -1939,6 +1973,7 @@ export type GetMeResponse = GetMeResponses[keyof GetMeResponses];
 export type UpdateMeData = {
   body: {
     bannerUrl?: string | null;
+    description?: string | null;
     firstName?: string | null;
     lastName?: string | null;
     language?: 'en' | 'nl';
@@ -2556,7 +2591,7 @@ export type PostAppCatchupData = {
       prefixes: Array<string>;
       entityTypes: Array<'task' | 'label' | 'attachment'>;
       /**
-       * View depth: subtree (default) covers rows at or below the prefix node; self covers only rows HOMED at the node (exact placement — a channel wall). Self views are answerable by direct home-scoped memberships.
+       * View depth: subtree (default) covers rows at or below the prefix node; self covers only rows HOMED at the node (exact placement: a channel wall). Self views are answerable by direct home-scoped memberships.
        */
       depth?: 'self' | 'subtree';
       /**
@@ -2789,6 +2824,7 @@ export type DeleteUsersResponse = DeleteUsersResponses[keyof DeleteUsersResponse
 export type UpdateUserData = {
   body?: {
     bannerUrl?: string | null;
+    description?: string | null;
     firstName?: string | null;
     lastName?: string | null;
     language?: 'en' | 'nl';
@@ -3694,6 +3730,426 @@ export type GetUserResponses = {
 
 export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
 
+export type GetNotificationsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Return only unread notifications
+     */
+    unread?: 'true' | 'false';
+    limit?: number;
+    /**
+     * createdAt of the last row of the previous page
+     */
+    before?: string;
+  };
+  url: '/notifications';
+};
+
+export type GetNotificationsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetNotificationsError = GetNotificationsErrors[keyof GetNotificationsErrors];
+
+export type GetNotificationsResponses = {
+  /**
+   * Notifications and unread count
+   */
+  200: {
+    items: Array<{
+      id: string;
+      createdAt: string;
+      type: 'mention' | 'comment' | 'reply';
+      entityType: 'task' | 'label' | 'attachment';
+      subjectId: string;
+      contextId: string | null;
+      channelId: string;
+      channelType: string;
+      organizationId: string;
+      tenantId: string;
+      actorId: string | null;
+      readAt: string | null;
+    }>;
+    unreadCount: number;
+  };
+};
+
+export type GetNotificationsResponse = GetNotificationsResponses[keyof GetNotificationsResponses];
+
+export type MarkNotificationsReadData = {
+  body: {
+    ids?: Array<string>;
+    /**
+     * Mark everything sharing one context read
+     */
+    contextId?: string;
+  };
+  path?: never;
+  query?: never;
+  url: '/notifications/read';
+};
+
+export type MarkNotificationsReadErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type MarkNotificationsReadError = MarkNotificationsReadErrors[keyof MarkNotificationsReadErrors];
+
+export type MarkNotificationsReadResponses = {
+  /**
+   * Number of notifications marked read
+   */
+  200: {
+    updated: number;
+  };
+};
+
+export type MarkNotificationsReadResponse = MarkNotificationsReadResponses[keyof MarkNotificationsReadResponses];
+
+export type GetNotificationPreferencesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/notifications/preferences';
+};
+
+export type GetNotificationPreferencesErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetNotificationPreferencesError = GetNotificationPreferencesErrors[keyof GetNotificationPreferencesErrors];
+
+export type GetNotificationPreferencesResponses = {
+  /**
+   * Notification preferences
+   */
+  200: {
+    mentionEmail: boolean;
+    commentEmail: boolean;
+    digest: 'off' | 'daily' | 'weekly';
+  };
+};
+
+export type GetNotificationPreferencesResponse =
+  GetNotificationPreferencesResponses[keyof GetNotificationPreferencesResponses];
+
+export type UpdateNotificationPreferencesData = {
+  body: {
+    mentionEmail?: boolean;
+    commentEmail?: boolean;
+    digest?: 'off' | 'daily' | 'weekly';
+  };
+  path?: never;
+  query?: never;
+  url: '/notifications/preferences';
+};
+
+export type UpdateNotificationPreferencesErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type UpdateNotificationPreferencesError =
+  UpdateNotificationPreferencesErrors[keyof UpdateNotificationPreferencesErrors];
+
+export type UpdateNotificationPreferencesResponses = {
+  /**
+   * Updated notification preferences
+   */
+  200: {
+    mentionEmail: boolean;
+    commentEmail: boolean;
+    digest: 'off' | 'daily' | 'weekly';
+  };
+};
+
+export type UpdateNotificationPreferencesResponse =
+  UpdateNotificationPreferencesResponses[keyof UpdateNotificationPreferencesResponses];
+
+export type UnsubscribeNotificationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    user: string;
+    category: 'digest' | 'mention' | 'comment';
+    token: string;
+  };
+  url: '/notifications/unsubscribe';
+};
+
+export type UnsubscribeNotificationsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type UnsubscribeNotificationsError = UnsubscribeNotificationsErrors[keyof UnsubscribeNotificationsErrors];
+
+export type GetPushVapidData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/push/vapid';
+};
+
+export type GetPushVapidErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetPushVapidError = GetPushVapidErrors[keyof GetPushVapidErrors];
+
+export type GetPushVapidResponses = {
+  /**
+   * VAPID public key
+   */
+  200: {
+    publicKey: string | null;
+  };
+};
+
+export type GetPushVapidResponse = GetPushVapidResponses[keyof GetPushVapidResponses];
+
+export type DeletePushSubscriptionData = {
+  body?: never;
+  path?: never;
+  query: {
+    endpoint: string;
+  };
+  url: '/push/subscriptions';
+};
+
+export type DeletePushSubscriptionErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type DeletePushSubscriptionError = DeletePushSubscriptionErrors[keyof DeletePushSubscriptionErrors];
+
+export type DeletePushSubscriptionResponses = {
+  /**
+   * Number of subscriptions removed
+   */
+  200: {
+    deleted: number;
+  };
+};
+
+export type DeletePushSubscriptionResponse = DeletePushSubscriptionResponses[keyof DeletePushSubscriptionResponses];
+
+export type CreatePushSubscriptionData = {
+  body: {
+    endpoint: string;
+    expirationTime?: number | null;
+    keys: {
+      p256dh: string;
+      auth: string;
+    };
+  };
+  path?: never;
+  query?: never;
+  url: '/push/subscriptions';
+};
+
+export type CreatePushSubscriptionErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type CreatePushSubscriptionError = CreatePushSubscriptionErrors[keyof CreatePushSubscriptionErrors];
+
+export type CreatePushSubscriptionResponses = {
+  /**
+   * Stored subscription
+   */
+  200: {
+    id: string;
+    endpoint: string;
+  };
+};
+
+export type CreatePushSubscriptionResponse = CreatePushSubscriptionResponses[keyof CreatePushSubscriptionResponses];
+
 export type GetPublicProjectData = {
   body?: never;
   path: {
@@ -4179,6 +4635,13 @@ export type CreateOrganizationsResponses = {
               label: number;
               attachment: number;
             };
+            entitiesSelf: {
+              workspace: number;
+              project: number;
+              task: number;
+              label: number;
+              attachment: number;
+            };
             activity: {
               task: {
                 created: number | null;
@@ -4547,6 +5010,9 @@ export type CreateWorkspacesResponses = {
             entities: {
               [key: string]: unknown;
             };
+            entitiesSelf: {
+              [key: string]: unknown;
+            };
             activity: {
               [key: string]: unknown;
             };
@@ -4868,6 +5334,11 @@ export type CreateProjectsResponses = {
               label: number;
               attachment: number;
             };
+            entitiesSelf: {
+              task: number;
+              label: number;
+              attachment: number;
+            };
             activity: {
               task: {
                 created: number | null;
@@ -5144,6 +5615,11 @@ export type AssignProjectWorkspaceResponses = {
           label: number;
           attachment: number;
         };
+        entitiesSelf: {
+          task: number;
+          label: number;
+          attachment: number;
+        };
         activity: {
           task: {
             created: number | null;
@@ -5231,6 +5707,11 @@ export type RemoveProjectWorkspaceResponses = {
           total: number;
         };
         entities: {
+          task: number;
+          label: number;
+          attachment: number;
+        };
+        entitiesSelf: {
           task: number;
           label: number;
           attachment: number;
@@ -5324,6 +5805,11 @@ export type MoveProjectToWorkspaceResponses = {
           total: number;
         };
         entities: {
+          task: number;
+          label: number;
+          attachment: number;
+        };
+        entitiesSelf: {
           task: number;
           label: number;
           attachment: number;
@@ -5556,8 +6042,8 @@ export type CreateAttachmentsData = {
      * MIME type of the server-converted variant; null when none.
      */
     convertedContentType?: string | null;
-    projectId: string;
     publicAt?: string | null;
+    projectId: string;
     stx: StxBase;
   }>;
   path: {
@@ -6055,7 +6541,7 @@ export type GetMembersData = {
   };
   query: {
     q?: string;
-    sort?: 'id' | 'name' | 'email' | 'role' | 'createdAt' | 'lastSeenAt';
+    sort?: 'id' | 'name' | 'email' | 'role' | 'createdAt' | 'lastSeenAt' | 'lastPostedAt';
     order?: 'asc' | 'desc';
     offset?: string;
     limit?: string;
@@ -6063,6 +6549,7 @@ export type GetMembersData = {
     entityId: string;
     entityType: 'organization' | 'workspace' | 'project';
     role?: 'admin' | 'member' | 'guest';
+    include?: string;
     userIds?: string;
   };
   url: '/{tenantId}/{organizationId}/memberships/members';
@@ -6109,6 +6596,18 @@ export type GetMembersResponses = {
       UserBase & {
         lastSeenAt: string | null;
         membership: MembershipBase;
+        counts?: {
+          memberships: {
+            workspace?: number;
+            project?: number;
+          };
+          products: {
+            attachment: number;
+          };
+          activity: {
+            attachment: number | null;
+          };
+        };
       }
     >;
     total: number;
@@ -6172,6 +6671,7 @@ export type GetPendingMembershipsResponses = {
   200: {
     items: Array<{
       id: string;
+      tokenId: string | null;
       email: string;
       thumbnailUrl: string | null;
       role: 'admin' | 'member' | 'guest' | null;
@@ -6183,6 +6683,55 @@ export type GetPendingMembershipsResponses = {
 };
 
 export type GetPendingMembershipsResponse = GetPendingMembershipsResponses[keyof GetPendingMembershipsResponses];
+
+export type ResendPendingInvitationData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/memberships/pending/{id}/resend';
+};
+
+export type ResendPendingInvitationErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type ResendPendingInvitationError = ResendPendingInvitationErrors[keyof ResendPendingInvitationErrors];
+
+export type ResendPendingInvitationResponses = {
+  /**
+   * Invitation resent
+   */
+  204: void;
+};
+
+export type ResendPendingInvitationResponse = ResendPendingInvitationResponses[keyof ResendPendingInvitationResponses];
 
 export type DeleteTasksData = {
   body?: {

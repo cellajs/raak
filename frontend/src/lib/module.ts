@@ -1,26 +1,24 @@
+import type { ProductEntityType } from 'shared';
 import { type ModuleConfig, registerModule } from 'shared/module-registry';
 import type { Tool } from '~/lib/placements';
 
-/**
- * A frontend module's registration: shared metadata plus frontend-only capabilities. Subsystems
- * build their own index from these via {@link onFrontendModuleRegister}, so a module declares its
- * capabilities in one place and each subsystem projects the ones it owns.
- */
+/** A frontend module's registration: shared metadata plus frontend-only capabilities. */
 export interface FrontendModule extends ModuleConfig {
-  /** UI tools this module places into named slots (indexed by `~/lib/placements`). */
   tools?: Tool[];
+  /**
+   * Product entity the module edits through CollaborativeBlockNote. Declare it on the module whose
+   * backend counterpart registers a `yjsMaterializer`; the organization layout prefetches a Yjs
+   * token per declared type.
+   */
+  collaborativeProduct?: ProductEntityType;
 }
 
 const frontendModules: FrontendModule[] = [];
 const listeners: ((module: FrontendModule) => void)[] = [];
 
-/**
- * Register a frontend module. Metadata flows to the shared module registry; capabilities flow to
- * frontend projections listening via {@link onFrontendModuleRegister}. Call once at module-load
- * time in the module's `*-module.ts`, which the composition root `~/modules.ts` glob-imports.
- */
+/** Registers a module: metadata to the shared registry, capabilities to {@link onFrontendModuleRegister} listeners. */
 export function defineFrontendModule(module: FrontendModule): void {
-  const { tools: _tools, ...metadata } = module;
+  const { tools: _tools, collaborativeProduct: _collaborativeProduct, ...metadata } = module;
   registerModule(metadata);
   frontendModules.push(module);
   for (const listener of listeners) listener(module);

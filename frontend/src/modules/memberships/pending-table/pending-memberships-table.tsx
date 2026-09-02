@@ -16,7 +16,6 @@ import type { PendingMembership } from '~/modules/memberships/types';
 
 const LIMIT = appConfig.requestLimits.pendingMemberships;
 
-/** Stable row key getter function - defined outside component to prevent re-renders */
 function rowKeyGetter(row: PendingMembership) {
   return row.id;
 }
@@ -29,18 +28,17 @@ export interface PendingMembershipsTableProps {
   channel: EnrichedChannel;
 }
 
-/**
- * Displays a table of pending memberships for a channel entity.
- */
 export function PendingMembershipsTable({ channel }: PendingMembershipsTableProps) {
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<PendingMembershipsSearch>({ saveDataInSearch: false });
 
-  // Table state
   const { sort, order } = search;
   const limit = LIMIT;
 
-  const [columns] = useColumns();
+  const [columns] = useColumns({
+    tenantId: channel.tenantId,
+    organizationId: channel.organizationId || channel.id,
+  });
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
   const queryOptions = pendingMembershipsQueryOptions({
@@ -52,7 +50,6 @@ export function PendingMembershipsTable({ channel }: PendingMembershipsTableProp
     limit,
   });
 
-  // Query invited members
   const {
     data: rows,
     isLoading,
@@ -65,14 +62,13 @@ export function PendingMembershipsTable({ channel }: PendingMembershipsTableProp
     select: ({ pages }) => pages.flatMap(({ items }) => items),
   });
 
-  // isFetching already includes next page fetch scenario
   const fetchMore = async () => {
     if (!hasNextPage || isLoading || isFetching) return;
     await fetchNextPage();
   };
 
   return (
-    <div className="flex h-full flex-col gap-2 pt-4">
+    <div className="flex h-full flex-col gap-2">
       <PendingMembershipsTableBar queryKey={queryOptions.queryKey} />
       <DataTable<PendingMembership>
         {...{

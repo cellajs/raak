@@ -10,9 +10,6 @@ import { ProjectSettings } from '~/modules/project/project-settings';
 import type { EnrichedProject } from '~/modules/project/types';
 import { fallbackContentRef } from '~/utils/fallback-content-ref';
 
-/**
- * Opens the project members sheet.
- */
 export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject<HTMLButtonElement | null>) => {
   const channel = { ...project, tenantId: project.tenantId };
 
@@ -32,9 +29,6 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
   );
 };
 
-/**
- * Opens the project settings sheet.
- */
 export const openProjectSettingsSheet = (
   project: EnrichedProject,
   triggerRef?: RefObject<HTMLButtonElement | null>,

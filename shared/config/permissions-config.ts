@@ -2,15 +2,6 @@ import { appConfig } from '../src/config-builder/app-config.ts';
 import { configurePermissions } from '../src/permissions/policy-matrix.ts';
 
 /**
- * Grant scoping for PRODUCT entities (optional). When a role list is configured, a product
- * membership grant of a role NOT in the list speaks only for rows HOMED at its own channel
- * level, while listed roles keep full subtree scope. `undefined` (the template default)
- * keeps every grant subtree-scoped, which is raak's current behavior. Revisit if
- * project-level roles (e.g. guest) should stop seeing workspace-nested rows.
- */
-export const elevatedRoles: readonly string[] | undefined = undefined;
-
-/**
  * Policy matrix for each entity type: CRUD permissions per role within each channel.
  * See `README.md` in this directory for the elevation vs. self row model and the entity
  * onboarding checklist.

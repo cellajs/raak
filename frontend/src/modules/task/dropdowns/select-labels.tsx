@@ -78,7 +78,6 @@ const renderLabelItem = (
   );
 };
 
-/** Renders the labels selector. */
 export function SelectLabels({
   value: currentLabels,
   projectId,

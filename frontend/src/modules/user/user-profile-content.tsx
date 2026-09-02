@@ -7,11 +7,11 @@ interface Props {
   isSheet?: boolean;
 }
 
-/**
- * This is a placeholder component for the user profile content
- **/
 export function UserProfileContent({ isSheet, user }: Props) {
+  // The page does not wrap this: content owns its container (so it can span full width) and its top padding
   return (
-    <OrganizationsGrid fixedQuery={{ relatableUserId: user.id }} saveDataInSearch={!isSheet} focusView={!isSheet} />
+    <div className="container pt-4">
+      <OrganizationsGrid fixedQuery={{ relatableUserId: user.id }} saveDataInSearch={!isSheet} focusView={!isSheet} />
+    </div>
   );
 }

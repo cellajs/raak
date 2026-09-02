@@ -1,8 +1,7 @@
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { dateMini } from '~/utils/date-mini';
-// fork: mini-time strings moved to a fork-owned module (see date-mini.ts).
-import type { locale } from '~/utils/mini-time-locale';
 
 const minute = 6e4;
 const hour = 36e5;
@@ -16,30 +15,25 @@ const getDelay = (date: string) => {
   return 0;
 };
 
-/**
- * Hook to get a relative date string that updates over time. 10s, 30s, 1h intervals. It stops updating after 1 day.
- */
-export const useRelativeDate = (date: string, loc: keyof typeof locale, addStr?: string) => {
-  const [text, setText] = useState(() => dateMini(date, loc, addStr));
+/** Relative date string that refreshes at 10s, 30s or 1h intervals, stops after a day, and follows the active language. */
+export const useRelativeDate = (date: string, addStr?: string) => {
+  const { i18n } = useTranslation();
+  const language = i18n.language;
+  const [text, setText] = useState(() => dateMini(date, addStr));
 
   useEffect(() => {
     let id: ReturnType<typeof setTimeout>;
 
     const tick = () => {
-      setText(dateMini(date, loc, addStr));
+      setText(dateMini(date, addStr));
       const ms = getDelay(date);
       if (ms) id = setTimeout(tick, ms);
     };
 
-    // Immediately sync text when date/loc/addStr changes
-    setText(dateMini(date, loc, addStr));
-
-    // Schedule the next update
-    const ms = getDelay(date);
-    if (ms) id = setTimeout(tick, ms);
+    tick();
 
     return () => clearTimeout(id);
-  }, [date, loc, addStr]);
+  }, [date, addStr, language]);
 
   return text;
 };

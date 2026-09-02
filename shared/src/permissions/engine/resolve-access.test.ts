@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { elevateAcross } from '../../testing/elevate.ts';
 import {
   configureWidePermissions,
   type WideChannelType,
   type WideProductType,
   type WideRole,
+  wideHierarchy,
   wideMembership,
   wideOverrides,
   wideSubject,
@@ -13,11 +15,9 @@ import { type EngineAccess, getDecisionsForAccesses } from './resolve-access.ts'
 import type { AccessMembership, SubjectForPermission } from './types.ts';
 
 /**
- * THE guarantee that lets `checkAccess` collapse accesses into classes: for every access,
- * the batch decision must equal the mapped single decision, over policies the template
- * itself never ships (row conditions, public read, guest roles, deep hierarchies,
- * `elevatedRoles`). This is the property the dispatch fan-out ultimately rides on; it
- * lives HERE because only the engine's own tests can inject synthetic policies.
+ * The guarantee that lets `checkAccess` group accesses into classes: for every access the batch
+ * decision equals the mapped single decision, over policies the template never ships. It lives
+ * here because only the engine's own tests can inject synthetic policies.
  */
 const ORGS = ['org1', 'org2'];
 const PROJECTS = ['proj1', 'proj2', 'proj3'];
@@ -27,7 +27,7 @@ const USERS = ['user1', 'user2', 'user3', 'user4'];
 interface PolicyScenario {
   name: string;
   result: ReturnType<typeof configureWidePermissions>;
-  elevatedRoles?: readonly string[];
+  elevatedGrants?: ReadonlySet<string>;
 }
 
 const scenarios: PolicyScenario[] = [
@@ -95,7 +95,7 @@ const scenarios: PolicyScenario[] = [
           break;
       }
     }),
-    elevatedRoles: ['admin'],
+    elevatedGrants: elevateAcross(wideHierarchy, ['admin']),
   },
 ];
 
@@ -165,14 +165,14 @@ const makeRandomizer = (seed: number) => {
 
 describe('getDecisionsForAccesses ≍ mapped getAllDecisions', () => {
   for (const scenario of scenarios) {
-    it(`agrees on can + membership for every access — ${scenario.name}`, () => {
+    it(`agrees on can + membership for every access: ${scenario.name}`, () => {
       const SEED = 0xacce55;
       const { randomSubject, randomAccess } = makeRandomizer(SEED);
       const { policyMatrix, publicReadGrants } = scenario.result;
       const baseOptions = {
         ...wideOverrides,
         publicGrants: publicReadGrants,
-        elevatedRoles: scenario.elevatedRoles,
+        elevatedGrants: scenario.elevatedGrants,
       };
 
       for (let iteration = 0; iteration < 150; iteration++) {

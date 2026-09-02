@@ -42,7 +42,6 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const taskSheetId = search.taskSheetId;
   const isSheetOpen = !!taskSheetId;
 
-  // Get filtered visible tasks for a panel
   const getVisiblePanelTasks = (panel: StrictBoardPanel) => {
     const boardTasks = cachedTasks();
     const projectTasks = boardTasks.filter(({ projectId }) => projectId === panel.project.id);

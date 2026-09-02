@@ -40,7 +40,6 @@ interface DeleteWorkspacesByIdsOpts {
   ids: string[];
 }
 
-/** Delete workspaces by IDs. */
 export const deleteWorkspacesByIds = async (ctx: AuthContext, { ids }: DeleteWorkspacesByIdsOpts) => {
   const { db, organizationId } = ctx.var;
   return db
@@ -83,7 +82,6 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
 
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
-  // Workspace filters in WHERE
   const workspaceWhere: SQL[] = [
     ...(q ? [ilike(workspacesTable.name, prepareStringForILikeFilter(q))] : []),
     ...(organizationId ? [eq(workspacesTable.organizationId, organizationId)] : []),

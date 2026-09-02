@@ -3,7 +3,6 @@ import type { GetPublicProjectResponse } from 'sdk';
 import { PageHeader } from '~/modules/common/page/header';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 
-/** Renders the public project page. */
 export function PublicProjectPage({ project, children }: { project: GetPublicProjectResponse; children: ReactNode }) {
   return (
     <>

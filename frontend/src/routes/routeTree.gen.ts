@@ -30,6 +30,7 @@ import { Route as PublicContentDocsRouteRouteImport } from './_public/_content/d
 import { Route as PublicMarketingAboutRouteImport } from './_public/_marketing/about'
 import { Route as PublicMarketingAccessibilityRouteImport } from './_public/_marketing/accessibility'
 import { Route as PublicMarketingContactRouteImport } from './_public/_marketing/contact'
+import { Route as PublicMarketingFeaturesRouteImport } from './_public/_marketing/features'
 import { Route as PublicAuthAuthenticateRouteImport } from './_public/auth/authenticate'
 import { Route as PublicAuthErrorRouteImport } from './_public/auth/error'
 import { Route as PublicAuthMfaRouteImport } from './_public/auth/mfa'
@@ -156,6 +157,11 @@ const PublicMarketingAccessibilityRoute =
 const PublicMarketingContactRoute = PublicMarketingContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => PublicMarketingRoute,
+} as any)
+const PublicMarketingFeaturesRoute = PublicMarketingFeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
   getParentRoute: () => PublicMarketingRoute,
 } as any)
 const PublicAuthAuthenticateRoute = PublicAuthAuthenticateRouteImport.update({
@@ -313,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof PublicMarketingAboutRoute
   '/accessibility': typeof PublicMarketingAccessibilityRoute
   '/contact': typeof PublicMarketingContactRoute
+  '/features': typeof PublicMarketingFeaturesRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
@@ -355,6 +362,7 @@ export interface FileRoutesByTo {
   '/about': typeof PublicMarketingAboutRoute
   '/accessibility': typeof PublicMarketingAccessibilityRoute
   '/contact': typeof PublicMarketingContactRoute
+  '/features': typeof PublicMarketingFeaturesRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
@@ -403,6 +411,7 @@ export interface FileRoutesById {
   '/_public/_marketing/about': typeof PublicMarketingAboutRoute
   '/_public/_marketing/accessibility': typeof PublicMarketingAccessibilityRoute
   '/_public/_marketing/contact': typeof PublicMarketingContactRoute
+  '/_public/_marketing/features': typeof PublicMarketingFeaturesRoute
   '/_public/auth/authenticate': typeof PublicAuthAuthenticateRoute
   '/_public/auth/error': typeof PublicAuthErrorRoute
   '/_public/auth/mfa': typeof PublicAuthMfaRoute
@@ -448,6 +457,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/accessibility'
     | '/contact'
+    | '/features'
     | '/auth/authenticate'
     | '/auth/error'
     | '/auth/mfa'
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/accessibility'
     | '/contact'
+    | '/features'
     | '/auth/authenticate'
     | '/auth/error'
     | '/auth/mfa'
@@ -537,6 +548,7 @@ export interface FileRouteTypes {
     | '/_public/_marketing/about'
     | '/_public/_marketing/accessibility'
     | '/_public/_marketing/contact'
+    | '/_public/_marketing/features'
     | '/_public/auth/authenticate'
     | '/_public/auth/error'
     | '/_public/auth/mfa'
@@ -715,6 +727,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof PublicMarketingContactRouteImport
+      parentRoute: typeof PublicMarketingRoute
+    }
+    '/_public/_marketing/features': {
+      id: '/_public/_marketing/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof PublicMarketingFeaturesRouteImport
       parentRoute: typeof PublicMarketingRoute
     }
     '/_public/auth/authenticate': {
@@ -1046,6 +1065,7 @@ interface PublicMarketingRouteChildren {
   PublicMarketingAboutRoute: typeof PublicMarketingAboutRoute
   PublicMarketingAccessibilityRoute: typeof PublicMarketingAccessibilityRoute
   PublicMarketingContactRoute: typeof PublicMarketingContactRoute
+  PublicMarketingFeaturesRoute: typeof PublicMarketingFeaturesRoute
   PublicMarketingLegalSubjectRoute: typeof PublicMarketingLegalSubjectRoute
   PublicMarketingLegalIndexRoute: typeof PublicMarketingLegalIndexRoute
 }
@@ -1054,6 +1074,7 @@ const PublicMarketingRouteChildren: PublicMarketingRouteChildren = {
   PublicMarketingAboutRoute: PublicMarketingAboutRoute,
   PublicMarketingAccessibilityRoute: PublicMarketingAccessibilityRoute,
   PublicMarketingContactRoute: PublicMarketingContactRoute,
+  PublicMarketingFeaturesRoute: PublicMarketingFeaturesRoute,
   PublicMarketingLegalSubjectRoute: PublicMarketingLegalSubjectRoute,
   PublicMarketingLegalIndexRoute: PublicMarketingLegalIndexRoute,
 }

@@ -113,9 +113,6 @@ const projectRoutes = {
     },
   }),
 
-  /**
-   * Update a project
-   */
   updateProject: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}',
@@ -139,9 +136,6 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Assign a project to a workspace
-   */
   assignProjectWorkspace: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace',
@@ -169,9 +163,6 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Remove a project from its assigned workspace
-   */
   removeProjectWorkspace: createXRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/projects/{id}/workspace',
@@ -198,9 +189,6 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Move a project between workspaces
-   */
   moveProjectToWorkspace: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}/move',
@@ -224,9 +212,6 @@ const projectRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Delete one or more projects
-   */
   deleteProjects: createXRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/projects',

@@ -24,7 +24,6 @@ export interface BoardProps {
   publicView?: boolean;
 }
 
-/** Props for child components that receive already-resolved projects */
 export type ResolvedBoardProps = Omit<BoardProps, 'projects'> & { projects: EnrichedProject[] };
 
 /**

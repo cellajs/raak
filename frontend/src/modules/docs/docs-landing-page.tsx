@@ -6,13 +6,9 @@ import { Spinner } from '~/modules/common/spinner';
 import { type DocsTile, docsConfig, getDocPageLoader, getResolvedDocPageComponent } from '~/modules/page/content';
 import { mdxComponents } from '~/modules/page/mdx-components';
 
-/**
- * The /docs landing page (title + intro MDX + link tiles), driven by the global docs config
- * (content root index.mdx frontmatter) so apps can customize it without touching code.
- */
+/** The /docs landing page, driven by the global docs config (content root index.mdx frontmatter). */
 export function DocsLandingPage() {
-  // Body resolved by the index route loader; the lazy path covers other callers and
-  // the fallback-config case (no root index.mdx → no body, title + tiles only).
+  // Body resolved by the index route loader; the lazy path covers other callers and the no-body case
   const Content = useMemo<ComponentType<{ components?: typeof mdxComponents }> | null>(() => {
     const resolved = getResolvedDocPageComponent('');
     if (resolved) return resolved;
@@ -32,6 +28,7 @@ export function DocsLandingPage() {
               </MDXProvider>
             </Suspense>
           )}
+          <p className="not-prose text-muted-foreground text-sm">v{__PKG_VERSION__}</p>
           {docsConfig.tiles.length > 0 && (
             <div className="not-prose mt-8 grid gap-3 sm:grid-cols-2">
               {docsConfig.tiles.map((tile) => (
@@ -45,7 +42,7 @@ export function DocsLandingPage() {
   );
 }
 
-/** Landing tile (mirrors the child page cards in view-page). Internal targets use the router. */
+/** Landing tile; internal targets go through the router. */
 function DocsTileCard({ tile }: { tile: DocsTile }) {
   const isInternal = tile.to.startsWith('/');
   const cardClass = 'group flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50';

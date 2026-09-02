@@ -24,7 +24,6 @@ interface MoveProjectFormProps {
   onSuccess?: () => void;
 }
 
-/** Renders the move project form. */
 export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectFormProps) {
   const { t } = useTranslation();
 

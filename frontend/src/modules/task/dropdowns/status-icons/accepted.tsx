@@ -1,6 +1,5 @@
 import type { SVGProps } from 'react';
 
-/** Renders the accepted icon. */
 export function AcceptedIcon({ ...props }: SVGProps<SVGSVGElement>) {
   return (
     <svg

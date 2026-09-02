@@ -15,7 +15,6 @@ import { lazyNamed } from '~/utils/lazy-named';
 
 const LabelPage = lazyNamed(() => import('~/modules/label/label-page'), 'LabelPage');
 
-/** Renders the workspace board tabs component. */
 export function WorkspaceBoardTabs({
   projects,
   workspace,

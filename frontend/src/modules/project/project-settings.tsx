@@ -18,7 +18,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/mod
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-/** Renders the project settings component. */
 export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; project: EnrichedProject }) {
   const navigate = useNavigate();
   const { t } = useTranslation();

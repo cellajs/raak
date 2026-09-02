@@ -36,7 +36,6 @@ export const getTasks = async (
     findLabelsByProjects(ctx, { projectIds }),
   ]);
 
-  // Build search filters
   const tasksSearchFilters: SQL[] = [];
 
   if (trimmedQuery) {

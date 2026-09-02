@@ -2,16 +2,13 @@ import { useState } from 'react';
 import { type FieldValues, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { BaseFormFieldProps } from '~/modules/common/form-fields/type';
-import { FormDescription, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { TagInput } from '~/modules/ui/tag-input';
 
 type DomainsFieldProps<TFieldValues extends FieldValues> = BaseFormFieldProps<TFieldValues> & {
   description?: string;
 };
 
-/**
- * Form field for entering and validating a list of domain names using tag input.
- */
 export function DomainsFormField<TFieldValues extends FieldValues>({
   control,
   name,
@@ -27,13 +24,11 @@ export function DomainsFormField<TFieldValues extends FieldValues>({
   const domains: string[] = formValue.map((dom: string) => dom);
   const [currentValue, setCurrentValue] = useState('');
 
-  // Validate input while typing
   const isValidInput = (value: string) => {
     if (!value || value.trim().length < 2) return true;
     return checkValidDomain(value);
   };
 
-  // Domain validation regex
   const checkValidDomain = (domain: string) => {
     return /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/i.test(domain.trim());
   };
@@ -45,11 +40,10 @@ export function DomainsFormField<TFieldValues extends FieldValues>({
       render={({ field: { onChange } }) => {
         return (
           <FormItem>
-            <FormLabel>
+            <FormLabel help={description}>
               {label}
               {required && <span className="ml-1 opacity-50">*</span>}
             </FormLabel>
-            {description && <FormDescription>{description}</FormDescription>}
             <TagInput
               inputProps={{ value: currentValue, 'aria-invalid': !isValidInput(currentValue) }}
               onInputChange={(newValue) => setCurrentValue(newValue)}

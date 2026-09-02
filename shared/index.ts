@@ -1,22 +1,17 @@
 import { hierarchy } from './config/config.default.ts';
 
-// Entity hierarchy & roles
 export { hierarchy, roles } from './config/config.default.ts';
 export type { LabelColorToken, LabelMode, PrimaryLabelDefinition } from './config/labels-config.ts';
 // fork: label modes and primary-label constraints. `shared/config/*` has no subpath export, so
 // app-owned config reaches consumers through this barrel until upstream ships an app-config stub.
 export { labelColorTokens, labelModes, labelSlug, primaryLabelLimits } from './config/labels-config.ts';
-// App configuration
 export { appConfig } from './src/config-builder/app-config.ts';
 export type { ConfigMode } from './src/config-builder/types.ts';
 
-// Bound guard facade: these ARE the app singleton's methods (arrow fields, so binding is
-// preserved), re-exported for the two highest-frequency checks. Everything else stays on
-// the instance. Test mocks that replace `hierarchy` must override these from the same
-// synthetic instance.
+// The app singleton's own arrow fields, so binding survives destructuring. Test mocks replacing
+// `hierarchy` must override these from the same synthetic instance.
 export const { isChannel, isProduct } = hierarchy;
 
-// Entity hierarchy types and builder functions
 export type {
   ChannelView,
   EntityHierarchy,
@@ -30,12 +25,11 @@ export {
   createEntityHierarchy,
   createRoleRegistry,
 } from './src/config-builder/entity-hierarchy.ts';
-// Row location: home attribution and paths are instance methods on EntityHierarchy.
-// Only the naming rule and the pure path-string helpers remain as free exports.
+// Home attribution and paths are instance methods on EntityHierarchy; only the naming rule and
+// the pure path-string helpers are free exports.
 export type { ResolvedAncestor } from './src/config-builder/resolve-row-channel.ts';
 export { entityIdColumnKey, entityIdColumnName } from './src/config-builder/resolve-row-channel.ts';
 export { pathHomeId, pathSegments, pathStartsWith } from './src/config-builder/row-path.ts';
-// Config builder types
 export type {
   AppServiceEndpointConfig,
   RequestLimitsConfig,
@@ -51,7 +45,6 @@ export {
   typedEntries,
   typedKeys,
 } from './src/config-builder/utils.ts';
-// Permissions
 export type {
   AccessMembership,
   ActionAttribution,
@@ -80,7 +73,6 @@ export type {
   RowForCondition,
   SubjectForPermission,
 } from './src/permissions/index.ts';
-// Permission engine (tier-neutral decision logic, shared by backend + yjs)
 export {
   type Access,
   type Actor,
@@ -96,7 +88,6 @@ export {
   computeCan,
   configurePermissions,
   createActionRecord,
-  elevatedRoles,
   formatBatchPermissionSummary,
   formatPermissionDecision,
   getAllDecisions,
@@ -118,7 +109,6 @@ export {
 } from './src/permissions/index.ts';
 export { draftVisibleTo, isUnpublishedDraft } from './src/published-rows.ts';
 export { seenWindowMs } from './src/seen-window.ts';
-// App-derived types
 export type {
   ActivityAction,
   ActivityVerb,
@@ -151,8 +141,7 @@ export type {
   UploadTemplateId,
   UserFlags,
 } from './types.ts';
-// Activity actions and event types (value exports)
 export { actionToVerb, activityActions, activityVerbs, isValidEventType, trackedEventTypes } from './types.ts';
 
-// Side-effect import: compile-time validation that config matches hierarchy
+// Side-effect import: compile-time check that the config matches the hierarchy.
 import './src/config-builder/config-validation.ts';

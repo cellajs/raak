@@ -6,6 +6,7 @@ import { inactiveMembershipsTable } from '#/modules/memberships/inactive-members
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import {
   channelEntityTypeSchema,
+  includeQuerySchema,
   paginationQuerySchema,
   validEmailSchema,
   validIdSchema,
@@ -15,7 +16,6 @@ import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
 import { userBaseSchema } from '#/schemas/user-schema-base';
 import { mockInactiveMembershipResponse, mockMembershipBase, mockMembershipResponse } from './memberships-mocks';
 
-/** Schema for entity roles enum - uses literal types from appConfig */
 const entityRoleSchema = z.enum(roles.all);
 
 export const membershipSchema = z
@@ -34,7 +34,6 @@ export const membershipSchema = z
 export const inactiveMembershipSchema = z
   .object({
     ...createSelectSchema(inactiveMembershipsTable).shape,
-    // Override enum columns with explicit schemas to preserve literal types
     role: entityRoleSchema,
     channelType: channelEntityTypeSchema,
     createdBy: nullableUserMinimalBaseSchema,
@@ -73,8 +72,11 @@ export const membershipUpdateBodySchema = z.object({
 export const memberListQuerySchema = paginationQuerySchema.extend({
   entityId: validIdSchema,
   entityType: channelEntityTypeSchema,
-  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).default('createdAt'),
+  // lastPostedAt sorts by the member's latest product row in the viewed channel; default is recent activity
+  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt', 'lastPostedAt']).default('lastSeenAt'),
   role: z.enum(roles.all).optional(),
+  // Opt-in per-member insight counts (member-counts.ts), mirroring the channel lists' include=counts
+  include: includeQuerySchema,
   userIds: z
     .string()
     .transform((value) => value.split(',').map((id) => id.trim()))
@@ -90,6 +92,8 @@ export const pendingMembershipListQuerySchema = paginationQuerySchema.extend({
 
 export const pendingMembershipSchema = z.object({
   id: z.string(),
+  /** The pending invitation's token id; null when the invite's token row is gone. */
+  tokenId: z.string().nullable(),
   email: userBaseSchema.shape.email,
   thumbnailUrl: userBaseSchema.shape.thumbnailUrl.nullable(),
   role: membershipSchema.shape.role.nullable(),

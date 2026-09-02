@@ -92,9 +92,6 @@ const taskRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Get single task by ID
-   */
   getTask: createXRoute({
     operationId: 'getTask',
     method: 'get',
@@ -119,9 +116,6 @@ const taskRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Update a task
-   */
   updateTask: createXRoute({
     operationId: 'updateTask',
     method: 'put',
@@ -152,9 +146,6 @@ const taskRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Delete one or more tasks
-   */
   deleteTasks: createXRoute({
     operationId: 'deleteTasks',
     method: 'delete',

@@ -40,7 +40,6 @@ interface Props {
   onChange: (items: ChannelBase[]) => void;
 }
 
-/** Renders the project suggestion combobox component. */
 export function ProjectSuggestionCombobox({
   value,
   workspaceId,

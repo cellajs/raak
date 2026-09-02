@@ -28,7 +28,6 @@ import {
 } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
-/** Renders the members selector. */
 export function SelectMembers({
   value: currentAssigned,
   projectId,

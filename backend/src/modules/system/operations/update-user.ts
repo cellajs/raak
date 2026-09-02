@@ -17,9 +17,8 @@ export async function updateUserOp(ctx: AuthContext, id: string, input: UpdateUs
   const targetUser = await findUserById(ctx, { id });
   if (!targetUser) throw new AppError(404, 'not_found', 'warn', { entityType: 'user', meta: { user: id } });
 
-  const { bannerUrl, firstName, lastName, language, newsletter, thumbnailUrl, slug } = input;
+  const { bannerUrl, description, firstName, lastName, language, newsletter, thumbnailUrl, slug } = input;
 
-  // Check if slug is available
   if (slug && slug !== targetUser.slug) {
     const slugAvailable = await checkSlugAvailable(ctx, slug, 'user');
     if (!slugAvailable) throw new AppError(409, 'slug_exists', 'warn', { entityType: 'user', meta: { slug } });
@@ -27,6 +26,7 @@ export async function updateUserOp(ctx: AuthContext, id: string, input: UpdateUs
 
   const values = {
     bannerUrl,
+    description,
     firstName,
     lastName,
     language,
@@ -42,7 +42,7 @@ export async function updateUserOp(ctx: AuthContext, id: string, input: UpdateUs
   invalidateCache.user(updatedUser.id);
   log.info('User updated', { userId: updatedUser.id });
 
-  // Re-select with userSelect to include timestamps (subqueries from user_counters table)
+  // Re-select to include the user_counters subqueries
   const userWithActivity = await findUserById(ctx, { id: updatedUser.id });
 
   return userWithActivity;

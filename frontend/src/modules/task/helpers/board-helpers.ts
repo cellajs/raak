@@ -93,7 +93,6 @@ export const sortByMembership = (projects: EnrichedProject[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
 
-/** Prepares board panels. */
 export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: BoardPanelData | undefined) => {
   const sortedProjects = sortByMembership(projects);
 
@@ -113,7 +112,6 @@ export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: 
   });
 };
 
-/** Formats section label for display. */
 export const formatSectionLabel = (filters: SectionsValue): string => {
   return Object.entries(filters)
     .map(([key, values]) => {
@@ -127,7 +125,6 @@ export const formatSectionLabel = (filters: SectionsValue): string => {
     .join('\n');
 };
 
-/** Normalizes panel widths. */
 export const normalizePanelWidths = (storedLayout: Record<string, number>, currentProjectIds: string[]) => {
   const layout: Record<string, number> = {};
 

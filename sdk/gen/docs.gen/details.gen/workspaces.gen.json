@@ -61,6 +61,21 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "toolsConfig": {
+                    "required": true,
+                    "anyOf": [
+                      { "type": "string", "required": false },
+                      { "type": "number", "required": false },
+                      { "type": "boolean", "required": false },
+                      { "type": "null", "required": false },
+                      {
+                        "type": "object",
+                        "required": false,
+                        "additionalProperties": { "type": "object", "required": false }
+                      },
+                      { "type": "array", "required": false, "itemType": "object" }
+                    ]
+                  },
                   "path": {
                     "type": ["string", "null"],
                     "required": true
@@ -127,6 +142,11 @@
                             }
                           },
                           "entities": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {}
+                          },
+                          "entitiesSelf": {
                             "type": "object",
                             "required": true,
                             "properties": {}
@@ -200,6 +220,7 @@
               "updatedBy": null,
               "publishedAt": "2024-04-18T21:12:59.543Z",
               "publicAt": null,
+              "toolsConfig": {},
               "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
               "included": {
@@ -226,6 +247,7 @@
                     "total": 287
                   },
                   "entities": {},
+                  "entitiesSelf": {},
                   "activity": {}
                 }
               }
@@ -463,6 +485,21 @@
                     "type": ["string", "null"],
                     "required": true
                   },
+                  "toolsConfig": {
+                    "required": true,
+                    "anyOf": [
+                      { "type": "string", "required": false },
+                      { "type": "number", "required": false },
+                      { "type": "boolean", "required": false },
+                      { "type": "null", "required": false },
+                      {
+                        "type": "object",
+                        "required": false,
+                        "additionalProperties": { "type": "object", "required": false }
+                      },
+                      { "type": "array", "required": false, "itemType": "object" }
+                    ]
+                  },
                   "path": {
                     "type": ["string", "null"],
                     "required": true
@@ -533,6 +570,11 @@
                             "required": true,
                             "properties": {}
                           },
+                          "entitiesSelf": {
+                            "type": "object",
+                            "required": true,
+                            "properties": {}
+                          },
                           "activity": {
                             "type": "object",
                             "required": true,
@@ -591,6 +633,7 @@
               "updatedBy": null,
               "publishedAt": "2024-11-21T01:19:53.533Z",
               "publicAt": null,
+              "toolsConfig": {},
               "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
               "included": {
@@ -617,6 +660,7 @@
                     "total": 159
                   },
                   "entities": {},
+                  "entitiesSelf": {},
                   "activity": {}
                 }
               }
@@ -635,6 +679,7 @@
               "updatedBy": null,
               "publishedAt": "2024-10-29T04:35:17.725Z",
               "publicAt": null,
+              "toolsConfig": {},
               "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
               "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
               "included": {
@@ -661,6 +706,7 @@
                     "total": 229
                   },
                   "entities": {},
+                  "entitiesSelf": {},
                   "activity": {}
                 }
               }
@@ -802,6 +848,21 @@
               "type": ["string", "null"],
               "required": true
             },
+            "toolsConfig": {
+              "required": true,
+              "anyOf": [
+                { "type": "string", "required": false },
+                { "type": "number", "required": false },
+                { "type": "boolean", "required": false },
+                { "type": "null", "required": false },
+                {
+                  "type": "object",
+                  "required": false,
+                  "additionalProperties": { "type": "object", "required": false }
+                },
+                { "type": "array", "required": false, "itemType": "object" }
+              ]
+            },
             "path": {
               "type": ["string", "null"],
               "required": true
@@ -872,6 +933,11 @@
                       "required": true,
                       "properties": {}
                     },
+                    "entitiesSelf": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {}
+                    },
                     "activity": {
                       "type": "object",
                       "required": true,
@@ -924,6 +990,7 @@
           "updatedBy": null,
           "publishedAt": "2024-03-18T14:19:46.053Z",
           "publicAt": null,
+          "toolsConfig": {},
           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
           "included": {
@@ -950,6 +1017,7 @@
                 "total": 324
               },
               "entities": {},
+              "entitiesSelf": {},
               "activity": {}
             }
           }
@@ -1083,6 +1151,21 @@
               "type": ["string", "null"],
               "required": true
             },
+            "toolsConfig": {
+              "required": true,
+              "anyOf": [
+                { "type": "string", "required": false },
+                { "type": "number", "required": false },
+                { "type": "boolean", "required": false },
+                { "type": "null", "required": false },
+                {
+                  "type": "object",
+                  "required": false,
+                  "additionalProperties": { "type": "object", "required": false }
+                },
+                { "type": "array", "required": false, "itemType": "object" }
+              ]
+            },
             "path": {
               "type": ["string", "null"],
               "required": true
@@ -1153,6 +1236,11 @@
                       "required": true,
                       "properties": {}
                     },
+                    "entitiesSelf": {
+                      "type": "object",
+                      "required": true,
+                      "properties": {}
+                    },
                     "activity": {
                       "type": "object",
                       "required": true,
@@ -1205,6 +1293,7 @@
           "updatedBy": null,
           "publishedAt": "2024-03-18T14:19:46.053Z",
           "publicAt": null,
+          "toolsConfig": {},
           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
           "included": {
@@ -1231,6 +1320,7 @@
                 "total": 324
               },
               "entities": {},
+              "entitiesSelf": {},
               "activity": {}
             }
           }

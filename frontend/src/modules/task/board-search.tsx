@@ -16,7 +16,6 @@ interface BoardSearchProps {
   toggleFocus: () => void;
 }
 
-/** Renders the board search component. */
 export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
   const { t } = useTranslation();
   const matchRoute = useMatchRoute();

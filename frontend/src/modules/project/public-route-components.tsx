@@ -11,7 +11,6 @@ const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), '
 
 const publicProjectApi = getRouteApi('/_public/_content/$tenantId/$organizationSlug/public/project/$slug');
 
-/** Renders the routed public project view. */
 export function PublicProjectRouteComponent() {
   const { project } = publicProjectApi.useRouteContext();
   const { view } = publicProjectApi.useSearch();

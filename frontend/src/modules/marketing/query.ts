@@ -2,7 +2,6 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { getPublicCounts } from 'sdk';
 import { appConfig, type EntityType } from 'shared';
 
-/** Builds React Query options for public counts. */
 export const publicCountsQueryOptions = () =>
   queryOptions({
     queryKey: ['marketing', 'public-counts'],

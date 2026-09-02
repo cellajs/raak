@@ -12,9 +12,6 @@ interface Props {
   saveDataInSearch?: boolean;
 }
 
-/**
- * Display a grid of workspace tiles.
- */
 export function WorkspacesGrid({ fixedQuery, saveDataInSearch, focusView }: Props) {
   const { search: baseSearch, setSearch } = useSearchParams({ saveDataInSearch });
 
@@ -36,6 +33,7 @@ export function WorkspacesGrid({ fixedQuery, saveDataInSearch, focusView }: Prop
         queryKey={queryOptions.queryKey}
         searchVars={baseSearch}
         label={'c:workspace'}
+        entityType="workspace"
         setSearch={setSearch}
         focusView={focusView}
       />

@@ -74,7 +74,6 @@ export async function generateCover({ title, avatarUrl, name }: Options) {
   ctx.font = fontStyles.heading;
   wrapText(ctx, title, space, fontSizes.heading + space, canvas.width - space * 2, fontSizes.heading);
 
-  // Avatar
   const avatarTop = canvas.height - avatarSize - avatarSize / 2;
   const avatarLeft = space;
 

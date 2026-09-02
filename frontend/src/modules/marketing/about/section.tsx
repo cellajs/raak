@@ -23,7 +23,6 @@ interface AboutSectionHeaderProps {
   className?: string;
 }
 
-/** Renders the about section header. */
 export function AboutSectionHeader({ title, text, textComponents, className = '' }: AboutSectionHeaderProps) {
   const { t } = useTranslation();
 
@@ -47,7 +46,6 @@ export function AboutSectionHeader({ title, text, textComponents, className = ''
   );
 }
 
-/** Renders the about section. */
 export function AboutSection({
   title,
   text,

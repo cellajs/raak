@@ -40,11 +40,10 @@ export default defineConfig({
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
-      // Attachment pins carry only the projectId/publicAt fork axis since the owned-embedding
-      // flip removed the task strand; db/mocks/module/queries/presigned converged to upstream.
+      // Attachment pins carry only the publicAt cascade and the projectId list/sync narrowing;
+      // the project placement itself lives in the placement seam below.
+      'backend/src/modules/attachment/helpers/attachment-placement.ts',
       'backend/src/modules/attachment/attachment-schema.ts',
-      'backend/src/modules/attachment/attachment-queries.ts',
-      'backend/src/modules/attachment/operations/create-attachments.ts',
       'backend/src/modules/attachment/operations/get-attachments.ts',
       'backend/scripts/seeds/20-attachment.seed.ts',
       'frontend/src/modules/attachment/query.ts',
@@ -73,6 +72,7 @@ export default defineConfig({
       'backend/src/modules/organization/setup-config-schema.ts',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',
+      'frontend/src/query/realtime/register-channel-paths.ts',
     ],
   },
 });

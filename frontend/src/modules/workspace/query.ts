@@ -76,7 +76,6 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
   });
 };
 
-/** Query options for a single workspace by id or slug. */
 export const workspaceQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
@@ -85,7 +84,6 @@ export const workspaceQueryOptions = (id: string, organizationId: string, tenant
     structuralSharing: preserveIncluded,
   });
 
-/** Mutation hook for creating a new workspace. */
 export const useWorkspaceCreateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -109,7 +107,6 @@ export const useWorkspaceCreateMutation = () => {
   });
 };
 
-/** Mutation hook for updating an existing workspace. */
 export const useUpdateWorkspaceMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -131,7 +128,6 @@ export const useUpdateWorkspaceMutation = () => {
   });
 };
 
-/** Mutation hook for deleting workspaces. */
 export const useWorkspaceDeleteMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;

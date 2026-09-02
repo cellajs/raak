@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { useReadOnlyHide } from '~/modules/project/use-read-only';
 
-/** Renders the task panel empty component. */
 export function TaskPanelEmpty({ projectId }: { projectId?: string }) {
   const { t } = useTranslation();
 

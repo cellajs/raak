@@ -71,6 +71,7 @@
               "enum": [6, 5, 4, 3, 2, 1, 0]
             },
             "statusChangedAt": { "type": "string", "required": true },
+            "mentions": { "type": "array", "required": true, "itemType": "string" },
             "checkboxCount": {
               "type": "integer",
               "required": true,
@@ -224,15 +225,15 @@
           "keywords": "minima accedo communis",
           "createdBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
-            "name": "Omar Thompson",
-            "slug": "omar_thompson78",
+            "name": "Nasir Thompson",
+            "slug": "nasir_thompson78",
             "thumbnailUrl": null,
             "entityType": "user"
           },
           "updatedBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
-            "name": "Omar Thompson",
-            "slug": "omar_thompson78",
+            "name": "Nasir Thompson",
+            "slug": "nasir_thompson78",
             "thumbnailUrl": null,
             "entityType": "user"
           },
@@ -252,6 +253,7 @@
           "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
           "labels": [],
           "assignedTo": [],
+          "mentions": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
@@ -394,6 +396,7 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
+                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -553,15 +556,15 @@
               "keywords": "sumptus ter arca",
               "createdBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
-                "name": "Adrain Kirlin",
-                "slug": "adrain_kirlin",
+                "name": "Agustin Kirlin",
+                "slug": "agustin_kirlin",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
-                "name": "Adrain Kirlin",
-                "slug": "adrain_kirlin",
+                "name": "Agustin Kirlin",
+                "slug": "agustin_kirlin",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -591,6 +594,7 @@
                 }
               ],
               "assignedTo": [],
+              "mentions": [],
               "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
               "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
               "primaryLabel": {
@@ -619,15 +623,15 @@
               "keywords": "nostrum volva sufficio",
               "createdBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
-                "name": "Okey Nikolaus",
-                "slug": "okey_nikolaus",
+                "name": "Nya Nikolaus",
+                "slug": "nya_nikolaus",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
-                "name": "Okey Nikolaus",
-                "slug": "okey_nikolaus",
+                "name": "Nya Nikolaus",
+                "slug": "nya_nikolaus",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -668,12 +672,13 @@
               "assignedTo": [
                 {
                   "id": "49e34c9b-2806-42e4-acac-8381fa303867",
-                  "name": "Sabryna Pacocha",
-                  "slug": "sabryna_pacocha",
+                  "name": "Sandra Pacocha",
+                  "slug": "sandra_pacocha",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
               ],
+              "mentions": [],
               "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
               "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
               "primaryLabel": {
@@ -1024,6 +1029,7 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
+                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -1183,15 +1189,15 @@
               "keywords": "sumptus ter arca",
               "createdBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
-                "name": "Adrain Kirlin",
-                "slug": "adrain_kirlin",
+                "name": "Agustin Kirlin",
+                "slug": "agustin_kirlin",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
-                "name": "Adrain Kirlin",
-                "slug": "adrain_kirlin",
+                "name": "Agustin Kirlin",
+                "slug": "agustin_kirlin",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -1221,6 +1227,7 @@
                 }
               ],
               "assignedTo": [],
+              "mentions": [],
               "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
               "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
               "primaryLabel": {
@@ -1249,15 +1256,15 @@
               "keywords": "nostrum volva sufficio",
               "createdBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
-                "name": "Okey Nikolaus",
-                "slug": "okey_nikolaus",
+                "name": "Nya Nikolaus",
+                "slug": "nya_nikolaus",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
-                "name": "Okey Nikolaus",
-                "slug": "okey_nikolaus",
+                "name": "Nya Nikolaus",
+                "slug": "nya_nikolaus",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -1298,12 +1305,13 @@
               "assignedTo": [
                 {
                   "id": "49e34c9b-2806-42e4-acac-8381fa303867",
-                  "name": "Sabryna Pacocha",
-                  "slug": "sabryna_pacocha",
+                  "name": "Sandra Pacocha",
+                  "slug": "sandra_pacocha",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
               ],
+              "mentions": [],
               "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
               "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
               "primaryLabel": {
@@ -1476,6 +1484,7 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
+                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -1646,15 +1655,15 @@
               "keywords": "inflammatio dens demergo",
               "createdBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
-                "name": "Breana Sawayn",
-                "slug": "breana_sawayn",
+                "name": "Bethel Sawayn",
+                "slug": "bethel_sawayn",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
-                "name": "Breana Sawayn",
-                "slug": "breana_sawayn",
+                "name": "Bethel Sawayn",
+                "slug": "bethel_sawayn",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -1704,19 +1713,20 @@
               "assignedTo": [
                 {
                   "id": "29955bb3-62d7-4390-b69f-3101343008a1",
-                  "name": "Erling Hane-Pfeffer",
-                  "slug": "erling_hane-pfeffer53",
+                  "name": "Ethelyn Hane-Pfeffer",
+                  "slug": "ethelyn_hane-pfeffer53",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 },
                 {
                   "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
-                  "name": "Maxine Gutkowski",
-                  "slug": "maxine_gutkowski63",
+                  "name": "Margaretta Gutkowski",
+                  "slug": "margaretta_gutkowski63",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
               ],
+              "mentions": [],
               "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
               "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
               "primaryLabel": {
@@ -1745,15 +1755,15 @@
               "keywords": "aiunt succurro spiritus",
               "createdBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
-                "name": "Alvin Kutch",
-                "slug": "alvin_kutch",
+                "name": "Americo Kutch",
+                "slug": "americo_kutch",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
-                "name": "Alvin Kutch",
-                "slug": "alvin_kutch",
+                "name": "Americo Kutch",
+                "slug": "americo_kutch",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -1785,12 +1795,13 @@
               "assignedTo": [
                 {
                   "id": "25b6609c-3410-4835-9183-b385c477265f",
-                  "name": "Wm Yost",
-                  "slug": "wm.yost84",
+                  "name": "Zachery Yost",
+                  "slug": "zachery.yost84",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
               ],
+              "mentions": [],
               "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
               "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
               "primaryLabel": {
@@ -1882,6 +1893,7 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
+                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -2052,15 +2064,15 @@
               "keywords": "inflammatio dens demergo",
               "createdBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
-                "name": "Breana Sawayn",
-                "slug": "breana_sawayn",
+                "name": "Bethel Sawayn",
+                "slug": "bethel_sawayn",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
-                "name": "Breana Sawayn",
-                "slug": "breana_sawayn",
+                "name": "Bethel Sawayn",
+                "slug": "bethel_sawayn",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -2110,19 +2122,20 @@
               "assignedTo": [
                 {
                   "id": "29955bb3-62d7-4390-b69f-3101343008a1",
-                  "name": "Erling Hane-Pfeffer",
-                  "slug": "erling_hane-pfeffer53",
+                  "name": "Ethelyn Hane-Pfeffer",
+                  "slug": "ethelyn_hane-pfeffer53",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 },
                 {
                   "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
-                  "name": "Maxine Gutkowski",
-                  "slug": "maxine_gutkowski63",
+                  "name": "Margaretta Gutkowski",
+                  "slug": "margaretta_gutkowski63",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
               ],
+              "mentions": [],
               "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
               "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
               "primaryLabel": {
@@ -2151,15 +2164,15 @@
               "keywords": "aiunt succurro spiritus",
               "createdBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
-                "name": "Alvin Kutch",
-                "slug": "alvin_kutch",
+                "name": "Americo Kutch",
+                "slug": "americo_kutch",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
               "updatedBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
-                "name": "Alvin Kutch",
-                "slug": "alvin_kutch",
+                "name": "Americo Kutch",
+                "slug": "americo_kutch",
                 "thumbnailUrl": null,
                 "entityType": "user"
               },
@@ -2191,12 +2204,13 @@
               "assignedTo": [
                 {
                   "id": "25b6609c-3410-4835-9183-b385c477265f",
-                  "name": "Wm Yost",
-                  "slug": "wm.yost84",
+                  "name": "Zachery Yost",
+                  "slug": "zachery.yost84",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
               ],
+              "mentions": [],
               "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
               "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
               "primaryLabel": {
@@ -2511,6 +2525,7 @@
               "enum": [6, 5, 4, 3, 2, 1, 0]
             },
             "statusChangedAt": { "type": "string", "required": true },
+            "mentions": { "type": "array", "required": true, "itemType": "string" },
             "checkboxCount": {
               "type": "integer",
               "required": true,
@@ -2664,15 +2679,15 @@
           "keywords": "minima accedo communis",
           "createdBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
-            "name": "Omar Thompson",
-            "slug": "omar_thompson78",
+            "name": "Nasir Thompson",
+            "slug": "nasir_thompson78",
             "thumbnailUrl": null,
             "entityType": "user"
           },
           "updatedBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
-            "name": "Omar Thompson",
-            "slug": "omar_thompson78",
+            "name": "Nasir Thompson",
+            "slug": "nasir_thompson78",
             "thumbnailUrl": null,
             "entityType": "user"
           },
@@ -2692,6 +2707,7 @@
           "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
           "labels": [],
           "assignedTo": [],
+          "mentions": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
@@ -2830,6 +2846,7 @@
               "enum": [6, 5, 4, 3, 2, 1, 0]
             },
             "statusChangedAt": { "type": "string", "required": true },
+            "mentions": { "type": "array", "required": true, "itemType": "string" },
             "checkboxCount": {
               "type": "integer",
               "required": true,
@@ -2983,15 +3000,15 @@
           "keywords": "minima accedo communis",
           "createdBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
-            "name": "Omar Thompson",
-            "slug": "omar_thompson78",
+            "name": "Nasir Thompson",
+            "slug": "nasir_thompson78",
             "thumbnailUrl": null,
             "entityType": "user"
           },
           "updatedBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
-            "name": "Omar Thompson",
-            "slug": "omar_thompson78",
+            "name": "Nasir Thompson",
+            "slug": "nasir_thompson78",
             "thumbnailUrl": null,
             "entityType": "user"
           },
@@ -3011,6 +3028,7 @@
           "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
           "labels": [],
           "assignedTo": [],
+          "mentions": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {

@@ -1,5 +1,6 @@
 import { defineBackendModule } from '#/lib/module';
 import { updateTaskOp } from '#/modules/task/operations/update-task';
+import { deriveTaskMentionsOnMaterialize, taskNotifications } from '#/modules/task/task-notifications';
 
 defineBackendModule({
   name: 'tasks',
@@ -9,4 +10,6 @@ defineBackendModule({
     support labeling, assignment, and status tracking, and are strictly scoped to their parent project.`,
   productEntity: 'task',
   yjsMaterializer: updateTaskOp,
+  notifications: taskNotifications,
+  onMutation: { 'task.updated': deriveTaskMentionsOnMaterialize },
 });

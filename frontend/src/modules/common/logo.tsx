@@ -9,7 +9,6 @@ interface LogoProps extends React.SVGProps<SVGSVGElement> {
   iconOnly?: boolean;
 }
 
-/** Renders the logo component. */
 export function Logo({ className, iconColor, textColor, height = 50, iconOnly = false, ...props }: LogoProps) {
   const mode = useUIStore((state) => state.mode);
 

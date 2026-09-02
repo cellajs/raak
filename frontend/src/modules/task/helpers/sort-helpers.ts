@@ -1,13 +1,11 @@
 import { appConfig } from 'shared';
 import type { Task } from '~/modules/task/types';
 
-/** Returns the items sorted by name. */
 export const getItemsSortedByName = <T extends { name: string }>(items: T[]): T[] => {
   // slice used so that the original array is not mutated
   return items.slice().sort((a, b) => a.name.localeCompare(b.name, appConfig.defaultLanguage));
 };
 
-/** Sorts tasks by status and display order. */
 export const sortTaskOrder = (
   task1: Pick<Task, 'status' | 'displayOrder'>,
   task2: Pick<Task, 'status' | 'displayOrder'>,

@@ -8,6 +8,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const defaultRepoRoot = join(here, '..', '..');
 const disallowedTerm = /fork/gi;
 const allowedFiles = new Set([
+  // release-please copies merged commit titles into the changelog verbatim, so any
+  // title using the CLI's source-control term would otherwise fail the release PR.
+  'cella/CHANGELOG.md',
   'cella/cella.config.ts',
   // The cella-sync skill documents the CLI sync workflow and the app-side marker convention,
   // both of which use the CLI's source-control term. It must stay byte-identical with the
@@ -32,7 +35,6 @@ function isAllowed(file: string): boolean {
   return allowedFiles.has(file) || allowedPrefixes.some((prefix) => file.startsWith(prefix));
 }
 
-/** Find disallowed terminology in one repository path and its text content. */
 export function findAppVocabularyFindings(file: string, source: string): AppVocabularyFinding[] {
   if (isAllowed(file)) return [];
 
@@ -74,7 +76,6 @@ function trackedFiles(repoRoot: string): string[] {
     .sort();
 }
 
-/** Check every tracked or untracked, nonignored text file in a repository. */
 export function runAppVocabularyCheck(repoRoot = defaultRepoRoot): number {
   const findings = trackedFiles(repoRoot).flatMap((file) => {
     const source = readFileSync(join(repoRoot, file));

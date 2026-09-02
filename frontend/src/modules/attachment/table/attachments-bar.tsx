@@ -21,7 +21,6 @@ import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 type AttachmentsTableBarProps = AttachmentsTableProps & BaseTableBarProps<Attachment, AttachmentsRouteSearchParams>;
 
-/** Renders the action and filter toolbar for the attachments table. */
 export function AttachmentsTableBar({
   channel,
   selected,
@@ -47,12 +46,9 @@ export function AttachmentsTableBar({
 
   const isFiltered = !!q;
 
-  // Honest bulk delete: act only on the rows this user may delete ('own' resolves per row);
-  // the badge shows that count when it differs from the selection. The backend's rejectedIds
-  // path stays as the net for stale client-side permissions.
+  // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
   const deletable = selected.filter((row) => resolveCan(channel.can?.attachment?.delete, row.createdBy));
 
-  // Drop selected rows on search
   const onSearch = (searchString: string) => {
     clearSelection();
     setSearch({ q: searchString });
@@ -79,7 +75,6 @@ export function AttachmentsTableBar({
   return (
     <>
       <TableBarContainer searchVars={searchVars} offsetTop={48}>
-        {/* Filter bar */}
         <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
           <FilterBarActions>
             <TableCount count={total} label="c:attachment" isFiltered={isFiltered} onResetFilters={onResetFilters} />
@@ -90,14 +85,11 @@ export function AttachmentsTableBar({
           </FilterBarSearch>
         </TableFilterBar>
 
-        {/* Columns view */}
         <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns} />
 
-        {/* Focus view */}
         {!isSheet && <FocusView iconOnly />}
       </TableBarContainer>
 
-      {/* Floating actions for the current selection */}
       <SelectionActionBar count={selected.length} onClear={clearSelection}>
         {deletable.length > 0 && (
           <TableBarButton
@@ -112,7 +104,6 @@ export function AttachmentsTableBar({
         )}
       </SelectionActionBar>
 
-      {/* Explainer alert box */}
       {!!total && (
         <AlertBanner id="edit_attachment" variant="plain" className="mb-4" icon={InfoIcon} animate>
           {t('c:edit_attachment.text')}
