@@ -885,7 +885,11 @@
               "description": "MIME type of the server-converted variant; null when none.",
               "maxLength": 255
             },
-            "projectId": { "type": "string", "required": true, "maxLength": 50 },
+            "publicAt": {
+              "type": ["string", "null"],
+              "required": false
+            },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
               "type": "object",
               "required": true,

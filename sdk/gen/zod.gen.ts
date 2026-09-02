@@ -2556,7 +2556,8 @@ export const zCreateAttachmentsBody = z
       publicBucket: z.boolean().optional(),
       groupId: z.uuid().nullish(),
       convertedContentType: z.string().max(255).nullish(),
-      projectId: z.string().max(50),
+      publicAt: z.string().nullish(),
+      projectId: z.uuid(),
       stx: zStxBase,
     }),
   )

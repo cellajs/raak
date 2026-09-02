@@ -14567,9 +14567,12 @@
                       "maxLength": 255,
                       "description": "MIME type of the server-converted variant; null when none."
                     },
+                    "publicAt": {
+                      "type": ["string", "null"]
+                    },
                     "projectId": {
                       "type": "string",
-                      "maxLength": 50
+                      "format": "uuid"
                     },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
