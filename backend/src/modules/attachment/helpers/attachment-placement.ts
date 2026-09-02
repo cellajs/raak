@@ -1,5 +1,14 @@
 import type { z } from '@hono/zod-openapi';
-import { appConfig, type ChannelEntityType, hierarchy } from 'shared';
+import {
+  type AncestorChannelType,
+  appConfig,
+  type ChannelEntityType,
+  type EntityIdColumns,
+  type EntityType,
+  hierarchy,
+  type NullableAncestorType,
+  type RootChannelType,
+} from 'shared';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { DB } from '#/db/db';
@@ -33,12 +42,17 @@ export const attachmentPlacementFieldsSchema = Object.fromEntries(
 /** A create-body item as the placement seam sees it; apps narrow to their placement fields. */
 export type AttachmentPlacementInput = Record<string, unknown>;
 
+type SubOrgAncestor = Exclude<AncestorChannelType<'attachment'>, RootChannelType>;
+
 /**
- * Ancestor id columns to stamp on the inserted row (null above the home). raak's home is strict,
- * so the resolved placement always carries the project id (the create op and the seed spread it
- * into the NOT NULL column); the seed also carries the project's `publicAt`.
+ * Ancestor id columns to stamp on the inserted row, typed like the table columns: strict ancestors
+ * are `string`, nullable ones `string | null`; empty for org-homed rows.
  */
-export type ResolvedAttachmentPlacement = Record<string, string | null> & { projectId: string };
+export type ResolvedAttachmentPlacement = EntityIdColumns<
+  Exclude<SubOrgAncestor, NullableAncestorType<'attachment'>> & EntityType,
+  string
+> &
+  EntityIdColumns<Extract<SubOrgAncestor, NullableAncestorType<'attachment'>> & EntityType, string | null>;
 
 const providedHome = (item: AttachmentPlacementInput) =>
   placementAncestors.filter((type) => typeof item[placementKey(type)] === 'string' && item[placementKey(type)]);
@@ -64,7 +78,6 @@ export const resolveAttachmentPlacement = async (
   ctx: AuthContext,
   input: AttachmentPlacementInput,
 ): Promise<ResolvedAttachmentPlacement> => {
-  // Built loosely (null above the home) and narrowed on return: raak's fields schema requires the project id.
   const columns: Record<string, string | null> = Object.fromEntries(
     placementAncestors.map((type) => [placementKey(type), null]),
   );
