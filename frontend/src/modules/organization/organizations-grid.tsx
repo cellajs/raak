@@ -14,12 +14,8 @@ interface Props {
   limitedView?: boolean;
 }
 
-// Optionally set a custom tile
 const tileComponent = ChannelGridTile;
 
-/**
- * Display a grid of organization tiles.
- */
 export function OrganizationsGrid({ fixedQuery, saveDataInSearch, focusView, limitedView: initialLimitedView }: Props) {
   const [expanded, setExpanded] = useState(false);
   const limitedView = initialLimitedView && !expanded;
@@ -41,12 +37,16 @@ export function OrganizationsGrid({ fixedQuery, saveDataInSearch, focusView, lim
   const entities = data;
 
   return (
-    <div className="flex h-full flex-col gap-2 pt-4">
+    <div className="flex h-full flex-col gap-2">
       {!limitedView && (
         <EntityGridBar
           queryKey={queryOptions.queryKey}
           searchVars={baseSearch}
           label={'c:organization'}
+          entityType="organization"
+          // Discovery grid: a role filter collapses the scope to membership-only; bar stays for short lists
+          roleFilter={false}
+          alwaysShow
           setSearch={setSearch}
           isSheet={!focusView}
           focusView={focusView}
@@ -65,6 +65,7 @@ export function OrganizationsGrid({ fixedQuery, saveDataInSearch, focusView, lim
         isFiltered={isFiltered}
         limitedView={limitedView}
         onExpand={() => setExpanded(true)}
+        queryKey={queryOptions.queryKey}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import type { ChannelEntityType, EntityIdColumns, EntityType, ProductEntityType } from 'shared';
 import { hierarchy } from 'shared';
+import type { ToolsConfig } from 'shared/tools-config';
 import slugify from 'slugify';
 import type { StxBase } from '#/schemas/sync-transaction-schemas';
 import { mockTenantId, mockUuid } from './mock-nanoid';
@@ -20,10 +21,7 @@ type MockTenantEntityColumns<T extends TenantEntityType> = {
 
 type MockTenantEntityColumnOptions = Partial<Omit<MockTenantEntityColumns<TenantEntityType>, 'entityType'>>;
 
-/**
- * Stored fields mirroring `tenantEntityColumns`. Runs inside the caller's faker seed so modules can
- * compose it with entity-specific fields without nested seed resets.
- */
+/** Mirrors `tenantEntityColumns`. Runs inside the caller's faker seed, so composing it needs no nested reset. */
 export const mockTenantEntityColumns = <T extends TenantEntityType>(
   entityType: T,
   options: MockTenantEntityColumnOptions = {},
@@ -53,10 +51,7 @@ type MockProductColumns<T extends ProductEntityType> = MockTenantEntityColumns<T
 
 type MockProductColumnOptions = Partial<Omit<MockProductColumns<ProductEntityType>, 'entityType'>>;
 
-/**
- * Stored fields mirroring `productColumns`. Entity-specific columns and hierarchy-derived relation
- * IDs stay in the owning module, matching the separate DB spreads.
- */
+/** Mirrors `productColumns`. Entity-specific and hierarchy-derived columns stay in the owning module. */
 export const mockProductColumns = <T extends ProductEntityType>(
   entityType: T,
   options: MockProductColumnOptions = {},
@@ -84,6 +79,7 @@ type MockChannelColumns<T extends ChannelEntityType> = MockTenantEntityColumns<T
   updatedBy: string | null;
   publishedAt: string | null;
   publicAt: string | null;
+  toolsConfig: ToolsConfig;
   path: string | null;
 };
 
@@ -91,10 +87,7 @@ type MockChannelColumnOptions = Partial<Omit<MockChannelColumns<ChannelEntityTyp
   channelIds?: Partial<EntityIdColumns<ChannelEntityType, string>>;
 };
 
-/**
- * Stored fields mirroring `channelColumns`, including the generated path value for full-row mocks.
- * Ancestor ID columns remain module-owned; `channelIds` is used only to mirror the DB path rule.
- */
+/** Mirrors `channelColumns` including the generated path; `channelIds` only feeds the DB path rule. */
 export const mockChannelColumns = <T extends ChannelEntityType>(
   entityType: T,
   options: MockChannelColumnOptions = {},
@@ -109,6 +102,7 @@ export const mockChannelColumns = <T extends ChannelEntityType>(
     updatedBy: options.updatedBy ?? null,
     publishedAt: options.publishedAt === undefined ? base.createdAt : options.publishedAt,
     publicAt: options.publicAt ?? null,
+    toolsConfig: options.toolsConfig ?? {},
     path: hierarchy.computeChannelPath(entityType, { id: base.id, ...options.channelIds }),
   };
 };

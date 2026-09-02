@@ -6,9 +6,9 @@ import { organizationsTable } from '#/modules/organization/organization-db';
 import { getOrgCache, setOrgCache } from './org-cache';
 
 /**
- * Middleware to ensure the user has access to an organization-scoped route.
- * Must run after tenantGuard to use tenant-scoped transaction with RLS.
- * Valid access for users that is a member of the organization or is a system admin.
+ * Grants org-scoped routes to system admins and to anyone holding a membership inside the
+ * organization, at organization level or in any channel below it. Must run after tenantGuard for
+ * the RLS transaction.
  */
 export const orgGuard = xMiddleware(
   {
@@ -27,17 +27,14 @@ export const orgGuard = xMiddleware(
     const isSystemAdmin = ctx.var.isSystemAdmin;
     const tenantId = ctx.var.tenantId;
 
-    // Guard: tenantGuard must run before orgGuard to provide tenant-scoped db
     if (!db) {
       throw new AppError(500, 'server_error', 'error', { message: 'orgGuard requires tenantGuard middleware' });
     }
 
-    // Guard: isAuthenticated must run before orgGuard to populate memberships
     if (memberships === undefined) {
       throw new AppError(500, 'server_error', 'error', { message: 'orgGuard requires isAuthenticated middleware' });
     }
 
-    // Check org cache before hitting DB
     const cached = getOrgCache(tenantId, organizationId);
     const orgRow =
       cached ??
@@ -54,20 +51,24 @@ export const orgGuard = xMiddleware(
     // Rows store organizationFlags sparse; merge config defaults under the stored bag
     const organization = withOrganizationDefaults(orgRow);
 
-    // Sanity check apart from RLS: Verify organization belongs to current tenant
+    // Second check beside RLS: the organization must belong to the current tenant
     if (organization.tenantId !== tenantId) {
       throw new AppError(403, 'forbidden', 'warn', { entityType: 'organization' });
     }
 
-    // Check if user has access to organization (or is a system admin)
+    // Deeper channel rows carry organizationId as an ancestor column, so a sub-channel member is
+    // in the org. This guard only rejects callers with no foothold at all; the permission engine
+    // does the fine-grained work.
     const orgMembership =
       memberships.find((m) => m.organizationId === organization.id && m.channelType === 'organization') || null;
-    if (!isSystemAdmin && !orgMembership) {
+    const isInOrganization = orgMembership !== null || memberships.some((m) => m.organizationId === organization.id);
+    if (!isSystemAdmin && !isInOrganization) {
       throw new AppError(403, 'forbidden', 'warn', { entityType: 'organization' });
     }
     const orgWithMembership = { ...organization, membership: orgMembership };
 
-    // Set organization with membership (can be null for system admins!) in context
+    // membership is the organization-level row: null for system admins, and for members who hold
+    // rows only in channels below the organization
     ctx.set('organization', orgWithMembership);
     ctx.set('organizationId', orgWithMembership.id);
 

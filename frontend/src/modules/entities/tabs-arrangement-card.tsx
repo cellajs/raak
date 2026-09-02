@@ -1,39 +1,41 @@
 import { GripVerticalIcon, LockIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SlotToolsConfig, ToolsConfig } from 'shared/tools-config';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import type { TKey } from '~/lib/i18n-locales';
 import { orderBySlotConfig } from '~/lib/placements';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
+import { HelpText } from '~/modules/common/help-text';
 import { getNavTabCandidates } from '~/modules/common/page/tab-nav';
 import { ToolCard } from '~/modules/common/tool-card';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { Switch } from '~/modules/ui/switch';
 
-/** One manageable tab: descriptor fields plus its current visibility on this channel. */
 interface TabRow {
   id: string;
   label: TKey;
   resource?: TKey;
   /** Pre-translated label, resolved once per render so module-scope renderers can use it. */
   name: string;
+  /** Pre-translated single-sentence explanation of the tab's content, absent when the tab declares none. */
+  description?: string;
   order: number;
   locked?: boolean;
   visible: boolean;
 }
 
-/** Stable row key getter, defined outside the component to keep its identity stable. */
+// Module scope keeps DataGrid's prop identity stable across renders
 function rowKeyGetter(row: TabRow) {
   return row.id;
 }
 
-/** Stable drag preview renderer, defined at module scope so DataGrid's prop identity stays stable. */
 function renderRowDragPreview(row: TabRow) {
   return <div className="rounded border bg-background px-2 py-1 text-sm shadow-md">{row.name}</div>;
 }
 
 interface TabsArrangementCardProps {
-  /** The hosting channel entity; the tabs slot and stored arrangement derive from it. */
   entity: EnrichedChannel & { toolsConfig?: ToolsConfig };
   /** The tabbed surface whose candidates are managed (route navTabs plus registry slot tools). */
   parentRouteId: string;
@@ -42,28 +44,37 @@ interface TabsArrangementCardProps {
 }
 
 /**
- * Admin card arranging a channel surface's tabs in a data grid: drag rows to reorder, toggle
- * visibility per tab, persisted on the channel in `toolsConfig['<channelType>.tabs']`. Candidates
- * list ungated, so tabs the viewer's own grants would hide stay manageable; `locked` tabs cannot
- * be hidden. UI visibility only, never authorization: enforcement belongs to permissions/quotas.
+ * Arranges a channel surface's tabs, persisted in `toolsConfig['<channelType>.tabs']`. Candidates
+ * list ungated, so tabs the viewer's own grants would hide stay manageable; `locked` tabs cannot be
+ * hidden. UI visibility only, never authorization.
  */
 export function TabsArrangementCard({ entity, parentRouteId, persist }: TabsArrangementCardProps) {
   const { t } = useTranslation();
+  const isMobile = useBreakpointBelow('sm');
 
   const slot = `${entity.entityType}.tabs`;
   const slotConfig = entity.toolsConfig?.[slot];
   const hidden = new Set(slotConfig?.hidden ?? []);
 
-  const candidates = getNavTabCandidates(parentRouteId).map(({ id, label, resource, order, locked }) => ({
+  // Draft order applied at drop time so the reorder does not wait on the mutation round-trip
+  const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
+  const persistedOrderKey = (slotConfig?.order ?? []).join();
+  useEffect(() => setDraftOrder(null), [persistedOrderKey]);
+
+  const candidates = getNavTabCandidates(parentRouteId).map(({ id, label, resource, description, order, locked }) => ({
     id,
     label,
     resource,
+    description,
     order,
     locked,
   }));
-  const rows = orderBySlotConfig(candidates, slotConfig).map((tab) => ({
+  const rows = orderBySlotConfig(candidates, draftOrder ? { order: draftOrder } : slotConfig).map((tab) => ({
     ...tab,
     name: t(tab.label, { resource: tab.resource ? t(tab.resource).toLowerCase() : '' }),
+    description: tab.description
+      ? t(tab.description, { resource: tab.resource ? t(tab.resource).toLowerCase() : '' })
+      : undefined,
     visible: !hidden.has(tab.id),
   }));
 
@@ -80,6 +91,7 @@ export function TabsArrangementCard({ entity, parentRouteId, persist }: TabsArra
     let insertAt = edge === 'bottom' ? toIdx + 1 : toIdx;
     if (fromIdx < insertAt) insertAt -= 1;
     ids.splice(insertAt, 0, moved);
+    setDraftOrder(ids);
     persistSlot({ order: ids, hidden: [...hidden] });
   };
 
@@ -98,7 +110,25 @@ export function TabsArrangementCard({ entity, parentRouteId, persist }: TabsArra
       // fork: header the name column with the reusable '{{resource}} name' key
       name: t('c:resource_name', { resource: t('c:tab') }),
       minWidth: 160,
-      renderCell: ({ row }) => <span className="truncate text-sm">{row.name}</span>,
+      renderCell: ({ row }) => {
+        if (!row.description) return <span className="truncate text-sm">{row.name}</span>;
+
+        // Fixed row height leaves no room for a second line on narrow screens, so the description moves into a popover
+        if (isMobile) {
+          return (
+            <HelpText type="popover" className="mb-0" content={row.description}>
+              <span className="truncate text-sm">{row.name}</span>
+            </HelpText>
+          );
+        }
+
+        return (
+          <div className="flex min-w-0 flex-col justify-center">
+            <span className="truncate text-sm leading-tight">{row.name}</span>
+            <span className="truncate text-muted-foreground text-xs leading-tight">{row.description}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'visible',
@@ -116,10 +146,11 @@ export function TabsArrangementCard({ entity, parentRouteId, persist }: TabsArra
   ];
 
   return (
-    <ToolCard label="c:tabs" description={t('c:tabs.text')}>
+    <ToolCard label="c:tabs" description={t('c:tabs.text', { resource: t(`c:${entity.entityType}`).toLowerCase() })}>
       <DataTable
         rows={rows}
         rowKeyGetter={rowKeyGetter}
+        rowHeight={56}
         columns={columns}
         hasNextPage={false}
         readOnly

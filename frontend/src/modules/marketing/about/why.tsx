@@ -10,7 +10,6 @@ const DeviceMockup = lazyNamed(() => import('~/modules/marketing/device-mockup')
 // Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
 // union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
 type AboutKey = Extract<TKey, `about:${string}`>;
-/** Renders the product-benefits section. */
 export function Why() {
   const { t } = useTranslation();
 

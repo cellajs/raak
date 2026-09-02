@@ -79,7 +79,6 @@ interface InfoGridProps<C extends string> {
   className?: string;
 }
 
-/** Renders the info grid. */
 export function InfoGrid<C extends string>({
   items,
   namespace = 'features',

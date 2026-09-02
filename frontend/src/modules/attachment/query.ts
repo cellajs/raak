@@ -49,13 +49,13 @@ const keys = {
       ['attachment', 'list', organizationId, filters] as const,
   },
 };
+// fork: project-homed attachments: delta sync narrows to the observed project channel.
 registerEntityQueryKeys('attachment', keys, (organizationId, tenantId, seqCursor, channelId) => {
   return getAttachments({
     path: { tenantId: tenantId!, organizationId: organizationId! },
     query: { seqCursor, projectId: channelId, limit: String(SYNC_CHUNK_SIZE) },
   });
 });
-/** Defines React Query cache keys for attachment. */
 export const attachmentQueryKeys = keys;
 
 const attachmentsMutationKeyBase = ['attachment'] as const;
@@ -67,7 +67,6 @@ type AttachmentsListParams = Omit<NonNullable<GetAttachmentsData['query']>, 'lim
   limit?: number;
 };
 
-/** Builds React Query options for attachments list. */
 export const attachmentsListQueryOptions = (params: AttachmentsListParams) => {
   const defaults = attachmentsSearchDefaults;
 
@@ -100,7 +99,6 @@ export const attachmentsListQueryOptions = (params: AttachmentsListParams) => {
   });
 };
 
-/** Builds the canonical cache lookup options for attachments. */
 export const attachmentsCanonicalOptions = ({
   organizationId,
   tenantId,
@@ -120,17 +118,14 @@ export const attachmentsCanonicalOptions = ({
   });
 };
 
-/** Builds React Query options for attachment. */
 export const attachmentQueryOptions = (tenantId: string, organizationId: string, id: string) => ({
   queryKey: keys.detail.byId(id),
   queryFn: () => getAttachment({ path: { tenantId, organizationId, id } }),
   initialData: () => findAttachmentInCache(id),
 });
 
-/** Finds an attachment in the React Query cache. */
 export const findAttachmentInCache = createCacheFinder<Attachment>('attachment');
 
-/** Provides attachment activity feed state and actions. */
 export function useAttachmentActivityFeed(tenantId: string, organizationId: string, limit = 20) {
   const { data } = useQuery({
     ...attachmentsCanonicalOptions({ organizationId, tenantId }),
@@ -139,7 +134,6 @@ export function useAttachmentActivityFeed(tenantId: string, organizationId: stri
   return data ?? [];
 }
 
-/** Provides group attachments state and actions. */
 export function useGroupAttachments(
   tenantId: string | undefined,
   organizationId: string | undefined,
@@ -162,11 +156,7 @@ type CreateData = Awaited<ReturnType<typeof createAttachmentsMutationFn>>;
 type UpdateData = Awaited<ReturnType<typeof updateAttachmentMutationFn>>;
 type DeleteData = Awaited<ReturnType<typeof deleteAttachmentsMutationFn>>;
 
-/**
- * Full options for one attachment op, shared by the live hook and the offline-replay defaults so a
- * replay reconciles like the live one. Callbacks take the QueryClient explicitly and derive the org
- * key from durable variables. On replay onMutate does not re-run, so onSettled invalidation recovers.
- */
+/** Shared by the live hook and the offline-replay defaults: callbacks take the QueryClient and derive the org key from durable variables, since onMutate does not re-run on replay. */
 const attachmentCreateOptions = (
   queryClient: QueryClient,
 ): UseMutationOptions<CreateData, Error, CreateAttachmentVars, { optimisticAttachments: OrgRoutableItemData[] }> => ({
@@ -276,7 +266,6 @@ const attachmentDeleteOptions = (
   },
 });
 
-/** Provides the React Query mutation for attachment create. */
 export const useAttachmentCreateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(attachmentCreateOptions(queryClient));
@@ -289,7 +278,6 @@ export const useAttachmentCreateMutation = (tenantId: string, organizationId: st
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-/** Provides the React Query mutation for attachment update. */
 export const useAttachmentUpdateMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(attachmentUpdateOptions(queryClient));
@@ -313,9 +301,7 @@ export const useAttachmentUpdateMutation = (tenantId: string, organizationId: st
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };
 
-/**
- * Delete mutation hook for attachments. This is a prepared mutation that can be used offline and will squash multiple deletes into one.
- */
+/** Prepared delete mutation: usable offline and squashes multiple deletes into one. */
 export const useAttachmentDeleteMutation = (tenantId: string, organizationId: string) => {
   const queryClient = useQueryClient();
   const mutation = useMutation(attachmentDeleteOptions(queryClient));

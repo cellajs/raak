@@ -2,7 +2,6 @@ import { Link } from '@tanstack/react-router';
 import { SearchIcon } from 'lucide-react';
 import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { appConfig } from 'shared';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { Logo } from '~/modules/common/logo';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
@@ -17,24 +16,18 @@ import { Button } from '~/modules/ui/button';
 import { SidebarContent } from '~/modules/ui/sidebar';
 import { lazyNamed } from '~/utils/lazy-named';
 
-const DebugDropdown =
-  appConfig.mode !== 'production'
-    ? lazyNamed(() => import('~/modules/common/debug-dropdown'), 'DebugDropdown')
-    : () => null;
+const DebugDropdown = __DEV_TOOLS__
+  ? lazyNamed(() => import('~/modules/common/debug-dropdown'), 'DebugDropdown')
+  : () => null;
 
 interface DocsSidebarProps {
   tags: GenTagSummary[];
 }
 
-/**
- * Docs sidebar: logo + theme, then sections from the global docs config (content root index.mdx
- * frontmatter). Label, order, and visibility are config-driven; each section id maps to a renderer.
- */
+/** Sections come from the global docs config (content root index.mdx frontmatter): label, order, visibility. */
 export function DocsSidebar({ tags }: DocsSidebarProps) {
   const { t } = useTranslation();
-  // "Sheet mode" matches the layout: the sidebar renders as a sheet whenever the viewport is
-  // below `md` (docs-layout's isDesktop = above md). Gate close/animation behavior on the same
-  // threshold so the sm–md band behaves like the sheet it actually is, not like desktop.
+  // The sidebar renders as a sheet below `md`, the same threshold as docs-layout's isDesktop
   const isMobile = useBreakpointBelow('md', false);
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -81,7 +74,7 @@ export function DocsSidebar({ tags }: DocsSidebarProps) {
         </div>
       </div>
 
-      {/* Config-driven sections (pre-sorted by order in content.ts) */}
+      {/* Sections are pre-sorted by order in content.ts */}
       {docsConfig.sections
         .filter((section) => section.visible)
         .map((section) => {
@@ -97,7 +90,6 @@ export function DocsSidebar({ tags }: DocsSidebarProps) {
           }
         })}
 
-      {/* Debug Toolbars */}
       <Suspense>{DebugDropdown ? <DebugDropdown className="absolute bottom-0 m-1" /> : null}</Suspense>
     </SidebarContent>
   );

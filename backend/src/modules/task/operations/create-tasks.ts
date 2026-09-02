@@ -3,6 +3,7 @@ import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
+import { dispatchMutation } from '#/lib/mutation-bus';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
@@ -60,7 +61,6 @@ export async function createTasksOp(
     primariesByProject.set(row.projectId, [...(primariesByProject.get(row.projectId) ?? []), row]);
   }
 
-  // Prepare tasks for insert
   const tasksToInsert = await Promise.all(
     input.map(async ({ stx, id, ...taskInfo }) => {
       // Derived attachments are UUID-shape-checked only: attachment rows created in the
@@ -103,6 +103,7 @@ export async function createTasksOp(
   // Insert + hydrate inside tenantContext so RLS session vars are set
   const { createdTasks, users, labels } = await tenantContext(ctx, async (txCtx) => {
     const createdTasks = await insertTasks(txCtx, { tasks: tasksToInsert });
+    await dispatchMutation(txCtx, 'task.created', { after: createdTasks });
     const [users, labels] = await getTaskRelations(txCtx, { tasks: createdTasks });
     return { createdTasks, users, labels };
   });

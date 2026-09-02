@@ -1,6 +1,11 @@
-import { hierarchy } from 'shared';
 import { describe, expect, it } from 'vitest';
-import { configureWidePermissions, wideMembership, wideOverrides, wideSubject } from '../../testing/wide-fixture.ts';
+import {
+  configureWidePermissions,
+  wideHierarchy,
+  wideMembership,
+  wideOverrides,
+  wideSubject,
+} from '../../testing/wide-fixture.ts';
 import { getAllDecisions } from './check.ts';
 import type { SubjectForPermission } from './types.ts';
 
@@ -21,39 +26,40 @@ const attachmentSubject = (
   });
 };
 
-// Real-config guard sanity checks. These assertions hold in every app (organization is always the
-// root channel with roles admin/member; a product is never a channel), so the block is stable across app configurations.
-describe('hierarchy guards (real app config)', () => {
+// Hierarchy guard sanity checks on the wide fixture. Asserting against the real app config here
+// would pin app-configurable choices (role vocabularies, product ancestry) into a synced test
+// that fails for apps customizing roles or re-parenting products in a config file they own.
+describe('hierarchy guards (wide fixture)', () => {
   describe('hierarchy.getOrderedAncestors', () => {
     it('returns empty array for root channel', () => {
-      const ancestors = hierarchy.getOrderedAncestors('organization');
+      const ancestors = wideHierarchy.getOrderedAncestors('organization');
       expect(ancestors).toEqual([]);
     });
 
     it('returns organization as an ancestor for a product entity', () => {
-      const ancestors = hierarchy.getOrderedAncestors('attachment');
+      const ancestors = wideHierarchy.getOrderedAncestors('attachment');
       expect(ancestors).toContain('organization');
     });
   });
 
   describe('hierarchy.getRoles', () => {
-    it('returns roles for the organization channel', () => {
-      const roles = hierarchy.getRoles('organization');
+    it('returns the declared roles for a channel', () => {
+      const roles = wideHierarchy.getRoles('organization');
       expect(roles).toEqual(['admin', 'member']);
     });
   });
 
   describe('hierarchy.isChannel / hierarchy.isProduct', () => {
     it('correctly identifies channel entities', () => {
-      expect(hierarchy.isChannel('organization')).toBe(true);
-      expect(hierarchy.isChannel('attachment')).toBe(false);
-      expect(hierarchy.isChannel('user')).toBe(false);
+      expect(wideHierarchy.isChannel('organization')).toBe(true);
+      expect(wideHierarchy.isChannel('attachment')).toBe(false);
+      expect(wideHierarchy.isChannel('user')).toBe(false);
     });
 
     it('correctly identifies product entities', () => {
-      expect(hierarchy.isProduct('attachment')).toBe(true);
-      expect(hierarchy.isProduct('organization')).toBe(false);
-      expect(hierarchy.isProduct('user')).toBe(false);
+      expect(wideHierarchy.isProduct('attachment')).toBe(true);
+      expect(wideHierarchy.isProduct('organization')).toBe(false);
+      expect(wideHierarchy.isProduct('user')).toBe(false);
     });
   });
 });
@@ -80,9 +86,7 @@ describe('configureWidePermissions', () => {
   });
 
   it('creates empty policies when no config is set', () => {
-    const { policyMatrix: policies } = configureWidePermissions(() => {
-      // No configuration
-    });
+    const { policyMatrix: policies } = configureWidePermissions(() => {});
 
     expect(policies.organization).toBeUndefined();
   });
@@ -193,7 +197,6 @@ describe('PermissionDecision action attribution', () => {
     expect(decision.actions.create).toBeDefined();
     expect(decision.actions.read).toBeDefined();
 
-    // Member can create - should have grantedBy entry
     expect(decision.actions.create.allowed).toBe(true);
     expect(decision.actions.create.grantedBy).toHaveLength(1);
     expect(decision.actions.create.grantedBy[0]).toEqual({
@@ -203,7 +206,6 @@ describe('PermissionDecision action attribution', () => {
       role: 'member',
     });
 
-    // Member cannot delete - should have empty grantedBy
     expect(decision.actions.delete.allowed).toBe(false);
     expect(decision.actions.delete.grantedBy).toHaveLength(0);
   });
@@ -226,7 +228,6 @@ describe('PermissionDecision action attribution', () => {
     const subject = attachmentSubject('att1', 'org1');
     const decision = getAllDecisions(policies, memberships, subject, { ...wideOverrides });
 
-    // Both admin and member grant read permission
     expect(decision.actions.read.allowed).toBe(true);
     expect(decision.actions.read.grantedBy).toHaveLength(2);
     expect(decision.actions.read.grantedBy).toContainEqual({
@@ -242,7 +243,6 @@ describe('PermissionDecision action attribution', () => {
       role: 'member',
     });
 
-    // Only admin grants delete permission
     expect(decision.actions.delete.allowed).toBe(true);
     expect(decision.actions.delete.grantedBy).toHaveLength(1);
     expect(decision.actions.delete.grantedBy[0]).toMatchObject({ type: 'membership', role: 'admin' });
@@ -267,8 +267,6 @@ describe('own permission policy, ownership-scoped access', () => {
 
   const userId = 'user-actor';
   const otherUserId = 'user-other';
-
-  // --- Pass cases: permission IS granted ---
 
   it('grants update/delete when member is the creator (own entity)', () => {
     const memberships = [wideMembership('organization', 'org1', 'member')];
@@ -298,8 +296,6 @@ describe('own permission policy, ownership-scoped access', () => {
     expect(can.update).toBe(true);
     expect(can.delete).toBe(true);
   });
-
-  // --- Fail cases: permission is NOT granted ---
 
   it('denies update/delete when member is NOT the creator', () => {
     const memberships = [wideMembership('organization', 'org1', 'member')];
@@ -367,12 +363,10 @@ describe('own permission, grant attribution', () => {
     const subject = attachmentSubject('att1', 'org1', { createdBy: userId });
     const decision = getAllDecisions(ownPolicies, memberships, subject, { userId, ...wideOverrides });
 
-    // Update was granted via the built-in `own` condition → attributed by condition name
     expect(decision.actions.update.allowed).toBe(true);
     expect(decision.actions.update.grantedBy).toHaveLength(1);
     expect(decision.actions.update.grantedBy[0]).toEqual({ type: 'relation', relation: 'own' });
 
-    // Delete same
     expect(decision.actions.delete.allowed).toBe(true);
     expect(decision.actions.delete.grantedBy).toHaveLength(1);
     expect(decision.actions.delete.grantedBy[0]).toEqual({ type: 'relation', relation: 'own' });
@@ -383,7 +377,6 @@ describe('own permission, grant attribution', () => {
     const subject = attachmentSubject('att1', 'org1', { createdBy: userId });
     const decision = getAllDecisions(ownPolicies, memberships, subject, { userId, ...wideOverrides });
 
-    // Create is unconditional 1 → membership grant
     expect(decision.actions.create.grantedBy).toHaveLength(1);
     expect(decision.actions.create.grantedBy[0]).toEqual({
       type: 'membership',
@@ -398,7 +391,6 @@ describe('own permission, grant attribution', () => {
     const subject = attachmentSubject('att1', 'org1', { createdBy: 'user-other' });
     const decision = getAllDecisions(ownPolicies, memberships, subject, { userId, ...wideOverrides });
 
-    // Update/delete denied: no grants at all
     expect(decision.actions.update.allowed).toBe(false);
     expect(decision.actions.update.grantedBy).toHaveLength(0);
     expect(decision.actions.delete.allowed).toBe(false);
@@ -410,7 +402,6 @@ describe('own permission, grant attribution', () => {
     const subject = attachmentSubject('att1', 'org1', { createdBy: 'user-other' });
     const decision = getAllDecisions(ownPolicies, memberships, subject, { userId, ...wideOverrides });
 
-    // Admin policy is unconditional 1, so grant is membership-based
     expect(decision.actions.update.allowed).toBe(true);
     expect(decision.actions.update.grantedBy[0]).toEqual({
       type: 'membership',
@@ -443,22 +434,18 @@ describe('own permission, batch subjects', () => {
 
     const results = getAllDecisions(ownPolicies, memberships, subjects, { userId, ...wideOverrides });
 
-    // Own entity: full access via ownership
     const ownDecision = results.get('att-own')!;
     expect(ownDecision.can.update).toBe(true);
     expect(ownDecision.can.delete).toBe(true);
 
-    // Other's entity: denied
     const otherDecision = results.get('att-other')!;
     expect(otherDecision.can.update).toBe(false);
     expect(otherDecision.can.delete).toBe(false);
 
-    // Null createdBy: denied
     const nullDecision = results.get('att-null')!;
     expect(nullDecision.can.update).toBe(false);
     expect(nullDecision.can.delete).toBe(false);
 
-    // All three can still create and read
     for (const id of ['att-own', 'att-other', 'att-null']) {
       const d = results.get(id)!;
       expect(d.can.create).toBe(true);
@@ -498,13 +485,11 @@ describe('wide hierarchy, guest role, multi-level ancestors', () => {
   it('resolves grants from the correct ancestor level (project vs organization)', () => {
     const subject = attachmentSubject('att1', 'org1', { project: 'p1' });
 
-    // A project member gets the project-level update grant.
     const asProjectMember = getAllDecisions(policies, [wideMembership('project', 'p1', 'member')], subject, {
       ...wideOverrides,
     });
     expect(asProjectMember.can.update).toBe(true);
 
-    // An organization member has no attachment cell at the organization level → no grant.
     const asOrgMember = getAllDecisions(policies, [wideMembership('organization', 'org1', 'member')], subject, {
       ...wideOverrides,
     });

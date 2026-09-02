@@ -49,6 +49,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       attachments: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       labels: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       assignedTo: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 2 } }),
+      mentions: [],
       publicAt,
       // Channel entity columns
       ...channelIds,

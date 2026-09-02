@@ -1,7 +1,6 @@
 import type { SVGProps } from 'react';
 import { STATUS_ICON_STROKE_WIDTH } from '~/modules/task/dropdowns/status-icons/constants';
 
-/** Renders the reviewed icon. */
 export function ReviewedIcon({ ...props }: SVGProps<SVGSVGElement>) {
   return (
     <svg

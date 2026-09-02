@@ -36,7 +36,6 @@ export type TaskTableProps = {
 
 export type ResolvedTaskTableProps = Omit<TaskTableProps, 'projects'> & { projects: Project[] };
 
-/** Renders the tasks table. */
 export function TasksTable({ projects: projectsProp, workspace, publicView, organization, tenantId }: TaskTableProps) {
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<BoardSearchParams>({});

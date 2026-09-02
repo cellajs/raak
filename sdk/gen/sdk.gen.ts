@@ -38,6 +38,9 @@ import type {
   CreateProjectsData,
   CreateProjectsErrors,
   CreateProjectsResponses,
+  CreatePushSubscriptionData,
+  CreatePushSubscriptionErrors,
+  CreatePushSubscriptionResponses,
   CreateRequestData,
   CreateRequestErrors,
   CreateRequestResponses,
@@ -80,6 +83,9 @@ import type {
   DeleteProjectsData,
   DeleteProjectsErrors,
   DeleteProjectsResponses,
+  DeletePushSubscriptionData,
+  DeletePushSubscriptionErrors,
+  DeletePushSubscriptionResponses,
   DeleteRequestsData,
   DeleteRequestsErrors,
   DeleteRequestsResponses,
@@ -140,6 +146,12 @@ import type {
   GetMyMembershipsData,
   GetMyMembershipsErrors,
   GetMyMembershipsResponses,
+  GetNotificationPreferencesData,
+  GetNotificationPreferencesErrors,
+  GetNotificationPreferencesResponses,
+  GetNotificationsData,
+  GetNotificationsErrors,
+  GetNotificationsResponses,
   GetOrganizationData,
   GetOrganizationErrors,
   GetOrganizationResponses,
@@ -170,6 +182,9 @@ import type {
   GetPublicTasksData,
   GetPublicTasksErrors,
   GetPublicTasksResponses,
+  GetPushVapidData,
+  GetPushVapidErrors,
+  GetPushVapidResponses,
   GetRequestsData,
   GetRequestsErrors,
   GetRequestsResponses,
@@ -225,6 +240,9 @@ import type {
   HandleMembershipInvitationResponses,
   InvokeTokenData,
   InvokeTokenErrors,
+  MarkNotificationsReadData,
+  MarkNotificationsReadErrors,
+  MarkNotificationsReadResponses,
   MarkSeenData,
   MarkSeenErrors,
   MarkSeenResponses,
@@ -250,6 +268,9 @@ import type {
   ResendInvitationWithTokenData,
   ResendInvitationWithTokenErrors,
   ResendInvitationWithTokenResponses,
+  ResendPendingInvitationData,
+  ResendPendingInvitationErrors,
+  ResendPendingInvitationResponses,
   ResolveTaskLinkData,
   ResolveTaskLinkErrors,
   ResolveTaskLinkResponses,
@@ -285,6 +306,8 @@ import type {
   ToggleMfaResponses,
   UnsubscribeMeData,
   UnsubscribeMeErrors,
+  UnsubscribeNotificationsData,
+  UnsubscribeNotificationsErrors,
   UpdateAttachmentData,
   UpdateAttachmentErrors,
   UpdateAttachmentResponses,
@@ -297,6 +320,9 @@ import type {
   UpdateMembershipErrors,
   UpdateMembershipResponses,
   UpdateMeResponses,
+  UpdateNotificationPreferencesData,
+  UpdateNotificationPreferencesErrors,
+  UpdateNotificationPreferencesResponses,
   UpdateOrganizationData,
   UpdateOrganizationErrors,
   UpdateOrganizationResponses,
@@ -346,6 +372,8 @@ import {
   zCreateProjectsPath,
   zCreateProjectsQuery,
   zCreateProjectsResponse,
+  zCreatePushSubscriptionBody,
+  zCreatePushSubscriptionResponse,
   zCreateRequestBody,
   zCreateRequestResponse,
   zCreateTasksBody,
@@ -380,6 +408,8 @@ import {
   zDeleteProjectsBody,
   zDeleteProjectsPath,
   zDeleteProjectsResponse,
+  zDeletePushSubscriptionQuery,
+  zDeletePushSubscriptionResponse,
   zDeleteRequestsBody,
   zDeleteRequestsResponse,
   zDeleteTasksBody,
@@ -416,6 +446,9 @@ import {
   zGetMyAuthResponse,
   zGetMyInvitationsResponse,
   zGetMyMembershipsResponse,
+  zGetNotificationPreferencesResponse,
+  zGetNotificationsQuery,
+  zGetNotificationsResponse,
   zGetOrganizationPath,
   zGetOrganizationQuery,
   zGetOrganizationResponse,
@@ -440,6 +473,7 @@ import {
   zGetPublicTaskResponse,
   zGetPublicTasksQuery,
   zGetPublicTasksResponse,
+  zGetPushVapidResponse,
   zGetRequestsQuery,
   zGetRequestsResponse,
   zGetTaskCoverPath,
@@ -476,6 +510,8 @@ import {
   zHandleMembershipInvitationPath,
   zHandleMembershipInvitationResponse,
   zInvokeTokenPath,
+  zMarkNotificationsReadBody,
+  zMarkNotificationsReadResponse,
   zMarkSeenBody,
   zMarkSeenPath,
   zMarkSeenResponse,
@@ -495,6 +531,8 @@ import {
   zRemoveProjectWorkspaceResponse,
   zResendInvitationWithTokenBody,
   zResendInvitationWithTokenResponse,
+  zResendPendingInvitationPath,
+  zResendPendingInvitationResponse,
   zResolveTaskLinkPath,
   zResolveTaskLinkResponse,
   zSelfCreateTenantBody,
@@ -517,6 +555,7 @@ import {
   zToggleMfaBody,
   zToggleMfaResponse,
   zUnsubscribeMeQuery,
+  zUnsubscribeNotificationsQuery,
   zUpdateAttachmentBody,
   zUpdateAttachmentPath,
   zUpdateAttachmentQuery,
@@ -529,6 +568,8 @@ import {
   zUpdateMembershipPath,
   zUpdateMembershipResponse,
   zUpdateMeResponse,
+  zUpdateNotificationPreferencesBody,
+  zUpdateNotificationPreferencesResponse,
   zUpdateOrganizationBody,
   zUpdateOrganizationPath,
   zUpdateOrganizationResponse,
@@ -1413,6 +1454,7 @@ export const getMe = <ThrowOnError extends boolean = true>(
  *
  * @param {updateMeData} options
  * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
+ * @param {string | null=} options.body.description - `string | null` (optional)
  * @param {string | null=} options.body.firstName - `string | null` (optional)
  * @param {string | null=} options.body.lastName - `string | null` (optional)
  * @param {enum=} options.body.language - `enum` (optional)
@@ -1984,6 +2026,7 @@ export const deleteUsers = <ThrowOnError extends boolean = true>(
  * @param {updateUserData} options
  * @param {string} options.path.id - `string`
  * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
+ * @param {string | null=} options.body.description - `string | null` (optional)
  * @param {string | null=} options.body.firstName - `string | null` (optional)
  * @param {string | null=} options.body.lastName - `string | null` (optional)
  * @param {enum=} options.body.language - `enum` (optional)
@@ -2604,6 +2647,320 @@ export const getUser = <ThrowOnError extends boolean = true>(
     ],
     url: '/users/users/{relatableUserId}',
     ...options,
+  });
+
+/**
+ * List notifications
+ *
+ * Returns the current user notification inbox, newest first, with the unread count. Ambient posts are not included: those are covered by unseen counts. Rows older than the retention window are removed with their partition.
+ *
+ * **GET /notifications** ·· [getNotifications](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/GET/notifications) ·· _notifications_
+ *
+ * @param {getNotificationsData} options
+ * @param {enum=} options.query.unread - `enum` (optional)
+ * @param {integer=} options.query.limit - `integer` (optional)
+ * @param {string=} options.query.before - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getNotifications = <ThrowOnError extends boolean = true>(
+  options?: Options<GetNotificationsData, ThrowOnError>,
+): RequestResult<GetNotificationsResponses, GetNotificationsErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetNotificationsResponses, GetNotificationsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zGetNotificationsQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetNotificationsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/notifications',
+    ...options,
+  });
+
+/**
+ * Mark notifications as read
+ *
+ * Marks specific notifications read by id, everything sharing one context, or all unread notifications when the body is empty. Idempotent.
+ *
+ * **POST /notifications/read** ·· [markNotificationsRead](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/POST/notifications/read) ·· _notifications_
+ *
+ * @param {markNotificationsReadData} options
+ * @param {any[]=} options.body.ids - `any[]` (optional)
+ * @param {string=} options.body.contextId - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const markNotificationsRead = <ThrowOnError extends boolean = true>(
+  options: Options<MarkNotificationsReadData, ThrowOnError>,
+): RequestResult<MarkNotificationsReadResponses, MarkNotificationsReadErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<MarkNotificationsReadResponses, MarkNotificationsReadErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zMarkNotificationsReadBody,
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zMarkNotificationsReadResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/notifications/read',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get notification preferences
+ *
+ * Email and digest preferences for the current user. In-app delivery is not opt-out.
+ *
+ * **GET /notifications/preferences** ·· [getNotificationPreferences](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/GET/notifications/preferences) ·· _notifications_
+ *
+ * @param {getNotificationPreferencesData} options
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getNotificationPreferences = <ThrowOnError extends boolean = true>(
+  options?: Options<GetNotificationPreferencesData, ThrowOnError>,
+): RequestResult<GetNotificationPreferencesResponses, GetNotificationPreferencesErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<
+    GetNotificationPreferencesResponses,
+    GetNotificationPreferencesErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetNotificationPreferencesResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/notifications/preferences',
+    ...options,
+  });
+
+/**
+ * Update notification preferences
+ *
+ * Partial update; unspecified keys keep their stored value.
+ *
+ * **PATCH /notifications/preferences** ·· [updateNotificationPreferences](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/PATCH/notifications/preferences) ·· _notifications_
+ *
+ * @param {updateNotificationPreferencesData} options
+ * @param {boolean=} options.body.mentionEmail - `boolean` (optional)
+ * @param {boolean=} options.body.commentEmail - `boolean` (optional)
+ * @param {enum=} options.body.digest - `enum` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateNotificationPreferences = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateNotificationPreferencesData, ThrowOnError>,
+): RequestResult<UpdateNotificationPreferencesResponses, UpdateNotificationPreferencesErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).patch<
+    UpdateNotificationPreferencesResponses,
+    UpdateNotificationPreferencesErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateNotificationPreferencesBody,
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateNotificationPreferencesResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/notifications/preferences',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Unsubscribe from a notification category
+ *
+ * Turns off one email category from a link in an email. The token identifies the user and the category, so unsubscribing from the digest leaves other email untouched. No auth.
+ *
+ * **GET /notifications/unsubscribe** ·· [unsubscribeNotifications](https://www.raak.dev/docs/operations?operationTag=notifications#tag/notifications/GET/notifications/unsubscribe) ·· _notifications_
+ *
+ * @param {unsubscribeNotificationsData} options
+ * @param {string} options.query.user - `string`
+ * @param {enum} options.query.category - `enum`
+ * @param {string} options.query.token - `string`
+ * @returns Possible status codes: 302, 400, 401, 403, 404, 409, 429
+ */
+export const unsubscribeNotifications = <ThrowOnError extends boolean = true>(
+  options: Options<UnsubscribeNotificationsData, ThrowOnError>,
+): RequestResult<unknown, UnsubscribeNotificationsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<unknown, UnsubscribeNotificationsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zUnsubscribeNotificationsQuery,
+        })
+        .parseAsync(data),
+    responseStyle: 'data',
+    url: '/notifications/unsubscribe',
+    ...options,
+  });
+
+/**
+ * Get the Web Push application server key
+ *
+ * Returns the VAPID public key `PushManager.subscribe()` needs, or null when this deployment has no push keys configured; the client then offers no push toggle.
+ *
+ * **GET /push/vapid** ·· [getPushVapid](https://www.raak.dev/docs/operations?operationTag=push#tag/push/GET/push/vapid) ·· _push_
+ *
+ * @param {getPushVapidData} options
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getPushVapid = <ThrowOnError extends boolean = true>(
+  options?: Options<GetPushVapidData, ThrowOnError>,
+): RequestResult<GetPushVapidResponses, GetPushVapidErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetPushVapidResponses, GetPushVapidErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetPushVapidResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/push/vapid',
+    ...options,
+  });
+
+/**
+ * Remove a Web Push subscription
+ *
+ * Deletes the given endpoint for the current user; an endpoint owned by someone else is a no-op.
+ *
+ * **DELETE /push/subscriptions** ·· [deletePushSubscription](https://www.raak.dev/docs/operations?operationTag=push#tag/push/DELETE/push/subscriptions) ·· _push_
+ *
+ * @param {deletePushSubscriptionData} options
+ * @param {string} options.query.endpoint - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const deletePushSubscription = <ThrowOnError extends boolean = true>(
+  options: Options<DeletePushSubscriptionData, ThrowOnError>,
+): RequestResult<DeletePushSubscriptionResponses, DeletePushSubscriptionErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<
+    DeletePushSubscriptionResponses,
+    DeletePushSubscriptionErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zDeletePushSubscriptionQuery,
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zDeletePushSubscriptionResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/push/subscriptions',
+    ...options,
+  });
+
+/**
+ * Register a Web Push subscription
+ *
+ * Stores the browser push subscription for the current user. Upserts by endpoint, so re-subscribing after key rotation reclaims the row.
+ *
+ * **POST /push/subscriptions** ·· [createPushSubscription](https://www.raak.dev/docs/operations?operationTag=push#tag/push/POST/push/subscriptions) ·· _push_
+ *
+ * @param {createPushSubscriptionData} options
+ * @param {string=} options.body.endpoint - `string` (optional)
+ * @param {number | null=} options.body.expirationTime - `number | null` (optional)
+ * @param {object} options.body.keys - `object`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const createPushSubscription = <ThrowOnError extends boolean = true>(
+  options: Options<CreatePushSubscriptionData, ThrowOnError>,
+): RequestResult<CreatePushSubscriptionResponses, CreatePushSubscriptionErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreatePushSubscriptionResponses, CreatePushSubscriptionErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreatePushSubscriptionBody,
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreatePushSubscriptionResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/push/subscriptions',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 /**
@@ -4088,6 +4445,7 @@ export const handleMembershipInvitation = <ThrowOnError extends boolean = true>(
  * @param {string} options.query.entityid - `string`
  * @param {enum} options.query.entitytype - `enum`
  * @param {enum=} options.query.role - `enum` (optional)
+ * @param {string=} options.query.include - `string` (optional)
  * @param {string=} options.query.userids - `string` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
@@ -4158,6 +4516,49 @@ export const getPendingMemberships = <ThrowOnError extends boolean = true>(
       },
     ],
     url: '/{tenantId}/{organizationId}/memberships/pending',
+    ...options,
+  });
+
+/**
+ * Resend pending invitation
+ *
+ * Re-sends the invitation email for a pending membership, minting a fresh token for its own invite. Requires update permission on the invited channel; the public auth resend endpoint stays for invitees holding an expired token.
+ *
+ * **POST /{tenantId}/{organizationId}/memberships/pending/{id}/resend** ·· [resendPendingInvitation](https://www.raak.dev/docs/operations?operationTag=memberships#tag/memberships/POST/{tenantId}/{organizationId}/memberships/pending/{id}/resend) ·· [resendPendingInvitation](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/memberships/pending/{id}/resend) ·· _memberships_cella_
+ *
+ * @param {resendPendingInvitationData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 204, 400, 401, 403, 404, 409, 429
+ */
+export const resendPendingInvitation = <ThrowOnError extends boolean = true>(
+  options: Options<ResendPendingInvitationData, ThrowOnError>,
+): RequestResult<ResendPendingInvitationResponses, ResendPendingInvitationErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<
+    ResendPendingInvitationResponses,
+    ResendPendingInvitationErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zResendPendingInvitationPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zResendPendingInvitationResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/memberships/pending/{id}/resend',
     ...options,
   });
 

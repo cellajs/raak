@@ -11,7 +11,6 @@ export const isCoarsePointerDevice = () => {
   return window.matchMedia(coarsePointerQuery).matches;
 };
 
-/** Resolves mobile task drop indicator. */
 export const resolveMobileTaskDropIndicator = ({
   clientX,
   clientY,

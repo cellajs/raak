@@ -19,16 +19,12 @@ interface Props {
   isSheet?: boolean;
 }
 
-/**
- * Profile page for a user
- */
 export function UserProfilePage({ user, organizationId, isSheet }: Props) {
   const { t } = useTranslation();
   const { user: currentUser } = useUserStore();
 
   const isSelf = !!currentUser && currentUser.id === user.id;
 
-  // Pick correct mutation hook
   const updateSelf = useUpdateSelfMutation();
   const updateUser = useUserUpdateMutation();
 
@@ -70,9 +66,8 @@ export function UserProfilePage({ user, organizationId, isSheet }: Props) {
         }
       />
       <Suspense>
-        <div className="container">
-          <ProfilePageContent user={user} organizationId={organizationId} isSheet={isSheet} />
-        </div>
+        {/* No wrapper: the content owns its own container, so it can run a full-width tab nav */}
+        <ProfilePageContent user={user} organizationId={organizationId} isSheet={isSheet} />
       </Suspense>
     </>
   );

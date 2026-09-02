@@ -6,17 +6,24 @@ const WRITE_DEBOUNCE_MS = 250;
 
 /** Flush callbacks for every live store, invoked on tab hide for best-effort durability. */
 const flushers = new Set<() => void>();
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') for (const flush of flushers) flush();
-  });
-}
 
 /**
- * Creates per-user Zustand storage backed by the live app database.
- * Writes are trailing-debounced per store, signed-out operations do nothing, and database rebinds
- * are resolved on every operation. Pair with explicit post-bind hydration.
+ * Issue every store's pending write immediately. For last-chance writes during unload (a reload
+ * fires only pagehide, where this module's own listener has already run before later-registered
+ * ones): write to the store, then call this so the put is issued in the same task.
  */
+export const flushKvWrites = () => {
+  for (const flush of flushers) flush();
+};
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushKvWrites();
+  });
+  window.addEventListener('pagehide', flushKvWrites);
+}
+
+/** Per-user Zustand storage over the live app database: writes are trailing-debounced per store, signed-out operations no-op, and every operation re-resolves the bound database. */
 export function idbKvStorage(base: string): StateStorage {
   let pending: { value: string; db: LocalUserDatabase } | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;

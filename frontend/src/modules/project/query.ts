@@ -117,7 +117,6 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
   });
 };
 
-/** Query options for a single project by id or slug. */
 export const projectQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
@@ -126,8 +125,6 @@ export const projectQueryOptions = (id: string, organizationId: string, tenantId
     structuralSharing: preserveIncluded,
   });
 
-// Query Options to get a public project by id or slug
-/** Builds React Query options for public project. */
 export const publicProjectQueryOptions = (id: string, bySlug = false) =>
   queryOptions({
     queryKey: projectQueryKeys.detail.public(id),
@@ -135,7 +132,6 @@ export const publicProjectQueryOptions = (id: string, bySlug = false) =>
     retry: false,
   });
 
-/** Mutation hook for creating a new project. */
 export const useProjectCreateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -159,7 +155,6 @@ export const useProjectCreateMutation = () => {
   });
 };
 
-/** Mutation hook for updating an existing project. */
 export const useProjectUpdateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;

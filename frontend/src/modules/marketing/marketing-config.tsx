@@ -138,12 +138,10 @@ export const whyDarkSlides = [
  ************************************************************************************************/
 
 export const featuresPageItems: InfoGridItem[] = [];
-/** Maps feature category values to icons. */
 export const featureCategoryIcons = {} as const;
 
 /** Lists the synchronization features shown on the marketing page. */
 export const syncPageItems: InfoGridItem[] = [];
-/** Maps sync category values to icons. */
 export const syncCategoryIcons = {
   sync: ZapIcon,
 } as const;

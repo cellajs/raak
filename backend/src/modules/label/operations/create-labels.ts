@@ -58,7 +58,6 @@ export async function createLabelsOp(
   // Fetch existing labels in org for duplicate check and color matching
   const existingLabels = await tenantRead(ctx, (readCtx) => findLabelsByOrg(readCtx));
 
-  // Prepare labels for insert
   const labelsToInsert = input.map(({ stx, ...labelInfo }) => {
     // Maintain same color for labels already in organization
     const sameLabelInOrg = existingLabels.find(({ name }) => name === labelInfo.name);

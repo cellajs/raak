@@ -23,7 +23,6 @@ interface CreateProjectFormProps {
   dialog?: boolean;
 }
 
-/** Renders the form for creating project. */
 export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();

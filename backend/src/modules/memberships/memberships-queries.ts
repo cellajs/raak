@@ -4,6 +4,7 @@ import type { ChannelEntityType, EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { tokensTable } from '#/modules/auth/tokens-db';
+import { lastPostedAtOrder, memberCountsSelect } from '#/modules/memberships/helpers/member-counts';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -20,7 +21,6 @@ interface CountMembershipsByChannelOpts {
   channelId: string;
 }
 
-/** Count active memberships for a channel entity. */
 export const countMembershipsByChannel = async (
   ctx: DbContext,
   { channelType, channelId }: CountMembershipsByChannelOpts,
@@ -38,7 +38,6 @@ interface CountPendingInvitesByChannelOpts {
   channelId: string;
 }
 
-/** Count pending invitations for a channel entity. */
 export const countPendingInvitesByChannel = async (
   ctx: DbContext,
   { channelType, channelId }: CountPendingInvitesByChannelOpts,
@@ -59,7 +58,6 @@ interface FindMembershipAwareRowsOpts {
   entityId: string;
 }
 
-/** Membership-aware lookup for a list of emails against a target entity. */
 export const findMembershipAwareRows = async (
   ctx: AuthContext,
   { emails, entityType, entityId }: FindMembershipAwareRowsOpts,
@@ -164,7 +162,6 @@ interface FindMembershipByIdInOrgOpts {
   membershipId: string;
 }
 
-/** Find a membership by ID scoped to an organization. */
 export const findMembershipByIdInOrg = async (ctx: AuthContext, { membershipId }: FindMembershipByIdInOrgOpts) => {
   const { db, organizationId } = ctx.var;
   const [membership] = await db
@@ -180,7 +177,6 @@ interface FindMembershipsByUserIdsAndChannelOpts {
   channelId: string;
 }
 
-/** Find memberships for deletion targets (by user IDs and context). */
 export const findMembershipsByUserIdsAndChannel = async (
   ctx: DbContext,
   { userIds, channelId }: FindMembershipsByUserIdsAndChannelOpts,
@@ -196,7 +192,6 @@ interface DeleteMembershipsByIdsOpts {
   ids: string[];
 }
 
-/** Delete memberships by IDs. */
 export const deleteMembershipsByIds = async (ctx: AuthContext, { ids }: DeleteMembershipsByIdsOpts) => {
   const { db, organizationId } = ctx.var;
   return db
@@ -209,7 +204,6 @@ interface UpdateMembershipOpts {
   values: Partial<typeof membershipsTable.$inferInsert>;
 }
 
-/** Update a membership by ID and return the updated row. */
 export const updateMembership = async (ctx: AuthContext, { id, values }: UpdateMembershipOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db
@@ -224,7 +218,6 @@ interface InsertTokensOpts {
   tokens: (typeof tokensTable.$inferInsert)[];
 }
 
-/** Insert tokens in bulk and return the created rows. */
 export const insertTokens = async (ctx: DbContext, { tokens }: InsertTokensOpts) => {
   const { db } = ctx.var;
   return db.insert(tokensTable).values(tokens).returning({
@@ -252,7 +245,6 @@ interface FindInactiveMembershipForUserOpts {
   id: string;
 }
 
-/** Find an inactive membership by ID for a specific user. */
 export const findInactiveMembershipForUser = async (ctx: AuthContext, { id }: FindInactiveMembershipForUserOpts) => {
   const { db, userId } = ctx.var;
   const [membership] = await db
@@ -268,18 +260,19 @@ interface FindMembersPaginatedOpts {
   entityId: string;
   entityType: ChannelEntityType;
   q?: string;
-  sort?: 'id' | 'name' | 'email' | 'createdAt' | 'lastSeenAt' | 'role';
+  sort?: 'id' | 'name' | 'email' | 'createdAt' | 'lastSeenAt' | 'role' | 'lastPostedAt';
   order?: 'asc' | 'desc';
   offset: number;
   limit: number;
   role?: EntityRole;
   userIds?: string[];
+  // Opt-in per-member insight counts; caller must run under tenantRead (product subqueries are RLS-guarded)
+  includeCounts?: boolean;
 }
 
-/** Get paginated members list with total count for an entity. */
 export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPaginatedOpts) => {
   const { db } = ctx.var;
-  const { organizationId, entityId, entityType, q, sort, order, offset, limit, role, userIds } = opts;
+  const { organizationId, entityId, entityType, q, sort, order, offset, limit, role, userIds, includeCounts } = opts;
 
   const $or = q
     ? [ilike(usersTable.name, prepareStringForILikeFilter(q)), ilike(usersTable.email, prepareStringForILikeFilter(q))]
@@ -303,8 +296,11 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
       name: usersTable.name,
       email: usersTable.email,
       createdAt: usersTable.createdAt,
-      lastSeenAt: sql`(SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id})`,
+      // COALESCE so never-signed-in members sort as oldest: plain DESC is NULLS FIRST in Postgres
+      lastSeenAt: sql`COALESCE((SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id}), '-infinity')`,
       role: membershipsTable.role,
+      // Latest live product row by the member in the viewed channel; RLS-guarded like the counts
+      lastPostedAt: lastPostedAtOrder(entityType, entityId, organizationId),
     },
     tieBreaker: usersTable.id,
   });
@@ -313,6 +309,8 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
     .select({
       ...memberSelect,
       membership: membershipBaseSelect,
+      // Per-member insight counts on the page rows only; the total below stays free of the subqueries
+      ...(includeCounts && { counts: memberCountsSelect(entityType, entityId, organizationId) }),
     })
     .from(usersTable)
     .innerJoin(membershipsTable, eq(membershipsTable.userId, usersTable.id))
@@ -323,10 +321,17 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
     .limit(limit)
     .offset(offset);
 
+  // Totals count over a slim id-only query, so include=counts never evaluates its subqueries channel-wide
+  const totalQuery = db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .innerJoin(membershipsTable, eq(membershipsTable.userId, usersTable.id))
+    .where(and(...membersFilters, or(...$or)));
+
   return resolveListTotal(itemsQuery, {
     kind: 'exact',
     getTotal: async () => {
-      const [{ total }] = await db.select({ total: count() }).from(membersQuery.as('members'));
+      const [{ total }] = await db.select({ total: count() }).from(totalQuery.as('members'));
       return total;
     },
   });
@@ -340,10 +345,8 @@ interface FindMemberPreviewsByChannelsOpts {
 }
 
 /**
- * Member previews for a set of contexts in ONE batched query: the first `limit` members
- * per context with the given role, ordered by membership createdAt (oldest first).
- * Powers `include=members` on channel entity list endpoints; overflow counts come from
- * the pre-computed `m:c:{role}` counters, so previews never need a second query.
+ * Member previews for a set of contexts in one batched query: the first `limit` members per context with the given
+ * role, oldest membership first. Overflow counts come from the `m:c:{role}` counters, so previews need no second query.
  */
 export const findMemberPreviewsByChannels = async (
   ctx: DbContext,
@@ -409,7 +412,6 @@ interface FindPendingMembershipsPaginatedOpts {
   limit: number;
 }
 
-/** Get paginated pending memberships list with total count. */
 export const findPendingMembershipsPaginated = async (ctx: DbContext, opts: FindPendingMembershipsPaginatedOpts) => {
   const { db } = ctx.var;
   const { organizationId, entityId, sort, order, offset, limit } = opts;
@@ -435,6 +437,8 @@ export const findPendingMembershipsPaginated = async (ctx: DbContext, opts: Find
       thumbnailUrl: sql<string | null>`${userBaseSelect.thumbnailUrl}`.as('thumbnailUrl'),
       createdAt: table.createdAt,
       createdBy: table.createdBy,
+      // The row's own invitation token: resends target it by id, never by email, which would resolve the address's newest token across orgs.
+      tokenId: tokensTable.id,
     })
     .from(table)
     .leftJoin(usersTable, eq(usersTable.id, table.userId))

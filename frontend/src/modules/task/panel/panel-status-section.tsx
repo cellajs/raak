@@ -11,7 +11,6 @@ import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
-import { useUserStore } from '~/modules/user/user-store';
 import { cn } from '~/utils/cn';
 import { dateMini } from '~/utils/date-mini';
 
@@ -42,7 +41,6 @@ export function PanelStatusSection({
   windowMode,
 }: PanelStatusSectionProps) {
   const { t } = useTranslation();
-  const language = useUserStore((state) => state.user?.language);
   const isVisible = useSectionEdgeVisibility({ edge: type === 'iced' ? 'bottom' : 'top', scrollRef, windowMode });
 
   const togglePanelSectionExpandState = useTaskBoardStore((state) => state.togglePanelSectionExpandState);
@@ -136,7 +134,7 @@ export function PanelStatusSection({
           {!isIced && (
             <div className="flex gap-1">
               <span>{t('c:since')}</span>
-              <span>{dateMini(dayjs().subtract(boardAcceptedCutOff, 'day').toISOString(), language || 'en')}</span>
+              <span>{dateMini(dayjs().subtract(boardAcceptedCutOff, 'day').toISOString())}</span>
               {counts.accepted !== counts.acceptedCutOff && showTotal && (
                 <div className="text-xs">
                   <span className="mr-2 ml-1">•</span>

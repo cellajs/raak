@@ -3,31 +3,35 @@ import { XIcon } from 'lucide-react';
 import type * as React from 'react';
 import { cn } from '~/utils/cn';
 
-/** Defines the style variants for alert. */
 export const alertVariants = cva(
   'relative grid w-full grid-cols-[0_1fr] items-start gap-y-0.5 rounded-lg border px-4 py-3 text-sm has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-[>svg]:gap-x-3 [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current',
   {
     variants: {
       variant: {
         default: 'bg-card text-card-foreground',
-        brand: 'bg-brand text-brand-foreground [--intent-color:var(--brand)]',
-        destructive: 'bg-destructive text-destructive-foreground [--intent-color:var(--destructive)]',
-        success: 'bg-success text-success-foreground [--intent-color:var(--success)]',
+        brand: '[--intent-color:var(--brand)]',
+        destructive: '[--intent-color:var(--destructive)]',
+        success: '[--intent-color:var(--success)]',
         plain: 'border-primary/20 bg-background/80 text-primary',
         secondary: 'bg-secondary text-secondary-foreground',
-        warning: 'bg-warning text-warning-foreground [--intent-color:var(--warning)]',
+        warning: '[--intent-color:var(--warning)]',
       },
       soft: {
         true: '',
         false: '',
       },
     },
+    // Solid fills gated on `soft: false`, so the soft form never emits `text-<intent>-foreground`
     compoundVariants: [
       {
         variant: ['brand', 'destructive', 'success', 'warning'],
         soft: true,
         className: 'soft-bg soft-border soft-text',
       },
+      { variant: 'brand', soft: false, className: 'bg-brand text-brand-foreground' },
+      { variant: 'destructive', soft: false, className: 'bg-destructive text-destructive-foreground' },
+      { variant: 'success', soft: false, className: 'bg-success text-success-foreground' },
+      { variant: 'warning', soft: false, className: 'bg-warning text-warning-foreground' },
     ],
     defaultVariants: {
       variant: 'default',
@@ -36,7 +40,6 @@ export const alertVariants = cva(
   },
 );
 
-/** Renders the styled alert primitive. */
 export function Alert({
   className,
   variant,
@@ -62,7 +65,6 @@ export function Alert({
   );
 }
 
-/** Renders the styled alert title primitive. */
 export function AlertTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -73,7 +75,6 @@ export function AlertTitle({ className, ...props }: React.ComponentProps<'div'>)
   );
 }
 
-/** Renders the styled alert description primitive. */
 export function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div

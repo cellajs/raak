@@ -1,13 +1,11 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
-import { productCountersTable } from '#/modules/entities/product-counters-db';
 
 interface FindAttachmentsByStxMutationIdOpts {
   mutationId: string;
 }
 
-/** Find attachments by their STX mutation ID (idempotency check). */
 export const findAttachmentsByStxMutationId = async (
   ctx: AuthContext,
   { mutationId }: FindAttachmentsByStxMutationIdOpts,
@@ -24,12 +22,10 @@ export const findAttachmentsByStxMutationId = async (
     );
 };
 
-interface InsertAttachmentsOpts {
-  attachments: (typeof attachmentsTable.$inferInsert)[];
-}
-
-/** Insert attachments and return the created rows. Silently skips duplicates (PK conflict). */
-export const insertAttachments = async (ctx: DbContext, { attachments }: InsertAttachmentsOpts) => {
+export const insertAttachments = async (
+  ctx: DbContext,
+  { attachments }: { attachments: (typeof attachmentsTable.$inferInsert)[] },
+) => {
   const { db } = ctx.var;
   return db.insert(attachmentsTable).values(attachments).onConflictDoNothing().returning();
 };
@@ -39,7 +35,6 @@ interface UpdateAttachmentOpts {
   values: Partial<typeof attachmentsTable.$inferInsert>;
 }
 
-/** Update an attachment by ID and return the updated row. */
 export const updateAttachment = async (ctx: AuthContext, { id, values }: UpdateAttachmentOpts) => {
   const { db, organizationId } = ctx.var;
   const [updated] = await db
@@ -56,7 +51,6 @@ interface DeleteAttachmentsByIdsOpts {
   deletedAt: string;
 }
 
-/** Soft-delete attachments by IDs. */
 export const deleteAttachmentsByIds = async (
   ctx: AuthContext,
   { ids, deletedAt, deletedBy }: DeleteAttachmentsByIdsOpts,
@@ -78,29 +72,11 @@ interface FindAttachmentsByIdsOpts {
   ids: string[];
 }
 
-/**
- * Find live (non-deleted) attachments by id. Tenant-scoped via RLS from `tenantRead`:
- * unknown, deleted, and cross-tenant ids are simply absent from the result.
- */
+/** Tenant-scoped via RLS from `tenantRead`: unknown, deleted and cross-tenant ids are absent. */
 export const findAttachmentsByIds = async (ctx: DbContext, { ids }: FindAttachmentsByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .select()
     .from(attachmentsTable)
     .where(and(inArray(attachmentsTable.id, ids), isNull(attachmentsTable.deletedAt)));
-};
-
-interface FindAttachmentViewCountOpts {
-  entityId: string;
-}
-
-/** Find an attachment's view count from product counters. */
-export const findAttachmentViewCount = async (ctx: DbContext, { entityId }: FindAttachmentViewCountOpts) => {
-  const { db } = ctx.var;
-  const [counters] = await db
-    .select({ viewCount: productCountersTable.viewCount })
-    .from(productCountersTable)
-    .where(eq(productCountersTable.productId, entityId))
-    .limit(1);
-  return counters?.viewCount ?? 0;
 };

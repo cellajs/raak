@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { type AnyColumn, and, count, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { type ChannelEntityType, hierarchy, isProduct, roles, type EntityType as SharedEntityType } from 'shared';
 import type z from 'zod';
 import type { DbContext } from '#/core/context';
@@ -6,11 +6,10 @@ import { jsonbIntRaw } from '#/db/utils/jsonb-counters';
 import { hasPublishedAt } from '#/db/utils/published-predicate';
 import { activitiesTable } from '#/modules/activities/activities-db';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
+import { productCountersTable } from '#/modules/entities/product-counters-db';
 import type { membershipCountSchema } from '#/schemas';
 import type { EntityModel, EntityType, ResolvableTable, TableWithIdAndSlug } from '#/tables';
 import { getEntityTable } from '#/tables';
-
-// Helpers
 
 function hasSlug(table: ResolvableTable): table is TableWithIdAndSlug {
   return 'slug' in table;
@@ -26,36 +25,37 @@ interface FindChannelCountersByKeysOpts {
   keys: string[];
 }
 
-/** Fetch context counter rows by keys (org IDs, project IDs, etc.). */
 export const findChannelCountersByKeys = async (ctx: DbContext, { keys }: FindChannelCountersByKeysOpts) => {
   const { db } = ctx.var;
   return db
     .select({
       channelKey: channelCountersTable.channelKey,
       counts: channelCountersTable.counts,
-      // Canonical id-path (CDC-maintained): lets catchup verify claimed view ancestry.
+      // CDC-maintained canonical id-path: lets catchup verify a claimed view's ancestry.
       path: channelCountersTable.path,
     })
     .from(channelCountersTable)
     .where(inArray(channelCountersTable.channelKey, keys));
 };
 
-/**
- * Builds a SQL projection of precomputed membership, entity, and activity values from
- * `channelCountersTable`, avoiding per-request aggregate subqueries.
- */
+/** Projects precomputed values from `channelCountersTable`, avoiding per-request aggregates. */
 export const getChannelCountsSelect = (entityType: ChannelEntityType) => {
   const children = hierarchy.getOrderedDescendants(entityType);
   const productChildren = children.filter((child) => isProduct(child));
   const col = '"channel_counters"."counts"';
 
-  // Build membership JSON: { admin: N, member: N, ..., pending: N, total: N }
+  // { admin: N, member: N, ..., pending: N, total: N }
   const roleJsonPairs = roles.all.map((role) => `'${role}', ${jsonbIntRaw(col, `m:c:${role}`)}`).join(', ');
 
-  // Build entity JSON: { attachment: N, ... }
+  // { attachment: N, ... }
   const entityJsonPairs = children.map((entity) => `'${entity}', ${jsonbIntRaw(col, `e:c:${entity}`)}`).join(', ');
 
-  // Build activity JSON over product descendants only: { attachment: { created: epochMs | null, updated: epochMs | null }, ... }
+  // Home-only twin of `entities` from the `e:c:h:` keys: rows homed directly at the channel, no descendant rollup.
+  const entitySelfJsonPairs = children
+    .map((entity) => `'${entity}', ${jsonbIntRaw(col, `e:c:h:${entity}`)}`)
+    .join(', ');
+
+  // Product descendants only: { attachment: { created: epochMs | null, updated: epochMs | null }, ... }
   const activityJsonPairs = productChildren
     .map(
       (entity) =>
@@ -71,6 +71,7 @@ export const getChannelCountsSelect = (entityType: ChannelEntityType) => {
         'total', ${sql.raw(jsonbIntRaw(col, 'm:c:total'))}
       )`,
     entities: sql<Record<(typeof children)[number], number>>`json_build_object(${sql.raw(entityJsonPairs)})`,
+    entitiesSelf: sql<Record<(typeof children)[number], number>>`json_build_object(${sql.raw(entitySelfJsonPairs)})`,
     activity: sql<
       Record<(typeof productChildren)[number], { created: number | null; updated: number | null }>
     >`json_build_object(${sql.raw(activityJsonPairs)})`,
@@ -79,15 +80,34 @@ export const getChannelCountsSelect = (entityType: ChannelEntityType) => {
   return { countsSelect };
 };
 
+// Product view-count queries: product_counters lives here and every product module reuses these
+
+interface FindProductViewCountOpts {
+  productId: string;
+}
+
+export const findProductViewCount = async (ctx: DbContext, { productId }: FindProductViewCountOpts) => {
+  const { db } = ctx.var;
+  const [counters] = await db
+    .select({ viewCount: productCountersTable.viewCount })
+    .from(productCountersTable)
+    .where(eq(productCountersTable.productId, productId))
+    .limit(1);
+  return counters?.viewCount ?? 0;
+};
+
+/** Pair with {@link productViewCountJoin}. */
+export const productViewCountSelect = () =>
+  sql<number>`coalesce(${productCountersTable.viewCount}, 0)`.as('view_count');
+
+export const productViewCountJoin = (productIdColumn: AnyColumn) => eq(productCountersTable.productId, productIdColumn);
+
 interface GetChannelCountsOpts {
   entityType: ChannelEntityType;
   entityId: string;
 }
 
-/**
- * Fetches aggregated counts for a specific entity from channelCountersTable.
- * Single LEFT JOIN on pre-computed JSONB, no COUNT(*) subqueries.
- */
+/** One LEFT JOIN on pre-computed JSONB, no COUNT(*) subqueries. */
 export const getChannelCounts = async (ctx: DbContext, { entityType, entityId }: GetChannelCountsOpts) => {
   const { db } = ctx.var;
   const { countsSelect } = getChannelCountsSelect(entityType);
@@ -97,7 +117,7 @@ export const getChannelCounts = async (ctx: DbContext, { entityType, entityId }:
     .from(channelCountersTable)
     .where(eq(channelCountersTable.channelKey, entityId));
 
-  // If no row exists yet, return zeroed counts (activity stamps are null until a first post)
+  // No row yet: activity stamps stay null until a first post.
   if (!counts) {
     const descendants = hierarchy.getOrderedDescendants(entityType);
     const zeroMembership = Object.fromEntries([...roles.all.map((r) => [r, 0]), ['pending', 0], ['total', 0]]);
@@ -108,6 +128,7 @@ export const getChannelCounts = async (ctx: DbContext, { entityType, entityId }:
     return {
       membership: zeroMembership as z.infer<typeof membershipCountSchema>,
       entities: zeroEntities as Record<string, number>,
+      entitiesSelf: { ...zeroEntities } as Record<string, number>,
       activity: nullActivity as Record<string, { created: number | null; updated: number | null }>,
     };
   }
@@ -121,12 +142,8 @@ interface GetOrganizationEntityCountOpts {
 }
 
 /**
- * Reads a single pre-computed entity count from channelCountersTable.
- * Used for quota checks: reads `e:c:{entityType}` from the org's counter row.
- *
- * Draft-lifecycle tables (opt-in `publishedAt`) fall back to a direct COUNT over live
- * rows INCLUDING drafts: the `e:c:` counter tracks published rows only, but a quota must
- * bound total storage, not published visibility. This prevents drafts from stockpiling for free.
+ * Reads `e:c:{entityType}` from the org's counter row. Draft-lifecycle tables fall back to a
+ * direct COUNT including drafts, since that counter tracks published rows only.
  */
 export const getOrganizationEntityCount = async (
   ctx: DbContext,
@@ -159,7 +176,6 @@ interface FindLatestUserActivityIdOpts {
   entityTypes: SharedEntityType[];
 }
 
-/** Get the latest activity ID relevant to a user's organizations. */
 export const findLatestUserActivityId = async (
   ctx: DbContext,
   { organizationIds, entityTypes }: FindLatestUserActivityIdOpts,
@@ -189,14 +205,9 @@ interface ResolveEntityOpts<T extends EntityType> {
 }
 
 /**
- * @internal Resolves an entity by ID or slug from its table.
- *
- * **Do not use directly in route handlers.** Use these permission-checking wrappers:
- * - `getValidChannel` for channel entities (e.g., organization)
- * - `getValidProduct` for product entities (e.g., attachment, page)
- *
- * Direct usage is only appropriate in internal utilities (e.g., slug availability checks)
- * or self-operations where the user acts on their own data without permission checks.
+ * @internal Never call this from a route handler: it runs no permission check. Use the
+ * `getValidChannel` / `getValidProduct` wrappers there, and this only in internal utilities
+ * such as slug availability, or self-operations on the caller's own data.
  */
 export async function resolveEntity<T extends EntityType>(
   ctx: DbContext,
@@ -221,7 +232,7 @@ interface ResolveEntitiesOpts<T extends EntityType> {
   ids: string[];
 }
 
-/** @internal Resolves multiple entities by IDs. See {@link resolveEntity} for usage guidelines. */
+/** @internal See {@link resolveEntity} for usage guidelines. */
 export async function resolveEntities<T extends EntityType>(
   ctx: DbContext,
   { entityType, ids }: ResolveEntitiesOpts<T>,
@@ -240,10 +251,7 @@ export async function resolveEntities<T extends EntityType>(
   return entities as Array<EntityModel<T>>;
 }
 
-/**
- * Draft-exclusion fragment for catchup/delta scans: drafts are outside the sync engine,
- * so their seq bumps must never surface ids to sync back. Empty for tables without the column.
- */
+/** Drafts are outside the sync engine, so their seq bumps must not yield ids to sync back. */
 const publishedSqlFilter = (table: ResolvableTable) =>
   hasPublishedAt(table) ? sql.raw(' AND published_at IS NOT NULL') : sql.raw('');
 
@@ -253,7 +261,6 @@ interface FindChangedEntityIdsOpts {
   afterSeq: number;
 }
 
-/** Fetch IDs of entities that changed since a given seq. Lightweight ID-only query. */
 export const findChangedEntityIds = async (
   ctx: DbContext,
   { entityType, organizationId, afterSeq }: FindChangedEntityIdsOpts,
@@ -269,7 +276,7 @@ export const findChangedEntityIds = async (
   return rows.map((r) => r.id);
 };
 
-/** Fetch IDs of entities that changed since a seq, split into live updates and soft-delete tombstones. */
+/** Split into live updates and soft-delete tombstones. */
 export const findChangedEntityDeltaIds = async (
   ctx: DbContext,
   { entityType, organizationId, afterSeq }: FindChangedEntityIdsOpts,

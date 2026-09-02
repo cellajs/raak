@@ -12,9 +12,6 @@ import { lazyNamed } from '~/utils/lazy-named';
 
 const AppLayout = lazyNamed(() => import('~/modules/common/app/app-layout'), 'AppLayout');
 
-/**
- * Layout for authenticated users requiring a valid user session.
- */
 export const Route = createFileRoute('/_app')({
   // isAuth is false here because the root route checks the leaf route's isAuth, not the layout's
   staticData: { isAuth: false, boundary: 'app' },
@@ -22,36 +19,36 @@ export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ location, cause }) => {
     if (cause !== 'enter') return;
 
-    const storedUser = useUserStore.getState().user;
+    let storedUser = useUserStore.getState().user;
 
-    // Redirect immediately without awaiting `/me`, preserving first paint when backend is slow.
-    // Background hydration restores valid sessions; global query handling owns failures.
     if (!storedUser) {
-      void queryClient.ensureQueryData({ ...meQueryOptions() }).catch(() => {});
-
-      // If root domain, check for last user to decide where to redirect
       if (location.pathname === '/') {
         const { lastUser } = useUserStore.getState();
-        if (lastUser) throw redirect({ to: '/auth/authenticate', replace: true });
-        throw redirect({ to: '/about', replace: true });
+        if (!lastUser) throw redirect({ to: '/about', replace: true });
+
+        // The cookie can still be valid while the store is empty after a backend-driven sign-in, so probe /me first.
+        try {
+          storedUser = await queryClient.ensureQueryData({ ...meQueryOptions() });
+        } catch {
+          throw redirect({ to: '/auth/authenticate', search: { fromRoot: true }, replace: true });
+        }
+      } else {
+        // Redirect without awaiting `/me` to keep first paint fast; background hydration restores valid sessions.
+        void queryClient.ensureQueryData({ ...meQueryOptions() }).catch(() => {});
+
+        console.info('Not authenticated -> redirect to sign in');
+
+        const url = new URL(location.pathname, window.location.origin);
+        const redirectPath = url.pathname + url.search;
+        throw redirect({ to: '/auth/authenticate', search: { fromRoot: true, redirect: redirectPath } });
       }
-
-      console.info('Not authenticated -> redirect to sign in');
-
-      const url = new URL(location.pathname, window.location.origin);
-      const redirectPath = url.pathname + url.search;
-      throw redirect({ to: '/auth/authenticate', search: { fromRoot: true, redirect: redirectPath } });
     }
 
-    // Stored user -> continue into the app and revalidate the session in the background
     console.info('Continuing user with session');
-    // Wait for the per-user localUserDb to open + sync store to rehydrate so the stream
-    // connects with a valid cursor (else catchup resyncs from `now`). Eager hydration
-    // started at sign-in, so this usually resolves immediately.
+    // The stream needs localUserDb open and the sync store rehydrated for a valid cursor, else catchup resyncs from `now`.
     await localUserStorageReady();
     // Start stream early so catchup runs in parallel with route loaders
     appStreamManager.connect();
-    // Validate session in parallel; disconnect stream if stale.
     queryClient.ensureQueryData({ ...meQueryOptions() }).catch(() => {
       appStreamManager.disconnect();
     });
@@ -64,10 +61,8 @@ export const Route = createFileRoute('/_app')({
     try {
       console.debug('[AppLayout] Fetching menu while loading app:', location.pathname);
 
-      // Prefetch unseen counts alongside menu data
       queryClient.prefetchQuery(unseenCountsQueryOptions());
 
-      // Get menu too but defer it so no need to hang while its being retrieved
       return defer(getMenuData());
     } catch (error) {
       if (error instanceof Error) {

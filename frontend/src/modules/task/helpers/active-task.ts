@@ -18,7 +18,6 @@ export const currentActiveTask = (taskId?: string): Task | undefined => {
   // Explicit taskId
   if (taskId) return tasks.find((t) => t.id === taskId);
 
-  // Store-focused task
   const storeFocusedId = useTaskInteractionStore.getState().focusedTaskId;
   if (storeFocusedId) return tasks.find((t) => t.id === storeFocusedId);
 

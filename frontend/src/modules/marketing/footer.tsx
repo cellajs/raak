@@ -63,7 +63,6 @@ function Credits({ className }: { className?: string }) {
   );
 }
 
-/** Renders the marketing footer. */
 export function MarketingFooter() {
   const { t } = useTranslation();
   const sectionClass = 'rich-gradient dark-gradient relative min-h-[30vw] pt-[15vw]';

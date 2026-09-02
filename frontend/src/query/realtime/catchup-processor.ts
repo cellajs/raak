@@ -13,11 +13,10 @@ import { syncStore } from '~/query/realtime/sync-store';
 import * as cacheOps from './cache-ops';
 import { enqueueCatchupRange, flushChannelViewNow, resetFetchPrioritizer } from './fetch-prioritizer';
 import * as membershipOps from './membership-ops';
-import { propagateEmbeddings } from './propagation';
+import { invalidateEmbeddedForHost, propagateEmbeddings } from './propagation';
 import { getSyncTier, getTenantIdForOrg } from './sync-priority';
 
 /**
- * Processes view-driven catchup against organization sequence cursors.
  * Readable views fetch deltas when their frontier advances; other statuses expose no summaries.
  * Cursors advance only after ingestion, invalidation handoff, or an intentional cache-free skip.
  */
@@ -48,11 +47,11 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
       const keys = getEntityQueryKeys(entityType);
 
       if (answer.status === 'opaque') {
-        // Readable but not provably all: no numbers to compare. Fall back to staleness, so
-        // an actively viewed list refetches; background lists follow their mount policy.
+        // Readable but not provably complete, so no numbers to compare: an actively viewed list refetches, background lists follow their mount policy.
         if (!baselineOnly && hasAnyCachedList(keys, organizationId)) {
           cacheOps.invalidateEntityListForOrg(keys, organizationId, 'active');
         }
+        if (!baselineOnly) invalidateEmbeddedForHost(entityType, organizationId);
         console.debug(`[CatchupProcessor] View ${answer.key}: opaque → staleness fallback`);
         continue;
       }
@@ -60,13 +59,13 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
       const frontier = answer.frontiers?.[entityType] ?? 0;
       const clientCursor = syncState.getOrgSeq(organizationId, entityType);
 
-      // Baseline (first session for this org view): store the frontier, let route loaders /
-      // hydration supply data. With something already cached, refetch it.
+      // First session for this org view: store the frontier and let route loaders or hydration supply the data; refetch only what is already cached.
       if (baselineOnly || clientCursor === 0) {
         if (!baselineOnly && hasAnyCachedList(keys, organizationId)) {
           cacheOps.invalidateEntityListForOrg(keys, organizationId, 'active');
           console.debug(`[CatchupProcessor] View ${answer.key}: first session → full refetch`);
         }
+        if (!baselineOnly) invalidateEmbeddedForHost(entityType, organizationId);
         syncState.setOrgSeq(organizationId, entityType, frontier);
         continue;
       }
@@ -76,17 +75,17 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
 
       const tenantId = syncState.getOrgTenantId(organizationId) ?? getTenantIdForOrg(organizationId);
 
-      // Cache-symmetry guard: with nothing cached there is nothing to patch; mount
-      // hydration fetches fresh. Advance so the window is not re-offered forever.
+      // Nothing cached means nothing to patch and mount hydration fetches fresh, so advance to stop the window being re-offered forever.
       if (!hasAnyCachedList(keys, organizationId)) {
+        // The host's own rows are not cached, but a cached embedded list can still hold their stale aggregates.
+        invalidateEmbeddedForHost(entityType, organizationId);
         syncState.setOrgSeq(organizationId, entityType, frontier);
         console.debug(`[CatchupProcessor] View ${answer.key}: no cached list → skip delta`);
         continue;
       }
 
-      // ONE fetch path: every gap goes through the fetch prioritizer. Background orgs advance at
-      // their negotiated flush; the viewing org is flushed immediately AND awaited so the
-      // mutation-replay gate (waitForActiveCatchup) resolves against a reconciled cache.
+      // Every gap goes through the fetch prioritizer: background orgs advance at their negotiated flush.
+      // The viewing org flushes immediately and is awaited, so waitForActiveCatchup resolves against a reconciled cache.
       enqueueCatchupRange({
         entityType: entityType as ProductEntityType,
         organizationId,
@@ -106,8 +105,7 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
       console.debug(`[CatchupProcessor] View ${answer.key}: delta=${frontier - clientCursor} → ${outcome}`);
     }
 
-    // Integrity: counts compared server-to-server per (org, entityType). A changed
-    // count with matching frontier means drift (e.g. failed refetch after invalidation).
+    // Counts compared server-to-server per (org, entityType): a changed count with a matching frontier means drift.
     if (!baselineOnly) verifyViewCounts(views);
   }
 
@@ -116,8 +114,7 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
   for (const organizationId of orgIds) {
     const { signals, propagation } = changes[organizationId];
 
-    // Seed the org entry so the NEXT catchup request declares views for it (fresh
-    // sessions have no stored orgs yet; membership-derived `changes` names them).
+    // Seed the org entry so the next catchup request declares views for it; fresh sessions have no stored orgs and learn them from `changes`.
     syncState.setOrgTenantId(organizationId, syncState.getOrgTenantId(organizationId) ?? '');
 
     // Membership change via the bump-only membership signal; stored after comparison.
@@ -147,14 +144,12 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
     console.info('[SyncTrust] catchup reconciled; resuming trusted mode');
   }
 
-  // Refresh memberships (getMyMemberships, invalidate channel lists, refresh current user).
   const membershipChannelsBefore = membershipChannelKeys();
   membershipOps.invalidateChannelList(null);
   await membershipOps.fetchMemberships();
   membershipOps.refreshMe();
 
-  // Remove organization product caches after membership loss so surviving rows refetch under
-  // current permissions. Organization prefixes cover home and filtered lists.
+  // Remove org product caches after membership loss so surviving rows refetch under current permissions; the org prefix covers home and filtered lists.
   const membershipChannelsAfter = membershipChannelKeys();
   const orgsWithLostChannel = new Set(
     [...membershipChannelsBefore].filter((key) => !membershipChannelsAfter.has(key)).map((key) => key.split(':')[0]),
@@ -167,8 +162,7 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
     }
   }
 
-  // Reconcile unseen counts. Synced-row deltas cannot see what happened while
-  // disconnected (other-device seen-marks, missed windows); an exact recount re-anchors them.
+  // Synced-row deltas miss what happened while disconnected, such as other-device seen-marks, so an exact recount re-anchors the counts.
   queryClient.invalidateQueries({ queryKey: seenKeys.unseenCounts });
 }
 
@@ -178,15 +172,11 @@ function membershipChannelKeys(): Set<string> {
   return new Set((data?.items ?? []).map((m) => `${m.organizationId}:${m.channelId}`));
 }
 
-/** Registered product entity types, for building the catchup views request. */
 export function catchupEntityTypes(): string[] {
   return getRegisteredProductEntityTypes();
 }
 
-/**
- * Use grant-boundary answers for precise invalidation atop organization-view ingestion.
- * Unchanged skips work, opaque falls back to staleness, and forbidden drops the view.
- */
+/** Grant-boundary answers refine org-view ingestion: unchanged skips work, opaque falls back to staleness, forbidden drops the view. */
 function processRegisteredViewAnswer(
   answer: NonNullable<PostAppCatchupResponse['views']>[number],
   syncState: ReturnType<typeof syncStore.getState>,
@@ -207,6 +197,7 @@ function processRegisteredViewAnswer(
       if (hasAnyCachedList(keys, view.organizationId)) {
         cacheOps.invalidateEntityListForOrg(keys, view.organizationId, 'active');
       }
+      invalidateEmbeddedForHost(entityType, view.organizationId);
     }
   };
 
@@ -237,11 +228,7 @@ function splitViewKey(key: string): [string | undefined, string | undefined] {
   return [key.slice(0, idx), key.slice(idx + 1)];
 }
 
-/**
- * Whether any list query data is cached under the entity's org prefix (or base for public
- * entities). Mirrors the patch target of fetchRangeAndPatch. When nothing is cached a delta
- * fetch has nothing to patch: mount hydration fetches fresh and resets the cursor itself.
- */
+/** Mirrors the patch target of fetchRangeAndPatch: with nothing cached a delta fetch has nothing to patch, and mount hydration resets the cursor itself. */
 function hasAnyCachedList(keys: ReturnType<typeof getEntityQueryKeys>, organizationId: string | null): boolean {
   const prefix = organizationId ? keys.list.org(organizationId) : keys.list.base;
   return queryClient.getQueriesData({ queryKey: prefix }).some(([, data]) => data !== undefined);
@@ -269,8 +256,9 @@ function verifyViewCounts(views: NonNullable<PostAppCatchupResponse['views']>): 
     if (!hasAnyCachedList(keys, organizationId)) continue;
 
     cacheOps.invalidateEntityListForOrg(keys, organizationId, 'active');
+    invalidateEmbeddedForHost(entityType, organizationId);
     console.debug(
-      `[CatchupProcessor] Integrity: ${entityType} in org ${organizationId} count changed — ${previous} → ${serverCount} → invalidated`,
+      `[CatchupProcessor] Integrity: ${entityType} in org ${organizationId} count changed from ${previous} → ${serverCount} → invalidated`,
     );
   }
 }

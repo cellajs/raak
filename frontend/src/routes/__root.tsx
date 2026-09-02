@@ -1,13 +1,13 @@
 import { createRootRouteWithContext, redirect } from '@tanstack/react-router';
 import i18n from 'i18next';
+import { ApiError } from '~/lib/api';
 import { ErrorNotice, type ErrorNoticeError } from '~/modules/common/error-notice';
 import { Root } from '~/modules/common/root';
 import { meQueryOptions } from '~/modules/me/query';
 import { useUserStore } from '~/modules/user/user-store';
 import { queryClient } from '~/query/query-client';
 
-// Root boundary components are defined locally (not imported) so their bindings are never read
-// cross-module at route-definition eval time, which can TDZ during HMR re-evaluation.
+// Root boundary components stay local: a cross-module binding read at route-definition eval time can TDZ during HMR.
 function RootErrorComponent({ error }: { error: unknown }) {
   return <ErrorNotice boundary="root" error={error as ErrorNoticeError} />;
 }
@@ -27,7 +27,6 @@ function RootNotFoundComponent() {
   );
 }
 
-/** Defines the root application route. */
 export const Route = createRootRouteWithContext()({
   staticData: { isAuth: false, boundary: 'root' },
   component: Root,
@@ -44,7 +43,10 @@ export const Route = createRootRouteWithContext()({
 
     try {
       await queryClient.ensureQueryData({ ...meQueryOptions() });
-    } catch {
+    } catch (error) {
+      // Only a definitive 401 means signed out; network blips and 5xx rethrow to the root error boundary.
+      if (!(error instanceof ApiError) || Number(error.status) !== 401) throw error;
+
       console.info('[RootRoute] Not authenticated -> redirect to sign in');
       const redirectPath = location.pathname + location.searchStr;
       throw redirect({ to: '/auth/authenticate', search: { fromRoot: true, redirect: redirectPath } });

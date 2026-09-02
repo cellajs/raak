@@ -1,20 +1,27 @@
+import { BoxIcon, type LucideIcon, PaperclipIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { roles } from 'shared';
+import { type ChannelEntityType, hierarchy, isChannel } from 'shared';
 import { enumSelectEditorOptions, RenderEnumSelect } from '~/modules/common/data-grid/cell-renderers';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { Member } from '~/modules/memberships/types';
+import { Badge } from '~/modules/ui/badge';
 import { UserCell } from '~/modules/user/user-cell';
 import { dateShort } from '~/utils/date-short';
 
-/** Builds the column definitions for the enclosing table. */
-export const useColumns = (isAdmin: boolean, isSheet: boolean) => {
+// Product types with per-member stat columns; must match `memberStatProductTypes` in the
+// backend's member-counts.ts (the response only carries these keys).
+const memberStatProductTypes = ['attachment'] as const;
+const memberStatIcons: Partial<Record<string, LucideIcon>> = {
+  attachment: PaperclipIcon,
+};
+
+export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: ChannelEntityType) => {
   const { t } = useTranslation();
 
   const columns = () => {
     const cols: ColumnOrColumnGroup<Member>[] = [
-      // For admins add checkbox column
       ...(isAdmin ? [CheckboxColumn] : []),
       {
         key: 'name',
@@ -61,7 +68,7 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean) => {
           renderEditCell: (props) => (
             <RenderEnumSelect
               {...props}
-              options={roles.all}
+              options={hierarchy.getRoles(entityType)}
               currentValue={props.row.membership?.role}
               setValue={(row, role) => ({ ...row, membership: { ...row.membership, role } })}
               renderOption={(role) => t(role)}
@@ -87,8 +94,67 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean) => {
         minBreakpoint: 'md',
         minWidth: 120,
         placeholderValue: '-',
-        renderCell: ({ row }) => dateShort(row.lastSeenAt),
+        // An empty lastSeenAt means the member never signed in, which the badge states explicitly
+        renderCell: ({ row }) =>
+          row.lastSeenAt ? (
+            dateShort(row.lastSeenAt)
+          ) : (
+            <Badge variant="secondary" size="xs">
+              {t('c:inactive')}
+            </Badge>
+          ),
       },
+      // Per-member insight columns from include=counts: when the member last posted in this
+      // channel, their authored counts within it, and their sub-channel membership counts.
+      {
+        key: 'lastPostedAt',
+        name: t('c:last_post'),
+        sortable: true,
+        sortDescendingFirst: true,
+        minBreakpoint: 'md',
+        minWidth: 120,
+        placeholderValue: '-',
+        renderCell: ({ row }) => {
+          const lastPostedAt = row.counts?.activity.attachment;
+          return lastPostedAt ? dateShort(new Date(lastPostedAt)) : null;
+        },
+      },
+      ...memberStatProductTypes.map((type): ColumnOrColumnGroup<Member> => {
+        const Icon = memberStatIcons[type] ?? BoxIcon;
+        return {
+          key: `${type}Count`,
+          name: t(`c:${type}`, { count: 2 }),
+          minBreakpoint: 'md',
+          minWidth: 60,
+          maxWidth: 120,
+          renderCell: ({ row }) => (
+            <>
+              <Icon className="mr-2 opacity-50" />
+              {row.counts?.products[type] ?? '-'}
+            </>
+          ),
+        };
+      }),
+      ...hierarchy
+        .getOrderedDescendants(entityType)
+        .filter(
+          (type): type is Exclude<ChannelEntityType, 'organization'> => isChannel(type) && type !== 'organization',
+        )
+        .map(
+          (type): ColumnOrColumnGroup<Member> => ({
+            key: `${type}Count`,
+            name: t(`c:${type}`, { count: 2, defaultValue: type }),
+            minBreakpoint: 'md',
+            minWidth: 60,
+            maxWidth: 120,
+            renderCell: ({ row }) => (
+              <>
+                <BoxIcon className="mr-2 opacity-50" />
+                {row.counts?.memberships[type] ?? '-'}
+              </>
+            ),
+          }),
+        ),
     ];
 
     return cols;

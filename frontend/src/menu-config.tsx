@@ -12,9 +12,6 @@ import { findOrganizationByIdOrSlug } from '~/modules/organization/query';
 import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
 import { getRouter } from '~/routes/-router-instance';
 
-/**
- * Create new organization from the menu.
- */
 function createOrganizationAction(triggerRef: RefObject<HTMLButtonElement | null>) {
   const callback = (args: CallbackArgs<Organization>) => {
     if (args.status === 'success') {

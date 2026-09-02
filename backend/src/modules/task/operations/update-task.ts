@@ -2,6 +2,7 @@ import type { z } from '@hono/zod-openapi';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
+import { dispatchMutation } from '#/lib/mutation-bus';
 import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
 import {
   type DerivedDescriptionProps,
@@ -132,6 +133,7 @@ export async function updateTaskOp(
     }
 
     const updatedTaskRecord = await updateTask(txCtx, { id, values: updateValues });
+    await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord], serverOrigin });
 
     const isProjectMove = 'projectId' in resolved.values && resolved.values.projectId !== entity.projectId;
 

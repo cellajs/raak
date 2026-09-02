@@ -8,17 +8,15 @@ import { TooltipButton } from '~/modules/common/tooltip-button';
 import { Slot } from '~/modules/ui/slot';
 import { cn } from '~/utils/cn';
 
-/** Defines the style variants for button. */
 export const buttonVariants = cva(
   'focus-effect inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium text-sm shadow-xs transition-colors disabled:pointer-events-none disabled:opacity-50 [&:not(.absolute):not(.relative)]:active:translate-y-[.05rem]',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground [--intent-color:var(--primary)] hover:bg-primary/80',
-        brand: 'bg-brand text-brand-foreground [--intent-color:var(--brand)] hover:bg-brand/80',
-        destructive:
-          'bg-destructive text-destructive-foreground [--intent-color:var(--destructive)] hover:bg-destructive/80',
-        success: 'bg-success text-success-foreground [--intent-color:var(--success)] hover:bg-success/80',
+        default: '[--intent-color:var(--primary)]',
+        brand: '[--intent-color:var(--brand)]',
+        destructive: '[--intent-color:var(--destructive)]',
+        success: '[--intent-color:var(--success)]',
         secondary:
           'border border-transparent bg-secondary text-secondary-foreground [--intent-color:var(--secondary)] hover:bg-secondary/80',
         outline:
@@ -31,11 +29,11 @@ export const buttonVariants = cva(
         plain: 'border border-primary/20 bg-primary/5 text-primary hover:border-primary/30 hover:bg-primary/10',
         input:
           'hover:transparent border border-input bg-background aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&:not(.absolute)]:active:translate-y-0',
-        warning: 'bg-warning text-warning-foreground [--intent-color:var(--warning)] hover:bg-warning/80',
+        warning: '[--intent-color:var(--warning)]',
         none: 'border-none bg-transparent shadow-none',
       },
       soft: {
-        true: 'soft-bg soft-border hover:soft-bg-hover soft-text border shadow-none',
+        true: '',
         false: '',
       },
       size: {
@@ -50,6 +48,28 @@ export const buttonVariants = cva(
         auto: 'h-auto',
       },
     },
+    // Solid intent fills are gated on `soft: false`: `.soft-text` sorts before `.text-*` in the compiled
+    // sheet, so a variant that also emitted `text-<intent>-foreground` would wash out its soft form.
+    compoundVariants: [
+      // Only intent variants have a soft form; surface-colored ones (`secondary`) would paint `soft-text` near-invisible.
+      {
+        variant: ['default', 'brand', 'destructive', 'success', 'warning'],
+        soft: true,
+        // The strong steps (not plain soft-bg) so the button stays legible on a soft-tinted surface;
+        // hover deepens all three: fill, text and frame.
+        className:
+          'soft-bg-strong soft-border-medium hover:soft-bg-stronger hover:soft-border-strong soft-text-strong hover:soft-text-stronger border shadow-none',
+      },
+      { variant: 'default', soft: false, className: 'bg-primary text-primary-foreground hover:bg-primary/80' },
+      { variant: 'brand', soft: false, className: 'bg-brand text-brand-foreground hover:bg-brand/80' },
+      {
+        variant: 'destructive',
+        soft: false,
+        className: 'bg-destructive text-destructive-foreground hover:bg-destructive/80',
+      },
+      { variant: 'success', soft: false, className: 'bg-success text-success-foreground hover:bg-success/80' },
+      { variant: 'warning', soft: false, className: 'bg-warning text-warning-foreground hover:bg-warning/80' },
+    ],
     defaultVariants: {
       variant: 'default',
       soft: false,
@@ -65,7 +85,6 @@ export interface ButtonProps
   render?: React.ReactElement;
 }
 
-/** Renders the styled button primitive. */
 export function Button({
   className,
   variant,
@@ -94,10 +113,7 @@ type SubmitButtonProps = Omit<ButtonProps, 'type'> & {
   icon?: React.ReactNode;
 };
 
-/**
- * Form submit button that warns when offline. With `icon`, it swaps to a spinner on loading;
- * without `icon`, loading overlays a spinner on the whole button.
- */
+/** Form submit button that warns when offline; `icon` swaps to a spinner on loading, otherwise the spinner overlays the button. */
 export function SubmitButton({
   onClick,
   children,

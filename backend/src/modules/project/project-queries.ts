@@ -41,7 +41,6 @@ interface DeleteProjectsByIdsOpts {
   ids: string[];
 }
 
-/** Delete projects by IDs. */
 export const deleteProjectsByIds = async (ctx: AuthContext, { ids }: DeleteProjectsByIdsOpts) => {
   const { db, organizationId } = ctx.var;
   return db
@@ -81,7 +80,6 @@ interface DeleteProjectMembershipOpts {
   projectId: string;
 }
 
-/** Delete a project membership by its project identity. */
 export const deleteProjectMembership = async (
   ctx: DbContext,
   { membershipId, userId, channelId, projectId }: DeleteProjectMembershipOpts,
@@ -148,7 +146,6 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
 
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
-  // Project filters in WHERE
   const projectWhere: SQL[] = [
     ...(q ? [ilike(projectsTable.name, prepareStringForILikeFilter(q))] : []),
     ...(organizationId ? [eq(projectsTable.organizationId, organizationId)] : []),

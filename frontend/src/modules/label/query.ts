@@ -82,7 +82,6 @@ const handleError = createResourceError('label');
 /** Look up a cached label entity by id across the org's label lists. */
 export const findLabelInCache = createCacheFinder<Label>('label');
 
-/** Builds React Query options for label. */
 export const labelQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
@@ -120,7 +119,6 @@ export const labelsCanonicalOptions = ({
   });
 };
 
-/** Builds React Query options for labels. */
 export const labelsQueryOptions = ({
   q = '',
   projectId,

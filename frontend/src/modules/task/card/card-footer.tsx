@@ -20,7 +20,6 @@ import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
-import { useUserStore } from '~/modules/user/user-store';
 import { cn } from '~/utils/cn';
 
 interface TaskCardFooterProps {
@@ -29,7 +28,6 @@ interface TaskCardFooterProps {
   isSheet?: boolean;
 }
 
-/** Renders the task card footer. */
 export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, isSheet = false }: TaskCardFooterProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
@@ -45,8 +43,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
 
   const handlers = useTaskFieldHandlers(task);
 
-  const { user } = useUserStore();
-  const statusChangedRelative = useRelativeDate(task.statusChangedAt, user?.language || 'en');
+  const statusChangedRelative = useRelativeDate(task.statusChangedAt);
   const isJustNow = dayjs().diff(dayjs.utc(task.statusChangedAt)) <= 1000;
   const isRelative = /^\d/.test(statusChangedRelative); // "2h", "5m" → use "ago"; "May 5" → don't
   const statusTooltip = isJustNow

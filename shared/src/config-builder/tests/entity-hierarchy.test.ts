@@ -136,10 +136,8 @@ describe('EntityHierarchyBuilder', () => {
     });
 
     it('getOrderedAncestors returns ancestors most-specific first', () => {
-      // Inherits permissions from both ancestors
       expect(hierarchy.getOrderedAncestors('task')).toEqual(['project', 'organization']);
       expect(hierarchy.getOrderedAncestors('label')).toEqual(['project', 'organization']);
-      // Gets both ancestors via the parent chain
       expect(hierarchy.getOrderedAncestors('attachment')).toEqual(['project', 'organization']);
       expect(hierarchy.getOrderedAncestors('workspace')).toEqual(['organization']);
       expect(hierarchy.getOrderedAncestors('project')).toEqual(['organization']);
@@ -164,9 +162,7 @@ describe('EntityHierarchyBuilder', () => {
     });
 
     it('relatableChannelTypes contains only channel parents of products', () => {
-      // project is parent of task, label, attachment
       expect(hierarchy.relatableChannelTypes).toContain('project');
-      // organization and workspace are NOT direct parents of any product
       expect(hierarchy.relatableChannelTypes).not.toContain('organization');
       expect(hierarchy.relatableChannelTypes).not.toContain('workspace');
       expect(hierarchy.relatableChannelTypes).toHaveLength(1);
@@ -224,6 +220,82 @@ describe('EntityHierarchyBuilder', () => {
       expect(() => deep().product('item', { parent: 'project', nullableAncestors: ['project', 'project'] })).toThrow(
         'duplicate nullableAncestor',
       );
+    });
+  });
+
+  describe('rootRoles', () => {
+    const base = () => createEntityHierarchy(roles).user().channel('organization', { parent: null, roles: roles.all });
+
+    it('exposes the declared escalation map via getRootRole', () => {
+      const h = base()
+        .channel('workspace', {
+          parent: 'organization',
+          roles: ['member', 'guest'],
+          rootRoles: { member: 'member', guest: 'guest' },
+        })
+        .build();
+      expect(h.getRootRole('workspace', 'member')).toBe('member');
+      expect(h.getRootRole('workspace', 'guest')).toBe('guest');
+    });
+
+    it('returns undefined for a channel without a map and for roles outside it', () => {
+      const h = base()
+        .channel('workspace', { parent: 'organization', roles: ['member'] })
+        .build();
+      expect(h.getRootRole('workspace', 'member')).toBeUndefined();
+      expect(h.getRootRole('organization', 'admin')).toBeUndefined();
+    });
+
+    it('throws when the root channel declares a map (it has no root above it)', () => {
+      expect(() =>
+        createEntityHierarchy(roles)
+          .user()
+          .channel('organization', { parent: null, roles: roles.all, rootRoles: { admin: 'admin' } as never }),
+      ).toThrow('cannot declare rootRoles');
+    });
+
+    it('throws when a declared map leaves one of the channel roles unmapped', () => {
+      expect(() =>
+        base().channel('workspace', {
+          parent: 'organization',
+          roles: ['member', 'guest'],
+          rootRoles: { member: 'member' } as any,
+        }),
+      ).toThrow('leaves guest unmapped');
+    });
+
+    it('throws when a mapped value is not a role of the chain root', () => {
+      expect(() =>
+        base().channel('workspace', {
+          parent: 'organization',
+          roles: ['guest'],
+          rootRoles: { guest: 'owner' } as any,
+        }),
+      ).toThrow('not a role of');
+    });
+  });
+
+  describe('elevatedGrants', () => {
+    it('compiles channel-qualified keys from each channel elevated list', () => {
+      const h = createEntityHierarchy(roles)
+        .user()
+        .channel('organization', { parent: null, roles: roles.all, elevated: ['admin'] })
+        .channel('workspace', { parent: 'organization', roles: ['member', 'guest'], elevated: ['member'] })
+        .build();
+      expect(h.elevatedGrants).toEqual(new Set(['organization:admin', 'workspace:member']));
+    });
+
+    it('compiles an empty set when no channel declares elevation', () => {
+      const h = createEntityHierarchy(roles).user().channel('organization', { parent: null, roles: roles.all }).build();
+      expect(h.elevatedGrants.size).toBe(0);
+    });
+
+    it('throws when an elevated role is not one of the channel roles', () => {
+      expect(() =>
+        createEntityHierarchy(roles)
+          .user()
+          .channel('organization', { parent: null, roles: ['admin'], elevated: ['owner'] as any }),
+      ).toThrow('elevates unknown role');
     });
   });
 });

@@ -83,9 +83,6 @@ class WebGLRenderer {
     }
   }
 
-  /**
-   * The main render loop.
-   */
   renderLoop() {
     try {
       this.checkContext();
@@ -160,9 +157,6 @@ class WebGLRenderer {
     }
   }
 
-  /**
-   * Requests the next frame to be rendered.
-   */
   requestNextFrame() {
     try {
       // Continue with next frame
@@ -209,10 +203,8 @@ let webGLRenderer = null;
 // Maximum number of circles allowed
 const maxAmountOfCircles = 200;
 
-// Minimum radius for circles
 const minCircleRadius = 0.0625;
 
-// Maximum radius for circles
 const maxCircleRadius = 0.15;
 
 // Minimum distance for touch detection

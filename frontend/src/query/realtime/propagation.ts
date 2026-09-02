@@ -1,9 +1,11 @@
+import type { QueryKey } from '@tanstack/react-query';
 import { appConfig, type ProductEntityType } from 'shared';
 import { asRecord } from 'shared/utils/as-record';
+import { resolveHomeChannelId } from '~/query/basic/apply-entity-to-lists';
 import { getEntityQueryKeys, hasEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { isInfiniteQueryData, isQueryData } from '~/query/basic/mutate-query';
-import type { EntityQueryData, InfiniteEntityQueryData, ItemData } from '~/query/basic/types';
+import type { EntityQueryData, InfiniteEntityQueryData, ItemData, RoutableItemData } from '~/query/basic/types';
 import { queryClient } from '~/query/query-client';
 
 /** Wire-compatible propagation hint. Product types stay a plain union to tolerate types this app's config omits. */
@@ -17,10 +19,8 @@ type PropagationHintInput = {
 };
 
 /**
- * Patch stale embedded-product references across every host column this app's
- * productEmbeddings config declares for the changed product. The hint's own host fields are
- * advisory: local config is the authority on where this client caches embedded copies.
- * Used by live SSE handlers, catchup after delta fetches, and optimistic mutation hooks.
+ * Patch stale embedded-product references across every host column productEmbeddings declares for the changed product.
+ * The hint's host fields are advisory: local config is the authority on where this client caches embedded copies.
  */
 export function propagateEmbeddings(hint: PropagationHintInput): void {
   const { embeddedProduct, update, remove } = hint;
@@ -29,7 +29,7 @@ export function propagateEmbeddings(hint: PropagationHintInput): void {
   const updateSet = new Set(update);
   const removeSet = new Set(remove);
 
-  // Read fresh embedded-product data for updates. The caller ensures it is cached.
+  // The caller guarantees the fresh embedded data is already cached.
   const freshEmbedded = new Map<string, ItemData>();
   for (const id of update) {
     const data = findInCache<ItemData>(embeddedProduct, id);
@@ -54,7 +54,6 @@ function patchHostCaches(
 
   const keys = getEntityQueryKeys(hostProduct);
 
-  // Scan all cached list queries for the host product
   for (const [queryKey, queryData] of queryClient.getQueriesData({ queryKey: keys.list.base })) {
     if (!queryData) continue;
 
@@ -80,7 +79,6 @@ function patchHostCaches(
     }
   }
 
-  // Patch detail caches (e.g., open task detail views)
   for (const [queryKey, host] of queryClient.getQueriesData({ queryKey: keys.detail.base })) {
     if (!host) continue;
     const patched = patchSingleHost(host as ItemData, hostColumn, updateSet, removeSet, freshEmbedded);
@@ -90,11 +88,7 @@ function patchHostCaches(
   }
 }
 
-/**
- * Hint-builder for mutation hooks: optimistic propagation of an embedded product's change,
- * so the actor's own cache updates immediately without waiting on the stream.
- * For updates, the fresh embedded copy must already be in cache when this runs.
- */
+/** Optimistic propagation for mutation hooks, so the actor's cache updates without waiting on the stream. For updates the fresh embedded copy must already be cached. */
 export function propagateEmbeddedProduct(
   embeddedProduct: ProductEntityType,
   ids: string[],
@@ -107,17 +101,119 @@ export function propagateEmbeddedProduct(
   });
 }
 
-/**
- * Invalidate list caches of every host product embedding the given product. Rollback path
- * for optimistic removals: propagation can patch or strip an embedded copy but cannot
- * re-insert one, so a failed delete recovers host data through a refetch.
- */
+/** Rollback path for optimistic removals: propagation can strip an embedded copy but cannot re-insert one, so a failed delete recovers host data through a refetch. */
 export function invalidateEmbeddingHosts(embeddedProduct: ProductEntityType, organizationId: string): void {
   for (const embedding of appConfig.productEmbeddings) {
     if (embedding.embeddedProduct !== embeddedProduct) continue;
     if (!hasEntityQueryKeys(embedding.hostProduct)) continue;
     const keys = getEntityQueryKeys(embedding.hostProduct);
     queryClient.invalidateQueries({ queryKey: keys.list.org(organizationId) });
+  }
+}
+
+// ── Embedded-product usage ───────────────────────────────────────────────────
+
+/**
+ * Embedded-product ids whose host references moved, keyed by embedded product. A host row is the
+ * only writer of the reference, so an embedded row's server-side usage aggregates go stale while
+ * its own row, seq and frontier stay untouched: no delta fetch can return the new value.
+ */
+export type EmbeddingTouches = Map<ProductEntityType, Set<string>>;
+
+/** Ids a host row references through one embedding column; id arrays and embedded-copy arrays both reduce to ids. */
+function embeddedIdsOf(host: ItemData | undefined, hostColumn: string): string[] {
+  if (!host) return [];
+  const value = asRecord(host)[hostColumn];
+  if (!Array.isArray(value)) {
+    if (value && typeof value === 'object' && 'id' in value) return [(value as { id: string }).id];
+    return [];
+  }
+  return value.flatMap((entry) => {
+    if (typeof entry === 'string') return [entry];
+    if (entry && typeof entry === 'object' && 'id' in entry) return [(entry as { id: string }).id];
+    return [];
+  });
+}
+
+/**
+ * Records the embedded rows a host row's reference change makes stale. Only the symmetric difference
+ * counts, so an edit that leaves the column alone costs nothing. Without a previous row the change is
+ * unclassifiable (a create, or a row this client never cached), so every current reference is taken as
+ * touched: over-invalidation is cheap here, a missed one is invisible until the next reload.
+ */
+export function collectEmbeddingTouches(
+  hostProduct: string,
+  previous: ItemData | undefined,
+  next: ItemData,
+  into: EmbeddingTouches,
+): void {
+  for (const embedding of appConfig.productEmbeddings) {
+    if (embedding.hostProduct !== hostProduct) continue;
+
+    const nextIds = embeddedIdsOf(next, embedding.hostColumn);
+    const previousIds = embeddedIdsOf(previous, embedding.hostColumn);
+    const touched = previous
+      ? [...nextIds.filter((id) => !previousIds.includes(id)), ...previousIds.filter((id) => !nextIds.includes(id))]
+      : nextIds;
+    if (touched.length === 0) continue;
+
+    const ids = into.get(embedding.embeddedProduct) ?? new Set<string>();
+    for (const id of touched) ids.add(id);
+    into.set(embedding.embeddedProduct, ids);
+  }
+}
+
+/**
+ * Refetches the lists holding embedded rows whose usage changed. The aggregate is server-derived, so
+ * the list endpoint owns its value. Home lists narrow the refetch to the channels that own the touched
+ * rows; an uncached row cannot be placed, so its product widens to the organization list.
+ */
+export function invalidateEmbeddedUsage(touches: EmbeddingTouches, organizationId: string): void {
+  for (const [embeddedProduct, ids] of touches) {
+    if (!hasEntityQueryKeys(embeddedProduct)) continue;
+    const keys = getEntityQueryKeys(embeddedProduct);
+
+    // Touched rows sharing a channel share one list, so collect homes before invalidating.
+    const homeChannelIds = new Set<string>();
+    let widened = false;
+    for (const id of ids) {
+      const cached = findInCache<ItemData>(embeddedProduct, id);
+      const homeChannelId = cached
+        ? resolveHomeChannelId(embeddedProduct, { ...cached, organizationId } as RoutableItemData)
+        : null;
+      // An unplaceable row already covers every home, so stop narrowing.
+      if (!homeChannelId) {
+        widened = true;
+        break;
+      }
+      homeChannelIds.add(homeChannelId);
+    }
+
+    const listKeys: QueryKey[] = widened
+      ? [keys.list.org(organizationId)]
+      : [...homeChannelIds].map((homeChannelId) => keys.list.home(organizationId, homeChannelId));
+
+    for (const queryKey of listKeys) {
+      queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+    }
+  }
+}
+
+/**
+ * Coarse form for the paths that invalidate a host list without ingesting its rows: opaque views,
+ * overflow, exhausted retries, nothing cached to patch. No row reaches the diff there, so every
+ * product the host embeds may hold a stale usage aggregate.
+ */
+export function invalidateEmbeddedForHost(
+  hostProduct: string,
+  organizationId: string,
+  refetchType: 'active' | 'none' = 'active',
+): void {
+  for (const embedding of appConfig.productEmbeddings) {
+    if (embedding.hostProduct !== hostProduct) continue;
+    if (!hasEntityQueryKeys(embedding.embeddedProduct)) continue;
+    const keys = getEntityQueryKeys(embedding.embeddedProduct);
+    queryClient.invalidateQueries({ queryKey: keys.list.org(organizationId), refetchType });
   }
 }
 
@@ -156,7 +252,7 @@ function patchSingleHost(
     return { ...host, [hostColumn]: ids.filter((id) => !removeSet.has(id)) } as ItemData;
   }
 
-  // Array column of embedded objects (e.g., task.labels)
+  // Array column of embedded objects.
   if (Array.isArray(embedded)) {
     const needsPatch = embedded.some(
       (item: { id?: string }) => item.id && (updateSet.has(item.id) || removeSet.has(item.id)),
@@ -169,18 +265,17 @@ function patchSingleHost(
         if (!item.id || !updateSet.has(item.id)) return item;
         const fresh = freshEmbedded.get(item.id);
         if (!fresh) return item;
-        // Use updatedAt guard to avoid replacing newer data with older
         const freshRecord = asRecord(fresh);
         if (item.updatedAt && freshRecord.updatedAt && freshRecord.updatedAt > item.updatedAt) return fresh;
         if (!item.updatedAt) return fresh;
-        // fresh is same age or older, keep cached version (concurrent edit edge case).
+        // Same age or older: keep the cached copy so a concurrent edit is not undone.
         return item;
       });
 
     return { ...host, [hostColumn]: patched } as ItemData;
   }
 
-  // Single object column (e.g., hypothetical task.category)
+  // Single object column.
   if (embedded && typeof embedded === 'object' && 'id' in embedded) {
     const obj = embedded as { id: string; updatedAt?: string };
     if (removeSet.has(obj.id)) {

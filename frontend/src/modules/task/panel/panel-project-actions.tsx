@@ -13,7 +13,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { cn } from '~/utils/cn';
 
-/** Renders the panel project actions component. */
 export function PanelProjectActions({ project, className }: { project: EnrichedProject; className?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();

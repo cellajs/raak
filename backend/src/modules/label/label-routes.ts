@@ -78,9 +78,6 @@ const labelsRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Get single label by ID
-   */
   getLabel: createXRoute({
     operationId: 'getLabel',
     method: 'get',
@@ -101,9 +98,6 @@ const labelsRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Update a label
-   */
   updateLabel: createXRoute({
     operationId: 'updateLabel',
     method: 'put',
@@ -131,9 +125,6 @@ const labelsRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Delete one or more labels
-   */
   deleteLabels: createXRoute({
     operationId: 'deleteLabels',
     method: 'delete',

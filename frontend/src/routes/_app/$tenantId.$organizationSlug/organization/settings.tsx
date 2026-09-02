@@ -3,12 +3,18 @@ import { OrganizationSettingsComponent } from '~/modules/organization/route-comp
 import { requireEntityAction } from '~/routes/-permission-guard';
 import { appTitle } from '~/utils/app-title';
 
-/**
- * Organization settings page.
- */
 export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/organization/settings')({
   // locked: the tabs arrangement card writes tab hiding; the settings tab itself must stay reachable
-  staticData: { isAuth: true, navTab: { id: 'settings', label: 'c:settings', requires: 'update', locked: true } },
+  staticData: {
+    isAuth: true,
+    navTab: {
+      id: 'settings',
+      label: 'c:settings',
+      description: 'c:tab_settings.text',
+      requires: 'update',
+      locked: true,
+    },
+  },
   beforeLoad: ({ context }) => {
     // Same grant the tab's `requires: 'update'` hides on; direct URLs get the same gate.
     requireEntityAction(

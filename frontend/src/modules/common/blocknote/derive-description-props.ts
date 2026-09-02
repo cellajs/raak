@@ -20,11 +20,7 @@ export type DerivedDescriptionProps = DerivedDescriptionCounts & {
 const stripCount = ({ attachmentCount: _attachmentCount, ...counts }: DescriptionCounts): DerivedDescriptionCounts =>
   counts;
 
-/**
- * Parse description blocks once and extract all count-based derived properties.
- * Synchronous and safe for optimistic updates in onMutate. The walk itself is shared
- * with the backend (derive-description-core) so the two sides cannot drift.
- */
+/** Synchronous, so it is safe for optimistic updates in onMutate; the walk is shared with the backend. */
 export const deriveDescriptionCounts = (description: string): DerivedDescriptionCounts => {
   try {
     return stripCount(countDescriptionBlocks(JSON.parse(description) as DescriptionBlock[]));
@@ -33,10 +29,7 @@ export const deriveDescriptionCounts = (description: string): DerivedDescription
   }
 };
 
-/**
- * Derive all description properties including summary (async due to HTML conversion).
- * Uses a single parse and walk for summary and count derivation.
- */
+/** Async because the summary needs HTML conversion. */
 export const deriveDescriptionProps = async (description: string): Promise<DerivedDescriptionProps> => {
   const blocks = JSON.parse(description) as CustomBlock[];
   const counts = stripCount(countDescriptionBlocks(blocks as DescriptionBlock[]));

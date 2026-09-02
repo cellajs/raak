@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { createHighlighter } from 'shiki';
+import { createHighlighterCore } from 'shiki/core';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
+import { bundledLanguages } from 'shiki/langs';
+import { bundledThemes } from 'shiki/themes';
 import { useUIStore } from '~/modules/ui/ui-store';
 
 interface CodeViewerProps {
@@ -9,24 +11,20 @@ interface CodeViewerProps {
 }
 
 /**
- * Singleton highlighter using Shiki's JavaScript regex engine (no WASM).
- * The default `codeToHtml` uses the Oniguruma WASM engine, which requires
- * `WebAssembly.instantiate` and is blocked by the app CSP (no 'unsafe-eval').
+ * Built from `shiki/core` with the themes and grammar named explicitly. The `shiki` entry bundles
+ * every engine, which places the Oniguruma WASM build on the boot path; the app CSP has no
+ * 'unsafe-eval', so the JavaScript regex engine is always the one used.
  */
-let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
+let highlighterPromise: ReturnType<typeof createHighlighterCore> | null = null;
 const getHighlighter = () => {
-  highlighterPromise ??= createHighlighter({
-    themes: ['github-dark-default', 'github-light-default'],
-    langs: ['typescript'],
+  highlighterPromise ??= createHighlighterCore({
+    themes: [bundledThemes['github-dark-default'], bundledThemes['github-light-default']],
+    langs: [bundledLanguages.typescript],
     engine: createJavaScriptRegexEngine(),
   });
   return highlighterPromise;
 };
 
-/**
- * Code viewer component using Shiki for syntax highlighting.
- * Supports TypeScript and Zod code display.
- */
 export function CodeViewer({ code, language }: CodeViewerProps) {
   const [state, setState] = useState<{ html: string; isLoading: boolean }>({ html: '', isLoading: true });
   const mode = useUIStore((state) => state.mode);
@@ -44,7 +42,6 @@ export function CodeViewer({ code, language }: CodeViewerProps) {
         });
         if (!cancelled) setState({ html: highlighted, isLoading: false });
       } catch {
-        // Fallback to plain code if highlighting fails
         if (!cancelled) setState({ html: `<pre><code>${code}</code></pre>`, isLoading: false });
       }
     };

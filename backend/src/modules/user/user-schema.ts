@@ -2,9 +2,17 @@ import { z } from '@hono/zod-openapi';
 import { appConfig, type EnabledOAuthProvider, type UserFlags } from 'shared';
 import { schemaTags } from '#/core/openapi-helpers';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
+import { memberCountsSchema } from '#/modules/memberships/helpers/member-counts';
 import { membershipBaseSchema } from '#/modules/memberships/memberships-schema';
 import { usersTable } from '#/modules/user/user-db';
-import { languageSchema, paginationQuerySchema, validCDNUrlSchema, validNameSchema, validSlugSchema } from '#/schemas';
+import {
+  languageSchema,
+  maxLength,
+  paginationQuerySchema,
+  validCDNUrlSchema,
+  validNameSchema,
+  validSlugSchema,
+} from '#/schemas';
 import { userBaseSchema } from '#/schemas/user-schema-base';
 import { mockUserResponse } from './user-mocks';
 
@@ -47,6 +55,8 @@ export const memberUserSchema = userBaseSchema.extend({
 
 export const memberSchema = memberUserSchema.extend({
   membership: membershipBaseSchema,
+  // Per-member insight counts, present when the members list is fetched with include=counts
+  counts: memberCountsSchema.optional(),
 });
 
 export const userUpdateBodySchema = createInsertSchema(usersTable, {
@@ -56,9 +66,11 @@ export const userUpdateBodySchema = createInsertSchema(usersTable, {
   thumbnailUrl: validCDNUrlSchema.nullable(),
   bannerUrl: validCDNUrlSchema.nullable(),
   language: languageSchema,
+  description: z.string().max(maxLength.html).nullable(),
 })
   .pick({
     bannerUrl: true,
+    description: true,
     firstName: true,
     lastName: true,
     language: true,

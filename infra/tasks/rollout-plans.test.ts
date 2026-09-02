@@ -7,7 +7,7 @@ import { planForService } from './rollout-plans';
 setEngineConfig(fakeConfig());
 
 describe('planForService', () => {
-  it('builds an lb-overlap plan with normalized health URL and internal-pool repoint', () => {
+  it('builds a start-first plan with normalized health URL and internal-pool repoint', () => {
     const plan = planForService('backend', 'https://www.cellajs.com/api');
     expect(plan).toMatchObject({
       service: 'backend',
@@ -24,9 +24,21 @@ describe('planForService', () => {
     const plan = planForService('cdc');
     expect(plan.strategy).toBe('stop-first');
     expect(plan.healthUrl).toBeUndefined();
+    expect(plan.exclusive).toBeUndefined();
   });
 
-  it('requires a health URL for lb-overlap services', () => {
+  it('marks the singleVM host exclusive with nothing to drain (its stop-first worker folds in)', () => {
+    setEngineConfig(fakeConfig({ singleVM: true }));
+    try {
+      const plan = planForService('backend', 'https://www.cellajs.com/api');
+      expect(plan).toMatchObject({ strategy: 'start-first', exclusive: true, drainSeconds: 0 });
+      expect(plan.healthUrl).toBe('https://www.cellajs.com/api/health');
+    } finally {
+      setEngineConfig(fakeConfig());
+    }
+  });
+
+  it('requires a health URL for start-first services', () => {
     expect(() => planForService('frontend')).toThrow(/health URL/);
   });
 

@@ -12,7 +12,6 @@ const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), '
 const orgLayoutApi = getRouteApi('/_app/$tenantId/$organizationSlug');
 const workspaceRouteApi = getRouteApi('/_app/$tenantId/$organizationSlug/workspace/$slug');
 
-/** Renders the routed workspace view. */
 export function WorkspaceRouteComponent() {
   const { workspace } = workspaceRouteApi.useRouteContext();
   const { organization, tenantId } = orgLayoutApi.useRouteContext();

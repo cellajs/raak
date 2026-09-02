@@ -114,9 +114,6 @@ const workspaceRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Update a workspace
-   */
   updateWorkspace: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/workspaces/{id}',
@@ -149,9 +146,6 @@ const workspaceRoutes = {
       ...errorResponseRefs,
     },
   }),
-  /**
-   * Delete one or more workspaces
-   */
   deleteWorkspaces: createXRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/workspaces',

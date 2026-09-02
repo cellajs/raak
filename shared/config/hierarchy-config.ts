@@ -19,9 +19,18 @@ export const roles = createRoleRegistry(['admin', 'member', 'guest'] as const);
  */
 export const hierarchy = createEntityHierarchy(roles)
   .user()
-  .channel('organization', { parent: null, roles: ['admin', 'member'] })
-  .channel('workspace', { parent: 'organization', roles: roles.all })
-  .channel('project', { parent: 'organization', roles: roles.all })
+  .channel('organization', { parent: null, roles: ['admin', 'member'], elevated: ['admin', 'member'] })
+  // Invites to a workspace or project auto-create the organization membership as a plain member.
+  .channel('workspace', {
+    parent: 'organization',
+    roles: roles.all,
+    rootRoles: { admin: 'member', member: 'member', guest: 'member' },
+  })
+  .channel('project', {
+    parent: 'organization',
+    roles: roles.all,
+    rootRoles: { admin: 'member', member: 'member', guest: 'member' },
+  })
   .product('task', { parent: 'project' })
   .product('label', { parent: 'project' })
   // Attachments are referenced by tasks via the derived task.attachments id array

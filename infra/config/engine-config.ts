@@ -4,12 +4,7 @@ export interface EngineServiceEndpoint {
   publicUrl?: string;
 }
 
-/**
- * The engine's input contract: everything the deploy engine (resources, tasks,
- * CLI) reads about the app it deploys. A host injects a value satisfying this
- * interface; cella's merged appConfig satisfies it structurally. Keep this the
- * complete list: a new field read anywhere in the engine belongs here first.
- */
+/** The engine's input contract: everything the deploy engine reads about the app. A host injects a value satisfying it, and any new field the engine reads belongs here first. */
 export interface EngineConfig {
   /** URL-safe resource prefix for every Scaleway resource and bucket. */
   slug: string;
@@ -35,11 +30,7 @@ export interface EngineConfig {
 
 let injected: EngineConfig | undefined;
 
-/**
- * Inject the config the engine deploys. Must run BEFORE any engine module that
- * reads config at evaluation is imported; entrypoints call
- * {@link loadEngineConfig} first and dynamic-import the rest.
- */
+/** Inject the config the engine deploys. Must run before importing any engine module that reads config at evaluation, so entrypoints call {@link loadEngineConfig} first and dynamic-import the rest. */
 export function setEngineConfig(config: EngineConfig): void {
   injected = config;
 }
@@ -48,10 +39,26 @@ export function setEngineConfig(config: EngineConfig): void {
 export function engineConfig(): EngineConfig {
   if (!injected) {
     throw new Error(
-      'engine-config: no config loaded — await loadEngineConfig() (or call setEngineConfig) before importing engine modules.',
+      'engine-config: no config loaded, await loadEngineConfig() (or call setEngineConfig) before importing engine modules.',
     );
   }
   return injected;
+}
+
+/**
+ * The slug namespaces every Scaleway resource name, the VM's `/etc/<slug>` config
+ * dir, and the `::<slug>::` serial marker rendered into the root boot script
+ * (resources/cloud-init.ts). Pinning it to kebab-case at the single config
+ * boundary makes every downstream shell use of the slug safe by construction, so
+ * no call site needs its own quoting or escaping.
+ */
+const SLUG_RE = /^[a-z][a-z0-9-]*$/;
+function assertValidSlug(slug: string): void {
+  if (!SLUG_RE.test(slug)) {
+    throw new Error(
+      `engine-config: slug '${slug}' must be lowercase kebab-case (letters, digits, hyphens; leading letter). It namespaces VM paths and shell markers.`,
+    );
+  }
 }
 
 /** Structural check for configs arriving from an INFRA_CONFIG_MODULE import. */
@@ -66,12 +73,7 @@ function isEngineConfig(value: unknown): value is EngineConfig {
   return true;
 }
 
-/**
- * Resolve and inject the engine config, idempotently: the module named by
- * INFRA_CONFIG_MODULE (its `engineConfig` or default export; the package-mode
- * path), or the workspace's shared appConfig (cella in-repo mode). The shared
- * import stays dynamic so this module can be imported before APP_MODE is set.
- */
+/** Resolve and inject the engine config idempotently, from INFRA_CONFIG_MODULE or the workspace's shared appConfig. The shared import stays dynamic so this module can load before APP_MODE is set. */
 export async function loadEngineConfig(): Promise<EngineConfig> {
   if (injected) return injected;
   const configModule = process.env.INFRA_CONFIG_MODULE;
@@ -84,10 +86,12 @@ export async function loadEngineConfig(): Promise<EngineConfig> {
         `engine-config: module '${configModule}' does not export an EngineConfig ('engineConfig' or default export).`,
       );
     }
+    assertValidSlug(candidate.slug);
     setEngineConfig(candidate);
     return candidate;
   }
   const { appConfig } = await import('shared');
+  assertValidSlug(appConfig.slug);
   setEngineConfig(appConfig);
   return appConfig;
 }

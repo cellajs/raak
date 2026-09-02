@@ -14,11 +14,12 @@ import { customBlockTypeSwitchItems } from '~/modules/common/blocknote/blocknote
 import { isHeadingMenuItemActive } from '~/modules/common/blocknote/helpers/header-item-select';
 import type { CustomBlockNoteMenuProps } from '~/modules/common/blocknote/types';
 
-/** Renders the cella custom block type select component. */
 export function CellaCustomBlockTypeSelect({
   headingLevels,
+  titleLevel,
 }: {
   headingLevels: CustomBlockNoteMenuProps['headingLevels'];
+  titleLevel?: CustomBlockNoteMenuProps['titleLevel'];
 }) {
   const Components = useComponentsContext()!;
   const dict = useDictionary();
@@ -35,6 +36,8 @@ export function CellaCustomBlockTypeSelect({
     if (type === 'heading') {
       if (props?.isToggleable) return false;
       if (typeof props?.level === 'number') {
+        // Forced-title mode: body blocks must not rank at or above the title
+        if (titleLevel !== undefined && props.level <= titleLevel) return false;
         return headingLevels.includes(props.level as (typeof headingLevels)[number]);
       }
     }
@@ -50,14 +53,13 @@ export function CellaCustomBlockTypeSelect({
       !!el.props?.isToggleable === currentBlock.props.isToggleable,
   );
 
-  // Handle item click for updating the block type
   const handleItemClick = (item: BlockTypeSelectItem) => {
     editor.focus();
     for (const block of selectedBlocks) {
       editor.updateBlock(block, {
         type: item.type,
         // biome-ignore lint/suspicious/noExplicitAny: required by author
-        props: item.props as any, // Pass props (to get heading level: 1 | 2 | 3)
+        props: item.props as any,
       });
     }
   };
@@ -72,7 +74,6 @@ export function CellaCustomBlockTypeSelect({
     };
   });
 
-  // Update the block whenever the editor content or selection changes
   useEditorState({
     editor,
     selector: ({ editor }) => {
@@ -81,7 +82,6 @@ export function CellaCustomBlockTypeSelect({
     },
   });
 
-  // Return null if the menu should not be shown or the editor is not editable
   if (!shouldShow || !editor.isEditable) return null;
 
   return (

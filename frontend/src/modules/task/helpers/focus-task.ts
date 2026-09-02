@@ -3,7 +3,6 @@ import { currentActiveTask } from '~/modules/task/helpers/active-task';
 import { scrollTaskIntoView } from '~/modules/task/helpers/panel-scroll-registry';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 
-/** Moves focus to task. */
 export const focusTask = (taskId: string | null) => {
   const { focusedTaskId: currentFocused, setFocusedTaskId } = useTaskInteractionStore.getState();
   if (currentFocused) {
@@ -25,7 +24,6 @@ export const focusWhenMounted = (id: string, attemptsLeft = 5) => {
   requestAnimationFrame(() => focusWhenMounted(id, attemptsLeft - 1));
 };
 
-/** Updates task card focus. */
 export const setTaskCardFocus = (id: string) => {
   focusTask(id);
 

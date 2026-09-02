@@ -92,7 +92,6 @@ export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProject
 
   await dispatchMutation(ctx, 'project.created', { after: projectRecords });
 
-  // Insert memberships for each project
   const membershipInserts = projectRecords.map((project) => ({
     userId: user.id,
     createdBy: user.id,

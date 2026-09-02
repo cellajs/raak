@@ -10,7 +10,8 @@ import { migrateConfig, migrationDb } from '#/db/db';
 import '#/lib/i18n';
 import process from 'node:process';
 import { cdcWebSocketServer } from '#/lib/cdc-websocket';
-import { scheduleDbMaintenance } from '#/lib/db-maintenance';
+import '#/lib/db-maintenance'; // registers the DB maintenance job before jobs start
+import { getBackendJobs } from '#/lib/module';
 import { otel } from '#/lib/tracing';
 import { registerCacheInvalidation } from '#/middlewares/product-cache/cache-invalidation';
 import { baseApp as app } from '#/routes';
@@ -21,11 +22,10 @@ otel.start();
 otel.verifyConnection();
 
 let server: import('@hono/node-server').ServerType | undefined;
-let stopDbMaintenance: (() => void) | undefined;
+const stopJobs: (() => void)[] = [];
 
 const startTunnel = appConfig.mode === 'tunnel' ? (await import('../scripts/start-tunnel')).startTunnel : () => null;
 
-// Register OpenAPI docs
 await registerOpenApiDocs(app);
 
 const main = async () => {
@@ -53,11 +53,12 @@ const main = async () => {
 
     console.info(`${timestamp()} [startup] Migrations complete, starting server...`);
 
-    // The migration-owning instance also owns periodic DB maintenance (expired session/token purge,
-    // pg_partman partition drops). Gating to a single instance avoids redundant runs.
-    stopDbMaintenance = scheduleDbMaintenance();
+    // The migration-owning instance also owns every scheduled job, so only one instance runs each.
+    const jobs = getBackendJobs();
+    for (const job of jobs) stopJobs.push(job.start());
+    console.info(`${timestamp()} [startup] scheduled jobs: ${jobs.map((job) => job.name).join(', ') || 'none'}`);
   } else {
-    console.info(`${timestamp()} [startup] RUN_MIGRATIONS_ON_BOOT=false — skipping migrations (run as MODE=migrate)`);
+    console.info(`${timestamp()} [startup] RUN_MIGRATIONS_ON_BOOT=false: skipping migrations (run as MODE=migrate)`);
   }
 
   registerCacheInvalidation();
@@ -70,7 +71,6 @@ const main = async () => {
       serverOptions: { keepAlive: true, keepAliveTimeout: 30_000 },
     },
     async () => {
-      // Tune HTTP server for high-throughput scenarios
       if (server && 'headersTimeout' in server) {
         server.headersTimeout = 60_000;
         server.requestTimeout = 30_000;
@@ -78,16 +78,13 @@ const main = async () => {
 
       cdcWebSocketServer.attachToServer(server!);
 
-      // Single-VM: this API process also runs every enabled service in-process.
-      // Reuses each subsystem's own start() (which self-checks its enabled flag
-      // and registers its own graceful shutdown). cdc keeps its slot + WS hop.
+      // Single-VM: this API process also runs every enabled service in-process, through each subsystem's own start().
       if (appConfig.singleVM) {
         if (appConfig.services.cdc.enabled) {
           console.warn(
-            `${timestamp()} [startup] singleVM + cdc: API holds the replication slot — deploy must be exclusive (no blue-green)`,
+            `${timestamp()} [startup] singleVM + cdc: API holds the replication slot, deploy must be exclusive (no blue-green)`,
           );
-          // The replication loop never resolves, so detach it without blocking other workers.
-          // Log failures explicitly to prevent unhandled rejections.
+          // The replication loop never resolves, so detach it and log failures to prevent unhandled rejections.
           void (await import('cdc-worker')).runCdcWorker().catch((error) => {
             console.error(`${timestamp()} [startup] in-process cdc worker crashed:`, error);
           });
@@ -105,8 +102,7 @@ const main = async () => {
       console.info(`${pc.bold(pc.greenBright(appConfig.name))} 
 Frontend: ${pc.bold(pc.cyanBright(appConfig.frontendUrl))} 
 Backend: ${pc.bold(pc.cyanBright(appConfig.backendUrl))} 
-Tunnel: ${pc.bold(pc.magentaBright(tunnelUrl || '-'))}
-Storybook: ${pc.cyanBright(`http://localhost:${(Number(new URL(appConfig.frontendUrl).port) || 3000) + 3006}/`)}`);
+Tunnel: ${pc.bold(pc.magentaBright(tunnelUrl || '-'))}`);
 
       console.info(' ');
     },
@@ -116,7 +112,7 @@ Storybook: ${pc.cyanBright(`http://localhost:${(Number(new URL(appConfig.fronten
 setupGracefulShutdown({
   name: 'api',
   cleanup: async () => {
-    stopDbMaintenance?.();
+    for (const stop of stopJobs) stop();
     if (server) {
       server.close();
     }

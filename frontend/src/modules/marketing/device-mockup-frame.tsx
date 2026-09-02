@@ -6,7 +6,6 @@ interface DeviceFrameProps {
   renderCarousel: (className: string) => React.ReactElement;
 }
 
-/** Renders the device frame component. */
 export function DeviceFrame({ type, inView, renderCarousel }: DeviceFrameProps) {
   switch (type) {
     case 'tablet':

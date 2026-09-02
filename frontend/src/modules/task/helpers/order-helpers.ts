@@ -6,9 +6,6 @@ import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 
-/**
- * Return task order for new task
- */
 export const getNewTaskOrder = (
   status: number,
   tasks: Pick<Task, 'id' | 'displayOrder' | 'status' | '_draft' | 'projectId'>[],
@@ -38,9 +35,6 @@ export const getRelativeTaskOrder = (edge: Edge, tasks: Task[], order: number, i
   return getRelativeOrder(filteredTasks, order, id, edge, false);
 };
 
-/**
- * Return task order based on new status
- */
 export const getNewStatusTaskOrder = (task: Task, newStatus: number) => {
   const oldStatus = task.status;
   const direction = oldStatus - newStatus;

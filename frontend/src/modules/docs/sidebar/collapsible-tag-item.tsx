@@ -15,13 +15,13 @@ const tagTypeConfig = {
   operations: {
     linkTo: '/docs/operations' as const,
     getHash: (name: string) => `tag/${name}`,
-    getSearch: (isExpanded: boolean, name: string) => ({ operationTag: isExpanded ? undefined : name }),
+    getSearch: (collapse: boolean, name: string) => ({ operationTag: collapse ? undefined : name }),
     triggerClassName: 'text-left',
   },
   schemas: {
     linkTo: '/docs/schemas' as const,
     getHash: (name: string) => name,
-    getSearch: (isExpanded: boolean, name: string) => ({ schemaTag: isExpanded ? undefined : name }),
+    getSearch: (collapse: boolean, name: string) => ({ schemaTag: collapse ? undefined : name }),
     triggerClassName: 'justify-start lowercase',
   },
 };
@@ -54,11 +54,13 @@ function CollapsibleTagItemBase<T>({
   itemKey,
   onPrerender,
 }: CollapsibleTagItemProps<T>) {
-  // Match the sheet-mode threshold used across the docs sidebar (below `md`); a tag group has
-  // deeper nesting, so in sheet mode expanding it must keep the sheet open, not close it.
+  // Sheet-mode threshold (below `md`): expanding a nested tag group must keep the sheet open
   const isMobile = useBreakpointBelow('md', false);
   const { linkTo, getSearch, getHash, triggerClassName } = tagTypeConfig[type];
   const hash = getHash(tag.name);
+  // Collapsing is a re-click on the section you are already reading. While expanded but scrolled
+  // elsewhere, the click jumps to this section and leaves it open.
+  const collapseOnClick = isExpanded && isActive;
 
   return (
     <Collapsible open={isExpanded}>
@@ -70,7 +72,7 @@ function CollapsibleTagItemBase<T>({
           render={
             <Link
               to={linkTo}
-              search={(prev) => ({ ...prev, ...getSearch(isExpanded, tag.name) })}
+              search={(prev) => ({ ...prev, ...getSearch(collapseOnClick, tag.name) })}
               hash={hash}
               replace
               resetScroll={false}
@@ -126,7 +128,6 @@ function collapsibleTagItemEqual<T>(prev: CollapsibleTagItemProps<T>, next: Coll
 }
 
 // memo doesn't preserve generics, so we cast
-/** Renders a collapsible tag branch in the documentation sidebar. */
 export const CollapsibleTagItem = memo(
   CollapsibleTagItemBase,
   collapsibleTagItemEqual,

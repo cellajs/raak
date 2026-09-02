@@ -1,11 +1,12 @@
 /**
- * Track the visual viewport and write how much of the layout viewport is hidden at the
- * bottom (on-screen keyboard, overlaying browser chrome in webviews, URL bar transitions)
- * to `--vv-bottom` on <html>. Fixed-to-bottom UI consumes it through `--bottom-inset`
- * (tailwind.css) so it stays visible when `position: fixed` and the visible viewport disagree.
- *
- * JS writes, CSS reads: no React state, no re-renders.
+ * Writes how much of the layout viewport is hidden at the bottom (on-screen keyboard, browser chrome, URL bar) to
+ * `--vv-bottom` on <html>. Fixed-to-bottom UI consumes it through `--bottom-inset` in tailwind.css.
  */
+/** Occlusions below this are browser chrome (URL bar ~56px), which fixed elements already track natively;
+ * during its show/hide animation innerHeight lags visualViewport.height, so compensating would double up.
+ * Only keyboard-sized occlusion needs compensation. */
+const MIN_KEYBOARD_PX = 100;
+
 export const initViewportObserver = () => {
   const viewport = window.visualViewport;
   if (!viewport) return;
@@ -15,7 +16,8 @@ export const initViewportObserver = () => {
 
   const update = () => {
     rafId = 0;
-    const hidden = Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop));
+    const occluded = Math.round(window.innerHeight - viewport.height - viewport.offsetTop);
+    const hidden = occluded < MIN_KEYBOARD_PX ? 0 : occluded;
     if (hidden === lastHidden) return;
     lastHidden = hidden;
     document.documentElement.style.setProperty('--vv-bottom', `${hidden}px`);

@@ -43,7 +43,6 @@ export type HandleDropdownProps = CommonDropdownProps &
     | { dropdownType: 'primaryLabel'; value: string; projectId: string; onChange: (v: string) => void }
   );
 
-/** Handles task dropdown click. */
 export function handleTaskDropdownClick(props: HandleDropdownProps) {
   const { dropdownType, triggerId, triggerRef, triggerWidth: width, taskId } = props;
   const options: DropdownData = {

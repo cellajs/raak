@@ -14,7 +14,6 @@ export interface InfoCard {
   country: string;
 }
 
-/** Renders the info cards component. */
 export function InfoCards() {
   const { t } = useTranslation();
   const mode = useUIStore((state) => state.mode);

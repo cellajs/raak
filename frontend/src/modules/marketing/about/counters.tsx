@@ -31,7 +31,6 @@ function CountUp({ start, end }: { start: number; end: number }) {
 
 const countsLength = counts.length;
 
-/** Renders the counters component. */
 export function Counters() {
   const { t } = useTranslation();
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0 });

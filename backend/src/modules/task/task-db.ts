@@ -36,6 +36,8 @@ export const tasksTable = snakeCase.table(
     statusChangedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
     labels: text().array().notNull().default(sql`'{}'::text[]`),
     assignedTo: text().array().notNull().default(sql`'{}'::text[]`),
+    // Server-derived from description mention nodes; the notification fan-out trusts this column.
+    mentions: text().array().notNull().default(sql`'{}'::text[]`),
     checkboxCount: integer().default(0).notNull(),
     checkedCount: integer().default(0).notNull(),
     // Derived from description media blocks (attachmentId props). Owned-lifecycle

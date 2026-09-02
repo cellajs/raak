@@ -17,7 +17,6 @@ export const config = {
   // Entity data model, derived from the hierarchy: the builder in hierarchy-config.ts is the
   // single declaration of the entity taxonomy.
 
-  /** All entity types in the app. */
   entityTypes: nonEmpty(hierarchy.allTypes),
 
   /** Channel entities with memberships. */
@@ -87,8 +86,6 @@ export const config = {
     },
   } as const,
 
-  // System roles
-
   /**
    * System-wide roles stored in DB.
    * Must include 'admin' for system administration access.
@@ -141,19 +138,14 @@ export const config = {
   // split (one service per process). cdc co-hosting forfeits API blue-green.
   singleVM: false as boolean,
 
-  /** About page URL */
   aboutUrl: '/about',
   /** Status page URL for uptime monitoring */
   statusUrl: '',
-  /** Canonical production URL */
   productionUrl: 'https://www.raak.dev',
 
-  /** Default redirect path after login */
   defaultRedirectPath: '/home',
   /** Redirect path for first-time users */
   welcomeRedirectPath: '/welcome',
-
-  // Email
 
   /** From address for system notifications */
   senderEmail: 'notifications@shareworks.nl',
@@ -181,9 +173,24 @@ export const config = {
    * Feature toggles for app capabilities.
    * Use to enable/disable major features without code changes.
    */
+  /**
+   * Local dev service ports, one knob for the backend/worker env defaults and the Vite proxy.
+   * `PORT`-style env vars still override at runtime. `frontend` is the Vite fallback for when
+   * `frontendUrl` carries no port (tunnel mode); otherwise the URL port wins.
+   */
+  devPorts: {
+    frontend: 3000,
+    api: 4000,
+    cdcHealth: 4001,
+    yjs: 4002,
+    mcp: 4003,
+  },
+
   has: {
     /** Progressive Web App support for preloading static assets and offline support */
     pwa: true as boolean,
+    /** Web Push delivery for notifications; also needs VAPID_* backend env vars. */
+    push: false as boolean,
     /** Allow users to sign up. If false, the app is by invitation only */
     selfRegistration: false as boolean,
     /** Suggest a waitlist for unknown emails when sign up is disabled */
@@ -234,8 +241,6 @@ export const config = {
 
                   The documentation is generated from source code using \`zod\` schemas, converted into OpenAPI via \`zod-openapi\` and served through the \`hono\` framework.`,
 
-  // Request limits
-
   /**
    * Default page sizes for list endpoints. Backend enforces max 1000.
    * Must include 'default' key as fallback.
@@ -259,7 +264,6 @@ export const config = {
   jsonBodyLimit: 1 * 1024 * 1024,
   /** Max file upload size in bytes */
   fileUploadLimit: 20 * 1024 * 1024,
-  /** Default body size limit in bytes */
   defaultBodyLimit: 1 * 1024 * 1024,
 
   // Storage & uploads (S3)
@@ -308,7 +312,6 @@ export const config = {
 
   /** Gleap token for customer support widget */
   gleapToken: '1ZoAxCRA83h5pj7qtRSvuz7rNNN9iXDd',
-  /** Google Maps API key */
   googleMapsKey: 'AIzaSyDMjCpQusdoPWLeD7jxkqAxVgJ8s5xJ3Co',
   /** Matrix homeserver URL for chat integration */
   matrixURL: 'https://matrix-client.matrix.org',
@@ -353,7 +356,6 @@ export const config = {
 
   // Localization
 
-  /** Default language code */
   defaultLanguage: 'en' as const,
   /** Available language codes - first is fallback */
   languages: ['en', 'nl'] as const,
@@ -391,9 +393,6 @@ export const config = {
     },
   },
 
-  // User defaults
-
-  /** Default user flags applied to new users */
   defaultUserFlags: {
     finishedOnboarding: false,
   },

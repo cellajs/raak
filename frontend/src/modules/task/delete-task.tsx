@@ -9,7 +9,6 @@ interface DeleteTaskProps {
   onCancel?: () => void;
 }
 
-/** Renders the deletion flow for task. */
 export function DeleteTask({ task, callback, onCancel }: DeleteTaskProps) {
   const deleteMutation = useTaskDeleteMutation(task.tenantId, task.organizationId);
   const [isPending, setIsPending] = useState(false);

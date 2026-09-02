@@ -72,7 +72,6 @@ export function requireCurrentUserProjectMembership(ctx: AuthContext, project: P
   return membership;
 }
 
-/** Replace a project membership with a new workspace assignment. */
 export async function replaceProjectMembershipWorkspace(
   ctx: DbContext,
   { membership, workspaceId, createdBy, role }: ReplaceProjectMembershipWorkspaceInput,

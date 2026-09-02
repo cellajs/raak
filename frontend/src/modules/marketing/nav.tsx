@@ -16,7 +16,6 @@ import { FloatingNav, type FloatingNavItem } from '~/modules/navigation/floating
 import { Button } from '~/modules/ui/button';
 import { Drawer, DrawerContent, DrawerTitle } from '~/modules/ui/drawer';
 
-/** Renders the marketing nav component. */
 export function MarketingNav() {
   const { t } = useTranslation();
 
@@ -74,7 +73,6 @@ export function MarketingNav() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Floating nav items for mobile
   const floatingNavItems: FloatingNavItem[] = [
     {
       id: 'marketing-menu',

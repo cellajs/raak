@@ -5,12 +5,11 @@ import { redirectToWelcomeIfOnboarding } from '~/modules/home/route-logic';
 import { withSuspense } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';
 
-/**
- * Alias for the home page, with an optional skipWelcome param.
- */
 export const Route = createFileRoute('/_app/home')({
   validateSearch: z.object({
     skipWelcome: z.boolean().optional(),
+    // The user sheet can be opened from home surfaces
+    userSheetId: z.string().optional(),
   }),
   staticData: { isAuth: true },
   head: () => ({ meta: [{ title: appTitle('Home') }] }),

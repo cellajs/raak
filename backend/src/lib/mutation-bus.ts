@@ -2,19 +2,11 @@ import type { TrackedEventType } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { onBackendModuleRegister } from '#/lib/module';
 
-/**
- * Batch payload: the rows the event is about. cella ops work in batches, so the bus does too.
- * `before`/`after` are index-aligned for updates; a create carries `after`, a delete carries
- * `before` (the deleted rows, which already hold the op's `deletedAt`/`deletedBy`). Handlers
- * narrow rows to their entity type.
- */
+/** The batched rows an event is about: `before`/`after` index-aligned for updates, `before` alone for deletes. */
 export interface MutationPayload {
   before?: Record<string, unknown>[];
   after?: Record<string, unknown>[];
-  /**
-   * True when the write originates from Yjs materialization (server-origin). Handlers that would
-   * double-process on those re-writes should return early.
-   */
+  /** True for writes from Yjs materialization; handlers that would double-process those re-writes return early. */
   serverOrigin?: boolean;
 }
 
@@ -22,21 +14,22 @@ export type MutationHandler = (ctx: AuthContext, payload: MutationPayload) => Pr
 
 const handlers = new Map<TrackedEventType, MutationHandler[]>();
 
+/** Direct registration, for cross-module handlers derived from other modules' declarations (e.g. mention derivation). */
+export function registerMutationHandler(event: TrackedEventType, handler: MutationHandler): void {
+  const existing = handlers.get(event);
+  if (existing) existing.push(handler);
+  else handlers.set(event, [handler]);
+}
+
 // Index the `onMutation` handlers each backend module declares (see defineBackendModule).
 onBackendModuleRegister((module) => {
   for (const entry of Object.entries(module.onMutation ?? {})) {
     const [event, handler] = entry as [TrackedEventType, MutationHandler];
-    const existing = handlers.get(event);
-    if (existing) existing.push(handler);
-    else handlers.set(event, [handler]);
+    registerMutationHandler(event, handler);
   }
 });
 
-/**
- * Fire the handlers registered for `<type>.<verb>` synchronously, in registration order, awaiting
- * each. Rejects on the first handler error so an operation can let a failed requirement abort the
- * request. Pass the transactional ctx when handlers must run inside the write's transaction.
- */
+/** Awaits handlers in registration order, rejecting on the first error. Pass a transactional ctx to join the write. */
 export async function dispatchMutation(
   ctx: AuthContext,
   event: TrackedEventType,

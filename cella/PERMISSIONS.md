@@ -23,8 +23,9 @@ Creator-only rules compare the user with the row's `createdBy` value.
 │  │ createEntityHierarchy(roles)  │  │ configurePermissions(types, cb)     │  │
 │  │   .user()                     │  │   entity × channel × role → cell    │  │
 │  │   .channel(name, {parent,     │  │   cell = 0 | 1 | 'own'              │  │
-│  │             roles})           │  │   publicRead()                      │  │
-│  │   .product(name, {parent})    │  │   elevatedRoles                     │  │
+│  │     roles, elevated,          │  │   publicRead()                      │  │
+│  │     rootRoles})               │  │                                     │  │
+│  │   .product(name, {parent})    │  │                                     │  │
 │  │                               │  │                                     │  │
 │  │ kinds, ancestor chains, roles │  │ → policyMatrix, publicReadGrants    │  │
 │  └──────────────┬────────────────┘  └────────────────┬────────────────────┘  │
@@ -141,7 +142,7 @@ For channel entities, note the two row kinds: **elevation** rows sit on an _ance
 
 ## The permission returned
 
-Presenting an access to the engine yields per-action verdicts. `getAllDecisions(policies, memberships, subject, options)` is the core; the **`checkAccess*` family** is the bound surface every tier actually calls — three named projections of the same engine, all injecting the configured `publicReadGrants` and `elevatedRoles`. The name at the call site tells you the shape:
+Presenting an access to the engine yields per-action verdicts. `getAllDecisions(policies, memberships, subject, options)` is the core; the **`checkAccess*` family** is the bound surface every tier actually calls — three named projections of the same engine, all injecting the configured `publicReadGrants` and the hierarchy-compiled `elevatedGrants` (per-channel `elevated` declarations as `channelType:role` keys). The name at the call site tells you the shape:
 
 ```ts
 checkAccess(access, action, subject); // → PermissionResult — the request-path check
@@ -245,6 +246,8 @@ export type CollectionReadWhere =
 ```
 
 A bare `undefined` WHERE would leak the table, which is exactly the bug this shape makes unrepresentable. In the same spirit, the compiled SQL for a row condition emits `false` for an anonymous actor, mirroring the check-form's deny.
+
+Channel lists have a sibling seam, `channel-collection-scope.ts` (`resolveChannelCollectionReadScope` → `buildChannelListReadWhere`, same tri-state): which rows of a sub-org channel type the caller can read beyond their own memberships, from org-root and ancestor-level grants (read+update grants see drafts, read-only grants see published rows). The template's only channel is the root organization, so the seam is dormant here; apps with sub-org channels compile it into a LEFT-joined membership list so discovery rows match single-row `checkAccess` results. The file's header comment carries the consumer contract (join-ON filters, NULL-membership mapping, ordering).
 
 
 ## Behavior

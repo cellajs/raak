@@ -28,7 +28,6 @@ interface UseProjectMembershipActionsArgs {
   onSuccess?: () => void;
 }
 
-/** Provides project membership actions state and actions. */
 export function useProjectMembershipActions({
   boardType,
   project,
