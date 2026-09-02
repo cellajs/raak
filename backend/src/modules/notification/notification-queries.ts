@@ -89,6 +89,8 @@ export async function markContextNotificationsRead(ctx: DbContext, userId: strin
   return updated.length;
 }
 
+// ── Preferences ──────────────────────────────────────────────────────────────
+
 /** Preferences row, created on first read so callers never handle a missing row. */
 export async function findOrCreatePreferences(ctx: DbContext, userId: string) {
   const { db } = ctx.var;
@@ -249,6 +251,8 @@ export async function stampEmailed(notificationIds: string[]): Promise<void> {
     .set({ emailedAt: new Date().toISOString() })
     .where(inArray(notificationsTable.id, notificationIds));
 }
+
+// ── Digest ───────────────────────────────────────────────────────────────────
 
 /** Recipients whose digest is due: cadence on, verified address, not yet run for this window. */
 export async function findDueDigestRecipients(dayStart: string, includeWeekly: boolean, limit: number) {

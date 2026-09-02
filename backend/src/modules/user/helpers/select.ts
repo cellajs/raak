@@ -6,6 +6,7 @@ import { userMinimalBaseSchema } from '#/schemas/minimal-base';
 import { userBaseSchema } from '#/schemas/user-schema-base';
 import { pick } from '#/utils/pick';
 
+/** User with timestamps from the user_counters table. */
 export type UserWithCounters = UserModel & {
   lastSeenAt: string | null;
   lastStartedAt: string | null;

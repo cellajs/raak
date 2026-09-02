@@ -57,6 +57,7 @@ function enrichItem(
   return result;
 }
 
+/** Returns the same reference when nothing changed. */
 function enrichListData(
   data: InfiniteData,
   memberships: MembershipBase[],

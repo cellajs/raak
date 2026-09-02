@@ -32,6 +32,7 @@ export async function createUser(email: string) {
   return user;
 }
 
+/** Returns the raw token string, for use in cookies. */
 export async function createMfaToken(user: { id: string; email: string }) {
   const mfaToken = nanoid(40);
   const hashedMfaToken = hashToken(mfaToken);

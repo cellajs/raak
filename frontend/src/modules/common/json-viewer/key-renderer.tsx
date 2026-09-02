@@ -27,6 +27,7 @@ export function KeyRenderer({
   const keyStr = String(keyName);
   const isMatch = searchText && keyStr.toLowerCase().includes(searchText.toLowerCase());
 
+  // Dictionary key from additionalProperties, written as [key].
   const isDictionaryKey = openapiMode === 'schema' && keyStr.startsWith('[') && keyStr.endsWith(']');
 
   const requiredLabel = hasSelfRequired && (

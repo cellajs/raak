@@ -6,6 +6,7 @@ export interface PrincipalNames {
   ciDeploy: string;
   /** Human admin application: bucket access plus infra reads. */
   admin: string;
+  /** Per-service VM application. */
   vmService: (service: string) => string;
   /** Boot fetcher application: registry pull and handoff-secret read. */
   boot: string;

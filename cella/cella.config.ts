@@ -72,6 +72,7 @@ export default defineConfig({
       'backend/src/modules/organization/setup-config-schema.ts',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',
+      'frontend/src/query/realtime/register-channel-paths.ts',
     ],
   },
 });

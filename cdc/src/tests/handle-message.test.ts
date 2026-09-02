@@ -47,6 +47,7 @@ import { replicationState } from '../services/replication-state';
 const { parseMessage } = await import('../pipeline/parse-message');
 const mocked = vi.mocked(parseMessage);
 
+/** Minimal DML message. */
 function mockDmlMessage(tag: 'insert' | 'update' | 'delete', id: string): Pgoutput.Message {
   const row = { id };
   if (tag === 'delete') {

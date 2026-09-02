@@ -202,6 +202,7 @@ export interface GenSchemaTagSummary {
   count: number;
 }
 
+/** A schema from components.schemas, for the schemas list page. */
 export interface GenComponentSchema {
   /** Key in components.schemas */
   name: string;
