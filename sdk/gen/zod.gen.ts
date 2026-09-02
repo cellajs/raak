@@ -2527,7 +2527,7 @@ export const zGetAttachmentsQuery = z.object({
     .string()
     .regex(/^\d+,\d+$/)
     .optional(),
-  channelId: z.string().max(50).optional(),
+  channelId: z.uuid().optional(),
 });
 
 /**
