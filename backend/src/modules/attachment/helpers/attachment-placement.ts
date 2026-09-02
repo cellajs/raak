@@ -14,7 +14,7 @@ import { validIdSchema } from '#/schemas';
  * row carries it as its home column and inherits the project's public-read flag, list reads
  * compile against the project column and narrow to one project, and the seed homes one batch
  * per project. The cella-owned schema, list and create ops and the seed call through this file,
- * so the fork axis stays local to it.
+ * so the app-specific axis stays local to it.
  */
 export const attachmentPlacementFieldsSchema = {
   projectId: validIdSchema,
@@ -45,9 +45,9 @@ const findOrganizationProject = async (ctx: AuthContext, projectId: string) => {
 
 /**
  * The project id is stamped as the home column and the row inherits the project's `publicAt`
- * (a public project publishes its attachments) instead of trusting the client. Membership on
- * that project is enforced by the create op's `canCreateEntity` check, which reads the hierarchy
- * ancestors off the resolved row.
+ * server-side (a public project publishes its attachments). Membership on that project is
+ * enforced by the create op's `canCreateEntity` check, which reads the hierarchy ancestors off
+ * the resolved row.
  */
 export const resolveAttachmentPlacement = async (
   ctx: AuthContext,
@@ -62,9 +62,9 @@ export const attachmentHomeColumnKey = 'projectId' satisfies keyof typeof attach
 
 /**
  * Home channel a list or delta read narrows to, from the `channelId` query param; undefined (or
- * the organization itself) reads org-wide. A requested project must exist in the organization;
- * membership on it is not required here, the collection read filter narrows a non-member to the
- * rows the row-conditional policy grants (own rows), instead of a 403.
+ * the organization itself) reads org-wide. A requested project must exist in the organization
+ * (404 otherwise); membership on it is not required here, because the collection read filter
+ * narrows a non-member to the rows the row-conditional policy grants (own rows).
  */
 export const resolveAttachmentHomeScope = async (
   ctx: AuthContext,
