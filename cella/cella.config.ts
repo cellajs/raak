@@ -33,6 +33,16 @@ export default defineConfig({
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
       'CLAUDE.md',
+      // App identity: brand assets and the app's own locale namespace. cella has no upstream fix
+      // to push into these, so they are never synced (a pin would still merge and drop upstream
+      // hunks on conflict). Template-consumed copy lives in common.json, never in app.json.
+      'frontend/public/favicon.ico',
+      'frontend/public/favicon.svg',
+      'frontend/public/thumbnail.png',
+      'frontend/src/modules/common/logo.tsx',
+      'frontend/src/modules/auth/legal/legal-config.ts',
+      'locales/en/app.json',
+      'locales/nl/app.json',
     ],
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
@@ -45,9 +55,6 @@ export default defineConfig({
       'bench/src/seeds/ids.ts',
       'backend/src/routes.ts',
       'backend/src/modules/memberships/memberships-db.ts',
-      'frontend/public/favicon.ico',
-      'frontend/public/favicon.svg',
-      'frontend/public/thumbnail.png',
       'frontend/src/nav-config.tsx',
       'frontend/src/placement-config.ts',
       'frontend/src/routes-config.tsx',
@@ -57,9 +64,7 @@ export default defineConfig({
       'frontend/src/styling/gradients.css',
       'frontend/src/styling/tailwind.css',
       'frontend/src/modules/home/onboarding/onboarding-config.ts',
-      'frontend/src/modules/common/logo.tsx',
       'locales/en/about.json',
-      'locales/en/app.json',
       'locales/nl/about.json',
       'backend/src/modules/organization/setup-config-schema.ts',
       'backend/src/mocks/app-product-mocks.ts',
