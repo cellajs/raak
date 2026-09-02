@@ -25,7 +25,15 @@ describe('deriveTaskMentionsOnMaterialize', () => {
 describe('taskNotifications', () => {
   it('is mentionable and links emails to the task resolver route', () => {
     expect(taskNotifications.mentionable).toBe(true);
-    expect(taskNotifications.resolveEmailLink?.({ subjectId: 'abc', contextId: null })).toBe(taskLink('abc'));
+    expect(
+      taskNotifications.resolveEmailLink?.({
+        subjectId: 'abc',
+        contextId: null,
+        tenantId: 't',
+        channelId: 'c',
+        entityType: 'task',
+      }),
+    ).toBe(taskLink('abc'));
     expect(taskLink('abc')).toMatch(/\/t\/abc$/);
   });
 });

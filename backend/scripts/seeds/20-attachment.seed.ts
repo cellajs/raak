@@ -4,8 +4,8 @@ import { appConfig } from 'shared';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
 import { seedDb } from '#/db/db';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
+import { seedAttachmentPlacements } from '#/modules/attachment/helpers/attachment-placement';
 import { organizationsTable } from '#/modules/organization/organization-db';
-import { projectsTable } from '#/modules/project/project-db';
 import { mockStx, mockUuid, setMockContext, withFakerSeed } from '#/mocks';
 import { defaultAdminUser } from '../fixtures';
 
@@ -17,7 +17,7 @@ setMockContext('script');
 
 /**
  * Known S3 files that should exist in the dev bucket under the `seed/` prefix.
- * Each seeded organization gets one attachment per file, assigned to one of its projects.
+ * Each placement the seam returns (one per organization by default) gets one attachment per file.
  */
 const SEED_FILES = [
   { filename: 'sample-image.webp', contentType: 'image/webp', size: '24500', originalKey: 'seed/sample-image.webp', public: true },
@@ -33,7 +33,7 @@ const isAttachmentSeeded = async () => {
 };
 
 /**
- * Seeds the database with attachment rows for each seeded organization.
+ * Seeds the database with attachment records for each seeded organization.
  * Records reference pre-existing files in the dev S3 bucket under `seed/`.
  */
 export const attachmentsSeed = async () => {
@@ -46,48 +46,31 @@ export const attachmentsSeed = async () => {
 
   // Fetch all seeded organizations (need tenantId + id for FK constraints)
   const organizations = await db.select({ id: organizationsTable.id, tenantId: organizationsTable.tenantId }).from(organizationsTable);
-  const projects = await db
-    .select({ id: projectsTable.id, organizationId: projectsTable.organizationId, publicAt: projectsTable.publicAt })
-    .from(projectsTable);
 
   if (!organizations.length) {
     spinner.fail('No organizations found → run organization seed first');
     return;
   }
 
-  const projectIdsByOrganization = new Map<string, string[]>();
-  const publicAtByProject = new Map<string, string | null>();
-
-  for (const project of projects) {
-    publicAtByProject.set(project.id, project.publicAt);
-    const projectIds = projectIdsByOrganization.get(project.organizationId);
-    if (projectIds) projectIds.push(project.id);
-    else projectIdsByOrganization.set(project.organizationId, [project.id]);
+  // Placement seam: apps home the seeded rows on their own channels, or return none to skip.
+  const placements = await seedAttachmentPlacements(db, organizations);
+  if (!placements.length) {
+    warnSpinner('No attachment placements from the placement seam → skip seeding');
+    return;
   }
 
   let totalCreated = 0;
-  let skippedOrganizations = 0;
 
-  for (const org of organizations) {
-    const projectIds = projectIdsByOrganization.get(org.id);
-
-    if (!projectIds?.length) {
-      skippedOrganizations++;
-      continue;
-    }
-
+  for (const { organizationId, tenantId, placement } of placements) {
     const records = SEED_FILES.map((file, i) =>
-      withFakerSeed(`attachment:seed:${org.id}:${i}`, () => {
+      withFakerSeed(`attachment:seed:${organizationId}:${Object.values(placement).join(':')}:${i}`, () => {
         const createdAt = faker.date.recent({ days: 30 }).toISOString();
-        const projectId = projectIds[i % projectIds.length];
         return {
           id: mockUuid(),
           entityType: 'attachment' as const,
-          tenantId: org.tenantId,
-          organizationId: org.id,
-          projectId,
-          // Mirror the parent project's publicity locally (no runtime inherit helper in seeds).
-          publicAt: publicAtByProject.get(projectId) ?? null,
+          tenantId,
+          organizationId,
+          ...placement,
           createdAt,
           updatedAt: createdAt,
           createdBy: defaultAdminUser.id,
@@ -110,11 +93,7 @@ export const attachmentsSeed = async () => {
     totalCreated += records.length;
   }
 
-  if (skippedOrganizations > 0) {
-    warnSpinner(`Skipped ${skippedOrganizations} organizations with no projects`);
-  }
-
-  succeedSpinner(`Created ${totalCreated} attachments across ${organizations.length} organizations`);
+  succeedSpinner(`Created ${totalCreated} attachments across ${placements.length} placements`);
 };
 
 export const seedConfig: SeedScript = { name: 'attachments', run: attachmentsSeed };

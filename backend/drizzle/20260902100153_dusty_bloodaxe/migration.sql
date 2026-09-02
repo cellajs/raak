@@ -1,0 +1,2 @@
+CREATE INDEX "attachments_project_id_index" ON "attachments" ("project_id");--> statement-breakpoint
+ALTER TABLE "attachments" ADD CONSTRAINT "attachments_project_id_projects_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE;

@@ -139,6 +139,11 @@ function CreateTaskForm({
         ? [...new Map([user, ...values.assignedTo].map((u) => [u.id, u])).values()]
         : values.assignedTo;
 
+    // attachmentCount is presentation-only here: task.attachments is an owned embedding derived from
+    // the description media blocks, so the create body carries the id list, never the count.
+    const { attachmentCount: _attachmentCount, ...descriptionProps } = await deriveDescriptionProps(
+      values.description ?? '',
+    );
     const newTask = {
       // Task variables
       ...values,
@@ -148,7 +153,7 @@ function CreateTaskForm({
       labels: values.labels.map(({ id }) => id),
       assignedTo: fullAssignedTo.map(({ id }) => id),
       displayOrder: getNewTaskOrder(values.status, tasks, projectId),
-      ...(await deriveDescriptionProps(values.description ?? '')),
+      ...descriptionProps,
       // Mutation variables
       fullLabels: values.labels,
       fullAssignedTo,

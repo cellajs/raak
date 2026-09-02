@@ -5970,7 +5970,7 @@ export type GetAttachmentsData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    projectId?: string;
+    channelId?: string;
   };
   url: '/{tenantId}/{organizationId}/attachments';
 };
@@ -6242,7 +6242,6 @@ export type UpdateAttachmentData = {
   body: {
     ops: {
       name?: string;
-      publicAt?: string | null;
     };
     stx: StxBase;
   };

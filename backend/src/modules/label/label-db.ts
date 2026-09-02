@@ -10,7 +10,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-import type { LabelMode } from 'shared';
+import type { LabelMode } from 'shared/config/labels-config';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { maxLength } from '#/db/utils/constraints';
 import { productColumns } from '#/db/utils/product-columns';

@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi';
-import { labelColorTokens, primaryLabelLimits } from 'shared';
+import { labelColorTokens, primaryLabelLimits } from 'shared/config/labels-config';
 import { validNameSchema } from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
 import { labelSlugSchema } from '#/schemas/label-slug-schema';

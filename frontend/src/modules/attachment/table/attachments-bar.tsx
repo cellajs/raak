@@ -1,9 +1,11 @@
-import { InfoIcon, TrashIcon } from 'lucide-react';
+import { InfoIcon, TrashIcon, UploadIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Attachment } from 'sdk';
+import { appConfig, hierarchy } from 'shared';
 import { DeleteAttachments } from '~/modules/attachment/delete-attachments';
 import type { AttachmentsTableProps } from '~/modules/attachment/table/attachments-table';
+import { useAttachmentsUploadDialog } from '~/modules/attachment/table/use-attachments-upload-dialog';
 import type { AttachmentsRouteSearchParams } from '~/modules/attachment/types';
 import { AlertBanner } from '~/modules/common/alerter/alert-banner';
 import { ColumnsView } from '~/modules/common/data-table/columns-view';
@@ -30,12 +32,18 @@ export function AttachmentsTableBar({
   setColumns,
   clearSelection,
   isSheet = false,
+  canUpload = false,
   queryKey,
 }: AttachmentsTableBarProps) {
-  // fork: no upload button and no canUpload prop. Attachments are created from task description
-  // media blocks (owned embedding), so a channel-level upload has no target to write into.
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
+  // Placement seam: a sub-organization channel homes its uploads on itself; the organization row is the
+  // org. Publication is row-local, so the channel's `publicAt` is only the default a new row starts with.
+  const isRoot = channel.entityType === hierarchy.rootChannelType;
+  const organizationId = !isRoot && 'organizationId' in channel ? String(channel.organizationId) : channel.id;
+  const publicAt = 'publicAt' in channel && typeof channel.publicAt === 'string' ? channel.publicAt : null;
+  const placement = { ...(isRoot ? {} : { [appConfig.entityIdColumnKeys[channel.entityType]]: channel.id }), publicAt };
+  const { open } = useAttachmentsUploadDialog(channel.tenantId, organizationId, placement);
   const resolveCan = useResolveCan();
 
   const deleteButtonRef = useRef(null);
@@ -45,6 +53,7 @@ export function AttachmentsTableBar({
   const { q } = searchVars;
 
   const isFiltered = !!q;
+  const showUpload = canUpload && !isFiltered;
 
   // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
   const deletable = selected.filter((row) => resolveCan(channel.can?.attachment?.delete, row.createdBy));
@@ -77,6 +86,7 @@ export function AttachmentsTableBar({
       <TableBarContainer searchVars={searchVars} offsetTop={48}>
         <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
           <FilterBarActions>
+            {showUpload && <TableBarButton icon={UploadIcon} label="c:upload" onClick={() => open()} />}
             <TableCount count={total} label="c:attachment" isFiltered={isFiltered} onResetFilters={onResetFilters} />
           </FilterBarActions>
           <div className="sm:grow" />

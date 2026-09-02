@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
 import { getColumns } from 'drizzle-orm';
-import { labelModes } from 'shared';
+import { labelModes } from 'shared/config/labels-config';
 import { schemaTags } from '#/core/openapi-helpers';
 import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';

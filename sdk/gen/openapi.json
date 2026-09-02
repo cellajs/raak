@@ -14324,10 +14324,10 @@
           {
             "schema": {
               "type": "string",
-              "maxLength": 50
+              "format": "uuid"
             },
             "required": false,
-            "name": "projectId",
+            "name": "channelId",
             "in": "query"
           }
         ],
@@ -14572,7 +14572,7 @@
                     },
                     "projectId": {
                       "type": "string",
-                      "maxLength": 50
+                      "format": "uuid"
                     },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
@@ -15323,9 +15323,6 @@
                       "name": {
                         "type": "string",
                         "maxLength": 255
-                      },
-                      "publicAt": {
-                        "type": ["string", "null"]
                       }
                     }
                   },

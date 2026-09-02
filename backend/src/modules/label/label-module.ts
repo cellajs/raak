@@ -1,4 +1,4 @@
-import type { PrimaryLabelDefinition } from 'shared';
+import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { tenantContext } from '#/db/tenant-context';
 import { defineBackendModule } from '#/lib/module';
 import { buildPrimaryLabelRows, propagateSetupConfigLabels } from '#/modules/label/helpers/primary-labels';

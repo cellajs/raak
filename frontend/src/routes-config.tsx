@@ -13,6 +13,8 @@ export type ChannelRouteEntry = {
   defaultTabId?: string;
   /** When shown as a subitem, navigate to a parent entity's route. */
   subitemOf?: { entityType: ChannelEntityType; searchParam: string };
+  /** Search params a notification link on this channel opens with, e.g. a product's sheet id keyed by its entity type. */
+  notificationSearch?: (notification: { entityType: string; subjectId: string }) => Record<string, string>;
 };
 
 /**
@@ -36,5 +38,8 @@ export const channelRouteConfig = {
     path: '/$tenantId/$organizationSlug/project/$slug',
     paramName: 'slug',
     subitemOf: { entityType: 'workspace', searchParam: 'projectSlug' },
+    // The project board reads `taskSheetId` and opens that task's sheet on top of the board.
+    notificationSearch: ({ entityType, subjectId }): Record<string, string> =>
+      entityType === 'task' ? { taskSheetId: subjectId } : {},
   },
 } as const satisfies Record<ChannelEntityType, ChannelRouteEntry>;

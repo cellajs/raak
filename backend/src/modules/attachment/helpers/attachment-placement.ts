@@ -1,37 +1,155 @@
-import { z } from '@hono/zod-openapi';
+import type { z } from '@hono/zod-openapi';
+import {
+  type AncestorChannelType,
+  appConfig,
+  type ChannelEntityType,
+  type EntityIdColumns,
+  type EntityType,
+  hierarchy,
+  type NullableAncestorType,
+  type RootChannelType,
+} from 'shared';
 import type { AuthContext } from '#/core/context';
-import { validIdSchema } from '#/schemas';
+import { AppError } from '#/core/error';
+import type { DB } from '#/db/db';
+import { tenantRead } from '#/db/tenant-context';
+import type { attachmentsTable } from '#/modules/attachment/attachment-db';
+import { projectsTable } from '#/modules/project/project-db';
+import { findProjectById } from '#/modules/task/task-queries';
+import { getValidChannel } from '#/permissions/get-valid-channel';
+import { validUuidSchema } from '#/schemas';
+
+const rootChannelType: string = hierarchy.rootChannelType;
+const nullableAncestors = new Set<string>(hierarchy.getNullableAncestors('attachment'));
+/** Sub-organization ancestors an attachment can home at, deepest first; none in cella. */
+const placementAncestors = hierarchy.getOrderedAncestors('attachment').filter((type) => type !== rootChannelType);
+const placementKey = (type: string) => appConfig.entityIdColumnKeys[type as ChannelEntityType];
 
 /**
- * Attachment placement seam, filled for raak: attachments are homed on a project (the parent
- * channel in raak's hierarchy), so every create-body item must name the project and the
- * resolved row carries it as its home column. The cella-owned schema and create op call
- * through this file, so the fork axis stays local to it.
+ * Create-body placement fields, spread into the create-item schema. This file is the attachment
+ * placement seam (pinned; apps own their fill), with defaults derived from the hierarchy: the
+ * client sends the deepest home id only (required when that home is a strict ancestor, optional
+ * when nullable), the chain above it is read off the resolved row, and every other sub-organization
+ * ancestor column is null. cella has no sub-organization ancestors, so its rows are org-homed.
  */
-export const attachmentPlacementFieldsSchema = {
-  projectId: validIdSchema,
-};
+export const attachmentPlacementFieldsSchema = Object.fromEntries(
+  placementAncestors.map((type) => [
+    placementKey(type),
+    nullableAncestors.has(type) ? validUuidSchema.optional() : validUuidSchema,
+  ]),
+) as Record<string, z.ZodType<string | undefined>>;
 
-export type AttachmentPlacementInput = { projectId: string } & Record<string, unknown>;
+/** A create-body item as the placement seam sees it; apps narrow to their placement fields. */
+export type AttachmentPlacementInput = Record<string, unknown>;
 
-export type ResolvedAttachmentPlacement = { projectId: string };
+type SubOrgAncestor = Exclude<AncestorChannelType<'attachment'>, RootChannelType>;
 
-const placementInputSchema = z.object({ projectId: validIdSchema });
+/**
+ * Ancestor id columns to stamp on the inserted row, typed like the table columns: strict ancestors
+ * are `string`, nullable ones `string | null`; empty for org-homed rows.
+ */
+export type ResolvedAttachmentPlacement = EntityIdColumns<
+  Exclude<SubOrgAncestor, NullableAncestorType<'attachment'>> & EntityType,
+  string
+> &
+  EntityIdColumns<Extract<SubOrgAncestor, NullableAncestorType<'attachment'>> & EntityType, string | null>;
 
-/** Per-item create-body validation; the schema already requires exactly one home id, so nothing is ambiguous. */
+const providedHome = (item: AttachmentPlacementInput) =>
+  placementAncestors.filter((type) => typeof item[placementKey(type)] === 'string' && item[placementKey(type)]);
+
+/** Per-item create-body validation, anchored at the returned path relative to the item: one home id at most. */
 export const validateAttachmentPlacement = (
   item: AttachmentPlacementInput,
 ): { path: (string | number)[]; message: string } | null => {
-  const parsed = placementInputSchema.safeParse(item);
-  if (parsed.success) return null;
-  return { path: ['projectId'], message: 'projectId is required' };
+  const provided = providedHome(item);
+  if (provided.length <= 1) return null;
+  return {
+    path: [placementKey(provided[0])],
+    message: 'Ambiguous placement: send only the deepest home id (its ancestors are derived server-side)',
+  };
 };
 
 /**
- * The project id is stamped as the home column. Membership on that project is enforced by the
- * create op's `canCreateEntity` check, which reads the hierarchy ancestors off the resolved row.
+ * Ancestor columns for one create-body item: the deepest provided id, resolved to a readable
+ * channel row, plus that row's own ancestor ids; never client input above the home. No id means
+ * org-homed, which the fields schema only allows when no strict ancestor exists.
  */
 export const resolveAttachmentPlacement = async (
-  _ctx: AuthContext,
+  ctx: AuthContext,
   input: AttachmentPlacementInput,
-): Promise<ResolvedAttachmentPlacement> => ({ projectId: input.projectId });
+): Promise<ResolvedAttachmentPlacement> => {
+  const columns: Record<string, string | null> = Object.fromEntries(
+    placementAncestors.map((type) => [placementKey(type), null]),
+  );
+  const home = providedHome(input)[0];
+  if (!home) return columns as ResolvedAttachmentPlacement;
+
+  const { entity } = await getValidChannel(ctx, input[placementKey(home)] as string, home, 'read');
+  const row = entity as Record<string, unknown>;
+  columns[placementKey(home)] = entity.id;
+  for (const ancestor of hierarchy.getOrderedAncestors(home)) {
+    if (ancestor === rootChannelType) break;
+    const id = row[placementKey(ancestor)];
+    columns[placementKey(ancestor)] = typeof id === 'string' ? id : null;
+  }
+  return columns as ResolvedAttachmentPlacement;
+};
+
+/**
+ * The channel type attachments home at: the deepest strict ancestor, else the root. Apps with
+ * nullable placement (rows home at any depth) keep the root here and read org-wide.
+ */
+const homeChannelType =
+  hierarchy.getOrderedAncestors('attachment').find((type) => !nullableAncestors.has(type)) ?? hierarchy.rootChannelType;
+
+/** Column holding a row's home channel id: list reads compile the caller's grant scope against it. */
+export const attachmentHomeColumnKey = appConfig.entityIdColumnKeys[
+  homeChannelType
+] as keyof typeof attachmentsTable.$inferSelect;
+
+/**
+ * Home channel a list or delta read narrows to, from the `channelId` query param; undefined (or
+ * the organization itself) reads org-wide. raak checks project existence only (404), unlike
+ * cella's read-access default: a non-member's list narrows to the rows the row-conditional policy
+ * grants (own rows) through the collection read filter, not to a 403.
+ */
+export const resolveAttachmentHomeScope = async (
+  ctx: AuthContext,
+  channelId: string | undefined,
+): Promise<string | undefined> => {
+  if (!channelId || channelId === ctx.var.organization.id) return undefined;
+  const project = await tenantRead(ctx, (readCtx) => findProjectById(readCtx, { projectId: channelId }));
+  if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
+  return project.id;
+};
+
+/** One seed batch: the organization it belongs to and the ancestor columns its rows carry. */
+export interface AttachmentSeedPlacement {
+  organizationId: string;
+  tenantId: string;
+  placement: ResolvedAttachmentPlacement;
+}
+
+/** One batch per seeded project, mirroring the project's publicity onto its attachments. */
+export const seedAttachmentPlacements = async (
+  db: DB,
+  organizations: { id: string; tenantId: string }[],
+): Promise<AttachmentSeedPlacement[]> => {
+  const organizationIds = new Set(organizations.map((org) => org.id));
+  const projects = await db
+    .select({
+      id: projectsTable.id,
+      organizationId: projectsTable.organizationId,
+      tenantId: projectsTable.tenantId,
+      publicAt: projectsTable.publicAt,
+    })
+    .from(projectsTable);
+
+  return projects
+    .filter((project) => organizationIds.has(project.organizationId))
+    .map((project) => ({
+      organizationId: project.organizationId,
+      tenantId: project.tenantId,
+      placement: { projectId: project.id, publicAt: project.publicAt },
+    }));
+};

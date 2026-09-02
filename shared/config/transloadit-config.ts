@@ -88,7 +88,7 @@ const attachment = {
       format: 'pdf',
       accepted: ['doc', 'docx', 'html', 'latex', 'md', 'odt', 'ppt', 'pptx', 'rtf', 'txt', 'xhtml', 'xls', 'xlsx'],
     },
-    preview_pdf: {
+    thumb_pdf: {
       use: 'filter_pdf',
       robot: '/document/thumbs',
       count: 1,
@@ -97,7 +97,7 @@ const attachment = {
       width: 640,
       height: 800,
     },
-    preview_document: {
+    thumb_document: {
       use: 'converted_document',
       robot: '/document/thumbs',
       count: 1,
@@ -106,7 +106,7 @@ const attachment = {
       width: 640,
       height: 800,
     },
-    preview_video: {
+    thumb_video: {
       use: ':original',
       robot: '/video/thumbs',
       count: 1,
@@ -114,7 +114,7 @@ const attachment = {
       width: 640,
       height: 360,
     },
-    preview_image: {
+    thumb_image: {
       use: 'filter_images',
       robot: '/image/resize',
       background: 'none',
@@ -123,7 +123,7 @@ const attachment = {
       width: 900,
       height: 900,
     },
-    thumbnail_image: {
+    thumb_image_tiny: {
       use: 'filter_images',
       robot: '/image/resize',
       background: 'none',
@@ -135,11 +135,11 @@ const attachment = {
   },
   use: [
     ':original',
-    'preview_image',
-    'thumbnail_image',
-    'preview_video',
-    'preview_pdf',
-    'preview_document',
+    'thumb_image',
+    'thumb_image_tiny',
+    'thumb_video',
+    'thumb_pdf',
+    'thumb_document',
     'converted_image',
     'converted_audio',
     'converted_document',

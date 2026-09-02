@@ -8,8 +8,8 @@ import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 export const parseUploadedAttachments = (
   result: UploadedUppyFile<'attachment'>,
   organizationId: string,
-  // fork: attachments have project as their parent context, so they require a projectId
-  projectId?: string,
+  /** Placement seam: the deepest home channel id column (`{ projectId }`) plus the channel's `publicAt` default; omitted = org-homed, private. */
+  placement?: Record<string, string | null>,
 ): Attachment[] => {
   const originalFiles = result[':original'] ?? [];
 
@@ -27,12 +27,10 @@ export const parseUploadedAttachments = (
     const extIndex = filename.lastIndexOf('.');
     const name = extIndex > 0 ? filename.substring(0, extIndex) : filename;
 
-    // Reuse the id minted before upload (`onBeforeFileAdded`, round-tripped as user_meta) so the
-    // row matches the local blob already stored under it. Falling back to a fresh id would
-    // silently orphan that blob, so only do it for uploads that predate the meta.
+    // Reuse the id minted before upload (round-tripped as user_meta) so the row matches the local blob stored under it.
     const attachmentId = user_meta?.attachmentId;
 
-    // Use createOptimisticEntity to get schema defaults (including placeholder tx)
+    // Schema defaults, including the placeholder tx.
     const attachment = createOptimisticEntity(zAttachment, {
       id: attachmentId,
       size: String(size ?? 0),
@@ -45,8 +43,7 @@ export const parseUploadedAttachments = (
       keys: { original: url ?? '' },
       groupId,
       organizationId,
-      // fork: projectId required
-      projectId,
+      ...placement,
     });
 
     attachments.push(attachment as Attachment);
@@ -54,14 +51,12 @@ export const parseUploadedAttachments = (
     if (uploadId) attachmentsByUploadId.set(uploadId, attachment as Attachment);
   }
 
-  //  Process converted + thumbnail variants
   const steps = uploadTemplates.attachment.use.filter((step) => step !== ':original');
 
   for (const step of steps) {
     const files = result[step] ?? [];
 
     for (const { url, mime, original_id } of files) {
-      // Handle original_id being string or string[] from Transloadit
       const resolvedId = Array.isArray(original_id) ? original_id[0] : original_id;
       if (!resolvedId) continue;
 
@@ -73,9 +68,10 @@ export const parseUploadedAttachments = (
         target.convertedContentType = mime ?? null;
       }
 
-      if (step.startsWith('thumbnail_')) {
+      // thumb_image_tiny writes the `thumbnail` variant and must be checked before the generic thumb_ prefix, which writes `preview`.
+      if (step === 'thumb_image_tiny') {
         if (url) target.keys.thumbnail = url;
-      } else if (step.startsWith('preview_')) {
+      } else if (step.startsWith('thumb_')) {
         if (url) target.keys.preview = url;
       }
     }

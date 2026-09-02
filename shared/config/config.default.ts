@@ -279,6 +279,18 @@ export const config = {
   /** Upload template IDs for Transloadit processing pipelines */
   uploadTemplateIds: ['avatar', 'cover', 'attachment'] as const,
 
+  /**
+   * Channels whose attachments table offers a direct upload, i.e. a home the create can write into.
+   * raak's attachments only come from task description media blocks (an owned embedding), so none.
+   */
+  attachmentUploadTargets: [] as const,
+
+  /**
+   * Product types with per-member stats in the members table (`include=counts` on GET /members):
+   * a count and a last-activity stamp per type; the first is the "last posted" sort key.
+   */
+  memberStatProductTypes: ['attachment'] as const,
+
   /** Uppy upload widget default restrictions */
   uppy: {
     defaultRestrictions: {

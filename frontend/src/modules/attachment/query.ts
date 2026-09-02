@@ -49,11 +49,11 @@ const keys = {
       ['attachment', 'list', organizationId, filters] as const,
   },
 };
-// fork: project-homed attachments: delta sync narrows to the observed project channel.
+// Placement seam: a narrowed delta fetch names the covering home channel; org-wide passes none.
 registerEntityQueryKeys('attachment', keys, (organizationId, tenantId, seqCursor, channelId) => {
   return getAttachments({
     path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, projectId: channelId, limit: String(SYNC_CHUNK_SIZE) },
+    query: { seqCursor, channelId, limit: String(SYNC_CHUNK_SIZE) },
   });
 });
 export const attachmentQueryKeys = keys;

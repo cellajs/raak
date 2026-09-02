@@ -8,14 +8,7 @@ import {
   validateAttachmentPlacement,
 } from '#/modules/attachment/helpers/attachment-placement';
 import { productViewCountSchema } from '#/modules/entities/entities-schema';
-import {
-  batchResponseSchema,
-  maxLength,
-  paginationQuerySchema,
-  stxBaseSchema,
-  validIdSchema,
-  validUuidSchema,
-} from '#/schemas';
+import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validUuidSchema } from '#/schemas';
 import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
 import { mockAttachmentResponse } from './attachment-mocks';
 
@@ -71,7 +64,7 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     publicBucket: true,
     groupId: true,
     convertedContentType: true,
-    // fork: raak attachments inherit the host task's public-read flag at create time.
+    // Row-local public read: client-sent, the template client stamps the home channel's value.
     publicAt: true,
   })
   .extend({
@@ -87,8 +80,6 @@ export const attachmentContract = evolutionContract.product('attachment', {
   createItem: attachmentCreateBodySchema,
   updateOps: {
     name: z.string().max(maxLength.field),
-    // fork: public-read flag cascades from the host task.
-    publicAt: z.string().nullable(),
   },
 });
 
@@ -112,8 +103,9 @@ const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'crea
 
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
   sort: attachmentSortKeys.default('createdAt').optional(),
-  // fork: Raak attachment lists can be narrowed to a project.
-  projectId: validIdSchema.optional(),
+  // Placement seam: narrow to rows homed at one channel (resolved by `resolveAttachmentHomeScope`);
+  // omitted or the organization itself reads org-wide.
+  channelId: validUuidSchema.optional(),
 });
 
 /** Selectable stored-file variants. Mirrors the frontend `BlobVariant`. */

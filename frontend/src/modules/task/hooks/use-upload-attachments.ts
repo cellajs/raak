@@ -20,8 +20,9 @@ export const useUploadAttachments = () => {
     ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) =>
     (attachments: Attachment[]) => {
       // The panel parses uploads org-scoped only; add raak's required projectId before
-      // persisting (task linkage lives in the description's attachmentId block props).
-      // Stamp publicAt from the parent project so the attachment inherits its publicity.
+      // persisting (task linkage lives in the description's attachmentId block props) and stamp
+      // publicAt from the parent project so the attachment inherits its publicity (client-sent,
+      // row-local, per cella/PERMISSIONS.md).
       const publicAt = getProjectPublicAt(projectId, tenantId);
       const createdAttachments = attachments.map((att) => ({ ...att, projectId, publicAt }));
 

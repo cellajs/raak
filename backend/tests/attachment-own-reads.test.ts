@@ -116,8 +116,8 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
     expect(b.ids).toEqual([attachmentIds.ownedByB]);
   });
 
-  it('P2: explicit ?projectId= without project membership returns own rows instead of 403', async () => {
-    const a = await listAttachments(memberA.sessionCookie, { projectId });
+  it('P2: explicit ?channelId= without project membership returns own rows instead of 403', async () => {
+    const a = await listAttachments(memberA.sessionCookie, { channelId: projectId });
     expect(a.status).toBe(200);
     expect(a.ids).toEqual([attachmentIds.ownedByA]);
   });
