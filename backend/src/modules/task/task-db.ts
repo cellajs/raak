@@ -12,10 +12,10 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
+import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
 import { productColumns } from '#/db/utils/product-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
-import { projectsTable } from '#/modules/project/project-db';
 
 /**
  * Tasks table is a product entity table.
@@ -44,10 +44,7 @@ export const tasksTable = snakeCase.table(
     // productEmbedding host column: the CDC worker GCs attachment rows it no longer references.
     attachments: uuid().array().notNull().default(sql`'{}'::uuid[]`),
     // publicAt comes from productColumns (base column); non-member public read is gated on it.
-    organizationId: uuid().notNull(),
-    projectId: uuid()
-      .notNull()
-      .references(() => projectsTable.id, { onDelete: 'cascade' }),
+    ...channelRelationColumns('task'),
   },
   (table) => [
     index('tasks_organization_id_index').on(table.organizationId),
@@ -55,6 +52,7 @@ export const tasksTable = snakeCase.table(
     index('tasks_tenant_id_index').on(table.tenantId),
     index('tasks_created_by_index').on(table.createdBy),
     index('tasks_updated_by_index').on(table.updatedBy),
+    ...channelRelationIndexes('tasks', table, 'task'),
     index('tasks_project_status_index').on(table.projectId, table.status),
     index('tasks_primary_label_id_index').on(table.primaryLabelId),
     index('idx_tasks_labels_gin').using('gin', table.labels),
