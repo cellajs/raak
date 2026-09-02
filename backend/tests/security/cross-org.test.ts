@@ -14,8 +14,8 @@ import { clearSecurityTestData, createOrgUser, createSecondOrg, createTestTenant
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
-// fork: the body's placement ids must resolve to seeded ancestor rows (the placement seam
-// resolves the home channel server-side and the relation columns reference it); proposed upstream
+// The body's placement ids must resolve to seeded ancestor rows: the placement seam resolves the
+// home channel server-side and the relation columns reference it (empty in cella).
 let plan: TestEntityHierarchyPlan | undefined;
 type BodyChannelIdColumns = ReturnType<typeof generateMockEntityBodyChannelIdColumns<'attachment'>>;
 const bodyChannelIdColumns = (): BodyChannelIdColumns =>

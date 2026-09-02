@@ -49,8 +49,8 @@ describe('recalculateCounters (sequence + frontier)', async () => {
     mockFetchRequest();
     tenant = await createTestTenant(call, 'recalc-sequence');
 
-    // fork: relation columns reference strict deeper ancestors, so their rows must exist: one
-    // minimal channel row per strict deeper ancestor, root-first, under the test organization; proposed upstream
+    // Relation columns reference strict deeper ancestors, so their rows must exist: one minimal
+    // channel row per strict deeper ancestor, root-first, under the test organization (none in cella).
     for (const type of [...ANCESTORS].reverse().filter((type) => type in deeperAncestorIds)) {
       const ownAncestors = Object.fromEntries(
         hierarchy
