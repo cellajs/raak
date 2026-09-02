@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { appConfig, hierarchy } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { DB } from '#/db/db';
@@ -57,8 +58,16 @@ export const resolveAttachmentPlacement = async (
   return { projectId: project.id, publicAt: project.publicAt };
 };
 
+/** The deepest strict ancestor is the home channel: `project` in raak. */
+const homeChannelType =
+  hierarchy
+    .getOrderedAncestors('attachment')
+    .find((type) => !hierarchy.getNullableAncestors('attachment').includes(type)) ?? hierarchy.rootChannelType;
+
 /** Column holding a row's home channel id: list reads compile the caller's grant scope against it. */
-export const attachmentHomeColumnKey = 'projectId' satisfies keyof typeof attachmentsTable.$inferSelect;
+export const attachmentHomeColumnKey = appConfig.entityIdColumnKeys[
+  homeChannelType
+] as keyof typeof attachmentsTable.$inferSelect;
 
 /**
  * Home channel a list or delta read narrows to, from the `channelId` query param; undefined (or

@@ -4,7 +4,7 @@ import { CheckIcon, ChevronDownIcon, FlagIcon, TagIcon } from 'lucide-react';
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zLabel } from 'sdk/zod.gen';
-import { labelSlug } from 'shared';
+import { labelSlug } from 'shared/config/labels-config';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';

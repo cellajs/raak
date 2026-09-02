@@ -1,4 +1,4 @@
-import type { LabelColorToken } from 'shared';
+import type { LabelColorToken } from 'shared/config/labels-config';
 
 interface LabelPaletteEntry {
   /** Accent color for icons and standalone glyphs */

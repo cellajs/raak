@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { labelSlug } from 'shared';
+import { labelSlug } from 'shared/config/labels-config';
 import {
   generateMockEntityChannelIdColumns,
   mockBatchResponse,

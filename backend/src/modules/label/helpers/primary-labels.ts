@@ -1,5 +1,5 @@
 import { and, asc, count, eq, inArray, isNull, sql } from 'drizzle-orm';
-import type { PrimaryLabelDefinition } from 'shared';
+import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { defaultOrder, orderGap } from 'shared/utils/display-order';
 import type { AuthContext, DbContext } from '#/core/context';
 import { createServerStx } from '#/core/stx';

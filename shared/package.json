@@ -15,7 +15,8 @@
     "./cli-utils/*": "./src/cli-utils/*.ts",
     "./testing/*": "./src/testing/*.ts",
     "./blocknote": "./src/utils/text-from-block.ts",
-    "./transloadit-config": "./config/transloadit-config.ts"
+    "./transloadit-config": "./config/transloadit-config.ts",
+    "./config/*": "./config/*.ts"
   },
   "dependencies": {
     "@blocknote/core": "^0.54.0",

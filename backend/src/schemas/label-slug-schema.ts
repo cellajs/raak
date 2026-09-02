@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi';
-import { labelSlug } from 'shared';
+import { labelSlug } from 'shared/config/labels-config';
 import { maxLength } from '#/db/utils/constraints';
 
 /** Canonical label identity used for cross-project grouping and organization tracking. */

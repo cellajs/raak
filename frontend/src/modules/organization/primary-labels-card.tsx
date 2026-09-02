@@ -2,7 +2,7 @@ import { GripVerticalIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
-import { labelSlug, type PrimaryLabelDefinition, primaryLabelLimits } from 'shared';
+import { labelSlug, type PrimaryLabelDefinition, primaryLabelLimits } from 'shared/config/labels-config';
 import type { RowsChangeData } from '~/modules/common/data-grid';
 import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
 import { DataTable } from '~/modules/common/data-table/data-table';
