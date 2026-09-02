@@ -6,7 +6,11 @@ export const tunnel = {
   name: 'Raak TUNNEL',
   slug: 'raak-tunnel',
 
-  frontendUrl: 'https://localhost:3000',
-  backendUrl: 'https://raak.ngrok.dev',
-  backendAuthUrl: 'https://raak.ngrok.dev/auth',
+  // The tunnel fronts the Vite dev server, which proxies /api, /yjs and /mcp to the service
+  // ports. One public origin keeps cookies first-party, so no SameSite=None is needed.
+  frontendUrl: 'https://raak.ngrok.dev',
+  backendUrl: 'https://raak.ngrok.dev/api',
+  backendAuthUrl: 'https://raak.ngrok.dev/api/auth',
+  yjsUrl: 'wss://raak.ngrok.dev/yjs',
+  mcpUrl: 'https://raak.ngrok.dev/mcp',
 } satisfies DeepPartial<typeof _default>;

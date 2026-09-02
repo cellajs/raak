@@ -523,8 +523,8 @@ export type Task = {
   checkboxCount: number;
   checkedCount: number;
   attachments: Array<string>;
-  organizationId: string;
   projectId: string;
+  organizationId: string;
   labels: Array<{
     id: string;
     name: string;
@@ -796,8 +796,8 @@ export type Label = {
   icon: string | null;
   organizationTracked: boolean;
   displayOrder: number | null;
-  organizationId: string;
   projectId: string;
+  organizationId: string;
   stx: StxBase;
   usedCount?: number;
 };
@@ -3612,124 +3612,6 @@ export type GetPublicCountsResponses = {
 
 export type GetPublicCountsResponse = GetPublicCountsResponses[keyof GetPublicCountsResponses];
 
-export type GetUsersData = {
-  body?: never;
-  path?: never;
-  query?: {
-    q?: string;
-    sort?: 'id' | 'name' | 'email' | 'role' | 'createdAt' | 'lastSeenAt';
-    order?: 'asc' | 'desc';
-    offset?: string;
-    limit?: string;
-    seqCursor?: string;
-    role?: 'admin';
-  };
-  url: '/users/users';
-};
-
-export type GetUsersErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
-
-export type GetUsersResponses = {
-  /**
-   * Users
-   */
-  200: {
-    /**
-     * Base user schema with essential fields for identification and display.
-     */
-    items: Array<
-      UserBase & {
-        lastSeenAt: string | null;
-        role?: 'admin' | null;
-      }
-    >;
-    total: number;
-  };
-};
-
-export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
-
-export type GetUserData = {
-  body?: never;
-  path: {
-    relatableUserId: string;
-  };
-  query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    slug?: BooleanQueryValue;
-  };
-  url: '/users/users/{relatableUserId}';
-};
-
-export type GetUserErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type GetUserError = GetUserErrors[keyof GetUserErrors];
-
-export type GetUserResponses = {
-  /**
-   * Base user schema with essential fields for identification and display.
-   */
-  200: UserBase & {
-    lastSeenAt: string | null;
-  };
-};
-
-export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
-
 export type GetNotificationsData = {
   body?: never;
   path?: never;
@@ -4149,6 +4031,124 @@ export type CreatePushSubscriptionResponses = {
 };
 
 export type CreatePushSubscriptionResponse = CreatePushSubscriptionResponses[keyof CreatePushSubscriptionResponses];
+
+export type GetUsersData = {
+  body?: never;
+  path?: never;
+  query?: {
+    q?: string;
+    sort?: 'id' | 'name' | 'email' | 'role' | 'createdAt' | 'lastSeenAt';
+    order?: 'asc' | 'desc';
+    offset?: string;
+    limit?: string;
+    seqCursor?: string;
+    role?: 'admin';
+  };
+  url: '/users/users';
+};
+
+export type GetUsersErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
+
+export type GetUsersResponses = {
+  /**
+   * Users
+   */
+  200: {
+    /**
+     * Base user schema with essential fields for identification and display.
+     */
+    items: Array<
+      UserBase & {
+        lastSeenAt: string | null;
+        role?: 'admin' | null;
+      }
+    >;
+    total: number;
+  };
+};
+
+export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
+
+export type GetUserData = {
+  body?: never;
+  path: {
+    relatableUserId: string;
+  };
+  query?: {
+    /**
+     * Boolean query value accepted as a boolean or its lowercase string representation.
+     */
+    slug?: BooleanQueryValue;
+  };
+  url: '/users/users/{relatableUserId}';
+};
+
+export type GetUserErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetUserError = GetUserErrors[keyof GetUserErrors];
+
+export type GetUserResponses = {
+  /**
+   * Base user schema with essential fields for identification and display.
+   */
+  200: UserBase & {
+    lastSeenAt: string | null;
+  };
+};
+
+export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
 
 export type GetPublicProjectData = {
   body?: never;

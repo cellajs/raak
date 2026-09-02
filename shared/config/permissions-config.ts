@@ -1,16 +1,15 @@
 import { appConfig } from '../src/config-builder/app-config.ts';
 import { configurePermissions } from '../src/permissions/policy-matrix.ts';
 
-/**
- * Policy matrix for each entity type: CRUD permissions per role within each channel.
- * See `README.md` in this directory for the elevation vs. self row model and the entity
- * onboarding checklist.
- */
+// Access policies per entity type: `1` = allowed, `0`/omitted = denied. Elevation vs. self rows,
+// product home rows, publicRead and row conditions are all explained in cella/PERMISSIONS.md.
+
 export const { policyMatrix, publicReadGrants } = configurePermissions(
   appConfig.entityTypes,
   ({ entityType, channels, publicRead }) => {
     switch (entityType) {
       case 'organization':
+        // self (this organization): create is inert here: org creation is gated by tenant quota, not this policy
         channels.organization.admin({ read: 1, update: 1, delete: 1 });
         channels.organization.member({ read: 1, update: 0, delete: 0 });
         break;

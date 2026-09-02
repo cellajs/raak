@@ -465,8 +465,8 @@ export const zTask = z.object({
   checkboxCount: z.int().gte(-2147483648).lte(2147483647),
   checkedCount: z.int().gte(-2147483648).lte(2147483647),
   attachments: z.array(z.uuid()),
-  organizationId: z.uuid(),
   projectId: z.uuid(),
+  organizationId: z.uuid(),
   labels: z.array(
     z.object({
       id: z.string(),
@@ -731,8 +731,8 @@ export const zLabel = z.object({
   icon: z.string().max(255).nullable(),
   organizationTracked: z.boolean(),
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327).nullable(),
-  organizationId: z.uuid(),
   projectId: z.uuid(),
+  organizationId: z.uuid(),
   stx: zStxBase,
   usedCount: z.int().gte(0).optional(),
 });
@@ -1485,51 +1485,6 @@ export const zGetPublicCountsResponse = z.object({
   attachment: z.number(),
 });
 
-export const zGetUsersQuery = z.object({
-  q: z.string().max(255).optional(),
-  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().regex(/^\d+$/).optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
-  seqCursor: z
-    .string()
-    .regex(/^\d+,\d+$/)
-    .optional(),
-  role: z.enum(['admin']).optional(),
-});
-
-/**
- * Users
- */
-export const zGetUsersResponse = z.object({
-  items: z.array(
-    zUserBase.and(
-      z.object({
-        lastSeenAt: z.string().nullable(),
-        role: z.enum(['admin']).nullish(),
-      }),
-    ),
-  ),
-  total: z.number(),
-});
-
-export const zGetUserPath = z.object({
-  relatableUserId: z.string().max(50),
-});
-
-export const zGetUserQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
-});
-
-/**
- * Base user schema with essential fields for identification and display.
- */
-export const zGetUserResponse = zUserBase.and(
-  z.object({
-    lastSeenAt: z.string().nullable(),
-  }),
-);
-
 export const zGetNotificationsQuery = z.object({
   unread: z.enum(['true', 'false']).optional(),
   limit: z.int().gte(1).lte(100).optional().default(30),
@@ -1635,6 +1590,51 @@ export const zCreatePushSubscriptionResponse = z.object({
   id: z.string(),
   endpoint: z.string(),
 });
+
+export const zGetUsersQuery = z.object({
+  q: z.string().max(255).optional(),
+  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
+  role: z.enum(['admin']).optional(),
+});
+
+/**
+ * Users
+ */
+export const zGetUsersResponse = z.object({
+  items: z.array(
+    zUserBase.and(
+      z.object({
+        lastSeenAt: z.string().nullable(),
+        role: z.enum(['admin']).nullish(),
+      }),
+    ),
+  ),
+  total: z.number(),
+});
+
+export const zGetUserPath = z.object({
+  relatableUserId: z.string().max(50),
+});
+
+export const zGetUserQuery = z.object({
+  slug: zBooleanQueryValue.optional(),
+});
+
+/**
+ * Base user schema with essential fields for identification and display.
+ */
+export const zGetUserResponse = zUserBase.and(
+  z.object({
+    lastSeenAt: z.string().nullable(),
+  }),
+);
 
 export const zGetPublicProjectPath = z.object({
   id: z.string().max(50),

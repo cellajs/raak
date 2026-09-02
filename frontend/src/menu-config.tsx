@@ -8,9 +8,9 @@ import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import type { MenuSectionOptions } from '~/modules/navigation/menu-sheet/section';
 import { CreateOrganizationForm } from '~/modules/organization/create-organization-form';
-import { findOrganizationByIdOrSlug } from '~/modules/organization/query';
 import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
 import { getRouter } from '~/routes/-router-instance';
+import { getCreatedChannelRoute } from '~/utils/channel-route';
 
 function createOrganizationAction(triggerRef: RefObject<HTMLButtonElement | null>) {
   const callback = (args: CallbackArgs<Organization>) => {
@@ -36,14 +36,8 @@ function createOrganizationAction(triggerRef: RefObject<HTMLButtonElement | null
 }
 
 const createWorkspaceAction = (triggerRef: RefObject<HTMLButtonElement | null>) => {
-  const callback = ({ slug, organizationId, tenantId }: Workspace) => {
-    // Find organization from react-query cache to get slug
-    const organization = findOrganizationByIdOrSlug(organizationId, tenantId);
-
-    getRouter().navigate({
-      to: '/$tenantId/$organizationSlug/workspace/$slug',
-      params: { slug, organizationSlug: organization?.slug ?? organizationId, tenantId },
-    });
+  const callback = (workspace: Workspace) => {
+    getRouter().navigate(getCreatedChannelRoute('workspace', workspace));
   };
 
   return useDialoger.getState().create(<CreateWorkspaceForm dialog callback={callback} />, {

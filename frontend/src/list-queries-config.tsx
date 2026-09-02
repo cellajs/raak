@@ -9,7 +9,12 @@ import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import type { BuildEntitySyncQueriesParams, ChannelListQueryMap, EntitySyncQueryOptions } from '~/query/types';
 
 /**
- * Maps channel entity types to their list query options (used for menu generation).
+ * Maps channel entity types to their list query options, for menu generation.
+ *
+ * Each factory is wrapped in an arrow function so the (ESM live) binding is read at call time. A
+ * direct reference throws "Cannot access X before initialization" when this module is evaluated
+ * mid-cycle, for example during Vite HMR before the entity query module has initialized. See the
+ * circular import chain via `~/query/realtime`.
  */
 export const channelListQueriesByType = {
   organization: (params) => organizationsListQueryOptions(params),
@@ -17,7 +22,7 @@ export const channelListQueriesByType = {
   project: (params) => projectsListQueryOptions(params),
 } satisfies ChannelListQueryMap;
 
-/** Returns query options to sync for a given entity. React Query handles staleness. */
+/** Pure mapping: React Query owns staleness. */
 export const buildEntitySyncQueries = ({
   targetEntityId,
   targetEntityType,

@@ -1,5 +1,6 @@
 import { getTableName } from 'drizzle-orm';
 import type { AnyPgTable, PgColumn } from 'drizzle-orm/pg-core';
+import type { ResourceType } from 'shared';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
@@ -29,15 +30,15 @@ export const entityTables = {
   label: labelsTable,
 } as const satisfies Record<string, ResolvableTable>;
 
+/** Resource-to-table mapping. */
 export const resourceTables = {
   request: requestsTable,
   membership: membershipsTable,
   inactive_membership: inactiveMembershipsTable,
   tenant: tenantsTable,
   system_role: systemRolesTable,
-} as const satisfies Record<string, TableWithId>;
+} as const satisfies Record<ResourceType, TableWithId>;
 
-// Derived types from the table registries above
 export type EntityType = keyof typeof entityTables;
 export type EntityModel<T extends EntityType> = (typeof entityTables)[T]['$inferSelect'];
 
@@ -45,7 +46,6 @@ type AllTrackedTables = typeof entityTables & typeof resourceTables;
 export type TrackedType = keyof AllTrackedTables;
 export type TrackedModel<T extends TrackedType> = AllTrackedTables[T]['$inferSelect'];
 
-/** Type-safe entity table lookup by entity type key. */
 export function getEntityTable<T extends keyof typeof entityTables>(entityType: T): (typeof entityTables)[T] {
   return entityTables[entityType];
 }

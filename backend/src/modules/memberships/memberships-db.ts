@@ -12,20 +12,16 @@ import { workspacesTable } from '#/modules/workspace/workspace-db';
 const roleEnum = roles.all;
 
 /**
- * Sub-context relation columns (below `organization`) shared with inactive-memberships,
- * so both membership tables stay structurally identical. Fork-owned: cella ships none;
- * forks add e.g. `workspaceId`/`projectId` here (with their foreign keys). Returns fresh
- * column builders on each call so the two tables don't share builder instances.
+ * Sub-context relation columns (below `organization`) shared with inactive-memberships, so both tables stay structurally
+ * identical. App-owned: cella ships none, apps add e.g. `workspaceId`/`projectId` here with their foreign keys. Returns
+ * fresh column builders per call so the two tables never share builder instances.
  */
 export const membershipChannelColumns = () => ({
   workspaceId: uuid().references(() => workspacesTable.id, { onDelete: 'cascade' }),
   projectId: uuid().references(() => projectsTable.id, { onDelete: 'cascade' }),
 });
 
-/**
- * Memberships table to track active memberships of users in organizations and other channel entities.
- * Each membership belongs to exactly one tenant (RLS isolation boundary).
- */
+/** Active memberships of users in organizations and other channel entities. Each belongs to exactly one tenant (RLS isolation boundary). */
 export const membershipsTable = snakeCase.table(
   'memberships',
   {

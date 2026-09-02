@@ -90,8 +90,8 @@
               "itemType": "string",
               "format": "uuid"
             },
-            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "labels": {
               "type": "array",
               "required": true,
@@ -415,8 +415,8 @@
                     "itemType": "string",
                     "format": "uuid"
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "labels": {
                     "type": "array",
                     "required": true,
@@ -1048,8 +1048,8 @@
                     "itemType": "string",
                     "format": "uuid"
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "labels": {
                     "type": "array",
                     "required": true,
@@ -1503,8 +1503,8 @@
                     "itemType": "string",
                     "format": "uuid"
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "labels": {
                     "type": "array",
                     "required": true,
@@ -1912,8 +1912,8 @@
                     "itemType": "string",
                     "format": "uuid"
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "labels": {
                     "type": "array",
                     "required": true,
@@ -2544,8 +2544,8 @@
               "itemType": "string",
               "format": "uuid"
             },
-            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "labels": {
               "type": "array",
               "required": true,
@@ -2865,8 +2865,8 @@
               "itemType": "string",
               "format": "uuid"
             },
-            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "labels": {
               "type": "array",
               "required": true,

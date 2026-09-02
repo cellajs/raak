@@ -79,8 +79,8 @@
                     "minimum": -140737488355328,
                     "maximum": 140737488355327
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "stx": {
                     "type": "object",
                     "required": true,
@@ -329,8 +329,8 @@
                     "minimum": -140737488355328,
                     "maximum": 140737488355327
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "stx": {
                     "type": "object",
                     "required": true,
@@ -514,8 +514,8 @@
                     "minimum": -140737488355328,
                     "maximum": 140737488355327
                   },
-                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "projectId": { "type": "string", "required": true, "format": "uuid" },
+                  "organizationId": { "type": "string", "required": true, "format": "uuid" },
                   "stx": {
                     "type": "object",
                     "required": true,
@@ -909,8 +909,8 @@
               "minimum": -140737488355328,
               "maximum": 140737488355327
             },
-            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
               "type": "object",
               "required": true,
@@ -1097,8 +1097,8 @@
               "minimum": -140737488355328,
               "maximum": 140737488355327
             },
-            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
+            "organizationId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
               "type": "object",
               "required": true,

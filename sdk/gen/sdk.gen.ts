@@ -2571,85 +2571,6 @@ export const getPublicCounts = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Get list of users
- *
- * Returns a list of users.
- *
- * **GET /users/users** ·· [getUsers](https://www.raak.dev/docs/operations?operationTag=users#tag/users/GET/users/users) ·· [getUsers](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/users/users) ·· _users_cella_
- *
- * @param {getUsersData} options
- * @param {string=} options.query.q - `string` (optional)
- * @param {enum=} options.query.sort - `enum` (optional)
- * @param {enum=} options.query.order - `enum` (optional)
- * @param {string=} options.query.offset - `string` (optional)
- * @param {string=} options.query.limit - `string` (optional)
- * @param {string=} options.query.seqcursor - `string` (optional)
- * @param {enum=} options.query.role - `enum` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getUsers = <ThrowOnError extends boolean = true>(
-  options?: Options<GetUsersData, ThrowOnError>,
-): RequestResult<GetUsersResponses, GetUsersErrors, ThrowOnError, 'data'> =>
-  (options?.client ?? client).get<GetUsersResponses, GetUsersErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: z.never().optional(),
-          query: zGetUsersQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetUsersResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v2',
-        type: 'apiKey',
-      },
-    ],
-    url: '/users/users',
-    ...options,
-  });
-
-/**
- * Get user
- *
- * Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.
- *
- * **GET /users/users/{relatableUserId}** ·· [getUser](https://www.raak.dev/docs/operations?operationTag=users#tag/users/GET/users/users/{relatableUserId}) ·· [getUser](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/users/users/{relatableUserId}) ·· _users_cella_
- *
- * @param {getUserData} options
- * @param {string} options.path.relatableuserid - `string`
- * @param {any=} options.query.slug - `any` (optional)
- * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
- */
-export const getUser = <ThrowOnError extends boolean = true>(
-  options: Options<GetUserData, ThrowOnError>,
-): RequestResult<GetUserResponses, GetUserErrors, ThrowOnError, 'data'> =>
-  (options.client ?? client).get<GetUserResponses, GetUserErrors, ThrowOnError, 'data'>({
-    requestValidator: async (data) =>
-      await z
-        .object({
-          body: z.never().optional(),
-          path: zGetUserPath,
-          query: zGetUserQuery.optional(),
-        })
-        .parseAsync(data),
-    responseValidator: async (data) => await zGetUserResponse.parseAsync(data),
-    responseStyle: 'data',
-    security: [
-      {
-        in: 'cookie',
-        name: 'raak-development-session-v2',
-        type: 'apiKey',
-      },
-    ],
-    url: '/users/users/{relatableUserId}',
-    ...options,
-  });
-
-/**
  * List notifications
  *
  * Returns the current user notification inbox, newest first, with the unread count. Ambient posts are not included: those are covered by unseen counts. Rows older than the retention window are removed with their partition.
@@ -2961,6 +2882,85 @@ export const createPushSubscription = <ThrowOnError extends boolean = true>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get list of users
+ *
+ * Returns a list of users.
+ *
+ * **GET /users/users** ·· [getUsers](https://www.raak.dev/docs/operations?operationTag=users#tag/users/GET/users/users) ·· [getUsers](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/users/users) ·· _users_cella_
+ *
+ * @param {getUsersData} options
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {enum=} options.query.sort - `enum` (optional)
+ * @param {enum=} options.query.order - `enum` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @param {string=} options.query.seqcursor - `string` (optional)
+ * @param {enum=} options.query.role - `enum` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getUsers = <ThrowOnError extends boolean = true>(
+  options?: Options<GetUsersData, ThrowOnError>,
+): RequestResult<GetUsersResponses, GetUsersErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetUsersResponses, GetUsersErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: zGetUsersQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetUsersResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/users/users',
+    ...options,
+  });
+
+/**
+ * Get user
+ *
+ * Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.
+ *
+ * **GET /users/users/{relatableUserId}** ·· [getUser](https://www.raak.dev/docs/operations?operationTag=users#tag/users/GET/users/users/{relatableUserId}) ·· [getUser](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/users/users/{relatableUserId}) ·· _users_cella_
+ *
+ * @param {getUserData} options
+ * @param {string} options.path.relatableuserid - `string`
+ * @param {any=} options.query.slug - `any` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getUser = <ThrowOnError extends boolean = true>(
+  options: Options<GetUserData, ThrowOnError>,
+): RequestResult<GetUserResponses, GetUserErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetUserResponses, GetUserErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetUserPath,
+          query: zGetUserQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetUserResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/users/users/{relatableUserId}',
+    ...options,
   });
 
 /**

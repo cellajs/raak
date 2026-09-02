@@ -63,7 +63,7 @@ const taskRoutes = {
     method: 'get',
     path: '/',
     xGuard: [authGuard, tenantGuard, orgGuard],
-    // Sync-driven read backpressure on the delta path (template pattern for fork product lists)
+    // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
     tags: ['tasks', 'app', 'product'],
     summary: 'Get list of tasks',

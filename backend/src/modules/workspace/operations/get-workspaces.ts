@@ -1,3 +1,4 @@
+import type { EntityRole } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
@@ -10,7 +11,7 @@ interface GetWorkspacesInput {
   offset: number;
   limit: number;
   organizationId?: string;
-  role?: 'admin' | 'member' | 'guest';
+  role?: EntityRole;
   excludeArchived?: boolean;
   include: string[];
 }
