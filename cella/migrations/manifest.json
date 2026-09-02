@@ -405,7 +405,7 @@
     "pnpm check",
     "pnpm test"
    ],
-   "summary": "Settings-slot resolution moves into useChannelSettingsSections (grants, context-role pairs, overrides, stored toolsConfig); ChannelSettingsPage is a presentation-only map and a ChannelSettingsSheet reference consumer ships upstream. channelSettingsTools factory removed: spread generalToolBase/detailsToolBase/tabsToolBase/dangerToolBase(channelType, resource) and render full cards (DeleteToolCard exported; general now requires 'update'). getTools applies the section default order 50 (getSlotDescriptors stays raw for tabs); getChannelSettingsTools + ChannelSettingsToolFor removed. Surface trims: SlotToolsConfig.settings key dropped (no reader; stored config = order + hidden), PlacementOverride narrowed to hidden/order, heldContextRoles loses its unused entity-less overload; prefer requires over visibleTo (grants inherit down the ancestor chain). Backend mergeJsonbShallow util replaces inlined jsonb || merge fragments. Supersedes the channelSettingsTools guidance in 20260730T0858 step 5. No DB change, no cache bump. Arrangement UI pivots to tabs: ToolsArrangementCard deleted, TabsArrangementCard (flat data grid, row drag + visibility switches, writes toolsConfig['<channelType>.tabs']) demoed on organization settings via getNavTabCandidates (new ungated export from tab-nav); organization settings navTab now locked. toolsConfig is UI visibility only, never authorization \u2014 enforcement belongs to permissions/quotas."
+   "summary": "Settings-slot resolution moves into useChannelSettingsSections (grants, context-role pairs, overrides, stored toolsConfig); ChannelSettingsPage is a presentation-only map and a ChannelSettingsSheet reference consumer ships upstream. channelSettingsTools factory removed: spread generalToolBase/detailsToolBase/tabsToolBase/dangerToolBase(channelType, resource) and render full cards (DeleteToolCard exported; general now requires 'update'). getTools applies the section default order 50 (getSlotDescriptors stays raw for tabs); getChannelSettingsTools + ChannelSettingsToolFor removed. Surface trims: SlotToolsConfig.settings key dropped (no reader; stored config = order + hidden), PlacementOverride narrowed to hidden/order, heldContextRoles loses its unused entity-less overload; prefer requires over visibleTo (grants inherit down the ancestor chain). Backend mergeJsonbShallow util replaces inlined jsonb || merge fragments. Supersedes the channelSettingsTools guidance in 20260730T0858 step 5. No DB change, no cache bump. Arrangement UI pivots to tabs: ToolsArrangementCard deleted, TabsArrangementCard (flat data grid, row drag + visibility switches, writes toolsConfig['<channelType>.tabs']) demoed on organization settings via getNavTabCandidates (new ungated export from tab-nav); organization settings navTab now locked. toolsConfig is UI visibility only, never authorization — enforcement belongs to permissions/quotas."
   },
   {
    "id": "20260811T0905-ts-import-extensions",
@@ -495,7 +495,7 @@
     "pnpm sdk",
     "pnpm check"
    ],
-   "summary": "The toolsConfig jsonb column (sparse, NOT NULL DEFAULT '{}') moves from organizations into the shared channelColumns() factory; mockChannelColumns mirrors it. Additive DB change: every fork channel table gains tools_config on the next pnpm generate (dormant where unused; no backfill). CRITICAL: apps that hand-copied the column per 20260730T0858 step 5 must DELETE their local declaration \u2014 a leftover explicit key after the spread silently wins with no TS error. Supersedes the hand-copy instruction in 20260730T0858."
+   "summary": "The toolsConfig jsonb column (sparse, NOT NULL DEFAULT '{}') moves from organizations into the shared channelColumns() factory; mockChannelColumns mirrors it. Additive DB change: every fork channel table gains tools_config on the next pnpm generate (dormant where unused; no backfill). CRITICAL: apps that hand-copied the column per 20260730T0858 step 5 must DELETE their local declaration — a leftover explicit key after the spread silently wins with no TS error. Supersedes the hand-copy instruction in 20260730T0858."
   },
   {
    "id": "20260817T1447-remove-filter-tab-ids",
@@ -627,6 +627,25 @@
     "pnpm check"
    ],
    "summary": "New push module: push_subscriptions table (unique-endpoint upsert, grants only, no CDC), /push subscribe/unsubscribe/VAPID routes, sender delivering {t:'notif', activityId, channelId, type} to offline subscribers of fresh notification rows (online users subtracted via their SSE user channel; 404/410 prunes, 429 backs off). Settings card gains a per-device toggle; SW gains push/notificationclick/pushsubscriptionchange and loses the periodicsync badge path. Double-gated: has.push config flag AND VAPID_* env keys. Apps run pnpm generate, set keys + flag to enable, and verify on desktop Chrome plus an installed iOS PWA."
+  },
+  {
+   "id": "20260902T0939-role-vocabulary-from-hierarchy",
+   "version": "next",
+   "title": "Role vocabulary derived from the hierarchy",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend",
+    "frontend/src",
+    "shared/src"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check"
+   ],
+   "summary": "hierarchy.rootChannelType, getLeastPrivilegedRole and getMostPrivilegedRole replace every 'member' literal in cella tests, stories, email previews, membership column defaults and the invite default role. Apps with another vocabulary drop their `fork: role vocabulary` markers and take upstream."
   }
  ]
 }
