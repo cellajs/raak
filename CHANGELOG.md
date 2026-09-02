@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.11](https://github.com/cellajs/raak/compare/0.1.10...0.1.11) (2026-09-02)
+
+
+### 🧹 Chores
+
+* sync upstream cella ([#132](https://github.com/cellajs/raak/issues/132)) ([87aa75f](https://github.com/cellajs/raak/commit/87aa75f9515165a51685c6641227ff4a953900d8))
+* sync upstream cella ([#133](https://github.com/cellajs/raak/issues/133)) ([f128aca](https://github.com/cellajs/raak/commit/f128acae47b189f0be070bb12b82ce757bf14b16))
+* sync upstream cella v0.9.2 (f84a4560) ([#128](https://github.com/cellajs/raak/issues/128)) ([35ed54a](https://github.com/cellajs/raak/commit/35ed54a24638d839ff2ce79a1c89dacda8259d5a))
+* sync upstream cella v0.9.8 (33ed326b) ([#130](https://github.com/cellajs/raak/issues/130)) ([8307022](https://github.com/cellajs/raak/commit/83070222ef578862c1e9092cdef9fb16bcf42928))
+
 ## [0.1.10](https://github.com/cellajs/raak/compare/0.1.9...0.1.10) (2026-08-14)
 
 
