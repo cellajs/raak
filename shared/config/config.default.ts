@@ -285,6 +285,12 @@ export const config = {
    */
   attachmentUploadTargets: [] as const,
 
+  /**
+   * Product types with per-member stats in the members table (`include=counts` on GET /members):
+   * a count and a last-activity stamp per type; the first is the "last posted" sort key.
+   */
+  memberStatProductTypes: ['attachment'] as const,
+
   /** Uppy upload widget default restrictions */
   uppy: {
     defaultRestrictions: {

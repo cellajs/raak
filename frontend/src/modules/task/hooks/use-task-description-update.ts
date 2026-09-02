@@ -15,7 +15,8 @@ export const useTaskDescriptionUpdate = (task: Task) => {
   return async (description: string, collaborative: boolean) => {
     if (collaborative) {
       // Patch cache-derived fields until the relay persists authoritative values.
-      const derived = await deriveDescriptionProps(description);
+      // attachmentCount is presentation-only (task.attachments is the derived id list), keep it off the cached row.
+      const { attachmentCount: _attachmentCount, ...derived } = await deriveDescriptionProps(description);
       patchDescriptionCaches(
         'task',
         task.id,

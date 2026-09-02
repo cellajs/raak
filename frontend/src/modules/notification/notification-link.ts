@@ -1,13 +1,13 @@
 import type { ChannelEntityType } from 'shared';
 import type { EntityRoute } from '~/modules/navigation/types';
-import { channelRouteConfig } from '~/routes-config';
+import { type ChannelRouteEntry, channelRouteConfig } from '~/routes-config';
 
 interface LinkTarget {
   channelId: string;
   channelType: string;
   organizationId: string;
   tenantId: string;
-  // fork: task notifications open the task sheet on the project board.
+  /** With `subjectId`, lets the channel's `notificationSearch` open the subject itself (a sheet, a scroll target). */
   entityType?: string;
   subjectId?: string;
 }
@@ -26,7 +26,9 @@ export function getNotificationRoute(notification: LinkTarget): EntityRoute | nu
   };
   params[config.paramName] = notification.channelId;
 
-  // fork: the project board reads `taskSheetId` and opens that task's sheet on top of the board.
-  const search = notification.entityType === 'task' ? { taskSheetId: notification.subjectId } : {};
+  const entry: ChannelRouteEntry = config;
+  const { entityType, subjectId } = notification;
+  const search =
+    entry.notificationSearch && entityType && subjectId ? entry.notificationSearch({ entityType, subjectId }) : {};
   return { to: config.path, params, search };
 }

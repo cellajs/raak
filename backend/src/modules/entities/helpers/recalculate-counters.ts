@@ -238,7 +238,6 @@ export const recalculateCounters = async (db: DbOrTx) => {
 
     // Driven from the embedded table, not the reference set: a row whose last host dropped it must be
     // written back to 0, and GROUP BY alone would leave its previous count standing.
-    // fork: host id arrays may be uuid[] (raak tasks.attachments), so the join compares as text on both sides.
     await upsertChannelCounters(
       db,
       `
@@ -249,6 +248,7 @@ export const recalculateCounters = async (db: DbOrTx) => {
         FROM ${src} h, unnest(h.${ref.hostColumn}) AS target_id
         WHERE TRUE${livePredicate(hostType, 'h')}${publishedPredicate(hostType, 'h')}
         GROUP BY target_id
+      -- Host id arrays may be text[] or uuid[], so both sides compare as text.
       ) u ON u.target_id::text = e.id::text
     `,
     );
