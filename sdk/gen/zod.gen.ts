@@ -2527,7 +2527,7 @@ export const zGetAttachmentsQuery = z.object({
     .string()
     .regex(/^\d+,\d+$/)
     .optional(),
-  projectId: z.string().max(50).optional(),
+  channelId: z.string().max(50).optional(),
 });
 
 /**
@@ -2556,7 +2556,6 @@ export const zCreateAttachmentsBody = z
       publicBucket: z.boolean().optional(),
       groupId: z.uuid().nullish(),
       convertedContentType: z.string().max(255).nullish(),
-      publicAt: z.string().nullish(),
       projectId: z.string().max(50),
       stx: zStxBase,
     }),
@@ -2628,7 +2627,6 @@ export const zGetAttachmentResponse = zAttachment;
 export const zUpdateAttachmentBody = z.object({
   ops: z.object({
     name: z.string().max(255).optional(),
-    publicAt: z.string().nullish(),
   }),
   stx: zStxBase,
 });

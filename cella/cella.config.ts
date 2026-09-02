@@ -33,22 +33,13 @@ export default defineConfig({
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
       'CLAUDE.md',
-      // Deleted in the owned-embedding flip (PR #94): raak has no non-task upload path, so the
-      // helper has no callers here; upstream keeps evolving it for its org-scoped file panel.
-      'frontend/src/modules/attachment/helpers/persist-attachments.ts',
     ],
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
       'backend/src/tables.ts',
-      // Attachment pins carry only the publicAt cascade and the projectId list/sync narrowing;
-      // the project placement itself lives in the placement seam below.
+      'backend/src/db/channel-tables.ts',
+      // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.
       'backend/src/modules/attachment/helpers/attachment-placement.ts',
-      'backend/src/modules/attachment/attachment-schema.ts',
-      'backend/src/modules/attachment/operations/get-attachments.ts',
-      'backend/scripts/seeds/20-attachment.seed.ts',
-      'frontend/src/modules/attachment/query.ts',
-      'frontend/src/modules/attachment/helpers/parse-uploaded.ts',
-      'frontend/src/modules/attachment/tests/parse-uploaded.test.ts',
       'backend/src/modules.ts',
       'bench/src/seeds/ids.ts',
       'backend/src/routes.ts',

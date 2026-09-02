@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query';
 // biome-ignore lint/style/noRestrictedImports: colocated mutation hook wrapping createAttachments with task-specific cache update logic.
 import { type Attachment, type CreateAttachmentsData, type CreateAttachmentsResponse, createAttachments } from 'sdk';
 import type { ApiError } from '~/lib/api';
-import { getProjectPublicAt } from '~/modules/project/query';
 import { createStxForCreate } from '~/query/offline/stx-utils';
 
 /** Provides upload attachments state and actions. */
@@ -20,10 +19,9 @@ export const useUploadAttachments = () => {
     ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) =>
     (attachments: Attachment[]) => {
       // The panel parses uploads org-scoped only; add raak's required projectId before
-      // persisting (task linkage lives in the description's attachmentId block props).
-      // Stamp publicAt from the parent project so the attachment inherits its publicity.
-      const publicAt = getProjectPublicAt(projectId, tenantId);
-      const createdAttachments = attachments.map((att) => ({ ...att, projectId, publicAt }));
+      // persisting (task linkage lives in the description's attachmentId block props). The
+      // attachment placement seam stamps `publicAt` from the project server-side.
+      const createdAttachments = attachments.map((att) => ({ ...att, projectId }));
 
       const stx = createStxForCreate();
       // Body is array with stx embedded in each item

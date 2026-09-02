@@ -5970,7 +5970,7 @@ export type GetAttachmentsData = {
     offset?: string;
     limit?: string;
     seqCursor?: string;
-    projectId?: string;
+    channelId?: string;
   };
   url: '/{tenantId}/{organizationId}/attachments';
 };
@@ -6042,7 +6042,6 @@ export type CreateAttachmentsData = {
      * MIME type of the server-converted variant; null when none.
      */
     convertedContentType?: string | null;
-    publicAt?: string | null;
     projectId: string;
     stx: StxBase;
   }>;
@@ -6242,7 +6241,6 @@ export type UpdateAttachmentData = {
   body: {
     ops: {
       name?: string;
-      publicAt?: string | null;
     };
     stx: StxBase;
   };

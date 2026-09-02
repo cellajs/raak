@@ -71,8 +71,6 @@ const attachmentCreateBodySchema = attachmentInsertSchema
     publicBucket: true,
     groupId: true,
     convertedContentType: true,
-    // fork: raak attachments inherit the host task's public-read flag at create time.
-    publicAt: true,
   })
   .extend({
     id: validUuidSchema,
@@ -87,8 +85,6 @@ export const attachmentContract = evolutionContract.product('attachment', {
   createItem: attachmentCreateBodySchema,
   updateOps: {
     name: z.string().max(maxLength.field),
-    // fork: public-read flag cascades from the host task.
-    publicAt: z.string().nullable(),
   },
 });
 
@@ -112,8 +108,9 @@ const attachmentSortKeys = attachmentSelectSchema.keyof().extract(['name', 'crea
 
 export const attachmentListQuerySchema = paginationQuerySchema.extend({
   sort: attachmentSortKeys.default('createdAt').optional(),
-  // fork: Raak attachment lists can be narrowed to a project.
-  projectId: validIdSchema.optional(),
+  // Placement seam: narrow to rows homed at one channel (resolved by `resolveAttachmentHomeScope`);
+  // omitted or the organization itself reads org-wide.
+  channelId: validIdSchema.optional(),
 });
 
 /** Selectable stored-file variants. Mirrors the frontend `BlobVariant`. */

@@ -37,11 +37,15 @@ function selectDefaultViewRows({ items }: { items: Attachment[] }) {
 export interface AttachmentsTableProps {
   channel: EnrichedChannel;
   isSheet?: boolean;
+  /** Override for special contexts; defaults to the caller's create permission on the channel. */
+  canUpload?: boolean;
 }
 
-// fork: attachments are created from task description media blocks (owned embedding), so this
-// table browses and manages only and carries no upload affordance or canUpload override.
-function AttachmentsTable({ channel, isSheet = false }: AttachmentsTableProps) {
+function AttachmentsTable({ channel, canUpload, isSheet = false }: AttachmentsTableProps) {
+  // Create has no row to resolve 'own' against, so only an unconditional grant shows upload, and
+  // only on channels the app declares as upload targets (`attachmentUploadTargets`).
+  const isUploadTarget = (appConfig.attachmentUploadTargets as readonly string[]).includes(channel.entityType);
+  const allowUpload = canUpload ?? (isUploadTarget && channel.can?.attachment?.create === true);
   const { t } = useTranslation();
   const { search, setSearch } = useSearchParams<AttachmentsRouteSearchParams>({ saveDataInSearch: !isSheet });
 
@@ -146,6 +150,7 @@ function AttachmentsTable({ channel, isSheet = false }: AttachmentsTableProps) {
         setColumns={setColumns}
         clearSelection={clearSelection}
         isSheet={isSheet}
+        canUpload={allowUpload}
         queryKey={isDefaultView ? canonicalOptions.queryKey : queryOptions.queryKey}
       />
       <DataTable<Attachment>

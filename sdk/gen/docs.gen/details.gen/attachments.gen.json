@@ -299,7 +299,7 @@
           "offset": { "type": "string", "required": false },
           "limit": { "type": "string", "required": false },
           "seqCursor": { "type": "string", "required": false },
-          "projectId": { "type": "string", "required": false, "maxLength": 50 }
+          "channelId": { "type": "string", "required": false, "maxLength": 50 }
         }
       }
     }
@@ -884,10 +884,6 @@
               "required": false,
               "description": "MIME type of the server-converted variant; null when none.",
               "maxLength": 255
-            },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": false
             },
             "projectId": { "type": "string", "required": true, "maxLength": 50 },
             "stx": {
@@ -1636,11 +1632,7 @@
             "type": "object",
             "required": true,
             "properties": {
-              "name": { "type": "string", "required": false, "maxLength": 255 },
-              "publicAt": {
-                "type": ["string", "null"],
-                "required": false
-              }
+              "name": { "type": "string", "required": false, "maxLength": 255 }
             }
           },
           "stx": {
