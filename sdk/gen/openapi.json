@@ -232,14 +232,14 @@
       "kind": "module"
     },
     {
-      "name": "organizations",
-      "description": "Endpoints for managing organizations, which are core channel entities and the highest ancestor\n    in the entity hierarchy. Organizations define access boundaries and are typically the primary scope for\n    permissions and resource management.",
+      "name": "notifications",
+      "description": "Per-recipient inbox for mentions and addressed activity, plus the daily/weekly\n    email digest. Product modules opt in by declaring a notifications source on their own\n    defineBackendModule call (who counts as a recipient is the only app-specific part); with no\n    source declared the whole module is dormant. Rows are partitioned by createdAt so retention is\n    automatic, and excluded from CDC because they are per-user state rather than synced content.",
       "parent": "cella",
       "kind": "module"
     },
     {
-      "name": "notifications",
-      "description": "Per-recipient inbox for mentions and addressed activity, plus the daily/weekly\n    email digest. Product modules opt in by declaring a notifications source on their own\n    defineBackendModule call (who counts as a recipient is the only app-specific part); with no\n    source declared the whole module is dormant. Rows are partitioned by createdAt so retention is\n    automatic, and excluded from CDC because they are per-user state rather than synced content.",
+      "name": "organizations",
+      "description": "Endpoints for managing organizations, which are core channel entities and the highest ancestor\n    in the entity hierarchy. Organizations define access boundaries and are typically the primary scope for\n    permissions and resource management.",
       "parent": "cella",
       "kind": "module"
     },
@@ -2208,11 +2208,11 @@
               "format": "uuid"
             }
           },
-          "organizationId": {
+          "projectId": {
             "type": "string",
             "format": "uuid"
           },
-          "projectId": {
+          "organizationId": {
             "type": "string",
             "format": "uuid"
           },
@@ -2329,8 +2329,8 @@
           "checkboxCount",
           "checkedCount",
           "attachments",
-          "organizationId",
           "projectId",
+          "organizationId",
           "labels",
           "primaryLabel",
           "assignedTo",
@@ -3448,11 +3448,11 @@
             "minimum": -140737488355328,
             "maximum": 140737488355327
           },
-          "organizationId": {
+          "projectId": {
             "type": "string",
             "format": "uuid"
           },
-          "projectId": {
+          "organizationId": {
             "type": "string",
             "format": "uuid"
           },
@@ -3483,8 +3483,8 @@
           "icon",
           "organizationTracked",
           "displayOrder",
-          "organizationId",
           "projectId",
+          "organizationId",
           "stx"
         ],
         "description": "A label used to categorize and filter tasks within a project or workspace.",
@@ -7977,364 +7977,6 @@
         }
       }
     },
-    "/users/users": {
-      "get": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "getUsers",
-        "tags": ["users", "cella"],
-        "summary": "Get list of users",
-        "description": "Returns a list of users.",
-        "x-guard": ["authGuard", "crossTenantGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 255
-            },
-            "required": false,
-            "name": "q",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["id", "name", "email", "role", "createdAt", "lastSeenAt"],
-              "default": "createdAt"
-            },
-            "required": false,
-            "name": "sort",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["asc", "desc"],
-              "default": "desc"
-            },
-            "required": false,
-            "name": "order",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
-            },
-            "required": false,
-            "name": "offset",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
-            },
-            "required": false,
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["admin"]
-            },
-            "required": false,
-            "name": "role",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Users",
-            "content": {
-              "application/json": {
-                "example": {
-                  "items": [
-                    {
-                      "id": "af54c332-26e9-48e2-9f9d-8ade4a445d7f",
-                      "entityType": "user",
-                      "name": "Elton Beahan",
-                      "firstName": "Elton",
-                      "lastName": "Beahan",
-                      "email": "elton.beahan@gmail.com",
-                      "slug": "eltonbeahan78",
-                      "description": null,
-                      "thumbnailUrl": null,
-                      "bannerUrl": null,
-                      "language": "en",
-                      "newsletter": false,
-                      "mfaRequired": false,
-                      "userFlags": {
-                        "finishedOnboarding": false
-                      },
-                      "createdAt": "2024-12-14T16:10:19.376Z",
-                      "updatedAt": "2024-12-14T16:10:19.376Z",
-                      "updatedBy": null,
-                      "lastStartedAt": "2024-12-14T16:10:19.376Z",
-                      "lastSignInAt": "2024-12-14T16:10:19.376Z",
-                      "lastSeenAt": "2024-12-14T16:10:19.376Z",
-                      "memberships": [
-                        {
-                          "id": "d33f6120-b967-4064-bbb8-8b24b6b50c11",
-                          "tenantId": "dbp099",
-                          "channelType": "organization",
-                          "channelId": "1008ac1a-ccec-476f-9baf-e65971876f04",
-                          "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
-                          "organizationId": "1008ac1a-ccec-476f-9baf-e65971876f04",
-                          "workspaceId": null,
-                          "projectId": null,
-                          "role": "member",
-                          "displayOrder": 70,
-                          "muted": false,
-                          "archived": false
-                        }
-                      ]
-                    },
-                    {
-                      "id": "c64d1a0d-9853-4aeb-8360-296b55c24f83",
-                      "entityType": "user",
-                      "name": "Moriah Adams",
-                      "firstName": "Moriah",
-                      "lastName": "Adams",
-                      "email": "moriah.adams@hotmail.com",
-                      "slug": "moriahadams",
-                      "description": null,
-                      "thumbnailUrl": null,
-                      "bannerUrl": null,
-                      "language": "en",
-                      "newsletter": true,
-                      "mfaRequired": false,
-                      "userFlags": {
-                        "finishedOnboarding": false
-                      },
-                      "createdAt": "2024-01-03T10:14:05.394Z",
-                      "updatedAt": "2024-01-03T10:14:05.394Z",
-                      "updatedBy": null,
-                      "lastStartedAt": "2024-01-03T10:14:05.394Z",
-                      "lastSignInAt": "2024-01-03T10:14:05.394Z",
-                      "lastSeenAt": "2024-01-03T10:14:05.394Z",
-                      "memberships": [
-                        {
-                          "id": "9e822f98-ecac-4acf-ab1f-e617c6f9a972",
-                          "tenantId": "6xgvt4",
-                          "channelType": "organization",
-                          "channelId": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
-                          "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
-                          "organizationId": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
-                          "workspaceId": null,
-                          "projectId": null,
-                          "role": "admin",
-                          "displayOrder": 41,
-                          "muted": false,
-                          "archived": false
-                        }
-                      ]
-                    }
-                  ],
-                  "total": 2
-                },
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "allOf": [
-                          {
-                            "$ref": "#/components/schemas/UserBase"
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "lastSeenAt": {
-                                "type": ["string", "null"]
-                              },
-                              "role": {
-                                "type": ["string", "null"],
-                                "enum": ["admin", null]
-                              }
-                            },
-                            "required": ["lastSeenAt"]
-                          }
-                        ],
-                        "description": "Base user schema with essential fields for identification and display.",
-                        "example": {
-                          "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
-                          "createdAt": "2024-01-28T04:41:50.387Z",
-                          "updatedAt": "2024-05-12T18:44:59.999Z",
-                          "name": "Roslyn Bayer",
-                          "description": null,
-                          "entityType": "user",
-                          "slug": "roslyn.bayer28",
-                          "thumbnailUrl": null,
-                          "bannerUrl": null,
-                          "email": "roslyn_bayer@hotmail.com"
-                        },
-                        "x-tags": ["base", "users", "cella"]
-                      }
-                    },
-                    "total": {
-                      "type": "number"
-                    }
-                  },
-                  "required": ["items", "total"]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
-    "/users/users/{relatableUserId}": {
-      "get": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "getUser",
-        "tags": ["users", "cella"],
-        "summary": "Get user",
-        "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
-        "x-guard": ["authGuard", "crossTenantGuard", "relatableGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "relatableUserId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
-            },
-            "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
-            "name": "slug",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User",
-            "content": {
-              "application/json": {
-                "example": {
-                  "id": "3c6f6c47-89c3-4946-870e-f4ee338ae389",
-                  "entityType": "user",
-                  "name": "Isai Senger",
-                  "firstName": "Isai",
-                  "lastName": "Senger",
-                  "email": "isai_senger@hotmail.com",
-                  "slug": "isaisenger90",
-                  "description": null,
-                  "thumbnailUrl": null,
-                  "bannerUrl": null,
-                  "language": "en",
-                  "newsletter": false,
-                  "mfaRequired": false,
-                  "userFlags": {
-                    "finishedOnboarding": false
-                  },
-                  "createdAt": "2024-06-15T02:53:22.776Z",
-                  "updatedAt": "2024-06-15T02:53:22.776Z",
-                  "updatedBy": null,
-                  "lastStartedAt": "2024-06-15T02:53:22.776Z",
-                  "lastSignInAt": "2024-06-15T02:53:22.776Z",
-                  "lastSeenAt": "2024-06-15T02:53:22.776Z"
-                },
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/UserBase"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "lastSeenAt": {
-                          "type": ["string", "null"]
-                        }
-                      },
-                      "required": ["lastSeenAt"]
-                    }
-                  ],
-                  "description": "Base user schema with essential fields for identification and display.",
-                  "example": {
-                    "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
-                    "createdAt": "2024-01-28T04:41:50.387Z",
-                    "updatedAt": "2024-05-12T18:44:59.999Z",
-                    "name": "Roslyn Bayer",
-                    "description": null,
-                    "entityType": "user",
-                    "slug": "roslyn.bayer28",
-                    "thumbnailUrl": null,
-                    "bannerUrl": null,
-                    "email": "roslyn_bayer@hotmail.com"
-                  },
-                  "x-tags": ["base", "users", "cella"]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
     "/notifications": {
       "get": {
         "security": [
@@ -8951,6 +8593,364 @@
                     }
                   },
                   "required": ["deleted"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/users/users": {
+      "get": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "getUsers",
+        "tags": ["users", "cella"],
+        "summary": "Get list of users",
+        "description": "Returns a list of users.",
+        "x-guard": ["authGuard", "crossTenantGuard"],
+        "x-rate-limiter": [],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["id", "name", "email", "role", "createdAt", "lastSeenAt"],
+              "default": "createdAt"
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "desc"
+            },
+            "required": false,
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+,\\d+$"
+            },
+            "required": false,
+            "name": "seqCursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["admin"]
+            },
+            "required": false,
+            "name": "role",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users",
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "id": "af54c332-26e9-48e2-9f9d-8ade4a445d7f",
+                      "entityType": "user",
+                      "name": "Elton Beahan",
+                      "firstName": "Elton",
+                      "lastName": "Beahan",
+                      "email": "elton.beahan@gmail.com",
+                      "slug": "eltonbeahan78",
+                      "description": null,
+                      "thumbnailUrl": null,
+                      "bannerUrl": null,
+                      "language": "en",
+                      "newsletter": false,
+                      "mfaRequired": false,
+                      "userFlags": {
+                        "finishedOnboarding": false
+                      },
+                      "createdAt": "2024-12-14T16:10:19.376Z",
+                      "updatedAt": "2024-12-14T16:10:19.376Z",
+                      "updatedBy": null,
+                      "lastStartedAt": "2024-12-14T16:10:19.376Z",
+                      "lastSignInAt": "2024-12-14T16:10:19.376Z",
+                      "lastSeenAt": "2024-12-14T16:10:19.376Z",
+                      "memberships": [
+                        {
+                          "id": "d33f6120-b967-4064-bbb8-8b24b6b50c11",
+                          "tenantId": "dbp099",
+                          "channelType": "organization",
+                          "channelId": "1008ac1a-ccec-476f-9baf-e65971876f04",
+                          "userId": "71f83013-c0d6-4ed3-833d-ccc90f1cb64d",
+                          "organizationId": "1008ac1a-ccec-476f-9baf-e65971876f04",
+                          "workspaceId": null,
+                          "projectId": null,
+                          "role": "member",
+                          "displayOrder": 70,
+                          "muted": false,
+                          "archived": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "c64d1a0d-9853-4aeb-8360-296b55c24f83",
+                      "entityType": "user",
+                      "name": "Moriah Adams",
+                      "firstName": "Moriah",
+                      "lastName": "Adams",
+                      "email": "moriah.adams@hotmail.com",
+                      "slug": "moriahadams",
+                      "description": null,
+                      "thumbnailUrl": null,
+                      "bannerUrl": null,
+                      "language": "en",
+                      "newsletter": true,
+                      "mfaRequired": false,
+                      "userFlags": {
+                        "finishedOnboarding": false
+                      },
+                      "createdAt": "2024-01-03T10:14:05.394Z",
+                      "updatedAt": "2024-01-03T10:14:05.394Z",
+                      "updatedBy": null,
+                      "lastStartedAt": "2024-01-03T10:14:05.394Z",
+                      "lastSignInAt": "2024-01-03T10:14:05.394Z",
+                      "lastSeenAt": "2024-01-03T10:14:05.394Z",
+                      "memberships": [
+                        {
+                          "id": "9e822f98-ecac-4acf-ab1f-e617c6f9a972",
+                          "tenantId": "6xgvt4",
+                          "channelType": "organization",
+                          "channelId": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
+                          "userId": "700617bb-ef60-4b47-8d4a-f7c5d64a3bdf",
+                          "organizationId": "0d125585-f24e-4042-ac17-1e8cdf2243e8",
+                          "workspaceId": null,
+                          "projectId": null,
+                          "role": "admin",
+                          "displayOrder": 41,
+                          "muted": false,
+                          "archived": false
+                        }
+                      ]
+                    }
+                  ],
+                  "total": 2
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/UserBase"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "lastSeenAt": {
+                                "type": ["string", "null"]
+                              },
+                              "role": {
+                                "type": ["string", "null"],
+                                "enum": ["admin", null]
+                              }
+                            },
+                            "required": ["lastSeenAt"]
+                          }
+                        ],
+                        "description": "Base user schema with essential fields for identification and display.",
+                        "example": {
+                          "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
+                          "createdAt": "2024-01-28T04:41:50.387Z",
+                          "updatedAt": "2024-05-12T18:44:59.999Z",
+                          "name": "Roslyn Bayer",
+                          "description": null,
+                          "entityType": "user",
+                          "slug": "roslyn.bayer28",
+                          "thumbnailUrl": null,
+                          "bannerUrl": null,
+                          "email": "roslyn_bayer@hotmail.com"
+                        },
+                        "x-tags": ["base", "users", "cella"]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["items", "total"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/users/users/{relatableUserId}": {
+      "get": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "getUser",
+        "tags": ["users", "cella"],
+        "summary": "Get user",
+        "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
+        "x-guard": ["authGuard", "crossTenantGuard", "relatableGuard"],
+        "x-rate-limiter": [],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "relatableUserId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/BooleanQueryValue"
+            },
+            "required": false,
+            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
+            "name": "slug",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "3c6f6c47-89c3-4946-870e-f4ee338ae389",
+                  "entityType": "user",
+                  "name": "Isai Senger",
+                  "firstName": "Isai",
+                  "lastName": "Senger",
+                  "email": "isai_senger@hotmail.com",
+                  "slug": "isaisenger90",
+                  "description": null,
+                  "thumbnailUrl": null,
+                  "bannerUrl": null,
+                  "language": "en",
+                  "newsletter": false,
+                  "mfaRequired": false,
+                  "userFlags": {
+                    "finishedOnboarding": false
+                  },
+                  "createdAt": "2024-06-15T02:53:22.776Z",
+                  "updatedAt": "2024-06-15T02:53:22.776Z",
+                  "updatedBy": null,
+                  "lastStartedAt": "2024-06-15T02:53:22.776Z",
+                  "lastSignInAt": "2024-06-15T02:53:22.776Z",
+                  "lastSeenAt": "2024-06-15T02:53:22.776Z"
+                },
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/UserBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "lastSeenAt": {
+                          "type": ["string", "null"]
+                        }
+                      },
+                      "required": ["lastSeenAt"]
+                    }
+                  ],
+                  "description": "Base user schema with essential fields for identification and display.",
+                  "example": {
+                    "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
+                    "createdAt": "2024-01-28T04:41:50.387Z",
+                    "updatedAt": "2024-05-12T18:44:59.999Z",
+                    "name": "Roslyn Bayer",
+                    "description": null,
+                    "entityType": "user",
+                    "slug": "roslyn.bayer28",
+                    "thumbnailUrl": null,
+                    "bannerUrl": null,
+                    "email": "roslyn_bayer@hotmail.com"
+                  },
+                  "x-tags": ["base", "users", "cella"]
                 }
               }
             }

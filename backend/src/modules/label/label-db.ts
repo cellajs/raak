@@ -1,21 +1,12 @@
 import { getColumns, sql } from 'drizzle-orm';
 import { toSnakeCase } from 'drizzle-orm/casing';
-import {
-  boolean,
-  doublePrecision,
-  foreignKey,
-  index,
-  snakeCase,
-  uniqueIndex,
-  uuid,
-  varchar,
-} from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, foreignKey, index, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import type { LabelMode } from 'shared/config/labels-config';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
+import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
 import { productColumns } from '#/db/utils/product-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
-import { projectsTable } from '#/modules/project/project-db';
 
 /**
  * Labels table is a lightweight product entity table.
@@ -34,10 +25,7 @@ export const labelsTable = snakeCase.table(
     icon: varchar({ length: maxLength.field }),
     organizationTracked: boolean().notNull().default(false),
     displayOrder: doublePrecision(),
-    organizationId: uuid().notNull(),
-    projectId: uuid()
-      .notNull()
-      .references(() => projectsTable.id, { onDelete: 'cascade' }),
+    ...channelRelationColumns('label'),
   },
   (table) => [
     // One live primary label per slug within a project; secondary/epic labels are exempt.
@@ -49,6 +37,7 @@ export const labelsTable = snakeCase.table(
     index('labels_tenant_id_index').on(table.tenantId),
     index('labels_created_by_index').on(table.createdBy),
     index('labels_updated_by_index').on(table.updatedBy),
+    ...channelRelationIndexes('labels', table, 'label'),
     foreignKey({
       columns: [table.tenantId, table.organizationId],
       foreignColumns: [organizationsTable.tenantId, organizationsTable.id],

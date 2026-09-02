@@ -1,4 +1,4 @@
-import type { ConfigMode, RequiredConfig, S3ConfigInput } from '../src/config-builder/types.ts';
+import type { ConfigMode, ProductEmbedding, RequiredConfig, S3ConfigInput } from '../src/config-builder/types.ts';
 import { nonEmpty } from '../src/config-builder/utils.ts';
 import { hierarchy } from './hierarchy-config.ts';
 import type { PrimaryLabelDefinition } from './labels-config.ts';
@@ -10,13 +10,13 @@ const defaultPrimaryLabels: PrimaryLabelDefinition[] = [
   { slug: 'bug', name: 'Bug', color: 'red', icon: 'bug' },
 ];
 
-// Re-export for external consumers
 export { hierarchy, roles } from './hierarchy-config.ts';
 
 export const config = {
   // Entity data model, derived from the hierarchy: the builder in hierarchy-config.ts is the
   // single declaration of the entity taxonomy.
 
+  /** All entity types in the app. */
   entityTypes: nonEmpty(hierarchy.allTypes),
 
   /** Channel entities with memberships. */
@@ -27,28 +27,35 @@ export const config = {
 
   /**
    * Product entity types tracked for seen/unseen counts.
-   * Unseen counts are grouped by the parent channel entity of each tracked type
-   * (e.g., tasks grouped by projectId). Badges appear on that parent channel in the menu.
+   * Unseen counts are grouped by the parent channel entity of each tracked type.
    */
   seenTrackedProductTypes: ['task'] as const,
+
+  /**
+   * Channels whose attachments table offers a direct upload, i.e. a home the create can write into.
+   * raak's attachments only come from task description media blocks (an owned embedding), so none.
+   */
+  attachmentUploadTargets: [] as const,
+
+  /**
+   * Product types with per-member stats in the members table (`include=counts` on GET /members):
+   * a count and a last-activity stamp per type; the first is the "last posted" sort key.
+   */
+  memberStatProductTypes: ['attachment'] as const,
 
   /** Maps entity types to their ID column names, derived from the hierarchy (`${type}Id`). */
   entityIdColumnKeys: hierarchy.idColumnKeys,
 
-  /** Available CRUD actions for permission checks */
   entityActions: ['create', 'read', 'update', 'delete'] as const,
 
-  /** Resource types that are not entities but have activities logged */
+  /** Not entities, but activities are logged for them. */
   resourceTypes: ['request', 'membership', 'inactive_membership', 'tenant', 'system_role'] as const,
 
   /**
-   * Entity embeddings: declares which entities are embedded as ID arrays inside
-   * other entities. Each entry maps an embedded entity to the host entity + column
-   * that references it via an ID array.
-   *
-   * Used for: ref-count recalculation, CDC soft-cascade suppression,
-   * SSE propagation hints, and client-side cache patching.
-   * Forks extend when adding new embedding relationships.
+   * Product embeddings: declares which product entities are embedded as ID arrays inside
+   * other product entities. Apps extend when adding new embedding relationships.
+   * `lifecycle: 'owned'` additionally lets CDC garbage-collect embedded rows that no live
+   * host references; the default 'shared' only strips references to dead rows.
    */
   productEmbeddings: [
     { embeddedProduct: 'label', hostProduct: 'task', hostColumn: 'labels' },
@@ -58,12 +65,7 @@ export const config = {
     // Owned lifecycle: task.attachments is derived from description media blocks;
     // CDC garbage-collects attachment rows no live task references.
     { embeddedProduct: 'attachment', hostProduct: 'task', hostColumn: 'attachments', lifecycle: 'owned' },
-  ] as readonly {
-    readonly embeddedProduct: (typeof hierarchy.productTypes)[number];
-    readonly hostProduct: (typeof hierarchy.productTypes)[number];
-    readonly hostColumn: string;
-    readonly lifecycle?: 'shared' | 'owned';
-  }[],
+  ] as readonly ProductEmbedding<(typeof hierarchy.productTypes)[number]>[],
 
   /**
    * User menu structure of channel entities with optional nested subentities.
@@ -74,10 +76,12 @@ export const config = {
     { entityType: 'workspace', subentityType: 'project' } as const,
   ],
 
-  /** Default restrictions for tenants (entity quotas and rate limits) */
   defaultRestrictions: {
     quotas: {
-      organization: 5,
+      // 1 tenant = 1 organization. Matches the hard structural cap (unique index on
+      // organizations.tenant_id); keep at 1 so the soft quota never advertises slots the
+      // 1:1 backstop will reject anyway. See create-organizations.ts.
+      organization: 1,
       user: 1000,
       attachment: 100,
     },
@@ -86,45 +90,29 @@ export const config = {
     },
   } as const,
 
-  /**
-   * System-wide roles stored in DB.
-   * Must include 'admin' for system administration access.
-   */
+  // System roles
+
   systemRoles: ['admin'] as const,
 
   // App identity
 
-  /** App display name shown in UI and emails */
   name: 'Raak',
-  /** URL-safe identifier used in paths and storage */
   slug: 'raak',
-  /** Primary domain for the app */
   domain: 'raak.dev',
-  /** App description for SEO and meta tags */
   description: 'A TypeScript template to build collaborative web apps with sync engine. MIT licensed.',
-  /** SEO keywords for search engines */
   keywords:
     'starter kit, fullstack, monorepo, typescript, hono, honojs, drizzle, shadcn, react, postgres, pwa, offline, instant updates, realtime data, sync engine',
 
   // URLs & endpoints
 
-  /** Frontend SPA base URL */
-  frontendUrl: 'https://www.raak.dev',
   // Same-origin: every service is a path under the app origin, so cookies stay
   // first-party (`__Host-`, SameSite=Strict), CORS disappears and CSP collapses
   // to 'self'. The LB routes /api, /yjs and /mcp by path prefix (matchPathBegin).
+  frontendUrl: 'https://www.raak.dev',
   backendUrl: 'https://www.raak.dev/api',
   backendAuthUrl: 'https://www.raak.dev/api/auth',
   yjsUrl: 'wss://www.raak.dev/yjs',
   mcpUrl: 'https://www.raak.dev/mcp',
-
-  /**
-   * Deployable services. Each entry gates a service (and/or its route surface)
-   * plus its public endpoint. Services are enabled by default; opt out with
-   * `{ enabled: false }`. `publicUrl` is derived from the matching URL fields
-   * above in app-config, so set enablement here. Distinct from `has` (in-app UX
-   * toggles).
-   */
   services: {
     frontend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev' },
     backend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/api' },
@@ -134,47 +122,32 @@ export const config = {
   },
 
   // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
-  // service in-process: one VM for previews/small forks. Default false keeps the
+  // service in-process: one VM for previews/small apps. Default false keeps the
   // split (one service per process). cdc co-hosting forfeits API blue-green.
   singleVM: false as boolean,
 
   aboutUrl: '/about',
-  /** Status page URL for uptime monitoring */
   statusUrl: '',
   productionUrl: 'https://www.raak.dev',
 
   defaultRedirectPath: '/home',
-  /** Redirect path for first-time users */
   welcomeRedirectPath: '/welcome',
 
-  /** From address for system notifications */
+  // Email
+
   senderEmail: 'notifications@shareworks.nl',
-  /** Email address for user support inquiries */
   supportEmail: 'info@cellajs.com',
-  /** Email address for security alerts (sysadmin failures, etc.) */
   securityEmail: 'info@cellajs.com',
 
   // Mode & flags
 
-  /** Runtime mode - overridden per environment file */
   mode: 'development' as ConfigMode,
-  /** Enable maintenance mode (blocks all requests) */
   maintenance: false,
-  /** Cookie version - increment when changing cookie structure to invalidate old cookies */
-  // Same-origin clean break from Domain-scoped cookies: every logged-in user re-authenticates
-  // once at cutover (upstream moved v1 → v2 with this migration).
-  cookieVersion: 'v2',
-  /** Persisted client query-cache shape - bump on breaking cached entity changes */
-  clientCacheVersion: 'v10-task-attachments',
-
-  // Feature flags
 
   /**
-   * Feature toggles for app capabilities.
-   * Use to enable/disable major features without code changes.
-   */
-  /**
-   * Local dev service ports, one knob for the backend/worker env defaults and the Vite proxy.
+   * Local dev listen ports, also the Vite proxy targets. Ports are machine-global, so an app must
+   * offset this whole block together with the port in the `frontendUrl` family (e.g. +20). With
+   * two stacks up, whichever backend binds :4000 first answers every app's `/api` proxy.
    * `PORT`-style env vars still override at runtime. `frontend` is the Vite fallback for when
    * `frontendUrl` carries no port (tunnel mode); otherwise the URL port wins.
    */
@@ -187,40 +160,29 @@ export const config = {
   },
 
   has: {
-    /** Progressive Web App support for preloading static assets and offline support */
     pwa: true as boolean,
     /** Web Push delivery for notifications; also needs VAPID_* backend env vars. */
     push: false as boolean,
-    /** Allow users to sign up. If false, the app is by invitation only */
     selfRegistration: false as boolean,
-    /** Suggest a waitlist for unknown emails when sign up is disabled */
     waitlist: true as boolean,
-    /** S3 fully configured - if false, files will be stored in local browser (IndexedDB) */
     uploadEnabled: true as boolean,
-    /** Customer support chat widget (Gleap) */
     chatSupport: false as boolean,
   },
 
+  // apiVersion guards the API envelope; cookieVersion invalidates all sessions.
+  // clientCacheVersion clears incompatible cached entities while preserving queued mutations.
+  // Bump the relevant token with its change; CI requires cache bumps not covered by an evolution lens.
+
+  apiVersion: 'v1',
+  // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
+  cookieVersion: 'v2',
+  clientCacheVersion: 'v10-task-attachments',
+
   // Authentication
 
-  /**
-   * Enabled authentication strategies.
-   * TOTP can only be used as MFA fallback with passkey as primary.
-   */
   enabledAuthStrategies: ['passkey', 'oauth', 'totp', 'magic'] as const,
-
-  /** Enabled OAuth providers - currently supports: github, google, microsoft */
   enabledOAuthProviders: ['github'] as const,
-
-  /** Token types used for verification flows */
   tokenTypes: ['email-verification', 'oauth-verification', 'invitation', 'confirm-mfa', 'magic'] as const,
-
-  /** TOTP configuration for MFA */
-  totp: {
-    intervalInSeconds: 30,
-    gracePeriodInSeconds: 60,
-    digits: 6,
-  },
 
   /**
    * Maximum concurrent regular sessions per user. On sign-in, the oldest sessions beyond the cap are
@@ -230,21 +192,22 @@ export const config = {
    */
   maxSessionsPerUser: 10,
 
+  totp: {
+    intervalInSeconds: 30,
+    gracePeriodInSeconds: 60,
+    digits: 6,
+  },
+
   // API configuration
 
-  /** API version prefix for endpoints */
-  apiVersion: 'v1',
-  /** API documentation description shown in Scalar */
   apiDescription: `⚠️ ATTENTION: PRERELEASE!  
                   This API is organized into modules based on logical domains (e.g. \`auth\`, \`organizations\`, \`memberships\`).
                   Each module includes a set of endpoints that expose functionality related to a specific resource or cross resource logic.
 
                   The documentation is generated from source code using \`zod\` schemas, converted into OpenAPI via \`zod-openapi\` and served through the \`hono\` framework.`,
 
-  /**
-   * Default page sizes for list endpoints. Backend enforces max 1000.
-   * Must include 'default' key as fallback.
-   */
+  // Request limits
+
   requestLimits: {
     default: 40,
     users: 100,
@@ -260,38 +223,19 @@ export const config = {
     pendingMemberships: 20,
   },
 
-  /** Max JSON body size in bytes */
   jsonBodyLimit: 1 * 1024 * 1024,
-  /** Max file upload size in bytes */
   fileUploadLimit: 20 * 1024 * 1024,
   defaultBodyLimit: 1 * 1024 * 1024,
 
   // Storage & uploads (S3)
 
-  /** S3-compatible storage configuration */
   s3: {
-    /** S3 region identifier */
     region: 'nl-ams',
-    /** S3 host endpoint */
     host: 's3.nl-ams.scw.cloud',
   } as S3ConfigInput,
 
-  /** Upload template IDs for Transloadit processing pipelines */
   uploadTemplateIds: ['avatar', 'cover', 'attachment'] as const,
 
-  /**
-   * Channels whose attachments table offers a direct upload, i.e. a home the create can write into.
-   * raak's attachments only come from task description media blocks (an owned embedding), so none.
-   */
-  attachmentUploadTargets: [] as const,
-
-  /**
-   * Product types with per-member stats in the members table (`include=counts` on GET /members):
-   * a count and a last-activity stamp per type; the first is the "last posted" sort key.
-   */
-  memberStatProductTypes: ['attachment'] as const,
-
-  /** Uppy upload widget default restrictions */
   uppy: {
     defaultRestrictions: {
       maxFileSize: 10 * 1024 * 1024,
@@ -304,36 +248,28 @@ export const config = {
     },
   },
 
-  /**
-   * Local blob storage restrictions (IndexedDB/Dexie).
-   * Controls which attachments are cached locally for offline access.
-   */
   localBlobStorage: {
-    enabled: true, // Enable local blob caching
-    maxFileSize: 10 * 1024 * 1024, // 10MB - files larger than this are not cached locally
-    maxTotalSize: 100 * 1024 * 1024, // 100MB - total cache size, LRU eviction when exceeded
-    allowedContentTypes: [] as string[], // Empty = all types allowed
-    excludedContentTypes: ['video/*'] as string[], // Excluded types (takes precedence over allowed)
-    downloadConcurrency: 2, // Max concurrent background downloads
-    downloadRetryAttempts: 3, // Max retry attempts for failed background downloads
-    uploadRetryAttempts: 3, // Max retry attempts for failed uploads
-    uploadRetryDelays: [60000, 300000, 900000] as const, // Retry delays in ms (1min, 5min, 15min)
+    enabled: true,
+    maxFileSize: 10 * 1024 * 1024,
+    maxTotalSize: 100 * 1024 * 1024,
+    allowedContentTypes: [] as string[],
+    excludedContentTypes: ['video/*'] as string[],
+    downloadConcurrency: 2,
+    downloadRetryAttempts: 3,
+    uploadRetryAttempts: 3,
+    uploadRetryDelays: [60000, 300000, 900000] as const,
   },
 
   // Third-party services
 
-  /** Gleap token for customer support widget */
   gleapToken: '1ZoAxCRA83h5pj7qtRSvuz7rNNN9iXDd',
   googleMapsKey: 'AIzaSyDMjCpQusdoPWLeD7jxkqAxVgJ8s5xJ3Co',
-  /** Matrix homeserver URL for chat integration */
   matrixURL: 'https://matrix-client.matrix.org',
   maplePublicIngestKey: 'maple_pk_LnUSK6-_5j3orVrlZ1Hv6I1pxzDh3SJ5',
 
   // Theming & UI
 
-  /** Primary theme color for PWA manifest and browser chrome */
   themeColor: '#26262b',
-  /** Theme configuration for UI components */
   theme: {
     navigation: {
       hasSidebarTextLabels: false,
@@ -352,7 +288,6 @@ export const config = {
       '2xl': '1400px',
     },
   } as const,
-  /** Placeholder background colors for avatars without images */
   placeholderColors: [
     'bg-blue-300',
     'bg-lime-300',
@@ -369,9 +304,7 @@ export const config = {
   // Localization
 
   defaultLanguage: 'en' as const,
-  /** Available language codes - first is fallback */
   languages: ['en', 'nl'] as const,
-  /** Common reference data */
   c: {
     countries: ['fr', 'de', 'nl', 'ua', 'us', 'gb'],
     timezones: [],
@@ -379,7 +312,6 @@ export const config = {
 
   // Company details
 
-  /** Company/organization details for footer, legal pages, and contact info */
   company: {
     name: 'CellaJS',
     shortName: 'Cella',
@@ -405,11 +337,14 @@ export const config = {
     },
   },
 
+  // User defaults
+
   defaultUserFlags: {
     finishedOnboarding: false,
   },
 
-  /** Default per-organization feature flags, layered under each org's own `organizationFlags`. */
+  // Organization defaults
+
   defaultOrganizationFlags: {},
 
   /**

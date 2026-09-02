@@ -1,3 +1,4 @@
+import type { EntityRole } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { findProjectsPaginated } from '#/modules/project/project-queries';
@@ -12,7 +13,7 @@ interface GetProjectsInput {
   organizationId?: string;
   workspaceId?: string;
   relatableUserId?: string;
-  role?: 'admin' | 'member' | 'guest';
+  role?: EntityRole;
   excludeArchived?: boolean;
   include: string[];
 }

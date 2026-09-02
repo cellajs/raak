@@ -13,9 +13,8 @@ const primaryLabelDefinitionSchema = z.object({
 });
 
 /**
- * Wire schema for `organization.setupConfig` (raak's fork override of cella's empty default): the
- * per-organization primary label set, wired into the organization response and update contract in
- * `organization-schema` so it validates on the wire and flows into the generated SDK type.
+ * Wire schema for `organization.setupConfig`, used by the organization response and update contract.
+ * raak's app-owned override of the template's empty default: the per-organization primary label set.
  * `primaryLabels` is replaced wholesale on update; array order is display order and the first entry
  * is the default for new tasks.
  */

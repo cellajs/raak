@@ -48,18 +48,16 @@ baseApp.route('/tenants/:tenantId/domains', domainHandlers);
 
 baseApp.route('/requests', requestHandlers);
 baseApp.route('/metrics', metricHandlers);
-baseApp.route('/users', userHandlers);
-
 baseApp.route('/notifications', notificationHandlers);
 baseApp.route('/push', pushHandlers);
+baseApp.route('/users', userHandlers);
 baseApp.route('/public/projects', publicProjectHandlers);
 baseApp.route('/public/tasks', publicTaskHandlers);
 baseApp.route('/t', taskRedirectHandlers);
 
 baseApp.route('/yjs', yjsHandlers);
 
-// Modules with absolute route paths: cross-tenant list + tenant-scoped routes in one app.
-// Registered after all static mounts so param segments (/:tenantId/...) cannot shadow static paths.
+// Absolute-path modules, registered after every static mount so param segments cannot shadow static paths.
 baseApp.route('/', organizationHandlers);
 baseApp.route('/', workspaceHandlers);
 baseApp.route('/', projectHandlers);

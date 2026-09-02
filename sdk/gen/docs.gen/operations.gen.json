@@ -1242,54 +1242,6 @@
     }
   },
   {
-    "id": "getUsers",
-    "hash": "tag/users/GET/users/users",
-    "method": "get",
-    "path": "/users/users",
-    "tags": ["users"],
-    "summary": "Get list of users",
-    "description": "Returns a list of users.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["users"],
-      "owner": ["cella"]
-    },
-    "entityType": "user"
-  },
-  {
-    "id": "getUser",
-    "hash": "tag/users/GET/users/users/{relatableUserId}",
-    "method": "get",
-    "path": "/users/users/{relatableUserId}",
-    "tags": ["users"],
-    "summary": "Get user",
-    "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["users"],
-      "owner": ["cella"]
-    },
-    "entityType": "user"
-  },
-  {
     "id": "getNotifications",
     "hash": "tag/notifications/GET/notifications",
     "method": "get",
@@ -1464,6 +1416,54 @@
     "tagsByKind": {
       "module": ["push"]
     }
+  },
+  {
+    "id": "getUsers",
+    "hash": "tag/users/GET/users/users",
+    "method": "get",
+    "path": "/users/users",
+    "tags": ["users"],
+    "summary": "Get list of users",
+    "description": "Returns a list of users.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["users"],
+      "owner": ["cella"]
+    },
+    "entityType": "user"
+  },
+  {
+    "id": "getUser",
+    "hash": "tag/users/GET/users/users/{relatableUserId}",
+    "method": "get",
+    "path": "/users/users/{relatableUserId}",
+    "tags": ["users"],
+    "summary": "Get user",
+    "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["users"],
+      "owner": ["cella"]
+    },
+    "entityType": "user"
   },
   {
     "id": "getPublicProject",

@@ -1,4 +1,5 @@
 import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
+import type { EntityRole } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
@@ -56,7 +57,7 @@ interface FindWorkspacesPaginatedOpts {
   limit: number;
   organizationId?: string;
   excludeArchived?: boolean;
-  role?: 'admin' | 'member' | 'guest';
+  role?: EntityRole;
   includeCounts: boolean;
 }
 
