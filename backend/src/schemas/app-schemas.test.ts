@@ -1,6 +1,6 @@
 import { OpenAPIRegistry, OpenApiGeneratorV31 } from '@asteasolutions/zod-to-openapi';
 import { describe, expect, it } from 'vitest';
-import { setupConfigSchema } from '#/modules/organization/setup-config-schema';
+import { setupConfigSchema } from '#/schemas/app-schemas';
 
 describe('setup config OpenAPI composition', () => {
   it('uses nullable type arrays for inline primary label fields', () => {

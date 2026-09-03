@@ -1,27 +1,19 @@
 import { boolean, doublePrecision, foreignKey, index, snakeCase, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 import { appConfig, hierarchy, roles } from 'shared';
 import { generateId } from 'shared/utils/entity-id';
+import { membershipChannelColumns, membershipChannelIndexes } from '#/db/utils/channel-relation-columns';
 import { tenantIdLength } from '#/db/utils/constraints';
 import { timestampColumns } from '#/db/utils/timestamp-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
-import { projectsTable } from '#/modules/project/project-db';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { usersTable } from '#/modules/user/user-db';
-import { workspacesTable } from '#/modules/workspace/workspace-db';
 
 const roleEnum = roles.all;
 
 /**
- * Sub-context relation columns (below `organization`) shared with inactive-memberships, so both tables stay structurally
- * identical. App-owned: cella ships none, apps add e.g. `workspaceId`/`projectId` here with their foreign keys. Returns
- * fresh column builders per call so the two tables never share builder instances.
+ * Active memberships of users in organizations and other channel entities. Each belongs to exactly one tenant (RLS
+ * isolation boundary). Sub-root channel columns and their indexes come from the hierarchy, shared with inactive-memberships.
  */
-export const membershipChannelColumns = () => ({
-  workspaceId: uuid().references(() => workspacesTable.id, { onDelete: 'cascade' }),
-  projectId: uuid().references(() => projectsTable.id, { onDelete: 'cascade' }),
-});
-
-/** Active memberships of users in organizations and other channel entities. Each belongs to exactly one tenant (RLS isolation boundary). */
 export const membershipsTable = snakeCase.table(
   'memberships',
   {
@@ -53,7 +45,7 @@ export const membershipsTable = snakeCase.table(
     index('memberships_updated_by_idx').on(table.updatedBy),
     index('memberships_tenant_id_idx').on(table.tenantId),
     index('memberships_channel_org_role_idx').on(table.channelType, table.organizationId, table.role),
-    index('memberships_project_user_archived_idx').on(table.projectId, table.userId, table.archived),
+    ...membershipChannelIndexes('memberships', table),
     // Composite index for application-layer membership lookups (orgGuard, permission checks)
     index('memberships_org_user_tenant_idx').on(table.organizationId, table.userId, table.tenantId),
     // One membership per user per entity

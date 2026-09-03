@@ -44,6 +44,8 @@
     "docker": "pnpm --filter backend docker:up --detach",
     "docker:test": "docker compose -f backend/compose.yaml --profile test up -d --wait db_test",
     "docker:test:down": "docker compose -f backend/compose.yaml --profile test down",
+    "docs:size": "node shared/scripts/check-doc-size.ts",
+    "docs:size:gate": "node shared/scripts/check-doc-size.ts --gate",
     "docs:style": "node shared/scripts/check-doc-style.ts",
     "docs:style:audit": "node shared/scripts/check-doc-style.ts --audit",
     "frontend:comments": "node shared/scripts/check-comment-style.ts frontend/src && node shared/scripts/check-comment-style.ts --placement frontend/src",

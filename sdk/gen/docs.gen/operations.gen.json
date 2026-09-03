@@ -529,6 +529,190 @@
     }
   },
   {
+    "id": "getDomains",
+    "hash": "tag/tenants/GET/tenants/{tenantId}/domains",
+    "method": "get",
+    "path": "/tenants/{tenantId}/domains",
+    "tags": ["tenants"],
+    "summary": "List domains for a tenant",
+    "description": "Returns all domains belonging to a tenant, including verification tokens. System admin access required.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "createDomain",
+    "hash": "tag/tenants/POST/tenants/{tenantId}/domains",
+    "method": "post",
+    "path": "/tenants/{tenantId}/domains",
+    "tags": ["tenants"],
+    "summary": "Add a domain to a tenant",
+    "description": "Adds a new domain to a tenant. The domain starts unverified. System admin access required.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getDomain",
+    "hash": "tag/tenants/GET/tenants/{tenantId}/domains/{id}",
+    "method": "get",
+    "path": "/tenants/{tenantId}/domains/{id}",
+    "tags": ["tenants"],
+    "summary": "Get domain with verification token",
+    "description": "Returns a single domain including its verification token for DNS TXT setup. System admin access required.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "deleteDomain",
+    "hash": "tag/tenants/DELETE/tenants/{tenantId}/domains/{id}",
+    "method": "delete",
+    "path": "/tenants/{tenantId}/domains/{id}",
+    "tags": ["tenants"],
+    "summary": "Remove a domain",
+    "description": "Removes a domain from a tenant. System admin access required.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "verifyDomain",
+    "hash": "tag/tenants/POST/tenants/{tenantId}/domains/{id}/verify",
+    "method": "post",
+    "path": "/tenants/{tenantId}/domains/{id}/verify",
+    "tags": ["tenants"],
+    "summary": "Verify domain ownership via DNS",
+    "description": "Looks up DNS TXT records for the domain to verify ownership. Checks for a _cella-verification.<domain> TXT record matching the verification token.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "checkSlug",
+    "hash": "tag/entities/POST/entities/{tenantId}/check-slug",
+    "method": "post",
+    "path": "/entities/{tenantId}/check-slug",
+    "tags": ["entities"],
+    "summary": "Check slug availability",
+    "description": "Checks whether a given slug is available within a tenant for the specified entity type.\n      Primarily used to prevent slug collisions before creating or updating an entity.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": false,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["entities"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getAppStream",
+    "hash": "tag/entities/GET/entities/app/stream",
+    "method": "get",
+    "path": "/entities/app/stream",
+    "tags": ["entities"],
+    "summary": "App event SSE stream",
+    "description": "SSE stream for membership and entity notifications affecting the current user. Sends lightweight notifications.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard"],
+      "xRateLimiter": ["streamConnectLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["entities"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "postAppCatchup",
+    "hash": "tag/entities/POST/entities/app/stream",
+    "method": "post",
+    "path": "/entities/app/stream",
+    "tags": ["entities"],
+    "summary": "App event catchup",
+    "description": "Fetch missed entity and membership changes since last sync. Send cursor and declared views (prefix sets + org-sequence cursors) in the body.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["entities"],
+      "owner": ["cella"]
+    }
+  },
+  {
     "id": "getMe",
     "hash": "tag/me/GET/me",
     "method": "get",
@@ -782,443 +966,6 @@
     }
   },
   {
-    "id": "getUnseenCounts",
-    "hash": "tag/seen/GET/unseen/counts",
-    "method": "get",
-    "path": "/unseen/counts",
-    "tags": ["seen"],
-    "summary": "Get unseen counts",
-    "description": "Returns the number of unseen product entities per parent channel entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard"],
-      "xRateLimiter": ["syncReadLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["seen"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "checkSlug",
-    "hash": "tag/entities/POST/entities/{tenantId}/check-slug",
-    "method": "post",
-    "path": "/entities/{tenantId}/check-slug",
-    "tags": ["entities"],
-    "summary": "Check slug availability",
-    "description": "Checks whether a given slug is available within a tenant for the specified entity type.\n      Primarily used to prevent slug collisions before creating or updating an entity.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": false,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["entities"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "getAppStream",
-    "hash": "tag/entities/GET/entities/app/stream",
-    "method": "get",
-    "path": "/entities/app/stream",
-    "tags": ["entities"],
-    "summary": "App event SSE stream",
-    "description": "SSE stream for membership and entity notifications affecting the current user. Sends lightweight notifications.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard"],
-      "xRateLimiter": ["streamConnectLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["entities"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "postAppCatchup",
-    "hash": "tag/entities/POST/entities/app/stream",
-    "method": "post",
-    "path": "/entities/app/stream",
-    "tags": ["entities"],
-    "summary": "App event catchup",
-    "description": "Fetch missed entity and membership changes since last sync. Send cursor and declared views (prefix sets + org-sequence cursors) in the body.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["entities"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "systemInvite",
-    "hash": "tag/system/POST/system/invite",
-    "method": "post",
-    "path": "/system/invite",
-    "tags": ["system"],
-    "summary": "Invite to system",
-    "description": "Invites one or more users to the system via email. Can be used to onboard system level users or admins.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": ["spamLimiter", "pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["system"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "deleteUsers",
-    "hash": "tag/system/DELETE/system",
-    "method": "delete",
-    "path": "/system",
-    "tags": ["system"],
-    "summary": "Delete users",
-    "description": "Deletes one or more users from the system based on a list of IDs. This also removes the user's memberships (cascade) and sets references to the user to null where applicable.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["system"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "updateUser",
-    "hash": "tag/system/PUT/system/{id}",
-    "method": "put",
-    "path": "/system/{id}",
-    "tags": ["system"],
-    "summary": "Update user",
-    "description": "Updates a user identified by ID.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["system"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "sendNewsletter",
-    "hash": "tag/system/POST/system/newsletter",
-    "method": "post",
-    "path": "/system/newsletter",
-    "tags": ["system"],
-    "summary": "Newsletter to members",
-    "description": "Sends a newsletter to members of one or more specified organizations.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": false,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["system"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "getTenants",
-    "hash": "tag/tenants/GET/tenants",
-    "method": "get",
-    "path": "/tenants",
-    "tags": ["tenants"],
-    "summary": "Get list of tenants",
-    "description": "Returns a paginated list of tenants. System admin access required.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "selfCreateTenant",
-    "hash": "tag/tenants/POST/tenants/self",
-    "method": "post",
-    "path": "/tenants/self",
-    "tags": ["tenants"],
-    "summary": "Create a tenant for yourself",
-    "description": "Creates a new tenant (workspace) for the authenticated user. A user may own multiple tenants; an org-less tenant from a prior failed attempt is reused instead of creating a duplicate.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "updateTenant",
-    "hash": "tag/tenants/PUT/tenants/{tenantId}",
-    "method": "put",
-    "path": "/tenants/{tenantId}",
-    "tags": ["tenants"],
-    "summary": "Update a tenant",
-    "description": "Updates a tenant by ID. System admin access required.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "getDomains",
-    "hash": "tag/tenants/GET/tenants/{tenantId}/domains",
-    "method": "get",
-    "path": "/tenants/{tenantId}/domains",
-    "tags": ["tenants"],
-    "summary": "List domains for a tenant",
-    "description": "Returns all domains belonging to a tenant, including verification tokens. System admin access required.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "createDomain",
-    "hash": "tag/tenants/POST/tenants/{tenantId}/domains",
-    "method": "post",
-    "path": "/tenants/{tenantId}/domains",
-    "tags": ["tenants"],
-    "summary": "Add a domain to a tenant",
-    "description": "Adds a new domain to a tenant. The domain starts unverified. System admin access required.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "getDomain",
-    "hash": "tag/tenants/GET/tenants/{tenantId}/domains/{id}",
-    "method": "get",
-    "path": "/tenants/{tenantId}/domains/{id}",
-    "tags": ["tenants"],
-    "summary": "Get domain with verification token",
-    "description": "Returns a single domain including its verification token for DNS TXT setup. System admin access required.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "deleteDomain",
-    "hash": "tag/tenants/DELETE/tenants/{tenantId}/domains/{id}",
-    "method": "delete",
-    "path": "/tenants/{tenantId}/domains/{id}",
-    "tags": ["tenants"],
-    "summary": "Remove a domain",
-    "description": "Removes a domain from a tenant. System admin access required.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "verifyDomain",
-    "hash": "tag/tenants/POST/tenants/{tenantId}/domains/{id}/verify",
-    "method": "post",
-    "path": "/tenants/{tenantId}/domains/{id}/verify",
-    "tags": ["tenants"],
-    "summary": "Verify domain ownership via DNS",
-    "description": "Looks up DNS TXT records for the domain to verify ownership. Checks for a _cella-verification.<domain> TXT record matching the verification token.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["tenants"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "getRequests",
-    "hash": "tag/requests/GET/requests",
-    "method": "get",
-    "path": "/requests",
-    "tags": ["requests"],
-    "summary": "Get list of requests",
-    "description": "Returns a list of submitted requests across all types: contact form, newsletter, and waitlist.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["requests"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "createRequest",
-    "hash": "tag/requests/POST/requests",
-    "method": "post",
-    "path": "/requests",
-    "tags": ["requests"],
-    "summary": "Create request",
-    "description": "Submits a new request to the system. Supported types include contact form, newsletter signup, and waitlist entry.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["publicGuard"],
-      "xRateLimiter": ["emailEnumLimiter", "spamLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["requests"],
-      "owner": ["cella"]
-    }
-  },
-  {
-    "id": "deleteRequests",
-    "hash": "tag/requests/DELETE/requests",
-    "method": "delete",
-    "path": "/requests",
-    "tags": ["requests"],
-    "summary": "Delete requests",
-    "description": "Deletes one or more requests from the system by their IDs.",
-    "deprecated": false,
-    "hasParams": false,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["requests"],
-      "owner": ["cella"]
-    }
-  },
-  {
     "id": "getPublicCounts",
     "hash": "tag/metrics/GET/metrics/public",
     "method": "get",
@@ -1352,6 +1099,31 @@
     }
   },
   {
+    "id": "getPublicProject",
+    "hash": "tag/projects/GET/public/projects/{id}",
+    "method": "get",
+    "path": "/public/projects/{id}",
+    "tags": ["projects"],
+    "summary": "Fetch public project by ID",
+    "description": "Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["projects"],
+      "owner": ["app"],
+      "entity": ["channel"]
+    },
+    "entityType": "project"
+  },
+  {
     "id": "getPushVapid",
     "hash": "tag/push/GET/push/vapid",
     "method": "get",
@@ -1418,77 +1190,188 @@
     }
   },
   {
-    "id": "getUsers",
-    "hash": "tag/users/GET/users/users",
+    "id": "getRequests",
+    "hash": "tag/requests/GET/requests",
     "method": "get",
-    "path": "/users/users",
-    "tags": ["users"],
-    "summary": "Get list of users",
-    "description": "Returns a list of users.",
+    "path": "/requests",
+    "tags": ["requests"],
+    "summary": "Get list of requests",
+    "description": "Returns a list of submitted requests across all types: contact form, newsletter, and waitlist.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": false,
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xGuard": ["authGuard", "sysAdminGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
     "tagsByKind": {
-      "module": ["users"],
+      "module": ["requests"],
       "owner": ["cella"]
-    },
-    "entityType": "user"
+    }
   },
   {
-    "id": "getUser",
-    "hash": "tag/users/GET/users/users/{relatableUserId}",
-    "method": "get",
-    "path": "/users/users/{relatableUserId}",
-    "tags": ["users"],
-    "summary": "Get user",
-    "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
+    "id": "createRequest",
+    "hash": "tag/requests/POST/requests",
+    "method": "post",
+    "path": "/requests",
+    "tags": ["requests"],
+    "summary": "Create request",
+    "description": "Submits a new request to the system. Supported types include contact form, newsletter signup, and waitlist entry.",
     "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["users"],
-      "owner": ["cella"]
-    },
-    "entityType": "user"
-  },
-  {
-    "id": "getPublicProject",
-    "hash": "tag/projects/GET/public/projects/{id}",
-    "method": "get",
-    "path": "/public/projects/{id}",
-    "tags": ["projects"],
-    "summary": "Fetch public project by ID",
-    "description": "Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
+    "hasParams": false,
+    "hasRequestBody": true,
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
       "xGuard": ["publicGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["emailEnumLimiter", "spamLimiter"],
       "xCache": []
     },
     "tagsByKind": {
-      "module": ["projects"],
-      "owner": ["app"],
-      "entity": ["channel"]
+      "module": ["requests"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "deleteRequests",
+    "hash": "tag/requests/DELETE/requests",
+    "method": "delete",
+    "path": "/requests",
+    "tags": ["requests"],
+    "summary": "Delete requests",
+    "description": "Deletes one or more requests from the system by their IDs.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
     },
-    "entityType": "project"
+    "tagsByKind": {
+      "module": ["requests"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getUnseenCounts",
+    "hash": "tag/seen/GET/unseen/counts",
+    "method": "get",
+    "path": "/unseen/counts",
+    "tags": ["seen"],
+    "summary": "Get unseen counts",
+    "description": "Returns the number of unseen product entities per parent channel entity (e.g., project) and entity type for the current user. Computed within the rolling seen window so entities older than seen_by retention do not participate.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard"],
+      "xRateLimiter": ["syncReadLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["seen"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "systemInvite",
+    "hash": "tag/system/POST/system/invite",
+    "method": "post",
+    "path": "/system/invite",
+    "tags": ["system"],
+    "summary": "Invite to system",
+    "description": "Invites one or more users to the system via email. Can be used to onboard system level users or admins.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xRateLimiter": ["spamLimiter", "pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["system"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "deleteUsers",
+    "hash": "tag/system/DELETE/system",
+    "method": "delete",
+    "path": "/system",
+    "tags": ["system"],
+    "summary": "Delete users",
+    "description": "Deletes one or more users from the system based on a list of IDs. This also removes the user's memberships (cascade) and sets references to the user to null where applicable.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["system"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "updateUser",
+    "hash": "tag/system/PUT/system/{id}",
+    "method": "put",
+    "path": "/system/{id}",
+    "tags": ["system"],
+    "summary": "Update user",
+    "description": "Updates a user identified by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["system"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "sendNewsletter",
+    "hash": "tag/system/POST/system/newsletter",
+    "method": "post",
+    "path": "/system/newsletter",
+    "tags": ["system"],
+    "summary": "Newsletter to members",
+    "description": "Sends a newsletter to members of one or more specified organizations.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": false,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["system"],
+      "owner": ["cella"]
+    }
   },
   {
     "id": "getPublicTask",
@@ -1614,6 +1497,123 @@
       "entity": ["product"]
     },
     "entityType": "task"
+  },
+  {
+    "id": "getTenants",
+    "hash": "tag/tenants/GET/tenants",
+    "method": "get",
+    "path": "/tenants",
+    "tags": ["tenants"],
+    "summary": "Get list of tenants",
+    "description": "Returns a paginated list of tenants. System admin access required.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "selfCreateTenant",
+    "hash": "tag/tenants/POST/tenants/self",
+    "method": "post",
+    "path": "/tenants/self",
+    "tags": ["tenants"],
+    "summary": "Create a tenant for yourself",
+    "description": "Creates a new tenant (workspace) for the authenticated user. A user may own multiple tenants; an org-less tenant from a prior failed attempt is reused instead of creating a duplicate.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "updateTenant",
+    "hash": "tag/tenants/PUT/tenants/{tenantId}",
+    "method": "put",
+    "path": "/tenants/{tenantId}",
+    "tags": ["tenants"],
+    "summary": "Update a tenant",
+    "description": "Updates a tenant by ID. System admin access required.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["tenants"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getUsers",
+    "hash": "tag/users/GET/users/users",
+    "method": "get",
+    "path": "/users/users",
+    "tags": ["users"],
+    "summary": "Get list of users",
+    "description": "Returns a list of users.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["users"],
+      "owner": ["cella"]
+    },
+    "entityType": "user"
+  },
+  {
+    "id": "getUser",
+    "hash": "tag/users/GET/users/users/{relatableUserId}",
+    "method": "get",
+    "path": "/users/users/{relatableUserId}",
+    "tags": ["users"],
+    "summary": "Get user",
+    "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["users"],
+      "owner": ["cella"]
+    },
+    "entityType": "user"
   },
   {
     "id": "getYjsToken",
@@ -1762,131 +1762,6 @@
       "entity": ["channel"]
     },
     "entityType": "organization"
-  },
-  {
-    "id": "createWorkspaces",
-    "hash": "tag/workspaces/POST/{tenantId}/{organizationId}/workspaces",
-    "method": "post",
-    "path": "/{tenantId}/{organizationId}/workspaces",
-    "tags": ["workspaces"],
-    "summary": "Create workspaces",
-    "description": "Creates one or more personal workspaces owned by the current user.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["insertEntityLock", "pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["workspaces"],
-      "owner": ["app"],
-      "entity": ["channel"]
-    },
-    "entityType": "workspace"
-  },
-  {
-    "id": "deleteWorkspaces",
-    "hash": "tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces",
-    "method": "delete",
-    "path": "/{tenantId}/{organizationId}/workspaces",
-    "tags": ["workspaces"],
-    "summary": "Delete workspaces",
-    "description": "Deletes one or more workspaces by ID.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["workspaces"],
-      "owner": ["app"],
-      "entity": ["channel"]
-    },
-    "entityType": "workspace"
-  },
-  {
-    "id": "getWorkspaces",
-    "hash": "tag/workspaces/GET/workspaces",
-    "method": "get",
-    "path": "/workspaces",
-    "tags": ["workspaces"],
-    "summary": "Get list of workspaces",
-    "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["workspaces"],
-      "owner": ["app"],
-      "entity": ["channel"]
-    },
-    "entityType": "workspace"
-  },
-  {
-    "id": "getWorkspace",
-    "hash": "tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}",
-    "method": "get",
-    "path": "/{tenantId}/{organizationId}/workspaces/{id}",
-    "tags": ["workspaces"],
-    "summary": "Get workspace",
-    "description": "Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["workspaces"],
-      "owner": ["app"],
-      "entity": ["channel"]
-    },
-    "entityType": "workspace"
-  },
-  {
-    "id": "updateWorkspace",
-    "hash": "tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}",
-    "method": "put",
-    "path": "/{tenantId}/{organizationId}/workspaces/{id}",
-    "tags": ["workspaces"],
-    "summary": "Update workspace",
-    "description": "Updates a workspace by ID.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["workspaces"],
-      "owner": ["app"],
-      "entity": ["channel"]
-    },
-    "entityType": "workspace"
   },
   {
     "id": "createProjects",
@@ -2089,13 +1964,38 @@
     "entityType": "project"
   },
   {
-    "id": "handleMcp",
-    "hash": "tag/mcp/POST/{tenantId}/{organizationId}/mcp",
+    "id": "createWorkspaces",
+    "hash": "tag/workspaces/POST/{tenantId}/{organizationId}/workspaces",
     "method": "post",
-    "path": "/{tenantId}/{organizationId}/mcp",
-    "tags": ["mcp"],
-    "summary": "MCP endpoint",
-    "description": "Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).",
+    "path": "/{tenantId}/{organizationId}/workspaces",
+    "tags": ["workspaces"],
+    "summary": "Create workspaces",
+    "description": "Creates one or more personal workspaces owned by the current user.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["insertEntityLock", "pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["channel"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "deleteWorkspaces",
+    "hash": "tag/workspaces/DELETE/{tenantId}/{organizationId}/workspaces",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/workspaces",
+    "tags": ["workspaces"],
+    "summary": "Delete workspaces",
+    "description": "Deletes one or more workspaces by ID.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": true,
@@ -2103,13 +2003,90 @@
     "hasExample": false,
     "extensions": {
       "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["channel"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "getWorkspaces",
+    "hash": "tag/workspaces/GET/workspaces",
+    "method": "get",
+    "path": "/workspaces",
+    "tags": ["workspaces"],
+    "summary": "Get list of workspaces",
+    "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "crossTenantGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
     "tagsByKind": {
-      "module": ["mcp"],
-      "owner": ["cella"]
-    }
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["channel"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "getWorkspace",
+    "hash": "tag/workspaces/GET/{tenantId}/{organizationId}/workspaces/{id}",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/workspaces/{id}",
+    "tags": ["workspaces"],
+    "summary": "Get workspace",
+    "description": "Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["channel"]
+    },
+    "entityType": "workspace"
+  },
+  {
+    "id": "updateWorkspace",
+    "hash": "tag/workspaces/PUT/{tenantId}/{organizationId}/workspaces/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/workspaces/{id}",
+    "tags": ["workspaces"],
+    "summary": "Update workspace",
+    "description": "Updates a workspace by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["workspaces"],
+      "owner": ["app"],
+      "entity": ["channel"]
+    },
+    "entityType": "workspace"
   },
   {
     "id": "getAttachments",
@@ -2260,6 +2237,154 @@
       "entity": ["product"]
     },
     "entityType": "attachment"
+  },
+  {
+    "id": "getLabels",
+    "hash": "tag/labels/GET/{tenantId}/{organizationId}/labels",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/labels",
+    "tags": ["labels"],
+    "summary": "Get list of labels",
+    "description": "Returns a list of labels for a given project or workspace.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["syncReadLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "createLabels",
+    "hash": "tag/labels/POST/{tenantId}/{organizationId}/labels",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/labels",
+    "tags": ["labels"],
+    "summary": "Create labels",
+    "description": "Creates one or more labels within a project.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "deleteLabels",
+    "hash": "tag/labels/DELETE/{tenantId}/{organizationId}/labels",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/labels",
+    "tags": ["labels"],
+    "summary": "Delete labels",
+    "description": "Deletes one or more labels by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "getLabel",
+    "hash": "tag/labels/GET/{tenantId}/{organizationId}/labels/{id}",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/labels/{id}",
+    "tags": ["labels"],
+    "summary": "Get label",
+    "description": "Retrieves a label by its ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": ["productCache"]
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "updateLabel",
+    "hash": "tag/labels/PUT/{tenantId}/{organizationId}/labels/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/labels/{id}",
+    "tags": ["labels"],
+    "summary": "Update label",
+    "description": "Updates a label by ID.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["labels"],
+      "owner": ["app"],
+      "entity": ["product"]
+    },
+    "entityType": "label"
+  },
+  {
+    "id": "handleMcp",
+    "hash": "tag/mcp/POST/{tenantId}/{organizationId}/mcp",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/mcp",
+    "tags": ["mcp"],
+    "summary": "MCP endpoint",
+    "description": "Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["mcp"],
+      "owner": ["cella"]
+    }
   },
   {
     "id": "membershipInvite",
@@ -2423,6 +2548,29 @@
     }
   },
   {
+    "id": "markSeen",
+    "hash": "tag/seen/POST/{tenantId}/{organizationId}/seen",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/seen",
+    "tags": ["seen"],
+    "summary": "Mark entities as seen",
+    "description": "Records that the current user has viewed one or more product entities. Deduplicates against existing records. Updates entity view counts for newly seen entities.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["seen"],
+      "owner": ["cella"]
+    }
+  },
+  {
     "id": "getTasks",
     "hash": "tag/tasks/GET/{tenantId}/{organizationId}/tasks",
     "method": "get",
@@ -2546,153 +2694,5 @@
       "entity": ["product"]
     },
     "entityType": "task"
-  },
-  {
-    "id": "getLabels",
-    "hash": "tag/labels/GET/{tenantId}/{organizationId}/labels",
-    "method": "get",
-    "path": "/{tenantId}/{organizationId}/labels",
-    "tags": ["labels"],
-    "summary": "Get list of labels",
-    "description": "Returns a list of labels for a given project or workspace.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["syncReadLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["labels"],
-      "owner": ["app"],
-      "entity": ["product"]
-    },
-    "entityType": "label"
-  },
-  {
-    "id": "createLabels",
-    "hash": "tag/labels/POST/{tenantId}/{organizationId}/labels",
-    "method": "post",
-    "path": "/{tenantId}/{organizationId}/labels",
-    "tags": ["labels"],
-    "summary": "Create labels",
-    "description": "Creates one or more labels within a project.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["labels"],
-      "owner": ["app"],
-      "entity": ["product"]
-    },
-    "entityType": "label"
-  },
-  {
-    "id": "deleteLabels",
-    "hash": "tag/labels/DELETE/{tenantId}/{organizationId}/labels",
-    "method": "delete",
-    "path": "/{tenantId}/{organizationId}/labels",
-    "tags": ["labels"],
-    "summary": "Delete labels",
-    "description": "Deletes one or more labels by ID.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["labels"],
-      "owner": ["app"],
-      "entity": ["product"]
-    },
-    "entityType": "label"
-  },
-  {
-    "id": "getLabel",
-    "hash": "tag/labels/GET/{tenantId}/{organizationId}/labels/{id}",
-    "method": "get",
-    "path": "/{tenantId}/{organizationId}/labels/{id}",
-    "tags": ["labels"],
-    "summary": "Get label",
-    "description": "Retrieves a label by its ID.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": false,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
-      "xCache": ["productCache"]
-    },
-    "tagsByKind": {
-      "module": ["labels"],
-      "owner": ["app"],
-      "entity": ["product"]
-    },
-    "entityType": "label"
-  },
-  {
-    "id": "updateLabel",
-    "hash": "tag/labels/PUT/{tenantId}/{organizationId}/labels/{id}",
-    "method": "put",
-    "path": "/{tenantId}/{organizationId}/labels/{id}",
-    "tags": ["labels"],
-    "summary": "Update label",
-    "description": "Updates a label by ID.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": true,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["labels"],
-      "owner": ["app"],
-      "entity": ["product"]
-    },
-    "entityType": "label"
-  },
-  {
-    "id": "markSeen",
-    "hash": "tag/seen/POST/{tenantId}/{organizationId}/seen",
-    "method": "post",
-    "path": "/{tenantId}/{organizationId}/seen",
-    "tags": ["seen"],
-    "summary": "Mark entities as seen",
-    "description": "Records that the current user has viewed one or more product entities. Deduplicates against existing records. Updates entity view counts for newly seen entities.",
-    "deprecated": false,
-    "hasParams": true,
-    "hasRequestBody": true,
-    "hasResponseBody": true,
-    "hasExample": false,
-    "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": ["pointsLimiter"],
-      "xCache": []
-    },
-    "tagsByKind": {
-      "module": ["seen"],
-      "owner": ["cella"]
-    }
   }
 ]

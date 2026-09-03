@@ -321,50 +321,6 @@ export const zUploadToken = z.object({
 });
 
 /**
- * A tenant representing an isolated data partition for multi-tenancy.
- */
-export const zTenant = z.object({
-  id: z.string().max(24),
-  name: z.string().max(255),
-  status: z.enum(['active', 'suspended', 'archived']),
-  restrictions: z.object({
-    quotas: z.record(z.string(), z.int().gte(0)),
-    rateLimits: z.object({
-      apiPointsPerHour: z.int().gte(0),
-    }),
-  }),
-  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])),
-  createdBy: z.uuid().nullable(),
-  subscriptionId: z.string().max(255).nullable(),
-  subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']),
-  subscriptionPlan: z.string().max(255).nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
-  domainsCount: z.int(),
-});
-
-/**
- * A tenant together with the single organization it holds.
- */
-export const zTenantWithOrganization = zTenant.and(
-  z.object({
-    organization: zOrganizationMinimalBase.nullable(),
-  }),
-);
-
-/**
- * A contact or waitlist submission from an unauthenticated user.
- */
-export const zRequest = z.object({
-  createdAt: z.string(),
-  id: z.uuid(),
-  message: z.string().max(255).nullable(),
-  email: z.string().max(255),
-  type: z.enum(['waitlist', 'newsletter', 'contact']),
-  wasInvited: z.boolean(),
-});
-
-/**
  * A project that organizes tasks and members within an organization.
  */
 export const zProject = z.object({
@@ -439,6 +395,18 @@ export const zProject = z.object({
 });
 
 /**
+ * A contact or waitlist submission from an unauthenticated user.
+ */
+export const zRequest = z.object({
+  createdAt: z.string(),
+  id: z.uuid(),
+  message: z.string().max(255).nullable(),
+  email: z.string().max(255),
+  type: z.enum(['waitlist', 'newsletter', 'contact']),
+  wasInvited: z.boolean(),
+});
+
+/**
  * A task representing a unit of work, assignable to users with status tracking and labels.
  */
 export const zTask = z.object({
@@ -494,6 +462,38 @@ export const zTask = z.object({
   updatedBy: zUserMinimalBase.nullable(),
   stx: zStxBase,
 });
+
+/**
+ * A tenant representing an isolated data partition for multi-tenancy.
+ */
+export const zTenant = z.object({
+  id: z.string().max(24),
+  name: z.string().max(255),
+  status: z.enum(['active', 'suspended', 'archived']),
+  restrictions: z.object({
+    quotas: z.record(z.string(), z.int().gte(0)),
+    rateLimits: z.object({
+      apiPointsPerHour: z.int().gte(0),
+    }),
+  }),
+  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])),
+  createdBy: z.uuid().nullable(),
+  subscriptionId: z.string().max(255).nullable(),
+  subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']),
+  subscriptionPlan: z.string().max(255).nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+  domainsCount: z.int(),
+});
+
+/**
+ * A tenant together with the single organization it holds.
+ */
+export const zTenantWithOrganization = zTenant.and(
+  z.object({
+    organization: zOrganizationMinimalBase.nullable(),
+  }),
+);
 
 /**
  * The main channel entity is an organization.
@@ -688,28 +688,6 @@ export const zAttachment = z.object({
 });
 
 /**
- * A user's membership in a channel entity, including role and activity data.
- */
-export const zMembership = z.object({
-  createdAt: z.string(),
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  channelType: z.enum(['organization', 'workspace', 'project']),
-  channelId: z.uuid(),
-  userId: z.uuid(),
-  role: z.enum(['admin', 'member', 'guest']),
-  createdBy: z.uuid(),
-  updatedAt: z.string().nullable(),
-  updatedBy: z.uuid().nullable(),
-  archived: z.boolean(),
-  muted: z.boolean(),
-  displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
-  organizationId: z.uuid(),
-  workspaceId: z.uuid().nullable(),
-  projectId: z.uuid().nullable(),
-});
-
-/**
  * A label used to categorize and filter tasks within a project or workspace.
  */
 export const zLabel = z.object({
@@ -735,6 +713,28 @@ export const zLabel = z.object({
   organizationId: z.uuid(),
   stx: zStxBase,
   usedCount: z.int().gte(0).optional(),
+});
+
+/**
+ * A user's membership in a channel entity, including role and activity data.
+ */
+export const zMembership = z.object({
+  createdAt: z.string(),
+  id: z.uuid(),
+  tenantId: z.string().max(24),
+  channelType: z.enum(['organization', 'workspace', 'project']),
+  channelId: z.uuid(),
+  userId: z.uuid(),
+  role: z.enum(['admin', 'member', 'guest']),
+  createdBy: z.uuid(),
+  updatedAt: z.string().nullable(),
+  updatedBy: z.uuid().nullable(),
+  archived: z.boolean(),
+  muted: z.boolean(),
+  displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
+  organizationId: z.uuid(),
+  workspaceId: z.uuid().nullable(),
+  projectId: z.uuid().nullable(),
 });
 
 /**
@@ -955,6 +955,189 @@ export const zMicrosoftCallbackQuery = z.object({
   state: z.string(),
 });
 
+export const zGetDomainsPath = z.object({
+  tenantId: z.string().max(50),
+});
+
+/**
+ * List of domains
+ */
+export const zGetDomainsResponse = z.array(
+  z.object({
+    id: z.uuid(),
+    tenantId: z.string().max(24),
+    domain: z.string().max(255),
+    verified: z.boolean(),
+    verificationToken: z.string().max(50).nullable(),
+    verifiedAt: z.string().nullable(),
+    lastCheckedAt: z.string().nullable(),
+    createdAt: z.string(),
+  }),
+);
+
+export const zCreateDomainBody = z.object({
+  domain: z
+    .string()
+    .min(4)
+    .max(255)
+    .regex(/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/),
+});
+
+export const zCreateDomainPath = z.object({
+  tenantId: z.string().max(50),
+});
+
+/**
+ * Created domain
+ */
+export const zCreateDomainResponse = z.object({
+  id: z.uuid(),
+  tenantId: z.string().max(24),
+  domain: z.string().max(255),
+  verified: z.boolean(),
+  verifiedAt: z.string().nullable(),
+  lastCheckedAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const zDeleteDomainPath = z.object({
+  tenantId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Domain removed
+ */
+export const zDeleteDomainResponse = z.object({
+  id: z.uuid(),
+  tenantId: z.string().max(24),
+  domain: z.string().max(255),
+  verified: z.boolean(),
+  verifiedAt: z.string().nullable(),
+  lastCheckedAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const zGetDomainPath = z.object({
+  tenantId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Domain with verification token
+ */
+export const zGetDomainResponse = z.object({
+  id: z.uuid(),
+  tenantId: z.string().max(24),
+  domain: z.string().max(255),
+  verified: z.boolean(),
+  verificationToken: z.string().max(50).nullable(),
+  verifiedAt: z.string().nullable(),
+  lastCheckedAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const zVerifyDomainPath = z.object({
+  tenantId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Verification result
+ */
+export const zVerifyDomainResponse = z.object({
+  success: z.boolean(),
+  domain: z.object({
+    id: z.uuid(),
+    tenantId: z.string().max(24),
+    domain: z.string().max(255),
+    verified: z.boolean(),
+    verificationToken: z.string().max(50).nullable(),
+    verifiedAt: z.string().nullable(),
+    lastCheckedAt: z.string().nullable(),
+    createdAt: z.string(),
+  }),
+  diagnostics: z
+    .object({
+      recordsFound: z.array(z.string()),
+      expectedToken: z.string(),
+    })
+    .optional(),
+});
+
+export const zCheckSlugBody = z.object({
+  slug: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[a-z0-9]+(-{0,3}[a-z0-9]+)*$/),
+  entityType: z.enum(['organization', 'workspace', 'project']),
+});
+
+export const zCheckSlugPath = z.object({
+  tenantId: z.string().max(50),
+});
+
+/**
+ * Slug is available
+ */
+export const zCheckSlugResponse = z.void();
+
+export const zPostAppCatchupBody = z.object({
+  cursor: z.string().optional(),
+  views: z
+    .array(
+      z.object({
+        key: z.string().max(512),
+        organizationId: z.string(),
+        prefixes: z.array(z.string().max(512)).min(1).max(64),
+        entityTypes: z.array(z.enum(['task', 'label', 'attachment'])).min(1),
+        depth: z.enum(['self', 'subtree']).optional(),
+        cursor: z.int().gte(0),
+      }),
+    )
+    .max(256)
+    .optional(),
+});
+
+/**
+ * Catchup summary
+ */
+export const zPostAppCatchupResponse = z.object({
+  changes: z.record(
+    z.string(),
+    z.object({
+      signals: z
+        .object({
+          membership: z.int().optional(),
+        })
+        .optional(),
+      propagation: z
+        .array(
+          z.object({
+            embeddedProduct: z.enum(['task', 'label', 'attachment']),
+            hostProduct: z.enum(['task', 'label', 'attachment']),
+            hostColumn: z.string(),
+            update: z.array(z.string()),
+            remove: z.array(z.string()),
+          }),
+        )
+        .optional(),
+    }),
+  ),
+  views: z
+    .array(
+      z.object({
+        key: z.string(),
+        status: z.enum(['ok', 'opaque', 'forbidden']),
+        frontiers: z.record(z.string(), z.int()).optional(),
+        counts: z.record(z.string(), z.int()).optional(),
+      }),
+    )
+    .optional(),
+  cursor: z.string().nullable(),
+});
+
 /**
  * User deleted
  */
@@ -1093,386 +1276,6 @@ export const zGetMyMembershipsResponse = z.object({
 });
 
 /**
- * Unseen counts per parent channel entity per entity type
- */
-export const zGetUnseenCountsResponse = z.record(z.string(), z.record(z.string(), z.int().gte(0)));
-
-export const zCheckSlugBody = z.object({
-  slug: z
-    .string()
-    .min(2)
-    .max(255)
-    .regex(/^[a-z0-9]+(-{0,3}[a-z0-9]+)*$/),
-  entityType: z.enum(['organization', 'workspace', 'project']),
-});
-
-export const zCheckSlugPath = z.object({
-  tenantId: z.string().max(50),
-});
-
-/**
- * Slug is available
- */
-export const zCheckSlugResponse = z.void();
-
-export const zPostAppCatchupBody = z.object({
-  cursor: z.string().optional(),
-  views: z
-    .array(
-      z.object({
-        key: z.string().max(512),
-        organizationId: z.string(),
-        prefixes: z.array(z.string().max(512)).min(1).max(64),
-        entityTypes: z.array(z.enum(['task', 'label', 'attachment'])).min(1),
-        depth: z.enum(['self', 'subtree']).optional(),
-        cursor: z.int().gte(0),
-      }),
-    )
-    .max(256)
-    .optional(),
-});
-
-/**
- * Catchup summary
- */
-export const zPostAppCatchupResponse = z.object({
-  changes: z.record(
-    z.string(),
-    z.object({
-      signals: z
-        .object({
-          membership: z.int().optional(),
-        })
-        .optional(),
-      propagation: z
-        .array(
-          z.object({
-            embeddedProduct: z.enum(['task', 'label', 'attachment']),
-            hostProduct: z.enum(['task', 'label', 'attachment']),
-            hostColumn: z.string(),
-            update: z.array(z.string()),
-            remove: z.array(z.string()),
-          }),
-        )
-        .optional(),
-    }),
-  ),
-  views: z
-    .array(
-      z.object({
-        key: z.string(),
-        status: z.enum(['ok', 'opaque', 'forbidden']),
-        frontiers: z.record(z.string(), z.int()).optional(),
-        counts: z.record(z.string(), z.int()).optional(),
-      }),
-    )
-    .optional(),
-  cursor: z.string().nullable(),
-});
-
-export const zSystemInviteBody = z.object({
-  emails: z.array(z.email().min(4).max(255)).min(1).max(50),
-});
-
-/**
- * Invitations are sent
- */
-export const zSystemInviteResponse = z.object({
-  data: z.array(z.unknown()),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-  invitesSentCount: z.number(),
-});
-
-export const zDeleteUsersBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
-});
-
-/**
- * Success
- */
-export const zDeleteUsersResponse = z.object({
-  data: z.array(z.unknown()),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-});
-
-export const zUpdateUserBody = z.object({
-  bannerUrl: z.string().max(2048).nullish(),
-  description: z.string().max(1000000).nullish(),
-  firstName: z
-    .string()
-    .min(2)
-    .max(255)
-    .regex(/^[\p{L}\d\-., '&()]+$/u)
-    .nullish(),
-  lastName: z
-    .string()
-    .min(2)
-    .max(255)
-    .regex(/^[\p{L}\d\-., '&()]+$/u)
-    .nullish(),
-  language: z.enum(['en', 'nl']).optional(),
-  newsletter: z.boolean().optional(),
-  thumbnailUrl: z.string().max(2048).nullish(),
-  slug: z
-    .string()
-    .min(2)
-    .max(255)
-    .regex(/^[a-z0-9]+(-{0,3}[a-z0-9]+)*$/)
-    .optional(),
-});
-
-export const zUpdateUserPath = z.object({
-  id: z.string().max(50),
-});
-
-/**
- * User
- */
-export const zUpdateUserResponse = zUser;
-
-export const zSendNewsletterBody = z.object({
-  organizationIds: z.array(z.uuid()).max(50),
-  roles: z
-    .array(z.enum(['admin', 'member', 'guest']))
-    .min(1)
-    .max(3),
-  subject: z.string().max(255),
-  content: z.string().max(1000000),
-});
-
-export const zSendNewsletterQuery = z.object({
-  toSelf: zBooleanQueryValue.optional(),
-});
-
-/**
- * Newsletter sent
- */
-export const zSendNewsletterResponse = z.void();
-
-export const zGetTenantsQuery = z.object({
-  q: z.string().max(255).optional(),
-  sort: z.enum(['createdAt', 'name']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().regex(/^\d+$/).optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
-  seqCursor: z
-    .string()
-    .regex(/^\d+,\d+$/)
-    .optional(),
-  status: z.enum(['active', 'suspended', 'archived']).optional(),
-});
-
-/**
- * Tenants list
- */
-export const zGetTenantsResponse = z.object({
-  items: z.array(zTenantWithOrganization),
-  total: z.number(),
-});
-
-export const zSelfCreateTenantBody = z.object({
-  name: z
-    .string()
-    .min(2)
-    .max(255)
-    .regex(/^[\p{L}\d\-., '&()]+$/u),
-});
-
-/**
- * Created tenant
- */
-export const zSelfCreateTenantResponse = zTenant;
-
-export const zUpdateTenantBody = z.object({
-  name: z
-    .string()
-    .min(2)
-    .max(255)
-    .regex(/^[\p{L}\d\-., '&()]+$/u)
-    .optional(),
-  status: z.enum(['active', 'suspended', 'archived']).optional(),
-  subscriptionId: z.string().max(255).nullish(),
-  subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']).optional(),
-  subscriptionPlan: z.string().max(255).nullish(),
-  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])).optional(),
-  restrictions: z
-    .object({
-      quotas: z.record(z.string(), z.int().gte(0)).optional(),
-      rateLimits: z
-        .object({
-          apiPointsPerHour: z.int().gte(0).optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-});
-
-export const zUpdateTenantPath = z.object({
-  tenantId: z.string().max(50),
-});
-
-/**
- * Updated tenant
- */
-export const zUpdateTenantResponse = zTenant;
-
-export const zGetDomainsPath = z.object({
-  tenantId: z.string().max(50),
-});
-
-/**
- * List of domains
- */
-export const zGetDomainsResponse = z.array(
-  z.object({
-    id: z.uuid(),
-    tenantId: z.string().max(24),
-    domain: z.string().max(255),
-    verified: z.boolean(),
-    verificationToken: z.string().max(50).nullable(),
-    verifiedAt: z.string().nullable(),
-    lastCheckedAt: z.string().nullable(),
-    createdAt: z.string(),
-  }),
-);
-
-export const zCreateDomainBody = z.object({
-  domain: z
-    .string()
-    .min(4)
-    .max(255)
-    .regex(/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/),
-});
-
-export const zCreateDomainPath = z.object({
-  tenantId: z.string().max(50),
-});
-
-/**
- * Created domain
- */
-export const zCreateDomainResponse = z.object({
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  domain: z.string().max(255),
-  verified: z.boolean(),
-  verifiedAt: z.string().nullable(),
-  lastCheckedAt: z.string().nullable(),
-  createdAt: z.string(),
-});
-
-export const zDeleteDomainPath = z.object({
-  tenantId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Domain removed
- */
-export const zDeleteDomainResponse = z.object({
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  domain: z.string().max(255),
-  verified: z.boolean(),
-  verifiedAt: z.string().nullable(),
-  lastCheckedAt: z.string().nullable(),
-  createdAt: z.string(),
-});
-
-export const zGetDomainPath = z.object({
-  tenantId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Domain with verification token
- */
-export const zGetDomainResponse = z.object({
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  domain: z.string().max(255),
-  verified: z.boolean(),
-  verificationToken: z.string().max(50).nullable(),
-  verifiedAt: z.string().nullable(),
-  lastCheckedAt: z.string().nullable(),
-  createdAt: z.string(),
-});
-
-export const zVerifyDomainPath = z.object({
-  tenantId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Verification result
- */
-export const zVerifyDomainResponse = z.object({
-  success: z.boolean(),
-  domain: z.object({
-    id: z.uuid(),
-    tenantId: z.string().max(24),
-    domain: z.string().max(255),
-    verified: z.boolean(),
-    verificationToken: z.string().max(50).nullable(),
-    verifiedAt: z.string().nullable(),
-    lastCheckedAt: z.string().nullable(),
-    createdAt: z.string(),
-  }),
-  diagnostics: z
-    .object({
-      recordsFound: z.array(z.string()),
-      expectedToken: z.string(),
-    })
-    .optional(),
-});
-
-export const zDeleteRequestsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
-});
-
-/**
- * Success
- */
-export const zDeleteRequestsResponse = z.object({
-  data: z.array(z.unknown()),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-});
-
-export const zGetRequestsQuery = z.object({
-  q: z.string().max(255).optional(),
-  sort: z.enum(['id', 'email', 'type', 'createdAt']).optional().default('createdAt'),
-  order: z.enum(['asc', 'desc']).optional().default('desc'),
-  offset: z.string().regex(/^\d+$/).optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
-  seqCursor: z
-    .string()
-    .regex(/^\d+,\d+$/)
-    .optional(),
-});
-
-/**
- * Requests
- */
-export const zGetRequestsResponse = z.object({
-  items: z.array(zRequest),
-  total: z.number(),
-});
-
-export const zCreateRequestBody = z.object({
-  email: z.email().min(4).max(255),
-  type: z.enum(['waitlist', 'newsletter', 'contact']),
-  message: z.string().max(255).nullable(),
-});
-
-/**
- * Requests
- */
-export const zCreateRequestResponse = zRequest;
-
-/**
  * Public counts
  */
 export const zGetPublicCountsResponse = z.object({
@@ -1556,6 +1359,23 @@ export const zUnsubscribeNotificationsQuery = z.object({
   token: z.string(),
 });
 
+export const zGetPublicProjectPath = z.object({
+  id: z.string().max(50),
+});
+
+export const zGetPublicProjectQuery = z.object({
+  slug: zBooleanQueryValue.optional(),
+});
+
+/**
+ * A project that organizes tasks and members within an organization.
+ */
+export const zGetPublicProjectResponse = zProject.and(
+  z.object({
+    membership: z.null(),
+  }),
+);
+
 /**
  * VAPID public key
  */
@@ -1591,9 +1411,22 @@ export const zCreatePushSubscriptionResponse = z.object({
   endpoint: z.string(),
 });
 
-export const zGetUsersQuery = z.object({
+export const zDeleteRequestsBody = z.object({
+  ids: z.array(z.string()).min(1).max(50),
+});
+
+/**
+ * Success
+ */
+export const zDeleteRequestsResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const zGetRequestsQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
+  sort: z.enum(['id', 'email', 'type', 'createdAt']).optional().default('createdAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().regex(/^\d+$/).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
@@ -1601,57 +1434,112 @@ export const zGetUsersQuery = z.object({
     .string()
     .regex(/^\d+,\d+$/)
     .optional(),
-  role: z.enum(['admin']).optional(),
 });
 
 /**
- * Users
+ * Requests
  */
-export const zGetUsersResponse = z.object({
-  items: z.array(
-    zUserBase.and(
-      z.object({
-        lastSeenAt: z.string().nullable(),
-        role: z.enum(['admin']).nullish(),
-      }),
-    ),
-  ),
+export const zGetRequestsResponse = z.object({
+  items: z.array(zRequest),
   total: z.number(),
 });
 
-export const zGetUserPath = z.object({
-  relatableUserId: z.string().max(50),
-});
-
-export const zGetUserQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
+export const zCreateRequestBody = z.object({
+  email: z.email().min(4).max(255),
+  type: z.enum(['waitlist', 'newsletter', 'contact']),
+  message: z.string().max(255).nullable(),
 });
 
 /**
- * Base user schema with essential fields for identification and display.
+ * Requests
  */
-export const zGetUserResponse = zUserBase.and(
-  z.object({
-    lastSeenAt: z.string().nullable(),
-  }),
-);
+export const zCreateRequestResponse = zRequest;
 
-export const zGetPublicProjectPath = z.object({
+/**
+ * Unseen counts per parent channel entity per entity type
+ */
+export const zGetUnseenCountsResponse = z.record(z.string(), z.record(z.string(), z.int().gte(0)));
+
+export const zSystemInviteBody = z.object({
+  emails: z.array(z.email().min(4).max(255)).min(1).max(50),
+});
+
+/**
+ * Invitations are sent
+ */
+export const zSystemInviteResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+  invitesSentCount: z.number(),
+});
+
+export const zDeleteUsersBody = z.object({
+  ids: z.array(z.string()).min(1).max(50),
+});
+
+/**
+ * Success
+ */
+export const zDeleteUsersResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const zUpdateUserBody = z.object({
+  bannerUrl: z.string().max(2048).nullish(),
+  description: z.string().max(1000000).nullish(),
+  firstName: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u)
+    .nullish(),
+  lastName: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u)
+    .nullish(),
+  language: z.enum(['en', 'nl']).optional(),
+  newsletter: z.boolean().optional(),
+  thumbnailUrl: z.string().max(2048).nullish(),
+  slug: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[a-z0-9]+(-{0,3}[a-z0-9]+)*$/)
+    .optional(),
+});
+
+export const zUpdateUserPath = z.object({
   id: z.string().max(50),
 });
 
-export const zGetPublicProjectQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
+/**
+ * User
+ */
+export const zUpdateUserResponse = zUser;
+
+export const zSendNewsletterBody = z.object({
+  organizationIds: z.array(z.uuid()).max(50),
+  roles: z
+    .array(z.enum(['admin', 'member', 'guest']))
+    .min(1)
+    .max(3),
+  subject: z.string().max(255),
+  content: z.string().max(1000000),
+});
+
+export const zSendNewsletterQuery = z.object({
+  toSelf: zBooleanQueryValue.optional(),
 });
 
 /**
- * A project that organizes tasks and members within an organization.
+ * Newsletter sent
  */
-export const zGetPublicProjectResponse = zProject.and(
-  z.object({
-    membership: z.null(),
-  }),
-);
+export const zSendNewsletterResponse = z.void();
 
 export const zGetPublicTaskPath = z.object({
   id: z.string().max(50),
@@ -1709,6 +1597,118 @@ export const zGetTaskCoverPath = z.object({
 export const zRedirectToTaskPath = z.object({
   id: z.string().max(50),
 });
+
+export const zGetTenantsQuery = z.object({
+  q: z.string().max(255).optional(),
+  sort: z.enum(['createdAt', 'name']).optional().default('createdAt'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
+  status: z.enum(['active', 'suspended', 'archived']).optional(),
+});
+
+/**
+ * Tenants list
+ */
+export const zGetTenantsResponse = z.object({
+  items: z.array(zTenantWithOrganization),
+  total: z.number(),
+});
+
+export const zSelfCreateTenantBody = z.object({
+  name: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u),
+});
+
+/**
+ * Created tenant
+ */
+export const zSelfCreateTenantResponse = zTenant;
+
+export const zUpdateTenantBody = z.object({
+  name: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u)
+    .optional(),
+  status: z.enum(['active', 'suspended', 'archived']).optional(),
+  subscriptionId: z.string().max(255).nullish(),
+  subscriptionStatus: z.enum(['none', 'trialing', 'active', 'past_due', 'paused', 'canceled']).optional(),
+  subscriptionPlan: z.string().max(255).nullish(),
+  authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])).optional(),
+  restrictions: z
+    .object({
+      quotas: z.record(z.string(), z.int().gte(0)).optional(),
+      rateLimits: z
+        .object({
+          apiPointsPerHour: z.int().gte(0).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+
+export const zUpdateTenantPath = z.object({
+  tenantId: z.string().max(50),
+});
+
+/**
+ * Updated tenant
+ */
+export const zUpdateTenantResponse = zTenant;
+
+export const zGetUsersQuery = z.object({
+  q: z.string().max(255).optional(),
+  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt']).optional().default('createdAt'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
+  role: z.enum(['admin']).optional(),
+});
+
+/**
+ * Users
+ */
+export const zGetUsersResponse = z.object({
+  items: z.array(
+    zUserBase.and(
+      z.object({
+        lastSeenAt: z.string().nullable(),
+        role: z.enum(['admin']).nullish(),
+      }),
+    ),
+  ),
+  total: z.number(),
+});
+
+export const zGetUserPath = z.object({
+  relatableUserId: z.string().max(50),
+});
+
+export const zGetUserQuery = z.object({
+  slug: zBooleanQueryValue.optional(),
+});
+
+/**
+ * Base user schema with essential fields for identification and display.
+ */
+export const zGetUserResponse = zUserBase.and(
+  z.object({
+    lastSeenAt: z.string().nullable(),
+  }),
+);
 
 export const zGetYjsTokenQuery = z.object({
   entityType: z.enum(['task', 'label', 'attachment']),
@@ -1953,140 +1953,6 @@ export const zUpdateOrganizationPath = z.object({
  * Organization was updated
  */
 export const zUpdateOrganizationResponse = zOrganization;
-
-export const zDeleteWorkspacesBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
-});
-
-export const zDeleteWorkspacesPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-});
-
-/**
- * Success
- */
-export const zDeleteWorkspacesResponse = z.object({
-  data: z.array(z.unknown()),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-});
-
-export const zCreateWorkspacesBody = z
-  .array(
-    z.object({
-      id: z
-        .string()
-        .max(50)
-        .regex(/^temp-/),
-      name: z
-        .string()
-        .min(2)
-        .max(255)
-        .regex(/^[\p{L}\d\-., '&()]+$/u),
-    }),
-  )
-  .min(1)
-  .max(10);
-
-export const zCreateWorkspacesPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-});
-
-/**
- * Workspaces created
- */
-export const zCreateWorkspacesResponse = z.object({
-  data: z.array(
-    zWorkspace.and(
-      z.object({
-        included: z
-          .object({
-            membership: zMembershipBase,
-            counts: z
-              .object({
-                membership: z.object({
-                  admin: z.number(),
-                  member: z.number(),
-                  guest: z.number(),
-                  pending: z.number(),
-                  total: z.number(),
-                }),
-                entities: z.record(z.string(), z.unknown()),
-                entitiesSelf: z.record(z.string(), z.unknown()),
-                activity: z.record(z.string(), z.unknown()),
-              })
-              .optional(),
-            members: z.array(zUserMinimalBase).optional(),
-          })
-          .optional(),
-      }),
-    ),
-  ),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-});
-
-export const zGetWorkspacesQuery = z.object({
-  q: z.string().max(255).optional(),
-  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().regex(/^\d+$/).optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
-  seqCursor: z
-    .string()
-    .regex(/^\d+,\d+$/)
-    .optional(),
-  organizationId: z.string().max(50).optional(),
-  role: z.enum(['admin', 'member', 'guest']).optional(),
-  excludeArchived: z.enum(['true', 'false']).optional(),
-  include: z.string().optional(),
-});
-
-/**
- * Workspaces
- */
-export const zGetWorkspacesResponse = z.object({
-  items: z.array(zWorkspace),
-  total: z.number(),
-});
-
-export const zGetWorkspacePath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-export const zGetWorkspaceQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
-  include: z.string().optional(),
-});
-
-/**
- * Workspace
- */
-export const zGetWorkspaceResponse = zWorkspace;
-
-export const zUpdateWorkspaceBody = z.object({
-  name: z
-    .string()
-    .min(2)
-    .max(255)
-    .regex(/^[\p{L}\d\-., '&()]+$/u)
-    .optional(),
-});
-
-export const zUpdateWorkspacePath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Workspace updated
- */
-export const zUpdateWorkspaceResponse = zWorkspace;
 
 export const zDeleteProjectsBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
@@ -2481,12 +2347,139 @@ export const zMoveProjectToWorkspaceResponse = zProject.and(
   }),
 );
 
-export const zHandleMcpBody = z.unknown();
+export const zDeleteWorkspacesBody = z.object({
+  ids: z.array(z.string()).min(1).max(50),
+});
 
-export const zHandleMcpPath = z.object({
+export const zDeleteWorkspacesPath = z.object({
   tenantId: z.string().max(50),
   organizationId: z.string().max(50),
 });
+
+/**
+ * Success
+ */
+export const zDeleteWorkspacesResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const zCreateWorkspacesBody = z
+  .array(
+    z.object({
+      id: z
+        .string()
+        .max(50)
+        .regex(/^temp-/),
+      name: z
+        .string()
+        .min(2)
+        .max(255)
+        .regex(/^[\p{L}\d\-., '&()]+$/u),
+    }),
+  )
+  .min(1)
+  .max(10);
+
+export const zCreateWorkspacesPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Workspaces created
+ */
+export const zCreateWorkspacesResponse = z.object({
+  data: z.array(
+    zWorkspace.and(
+      z.object({
+        included: z
+          .object({
+            membership: zMembershipBase,
+            counts: z
+              .object({
+                membership: z.object({
+                  admin: z.number(),
+                  member: z.number(),
+                  guest: z.number(),
+                  pending: z.number(),
+                  total: z.number(),
+                }),
+                entities: z.record(z.string(), z.unknown()),
+                entitiesSelf: z.record(z.string(), z.unknown()),
+                activity: z.record(z.string(), z.unknown()),
+              })
+              .optional(),
+            members: z.array(zUserMinimalBase).optional(),
+          })
+          .optional(),
+      }),
+    ),
+  ),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const zGetWorkspacesQuery = z.object({
+  q: z.string().max(255).optional(),
+  sort: z.enum(['id', 'name', 'createdAt', 'displayOrder']).optional().default('displayOrder'),
+  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
+  organizationId: z.string().max(50).optional(),
+  role: z.enum(['admin', 'member', 'guest']).optional(),
+  excludeArchived: z.enum(['true', 'false']).optional(),
+  include: z.string().optional(),
+});
+
+/**
+ * Workspaces
+ */
+export const zGetWorkspacesResponse = z.object({
+  items: z.array(zWorkspace),
+  total: z.number(),
+});
+
+export const zGetWorkspacePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+export const zGetWorkspaceQuery = z.object({
+  slug: zBooleanQueryValue.optional(),
+  include: z.string().optional(),
+});
+
+/**
+ * Workspace
+ */
+export const zGetWorkspaceResponse = zWorkspace;
+
+export const zUpdateWorkspaceBody = z.object({
+  name: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u)
+    .optional(),
+});
+
+export const zUpdateWorkspacePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Workspace updated
+ */
+export const zUpdateWorkspaceResponse = zWorkspace;
 
 export const zDeleteAttachmentsBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
@@ -2646,6 +2639,136 @@ export const zUpdateAttachmentQuery = z.object({
  * Attachment was updated
  */
 export const zUpdateAttachmentResponse = zAttachment;
+
+export const zDeleteLabelsBody = z.object({
+  ids: z.array(z.string()).min(1).max(50),
+  stx: z
+    .object({
+      mutationId: z.string(),
+      sourceId: z.string(),
+    })
+    .optional(),
+});
+
+export const zDeleteLabelsPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Success
+ */
+export const zDeleteLabelsResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const zGetLabelsPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+export const zGetLabelsQuery = z.object({
+  q: z.string().max(255).optional(),
+  sort: z.enum(['name', 'usedCount']).optional().default('name'),
+  order: z.enum(['asc', 'desc']).optional().default('asc'),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+  seqCursor: z
+    .string()
+    .regex(/^\d+,\d+$/)
+    .optional(),
+  modes: z.string().optional(),
+  projectId: z.string().max(50).optional(),
+  workspaceId: z.string().max(50).optional(),
+});
+
+/**
+ * Label list
+ */
+export const zGetLabelsResponse = z.object({
+  items: z.array(zLabel),
+  total: z.number(),
+});
+
+export const zCreateLabelsBody = z
+  .array(
+    z.object({
+      name: z.string().max(255).optional(),
+      projectId: z.uuid(),
+      id: z.uuid(),
+      color: z.string().max(255).nullable(),
+      mode: z.enum(['primary', 'secondary', 'epic']).optional().default('secondary'),
+      slug: z.string().max(255).optional(),
+      icon: z.string().max(255).nullish(),
+      displayOrder: z.number().optional(),
+      stx: zStxBase,
+    }),
+  )
+  .min(1)
+  .max(50);
+
+export const zCreateLabelsPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+export const zCreateLabelsResponse = z.union([
+  z.object({
+    data: z.array(zLabel),
+    rejectedIds: z.array(z.string()),
+    rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+  }),
+  z.object({
+    data: z.array(zLabel),
+    rejectedIds: z.array(z.string()),
+    rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
+  }),
+]);
+
+export const zGetLabelPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Label
+ */
+export const zGetLabelResponse = zLabel;
+
+export const zUpdateLabelBody = z.object({
+  ops: z.object({
+    name: z.string().max(255).optional(),
+    color: z.string().max(255).nullish(),
+    slug: z.string().max(255).optional(),
+    icon: z.string().max(255).nullish(),
+    displayOrder: z.number().optional(),
+    description: z.string().max(1000000).nullish(),
+    mode: z.enum(['secondary', 'epic']).optional(),
+    organizationTracked: z.boolean().optional(),
+  }),
+  stx: zStxBase,
+});
+
+export const zUpdateLabelPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Label updated
+ */
+export const zUpdateLabelResponse = zLabel;
+
+export const zHandleMcpBody = z.unknown();
+
+export const zHandleMcpPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
 
 export const zDeleteMembershipsBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
@@ -2825,6 +2948,23 @@ export const zResendPendingInvitationPath = z.object({
  */
 export const zResendPendingInvitationResponse = z.void();
 
+export const zMarkSeenBody = z.object({
+  entityIds: z.array(z.string().max(50)).min(1).max(500),
+  entityType: z.enum(['task', 'label', 'attachment']),
+});
+
+export const zMarkSeenPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Seen records processed
+ */
+export const zMarkSeenResponse = z.object({
+  newCount: z.int().gte(0),
+});
+
 export const zDeleteTasksBody = z.object({
   ids: z.array(z.string()).min(1).max(100),
   stx: z
@@ -2975,143 +3115,3 @@ export const zUpdateTaskQuery = z.object({
  * Task updated
  */
 export const zUpdateTaskResponse = zTask;
-
-export const zDeleteLabelsBody = z.object({
-  ids: z.array(z.string()).min(1).max(50),
-  stx: z
-    .object({
-      mutationId: z.string(),
-      sourceId: z.string(),
-    })
-    .optional(),
-});
-
-export const zDeleteLabelsPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-});
-
-/**
- * Success
- */
-export const zDeleteLabelsResponse = z.object({
-  data: z.array(z.unknown()),
-  rejectedIds: z.array(z.string()),
-  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-});
-
-export const zGetLabelsPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-});
-
-export const zGetLabelsQuery = z.object({
-  q: z.string().max(255).optional(),
-  sort: z.enum(['name', 'usedCount']).optional().default('name'),
-  order: z.enum(['asc', 'desc']).optional().default('asc'),
-  offset: z.string().regex(/^\d+$/).optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
-  seqCursor: z
-    .string()
-    .regex(/^\d+,\d+$/)
-    .optional(),
-  modes: z.string().optional(),
-  projectId: z.string().max(50).optional(),
-  workspaceId: z.string().max(50).optional(),
-});
-
-/**
- * Label list
- */
-export const zGetLabelsResponse = z.object({
-  items: z.array(zLabel),
-  total: z.number(),
-});
-
-export const zCreateLabelsBody = z
-  .array(
-    z.object({
-      name: z.string().max(255).optional(),
-      projectId: z.uuid(),
-      id: z.uuid(),
-      color: z.string().max(255).nullable(),
-      mode: z.enum(['primary', 'secondary', 'epic']).optional().default('secondary'),
-      slug: z.string().max(255).optional(),
-      icon: z.string().max(255).nullish(),
-      displayOrder: z.number().optional(),
-      stx: zStxBase,
-    }),
-  )
-  .min(1)
-  .max(50);
-
-export const zCreateLabelsPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-});
-
-export const zCreateLabelsResponse = z.union([
-  z.object({
-    data: z.array(zLabel),
-    rejectedIds: z.array(z.string()),
-    rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-  }),
-  z.object({
-    data: z.array(zLabel),
-    rejectedIds: z.array(z.string()),
-    rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
-  }),
-]);
-
-export const zGetLabelPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Label
- */
-export const zGetLabelResponse = zLabel;
-
-export const zUpdateLabelBody = z.object({
-  ops: z.object({
-    name: z.string().max(255).optional(),
-    color: z.string().max(255).nullish(),
-    slug: z.string().max(255).optional(),
-    icon: z.string().max(255).nullish(),
-    displayOrder: z.number().optional(),
-    description: z.string().max(1000000).nullish(),
-    mode: z.enum(['secondary', 'epic']).optional(),
-    organizationTracked: z.boolean().optional(),
-  }),
-  stx: zStxBase,
-});
-
-export const zUpdateLabelPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Label updated
- */
-export const zUpdateLabelResponse = zLabel;
-
-export const zMarkSeenBody = z.object({
-  entityIds: z.array(z.string().max(50)).min(1).max(500),
-  entityType: z.enum(['task', 'label', 'attachment']),
-});
-
-export const zMarkSeenPath = z.object({
-  tenantId: z.string().max(50),
-  organizationId: z.string().max(50),
-});
-
-/**
- * Seen records processed
- */
-export const zMarkSeenResponse = z.object({
-  newCount: z.int().gte(0),
-});
