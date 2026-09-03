@@ -2,6 +2,7 @@ import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { tenantContext } from '#/db/tenant-context';
 import { defineBackendModule } from '#/lib/module';
 import { buildPrimaryLabelRows, propagateSetupConfigLabels } from '#/modules/label/helpers/primary-labels';
+import { labelHandlers } from '#/modules/label/label-handlers';
 import { insertLabels } from '#/modules/label/label-queries';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
@@ -13,6 +14,7 @@ defineBackendModule({
   name: 'labels',
   owner: 'app',
   scope: ['frontend', 'backend'],
+  routes: [{ path: '/:tenantId/:organizationId/labels', app: labelHandlers, phase: 'tenant' }],
   description: `Endpoints for managing labels, which are lightweight, user defined tags assigned to tasks.
     Labels help categorize and filter tasks (for example client, api, or backend). They exist at the
     project level and are available to all members of the project.`,

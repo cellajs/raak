@@ -1,0 +1,1 @@
+CREATE INDEX "memberships_workspace_user_archived_idx" ON "memberships" ("workspace_id","user_id","archived");

@@ -46,15 +46,13 @@ export default defineConfig({
     ],
     // Paths pinned to fork; prefer fork version during merge conflicts
     pinned: [
-      'backend/src/tables.ts',
       'backend/src/db/channel-tables.ts',
       // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.
       'backend/src/modules/attachment/helpers/attachment-placement.ts',
       'backend/src/modules.ts',
+      'backend/src/db/product-tables.ts',
+      'backend/src/schemas/app-schemas.ts',
       'bench/src/seeds/ids.ts',
-      'backend/src/routes.ts',
-      'backend/src/modules/memberships/memberships-db.ts',
-      'frontend/src/nav-config.tsx',
       'frontend/src/placement-config.ts',
       'frontend/src/members-config.ts',
       'frontend/src/routes-config.tsx',
@@ -63,10 +61,8 @@ export default defineConfig({
       'frontend/src/list-queries-config.tsx',
       'frontend/src/styling/gradients.css',
       'frontend/src/styling/tailwind.css',
-      'frontend/src/modules/home/onboarding/onboarding-config.ts',
       'locales/en/about.json',
       'locales/nl/about.json',
-      'backend/src/modules/organization/setup-config-schema.ts',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',
     ],
