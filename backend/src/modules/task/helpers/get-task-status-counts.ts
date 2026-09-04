@@ -1,4 +1,4 @@
-import type { DbContext } from '#/core/context';
+import type { AuthContext } from '#/core/context';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { countTasksByStatus } from '#/modules/task/task-queries';
 
@@ -12,7 +12,7 @@ const statusNames = Object.entries(TaskStatus)
  * Get task counts grouped by status for a single project.
  * Used in getProject (single entity) handler.
  */
-export const getTaskStatusCounts = async (ctx: DbContext, projectId: string): Promise<TaskStatusCounts> => {
+export const getTaskStatusCounts = async (ctx: AuthContext, projectId: string): Promise<TaskStatusCounts> => {
   const rows = await countTasksByStatus(ctx, { projectId });
 
   // Build object with all statuses defaulting to 0

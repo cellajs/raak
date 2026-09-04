@@ -1,7 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
-import { unsafeInternalAdminDb } from '#/db/db';
+import { getAdminDb } from '#/db/db';
 import { resolveEntity } from '#/modules/entities/entities-queries';
 import { publicProjectRoutes } from '#/modules/project/public-routes';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
@@ -15,7 +15,10 @@ app.openapi(publicProjectRoutes.getPublicProject, async (ctx) => {
   const { slug: bySlug } = ctx.req.valid('query');
   const entityType = 'project';
 
-  const project = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, { entityType, identifier: id, bySlug });
+  const project = await resolveEntity(
+    { var: { db: getAdminDb('public project reads') } },
+    { entityType, identifier: id, bySlug },
+  );
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType });
 
   // Anonymous engine check: readable only via the declared public read grant

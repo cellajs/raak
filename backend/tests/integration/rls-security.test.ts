@@ -6,9 +6,10 @@ import { testAdminRoleDatabaseUrl, testRuntimeDatabaseUrl } from 'shared/test-db
 import { buildTestEntityHierarchyPlan, type TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
 import { nanoidTenant } from 'shared/utils/nanoid';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { baseDb as adminDb, type Tx } from '#/db/db';
+import { baseDb as adminDb, type DbOrTx, type Tx } from '#/db/db';
 import { membershipImmutableColumns } from '#/db/immutability-triggers';
 import { buildInsertableProduct } from '#/mocks';
+import { loadSubjectRows, type NotificationSource } from '#/modules/notification/notification-sources';
 import { seenWindowMs, trackedProductTypes } from '#/modules/seen/operations/mark-seen';
 import { findUnseenCountsByUser } from '#/modules/seen/seen-queries';
 import { entityTables, getEntityTable } from '#/tables';
@@ -114,7 +115,7 @@ const makeRlsProductFixture = (entityType: ProductEntityType): RlsProductFixture
   const rowName = `RLS ${entityType}`;
   const plan = buildTestEntityHierarchyPlan({
     entityType,
-    rootChannelId: TEST_ORG_A,
+    organizationId: TEST_ORG_A,
     makeChannelId: () => randomUUID(),
   });
   // Deepest seeded ancestor is where unseen counts roll up (the org itself when org-homed).
@@ -193,53 +194,6 @@ async function checkRequiredTablesExist(): Promise<boolean> {
   const requiredTables = ['attachments', 'organizations', 'memberships'];
   const results = await Promise.all(requiredTables.map((tableName) => tableExists(tableName)));
   return results.every(Boolean);
-}
-
-/** Create the RLS roles if missing and re-apply FORCE RLS, ownership and grants. Idempotent. */
-async function ensureRlsRoles() {
-  await adminDb.execute(sql`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'runtime_role') THEN
-        CREATE ROLE runtime_role WITH LOGIN PASSWORD 'dev_password';
-      END IF;
-      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'admin_role') THEN
-        CREATE ROLE admin_role WITH LOGIN BYPASSRLS PASSWORD 'dev_password';
-      END IF;
-    END $$;
-  `);
-
-  await adminDb.execute(sql`GRANT USAGE ON SCHEMA public TO runtime_role`);
-  await adminDb.execute(sql`GRANT ALL ON SCHEMA public TO admin_role`);
-
-  // RLS-subject tables (FORCE RLS), org-scoped product entities + yjs_documents.
-  const rlsSubjectTables = [
-    'yjs_documents',
-    ...rlsProductTypes.map((t) => getTableName(entityTables[t as keyof typeof entityTables])),
-  ];
-  for (const table of rlsSubjectTables) {
-    if (!(await tableExists(table))) continue;
-    await adminDb.execute(sql.raw(`ALTER TABLE ${table} OWNER TO admin_role`));
-    await adminDb.execute(sql.raw(`ALTER TABLE ${table} FORCE ROW LEVEL SECURITY`));
-    await adminDb.execute(sql.raw(`GRANT SELECT, INSERT, UPDATE, DELETE ON ${table} TO runtime_role`));
-  }
-
-  // Non-RLS channel and seen tables: writes are enforced by application guards, not policies.
-  const channelTableNames = appConfig.channelEntityTypes
-    .map((type) => entityTables[type as keyof typeof entityTables])
-    .filter(Boolean)
-    .map((table) => getTableName(table));
-  const nonRlsTables = [...channelTableNames, 'memberships', 'inactive_memberships', 'users', 'tenants', 'seen_by'];
-  for (const table of nonRlsTables) {
-    if (!(await tableExists(table))) continue;
-    const priv = table === 'tenants' ? 'SELECT' : 'SELECT, INSERT, UPDATE, DELETE';
-    await adminDb.execute(sql.raw(`GRANT ${priv} ON ${table} TO runtime_role`));
-  }
-
-  // Admin gets full access; pg_catalog for JSONB operators.
-  await adminDb.execute(sql`GRANT ALL ON ALL TABLES IN SCHEMA public TO admin_role`);
-  await adminDb.execute(sql`GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO admin_role`);
-  await adminDb.execute(sql`GRANT USAGE ON SCHEMA pg_catalog TO runtime_role`);
 }
 
 /** Seed via adminDb (superuser) so RLS does not block the inserts. */
@@ -475,7 +429,6 @@ const rlsSuiteReady = await (async () => {
       return;
     }
 
-    await ensureRlsRoles();
     rolesAvailable = await checkRolesExist();
 
     if (!rolesAvailable) {
@@ -855,8 +808,46 @@ const rlsSuiteReady = await (async () => {
     });
   });
 
-  // CDC stamps seq as `admin_role` with no tenant context, so BYPASSRLS must cover FORCE RLS.
-  describe('CDC seq stamping (admin_role under FORCE RLS)', () => {
+  // The notification fan-out is a worker path off the activity bus: it reads product rows on a tenant-scoped runtime
+  // transaction (tenantReadById), never on the admin connection. This pins that the runtime read sees exactly the rows
+  // admin_role sees everything as the table owner (RLS enabled, not forced), and nothing without tenant context, so the fan-out can never notify from a partial view.
+  describe('Notification fan-out subject reads (worker path, runtime_role vs admin_role)', () => {
+    let adminRoleDb: NodePgDatabase;
+
+    beforeAll(async () => {
+      if (!rolesAvailable) return;
+      adminRoleDb = drizzle({
+        connection: { connectionString: testAdminRoleDatabaseUrl, connectionTimeoutMillis: 5_000 },
+      });
+    });
+
+    it.skipIf(iterableRlsProducts.length === 0)(
+      'tenant-scoped runtime read matches the admin_role read and is empty without context',
+      async () => {
+        if (!rolesAvailable) return;
+        const [entityType, fixture] = iterableRlsProducts[0];
+        // The generic table read; app declarations with their own loadRows take the same tx.
+        const source: NotificationSource = { entityType, declaration: {}, mentionable: false, deriveFrom: 'client' };
+        const ids = (rows: { id: string }[]) => rows.map((row) => row.id);
+
+        const asAdmin = await loadSubjectRows(source, adminRoleDb as unknown as DbOrTx, [fixture.rowId]);
+        const asRuntime = await queryAsRuntimeRole<{ id: string }>(TEST_TENANT_A, TEST_USER_A, (tx) =>
+          loadSubjectRows(source, tx as unknown as DbOrTx, [fixture.rowId]),
+        );
+        const withoutContext = await queryWithoutChannel<{ id: string }>((tx) =>
+          loadSubjectRows(source, tx as unknown as DbOrTx, [fixture.rowId]),
+        );
+
+        expect(ids(asAdmin), 'admin_role must see the fixture row (owner bypass)').toEqual([fixture.rowId]);
+        expect(ids(asRuntime), 'tenant-scoped runtime read must match the admin read').toEqual(ids(asAdmin));
+        expect(withoutContext, 'no tenant context must fail closed').toEqual([]);
+      },
+    );
+  });
+
+  // CDC stamps seq as `admin_role` with no tenant context. The role has no BYPASSRLS (managed providers
+  // cannot grant it); it bypasses because it owns the RLS tables and RLS is never forced.
+  describe('CDC seq stamping (admin_role as owner, RLS enabled and not forced)', () => {
     let adminRoleDb: NodePgDatabase;
 
     beforeAll(async () => {
@@ -867,11 +858,23 @@ const rlsSuiteReady = await (async () => {
       });
     });
 
-    it('admin_role has BYPASSRLS attribute', async () => {
-      const rows = getRows<{ bypass: boolean }>(
+    it('admin_role owns every RLS table without forced RLS, and holds no BYPASSRLS attribute', async () => {
+      const role = getRows<{ bypass: boolean }>(
         await adminDb.execute(sql`SELECT rolbypassrls AS bypass FROM pg_roles WHERE rolname = 'admin_role'`),
       );
-      expect(rows[0]?.bypass).toBe(true);
+      expect(role[0]?.bypass, 'the suite must prove owner bypass, not the attribute').toBe(false);
+
+      const blocked = getRows<{ relname: string }>(
+        await adminDb.execute(sql`
+          SELECT relname FROM pg_class
+          WHERE relnamespace = 'public'::regnamespace AND relkind = 'r' AND relrowsecurity
+            AND (relforcerowsecurity OR pg_get_userbyid(relowner) <> 'admin_role')
+        `),
+      );
+      expect(
+        blocked.map((r) => r.relname),
+        'RLS tables admin_role cannot bypass',
+      ).toEqual([]);
     });
 
     it.skipIf(iterableRlsProducts.length === 0)(
@@ -881,7 +884,7 @@ const rlsSuiteReady = await (async () => {
         const before = getRows<{ seq: string | number }>(
           await adminRoleDb.execute(sql.raw(`SELECT seq FROM ${fixture.table} WHERE id = '${fixture.rowId}'`)),
         );
-        expect(before, 'admin_role must see the product row (BYPASSRLS)').toHaveLength(1);
+        expect(before, 'admin_role must see the product row (owner bypass)').toHaveLength(1);
 
         // bigint columns come back as strings from node-pg; coerce
         const newSeq = Number(before[0].seq ?? 0) + 1;

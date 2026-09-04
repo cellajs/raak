@@ -759,6 +759,110 @@
     "pnpm test"
    ],
    "summary": "memberships-db.ts, routes.ts and tables.ts lose their pins: membership channel columns and indexes derive from the hierarchy, route mounts are declared on defineBackendModule (routes with a phase), entityTables derives from channel-tables.ts plus the new pinned product-tables.ts (also home of the app partition and grant lists). setup-config-schema.ts and app-channel-counts.ts merge into the pinned schemas/app-schemas.ts. user-profile-content.tsx hosts a user.profile slot (cella's organizations grid is a tool). Template pins add modules.ts and drop nav-config.tsx, onboarding-config.ts and user-profile-content.tsx. Apps move their fills, take upstream for the five files, and run generate (index-only migration for sub-root channels)."
+  },
+  {
+   "id": "20260903T0640-notifications-contract",
+   "version": "next",
+   "title": "Notifications contract: table-derived sources, attachment mentions, /n deep link",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "frontend/src",
+    "shared",
+    "yjs/src",
+    "locales"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check",
+    "pnpm test:core"
+   ],
+   "summary": "Notification sources derive from the product table (notifications: true; live rows, mentions writing via mentionableColumns, previews and digest names, deriveFrom both with a yjsMaterializer), apps declare only resolveRecipients/resolveContextId. Email and push links are self-describing /n links resolved by the frontend, resolveEmailLink is gone. Attachments are the template consumer (mentions column, description update op, materializer, collaborative editor in a sheet; useDescriptionUpdate is the shared persistence policy). appNotificationTypes extends the type enum and labels. Shared server BlockNote schema; pnpm style app allowlist. Inbox items carry actor, channelName and subjectTitle for sentence-style cards; channelRouteConfig.notificationSearch opens the subject; a notifications seed on mockSeedNotification."
+  },
+  {
+   "id": "20260904T0746-organization-spine",
+   "version": "next",
+   "title": "Organization is the spine: no configurable root channel, explicit request scope",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "frontend/src",
+    "shared",
+    "cdc/src",
+    "yjs/src"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check",
+    "pnpm test:core"
+   ],
+   "summary": "The hierarchy builder declares the organization with organization({ roles, elevated }) as the only parentless entity and channel() requires a parent; hierarchy.rootChannelType, RootChannelType, rootRoles/getRootRole (now organizationRoles/getOrganizationRole), resolveRootMembershipRole (now resolveOrganizationMembershipRole) and the rootChannelId test-plan option (now organizationId) are gone, and every root-detection idiom becomes the literal 'organization'. Organization-bound tables declare organizationForeignKey(table). getValidProduct requires tenant + organization scope on the request context (500 otherwise) and reads wrong-tenant, wrong-organization, deleted, draft and missing rows as one 404 before the engine; getValidChannel compares whichever of the two the context set. No DB or wire change."
+  },
+  {
+   "id": "20260904T0846-rls-defense-in-depth",
+   "version": "next",
+   "title": "RLS defense in depth: explicit request scope, lazy admin credential, verified catalog, runtime-role parity run",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/scripts",
+    "backend/tests",
+    "yjs/src",
+    ".github/workflows"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check",
+    "pnpm test:core",
+    "pnpm test:core:runtime"
+   ],
+   "summary": "requestScopeWhere(ctx, table) adds the guarded tenant + organization predicate to every organization-bound product query and splitByPermission rejects unknown and out-of-scope ids, so removing RLS broadens no application query. The admin pool is lazy (getAdminDb(purpose), getSeedDb(); migrationDb, unsafeInternalAdminDb and seedDb are gone) and DATABASE_ADMIN_URL is optional for the request-serving API. The RLS and verify side-effect blocks refuse to run without runtime_role and admin_role; the verifier asserts owner, the four-policy contract (rlsPolicyContract), grants per classification and that runtime_role has no BYPASSRLS. Test global setup creates roles before migrating and refuses a degraded volume; verification tests inspect the catalog without repairing it. The backend suite also runs as runtime_role (test:core:runtime, CI step). The Yjs startup sweep lists and deletes per tenant inside tenant-scoped transactions; deleteStaleDoc takes the row."
+  },
+  {
+   "id": "20260904T0947-rls-owner-bypass",
+   "version": "next",
+   "title": "RLS owner bypass replaces BYPASSRLS: NO FORCE RLS, effective CDC role probe, smoke warnings",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/scripts",
+    "backend/tests",
+    "cdc/src",
+    "infra"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check"
+   ],
+   "summary": "RLS tables are ENABLE (never FORCE) so admin_role bypasses as owner; Scaleway cannot grant BYPASSRLS (found by the 0.10.0 smoke failure). create-db-roles and the test setup create admin_role without BYPASSRLS; verify asserts enabled-not-forced. CDC worker probes effective bypass per table (rlsBypass/rlsBlockedTables, health reason rls_bypass_missing replaces role_missing_bypassrls). Smoke results are ok/warn/fail (degraded warns via ::warning::, unhealthy fails); infra status gains live.components on the shared lib/health-components.ts."
+  },
+  {
+   "id": "20260904T1349-table-bar-sticky-cleanup",
+   "version": "next",
+   "title": "Table filter bars drop the dead sticky wiring",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "frontend/src"
+   ],
+   "requires": [
+    "pnpm check"
+   ],
+   "summary": "TableBarContainer no longer wraps filter rows in StickyBox: enableSticky defaulted to false and no bar ever set it, so offsetTop, enableSticky, the focusView subscription and the group/sticky classes were dead. The container is now a plain flex row plus the search-vars scroll reset, and EntityGridBar drops its isSheet prop (it only fed offsetTop). App-owned bars remove offsetTop from <TableBarContainer> and isSheet from <EntityGridBar>. StickyBox itself is untouched."
   }
  ]
 }

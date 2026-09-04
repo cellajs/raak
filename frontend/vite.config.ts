@@ -334,7 +334,8 @@ const viteConfig = {
     {
       enforce: 'pre' as const,
       ...mdx({
-        // fork: bridge for cellajs/cella#1128 (root-level CHANGELOG.md must compile); drop on the next sync
+        // Template docs live under cella/. An app keeps its release-please CHANGELOG.md at the repo root
+        // (cella/CHANGELOG.md is template-owned and overwritten on sync), so root-level SHOUTCASE .md compile too.
         include: /\/(src\/content\/docs\/.*\.(md|mdx)|(cella\/)?[A-Z][A-Z_]*\.md|[a-z-]+\/README\.md)$/,
         format: 'detect',
         // Read component overrides (links, headings) from MDXProvider context. A

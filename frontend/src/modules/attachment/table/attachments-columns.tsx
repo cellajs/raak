@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import type { Attachment } from 'sdk';
 import { resolveCan, seenWindowMs } from 'shared';
 import { DownloadCell, EllipsisCell, ThumbnailCell } from '~/modules/attachment/table/attachment-cells';
-import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
+import { DescriptionCell, openDescriptionSheetFromCell } from '~/modules/attachment/table/description-cell';
+import { EditCellInput, externalEditorOptions, RenderExternalEditor } from '~/modules/common/data-grid/cell-renderers';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { EnrichedChannel } from '~/modules/entities/types';
@@ -66,6 +67,22 @@ export const useColumns = (channel: EnrichedChannel, isSheet: boolean) => {
         ...(canUpdate && {
           renderEditCell: ({ row, onRowChange }) => (
             <EditCellInput value={row.name} onChange={(e) => onRowChange({ ...row, name: e.target.value })} autoFocus />
+          ),
+        }),
+      },
+      {
+        key: 'description',
+        name: t('c:description'),
+        minBreakpoint: 'md',
+        resizable: true,
+        minWidth: 200,
+        placeholderValue: '-',
+        renderCell: ({ row, isCellEditable }) => <DescriptionCell row={row} editable={isCellEditable} />,
+        // The editor is the description sheet: entering edit mode opens it and leaves edit mode again.
+        ...(canUpdate && {
+          editorOptions: externalEditorOptions,
+          renderEditCell: ({ row, onClose }) => (
+            <RenderExternalEditor onClose={onClose} open={(cell) => openDescriptionSheetFromCell(row.id, cell)} />
           ),
         }),
       },

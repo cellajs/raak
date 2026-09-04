@@ -40,6 +40,11 @@
     "20260902T0949-generic-app-adoptions",
     "20260902T0950-brand-and-app-locale-ignored",
     "20260902T1355-members-config-and-hierarchy-test-seeds",
-    "20260902T1536-seam-consolidation"
+    "20260902T1536-seam-consolidation",
+    "20260903T0640-notifications-contract",
+    "20260904T0746-organization-spine",
+    "20260904T0846-rls-defense-in-depth",
+    "20260904T0947-rls-owner-bypass",
+    "20260904T1349-table-bar-sticky-cleanup"
   ]
 }

@@ -1,6 +1,7 @@
 import { and, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import { appConfig } from 'shared';
 import type { AuthContext, DbContext } from '#/core/context';
+import { requestScopeWhere } from '#/db/utils/request-scope';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { labelsTable } from '#/modules/label/label-db';
 
@@ -18,17 +19,20 @@ interface FindLabelsByStxMutationIdOpts {
 }
 
 export const findLabelsByStxMutationId = async (ctx: AuthContext, { mutationId }: FindLabelsByStxMutationIdOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   return db
     .select()
     .from(labelsTable)
-    .where(and(sql`${labelsTable.stx}->>'mutationId' = ${mutationId}`, eq(labelsTable.organizationId, organizationId)));
+    .where(and(sql`${labelsTable.stx}->>'mutationId' = ${mutationId}`, requestScopeWhere(ctx, labelsTable, 'label')));
 };
 
 /** Find all labels in an organization (used for duplicate/color matching). */
 export const findLabelsByOrg = async (ctx: AuthContext) => {
-  const { db, organizationId } = ctx.var;
-  return db.select().from(labelsTable).where(eq(labelsTable.organizationId, organizationId));
+  const { db } = ctx.var;
+  return db
+    .select()
+    .from(labelsTable)
+    .where(requestScopeWhere(ctx, labelsTable, 'label'));
 };
 
 interface InsertLabelsOpts {
@@ -48,11 +52,11 @@ interface UpdateLabelOpts {
 
 /** Update a label by ID and return the updated row. */
 export const updateLabel = async (ctx: AuthContext, { id, values }: UpdateLabelOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   const [updated] = await db
     .update(labelsTable)
     .set(values)
-    .where(and(eq(labelsTable.id, id), eq(labelsTable.organizationId, organizationId)))
+    .where(and(eq(labelsTable.id, id), requestScopeWhere(ctx, labelsTable, 'label')))
     .returning();
   return updated;
 };
@@ -65,12 +69,12 @@ interface DeleteLabelsByIdsOpts {
 
 /** Soft-delete labels by IDs. */
 export const deleteLabelsByIds = async (ctx: AuthContext, { ids, deletedAt, deletedBy }: DeleteLabelsByIdsOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   return db
     .update(labelsTable)
     .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
     .where(
-      and(inArray(labelsTable.id, ids), eq(labelsTable.organizationId, organizationId), isNull(labelsTable.deletedAt)),
+      and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)),
     );
 };
 
@@ -104,7 +108,7 @@ interface BuildLabelsListQueryOpts {
 
 /** Build the labels list query with counter join and filters. Returns a subquery. */
 export const buildLabelsListQuery = (ctx: AuthContext, { filters }: BuildLabelsListQueryOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   return db
     .select({
       ...getColumns(labelsTable),
@@ -114,5 +118,5 @@ export const buildLabelsListQuery = (ctx: AuthContext, { filters }: BuildLabelsL
     })
     .from(labelsTable)
     .leftJoin(channelCountersTable, sql`${channelCountersTable.channelKey} = ${labelsTable.id}::text`)
-    .where(and(eq(labelsTable.organizationId, organizationId), ...filters));
+    .where(and(requestScopeWhere(ctx, labelsTable, 'label'), ...filters));
 };

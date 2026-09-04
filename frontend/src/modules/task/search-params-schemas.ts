@@ -20,6 +20,10 @@ export const boardSearchDefaults = {
 const baseTaskViewSchema = z.object({
   taskSheetId: z.string().optional(),
   userSheetId: z.string().optional(),
+  // Attachments are project-homed, so their notification links resolve here; the globally mounted
+  // dialog handler only sees params the route validates.
+  attachmentDialogId: z.string().optional(),
+  groupId: z.string().optional(),
   view: taskViewSchema.optional(),
   ...labelPanelSearchSchema.shape,
 });

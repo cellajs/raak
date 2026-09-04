@@ -3,7 +3,7 @@ import { updateTask } from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { generateServerHLC } from '#/core/stx';
-import { baseDb as db } from '#/db/db';
+import { getSeedDb } from '#/db/db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { tasksTable } from '#/modules/task/task-db';
@@ -13,6 +13,9 @@ import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
 import { mockFetchRequest, setTestConfig } from './test-utils';
+
+// Direct table seeding and inspection run as admin: tasks are RLS-subject and the runtime role sees them only inside a tenant transaction.
+const db = getSeedDb();
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 

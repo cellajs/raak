@@ -1,5 +1,87 @@
 # Changelog
 
+## [0.10.1](https://github.com/cellajs/cella/compare/0.10.0...0.10.1) (2026-09-04)
+
+
+### 🎉 New features
+
+* **account:** email digest label, spacing, radio group with help popover ([#1145](https://github.com/cellajs/cella/issues/1145)) ([b1504fd](https://github.com/cellajs/cella/commit/b1504fd187e8ae7f0b60b0145c7ce661a77ff6c1))
+* **attachments:** description cell edits like other cells; mention names in flattened text ([#1141](https://github.com/cellajs/cella/issues/1141)) ([1e743fb](https://github.com/cellajs/cella/commit/1e743fba8c04604c3f6698eb2f01c1620be65272))
+* **nav:** notifications sheet tuning, drop home nav button, shared nav sheet frame ([#1142](https://github.com/cellajs/cella/issues/1142)) ([d2cd3ee](https://github.com/cellajs/cella/commit/d2cd3eeccc88d4409d17d6112786c7545e54d781))
+* **rls:** parity run, explicit request scope, per-tenant Yjs sweep, verified catalog, lazy admin credential ([#1137](https://github.com/cellajs/cella/issues/1137)) ([34d6d7a](https://github.com/cellajs/cella/commit/34d6d7ad72bce3c7d6510547865a4aee14f59c70))
+* **ui:** UI/UX improvements: attachment dialog description, nav loader, search polish ([#1149](https://github.com/cellajs/cella/issues/1149)) ([51c5921](https://github.com/cellajs/cella/commit/51c5921f87d3298d5510e375edbf51a397768c50))
+
+
+### 🐞 Bug fixes
+
+* **account:** drop bare id on notifications card that broke scroll spy ([#1144](https://github.com/cellajs/cella/issues/1144)) ([285d654](https://github.com/cellajs/cella/commit/285d6541fca0058d96293d6ed66143bf2bf071a6))
+* **form:** slug field ring resets on every value change and ignores stale checks ([#1148](https://github.com/cellajs/cella/issues/1148)) ([80b645c](https://github.com/cellajs/cella/commit/80b645c61e1bdf536bdc2597f9d04222ff3ed6e4))
+* **marketing:** mobile drawer says About, not Home ([#1143](https://github.com/cellajs/cella/issues/1143)) ([d98c19e](https://github.com/cellajs/cella/commit/d98c19e741205aa994083b803ab896dd1a77aaf7))
+* **mobile:** docs render-mode labels, dialog overflow, breakpoint flip, floating nav inset ([#1139](https://github.com/cellajs/cella/issues/1139)) ([245efe2](https://github.com/cellajs/cella/commit/245efe297ef9bd13681ee3e00d7a17d0e571e4fc))
+* **rls:** owner bypass replaces BYPASSRLS, smoke warn tier, status components check ([#1140](https://github.com/cellajs/cella/issues/1140)) ([972d8b6](https://github.com/cellajs/cella/commit/972d8b65d81a6597a128a2cfe2ed7f1972b9be17))
+
+
+### 🔧 Small improvements
+
+* **table:** drop dead sticky wiring from table filter bars ([#1147](https://github.com/cellajs/cella/issues/1147)) ([9cfd566](https://github.com/cellajs/cella/commit/9cfd5662368037d780ca83b90589d329d763815f))
+
+## [0.10.0](https://github.com/cellajs/cella/compare/0.9.8...0.10.0) (2026-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **permissions:** per-channel elevatedGrants and explicit rootRoles ([#1107](https://github.com/cellajs/cella/issues/1107))
+
+### 🎉 New features
+
+* **attachment:** channel placement seam with an org-homed default ([#1108](https://github.com/cellajs/cella/issues/1108)) ([35d78f1](https://github.com/cellajs/cella/commit/35d78f146aa1e16d7d6d53cd00f0355f22faa0ba))
+* **memberships:** per-member insight counts and recent-activity default sort ([#1109](https://github.com/cellajs/cella/issues/1109)) ([40fed1b](https://github.com/cellajs/cella/commit/40fed1b6cfc1df5f3797141b9fcbf63934a09c28))
+* **notifications:** inbox, mentions and email digest module ([#1113](https://github.com/cellajs/cella/issues/1113)) ([35057de](https://github.com/cellajs/cella/commit/35057deb3843f5b8c1c9131ea622b9ec92038079))
+* **notifications:** table-derived sources, attachment mentions, /n deep links ([#1131](https://github.com/cellajs/cella/issues/1131)) ([377784e](https://github.com/cellajs/cella/commit/377784ef522b51d65ddd85f7a56b9ca744ce6bb5))
+* **push:** Web Push for notifications (infra, delivery, periodicsync retirement) ([#1116](https://github.com/cellajs/cella/issues/1116)) ([91af054](https://github.com/cellajs/cella/commit/91af054df0754a131dccde5c536570f75f9a01c0))
+* **seen:** app badge counts unread notifications ([#1114](https://github.com/cellajs/cella/issues/1114)) ([5915906](https://github.com/cellajs/cella/commit/5915906ea61404a38619b62339a3dd7193e12a38))
+* **ui:** spotlighter page-dim overlay primitive ([#1112](https://github.com/cellajs/cella/issues/1112)) ([25568b5](https://github.com/cellajs/cella/commit/25568b575c6e3a6e18cd396a526339c2d214446b))
+
+
+### 🐞 Bug fixes
+
+* address the code findings from the docs bottom-up review ([#1134](https://github.com/cellajs/cella/issues/1134)) ([62397b9](https://github.com/cellajs/cella/commit/62397b90153ffebbc51173b0c23dc80f8a937d21))
+* **docs:** let a newer commit overtake the frontmatter updatedAt stamp ([#1135](https://github.com/cellajs/cella/issues/1135)) ([acb1a45](https://github.com/cellajs/cella/commit/acb1a45365ca5a747b87e3a86f7518be7b131173))
+* **frontend:** compile an app's root-level CHANGELOG.md in MDX, build the frontend in PR CI ([#1128](https://github.com/cellajs/cella/issues/1128)) ([f926cc2](https://github.com/cellajs/cella/commit/f926cc2695a6588fd0ccdbedc7b9fa8c0c534fa8))
+* **query:** make revalidateIfStale reach ensureQueryData, retire two stale TODOs ([#1123](https://github.com/cellajs/cella/issues/1123)) ([ba3f346](https://github.com/cellajs/cella/commit/ba3f3465d80dbdfc29c3f4668457440501b741b8))
+* **seeds:** batch organization member inserts, seed admin as org admin on live memberships ([#1125](https://github.com/cellajs/cella/issues/1125)) ([1d7f8f8](https://github.com/cellajs/cella/commit/1d7f8f8d67c369517d486d0cc4a5149a1553a655))
+
+
+### 🔧 Small improvements
+
+* adopt projectcampus tunings sweep (UI, drafts, sync, seen) ([#1105](https://github.com/cellajs/cella/issues/1105)) ([f132504](https://github.com/cellajs/cella/commit/f1325046cd5c16636be3e759deac8836ceb96715))
+* **attachments:** hierarchy-derived placement seam, config subpath export ([#1122](https://github.com/cellajs/cella/issues/1122)) ([dfc473b](https://github.com/cellajs/cella/commit/dfc473b674262933f028c962a8958366edc0124b))
+* **blocknote:** static document pipeline with first-pass HTML cache ([#1110](https://github.com/cellajs/cella/issues/1110)) ([2f093aa](https://github.com/cellajs/cella/commit/2f093aa02411d2bbc7d58dc616db087152af9d5d))
+* fork drift convergence (role vocabulary, placement seam v2, generic adoptions, ignored brand files) ([#1121](https://github.com/cellajs/cella/issues/1121)) ([3d8be71](https://github.com/cellajs/cella/commit/3d8be713ba3f31790f69e7255e07afa72ff4c062))
+* **hierarchy:** organization is the spine, explicit request scope in entity validation ([#1136](https://github.com/cellajs/cella/issues/1136)) ([3dd0b90](https://github.com/cellajs/cella/commit/3dd0b908cce16f37ef2ae483cb518e1068495a23))
+* **infra:** resolve the admin IAM app by name, drop its env vars ([#1119](https://github.com/cellajs/cella/issues/1119)) ([33ed326](https://github.com/cellajs/cella/commit/33ed326b3f3007ffd90bbc2cdad29e189af1ed8f))
+* **memberships:** generalize JoinedButton for reuse beyond the org header ([#1104](https://github.com/cellajs/cella/issues/1104)) ([e6ad215](https://github.com/cellajs/cella/commit/e6ad2155a0a97a0eb938d02c597d016047a17c4f))
+* **memberships:** members-config seam, hierarchy-aware test seeds from fork drift ([#1124](https://github.com/cellajs/cella/issues/1124)) ([18aa3d7](https://github.com/cellajs/cella/commit/18aa3d77b5a8fc0aa80d72d5ff91a77537f82811))
+* **permissions:** per-channel elevatedGrants and explicit rootRoles ([#1107](https://github.com/cellajs/cella/issues/1107)) ([686289a](https://github.com/cellajs/cella/commit/686289a62e41c2296f0442903cda6a507c538a4c))
+* **seams:** consolidate fork seams (derived memberships, module routes, product tables, app schemas, profile slot) ([#1126](https://github.com/cellajs/cella/issues/1126)) ([5d3f50c](https://github.com/cellajs/cella/commit/5d3f50cca8cf5a4d81c037483a9652c3c9240f09))
+* **sync:** generic channel-path resolver, drop register-channel-paths seam ([#1120](https://github.com/cellajs/cella/issues/1120)) ([2e2b825](https://github.com/cellajs/cella/commit/2e2b8253a59a6f08db2e2a2372215731ce306a65))
+
+
+### 📖 Documentation
+
+* bottom-up review of every /docs-imported doc against the code ([#1132](https://github.com/cellajs/cella/issues/1132)) ([c3e8363](https://github.com/cellajs/cella/commit/c3e83631a35d8872fe8e4b5fdf413dd607ba15bc))
+* **migrations:** formlabel help popover replaces FormDescription ([#1106](https://github.com/cellajs/cella/issues/1106)) ([4766180](https://github.com/cellajs/cella/commit/47661801e3d7dd4e1f0b90c386a8a2863ecec2c7))
+* reduce Markdown by 29% without dropping rules ([#1127](https://github.com/cellajs/cella/issues/1127)) ([45e881a](https://github.com/cellajs/cella/commit/45e881a7a0ec1bdcdd10c19ebcb8bf80ee2cae2f))
+* remove paragraphs that restate another doc, fix eight doc contradictions ([#1130](https://github.com/cellajs/cella/issues/1130)) ([386ed48](https://github.com/cellajs/cella/commit/386ed483b530529719b04e12be8c752aabfbe7fa))
+
+
+### 🧹 Chores
+
+* bump biome to 2.5.10 and add channel-path resolver seam ([#1111](https://github.com/cellajs/cella/issues/1111)) ([b703122](https://github.com/cellajs/cella/commit/b703122d577dee4a4cab9ddfa7d414d1c35f2f1b))
+* docs alignment ([#1117](https://github.com/cellajs/cella/issues/1117)) ([ec67c60](https://github.com/cellajs/cella/commit/ec67c605a17c8e88466c3be52b4e4fd5a70fc4db))
+* update dependencies ([#1102](https://github.com/cellajs/cella/issues/1102)) ([781bc72](https://github.com/cellajs/cella/commit/781bc72088ad069747fe5f52b41b298f226dc7df))
+* update dependencies ([#1118](https://github.com/cellajs/cella/issues/1118)) ([28760c7](https://github.com/cellajs/cella/commit/28760c79a4e492b83a77d87be3b295114a6bdfe7))
+
 ## [0.9.8](https://github.com/cellajs/cella/compare/0.9.7...0.9.8) (2026-08-24)
 
 

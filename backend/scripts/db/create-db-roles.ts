@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { migrationDb } from '#/db/db';
+import { getAdminDb } from '#/db/db';
 import { env } from '#/env';
 import { timestamp } from '#/utils/console';
 import pc from 'picocolors';
@@ -42,19 +42,21 @@ ELSE
 END IF;
 
 -- admin_role: Migrations, seeds, system admin, CDC worker.
--- Needs BYPASSRLS (for CDC seq stamping under FORCE RLS) and REPLICATION (for the CDC slot).
--- Try with both first; fall back without them on managed providers that forbid these attributes.
+-- Needs REPLICATION (for the CDC slot). It bypasses RLS as the owner of every RLS table (RLS is
+-- enabled, never forced), so BYPASSRLS is deliberately not requested: managed providers such as
+-- Scaleway cannot grant it and dev should mirror that shape.
+-- Try with REPLICATION first; fall back without it on managed providers that forbid the attribute.
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'admin_role') THEN
-    CREATE ROLE admin_role WITH LOGIN BYPASSRLS REPLICATION PASSWORD '${escSql(adminPassword)}';
-    RAISE NOTICE 'Created role admin_role with BYPASSRLS + REPLICATION';
+    CREATE ROLE admin_role WITH LOGIN REPLICATION PASSWORD '${escSql(adminPassword)}';
+    RAISE NOTICE 'Created role admin_role with REPLICATION';
   ELSE
-    ALTER ROLE admin_role WITH BYPASSRLS REPLICATION PASSWORD '${escSql(adminPassword)}';
+    ALTER ROLE admin_role WITH REPLICATION PASSWORD '${escSql(adminPassword)}';
   END IF;
 EXCEPTION WHEN OTHERS THEN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'admin_role') THEN
     CREATE ROLE admin_role WITH LOGIN PASSWORD '${escSql(adminPassword)}';
-    RAISE NOTICE 'Created role admin_role without BYPASSRLS/REPLICATION (managed provider)';
+    RAISE NOTICE 'Created role admin_role without REPLICATION (managed provider)';
   ELSE
     ALTER ROLE admin_role WITH PASSWORD '${escSql(adminPassword)}';
   END IF;
@@ -107,7 +109,7 @@ const requiredRoles = ['runtime_role', 'admin_role'] as const;
  * Returns true if setup can be skipped (avoids catalog writes on hot-reload).
  */
 async function rolesExist(): Promise<boolean> {
-const result = await migrationDb!.execute(
+const result = await getAdminDb('role setup').execute(
   sql.raw(`SELECT COUNT(*)::int AS cnt FROM pg_roles WHERE rolname IN ('${requiredRoles.join("','")}')`),
 );
 return (result.rows[0] as { cnt: number }).cnt === requiredRoles.length;
@@ -118,15 +120,13 @@ return (result.rows[0] as { cnt: number }).cnt === requiredRoles.length;
  * If so, roles are Scaleway-managed and we only need to ensure grants.
  */
 async function isRoleManagedExternally(): Promise<boolean> {
-  const result = await migrationDb!.execute(sql.raw('SELECT CURRENT_USER AS cu'));
+  const result = await getAdminDb('role setup').execute(sql.raw('SELECT CURRENT_USER AS cu'));
   const currentUser = (result.rows[0] as { cu: string }).cu;
   return requiredRoles.includes(currentUser as typeof requiredRoles[number]);
 }
 
 export async function createDbRoles() {
-  if (!migrationDb) {
-    throw new Error('DATABASE_ADMIN_URL required for role setup');
-  }
+  const migrationDb = getAdminDb('role setup');
 
   // If we're connected as one of the application roles, they're managed externally
   // (e.g., Scaleway-managed users). Only ensure grants are in place.

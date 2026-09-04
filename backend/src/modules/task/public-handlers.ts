@@ -2,7 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { isUnpublishedDraft } from 'shared';
 import type { AuthContext, Env } from '#/core/context';
 import { AppError } from '#/core/error';
-import { unsafeInternalAdminDb } from '#/db/db';
+import { getAdminDb } from '#/db/db';
 import { resolveEntity } from '#/modules/entities/entities-queries';
 import { getTasks } from '#/modules/task/helpers/get-tasks';
 import { getTaskRelations, hydrateTask } from '#/modules/task/helpers/hydrate-task';
@@ -18,7 +18,10 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   // Validate request
   if (!id) throw new AppError(404, 'not_found', 'warn');
 
-  const mainTask = await resolveEntity({ var: { db: unsafeInternalAdminDb! } }, { entityType: 'task', identifier: id });
+  const mainTask = await resolveEntity(
+    { var: { db: getAdminDb('public task reads') } },
+    { entityType: 'task', identifier: id },
+  );
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Drafts are never publicly readable: they read as absent to non-authors (the anonymous caller).
@@ -32,9 +35,14 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'task' });
   }
 
-  // Relation reads (labels incl. the primary label) are org-scoped, so carry the task's org.
+  // Relation reads are request-scoped, so carry the task's own tenant and organization.
   const publicCtx = {
-    var: { db: unsafeInternalAdminDb!, userId: '', organizationId: mainTask.organizationId },
+    var: {
+      db: getAdminDb('public task reads'),
+      userId: '',
+      tenantId: mainTask.tenantId,
+      organizationId: mainTask.organizationId,
+    },
   } as AuthContext;
   const [users, labels] = await getTaskRelations(publicCtx, { tasks: [mainTask] });
 
@@ -49,13 +57,18 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   // Public reads intentionally bypass tenant status checks from tenantGuard. Resolve the project
   // for org scoping only; the project's own publicAt does not gate the list.
   const project = await resolveEntity(
-    { var: { db: unsafeInternalAdminDb! } },
+    { var: { db: getAdminDb('public task reads') } },
     { entityType: 'project', identifier: projectId },
   );
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
   const publicCtx = {
-    var: { db: unsafeInternalAdminDb!, userId: '', organizationId: project.organizationId },
+    var: {
+      db: getAdminDb('public task reads'),
+      userId: '',
+      tenantId: project.tenantId,
+      organizationId: project.organizationId,
+    },
   } as AuthContext;
   const response = await getTasks(publicCtx, [project.id], queryInfo, { publicOnly: true });
   return ctx.json(response, 200);

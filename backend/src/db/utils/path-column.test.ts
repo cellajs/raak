@@ -2,7 +2,9 @@ import { sql } from 'drizzle-orm';
 import { createEntityHierarchy, createRoleRegistry } from 'shared';
 import { deepHierarchy as deepH } from 'shared/testing/deep-fixture';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { seedDb } from '#/db/db';
+import { getSeedDb } from '#/db/db';
+
+const seedDb = getSeedDb();
 
 /** The generated-column SQL rule and the JS rule must produce identical paths for every row shape. */
 const roles = createRoleRegistry(['admin', 'member'] as const);
@@ -10,7 +12,7 @@ const roles = createRoleRegistry(['admin', 'member'] as const);
 // Synthetic org-homed product: binding to the real config would break the assertion in apps that re-home it.
 const orgHomedH = createEntityHierarchy(roles)
   .user()
-  .channel('organization', { parent: null, roles: roles.all })
+  .organization({ roles: roles.all })
   .product('doc', { parent: 'organization' })
   .build();
 describe('pathColumnSql (SQL shape)', () => {
@@ -18,7 +20,7 @@ describe('pathColumnSql (SQL shape)', () => {
     expect(orgHomedH.pathColumnSql('doc', false)).toBe('"organization_id"::text');
   });
 
-  it('root channel (organization): its own id', () => {
+  it('organization: its own id', () => {
     expect(orgHomedH.pathColumnSql('organization', true)).toBe('"id"::text');
   });
 

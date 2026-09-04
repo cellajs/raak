@@ -7,7 +7,6 @@ import {
   type EntityType,
   hierarchy,
   type NullableAncestorType,
-  type RootChannelType,
 } from 'shared';
 import type { AuthContext } from '#/core/context';
 import { AppError } from '#/core/error';
@@ -19,10 +18,9 @@ import { findProjectById } from '#/modules/task/task-queries';
 import { getValidChannel } from '#/permissions/get-valid-channel';
 import { validUuidSchema } from '#/schemas';
 
-const rootChannelType: string = hierarchy.rootChannelType;
 const nullableAncestors = new Set<string>(hierarchy.getNullableAncestors('attachment'));
 /** Sub-organization ancestors an attachment can home at, deepest first; none in cella. */
-const placementAncestors = hierarchy.getOrderedAncestors('attachment').filter((type) => type !== rootChannelType);
+const placementAncestors = hierarchy.getOrderedAncestors('attachment').filter((type) => type !== 'organization');
 const placementKey = (type: string) => appConfig.entityIdColumnKeys[type as ChannelEntityType];
 
 /**
@@ -42,7 +40,7 @@ export const attachmentPlacementFieldsSchema = Object.fromEntries(
 /** A create-body item as the placement seam sees it; apps narrow to their placement fields. */
 export type AttachmentPlacementInput = Record<string, unknown>;
 
-type SubOrgAncestor = Exclude<AncestorChannelType<'attachment'>, RootChannelType>;
+type SubOrgAncestor = Exclude<AncestorChannelType<'attachment'>, 'organization'>;
 
 /**
  * Ancestor id columns to stamp on the inserted row, typed like the table columns: strict ancestors
@@ -88,7 +86,7 @@ export const resolveAttachmentPlacement = async (
   const row = entity as Record<string, unknown>;
   columns[placementKey(home)] = entity.id;
   for (const ancestor of hierarchy.getOrderedAncestors(home)) {
-    if (ancestor === rootChannelType) break;
+    if (ancestor === 'organization') break;
     const id = row[placementKey(ancestor)];
     columns[placementKey(ancestor)] = typeof id === 'string' ? id : null;
   }
@@ -96,11 +94,11 @@ export const resolveAttachmentPlacement = async (
 };
 
 /**
- * The channel type attachments home at: the deepest strict ancestor, else the root. Apps with
- * nullable placement (rows home at any depth) keep the root here and read org-wide.
+ * The channel type attachments home at: the deepest strict ancestor, else the organization. Apps
+ * with nullable placement (rows home at any depth) keep the organization here and read org-wide.
  */
 const homeChannelType =
-  hierarchy.getOrderedAncestors('attachment').find((type) => !nullableAncestors.has(type)) ?? hierarchy.rootChannelType;
+  hierarchy.getOrderedAncestors('attachment').find((type) => !nullableAncestors.has(type)) ?? 'organization';
 
 /** Column holding a row's home channel id: list reads compile the caller's grant scope against it. */
 export const attachmentHomeColumnKey = appConfig.entityIdColumnKeys[

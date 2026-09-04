@@ -4,7 +4,7 @@ import { generateId } from 'shared/utils/entity-id';
 import { hashSourceId } from 'shared/utils/hash-source-id';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { baseDb as db } from '#/db/db';
+import { getSeedDb } from '#/db/db';
 import { labelsTable } from '#/modules/label/label-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
@@ -13,6 +13,9 @@ import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
 import { mockFetchRequest, setTestConfig } from './test-utils';
+
+// Direct table seeding and inspection run as admin: labels are RLS-subject and the runtime role sees them only inside a tenant transaction.
+const db = getSeedDb();
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 

@@ -1,6 +1,7 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { AuthContext, DbContext } from '#/core/context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
+import { requestScopeWhere } from '#/db/utils/request-scope';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
@@ -15,11 +16,11 @@ interface FindTasksByStxMutationIdOpts {
 }
 
 export const findTasksByStxMutationId = async (ctx: AuthContext, { mutationId }: FindTasksByStxMutationIdOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   return db
     .select()
     .from(tasksTable)
-    .where(and(sql`${tasksTable.stx}->>'mutationId' = ${mutationId}`, eq(tasksTable.organizationId, organizationId)));
+    .where(and(sql`${tasksTable.stx}->>'mutationId' = ${mutationId}`, requestScopeWhere(ctx, tasksTable, 'task')));
 };
 
 interface InsertTasksOpts {
@@ -39,11 +40,11 @@ interface UpdateTaskOpts {
 
 /** Update a task by ID and return the updated row. */
 export const updateTask = async (ctx: AuthContext, { id, values }: UpdateTaskOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   const [updated] = await db
     .update(tasksTable)
     .set(values)
-    .where(and(eq(tasksTable.id, id), eq(tasksTable.organizationId, organizationId)))
+    .where(and(eq(tasksTable.id, id), requestScopeWhere(ctx, tasksTable, 'task')))
     .returning();
   return updated;
 };
@@ -56,13 +57,11 @@ interface DeleteTasksByIdsOpts {
 
 /** Soft-delete tasks by IDs and return the affected rows. */
 export const deleteTasksByIds = async (ctx: AuthContext, { ids, deletedAt, deletedBy }: DeleteTasksByIdsOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   return db
     .update(tasksTable)
     .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
-    .where(
-      and(inArray(tasksTable.id, ids), eq(tasksTable.organizationId, organizationId), isNull(tasksTable.deletedAt)),
-    )
+    .where(and(inArray(tasksTable.id, ids), requestScopeWhere(ctx, tasksTable, 'task'), isNull(tasksTable.deletedAt)))
     .returning();
 };
 
@@ -151,11 +150,11 @@ interface FindLabelsByProjectsOpts {
 
 /** Find distinct labels for one or more projects in an organization. */
 export const findLabelsByProjects = async (ctx: AuthContext, { projectIds }: FindLabelsByProjectsOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   return db
     .selectDistinct(labelEmbeddedSelect)
     .from(labelsTable)
-    .where(and(eq(labelsTable.organizationId, organizationId), inArray(labelsTable.projectId, projectIds)))
+    .where(and(requestScopeWhere(ctx, labelsTable, 'label'), inArray(labelsTable.projectId, projectIds)))
     .orderBy(asc(labelsTable.name));
 };
 
@@ -166,7 +165,7 @@ interface FindTaskRelationsOpts {
 
 /** Fetch users and labels referenced by one or more tasks (by ID lookups). */
 export const findTaskRelations = async (ctx: AuthContext, { userIds, labelIds }: FindTaskRelationsOpts) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
   return Promise.all([
     userIds.length > 0
       ? db
@@ -178,7 +177,7 @@ export const findTaskRelations = async (ctx: AuthContext, { userIds, labelIds }:
       ? db
           .select(labelEmbeddedSelect)
           .from(labelsTable)
-          .where(and(inArray(labelsTable.id, labelIds), eq(labelsTable.organizationId, organizationId)))
+          .where(and(inArray(labelsTable.id, labelIds), requestScopeWhere(ctx, labelsTable, 'label')))
           .orderBy(asc(labelsTable.name))
       : [],
   ]);
@@ -227,7 +226,7 @@ interface CountTasksByStatusOpts {
   projectId: string;
 }
 
-export const countTasksByStatus = async (ctx: DbContext, { projectId }: CountTasksByStatusOpts) => {
+export const countTasksByStatus = async (ctx: AuthContext, { projectId }: CountTasksByStatusOpts) => {
   const { db } = ctx.var;
   return db
     .select({
@@ -235,23 +234,19 @@ export const countTasksByStatus = async (ctx: DbContext, { projectId }: CountTas
       count: count(),
     })
     .from(tasksTable)
-    .where(eq(tasksTable.projectId, projectId))
+    .where(and(eq(tasksTable.projectId, projectId), requestScopeWhere(ctx, tasksTable, 'task')))
     .groupBy(tasksTable.status);
 };
 
 interface FilterExistingAttachmentIdsOpts {
   ids: string[];
-  organizationId: string;
 }
 
 /**
  * Narrow candidate attachment ids to live rows in this organization. Guards the derived
  * task.attachments host array against doctored or stale ids from client-authored blocks.
  */
-export const filterExistingAttachmentIds = async (
-  ctx: DbContext,
-  { ids, organizationId }: FilterExistingAttachmentIdsOpts,
-) => {
+export const filterExistingAttachmentIds = async (ctx: AuthContext, { ids }: FilterExistingAttachmentIdsOpts) => {
   if (ids.length === 0) return [];
   const { db } = ctx.var;
   const rows = await db
@@ -260,7 +255,7 @@ export const filterExistingAttachmentIds = async (
     .where(
       and(
         inArray(attachmentsTable.id, ids),
-        eq(attachmentsTable.organizationId, organizationId),
+        requestScopeWhere(ctx, attachmentsTable, 'attachment'),
         isNull(attachmentsTable.deletedAt),
       ),
     );

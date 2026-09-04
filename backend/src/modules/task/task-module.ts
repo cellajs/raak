@@ -3,7 +3,6 @@ import { updateTaskOp } from '#/modules/task/operations/update-task';
 import { publicTaskHandlers } from '#/modules/task/public-handlers';
 import { taskRedirectHandlers } from '#/modules/task/redirect-handlers';
 import { taskHandlers } from '#/modules/task/task-handlers';
-import { deriveTaskMentionsOnMaterialize, taskNotifications } from '#/modules/task/task-notifications';
 
 defineBackendModule({
   name: 'tasks',
@@ -18,6 +17,5 @@ defineBackendModule({
     support labeling, assignment, and status tracking, and are strictly scoped to their parent project.`,
   productEntity: 'task',
   yjsMaterializer: updateTaskOp,
-  notifications: taskNotifications,
-  onMutation: { 'task.updated': deriveTaskMentionsOnMaterialize },
+  notifications: true,
 });
