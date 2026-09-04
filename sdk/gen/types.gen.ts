@@ -3055,10 +3055,13 @@ export type GetNotificationsResponses = {
       subjectId: string;
       contextId: string | null;
       channelId: string;
-      channelType: string;
+      channelType: 'organization' | 'workspace' | 'project';
       organizationId: string;
       tenantId: string;
       actorId: string | null;
+      actor: UserMinimalBase | null;
+      channelName: string;
+      subjectTitle: string;
       readAt: string | null;
     }>;
     unreadCount: number;
@@ -6196,6 +6199,7 @@ export type UpdateAttachmentData = {
   body: {
     ops: {
       name?: string;
+      description?: string;
     };
     stx: StxBase;
   };

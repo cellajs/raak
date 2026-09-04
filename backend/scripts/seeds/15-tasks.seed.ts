@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { appConfig } from 'shared';
 import { and, eq } from 'drizzle-orm';
 
-import { seedDb } from '#/db/db';
+import { getSeedDb } from '#/db/db';
 import { type InsertLabelModel, labelsTable } from '#/modules/label/label-db';
 import { type InsertMembershipModel, membershipsTable } from '#/modules/memberships/memberships-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
@@ -36,7 +36,7 @@ const adminProjectMembershipCap = adminWorkspaceMembershipCap * 3;
 const insertBatchSize = 500;
 
 // Seed scripts use admin connection for privileged operations
-const db = seedDb;
+const db = getSeedDb();
 
 /**
  * Checks if there are any workspaces seeded in the database.

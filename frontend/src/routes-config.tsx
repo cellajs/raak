@@ -24,6 +24,9 @@ export const channelRouteConfig = {
     path: '/$tenantId/$organizationSlug/organization',
     paramName: 'organizationSlug',
     defaultTabId: 'attachments',
+    // The attachments tab reads `attachmentDialogId` and opens that attachment's dialog on top of the grid.
+    notificationSearch: ({ entityType, subjectId }): Record<string, string> =>
+      entityType === 'attachment' ? { attachmentDialogId: subjectId } : {},
   },
   workspace: {
     path: '/$tenantId/$organizationSlug/workspace/$slug',
@@ -33,8 +36,12 @@ export const channelRouteConfig = {
     path: '/$tenantId/$organizationSlug/project/$slug',
     paramName: 'slug',
     subitemOf: { entityType: 'workspace', searchParam: 'projectSlug' },
-    // The project board reads `taskSheetId` and opens that task's sheet on top of the board.
-    notificationSearch: ({ entityType, subjectId }): Record<string, string> =>
-      entityType === 'task' ? { taskSheetId: subjectId } : {},
+    // The project board reads `taskSheetId` and opens that task's sheet on top of the board;
+    // attachments are project-homed, so their dialog opens over it on `attachmentDialogId`.
+    notificationSearch: ({ entityType, subjectId }): Record<string, string> => {
+      if (entityType === 'task') return { taskSheetId: subjectId };
+      if (entityType === 'attachment') return { attachmentDialogId: subjectId };
+      return {};
+    },
   },
 } as const satisfies Record<ChannelEntityType, ChannelRouteEntry>;

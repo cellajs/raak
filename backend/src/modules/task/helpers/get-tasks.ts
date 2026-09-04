@@ -1,8 +1,9 @@
-import { and, arrayOverlaps, asc, desc, eq, ilike, inArray, isNotNull, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, ilike, inArray, isNotNull, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { z } from 'zod';
 import type { AuthContext } from '#/core/context';
 import { publishedRowsPredicate } from '#/db/utils/published-predicate';
+import { requestScopeWhere } from '#/db/utils/request-scope';
 import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { getDateFromToday } from '#/modules/task/helpers/utils';
 import { tasksTable } from '#/modules/task/task-db';
@@ -82,7 +83,7 @@ export const getTasks = async (
   const filters = and(
     ...seqCursorFilters(tasksTable.seq, seqCursor),
     tasksSearchFilters.length ? or(...tasksSearchFilters) : undefined,
-    eq(tasksTable.organizationId, ctx.var.organizationId),
+    requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
     // Hide tombstones for normal reads; on seqCursor delta sync they flow through so caches can drop them

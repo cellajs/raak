@@ -14,7 +14,7 @@ import {
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
-import { productColumns } from '#/db/utils/product-columns';
+import { mentionableColumns, productColumns } from '#/db/utils/product-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
 /**
@@ -36,8 +36,7 @@ export const tasksTable = snakeCase.table(
     statusChangedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
     labels: text().array().notNull().default(sql`'{}'::text[]`),
     assignedTo: text().array().notNull().default(sql`'{}'::text[]`),
-    // Server-derived from description mention nodes; the notification fan-out trusts this column.
-    mentions: text().array().notNull().default(sql`'{}'::text[]`),
+    ...mentionableColumns,
     checkboxCount: integer().default(0).notNull(),
     checkedCount: integer().default(0).notNull(),
     // Derived from description media blocks (attachmentId props). Owned-lifecycle

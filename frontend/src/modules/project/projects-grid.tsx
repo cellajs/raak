@@ -49,7 +49,6 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedV
           label={'c:project'}
           entityType="project"
           setSearch={setSearch}
-          isSheet={!focusView}
           focusView={focusView}
         />
       )}

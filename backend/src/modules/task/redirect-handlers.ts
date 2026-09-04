@@ -3,9 +3,12 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { html, raw } from 'hono/html';
 import { appConfig } from 'shared';
-import { unsafeInternalAdminDb } from '#/db/db';
+import { getAdminDb } from '#/db/db';
 
-const db = unsafeInternalAdminDb!;
+// Public task links resolve for anonymous visitors, so no tenant context exists to scope RLS by:
+// read as admin and gate on the public-read grant. Resolved per request so a process without the
+// admin credential still boots and only these routes fail.
+const db = () => getAdminDb('public task link resolution');
 
 import { getTextFromBlock } from 'shared/blocknote';
 import type { Env } from '#/core/context';
@@ -24,7 +27,7 @@ const app = new OpenAPIHono<Env>({ defaultHook });
 
 /** Display name of a task's primary label (task type); falls back to 'Task'. */
 const getTaskType = async (primaryLabelId: string) => {
-  const [label] = await db
+  const [label] = await db()
     .select({ name: labelsTable.name })
     .from(labelsTable)
     .where(eq(labelsTable.id, primaryLabelId))
@@ -35,14 +38,14 @@ const getTaskType = async (primaryLabelId: string) => {
 app.openapi(taskRedirectRoutes.resolveTaskLink, async (ctx) => {
   const { id } = ctx.req.valid('param');
 
-  const [task] = await db
+  const [task] = await db()
     .select()
     .from(tasksTable)
     .where(and(eq(tasksTable.id, id), isNull(tasksTable.deletedAt)))
     .limit(1);
   if (!task) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
-  const [project] = await db
+  const [project] = await db()
     .select({
       slug: projectsTable.slug,
       organizationId: projectsTable.organizationId,
@@ -55,7 +58,7 @@ app.openapi(taskRedirectRoutes.resolveTaskLink, async (ctx) => {
 
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
-  const [organization] = await db
+  const [organization] = await db()
     .select({ slug: organizationsTable.slug })
     .from(organizationsTable)
     .where(eq(organizationsTable.id, project.organizationId))
@@ -80,7 +83,7 @@ app.openapi(taskRedirectRoutes.resolveTaskLink, async (ctx) => {
 app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
   const { id } = ctx.req.valid('param');
 
-  const [task] = await db
+  const [task] = await db()
     .select()
     .from(tasksTable)
     .where(and(eq(tasksTable.id, id), isNull(tasksTable.deletedAt)));
@@ -89,7 +92,7 @@ app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
   let createdByUser: Partial<UserModel> | undefined;
 
   if (task.createdBy) {
-    [createdByUser] = await db
+    [createdByUser] = await db()
       .select({ ...userMinimalBaseSelect, entityType: sql<'user'>`'user'` })
       .from(usersTable)
       .where(eq(usersTable.id, task.createdBy));
@@ -113,7 +116,7 @@ app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
 app.openapi(taskRedirectRoutes.redirectToTask, async (ctx) => {
   const { id } = ctx.req.valid('param');
 
-  const [taskRecord] = await db
+  const [taskRecord] = await db()
     .select({ task: tasksTable, createdBy: usersTable })
     .from(tasksTable)
     .leftJoin(usersTable, eq(usersTable.id, tasksTable.createdBy))
@@ -127,7 +130,7 @@ app.openapi(taskRedirectRoutes.redirectToTask, async (ctx) => {
 
   const { task, createdBy } = taskRecord;
   // Find a project to show the task in.
-  const [project] = await db
+  const [project] = await db()
     .select({ slug: projectsTable.slug, name: projectsTable.name, entity: projectsTable.entityType })
     .from(projectsTable)
     .where(eq(projectsTable.id, task.projectId))

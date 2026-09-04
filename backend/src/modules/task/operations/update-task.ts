@@ -127,7 +127,6 @@ export async function updateTaskOp(
       // block props must never enter the owned-embedding host array).
       derivedDescription.attachments = await filterExistingAttachmentIds(txCtx, {
         ids: derivedDescription.attachments,
-        organizationId: txCtx.var.organizationId,
       });
       Object.assign(updateValues, derivedDescription);
     }
