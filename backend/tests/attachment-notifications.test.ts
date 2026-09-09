@@ -37,6 +37,14 @@ const paragraphWithMentions = (ids: string[]) => ({
   children: [],
 });
 
+const paragraphWithText = (text: string) => ({
+  id: generateId(),
+  type: 'paragraph',
+  props: {},
+  content: [{ type: 'text', text, styles: {} }],
+  children: [],
+});
+
 const updateStx = () => ({
   ...mockStxBase(`stx:${generateId()}`),
   fieldTimestamps: { description: generateServerHLC('test-client') },
@@ -72,6 +80,14 @@ describe('Attachment mentions (template notification source)', async () => {
     return row.mentions;
   };
 
+  const storedKeywords = async () => {
+    const [row] = await db
+      .select({ keywords: attachmentsTable.keywords })
+      .from(attachmentsTable)
+      .where(eq(attachmentsTable.id, attachmentId));
+    return row.keywords;
+  };
+
   const notificationsFor = (userId: string) =>
     db
       .select({ type: notificationsTable.type, emailedAt: notificationsTable.emailedAt })
@@ -105,8 +121,7 @@ describe('Attachment mentions (template notification source)', async () => {
   beforeAll(async () => {
     mockFetchRequest();
     tenant = await createTestTenant(call, 'attachment-mentions');
-    // fork: raak grants organization members `read: 'own'` on attachments, so the mentioned user
-    // needs the org role that reads them all; the stranger id still proves the drop path.
+    // The role that reads every attachment under any app's permission matrix; the stranger id covers the drop path.
     member = await createOrgUser(
       call,
       tenant.tenantId,
@@ -159,6 +174,26 @@ describe('Attachment mentions (template notification source)', async () => {
     const result = await putDescription(JSON.stringify([paragraphWithMentions([])]));
     expect(result.response.status).toBe(200);
     expect(await storedMentions()).toEqual([]);
+  });
+
+  it('re-derives the keywords search column from the description on both write paths', async () => {
+    const result = await putDescription(
+      JSON.stringify([paragraphWithText('quarterly budget'), paragraphWithMentions([member.id])]),
+    );
+    expect(result.response.status).toBe(200);
+    expect(await storedKeywords()).toContain('quarterly budget');
+
+    await materializeDescriptionOp({
+      entityType: 'attachment',
+      entityId: attachmentId,
+      tenantId: tenant.tenantId,
+      organizationId: tenant.organization.id,
+      description: JSON.stringify([paragraphWithText('signed contract')]),
+      editedBy: tenant.user.id,
+    });
+    const keywords = await storedKeywords();
+    expect(keywords).toContain('signed contract');
+    expect(keywords).not.toContain('quarterly budget');
   });
 
   it('derives from Yjs materialization too, the write path of the collaborative editor', async () => {

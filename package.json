@@ -52,6 +52,7 @@
     "frontend:comments": "node shared/scripts/check-comment-style.ts frontend/src && node shared/scripts/check-comment-style.ts --placement frontend/src",
     "frontend:style": "node shared/scripts/check-frontend-style.ts",
     "generate": "pnpm --filter backend generate",
+    "generate:routes": "pnpm --filter frontend gen:routes",
     "infra": "pnpm infra:compose && pnpm --filter infra cli",
     "infra:compose": "pnpm --filter infra compose:generate",
     "infra:production": "pnpm infra --mode production",
@@ -82,19 +83,19 @@
     "vocabulary:check": "node shared/scripts/check-app-vocabulary.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.11",
+    "@biomejs/biome": "^2.5.12",
     "@cellajs/cli": "^0.2.0",
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
     "@evilmartians/lefthook": "^2.1.12",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "cross-env": "^10.1.0",
-    "knip": "^6.33.0",
+    "knip": "^6.34.0",
     "rimraf": "^6.1.3",
     "semver": "^7.7.3",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.0"
   },
   "packageManager": "pnpm@11.8.0",
   "commitlint": {

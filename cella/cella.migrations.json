@@ -45,6 +45,9 @@
     "20260904T0746-organization-spine",
     "20260904T0846-rls-defense-in-depth",
     "20260904T0947-rls-owner-bypass",
-    "20260904T1349-table-bar-sticky-cleanup"
+    "20260904T1349-table-bar-sticky-cleanup",
+    "20260907T0619-route-tree-generation-script",
+    "20260907T0711-description-seed-preview-hooks",
+    "20260909T0740-yjs-update-log"
   ]
 }

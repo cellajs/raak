@@ -162,6 +162,8 @@ HLC: 1710500000123:0001:abcde
 
 Comparison uses milliseconds, then counter, then source. Each tab advances its own clock. The server advances its clock from received timestamps before generating its own. This is deterministic last-writer-wins, not a causal clock.
 
+Only a replayed offline write (`stx.replayed`) is arbitrated by its client timestamps: they are its intent time, which lets it lose to an edit made elsewhere while it was queued. An online write is ordered by server arrival: the server replaces its field timestamps with one fresh server HLC, so a device clock behind the stored value cannot get its edit silently dropped.
+
 Value shape selects merge behavior:
 
 ```typescript
@@ -175,7 +177,7 @@ Value shape selects merge behavior:
 }
 ```
 
-`fieldTimestamps` must name exactly the scalar operation keys. The server omits scalar values that lose HLC comparison and returns the authoritative row, never a conflict response. Merge resolution takes no `FOR UPDATE` lock, so overlapping updates can race.
+`fieldTimestamps` must name exactly the scalar operation keys. For a replay, the server omits scalar values that lose HLC comparison and returns the authoritative row, never a conflict response. Merge resolution takes no `FOR UPDATE` lock, so overlapping updates can race.
 
 ### Paused writes
 
@@ -195,7 +197,7 @@ The first tab to acquire the Web Lock becomes leader, owns SSE, and forwards not
 
 ### Yjs
 
-Yjs collaboration is disabled in the template. Relay, single-writer, and materialization semantics: [Yjs worker](../yjs/README.md).
+The template collaborates on attachment descriptions through the Yjs relay (`services.yjs.enabled`); an app adds a product by registering a `yjsMaterializer`. Relay, update log, compaction and materialization semantics: [Yjs worker](../yjs/README.md).
 
 ## Reference
 
