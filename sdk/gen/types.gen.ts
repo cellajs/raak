@@ -108,6 +108,10 @@ export type StxBase = {
   fieldTimestamps: {
     [key: string]: string;
   };
+  /**
+   * Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time
+   */
+  replayed?: boolean;
 };
 
 /**
@@ -1421,7 +1425,7 @@ export type CreatePasskeyData = {
         clientDataJSON: string;
         attestationObject: string;
         authenticatorData?: string;
-        transports?: Array<'ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb'>;
+        transports?: Array<string>;
         publicKeyAlgorithm?: number;
         publicKey?: string;
       };

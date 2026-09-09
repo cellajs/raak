@@ -18,6 +18,7 @@ import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
 import { mockLabel } from '#/modules/label/label-mocks';
 import { mockChannelMembership } from '#/modules/memberships/memberships-mocks';
 import { mockProject } from '#/modules/project/project-mocks';
+import { paragraphBlock, text as inlineText } from './description-document';
 import { mockWorkspace } from '#/modules/workspace/workspace-mocks';
 import { mockPastIsoDate, mockUuid, setMockContext } from '#/mocks';
 import { defaultAdminUser } from '../fixtures';
@@ -46,22 +47,16 @@ const isDataSeeded = async () => {
   return workspacesInTable.length > 0;
 };
 
-/**
- * Creates a BlockNote-style JSON description from name and text,
- * optionally appending checklist items with unique checkboxIds.
- */
+/** Two paragraphs plus optional checklist items, in the prop order the editor serializes. */
 const createDescription = (name: string, text: string, checklistCount = 0) => {
-  const blocks: object[] = [
-    { id: nanoid(), type: 'paragraph', props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' }, content: [{ type: 'text', text: name, styles: {} }], children: [] },
-    { id: nanoid(), type: 'paragraph', props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' }, content: [{ type: 'text', text, styles: {} }], children: [] },
-  ];
+  const blocks: object[] = [paragraphBlock([inlineText(name)]), paragraphBlock([inlineText(text)])];
 
   for (let i = 0; i < checklistCount; i++) {
     blocks.push({
       id: nanoid(),
       type: 'checklistItem',
       props: { textColor: 'default', textAlignment: 'left', checkboxId: nanoid(12), checked: false },
-      content: [{ type: 'text', text: faker.hacker.phrase(), styles: {} }],
+      content: [inlineText(faker.hacker.phrase())],
       children: [],
     });
   }

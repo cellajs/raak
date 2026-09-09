@@ -201,6 +201,11 @@
                   "required": true,
                   "description": "Per-field HLC timestamps for scalar fields being changed",
                   "additionalProperties": { "type": "string", "required": false }
+                },
+                "replayed": {
+                  "type": "boolean",
+                  "required": false,
+                  "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                 }
               },
               "ref": "#/components/schemas/StxBase"
@@ -526,6 +531,11 @@
                         "required": true,
                         "description": "Per-field HLC timestamps for scalar fields being changed",
                         "additionalProperties": { "type": "string", "required": false }
+                      },
+                      "replayed": {
+                        "type": "boolean",
+                        "required": false,
+                        "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                       }
                     },
                     "ref": "#/components/schemas/StxBase"
@@ -1159,6 +1169,11 @@
                         "required": true,
                         "description": "Per-field HLC timestamps for scalar fields being changed",
                         "additionalProperties": { "type": "string", "required": false }
+                      },
+                      "replayed": {
+                        "type": "boolean",
+                        "required": false,
+                        "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                       }
                     },
                     "ref": "#/components/schemas/StxBase"
@@ -1614,6 +1629,11 @@
                         "required": true,
                         "description": "Per-field HLC timestamps for scalar fields being changed",
                         "additionalProperties": { "type": "string", "required": false }
+                      },
+                      "replayed": {
+                        "type": "boolean",
+                        "required": false,
+                        "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                       }
                     },
                     "ref": "#/components/schemas/StxBase"
@@ -2023,6 +2043,11 @@
                         "required": true,
                         "description": "Per-field HLC timestamps for scalar fields being changed",
                         "additionalProperties": { "type": "string", "required": false }
+                      },
+                      "replayed": {
+                        "type": "boolean",
+                        "required": false,
+                        "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                       }
                     },
                     "ref": "#/components/schemas/StxBase"
@@ -2339,6 +2364,11 @@
                   "required": true,
                   "description": "Per-field HLC timestamps for scalar fields being changed",
                   "additionalProperties": { "type": "string", "required": false }
+                },
+                "replayed": {
+                  "type": "boolean",
+                  "required": false,
+                  "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                 }
               },
               "ref": "#/components/schemas/StxBase"
@@ -2655,6 +2685,11 @@
                   "required": true,
                   "description": "Per-field HLC timestamps for scalar fields being changed",
                   "additionalProperties": { "type": "string", "required": false }
+                },
+                "replayed": {
+                  "type": "boolean",
+                  "required": false,
+                  "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                 }
               },
               "ref": "#/components/schemas/StxBase"
@@ -2976,6 +3011,11 @@
                   "required": true,
                   "description": "Per-field HLC timestamps for scalar fields being changed",
                   "additionalProperties": { "type": "string", "required": false }
+                },
+                "replayed": {
+                  "type": "boolean",
+                  "required": false,
+                  "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
                 }
               },
               "ref": "#/components/schemas/StxBase"
@@ -3199,6 +3239,11 @@
                 "required": true,
                 "description": "Per-field HLC timestamps for scalar fields being changed",
                 "additionalProperties": { "type": "string", "required": false }
+              },
+              "replayed": {
+                "type": "boolean",
+                "required": false,
+                "description": "Set on a paused offline mutation being replayed: its field timestamps then arbitrate as intent time"
               }
             },
             "ref": "#/components/schemas/StxBase"
