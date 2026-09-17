@@ -1,11 +1,13 @@
 import { spawnSync } from 'node:child_process';
 import { confirm } from '@inquirer/prompts';
-import { buildProviderEnv, stateKeyOverrideFromEnv } from '../../lib/scaleway/bootstrap-scw-env';
+import { buildProviderEnv, stateKeyForPrivilegedRun } from '../../lib/scaleway/bootstrap-scw-env';
 import { resolveOrganizationId } from '../../lib/scaleway/scaleway-iam';
+import { PRIVILEGED_UP_ENV } from '../../lib/stack/privileged-up';
 import { parseOrphanedDeletes, pruneOrphanedDeletes, runPulumiUpWithHint } from '../../lib/stack/pulumi-up';
 import { pc, warningMark } from '../../lib/utils/cli-output';
 import { errorMessage } from '../../lib/utils/errors';
 import { infraDir } from '../../lib/utils/paths';
+import { ensureRegistryPrincipals } from '../../tasks/setup-service-apps';
 import { maskedSecret } from '../prompts/masked-secret';
 import {
   acquireStackLockOrExit,
@@ -62,8 +64,8 @@ export async function runPrivilegedConverge(
   );
   const stack = await promptStackName(context);
 
-  // The state-identity override applies to every state-bucket touch (login, lock, `up`), while the bootstrap key drives the resource mutations.
-  const stateOverride = stateKeyOverrideFromEnv();
+  // The state identity (explicit SCW_STATE_*, else the standing key from infra/.env.<mode>, else the bootstrap key) applies to every state-bucket touch (login, lock, `up`), while the bootstrap key drives the resource mutations.
+  const stateOverride = stateKeyForPrivilegedRun();
   const env = buildProviderEnv(infraDir, {
     accessKey: bootAccess,
     secretKey: bootSecret,
@@ -71,6 +73,8 @@ export async function runPrivilegedConverge(
     passphrase,
     ...stateOverride,
   });
+  // Marks the `pulumi up` child as bootstrap-keyed: bootstrap-owned resources (VM IAM policy rules) reconcile under this marker.
+  env[PRIVILEGED_UP_ENV] = '1';
   pulumiLoginAndSelect(infraDir, env, appConfig, stack);
 
   // Lock the stack through the control bucket to exclude concurrent operators and CI.
@@ -91,11 +95,32 @@ export async function runPrivilegedConverge(
 
   let completed = false;
   try {
-    // Resolve the organization id for the program's IAM resources; failure is non-fatal because the program can derive it at runtime.
+    // The Pulumi program requires the organization id (pulumi-context.ts requireEnv): SCW_ORGANIZATION_ID / SCW_DEFAULT_ORGANIZATION_ID from the env, else the Account API. Without it the up is a guaranteed failure, so stop before spending the lock on it.
     try {
       env.SCW_DEFAULT_ORGANIZATION_ID = await resolveOrganizationId(bootSecret, projectId);
     } catch (error) {
-      console.warn(`${warningMark} Could not resolve organization id (${errorMessage(error)}); continuing without it.`);
+      await releaseLock();
+      console.error(
+        `${warningMark} Could not resolve the organization id (${errorMessage(error)}). Set SCW_ORGANIZATION_ID (backend/.env) or SCW_DEFAULT_ORGANIZATION_ID and re-run.`,
+      );
+      process.exit(1);
+    }
+
+    // Registry principals are bootstrap-owned like the policies they anchor: create any missing vm-<service>/boot application here, so a registry change converges in this one run. Idempotent; a failure only warns because a missing application still fails the `up` with guidance.
+    console.info(pc.dim('\n→ Ensuring registry IAM principals (vm-<service> + boot applications)…'));
+    try {
+      await ensureRegistryPrincipals({
+        callerSecretKey: bootSecret,
+        projectId,
+        slug: appConfig.slug,
+        mode: context.environment,
+        organizationId: env.SCW_DEFAULT_ORGANIZATION_ID,
+        singleVM: appConfig.singleVM ?? false,
+      });
+    } catch (error) {
+      console.warn(
+        `${warningMark} Could not ensure registry principals (${errorMessage(error)}); \`pulumi up\` fails at requirePrincipalId if one is missing.`,
+      );
     }
 
     // Reconcile gen/sha from live state before `up`: a stale committed Pulumi.<stack>.yaml would converge compute back to an old generation and destroy newer live VMs.

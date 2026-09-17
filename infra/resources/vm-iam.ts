@@ -11,7 +11,8 @@ import {
 } from '../lib/scaleway/permissions';
 import { principalNames } from '../lib/scaleway/principals';
 import { bootKeyCondition, serviceKeyCondition } from '../lib/scaleway/secret-paths';
-import { deployedServices, secretScopeSlugs } from '../lib/services';
+import { principalSecretScopeSlugs, principalServices } from '../lib/services';
+import { vmPolicyIgnoreChanges } from '../lib/stack/privileged-up';
 import { mode, naming, organizationId, projectId, tags } from '../pulumi-context';
 
 const names = principalNames(appConfig.slug, mode);
@@ -36,7 +37,10 @@ function findApplicationId(name: string): pulumi.Output<string | undefined> {
 /** Require a principal: missing means the stack cannot function, so fail with guidance. */
 function requirePrincipalId(resolved: pulumi.Output<string | undefined>, label: string): pulumi.Output<string> {
   return resolved.apply((id) => {
-    if (!id) throw new Error(`IAM application for ${label} not found: run the infra CLI bootstrap first.`);
+    if (!id)
+      throw new Error(
+        `IAM application for ${label} not found: run the infra CLI bootstrap first, or "Apply infra change" after a registry change.`,
+      );
     return id;
   });
 }
@@ -57,9 +61,10 @@ export const adminApplicationId: pulumi.Output<string | undefined> = findApplica
   return undefined;
 });
 
-// VM-side principals: one application per deployed service plus the boot fetcher.
+// VM-side principals: one application per registry service that owns VMs, plus the boot fetcher. Registry-derived: an `enabled` toggle changes compute, never a principal.
 
-const vmServices = deployedServices(appConfig.services, appConfig.singleVM ?? false);
+const singleVM = appConfig.singleVM ?? false;
+const vmServices = principalServices(singleVM);
 
 /** Per-service application ids. Required. */
 export const serviceApplicationIds: Record<string, pulumi.Output<string>> = Object.fromEntries(
@@ -78,10 +83,13 @@ export const bootApplicationId: pulumi.Output<string> = requirePrincipalId(
 /**
  * Pulumi-managed IAM policies for the VM-side principals. Bootstrap-owned: IAM policy write is forbidden to the CI key, so a bootstrap-key up creates these before compute exists, and compute VMs depend on them so grants attach before the first runtime-secret hydration.
  * One policy per service app (secret read conditioned to its own and shared folders) and one for the boot app (registry pull, diag write, handoff-only secret read). Conditions only narrow, and `assert-vm-grants` verifies no other policy un-scopes them.
- * `ignoreChanges: ['rules', 'description']` keeps CI ups from attempting IAM writes they would 403 on, and sidesteps the provider's condition empty-vs-unset diff asymmetry that shows a phantom ~rules.
+ * Principals and conditions follow the service registry, not the enabled set: a service toggle changes compute only, while a registry change or a `singleVM` flip needs a privileged up.
+ * CI ups ignore `rules` (they would 403 on the IAM write, and the provider shows a phantom ~rules from its condition empty-vs-unset asymmetry); a privileged up (CLI "Apply infra change") reconciles them, which is how a changed secret scope reaches the live policy.
  * @see resources/compute.ts
+ * @see lib/stack/privileged-up.ts
  */
 export const vmIamPolicies: scaleway.iam.Policy[] = [];
+const policyOptions = { ignoreChanges: vmPolicyIgnoreChanges() };
 
 for (const svc of vmServices) {
   const isBackend = svc.s3Access === true;
@@ -97,11 +105,7 @@ for (const svc of vmServices) {
           {
             permissionSetNames: [...SERVICE_SECRET_PERMISSION_SETS],
             projectIds: [projectId],
-            condition: serviceKeyCondition(
-              naming.slug,
-              mode,
-              secretScopeSlugs(appConfig.services, appConfig.singleVM ?? false, svc.slug),
-            ),
+            condition: serviceKeyCondition(naming.slug, mode, principalSecretScopeSlugs(singleVM, svc.slug)),
           },
           ...(isBackend
             ? [
@@ -114,7 +118,7 @@ for (const svc of vmServices) {
         ],
         tags,
       },
-      { ignoreChanges: ['rules', 'description'] },
+      policyOptions,
     ),
   );
 }
@@ -140,7 +144,7 @@ vmIamPolicies.push(
       ],
       tags,
     },
-    { ignoreChanges: ['rules', 'description'] },
+    policyOptions,
   ),
 );
 

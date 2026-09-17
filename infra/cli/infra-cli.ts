@@ -192,12 +192,14 @@ async function chooseStackAction(): Promise<Exclude<CliMode, 'status'> | 'back'>
       {
         name: 'Apply infra change',
         value: 'apply',
-        description: 'Apply database, VPC, or network changes (needs a bootstrap key).',
+        description:
+          'Apply bootstrap-owned changes: registry IAM principals and policies, database, VPC, network (needs a bootstrap key).',
       },
       {
         name: 'Preview',
         value: 'preview',
-        description: 'Show what a deploy would change. Read-only, makes no changes.',
+        description:
+          'Dry run of an Apply infra change (a CI deploy applies the same minus VM policy rules). Read-only.',
       },
       {
         name: 'Resume',
