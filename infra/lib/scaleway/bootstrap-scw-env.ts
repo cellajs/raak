@@ -15,6 +15,21 @@ export function resolveProjectId(): string | undefined {
   return repo ?? ecosystem;
 }
 
+/**
+ * Resolve the repository (`SCW_ORGANIZATION_ID`, the name backend/.env and the GitHub Environment use) and Scaleway-native
+ * (`SCW_DEFAULT_ORGANIZATION_ID`, the name the provider and the Pulumi program read) organization id variables to one value. Both present must match.
+ */
+export function resolveOrganizationIdFromEnv(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const repo = env.SCW_ORGANIZATION_ID?.trim() || undefined;
+  const ecosystem = env.SCW_DEFAULT_ORGANIZATION_ID?.trim() || undefined;
+  if (repo && ecosystem && repo !== ecosystem) {
+    throw new Error(
+      `SCW_ORGANIZATION_ID (${repo}) and SCW_DEFAULT_ORGANIZATION_ID (${ecosystem}) disagree: unset one so they match.`,
+    );
+  }
+  return ecosystem ?? repo;
+}
+
 /** Inputs for {@link buildProviderEnv}. */
 export interface ProviderEnvInput {
   /** Scaleway provider credentials (`SCW_ACCESS_KEY` / `SCW_SECRET_KEY`). */
@@ -30,14 +45,31 @@ export interface ProviderEnvInput {
   organizationId?: string;
 }
 
-/** State-backend credential override for split-identity runs: the state-bucket policy admits only the CI and admin principals, so a bootstrap-key run 403s on `pulumi login` without an admitted key on the `AWS_*` side. */
-export function stateKeyOverrideFromEnv(): Pick<ProviderEnvInput, 'stateAccessKey' | 'stateSecretKey'> {
-  const stateAccessKey = process.env.SCW_STATE_ACCESS_KEY?.trim() || undefined;
-  const stateSecretKey = process.env.SCW_STATE_SECRET_KEY?.trim() || undefined;
+/** State-backend credential override for split-identity runs: the state-bucket policy admits only the admin and CI principals, so a bootstrap-key run 403s on `pulumi login` without an admitted key on the `AWS_*` side. */
+export function stateKeyOverrideFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): Pick<ProviderEnvInput, 'stateAccessKey' | 'stateSecretKey'> {
+  const stateAccessKey = env.SCW_STATE_ACCESS_KEY?.trim() || undefined;
+  const stateSecretKey = env.SCW_STATE_SECRET_KEY?.trim() || undefined;
   if (!!stateAccessKey !== !!stateSecretKey) {
     throw new Error('SCW_STATE_ACCESS_KEY and SCW_STATE_SECRET_KEY must be set together');
   }
   return { stateAccessKey, stateSecretKey };
+}
+
+/**
+ * State-backend identity for a privileged run. An explicit `SCW_STATE_*` pair wins; otherwise the standing operator key already in the env
+ * (`SCW_ACCESS_KEY` / `SCW_SECRET_KEY` from infra/.env.<mode>, the admin application's key, which the state-bucket policy admits); otherwise
+ * empty, and the caller uses the bootstrap key for both sides.
+ */
+export function stateKeyForPrivilegedRun(
+  env: NodeJS.ProcessEnv = process.env,
+): Pick<ProviderEnvInput, 'stateAccessKey' | 'stateSecretKey'> {
+  const explicit = stateKeyOverrideFromEnv(env);
+  if (explicit.stateAccessKey) return explicit;
+  const stateAccessKey = env.SCW_ACCESS_KEY?.trim() || undefined;
+  const stateSecretKey = env.SCW_SECRET_KEY?.trim() || undefined;
+  return stateAccessKey && stateSecretKey ? { stateAccessKey, stateSecretKey } : {};
 }
 
 /** Build a child environment with explicit Scaleway, S3-state, and Pulumi credentials, with local Scaleway profiles disabled so operator configuration cannot shadow the supplied identity. */
