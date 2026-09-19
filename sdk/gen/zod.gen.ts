@@ -756,12 +756,12 @@ export const zCheckEmailBody = z.object({
 export const zCheckEmailResponse = z.void();
 
 export const zInvokeTokenPath = z.object({
-  type: z.enum(['email-verification', 'oauth-verification', 'invitation', 'magic']),
+  type: z.enum(['oauth-verification', 'invitation', 'magic']),
   token: z.string(),
 });
 
 export const zGetTokenDataPath = z.object({
-  type: z.enum(['email-verification', 'oauth-verification', 'invitation', 'magic']),
+  type: z.enum(['oauth-verification', 'invitation', 'magic']),
   id: z.string().max(50),
 });
 
@@ -772,7 +772,20 @@ export const zGetTokenDataResponse = z.object({
   email: z.email(),
   userId: z.string().optional(),
   inactiveMembershipId: z.string().optional(),
+  invitation: z
+    .object({
+      entityType: z.enum(['organization', 'workspace', 'project']),
+      entityName: z.string(),
+      role: z.enum(['admin', 'member', 'guest']),
+      inviterName: z.string(),
+    })
+    .optional(),
 });
+
+/**
+ * Invitation was accepted
+ */
+export const zAcceptInvitationTokenResponse = zChannelBase;
 
 export const zStartImpersonationBody = z.object({
   targetUserId: z.string().max(50),
