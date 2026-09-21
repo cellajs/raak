@@ -904,7 +904,7 @@ export type CheckEmailResponse = CheckEmailResponses[keyof CheckEmailResponses];
 export type InvokeTokenData = {
   body?: never;
   path: {
-    type: 'email-verification' | 'oauth-verification' | 'invitation' | 'magic';
+    type: 'oauth-verification' | 'invitation' | 'magic';
     token: string;
   };
   query?: never;
@@ -943,7 +943,7 @@ export type InvokeTokenError = InvokeTokenErrors[keyof InvokeTokenErrors];
 export type GetTokenDataData = {
   body?: never;
   path: {
-    type: 'email-verification' | 'oauth-verification' | 'invitation' | 'magic';
+    type: 'oauth-verification' | 'invitation' | 'magic';
     id: string;
   };
   query?: never;
@@ -987,10 +987,61 @@ export type GetTokenDataResponses = {
     email: string;
     userId?: string;
     inactiveMembershipId?: string;
+    invitation?: {
+      entityType: 'organization' | 'workspace' | 'project';
+      entityName: string;
+      role: 'admin' | 'member' | 'guest';
+      inviterName: string;
+    };
   };
 };
 
 export type GetTokenDataResponse = GetTokenDataResponses[keyof GetTokenDataResponses];
+
+export type AcceptInvitationTokenData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/auth/invitation-token/accept';
+};
+
+export type AcceptInvitationTokenErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type AcceptInvitationTokenError = AcceptInvitationTokenErrors[keyof AcceptInvitationTokenErrors];
+
+export type AcceptInvitationTokenResponses = {
+  /**
+   * Invitation was accepted
+   */
+  200: ChannelBase;
+};
+
+export type AcceptInvitationTokenResponse = AcceptInvitationTokenResponses[keyof AcceptInvitationTokenResponses];
 
 export type StartImpersonationData = {
   body: {
