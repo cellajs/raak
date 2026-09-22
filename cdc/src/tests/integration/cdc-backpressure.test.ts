@@ -5,6 +5,7 @@ import { CDC_PUBLICATION_NAME, CDC_SLOT_NAME } from '../../constants';
 import { cdcDb } from '../../lib/db';
 import { wsClient } from '../../network/websocket-client';
 import { replicationState } from '../../services/replication-state';
+import { lsnToBigInt } from '../../utils/lsn';
 import { type CdcPipelineHarness, slotActive, startCdcPipeline, waitFor } from './pipeline-harness';
 
 const WS_PORT = Number(new URL(process.env.API_WS_URL ?? 'ws://127.0.0.1:4788').port || 4788);
@@ -106,6 +107,23 @@ describe.skipIf(!READY)('CDC backpressure (integration)', () => {
     await waitFor(async () => (await slotLagBytes()) < 65_536, 15_000, 'slot drained while WS up');
   }, 30_000);
 
+  it('advances an idle slot past WAL that carries no published change', async () => {
+    // Data acks stop at the last published row; only the idle keepalive ack can confirm what follows.
+    const res = await cdcDb.execute<{ target: string }>(sql`
+      SELECT pg_logical_emit_message(false, 'cdc-idle-test', repeat('x', 1048576))::text AS target
+    `);
+    const target = res.rows[0].target;
+
+    const slotReached = async () => {
+      const slot = await cdcDb.execute<{ reached: boolean }>(sql`
+        SELECT confirmed_flush_lsn >= ${target}::pg_lsn AS reached
+        FROM pg_replication_slots WHERE slot_name = ${CDC_SLOT_NAME}
+      `);
+      return slot.rows[0]?.reached === true;
+    };
+    await waitFor(slotReached, 15_000, 'idle slot advanced past unpublished WAL');
+  }, 30_000);
+
   it('retains WAL while the WebSocket is down (no ack)', async () => {
     await stopStubWs();
     await waitFor(() => !wsClient.isConnected(), 10_000, 'worker WS disconnected');
@@ -114,7 +132,18 @@ describe.skipIf(!READY)('CDC backpressure (integration)', () => {
     const lagBefore = await slotLagBytes();
 
     // Commit a clear burst of WAL while acks are held.
-    for (let i = 0; i < 200; i++) await insertTenant(`bp-down-${i}-${Date.now()}`);
+    for (let i = 0; i < 199; i++) await insertTenant(`bp-down-${i}-${Date.now()}`);
+    const wal = await cdcDb.execute<{ lsn: string }>(sql`SELECT pg_current_wal_lsn()::text AS lsn`);
+    await insertTenant(`bp-down-last-${Date.now()}`);
+
+    // The whole burst is applied and its ack withheld before the WebSocket returns: no flush is left
+    // to straddle the reconnect, so only the reconnect itself can release the held position.
+    const lastInsertFloor = lsnToBigInt(wal.rows[0].lsn);
+    await waitFor(
+      () => !!replicationState.heldAckLsn && lsnToBigInt(replicationState.heldAckLsn) >= lastInsertFloor,
+      20_000,
+      'burst applied with its ack withheld',
+    );
 
     const lagAfter = await slotLagBytes();
     expect(lagAfter).toBeGreaterThan(lagBefore);

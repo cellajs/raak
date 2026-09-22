@@ -13,14 +13,14 @@
     "tsperf": "rm -rf tsconfig.tsbuildinfo && tsgo --noEmit --extendedDiagnostics"
   },
   "dependencies": {
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.1",
     "shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "26.5.0",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "cross-env": "^10.1.0",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   }
 }

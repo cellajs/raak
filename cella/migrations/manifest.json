@@ -1027,6 +1027,80 @@
     "pnpm check"
    ],
    "summary": "Onboarding no longer sends an invited user through the create-organization steps. getOnboardingSteps takes { hasOrganizations, hasInvitations } and every step has a when: a user with pending invitations gets an invitations step (explicit accept or reject per invitation) and the profile step, a user with neither organizations nor invitations keeps the three founder steps, a member gets profile only. The /welcome route loads both queries before the step list locks, the footer reads currentStep from the stepper, and the completed screen links into the first organization or offers the menu's organization createAction. Apps that never edited frontend/src/modules/home/onboarding are unaffected; apps with their own steps add a when to each and pass the context."
+  },
+  {
+   "id": "20260921T1433-devices-table",
+   "version": "next",
+   "title": "Sign-ins enroll the browser in a devices table",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "backend/scripts"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check"
+   ],
+   "summary": "New devices table (devicesTable in backend/src/modules/auth/devices-db.ts) remembers which browsers a user signed in from, keyed on (userId, deviceIdHash), the per-user HMAC of the device-id cookie. createSession enrolls the browser on every non-impersonation sign-in; a first insert on an account that signed in before sends the new-sign-in account security email, except after a magic link or email sign-in and beyond three notices per user per day. A daily prune-devices job removes rows unseen for 400 days and keeps 50 per user. In the same change the device-id cookie becomes SameSite Lax so OAuth callbacks and emailed links can read it, mfa sessions get a device id, the same-browser replace and the maxSessionsPerUser cap, and account security emails escape their details. Apps run pnpm generate; an app that lists tables by hand adds devices."
+  },
+  {
+   "id": "20260921T1436-identity-issuer-slug",
+   "version": "next",
+   "title": "identities are keyed on (kind, issuer, subject); provider becomes the issuer slug",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "backend/scripts"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check"
+   ],
+   "summary": "identities.provider and the nullable identities.issuer merge into one not-null issuer, always a slug namespaced by kind (a supported OAuth provider for 'oauth', an issuer-registry entry for sso and lti later); the issuer URL stays in config. providerUserId becomes subject, and the unique index is identities_kind_issuer_subject_idx on (kind, issuer, subject). Social lookups are scoped to kind = 'oauth'. No API change. Apps already on identities run pnpm generate with the README hints and add UPDATE identities SET issuer = provider above the DROP COLUMN so rows survive; apps still on oauth_accounts use the combined hints from the README in place of those in 20260918T0831-identities-table and get a plain rename."
+  },
+  {
+   "id": "20260921T1629-node-26",
+   "version": "next",
+   "title": "Node.js 26 is the required runtime",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    ".github/workflows",
+    "frontend"
+   ],
+   "requires": [
+    "pnpm install",
+    "pnpm check"
+   ],
+   "summary": "engines.node moves from 24.x to 26.x in every package, and CI workflows, Dockerfile, infra/boot/Dockerfile, the infra boot:build target and @types/node follow. Every developer machine, CI runner and image needs Node 26. Node 25+ defines a global localStorage that is undefined without --localstorage-file, which makes zustand persist crash on write in node-env vitest runs; frontend/vitest.setup.ts now deletes that global when there is no window. Synced files arrive migrated. Apps update their own workflows, Dockerfiles, Node version pins and engines fields, and copy the vitest guard into any setup file of their own."
+  },
+  {
+   "id": "20260921T1945-devices-table-slim",
+   "version": "next",
+   "title": "devices keeps only what is read: the key and three timestamps",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check"
+   ],
+   "summary": "devices drops lastStrategy, deviceName, deviceType, deviceOs, browser and ipCountry: every sign-in wrote them and nothing read them, since the new sign-in notice builds its text from the request and the sessions list reads the same facts from the session row. The table is now (userId, deviceIdHash, firstSeenAt, lastSeenAt, notifiedAt) and enrollDevice(userId, deviceId) loses its context and strategy parameters. No API change. Apps run pnpm generate (six DROP COLUMN statements, no prompts; an app applying this together with 20260921T1433-devices-table gets the table in its final shape), drop the last two arguments from their own enrollDevice calls, and read a dropped column from the session row of that sign-in."
   }
  ]
 }

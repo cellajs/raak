@@ -59,12 +59,12 @@ Data messages carry the activity, compacted row data, the previous location of r
 
 ## Failure and recovery
 
-The slot advances only after processing and is the only durable buffer, so a crash redelivers unacknowledged changes. Delivery is **at least once**: activity inserts are replay-safe, WebSocket messages may repeat (consumers deduplicate by activity ID), counter and sequence writes are not idempotent.
+The slot advances only after processing and is the only durable buffer, so a crash redelivers unacknowledged changes. An idle worker (nothing buffered, no acknowledgement held) also confirms the server's keepalive position, so WAL without published changes does not pile up behind the slot. Delivery is **at least once**: activity inserts are replay-safe, WebSocket messages may repeat (consumers deduplicate by activity ID), counter and sequence writes are not idempotent.
 
 | Failure | Detection | Recovery |
 | --- | --- | --- |
 | Activity persistence fails | Insert error | Transient errors retry three times, then per row. Rows that still fail skip counters and notification. Three consecutive failures open a per-table circuit for 60 seconds, then half-open. |
-| API WebSocket unavailable | Connection drop. Slot lag is checked every 10 seconds (1 GB warns, 2 GB unhealthy) | Hold data acknowledgements so WAL stays behind the slot. Reconnect with exponential backoff, 1 to 30 seconds. |
+| API WebSocket unavailable | Connection drop. Slot lag is checked every 10 seconds (1 GB warns, 2 GB unhealthy) | Hold data acknowledgements so WAL stays behind the slot. Reconnect with exponential backoff, 1 to 30 seconds, then send the held acknowledgement. |
 | Worker more than 10 seconds behind | Commit timestamp lag | Catch-up mode: ignore seeded inserts (`00000000-` or `gen-` IDs). After three transactions under 2 seconds, recalculate counters and send `catchup_complete` so the backend invalidates its entity cache. |
 | Slot held by another worker (rolling deploy) | PostgreSQL error `55006`, logged with the holding walsender | Retry the subscription 12 times at 500 ms, then every 5 seconds (the same cadence as any subscribe error). |
 | Unexpected data | Draft row, or product group without an organization | Drop the draft row (rate-limited warning). Log and skip the whole group, activities included, still acknowledging its LSN. |
