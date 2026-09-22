@@ -4,7 +4,7 @@
   "description": "Hono API server with postgres, auth, CRUD, and real-time sync",
   "type": "module",
   "engines": {
-    "node": "24.x"
+    "node": "26.x"
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production tsup",
