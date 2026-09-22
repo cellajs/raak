@@ -266,6 +266,7 @@ export const zMeAuthData = z.object({
       createdAt: z.string(),
       expiresAt: z.string(),
       isCurrent: z.boolean(),
+      isNewDevice: z.boolean(),
     }),
   ),
   passkeys: z.array(

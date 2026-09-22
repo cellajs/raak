@@ -18,7 +18,7 @@
 
 ## Installation
 
-- You need node and pnpm v11. Check with `node -v`. Install Node 24.x. (ie. using [Volta](https://docs.volta.sh/guide/)).
+- You need node and pnpm v11. Check with `node -v`. Install Node 26.x. (ie. using [Volta](https://docs.volta.sh/guide/)).
 - You need [Docker](https://docs.docker.com/get-started/get-docker/) running for the database.
 - Use [git over ssh](https://docs.github.com/en/authentication/connecting-to-github-with-ssh).
   <br></br>
