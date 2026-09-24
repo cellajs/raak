@@ -25,6 +25,8 @@ application query.
 | A permission bug exposes data within the active tenant | RLS cannot help because the row still matches the tenant |
 | Application scope and RLS both fail | Cross-tenant isolation can fail |
 
+A service account's tenant comes from its account, never from the URL: `tenantGuard` compares the two before any lookup, and an access token carries a tenant-qualified audience, so a machine caller cannot probe another tenant ([Interoperability](./INTEROPERABILITY.md)).
+
 Per-operation checks: [Enforcement paths](./PERMISSIONS.md#enforcement-paths).
 
 ## What RLS covers
@@ -90,7 +92,7 @@ the shared engine, and a contextless insert passes RLS.
 | Role | RLS | Purpose |
 | --- | --- | --- |
 | `runtime_role` | Enforced | API requests and enabled workers using the runtime connection |
-| `admin_role` | Bypassed as table owner | Migrations, seeds, maintenance, and CDC replication or stamping |
+| `admin_role` | Bypassed as table owner | Migrations, seeds, the pg_cron partition job, and CDC replication or stamping |
 
 `admin_role` owns the RLS-protected tables and the activity log. Migrations grant `runtime_role` what
 the application needs, and refuse to run when either role is missing. The bypass never depends on the
@@ -103,7 +105,7 @@ replication slot could not open. An application system administrator is not `adm
 requests use the runtime connection and normal request scope.
 
 The admin credential (`DATABASE_ADMIN_URL`) is optional for the request-serving API: `getAdminDb()`
-opens the pool on first use, only the migrate, seed, maintenance and mcp-queue paths call it, and
+opens the pool on first use, only the migrate, seed and mcp-queue paths call it, and
 each fails with a clear error when the credential is absent. A process never given the credential
 cannot reach an RLS-bypassing connection. Never call `getAdminDb()` from a request handler.
 

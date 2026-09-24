@@ -23,6 +23,9 @@ import type {
   CheckSlugData,
   CheckSlugErrors,
   CheckSlugResponses,
+  CreateApiKeyData,
+  CreateApiKeyErrors,
+  CreateApiKeyResponses,
   CreateAttachmentsData,
   CreateAttachmentsErrors,
   CreateAttachmentsResponses,
@@ -47,6 +50,9 @@ import type {
   CreateRequestData,
   CreateRequestErrors,
   CreateRequestResponses,
+  CreateServiceAccountData,
+  CreateServiceAccountErrors,
+  CreateServiceAccountResponses,
   CreateTasksData,
   CreateTasksErrors,
   CreateTasksResponses,
@@ -74,9 +80,6 @@ import type {
   DeleteMyMembershipData,
   DeleteMyMembershipErrors,
   DeleteMyMembershipResponses,
-  DeleteMySessionsData,
-  DeleteMySessionsErrors,
-  DeleteMySessionsResponses,
   DeleteOrganizationsData,
   DeleteOrganizationsErrors,
   DeleteOrganizationsResponses,
@@ -110,6 +113,12 @@ import type {
   GenerateTotpKeyData,
   GenerateTotpKeyErrors,
   GenerateTotpKeyResponses,
+  GetApiKeysData,
+  GetApiKeysErrors,
+  GetApiKeysResponses,
+  GetApiProtectedResourceMetadataData,
+  GetApiProtectedResourceMetadataErrors,
+  GetApiProtectedResourceMetadataResponses,
   GetAppStreamData,
   GetAppStreamErrors,
   GetAppStreamResponses,
@@ -122,6 +131,9 @@ import type {
   GetAuthHealthData,
   GetAuthHealthErrors,
   GetAuthHealthResponses,
+  GetConnectedAppsData,
+  GetConnectedAppsErrors,
+  GetConnectedAppsResponses,
   GetDomainData,
   GetDomainErrors,
   GetDomainResponses,
@@ -134,6 +146,9 @@ import type {
   GetLabelsData,
   GetLabelsErrors,
   GetLabelsResponses,
+  GetMcpProtectedResourceMetadataData,
+  GetMcpProtectedResourceMetadataErrors,
+  GetMcpProtectedResourceMetadataResponses,
   GetMeData,
   GetMeErrors,
   GetMembersData,
@@ -191,6 +206,9 @@ import type {
   GetRequestsData,
   GetRequestsErrors,
   GetRequestsResponses,
+  GetServiceAccountsData,
+  GetServiceAccountsErrors,
+  GetServiceAccountsResponses,
   GetTaskCoverData,
   GetTaskCoverErrors,
   GetTaskCoverResponses,
@@ -277,6 +295,15 @@ import type {
   ResolveTaskLinkData,
   ResolveTaskLinkErrors,
   ResolveTaskLinkResponses,
+  RevokeApiKeyData,
+  RevokeApiKeyErrors,
+  RevokeApiKeyResponses,
+  RevokeConnectedAppData,
+  RevokeConnectedAppErrors,
+  RevokeConnectedAppResponses,
+  RevokeMySessionsData,
+  RevokeMySessionsErrors,
+  RevokeMySessionsResponses,
   SelfCreateTenantData,
   SelfCreateTenantErrors,
   SelfCreateTenantResponses,
@@ -332,6 +359,9 @@ import type {
   UpdateProjectData,
   UpdateProjectErrors,
   UpdateProjectResponses,
+  UpdateServiceAccountData,
+  UpdateServiceAccountErrors,
+  UpdateServiceAccountResponses,
   UpdateTaskData,
   UpdateTaskErrors,
   UpdateTaskResponses,
@@ -358,6 +388,9 @@ import {
   zCheckSlugBody,
   zCheckSlugPath,
   zCheckSlugResponse,
+  zCreateApiKeyBody,
+  zCreateApiKeyPath,
+  zCreateApiKeyResponse,
   zCreateAttachmentsBody,
   zCreateAttachmentsPath,
   zCreateAttachmentsResponse,
@@ -380,6 +413,9 @@ import {
   zCreatePushSubscriptionResponse,
   zCreateRequestBody,
   zCreateRequestResponse,
+  zCreateServiceAccountBody,
+  zCreateServiceAccountPath,
+  zCreateServiceAccountResponse,
   zCreateTasksBody,
   zCreateTasksPath,
   zCreateTasksResponse,
@@ -402,8 +438,6 @@ import {
   zDeleteMeResponse,
   zDeleteMyMembershipQuery,
   zDeleteMyMembershipResponse,
-  zDeleteMySessionsBody,
-  zDeleteMySessionsResponse,
   zDeleteOrganizationsBody,
   zDeleteOrganizationsPath,
   zDeleteOrganizationsResponse,
@@ -428,12 +462,17 @@ import {
   zGeneratePasskeyChallengeBody,
   zGeneratePasskeyChallengeResponse,
   zGenerateTotpKeyResponse,
+  zGetApiKeysPath,
+  zGetApiKeysResponse,
+  zGetApiProtectedResourceMetadataPath,
+  zGetApiProtectedResourceMetadataResponse,
   zGetAttachmentPath,
   zGetAttachmentResponse,
   zGetAttachmentsPath,
   zGetAttachmentsQuery,
   zGetAttachmentsResponse,
   zGetAuthHealthResponse,
+  zGetConnectedAppsResponse,
   zGetDomainPath,
   zGetDomainResponse,
   zGetDomainsPath,
@@ -443,6 +482,8 @@ import {
   zGetLabelsPath,
   zGetLabelsQuery,
   zGetLabelsResponse,
+  zGetMcpProtectedResourceMetadataPath,
+  zGetMcpProtectedResourceMetadataResponse,
   zGetMembersPath,
   zGetMembersQuery,
   zGetMembersResponse,
@@ -480,6 +521,9 @@ import {
   zGetPushVapidResponse,
   zGetRequestsQuery,
   zGetRequestsResponse,
+  zGetServiceAccountsPath,
+  zGetServiceAccountsQuery,
+  zGetServiceAccountsResponse,
   zGetTaskCoverPath,
   zGetTaskPath,
   zGetTaskResponse,
@@ -539,6 +583,12 @@ import {
   zResendPendingInvitationResponse,
   zResolveTaskLinkPath,
   zResolveTaskLinkResponse,
+  zRevokeApiKeyPath,
+  zRevokeApiKeyResponse,
+  zRevokeConnectedAppPath,
+  zRevokeConnectedAppResponse,
+  zRevokeMySessionsBody,
+  zRevokeMySessionsResponse,
   zSelfCreateTenantBody,
   zSelfCreateTenantResponse,
   zSendMagicLinkBody,
@@ -580,6 +630,9 @@ import {
   zUpdateProjectBody,
   zUpdateProjectPath,
   zUpdateProjectResponse,
+  zUpdateServiceAccountBody,
+  zUpdateServiceAccountPath,
+  zUpdateServiceAccountResponse,
   zUpdateTaskBody,
   zUpdateTaskPath,
   zUpdateTaskQuery,
@@ -885,7 +938,7 @@ export const resendInvitationWithToken = <ThrowOnError extends boolean = true>(
 /**
  * Sign out
  *
- * Signs out the current user and clears the active session.
+ * Signs out the current user: the session is revoked (its row stays for the sessions list) and the cookie is cleared.
  *
  * **POST /auth/sign-out** ·· [signOut](https://www.raak.dev/docs/operations?operationTag=auth#tag/auth/POST/auth/sign-out) ·· [signOut](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/auth/sign-out) ·· _auth_cella_
  *
@@ -1568,7 +1621,7 @@ export const getDomain = <ThrowOnError extends boolean = true>(
 /**
  * Verify domain ownership via DNS
  *
- * Looks up DNS TXT records for the domain to verify ownership. Checks for a _cella-verification.<domain> TXT record matching the verification token.
+ * Looks up DNS TXT records for the domain to verify ownership. Checks for a _raak-development-verification.<domain> TXT record matching the verification token.
  *
  * **POST /tenants/{tenantId}/domains/{id}/verify** ·· [verifyDomain](https://www.raak.dev/docs/operations?operationTag=tenants#tag/tenants/POST/tenants/{tenantId}/domains/{id}/verify) ·· [verifyDomain](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/tenants/{tenantId}/domains/{id}/verify) ·· _tenants_cella_
  *
@@ -1883,7 +1936,7 @@ export const toggleMfa = <ThrowOnError extends boolean = true>(
 /**
  * Get auth data
  *
- * Returns authentication related data of current user, including sessions, OAuth accounts, and sign in options.
+ * Returns authentication related data of current user, including sessions, passkeys, TOTP and the enabled sign-in providers.
  *
  * **GET /me/auth** ·· [getMyAuth](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/auth) ·· [getMyAuth](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/auth) ·· _me_cella_
  *
@@ -1951,29 +2004,29 @@ export const getMyInvitations = <ThrowOnError extends boolean = true>(
   });
 
 /**
- * Terminate sessions
+ * Revoke sessions
  *
- * Ends one or more sessions for the current user based on provided session IDs.
+ * Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for 30 days. Revoking the current session signs out.
  *
- * **DELETE /me/sessions** ·· [deleteMySessions](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me/sessions) ·· [deleteMySessions](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/me/sessions) ·· _me_cella_
+ * **DELETE /me/sessions** ·· [revokeMySessions](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me/sessions) ·· [revokeMySessions](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/me/sessions) ·· _me_cella_
  *
- * @param {deleteMySessionsData} options
+ * @param {revokeMySessionsData} options
  * @param {any[]=} options.body.ids - `any[]` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
-export const deleteMySessions = <ThrowOnError extends boolean = true>(
-  options?: Options<DeleteMySessionsData, ThrowOnError>,
-): RequestResult<DeleteMySessionsResponses, DeleteMySessionsErrors, ThrowOnError, 'data'> =>
-  (options?.client ?? client).delete<DeleteMySessionsResponses, DeleteMySessionsErrors, ThrowOnError, 'data'>({
+export const revokeMySessions = <ThrowOnError extends boolean = true>(
+  options?: Options<RevokeMySessionsData, ThrowOnError>,
+): RequestResult<RevokeMySessionsResponses, RevokeMySessionsErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).delete<RevokeMySessionsResponses, RevokeMySessionsErrors, ThrowOnError, 'data'>({
     requestValidator: async (data) =>
       await z
         .object({
-          body: zDeleteMySessionsBody.optional(),
+          body: zRevokeMySessionsBody.optional(),
           path: z.never().optional(),
           query: z.never().optional(),
         })
         .parseAsync(data),
-    responseValidator: async (data) => await zDeleteMySessionsResponse.parseAsync(data),
+    responseValidator: async (data) => await zRevokeMySessionsResponse.parseAsync(data),
     responseStyle: 'data',
     security: [
       {
@@ -2125,6 +2178,77 @@ export const getMyMemberships = <ThrowOnError extends boolean = true>(
       },
     ],
     url: '/me/memberships',
+    ...options,
+  });
+
+/**
+ * Get connected apps
+ *
+ * Lists the OAuth clients the user consented to (MCP clients, registered apps) with their scopes.
+ *
+ * **GET /me/connected-apps** ·· [getConnectedApps](https://www.raak.dev/docs/operations?operationTag=me#tag/me/GET/me/connected-apps) ·· [getConnectedApps](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/me/connected-apps) ·· _me_cella_
+ *
+ * @param {getConnectedAppsData} options
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getConnectedApps = <ThrowOnError extends boolean = true>(
+  options?: Options<GetConnectedAppsData, ThrowOnError>,
+): RequestResult<GetConnectedAppsResponses, GetConnectedAppsErrors, ThrowOnError, 'data'> =>
+  (options?.client ?? client).get<GetConnectedAppsResponses, GetConnectedAppsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: z.never().optional(),
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetConnectedAppsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/me/connected-apps',
+    ...options,
+  });
+
+/**
+ * Revoke connected app
+ *
+ * Revokes a consent: the grant and every token issued under it are deleted.
+ *
+ * **DELETE /me/connected-apps/{id}** ·· [revokeConnectedApp](https://www.raak.dev/docs/operations?operationTag=me#tag/me/DELETE/me/connected-apps/{id}) ·· [revokeConnectedApp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/me/connected-apps/{id}) ·· _me_cella_
+ *
+ * @param {revokeConnectedAppData} options
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const revokeConnectedApp = <ThrowOnError extends boolean = true>(
+  options: Options<RevokeConnectedAppData, ThrowOnError>,
+): RequestResult<RevokeConnectedAppResponses, RevokeConnectedAppErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<RevokeConnectedAppResponses, RevokeConnectedAppErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zRevokeConnectedAppPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zRevokeConnectedAppResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/me/connected-apps/{id}',
     ...options,
   });
 
@@ -3222,6 +3346,45 @@ export const getYjsToken = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Protected resource metadata (API)
+ *
+ * RFC 9728 metadata of this tenant as an API resource: its resource identifier, the authorization server that issues tokens for it, and the scopes it understands.
+ *
+ * **GET /{tenantId}/.well-known/oauth-protected-resource** ·· [getApiProtectedResourceMetadata](https://www.raak.dev/docs/operations?operationTag=oauth-server#tag/oauth-server/GET/{tenantId}/.well-known/oauth-protected-resource) ·· [getApiProtectedResourceMetadata](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/.well-known/oauth-protected-resource) ·· _oauth-server_cella_
+ *
+ * @param {getApiProtectedResourceMetadataData} options
+ * @param {string} options.path.tenantid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getApiProtectedResourceMetadata = <ThrowOnError extends boolean = true>(
+  options: Options<GetApiProtectedResourceMetadataData, ThrowOnError>,
+): RequestResult<
+  GetApiProtectedResourceMetadataResponses,
+  GetApiProtectedResourceMetadataErrors,
+  ThrowOnError,
+  'data'
+> =>
+  (options.client ?? client).get<
+    GetApiProtectedResourceMetadataResponses,
+    GetApiProtectedResourceMetadataErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetApiProtectedResourceMetadataPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetApiProtectedResourceMetadataResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/.well-known/oauth-protected-resource',
+    ...options,
+  });
+
+/**
  * Delete organizations
  *
  * Deletes one or more organizations by ID within a tenant.
@@ -3381,6 +3544,16 @@ export const getOrganization = <ThrowOnError extends boolean = true>(
         name: 'raak-development-session-v2',
         type: 'apiKey',
       },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
+      },
     ],
     url: '/{tenantId}/organizations/{id}',
     ...options,
@@ -3435,6 +3608,16 @@ export const updateOrganization = <ThrowOnError extends boolean = true>(
         in: 'cookie',
         name: 'raak-development-session-v2',
         type: 'apiKey',
+      },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
       },
     ],
     url: '/{tenantId}/organizations/{id}',
@@ -4029,6 +4212,16 @@ export const deleteAttachments = <ThrowOnError extends boolean = true>(
         name: 'raak-development-session-v2',
         type: 'apiKey',
       },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
+      },
     ],
     url: '/{tenantId}/{organizationId}/attachments',
     ...options,
@@ -4077,6 +4270,16 @@ export const getAttachments = <ThrowOnError extends boolean = true>(
         name: 'raak-development-session-v2',
         type: 'apiKey',
       },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
+      },
     ],
     url: '/{tenantId}/{organizationId}/attachments',
     ...options,
@@ -4113,6 +4316,16 @@ export const createAttachments = <ThrowOnError extends boolean = true>(
         in: 'cookie',
         name: 'raak-development-session-v2',
         type: 'apiKey',
+      },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
       },
     ],
     url: '/{tenantId}/{organizationId}/attachments',
@@ -4156,6 +4369,16 @@ export const getPresignedUrls = <ThrowOnError extends boolean = true>(
         name: 'raak-development-session-v2',
         type: 'apiKey',
       },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
+      },
     ],
     url: '/{tenantId}/{organizationId}/attachments/presigned-urls',
     ...options,
@@ -4198,6 +4421,16 @@ export const getAttachment = <ThrowOnError extends boolean = true>(
         name: 'raak-development-session-v2',
         type: 'apiKey',
       },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
+      },
     ],
     url: '/{tenantId}/{organizationId}/attachments/{id}',
     ...options,
@@ -4238,6 +4471,16 @@ export const updateAttachment = <ThrowOnError extends boolean = true>(
         in: 'cookie',
         name: 'raak-development-session-v2',
         type: 'apiKey',
+      },
+      {
+        key: 'apiKey',
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
       },
     ],
     url: '/{tenantId}/{organizationId}/attachments/{id}',
@@ -4461,9 +4704,49 @@ export const updateLabel = <ThrowOnError extends boolean = true>(
   });
 
 /**
+ * Protected resource metadata
+ *
+ * RFC 9728 metadata of this organization MCP server: its resource identifier, the authorization server that issues tokens for it, and the scopes it understands.
+ *
+ * **GET /{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource** ·· [getMcpProtectedResourceMetadata](https://www.raak.dev/docs/operations?operationTag=mcp#tag/mcp/GET/{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource) ·· [getMcpProtectedResourceMetadata](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource) ·· _mcp_cella_
+ *
+ * @param {getMcpProtectedResourceMetadataData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getMcpProtectedResourceMetadata = <ThrowOnError extends boolean = true>(
+  options: Options<GetMcpProtectedResourceMetadataData, ThrowOnError>,
+): RequestResult<
+  GetMcpProtectedResourceMetadataResponses,
+  GetMcpProtectedResourceMetadataErrors,
+  ThrowOnError,
+  'data'
+> =>
+  (options.client ?? client).get<
+    GetMcpProtectedResourceMetadataResponses,
+    GetMcpProtectedResourceMetadataErrors,
+    ThrowOnError,
+    'data'
+  >({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetMcpProtectedResourceMetadataPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetMcpProtectedResourceMetadataResponse.parseAsync(data),
+    responseStyle: 'data',
+    url: '/{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource',
+    ...options,
+  });
+
+/**
  * MCP endpoint
  *
- * Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).
+ * Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to.
  *
  * **POST /{tenantId}/{organizationId}/mcp** ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=mcp#tag/mcp/POST/{tenantId}/{organizationId}/mcp) ·· [handleMcp](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/mcp) ·· _mcp_cella_
  *
@@ -4487,9 +4770,9 @@ export const handleMcp = <ThrowOnError extends boolean = true>(
     responseStyle: 'data',
     security: [
       {
-        in: 'cookie',
-        name: 'raak-development-session-v2',
-        type: 'apiKey',
+        key: 'oauth2',
+        scheme: 'bearer',
+        type: 'http',
       },
     ],
     url: '/{tenantId}/{organizationId}/mcp',
@@ -4854,6 +5137,258 @@ export const markSeen = <ThrowOnError extends boolean = true>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Get service accounts
+ *
+ * Lists the service accounts of this organization.
+ *
+ * **GET /{tenantId}/{organizationId}/service-accounts** ·· [getServiceAccounts](https://www.raak.dev/docs/operations?operationTag=service-accounts#tag/service-accounts/GET/{tenantId}/{organizationId}/service-accounts) ·· [getServiceAccounts](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/service-accounts) ·· _service-accounts_cella_
+ *
+ * @param {getServiceAccountsData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string=} options.query.q - `string` (optional)
+ * @param {string=} options.query.offset - `string` (optional)
+ * @param {string=} options.query.limit - `string` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getServiceAccounts = <ThrowOnError extends boolean = true>(
+  options: Options<GetServiceAccountsData, ThrowOnError>,
+): RequestResult<GetServiceAccountsResponses, GetServiceAccountsErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetServiceAccountsResponses, GetServiceAccountsErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetServiceAccountsPath,
+          query: zGetServiceAccountsQuery.optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetServiceAccountsResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/service-accounts',
+    ...options,
+  });
+
+/**
+ * Create service account
+ *
+ * Creates a machine actor bound to this organization at the given role (capped at your own), optionally issuing its first API key in the same call.
+ *
+ * **POST /{tenantId}/{organizationId}/service-accounts** ·· [createServiceAccount](https://www.raak.dev/docs/operations?operationTag=service-accounts#tag/service-accounts/POST/{tenantId}/{organizationId}/service-accounts) ·· [createServiceAccount](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/service-accounts) ·· _service-accounts_cella_
+ *
+ * @param {createServiceAccountData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {enum=} options.body.role - `enum` (optional)
+ * @param {object} options.body.key - `object`
+ * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
+ */
+export const createServiceAccount = <ThrowOnError extends boolean = true>(
+  options: Options<CreateServiceAccountData, ThrowOnError>,
+): RequestResult<CreateServiceAccountResponses, CreateServiceAccountErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateServiceAccountResponses, CreateServiceAccountErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateServiceAccountBody,
+          path: zCreateServiceAccountPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateServiceAccountResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/service-accounts',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Update service account
+ *
+ * Renames, disables or re-enables a service account. Accounts are never deleted.
+ *
+ * **PUT /{tenantId}/{organizationId}/service-accounts/{id}** ·· [updateServiceAccount](https://www.raak.dev/docs/operations?operationTag=service-accounts#tag/service-accounts/PUT/{tenantId}/{organizationId}/service-accounts/{id}) ·· [updateServiceAccount](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/PUT/{tenantId}/{organizationId}/service-accounts/{id}) ·· _service-accounts_cella_
+ *
+ * @param {updateServiceAccountData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {enum=} options.body.status - `enum` (optional)
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const updateServiceAccount = <ThrowOnError extends boolean = true>(
+  options: Options<UpdateServiceAccountData, ThrowOnError>,
+): RequestResult<UpdateServiceAccountResponses, UpdateServiceAccountErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).put<UpdateServiceAccountResponses, UpdateServiceAccountErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zUpdateServiceAccountBody,
+          path: zUpdateServiceAccountPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zUpdateServiceAccountResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/service-accounts/{id}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get API keys
+ *
+ * Lists the API keys of a service account. Secrets are never returned here.
+ *
+ * **GET /{tenantId}/{organizationId}/service-accounts/{id}/keys** ·· [getApiKeys](https://www.raak.dev/docs/operations?operationTag=service-accounts#tag/service-accounts/GET/{tenantId}/{organizationId}/service-accounts/{id}/keys) ·· [getApiKeys](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/GET/{tenantId}/{organizationId}/service-accounts/{id}/keys) ·· _service-accounts_cella_
+ *
+ * @param {getApiKeysData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const getApiKeys = <ThrowOnError extends boolean = true>(
+  options: Options<GetApiKeysData, ThrowOnError>,
+): RequestResult<GetApiKeysResponses, GetApiKeysErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).get<GetApiKeysResponses, GetApiKeysErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zGetApiKeysPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zGetApiKeysResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/service-accounts/{id}/keys',
+    ...options,
+  });
+
+/**
+ * Create API key
+ *
+ * Issues an API key for a service account; the plaintext is returned once. With `rollFrom`, the previous key keeps working for the overlap window.
+ *
+ * **POST /{tenantId}/{organizationId}/service-accounts/{id}/keys** ·· [createApiKey](https://www.raak.dev/docs/operations?operationTag=service-accounts#tag/service-accounts/POST/{tenantId}/{organizationId}/service-accounts/{id}/keys) ·· [createApiKey](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/{tenantId}/{organizationId}/service-accounts/{id}/keys) ·· _service-accounts_cella_
+ *
+ * @param {createApiKeyData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string=} options.body.name - `string` (optional)
+ * @param {any[] | null=} options.body.scopes - `any[] | null` (optional)
+ * @param {string=} options.body.expiresAt - `string` (optional)
+ * @param {string=} options.body.rollFrom - `string` (optional)
+ * @param {integer=} options.body.rollOverlapDays - `integer` (optional)
+ * @returns Possible status codes: 201, 400, 401, 403, 404, 409, 429
+ */
+export const createApiKey = <ThrowOnError extends boolean = true>(
+  options: Options<CreateApiKeyData, ThrowOnError>,
+): RequestResult<CreateApiKeyResponses, CreateApiKeyErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).post<CreateApiKeyResponses, CreateApiKeyErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: zCreateApiKeyBody,
+          path: zCreateApiKeyPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zCreateApiKeyResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/service-accounts/{id}/keys',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Revoke API key
+ *
+ * Revokes an API key immediately. The row stays for the audit trail.
+ *
+ * **DELETE /{tenantId}/{organizationId}/service-accounts/{id}/keys/{keyId}** ·· [revokeApiKey](https://www.raak.dev/docs/operations?operationTag=service-accounts#tag/service-accounts/DELETE/{tenantId}/{organizationId}/service-accounts/{id}/keys/{keyId}) ·· [revokeApiKey](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/DELETE/{tenantId}/{organizationId}/service-accounts/{id}/keys/{keyId}) ·· _service-accounts_cella_
+ *
+ * @param {revokeApiKeyData} options
+ * @param {string} options.path.tenantid - `string`
+ * @param {string} options.path.organizationid - `string`
+ * @param {string} options.path.id - `string`
+ * @param {string} options.path.keyid - `string`
+ * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
+ */
+export const revokeApiKey = <ThrowOnError extends boolean = true>(
+  options: Options<RevokeApiKeyData, ThrowOnError>,
+): RequestResult<RevokeApiKeyResponses, RevokeApiKeyErrors, ThrowOnError, 'data'> =>
+  (options.client ?? client).delete<RevokeApiKeyResponses, RevokeApiKeyErrors, ThrowOnError, 'data'>({
+    requestValidator: async (data) =>
+      await z
+        .object({
+          body: z.never().optional(),
+          path: zRevokeApiKeyPath,
+          query: z.never().optional(),
+        })
+        .parseAsync(data),
+    responseValidator: async (data) => await zRevokeApiKeyResponse.parseAsync(data),
+    responseStyle: 'data',
+    security: [
+      {
+        in: 'cookie',
+        name: 'raak-development-session-v2',
+        type: 'apiKey',
+      },
+    ],
+    url: '/{tenantId}/{organizationId}/service-accounts/{id}/keys/{keyId}',
+    ...options,
   });
 
 /**

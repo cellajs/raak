@@ -48,8 +48,20 @@ export const config = {
 
   entityActions: ['create', 'read', 'update', 'delete'] as const,
 
-  /** Not entities, but activities are logged for them. */
-  resourceTypes: ['request', 'membership', 'inactive_membership', 'tenant', 'system_role'] as const,
+  /**
+   * Not entities, but activities are logged for them. Tenant- or system-owned rows only: rows a user owns
+   * (sessions, identities, passkeys, emails) are self-audited through the account pages and notifications.
+   */
+  resourceTypes: [
+    'request',
+    'membership',
+    'inactive_membership',
+    'tenant',
+    'system_role',
+    'service_account',
+    'api_key',
+    'oauth_client',
+  ] as const,
 
   /**
    * Product embeddings: declares which product entities are embedded as ID arrays inside
@@ -84,6 +96,8 @@ export const config = {
       organization: 1,
       user: 1000,
       attachment: 100,
+      serviceAccount: 20,
+      apiKey: 100,
     },
     rateLimits: {
       apiPointsPerHour: 1000,
@@ -113,12 +127,15 @@ export const config = {
   backendAuthUrl: 'https://www.raak.dev/api/auth',
   yjsUrl: 'wss://www.raak.dev/yjs',
   mcpUrl: 'https://www.raak.dev/mcp',
+  /** The OAuth authorization server (issuer). Same origin under `/oauth`, so the session cookie reaches its consent screen. */
+  oauthUrl: 'https://www.raak.dev/oauth',
   services: {
     frontend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev' },
     backend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/api' },
     cdc: { enabled: true as boolean },
     yjs: { enabled: true as boolean, publicUrl: 'wss://www.raak.dev/yjs' },
     mcp: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/mcp' },
+    oauth: { enabled: false as boolean, publicUrl: 'https://www.raak.dev/oauth' },
   },
 
   // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
@@ -157,6 +174,7 @@ export const config = {
     cdcHealth: 4001,
     yjs: 4002,
     mcp: 4003,
+    oauth: 4004,
   },
 
   has: {
@@ -176,7 +194,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v2',
-  clientCacheVersion: 'v10-task-attachments',
+  clientCacheVersion: 'v11-tenant-restrictions',
 
   // Authentication
 

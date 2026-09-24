@@ -1,5 +1,6 @@
+import { appConfig } from 'shared';
 import { createXRoute } from '#/core/x-routes';
-import { authGuard, sysAdminGuard, tenantGuard } from '#/middlewares/guard';
+import { sysAdminGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import { errorResponseRefs, tenantOnlyParamSchema } from '#/schemas';
 import {
@@ -15,7 +16,7 @@ export const domainRoutes = {
     operationId: 'getDomains',
     method: 'get',
     path: '/',
-    xGuard: [authGuard, sysAdminGuard, tenantGuard],
+    xGuard: [userGuard, sysAdminGuard, tenantGuard],
     tags: ['tenants', 'cella'],
     summary: 'List domains for a tenant',
     description:
@@ -38,7 +39,7 @@ export const domainRoutes = {
     operationId: 'createDomain',
     method: 'post',
     path: '/',
-    xGuard: [authGuard, sysAdminGuard, tenantGuard],
+    xGuard: [userGuard, sysAdminGuard, tenantGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['tenants', 'cella'],
     summary: 'Add a domain to a tenant',
@@ -67,7 +68,7 @@ export const domainRoutes = {
     operationId: 'deleteDomain',
     method: 'delete',
     path: '/{id}',
-    xGuard: [authGuard, sysAdminGuard, tenantGuard],
+    xGuard: [userGuard, sysAdminGuard, tenantGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['tenants', 'cella'],
     summary: 'Remove a domain',
@@ -90,7 +91,7 @@ export const domainRoutes = {
     operationId: 'getDomain',
     method: 'get',
     path: '/{id}',
-    xGuard: [authGuard, sysAdminGuard, tenantGuard],
+    xGuard: [userGuard, sysAdminGuard, tenantGuard],
     tags: ['tenants', 'cella'],
     summary: 'Get domain with verification token',
     description:
@@ -113,12 +114,11 @@ export const domainRoutes = {
     operationId: 'verifyDomain',
     method: 'post',
     path: '/{id}/verify',
-    xGuard: [authGuard, sysAdminGuard, tenantGuard],
+    xGuard: [userGuard, sysAdminGuard, tenantGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['tenants', 'cella'],
     summary: 'Verify domain ownership via DNS',
-    description:
-      'Looks up DNS TXT records for the domain to verify ownership. Checks for a _cella-verification.<domain> TXT record matching the verification token.',
+    description: `Looks up DNS TXT records for the domain to verify ownership. Checks for a _${appConfig.slug}-verification.<domain> TXT record matching the verification token.`,
     request: { params: domainParamSchema },
     responses: {
       200: {

@@ -1,6 +1,6 @@
 import { and, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import { appConfig } from 'shared';
-import type { AuthContext, DbContext } from '#/core/context';
+import type { ActorContext, DbContext } from '#/core/context';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { labelsTable } from '#/modules/label/label-db';
@@ -18,7 +18,7 @@ interface FindLabelsByStxMutationIdOpts {
   mutationId: string;
 }
 
-export const findLabelsByStxMutationId = async (ctx: AuthContext, { mutationId }: FindLabelsByStxMutationIdOpts) => {
+export const findLabelsByStxMutationId = async (ctx: ActorContext, { mutationId }: FindLabelsByStxMutationIdOpts) => {
   const { db } = ctx.var;
   return db
     .select()
@@ -27,7 +27,7 @@ export const findLabelsByStxMutationId = async (ctx: AuthContext, { mutationId }
 };
 
 /** Find all labels in an organization (used for duplicate/color matching). */
-export const findLabelsByOrg = async (ctx: AuthContext) => {
+export const findLabelsByOrg = async (ctx: ActorContext) => {
   const { db } = ctx.var;
   return db
     .select()
@@ -51,7 +51,7 @@ interface UpdateLabelOpts {
 }
 
 /** Update a label by ID and return the updated row. */
-export const updateLabel = async (ctx: AuthContext, { id, values }: UpdateLabelOpts) => {
+export const updateLabel = async (ctx: ActorContext, { id, values }: UpdateLabelOpts) => {
   const { db } = ctx.var;
   const [updated] = await db
     .update(labelsTable)
@@ -68,7 +68,7 @@ interface DeleteLabelsByIdsOpts {
 }
 
 /** Soft-delete labels by IDs. */
-export const deleteLabelsByIds = async (ctx: AuthContext, { ids, deletedAt, deletedBy }: DeleteLabelsByIdsOpts) => {
+export const deleteLabelsByIds = async (ctx: ActorContext, { ids, deletedAt, deletedBy }: DeleteLabelsByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .update(labelsTable)
@@ -107,7 +107,7 @@ interface BuildLabelsListQueryOpts {
 }
 
 /** Build the labels list query with counter join and filters. Returns a subquery. */
-export const buildLabelsListQuery = (ctx: AuthContext, { filters }: BuildLabelsListQueryOpts) => {
+export const buildLabelsListQuery = (ctx: ActorContext, { filters }: BuildLabelsListQueryOpts) => {
   const { db } = ctx.var;
   return db
     .select({

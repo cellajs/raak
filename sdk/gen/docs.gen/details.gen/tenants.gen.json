@@ -489,6 +489,11 @@
                             "minimum": 0
                           }
                         }
+                      },
+                      "allowUnregisteredClients": {
+                        "type": "boolean",
+                        "required": true,
+                        "description": "Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)"
                       }
                     }
                   },
@@ -657,6 +662,11 @@
                       "minimum": 0
                     }
                   }
+                },
+                "allowUnregisteredClients": {
+                  "type": "boolean",
+                  "required": true,
+                  "description": "Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)"
                 }
               }
             },
@@ -801,6 +811,11 @@
                       "minimum": 0
                     }
                   }
+                },
+                "allowUnregisteredClients": {
+                  "type": "boolean",
+                  "required": true,
+                  "description": "Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)"
                 }
               }
             },
@@ -940,6 +955,7 @@
                 "description": "Entity quotas (0 = unlimited)",
                 "additionalProperties": { "type": "integer", "required": false, "minimum": 0 }
               },
+              "allowUnregisteredClients": { "type": "boolean", "required": false },
               "rateLimits": {
                 "type": "object",
                 "required": false,

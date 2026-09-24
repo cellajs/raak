@@ -33,6 +33,7 @@ import { Route as PublicMarketingAccessibilityRouteImport } from './_public/_mar
 import { Route as PublicMarketingContactRouteImport } from './_public/_marketing/contact'
 import { Route as PublicMarketingFeaturesRouteImport } from './_public/_marketing/features'
 import { Route as PublicAuthAuthenticateRouteImport } from './_public/auth/authenticate'
+import { Route as PublicAuthConsentRouteImport } from './_public/auth/consent'
 import { Route as PublicAuthErrorRouteImport } from './_public/auth/error'
 import { Route as PublicAuthMfaRouteImport } from './_public/auth/mfa'
 import { Route as PublicAuthSignOutRouteImport } from './_public/auth/sign-out'
@@ -173,6 +174,11 @@ const PublicMarketingFeaturesRoute = PublicMarketingFeaturesRouteImport.update({
 const PublicAuthAuthenticateRoute = PublicAuthAuthenticateRouteImport.update({
   id: '/authenticate',
   path: '/authenticate',
+  getParentRoute: () => PublicAuthRouteRoute,
+} as any)
+const PublicAuthConsentRoute = PublicAuthConsentRouteImport.update({
+  id: '/consent',
+  path: '/consent',
   getParentRoute: () => PublicAuthRouteRoute,
 } as any)
 const PublicAuthErrorRoute = PublicAuthErrorRouteImport.update({
@@ -328,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof PublicMarketingContactRoute
   '/features': typeof PublicMarketingFeaturesRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
+  '/auth/consent': typeof PublicAuthConsentRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
   '/auth/sign-out': typeof PublicAuthSignOutRoute
@@ -372,6 +379,7 @@ export interface FileRoutesByTo {
   '/contact': typeof PublicMarketingContactRoute
   '/features': typeof PublicMarketingFeaturesRoute
   '/auth/authenticate': typeof PublicAuthAuthenticateRoute
+  '/auth/consent': typeof PublicAuthConsentRoute
   '/auth/error': typeof PublicAuthErrorRoute
   '/auth/mfa': typeof PublicAuthMfaRoute
   '/auth/sign-out': typeof PublicAuthSignOutRoute
@@ -422,6 +430,7 @@ export interface FileRoutesById {
   '/_public/_marketing/contact': typeof PublicMarketingContactRoute
   '/_public/_marketing/features': typeof PublicMarketingFeaturesRoute
   '/_public/auth/authenticate': typeof PublicAuthAuthenticateRoute
+  '/_public/auth/consent': typeof PublicAuthConsentRoute
   '/_public/auth/error': typeof PublicAuthErrorRoute
   '/_public/auth/mfa': typeof PublicAuthMfaRoute
   '/_public/auth/sign-out': typeof PublicAuthSignOutRoute
@@ -469,6 +478,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/features'
     | '/auth/authenticate'
+    | '/auth/consent'
     | '/auth/error'
     | '/auth/mfa'
     | '/auth/sign-out'
@@ -513,6 +523,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/features'
     | '/auth/authenticate'
+    | '/auth/consent'
     | '/auth/error'
     | '/auth/mfa'
     | '/auth/sign-out'
@@ -562,6 +573,7 @@ export interface FileRouteTypes {
     | '/_public/_marketing/contact'
     | '/_public/_marketing/features'
     | '/_public/auth/authenticate'
+    | '/_public/auth/consent'
     | '/_public/auth/error'
     | '/_public/auth/mfa'
     | '/_public/auth/sign-out'
@@ -760,6 +772,13 @@ declare module '@tanstack/react-router' {
       path: '/authenticate'
       fullPath: '/auth/authenticate'
       preLoaderRoute: typeof PublicAuthAuthenticateRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
+    '/_public/auth/consent': {
+      id: '/_public/auth/consent'
+      path: '/consent'
+      fullPath: '/auth/consent'
+      preLoaderRoute: typeof PublicAuthConsentRouteImport
       parentRoute: typeof PublicAuthRouteRoute
     }
     '/_public/auth/error': {
@@ -1061,6 +1080,7 @@ const PublicContentRouteRouteWithChildren =
 
 interface PublicAuthRouteRouteChildren {
   PublicAuthAuthenticateRoute: typeof PublicAuthAuthenticateRoute
+  PublicAuthConsentRoute: typeof PublicAuthConsentRoute
   PublicAuthErrorRoute: typeof PublicAuthErrorRoute
   PublicAuthMfaRoute: typeof PublicAuthMfaRoute
   PublicAuthSignOutRoute: typeof PublicAuthSignOutRoute
@@ -1070,6 +1090,7 @@ interface PublicAuthRouteRouteChildren {
 
 const PublicAuthRouteRouteChildren: PublicAuthRouteRouteChildren = {
   PublicAuthAuthenticateRoute: PublicAuthAuthenticateRoute,
+  PublicAuthConsentRoute: PublicAuthConsentRoute,
   PublicAuthErrorRoute: PublicAuthErrorRoute,
   PublicAuthMfaRoute: PublicAuthMfaRoute,
   PublicAuthSignOutRoute: PublicAuthSignOutRoute,

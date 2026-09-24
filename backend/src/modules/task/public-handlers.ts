@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { isUnpublishedDraft } from 'shared';
-import type { AuthContext, Env } from '#/core/context';
+import type { ActorContext, Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { getAdminDb } from '#/db/db';
 import { resolveEntity } from '#/modules/entities/entities-queries';
@@ -39,11 +39,10 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   const publicCtx = {
     var: {
       db: getAdminDb('public task reads'),
-      userId: '',
       tenantId: mainTask.tenantId,
       organizationId: mainTask.organizationId,
     },
-  } as AuthContext;
+  } as ActorContext;
   const [users, labels] = await getTaskRelations(publicCtx, { tasks: [mainTask] });
 
   const taskResponse = hydrateTask(mainTask, users, labels);
@@ -65,11 +64,10 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const publicCtx = {
     var: {
       db: getAdminDb('public task reads'),
-      userId: '',
       tenantId: project.tenantId,
       organizationId: project.organizationId,
     },
-  } as AuthContext;
+  } as ActorContext;
   const response = await getTasks(publicCtx, [project.id], queryInfo, { publicOnly: true });
   return ctx.json(response, 200);
 });

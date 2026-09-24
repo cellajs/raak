@@ -1,4 +1,4 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import {
   requireCurrentUserProjectMembership,
@@ -9,7 +9,7 @@ import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
-export async function moveProjectToWorkspaceOp(ctx: AuthContext, id: string, workspaceId: string) {
+export async function moveProjectToWorkspaceOp(ctx: UserContext, id: string, workspaceId: string) {
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read');
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
   const membership = requireCurrentUserProjectMembership(ctx, project);

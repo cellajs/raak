@@ -1,11 +1,11 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
-import { toMembershipBase } from '#/modules/memberships/helpers/select';
+import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidChannel } from '#/permissions';
 
-export async function getProjectOp(ctx: AuthContext, id: string, opts: { bySlug?: boolean; include: string[] }) {
+export async function getProjectOp(ctx: UserContext, id: string, opts: { bySlug?: boolean; include: string[] }) {
   const user = ctx.var.user;
   const { bySlug, include } = opts;
 
@@ -27,7 +27,7 @@ export async function getProjectOp(ctx: AuthContext, id: string, opts: { bySlug?
 
   if (counts) included.counts = { ...counts, taskStatusCounts };
 
-  if (includeMembership && membership) {
+  if (includeMembership && membership && isMembershipRow(membership)) {
     included.membership = toMembershipBase(membership);
   }
 

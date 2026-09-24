@@ -45,7 +45,7 @@ let runtimeDb: NodePgDatabase;
 
 let rolesAvailable = false;
 let requiredTablesAvailable = false;
-/** Whether the seen_by table exists (partman-partitioned; may be absent in a minimal test DB). */
+/** Whether the seen_by table exists (partitioned; may be absent in a minimal test DB). */
 let seenByAvailable = false;
 
 const quoteIdent = (identifier: string) => `"${identifier.replaceAll('"', '""')}"`;
@@ -207,6 +207,13 @@ async function setupTestData() {
     ON CONFLICT (id) DO NOTHING
   `);
 
+  // users.id is a foreign key to actors.id, so the actor row comes first
+  await adminDb.execute(sql`
+    INSERT INTO actors (id, kind, created_at)
+    VALUES (${TEST_USER_A}, 'user', NOW()), (${TEST_USER_B}, 'user', NOW())
+    ON CONFLICT (id) DO NOTHING
+  `);
+
   await adminDb.execute(sql`
     INSERT INTO users (id, entity_type, name, slug, email, created_at)
     VALUES
@@ -259,6 +266,7 @@ async function cleanupTestData() {
   await cleanupEntityHierarchy(...activeRlsProducts.map(({ fixture }) => fixture.plan));
   await adminDb.execute(sql`DELETE FROM organizations WHERE id IN (${TEST_ORG_A}, ${TEST_ORG_B})`);
   await adminDb.execute(sql`DELETE FROM users WHERE id IN (${TEST_USER_A}, ${TEST_USER_B})`);
+  await adminDb.execute(sql`DELETE FROM actors WHERE id IN (${TEST_USER_A}, ${TEST_USER_B})`);
   await adminDb.execute(
     sql`DELETE FROM tenants WHERE id IN (${TEST_TENANT_A}, ${TEST_TENANT_B}, ${TEST_TENANT_EMPTY})`,
   );
@@ -450,7 +458,7 @@ const rlsSuiteReady = await (async () => {
 
     await setupTestData();
 
-    // seen_by is partman-partitioned and may be absent in a minimal test DB.
+    // seen_by is partitioned and may be absent in a minimal test DB.
     seenByAvailable = await tableExists('seen_by');
   });
 

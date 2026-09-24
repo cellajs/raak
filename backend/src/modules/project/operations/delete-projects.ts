@@ -1,10 +1,10 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { deleteProjectsByIds } from '#/modules/project/project-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { log } from '#/utils/logger';
 
-export async function deleteProjectsOp(ctx: AuthContext, ids: string[]) {
+export async function deleteProjectsOp(ctx: UserContext, ids: string[]) {
   // Convert the ids to an array
   const toDeleteIds = Array.isArray(ids) ? ids : [ids];
 

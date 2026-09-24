@@ -13,4 +13,5 @@ export const staging = {
   backendAuthUrl: 'https://staging.raak.dev/api/auth',
   yjsUrl: 'wss://staging.raak.dev/yjs',
   mcpUrl: 'https://staging.raak.dev/mcp',
+  oauthUrl: 'https://staging.raak.dev/oauth',
 } satisfies DeepPartial<typeof _default>;

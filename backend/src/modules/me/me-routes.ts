@@ -1,11 +1,13 @@
 import { z } from '@hono/zod-openapi';
 import { createXRoute } from '#/core/x-routes';
-import { authGuard, crossTenantGuard, publicGuard } from '#/middlewares/guard';
+import { crossTenantGuard, publicGuard, userGuard } from '#/middlewares/guard';
 import { bulkPointsLimiter, singlePointsLimiter, tokenLimiter } from '#/middlewares/rate-limiter/limiters';
 import {
+  connectedAppSchema,
   meAuthDataSchema,
   mePendingInvitationSchema,
   meSchema,
+  sessionBaseSchema,
   toggleMfaBodySchema,
   uploadTokenQuerySchema,
   uploadTokenSchema,
@@ -15,6 +17,7 @@ import { mockUserResponse } from '#/modules/user/user-mocks';
 import { userFlagsSchema, userSchema, userUpdateBodySchema } from '#/modules/user/user-schema';
 import {
   batchResponseSchema,
+  entityIdParamSchema,
   entityWithTypeQuerySchema,
   errorResponseRefs,
   idsBodySchema,
@@ -22,6 +25,7 @@ import {
   paginationSchema,
 } from '#/schemas';
 import {
+  mockConnectedApp,
   mockMeAuthResponse,
   mockMeResponse,
   mockPaginatedInvitationsResponse,
@@ -33,7 +37,7 @@ const meRoutes = {
     operationId: 'getMe',
     method: 'get',
     path: '/',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     tags: ['me', 'cella'],
     summary: 'Get self',
     description: 'Returns the current user.',
@@ -54,7 +58,7 @@ const meRoutes = {
     operationId: 'getMyInvitations',
     method: 'get',
     path: '/invitations',
-    xGuard: [authGuard, crossTenantGuard],
+    xGuard: [userGuard, crossTenantGuard],
     tags: ['me', 'cella'],
     summary: 'Get list of invitations',
     description: 'Returns a list of pending memberships with entity data.',
@@ -75,7 +79,7 @@ const meRoutes = {
     operationId: 'updateMe',
     method: 'put',
     path: '/',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['me', 'cella'],
     summary: 'Update self',
@@ -102,7 +106,7 @@ const meRoutes = {
     operationId: 'deleteMe',
     method: 'delete',
     path: '/',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['me', 'cella'],
     summary: 'Delete self',
@@ -117,11 +121,11 @@ const meRoutes = {
     operationId: 'getMyAuth',
     method: 'get',
     path: '/auth',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     tags: ['me', 'cella'],
     summary: 'Get auth data',
     description:
-      'Returns authentication related data of current user, including sessions, OAuth accounts, and sign in options.',
+      'Returns authentication related data of current user, including sessions, passkeys, TOTP and the enabled sign-in providers.',
     responses: {
       200: {
         description: 'User sign-up info',
@@ -130,15 +134,16 @@ const meRoutes = {
       ...errorResponseRefs,
     },
   }),
-  deleteMySessions: createXRoute({
-    operationId: 'deleteMySessions',
+  revokeMySessions: createXRoute({
+    operationId: 'revokeMySessions',
     method: 'delete',
     path: '/sessions',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['me', 'cella'],
-    summary: 'Terminate sessions',
-    description: 'Ends one or more sessions for the current user based on provided session IDs.',
+    summary: 'Revoke sessions',
+    description:
+      'Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for 30 days. Revoking the current session signs out.',
     request: {
       required: true,
       body: {
@@ -148,8 +153,8 @@ const meRoutes = {
 
     responses: {
       200: {
-        description: 'Success',
-        content: { 'application/json': { schema: batchResponseSchema() } },
+        description: 'Sessions were revoked',
+        content: { 'application/json': { schema: batchResponseSchema(sessionBaseSchema) } },
       },
       ...errorResponseRefs,
     },
@@ -158,7 +163,7 @@ const meRoutes = {
     operationId: 'deleteMyMembership',
     method: 'delete',
     path: '/leave',
-    xGuard: [authGuard, crossTenantGuard],
+    xGuard: [userGuard, crossTenantGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['me', 'cella'],
     summary: 'Leave entity',
@@ -194,7 +199,7 @@ const meRoutes = {
     operationId: 'getUploadToken',
     method: 'get',
     path: '/upload-token',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     tags: ['me', 'cella'],
     summary: 'Get upload token',
     description:
@@ -212,7 +217,7 @@ const meRoutes = {
     operationId: 'toggleMfa',
     method: 'put',
     path: '/mfa',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['me', 'cella'],
     summary: 'Toggle MFA',
@@ -233,7 +238,7 @@ const meRoutes = {
     operationId: 'getMyMemberships',
     method: 'get',
     path: '/memberships',
-    xGuard: [authGuard],
+    xGuard: [userGuard],
     tags: ['me', 'cella'],
     summary: 'Get my memberships',
     description: 'Returns all memberships for the current user across all channel entities.',
@@ -244,6 +249,47 @@ const meRoutes = {
           'application/json': {
             schema: z.object({ items: z.array(membershipBaseSchema) }),
           },
+        },
+      },
+      ...errorResponseRefs,
+    },
+  }),
+  getConnectedApps: createXRoute({
+    operationId: 'getConnectedApps',
+    method: 'get',
+    path: '/connected-apps',
+    xGuard: [userGuard],
+    tags: ['me', 'cella'],
+    summary: 'Get connected apps',
+    description: 'Lists the OAuth clients the user consented to (MCP clients, registered apps) with their scopes.',
+    responses: {
+      200: {
+        description: 'Connected apps',
+        content: {
+          'application/json': {
+            schema: z.object({ items: z.array(connectedAppSchema) }),
+            example: { items: [mockConnectedApp()] },
+          },
+        },
+      },
+      ...errorResponseRefs,
+    },
+  }),
+  revokeConnectedApp: createXRoute({
+    operationId: 'revokeConnectedApp',
+    method: 'delete',
+    path: '/connected-apps/{id}',
+    xGuard: [userGuard],
+    xRateLimiter: [singlePointsLimiter],
+    tags: ['me', 'cella'],
+    summary: 'Revoke connected app',
+    description: 'Revokes a consent: the grant and every token issued under it are deleted.',
+    request: { params: entityIdParamSchema },
+    responses: {
+      200: {
+        description: 'Consent was revoked',
+        content: {
+          'application/json': { schema: batchResponseSchema() },
         },
       },
       ...errorResponseRefs,

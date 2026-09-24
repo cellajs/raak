@@ -1,11 +1,11 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
 import { filterPrimaryLabelDeletes, reassignTasksFromDeletedPrimaries } from '#/modules/label/helpers/primary-labels';
 import { deleteCountersByKeys, deleteLabelsByIds } from '#/modules/label/label-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { getIsoDate } from '#/utils/iso-date';
 
-export async function deleteLabelsOp(ctx: AuthContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
+export async function deleteLabelsOp(ctx: UserContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
   const { allowedIds: permittedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'label', ids);
   const deletedAt = getIsoDate();
   const deletedBy = ctx.var.user.id;

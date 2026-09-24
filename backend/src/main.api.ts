@@ -10,7 +10,7 @@ import { baseDb, getAdminDb, migrateConfig } from '#/db/db';
 import '#/lib/i18n';
 import process from 'node:process';
 import { cdcWebSocketServer } from '#/lib/cdc-websocket';
-import '#/lib/db-maintenance'; // registers the DB maintenance job before jobs start
+import { startGeoipRefresh } from '#/lib/geoip';
 import { getBackendJobs } from '#/lib/module';
 import { otel } from '#/lib/tracing';
 import { registerCacheInvalidation } from '#/middlewares/product-cache/cache-invalidation';
@@ -47,6 +47,8 @@ const main = async () => {
 
     console.info(`${timestamp()} [startup] Running migrations...`);
     await pgMigrate(migrationDb, migrateConfig);
+    const { schedulePartitionMaintenance } = await import('../scripts/db/schedule-partition-maintenance');
+    await schedulePartitionMaintenance();
 
     console.info(`${timestamp()} [startup] Migrations complete, starting server...`);
 
@@ -59,6 +61,9 @@ const main = async () => {
   }
 
   registerCacheInvalidation();
+
+  // Per process, not a scheduled job: every replica keeps its own GeoIP copy current.
+  stopJobs.push(startGeoipRefresh());
 
   server = serve(
     {
@@ -88,8 +93,17 @@ const main = async () => {
         }
         if (appConfig.services.yjs.enabled) await (await import('yjs-worker')).startYjsWorker();
         (await import('#/modules/yjs/yjs-materializers')).warnWhenNoYjsMaterializer();
+        // Folded workers listen on their own ports (the LB routes each path to the host VM on that port); the API
+        // process keeps PORT for itself.
         if (appConfig.services.mcp.enabled)
-          await (await import('#/modules/mcp/worker/mcp-worker-entry')).startMcpWorker();
+          await (await import('#/modules/mcp/worker/mcp-worker-entry')).startMcpWorker({
+            port: appConfig.devPorts.mcp,
+          });
+        if (appConfig.services.oauth.enabled)
+          await (await import('#/modules/oauth-server/worker/oauth-worker-entry')).startOauthServer({
+            port: appConfig.devPorts.oauth,
+            inProcess: true,
+          });
       }
 
       const tunnelUrl = await startTunnel();

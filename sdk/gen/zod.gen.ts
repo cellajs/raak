@@ -110,7 +110,18 @@ export const zStreamNotification = z.object({
   kind: z.enum(['product', 'membership']),
   action: z.enum(['create', 'update', 'delete', 'moveOut']),
   productType: z.enum(['task', 'label', 'attachment']).nullable(),
-  resourceType: z.enum(['request', 'membership', 'inactive_membership', 'tenant', 'system_role']).nullable(),
+  resourceType: z
+    .enum([
+      'request',
+      'membership',
+      'inactive_membership',
+      'tenant',
+      'system_role',
+      'service_account',
+      'api_key',
+      'oauth_client',
+    ])
+    .nullable(),
   subjectId: z.string().nullable(),
   organizationId: z.string().nullable(),
   tenantId: z.string().nullable(),
@@ -144,6 +155,7 @@ export const zApiError = z.object({
   severity: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']),
   entityType: z.enum(['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment']).optional(),
   logId: z.string().optional(),
+  requestId: z.string().optional(),
   path: z.string().optional(),
   method: z.string().optional(),
   timestamp: z.string().optional(),
@@ -265,6 +277,9 @@ export const zMeAuthData = z.object({
       deviceIdHash: z.string().max(64).nullable(),
       createdAt: z.string(),
       expiresAt: z.string(),
+      revokedAt: z.string().nullable(),
+      revokedBy: z.uuid().nullable(),
+      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced']).nullable(),
       isCurrent: z.boolean(),
       isNewDevice: z.boolean(),
     }),
@@ -320,6 +335,19 @@ export const zUploadToken = z.object({
       }),
     })
     .nullable(),
+});
+
+/**
+ * An OAuth consent (grant) of the current user.
+ */
+export const zConnectedApp = z.object({
+  id: z.string(),
+  clientId: z.string(),
+  clientName: z.string(),
+  scopes: z.array(z.string()),
+  resources: z.array(z.string()),
+  createdAt: z.string(),
+  expiresAt: z.string().nullable(),
 });
 
 /**
@@ -477,6 +505,7 @@ export const zTenant = z.object({
     rateLimits: z.object({
       apiPointsPerHour: z.int().gte(0),
     }),
+    allowUnregisteredClients: z.boolean(),
   }),
   authStrategies: z.array(z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic'])),
   createdBy: z.uuid().nullable(),
@@ -496,6 +525,14 @@ export const zTenantWithOrganization = zTenant.and(
     organization: zOrganizationMinimalBase.nullable(),
   }),
 );
+
+export const zProtectedResourceMetadata = z.object({
+  resource: z.string(),
+  authorization_servers: z.array(z.string()),
+  scopes_supported: z.array(z.string()),
+  bearer_methods_supported: z.array(z.string()),
+  resource_documentation: z.string(),
+});
 
 /**
  * The main channel entity is an organization.
@@ -728,7 +765,7 @@ export const zMembership = z.object({
   channelId: z.uuid(),
   userId: z.uuid(),
   role: z.enum(['admin', 'member', 'guest']),
-  createdBy: z.uuid(),
+  createdBy: z.uuid().nullable(),
   updatedAt: z.string().nullable(),
   updatedBy: z.uuid().nullable(),
   archived: z.boolean(),
@@ -738,6 +775,73 @@ export const zMembership = z.object({
   workspaceId: z.uuid().nullable(),
   projectId: z.uuid().nullable(),
 });
+
+/**
+ * The actor an API key runs as, with its role bindings.
+ */
+export const zServiceAccount = z.object({
+  id: z.uuid(),
+  tenantId: z.string().max(24),
+  name: z.string().max(255),
+  status: z.enum(['active', 'disabled']),
+  bindings: z.array(
+    z.object({
+      channelType: z.enum(['organization', 'workspace', 'project']),
+      channelId: z.string().max(50),
+      organizationId: z.string().max(50),
+      role: z.enum(['admin', 'member']),
+    }),
+  ),
+  oauthClientId: z.string().max(255).nullable(),
+  createdBy: z.uuid().nullable(),
+  updatedBy: z.uuid().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+});
+
+/**
+ * An API key of a service account; the secret is never returned after creation.
+ */
+export const zApiKey = z.object({
+  id: z.uuid(),
+  actorId: z.uuid(),
+  tenantId: z.string().max(24),
+  name: z.string().max(255),
+  prefix: z.string().max(255),
+  last4: z.string().max(4),
+  scopes: z
+    .array(
+      z.enum([
+        'organization:read',
+        'organization:write',
+        'workspace:read',
+        'workspace:write',
+        'project:read',
+        'project:write',
+        'task:read',
+        'task:write',
+        'label:read',
+        'label:write',
+        'attachment:read',
+        'attachment:write',
+      ]),
+    )
+    .nullable(),
+  expiresAt: z.string().nullable(),
+  revokedAt: z.string().nullable(),
+  revokedBy: z.uuid().nullable(),
+  createdBy: z.uuid().nullable(),
+  createdAt: z.string(),
+});
+
+/**
+ * A newly issued API key with its plaintext secret.
+ */
+export const zCreatedApiKey = zApiKey.and(
+  z.object({
+    secret: z.string(),
+  }),
+);
 
 /**
  * Auth health status
@@ -1245,15 +1349,36 @@ export const zGetMyInvitationsResponse = z.object({
   total: z.number(),
 });
 
-export const zDeleteMySessionsBody = z.object({
+export const zRevokeMySessionsBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
 });
 
 /**
- * Success
+ * Sessions were revoked
  */
-export const zDeleteMySessionsResponse = z.object({
-  data: z.array(z.unknown()),
+export const zRevokeMySessionsResponse = z.object({
+  data: z.array(
+    z.object({
+      id: z.uuid(),
+      type: z.enum(['regular', 'impersonation', 'mfa']),
+      userId: z.uuid(),
+      deviceName: z.string().max(255).nullable(),
+      deviceType: z.enum(['desktop', 'mobile']),
+      deviceOs: z.string().max(255).nullable(),
+      browser: z.string().max(255).nullable(),
+      authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']),
+      ipHash: z.string().max(64).nullable(),
+      ipSubnetHash: z.string().max(64).nullable(),
+      ipCountry: z.string().max(2).nullable(),
+      ipAsn: z.int().gte(-2147483648).lte(2147483647).nullable(),
+      deviceIdHash: z.string().max(64).nullable(),
+      createdAt: z.string(),
+      expiresAt: z.string(),
+      revokedAt: z.string().nullable(),
+      revokedBy: z.uuid().nullable(),
+      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced']).nullable(),
+    }),
+  ),
   rejectedIds: z.array(z.string()),
   rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
 });
@@ -1288,6 +1413,26 @@ export const zUnsubscribeMeQuery = z.object({
  */
 export const zGetMyMembershipsResponse = z.object({
   items: z.array(zMembershipBase),
+});
+
+/**
+ * Connected apps
+ */
+export const zGetConnectedAppsResponse = z.object({
+  items: z.array(zConnectedApp),
+});
+
+export const zRevokeConnectedAppPath = z.object({
+  id: z.string().max(50),
+});
+
+/**
+ * Consent was revoked
+ */
+export const zRevokeConnectedAppResponse = z.object({
+  data: z.array(z.unknown()),
+  rejectedIds: z.array(z.string()),
+  rejectionReasons: z.record(z.string(), z.array(z.string())).optional(),
 });
 
 /**
@@ -1665,6 +1810,7 @@ export const zUpdateTenantBody = z.object({
   restrictions: z
     .object({
       quotas: z.record(z.string(), z.int().gte(0)).optional(),
+      allowUnregisteredClients: z.boolean().optional(),
       rateLimits: z
         .object({
           apiPointsPerHour: z.int().gte(0).optional(),
@@ -1740,6 +1886,15 @@ export const zGetYjsTokenQuery = z.object({
 export const zGetYjsTokenResponse = z.object({
   token: z.string(),
 });
+
+export const zGetApiProtectedResourceMetadataPath = z.object({
+  tenantId: z.string().max(50),
+});
+
+/**
+ * Protected resource metadata
+ */
+export const zGetApiProtectedResourceMetadataResponse = zProtectedResourceMetadata;
 
 export const zDeleteOrganizationsBody = z.object({
   ids: z.array(z.string()).min(1).max(50),
@@ -2782,6 +2937,16 @@ export const zUpdateLabelPath = z.object({
  */
 export const zUpdateLabelResponse = zLabel;
 
+export const zGetMcpProtectedResourceMetadataPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Protected resource metadata
+ */
+export const zGetMcpProtectedResourceMetadataResponse = zProtectedResourceMetadata;
+
 export const zHandleMcpBody = z.unknown();
 
 export const zHandleMcpPath = z.object({
@@ -2983,6 +3148,163 @@ export const zMarkSeenPath = z.object({
 export const zMarkSeenResponse = z.object({
   newCount: z.int().gte(0),
 });
+
+export const zGetServiceAccountsPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+export const zGetServiceAccountsQuery = z.object({
+  q: z.string().max(255).optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+});
+
+/**
+ * Service accounts
+ */
+export const zGetServiceAccountsResponse = z.object({
+  items: z.array(zServiceAccount),
+  total: z.number(),
+});
+
+export const zCreateServiceAccountBody = z.object({
+  name: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u),
+  role: z.enum(['admin', 'member']),
+  key: z
+    .object({
+      name: z
+        .string()
+        .min(2)
+        .max(255)
+        .regex(/^[\p{L}\d\-., '&()]+$/u),
+      scopes: z
+        .array(
+          z.enum([
+            'organization:read',
+            'organization:write',
+            'workspace:read',
+            'workspace:write',
+            'project:read',
+            'project:write',
+            'task:read',
+            'task:write',
+            'label:read',
+            'label:write',
+            'attachment:read',
+            'attachment:write',
+          ]),
+        )
+        .min(1)
+        .nullish(),
+      expiresAt: z.iso.datetime().optional(),
+    })
+    .optional(),
+});
+
+export const zCreateServiceAccountPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Service account was created
+ */
+export const zCreateServiceAccountResponse = z.object({
+  serviceAccount: zServiceAccount,
+  apiKey: zCreatedApiKey.optional(),
+});
+
+export const zUpdateServiceAccountBody = z.object({
+  name: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u)
+    .optional(),
+  status: z.enum(['active', 'disabled']).optional(),
+});
+
+export const zUpdateServiceAccountPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Service account was updated
+ */
+export const zUpdateServiceAccountResponse = zServiceAccount;
+
+export const zGetApiKeysPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * API keys
+ */
+export const zGetApiKeysResponse = z.object({
+  items: z.array(zApiKey),
+});
+
+export const zCreateApiKeyBody = z.object({
+  name: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u),
+  scopes: z
+    .array(
+      z.enum([
+        'organization:read',
+        'organization:write',
+        'workspace:read',
+        'workspace:write',
+        'project:read',
+        'project:write',
+        'task:read',
+        'task:write',
+        'label:read',
+        'label:write',
+        'attachment:read',
+        'attachment:write',
+      ]),
+    )
+    .min(1)
+    .nullish(),
+  expiresAt: z.iso.datetime().optional(),
+  rollFrom: z.string().max(50).optional(),
+  rollOverlapDays: z.int().gte(0).lte(30).optional().default(7),
+});
+
+export const zCreateApiKeyPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * API key was issued
+ */
+export const zCreateApiKeyResponse = zCreatedApiKey;
+
+export const zRevokeApiKeyPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+  id: z.string().max(50),
+  keyId: z.string().max(50),
+});
+
+/**
+ * API key was revoked
+ */
+export const zRevokeApiKeyResponse = zApiKey;
 
 export const zDeleteTasksBody = z.object({
   ids: z.array(z.string()).min(1).max(100),

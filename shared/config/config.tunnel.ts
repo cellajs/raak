@@ -13,4 +13,5 @@ export const tunnel = {
   backendAuthUrl: 'https://raak.ngrok.dev/api/auth',
   yjsUrl: 'wss://raak.ngrok.dev/yjs',
   mcpUrl: 'https://raak.ngrok.dev/mcp',
+  oauthUrl: 'https://raak.ngrok.dev/oauth',
 } satisfies DeepPartial<typeof _default>;

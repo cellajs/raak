@@ -1,4 +1,4 @@
-import type { AuthContext, DbContext } from '#/core/context';
+import type { DbContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import {
@@ -13,7 +13,7 @@ type ProjectMembershipTarget = {
   entityType: 'project';
 };
 
-type ProjectMembership = AuthContext['var']['memberships'][number] & {
+type ProjectMembership = UserContext['var']['memberships'][number] & {
   channelType: 'project';
   projectId: string;
 };
@@ -34,13 +34,13 @@ type UpsertProjectMembershipWorkspaceInput = {
 };
 
 function isProjectMembershipTarget(
-  membership: AuthContext['var']['memberships'][number],
+  membership: UserContext['var']['memberships'][number],
   project: ProjectMembershipTarget,
 ): membership is ProjectMembership {
   return membership.projectId === project.id && membership.channelType === project.entityType;
 }
 
-export async function resolveProjectWorkspaceId(ctx: AuthContext, workspaceId: string): Promise<string> {
+export async function resolveProjectWorkspaceId(ctx: UserContext, workspaceId: string): Promise<string> {
   const { entity } = await getValidChannel(ctx, workspaceId, 'workspace', 'read');
   // A project may only be assigned to a workspace in the same organization as the request context.
   // Without this guard a user with cross-org read access could link a project into a foreign-org
@@ -55,11 +55,11 @@ export async function resolveProjectWorkspaceId(ctx: AuthContext, workspaceId: s
   return entity.id;
 }
 
-export function findCurrentUserProjectMembership(ctx: AuthContext, project: ProjectMembershipTarget) {
+export function findCurrentUserProjectMembership(ctx: UserContext, project: ProjectMembershipTarget) {
   return ctx.var.memberships.find((membership) => isProjectMembershipTarget(membership, project));
 }
 
-export function requireCurrentUserProjectMembership(ctx: AuthContext, project: ProjectMembershipTarget) {
+export function requireCurrentUserProjectMembership(ctx: UserContext, project: ProjectMembershipTarget) {
   const membership = findCurrentUserProjectMembership(ctx, project);
 
   if (!membership) {
@@ -117,7 +117,7 @@ export async function replaceProjectMembershipWorkspace(
 }
 
 export async function setCurrentUserProjectMembershipWorkspace(
-  ctx: AuthContext,
+  ctx: UserContext,
   { membership, workspaceId, role }: SetProjectMembershipWorkspaceInput,
 ) {
   const updatedMembership = await replaceProjectMembershipWorkspace(ctx, {
@@ -133,7 +133,7 @@ export async function setCurrentUserProjectMembershipWorkspace(
 }
 
 async function createCurrentUserProjectMembershipInWorkspace(
-  ctx: AuthContext,
+  ctx: UserContext,
   {
     project,
     workspaceId,
@@ -171,7 +171,7 @@ async function createCurrentUserProjectMembershipInWorkspace(
 }
 
 export async function upsertCurrentUserProjectMembershipWorkspace(
-  ctx: AuthContext,
+  ctx: UserContext,
   { project, workspaceId }: UpsertProjectMembershipWorkspaceInput,
 ) {
   const existingMembership = findCurrentUserProjectMembership(ctx, project);

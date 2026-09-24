@@ -1,4 +1,4 @@
-import { useInView } from 'react-intersection-observer';
+import { useInView } from '~/hooks/use-in-view';
 import { AttachmentsCarousel, type CarouselItemData } from '~/modules/attachment/attachments-carousel';
 import { DeviceFrame } from '~/modules/marketing/device-mockup-frame';
 import { useUIStore } from '~/modules/ui/ui-store';
@@ -22,10 +22,7 @@ function DeviceMockup({ lightItems, darkItems, type, className }: DeviceMockupPr
 
   const items = mode === 'dark' ? darkItems : lightItems;
 
-  const { ref, inView } = useInView({
-    triggerOnce: false,
-    threshold: 0,
-  });
+  const { ref, inView } = useInView();
   const mockupClass = `transition-opacity duration-700 ease-out ${inView ? 'opacity-100' : 'opacity-0'}`;
 
   return (

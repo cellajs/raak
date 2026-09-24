@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import type { LabelModel } from '#/modules/label/label-db';
@@ -18,7 +18,7 @@ type UpdateLabelInput = z.infer<typeof labelUpdateStxBodySchema>;
 const trackedFields = ['name', 'color', 'icon', 'slug'] as const;
 
 export async function updateLabelOp(
-  ctx: AuthContext,
+  ctx: UserContext,
   id: string,
   input: UpdateLabelInput,
   opts: { serverOrigin?: boolean } = {},

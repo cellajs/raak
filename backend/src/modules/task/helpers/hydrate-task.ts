@@ -1,6 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import { appConfig } from 'shared';
-import type { AuthContext } from '#/core/context';
+import type { ActorContext } from '#/core/context';
 import type { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import type { TaskModel } from '#/modules/task/task-db';
 import { findTaskRelations } from '#/modules/task/task-queries';
@@ -52,7 +52,7 @@ export const hydrateTask = (task: TaskModel, members: UserMinimalBaseSchemas[], 
 };
 
 /** Fetch users and labels referenced by one or more tasks. */
-export const getTaskRelations = async (ctx: AuthContext, { tasks }: { tasks: TaskModel[] }) => {
+export const getTaskRelations = async (ctx: ActorContext, { tasks }: { tasks: TaskModel[] }) => {
   const userIds = Array.from(
     new Set(tasks.flatMap((t) => [t.createdBy, t.updatedBy, ...t.assignedTo].filter((u) => u !== null))),
   );
@@ -62,11 +62,11 @@ export const getTaskRelations = async (ctx: AuthContext, { tasks }: { tasks: Tas
 
 /**
  * Lightweight task hydration that skips relation DB queries entirely.
- * Returns stub arrays for labels/assignedTo and builds updatedBy from the current user.
+ * Returns stub arrays for labels/assignedTo and builds updatedBy from the current user, if any.
  */
 export const hydrateTaskLite = (
   task: TaskModel,
-  currentUser: Pick<UserMinimalBase, 'id' | 'name' | 'slug' | 'thumbnailUrl'>,
+  currentUser: Pick<UserMinimalBase, 'id' | 'name' | 'slug' | 'thumbnailUrl'> | undefined,
 ): ReturnTask => ({
   ...task,
   stx: task.stx,
@@ -74,5 +74,5 @@ export const hydrateTaskLite = (
   assignedTo: [],
   primaryLabel: null,
   createdBy: null,
-  updatedBy: toUserMinimalBase(currentUser),
+  updatedBy: currentUser ? toUserMinimalBase(currentUser) : null,
 });

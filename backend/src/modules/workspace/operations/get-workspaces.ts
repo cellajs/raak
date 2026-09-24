@@ -1,5 +1,5 @@
 import type { EntityRole } from 'shared';
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
 import { findWorkspacesPaginated } from '#/modules/workspace/workspace-queries';
@@ -16,7 +16,7 @@ interface GetWorkspacesInput {
   include: string[];
 }
 
-export async function getWorkspacesOp(ctx: AuthContext, input: GetWorkspacesInput) {
+export async function getWorkspacesOp(ctx: UserContext, input: GetWorkspacesInput) {
   const user = ctx.var.user;
   const { include, ...queryOpts } = input;
 

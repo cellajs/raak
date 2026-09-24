@@ -105,7 +105,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard"],
       "xRateLimiter": ["tokenLimiter"],
       "xCache": []
     },
@@ -128,7 +128,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -151,7 +151,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -190,7 +190,7 @@
     "path": "/auth/sign-out",
     "tags": ["auth"],
     "summary": "Sign out",
-    "description": "Signs out the current user and clears the active session.",
+    "description": "Signs out the current user: the session is revoked (its row stays for the sessions list) and the cookie is cleared.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": false,
@@ -243,7 +243,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -266,7 +266,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -289,7 +289,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -335,7 +335,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -358,7 +358,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -565,7 +565,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard", "tenantGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -588,7 +588,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard", "tenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -611,7 +611,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard", "tenantGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -634,7 +634,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard", "tenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -650,14 +650,14 @@
     "path": "/tenants/{tenantId}/domains/{id}/verify",
     "tags": ["tenants"],
     "summary": "Verify domain ownership via DNS",
-    "description": "Looks up DNS TXT records for the domain to verify ownership. Checks for a _cella-verification.<domain> TXT record matching the verification token.",
+    "description": "Looks up DNS TXT records for the domain to verify ownership. Checks for a _raak-development-verification.<domain> TXT record matching the verification token.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": false,
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard", "tenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -680,7 +680,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "tenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -703,7 +703,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["streamConnectLimiter"],
       "xCache": []
     },
@@ -726,7 +726,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -749,7 +749,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -772,7 +772,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -795,7 +795,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -818,7 +818,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -834,14 +834,14 @@
     "path": "/me/auth",
     "tags": ["me"],
     "summary": "Get auth data",
-    "description": "Returns authentication related data of current user, including sessions, OAuth accounts, and sign in options.",
+    "description": "Returns authentication related data of current user, including sessions, passkeys, TOTP and the enabled sign-in providers.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": false,
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -864,7 +864,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -874,20 +874,20 @@
     }
   },
   {
-    "id": "deleteMySessions",
+    "id": "revokeMySessions",
     "hash": "tag/me/DELETE/me/sessions",
     "method": "delete",
     "path": "/me/sessions",
     "tags": ["me"],
-    "summary": "Terminate sessions",
-    "description": "Ends one or more sessions for the current user based on provided session IDs.",
+    "summary": "Revoke sessions",
+    "description": "Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for 30 days. Revoking the current session signs out.",
     "deprecated": false,
     "hasParams": false,
     "hasRequestBody": true,
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -910,7 +910,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -933,7 +933,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -979,8 +979,54 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["me"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getConnectedApps",
+    "hash": "tag/me/GET/me/connected-apps",
+    "method": "get",
+    "path": "/me/connected-apps",
+    "tags": ["me"],
+    "summary": "Get connected apps",
+    "description": "Lists the OAuth clients the user consented to (MCP clients, registered apps) with their scopes.",
+    "deprecated": false,
+    "hasParams": false,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["userGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["me"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "revokeConnectedApp",
+    "hash": "tag/me/DELETE/me/connected-apps/{id}",
+    "method": "delete",
+    "path": "/me/connected-apps/{id}",
+    "tags": ["me"],
+    "summary": "Revoke connected app",
+    "description": "Revokes a consent: the grant and every token issued under it are deleted.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["userGuard"],
+      "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
@@ -1025,7 +1071,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["syncReadLimiter"],
       "xCache": []
     },
@@ -1047,7 +1093,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1069,7 +1115,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1091,7 +1137,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1160,7 +1206,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1182,7 +1228,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1204,7 +1250,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1226,7 +1272,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1272,7 +1318,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1295,7 +1341,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["syncReadLimiter"],
       "xCache": []
     },
@@ -1318,7 +1364,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": ["spamLimiter", "pointsLimiter"],
       "xCache": []
     },
@@ -1341,7 +1387,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1364,7 +1410,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1387,7 +1433,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1535,7 +1581,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1558,7 +1604,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1581,7 +1627,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1604,7 +1650,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1628,7 +1674,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard", "relatableGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1652,12 +1698,35 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
       "module": ["yjs"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getApiProtectedResourceMetadata",
+    "hash": "tag/oauth-server/GET/{tenantId}/.well-known/oauth-protected-resource",
+    "method": "get",
+    "path": "/{tenantId}/.well-known/oauth-protected-resource",
+    "tags": ["oauth-server"],
+    "summary": "Protected resource metadata (API)",
+    "description": "RFC 9728 metadata of this tenant as an API resource: its resource identifier, the authorization server that issues tokens for it, and the scopes it understands.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["oauth-server"],
       "owner": ["cella"]
     }
   },
@@ -1675,7 +1744,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "tenantGuard"],
       "xRateLimiter": ["insertEntityLock", "pointsLimiter"],
       "xCache": []
     },
@@ -1700,7 +1769,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard"],
+      "xGuard": ["userGuard", "tenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1725,7 +1794,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard", "relatableGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1750,7 +1819,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard"],
+      "xGuard": ["actorGuard", "tenantGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1775,7 +1844,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard"],
+      "xGuard": ["actorGuard", "tenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1800,7 +1869,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["insertEntityLock", "pointsLimiter"],
       "xCache": []
     },
@@ -1825,7 +1894,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1850,7 +1919,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard", "relatableGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard", "relatableGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1875,7 +1944,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1900,7 +1969,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1925,7 +1994,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1950,7 +2019,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1975,7 +2044,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2000,7 +2069,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["insertEntityLock", "pointsLimiter"],
       "xCache": []
     },
@@ -2025,7 +2094,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2050,7 +2119,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2075,7 +2144,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2100,7 +2169,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2125,7 +2194,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["syncReadLimiter"],
       "xCache": []
     },
@@ -2150,7 +2219,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2175,7 +2244,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2200,7 +2269,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["presignedUrlLimiter"],
       "xCache": []
     },
@@ -2225,7 +2294,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": ["productCache"]
     },
@@ -2250,7 +2319,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2275,7 +2344,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["syncReadLimiter"],
       "xCache": []
     },
@@ -2300,7 +2369,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2325,7 +2394,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2350,7 +2419,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": ["productCache"]
     },
@@ -2375,7 +2444,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2387,20 +2456,43 @@
     "entityType": "label"
   },
   {
+    "id": "getMcpProtectedResourceMetadata",
+    "hash": "tag/mcp/GET/{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource",
+    "tags": ["mcp"],
+    "summary": "Protected resource metadata",
+    "description": "RFC 9728 metadata of this organization MCP server: its resource identifier, the authorization server that issues tokens for it, and the scopes it understands.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": false,
+    "extensions": {
+      "xGuard": ["publicGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["mcp"],
+      "owner": ["cella"]
+    }
+  },
+  {
     "id": "handleMcp",
     "hash": "tag/mcp/POST/{tenantId}/{organizationId}/mcp",
     "method": "post",
     "path": "/{tenantId}/{organizationId}/mcp",
     "tags": ["mcp"],
     "summary": "MCP endpoint",
-    "description": "Model Context Protocol (JSON-RPC 2.0) endpoint. Exposes the workspace-scoped server tool registry to MCP clients (initialize, tools/list, tools/call).",
+    "description": "Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to.",
     "deprecated": false,
     "hasParams": true,
     "hasRequestBody": true,
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["tokenGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2423,7 +2515,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["spamLimiter", "pointsLimiter"],
       "xCache": []
     },
@@ -2446,7 +2538,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2469,7 +2561,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2492,7 +2584,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard", "crossTenantGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2515,7 +2607,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2538,7 +2630,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2561,7 +2653,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["spamLimiter", "pointsLimiter"],
       "xCache": []
     },
@@ -2584,12 +2676,150 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
     "tagsByKind": {
       "module": ["seen"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getServiceAccounts",
+    "hash": "tag/service-accounts/GET/{tenantId}/{organizationId}/service-accounts",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/service-accounts",
+    "tags": ["service-accounts"],
+    "summary": "Get service accounts",
+    "description": "Lists the service accounts of this organization.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "createServiceAccount",
+    "hash": "tag/service-accounts/POST/{tenantId}/{organizationId}/service-accounts",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/service-accounts",
+    "tags": ["service-accounts"],
+    "summary": "Create service account",
+    "description": "Creates a machine actor bound to this organization at the given role (capped at your own), optionally issuing its first API key in the same call.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "updateServiceAccount",
+    "hash": "tag/service-accounts/PUT/{tenantId}/{organizationId}/service-accounts/{id}",
+    "method": "put",
+    "path": "/{tenantId}/{organizationId}/service-accounts/{id}",
+    "tags": ["service-accounts"],
+    "summary": "Update service account",
+    "description": "Renames, disables or re-enables a service account. Accounts are never deleted.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "getApiKeys",
+    "hash": "tag/service-accounts/GET/{tenantId}/{organizationId}/service-accounts/{id}/keys",
+    "method": "get",
+    "path": "/{tenantId}/{organizationId}/service-accounts/{id}/keys",
+    "tags": ["service-accounts"],
+    "summary": "Get API keys",
+    "description": "Lists the API keys of a service account. Secrets are never returned here.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": [],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "createApiKey",
+    "hash": "tag/service-accounts/POST/{tenantId}/{organizationId}/service-accounts/{id}/keys",
+    "method": "post",
+    "path": "/{tenantId}/{organizationId}/service-accounts/{id}/keys",
+    "tags": ["service-accounts"],
+    "summary": "Create API key",
+    "description": "Issues an API key for a service account; the plaintext is returned once. With `rollFrom`, the previous key keeps working for the overlap window.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": true,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    }
+  },
+  {
+    "id": "revokeApiKey",
+    "hash": "tag/service-accounts/DELETE/{tenantId}/{organizationId}/service-accounts/{id}/keys/{keyId}",
+    "method": "delete",
+    "path": "/{tenantId}/{organizationId}/service-accounts/{id}/keys/{keyId}",
+    "tags": ["service-accounts"],
+    "summary": "Revoke API key",
+    "description": "Revokes an API key immediately. The row stays for the audit trail.",
+    "deprecated": false,
+    "hasParams": true,
+    "hasRequestBody": false,
+    "hasResponseBody": true,
+    "hasExample": true,
+    "extensions": {
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xRateLimiter": ["pointsLimiter"],
+      "xCache": []
+    },
+    "tagsByKind": {
+      "module": ["service-accounts"],
       "owner": ["cella"]
     }
   },
@@ -2607,7 +2837,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["syncReadLimiter"],
       "xCache": []
     },
@@ -2632,7 +2862,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2657,7 +2887,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2682,7 +2912,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": ["productCache"]
     },
@@ -2707,7 +2937,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["authGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },

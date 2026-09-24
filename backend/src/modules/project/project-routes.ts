@@ -1,5 +1,5 @@
 import { createXRoute } from '#/core/x-routes';
-import { authGuard, crossTenantGuard, orgGuard, relatableGuard, tenantGuard } from '#/middlewares/guard';
+import { crossTenantGuard, orgGuard, relatableGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import {
@@ -33,7 +33,7 @@ const projectRoutes = {
   createProjects: createXRoute({
     method: 'post',
     path: '/{tenantId}/{organizationId}/projects',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     tags: ['projects', 'app', 'channel'],
     operationId: 'createProjects',
@@ -64,7 +64,7 @@ const projectRoutes = {
   getProjects: createXRoute({
     method: 'get',
     path: '/projects',
-    xGuard: [authGuard, crossTenantGuard, relatableGuard],
+    xGuard: [userGuard, crossTenantGuard, relatableGuard],
     tags: ['projects', 'app', 'channel'],
     operationId: 'getProjects',
     summary: 'Get list of projects',
@@ -95,7 +95,7 @@ const projectRoutes = {
   getProject: createXRoute({
     method: 'get',
     path: '/{tenantId}/{organizationId}/projects/{id}',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     tags: ['projects', 'app', 'channel'],
     operationId: 'getProject',
     summary: 'Get project',
@@ -116,7 +116,7 @@ const projectRoutes = {
   updateProject: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'channel'],
     operationId: 'updateProject',
@@ -139,7 +139,7 @@ const projectRoutes = {
   assignProjectWorkspace: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'channel'],
     operationId: 'assignProjectWorkspace',
@@ -166,7 +166,7 @@ const projectRoutes = {
   removeProjectWorkspace: createXRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/projects/{id}/workspace',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'channel'],
     operationId: 'removeProjectWorkspace',
@@ -192,7 +192,7 @@ const projectRoutes = {
   moveProjectToWorkspace: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}/move',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['projects', 'app', 'channel'],
     operationId: 'moveProjectToWorkspace',
@@ -215,7 +215,7 @@ const projectRoutes = {
   deleteProjects: createXRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/projects',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['projects', 'app', 'channel'],
     operationId: 'deleteProjects',

@@ -25,6 +25,11 @@ const quotasSchema = z.record(z.string(), z.number().int().min(0)).describe('Ent
 const restrictionsSchema = z.object({
   quotas: quotasSchema,
   rateLimits: rateLimitsSchema,
+  allowUnregisteredClients: z
+    .boolean()
+    .describe(
+      'Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)',
+    ),
 });
 
 export const tenantSchema = z
@@ -56,6 +61,7 @@ export const selfCreateTenantBodySchema = createInsertSchema(tenantsTable, {
 const partialRestrictionsSchema = z
   .object({
     quotas: quotasSchema.optional(),
+    allowUnregisteredClients: z.boolean().optional(),
     rateLimits: z
       .object({
         apiPointsPerHour: z.number().int().min(0).optional(),

@@ -1,6 +1,7 @@
-import { and, eq, getColumns, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, eq, getColumns, isNotNull, isNull, sql } from 'drizzle-orm';
 import { appConfig } from 'shared';
-import type { AuthContext, DbContext } from '#/core/context';
+import type { DbContext, UserContext } from '#/core/context';
+import { revokeSessions } from '#/modules/auth/auth-queries';
 import { sessionsTable } from '#/modules/auth/sessions-db';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -17,7 +18,7 @@ interface UpsertLastStartedOpts {
 }
 
 /** Upsert the lastStartedAt counter for a user (avoids CDC noise on users table). */
-export const upsertLastStarted = async (ctx: AuthContext, { lastStartedAt }: UpsertLastStartedOpts) => {
+export const upsertLastStarted = async (ctx: UserContext, { lastStartedAt }: UpsertLastStartedOpts) => {
   const { db, userId } = ctx.var;
   return db.insert(userCountersTable).values({ userId, lastStartedAt }).onConflictDoUpdate({
     target: userCountersTable.userId,
@@ -26,7 +27,7 @@ export const upsertLastStarted = async (ctx: AuthContext, { lastStartedAt }: Ups
 };
 
 /** Select a user by ID with activity timestamps (from user_counters). */
-export const findCurrentUser = async (ctx: AuthContext) => {
+export const findCurrentUser = async (ctx: UserContext) => {
   const { db, userId } = ctx.var;
   const [user] = await db.select(userSelect).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   return user;
@@ -36,30 +37,20 @@ interface UpdateUserMfaOpts {
   mfaRequired: boolean;
 }
 
-/** Deletes regular sessions when enabling MFA. */
-export const updateUserMfa = async (ctx: AuthContext, { mfaRequired }: UpdateUserMfaOpts) => {
+/** Revokes every regular session when enabling MFA; the caller mints the mfa session that replaces them. */
+export const updateUserMfa = async (ctx: UserContext, { mfaRequired }: UpdateUserMfaOpts) => {
   const { db, userId } = ctx.var;
   const [updatedUser] = await db.update(usersTable).set({ mfaRequired }).where(eq(usersTable.id, userId)).returning();
 
   if (updatedUser.mfaRequired) {
-    await db
-      .delete(sessionsTable)
-      .where(and(eq(sessionsTable.userId, updatedUser.id), eq(sessionsTable.type, 'regular')));
+    await revokeSessions(ctx, {
+      filters: [eq(sessionsTable.userId, updatedUser.id), eq(sessionsTable.type, 'regular')],
+      reason: 'mfa_enabled',
+      revokedBy: userId,
+    });
   }
 
   return updatedUser;
-};
-
-interface DeleteSessionsByIdsOpts {
-  sessionIds: string[];
-}
-
-export const deleteSessionsByIds = async (ctx: AuthContext, { sessionIds }: DeleteSessionsByIdsOpts) => {
-  const { db, userId } = ctx.var;
-  return db
-    .delete(sessionsTable)
-    .where(and(inArray(sessionsTable.id, sessionIds), eq(sessionsTable.userId, userId)))
-    .returning({ id: sessionsTable.id });
 };
 
 export interface UpdateMeOpts {
@@ -67,7 +58,7 @@ export interface UpdateMeOpts {
 }
 
 /** Update current user. Merges userFlags via jsonb || if provided. */
-export const updateMe = async (ctx: AuthContext, { values }: UpdateMeOpts) => {
+export const updateMe = async (ctx: UserContext, { values }: UpdateMeOpts) => {
   const { db, userId } = ctx.var;
   const { userFlags, ...rest } = values;
 
@@ -81,7 +72,7 @@ export const updateMe = async (ctx: AuthContext, { values }: UpdateMeOpts) => {
   return db.update(usersTable).set(updateData).where(eq(usersTable.id, userId));
 };
 
-export const deleteUser = async (ctx: AuthContext) => {
+export const deleteUser = async (ctx: UserContext) => {
   const { db, userId } = ctx.var;
   return db.delete(usersTable).where(eq(usersTable.id, userId));
 };
@@ -90,7 +81,7 @@ interface DeleteMyMembershipOpts {
   channelId: string;
 }
 
-export const deleteMyMembership = async (ctx: AuthContext, { channelId }: DeleteMyMembershipOpts) => {
+export const deleteMyMembership = async (ctx: UserContext, { channelId }: DeleteMyMembershipOpts) => {
   const { db, userId } = ctx.var;
   return db
     .delete(membershipsTable)

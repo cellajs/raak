@@ -17,6 +17,7 @@ async function fakeDeployEnv(opts: DeployOptions): Promise<Record<AllowedKey, st
     pulumi_stack: opts.mode,
     region: 'fr-par',
     registry_ns: 'cella-registry',
+    public_bucket: '',
     frontend_bucket: 'cella-frontend',
     state_bucket: 'cella-pulumi-state',
     vm_assert_json: JSON.stringify([
@@ -70,6 +71,14 @@ function makeFake(opts: { rolloutFails?: boolean; verifyFails?: boolean; updateF
       ops.push(`task:${name}${argv[0] && !argv[0].startsWith('--') ? `:${argv[0]}` : ''}`);
       if (name === 'assert-vm-grants') grantArgs.push([...argv]);
     },
+    lease: async (_stack, operation) => {
+      ops.push(`lease:acquire:${operation}`);
+      return {
+        release: async () => {
+          ops.push('lease:release');
+        },
+      };
+    },
     exec: async (cmd, args, execOpts) => {
       ops.push(`exec:${cmd}:${args[0]}${execOpts?.allowFailure ? ':allow-failure' : ''}`);
     },
@@ -119,6 +128,28 @@ describe('parseDeployArgs', () => {
 });
 
 describe('runDeploy sequencing', () => {
+  it('refreshes GeoIP data before the stack update when a public bucket exists, and shrugs off a failure', async () => {
+    const withBucket = async (o: DeployOptions) => ({ ...(await fakeDeployEnv(o)), public_bucket: 'cella-public' });
+
+    const ok = makeFake();
+    await runDeploy(baseOpts, ok.fx, withBucket);
+    expect(ok.ops.indexOf('task:geoip-refresh')).toBeGreaterThan(ok.ops.indexOf('task:wait-for-images'));
+    expect(ok.ops.indexOf('task:geoip-refresh')).toBeLessThan(ok.ops.indexOf('task:mint-generation-keys'));
+
+    const failing = makeFake();
+    const task = failing.fx.task;
+    failing.fx.task = async (name, argv) => {
+      if (name === 'geoip-refresh') throw new Error('db-ip down');
+      return task(name, argv);
+    };
+    await runDeploy(baseOpts, failing.fx, withBucket);
+    expect(failing.ops).toContain('rollout');
+
+    const none = makeFake();
+    await runDeploy(baseOpts, none.fx, fakeDeployEnv);
+    expect(none.ops).not.toContain('task:geoip-refresh');
+  });
+
   it('runs preflights, rollout, verification, entry publish, smoke, then releases the lock', async () => {
     const { fx, ops } = makeFake();
     await runDeploy(baseOpts, fx, fakeDeployEnv);
@@ -130,7 +161,8 @@ describe('runDeploy sequencing', () => {
     const spine = [
       'task:ensure-state-bucket',
       'exec:pulumi:login',
-      'task:stack-lock:acquire',
+      'lease:acquire:deploy',
+      'task:preflight-privileged',
       'task:wait-for-images',
       'task:mint-generation-keys',
       'update:production',
@@ -138,7 +170,7 @@ describe('runDeploy sequencing', () => {
       'rollout',
       'publish-entry',
       'task:smoke',
-      'task:stack-lock:release',
+      'lease:release',
     ];
     let cursor = -1;
     for (const op of spine) {
@@ -158,7 +190,7 @@ describe('runDeploy sequencing', () => {
     await expect(runDeploy(baseOpts, fx, fakeDeployEnv)).rejects.toThrow(/cutover failed/);
     expect(ops).toContain('boot-diag');
     expect(ops).not.toContain('publish-entry');
-    expect(ops.at(-1)).toBe('task:stack-lock:release');
+    expect(ops.at(-1)).toBe('lease:release');
   });
 
   it('a frontend-less registry (empty frontend_bucket) skips build, asset upload, and entry publish', async () => {
@@ -169,14 +201,14 @@ describe('runDeploy sequencing', () => {
     expect(ops).not.toContain('upload-assets');
     expect(ops).not.toContain('publish-entry');
     expect(ops).toContain('task:smoke');
-    expect(ops.at(-1)).toBe('task:stack-lock:release');
+    expect(ops.at(-1)).toBe('lease:release');
   });
 
   it('fails before publishing when a service does not serve the expected version', async () => {
     const { fx, ops } = makeFake({ verifyFails: true });
     await expect(runDeploy(baseOpts, fx, fakeDeployEnv)).rejects.toThrow(/does not serve/);
     expect(ops).not.toContain('publish-entry');
-    expect(ops.at(-1)).toBe('task:stack-lock:release');
+    expect(ops.at(-1)).toBe('lease:release');
   });
 
   it('builds the frontend itself when no dist dir is provided', async () => {
@@ -274,10 +306,10 @@ describe('runReap sequencing', () => {
     expect(ops).toEqual([
       'exec:pulumi:login',
       'exec:pulumi:stack',
-      'task:stack-lock:acquire',
+      'lease:acquire:reap',
       'task:install-pulumi-providers',
       'update:production',
-      'task:stack-lock:release',
+      'lease:release',
     ]);
   });
 
@@ -286,6 +318,6 @@ describe('runReap sequencing', () => {
     await expect(runReap({ mode: 'production', sha: 'abc123' }, fx, fakeDeployEnv)).rejects.toThrow(
       /stack update failed/,
     );
-    expect(ops.at(-1)).toBe('task:stack-lock:release');
+    expect(ops.at(-1)).toBe('lease:release');
   });
 });

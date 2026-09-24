@@ -132,7 +132,16 @@ export type StreamNotification = {
    */
   action: 'create' | 'update' | 'delete' | 'moveOut';
   productType: 'task' | 'label' | 'attachment' | null;
-  resourceType: 'request' | 'membership' | 'inactive_membership' | 'tenant' | 'system_role' | null;
+  resourceType:
+    | 'request'
+    | 'membership'
+    | 'inactive_membership'
+    | 'tenant'
+    | 'system_role'
+    | 'service_account'
+    | 'api_key'
+    | 'oauth_client'
+    | null;
   subjectId: string | null;
   organizationId: string | null;
   tenantId: string | null;
@@ -210,6 +219,7 @@ export type ApiError = {
   severity: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
   entityType?: 'user' | 'organization' | 'workspace' | 'project' | 'task' | 'label' | 'attachment';
   logId?: string;
+  requestId?: string;
   path?: string;
   method?: string;
   timestamp?: string;
@@ -316,6 +326,9 @@ export type MeAuthData = {
     deviceIdHash: string | null;
     createdAt: string;
     expiresAt: string;
+    revokedAt: string | null;
+    revokedBy: string | null;
+    revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | null;
     isCurrent: boolean;
     /**
      * The browser was first seen recently and is not the first one known.
@@ -370,6 +383,19 @@ export type UploadToken = {
     };
     [key: string]: unknown;
   } | null;
+};
+
+/**
+ * An OAuth consent (grant) of the current user.
+ */
+export type ConnectedApp = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  scopes: Array<string>;
+  resources: Array<string>;
+  createdAt: string;
+  expiresAt: string | null;
 };
 
 /**
@@ -543,6 +569,10 @@ export type Tenant = {
        */
       apiPointsPerHour: number;
     };
+    /**
+     * Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)
+     */
+    allowUnregisteredClients: boolean;
   };
   authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
   createdBy: string | null;
@@ -555,6 +585,14 @@ export type Tenant = {
    * Number of domains claimed by this tenant
    */
   domainsCount: number;
+};
+
+export type ProtectedResourceMetadata = {
+  resource: string;
+  authorization_servers: Array<string>;
+  scopes_supported: Array<string>;
+  bearer_methods_supported: Array<string>;
+  resource_documentation: string;
 };
 
 /**
@@ -799,7 +837,7 @@ export type Membership = {
   channelId: string;
   userId: string;
   role: 'admin' | 'member' | 'guest';
-  createdBy: string;
+  createdBy: string | null;
   updatedAt: string | null;
   updatedBy: string | null;
   archived: boolean;
@@ -808,6 +846,68 @@ export type Membership = {
   organizationId: string;
   workspaceId: string | null;
   projectId: string | null;
+};
+
+/**
+ * The actor an API key runs as, with its role bindings.
+ */
+export type ServiceAccount = {
+  id: string;
+  tenantId: string;
+  name: string;
+  status: 'active' | 'disabled';
+  bindings: Array<{
+    channelType: 'organization' | 'workspace' | 'project';
+    channelId: string;
+    organizationId: string;
+    role: 'admin' | 'member';
+  }>;
+  oauthClientId: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+/**
+ * A newly issued API key with its plaintext secret.
+ */
+export type CreatedApiKey = ApiKey & {
+  /**
+   * The plaintext API key; store it now, it is not shown again.
+   */
+  secret: string;
+};
+
+/**
+ * An API key of a service account; the secret is never returned after creation.
+ */
+export type ApiKey = {
+  id: string;
+  actorId: string;
+  tenantId: string;
+  name: string;
+  prefix: string;
+  last4: string;
+  scopes: Array<
+    | 'organization:read'
+    | 'organization:write'
+    | 'workspace:read'
+    | 'workspace:write'
+    | 'project:read'
+    | 'project:write'
+    | 'task:read'
+    | 'task:write'
+    | 'label:read'
+    | 'label:write'
+    | 'attachment:read'
+    | 'attachment:write'
+  > | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  revokedBy: string | null;
+  createdBy: string | null;
+  createdAt: string;
 };
 
 export type GetAuthHealthData = {
@@ -2758,7 +2858,7 @@ export type GetMyInvitationsResponses = {
 
 export type GetMyInvitationsResponse = GetMyInvitationsResponses[keyof GetMyInvitationsResponses];
 
-export type DeleteMySessionsData = {
+export type RevokeMySessionsData = {
   body?: {
     ids: Array<string>;
   };
@@ -2767,7 +2867,7 @@ export type DeleteMySessionsData = {
   url: '/me/sessions';
 };
 
-export type DeleteMySessionsErrors = {
+export type RevokeMySessionsErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -2794,14 +2894,33 @@ export type DeleteMySessionsErrors = {
   429: TooManyRequestsError;
 };
 
-export type DeleteMySessionsError = DeleteMySessionsErrors[keyof DeleteMySessionsErrors];
+export type RevokeMySessionsError = RevokeMySessionsErrors[keyof RevokeMySessionsErrors];
 
-export type DeleteMySessionsResponses = {
+export type RevokeMySessionsResponses = {
   /**
-   * Success
+   * Sessions were revoked
    */
   200: {
-    data: Array<unknown>;
+    data: Array<{
+      id: string;
+      type: 'regular' | 'impersonation' | 'mfa';
+      userId: string;
+      deviceName: string | null;
+      deviceType: 'desktop' | 'mobile';
+      deviceOs: string | null;
+      browser: string | null;
+      authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+      ipHash: string | null;
+      ipSubnetHash: string | null;
+      ipCountry: string | null;
+      ipAsn: number | null;
+      deviceIdHash: string | null;
+      createdAt: string;
+      expiresAt: string;
+      revokedAt: string | null;
+      revokedBy: string | null;
+      revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | null;
+    }>;
     /**
      * Identifiers of items that could not be processed
      */
@@ -2815,7 +2934,7 @@ export type DeleteMySessionsResponses = {
   };
 };
 
-export type DeleteMySessionsResponse = DeleteMySessionsResponses[keyof DeleteMySessionsResponses];
+export type RevokeMySessionsResponse = RevokeMySessionsResponses[keyof RevokeMySessionsResponses];
 
 export type DeleteMyMembershipData = {
   body?: never;
@@ -3001,6 +3120,112 @@ export type GetMyMembershipsResponses = {
 };
 
 export type GetMyMembershipsResponse = GetMyMembershipsResponses[keyof GetMyMembershipsResponses];
+
+export type GetConnectedAppsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/me/connected-apps';
+};
+
+export type GetConnectedAppsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetConnectedAppsError = GetConnectedAppsErrors[keyof GetConnectedAppsErrors];
+
+export type GetConnectedAppsResponses = {
+  /**
+   * Connected apps
+   */
+  200: {
+    items: Array<ConnectedApp>;
+  };
+};
+
+export type GetConnectedAppsResponse = GetConnectedAppsResponses[keyof GetConnectedAppsResponses];
+
+export type RevokeConnectedAppData = {
+  body?: never;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/me/connected-apps/{id}';
+};
+
+export type RevokeConnectedAppErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type RevokeConnectedAppError = RevokeConnectedAppErrors[keyof RevokeConnectedAppErrors];
+
+export type RevokeConnectedAppResponses = {
+  /**
+   * Consent was revoked
+   */
+  200: {
+    data: Array<unknown>;
+    /**
+     * Identifiers of items that could not be processed
+     */
+    rejectedIds: Array<string>;
+    /**
+     * Map of reason code to rejected item IDs
+     */
+    rejectionReasons?: {
+      [key: string]: Array<string>;
+    };
+  };
+};
+
+export type RevokeConnectedAppResponse = RevokeConnectedAppResponses[keyof RevokeConnectedAppResponses];
 
 export type GetPublicCountsData = {
   body?: never;
@@ -4348,6 +4573,7 @@ export type UpdateTenantData = {
       quotas?: {
         [key: string]: number;
       };
+      allowUnregisteredClients?: boolean;
       rateLimits?: {
         apiPointsPerHour?: number;
       };
@@ -4566,6 +4792,55 @@ export type GetYjsTokenResponses = {
 };
 
 export type GetYjsTokenResponse = GetYjsTokenResponses[keyof GetYjsTokenResponses];
+
+export type GetApiProtectedResourceMetadataData = {
+  body?: never;
+  path: {
+    tenantId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/.well-known/oauth-protected-resource';
+};
+
+export type GetApiProtectedResourceMetadataErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetApiProtectedResourceMetadataError =
+  GetApiProtectedResourceMetadataErrors[keyof GetApiProtectedResourceMetadataErrors];
+
+export type GetApiProtectedResourceMetadataResponses = {
+  /**
+   * Protected resource metadata
+   */
+  200: ProtectedResourceMetadata;
+};
+
+export type GetApiProtectedResourceMetadataResponse =
+  GetApiProtectedResourceMetadataResponses[keyof GetApiProtectedResourceMetadataResponses];
 
 export type DeleteOrganizationsData = {
   body: {
@@ -6637,6 +6912,56 @@ export type UpdateLabelResponses = {
 
 export type UpdateLabelResponse = UpdateLabelResponses[keyof UpdateLabelResponses];
 
+export type GetMcpProtectedResourceMetadataData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource';
+};
+
+export type GetMcpProtectedResourceMetadataErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetMcpProtectedResourceMetadataError =
+  GetMcpProtectedResourceMetadataErrors[keyof GetMcpProtectedResourceMetadataErrors];
+
+export type GetMcpProtectedResourceMetadataResponses = {
+  /**
+   * Protected resource metadata
+   */
+  200: ProtectedResourceMetadata;
+};
+
+export type GetMcpProtectedResourceMetadataResponse =
+  GetMcpProtectedResourceMetadataResponses[keyof GetMcpProtectedResourceMetadataResponses];
+
 export type HandleMcpData = {
   body: unknown;
   path: {
@@ -7179,6 +7504,354 @@ export type MarkSeenResponses = {
 };
 
 export type MarkSeenResponse = MarkSeenResponses[keyof MarkSeenResponses];
+
+export type GetServiceAccountsData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: {
+    q?: string;
+    offset?: string;
+    limit?: string;
+  };
+  url: '/{tenantId}/{organizationId}/service-accounts';
+};
+
+export type GetServiceAccountsErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetServiceAccountsError = GetServiceAccountsErrors[keyof GetServiceAccountsErrors];
+
+export type GetServiceAccountsResponses = {
+  /**
+   * Service accounts
+   */
+  200: {
+    items: Array<ServiceAccount>;
+    total: number;
+  };
+};
+
+export type GetServiceAccountsResponse = GetServiceAccountsResponses[keyof GetServiceAccountsResponses];
+
+export type CreateServiceAccountData = {
+  body: {
+    name: string;
+    role: 'admin' | 'member';
+    key?: {
+      name: string;
+      scopes?: Array<
+        | 'organization:read'
+        | 'organization:write'
+        | 'workspace:read'
+        | 'workspace:write'
+        | 'project:read'
+        | 'project:write'
+        | 'task:read'
+        | 'task:write'
+        | 'label:read'
+        | 'label:write'
+        | 'attachment:read'
+        | 'attachment:write'
+      > | null;
+      expiresAt?: string;
+    };
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/service-accounts';
+};
+
+export type CreateServiceAccountErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type CreateServiceAccountError = CreateServiceAccountErrors[keyof CreateServiceAccountErrors];
+
+export type CreateServiceAccountResponses = {
+  /**
+   * Service account was created
+   */
+  201: {
+    serviceAccount: ServiceAccount;
+    apiKey?: CreatedApiKey;
+  };
+};
+
+export type CreateServiceAccountResponse = CreateServiceAccountResponses[keyof CreateServiceAccountResponses];
+
+export type UpdateServiceAccountData = {
+  body: {
+    name?: string;
+    status?: 'active' | 'disabled';
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/service-accounts/{id}';
+};
+
+export type UpdateServiceAccountErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type UpdateServiceAccountError = UpdateServiceAccountErrors[keyof UpdateServiceAccountErrors];
+
+export type UpdateServiceAccountResponses = {
+  /**
+   * Service account was updated
+   */
+  200: ServiceAccount;
+};
+
+export type UpdateServiceAccountResponse = UpdateServiceAccountResponses[keyof UpdateServiceAccountResponses];
+
+export type GetApiKeysData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/service-accounts/{id}/keys';
+};
+
+export type GetApiKeysErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetApiKeysError = GetApiKeysErrors[keyof GetApiKeysErrors];
+
+export type GetApiKeysResponses = {
+  /**
+   * API keys
+   */
+  200: {
+    items: Array<ApiKey>;
+  };
+};
+
+export type GetApiKeysResponse = GetApiKeysResponses[keyof GetApiKeysResponses];
+
+export type CreateApiKeyData = {
+  body: {
+    name: string;
+    scopes?: Array<
+      | 'organization:read'
+      | 'organization:write'
+      | 'workspace:read'
+      | 'workspace:write'
+      | 'project:read'
+      | 'project:write'
+      | 'task:read'
+      | 'task:write'
+      | 'label:read'
+      | 'label:write'
+      | 'attachment:read'
+      | 'attachment:write'
+    > | null;
+    expiresAt?: string;
+    rollFrom?: string;
+    rollOverlapDays?: number;
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/service-accounts/{id}/keys';
+};
+
+export type CreateApiKeyErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type CreateApiKeyError = CreateApiKeyErrors[keyof CreateApiKeyErrors];
+
+export type CreateApiKeyResponses = {
+  /**
+   * API key was issued
+   */
+  201: CreatedApiKey;
+};
+
+export type CreateApiKeyResponse = CreateApiKeyResponses[keyof CreateApiKeyResponses];
+
+export type RevokeApiKeyData = {
+  body?: never;
+  path: {
+    tenantId: string;
+    organizationId: string;
+    id: string;
+    keyId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/service-accounts/{id}/keys/{keyId}';
+};
+
+export type RevokeApiKeyErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type RevokeApiKeyError = RevokeApiKeyErrors[keyof RevokeApiKeyErrors];
+
+export type RevokeApiKeyResponses = {
+  /**
+   * API key was revoked
+   */
+  200: ApiKey;
+};
+
+export type RevokeApiKeyResponse = RevokeApiKeyResponses[keyof RevokeApiKeyResponses];
 
 export type DeleteTasksData = {
   body?: {
