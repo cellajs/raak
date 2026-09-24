@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.12](https://github.com/cellajs/raak/compare/0.1.11...0.1.12) (2026-09-24)
+
+
+### 🐞 Bug fixes
+
+* **frontend:** bridge cella[#1128](https://github.com/cellajs/raak/issues/1128) so the root CHANGELOG.md compiles in MDX ([#136](https://github.com/cellajs/raak/issues/136)) ([2bcb917](https://github.com/cellajs/raak/commit/2bcb917f790cc600286d925573404fbecdd2a2b3))
+
+
+### 🧹 Chores
+
+* sync upstream cella ([#140](https://github.com/cellajs/raak/issues/140)) ([47ed7b9](https://github.com/cellajs/raak/commit/47ed7b975c9d8a438e44812e462d36eed492461b))
+* sync upstream cella ([#142](https://github.com/cellajs/raak/issues/142)) ([b51730d](https://github.com/cellajs/raak/commit/b51730dd5662f6575aac6d7acd79bf10ecaa1aec))
+* sync upstream cella v0.10.1 (6b676860) ([#138](https://github.com/cellajs/raak/issues/138)) ([22e895a](https://github.com/cellajs/raak/commit/22e895a3a2499acde86c05321caa88dffdd69163))
+* sync upstream cella v0.10.2 (55af2fac) ([#139](https://github.com/cellajs/raak/issues/139)) ([d514c3c](https://github.com/cellajs/raak/commit/d514c3cf1e5f7277dcca0e1d0ce85c7f594cc28a))
+* sync upstream cella v0.10.4 (0a022a61) ([#141](https://github.com/cellajs/raak/issues/141)) ([2d95e8f](https://github.com/cellajs/raak/commit/2d95e8f2ae3b3f1912c70bb32dbde875e4759bd5))
+* sync upstream cella v0.11.1 (0f57bc7e) ([#143](https://github.com/cellajs/raak/issues/143)) ([2799e75](https://github.com/cellajs/raak/commit/2799e757552c5d5469766f82c4a93500245d76bc))
+* sync upstream cella v0.9.8 (45e881a7) ([#135](https://github.com/cellajs/raak/issues/135)) ([1e4a69e](https://github.com/cellajs/raak/commit/1e4a69e52780bef310991fc1ff6240edd1b14936))
+
 ## [0.1.11](https://github.com/cellajs/raak/compare/0.1.10...0.1.11) (2026-09-02)
 
 
