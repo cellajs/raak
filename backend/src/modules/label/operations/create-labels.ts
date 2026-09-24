@@ -1,6 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import { labelSlug } from 'shared/config/labels-config';
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
@@ -18,7 +18,7 @@ import { log } from '#/utils/logger';
 type CreateLabelsInput = z.infer<typeof labelCreateManyStxBodySchema>;
 
 export async function createLabelsOp(
-  ctx: AuthContext,
+  ctx: UserContext,
   rawInput: CreateLabelsInput,
 ): Promise<{ data: LabelModel[]; rejectedIds: string[] }> {
   // Lens seam: canonicalize old-shape field names before any body access

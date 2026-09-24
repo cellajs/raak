@@ -1,6 +1,6 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
-import { toMembershipBase } from '#/modules/memberships/helpers/select';
+import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidChannel } from '#/permissions/get-valid-channel';
 
@@ -9,7 +9,7 @@ interface GetWorkspaceOpts {
   include: string[];
 }
 
-export async function getWorkspaceOp(ctx: AuthContext, id: string, opts: GetWorkspaceOpts) {
+export async function getWorkspaceOp(ctx: UserContext, id: string, opts: GetWorkspaceOpts) {
   const user = ctx.var.user;
   const { bySlug, include } = opts;
 
@@ -25,7 +25,8 @@ export async function getWorkspaceOp(ctx: AuthContext, id: string, opts: GetWork
 
   const included: { counts?: typeof counts; membership?: ReturnType<typeof toMembershipBase> } = {};
   if (counts) included.counts = counts;
-  if (includeMembership && membership) included.membership = toMembershipBase(membership);
+  if (includeMembership && membership && isMembershipRow(membership))
+    included.membership = toMembershipBase(membership);
 
   return { ...workspaceWithAudit, included };
 }

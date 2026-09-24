@@ -1,4 +1,4 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import {
   requireCurrentUserProjectMembership,
@@ -8,7 +8,7 @@ import { withAuditUser } from '#/modules/user/helpers/audit-user';
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
-export async function removeProjectWorkspaceOp(ctx: AuthContext, id: string) {
+export async function removeProjectWorkspaceOp(ctx: UserContext, id: string) {
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read');
   const membership = requireCurrentUserProjectMembership(ctx, project);
   const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, {

@@ -75,10 +75,13 @@ The engine **never loads rows**. Callers hand in the row data a decision needs. 
 | **Product** | Owns no roles and inherits from channels (`attachment`). Orders as `[...ancestors]`. Must have a channel parent. |
 | **User entity** | Carries no policies. `configurePermissions` filters it out. |
 | **Membership** | Explicit `user → channel` relation. The engine reads only `{ channelType, channelId, role }` (`AccessMembership`). |
+| **Actor** | Who acts: a user or a service account, one row in `actors` either way. `actor.id` is what provenance columns and the `own` condition compare against. |
+| **Binding** | A role on a channel, whoever holds it: a membership row for a user, a stored binding for a service account. `actor.bindings` is what the guards and the engine read. |
 | **Subject** | What is acted on: entity type, optional id, `channelIds` scope, optionally `row`. |
 | **Policy cell** | `0` (deny), `1` (allow), or a row-condition name (`'own'` in policies: allow on qualifying rows). |
 | **Action** | `create`, `read`, `update`, `delete` (`appConfig.entityActions`). |
 | **Grant source** | Why an action was allowed: `membership`, `relation`, `public`, or `systemAdmin`. |
+| **Access scope** | The mask an API key or access token puts over its actor's bindings: `<type>:read` or `<type>:write` per entity type with a policy. `null` is unmasked. |
 
 ## The access you present
 
@@ -86,11 +89,11 @@ Every `checkAccess*` call takes an explicit `Access`, actor plus memberships:
 
 ```ts
 export type Access<T extends AccessMembership = AccessMembership> =
-  | { userId: string; isSystemAdmin?: boolean; memberships: T[] }
+  | { actorId: string; isSystemAdmin?: boolean; memberships: T[]; scopes: readonly AccessScope[] | null }
   | { anonymous: true };
 ```
 
-Backend handlers never assemble an access by hand: `accessFrom(ctx)` reads the guard-populated `userId`, `isSystemAdmin`, and `memberships` off the request context and yields `{ anonymous: true }` when nobody is signed in.
+Backend handlers never assemble an access by hand: `accessFrom(ctx)` reads the guard-populated actor (`id`, `bindings`, `scopes`) and `isSystemAdmin` off the request context and yields `{ anonymous: true }` when nobody is signed in. `scopes` is required so a hand-built access states its mask: a session passes `null`; an API key or an access token passes what it was issued with, and the decision is `allowed AND the scope covers the action`. Where scopes come from: [Interoperability](./INTEROPERABILITY.md#access-scopes).
 
 ## The policy consulted
 
@@ -150,7 +153,7 @@ export type SubjectForPermission = {
 };
 ```
 
-Ancestor scope is **tri-state**. `undefined` means a required scope was omitted and throws `MissingScopeError` (HTTP 400 `missing_scope`, WebSocket close `4400`). `null` means explicitly not scoped to that ancestor. A string is a concrete channel id. A missing scope never defaults to unscoped, which would bypass permissions.
+Ancestor scope is **tri-state**. `undefined` means a required scope was omitted and throws `MissingAncestorError` (HTTP 400 `missing_ancestor`, WebSocket close `4400`). `null` means explicitly not scoped to that ancestor. A string is a concrete channel id. A missing scope never defaults to unscoped, which would bypass permissions.
 
 ## Row conditions
 
@@ -170,7 +173,7 @@ Two row columns sit beside the engine: drafts (`publishedAt`) are visible to the
 
 | Path | Guard or helper | What it checks | On failure |
 | --- | --- | --- | --- |
-| Guard chain | `authGuard` → `tenantGuard` → `orgGuard` | Authenticated, in-tenant (member or tenant creator), org member or system admin. Never consults the policy matrix. | 401, 403, or 404 before the handler |
+| Guard chain | `userGuard` → `tenantGuard` → `orgGuard` | Authenticated, in-tenant (member or tenant creator), org member or system admin. Never consults the policy matrix. | 401, 403, or 404 before the handler |
 | Single row | `getValidProduct`, `getValidChannel` via `buildSubjectFromEntity` | Loads the row, rejects it outside the request tenant or organization, passes it as `subject.row`, runs the engine | 403, or 404 for an out-of-scope row or a non-author on a draft |
 | Create | `canCreateEntity` | No row exists yet. The subject describes the would-be placement | 403 |
 | Bulk | `splitByPermission` | Splits allowed from denied | 403 only when nothing is allowed |

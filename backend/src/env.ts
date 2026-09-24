@@ -1,19 +1,14 @@
-import path from 'node:path';
+import { existsSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
-import { env as dotenv } from '@dotenv-run/core';
 import { createEnv } from '@t3-oss/env-core';
 import { appConfig } from 'shared';
 import { z } from 'zod';
 import { severityLevels } from '#/schemas/api-error-schemas';
 
-// Resolve root relative to this file so it works regardless of cwd (e.g. vitest workers)
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-dotenv({
-  root: path.resolve(__dirname, '../../..'),
-  files: ['.env'],
-});
+// Resolved from this file (src/ or the dist/ bundle), so it works regardless of cwd (e.g. vitest workers).
+// Variables already in the environment win over the file.
+const envFile = new URL('../.env', import.meta.url);
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 export const env = createEnv({
   server: {
@@ -91,12 +86,16 @@ export const env = createEnv({
     PII_HASH_SECRET: z.string().min(16, 'PII_HASH_SECRET must be at least 16 characters'),
     DATA_ENCRYPTION_KEY: z.string().min(32, 'DATA_ENCRYPTION_KEY must be at least 32 characters'),
 
+    // GeoIP (lib/geoip.ts): local MMDB paths, the object prefix they download from ('off' disables the refresh; empty
+    // means the geoip/ prefix of the public bucket), and the public address development geolocates for loopback sign-ins.
     GEOIP_COUNTRY_DB_PATH: z.string().default('./geoip/dbip-country-lite.mmdb'),
     GEOIP_ASN_DB_PATH: z.string().default('./geoip/dbip-asn-lite.mmdb'),
+    GEOIP_SOURCE_URL: z.string().default(''),
+    GEOIP_DEV_SAMPLE_IP: z.string().default('8.8.8.8'),
 
     SCW_AI_API_KEY: z.string().optional(),
 
-    MODE: z.enum(['api', 'mcp', 'cdc', 'migrate']).default('api'),
+    MODE: z.enum(['api', 'mcp', 'oauth', 'cdc', 'migrate']).default('api'),
 
     // Apply migrations and roles before binding the API port. Production runs migrations in a separate mode.
     RUN_MIGRATIONS_ON_BOOT: z

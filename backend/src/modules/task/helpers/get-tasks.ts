@@ -1,7 +1,7 @@
 import { and, arrayOverlaps, asc, desc, ilike, inArray, isNotNull, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { z } from 'zod';
-import type { AuthContext } from '#/core/context';
+import type { ActorContext } from '#/core/context';
 import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
@@ -21,7 +21,7 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
 export const getTasks = async (
-  ctx: AuthContext,
+  ctx: ActorContext,
   projectIds: string[],
   queryInfo: QueryInfo,
   opts?: { publicOnly?: boolean },

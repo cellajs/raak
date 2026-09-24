@@ -1,7 +1,7 @@
 import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
-import type { AuthContext, DbContext } from '#/core/context';
+import type { ActorContext, DbContext } from '#/core/context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
-import { requestScopeWhere } from '#/db/utils/request-scope';
+import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
@@ -15,7 +15,7 @@ interface FindTasksByStxMutationIdOpts {
   mutationId: string;
 }
 
-export const findTasksByStxMutationId = async (ctx: AuthContext, { mutationId }: FindTasksByStxMutationIdOpts) => {
+export const findTasksByStxMutationId = async (ctx: ActorContext, { mutationId }: FindTasksByStxMutationIdOpts) => {
   const { db } = ctx.var;
   return db
     .select()
@@ -39,7 +39,7 @@ interface UpdateTaskOpts {
 }
 
 /** Update a task by ID and return the updated row. */
-export const updateTask = async (ctx: AuthContext, { id, values }: UpdateTaskOpts) => {
+export const updateTask = async (ctx: ActorContext, { id, values }: UpdateTaskOpts) => {
   const { db } = ctx.var;
   const [updated] = await db
     .update(tasksTable)
@@ -56,7 +56,7 @@ interface DeleteTasksByIdsOpts {
 }
 
 /** Soft-delete tasks by IDs and return the affected rows. */
-export const deleteTasksByIds = async (ctx: AuthContext, { ids, deletedAt, deletedBy }: DeleteTasksByIdsOpts) => {
+export const deleteTasksByIds = async (ctx: ActorContext, { ids, deletedAt, deletedBy }: DeleteTasksByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .update(tasksTable)
@@ -69,8 +69,11 @@ interface FindProjectsByWorkspaceOpts {
   workspaceId: string;
 }
 
-export const findProjectsByWorkspace = async (ctx: AuthContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
-  const { db, organizationId, userId } = ctx.var;
+export const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
+  const { db, actor } = ctx.var;
+  // Workspaces group a user's own project memberships; a service account has none.
+  if (actor.kind !== 'user') return [];
+  const { organizationId } = requestScope(ctx, 'project');
   return db
     .select({
       ...getColumns(projectsTable),
@@ -82,7 +85,7 @@ export const findProjectsByWorkspace = async (ctx: AuthContext, { workspaceId }:
         eq(membershipsTable.channelType, 'project'),
         eq(membershipsTable.projectId, projectsTable.id),
         eq(membershipsTable.workspaceId, workspaceId),
-        eq(membershipsTable.userId, userId),
+        eq(membershipsTable.userId, actor.id),
         eq(membershipsTable.archived, false),
       ),
     )
@@ -93,8 +96,9 @@ interface FindProjectByIdOpts {
   projectId: string;
 }
 
-export const findProjectById = async (ctx: AuthContext, { projectId }: FindProjectByIdOpts) => {
-  const { db, organizationId } = ctx.var;
+export const findProjectById = async (ctx: ActorContext, { projectId }: FindProjectByIdOpts) => {
+  const { db } = ctx.var;
+  const { organizationId } = requestScope(ctx);
   const [project] = await db
     .select()
     .from(projectsTable)
@@ -109,10 +113,11 @@ interface FindProjectMemberUserIdsOpts {
 }
 
 export const findProjectMemberUserIds = async (
-  ctx: AuthContext,
+  ctx: ActorContext,
   { projectId, userIds }: FindProjectMemberUserIdsOpts,
 ) => {
-  const { db, organizationId } = ctx.var;
+  const { db } = ctx.var;
+  const { organizationId } = requestScope(ctx);
   return db
     .select({ userId: membershipsTable.userId })
     .from(membershipsTable)
@@ -131,8 +136,9 @@ interface FindProjectMembersOpts {
 }
 
 /** Find distinct project members (users) for one or more projects in an organization. */
-export const findProjectMembers = async (ctx: AuthContext, { projectIds }: FindProjectMembersOpts) => {
-  const { db, organizationId } = ctx.var;
+export const findProjectMembers = async (ctx: ActorContext, { projectIds }: FindProjectMembersOpts) => {
+  const { db } = ctx.var;
+  const { organizationId } = requestScope(ctx);
   return db
     .selectDistinct({ ...userMinimalBaseSelect, entityType: sql<'user'>`'user'` })
     .from(usersTable)
@@ -149,7 +155,7 @@ interface FindLabelsByProjectsOpts {
 }
 
 /** Find distinct labels for one or more projects in an organization. */
-export const findLabelsByProjects = async (ctx: AuthContext, { projectIds }: FindLabelsByProjectsOpts) => {
+export const findLabelsByProjects = async (ctx: ActorContext, { projectIds }: FindLabelsByProjectsOpts) => {
   const { db } = ctx.var;
   return db
     .selectDistinct(labelEmbeddedSelect)
@@ -164,7 +170,7 @@ interface FindTaskRelationsOpts {
 }
 
 /** Fetch users and labels referenced by one or more tasks (by ID lookups). */
-export const findTaskRelations = async (ctx: AuthContext, { userIds, labelIds }: FindTaskRelationsOpts) => {
+export const findTaskRelations = async (ctx: ActorContext, { userIds, labelIds }: FindTaskRelationsOpts) => {
   const { db } = ctx.var;
   return Promise.all([
     userIds.length > 0
@@ -226,7 +232,7 @@ interface CountTasksByStatusOpts {
   projectId: string;
 }
 
-export const countTasksByStatus = async (ctx: AuthContext, { projectId }: CountTasksByStatusOpts) => {
+export const countTasksByStatus = async (ctx: ActorContext, { projectId }: CountTasksByStatusOpts) => {
   const { db } = ctx.var;
   return db
     .select({
@@ -246,7 +252,7 @@ interface FilterExistingAttachmentIdsOpts {
  * Narrow candidate attachment ids to live rows in this organization. Guards the derived
  * task.attachments host array against doctored or stale ids from client-authored blocks.
  */
-export const filterExistingAttachmentIds = async (ctx: AuthContext, { ids }: FilterExistingAttachmentIdsOpts) => {
+export const filterExistingAttachmentIds = async (ctx: ActorContext, { ids }: FilterExistingAttachmentIdsOpts) => {
   if (ids.length === 0) return [];
   const { db } = ctx.var;
   const rows = await db

@@ -3,7 +3,7 @@ import {
   buildSubject,
   buildSubjectFromEntity,
   hierarchy,
-  MissingScopeError,
+  MissingAncestorError,
   matchesRowCondition,
 } from 'shared';
 import { describe, expect, it } from 'vitest';
@@ -39,15 +39,15 @@ describe('shared buildSubject', () => {
     expect(() => buildSubject(productWithAncestors, ancestorChannelIds)).not.toThrow();
   });
 
-  it('throws MissingScopeError when a required ancestor ID is missing (undefined)', () => {
+  it('throws MissingAncestorError when a required ancestor ID is missing (undefined)', () => {
     const ancestorChannelIds = fullAncestorChannelIds();
     delete ancestorChannelIds[ancestorIdKeys[0]];
     try {
       buildSubject(productWithAncestors, ancestorChannelIds);
-      expect.unreachable('Expected MissingScopeError to be thrown');
+      expect.unreachable('Expected MissingAncestorError to be thrown');
     } catch (e) {
-      expect(e).toBeInstanceOf(MissingScopeError);
-      expect((e as MissingScopeError).missingKey).toBe(ancestorIdKeys[0]);
+      expect(e).toBeInstanceOf(MissingAncestorError);
+      expect((e as MissingAncestorError).missingKey).toBe(ancestorIdKeys[0]);
     }
   });
 });
@@ -78,8 +78,8 @@ describe('buildSubjectFromEntity: carries the row', () => {
     const row = { ...subject.row, createdBy: subject.createdBy };
 
     // `own`: the actor created it. Public read: the row carries publicAt.
-    expect(matchesRowCondition('own', row, { userId: 'u1' })).toBe(true);
-    expect(matchesRowCondition('own', row, { userId: 'u2' })).toBe(false);
+    expect(matchesRowCondition('own', row, { actorId: 'u1' })).toBe(true);
+    expect(matchesRowCondition('own', row, { actorId: 'u2' })).toBe(false);
     expect(matchesRowCondition('public', row, {})).toBe(true);
 
     // ...and an unpublished row is not public.

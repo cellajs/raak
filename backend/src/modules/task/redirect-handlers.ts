@@ -95,7 +95,8 @@ app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
     [createdByUser] = await db()
       .select({ ...userMinimalBaseSelect, entityType: sql<'user'>`'user'` })
       .from(usersTable)
-      .where(eq(usersTable.id, task.createdBy));
+      // Any actor id: a service account creator matches no user row, so the cover shows no avatar
+      .where(eq(usersTable.id, task.createdBy as string));
   }
 
   const png = await generateCover({

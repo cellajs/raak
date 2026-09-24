@@ -31,7 +31,7 @@ defineBackendModule({
           projectId: project.id as string,
           organizationId: organization.id,
           tenantId: organization.tenantId,
-          createdBy: ctx.var.user.id,
+          createdBy: ctx.var.actor.id,
         }),
       );
       if (rows.length) await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: rows }));
@@ -45,7 +45,7 @@ defineBackendModule({
           propagateSetupConfigLabels(txCtx, {
             entries: nextLabels,
             organizationId: org.id as string,
-            updatedBy: ctx.var.user.id,
+            updatedBy: ctx.var.actor.id,
           }),
         );
       }

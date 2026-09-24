@@ -97,6 +97,9 @@ const repoDocRoutes = {
   'cdc/README.md': '/docs/page/architecture/cdc',
   'yjs/README.md': '/docs/page/architecture/yjs',
   'cella/DEPLOYMENT.md': '/docs/page/guides/deployment',
+  'cella/INTEROPERABILITY.md': '/docs/page/architecture/interoperability',
+  'oauth/README.md': '/docs/page/architecture/oauth',
+  'mcp/README.md': '/docs/page/architecture/mcp',
   'bench/README.md': '/docs/page/guides/load-testing',
 } as const;
 
@@ -129,6 +132,7 @@ const viteConfig = {
       '/api': { target: `http://localhost:${appConfig.devPorts.api}` },
       '/yjs': { target: `ws://localhost:${appConfig.devPorts.yjs}`, ws: true },
       '/mcp': { target: `http://localhost:${appConfig.devPorts.mcp}` },
+      '/oauth': { target: `http://localhost:${appConfig.devPorts.oauth}` },
     },
     // Tunnel mode: ngrok terminates TLS and forwards plain HTTP. Accept the public
     // Host header and point HMR websockets back at the public origin.
@@ -203,7 +207,7 @@ const viteConfig = {
             // which the per-package backstop below would otherwise spend on a few hundred bytes.
             {
               name: 'vendor',
-              test: /node_modules[\\/](zustand|clsx|cnfast|dayjs|nanoid|uuidv7|dobajs|sonner|input-otp|qrcode\.react|canvas-confetti|onedollarstats|react-use-downloader|dexie-react-hooks|class-variance-authority|embla-carousel[\w-]*|@atlaskit[\\/]pragmatic-drag-and-drop[\w-]*|@simplewebauthn[\\/]browser|@mdx-js[\\/]react|@t3-oss[\\/]env-core|use-sync-external-store|use-debounce|react-error-boundary|react-intersection-observer|slugify|react-i18next|i18next[\w-]*|@babel[\\/]runtime)[\\/]/,
+              test: /node_modules[\\/](zustand|clsx|cnfast|dayjs|nanoid|uuidv7|dobajs|sonner|input-otp|qrcode\.react|canvas-confetti|onedollarstats|react-use-downloader|dexie-react-hooks|class-variance-authority|embla-carousel[\w-]*|@atlaskit[\\/]pragmatic-drag-and-drop[\w-]*|@simplewebauthn[\\/]browser|@mdx-js[\\/]react|@t3-oss[\\/]env-core|use-sync-external-store|use-debounce|react-error-boundary|slugify|react-i18next|i18next[\w-]*|@babel[\\/]runtime)[\\/]/,
               minSize: 0,
             },
             {
@@ -450,7 +454,7 @@ const viteConfig = {
     // browser, so mode selection and the URL overrides it reads must survive
     // into this replacement object; NODE_ENV alone silently rebakes production.
     'process.env': Object.fromEntries(
-      (['NODE_ENV', 'APP_MODE', 'FRONTEND_URL', 'BACKEND_URL', 'BACKEND_AUTH_URL', 'YJS_URL', 'MCP_API_URL'] as const)
+      (['NODE_ENV', 'APP_MODE', 'FRONTEND_URL', 'BACKEND_URL', 'BACKEND_AUTH_URL', 'YJS_URL', 'MCP_URL'] as const)
         .filter((key) => process.env[key] !== undefined)
         .map((key) => [key, process.env[key]]),
     ),

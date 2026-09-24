@@ -1,7 +1,8 @@
 import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
 import type { EntityRole } from 'shared';
-import type { AuthContext, DbContext } from '#/core/context';
+import type { ActorContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
+import { requestScope } from '#/db/utils/request-scope';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -27,8 +28,9 @@ interface UpdateWorkspaceOpts {
 }
 
 /** Update a workspace by ID and return the updated row. */
-export const updateWorkspace = async (ctx: AuthContext, { id, values }: UpdateWorkspaceOpts) => {
-  const { db, organizationId } = ctx.var;
+export const updateWorkspace = async (ctx: ActorContext, { id, values }: UpdateWorkspaceOpts) => {
+  const { db } = ctx.var;
+  const { organizationId } = requestScope(ctx);
   const [updated] = await db
     .update(workspacesTable)
     .set(values)
@@ -41,8 +43,9 @@ interface DeleteWorkspacesByIdsOpts {
   ids: string[];
 }
 
-export const deleteWorkspacesByIds = async (ctx: AuthContext, { ids }: DeleteWorkspacesByIdsOpts) => {
-  const { db, organizationId } = ctx.var;
+export const deleteWorkspacesByIds = async (ctx: ActorContext, { ids }: DeleteWorkspacesByIdsOpts) => {
+  const { db } = ctx.var;
+  const { organizationId } = requestScope(ctx);
   return db
     .delete(workspacesTable)
     .where(and(inArray(workspacesTable.id, ids), eq(workspacesTable.organizationId, organizationId)));

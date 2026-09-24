@@ -11,9 +11,9 @@ type AccountSecurityType =
   | 'sysadmin-signin'
   | 'impersonation-started'
   | 'passkey-added'
-  | 'passkey-removed'
+  | 'passkey-deleted'
   | 'totp-added'
-  | 'totp-removed'
+  | 'totp-deleted'
   | 'tenant-created'
   | 'system-role-granted'
   | 'system-role-changed'
@@ -30,6 +30,15 @@ interface AccountSecurityStatic {
 export const accountSecurityEmail = defineEmailTemplate<AccountSecurityStatic>()({
   translate(lng, { name, type, details }) {
     const baseProps = { lng, appName: appConfig.name };
+    // The location line exists only when a country is known; the text keys splice it in unescaped ({{- location}}), so the
+    // country itself is escaped here.
+    const location = details?.country
+      ? i18n.t('backend:email.account_security.location', {
+          ...baseProps,
+          country: details.country,
+          interpolation: { escapeValue: true },
+        })
+      : '';
     return {
       subject: i18n.t(`backend:email.account_security.${type}.title`, { ...baseProps, ...details }),
       previewText: i18n.t('backend:email.account_security.preview', { ...baseProps, name }),
@@ -38,6 +47,7 @@ export const accountSecurityEmail = defineEmailTemplate<AccountSecurityStatic>()
       bodyHtml: i18n.t(`backend:email.account_security.${type}.text`, {
         ...baseProps,
         ...details,
+        location,
         interpolation: { escapeValue: true },
       }),
       supportText: i18n.t('backend:email.support_email', { lng }),

@@ -6,7 +6,7 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { systemRolesTable } from '#/modules/system/system-roles-db';
 
 /** Always the identified variant: these are known users, never the anonymous actor. */
-export type UserAccess = Extract<Access<MembershipBaseModel>, { userId: string }>;
+export type UserAccess = Extract<Access<MembershipBaseModel>, { actorId: string }>;
 
 /**
  * Build permission `Access` objects for arbitrary users, connected or not.
@@ -41,7 +41,9 @@ export async function accessForUserIds(userIds: string[]): Promise<Map<string, U
 
   for (const userId of unique) {
     result.set(userId, {
-      userId,
+      // An offline user is read as a session would be: unmasked.
+      scopes: null,
+      actorId: userId,
       isSystemAdmin: adminIds.has(userId),
       memberships: byUser.get(userId) ?? [],
     });

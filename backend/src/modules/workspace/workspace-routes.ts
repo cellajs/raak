@@ -1,5 +1,5 @@
 import { createXRoute } from '#/core/x-routes';
-import { authGuard, crossTenantGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
+import { crossTenantGuard, orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import {
@@ -31,7 +31,7 @@ const workspaceRoutes = {
   createWorkspaces: createXRoute({
     method: 'post',
     path: '/{tenantId}/{organizationId}/workspaces',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
     tags: ['workspaces', 'app', 'channel'],
     operationId: 'createWorkspaces',
@@ -67,7 +67,7 @@ const workspaceRoutes = {
   getWorkspaces: createXRoute({
     method: 'get',
     path: '/workspaces',
-    xGuard: [authGuard, crossTenantGuard],
+    xGuard: [userGuard, crossTenantGuard],
     tags: ['workspaces', 'app', 'channel'],
     operationId: 'getWorkspaces',
     summary: 'Get list of workspaces',
@@ -97,7 +97,7 @@ const workspaceRoutes = {
   getWorkspace: createXRoute({
     method: 'get',
     path: '/{tenantId}/{organizationId}/workspaces/{id}',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     tags: ['workspaces', 'app', 'channel'],
     operationId: 'getWorkspace',
     summary: 'Get workspace',
@@ -117,7 +117,7 @@ const workspaceRoutes = {
   updateWorkspace: createXRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/workspaces/{id}',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['workspaces', 'app', 'channel'],
     operationId: 'updateWorkspace',
@@ -149,7 +149,7 @@ const workspaceRoutes = {
   deleteWorkspaces: createXRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/workspaces',
-    xGuard: [authGuard, tenantGuard, orgGuard],
+    xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['workspaces', 'app', 'channel'],
     operationId: 'deleteWorkspaces',

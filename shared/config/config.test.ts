@@ -10,7 +10,8 @@ export const test = {
   domain: '',
 
   services: {
-    mcp: { enabled: false },
+    mcp: { enabled: true },
+    oauth: { enabled: true },
   },
 
   frontendUrl: development.frontendUrl,
@@ -18,4 +19,5 @@ export const test = {
   backendAuthUrl: development.backendAuthUrl,
   yjsUrl: development.yjsUrl,
   mcpUrl: development.mcpUrl,
+  oauthUrl: development.oauthUrl,
 } satisfies DeepPartial<typeof _default>;

@@ -1,5 +1,5 @@
 import type { EntityRole } from 'shared';
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { findProjectsPaginated } from '#/modules/project/project-queries';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
@@ -18,7 +18,7 @@ interface GetProjectsInput {
   include: string[];
 }
 
-export async function getProjectsOp(ctx: AuthContext, input: GetProjectsInput) {
+export async function getProjectsOp(ctx: UserContext, input: GetProjectsInput) {
   const user = ctx.var.user;
   const { include, relatableUserId, ...queryParams } = input;
 

@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
@@ -28,7 +28,7 @@ const defaultTaskStatusCounts = {
 
 type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 
-export async function createProjectsOp(ctx: AuthContext, rawItems: CreateProjectItem[], workspaceId: string) {
+export async function createProjectsOp(ctx: UserContext, rawItems: CreateProjectItem[], workspaceId: string) {
   // Lens seam: canonicalize old-shape field names before any body access
   const items = rawItems.map((item) => projectContract.normalizeBody(item));
   const db = ctx.var.db;

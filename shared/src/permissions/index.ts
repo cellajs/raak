@@ -1,4 +1,10 @@
-export { policyMatrix, publicReadGrants } from '../../config/permissions-config.ts';
+export { accessScopes, policyMatrix, publicReadGrants } from '../../config/permissions-config.ts';
+export {
+  type AccessScope,
+  type AccessScopedEntityType,
+  type AccessScopes,
+  deriveAccessScopes,
+} from './access-scopes.ts';
 export {
   allActionsAllowed,
   allActionsDenied,
@@ -9,13 +15,13 @@ export {
 export { buildSubject, buildSubjectFromEntity } from './build-subject.ts';
 export {
   type Access,
-  type Actor,
   type BatchPermissionResult,
   type CheckAccessFanoutOptions,
   checkAccess,
   checkAccessBatch,
   checkAccessFanout,
   type PermissionResult,
+  type PredicateActor,
 } from './check-access.ts';
 export type { EntityCanMap } from './compute-can.ts';
 export { computeCan } from './compute-can.ts';
@@ -36,7 +42,7 @@ export type {
   SubjectForPermission,
 } from './engine/types.ts';
 export { validateMembership, validateSubject } from './engine/validation.ts';
-export { MissingScopeError } from './missing-scope-error.ts';
+export { MissingAncestorError } from './missing-ancestor-error.ts';
 export type { PermissionsConfigResult } from './policy-matrix.ts';
 // `configurePolicyMatrix` is test-only; it lives at `shared/testing/policies`, not on this barrel.
 export { configurePermissions, getEntityPolicies, getPolicyPermissions } from './policy-matrix.ts';

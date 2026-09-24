@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import type { AuthContext } from '#/core/context';
+import type { ActorContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
@@ -21,8 +21,11 @@ type UpdateTaskInput = z.infer<typeof taskUpdateStxBodySchema>;
 
 type ReturnTask = ReturnType<typeof hydrateTask>;
 
+/** A session or a user token carries the editor's row; a service account's call only its actor. */
+type UpdateTaskContext = { var: ActorContext['var'] & Partial<Pick<UserContext['var'], 'user'>> };
+
 export async function updateTaskOp(
-  ctx: AuthContext,
+  ctx: UpdateTaskContext,
   id: string,
   input: UpdateTaskInput,
   opts: { fullResponse?: boolean; serverOrigin?: boolean },
@@ -70,7 +73,7 @@ export async function updateTaskOp(
     const updateValues: Partial<InsertTaskModel> = {
       ...resolved.values,
       updatedAt: getIsoDate(),
-      updatedBy: user.id,
+      updatedBy: ctx.var.actor.id,
       stx: resolved.stx,
     };
 

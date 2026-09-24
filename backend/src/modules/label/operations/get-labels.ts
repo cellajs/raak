@@ -1,7 +1,7 @@
 import type { z } from '@hono/zod-openapi';
 import { count, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
@@ -20,7 +20,7 @@ import { seqCursorFilters } from '#/utils/seq-cursor';
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
 export async function getLabelsOp(
-  ctx: AuthContext,
+  ctx: UserContext,
   input: GetLabelsInput,
 ): Promise<{ items: (LabelModel & { usedCount: number })[]; total: number }> {
   const { projectId, workspaceId, ...queryInfo } = input;

@@ -5,11 +5,10 @@
 # `--target <name>` (see `target` in infra/config/services.config.ts, threaded
 # through print-deploy-env into .github/workflows/deploy.yml). Shared stages:
 #
-#   base    : node:26-alpine + corepack (pnpm version pinned by the root
-#              package.json `packageManager` field)
+#   base    : node:26-alpine + pnpm from npm, at the version the root
+#              package.json `packageManager` field pins
 #   runtime : node:26-alpine + non-root `app` user + RELEASE_SHA/NODE_ENV,
 #              the parent of every production target
-#   geoip   : downloads GeoIP databases in a discarded stage (backend only)
 #
 #   manifests: all workspace manifests + lockfile (shared by every service;
 #              `--filter` scopes each install, and lockfile changes already
@@ -26,11 +25,13 @@
 # -----------------------------------------------------------------------------
 FROM node:26-alpine AS base
 
-# pnpm version comes from the root package.json `packageManager` field; corepack
-# fetches it on first use in each stage.
-RUN corepack enable
-
 WORKDIR /app
+
+# pnpm comes from npm at the version pinned by the root package.json
+# `packageManager` field (the pin pnpm/action-setup reads in CI), minus any
+# `+sha` suffix. Node 25+ images no longer ship corepack.
+COPY package.json ./
+RUN npm install -g --no-fund --no-audit "$(node -p "require('./package.json').packageManager.split('+')[0]")"
 
 # -----------------------------------------------------------------------------
 # Shared: production runtime base (non-root user, release metadata)
@@ -50,28 +51,6 @@ ENV RELEASE_SHA=${RELEASE_SHA}
 ENV NODE_ENV=production
 
 USER app
-
-# -----------------------------------------------------------------------------
-# Shared: GeoIP databases (DB-IP Lite, CC BY 4.0). Backend only
-# -----------------------------------------------------------------------------
-# Runs in a discarded stage so curl/gzip never reach the final image.
-# Best-effort: if the current-month URL isn't published yet, the build still
-# succeeds and country lookups simply return null until the file is supplied
-# at runtime.
-FROM node:26-alpine AS geoip
-
-# ARG busts this stage's cache every release so each deploy refreshes the data.
-ARG RELEASE_SHA=unknown
-
-RUN --mount=type=cache,id=apk-cache,target=/var/cache/apk \
-    apk add --no-cache curl gzip && \
-    mkdir -p /geoip && \
-    MONTH=$(date -u +%Y-%m) && \
-    for kind in country asn; do \
-      curl -fsSL "https://download.db-ip.com/free/dbip-${kind}-lite-${MONTH}.mmdb.gz" \
-        | gunzip > "/geoip/dbip-${kind}-lite.mmdb" \
-        || echo "geoip: failed to fetch ${kind} for ${MONTH} — continuing without it"; \
-    done
 
 # -----------------------------------------------------------------------------
 # Shared: workspace manifests for dependency installs
@@ -136,8 +115,10 @@ COPY --from=backend-builder --chown=app:app /app/json ./json
 # Drizzle migrations
 COPY --chown=app:app backend/drizzle ./backend/drizzle
 
-# GeoIP databases
-COPY --from=geoip --chown=app:app /geoip ./backend/geoip
+# GeoIP databases download here at runtime (backend/src/lib/geoip.ts); the image ships none.
+USER root
+RUN mkdir -p backend/geoip && chown app:app backend/geoip
+USER app
 
 ENV PORT=4000
 

@@ -6,6 +6,8 @@ const ALGORITHM = 'aes-256-gcm';
 const KEY_BYTES = 32;
 const IV_BYTES = 12;
 const AUTH_TAG_BYTES = 16;
+// A fixed, product-neutral salt: changing it re-keys every stored ciphertext.
+// fork: raak keeps the pre-0.11 salt so the TOTP secrets already stored in production still decrypt
 const HKDF_SALT = 'cella:data-encryption';
 
 const encode = (value: Buffer) => value.toString('base64url');

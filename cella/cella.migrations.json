@@ -58,6 +58,18 @@
     "20260921T1433-devices-table",
     "20260921T1436-identity-issuer-slug",
     "20260921T1629-node-26",
-    "20260921T1945-devices-table-slim"
+    "20260921T1945-devices-table-slim",
+    "20260922T1210-principals",
+    "20260922T1600-service-accounts",
+    "20260922T1900-oauth-server",
+    "20260922T1930-mcp-substrate",
+    "20260922T2010-app-voice",
+    "20260923T0803-auth-renames-3",
+    "20260923T0835-auth-resource-activities",
+    "20260923T0850-geoip-bucket-source",
+    "20260923T0902-principal-to-actor",
+    "20260923T1200-partition-maintenance-pg-cron",
+    "20260923T2319-session-revocation",
+    "20260923T2343-infra-operator-keys"
   ]
 }

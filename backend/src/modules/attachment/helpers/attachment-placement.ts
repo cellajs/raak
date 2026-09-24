@@ -8,7 +8,7 @@ import {
   hierarchy,
   type NullableAncestorType,
 } from 'shared';
-import type { AuthContext } from '#/core/context';
+import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { DB } from '#/db/db';
 import { tenantRead } from '#/db/tenant-context';
@@ -73,7 +73,7 @@ export const validateAttachmentPlacement = (
  * org-homed, which the fields schema only allows when no strict ancestor exists.
  */
 export const resolveAttachmentPlacement = async (
-  ctx: AuthContext,
+  ctx: OrgContext,
   input: AttachmentPlacementInput,
 ): Promise<ResolvedAttachmentPlacement> => {
   const columns: Record<string, string | null> = Object.fromEntries(
@@ -112,7 +112,7 @@ export const attachmentHomeColumnKey = appConfig.entityIdColumnKeys[
  * grants (own rows) through the collection read filter, not to a 403.
  */
 export const resolveAttachmentHomeScope = async (
-  ctx: AuthContext,
+  ctx: OrgContext,
   channelId: string | undefined,
 ): Promise<string | undefined> => {
   if (!channelId || channelId === ctx.var.organization.id) return undefined;

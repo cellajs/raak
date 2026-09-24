@@ -326,7 +326,17 @@
         "resourceType": {
           "type": ["string", "null"],
           "required": true,
-          "enum": ["request", "membership", "inactive_membership", "tenant", "system_role", null]
+          "enum": [
+            "request",
+            "membership",
+            "inactive_membership",
+            "tenant",
+            "system_role",
+            "service_account",
+            "api_key",
+            "oauth_client",
+            null
+          ]
         },
         "subjectId": {
           "type": ["string", "null"],
@@ -588,6 +598,33 @@
     }
   },
   {
+    "name": "ConnectedApp",
+    "ref": "#/components/schemas/ConnectedApp",
+    "type": "object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "required": true },
+        "clientId": { "type": "string", "required": true },
+        "clientName": { "type": "string", "required": true },
+        "scopes": { "type": "array", "required": true, "itemType": "string" },
+        "resources": { "type": "array", "required": true, "itemType": "string" },
+        "createdAt": { "type": "string", "required": true },
+        "expiresAt": {
+          "type": ["string", "null"],
+          "required": true
+        }
+      }
+    },
+    "schemaTag": "data",
+    "tagsByKind": {
+      "schema": ["data"],
+      "module": ["me"],
+      "owner": ["cella"]
+    },
+    "description": "An OAuth consent (grant) of the current user."
+  },
+  {
     "name": "Me",
     "ref": "#/components/schemas/Me",
     "type": "object",
@@ -792,6 +829,20 @@
               },
               "createdAt": { "type": "string", "required": true },
               "expiresAt": { "type": "string", "required": true },
+              "revokedAt": {
+                "type": ["string", "null"],
+                "required": true
+              },
+              "revokedBy": {
+                "type": ["string", "null"],
+                "required": true,
+                "format": "uuid"
+              },
+              "revocationReason": {
+                "type": ["string", "null"],
+                "required": true,
+                "enum": ["sign_out", "other_session", "mfa_enabled", "session_cap", "replaced", null]
+              },
               "isCurrent": { "type": "boolean", "required": true },
               "isNewDevice": {
                 "type": "boolean",
@@ -864,6 +915,9 @@
           "ipCountry": null,
           "ipAsn": null,
           "deviceIdHash": "9ad4a3a84be73e1e9b96a7acab442bcb",
+          "revokedAt": null,
+          "revokedBy": null,
+          "revocationReason": null,
           "isCurrent": true,
           "isNewDevice": false
         }
@@ -1031,7 +1085,11 @@
           "required": true,
           "enum": ["admin", "member", "guest"]
         },
-        "createdBy": { "type": "string", "required": true, "format": "uuid" },
+        "createdBy": {
+          "type": ["string", "null"],
+          "required": true,
+          "format": "uuid"
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
@@ -1949,6 +2007,247 @@
     }
   },
   {
+    "name": "ApiKey",
+    "ref": "#/components/schemas/ApiKey",
+    "type": "object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "required": true, "format": "uuid" },
+        "actorId": { "type": "string", "required": true, "format": "uuid" },
+        "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+        "name": { "type": "string", "required": true, "maxLength": 255 },
+        "prefix": { "type": "string", "required": true, "maxLength": 255 },
+        "last4": { "type": "string", "required": true, "maxLength": 4 },
+        "scopes": {
+          "type": ["array", "null"],
+          "required": true,
+          "itemType": "string",
+          "enum": [
+            "organization:read",
+            "organization:write",
+            "workspace:read",
+            "workspace:write",
+            "project:read",
+            "project:write",
+            "task:read",
+            "task:write",
+            "label:read",
+            "label:write",
+            "attachment:read",
+            "attachment:write"
+          ]
+        },
+        "expiresAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
+        "revokedAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
+        "revokedBy": {
+          "type": ["string", "null"],
+          "required": true,
+          "format": "uuid"
+        },
+        "createdBy": {
+          "type": ["string", "null"],
+          "required": true,
+          "format": "uuid"
+        },
+        "createdAt": { "type": "string", "required": true }
+      }
+    },
+    "schemaTag": "data",
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    },
+    "description": "An API key of a service account; the secret is never returned after creation.",
+    "example": {
+      "id": "f3c10bf5-c7cd-4d71-886d-aaaf26240582",
+      "actorId": "e76689f8-afe7-4c1a-aad6-09f237f1bb30",
+      "tenantId": "maq9vh",
+      "name": "reboot key",
+      "prefix": "raak-development_sk_test_Ab3d",
+      "last4": "2345",
+      "scopes": ["attachment:read"],
+      "expiresAt": null,
+      "revokedAt": null,
+      "revokedBy": null,
+      "createdBy": "e522e29f-f395-42f7-999b-7ea34c4cb760",
+      "createdAt": "2024-11-05T21:01:57.922Z"
+    }
+  },
+  {
+    "name": "CreatedApiKey",
+    "ref": "#/components/schemas/CreatedApiKey",
+    "type": "object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "required": true, "format": "uuid" },
+        "actorId": { "type": "string", "required": true, "format": "uuid" },
+        "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+        "name": { "type": "string", "required": true, "maxLength": 255 },
+        "prefix": { "type": "string", "required": true, "maxLength": 255 },
+        "last4": { "type": "string", "required": true, "maxLength": 4 },
+        "scopes": {
+          "type": ["array", "null"],
+          "required": true,
+          "itemType": "string",
+          "enum": [
+            "organization:read",
+            "organization:write",
+            "workspace:read",
+            "workspace:write",
+            "project:read",
+            "project:write",
+            "task:read",
+            "task:write",
+            "label:read",
+            "label:write",
+            "attachment:read",
+            "attachment:write"
+          ]
+        },
+        "expiresAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
+        "revokedAt": {
+          "type": ["string", "null"],
+          "required": true
+        },
+        "revokedBy": {
+          "type": ["string", "null"],
+          "required": true,
+          "format": "uuid"
+        },
+        "createdBy": {
+          "type": ["string", "null"],
+          "required": true,
+          "format": "uuid"
+        },
+        "createdAt": { "type": "string", "required": true },
+        "secret": {
+          "type": "string",
+          "required": true,
+          "description": "The plaintext API key; store it now, it is not shown again."
+        }
+      },
+      "extendsRef": "#/components/schemas/ApiKey"
+    },
+    "schemaTag": "data",
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    },
+    "description": "A newly issued API key with its plaintext secret.",
+    "extendsRef": "#/components/schemas/ApiKey",
+    "example": {
+      "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
+      "actorId": "6b40b65d-1ea1-4132-892e-876f9e4e268a",
+      "tenantId": "kr2nrm",
+      "name": "connect key",
+      "prefix": "raak-development_sk_test_Ab3d",
+      "last4": "2345",
+      "scopes": ["attachment:read"],
+      "expiresAt": null,
+      "revokedAt": null,
+      "revokedBy": null,
+      "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
+      "createdAt": "2024-08-12T09:36:07.688Z",
+      "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
+    }
+  },
+  {
+    "name": "ServiceAccount",
+    "ref": "#/components/schemas/ServiceAccount",
+    "type": "object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "required": true, "format": "uuid" },
+        "tenantId": { "type": "string", "required": true, "maxLength": 24 },
+        "name": { "type": "string", "required": true, "maxLength": 255 },
+        "status": {
+          "type": "string",
+          "required": true,
+          "enum": ["active", "disabled"]
+        },
+        "bindings": {
+          "type": "array",
+          "required": true,
+          "itemType": "object",
+          "items": {
+            "type": "object",
+            "properties": {
+              "channelType": {
+                "type": "string",
+                "required": true,
+                "enum": ["organization", "workspace", "project"]
+              },
+              "channelId": { "type": "string", "required": true, "maxLength": 50 },
+              "organizationId": { "type": "string", "required": true, "maxLength": 50 },
+              "role": {
+                "type": "string",
+                "required": true,
+                "enum": ["admin", "member"]
+              }
+            }
+          }
+        },
+        "oauthClientId": {
+          "type": ["string", "null"],
+          "required": true,
+          "maxLength": 255
+        },
+        "createdBy": {
+          "type": ["string", "null"],
+          "required": true,
+          "format": "uuid"
+        },
+        "updatedBy": {
+          "type": ["string", "null"],
+          "required": true,
+          "format": "uuid"
+        },
+        "createdAt": { "type": "string", "required": true },
+        "updatedAt": {
+          "type": ["string", "null"],
+          "required": true
+        }
+      }
+    },
+    "schemaTag": "data",
+    "tagsByKind": {
+      "module": ["service-accounts"],
+      "owner": ["cella"]
+    },
+    "description": "The actor an API key runs as, with its role bindings.",
+    "example": {
+      "id": "764ce6e7-55fc-4f5d-b661-0c777df71d45",
+      "tenantId": "yug3pr",
+      "name": "system bot",
+      "status": "active",
+      "bindings": [
+        {
+          "channelType": "organization",
+          "channelId": "5ff67410-debc-4270-9ca8-327f8f7493ef",
+          "organizationId": "5ff67410-debc-4270-9ca8-327f8f7493ef",
+          "role": "member"
+        }
+      ],
+      "oauthClientId": null,
+      "createdBy": "9363c51c-e97a-4ee4-9dbe-ebe841e8f2f9",
+      "createdAt": "2024-09-01T22:49:17.262Z",
+      "updatedAt": "2024-09-01T22:49:17.262Z",
+      "updatedBy": null
+    }
+  },
+  {
     "name": "Task",
     "ref": "#/components/schemas/Task",
     "type": "object",
@@ -2255,6 +2554,11 @@
                   "minimum": 0
                 }
               }
+            },
+            "allowUnregisteredClients": {
+              "type": "boolean",
+              "required": true,
+              "description": "Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)"
             }
           }
         },
@@ -2339,6 +2643,11 @@
                   "minimum": 0
                 }
               }
+            },
+            "allowUnregisteredClients": {
+              "type": "boolean",
+              "required": true,
+              "description": "Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)"
             }
           }
         },
@@ -2854,6 +3163,7 @@
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
         "logId": { "type": "string", "required": false },
+        "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
         "timestamp": { "type": "string", "required": false },
@@ -2916,6 +3226,7 @@
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
         "logId": { "type": "string", "required": false },
+        "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
         "timestamp": { "type": "string", "required": false },
@@ -2999,6 +3310,7 @@
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
         "logId": { "type": "string", "required": false },
+        "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
         "timestamp": { "type": "string", "required": false },
@@ -3063,6 +3375,7 @@
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
         "logId": { "type": "string", "required": false },
+        "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
         "timestamp": { "type": "string", "required": false },
@@ -3127,6 +3440,7 @@
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
         "logId": { "type": "string", "required": false },
+        "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
         "timestamp": { "type": "string", "required": false },
@@ -3164,6 +3478,23 @@
       "severity": "warn",
       "timestamp": "2025-01-01T12:00:00.000Z"
     }
+  },
+  {
+    "name": "ProtectedResourceMetadata",
+    "ref": "#/components/schemas/ProtectedResourceMetadata",
+    "type": "object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "resource": { "type": "string", "required": true },
+        "authorization_servers": { "type": "array", "required": true, "itemType": "string" },
+        "scopes_supported": { "type": "array", "required": true, "itemType": "string" },
+        "bearer_methods_supported": { "type": "array", "required": true, "itemType": "string" },
+        "resource_documentation": { "type": "string", "required": true }
+      }
+    },
+    "schemaTag": "data",
+    "tagsByKind": {}
   },
   {
     "name": "StxBase",
@@ -3235,6 +3566,7 @@
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
         "logId": { "type": "string", "required": false },
+        "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
         "timestamp": { "type": "string", "required": false },
@@ -3299,6 +3631,7 @@
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
         "logId": { "type": "string", "required": false },
+        "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
         "timestamp": { "type": "string", "required": false },

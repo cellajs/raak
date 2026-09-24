@@ -1,10 +1,10 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { deleteWorkspacesByIds } from '#/modules/workspace/workspace-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { log } from '#/utils/logger';
 
-export async function deleteWorkspacesOp(ctx: AuthContext, ids: string[]) {
+export async function deleteWorkspacesOp(ctx: UserContext, ids: string[]) {
   const toDeleteIds = Array.isArray(ids) ? ids : [ids];
   const { allowedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'workspace', toDeleteIds);
   await deleteWorkspacesByIds(ctx, { ids: allowedIds });

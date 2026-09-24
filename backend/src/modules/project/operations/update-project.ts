@@ -1,8 +1,8 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
-import { toMembershipBase } from '#/modules/memberships/helpers/select';
+import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
 import { updateProject } from '#/modules/project/project-queries';
 import { projectContract } from '#/modules/project/project-schema';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
@@ -11,7 +11,7 @@ import { getValidChannel } from '#/permissions';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
-export async function updateProjectOp(ctx: AuthContext, id: string, rawInput: Record<string, unknown>) {
+export async function updateProjectOp(ctx: UserContext, id: string, rawInput: Record<string, unknown>) {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = projectContract.normalizeBody(rawInput);
   const user = ctx.var.user;
@@ -38,7 +38,7 @@ export async function updateProjectOp(ctx: AuthContext, id: string, rawInput: Re
 
   const projectWithAudit = await withAuditUser(ctx, updatedProjectRecord, user);
   const included = {
-    ...(membership && { membership: toMembershipBase(membership) }),
+    ...(membership && isMembershipRow(membership) && { membership: toMembershipBase(membership) }),
     counts: { ...counts, taskStatusCounts },
   };
 

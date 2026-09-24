@@ -1,4 +1,4 @@
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
@@ -15,7 +15,7 @@ import { createRejectionState, takeWithRestriction } from '#/utils/rejection-uti
 
 type CreateWorkspaceItem = { id: string; name: string };
 
-export async function createWorkspacesOp(ctx: AuthContext, rawItems: CreateWorkspaceItem[]) {
+export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorkspaceItem[]) {
   // Lens seam: canonicalize old-shape field names before any body access
   const items = rawItems.map((item) => workspaceContract.normalizeBody(item));
   const db = ctx.var.db;

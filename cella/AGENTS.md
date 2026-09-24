@@ -27,11 +27,14 @@ Tech stack, file structure, data modeling, security and sync/offline design: [Ar
 
 ## Middleware & guards
 
-Global chain in `backend/src/middlewares/app.ts`: log context → referrer override → secureHeaders → OpenTelemetry → pino logger → CSRF → client version → dynamic body-limit → gzip (GET only). No CORS middleware: the API is same-origin.
+Global chain in `backend/src/middlewares/app.ts`: log context → referrer override → secureHeaders → OpenTelemetry → pino logger → CSRF (skipped for requests carrying an API key; the service guard refuses browser origins itself) → client version → dynamic body-limit → gzip (GET only). No CORS middleware: the API is same-origin.
 
 Route-level guards in `backend/src/middlewares/guard/`:
 
-- `authGuard`: validates the session and sets `ctx.var.user`, `ctx.var.memberships`, `ctx.var.db` (baseDb).
+- `userGuard`: validates the session and sets `ctx.var.user`, `ctx.var.memberships`, `ctx.var.actor`, `ctx.var.db` (baseDb).
+- `serviceGuard`: a secret API key (`Authorization: Bearer <slug>_sk_…` or `x-api-key`) or an access token from the app's authorization server; sets `ctx.var.actor` (a service account, or the consenting user masked by the token scopes). Never system admin.
+- `actorGuard`: a session, an API key or an access token, for routes whose operation takes `ActorContext`. `tokenGuard`: access tokens only (the MCP face), answering 401 with the RFC 9728 challenge.
+- Contexts, narrowest first: `DbContext` (a connection), `ActorContext` (actor + tenant, no user row), `OrgContext` (plus the organization), `UserContext` (a signed-in user, session fields only behind `userGuard`). Type an operation on the narrowest it needs. Every guard declares the OpenAPI `security` it accepts; `createXRoute` emits it per operation.
 - `tenantGuard`: verifies tenant membership, loads the tenant row, and sets `ctx.var.db = baseDb` and `ctx.var.tenantId`.
 - `orgGuard`: resolves the organization and verifies membership.
 - `publicGuard`: unauthenticated routes. Sets `ctx.var.db` to baseDb.
@@ -44,13 +47,17 @@ Route-level guards in `backend/src/middlewares/guard/`:
 
 Read/write boundary and table categories: [Multi-tenancy](./MULTI_TENANCY.md).
 
+Secret columns (a hash, a session or token secret, a private key) are declared once, by table name, in `backend/src/db/secret-columns.ts`. Three things derive from it and nothing else lists them: `createSelectSchema` omits them from every response schema, `lib/redact-keys.ts` censors them in backend and worker logs, and the CDC worker strips them from the row image. Adding such a column means one line there; a column whose name ends like a secret but is not one goes in `secretLookingColumns` with its reason. `cdc/src/tests/secret-columns.test.ts` fails on a column in neither map.
+
 ## Error handling
 
 `AppError` is the structured error class: `status`, `type` (i18n key from `locales/en/error`), `severity`, `entityType`, `meta`, `willRedirect`. PostgreSQL error codes map automatically (FK violation → 400, unique constraint → 409, RLS denial → 403, deadlock → 409).
 
 ## Auth
 
-Five sub-modules in `backend/src/modules/auth/`: `general/` (session, cookies, MFA, token invocation), `magic/`, `oauth/`, `passkeys/` (WebAuthn), `totps/` (TOTP 2FA). Sessions: `general/helpers/session.ts`. Cookies: `general/helpers/cookie.ts`.
+Five sub-modules in `backend/src/modules/auth/`: `general/` (session, cookies, MFA, token invocation), `magic/`, `oauth/` (signing in with a provider), `passkeys/` (WebAuthn), `totps/` (TOTP 2FA). Sessions: `general/helpers/session.ts`. Cookies: `general/helpers/cookie.ts`.
+
+Machine access ([Interoperability](/docs/page/architecture/interoperability)): `actors/` (the supertype that `createdBy`/`updatedBy`/`deletedBy` on channel and product tables reference), `service-accounts/` (accounts, role `bindings`, API keys in `api_keys`), `oauth-server/` (the app's authorization server; process entry in `oauth/`, tokens verified by the guards), `mcp/` (tokens-only endpoint; process entry in `mcp/`). Names: API key, access scope (`accessScopes` derived from the policy matrix), binding, OAuth client. Name the proof: session, API key or access token; `credential` is the WebAuthn word (passkeys) and nothing else.
 
 ## Permissions
 
@@ -82,7 +89,7 @@ Every check takes an `Access` from `accessFrom(ctx)`. Never assemble one by hand
 **Extension system** in `backend/src/core/`:
 
 - `x-middleware.ts`: wrap guards/limiters/caches with `xMiddleware(options, fn)` so they appear in the spec and docs UI. Use `setMiddlewareExtension` for composed middleware.
-- `x-routes.ts`: always `createXRoute`, never `createRoute`. Props: `xGuard` (required), `xRateLimiter`, `xCache`.
+- `x-routes.ts`: always `createXRoute`, never `createRoute`. Props: `xGuard` (required), `xRateLimiter`, `xCache`, `x-service` (404 while that service is disabled), `x-tool` (opts the route in as an MCP tool: `{ enabled, description, approvalRequired, category, entity, execute }`; input derives from `request`, `execute` calls the operation). Per-operation `security` follows the guard's declaration (`cookieAuth`, `apiKey`, `oauth2`).
 - `openapi-extensions.ts`: new `x-*` extension types go here.
 - `openapi-registration.ts`: builds the spec and writes `openapi.cache.json`.
 - Frontend: the openapi-parser plugin (`sdk/src/plugins/openapi-parser/`) writes generated docs, served by Vite at `/static/docs.gen/`. The docs UI is the frontend docs module.
@@ -142,7 +149,7 @@ A child-side host FK (nullable `<host>Id` column on one product pointing at anot
   - **No repeats**: the same comment text never appears in two files. Put it once at the shared abstraction or delete every copy.
 - **Never use em dashes (`—`, U+2014) anywhere in text** (code, YAML, config, docs). Split the sentence, use a colon, or drop the clause. `shared/scripts/check-comment-style.ts` (in `pnpm check`) fails the build on em dashes in code and YAML comments, `shared/scripts/check-doc-style.ts` (`pnpm docs:style`) on em dashes in Markdown and MDX prose. Contrast and history phrases (`instead`, `rather than`, `previously`, `used to`, `maybe`, `we should`) are review signals: rewrite around the current behavior, delete the rest.
 - **Agent-associated vocabulary**: name the concrete behavior. Replace `load-bearing` with the dependency, requirement or failure consequence it abbreviates. `seam`, `land`, `surface` as a verb, `wiring`, `scaffold`, `floor`, `decisive`, `genuinely`, `cleanly`, `honest take` and `silently` are review signals. Prefer the exact term (boundary, merge, report, registration, minimum, the missing error). Keep exact domain terms (`canonical`, `idempotent`, `parity`, `guard`, `stale`, `round-trip`, `fallback`, `authoritative`, `verdict`). Never rename identifiers, files, APIs or domain concepts for prose style. `pnpm prose:audit` reports review terms. Required replacements fail `pnpm docs:style` (generated output, migrations, changelog, `infra/` excluded).
-- **Template/app vocabulary**: `template` for Cella. `app`, `app-owned` or `app-specific` for projects built from it. `sync-breaking` for an upstream change that requires app work after a sync. The Cella CLI keeps its source-control term in `cella/cella.config.ts`, and the `// fork: <why>` markers the cella-sync skill requires on app edits are skipped by `pnpm vocabulary:check`. Compatibility migrations may name legacy identifiers they replace.
+- **Template/app vocabulary**: `template` for Cella. `app`, `app-owned` or `app-specific` for projects built from it. `sync-breaking` for an upstream change that requires app work after a sync. The Cella CLI keeps its source-control term in `cella/cella.config.ts`, and the `// fork: <why>` markers the cella-sync skill requires on app edits are skipped by `pnpm vocabulary:check`. Compatibility migrations may name legacy identifiers they replace. `cella` in code names the template only where it contrasts with the app ("none in cella; apps with other vocabularies add theirs"), never the running system ("the app's authorization server", not "cella's"). The product name is never an identifier, claim, header, DNS record or URL literal in `backend/src`, `shared/src` or `frontend/src`: derive it from `appConfig.slug` / `appConfig.name` or pick a neutral name. `pnpm vocabulary:check` rejects `cella_*`, `Cella*`, `_cella-*` and `cellajs.com` there (tests, config, docs and marketing excluded).
 - `materialize`/`materialization` only for the Yjs operation that converts collaborative state into durable entity data. Elsewhere use `persist`, `provision`, `create` or `resolve`.
 - **Prefer plain composable functions over configuration factories.** `createX(config)` returning behavior is justified only to bind long-lived shared state for many call sites (e.g. mutation options bound to a QueryClient). Otherwise write a small function with explicit arguments.
 - **Reserved domain vocabulary.** These words name a subsystem. Never reuse them:
@@ -165,10 +172,11 @@ A child-side host FK (nullable `<host>Id` column on one product pointing at anot
 ## Testing
 
 - Test modes: [Testing](/docs/page/guides/testing).
+- The authorization server runs in-process for tests: `backend/tests/oauth-helpers.ts` (`startTestOauthServer`, `clientCredentialsToken`, `authorizationCodeToken` through the consent routes).
 
 ## Deploy debugging
 
-Prod deploys are immutable VM generations on Scaleway (Pulumi + S3 control object). The LB-overlap cutover waits for the new VM to serve `X-App-Version: <SHA>` (`/health` → 204 backend/yjs/mcp, 200 frontend). "cutover unhealthy / wait-for-version timeout" means the app never bound its port: almost always a **boot-time crash**, not the LB.
+Prod deploys are immutable VM generations on Scaleway (Pulumi + S3 control object). The LB-overlap cutover waits for the new VM to serve `X-App-Version: <SHA>` (`/health` → 204 backend/yjs/mcp/oauth, 200 frontend). "cutover unhealthy / wait-for-version timeout" means the app never bound its port: almost always a **boot-time crash**, not the LB.
 
 1. **Read the boot logs first.** The boot runner ([infra/boot/src/boot.ts](../infra/boot/src/boot.ts)) runs `docker compose up --wait` and uploads a crashed container's stdout/stderr to the `boot-diag/` prefix of the boot-diag bucket. Read it with `pnpm --filter infra diag` (`--service backend`, `--list`, `--mode staging`, `--replay`). [infra/tasks/deploy-run.ts](../infra/tasks/deploy-run.ts) runs it automatically on rollout failure.
 2. **No SSH, no serial-log API.** SecurityGroup drops inbound. The only channels are the S3 boot-diag above and the Scaleway **web** serial console (`::cella::` markers + `BOOT FAILED (exit N)`).
@@ -190,7 +198,7 @@ Prod deploys are immutable VM generations on Scaleway (Pulumi + S3 control objec
 
 ## Commands
 
-- `pnpm dev`: Dev servers for every package. Start PostgreSQL first with `pnpm docker`.
+- `pnpm dev`: Dev servers for every package, including the `oauth/` and `mcp/` workers (each exits at once while its `appConfig.services` entry is disabled). Start PostgreSQL first with `pnpm docker`.
 - `pnpm check`: Runs `sdk` + typecheck + `lens:check` + `lint:fix` (which includes the style and doc checks).
 - `pnpm generate`: Create Drizzle migrations from schema changes.
 - `pnpm sdk`: Regenerate OpenAPI spec and frontend SDK.

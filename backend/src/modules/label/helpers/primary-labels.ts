@@ -1,7 +1,7 @@
 import { and, asc, count, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { defaultOrder, orderGap } from 'shared/utils/display-order';
-import type { AuthContext, DbContext } from '#/core/context';
+import type { ActorContext, DbContext } from '#/core/context';
 import { createServerStx } from '#/core/stx';
 import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { tasksTable } from '#/modules/task/task-db';
@@ -116,7 +116,7 @@ export const reassignTasksFromDeletedPrimaries = async (
  * that may actually be deleted. Must run inside a tenant context.
  */
 export const filterPrimaryLabelDeletes = async (
-  ctx: AuthContext,
+  ctx: ActorContext,
   ids: string[],
   rejected: Set<string>,
 ): Promise<{ allowedIds: string[]; deletedPrimaryIds: string[] }> => {

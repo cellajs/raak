@@ -1082,7 +1082,7 @@
     "pnpm install",
     "pnpm check"
    ],
-   "summary": "engines.node moves from 24.x to 26.x in every package, and CI workflows, Dockerfile, infra/boot/Dockerfile, the infra boot:build target and @types/node follow. Every developer machine, CI runner and image needs Node 26. Node 25+ defines a global localStorage that is undefined without --localstorage-file, which makes zustand persist crash on write in node-env vitest runs; frontend/vitest.setup.ts now deletes that global when there is no window. Synced files arrive migrated. Apps update their own workflows, Dockerfiles, Node version pins and engines fields, and copy the vitest guard into any setup file of their own."
+   "summary": "engines.node moves from 24.x to 26.x in every package, and CI workflows, Dockerfile, infra/boot/Dockerfile, the infra boot:build target and @types/node follow. Every developer machine, CI runner and image needs Node 26. Node 25+ defines a global localStorage that is undefined without --localstorage-file, which makes zustand persist crash on write in node-env vitest runs; frontend/vitest.setup.ts now deletes that global when there is no window. Synced files arrive migrated. Apps update their own workflows, Dockerfiles, Node version pins and engines fields, and copy the vitest guard into any setup file of their own. Node 25+ images ship no corepack, so a Dockerfile installs pnpm from npm at the packageManager pin."
   },
   {
    "id": "20260921T1945-devices-table-slim",
@@ -1101,6 +1101,250 @@
     "pnpm check"
    ],
    "summary": "devices drops lastStrategy, deviceName, deviceType, deviceOs, browser and ipCountry: every sign-in wrote them and nothing read them, since the new sign-in notice builds its text from the request and the sessions list reads the same facts from the session row. The table is now (userId, deviceIdHash, firstSeenAt, lastSeenAt, notifiedAt) and enrollDevice(userId, deviceId) loses its context and strategy parameters. No API change. Apps run pnpm generate (six DROP COLUMN statements, no prompts; an app applying this together with 20260921T1433-devices-table gets the table in its final shape), drop the last two arguments from their own enrollDevice calls, and read a dropped column from the session row of that sign-in."
+  },
+  {
+   "id": "20260922T1210-principals",
+   "version": "next",
+   "title": "principals: one actor table behind every provenance column",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/scripts",
+    "backend/tests"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm sdk",
+    "pnpm check"
+   ],
+   "summary": "New principals (id, kind) table: users.id is a foreign key to it and createdBy/updatedBy/deletedBy in productColumns and channelColumns reference principals instead of users, so a later service account can be named in provenance with a real constraint. Users are inserted through insertUsers(), which writes the principal row first in one transaction; any direct db.insert(usersTable) fails on the new foreign key. AuthContext is renamed UserContext (a signed-in user) and ActorContext is its new supertype, carrying one actor { kind, id, grants } variable that accessFrom/actorFrom read; machine-callable operations are typed on it. Error bodies gain requestId. Apps rename AuthContext to UserContext with one perl/sed pass, run pnpm generate with one create hint per provenance foreign key, add the principals backfill INSERT after CREATE TABLE in the generated SQL, route user inserts through insertUsers, add principals to test TRUNCATE lists, and retype operations that only need the actor's id."
+  },
+  {
+   "id": "20260922T1600-service-accounts",
+   "version": "next",
+   "title": "service accounts and API keys: the first machine principal",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "shared/config"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm sdk",
+    "pnpm check"
+   ],
+   "summary": "Adds service_accounts (a tenant-scoped machine principal with role bindings in bindings, disabled never deleted) and api_keys (opaque API keys stored as hashes, with a scopes mask). serviceGuard authenticates Authorization: Bearer <app>_sk_live_… as the service account and actorGuard accepts a session or a key on routes whose operations take ActorContext. Scopes are derived from the policy matrix (scopes next to policyMatrix, <entityType>:read|write) and masked in checkAccess and collection reads; the points limiter keys on (tenantId, principalId); CSRF is skipped for machine credentials. Apps rename authGuard to userGuard with one perl pass (userGuard = session only, serviceGuard = API key, actorGuard = either), run pnpm generate and pnpm sdk, add the two tables to the RLS grant list and test TRUNCATE lists, switch machine-callable routes to actorGuard, give hand-built test contexts an actor ({ kind: 'user', id, grants, scopes: null }), rename the shared SQL actor type Actor to PredicateActor, narrow grants to membership rows with isMembershipRow where a membership is returned, and type operations that read the organization as OrgContext. Id brands: user-referencing columns are UserId, principal-referencing ones PrincipalId, service_accounts.id ServiceAccountId; only a service id (or actor.id) into a user column fails to compile. backend/tsconfig.json turns on noImplicitOverride and noImplicitReturns. Review round: service_accounts.updatedBy and credentials.revokedBy (migration audit_principals), queries take (ctx, opts) and never throw, one operation per file, credential cache by hash, guards declare their OpenAPI security, Access.scopes is required."
+  },
+  {
+   "id": "20260922T1900-oauth-server",
+   "version": "next",
+   "title": "OAuth authorization server: keystore, consent, connected apps",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "frontend/src",
+    "shared/config",
+    "infra/config",
+    "locales"
+   ],
+   "requires": [
+    "pnpm check",
+    "pnpm generate",
+    "pnpm generate:routes",
+    "pnpm infra:compose",
+    "pnpm install",
+    "pnpm sdk"
+   ],
+   "summary": "Adds node-oidc-provider as the MODE=oauth process on the same origin under /oauth/* (AUTH_SUBSTRATE_PLAN Phase D): oidc_payloads adapter, signing_keys (RS256, encrypted private JWK, current + next), oauth_clients for pre-registered apps, service_accounts.oauth_client_id for installations, tenants.restrictions.allowConsentedClients. Grant types authorization_code + refresh_token + client_credentials; client auth none (Client ID Metadata Documents) and client_secret_basic (clients rows and service accounts with their secret keys). Every token carries an RFC 8707 resource (<backendUrl>/t/<tenant> or <mcpUrl>/<tenant>/<org>/mcp). Consent page at /oauth/consent reads the session; GET/DELETE /me/connected-apps list and revoke grants; serviceGuard and actorGuard accept the JWT and resolve the consenting user (masked by token scopes) or the service account. Apps add oauthUrl, services.oauth and devPorts.oauth to config, the three tables to the RLS grant list, the oauth service to registry-enumerating infra tests, and the locale keys. Review round: oauth/ workspace package and singleVM fold (add oauth to pnpm-workspace.yaml), consent page at /auth/consent, oidc_payloads.account_id + hourly sweep job, unique current/next signing key, API-face protected resource metadata, health probe."
+  },
+  {
+   "id": "20260922T1930-mcp-substrate",
+   "version": "next",
+   "title": "MCP on the substrate: tokens only, tools from routes",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "shared/config"
+   ],
+   "requires": [
+    "pnpm install",
+    "pnpm sdk",
+    "pnpm check"
+   ],
+   "summary": "The MCP endpoint sits behind tokenGuard (access tokens from the authorization server only; sessions and API keys refused) and answers tokenless calls with the RFC 9728 challenge; a public route publishes the protected resource metadata. Tools are routes: createXRoute registers a route carrying x-tool ({ enabled, description, approvalRequired, category, entity, execute }) in the core tool registry, deriving the input schema from the route request with the sync transaction left out and rebuilt server-side; tools/list carries annotations and the required scope, tools/call outside the token scopes answers 403 insufficient_scope with the scope to step up to. The attachment module ships the showcase (list, get, create, update, delete). OpenAPI gains an oauth2 security scheme. buildTools and @tanstack/ai are gone; apps move their tools onto routes and enable services.mcp in development and test config."
+  },
+  {
+   "id": "20260922T2010-app-voice",
+   "version": "next",
+   "title": "app voice: no product name in identifiers and wire strings",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "frontend/src",
+    "shared/scripts",
+    "cella"
+   ],
+   "requires": [
+    "pnpm sdk",
+    "pnpm vocabulary:check"
+   ],
+   "summary": "The domain verification TXT record is _<appConfig.slug>-verification.<domain> (was _cella-verification) and the HKDF salt behind encryptData is the neutral constant data-encryption (was cella:data-encryption), which re-keys every stored ciphertext: TOTP secrets encrypted before the change no longer decrypt, so delete them (no users) or keep the old salt with a marker. pnpm vocabulary:check gains a product-name rule rejecting cella_*, Cella*, _cella-* identifiers and cellajs.com literals in backend/src, shared/src and frontend/src; cella/AGENTS.md records that cella in code names the template only where it contrasts with the app."
+  },
+  {
+   "id": "20260923T0803-auth-renames-3",
+   "version": "next",
+   "title": "auth substrate renames, round 3: MissingAncestorError, allowUnregisteredClients, MCP_URL",
+   "kind": "codemod",
+   "syncBreaking": true,
+   "clientCacheBump": true,
+   "script": "cella/migrations/20260923T0803-auth-renames-3/auth-renames-3.ts",
+   "roots": [
+    "backend/src",
+    "shared/src",
+    "frontend/src",
+    "yjs/src",
+    "locales",
+    "infra/config"
+   ],
+   "requires": [
+    "pnpm sdk",
+    "pnpm --filter infra compose:generate"
+   ],
+   "summary": "MissingScopeError/missing_scope -> MissingAncestorError/missing_ancestor (engine error for an absent ancestor channel id; no longer shares a word with RFC 6750 insufficient_scope); tenant restriction allowConsentedClients -> allowUnregisteredClients and refusal clients_not_allowed -> unregistered_clients_not_allowed (it gates consent to OAuth clients with no registration), with a migration rewriting the column default and stored rows; env MCP_API_URL -> MCP_URL. Tenant wire shape changes: clientCacheVersion v9-tenant-restrictions."
+  },
+  {
+   "id": "20260923T0835-auth-resource-activities",
+   "version": "next",
+   "title": "service accounts, API keys and OAuth clients are activity resources; one secret-column registry",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "cdc/src",
+    "yjs/src"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm sdk"
+   ],
+   "summary": "resourceTypes gains service_account, api_key and oauth_client (resourceTables maps them), so key minting and revocation, account changes and client registration land in activities; user-owned rows stay out and are covered by notifications. Secret columns are declared once in backend/src/db/secret-columns.ts (secretColumns by table name, secretLookingColumns with reasons, secretColumnPattern): createSelectSchema omits them from every response schema (hand .omit() calls for them become type errors), lib/redact-keys.ts derives the pino redact paths for the backend and the workers (createWorkerLog takes them as third argument; redactedFields moved out of lib/pino.ts), and the CDC worker strips them from the row image via compactRowData(tableMeta, rowData). A CDC test globs every *-db.ts and fails on a column ending in hash, secret, jwk, token or password that is in neither map. createActivity attributes an update to revokedBy when updatedBy is absent. pnpm generate adds the three tables to cdc_pub with REPLICA IDENTITY FULL."
+  },
+  {
+   "id": "20260923T0850-geoip-bucket-source",
+   "version": "next",
+   "title": "GeoIP databases come from the public bucket, not the image",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "Dockerfile",
+    "infra/tasks",
+    "locales/en"
+   ],
+   "requires": [
+    "pnpm check"
+   ],
+   "summary": "The Docker geoip build stage and backend/scripts/download-geoip.ts are removed; backend/src/lib/geoip.ts downloads the DB-IP Lite databases from GEOIP_SOURCE_URL (default: the geoip/ prefix of the app's public bucket, the shared template bucket in development) at boot and daily, and geolocates GEOIP_DEV_SAMPLE_IP instead of loopback in development. infra/tasks/geoip-refresh.ts publishes the data: pnpm infra → Refresh GeoIP data, the deploy pipeline with a 35-day gate, and the monthly geoip-refresh workflow. print-deploy-env emits public_bucket. The new sign-in notice drops its location line when the country is unknown ({{- location}} plus the email.account_security.location key)."
+   },
+   {
+   "id": "20260923T1200-partition-maintenance-pg-cron",
+   "version": "next",
+   "title": "partition retention moves from pg_partman to maintain_partitions() and pg_cron",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/scripts",
+    "backend/src",
+    "backend/db",
+    "infra/resources"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm check"
+   ],
+   "summary": "pg_partman is removed: Scaleway Managed PostgreSQL never offered it, so production skipped partitioning entirely, and run_maintenance() depended on an in-process timer that production never started. 10-partitions.migration.ts converts activities, seen_by and notifications to native range partitions with a DEFAULT partition and installs the maintain_partitions() procedure (drop past retention, trim DEFAULT, create two intervals ahead, move DEFAULT rows into new ranges); schedule-partition-maintenance.ts registers it as a nightly pg_cron job from the cluster's cron database (rdb on Scaleway, postgres in the dev image) after every migrate and boot-time migration, failing loudly when pg_cron is not loaded. The dev image installs postgresql-17-cron instead of postgresql-17-partman and compose preloads it; infra adds admin-cron-privilege on rdb. db-maintenance.ts (lib and script) and the db-maintenance backend job are deleted; partman-parity.test.ts is partition-parity.test.ts. sessions, tokens and unsubscribe_tokens stop being partitioned: their primary key is id alone (migration 20260923092234_tidy_bruce_banner flattens partitioned copies and swaps the key) and the same procedure sweeps rows older than the retention with a DELETE, so tokens.id can now be referenced by a real foreign key."
+   },
+   {
+   "id": "20260923T0902-principal-to-actor",
+   "version": "next",
+   "title": "principal becomes actor: one word for who acts",
+   "kind": "codemod",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": "cella/migrations/20260923T0902-principal-to-actor/principal-to-actor.ts",
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "backend/scripts",
+    "shared/src",
+    "frontend/src",
+    "yjs/src",
+    "cdc/src"
+   ],
+   "requires": [
+    "pnpm sdk"
+   ],
+   "summary": "The stored identity and the request-time value share one name. backend/src/modules/principals/ is backend/src/modules/actors/ (principalsTable -> actorsTable, principalKinds -> actorKinds, insertPrincipals -> insertActors, deleteDanglingPrincipals -> deleteDanglingActors), PrincipalId -> ActorId, api_keys.principal_id -> actor_id with its index and the *_principals_id_fkey constraints renamed in migration 20260923100637_principal_to_actor, access-token claim principal_kind -> actor_kind, rate-limit identifier principalId -> actorId, findApiKeysByPrincipal -> findApiKeysByActor, principalQuotaKeys -> machineQuotaKeys. The engine access field userId -> actorId on Access, PredicateActor, EngineAccess, ConditionActor and PermissionCheckOptions (manual: userId also names the membership column; pnpm check lists every literal). Docs and comments say actor; infra/ keeps principal for Scaleway IAM. The ApiKey wire shape carries actorId, which no client reads, so clientCacheVersion does not bump."
+  },
+   {
+   "id": "20260923T2319-session-revocation",
+   "version": "next",
+   "title": "Sessions are revoked, not deleted",
+   "kind": "manual",
+   "syncBreaking": true,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    "backend/src",
+    "backend/tests",
+    "frontend/src",
+    "locales"
+   ],
+   "requires": [
+    "pnpm generate",
+    "pnpm sdk",
+    "pnpm check"
+   ],
+   "summary": "A session ends the way an API key does: sessions gains revokedAt, revokedBy (actor; null for the server's housekeeping) and revocationReason (sign_out, other_session, mfa_enabled, session_cap, replaced), and the row stays until the nightly sweep, so the sessions list shows revoked and expired sessions of the last 30 days. revokeSessions (auth-queries.ts) replaces deleteSession and deleteSessionsByIds; validateSession answers 401 session_revoked; the route deleteMySessions is revokeMySessions and returns the revoked rows; the auth event session.deleted is session.revoked. Locale keys terminate, terminate_all, success.session_terminated and success.sessions_terminated are removed in favour of revoke, revoke_all and success.revoke_resource; revocation_reason.*, revoked, expired and session_history are added. Three nullable columns (migration 20260923232124_session_revocation); no clientCacheVersion bump. Passkeys and TOTP say delete everywhere (mail types passkey-deleted / totp-deleted, locale keys delete_mfa_last, passkey_delete_failed, totp_delete_failed; unlink, unlink_mfa_last, success.passkey_unlinked, success.totp_removed, passkey_unlink_failed, totp_remove_failed removed), and emails.lastVerifiedBy is lastVerifiedVia (markEmailVerified takes via) because every other *By column names an actor."
+  },
+  {
+   "id": "20260923T2343-infra-operator-keys",
+   "version": "next",
+   "title": "Operator API keys and privileged runs in the infra CLI",
+   "kind": "manual",
+   "syncBreaking": false,
+   "clientCacheBump": false,
+   "script": null,
+   "roots": [
+    ".github/workflows",
+    "infra"
+   ],
+   "requires": [],
+   "summary": "Keys are named after their Scaleway bearer: the Owner API key (SCW_OWNER_*, your own key as organization Owner; a durable one mints a 30-minute key per privileged run) and the admin application key (SCW_ADMIN_* in infra/.env.<mode>; setup writes it, Fetch admin application key does elsewhere). SCW_BOOTSTRAP_* and SCW_STATE_* are read for one release with rename warnings. Apply validates the key, previews and confirms once, and verifies live grants and database privileges afterwards. Stack locks are renewed leases released on Ctrl-C. A preflight names owed Applies in the deploy and in the infra-preflight job on release PRs. keychain: and op: references resolve when the env file loads. Synced files arrive migrated; operators update their infra/.env.<mode> once."
   }
  ]
 }

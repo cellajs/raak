@@ -50,7 +50,14 @@ export function rowReadDecisions(subscribers: readonly SubscriberAccess[], event
   const subject = rowReadSubject(event);
   if (!subject) return subscribers.map(() => false);
   try {
-    const results = checkAccessFanout(subscribers as SubscriberAccess[], 'read', subject, {
+    // Stream subscribers hold sessions: never a key or token mask.
+    const accesses = subscribers.map((subscriber) => ({
+      actorId: subscriber.userId,
+      isSystemAdmin: subscriber.isSystemAdmin,
+      memberships: subscriber.memberships,
+      scopes: null,
+    }));
+    const results = checkAccessFanout(accesses, 'read', subject, {
       onInvalidMembership: 'deny',
     });
     return results.map((result) => result.allowed);

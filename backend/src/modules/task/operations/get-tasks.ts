@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import type { AuthContext } from '#/core/context';
+import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { getTasks } from '#/modules/task/helpers/get-tasks';
@@ -10,10 +10,7 @@ import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 
 type GetTasksInput = z.infer<typeof taskListQuerySchema>;
 
-export async function getTasksOp(
-  ctx: AuthContext,
-  input: GetTasksInput,
-): Promise<Awaited<ReturnType<typeof getTasks>>> {
+export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise<Awaited<ReturnType<typeof getTasks>>> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const organizationId = ctx.var.organization.id;
 
@@ -33,7 +30,7 @@ export async function getTasksOp(
 
   // Scope to the caller's readable projects; undefined means org-wide (all readable projects).
   const { homeChannelIds: projectIds } = resolveCollectionReadFilter(
-    ctx.var.memberships,
+    ctx.var.actor.bindings,
     'task',
     organizationId,
     actorFrom(ctx),

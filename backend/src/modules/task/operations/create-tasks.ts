@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import type { AuthContext } from '#/core/context';
+import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
@@ -20,7 +20,7 @@ type CreateTasksInput = z.infer<typeof taskCreateManyStxBodySchema>;
 type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
 
 export async function createTasksOp(
-  ctx: AuthContext,
+  ctx: OrgContext,
   rawInput: CreateTasksInput,
 ): Promise<{ data: ReturnTask[]; rejectedIds: string[] }> {
   // Lens seam: canonicalize old-shape field names before any body access
@@ -91,7 +91,7 @@ export async function createTasksOp(
         tenantId: organization.tenantId,
         organizationId: organization.id,
         createdAt: getIsoDate(),
-        createdBy: ctx.var.user.id,
+        createdBy: ctx.var.actor.id,
         stx: buildStx(stx),
       };
 

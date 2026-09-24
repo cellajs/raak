@@ -11,14 +11,16 @@ import { booleanTransformSchema, validUuidSchema } from '#/schemas';
 import { channelBaseSchema } from '#/schemas/entity-base';
 import { mockMeAuthResponse, mockMeResponse, mockUploadTokenResponse } from './me-mocks';
 
-export const sessionSchema = createSelectSchema(sessionsTable)
-  .omit({ secret: true })
-  .extend({
-    isCurrent: z.boolean(),
-    isNewDevice: z
-      .boolean()
-      .openapi({ description: 'The browser was first seen recently and is not the first one known.' }),
-  });
+/** A session row as stored, secret omitted: what a revoke returns. */
+export const sessionBaseSchema = createSelectSchema(sessionsTable);
+
+/** A session as the account page lists it. */
+export const sessionSchema = sessionBaseSchema.extend({
+  isCurrent: z.boolean(),
+  isNewDevice: z
+    .boolean()
+    .openapi({ description: 'The browser was first seen recently and is not the first one known.' }),
+});
 
 export const meSchema = z
   .object({
@@ -84,3 +86,21 @@ export const mePendingInvitationSchema = z.object({
   entity: channelBaseSchema,
   inactiveMembership: inactiveMembershipSchema,
 });
+
+/** A consent the user gave to an OAuth client, as the account page lists it. */
+export const connectedAppSchema = z
+  .object({
+    id: z.string(),
+    clientId: z.string(),
+    clientName: z.string(),
+    scopes: z.array(z.string()),
+    resources: z.array(z.string()),
+    createdAt: z.string(),
+    expiresAt: z.string().nullable(),
+  })
+  .openapi('ConnectedApp', {
+    description: 'An OAuth consent (grant) of the current user.',
+    'x-tags': schemaTags('data', 'me', 'cella'),
+  });
+
+export type ConnectedApp = z.infer<typeof connectedAppSchema>;

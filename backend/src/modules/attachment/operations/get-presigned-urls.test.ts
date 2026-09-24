@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AuthContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 
 // Boundaries mocked: the RLS transaction passes through; DB query, signer and permission are stubbed.
 vi.mock('#/db/tenant-context', () => ({
-  tenantRead: (ctx: AuthContext, fn: (c: AuthContext) => unknown) => fn(ctx),
+  tenantRead: (ctx: UserContext, fn: (c: UserContext) => unknown) => fn(ctx),
 }));
 const findAttachmentsByIds = vi.fn();
 vi.mock('#/modules/attachment/attachment-queries', () => ({
@@ -15,7 +15,7 @@ vi.mock('#/modules/attachment/helpers/signed-url', () => ({
 }));
 const checkAccessBatch = vi.fn();
 vi.mock('#/permissions', () => ({ checkAccessBatch: (...args: unknown[]) => checkAccessBatch(...args) }));
-vi.mock('#/permissions/access', () => ({ accessFrom: () => ({ userId: 'user-1', memberships: [] }) }));
+vi.mock('#/permissions/access', () => ({ accessFrom: () => ({ actorId: 'user-1', memberships: [] }) }));
 const buildSubjectFromEntity = vi.fn();
 vi.mock('#/permissions/build-subject', () => ({
   buildSubjectFromEntity: (...args: unknown[]) => buildSubjectFromEntity(...args),
@@ -23,7 +23,7 @@ vi.mock('#/permissions/build-subject', () => ({
 
 const { getPresignedUrlsOp } = await import('./get-presigned-urls');
 
-const ctx = { var: { memberships: [] } } as unknown as AuthContext;
+const ctx = { var: { memberships: [] } } as unknown as UserContext;
 
 const attachmentA = {
   id: 'att-a',
@@ -96,7 +96,7 @@ describe('getPresignedUrlsOp: fail-closed batch signing', () => {
     await getPresignedUrlsOp(ctx, { items: [{ attachmentId: 'att-a', variant: 'original' }] });
 
     expect(buildSubjectFromEntity).toHaveBeenCalledWith('attachment', attachmentA);
-    expect(checkAccessBatch).toHaveBeenCalledWith({ userId: 'user-1', memberships: [] }, 'read', [{ id: 'att-a' }]);
+    expect(checkAccessBatch).toHaveBeenCalledWith({ actorId: 'user-1', memberships: [] }, 'read', [{ id: 'att-a' }]);
   });
 
   it('falls back to the original key when the requested variant is missing', async () => {
