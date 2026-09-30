@@ -15,6 +15,7 @@ import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
+import { assertBlockMediaUrls } from '#/utils/validate-block-urls';
 
 type CreateTasksInput = z.infer<typeof taskCreateManyStxBodySchema>;
 type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
@@ -66,6 +67,7 @@ export async function createTasksOp(
       // Derived attachments are UUID-shape-checked only: attachment rows created in the
       // same client batch may not be committed yet, so existence is not enforced here.
       const descriptionText = String(taskInfo.description ?? '');
+      if (descriptionText) assertBlockMediaUrls(descriptionText, organization.id, 'task', 'description');
       const derived = await deriveDescriptionProps(descriptionText);
 
       const projectPrimaries = primariesByProject.get(taskInfo.projectId) ?? [];

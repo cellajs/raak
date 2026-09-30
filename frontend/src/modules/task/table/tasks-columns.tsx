@@ -4,7 +4,6 @@ import { createContext, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project } from 'sdk';
 import { zUserMinimalBase } from 'sdk/zod.gen';
-import { BlockNoteMinimalHtml } from '~/modules/common/blocknote/minimal-html';
 import type { RenderCellProps } from '~/modules/common/data-grid';
 import { estimateWrappedLines, SelectColumn } from '~/modules/common/data-grid';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
@@ -14,6 +13,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
+import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
@@ -72,7 +72,7 @@ function SummaryCell({
     >
       <div className="whitespace-pre-wrap py-1 leading-5">
         {row.summary ? (
-          <BlockNoteMinimalHtml html={row.summary} className="pointer-events-none" />
+          <TaskSummaryHtml html={row.summary} className="pointer-events-none" />
         ) : (
           <span className="text-muted">-</span>
         )}

@@ -70,7 +70,7 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
 
   // Invalidate membership cache so subsequent requests see the new membership
-  invalidateCache.user(user.id);
+  await invalidateCache.user(db, user.id);
 
   const counts = buildZeroCounts('workspace');
   const membershipByWsId = new Map(createdMemberships.map((m) => [m.workspaceId, m]));

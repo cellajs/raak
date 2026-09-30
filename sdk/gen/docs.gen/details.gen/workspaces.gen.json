@@ -417,7 +417,7 @@
             "itemType": "string"
           }
         },
-        "required": false,
+        "required": true,
         "contentType": "application/json"
       }
     }
@@ -1387,7 +1387,7 @@
             "maxLength": 255
           }
         },
-        "required": false,
+        "required": true,
         "contentType": "application/json"
       }
     }

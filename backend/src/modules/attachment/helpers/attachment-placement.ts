@@ -11,16 +11,18 @@ import {
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import type { DB } from '#/db/db';
-import { tenantRead } from '#/db/tenant-context';
 import type { attachmentsTable } from '#/modules/attachment/attachment-db';
+// fork: seed batches home at raak's projects
 import { projectsTable } from '#/modules/project/project-db';
-import { findProjectById } from '#/modules/task/task-queries';
-import { getValidChannel } from '#/permissions/get-valid-channel';
+import { resolveChannelInScope } from '#/permissions/get-valid-channel';
 import { validUuidSchema } from '#/schemas';
 
 const nullableAncestors = new Set<string>(hierarchy.getNullableAncestors('attachment'));
 /** Sub-organization ancestors an attachment can home at, deepest first; none in cella. */
-const placementAncestors = hierarchy.getOrderedAncestors('attachment').filter((type) => type !== 'organization');
+// Compared as string so cella's organization-only chain does not infer a `never[]` predicate.
+const placementAncestors = hierarchy
+  .getOrderedAncestors('attachment')
+  .filter((type) => (type as string) !== 'organization');
 const placementKey = (type: string) => appConfig.entityIdColumnKeys[type as ChannelEntityType];
 
 /**
@@ -68,9 +70,9 @@ export const validateAttachmentPlacement = (
 };
 
 /**
- * Ancestor columns for one create-body item: the deepest provided id, resolved to a readable
- * channel row, plus that row's own ancestor ids; never client input above the home. No id means
- * org-homed, which the fields schema only allows when no strict ancestor exists.
+ * Ancestor columns for one create-body item: the deepest provided id, resolved to a channel row in
+ * the request scope, plus that row's own ancestor ids; never client input above the home. No id
+ * means org-homed, which the fields schema only allows when no strict ancestor exists.
  */
 export const resolveAttachmentPlacement = async (
   ctx: OrgContext,
@@ -82,7 +84,9 @@ export const resolveAttachmentPlacement = async (
   const home = providedHome(input)[0];
   if (!home) return columns as ResolvedAttachmentPlacement;
 
-  const { entity } = await getValidChannel(ctx, input[placementKey(home)] as string, home, 'read');
+  // Placement resolves where the row lives; `canCreateEntity` on the placed row decides whether the
+  // actor may create there. No separate read check on the home, so no scope beyond `attachment:write`.
+  const entity = await resolveChannelInScope(ctx, input[placementKey(home)] as string, home);
   const row = entity as Record<string, unknown>;
   columns[placementKey(home)] = entity.id;
   for (const ancestor of hierarchy.getOrderedAncestors(home)) {
@@ -106,19 +110,24 @@ export const attachmentHomeColumnKey = appConfig.entityIdColumnKeys[
 ] as keyof typeof attachmentsTable.$inferSelect;
 
 /**
- * Home channel a list or delta read narrows to, from the `channelId` query param; undefined (or
- * the organization itself) reads org-wide. raak checks project existence only (404), unlike
- * cella's read-access default: a non-member's list narrows to the rows the row-conditional policy
- * grants (own rows) through the collection read filter, not to a 403.
+ * Home channel a list or delta read narrows to, from the `channelId` query param; undefined reads
+ * org-wide. The organization itself (or no id) is org-wide; any other id must be a channel of the
+ * home type inside the request scope. With the organization as home there is no narrower channel, so
+ * other ids are unknown.
  */
 export const resolveAttachmentHomeScope = async (
   ctx: OrgContext,
   channelId: string | undefined,
 ): Promise<string | undefined> => {
   if (!channelId || channelId === ctx.var.organization.id) return undefined;
-  const project = await tenantRead(ctx, (readCtx) => findProjectById(readCtx, { projectId: channelId }));
-  if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-  return project.id;
+  // Compared as string so cella's organization-only hierarchy does not narrow `homeChannelType` to never.
+  if ((homeChannelType as string) === 'organization') {
+    throw new AppError(404, 'not_found', 'warn', { entityType: 'organization' });
+  }
+  // Existence and scope only: the collection read filter narrows the list to the rows the caller's
+  // grants allow, so a home the caller cannot read yields an empty page, never a 403.
+  const entity = await resolveChannelInScope(ctx, channelId, homeChannelType);
+  return entity.id;
 };
 
 /** One seed batch: the organization it belongs to and the ancestor columns its rows carry. */
@@ -128,6 +137,7 @@ export interface AttachmentSeedPlacement {
   placement: ResolvedAttachmentPlacement;
 }
 
+// fork: raak seeds one batch per project, mirroring the project's publicity onto its attachments
 /** One batch per seeded project, mirroring the project's publicity onto its attachments. */
 export const seedAttachmentPlacements = async (
   db: DB,

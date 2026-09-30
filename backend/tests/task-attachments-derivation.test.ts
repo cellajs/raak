@@ -12,7 +12,7 @@ import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
-import { mockFetchRequest, setTestConfig } from './test-utils';
+import { setTestConfig } from './test-utils';
 
 // Direct table seeding and inspection run as admin: tasks and attachments are RLS-subject and the runtime role sees them only inside a tenant transaction.
 const db = getSeedDb();
@@ -49,7 +49,6 @@ describe('Task attachments derivation (owned embedding host array)', async () =>
   let tenant: TestTenant;
 
   beforeAll(async () => {
-    mockFetchRequest();
     tenant = await createTestTenant(call, 'task-attachments-derivation');
 
     await db.insert(projectsTable).values({
@@ -91,21 +90,21 @@ describe('Task attachments derivation (owned embedding host array)', async () =>
         id: attachmentIds.referenced,
         name: 'referenced',
         filename: 'ref.png',
-        keys: { original: `${projectId}/ref.png` },
+        keys: { original: `${tenant.organization.id}/uploads/ref.png` },
       },
       {
         ...baseAttachment,
         id: attachmentIds.keyReferenced,
         name: 'key referenced',
         filename: 'key.png',
-        keys: { original: `${projectId}/key.png` },
+        keys: { original: `${tenant.organization.id}/uploads/key.png` },
       },
       {
         ...baseAttachment,
         id: attachmentIds.unreferenced,
         name: 'unreferenced',
         filename: 'un.png',
-        keys: { original: `${projectId}/un.png` },
+        keys: { original: `${tenant.organization.id}/uploads/un.png` },
       },
     ]);
   });
@@ -129,7 +128,7 @@ describe('Task attachments derivation (owned embedding host array)', async () =>
       // Private-mode block: url and attachmentId both hold the attachment id
       mediaBlock('image', attachmentIds.referenced, attachmentIds.referenced),
       // Public-mode block: url holds the storage key, attachmentId the entity id
-      mediaBlock('file', `${projectId}/key.png`, attachmentIds.keyReferenced),
+      mediaBlock('file', `${tenant.organization.id}/uploads/key.png`, attachmentIds.keyReferenced),
       // Doctored block: UUID-shaped attachmentId without a row must be filtered out
       mediaBlock('image', unknownId, unknownId),
     ]);

@@ -12,7 +12,7 @@ import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
-import { mockFetchRequest, setTestConfig } from './test-utils';
+import { setTestConfig } from './test-utils';
 
 // Direct table seeding and inspection run as admin: tasks are RLS-subject and the runtime role sees them only inside a tenant transaction.
 const db = getSeedDb();
@@ -45,7 +45,6 @@ describe('Task mentions derivation (notification source)', async () => {
   let member: { id: string };
 
   beforeAll(async () => {
-    mockFetchRequest();
     tenant = await createTestTenant(call, 'task-mentions-derivation');
     member = await createOrgUser(call, tenant.tenantId, tenant.organization.id, 'task-mentions-member');
 

@@ -126,6 +126,7 @@ const workspaceRoutes = {
     request: {
       params: idInTenantOrgParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: workspaceUpdateBodySchema,
@@ -158,6 +159,7 @@ const workspaceRoutes = {
     request: {
       params: tenantOrgParamSchema,
       body: {
+        required: true,
         content: { 'application/json': { schema: idsBodySchema() } },
       },
     },

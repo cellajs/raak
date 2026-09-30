@@ -127,7 +127,7 @@ export async function setCurrentUserProjectMembershipWorkspace(
     role,
   });
 
-  invalidateCache.user(updatedMembership.userId);
+  await invalidateCache.user(ctx.var.db, updatedMembership.userId);
 
   return updatedMembership;
 }
@@ -165,7 +165,7 @@ async function createCurrentUserProjectMembershipInWorkspace(
     },
   });
 
-  invalidateCache.user(membership.userId);
+  await invalidateCache.user(ctx.var.db, membership.userId);
 
   return membership;
 }

@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm';
-import type { TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
+// fork: SDK create item type for attachmentBody
+import type { CreateAttachmentsData } from 'sdk';
+import { appConfig, hierarchy } from 'shared';
+import { buildTestEntityHierarchyPlan, type TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
+import { generateId } from 'shared/utils/entity-id';
+import { nanoid } from 'shared/utils/nanoid';
+import { getAdminDb } from '#/db/db';
+import { attachmentsTable } from '#/modules/attachment/attachment-db';
 
 const quoteIdent = (identifier: string) => `"${identifier.replaceAll('"', '""')}"`;
 
@@ -40,3 +47,56 @@ export async function cleanupEntityHierarchy(db: ExecutableDb, ...plans: TestEnt
     await db.execute(sql`DELETE FROM ${sql.raw(quoteIdent(row.tableName))} WHERE id = ${row.id}`);
   }
 }
+
+/**
+ * Seeds, on the admin connection, the channels between an organization and where its attachments live, and returns
+ * the plan: none in the template, whose attachments live in the organization itself.
+ */
+export async function seedAttachmentHome(org: { id: string; tenantId: string }, createdBy: string) {
+  const plan = buildTestEntityHierarchyPlan({
+    entityType: 'attachment',
+    organizationId: org.id,
+    makeChannelId: () => generateId(),
+  });
+  const slugPrefix = `home-${nanoid(6)}`;
+  await seedEntityHierarchy(getAdminDb('test setup'), plan, { tenantId: org.tenantId, createdBy, slugPrefix });
+  return plan;
+}
+
+/** The id column a create body names its home by: the deepest channel the plan seeded, none when that is the organization. */
+export function homeColumns(plan: TestEntityHierarchyPlan): Record<string, string> {
+  const home = hierarchy
+    .getOrderedAncestors(plan.entityType)
+    .find((type) => type !== 'organization' && plan.channelIdColumns[appConfig.entityIdColumnKeys[type]]);
+  if (!home) return {};
+  const key = appConfig.entityIdColumnKeys[home];
+  return { [key]: plan.channelIdColumns[key] };
+}
+
+/**
+ * A create body for one attachment in the plan's home, its file under the organization's upload prefix; `fields` add or
+ * replace body fields.
+ */
+// fork: typed as the SDK create item, since the spread home columns hide raak's required `projectId` from the checker
+export const attachmentBody = (
+  id: string,
+  plan: TestEntityHierarchyPlan,
+  fields: Record<string, unknown> = {},
+): CreateAttachmentsData['body'][number] =>
+  ({
+    id,
+    filename: 'file.pdf',
+    contentType: 'application/pdf',
+    size: '1024',
+    keys: { original: `${plan.channelIdsByType.organization}/uploads/${id}.pdf` },
+    ...homeColumns(plan),
+    stx: { mutationId: id, sourceId: 'test', fieldTimestamps: {} },
+    ...fields,
+  }) as CreateAttachmentsData['body'][number];
+
+/** Inserts an attachment row `buildInsertableProduct` built, on the admin connection. */
+export const insertAttachmentRow = (row: Record<string, unknown>) =>
+  // buildInsertableProduct returns a config-derived Record, so the insert type needs a cast.
+  getAdminDb('test setup')
+    .insert(attachmentsTable)
+    .values(row as typeof attachmentsTable.$inferInsert);

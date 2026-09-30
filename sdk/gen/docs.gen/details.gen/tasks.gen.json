@@ -2478,7 +2478,7 @@
             }
           }
         },
-        "required": false,
+        "required": true,
         "contentType": "application/json"
       }
     }
@@ -3249,7 +3249,7 @@
             "ref": "#/components/schemas/StxBase"
           }
         },
-        "required": false,
+        "required": true,
         "contentType": "application/json"
       }
     }

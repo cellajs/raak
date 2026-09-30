@@ -149,6 +149,7 @@ const taskRoutes = {
       params: idInTenantOrgParamSchema,
       query: fullResponseQuerySchema,
       body: {
+        required: true,
         content: { 'application/json': { schema: taskUpdateStxBodySchema } },
       },
     },
@@ -171,7 +172,7 @@ const taskRoutes = {
     description: 'Deletes one or more tasks by ID.',
     request: {
       params: tenantOrgParamSchema,
-      body: { content: { 'application/json': { schema: idsWithStxBodySchema(100) } } },
+      body: { required: true, content: { 'application/json': { schema: idsWithStxBodySchema(100) } } },
     },
     responses: {
       200: {

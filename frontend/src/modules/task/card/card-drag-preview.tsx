@@ -1,6 +1,6 @@
-import { BlockNoteMinimalHtml } from '~/modules/common/blocknote/minimal-html';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { TaskCardFooter } from '~/modules/task/card/card-footer';
+import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
 import { taskCardVariants } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
@@ -22,7 +22,7 @@ export function TaskCardDragPreview({ task }: { task: Task }) {
             <PrimaryLabelIcon label={task.primaryLabel} />
           </div>
 
-          <BlockNoteMinimalHtml html={task.summary} className="m-1 inline leading-none opacity-80" />
+          <TaskSummaryHtml html={task.summary} className="m-1 inline leading-none opacity-80" />
         </div>
         <TaskCardFooter task={task} isSheet={false} isSelected={false} />
       </CardContent>

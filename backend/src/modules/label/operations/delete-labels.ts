@@ -1,5 +1,6 @@
 import type { UserContext } from '#/core/context';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
+import { dispatchMutation } from '#/lib/mutation-bus';
 import { filterPrimaryLabelDeletes, reassignTasksFromDeletedPrimaries } from '#/modules/label/helpers/primary-labels';
 import { deleteCountersByKeys, deleteLabelsByIds } from '#/modules/label/label-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
@@ -14,7 +15,9 @@ export async function deleteLabelsOp(ctx: UserContext, ids: string[]): Promise<{
   await tenantContextIncludingDeleted(ctx, async (txCtx) => {
     const { allowedIds, deletedPrimaryIds } = await filterPrimaryLabelDeletes(txCtx, permittedIds, rejected);
 
-    await deleteLabelsByIds(txCtx, { ids: allowedIds, deletedAt, deletedBy });
+    const deleted = await deleteLabelsByIds(txCtx, { ids: allowedIds, deletedAt, deletedBy });
+    // Inside the transaction: the collaborative documents of epic descriptions go with them.
+    await dispatchMutation(txCtx, 'label.deleted', { before: deleted });
 
     // Tasks reference exactly one primary label (NOT NULL), so reassignment happens in-transaction
     await reassignTasksFromDeletedPrimaries(txCtx, { deletedPrimaryIds, updatedBy: deletedBy });

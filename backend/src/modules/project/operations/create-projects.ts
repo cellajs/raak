@@ -103,7 +103,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
 
   // Invalidate membership cache so subsequent requests see the new membership
-  invalidateCache.user(user.id);
+  await invalidateCache.user(db, user.id);
 
   // Build counts for response
   const counts = buildZeroCounts('project');

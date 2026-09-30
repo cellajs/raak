@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UserContext } from '#/core/context';
 import { resolveEntity } from '#/modules/entities/entities-queries';
 import { checkAccess } from '#/permissions';
-import { getValidChannel } from '#/permissions/get-valid-channel';
+import { getValidChannel, resolveChannelInScope } from '#/permissions/get-valid-channel';
 
 vi.mock('#/modules/entities/entities-queries', () => ({ resolveEntity: vi.fn() }));
 vi.mock('#/permissions', () => ({ checkAccess: vi.fn() }));
@@ -61,12 +61,45 @@ describe('getValidChannel request scope', () => {
     ).rejects.toMatchObject({ status: 404, type: 'not_found' });
   });
 
-  it('returns 403 when the channel is in scope but the engine denies the action', async () => {
+  it('reads a channel the engine denies `read` on as 404, whatever the action asked', async () => {
     vi.mocked(resolveEntity).mockResolvedValue(organization as never);
     vi.mocked(checkAccess).mockReturnValue({ allowed: false, membership: null } as ReturnType<typeof checkAccess>);
+    for (const action of ['read', 'update'] as const) {
+      await expect(getValidChannel(ctx({ tenantId: TENANT }), ORG, 'organization', action)).rejects.toMatchObject({
+        status: 404,
+        type: 'not_found',
+      });
+    }
+  });
+
+  it('returns 403 when the caller reads the channel but the engine denies the action', async () => {
+    vi.mocked(resolveEntity).mockResolvedValue(organization as never);
+    vi.mocked(checkAccess).mockImplementation(
+      (_access, action) => ({ allowed: action === 'read', membership: null }) as ReturnType<typeof checkAccess>,
+    );
     await expect(getValidChannel(ctx({ tenantId: TENANT }), ORG, 'organization', 'update')).rejects.toMatchObject({
       status: 403,
       type: 'forbidden',
+      meta: { action: 'update' },
+    });
+  });
+
+  it('resolveChannelInScope returns the row in scope without consulting the engine', async () => {
+    vi.mocked(resolveEntity).mockResolvedValue(organization as never);
+    await expect(resolveChannelInScope(ctx({ tenantId: TENANT }), ORG, 'organization')).resolves.toEqual(organization);
+    expect(checkAccess).not.toHaveBeenCalled();
+  });
+
+  it('resolveChannelInScope reads a missing and a foreign-tenant row as the same 404', async () => {
+    vi.mocked(resolveEntity).mockResolvedValue(undefined as never);
+    await expect(resolveChannelInScope(ctx({ tenantId: TENANT }), ORG, 'organization')).rejects.toMatchObject({
+      status: 404,
+      type: 'not_found',
+    });
+    vi.mocked(resolveEntity).mockResolvedValue({ ...organization, tenantId: 'tenant-b' } as never);
+    await expect(resolveChannelInScope(ctx({ tenantId: TENANT }), ORG, 'organization')).rejects.toMatchObject({
+      status: 404,
+      type: 'not_found',
     });
   });
 });
