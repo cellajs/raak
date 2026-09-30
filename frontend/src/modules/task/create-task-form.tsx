@@ -69,7 +69,9 @@ function CreateTaskForm({
 
   const isMobile = useBreakpointBelow('sm');
   const setForm = useDraftStore((state) => state.setForm);
-  const focusedTaskId = useTaskInteractionStore((s) => s.focusedTaskId);
+
+  const formId = `create-task-${projectId}`;
+  const isFocused = useTaskInteractionStore((s) => s.focusedTaskId === formId);
 
   const [defaultId] = useState(generateId());
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -81,9 +83,6 @@ function CreateTaskForm({
   const { attachmentsCreationCallback } = useUploadAttachments();
 
   const taskMutation = useTaskCreateMutation(tenantId, organizationId);
-
-  const formId = `create-task-${projectId}`;
-  const isFocused = focusedTaskId === formId;
 
   const formOptions: UseFormProps<NewTaskFormValues> = useMemo(
     () => ({

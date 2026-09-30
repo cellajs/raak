@@ -1,6 +1,5 @@
 import { useSearch } from '@tanstack/react-router';
 import type { Project } from 'sdk';
-import { useShallow } from 'zustand/react/shallow';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
@@ -11,7 +10,7 @@ import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modu
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { cachedTasks, currentActiveTask } from '~/modules/task/helpers/active-task';
-import { prepareBoardPanels, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
+import { pickViewSections, prepareBoardPanels, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
 import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
@@ -32,7 +31,6 @@ type StrictBoardPanel = ProjectResizablePanel;
 
 /** Registers keyboard navigation and actions for task views. */
 export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
-  const boardPanelData = useTaskBoardStore(useShallow((state) => state.panelData[boardId]));
   const { tenantId, organization } = useOrganizationLayoutContext();
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(tenantId, organization.id);
@@ -67,7 +65,8 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   // Resolve the focused task and its panel's rendered task list (shared by vertical nav handlers).
   const resolveVerticalNavContext = () => {
     if (!projects.length) return null;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, boardPanelData);
+    const boardPanelData = useTaskBoardStore.getState().panelData[boardId];
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, pickViewSections(boardPanelData));
     const currentTask = currentActiveTask();
     if (!currentTask) return null;
 
@@ -137,7 +136,8 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   // Left/Right focuses the first visible task in the target panel.
   const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
     if (!projects.length) return;
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, boardPanelData);
+    const boardPanelData = useTaskBoardStore.getState().panelData[boardId];
+    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, pickViewSections(boardPanelData));
     const currentTask = currentActiveTask();
 
     const currentPanelIndex = allPanels.findIndex(

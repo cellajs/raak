@@ -5,6 +5,7 @@ import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
 import { nanoid } from 'shared/utils/nanoid';
+import { useShallow } from 'zustand/react/shallow';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import type { TKey } from '~/lib/i18n-locales';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
@@ -19,7 +20,12 @@ import { buildBoardExtraPanels, sortPanelsByOrder } from '~/modules/task/board/b
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { BoardSearch } from '~/modules/task/board-search';
-import { formatSectionLabel, normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
+import {
+  formatSectionLabel,
+  normalizePanelWidths,
+  pickViewSections,
+  prepareBoardPanels,
+} from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
 import type { BoardResizablePanel } from '~/modules/task/types';
@@ -60,7 +66,7 @@ export function BoardSkeleton({
   const isMobile = useBreakpointBelow('sm');
 
   const isInWorkspace = !!matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
-  const panelStateMap = useTaskBoardStore((state) => state.panelData[boardId]);
+  const viewSections = useTaskBoardStore(useShallow((state) => pickViewSections(state.panelData[boardId])));
   const panelCollapseState = useBoardStore((state) => state.panelCollapseState);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
@@ -72,8 +78,8 @@ export function BoardSkeleton({
 
   const panels: SkeletonColumn[] = useMemo(() => {
     if (isMobile) return [{ kind: 'mobile', panelId: 'mobilePanel' }];
-    return sortPanelsByOrder([...prepareBoardPanels(projects, panelStateMap), ...extraPanels], localOrders);
-  }, [isMobile, projects, panelStateMap, extraPanels, localOrders]);
+    return sortPanelsByOrder([...prepareBoardPanels(projects, viewSections), ...extraPanels], localOrders);
+  }, [isMobile, projects, viewSections, extraPanels, localOrders]);
 
   const minContainerWidth = useMemo(() => {
     if (!panels.length) return 0;
