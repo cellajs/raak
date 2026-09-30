@@ -93,11 +93,24 @@ export const sortByMembership = (projects: EnrichedProject[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
 
-export const prepareBoardPanels = (projects: EnrichedProject[], boardPanelData: BoardPanelData | undefined) => {
+/** projectId → split sections of one board; unsplit projects are absent. */
+export type BoardViewSections = Record<string, SectionsValue[]>;
+
+/** Narrows a board's panel data to its split sections, the only part the panel layout depends on. */
+export const pickViewSections = (board: BoardPanelData | undefined): BoardViewSections => {
+  const sections: BoardViewSections = {};
+  if (!board) return sections;
+  for (const [projectId, { viewSections }] of Object.entries(board)) {
+    if (viewSections) sections[projectId] = viewSections;
+  }
+  return sections;
+};
+
+export const prepareBoardPanels = (projects: EnrichedProject[], viewSectionsByProject: BoardViewSections) => {
   const sortedProjects = sortByMembership(projects);
 
   return sortedProjects.flatMap((project): ProjectResizablePanel[] => {
-    const viewSections = boardPanelData?.[project.id]?.viewSections;
+    const viewSections = viewSectionsByProject[project.id];
     // If the project has no splits, use a default single panel
     if (!viewSections?.length) return [{ kind: 'project', project, panelId: project.id }];
 

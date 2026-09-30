@@ -7,7 +7,7 @@ import { EXPLAINER_PANEL_ID } from '~/modules/common/board/explainer-panel';
 import { LABELS_PANEL_ID } from '~/modules/label/types';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { normalizePanelWidths, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
+import { normalizePanelWidths, pickViewSections, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardResizablePanel } from '~/modules/task/types';
 
 /** Default anchors for panels the server doesn't own: the explainer leads the board, the
@@ -143,16 +143,17 @@ export function computePanelReorder(
 
 /** Shared board panel setup: panels, layout, and resize handler. */
 export function useBoardPanels(boardId: string, projects: EnrichedProject[], extraPanels?: BoardResizablePanel[]) {
-  const panelInfo = useTaskBoardStore(useShallow((state) => state.panelData[boardId]));
+  // Projected past prefs so an iced/accepted expand toggle doesn't rebuild every panel.
+  const viewSections = useTaskBoardStore(useShallow((state) => pickViewSections(state.panelData[boardId])));
   const storedBoardLayout = useBoardStore((state) => state.boardLayouts[boardId]);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
   const prunePanelOrders = useBoardStore((state) => state.prunePanelOrders);
   const updateBoardLayout = useBoardStore((state) => state.updateBoardLayout);
 
   const panels: BoardResizablePanel[] = useMemo(() => {
-    const all = [...prepareBoardPanels(projects, panelInfo), ...(extraPanels ?? [])];
+    const all = [...prepareBoardPanels(projects, viewSections), ...(extraPanels ?? [])];
     return sortPanelsByOrder(all, localOrders);
-  }, [projects, extraPanels, panelInfo, localOrders]);
+  }, [projects, extraPanels, viewSections, localOrders]);
 
   // Drop stale local orders once their panels disappear
   useEffect(() => {

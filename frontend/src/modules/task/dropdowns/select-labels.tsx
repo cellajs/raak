@@ -130,7 +130,8 @@ export function SelectLabels({
   const [searchValue, setSearchValue] = useState('');
   const [selectedCollapsed, setSelectedCollapsed] = useState(initialSelectedCollapsed ?? !isMobile);
 
-  const { trackUsage, getScore } = useLabelRecencyStore();
+  const trackUsage = useLabelRecencyStore((s) => s.trackUsage);
+  const getScore = useLabelRecencyStore((s) => s.getScore);
 
   const projectLabels = useMemo(() => labels.filter((l) => l.projectId === projectId), [labels, projectId]);
 
