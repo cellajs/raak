@@ -1,5 +1,4 @@
 import { sql } from 'drizzle-orm';
-// fork: SDK create item type for attachmentBody
 import type { CreateAttachmentsData } from 'sdk';
 import { appConfig, hierarchy } from 'shared';
 import { buildTestEntityHierarchyPlan, type TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
@@ -77,7 +76,6 @@ export function homeColumns(plan: TestEntityHierarchyPlan): Record<string, strin
  * A create body for one attachment in the plan's home, its file under the organization's upload prefix; `fields` add or
  * replace body fields.
  */
-// fork: typed as the SDK create item, since the spread home columns hide raak's required `projectId` from the checker
 export const attachmentBody = (
   id: string,
   plan: TestEntityHierarchyPlan,

@@ -72,6 +72,8 @@
     "20260923T2319-session-revocation",
     "20260923T2343-infra-operator-keys",
     "20260926T0700-jobs-pg-boss",
-    "20260927T0704-access-hardening"
+    "20260927T0704-access-hardening",
+    "20260930T0855-store-selectors-and-seams",
+    "20260930T1510-base-ui-toast"
   ]
 }

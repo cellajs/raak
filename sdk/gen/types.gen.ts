@@ -851,7 +851,7 @@ export type ServiceAccount = {
     channelType: 'organization' | 'workspace' | 'project';
     channelId: string;
     organizationId: string;
-    role: 'admin' | 'member';
+    role: 'admin' | 'member' | 'guest';
   }>;
   oauthClientId: string | null;
   createdBy: string | null;

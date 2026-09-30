@@ -3,7 +3,7 @@ import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/ad
 import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { getEdgeAndTargetOrder, isPanelData, isTaskData } from '~/modules/task/helpers/drag-and-drop';
@@ -191,7 +191,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
               return;
             }
           } catch (err) {
-            toast.error(t('error:reorder_resource', { resource: t('c:task') }));
+            toaster.error(t('error:reorder_resource', { resource: t('c:task') }));
           }
         },
       }),

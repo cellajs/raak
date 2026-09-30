@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi';
-import { type AccessScope, accessScopes, appConfig, type EntityRole, hierarchy } from 'shared';
+import { type AccessScope, accessScopes, appConfig, hierarchy, type OrganizationRole, roles } from 'shared';
 import { schemaTags } from '#/core/openapi-helpers';
 import { createSelectSchema } from '#/db/utils/drizzle-schema';
 import { apiKeysTable } from '#/modules/service-accounts/api-keys-db';
@@ -8,7 +8,7 @@ import { idInTenantOrgParamSchema, paginationQuerySchema, validIdSchema, validNa
 import { mockApiKeyResponse, mockCreatedApiKeyResponse, mockServiceAccountResponse } from './service-accounts-mocks';
 
 // `getRoles` returns a readonly array; a channel always has at least one role, which zod's enum needs to see.
-const organizationRoles = hierarchy.getRoles('organization') as [EntityRole, ...EntityRole[]];
+const organizationRoles = hierarchy.getRoles('organization') as [OrganizationRole, ...OrganizationRole[]];
 /** Derived from the policy matrix (non-empty by construction): the only values a key may be narrowed to. */
 // The template configuration always carries a policy, so the vocabulary is never empty where keys are issued.
 const scopeEnum = z.enum(accessScopes.all as [AccessScope, ...AccessScope[]]);
@@ -17,7 +17,8 @@ const roleBindingSchema = z.object({
   channelType: z.enum(appConfig.channelEntityTypes),
   channelId: validIdSchema,
   organizationId: validIdSchema,
-  role: z.enum(organizationRoles),
+  // fork: a binding carries its channel's role, and raak's channels declare roles the organization does not (`guest`)
+  role: z.enum(roles.all),
 });
 
 /** The route addresses one key of one account. */

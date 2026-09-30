@@ -51,6 +51,7 @@ export default defineConfig({
       // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.
       'backend/src/modules/attachment/helpers/attachment-placement.ts',
       'backend/src/modules.ts',
+      'backend/src/bundle-config.ts',
       'backend/src/db/product-tables.ts',
       'backend/src/schemas/app-schemas.ts',
       'bench/src/seeds/ids.ts',

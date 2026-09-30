@@ -20,7 +20,7 @@ export function ExplainerPanel() {
   const { t } = useTranslation();
 
   const { organization, tenantId } = useOrganizationLayoutContext();
-  const { setAlertSeen } = useAlertStore();
+  const setAlertSeen = useAlertStore((state) => state.setAlertSeen);
 
   const setAsSeen = () => setAlertSeen('welcome-text');
 

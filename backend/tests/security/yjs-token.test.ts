@@ -10,13 +10,12 @@ import { adminRole, defaultHeaders } from '../fixtures';
 import { createOrganizationAdminUser, createSystemAdminUser, createTestSession, expectRefusal } from '../helpers';
 import { createAppClient } from '../test-client';
 import { setTestConfig } from '../test-utils';
-// fork: member attachment policy helper
 import {
+  assumeMemberAttachmentPolicy,
   clearSecurityTestData,
   createOrgUser,
   createTestTenant,
   type TestTenant,
-  useMemberAttachmentPolicy,
 } from './helpers';
 import { paragraph, seedAttachment } from './yjs-helpers';
 
@@ -30,8 +29,7 @@ const TOKEN_TTL_MS = 5 * 60 * 1000;
  * organization-guarded and checks update on the row itself.
  */
 describe.skipIf(appConfig.services.yjs.enabled === false)('Yjs token security', async () => {
-  // fork: asserts the template's member attachment policy; a fork's own may be narrower
-  useMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
+  assumeMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
   const call = await createAppClient();
   let owner: TestTenant;
   let other: TestTenant;

@@ -11,7 +11,6 @@ import { getValidChannel } from '#/permissions';
 import { getValidProduct } from '#/permissions/get-valid-product';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
 import { getIsoDate } from '#/utils/iso-date';
-import { assertBlockMediaUrls } from '#/utils/validate-block-urls';
 
 type UpdateLabelInput = z.infer<typeof labelUpdateStxBodySchema>;
 
@@ -79,8 +78,8 @@ export async function updateLabelOp(
     if (resolved.changed && 'description' in resolved.values) {
       const description = resolved.values.description as string | null;
       if (description) {
-        // Media may reference only uploads of the label's own organization; keywords feed the shared board search
-        assertBlockMediaUrls(description, before.organizationId, 'label', 'description');
+        labelContract.assertBlockFields(resolved.values, before.organizationId);
+        // Keywords feed the shared board search
         values.keywords = extractKeywordsFromBlocks(description);
       } else {
         values.keywords = '';

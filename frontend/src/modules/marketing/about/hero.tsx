@@ -17,7 +17,7 @@ interface HeroProps {
 
 export function Hero({ title, text, children, chips }: HeroProps) {
   const { t } = useTranslation();
-  const { theme } = useUIStore();
+  const theme = useUIStore((state) => state.theme);
   const { ref, inView } = useInView({ once: true, threshold: 0.5 });
 
   // When a theme color is active, derive gradient from --primary CSS variable so any color in appConfig.theme.colors works automatically

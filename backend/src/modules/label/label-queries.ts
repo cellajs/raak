@@ -14,25 +14,6 @@ export const labelUsedCountKey = `e:c:${
   appConfig.productEmbeddings.find((e) => e.embeddedProduct === 'label')?.hostProduct ?? 'task'
 }`;
 
-interface FindLabelsByStxMutationIdOpts {
-  mutationId: string;
-}
-
-/** The acting actor's own rows written under `mutationId`, the idempotent replay of a create. */
-export const findLabelsByStxMutationId = async (ctx: ActorContext, { mutationId }: FindLabelsByStxMutationIdOpts) => {
-  const { db } = ctx.var;
-  return db
-    .select()
-    .from(labelsTable)
-    .where(
-      and(
-        sql`${labelsTable.stx}->>'mutationId' = ${mutationId}`,
-        eq(labelsTable.createdBy, ctx.var.actor.id),
-        requestScopeWhere(ctx, labelsTable, 'label'),
-      ),
-    );
-};
-
 /** Find all labels in an organization (used for duplicate/color matching). */
 export const findLabelsByOrg = async (ctx: ActorContext) => {
   const { db } = ctx.var;

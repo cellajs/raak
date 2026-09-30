@@ -5,8 +5,8 @@ import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
-import type { LabelModel } from '#/modules/label/label-db';
-import { findLabelsByOrg, findLabelsByStxMutationId, insertLabels } from '#/modules/label/label-queries';
+import { type LabelModel, labelsTable } from '#/modules/label/label-db';
+import { findLabelsByOrg, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
 import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
@@ -32,9 +32,7 @@ export async function createLabelsOp(
 
   // Idempotency check
   const batchStxId = input[0].stx.mutationId;
-  const existing = await checkIdempotency(batchStxId, () =>
-    tenantRead(ctx, (readCtx) => findLabelsByStxMutationId(readCtx, { mutationId: batchStxId })),
-  );
+  const existing = await checkIdempotency(ctx, labelsTable, batchStxId);
   if (existing) return { data: existing, rejectedIds: [] };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.

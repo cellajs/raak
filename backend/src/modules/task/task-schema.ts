@@ -84,6 +84,7 @@ export const taskContract = evolutionContract.product('task', {
     projectId: validUuidSchema,
     publicAt: z.string().nullable(),
   },
+  blockFields: ['description'],
 });
 
 /** Update body using fields pattern for single or multi-field updates with conflict detection */

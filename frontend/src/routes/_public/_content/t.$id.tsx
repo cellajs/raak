@@ -3,7 +3,7 @@ import i18n from 'i18next';
 import { resolveTaskLink } from 'sdk';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
-import { useToastStore } from '~/modules/common/toaster/toast-store';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { useUserStore } from '~/modules/user/user-store';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { getCachedMemberships } from '~/query/enrichment/helpers';
@@ -41,7 +41,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
       resolved = await resolveTaskLink({ path: { id } });
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
-        useToastStore.getState().showToast(i18n.t('error:not_found.text'), 'warning');
+        toaster.warning(i18n.t('error:not_found.text'));
       }
       throw err;
     }
@@ -94,7 +94,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
       }
 
       // No org access and not public, show error.
-      useToastStore.getState().showToast(i18n.t('error:forbidden.text'), 'warning');
+      toaster.warning(i18n.t('error:forbidden.text'));
       throw redirect({ to: appConfig.defaultRedirectPath, replace: true });
     }
 
