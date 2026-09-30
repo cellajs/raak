@@ -60,6 +60,9 @@ importers:
 
   backend:
     dependencies:
+      '@napi-rs/canvas':
+        specifier: ^1.0.9
+        version: 1.0.9
       '@opentelemetry/api':
         specifier: ^1.9.1
         version: 1.9.1
@@ -107,7 +110,7 @@ importers:
         version: 30.1.1
       oidc-provider:
         specifier: 9.12.2
-        version: 9.12.2
+        version: 9.12.2(supports-color@8.1.1)
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -122,7 +125,7 @@ importers:
         version: 13.1.3
       web-push:
         specifier: ^3.6.7
-        version: 3.6.7
+        version: 3.6.7(supports-color@8.1.1)
     devDependencies:
       '@asteasolutions/zod-to-openapi':
         specifier: ^9.1.0
@@ -154,9 +157,6 @@ importers:
       '@isaacs/ttlcache':
         specifier: ^2.1.5
         version: 2.1.5
-      '@napi-rs/canvas':
-        specifier: ^1.0.9
-        version: 1.0.9
       '@ngrok/ngrok':
         specifier: ^1.7.0
         version: 1.7.0
@@ -276,7 +276,7 @@ importers:
         version: 1.6.9
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -337,10 +337,10 @@ importers:
         version: 8.23.1
       artillery:
         specifier: ^2.0.34
-        version: 2.0.34(patch_hash=4a3a3ec7f9f0440ca256977f0c66e784c0f7d0be498ebbd7e22bceb54d2f7c4b)(@types/node@26.6.3)
+        version: 2.0.34(patch_hash=4a3a3ec7f9f0440ca256977f0c66e784c0f7d0be498ebbd7e22bceb54d2f7c4b)(@types/node@26.6.3)(supports-color@8.1.1)
       artillery-plugin-ensure:
         specifier: ^1.27.0
-        version: 1.27.0
+        version: 1.27.0(supports-color@8.1.1)
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -434,7 +434,7 @@ importers:
         version: link:../shared
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -849,7 +849,7 @@ importers:
         version: 3.2.2(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))
       vite-plugin-pwa:
         specifier: ^1.3.0
-        version: 1.3.0(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))(workbox-build@7.4.1(@types/babel__core@7.20.5))(workbox-window@7.4.1)
+        version: 1.3.0(supports-color@8.1.1)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))(workbox-build@7.4.1(@types/babel__core@7.20.5)(supports-color@8.1.1))(workbox-window@7.4.1)
       vite-plugin-static-copy:
         specifier: ^4.1.1
         version: 4.1.1(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -861,7 +861,7 @@ importers:
         version: 5.0.2(@opentelemetry/api@1.9.1)(@types/node@26.6.3)(@vitest/browser-playwright@5.0.2)(@vitest/coverage-v8@5.0.2)(@vitest/ui@5.0.2)(jsdom@30.1.1)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))
       workbox-build:
         specifier: ^7.4.1
-        version: 7.4.1(@types/babel__core@7.20.5)
+        version: 7.4.1(@types/babel__core@7.20.5)(supports-color@8.1.1)
       yaml:
         specifier: ^2.9.1
         version: 2.9.1
@@ -879,7 +879,7 @@ importers:
         version: 8.7.2(@types/node@26.6.3)
       '@pulumi/pulumi':
         specifier: ^3.265.0
-        version: 3.265.0(typescript@6.0.3)
+        version: 3.265.0(supports-color@8.1.1)(typescript@6.0.3)
       '@pulumi/random':
         specifier: ^4.21.2
         version: 4.21.2(typescript@6.0.3)
@@ -901,7 +901,7 @@ importers:
         version: 7.0.0-dev.20260707.2
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -1168,7 +1168,7 @@ importers:
         version: 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@blocknote/server-util':
         specifier: ^0.55.0
-        version: 0.55.0(@types/hast@3.0.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))
+        version: 0.55.0(@types/hast@3.0.5)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.11)
@@ -1204,7 +1204,7 @@ importers:
         version: link:../shared
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -12648,7 +12648,7 @@ snapshots:
       regexpu-core: 6.4.0
       semver: 6.3.1
 
-  '@babel/helper-define-polyfill-provider@0.6.8(@babel/core@7.29.7)':
+  '@babel/helper-define-polyfill-provider@0.6.8(@babel/core@7.29.7)(supports-color@8.1.1)':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/helper-compilation-targets': 7.29.7
@@ -13166,7 +13166,7 @@ snapshots:
       '@babel/helper-create-regexp-features-plugin': 7.29.7(@babel/core@7.29.7)
       '@babel/helper-plugin-utils': 7.29.7
 
-  '@babel/preset-env@7.29.7(@babel/core@7.29.7)':
+  '@babel/preset-env@7.29.7(@babel/core@7.29.7)(supports-color@8.1.1)':
     dependencies:
       '@babel/compat-data': 7.29.7
       '@babel/core': 7.29.7
@@ -13235,7 +13235,7 @@ snapshots:
       '@babel/plugin-transform-unicode-regex': 7.29.7(@babel/core@7.29.7)
       '@babel/plugin-transform-unicode-sets-regex': 7.29.7(@babel/core@7.29.7)
       '@babel/preset-modules': 0.1.6-no-external-plugins(@babel/core@7.29.7)
-      babel-plugin-polyfill-corejs2: 0.4.17(@babel/core@7.29.7)
+      babel-plugin-polyfill-corejs2: 0.4.17(@babel/core@7.29.7)(supports-color@8.1.1)
       babel-plugin-polyfill-corejs3: 0.14.2(@babel/core@7.29.7)
       babel-plugin-polyfill-regenerator: 0.6.8(@babel/core@7.29.7)
       core-js-compat: 3.49.0
@@ -13462,71 +13462,10 @@ snapshots:
       - y-protocols
       - yjs
 
-  '@blocknote/react@0.55.0(@types/hast@3.0.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)':
-    dependencies:
-      '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@emoji-mart/data': 1.2.1
-      '@floating-ui/react': 0.27.19(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@tiptap/core': 3.31.3(@tiptap/pm@3.31.3)
-      '@tiptap/pm': 3.31.3
-      '@tiptap/react': 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      emoji-mart: 5.6.0
-      fast-deep-equal: 3.1.3
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-      use-sync-external-store: 1.6.0(react@19.3.0)
-    optionalDependencies:
-      '@types/use-sync-external-store': 1.5.0
-    transitivePeerDependencies:
-      - '@floating-ui/dom'
-      - '@lezer/common'
-      - '@lezer/highlight'
-      - '@types/hast'
-      - '@types/react'
-      - '@types/react-dom'
-      - '@y/prosemirror'
-      - '@y/protocols'
-      - '@y/y'
-      - highlight.js
-      - lowlight
-      - refractor
-      - sugar-high
-      - y-prosemirror
-      - y-protocols
-      - yjs
-
   '@blocknote/server-util@0.55.0(@types/hast@3.0.5)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))':
     dependencies:
       '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@blocknote/react': 0.55.0(@types/hast@3.0.5)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@tiptap/pm': 3.31.3
-      jsdom: 29.1.1
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-      yjs: 13.6.33
-    transitivePeerDependencies:
-      - '@floating-ui/dom'
-      - '@lezer/common'
-      - '@lezer/highlight'
-      - '@noble/hashes'
-      - '@types/hast'
-      - '@types/react'
-      - '@types/react-dom'
-      - '@y/prosemirror'
-      - '@y/protocols'
-      - '@y/y'
-      - canvas
-      - highlight.js
-      - lowlight
-      - refractor
-      - sugar-high
-      - y-prosemirror
-      - y-protocols
-
-  '@blocknote/server-util@0.55.0(@types/hast@3.0.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))':
-    dependencies:
-      '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@blocknote/react': 0.55.0(@types/hast@3.0.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@tiptap/pm': 3.31.3
       jsdom: 29.1.1
       react: 19.3.0
@@ -14654,13 +14593,13 @@ snapshots:
     dependencies:
       agent-base: 7.1.4
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       lru-cache: 11.5.3
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
       - supports-color
 
-  '@npmcli/arborist@9.8.0':
+  '@npmcli/arborist@9.8.0(supports-color@8.1.1)':
     dependencies:
       '@gar/promise-retry': 1.0.3
       '@isaacs/string-locale-compare': 1.1.0
@@ -14686,7 +14625,7 @@ snapshots:
       npm-package-arg: 13.0.2
       npm-pick-manifest: 11.0.3
       npm-registry-fetch: 19.1.1
-      pacote: 21.5.1
+      pacote: 21.5.1(supports-color@8.1.1)
       parse-conflict-json: 5.0.1
       proc-log: 6.1.0
       proggy: 4.0.0
@@ -14730,7 +14669,7 @@ snapshots:
     dependencies:
       cacache: 20.0.4
       json-parse-even-better-errors: 5.0.0
-      pacote: 21.5.1
+      pacote: 21.5.1(supports-color@8.1.1)
       proc-log: 6.1.0
       semver: 7.8.5
     transitivePeerDependencies:
@@ -15890,11 +15829,11 @@ snapshots:
 
   '@protobufjs/utf8@1.1.1': {}
 
-  '@pulumi/pulumi@3.265.0(typescript@6.0.3)':
+  '@pulumi/pulumi@3.265.0(supports-color@8.1.1)(typescript@6.0.3)':
     dependencies:
       '@grpc/grpc-js': 1.14.4
       '@logdna/tail-file': 2.2.0
-      '@npmcli/arborist': 9.8.0
+      '@npmcli/arborist': 9.8.0(supports-color@8.1.1)
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/exporter-trace-otlp-grpc': 0.220.0(@opentelemetry/api@1.9.1)
@@ -15924,7 +15863,7 @@ snapshots:
 
   '@pulumi/random@4.21.2(typescript@6.0.3)':
     dependencies:
-      '@pulumi/pulumi': 3.265.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.265.0(supports-color@8.1.1)(typescript@6.0.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -15932,7 +15871,7 @@ snapshots:
 
   '@pulumiverse/scaleway@1.56.1(typescript@6.0.3)':
     dependencies:
-      '@pulumi/pulumi': 3.265.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.265.0(supports-color@8.1.1)(typescript@6.0.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -16339,10 +16278,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sigstore/tuf@4.0.2':
+  '@sigstore/tuf@4.0.2(supports-color@8.1.1)':
     dependencies:
       '@sigstore/protobuf-specs': 0.5.1
-      tuf-js: 4.1.0
+      tuf-js: 4.1.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -17307,7 +17246,7 @@ snapshots:
   '@typespec/ts-http-runtime@0.3.6':
     dependencies:
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -17709,14 +17648,14 @@ snapshots:
       get-intrinsic: 1.3.0
       is-array-buffer: 3.0.5
 
-  arrivals@2.1.2:
+  arrivals@2.1.2(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       nanotimer: 0.3.14
     transitivePeerDependencies:
       - supports-color
 
-  artillery-plugin-ensure@1.27.0:
+  artillery-plugin-ensure@1.27.0(supports-color@8.1.1):
     dependencies:
       chalk: 2.4.2
       debug: 4.4.3(supports-color@8.1.1)
@@ -17724,7 +17663,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  artillery@2.0.34(patch_hash=4a3a3ec7f9f0440ca256977f0c66e784c0f7d0be498ebbd7e22bceb54d2f7c4b)(@types/node@26.6.3):
+  artillery@2.0.34(patch_hash=4a3a3ec7f9f0440ca256977f0c66e784c0f7d0be498ebbd7e22bceb54d2f7c4b)(@types/node@26.6.3)(supports-color@8.1.1):
     dependencies:
       '@artilleryio/sketches-js': 2.1.1
       '@aws-sdk/client-cloudwatch': 3.1123.0
@@ -17764,7 +17703,7 @@ snapshots:
       '@smithy/core': 3.35.0
       '@upstash/redis': 1.38.0
       agentkeepalive: 4.6.0
-      arrivals: 2.1.2
+      arrivals: 2.1.2(supports-color@8.1.1)
       async: 2.6.4
       chalk: 4.1.2
       cheerio: 1.2.0
@@ -17774,7 +17713,7 @@ snapshots:
       cookie-parser: 1.4.7
       cross-spawn: 7.0.6
       csv-parse: 7.0.2
-      datadog-metrics: 0.12.1
+      datadog-metrics: 0.12.1(supports-color@8.1.1)
       debug: 4.4.3(supports-color@8.1.1)
       decompress-response: 6.0.0
       deep-for-each: 3.0.0
@@ -17793,14 +17732,14 @@ snapshots:
       got: 14.6.6
       hot-shots: 10.2.1
       hpagent: 0.1.2
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.1(supports-color@8.1.1)
       jmespath: 0.16.0
       joi: 17.13.7
       js-yaml: 3.15.2
       jsonpath-plus: 10.4.0
       jsonwebtoken: 9.0.3
       lodash: 4.18.1
-      mixpanel: 0.18.1
+      mixpanel: 0.18.1(supports-color@8.1.1)
       moment: 2.30.1
       ms: 2.1.3
       nanoid: 3.3.18
@@ -17811,9 +17750,9 @@ snapshots:
       protobufjs: 7.6.5
       rc: 1.2.8
       semver: 7.8.5
-      socket.io-client: 4.8.3
+      socket.io-client: 4.8.3(supports-color@8.1.1)
       socketio-wildcard: 2.0.0
-      sqs-consumer: 6.0.2(@aws-sdk/client-sqs@3.1123.0)
+      sqs-consumer: 6.0.2(@aws-sdk/client-sqs@3.1123.0)(supports-color@8.1.1)
       tempy: 3.2.0
       tough-cookie: 5.1.2
       uuid: 11.1.1
@@ -17890,11 +17829,11 @@ snapshots:
 
   babel-plugin-add-react-displayname@0.0.5: {}
 
-  babel-plugin-polyfill-corejs2@0.4.17(@babel/core@7.29.7):
+  babel-plugin-polyfill-corejs2@0.4.17(@babel/core@7.29.7)(supports-color@8.1.1):
     dependencies:
       '@babel/compat-data': 7.29.7
       '@babel/core': 7.29.7
-      '@babel/helper-define-polyfill-provider': 0.6.8(@babel/core@7.29.7)
+      '@babel/helper-define-polyfill-provider': 0.6.8(@babel/core@7.29.7)(supports-color@8.1.1)
       semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
@@ -17902,7 +17841,7 @@ snapshots:
   babel-plugin-polyfill-corejs3@0.14.2(@babel/core@7.29.7):
     dependencies:
       '@babel/core': 7.29.7
-      '@babel/helper-define-polyfill-provider': 0.6.8(@babel/core@7.29.7)
+      '@babel/helper-define-polyfill-provider': 0.6.8(@babel/core@7.29.7)(supports-color@8.1.1)
       core-js-compat: 3.49.0
     transitivePeerDependencies:
       - supports-color
@@ -17910,7 +17849,7 @@ snapshots:
   babel-plugin-polyfill-regenerator@0.6.8(@babel/core@7.29.7):
     dependencies:
       '@babel/core': 7.29.7
-      '@babel/helper-define-polyfill-provider': 0.6.8(@babel/core@7.29.7)
+      '@babel/helper-define-polyfill-provider': 0.6.8(@babel/core@7.29.7)(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -18527,7 +18466,7 @@ snapshots:
       es-errors: 1.3.0
       is-data-view: 1.0.2
 
-  datadog-metrics@0.12.1:
+  datadog-metrics@0.12.1(supports-color@8.1.1):
     dependencies:
       '@datadog/datadog-api-client': 1.58.0
       debug: 4.4.3(supports-color@8.1.1)
@@ -18807,7 +18746,7 @@ snapshots:
 
   enforce-unique@1.3.0: {}
 
-  engine.io-client@6.6.6:
+  engine.io-client@6.6.6(supports-color@8.1.1):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@8.1.1)
@@ -19696,21 +19635,21 @@ snapshots:
 
   http_ece@1.2.0: {}
 
-  https-proxy-agent@5.0.0:
+  https-proxy-agent@5.0.0(supports-color@8.1.1):
     dependencies:
       agent-base: 6.0.2
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@5.0.1:
+  https-proxy-agent@5.0.1(supports-color@8.1.1):
     dependencies:
       agent-base: 6.0.2
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6:
+  https-proxy-agent@7.0.6(supports-color@8.1.1):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -21045,9 +20984,9 @@ snapshots:
 
   mitt@3.0.1: {}
 
-  mixpanel@0.18.1:
+  mixpanel@0.18.1(supports-color@8.1.1):
     dependencies:
-      https-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -21229,7 +21168,7 @@ snapshots:
 
   ohash@2.0.11: {}
 
-  oidc-provider@9.12.2:
+  oidc-provider@9.12.2(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       jose: 6.2.12
@@ -21505,7 +21444,7 @@ snapshots:
 
   package-manager-detector@1.8.0: {}
 
-  pacote@21.5.1:
+  pacote@21.5.1(supports-color@8.1.1):
     dependencies:
       '@gar/promise-retry': 1.0.3
       '@npmcli/git': 7.0.2
@@ -21521,7 +21460,7 @@ snapshots:
       npm-pick-manifest: 11.0.3
       npm-registry-fetch: 19.1.1
       proc-log: 6.1.0
-      sigstore: 4.1.1
+      sigstore: 4.1.1(supports-color@8.1.1)
       ssri: 13.0.1
       tar: 7.5.22
     transitivePeerDependencies:
@@ -22711,13 +22650,13 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
-  sigstore@4.1.1:
+  sigstore@4.1.1(supports-color@8.1.1):
     dependencies:
       '@sigstore/bundle': 4.0.0
       '@sigstore/core': 3.2.1
       '@sigstore/protobuf-specs': 0.5.1
       '@sigstore/sign': 4.1.1
-      '@sigstore/tuf': 4.0.2
+      '@sigstore/tuf': 4.0.2(supports-color@8.1.1)
       '@sigstore/verify': 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -22743,18 +22682,18 @@ snapshots:
       dot-case: 3.0.4
       tslib: 2.8.1
 
-  socket.io-client@4.8.3:
+  socket.io-client@4.8.3(supports-color@8.1.1):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@8.1.1)
-      engine.io-client: 6.6.6
-      socket.io-parser: 4.2.7
+      engine.io-client: 6.6.6(supports-color@8.1.1)
+      socket.io-parser: 4.2.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  socket.io-parser@4.2.7:
+  socket.io-parser@4.2.7(supports-color@8.1.1):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@8.1.1)
@@ -22847,7 +22786,7 @@ snapshots:
 
   sprintf-js@1.0.3: {}
 
-  sqs-consumer@6.0.2(@aws-sdk/client-sqs@3.1123.0):
+  sqs-consumer@6.0.2(@aws-sdk/client-sqs@3.1123.0)(supports-color@8.1.1):
     dependencies:
       '@aws-sdk/client-sqs': 3.1123.0
       debug: 4.4.3(supports-color@8.1.1)
@@ -23202,7 +23141,7 @@ snapshots:
 
   tsscmp@1.0.6: {}
 
-  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1):
+  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.28)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.28.1)
       cac: 6.7.14
@@ -23240,7 +23179,7 @@ snapshots:
     dependencies:
       tslib: 1.14.1
 
-  tuf-js@4.1.0:
+  tuf-js@4.1.0(supports-color@8.1.1):
     dependencies:
       '@tufjs/models': 4.1.0
       debug: 4.4.3(supports-color@8.1.1)
@@ -23546,13 +23485,13 @@ snapshots:
       pathe: 0.2.0
       vite: 8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1)
 
-  vite-plugin-pwa@1.3.0(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))(workbox-build@7.4.1(@types/babel__core@7.20.5))(workbox-window@7.4.1):
+  vite-plugin-pwa@1.3.0(supports-color@8.1.1)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))(workbox-build@7.4.1(@types/babel__core@7.20.5)(supports-color@8.1.1))(workbox-window@7.4.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       pretty-bytes: 6.1.1
       tinyglobby: 0.2.17
       vite: 8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1)
-      workbox-build: 7.4.1(@types/babel__core@7.20.5)
+      workbox-build: 7.4.1(@types/babel__core@7.20.5)(supports-color@8.1.1)
       workbox-window: 7.4.1
     transitivePeerDependencies:
       - supports-color
@@ -23645,11 +23584,11 @@ snapshots:
 
   web-namespaces@2.0.1: {}
 
-  web-push@3.6.7:
+  web-push@3.6.7(supports-color@8.1.1):
     dependencies:
       asn1.js: 5.4.1
       http_ece: 1.2.0
-      https-proxy-agent: 7.0.6
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       jws: 4.0.1
       minimist: 1.2.8
     transitivePeerDependencies:
@@ -23762,11 +23701,11 @@ snapshots:
     dependencies:
       workbox-core: 7.4.1
 
-  workbox-build@7.4.1(@types/babel__core@7.20.5):
+  workbox-build@7.4.1(@types/babel__core@7.20.5)(supports-color@8.1.1):
     dependencies:
       '@apideck/better-ajv-errors': 0.3.7(ajv@8.20.0)
       '@babel/core': 7.29.7
-      '@babel/preset-env': 7.29.7(@babel/core@7.29.7)
+      '@babel/preset-env': 7.29.7(@babel/core@7.29.7)(supports-color@8.1.1)
       '@babel/runtime': 7.29.7
       '@rollup/plugin-babel': 6.1.0(@babel/core@7.29.7)(@types/babel__core@7.20.5)(rollup@4.60.4)
       '@rollup/plugin-node-resolve': 16.0.3(rollup@4.60.4)
