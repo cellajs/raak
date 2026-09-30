@@ -772,7 +772,7 @@ export const zServiceAccount = z.object({
       channelType: z.enum(['organization', 'workspace', 'project']),
       channelId: z.string().max(50),
       organizationId: z.string().max(50),
-      role: z.enum(['admin', 'member']),
+      role: z.enum(['admin', 'member', 'guest']),
     }),
   ),
   oauthClientId: z.string().max(255).nullable(),

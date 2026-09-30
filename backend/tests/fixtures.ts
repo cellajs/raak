@@ -1,5 +1,3 @@
-// fork: organization role type for the fixture roles
-import type { CreateServiceAccountData } from 'sdk';
 import { appConfig, hierarchy } from 'shared';
 import type { OtelSDKOptions } from 'shared/otel';
 
@@ -17,10 +15,8 @@ export const signUpUser = {
  * The organization's most and least privileged roles, read from the hierarchy: `admin` and `member` in the template,
  * so an app with other role names runs every test unchanged.
  */
-// fork: typed as the API's organization role; the registry's role type also spans raak's sub-organization `guest`
-type OrganizationRole = CreateServiceAccountData['body']['role'];
-export const adminRole = hierarchy.getMostPrivilegedRole('organization') as OrganizationRole;
-export const memberRole = hierarchy.getLeastPrivilegedRole('organization') as OrganizationRole;
+export const adminRole = hierarchy.getMostPrivilegedRole('organization');
+export const memberRole = hierarchy.getLeastPrivilegedRole('organization');
 
 /** A config value as a test may set it: the literal types `satisfies` gives the defaults are widened. */
 type Settable<T> = T extends string

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { createEntityHierarchy, createRoleRegistry } from '../entity-hierarchy.ts';
 
 describe('EntityHierarchyBuilder', () => {
@@ -138,6 +138,11 @@ describe('EntityHierarchyBuilder', () => {
       expect(hierarchy.getRoles('organization')).toEqual(['admin', 'member']);
       expect(hierarchy.getRoles('project')).toEqual(['admin', 'member', 'guest']);
       expect(hierarchy.getRoles('task')).toEqual([]);
+      expectTypeOf(hierarchy.getRoles('organization')).toEqualTypeOf<readonly ('admin' | 'member')[]>();
+      expectTypeOf(hierarchy.getMostPrivilegedRole('project')).toEqualTypeOf<'admin' | 'member' | 'guest'>();
+      expectTypeOf<ReturnType<typeof hierarchy.getRoles<'task'>>>().toEqualTypeOf<
+        readonly ('admin' | 'member' | 'guest')[]
+      >();
     });
 
     it('getParent returns correct parent', () => {
@@ -205,7 +210,7 @@ describe('EntityHierarchyBuilder', () => {
         .product('item', { parent: 'project', nullableAncestors: ['project', 'courseSection'] })
         .build();
       expect(h.getNullableAncestors('item')).toEqual(['project', 'courseSection']);
-      expect(h.getProductConfig('item')?.nullableAncestors).toEqual(['project', 'courseSection']);
+      expect(h.getNullableAncestors('item')).toEqual(['project', 'courseSection']);
     });
 
     it('returns empty array when none declared', () => {

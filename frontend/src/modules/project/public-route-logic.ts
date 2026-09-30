@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import type { Organization } from 'sdk';
 import { ApiError } from '~/lib/api';
-import { useToastStore } from '~/modules/common/toaster/toast-store';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { publicProjectQueryOptions } from '~/modules/project/query';
 import { queryClient } from '~/query/query-client';
 
@@ -34,7 +34,7 @@ export const publicProjectRouteBeforeLoad = async ({ params }: PublicProjectRout
   } catch (err) {
     // Show a toast and bubble up the error to the error boundary
     if (err instanceof ApiError) {
-      useToastStore.getState().showToast(i18n.t('c:project_not_public.text'), 'info');
+      toaster.info(i18n.t('c:project_not_public.text'));
     }
     throw err;
   }

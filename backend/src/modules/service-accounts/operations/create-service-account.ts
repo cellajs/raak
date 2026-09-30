@@ -1,4 +1,4 @@
-import { hierarchy } from 'shared';
+import { type EntityRole, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { insertServiceAccount } from '#/modules/service-accounts/helpers/insert-service-accounts';
@@ -19,7 +19,8 @@ export async function createServiceAccountOp(ctx: UserContext, input: CreateServ
 
   const { membership } = await requireOrgAdmin(ctx);
   // Roles are listed most-privileged first; a lower index is a higher role.
-  const roles = hierarchy.getRoles('organization');
+  // fork: widened, since the membership's role type also spans channel roles the organization does not declare (`guest`)
+  const roles: readonly EntityRole[] = hierarchy.getRoles('organization');
   const creatorRank = isSystemAdmin ? 0 : membership ? roles.indexOf(membership.role) : -1;
   if (creatorRank < 0 || roles.indexOf(input.role) < creatorRank) {
     throw new AppError(403, 'forbidden', 'warn', { meta: { reason: 'role_exceeds_creator', role: input.role } });

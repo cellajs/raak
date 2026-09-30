@@ -86,6 +86,7 @@ export const labelContract = evolutionContract.product('label', {
     // Setting true relinks a primary label to its setupConfig entry (server re-syncs fields)
     organizationTracked: z.boolean(),
   },
+  blockFields: ['description'],
 });
 
 /** Update body using fields pattern for single or multi-field updates with conflict detection */

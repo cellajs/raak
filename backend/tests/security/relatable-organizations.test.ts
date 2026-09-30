@@ -20,8 +20,7 @@ import { clearSecurityTestData, createOrgUser } from './helpers';
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
 // Member previews list the organization's top role, so the viewer holds it to appear in one.
-// fork: the organization role type of the fixtures; the registry's role type also spans raak's `guest`
-const [previewedRole] = hierarchy.getRoles('organization') as (typeof memberRole)[];
+const [previewedRole] = hierarchy.getRoles('organization');
 
 type OrgList = {
   items: { id: string; included: { members?: { id: string }[]; counts?: unknown } }[];

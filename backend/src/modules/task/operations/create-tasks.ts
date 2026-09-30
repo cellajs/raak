@@ -8,14 +8,14 @@ import { getOrganizationEntityCount } from '#/modules/entities/entities-queries'
 import { findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTasks } from '#/modules/task/helpers/hydrate-task';
-import { findTasksByStxMutationId, insertTasks } from '#/modules/task/task-queries';
+import { tasksTable } from '#/modules/task/task-db';
+import { insertTasks } from '#/modules/task/task-queries';
 import { taskContract, type taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
-import { assertBlockMediaUrls } from '#/utils/validate-block-urls';
 
 type CreateTasksInput = z.infer<typeof taskCreateManyStxBodySchema>;
 type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
@@ -35,14 +35,11 @@ export async function createTasksOp(
 
   // Idempotency check
   const batchStxId = input[0].stx.mutationId;
-  const existing = await checkIdempotency(batchStxId, () =>
-    tenantRead(ctx, async (readCtx) => {
-      const tasks = await findTasksByStxMutationId(readCtx, { mutationId: batchStxId });
-      const [users, labels] = await getTaskRelations(readCtx, { tasks });
-      return hydrateTasks(tasks, users, labels);
-    }),
-  );
-  if (existing) return { data: existing, rejectedIds: [] };
+  const existing = await checkIdempotency(ctx, tasksTable, batchStxId);
+  if (existing) {
+    const [users, labels] = await tenantRead(ctx, (readCtx) => getTaskRelations(readCtx, { tasks: existing }));
+    return { data: hydrateTasks(existing, users, labels), rejectedIds: [] };
+  }
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
   const currentTasksCount = await getOrganizationEntityCount(ctx, {
@@ -66,8 +63,8 @@ export async function createTasksOp(
     input.map(async ({ stx, id, ...taskInfo }) => {
       // Derived attachments are UUID-shape-checked only: attachment rows created in the
       // same client batch may not be committed yet, so existence is not enforced here.
+      taskContract.assertBlockFields(taskInfo, organization.id);
       const descriptionText = String(taskInfo.description ?? '');
-      if (descriptionText) assertBlockMediaUrls(descriptionText, organization.id, 'task', 'description');
       const derived = await deriveDescriptionProps(descriptionText);
 
       const projectPrimaries = primariesByProject.get(taskInfo.projectId) ?? [];

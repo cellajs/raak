@@ -1,6 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
 import { generatePasskeyChallenge, signInWithPasskey } from 'sdk';
-// fork: member attachment policy helper
 import {
   type EntityActionPermissions,
   type EntityRole,
@@ -121,12 +120,8 @@ export async function passkeySignIn(
   return call(signInWithPasskey, { body: { type, assertion }, headers });
 }
 
-// fork: member attachment policy helper, for forks whose member policy differs from the template's
-/**
- * Holds the organization member's attachment permissions at `permissions` around each test of the enclosing suite, so
- * a test asserting what a member may do runs against that policy in any app, not against the app's configured one.
- */
-export function useMemberAttachmentPolicy(permissions: Partial<EntityActionPermissions>) {
+/** A suite calls this at its top to declare the organization member's attachment policy its assertions assume. */
+export function assumeMemberAttachmentPolicy(permissions: Partial<EntityActionPermissions>) {
   const policy = getPolicyPermissions(getEntityPolicies('attachment', policyMatrix), 'organization', memberRole);
   let configured: EntityActionPermissions | undefined;
   beforeEach(() => {

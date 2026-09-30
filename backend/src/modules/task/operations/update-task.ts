@@ -15,7 +15,6 @@ import { filterExistingAttachmentIds, findProjectMemberUserIds, updateTask } fro
 import { taskContract, type taskUpdateStxBodySchema } from '#/modules/task/task-schema';
 import { getValidProduct } from '#/permissions/get-valid-product';
 import { getIsoDate } from '#/utils/iso-date';
-import { assertBlockMediaUrls } from '#/utils/validate-block-urls';
 
 type UpdateTaskInput = z.infer<typeof taskUpdateStxBodySchema>;
 
@@ -58,10 +57,7 @@ export async function updateTaskOp(
   const taskResponse = await tenantContext(ctx, async (txCtx) => {
     const { entity } = await getValidProduct(txCtx, id, 'task', 'update');
 
-    // Media in a description may reference only uploads of the task's own organization.
-    if (rawOps.description) {
-      assertBlockMediaUrls(rawOps.description as string, entity.organizationId, 'task', 'description');
-    }
+    taskContract.assertBlockFields(rawOps, entity.organizationId);
 
     // Server-origin writes (Yjs description materialization) carry no client field
     // timestamps, so every changed scalar gets a fresh server HLC.

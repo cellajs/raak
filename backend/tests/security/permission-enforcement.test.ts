@@ -22,8 +22,7 @@ import { attachmentBody, seedAttachmentHome } from '../hierarchy-helpers';
 import { createInvitation } from '../invitations/helpers';
 import { createAppClient, type TestResult } from '../test-client';
 import { setTestConfig } from '../test-utils';
-// fork: member attachment policy helper
-import { clearSecurityTestData, createOrgUser, useMemberAttachmentPolicy } from './helpers';
+import { assumeMemberAttachmentPolicy, clearSecurityTestData, createOrgUser } from './helpers';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
@@ -57,8 +56,7 @@ interface Row {
  * reads, so the permission check is what answers, and the same call succeeds for the admin.
  */
 describe('Member escalation over HTTP', async () => {
-  // fork: asserts the template's member attachment policy; a fork's own may be narrower
-  useMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
+  assumeMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
   const call = await createAppClient();
   let shared: Fixture;
 
