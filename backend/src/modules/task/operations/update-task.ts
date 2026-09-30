@@ -24,14 +24,18 @@ type ReturnTask = ReturnType<typeof hydrateTask>;
 /** A session or a user token carries the editor's row; a service account's call only its actor. */
 type UpdateTaskContext = { var: ActorContext['var'] & Partial<Pick<UserContext['var'], 'user'>> };
 
+/**
+ * Also the task's Yjs materializer: the relay calls it with `materialized` for a collaborative description.
+ * `serverOrigin` stamps the fields with the server clock, for a transaction the server built (an MCP tool, the relay).
+ */
 export async function updateTaskOp(
   ctx: UpdateTaskContext,
   id: string,
   input: UpdateTaskInput,
-  opts: { fullResponse?: boolean; serverOrigin?: boolean },
+  opts: { fullResponse?: boolean; serverOrigin?: boolean; materialized?: boolean },
 ): Promise<ReturnTask> {
   const { ops: rawOps = {}, stx } = input;
-  const { fullResponse, serverOrigin } = opts;
+  const { fullResponse, serverOrigin, materialized } = opts;
   const user = ctx.var.user;
 
   // Pre-compute description metadata outside the transaction to avoid holding a DB
@@ -43,9 +47,6 @@ export async function updateTaskOp(
   if ('description' in rawOps) {
     const description = rawOps.description;
     if (description) {
-      // Validate media URLs in description are from trusted sources (CDN only)
-      assertBlockMediaUrls(description as string, 'task', 'description');
-
       parsedBlocks = JSON.parse(description as string);
       derivedDescription = await deriveDescriptionProps(description as string, parsedBlocks);
     } else {
@@ -56,6 +57,11 @@ export async function updateTaskOp(
   // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
   const taskResponse = await tenantContext(ctx, async (txCtx) => {
     const { entity } = await getValidProduct(txCtx, id, 'task', 'update');
+
+    // Media in a description may reference only uploads of the task's own organization.
+    if (rawOps.description) {
+      assertBlockMediaUrls(rawOps.description as string, entity.organizationId, 'task', 'description');
+    }
 
     // Server-origin writes (Yjs description materialization) carry no client field
     // timestamps, so every changed scalar gets a fresh server HLC.
@@ -135,7 +141,7 @@ export async function updateTaskOp(
     }
 
     const updatedTaskRecord = await updateTask(txCtx, { id, values: updateValues });
-    await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord], serverOrigin });
+    await dispatchMutation(txCtx, 'task.updated', { before: [entity], after: [updatedTaskRecord], materialized });
 
     const isProjectMove = 'projectId' in resolved.values && resolved.values.projectId !== entity.projectId;
 

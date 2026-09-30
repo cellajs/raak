@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import { applyHint, classifyPreviewSteps, formatPending, isPrivilegedUrn, splitUrn } from './preflight-privileged';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  applyHint,
+  classifyPreviewSteps,
+  formatPending,
+  isPrivilegedUrn,
+  main,
+  type PreviewStep,
+  readPath,
+  splitUrn,
+} from './preflight-privileged';
 
 const urn = (type: string, name: string) => `urn:pulumi:production::infra::${type}::${name}`;
 
@@ -44,6 +53,35 @@ describe('classifyPreviewSteps', () => {
     ]);
     expect(ciApplicable).toBe(2);
   });
+  it('shows old and new values for IAM policy rule paths, from state outputs and program inputs', () => {
+    const { privileged } = classifyPreviewSteps([
+      {
+        op: 'update',
+        urn: urn('scaleway:iam/policy:Policy', 'vm-backend-policy'),
+        detailedDiff: { 'rules[0].condition': { kind: 'update' } },
+        oldState: { outputs: { rules: [{ condition: 'a || b' }] } },
+        newState: { inputs: { rules: [{ condition: 'a || b || c' }] } },
+      },
+      {
+        op: 'update',
+        urn: urn('scaleway:databases/privilege:Privilege', 'p'),
+        detailedDiff: { permission: { kind: 'update' } },
+        oldState: { outputs: { permission: 'readonly' } },
+        newState: { inputs: { permission: 'all' } },
+      },
+    ]);
+    expect(privileged[0]?.values).toEqual([{ path: 'rules[0].condition', old: 'a || b', new: 'a || b || c' }]);
+    expect(privileged[1]?.values).toBeUndefined();
+    const text = formatPending('production', privileged);
+    expect(text).toContain('rules[0].condition: a || b → a || b || c');
+    expect(text).not.toContain('readonly');
+  });
+  it('reads bracketed paths and tolerates missing segments', () => {
+    expect(readPath({ rules: [{ condition: 'x' }] }, 'rules[0].condition')).toBe('x');
+    expect(readPath({ rules: [] }, 'rules[0].condition')).toBeUndefined();
+    expect(readPath(undefined, 'rules[0].condition')).toBeUndefined();
+    expect(readPath({ a: { b: [[1, 2]] } }, 'a.b[0][1]')).toBe(2);
+  });
   it('formats the operator command with the mode', () => {
     const text = formatPending('production', [
       { op: 'create', resource: 'scaleway:databases/privilege:Privilege::p', paths: [] },
@@ -51,5 +89,39 @@ describe('classifyPreviewSteps', () => {
     expect(text).toContain('1 privileged change(s) pending');
     expect(text).toContain(applyHint('production'));
     expect(applyHint('staging')).toBe('pnpm infra --mode staging  →  Stack setup  →  Apply infra change');
+  });
+});
+
+describe('main', () => {
+  const env = { ...process.env };
+  afterEach(() => {
+    process.env = { ...env };
+  });
+
+  /** Effects that answer only for the production stack: the mode's stack file is set up and its preview returns `steps`. */
+  const production = (steps: PreviewStep[]) => ({
+    stackIsSetUp: (mode: string) => mode === 'production',
+    preview: async (stack: string) => {
+      if (stack !== 'organization/infra/production') throw new Error(`previewed the wrong stack: ${stack}`);
+      return steps;
+    },
+  });
+  const run = (steps: PreviewStep[]) => main(['--mode', 'production'], production(steps));
+
+  it('throws exit code 2 with the operator command when a privileged change is pending', async () => {
+    const pending = run([{ op: 'create', urn: urn('scaleway:databases/privilege:Privilege', 'admin-cron-privilege') }]);
+    await expect(pending).rejects.toMatchObject({ name: 'ExitCodeError', exitCode: 2 });
+    await expect(pending).rejects.toThrow(applyHint('production'));
+  });
+
+  it('passes when every change is one a CI deploy applies', async () => {
+    await expect(run([{ op: 'create', urn: urn('scaleway:instance/server:Server', 'vm-backend-abc') }])).resolves.toBe(
+      undefined,
+    );
+  });
+
+  it('skips a mode without a set-up stack', async () => {
+    const effects = production([{ op: 'create', urn: urn('scaleway:iam/policy:Policy', 'vm-backend-policy') }]);
+    await expect(main(['--mode', 'staging'], effects)).resolves.toBe(undefined);
   });
 });

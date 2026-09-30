@@ -12,7 +12,8 @@ import { defineConfig } from 'tsup';
  *   pino package, and resolves transport targets like 'pino-pretty' by name from the caller, so
  *   neither survives being inlined.
  */
-const KEEP_ON_DISK = String.raw`pg(?:\/|$)|@ngrok\/ngrok|@opentelemetry\/|pino(?:-|\/|$)|thread-stream|sonic-boom|jsdom`;
+// fork: @napi-rs/canvas, raak's native addon for task covers, loads by platform-specific .node file
+const KEEP_ON_DISK = String.raw`pg(?:\/|$)|@ngrok\/ngrok|@napi-rs\/canvas|@opentelemetry\/|pino(?:-|\/|$)|thread-stream|sonic-boom|jsdom`;
 
 export default defineConfig({
   entry: {
@@ -47,6 +48,8 @@ export default defineConfig({
   external: [
     // Native addon. Regexes: a bare name matches the exact specifier, and these are reached through subpaths too.
     /^@ngrok\/ngrok(\/|$)/,
+    // fork: raak's native canvas addon
+    /^@napi-rs\/canvas(\/|$)/,
     // The SDK patches modules through the loader registry, so both it and anything it instruments
     // have to be loaded from disk; a bundled copy of `pg` is never handed to the instrumentation.
     /^@opentelemetry/,

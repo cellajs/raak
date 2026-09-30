@@ -110,6 +110,7 @@ const labelsRoutes = {
     request: {
       params: idInTenantOrgParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: labelUpdateStxBodySchema,
@@ -137,6 +138,7 @@ const labelsRoutes = {
     request: {
       params: tenantOrgParamSchema,
       body: {
+        required: true,
         content: { 'application/json': { schema: idsWithStxBodySchema() } },
       },
     },

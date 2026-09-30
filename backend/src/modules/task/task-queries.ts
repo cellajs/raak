@@ -15,12 +15,19 @@ interface FindTasksByStxMutationIdOpts {
   mutationId: string;
 }
 
+/** The acting actor's own rows written under `mutationId`, the idempotent replay of a create. */
 export const findTasksByStxMutationId = async (ctx: ActorContext, { mutationId }: FindTasksByStxMutationIdOpts) => {
   const { db } = ctx.var;
   return db
     .select()
     .from(tasksTable)
-    .where(and(sql`${tasksTable.stx}->>'mutationId' = ${mutationId}`, requestScopeWhere(ctx, tasksTable, 'task')));
+    .where(
+      and(
+        sql`${tasksTable.stx}->>'mutationId' = ${mutationId}`,
+        eq(tasksTable.createdBy, ctx.var.actor.id),
+        requestScopeWhere(ctx, tasksTable, 'task'),
+      ),
+    );
 };
 
 interface InsertTasksOpts {

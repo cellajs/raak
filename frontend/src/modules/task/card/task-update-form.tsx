@@ -63,6 +63,7 @@ export function TaskUpdateForm({ task, contentApiRef, active = true, onEditorRea
         entityType="task"
         entityId={task.id}
         tenantId={tenantId}
+        organizationId={task.organizationId}
         canEdit={canEdit}
         description={task.description}
         updateData={updateData}

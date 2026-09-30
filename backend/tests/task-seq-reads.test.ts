@@ -10,7 +10,7 @@ import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
-import { mockFetchRequest, setTestConfig } from './test-utils';
+import { setTestConfig } from './test-utils';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
@@ -42,7 +42,6 @@ describe('Task seq reads', async () => {
   };
 
   beforeAll(async () => {
-    mockFetchRequest();
     tenant = await createTestTenant(call, 'task-seq-reads');
 
     await db.insert(projectsTable).values({

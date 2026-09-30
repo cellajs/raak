@@ -136,6 +136,8 @@ export const config = {
     yjs: { enabled: true as boolean, publicUrl: 'wss://www.raak.dev/yjs' },
     mcp: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/mcp' },
     oauth: { enabled: false as boolean, publicUrl: 'https://www.raak.dev/oauth' },
+    // The job store's maintainer (cron and queue supervision); off means no sweeps or queues run anywhere.
+    jobs: { enabled: true as boolean },
   },
 
   // Cost escape hatch: when true the backend (MODE=api) also boots every enabled
@@ -166,7 +168,8 @@ export const config = {
    * offset this whole block together with the port in the `frontendUrl` family (e.g. +20). With
    * two stacks up, whichever backend binds :4000 first answers every app's `/api` proxy.
    * `PORT`-style env vars still override at runtime. `frontend` is the Vite fallback for when
-   * `frontendUrl` carries no port (tunnel mode); otherwise the URL port wins.
+   * `frontendUrl` carries no port (tunnel mode); otherwise the URL port wins. `internal` is the
+   * backend's internal listener, which the cdc and yjs workers dial (`INTERNAL_PORT` overrides it).
    */
   devPorts: {
     frontend: 3000,
@@ -175,6 +178,8 @@ export const config = {
     yjs: 4002,
     mcp: 4003,
     oauth: 4004,
+    internal: 4005,
+    jobs: 4006,
   },
 
   has: {
@@ -193,20 +198,20 @@ export const config = {
 
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
-  cookieVersion: 'v2',
-  clientCacheVersion: 'v11-tenant-restrictions',
+  cookieVersion: 'v3',
+  clientCacheVersion: 'v12-access-hardening',
 
   // Authentication
 
   enabledAuthStrategies: ['passkey', 'oauth', 'totp', 'magic'] as const,
   enabledOAuthProviders: ['github'] as const,
-  tokenTypes: ['oauth-verification', 'invitation', 'confirm-mfa', 'magic'] as const,
+  tokenTypes: ['oauth-verification', 'invitation', 'confirm-mfa', 'magic', 'oauth-connect', 'step-up'] as const,
 
   /**
-   * Maximum concurrent regular sessions per user. On sign-in, the oldest sessions beyond the cap are
+   * Maximum concurrent sessions per user. On sign-in, the oldest sessions beyond the cap are
    * hard-deleted (Hanko-style eviction). Keep comfortably above a realistic device count. This is
    * bloat/abuse protection (credential-stuffing bursts, unbounded session accumulation), not a UX
-   * feature. `mfa` and `impersonation` sessions never count toward or get evicted by the cap.
+   * feature. Regular and `mfa` sessions count together; `impersonation` sessions are left alone.
    */
   maxSessionsPerUser: 10,
 
@@ -252,7 +257,13 @@ export const config = {
     host: 's3.nl-ams.scw.cloud',
   } as S3ConfigInput,
 
-  uploadTemplateIds: ['avatar', 'cover', 'attachment'] as const,
+  uploadTemplateIds: ['avatar', 'cover', 'attachment', 'newsletter'] as const,
+
+  /**
+   * Origin of the media asset CDN, which serves re-hosted images as immutable content-hash objects. A media block may
+   * reference an asset by URL there. Empty while no asset service is configured, so no URL passes as an asset.
+   */
+  mediaAssetOrigin: '',
 
   uppy: {
     defaultRestrictions: {

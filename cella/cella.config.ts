@@ -34,8 +34,8 @@ export default defineConfig({
       '.github/release-please-config.json',
       'CLAUDE.md',
       // App identity: brand assets and the app's own locale namespace. cella has no upstream fix
-      // to push into these, so they are never synced (a pin would still merge and drop upstream
-      // hunks on conflict). Template-consumed copy lives in common.json, never in app.json.
+      // to push into these, so they are never synced. Template-consumed copy lives in common.json,
+      // never in app.json.
       'frontend/public/favicon.ico',
       'frontend/public/favicon.svg',
       'frontend/public/thumbnail.png',
@@ -44,7 +44,8 @@ export default defineConfig({
       'locales/en/app.json',
       'locales/nl/app.json',
     ],
-    // Paths pinned to fork; prefer fork version during merge conflicts
+    // Paths pinned to the app: the app copy always wins, upstream hunks never merge in. Adopt them by hand
+    // from the analyze list ("protected but behind upstream").
     pinned: [
       'backend/src/db/channel-tables.ts',
       // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.

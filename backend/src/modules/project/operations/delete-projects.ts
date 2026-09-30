@@ -14,7 +14,7 @@ export async function deleteProjectsOp(ctx: UserContext, ids: string[]) {
   await deleteProjectsByIds(ctx, { ids: allowedIds });
 
   // Invalidate membership cache so deleted memberships are absent for the current user.
-  invalidateCache.user(ctx.var.user.id);
+  await invalidateCache.user(ctx.var.db, ctx.var.user.id);
 
   log.info('Projects deleted', { count: allowedIds.length, ids: allowedIds });
 

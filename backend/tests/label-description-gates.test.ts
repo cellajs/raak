@@ -12,7 +12,7 @@ import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
-import { mockFetchRequest, setTestConfig } from './test-utils';
+import { setTestConfig } from './test-utils';
 
 // Direct table seeding and inspection run as admin: labels are RLS-subject and the runtime role sees them only inside a tenant transaction.
 const db = getSeedDb();
@@ -57,7 +57,6 @@ describe('Label description gates (epic documentation)', async () => {
   let member: Awaited<ReturnType<typeof createOrgUser>>;
 
   beforeAll(async () => {
-    mockFetchRequest();
     tenant = await createTestTenant(call, 'label-desc-gates');
     member = await createOrgUser(call, tenant.tenantId, tenant.organization.id, 'label-desc-member', 'member');
 

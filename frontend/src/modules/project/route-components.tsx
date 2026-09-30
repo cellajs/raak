@@ -1,7 +1,5 @@
 import { getRouteApi } from '@tanstack/react-router';
 import { Suspense } from 'react';
-import { appConfig } from 'shared';
-import { YjsTokenFetcher } from '~/modules/common/blocknote/yjs-token-fetcher';
 import { Spinner } from '~/modules/common/spinner';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
 import { lazyNamed } from '~/utils/lazy-named';
@@ -17,12 +15,6 @@ export function ProjectRouteComponent() {
   const { view } = projectApi.useSearch();
   return (
     <Suspense fallback={<Spinner className="mt-[45vh] h-10 w-10" />}>
-      {!!appConfig.yjsUrl && (
-        <>
-          <YjsTokenFetcher entityType="task" tenantId={tenantId} organizationId={project.organizationId} />
-          <YjsTokenFetcher entityType="label" tenantId={tenantId} organizationId={project.organizationId} />
-        </>
-      )}
       <ProjectPage
         key={project.slug}
         projectId={project.id}

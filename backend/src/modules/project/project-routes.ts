@@ -124,7 +124,7 @@ const projectRoutes = {
     description: 'Updates a project by ID.',
     request: {
       params: idInTenantOrgParamSchema,
-      body: { content: { 'application/json': { schema: projectUpdateBodySchema } } },
+      body: { required: true, content: { 'application/json': { schema: projectUpdateBodySchema } } },
     },
     responses: {
       200: {
@@ -224,6 +224,7 @@ const projectRoutes = {
     request: {
       params: tenantOrgParamSchema,
       body: {
+        required: true,
         content: { 'application/json': { schema: idsBodySchema() } },
       },
     },

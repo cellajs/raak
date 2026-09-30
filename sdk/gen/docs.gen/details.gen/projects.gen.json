@@ -835,7 +835,7 @@
             "itemType": "string"
           }
         },
-        "required": false,
+        "required": true,
         "contentType": "application/json"
       }
     }
@@ -1971,7 +1971,7 @@
             "required": false
           }
         },
-        "required": false,
+        "required": true,
         "contentType": "application/json"
       }
     }

@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { adoptStateBackendEnv, stateBackendUrl, stateBucket } from '../lib/stack/control-store';
 import { PRIVILEGED_UP_ENV } from '../lib/stack/privileged-up';
+import { ExitCodeError } from '../lib/utils/errors';
 import { runIfMain } from '../lib/utils/is-main';
 import { infraDir } from '../lib/utils/paths';
 import { getFlag } from './args';
@@ -28,6 +29,9 @@ export interface PreviewStep {
   /** Property paths the update touches, e.g. `rules[0].condition`. */
   detailedDiff?: Record<string, { kind: string }>;
   diffReasons?: string[];
+  /** The resource as state holds it (the provider diffs against its outputs) and as the program declares it. */
+  oldState?: { inputs?: Record<string, unknown>; outputs?: Record<string, unknown> };
+  newState?: { inputs?: Record<string, unknown>; outputs?: Record<string, unknown> };
 }
 
 export interface PendingPrivilegedChange {
@@ -36,6 +40,22 @@ export interface PendingPrivilegedChange {
   resource: string;
   /** Changed property paths for an update, empty otherwise. */
   paths: string[];
+  /** Old (state outputs) and new (program inputs) value per changed path; IAM policies only, whose rules hold no secret. */
+  values?: Array<{ path: string; old: unknown; new: unknown }>;
+}
+
+/** Read a `detailedDiff` path such as `rules[0].condition` out of a state object; undefined when any segment is missing. */
+export function readPath(obj: unknown, path: string): unknown {
+  let current: unknown = obj;
+  for (const part of path.split('.')) {
+    const match = part.match(/^([^[]+)((?:\[\d+\])*)$/);
+    if (!match) return undefined;
+    current = (current as Record<string, unknown> | undefined)?.[match[1] as string];
+    for (const index of (match[2] as string).matchAll(/\[(\d+)\]/g)) {
+      current = (current as unknown[] | undefined)?.[Number(index[1])];
+    }
+  }
+  return current;
 }
 
 /** URN `urn:pulumi:<stack>::<project>::<type>::<name>` → its type and name. */
@@ -73,10 +93,23 @@ export function classifyPreviewSteps(steps: PreviewStep[]): {
       continue;
     }
     const { type, name } = splitUrn(step.urn);
-    privileged.push({ op: step.op, resource: `${type}::${name}`, paths: Object.keys(step.detailedDiff ?? {}).sort() });
+    const paths = Object.keys(step.detailedDiff ?? {}).sort();
+    // A policy's rules carry no secret, and the old value is what Pulumi will overwrite: an update Scaleway never kept shows up here as stale outputs.
+    const values =
+      type.startsWith('scaleway:iam/') && paths.length > 0 && (step.oldState || step.newState)
+        ? paths.map((path) => ({
+            path,
+            old: readPath(step.oldState?.outputs, path),
+            new: readPath(step.newState?.inputs, path),
+          }))
+        : undefined;
+    privileged.push({ op: step.op, resource: `${type}::${name}`, paths, ...(values ? { values } : {}) });
   }
   return { privileged, ciApplicable };
 }
+
+const showValue = (value: unknown): string =>
+  value === undefined ? '(unset)' : typeof value === 'string' ? value : JSON.stringify(value);
 
 /** The exact operator command for the mode. */
 export function applyHint(mode: string): string {
@@ -89,6 +122,9 @@ export function formatPending(mode: string, pending: PendingPrivilegedChange[]):
     lines.push(
       `  ${change.op.padEnd(7)} ${change.resource}${change.paths.length ? `  (${change.paths.join(', ')})` : ''}`,
     );
+    for (const value of change.values ?? []) {
+      lines.push(`          ${value.path}: ${showValue(value.old)} → ${showValue(value.new)}`);
+    }
   }
   lines.push(`  Run first: ${applyHint(mode)}`);
   return lines.join('\n');
@@ -118,11 +154,26 @@ export async function runPrivilegedPreview(
   return parsed.steps ?? [];
 }
 
+/** What `main` reads from the machine: whether the mode's stack is set up, and the privileged preview. */
+export interface PreflightEffects {
+  /** True when `Pulumi.<mode>.yaml` exists and carries an encryption salt. */
+  stackIsSetUp(mode: string): boolean;
+  preview(stack: string): Promise<PreviewStep[]>;
+}
+
+const liveEffects: PreflightEffects = {
+  stackIsSetUp: (mode) => {
+    const stackFile = resolve(infraDir, `Pulumi.${mode}.yaml`);
+    return existsSync(stackFile) && /^encryptionsalt:/m.test(readFileSync(stackFile, 'utf8'));
+  },
+  preview: (stack) => runPrivilegedPreview(stack),
+};
+
 /**
  * Standalone entry: `pnpm --filter infra preflight --mode <m> [--login]`. Exit 2 with the operator command when a privileged change is pending,
  * 0 when a CI deploy can apply everything, 1 when the preview itself failed. `--login` performs the state-backend login + stack select first (the deploy has already done both).
  */
-export async function main(argv = process.argv.slice(2)): Promise<void> {
+export async function main(argv = process.argv.slice(2), fx: PreflightEffects = liveEffects): Promise<void> {
   const mode = getFlag(argv, '--mode') ?? process.env.APP_MODE ?? process.env.INFRA_MODE;
   if (!mode) throw new Error('preflight: --mode (or APP_MODE) is required');
   process.env.APP_MODE = mode;
@@ -143,19 +194,15 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       if (res.status !== 0) throw new Error(`pulumi ${args.join(' ')} exited ${res.status}`);
     }
   }
-  const stackFile = resolve(infraDir, `Pulumi.${mode}.yaml`);
-  if (!existsSync(stackFile) || !/^encryptionsalt:/m.test(readFileSync(stackFile, 'utf8'))) {
+  if (!fx.stackIsSetUp(mode)) {
     console.info(`[preflight] no set-up Pulumi.${mode}.yaml: nothing to check`);
     return;
   }
 
-  const steps = await runPrivilegedPreview(stack);
+  const steps = await fx.preview(stack);
   const { privileged, ciApplicable } = classifyPreviewSteps(steps);
-  if (privileged.length > 0) {
-    console.error(formatPending(mode, privileged));
-    process.exitCode = 2;
-    return;
-  }
+  // Thrown, never set as the exit code: the deploy runs this task in-process and must stop here.
+  if (privileged.length > 0) throw new ExitCodeError(formatPending(mode, privileged), 2);
   console.info(`✓ no privileged change pending (${ciApplicable} CI-applicable change(s) in the plan)`);
 }
 

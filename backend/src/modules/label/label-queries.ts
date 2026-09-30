@@ -18,12 +18,19 @@ interface FindLabelsByStxMutationIdOpts {
   mutationId: string;
 }
 
+/** The acting actor's own rows written under `mutationId`, the idempotent replay of a create. */
 export const findLabelsByStxMutationId = async (ctx: ActorContext, { mutationId }: FindLabelsByStxMutationIdOpts) => {
   const { db } = ctx.var;
   return db
     .select()
     .from(labelsTable)
-    .where(and(sql`${labelsTable.stx}->>'mutationId' = ${mutationId}`, requestScopeWhere(ctx, labelsTable, 'label')));
+    .where(
+      and(
+        sql`${labelsTable.stx}->>'mutationId' = ${mutationId}`,
+        eq(labelsTable.createdBy, ctx.var.actor.id),
+        requestScopeWhere(ctx, labelsTable, 'label'),
+      ),
+    );
 };
 
 /** Find all labels in an organization (used for duplicate/color matching). */
@@ -75,7 +82,8 @@ export const deleteLabelsByIds = async (ctx: ActorContext, { ids, deletedAt, del
     .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
     .where(
       and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)),
-    );
+    )
+    .returning();
 };
 
 interface DeleteCountersByKeysOpts {

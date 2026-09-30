@@ -9,7 +9,7 @@ import { mockStxBase } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
-import { mockFetchRequest, setTestConfig } from './test-utils';
+import { setTestConfig } from './test-utils';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
@@ -47,7 +47,6 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
   };
 
   beforeAll(async () => {
-    mockFetchRequest();
     tenant = await createTestTenant(call, 'attachment-own-reads');
     // Two org members WITHOUT any project membership.
     memberA = await createOrgUser(call, tenant.tenantId, tenant.organization.id, 'attachment-own-a', 'member');
@@ -77,7 +76,7 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
         id: attachmentIds.ownedByA,
         name: 'owned by A',
         filename: 'a.png',
-        keys: { original: `${projectId}/a.png` },
+        keys: { original: `${tenant.organization.id}/uploads/a.png` },
         createdBy: memberA.id,
       },
       {
@@ -85,7 +84,7 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
         id: attachmentIds.ownedByB,
         name: 'owned by B',
         filename: 'b.png',
-        keys: { original: `${projectId}/b.png` },
+        keys: { original: `${tenant.organization.id}/uploads/b.png` },
         createdBy: memberB.id,
       },
       {
@@ -93,7 +92,7 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
         id: attachmentIds.ownedByAdmin,
         name: 'owned by admin',
         filename: 'admin.png',
-        keys: { original: `${projectId}/admin.png` },
+        keys: { original: `${tenant.organization.id}/uploads/admin.png` },
         createdBy: tenant.user.id,
       },
     ]);
@@ -122,9 +121,9 @@ describe('Attachment own-reads (row-conditional org member policy)', async () =>
     expect(a.ids).toEqual([attachmentIds.ownedByA]);
   });
 
-  it('P3: single GET honors the condition — own 200, foreign 403', async () => {
+  it('P3: single GET honors the condition — own 200, foreign 404', async () => {
     expect(await getOne(memberA.sessionCookie, attachmentIds.ownedByA)).toBe(200);
-    expect(await getOne(memberA.sessionCookie, attachmentIds.ownedByB)).toBe(403);
+    expect(await getOne(memberA.sessionCookie, attachmentIds.ownedByB)).toBe(404);
     expect(await getOne(memberB.sessionCookie, attachmentIds.ownedByB)).toBe(200);
   });
 

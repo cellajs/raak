@@ -70,6 +70,8 @@
     "20260923T0902-principal-to-actor",
     "20260923T1200-partition-maintenance-pg-cron",
     "20260923T2319-session-revocation",
-    "20260923T2343-infra-operator-keys"
+    "20260923T2343-infra-operator-keys",
+    "20260926T0700-jobs-pg-boss",
+    "20260927T0704-access-hardening"
   ]
 }

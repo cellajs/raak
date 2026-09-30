@@ -1337,7 +1337,7 @@
           "offset": { "type": "string", "required": false },
           "limit": { "type": "string", "required": false },
           "seqCursor": { "type": "string", "required": false },
-          "relatableUserId": { "type": "string", "required": false, "maxLength": 50 },
+          "relatableUserId": { "type": "string", "required": false, "format": "uuid" },
           "role": {
             "type": "string",
             "required": false,
@@ -2497,7 +2497,7 @@
             }
           }
         },
-        "required": false,
+        "required": true,
         "contentType": "application/json"
       }
     }

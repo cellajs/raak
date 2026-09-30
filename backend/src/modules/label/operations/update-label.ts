@@ -2,6 +2,7 @@ import type { z } from '@hono/zod-openapi';
 import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
+import { dispatchMutation } from '#/lib/mutation-bus';
 import type { LabelModel } from '#/modules/label/label-db';
 import { updateLabel } from '#/modules/label/label-queries';
 import { labelContract, type labelUpdateStxBodySchema } from '#/modules/label/label-schema';
@@ -17,14 +18,18 @@ type UpdateLabelInput = z.infer<typeof labelUpdateStxBodySchema>;
 /** Field ops that unlink a tracked primary label from its organization setupConfig entry. */
 const trackedFields = ['name', 'color', 'icon', 'slug'] as const;
 
+/**
+ * Also the label's Yjs materializer: the relay calls it with `materialized` for a collaborative epic description.
+ * `serverOrigin` stamps the fields with the server clock, for a transaction the server built (the relay).
+ */
 export async function updateLabelOp(
   ctx: UserContext,
   id: string,
   input: UpdateLabelInput,
-  opts: { serverOrigin?: boolean } = {},
+  opts: { serverOrigin?: boolean; materialized?: boolean } = {},
 ): Promise<LabelModel> {
   const { ops: rawOps, stx } = input;
-  const { serverOrigin } = opts;
+  const { serverOrigin, materialized } = opts;
 
   // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
   const updated = await tenantContext(ctx, async (txCtx) => {
@@ -74,8 +79,8 @@ export async function updateLabelOp(
     if (resolved.changed && 'description' in resolved.values) {
       const description = resolved.values.description as string | null;
       if (description) {
-        // Media URLs must come from trusted sources; keywords feed the shared board search
-        assertBlockMediaUrls(description, 'label', 'description');
+        // Media may reference only uploads of the label's own organization; keywords feed the shared board search
+        assertBlockMediaUrls(description, before.organizationId, 'label', 'description');
         values.keywords = extractKeywordsFromBlocks(description);
       } else {
         values.keywords = '';
@@ -100,7 +105,10 @@ export async function updateLabelOp(
       }
     }
 
-    return updateLabel(txCtx, { id, values });
+    const updatedLabel = await updateLabel(txCtx, { id, values });
+    // Inside the transaction, `before`/`after` index-aligned as the mutation bus contract requires.
+    await dispatchMutation(txCtx, 'label.updated', { before: [before], after: [updatedLabel], materialized });
+    return updatedLabel;
   });
 
   return updated;

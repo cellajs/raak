@@ -30,6 +30,7 @@ export function LabelDescriptionForm({ label }: { label: Label }) {
         entityType="label"
         entityId={label.id}
         tenantId={tenantId}
+        organizationId={label.organizationId}
         canEdit={canEdit}
         description={label.description}
         updateData={updateData}
