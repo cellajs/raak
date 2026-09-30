@@ -34,6 +34,7 @@ import { attachmentBody, seedAttachmentHome } from '../hierarchy-helpers';
 import { createInvitation } from '../invitations/helpers';
 import { createAppClient, type TestResult } from '../test-client';
 import { setTestConfig } from '../test-utils';
+// fork: member attachment policy helper
 import {
   clearSecurityTestData,
   createOrgUser,
@@ -69,6 +70,7 @@ interface Row {
  * sit outside RLS, so that check is their only one. The tenant boundary itself is cross-tenant.test.ts.
  */
 describe('Cross-organization API isolation', async () => {
+  // fork: asserts the template's member attachment policy; a fork's own may be narrower
   useMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
   const call = await createAppClient();
   let tenant: TestTenant;

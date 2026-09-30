@@ -9,6 +9,7 @@ import { attachmentBody, seedAttachmentHome } from '../hierarchy-helpers';
 import { bearerHeaders, serviceAccountWithKey } from '../oauth-helpers';
 import { createAppClient } from '../test-client';
 import { setTestConfig } from '../test-utils';
+// fork: member attachment policy helper
 import { clearSecurityTestData, createOrgUser, useMemberAttachmentPolicy } from './helpers';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
@@ -20,6 +21,7 @@ setTestConfig({ enabledAuthStrategies: ['passkey'] });
  * for an action denied on a row the caller can read.
  */
 describe('Product existence (getValidProduct)', async () => {
+  // fork: asserts the template's member attachment policy; a fork's own may be narrower
   useMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
   const call = await createAppClient();
   const { baseApp } = await import('#/routes');

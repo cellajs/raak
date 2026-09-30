@@ -7,6 +7,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { buildInsertableProduct } from '#/mocks';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
+// fork: skipped where attachments are not seen-tracked
 import { isTrackedProductType } from '#/modules/seen/operations/mark-seen';
 import { seenByTable } from '#/modules/seen/seen-by-db';
 import { adminRole, defaultHeaders, memberRole } from '../fixtures';
@@ -14,6 +15,7 @@ import { adminDb, createTestOrganization } from '../helpers';
 import { cleanupEntityHierarchy, insertAttachmentRow, seedAttachmentHome } from '../hierarchy-helpers';
 import { createAppClient } from '../test-client';
 import { setTestConfig } from '../test-utils';
+// fork: member attachment policy helper
 import { clearSecurityTestData, createOrgUser, useMemberAttachmentPolicy } from './helpers';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
@@ -22,6 +24,7 @@ setTestConfig({ enabledAuthStrategies: ['passkey'] });
  * markSeen answers how many of the posted ids it newly recorded as seen, and bumps their view counts. It counts only
  * rows the caller may read, like the reads do, so the answer never confirms that a hidden row exists.
  */
+// fork: runs where attachments are seen-tracked, under the template's member attachment policy
 describe.skipIf(!isTrackedProductType('attachment'))('markSeen and rows the caller cannot read', async () => {
   useMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
   const call = await createAppClient();

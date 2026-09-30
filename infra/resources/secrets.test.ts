@@ -6,12 +6,14 @@ import { installPulumiMocks, type MockHarness, unwrapSecret } from '../tests/hel
 
 const material = 'known-yjs-token-key-material-of-32-chars';
 let h: MockHarness;
+// fork: the stack folder follows the app slug, not the template's
 let slug: string;
 
 beforeAll(async () => {
   // The signing key comes from stack config, so its public half is known.
   h = await installPulumiMocks({ deferCompute: true, config: { 'infra:yjsTokenPrivateKey': material } });
   await import('./secrets');
+  // fork: the app slug
   ({ slug } = (await import('../pulumi-context')).naming);
   await h.settle();
 });
@@ -29,8 +31,9 @@ describe('secrets module', () => {
     for (const definition of runtimeSecrets) {
       const path = String(containers().find((r) => r.inputs.name === definition.secretName)?.inputs.path);
       // The VM grants are conditioned on these folders (tests/unit/secret-scope.test.ts proves what each covers), so the container must sit in the folder its consumer set owns.
+      // fork: the app slug
       expect(path, definition.id).toBe(secretPathFor(definition, slug, 'production'));
-      expect(path.startsWith(`/${slug}-production/`) && path.endsWith('/')).toBe(true);
+      expect(path).toMatch(new RegExp(`^/${slug}-production/.+/$`));
     }
   });
 

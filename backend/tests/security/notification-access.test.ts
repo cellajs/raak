@@ -15,6 +15,7 @@ import { adminDb, mailsTo } from '../helpers';
 import { attachmentBody, seedAttachmentHome } from '../hierarchy-helpers';
 import { createAppClient } from '../test-client';
 import { setTestConfig } from '../test-utils';
+// fork: member attachment policy helper
 import {
   clearSecurityTestData,
   createOrgUser,
@@ -34,6 +35,7 @@ const DAY = 24 * HOUR;
  * the digest or a mention mail, and a first digest must not reach back through the whole inbox.
  */
 describe('Notification access', async () => {
+  // fork: asserts the template's member attachment policy; a fork's own may be narrower
   useMemberAttachmentPolicy({ read: 1, update: 'own', delete: 'own' });
   const call = await createAppClient();
   let tenant: TestTenant;
