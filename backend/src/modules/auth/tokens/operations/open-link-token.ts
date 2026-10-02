@@ -6,7 +6,7 @@ import { handleMagicLink } from '#/modules/auth/general/helpers/handle-magic';
 import { explainOpenedMagicLink, holdMagicLinkOutsideItsBrowser } from '#/modules/auth/magic/helpers/magic-link-browser';
 import { claimMagicLinkOwner } from '#/modules/auth/magic/helpers/magic-sign-up';
 import { handleOAuthVerification } from '#/modules/auth/oauth/helpers/handle-oauth-verification';
-import { openStepUpLink } from '#/modules/auth/step-up/helpers/step-up-link';
+import { openStepUpLink } from '#/modules/auth/step-up/operations/open-step-up-link';
 import { forgetLinkRequest, invokeToken } from '#/modules/auth/tokens/token-lifecycle';
 import type { LinkTokenType } from '#/modules/auth/tokens/token-policies';
 import { log } from '#/utils/logger';
@@ -18,7 +18,7 @@ type LinkHandler = (ctx: Context<Env>, rawToken: string) => Promise<Response>;
  * What opening each link token type does, keyed by every link type: a type added with a link policy does not compile
  * until it says what its link does, so no link falls through to another type's handling.
  */
-export const linkHandlers = {
+const linkHandlers = {
   // Only a magic link belongs to a sign-in method, so this route's switch is checked here, per token type.
   magic: async (ctx, rawToken) => {
     assertSwitchOn({ strategy: 'magic' });
@@ -40,3 +40,6 @@ export const linkHandlers = {
   },
   'step-up': openStepUpLink,
 } satisfies Record<LinkTokenType, LinkHandler>;
+
+/** Opens an emailed link of `type` from the raw value in its URL, by what that type's link does. */
+export const openLinkToken = (ctx: Context<Env>, type: LinkTokenType, rawToken: string) => linkHandlers[type](ctx, rawToken);

@@ -13,6 +13,7 @@ import { createServerStx } from '#/core/stx';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
+import { type DescriptionBlock, findSummarySource } from 'shared/utils/derive-description-core';
 import { nanoid } from 'shared/utils/nanoid';
 import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
 import { mockLabel } from '#/modules/label/label-mocks';
@@ -256,8 +257,10 @@ const tasksSeed = async () => {
         const hasChecklist = faker.datatype.boolean();
         const checklistCount = hasChecklist ? faker.number.int({ min: 1, max: 6 }) : 0;
         const description = createDescription(name, taskDescription, checklistCount);
-        const blocks = JSON.parse(description) as { type: string }[];
+        const blocks = JSON.parse(description) as DescriptionBlock[];
         const expandable = blocks.length > 1;
+        // deriveDocument's summary rule, without its keyword and mention walks, which 1M+ rows would pay for.
+        const { source: summarySource, summaryLength } = findSummarySource(blocks);
         const keywords = extractKeywordsFromBlocks(description);
         const checkboxCount = checklistCount;
         const checkedCount = 0;
@@ -288,8 +291,8 @@ const tasksSeed = async () => {
           projectId,
           // Mirror the parent project's publicity locally (no runtime inherit helper in seeds).
           publicAt: insertProject.publicAt ?? null,
-          summary: name,
-          summaryLength: name.length,
+          summary: summarySource ? JSON.stringify([summarySource]) : '',
+          summaryLength,
           keywords,
           expandable,
           assignedTo,

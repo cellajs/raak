@@ -26,7 +26,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
     const description = faker.lorem.paragraph();
     const base = mockProductColumns('task', { name, description });
     const channelIds = generateMockEntityChannelIdColumns('task');
-    const summary = faker.lorem.sentence({ min: 5, max: 15 });
+    const summaryText = faker.lorem.sentence({ min: 5, max: 15 });
     const checkboxCount = faker.number.int({ min: 0, max: 10 });
     const publicAt =
       faker.helpers.maybe(() => faker.date.between({ from: new Date(base.createdAt), to: MOCK_REF_DATE }).toISOString(), { probability: 0.3 }) ??
@@ -36,8 +36,8 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       ...base,
       // Specific columns
       expandable: faker.datatype.boolean(),
-      summary,
-      summaryLength: summary.length,
+      summary: JSON.stringify([{ type: 'paragraph', props: {}, content: [{ type: 'text', text: summaryText, styles: {} }], children: [] }]),
+      summaryLength: summaryText.length,
       primaryLabelId: mockUuid(),
       displayOrder: faker.number.float({ min: 0, max: 1000, fractionDigits: 2 }),
       status: faker.helpers.arrayElement(taskStatuses),

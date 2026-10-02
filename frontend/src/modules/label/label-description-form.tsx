@@ -12,7 +12,7 @@ const gutterStyle = 'pt-3 pr-4 pb-5 pl-2 sm:pl-9';
 
 /**
  * Hosts the collaborative BlockNote editor for documenting an epic label; the shared
- * CollaborativeBlockNote owns the Yjs gates and fallback. Task-only primitives
+ * CollaborativeBlockNote owns the Yjs connection and its status. Task-only primitives
  * (checklist) and file blocks (no label attachment host yet) are excluded.
  */
 export function LabelDescriptionForm({ label }: { label: Label }) {

@@ -13,6 +13,7 @@ import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
+import { cn } from '~/utils/cn';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
 // (see @blocknote/react BlockNoteView), which would add empty trailing height below the editor.
@@ -24,18 +25,16 @@ interface TaskUpdateFormProps {
   task: Task;
   /** Exposes the editor's imperative API to the parent slot (handoff, warm-on-hover, checkbox toggle). */
   contentApiRef?: RefObject<BlockNoteContentApi | null>;
-  /** True when this is the focused editing editor; false when it is only warmed behind the static view. */
-  active?: boolean;
   /** Fires once the editor is mounted. */
   onEditorReady?: () => void;
 }
 
 /**
  * Hosts the collaborative BlockNote editor for editing a task description; the shared
- * CollaborativeBlockNote owns the Yjs gates and fallback, this wires task specifics
+ * CollaborativeBlockNote owns the Yjs connection and its status, this wires task specifics
  * (permission, members, attachments, card-state handlers, cache policy).
  */
-export function TaskUpdateForm({ task, contentApiRef, active = true, onEditorReady }: TaskUpdateFormProps) {
+export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdateFormProps) {
   const { tenantId } = useOrganizationLayoutContext();
 
   const project = findProjectByIdOrSlug(task.projectId, tenantId);
@@ -65,15 +64,15 @@ export function TaskUpdateForm({ task, contentApiRef, active = true, onEditorRea
         contentApiRef={contentApiRef}
         onEditorReady={onEditorReady}
         waitingFallback={
-          // Faded read-only preview while waiting for WS sync (avoids empty flash).
+          // The static wherever no live editor is, faded and inert only while an editor is coming.
           // noGutter: the wrapper already applies taskDescriptionGutterStyle, so the preview
           // aligns with the editor that replaces it and the swap causes no reflow.
-          <div className="pointer-events-none select-none opacity-50">
+          <div className={cn(canEdit && 'pointer-events-none select-none opacity-50')}>
             <TaskCardContentExpanded task={task} noGutter />
           </div>
         }
         editable
-        autoFocus={active}
+        // No autoFocus: its deferred focus would move the cursor to the start after the slot placed it.
         members={projectMembers}
         className={expandedStyle}
         dense

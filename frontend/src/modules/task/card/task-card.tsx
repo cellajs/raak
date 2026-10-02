@@ -14,7 +14,6 @@ import { CardDescriptionSlot } from '~/modules/task/card/card-description-slot';
 import { TaskCardDragPreview } from '~/modules/task/card/card-drag-preview';
 import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
-import { PreserveDescriptionHeight } from '~/modules/task/card/preserve-description-height';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
@@ -200,9 +199,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
               <TaskCardHeader task={task} isSheet={isSheet} />
             </StickyBox>
           )}
-          <PreserveDescriptionHeight>
-            <CardDescriptionSlot task={task} state={effectiveState} isReadOnly={isReadOnly} />
-          </PreserveDescriptionHeight>
+          <CardDescriptionSlot task={task} state={effectiveState} isReadOnly={isReadOnly} />
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />
         </CardContent>
         {dropIndicatorEdge && <DropIndicator edge={dropIndicatorEdge} gap={0.25} />}

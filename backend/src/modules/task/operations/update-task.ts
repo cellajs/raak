@@ -4,7 +4,7 @@ import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
-import { type DerivedDescriptionProps, deriveDescriptionProps, type ParsedBlock } from '#/modules/task/helpers/description';
+import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTask, hydrateTaskLite } from '#/modules/task/helpers/hydrate-task';
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { filterExistingAttachmentIds, findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
@@ -33,21 +33,9 @@ export async function updateTaskOp(
   const { fullResponse, serverOrigin, materialized } = opts;
   const user = ctx.var.user;
 
-  // Pre-compute description metadata outside the transaction to avoid holding a DB
-  // connection during CPU-intensive BlockNote HTML conversion + keyword extraction.
   // A cleared description derives empty counts and an empty attachments array, so the
   // CDC worker garbage-collects attachments the description no longer references.
-  let derivedDescription: DerivedDescriptionProps | undefined;
-  let parsedBlocks: ParsedBlock[] | undefined;
-  if ('description' in rawOps) {
-    const description = rawOps.description;
-    if (description) {
-      parsedBlocks = JSON.parse(description as string);
-      derivedDescription = await deriveDescriptionProps(description as string, parsedBlocks);
-    } else {
-      derivedDescription = await deriveDescriptionProps('');
-    }
-  }
+  const derivedDescription = 'description' in rawOps ? deriveDescriptionProps(rawOps.description as string | null) : undefined;
 
   // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
   const taskResponse = await tenantContext(ctx, async (txCtx) => {

@@ -53,42 +53,40 @@ export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput)
     primariesByProject.set(row.projectId, [...(primariesByProject.get(row.projectId) ?? []), row]);
   }
 
-  const tasksToInsert = await Promise.all(
-    input.map(async ({ stx, id, ...taskInfo }) => {
-      // Derived attachments are UUID-shape-checked only: attachment rows created in the
-      // same client batch may not be committed yet, so existence is not enforced here.
-      taskContract.assertBlockFields(taskInfo, organization.id);
-      const descriptionText = String(taskInfo.description ?? '');
-      const derived = await deriveDescriptionProps(descriptionText);
+  const tasksToInsert = input.map(({ stx, id, ...taskInfo }) => {
+    // Derived attachments are UUID-shape-checked only: attachment rows created in the
+    // same client batch may not be committed yet, so existence is not enforced here.
+    taskContract.assertBlockFields(taskInfo, organization.id);
+    const descriptionText = String(taskInfo.description ?? '');
+    const derived = deriveDescriptionProps(descriptionText);
 
-      const projectPrimaries = primariesByProject.get(taskInfo.projectId) ?? [];
-      // Unknown/missing ids fall back to the project default (graceful for offline replays)
-      const primaryLabelId = projectPrimaries.some((l) => l.id === taskInfo.primaryLabelId)
-        ? (taskInfo.primaryLabelId as string)
-        : projectPrimaries[0]?.id;
-      if (!primaryLabelId) {
-        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'task', meta: { reason: 'Project has no primary labels' } });
-      }
+    const projectPrimaries = primariesByProject.get(taskInfo.projectId) ?? [];
+    // Unknown/missing ids fall back to the project default (graceful for offline replays)
+    const primaryLabelId = projectPrimaries.some((l) => l.id === taskInfo.primaryLabelId)
+      ? (taskInfo.primaryLabelId as string)
+      : projectPrimaries[0]?.id;
+    if (!primaryLabelId) {
+      throw new AppError(400, 'invalid_request', 'warn', { entityType: 'task', meta: { reason: 'Project has no primary labels' } });
+    }
 
-      const task = {
-        ...taskInfo,
-        id,
-        primaryLabelId,
-        entityType: 'task' as const,
-        description: descriptionText,
-        ...derived,
-        displayOrder: taskInfo.displayOrder ?? 0,
-        tenantId: organization.tenantId,
-        organizationId: organization.id,
-        createdAt: getIsoDate(),
-        createdBy: ctx.var.actor.id,
-        stx: buildStx(stx),
-      };
+    const task = {
+      ...taskInfo,
+      id,
+      primaryLabelId,
+      entityType: 'task' as const,
+      description: descriptionText,
+      ...derived,
+      displayOrder: taskInfo.displayOrder ?? 0,
+      tenantId: organization.tenantId,
+      organizationId: organization.id,
+      createdAt: getIsoDate(),
+      createdBy: ctx.var.actor.id,
+      stx: buildStx(stx),
+    };
 
-      canCreateEntity(ctx, buildSubject('task', task));
-      return task;
-    }),
-  );
+    canCreateEntity(ctx, buildSubject('task', task));
+    return task;
+  });
 
   // Insert + hydrate inside tenantContext so RLS session vars are set
   const { createdTasks, users, labels } = await tenantContext(ctx, async (txCtx) => {

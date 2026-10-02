@@ -4,7 +4,8 @@ import type { CreateTasksData, GetTasksData, StxBase, UpdateTaskData, UserMinima
 import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
 import { zTask } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
-import { deriveDescriptionCounts } from '~/modules/common/blocknote/derive-description-props';
+import { deriveDocument } from 'shared/utils/derive-description-core';
+import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { findLabelInCache, labelQueryKeys } from '~/modules/label/query';
 import { getProjectPublicAt } from '~/modules/project/query';
@@ -53,9 +54,6 @@ type BaseUpdateParams = Pick<UpdateTaskData['path'], 'id'> & UpdateTaskDataOps;
 
 /** Client-only fields for building correct optimistic cache shape (not in API schema) */
 type OptimisticCacheFields = {
-  /** Client-computed summary (backend regenerates server-side) */
-  summary?: string;
-  summaryLength?: number;
   fullLabels: TaskLabel[];
   fullAssignedTo: UserMinimalBase[];
 };
@@ -113,11 +111,17 @@ registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, 
 });
 
 /**
- * Fields derived from the task description (computed server-side on description writes).
- * Used both to merge server-computed values after a description mutation and to protect
- * these fields from stale SSE overwrites while a Yjs editor is active.
+ * The task columns `deriveDescriptionProps` (backend) stores from a description, minus `keywords`: the server
+ * extracts those with its own word list, and they only feed server search.
  */
-export const TASK_DERIVED_DESCRIPTION_FIELDS = [
+const deriveTaskDescription = (description: string | null) => {
+  const { summary, summaryLength, counts } = deriveDocument(description);
+  const { expandable, checkboxCount, checkedCount, attachments } = counts;
+  return { summary, summaryLength, expandable, checkboxCount, checkedCount, attachments };
+};
+
+/** Every column the server derives from the description: merged from its response after a description write. */
+const TASK_DERIVED_DESCRIPTION_FIELDS = [
   'summary',
   'summaryLength',
   'expandable',
@@ -127,7 +131,7 @@ export const TASK_DERIVED_DESCRIPTION_FIELDS = [
   'keywords',
 ] as const;
 
-// Register Yjs-owned fields; SSE updates skip these while a Yjs editor is active.
+registerDescriptionDerivation('task', deriveTaskDescription);
 registerYjsOwnedFields('task', ['description', ...TASK_DERIVED_DESCRIPTION_FIELDS]);
 
 const tasksMutationKeyBase = ['task'] as const;
@@ -146,7 +150,7 @@ export const getTasksNextPageParam: GetNextPageParamFunction<PageParams, TasksQu
 // Optimistic UI fields are removed before SDK operations.
 
 const createTaskMutationFn = async (vars: TaskCreateFullVars) => {
-  const { tenantId, organizationId, stx, fullLabels: _fl, fullAssignedTo: _fa, isSheet: _is, summary: _summary, ...data } = vars;
+  const { tenantId, organizationId, stx, fullLabels: _fl, fullAssignedTo: _fa, isSheet: _is, ...data } = vars;
   const effectiveStx = stx ?? createStxForCreate();
   const result = await createTasks({ body: [{ ...data, stx: effectiveStx }], path: { organizationId, tenantId } });
   return result.data[0];
@@ -206,16 +210,7 @@ const applyOptimisticTaskUpdate = (
       if (freshPrimary) optimisticUpdates.primaryLabel = freshPrimary;
     }
 
-    // When description changes, derive all virtual props optimistically.
-    // Counts are derived even without a client-computed summary (e.g. checkbox
-    // toggles skip summary; the backend regenerates it server-side).
-    if (typeof mergedOps.description === 'string') {
-      Object.assign(optimisticUpdates, deriveDescriptionCounts(mergedOps.description));
-      if (variables.summary) {
-        optimisticUpdates.summary = variables.summary;
-        optimisticUpdates.summaryLength = variables.summaryLength ?? previousTask.summaryLength;
-      }
-    }
+    if ('description' in mergedOps) Object.assign(optimisticUpdates, deriveTaskDescription(mergedOps.description as string | null));
 
     const optimisticTask: Task = { ...previousTask, ...optimisticUpdates, updatedAt: new Date().toISOString() };
 
@@ -323,7 +318,14 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ fullLabels, fullAssignedTo, isSheet: _isSheet, stx: _stx, tenantId, organizationId, ...rest }) => {
     const orgKey = taskKeys.list.org(organizationId);
-    const optimisticTask = createOptimisticEntity(zTask, { ...rest, tenantId, organizationId, labels: fullLabels, assignedTo: fullAssignedTo });
+    const optimisticTask = createOptimisticEntity(zTask, {
+      ...rest,
+      ...deriveTaskDescription(rest.description ?? null),
+      tenantId,
+      organizationId,
+      labels: fullLabels,
+      assignedTo: fullAssignedTo,
+    });
     await queryClient.cancelQueries({ queryKey: orgKey });
     // Insert into the row's canonical home (project) list only, never filtered/search lists.
     insertEntitiesIntoHome(queryClient, [optimisticTask]);
