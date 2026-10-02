@@ -19,7 +19,7 @@ const toastIcons: Record<string, ReactNode> = {
 // Stacking and swipe transforms follow the shadcn base toast. `--toast-dir` (1 for bottom, -1 for top, set on the
 // viewport) flips every vertical offset, so one class list serves both edges.
 const toastRootClassName = cn(
-  'group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom select-none rounded-lg border bg-popover text-popover-foreground shadow-lg outline-none will-change-transform focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+  'group/toast focus-effect pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom select-none rounded-lg border bg-popover text-popover-foreground shadow-lg will-change-transform',
   'group-data-[position=top]/toast-viewport:top-0 group-data-[position=top]/toast-viewport:bottom-auto group-data-[position=top]/toast-viewport:origin-top',
   '[--gap:0.75rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-dir)*-1*(var(--toast-offset-y)+var(--toast-index)*var(--gap))+var(--toast-swipe-movement-y))] [--peek:0.75rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))]',
   'h-(--height) [transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-var(--toast-dir)*(var(--toast-index)*var(--peek)+var(--shrink)*var(--height))))_scale(var(--scale))] [transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]',
@@ -40,17 +40,10 @@ const toastRootClassName = cn(
 
 function ToastList({ position }: { position: ToastPosition }) {
   const { toasts } = ToastPrimitive.useToastManager();
-  const swipeDirection: ToastPrimitive.Root.Props['swipeDirection'] =
-    position === 'top' ? ['up', 'right'] : ['down', 'right'];
+  const swipeDirection: ToastPrimitive.Root.Props['swipeDirection'] = position === 'top' ? ['up', 'right'] : ['down', 'right'];
 
   return toasts.map((toast) => (
-    <ToastPrimitive.Root
-      key={toast.id}
-      toast={toast}
-      swipeDirection={swipeDirection}
-      data-slot="toast"
-      className={toastRootClassName}
-    >
+    <ToastPrimitive.Root key={toast.id} toast={toast} swipeDirection={swipeDirection} data-slot="toast" className={toastRootClassName}>
       <ToastPrimitive.Content
         data-slot="toast-content"
         className="flex h-full items-center gap-3 overflow-hidden p-4 transition-opacity duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] data-behind:opacity-0 data-expanded:opacity-100"
@@ -62,17 +55,9 @@ function ToastList({ position }: { position: ToastPosition }) {
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <ToastPrimitive.Title data-slot="toast-title" className="font-medium text-sm" />
-          <ToastPrimitive.Description
-            data-slot="toast-description"
-            render={<div />}
-            className="text-muted-foreground text-sm"
-          />
+          <ToastPrimitive.Description data-slot="toast-description" render={<div />} className="text-muted-foreground text-sm" />
         </div>
-        <ToastPrimitive.Action
-          data-slot="toast-action"
-          render={<Button variant="outline" size="xs" />}
-          className="shrink-0"
-        />
+        <ToastPrimitive.Action data-slot="toast-action" render={<Button variant="outline" size="xs" />} className="shrink-0" />
         <ToastPrimitive.Close
           data-slot="toast-close"
           aria-label={t('c:close')}
@@ -90,11 +75,7 @@ function ToastList({ position }: { position: ToastPosition }) {
  * Renders the toasts of `toastManager` in a stack at the top or bottom edge. Toasts carry their own
  * icon per `type`, a close button and an optional action. Ported from the shadcn base toast.
  */
-export function Toaster({
-  children,
-  position = 'bottom',
-  ...props
-}: ToastPrimitive.Provider.Props & { position?: ToastPosition }) {
+export function Toaster({ children, position = 'bottom', ...props }: ToastPrimitive.Provider.Props & { position?: ToastPosition }) {
   return (
     <ToastPrimitive.Provider {...props}>
       {children}
@@ -103,7 +84,7 @@ export function Toaster({
           data-slot="toast-viewport"
           data-position={position}
           className={cn(
-            'group/toast-viewport pointer-events-none fixed inset-x-4 z-500 mx-auto w-auto max-w-115 outline-none [--toast-dir:1] sm:right-4 sm:left-auto sm:mx-0 sm:w-full',
+            'group/toast-viewport pointer-events-none fixed inset-x-4 z-500 mx-auto w-auto max-w-115 outline-hidden [--toast-dir:1] sm:right-4 sm:left-auto sm:mx-0 sm:w-full',
             'data-[position=top]:top-[calc(1rem+env(safe-area-inset-top,0px))] data-[position=bottom]:bottom-4 data-[position=top]:[--toast-dir:-1]',
           )}
         >

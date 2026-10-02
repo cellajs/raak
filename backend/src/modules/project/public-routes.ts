@@ -19,10 +19,7 @@ const publicProjectRoutes = {
       200: {
         description: 'Project without membership public',
         content: {
-          'application/json': {
-            schema: projectSchema.extend({ membership: z.null() }),
-            example: { ...mockProjectResponse(), membership: null },
-          },
+          'application/json': { schema: projectSchema.extend({ membership: z.null() }), example: { ...mockProjectResponse(), membership: null } },
         },
       },
       ...errorResponseRefs,

@@ -5,8 +5,6 @@ export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
 /** One service or dependency in the health envelope: `status` grades it, the open `details` bag diagnoses it. */
 export interface HealthComponent {
   status: HealthStatus;
-  /** Human-readable name for user-facing status displays. */
-  label?: string;
   /** How the status was obtained: `local` self-check, worker `push`, or active `probe`. */
   checkedVia?: 'local' | 'push' | 'probe';
   /** Age of the underlying data (ms), set for pushed/cached reports. */
@@ -32,10 +30,7 @@ export function worstStatus(a: HealthStatus, b: HealthStatus): HealthStatus {
 }
 
 /** Only critical components reach `unhealthy`; others cap at `degraded` so a flaky worker keeps the API registered. */
-export function rollupStatus(
-  components: Record<string, HealthComponent>,
-  criticalComponents: Set<string>,
-): HealthStatus {
+export function rollupStatus(components: Record<string, HealthComponent>, criticalComponents: Set<string>): HealthStatus {
   let result: HealthStatus = 'healthy';
   for (const [name, component] of Object.entries(components)) {
     const capped = criticalComponents.has(name) || component.status !== 'unhealthy' ? component.status : 'degraded';
@@ -167,20 +162,11 @@ export interface ProbeResult {
 }
 
 /** Maps an active probe of a worker's `/health?depth=full`; an unreachable worker is `unhealthy` here. */
-export function mapProbeComponent(
-  result: ProbeResult,
-  extractDetails: (body: Record<string, unknown>) => Record<string, unknown>,
-): HealthComponent {
+export function mapProbeComponent(result: ProbeResult, extractDetails: (body: Record<string, unknown>) => Record<string, unknown>): HealthComponent {
   if (!result.ok || !result.body) {
-    return {
-      status: 'unhealthy',
-      checkedVia: 'probe',
-      latencyMs: result.latencyMs,
-      reason: result.reason ?? 'unreachable',
-    };
+    return { status: 'unhealthy', checkedVia: 'probe', latencyMs: result.latencyMs, reason: result.reason ?? 'unreachable' };
   }
   const reported = result.body.status;
-  const status: HealthStatus =
-    reported === 'unhealthy' ? 'unhealthy' : reported === 'degraded' ? 'degraded' : 'healthy';
+  const status: HealthStatus = reported === 'unhealthy' ? 'unhealthy' : reported === 'degraded' ? 'degraded' : 'healthy';
   return { status, checkedVia: 'probe', latencyMs: result.latencyMs, details: extractDetails(result.body) };
 }

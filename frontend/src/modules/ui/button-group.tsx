@@ -1,7 +1,7 @@
+import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
-import React from 'react';
+import type React from 'react';
 import { Separator } from '~/modules/ui/separator';
-import { Slot } from '~/modules/ui/slot';
 import { cn } from '~/utils/cn';
 
 export const buttonGroupVariants = cva(
@@ -9,23 +9,15 @@ export const buttonGroupVariants = cva(
   {
     variants: {
       orientation: {
-        horizontal:
-          '[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none',
-        vertical:
-          'flex-col [&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:border-t-0 [&>*:not(:last-child)]:rounded-b-none',
+        horizontal: '[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none',
+        vertical: 'flex-col [&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:border-t-0 [&>*:not(:last-child)]:rounded-b-none',
       },
     },
-    defaultVariants: {
-      orientation: 'horizontal',
-    },
+    defaultVariants: { orientation: 'horizontal' },
   },
 );
 
-export function ButtonGroup({
-  className,
-  orientation,
-  ...props
-}: React.ComponentProps<'div'> & VariantProps<typeof buttonGroupVariants>) {
+export function ButtonGroup({ className, orientation, ...props }: React.ComponentProps<'div'> & VariantProps<typeof buttonGroupVariants>) {
   return (
     <div
       role="group"
@@ -37,39 +29,26 @@ export function ButtonGroup({
   );
 }
 
-export function ButtonGroupText({
-  className,
-  render,
-  children,
-  ...props
-}: React.ComponentProps<'div'> & {
-  render?: React.ReactElement;
-}) {
-  const computedProps = {
-    className: cn(
-      "flex items-center gap-2 rounded-md border bg-muted px-4 font-medium text-sm shadow-xs [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none",
-      className,
-    ),
-    ...props,
-  };
-
-  if (render) {
-    return <Slot {...computedProps}>{React.cloneElement(render, undefined, children)}</Slot>;
-  }
-
-  return <div {...computedProps}>{children}</div>;
+export function ButtonGroupText({ className, render, ...props }: useRender.ComponentProps<'div'>) {
+  return useRender({
+    defaultTagName: 'div',
+    render,
+    props: {
+      className: cn(
+        "flex items-center gap-2 rounded-md border bg-muted px-4 font-medium text-sm shadow-xs [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none",
+        className,
+      ),
+      ...props,
+    },
+  });
 }
 
-export function ButtonGroupSeparator({
-  className,
-  orientation = 'vertical',
-  ...props
-}: React.ComponentProps<typeof Separator>) {
+export function ButtonGroupSeparator({ className, orientation = 'vertical', ...props }: React.ComponentProps<typeof Separator>) {
   return (
     <Separator
       data-slot="button-group-separator"
       orientation={orientation}
-      className={cn('!m-0 relative self-stretch bg-input data-[orientation=vertical]:h-auto', className)}
+      className={cn('relative m-0! self-stretch bg-input data-[orientation=vertical]:h-auto', className)}
       {...props}
     />
   );

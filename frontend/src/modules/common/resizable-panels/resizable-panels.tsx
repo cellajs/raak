@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, type Ref, useContext, useEffect, useRef } from 'react';
+import { createContext, type ReactNode, type Ref, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { cn } from '~/utils/cn';
 
@@ -107,12 +107,7 @@ function resolveLayout(
   if (growPanel && collapsedAtStart.has(growPanel.id) && growPanel.collapsible) {
     const expandThreshold = growPanel.minWidth - growPanel.collapsedWidth;
     if (absDx < expandThreshold) {
-      hints.push({
-        panelId: growPanel.id,
-        side: draggingLeft ? 'left' : 'right',
-        mode: 'expand',
-        progress: absDx / expandThreshold,
-      });
+      hints.push({ panelId: growPanel.id, side: draggingLeft ? 'left' : 'right', mode: 'expand', progress: absDx / expandThreshold });
       return { widths: { ...initialWidths }, hints };
     }
   }
@@ -175,12 +170,7 @@ function resolveLayout(
         // Collapse hint (G4)
         const progress = collapseProgress(victim, rawWidth);
         if (progress > 0) {
-          hints.push({
-            panelId: victim.id,
-            side: draggingLeft ? 'right' : 'left',
-            mode: 'collapse',
-            progress,
-          });
+          hints.push({ panelId: victim.id, side: draggingLeft ? 'right' : 'left', mode: 'collapse', progress });
         }
 
         if (clampedWidth <= victim.collapsedWidth) {
@@ -236,12 +226,7 @@ function resolveLayout(
         // Collapse hint (G4)
         const progress = collapseProgress(victim, rawWidth);
         if (progress > 0) {
-          hints.push({
-            panelId: victim.id,
-            side: draggingLeft ? 'right' : 'left',
-            mode: 'collapse',
-            progress,
-          });
+          hints.push({ panelId: victim.id, side: draggingLeft ? 'right' : 'left', mode: 'collapse', progress });
         }
 
         if (clampedWidth <= victim.collapsedWidth) {
@@ -293,18 +278,12 @@ function ResizeHint() {
     <div
       data-resize-hint=""
       className="pointer-events-none absolute top-1/2 z-999 flex items-center justify-center"
-      style={{
-        left: 'var(--hint-left, auto)',
-        right: 'var(--hint-right, auto)',
-        opacity: 'var(--hint-progress, 0)',
-        transform: HINT_TRANSFORM,
-      }}
+      style={{ left: 'var(--hint-left, auto)', right: 'var(--hint-right, auto)', opacity: 'var(--hint-progress, 0)', transform: HINT_TRANSFORM }}
     >
       <div
         className="absolute h-24 w-18 rounded-full"
         style={{
-          background:
-            'radial-gradient(ellipse, var(--background) 30%, color-mix(in oklch, var(--background) 60%, transparent) 60%, transparent 80%)',
+          background: 'radial-gradient(ellipse, var(--background) 30%, color-mix(in oklch, var(--background) 60%, transparent) 60%, transparent 80%)',
         }}
       />
       <svg
@@ -326,12 +305,7 @@ function ResizeHint() {
   );
 }
 
-function showResizeHint(
-  element: HTMLDivElement,
-  side: 'left' | 'right',
-  mode: 'collapse' | 'expand',
-  progress: number,
-) {
+function showResizeHint(element: HTMLDivElement, side: 'left' | 'right', mode: 'collapse' | 'expand', progress: number) {
   const attr = `${mode}-${side}`;
   const s = element.style;
   if (element.getAttribute('data-resizing') !== attr) {
@@ -377,15 +351,7 @@ interface PanelGroupProps {
   children: ReactNode;
 }
 
-export function ResizablePanelGroup({
-  id,
-  defaultLayout,
-  onLayoutChanged,
-  onCollapseChange,
-  onReady,
-  className,
-  children,
-}: PanelGroupProps) {
+export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onCollapseChange, onReady, className, children }: PanelGroupProps) {
   const panelsRef = useRef<PanelEntry[]>([]);
   const widthsRef = useRef<Record<string, number>>({});
   const dragRef = useRef<DragState | null>(null);
@@ -449,9 +415,7 @@ export function ResizablePanelGroup({
   const computeAutoFill = () => {
     const container = containerRef.current;
     if (!container) return true;
-    const parentWidth = container.parentElement
-      ? container.parentElement.getBoundingClientRect().width
-      : container.getBoundingClientRect().width;
+    const parentWidth = (container.parentElement ?? container).getBoundingClientRect().width;
     return getIdealPanelSum() + getSeparatorSpace() <= parentWidth;
   };
 
@@ -655,8 +619,7 @@ export function ResizablePanelGroup({
     let sepSpace = 0;
     for (const sep of separatorsRef.current.values()) {
       const style = getComputedStyle(sep);
-      sepSpace +=
-        sep.getBoundingClientRect().width + Number.parseFloat(style.marginLeft) + Number.parseFloat(style.marginRight);
+      sepSpace += sep.getBoundingClientRect().width + Number.parseFloat(style.marginLeft) + Number.parseFloat(style.marginRight);
     }
     return sepSpace;
   };
@@ -746,9 +709,7 @@ export function ResizablePanelGroup({
       const w = widthsRef.current[panel.id] ?? panel.minWidth;
       const isLast = i === resizable.length - 1;
       // Last panel absorbs rounding remainder to keep total exact
-      let newW = isLast
-        ? Math.max(panel.minWidth, target - distributed)
-        : Math.max(panel.minWidth, Math.floor(w * ratio));
+      let newW = Math.max(panel.minWidth, isLast ? target - distributed : Math.floor(w * ratio));
       newW = Math.min(newW, viewportWidth);
       distributed += newW;
       if (Math.abs(newW - w) >= 1) {
@@ -797,15 +758,7 @@ export function ResizablePanelGroup({
       if (!drag) return;
       const dx = e.clientX - drag.startX;
       const ppc = dx < 0 ? drag.perPanelCascade.left : drag.perPanelCascade.right;
-      const result = resolveLayout(
-        panelsRef.current,
-        drag.separatorIndex,
-        drag.initialWidths,
-        drag.collapsedAtStart,
-        dx,
-        drag.autoFill,
-        ppc,
-      );
+      const result = resolveLayout(panelsRef.current, drag.separatorIndex, drag.initialWidths, drag.collapsedAtStart, dx, drag.autoFill, ppc);
 
       applyLayoutResult(result);
     };
@@ -826,13 +779,10 @@ export function ResizablePanelGroup({
     };
   }, []);
 
-  const ctxValue: PanelGroupContextValue = {
-    groupId: id,
-    registerPanel,
-    unregisterPanel,
-    registerSeparator,
-    unregisterSeparator,
-  };
+  // Panels and separators re-register whenever this value changes, which re-measures and aborts a running drag.
+  // The functions only touch refs, so the first render's copies stay valid and the value follows `id` alone.
+  const [registry] = useState(() => ({ registerPanel, unregisterPanel, registerSeparator, unregisterSeparator }));
+  const ctxValue = useMemo<PanelGroupContextValue>(() => ({ groupId: id, ...registry }), [id, registry]);
 
   const dragCtx: SeparatorDragContextValue = {
     startDrag,
@@ -845,12 +795,7 @@ export function ResizablePanelGroup({
   return (
     <PanelGroupContext.Provider value={ctxValue}>
       <SeparatorDragContext.Provider value={dragCtx}>
-        <div
-          ref={containerRef}
-          className={className}
-          data-panel-group={id}
-          style={{ display: 'flex', overflow: 'visible' }}
-        >
+        <div ref={containerRef} className={className} data-panel-group={id} style={{ display: 'flex', overflow: 'visible' }}>
           {children}
         </div>
       </SeparatorDragContext.Provider>
@@ -873,16 +818,7 @@ interface PanelProps {
   [key: `data-${string}`]: string | undefined;
 }
 
-export function ResizablePanel({
-  id,
-  minWidth,
-  collapsedWidth = 0,
-  collapsible = false,
-  className,
-  children,
-  ref,
-  ...rest
-}: PanelProps) {
+export function ResizablePanel({ id, minWidth, collapsedWidth = 0, collapsible = false, className, children, ref, ...rest }: PanelProps) {
   const ctx = useContext(PanelGroupContext);
   const internalRef = useRef<HTMLDivElement | null>(null);
 
@@ -1027,7 +963,7 @@ export function ResizableSeparator({ index, className, children, ...rest }: Sepa
       aria-controls={ariaControls || undefined}
       tabIndex={0}
       data-separator="inactive"
-      className={cn('select-none focus-visible:outline-none focus-visible:ring-0', className)}
+      className={cn('select-none focus-visible:outline-hidden focus-visible:ring-0', className)}
       style={{ touchAction: 'none', cursor: 'col-resize', flexShrink: 0 }}
       onPointerDown={handlePointerDown}
       onPointerEnter={handlePointerEnter}

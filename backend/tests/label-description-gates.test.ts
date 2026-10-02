@@ -83,13 +83,7 @@ describe('Label description gates (epic documentation)', async () => {
       projectId,
     });
 
-    const baseLabel = {
-      tenantId: tenant.tenantId,
-      organizationId: tenant.organization.id,
-      projectId,
-      createdBy: tenant.user.id,
-      stx: mockStxBase(),
-    };
+    const baseLabel = { tenantId: tenant.tenantId, organizationId: tenant.organization.id, projectId, createdBy: tenant.user.id, stx: mockStxBase() };
     await db.insert(labelsTable).values([
       { ...baseLabel, id: epicLabelId, name: 'Checkout revamp', slug: 'checkout-revamp', mode: 'epic' },
       { ...baseLabel, id: secondaryLabelId, name: 'urgent', slug: 'urgent', mode: 'secondary' },

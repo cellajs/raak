@@ -7,15 +7,13 @@ import { zMoveProjectToWorkspacePath, zMoveProjectToWorkspaceQuery } from 'sdk/z
 import { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useProjectMoveMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 
-const formSchema = z.object({
-  ...zMoveProjectToWorkspacePath.shape,
-  ...zMoveProjectToWorkspaceQuery.shape,
-});
+const formSchema = z.object({ ...zMoveProjectToWorkspacePath.shape, ...zMoveProjectToWorkspaceQuery.shape });
 type FormValues = z.infer<typeof formSchema>;
 
 interface MoveProjectFormProps {
@@ -67,25 +65,12 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <SelectParentFormField
-          parentType="workspace"
-          control={form.control}
-          label={t('c:workspace')}
-          options={options}
-          name="workspaceId"
-          required
-        />
+        <SelectParentFormField parentType="workspace" control={form.control} label={t('c:workspace')} options={options} name="workspaceId" required />
         <div className="flex flex-col gap-2 sm:flex-row">
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:move')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={form.isDirty ? '' : 'invisible'}
-            aria-label="Cancel"
-            onClick={() => form.reset()}
-          >
+          <Button type="reset" variant="secondary" className={form.isDirty ? '' : 'invisible'} aria-label="Cancel" onClick={() => form.reset()}>
             {t('c:cancel')}
           </Button>
         </div>

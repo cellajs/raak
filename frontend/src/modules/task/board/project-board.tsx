@@ -54,14 +54,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
         if (col?.kind === 'labels') return <LabelsPanel entity="project" entityId={boardId} windowScroll />;
         if (col?.kind !== 'project') return null;
 
-        return (
-          <ProjectBoardPanel
-            project={col.project}
-            publicView={publicView}
-            sectionFilters={col.sectionFilters}
-            windowScroll
-          />
-        );
+        return <ProjectBoardPanel project={col.project} publicView={publicView} sectionFilters={col.sectionFilters} windowScroll />;
       }}
     </BoardLayout>
   );

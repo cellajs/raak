@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { useLatestRef } from '~/hooks/use-latest-ref';
 import { useUIStore } from '~/modules/ui/ui-store';
+import { cn } from '~/utils/cn';
 
 // Hold the indicator still briefly, then glide it off-screen (ms).
 const exitHold = 100;
 const exitDuration = 450;
+// Minimum swipe distance before the pull-to-refresh UI appears and starts counting (px).
+const activationThreshold = 30;
+// First 30px of pull just shows the empty circle, progress starts after that (px).
+const emptyPhase = 30;
 
 type Phase = 'idle' | 'refreshing' | 'exiting';
 
@@ -22,133 +29,123 @@ function getScrollParent(el: Element | null): Element | null {
 
 type Props = {
   onRefresh: () => void | Promise<void>;
-  /** Whether queries are currently fetching (from useIsFetching) */
-  isFetching?: boolean;
   refreshThreshold?: number;
   maximumPullLength?: number;
   isDisabled?: boolean;
 };
 
-export function PullToRefresh({
-  onRefresh,
-  isFetching = false,
-  refreshThreshold = 90,
-  maximumPullLength = 200,
-  isDisabled = false,
-}: Props) {
+export function PullToRefresh({ onRefresh, refreshThreshold = 90, maximumPullLength = 200, isDisabled = false }: Props) {
+  const queryClient = useQueryClient();
   const [pullPosition, setPullPosition] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
 
   const pullStartRef = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
+  // Mirrors pullPosition for the touch handlers, so they are not re-bound on every move
+  const pullPositionRef = useRef(0);
   // Whether any query actually fetched during the current refresh cycle.
   const sawFetchRef = useRef(false);
+  const onRefreshRef = useLatestRef(onRefresh);
 
   const isRefreshing = phase === 'refreshing';
   // Indicator stays styled as a spinner through both refreshing and exiting.
   const isActive = phase !== 'idle';
   const isPulling = pullPosition > 0;
 
-  // Disable when UI is locked (dialog, dropdown, sheet open)
+  // Disabled while an overlay is open (dialog, dropdown, sheet)
   const isUILocked = useUIStore((state) => state.uiLocks.length > 0);
-  if (isUILocked) isDisabled = true;
+  const disabled = isDisabled || isUILocked;
 
-  const startPull = useCallback(
-    (e: TouchEvent) => {
-      if (isDisabled) return;
+  // Watches the query cache only while refreshing, so fetches at other times never re-render this
+  useEffect(() => {
+    if (!isRefreshing) return;
+    const check = () => {
+      if (!sawFetchRef.current && queryClient.isFetching() > 0) sawFetchRef.current = true;
+    };
+    check();
+    return queryClient.getQueryCache().subscribe(check);
+  }, [isRefreshing, queryClient]);
 
-      // Only start at the top of the touch target's scroll parent, or of the window
-      const target = e.target as Element | null;
-      const scrollParent = getScrollParent(target);
-      const scrollTop = scrollParent ? scrollParent.scrollTop : window.scrollY;
-      if (scrollTop > 0) return;
+  useEffect(() => {
+    if (disabled) return;
 
+    const setPull = (position: number) => {
+      pullPositionRef.current = position;
+      setPullPosition(position);
+    };
+
+    const cancelPull = () => {
+      pullStartRef.current = null;
+      isDraggingRef.current = false;
+      setPull(0);
+    };
+
+    const startPull = (e: TouchEvent) => {
       const touch = e.targetTouches[0];
-      const pullArea = window.innerHeight * 0.4;
+      if (!touch || touch.clientY > window.innerHeight * 0.4 || window.scrollY > 0) return;
 
-      if (touch.clientY <= pullArea) {
-        setPhase('idle'); // cancel any in-progress exit animation
-        pullStartRef.current = touch.screenY;
-        isDraggingRef.current = true;
-      }
-    },
-    [isDisabled],
-  );
+      // Only start at the top of the touch target's scroll parent; the walk reads styles, so it runs last
+      const scrollParent = getScrollParent(e.target as Element | null);
+      if (scrollParent && scrollParent.scrollTop > 0) return;
 
-  // Minimum swipe distance before the pull-to-refresh UI appears and starts counting
-  const activationThreshold = 30;
+      setPhase('idle'); // cancel any in-progress exit animation
+      pullStartRef.current = touch.screenY;
+      isDraggingRef.current = true;
+    };
 
-  const onPull = useCallback(
-    (e: TouchEvent) => {
-      if (isDisabled || !isDraggingRef.current || pullStartRef.current === null) return;
+    const onPull = (e: TouchEvent) => {
+      if (!isDraggingRef.current || pullStartRef.current === null) return;
 
       const touch = e.targetTouches[0];
       if (!touch) return;
 
       const rawDelta = touch.screenY - pullStartRef.current;
-
       if (rawDelta < activationThreshold) {
-        setPullPosition(0);
+        setPull(0);
         return;
       }
 
-      const delta = rawDelta - activationThreshold;
-      const clamped = Math.max(0, Math.min(delta, maximumPullLength));
+      setPull(Math.max(0, Math.min(rawDelta - activationThreshold, maximumPullLength)));
+    };
 
-      setPullPosition(clamped);
-    },
-    [isDisabled, maximumPullLength],
-  );
+    const endPull = () => {
+      if (!isDraggingRef.current) return;
 
-  const endPull = useCallback(() => {
-    if (isDisabled || !isDraggingRef.current) return;
+      // Discount the empty-circle phase before comparing against the threshold
+      const pulledEnough = pullPositionRef.current - emptyPhase >= refreshThreshold;
+      cancelPull();
+      if (!pulledEnough) return;
 
-    // Discount the empty-circle phase before comparing against the threshold
-    const pulledEnough = pullPosition - 30 >= refreshThreshold;
+      // Enter the refreshing state immediately, even on routes without active query observers.
+      setPhase('refreshing');
+      sawFetchRef.current = false;
 
-    pullStartRef.current = null;
-    isDraggingRef.current = false;
+      Promise.resolve(onRefreshRef.current()).finally(() => {
+        // Static routes have nothing to refetch, so skip the animation and hard-reload.
+        if (!sawFetchRef.current) {
+          window.location.reload();
+          return;
+        }
+        setPhase('exiting');
+      });
+    };
 
-    if (!pulledEnough) {
-      setPullPosition(0);
-      return;
-    }
-
-    // Enter the refreshing state immediately, even on routes without active query observers.
-    setPhase('refreshing');
-    setPullPosition(0);
-    sawFetchRef.current = false;
-
-    Promise.resolve(onRefresh()).finally(() => {
-      // Static routes have nothing to refetch, so skip the animation and hard-reload.
-      if (!sawFetchRef.current) {
-        window.location.reload();
-        return;
-      }
-      setPhase('exiting');
-    });
-  }, [isDisabled, pullPosition, refreshThreshold, onRefresh]);
-
-  useEffect(() => {
-    if (isRefreshing && isFetching) sawFetchRef.current = true;
-  }, [isRefreshing, isFetching]);
-
-  useEffect(() => {
-    if (isDisabled) return;
-
-    // Non-passive so onPull can preventDefault; otherwise the browser's own pull-to-refresh wins
-    const options = { passive: false };
-
-    window.addEventListener('touchstart', startPull, options);
-    window.addEventListener('touchmove', onPull, options);
-    window.addEventListener('touchend', endPull, options);
+    // Native pull-to-refresh is off through overscroll-none on html and body, so the listeners stay passive
+    window.addEventListener('touchstart', startPull, { passive: true });
+    window.addEventListener('touchmove', onPull, { passive: true });
+    window.addEventListener('touchend', endPull);
+    // A touch the browser takes over (scroll, system gesture) must not leave the pull half-drawn
+    window.addEventListener('touchcancel', cancelPull);
 
     return () => {
       window.removeEventListener('touchstart', startPull);
       window.removeEventListener('touchmove', onPull);
       window.removeEventListener('touchend', endPull);
+      window.removeEventListener('touchcancel', cancelPull);
+      // An overlay opening mid-pull disables this: drop the pull so it never freezes on screen
+      cancelPull();
     };
-  }, [startPull, onPull, endPull, isDisabled]);
+  }, [disabled, maximumPullLength, refreshThreshold]);
 
   useEffect(() => {
     const className = 'overflow-hidden';
@@ -160,8 +157,6 @@ export function PullToRefresh({
     };
   }, [isPulling]);
 
-  // First 30px of pull just shows the empty circle, progress starts after that
-  const emptyPhase = 30;
   const progressPull = Math.max(0, pullPosition - emptyPhase);
   const clamped = Math.min(progressPull, refreshThreshold);
   const progress = clamped / refreshThreshold;
@@ -185,33 +180,27 @@ export function PullToRefresh({
   if (!isPulling && phase === 'idle') return null;
 
   const isExiting = phase === 'exiting';
-  const top = isExiting ? -20 : isRefreshing ? 48 : Math.min(pullPosition / 1.5, 120);
+  // Moved by transform, so the release and exit glides run on the compositor while the refresh re-renders the page
+  const offset = isExiting ? -20 : isRefreshing ? 48 : Math.min(pullPosition / 1.5, 120);
   const opacity = isExiting ? 0 : isActive || pullPosition > 0 ? 1 : 0;
   const transition = isDraggingRef.current
     ? 'none'
     : isExiting
-      ? `top ${exitDuration}ms ease-in ${exitHold}ms, opacity ${exitDuration}ms ease-in ${exitHold}ms`
-      : 'top 0.3s ease-out, opacity 0.3s ease-out';
+      ? `transform ${exitDuration}ms ease-in ${exitHold}ms, opacity ${exitDuration}ms ease-in ${exitHold}ms`
+      : 'transform 0.3s ease-out, opacity 0.3s ease-out';
 
   return (
     <div
       onTransitionEnd={(e) => {
         if (isExiting && e.propertyName === 'opacity') setPhase('idle');
       }}
-      style={{
-        top,
-        opacity,
-        transition,
-      }}
-      className="fixed inset-x-1/2 z-300 h-8 w-8 -translate-x-1/2 bg-base-100"
+      style={{ transform: `translateY(${offset}px)`, opacity, transition }}
+      className="fixed inset-x-1/2 top-0 z-300 size-8 -translate-x-1/2"
     >
       <svg
-        className={`h-8 w-8 ${isActive ? 'animate-spin' : ''}`}
+        className={cn('size-8', isActive && 'animate-spin')}
         viewBox="0 0 40 40"
-        style={{
-          transform: isActive ? undefined : `rotate(${pullPosition * 2}deg)`,
-          transition: isActive ? 'none' : 'transform 0.1s ease-out',
-        }}
+        style={isActive ? { transition: 'none' } : { transform: `rotate(${pullPosition * 2}deg)`, transition: 'transform 0.1s ease-out' }}
       >
         <title>Pull to refresh</title>
         <circle
@@ -221,8 +210,7 @@ export function PullToRefresh({
           fill="none"
           stroke="currentColor"
           strokeWidth={backgroundStroke}
-          className="text-muted-foreground/50"
-          style={{ transition: 'stroke-width 0.15s ease-out' }}
+          className="text-muted-foreground/70 transition-[stroke-width] duration-150 ease-out"
         />
         <circle
           cx="20"
@@ -234,8 +222,7 @@ export function PullToRefresh({
           strokeDasharray={isActive ? explodedDashArray : circumference}
           strokeDashoffset={isActive ? 0 : strokeDashoffset}
           strokeLinecap={isActive ? 'butt' : 'round'}
-          className="text-foreground"
-          style={{ transition: 'stroke-width 0.15s ease-out' }}
+          className="text-foreground transition-[stroke-width] duration-150 ease-out"
         />
       </svg>
     </div>

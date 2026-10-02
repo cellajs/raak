@@ -23,11 +23,7 @@ export async function getWorkspacesOp(ctx: UserContext, input: GetWorkspacesInpu
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');
 
-  const { items: workspaceResults, total } = await findWorkspacesPaginated(ctx, {
-    userId: user.id,
-    ...queryOpts,
-    includeCounts,
-  });
+  const { items: workspaceResults, total } = await findWorkspacesPaginated(ctx, { userId: user.id, ...queryOpts, includeCounts });
 
   const items = coalesceAuditUsers(workspaceResults).map((ws) => {
     const { membership, counts, ...workspace } = ws;

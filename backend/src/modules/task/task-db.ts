@@ -1,20 +1,9 @@
 import { sql } from 'drizzle-orm';
-import {
-  boolean,
-  doublePrecision,
-  foreignKey,
-  index,
-  integer,
-  snakeCase,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-} from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, foreignKey, index, integer, snakeCase, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
-import { mentionableColumns, productColumns } from '#/db/utils/product-columns';
+import { productColumns } from '#/db/utils/product-columns';
 import { organizationsTable } from '#/modules/organization/organization-db';
 
 /**
@@ -36,7 +25,6 @@ export const tasksTable = snakeCase.table(
     statusChangedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
     labels: text().array().notNull().default(sql`'{}'::text[]`),
     assignedTo: text().array().notNull().default(sql`'{}'::text[]`),
-    ...mentionableColumns,
     checkboxCount: integer().default(0).notNull(),
     checkedCount: integer().default(0).notNull(),
     // Derived from description media blocks (attachmentId props). Owned-lifecycle
@@ -58,10 +46,9 @@ export const tasksTable = snakeCase.table(
     index('idx_tasks_assigned_to_gin').using('gin', table.assignedTo),
     // Backs the CDC refcount check: "which live tasks still reference attachment X?"
     index('idx_tasks_attachments_gin').using('gin', table.attachments),
-    foreignKey({
-      columns: [table.tenantId, table.organizationId],
-      foreignColumns: [organizationsTable.tenantId, organizationsTable.id],
-    }).onDelete('cascade'),
+    foreignKey({ columns: [table.tenantId, table.organizationId], foreignColumns: [organizationsTable.tenantId, organizationsTable.id] }).onDelete(
+      'cascade',
+    ),
     tenantSelectPolicy('tasks', table),
     ...writeThroughPolicies('tasks'),
   ],

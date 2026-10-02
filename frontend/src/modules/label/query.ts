@@ -1,11 +1,4 @@
-import {
-  infiniteQueryOptions,
-  type QueryClient,
-  queryOptions,
-  type UseMutationOptions,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { infiniteQueryOptions, type QueryClient, queryOptions, type UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   type CreateLabelsData,
   createLabels,
@@ -58,10 +51,7 @@ type LabelFilters = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset'
 const baseKeys = createEntityKeys<LabelFilters>('label');
 const keys = {
   ...baseKeys,
-  list: {
-    ...baseKeys.list,
-    filtered: (organizationId: string, filters: LabelFilters) => ['label', 'list', organizationId, filters] as const,
-  },
+  list: { ...baseKeys.list, filtered: (organizationId: string, filters: LabelFilters) => ['label', 'list', organizationId, filters] as const },
 };
 registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, channelId) => {
   return getLabels({
@@ -89,8 +79,7 @@ export const labelQueryOptions = (id: string, organizationId: string, tenantId: 
     initialData: () => findLabelInCache(id),
   });
 
-type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset'> &
-  GetLabelsData['path'] & { limit?: number };
+type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset'> & GetLabelsData['path'] & { limit?: number };
 
 /**
  * Canonical label query: one flat list per project (labels are project-homed, `projectId notNull`),
@@ -98,15 +87,7 @@ type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'off
  * sync splices into; org/workspace-level views aggregate these per-project lists client-side (see
  * the label picker). staleTime follows sync liveness.
  */
-export const labelsCanonicalOptions = ({
-  organizationId,
-  tenantId,
-  projectId,
-}: {
-  organizationId: string;
-  tenantId: string;
-  projectId: string;
-}) => {
+export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
   return queryOptions({
     queryKey: keys.list.home(organizationId, projectId),
     queryFn: () => {
@@ -138,11 +119,7 @@ export const labelsQueryOptions = ({
     queryFn: ({ pageParam: { page, offset }, signal }) => {
       const requestOffset = String(offset ?? (page ?? 0) * limit);
 
-      return getLabels({
-        query: { ...requestQuery, offset: requestOffset },
-        path: { organizationId, tenantId },
-        signal,
-      });
+      return getLabels({ query: { ...requestQuery, offset: requestOffset }, path: { organizationId, tenantId }, signal });
     },
     ...baseInfiniteQueryOptions,
     meta: { persist: false },
@@ -180,9 +157,7 @@ type DeleteData = Awaited<ReturnType<typeof deleteLabelMutationFn>>;
  * replay reconciles like the live one. Callbacks take the QueryClient explicitly and derive the org
  * key from durable variables. On replay onMutate does not re-run, so onSettled invalidation recovers.
  */
-const labelCreateOptions = (
-  queryClient: QueryClient,
-): UseMutationOptions<CreateData, Error, CreateLabelFullVars, { optimisticLabel: Label }> => ({
+const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateData, Error, CreateLabelFullVars, { optimisticLabel: Label }> => ({
   mutationKey: keys.create,
   scope: { id: 'label' },
   mutationFn: createLabelMutationFn,
@@ -255,9 +230,7 @@ const labelUpdateOptions = (
   },
 });
 
-const labelDeleteOptions = (
-  queryClient: QueryClient,
-): UseMutationOptions<DeleteData, Error, DeleteLabelVars, { deletedLabels: Label[] }> => ({
+const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteData, Error, DeleteLabelVars, { deletedLabels: Label[] }> => ({
   mutationKey: keys.delete,
   scope: { id: 'label' },
   mutationFn: deleteLabelMutationFn,

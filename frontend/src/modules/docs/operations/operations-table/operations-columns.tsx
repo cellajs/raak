@@ -1,13 +1,15 @@
 import { BirdIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { GenExtensionDefinition, GenOperationSummary } from 'sdk/docs-types';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { openOperationSheet } from '~/modules/docs/operations/operation-detail';
 import { openExamplesSheet } from '~/modules/docs/operations/operation-examples';
-import type { GenExtensionDefinition, GenOperationSummary } from '~/modules/docs/types';
+import { SwitchedOffBadge } from '~/modules/docs/operations/switched-off-badge';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Input } from '~/modules/ui/input';
+import { cn } from '~/utils/cn';
 import { getMethodColor } from '../../helpers/get-method-color';
 
 export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: string[] = []) => {
@@ -32,11 +34,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
             {values.map((value: string) => {
               const meta = ext.values?.[value];
               const label = meta?.name ?? value;
-              const tooltipContent = meta?.description
-                ? `${value}: ${meta.description}`
-                : label !== value
-                  ? value
-                  : undefined;
+              const tooltipContent = meta?.description ? `${value}: ${meta.description}` : label !== value ? value : undefined;
               return (
                 <code
                   key={value}
@@ -84,10 +82,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
         sortable: true,
         width: 80,
         renderCell: ({ row }) => (
-          <Badge
-            variant="secondary"
-            className={`bg-transparent font-mono text-xs uppercase shadow-none ${getMethodColor(row.method)}`}
-          >
+          <Badge variant="secondary" className={cn('bg-transparent font-mono text-xs uppercase shadow-none', getMethodColor(row.method))}>
             {row.method.toUpperCase()}
           </Badge>
         ),
@@ -110,6 +105,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
             <span dir="rtl" className="block min-w-0 flex-1 truncate text-left">
               &lrm;{row.path}
             </span>
+            <SwitchedOffBadge enabledBy={row.enabledBy} />
           </Button>
         ),
       },
@@ -120,8 +116,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
         width: 50,
         renderCell: ({ row, tabIndex }) => {
           // No response body means examples are not applicable
-          if (!row.hasResponseBody)
-            return <span className="block w-full text-center text-muted-foreground/50 text-xs">na</span>;
+          if (!row.hasResponseBody) return <span className="block w-full text-center text-muted-foreground/70 text-xs">na</span>;
           // Has response body but no example yet
           if (!row.hasExample) return <span className="block w-full text-center text-muted-foreground">-</span>;
           return (
@@ -132,7 +127,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
               className="justify-center opacity-60 hover:opacity-100"
               onClick={(e) => openExamplesSheet(row, e.currentTarget)}
             >
-              <BirdIcon className="h-4 w-4" />
+              <BirdIcon className="size-4" />
             </Button>
           );
         },
@@ -144,7 +139,7 @@ export const useColumns = (extensions: GenExtensionDefinition[] = [], tagKinds: 
         minBreakpoint: 'md',
         resizable: true,
         width: 200,
-        renderCell: ({ row }) => <code className="truncate font-mono text-muted-foreground/80 text-xs">{row.id}</code>,
+        renderCell: ({ row }) => <code className="truncate font-mono text-muted-foreground text-xs">{row.id}</code>,
       },
       {
         key: 'summary',

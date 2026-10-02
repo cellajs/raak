@@ -5,6 +5,7 @@ import type { Session } from '~/modules/me/types';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent } from '~/modules/ui/card';
+import { cn } from '~/utils/cn';
 import { dateShort } from '~/utils/date-short';
 
 interface SessionTileProps {
@@ -41,18 +42,18 @@ export function SessionTile({ session, isCurrentDevice, handleRevoke, isPending 
 
   return (
     <Card
-      className={`group/tile w-full py-0 transition-all sm:py-0 sm:has-[button:focus]:ring-2 ${isLive ? '' : 'opacity-70'}`}
+      className={cn('group/tile w-full py-0 transition-all sm:py-0 sm:has-[button:focus]:ring-2', !isLive && 'opacity-70')}
       data-expanded={expanded}
     >
-      <CardContent className="flex gap-2 p-2! sm:gap-3 sm:p-3! lg:items-center">
-        <DeviceIcon className="size-4 max-sm:mt-0.5 sm:h-8 sm:w-8" strokeWidth={1.5} />
+      <CardContent className="flex gap-2 p-2 sm:gap-3 sm:p-3 lg:items-center">
+        <DeviceIcon className="size-4 max-sm:mt-0.5 sm:size-8" strokeWidth={1.5} />
         <div className="flex w-full flex-col gap-1 overflow-hidden">
           <div className="flex gap-1 xs:gap-2 max-xs:flex-col">
             <span className="text-sm">{session.deviceName || t('c:unknown_device')}</span>
             <div className="flex items-center gap-2 empty:hidden">
               {session.type === 'mfa' && (
-                <Badge size="xs" variant="outline" className="border-green-600 text-green-600">
-                  <ShieldCheckIcon className="icon-xs" />
+                <Badge size="xs" variant="outline" className="border-success text-success">
+                  <ShieldCheckIcon className="size-3" />
                   {t('c:mfa_short')}
                 </Badge>
               )}
@@ -94,30 +95,18 @@ export function SessionTile({ session, isCurrentDevice, handleRevoke, isPending 
               </p>
             )}
             {session.authStrategy && (
-              <p
-                className="hidden truncate capitalize max-lg:group-data-[expanded=true]/tile:inline lg:inline"
-                aria-describedby={t('c:strategy')}
-              >
+              <p className="hidden truncate capitalize max-lg:group-data-[expanded=true]/tile:inline lg:inline" aria-describedby={t('c:strategy')}>
                 {t(`c:${session.authStrategy}`)}
               </p>
             )}
-            <p
-              className="hidden truncate max-lg:group-data-[expanded=true]/tile:inline lg:inline"
-              aria-describedby="os"
-            >
+            <p className="hidden truncate max-lg:group-data-[expanded=true]/tile:inline lg:inline" aria-describedby="os">
               {session.deviceOs}
             </p>
-            <p
-              className="hidden truncate max-lg:group-data-[expanded=true]/tile:inline lg:inline"
-              aria-describedby={t('c:browser')}
-            >
+            <p className="hidden truncate max-lg:group-data-[expanded=true]/tile:inline lg:inline" aria-describedby={t('c:browser')}>
               {session.browser}
             </p>
             {countryName && (
-              <p
-                className="hidden truncate max-lg:group-data-[expanded=true]/tile:inline lg:inline"
-                aria-describedby={t('c:country')}
-              >
+              <p className="hidden truncate max-lg:group-data-[expanded=true]/tile:inline lg:inline" aria-describedby={t('c:country')}>
                 {countryName}
               </p>
             )}
@@ -130,21 +119,15 @@ export function SessionTile({ session, isCurrentDevice, handleRevoke, isPending 
             >
               <div className="group-data-[expanded=true]/tile:hidden">More</div>
               <div className="group-data-[expanded=false]/tile:hidden">Less</div>
-              <ChevronDownIcon className={`icon-xs ml-1 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              <ChevronDownIcon className={cn('size-3 transition-transform', expanded && 'rotate-180')} />
             </Button>
           </div>
         </div>
 
         {isLive && !session.isCurrent && handleRevoke && (
-          <Button
-            variant="plain"
-            size="sm"
-            className="ml-auto text-sm"
-            disabled={isPending}
-            onClick={() => handleRevoke([session.id])}
-          >
+          <Button variant="plain" size="sm" className="ml-auto text-sm" disabled={isPending} onClick={() => handleRevoke([session.id])}>
             <UnplugIcon />
-            <span className="ml-1 max-md:hidden">{t('c:revoke')}</span>
+            <span className="max-md:hidden">{t('c:revoke')}</span>
           </Button>
         )}
       </CardContent>

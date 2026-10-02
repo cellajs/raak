@@ -41,9 +41,7 @@ const findWorkspaceInCache = createCacheFinder<Workspace>('workspace');
 export const findWorkspaceByIdOrSlug = (idOrSlug: string, tenantId: string): Workspace | undefined =>
   findWorkspaceInCache((ws) => ws.id === idOrSlug || (ws.slug === idOrSlug && ws.tenantId === tenantId));
 
-type WorkspacesListParams = Omit<NonNullable<GetWorkspacesData['query']>, 'limit' | 'offset'> & {
-  limit?: number;
-};
+type WorkspacesListParams = Omit<NonNullable<GetWorkspacesData['query']>, 'limit' | 'offset'> & { limit?: number };
 
 /** Paginated workspaces infinite query. `include` is deliberately not part of the cache key. */
 export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) => {
@@ -66,10 +64,7 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
     queryFn: ({ pageParam: { page, offset }, signal }) => {
       const requestOffset = String(offset ?? (page ?? 0) * limit);
 
-      return getWorkspaces({
-        query: { ...requestQuery, offset: requestOffset },
-        signal,
-      });
+      return getWorkspaces({ query: { ...requestQuery, offset: requestOffset }, signal });
     },
     ...baseInfiniteQueryOptions,
     refetchOnMount: true,
@@ -140,10 +135,7 @@ export const useWorkspaceDeleteMutation = () => {
     onSuccess: (_, { workspaces }) => {
       const message =
         workspaces.length > 1
-          ? t('c:success.delete_counted_resources', {
-              count: workspaces.length,
-              resources: t('c:workspace_other').toLowerCase(),
-            })
+          ? t('c:success.delete_counted_resources', { count: workspaces.length, resources: t('c:workspace_other').toLowerCase() })
           : t('c:success.delete_resource', { resource: t('c:workspace') });
 
       toaster.success(message);

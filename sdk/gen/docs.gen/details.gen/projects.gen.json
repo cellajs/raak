@@ -335,7 +335,6 @@
         "properties": {
           "slug": {
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "anyOf": [
               {
                 "type": "string",
@@ -343,8 +342,7 @@
                 "enum": ["true", "false"]
               },
               { "type": "boolean", "required": false }
-            ],
-            "ref": "#/components/schemas/BooleanQueryValue"
+            ]
           }
         }
       }
@@ -716,10 +714,11 @@
       },
       "body": {
         "type": "array",
+        "minItems": 1,
+        "maxItems": 10,
         "itemType": "object",
         "items": {
           "type": "object",
-          "required": true,
           "properties": {
             "id": { "type": "string", "required": true, "maxLength": 50 },
             "name": {
@@ -740,8 +739,6 @@
             }
           }
         },
-        "minItems": 1,
-        "maxItems": 10,
         "required": true,
         "contentType": "application/json"
       }
@@ -1590,7 +1587,6 @@
         "properties": {
           "slug": {
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "anyOf": [
               {
                 "type": "string",
@@ -1598,8 +1594,7 @@
                 "enum": ["true", "false"]
               },
               { "type": "boolean", "required": false }
-            ],
-            "ref": "#/components/schemas/BooleanQueryValue"
+            ]
           },
           "include": { "type": "string", "required": false }
         }

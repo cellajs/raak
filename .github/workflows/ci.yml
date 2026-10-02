@@ -74,8 +74,8 @@ jobs:
       - name: Run Biome
         run: pnpm biome check .
 
-      - name: Run style checks (terminology / docs / comments)
-        run: pnpm prose:check
+      - name: Run style checks (terminology / docs / comments / frontend)
+        run: pnpm style
 
       - name: Run lens checks (append-only / collision / purity / wire completeness)
         run: pnpm --filter shared lens:check
@@ -288,12 +288,9 @@ jobs:
         if: env.SCW_ACCESS_KEY != ''
         run: pnpm --filter infra preflight --mode production --login
 
-  # Storybook component tests (Vitest browser mode via Playwright). Heavy: runs on the release PR only.
+  # Storybook component tests (Vitest browser mode via Playwright). Heavy: runs on the release PR only, so a
+  # story that breaks on a feature PR fails the release PR; run `pnpm test:storybook` before merging frontend work.
   storybook-test:
-    # Same-repo branch only: release-please pushes its branch into this repo, so a
-    # PR from another repository (whose branch name its author fully controls)
-    # cannot spoof the prefix to trigger the heavy suites. head_ref is set only for
-    # pull_request events.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.head_ref, 'release-please--branches--main')
     runs-on: ubuntu-latest
     timeout-minutes: 20

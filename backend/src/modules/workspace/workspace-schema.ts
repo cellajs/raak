@@ -41,15 +41,8 @@ export const workspaceWithMembershipSchema = workspaceSchema.extend({
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for workspace */
 export const workspaceContract = evolutionContract.channel('workspace', {
-  createItem: z.object({
-    id: validTempIdSchema,
-    name: validNameSchema,
-  }),
-  updateBody: createInsertSchema(workspacesTable, {
-    name: validNameSchema,
-  })
-    .pick({ name: true })
-    .partial(),
+  createItem: z.object({ id: validTempIdSchema, name: validNameSchema }),
+  updateBody: createInsertSchema(workspacesTable, { name: validNameSchema }).pick({ name: true }).partial(),
 });
 
 /** Array schema for batch creates */

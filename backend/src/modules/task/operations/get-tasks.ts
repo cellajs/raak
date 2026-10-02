@@ -29,13 +29,7 @@ export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise
   }
 
   // Scope to the caller's readable projects; undefined means org-wide (all readable projects).
-  const { homeChannelIds: projectIds } = resolveCollectionReadFilter(
-    ctx.var.actor.bindings,
-    'task',
-    organizationId,
-    actorFrom(ctx),
-    requested,
-  );
+  const { homeChannelIds: projectIds } = resolveCollectionReadFilter(ctx.var.actor.bindings, 'task', organizationId, actorFrom(ctx), requested);
 
   // Tasks always require an explicit project scope (no org-wide aggregate read).
   if (!projectIds || projectIds.length === 0) {

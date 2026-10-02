@@ -8,14 +8,12 @@ import type { FilePanelProps } from '@blocknote/react';
 import { FilePanelController, GridSuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { type MouseEventHandler, type RefObject, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { appConfig, type ProductEntityType } from 'shared';
 import type { WebsocketProvider } from 'y-websocket';
 import type { XmlFragment } from 'yjs';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { customSchema } from '~/modules/common/blocknote/blocknote-config';
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
-import { forcedTitleExtension } from '~/modules/common/blocknote/custom-elements/forced-title/forced-title-extension';
 import { Mention } from '~/modules/common/blocknote/custom-elements/mention/mention-menu';
 import { FilePanelBridge } from '~/modules/common/blocknote/custom-file-panel/file-panel-bridge';
 import { useUploadHost } from '~/modules/common/blocknote/custom-file-panel/upload-host';
@@ -43,6 +41,7 @@ import type {
 } from '~/modules/common/blocknote/types';
 import { useUIStore } from '~/modules/ui/ui-store';
 import { getRouter } from '~/routes/-router-instance';
+import { cn } from '~/utils/cn';
 
 /** Yjs connection plus entity identity for SSE suppression; passing this bundle switches the editor into collaborative mode. */
 export interface CollaborationBundle {
@@ -93,7 +92,7 @@ function BlockNote({
   emojis = true,
   excludeBlockTypes,
   excludeFileBlockTypes,
-  forcedTitle = false,
+  titlePlaceholder,
   extensions,
   members, // for mentions
   filePanel,
@@ -110,11 +109,8 @@ function BlockNote({
   onFocus,
   onBeforeLoad,
 }: BlockNoteProps) {
-  const { t } = useTranslation();
   const mode = useUIStore((state) => state.mode);
   const isMobile = useBreakpointBelow('sm');
-  // Forced-title mode: `true` pins block 0 at level 1; `{ level }` overrides for nested surfaces
-  const titleLevel = forcedTitle ? (typeof forcedTitle === 'object' ? forcedTitle.level : 1) : undefined;
   // Set only when an ancestor hoists the upload dialog outside this (possibly remounting) editor.
   const uploadHost = useUploadHost();
 
@@ -123,9 +119,7 @@ function BlockNote({
 
   const defaultAllowedBlockTypes = Object.keys(customSchema.blockSpecs) as CustomBlockTypes[];
   const allowedBlockTypes = defaultAllowedBlockTypes.filter(
-    (type) =>
-      !excludeBlockTypes?.includes(type as CustomBlockRegularTypes) &&
-      !excludeFileBlockTypes?.includes(type as CustomBlockFileTypes),
+    (type) => !excludeBlockTypes?.includes(type as CustomBlockRegularTypes) && !excludeFileBlockTypes?.includes(type as CustomBlockFileTypes),
   );
 
   // Parse initial content once at creation time so the undo history starts clean
@@ -140,12 +134,7 @@ function BlockNote({
     trailingBlock,
     dictionary: getDictionary(),
     // Caller extensions come first: BlockNote keeps the first extension per key and drops later duplicates.
-    extensions: [
-      ...(extensions ?? []),
-      ...(titleLevel ? [forcedTitleExtension({ level: titleLevel })] : []),
-      checkedExtension(),
-      syntaxHighlighter,
-    ],
+    extensions: [...(extensions ?? []), checkedExtension(), syntaxHighlighter],
     resolveFileUrl: createResolveFileUrl({ baseFilePanelProps }),
   };
 
@@ -153,11 +142,7 @@ function BlockNote({
     collaboration
       ? withCollaboration({
           ...baseOptions,
-          collaboration: {
-            fragment: collaboration.fragment,
-            user: collaboration.user,
-            provider: collaboration.provider,
-          },
+          collaboration: { fragment: collaboration.fragment, user: collaboration.user, provider: collaboration.provider },
         })
       : baseOptions,
   );
@@ -171,12 +156,7 @@ function BlockNote({
         // Must match the collapsed summary source in deriveDescriptionProps.
         const doc = editor.document as CustomBlock[];
         const summaryBlock =
-          doc.find(
-            (b) =>
-              b.type !== 'checklistItem' &&
-              Array.isArray(b.content) &&
-              b.content.some((c) => 'text' in c && !!c.text.trim()),
-          ) ?? doc[0];
+          doc.find((b) => b.type !== 'checklistItem' && Array.isArray(b.content) && b.content.some((c) => 'text' in c && !!c.text.trim())) ?? doc[0];
         if (summaryBlock) editor.setTextCursorPosition(summaryBlock, 'end');
       },
       placeCursorAtPoint: (clientX, clientY) => {
@@ -207,9 +187,7 @@ function BlockNote({
 
   useYjsUndoManagerFix(editor, collaborative);
 
-  useYjsSseSuppression(
-    collaboration ? { entityType: collaboration.entityType, entityId: collaboration.entityId } : null,
-  );
+  useYjsSseSuppression(collaboration ? { entityType: collaboration.entityType, entityId: collaboration.entityId } : null);
 
   const checkUntrustedMedia = useUntrustedMediaWarning({ organizationId: baseFilePanelProps?.organizationId });
 
@@ -232,12 +210,7 @@ function BlockNote({
     handleUpdateData(editor);
   };
 
-  const handleKeyDown = useEditorKeyboard({
-    editor,
-    onEscapeClick,
-    onEnterClick,
-    commit: commitDocument,
-  });
+  const handleKeyDown = useEditorKeyboard({ editor, onEscapeClick, onEnterClick, commit: commitDocument });
 
   // A host dismissed by an outside press (a sheet) unmounts the editor while it still has focus, so
   // no blur fires; the cleanup commits what blur would have. Standalone only: the relay owns
@@ -292,9 +265,9 @@ function BlockNote({
       editable={editable}
       autoFocus={autoFocus}
       ref={blockNoteRef}
-      className={`${dense ? 'bn-dense' : ''} ${titleLevel ? 'bn-forced-title' : ''} ${className}`}
-      // Forced-title placeholder text rides a CSS var so it stays translatable (styles.css)
-      {...(titleLevel && { style: { '--bn-title-placeholder': `"${t('c:title')}"` } as React.CSSProperties })}
+      className={cn(dense && 'bn-dense', titlePlaceholder && 'bn-title-placeholder', className)}
+      // The block-0 title placeholder rides a CSS var: BlockNote's own placeholders are per block type (styles.css)
+      {...(titlePlaceholder && { style: { '--bn-title-placeholder': JSON.stringify(titlePlaceholder) } as React.CSSProperties })}
       data-color-scheme={mode}
       shadCNComponents={shadCNComponents}
       sideMenu={false}
@@ -308,27 +281,11 @@ function BlockNote({
       onBlur={handleBlur}
       {...(commitOnEveryChange && { onChange: handleUpdateData })}
     >
-      {slashMenu && (
-        <CustomSlashMenu
-          editor={editor}
-          allowedTypes={allowedBlockTypes}
-          headingLevels={headingLevels}
-          titleLevel={titleLevel}
-        />
-      )}
+      {slashMenu && <CustomSlashMenu editor={editor} allowedTypes={allowedBlockTypes} headingLevels={headingLevels} />}
 
-      {!isMobile && formattingToolbar && (
-        <CustomFormattingToolbar headingLevels={headingLevels} titleLevel={titleLevel} />
-      )}
+      {!isMobile && formattingToolbar && <CustomFormattingToolbar headingLevels={headingLevels} />}
 
-      {sideMenu && (
-        <CustomSideMenu
-          editor={editor}
-          allowedTypes={allowedBlockTypes}
-          headingLevels={headingLevels}
-          titleLevel={titleLevel}
-        />
-      )}
+      {sideMenu && <CustomSideMenu editor={editor} allowedTypes={allowedBlockTypes} headingLevels={headingLevels} />}
 
       {/* To avoid rendering "0" */}
       {members?.length ? <Mention members={members} editor={editor} /> : null}

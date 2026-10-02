@@ -3,8 +3,8 @@ import type { FieldValues } from 'react-hook-form';
 import type { ChannelBase } from 'sdk';
 import type { ChannelEntityType } from 'shared';
 import { channelListQueriesByType } from '~/list-queries-config';
+import { ComboboxSelect, type ComboboxSelectProps } from '~/modules/common/form-fields/select-combobox/combobox-select';
 import type { BaseFormFieldProps } from '~/modules/common/form-fields/type';
-import { ComboboxSelect, type ComboboxSelectProps } from '~/modules/ui/combobox';
 import { FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { flattenInfiniteData } from '~/query/basic/flatten';
@@ -43,13 +43,7 @@ export function SelectParentFormField<TFieldValues extends FieldValues>({
 }: SelectParentProps<TFieldValues>) {
   const { items } = useParentChannels(parentType, organizationId, !disabled);
 
-  const options =
-    opts ??
-    items.map((i) => ({
-      value: i.id,
-      label: i.name,
-      url: i.thumbnailUrl ?? undefined,
-    }));
+  const options = opts ?? items.map((i) => ({ value: i.id, label: i.name, url: i.thumbnailUrl ?? undefined }));
 
   return (
     <FormField

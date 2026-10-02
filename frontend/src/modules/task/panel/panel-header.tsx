@@ -19,11 +19,7 @@ import { cn } from '~/utils/cn';
 /**
  * Header component for task board panels in desktop view. Displays project name/avatar or section filters, along with actions like creating a new task or accessing project actions.
  */
-export function TaskPanelHeader({
-  project,
-  sectionFilters,
-  publicView,
-}: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView'>) {
+export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<BoardPanelProps, 'project' | 'sectionFilters' | 'publicView'>) {
   const { t } = useTranslation();
 
   const boardId = useBoardStore((state) => state.activeBoardId)!;
@@ -58,15 +54,7 @@ export function TaskPanelHeader({
         <PanelDragHandleButton
           name={project.name}
           fallbackLabel={project.name}
-          icon={
-            <EntityAvatar
-              className="h-8 w-8"
-              id={project.id}
-              type="project"
-              name={project.name}
-              url={project.thumbnailUrl}
-            />
-          }
+          icon={<EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />}
           className={cn(
             'flex h-auto items-center gap-2 truncate p-0 no-underline hover:bg-transparent',
             isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
@@ -86,22 +74,13 @@ export function TaskPanelHeader({
             name={`${project.name} — ${formatSectionLabel(sectionFilters)}`}
             icon={
               <div className="relative shrink-0">
-                <EntityAvatar
-                  className="h-8 w-8"
-                  id={project.id}
-                  type="project"
-                  name={project.name}
-                  url={project.thumbnailUrl}
-                />
+                <EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
                 <div className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full border bg-background">
                   <FunnelIcon className="h-2.5 w-2.5" />
                 </div>
               </div>
             }
-            className={cn(
-              'flex h-auto min-w-0 items-center gap-2 p-0 hover:bg-transparent',
-              isCollapsed ? 'w-full justify-center' : 'justify-start',
-            )}
+            className={cn('flex h-auto min-w-0 items-center gap-2 p-0 hover:bg-transparent', isCollapsed ? 'w-full justify-center' : 'justify-start')}
           >
             {!isCollapsed && (
               <div className="truncate font-semibold leading-6">
@@ -165,22 +144,14 @@ export function TaskPanelHeader({
       )}
       {!publicView && isPrimary && <PanelProjectActions project={project} className="h-8 px-2" />}
       {!isReadOnly && (
-        <Button
-          data-form-dirty={hasDraft}
-          variant="plain"
-          size="xs"
-          className="relative hidden rounded sm:inline-flex"
-          onClick={toggleCreateForm}
-        >
+        <Button data-form-dirty={hasDraft} variant="plain" size="xs" className="relative hidden rounded sm:inline-flex" onClick={toggleCreateForm}>
           <Badge className="absolute -top-1 -right-1 z-100 flex in-data-[form-dirty=false]:hidden h-2 w-2 justify-center p-0" />
           <PlusIcon className={cn('size-4.5', 'transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />
-          <span className="ml-1">{t('c:task')}</span>
+          <span className="">{t('c:task')}</span>
         </Button>
       )}
     </>
   ) : undefined;
 
-  return (
-    <BoardPanelHeader className="bg-card" leading={leadingSlot} actions={actionsSlot} isCollapsed={!!isCollapsed} />
-  );
+  return <BoardPanelHeader className="bg-card" leading={leadingSlot} actions={actionsSlot} isCollapsed={!!isCollapsed} />;
 }

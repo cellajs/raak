@@ -1,12 +1,5 @@
 import { faker } from '@faker-js/faker';
-import {
-  generateMockEntityChannelIdColumns,
-  mockBatchResponse,
-  mockNanoid,
-  mockPaginated,
-  mockProductColumns,
-  withFakerSeed,
-} from '#/mocks';
+import { generateMockEntityChannelIdColumns, mockBatchResponse, mockNanoid, mockPaginated, mockProductColumns, withFakerSeed } from '#/mocks';
 import type { AttachmentModel } from '#/modules/attachment/attachment-db';
 import { mockAuditUsers } from '#/schemas/entity-base-mocks';
 
@@ -26,7 +19,6 @@ export const mockAttachment = (key = 'attachment:default'): AttachmentModel =>
       convertedContentType: null,
       size: String(faker.number.int({ min: 1000, max: 10_000_000 })),
       keys: { original: `uploads/${mockNanoid()}/${filename}` },
-      mentions: [],
       ...channelIds,
     };
   });

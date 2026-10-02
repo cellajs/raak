@@ -73,11 +73,7 @@ interface MenuContext {
 }
 
 /** Selection prompt shared by rotate/set/delete; undefined = Esc (go back). */
-async function selectSecret(
-  ctx: MenuContext,
-  message: string,
-  choices: ManagedRuntimeSecret[],
-): Promise<ManagedRuntimeSecret | undefined> {
+async function selectSecret(ctx: MenuContext, message: string, choices: ManagedRuntimeSecret[]): Promise<ManagedRuntimeSecret | undefined> {
   const selectedId = await ctx.prompts.select<string>({ message, choices: choices.map(formatSecretChoice) });
   if (selectedId === BACK) return undefined;
   const secret = choices.find((entry) => entry.id === selectedId);
@@ -115,9 +111,7 @@ async function handleRotate(ctx: MenuContext): Promise<void> {
   // "secret already exists". Deploy first so the container exists, then rotate.
   const existing = await ctx.client.getSecretByName(secret.secretName, secretPathFor(secret, ctx.slug, ctx.mode));
   if (!existing) {
-    ctx.log(
-      `${warningMark} ${secret.secretName} (${secret.envVar}) has no container yet. Deploy first so Pulumi creates it, then rotate.`,
-    );
+    ctx.log(`${warningMark} ${secret.secretName} (${secret.envVar}) has no container yet. Deploy first so Pulumi creates it, then rotate.`);
     return;
   }
   const version = await ctx.client.putSecretValue({
@@ -178,9 +172,7 @@ async function handleSet(ctx: MenuContext): Promise<void> {
     description: 'Updated by the infra CLI (Manage runtime secrets)',
     disablePrevious: true,
   });
-  ctx.log(
-    `${checkMark} Updated ${secret.secretName} ${pc.dim(`(revision ${version.revision}, ${value.length} chars)`)}`,
-  );
+  ctx.log(`${checkMark} Updated ${secret.secretName} ${pc.dim(`(revision ${version.revision}, ${value.length} chars)`)}`);
 }
 
 /**
@@ -197,9 +189,7 @@ async function handleMint(ctx: MenuContext): Promise<void> {
   const selectedId = await ctx.prompts.select<string>({
     message: 'Select a managed key to mint / rotate (Esc to go back)',
     choices: managedKeys.map((key) => {
-      const targets = Object.values(key.assign).map(
-        (id) => runtimeSecrets.find((secret) => secret.id === id)?.envVar ?? id,
-      );
+      const targets = Object.values(key.assign).map((id) => runtimeSecrets.find((secret) => secret.id === id)?.envVar ?? id);
       return {
         name: `${key.suffix}: ${key.label}`,
         value: key.id,
@@ -238,11 +228,7 @@ async function handleMint(ctx: MenuContext): Promise<void> {
 
 export async function manageRuntimeSecrets(options: ManageRuntimeSecretsOptions): Promise<void> {
   const ctx: MenuContext = {
-    client: createSecretManagerClient({
-      secretKey: options.secretKey,
-      region: options.region,
-      projectId: options.projectId,
-    }),
+    client: createSecretManagerClient({ secretKey: options.secretKey, region: options.region, projectId: options.projectId }),
     secrets: operatorManagedSecrets(),
     prompts: options.prompts,
     path: options.path,
@@ -306,8 +292,6 @@ export async function manageRuntimeSecrets(options: ManageRuntimeSecretsOptions)
 }
 
 if (isMain(import.meta.url)) {
-  process.stderr.write(
-    'Run this task through the infra CLI (Manage runtime secrets) so prompts and stack context stay aligned.\n',
-  );
+  process.stderr.write('Run this task through the infra CLI (Manage runtime secrets) so prompts and stack context stay aligned.\n');
   process.exit(1);
 }

@@ -1,6 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { UsersIcon } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig, isUnconditionalCan } from 'shared';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
@@ -9,6 +7,8 @@ import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import type { RowsChangeData } from '~/modules/common/data-grid';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
+import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
+import { useRowSelection } from '~/modules/common/data-table/use-row-selection';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { MembersTableBar } from '~/modules/memberships/members-table/members-bar';
 import { useColumns } from '~/modules/memberships/members-table/members-columns';
@@ -33,14 +33,12 @@ function MembersTable({ channel, isSheet = false, children }: MembersTableWrappe
   const { search, setSearch } = useSearchParams<MembersRouteSearchParams>({ saveDataInSearch: !isSheet });
 
   // MembersTable always renders inside OrganizationLayoutRoute
-  const { organization } = useOrganizationLayoutContext();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
 
   const updateMemberMembership = useMemberUpdateMutation();
 
   const entityId = channel.id;
   const entityType = channel.entityType;
-  const tenantId = organization.tenantId;
-  const organizationId = organization.id;
 
   // Members are managed per channel and the channel has no `createdBy` to resolve `'own'`, so require an unconditional grant.
   const canUpdate = isUnconditionalCan(channel.can?.[channel.entityType]?.update);
@@ -48,43 +46,21 @@ function MembersTable({ channel, isSheet = false, children }: MembersTableWrappe
   const { q, role, sort, order } = search;
   const limit = LIMIT;
 
-  const [selected, setSelected] = useState<Member[]>([]);
   const [columns, setColumns] = useColumns(canUpdate, isSheet, entityType);
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
   // include=counts feeds the per-member insight columns (last post, authored counts, sub-channel memberships)
-  const queryOptions = membersListQueryOptions({
-    entityId,
-    entityType,
-    tenantId,
-    organizationId,
-    ...search,
-    limit,
-    include: 'counts',
-  });
+  const queryOptions = membersListQueryOptions({ entityId, entityType, tenantId, organizationId, ...search, limit, include: 'counts' });
 
-  const {
-    data: rows,
-    isLoading,
-    isFetching,
-    error,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteQuery({
-    ...queryOptions,
-    select: ({ pages }) => pages.flatMap(({ items }) => items),
-  });
+  const { rows, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
+  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(rows);
 
   const onRowsChange = (changedRows: Member[], { indexes, column }: RowsChangeData<Member>) => {
     if (column.key !== 'role') return;
 
     for (const index of indexes) {
       const updatedMembership = {
-        path: {
-          id: changedRows[index].membership.id,
-          tenantId,
-          organizationId,
-        },
+        path: { id: changedRows[index].membership.id, tenantId, organizationId },
         body: { role: changedRows[index].membership.role },
         channelId: entityId,
         channelType: entityType,
@@ -93,18 +69,6 @@ function MembersTable({ channel, isSheet = false, children }: MembersTableWrappe
       updateMemberMembership.mutateAsync(updatedMembership);
     }
   };
-
-  // isFetching already includes next page fetch scenario
-  const fetchMore = async () => {
-    if (!hasNextPage || isLoading || isFetching) return;
-    await fetchNextPage();
-  };
-
-  const onSelectedRowsChange = (value: Set<string>) => {
-    if (rows) setSelected(rows.filter((row) => value.has(row.id)));
-  };
-
-  const selectedRowIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected]);
 
   return (
     <>
@@ -116,7 +80,7 @@ function MembersTable({ channel, isSheet = false, children }: MembersTableWrappe
         queryKey={queryOptions.queryKey}
         columns={columns}
         setColumns={setColumns}
-        clearSelection={() => setSelected([])}
+        clearSelection={clearSelection}
         isSheet={isSheet}
       />
       {children}
@@ -140,11 +104,7 @@ function MembersTable({ channel, isSheet = false, children }: MembersTableWrappe
           sortColumns,
           onSortColumnsChange,
           NoRowsComponent: (
-            <ContentPlaceholder
-              icon={UsersIcon}
-              title="c:no_resource_yet"
-              titleProps={{ resource: t('c:member_other').toLowerCase() }}
-            />
+            <ContentPlaceholder icon={UsersIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:member_other').toLowerCase() }} />
           ),
         }}
       />

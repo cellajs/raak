@@ -3,10 +3,11 @@ import { CheckIcon, TriangleAlertIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import type { TokenData } from '~/modules/auth/types';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useAcceptInvitationTokenMutation } from '~/modules/me/query';
 import type { MeUser } from '~/modules/me/types';
 import { Alert, AlertDescription, AlertTitle } from '~/modules/ui/alert';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 
 interface Props {
   tokenData: TokenData;
@@ -60,19 +61,12 @@ export function AcceptInvitationStep({ tokenData, user }: Props) {
         <Alert variant="warning">
           <TriangleAlertIcon />
           <AlertTitle>{t('c:invite_other_address')}</AlertTitle>
-          <AlertDescription>
-            {t('c:invite_other_address.text', { invitedEmail, accountEmail: user.email })}
-          </AlertDescription>
+          <AlertDescription>{t('c:invite_other_address.text', { invitedEmail, accountEmail: user.email })}</AlertDescription>
         </Alert>
       )}
 
       <div className="flex flex-col gap-2">
-        <SubmitButton
-          loading={isPending}
-          icon={<CheckIcon />}
-          className="w-full"
-          onClick={() => accept(undefined, { onSuccess: leave })}
-        >
+        <SubmitButton loading={isPending} icon={<CheckIcon />} className="w-full" onClick={() => accept(undefined, { onSuccess: leave })}>
           {t('c:accept')}
         </SubmitButton>
         <Button variant="plain" className="w-full" disabled={isPending} onClick={leave}>

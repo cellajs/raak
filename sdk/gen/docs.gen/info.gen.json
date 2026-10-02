@@ -7,6 +7,13 @@
   "hiddenOperationCount": 0,
   "extensions": [
     {
+      "key": "x-enabled-by",
+      "id": "xEnabledBy",
+      "description": "Config switch the endpoint belongs to: a service, a sign-in method or an OAuth provider; refused before the guards while it is off",
+      "required": false,
+      "kind": "metadata"
+    },
+    {
       "key": "x-guard",
       "id": "xGuard",
       "description": "Authorization middleware applied to the endpoint",
@@ -17,27 +24,10 @@
           "name": "service",
           "description": "Requires a secret API key or an access token and sets the service account or the consenting user as the actor"
         },
-        "userGuard": {
-          "name": "user",
-          "description": "Requires valid session and sets auth context (user, memberships, baseDb)"
-        },
-        "actorGuard": {
-          "name": "actor",
-          "description": "Requires a session cookie, a secret API key, or an access token and sets the actor"
-        },
-        "crossTenantGuard": {
-          "name": "crossTenant",
-          "description": "Requires userGuard and sets baseDb for cross-tenant access"
-        },
-        "noImpersonationGuard": {
-          "name": "noImpersonation",
-          "description": "Refused while impersonating: the admin acts as the user, never on the account itself"
-        },
+        "userGuard": { "name": "user", "description": "Requires valid session and sets auth context (user, memberships, baseDb)" },
+        "actorGuard": { "name": "actor", "description": "Requires a session cookie, a secret API key, or an access token and sets the actor" },
         "orgGuard": { "name": "org", "description": "Validates organization membership within tenant context" },
-        "publicGuard": {
-          "name": "public",
-          "description": "No authentication required; provides baseDb without RLS context"
-        },
+        "publicGuard": { "name": "public", "description": "No authentication required; provides baseDb without RLS context" },
         "relatableGuard": {
           "name": "relatable",
           "description": "Checks that the requesting user shares at least one organization with the target user"
@@ -46,7 +36,7 @@
           "name": "stepUp",
           "description": "Requires a recent proof of presence on this session: the enrolled passkey or TOTP, else a fresh sign-in or a confirmed email link. Refuses impersonation."
         },
-        "sysAdminGuard": { "name": "sysAdmin", "description": "Requires system admin + IP whitelist" },
+        "sysAdminGuard": { "name": "sysAdmin", "description": "Requires system admin + IP whitelist, never an impersonation" },
         "tenantGuard": {
           "name": "tenant",
           "description": "Requires userGuard or serviceGuard, validates tenant access, and sets baseDb + tenantId context"
@@ -64,53 +54,21 @@
       "required": false,
       "kind": "middleware",
       "values": {
-        "spamLimiter": {
-          "name": "spam",
-          "description": "Max 10 requests/hour per user (per IP when anonymous) for email-sending endpoints"
-        },
-        "emailEnumLimiter": {
-          "name": "emailEnum",
-          "description": "Max 30 address lookups/hour per IP, then blocks the IP for 30 min"
-        },
-        "presignedUrlLimiter": {
-          "name": "presignedUrl",
-          "description": "Max 2000 requests/hour per user for presigned URLs"
-        },
-        "totpVerificationLimiter": {
-          "name": "totpVerification",
-          "description": "Blocks IP for 30 min after 5 failed TOTP attempts"
-        },
-        "stepUpLimiter": {
-          "name": "stepUp",
-          "description": "Blocks the account for 30 min after 5 failed second-factor checks on step-up"
-        },
-        "magicLinkLimiter": {
-          "name": "magicLink",
-          "description": "Max 2 magic link emails per 30 min per email address"
-        },
-        "passkeyChallengeLimiter": {
-          "name": "passkeyChallenge",
-          "description": "Max 30 passkey challenges/hour per IP"
-        },
-        "clientMetadataFetchLimiter": {
-          "name": "clientMetadataFetch",
-          "description": "Max 60 client metadata document fetches per minute per IP"
-        },
+        "spamLimiter": { "name": "spam", "description": "Max 10 requests/hour per user (per IP when anonymous) for email-sending endpoints" },
+        "emailEnumLimiter": { "name": "emailEnum", "description": "Max 30 address lookups/hour per IP, then blocks the IP for 30 min" },
+        "presignedUrlLimiter": { "name": "presignedUrl", "description": "Max 2000 requests/hour per user for presigned URLs" },
+        "totpVerificationLimiter": { "name": "totpVerification", "description": "Blocks IP for 30 min after 5 failed TOTP attempts" },
+        "stepUpLimiter": { "name": "stepUp", "description": "Blocks the account for 30 min after 5 failed second-factor checks on step-up" },
+        "magicLinkLimiter": { "name": "magicLink", "description": "Max 2 magic link emails per 30 min per email address" },
+        "passkeyChallengeLimiter": { "name": "passkeyChallenge", "description": "Max 30 passkey challenges/hour per IP" },
+        "clientMetadataFetchLimiter": { "name": "clientMetadataFetch", "description": "Max 60 client metadata document fetches per minute per IP" },
         "serviceBurstLimiter": { "name": "serviceBurst", "description": "Max 30 requests/second per service account" },
-        "syncReadLimiter": {
-          "name": "syncRead",
-          "description": "Max 5000 sync-driven reads/hour per user (delta lists, unseen counts)"
-        },
+        "mcpRequestLimiter": { "name": "mcpRequest", "description": "Max 30 MCP requests/second per account" },
+        "syncReadLimiter": { "name": "syncRead", "description": "Max 5000 sync-driven reads/hour per user (delta lists, unseen counts)" },
         "streamConnectLimiter": { "name": "streamConnect", "description": "Max 240 SSE stream connects/hour per user" },
-        "pointsLimiter": {
-          "name": "points",
-          "description": "Consumes 1 API point(s) per request against per-tenant hourly budget"
-        },
+        "pointsLimiter": { "name": "points", "description": "Consumes 1 API point(s) per request against per-tenant hourly budget" },
         "tokenLimiter": { "name": "token", "description": "Blocks IP for 30 min after 10 consecutive token failures" },
-        "insertEntityLock": {
-          "name": "insertEntityLock",
-          "description": "Prevents concurrent entity creation for the same tenant"
-        }
+        "insertEntityLock": { "name": "insertEntityLock", "description": "Prevents concurrent entity creation for the same tenant" }
       }
     },
     {
@@ -120,30 +78,13 @@
       "required": false,
       "kind": "middleware",
       "values": {
-        "productCache": {
-          "name": "app",
-          "description": "Entity-keyed detail cache with per-request read authorization"
-        }
+        "productCache": { "name": "app", "description": "Entity-keyed detail cache with per-request read authorization" }
       }
     },
     {
       "key": "x-tool",
       "id": "xTool",
       "description": "MCP tool registration metadata",
-      "required": false,
-      "kind": "metadata"
-    },
-    {
-      "key": "x-service",
-      "id": "x-service",
-      "description": "Service gating the endpoint; route returns 404 when the service is disabled",
-      "required": false,
-      "kind": "metadata"
-    },
-    {
-      "key": "x-strategy",
-      "id": "x-strategy",
-      "description": "Sign-in method the endpoint belongs to; refused while that method is switched off",
       "required": false,
       "kind": "metadata"
     }

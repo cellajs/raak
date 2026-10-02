@@ -13,13 +13,11 @@ const meta = {
   args: {},
   render: (args) => (
     <HoverCard {...args}>
-      <HoverCardTrigger>Hover</HoverCardTrigger>
+      <HoverCardTrigger href="#hover-card">Hover</HoverCardTrigger>
       <HoverCardContent>Yeah, that works out. This is me. I am cool.</HoverCardContent>
     </HoverCard>
   ),
-  parameters: {
-    layout: 'centered',
-  },
+  parameters: { layout: 'centered' },
 } satisfies Meta<typeof HoverCard>;
 
 export default meta;
@@ -39,15 +37,24 @@ export const ShouldShowOnHover: Story = {
 
     await step('Hover over the trigger element', async () => {
       await userEvent.hover(await canvasBody.findByText(/hover/i));
-      await waitFor(() =>
-        expect(canvasElement.ownerDocument.body.querySelector('[data-slot="hover-card-content"]')).toBeVisible(),
-      );
+      await waitFor(() => expect(canvasElement.ownerDocument.body.querySelector('[data-slot="hover-card-content"]')).toBeVisible());
     });
     await step('Unhover the trigger element', async () => {
       await userEvent.unhover(await canvasBody.findByText(/hover/i));
-      await waitFor(() =>
-        expect(canvasElement.ownerDocument.body.querySelector('[data-slot="hover-card-content"]')).toBeNull(),
-      );
+      await waitFor(() => expect(canvasElement.ownerDocument.body.querySelector('[data-slot="hover-card-content"]')).toBeNull());
     });
+  },
+};
+
+export const ShouldShowOnFocus: Story = {
+  name: 'when the trigger gets keyboard focus, should show hover card content',
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const doc = canvasElement.ownerDocument;
+    await userEvent.tab();
+    await expect(await within(doc.body).findByText(/hover/i)).toHaveFocus();
+    await waitFor(() => expect(doc.body.querySelector('[data-slot="hover-card-content"]')).toBeVisible());
+    await userEvent.tab();
+    await waitFor(() => expect(doc.body.querySelector('[data-slot="hover-card-content"]')).toBeNull());
   },
 };

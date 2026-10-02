@@ -4,22 +4,15 @@ import { useComponentsContext, useDictionary, useExtension, useExtensionState } 
 import { customBlockTypeSwitchItems, getSideMenuItems } from '~/modules/common/blocknote/blocknote-config';
 import { focusEditor } from '~/modules/common/blocknote/helpers/focus';
 import { isHeadingMenuItemActive } from '~/modules/common/blocknote/helpers/header-item-select';
-import type {
-  CommonBlockNoteProps,
-  CustomBlockNoteEditor,
-  CustomBlockTypes,
-  TitleLevel,
-} from '~/modules/common/blocknote/types';
+import type { CommonBlockNoteProps, CustomBlockNoteEditor, CustomBlockTypes } from '~/modules/common/blocknote/types';
 
 interface ResetBlockTypeItemProp {
   editor: CustomBlockNoteEditor;
   allowedTypes: CustomBlockTypes[];
   headingLevels: NonNullable<CommonBlockNoteProps['headingLevels']>;
-  /** Forced-title mode: body blocks must not rank at or above the title. */
-  titleLevel?: TitleLevel;
 }
 
-export function ResetBlockTypeItem({ editor, allowedTypes, headingLevels, titleLevel }: ResetBlockTypeItemProp) {
+export function ResetBlockTypeItem({ editor, allowedTypes, headingLevels }: ResetBlockTypeItemProp) {
   const Components = useComponentsContext()!;
   const dict = useDictionary();
 
@@ -37,7 +30,6 @@ export function ResetBlockTypeItem({ editor, allowedTypes, headingLevels, titleL
     if (item.type === 'heading') {
       if (item.props?.isToggleable) return false;
       if (typeof item.props?.level === 'number') {
-        if (titleLevel !== undefined && item.props.level <= titleLevel) return false;
         return headingLevels.includes(item.props.level as (typeof headingLevels)[number]);
       }
     }
@@ -52,10 +44,7 @@ export function ResetBlockTypeItem({ editor, allowedTypes, headingLevels, titleL
       if (existingBlock) editor.updateBlock(existingBlock, { type: 'paragraph' });
     }
 
-    editor.updateBlock(block, {
-      type: item.type as Exclude<CustomBlockTypes, 'emoji'>,
-      props: item.props,
-    });
+    editor.updateBlock(block, { type: item.type as Exclude<CustomBlockTypes, 'emoji'>, props: item.props });
     // Refocus the editor so the open side menu does not block the blur update.
     setTimeout(() => focusEditor(editor, block.id), 0);
   };

@@ -5,22 +5,13 @@ import { getNewTaskOrder } from './order-helpers';
 
 // getNewTaskOrder is pure over its args; stub the cache accessor so importing order-helpers
 // doesn't pull the query-client chain (which touches `window`) into the node test env.
-vi.mock('~/modules/task/helpers/active-task', () => ({
-  cachedTasks: () => [],
-  currentActiveTask: () => undefined,
-}));
+vi.mock('~/modules/task/helpers/active-task', () => ({ cachedTasks: () => [], currentActiveTask: () => undefined }));
 
 const orderGap = 10;
 const defaultOrder = 1000;
 
 type OrderTask = Pick<Task, 'id' | 'displayOrder' | 'status' | '_draft' | 'projectId'>;
-const task = (
-  id: string,
-  displayOrder: number,
-  status: Task['status'],
-  projectId = 'p1',
-  _draft = false,
-): OrderTask => ({
+const task = (id: string, displayOrder: number, status: Task['status'], projectId = 'p1', _draft = false): OrderTask => ({
   id,
   displayOrder,
   status,
@@ -35,20 +26,12 @@ describe('getNewTaskOrder', () => {
   });
 
   it('places early-stage tasks (>= Unstarted) at the top: max order + gap', () => {
-    const tasks = [
-      task('a', 10, TaskStatus.Unstarted),
-      task('b', 30, TaskStatus.Unstarted),
-      task('c', 20, TaskStatus.Unstarted),
-    ];
+    const tasks = [task('a', 10, TaskStatus.Unstarted), task('b', 30, TaskStatus.Unstarted), task('c', 20, TaskStatus.Unstarted)];
     expect(getNewTaskOrder(TaskStatus.Unstarted, tasks)).toBe(30 + orderGap);
   });
 
   it('places later-stage tasks (< Unstarted) at the bottom: min order − gap', () => {
-    const tasks = [
-      task('a', 10, TaskStatus.Started),
-      task('b', 30, TaskStatus.Started),
-      task('c', 20, TaskStatus.Started),
-    ];
+    const tasks = [task('a', 10, TaskStatus.Started), task('b', 30, TaskStatus.Started), task('c', 20, TaskStatus.Started)];
     expect(getNewTaskOrder(TaskStatus.Started, tasks)).toBe(10 - orderGap);
   });
 

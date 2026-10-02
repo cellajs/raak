@@ -1,8 +1,5 @@
 import { deriveDescriptionProps } from '~/modules/common/blocknote/derive-description-props';
-import {
-  patchCollaborativeDescription,
-  persistStandaloneDescription,
-} from '~/modules/common/blocknote/use-description-update';
+import { patchCollaborativeDescription, persistStandaloneDescription } from '~/modules/common/blocknote/use-description-update';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
@@ -16,12 +13,7 @@ export const useTaskDescriptionUpdate = (task: Task) => {
 
   return async (description: string, collaborative: boolean) => {
     // attachmentCount is presentation-only (task.attachments is the derived id list), keep it off the cached row.
-    const {
-      attachmentCount: _attachmentCount,
-      summary,
-      summaryLength,
-      ...derived
-    } = await deriveDescriptionProps(description);
+    const { attachmentCount: _attachmentCount, summary, summaryLength, ...derived } = await deriveDescriptionProps(description);
 
     if (collaborative) {
       patchCollaborativeDescription('task', task, description, { summary, summaryLength, ...derived });
@@ -31,8 +23,6 @@ export const useTaskDescriptionUpdate = (task: Task) => {
       return;
     }
 
-    await persistStandaloneDescription('task', task, description, (ops) =>
-      updateDesc({ id: task.id, ops, summary, summaryLength }),
-    );
+    await persistStandaloneDescription('task', task, description, (ops) => updateDesc({ id: task.id, ops, summary, summaryLength }));
   };
 };

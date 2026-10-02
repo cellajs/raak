@@ -10,9 +10,7 @@ import { labelsTable } from '#/modules/label/label-db';
  * as `e:c:<hostProduct>` (see cdc getCountDeltas). Derived from the same embedding
  * config so reader and writer cannot drift apart.
  */
-export const labelUsedCountKey = `e:c:${
-  appConfig.productEmbeddings.find((e) => e.embeddedProduct === 'label')?.hostProduct ?? 'task'
-}`;
+export const labelUsedCountKey = `e:c:${appConfig.productEmbeddings.find((e) => e.embeddedProduct === 'label')?.hostProduct ?? 'task'}`;
 
 /** Find all labels in an organization (used for duplicate/color matching). */
 export const findLabelsByOrg = async (ctx: ActorContext) => {
@@ -61,9 +59,7 @@ export const deleteLabelsByIds = async (ctx: ActorContext, { ids, deletedAt, del
   return db
     .update(labelsTable)
     .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
-    .where(
-      and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)),
-    )
+    .where(and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)))
     .returning();
 };
 
@@ -101,9 +97,7 @@ export const buildLabelsListQuery = (ctx: ActorContext, { filters }: BuildLabels
   return db
     .select({
       ...getColumns(labelsTable),
-      usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>${labelUsedCountKey})::int, 0)`.as(
-        'used_count',
-      ),
+      usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>${labelUsedCountKey})::int, 0)`.as('used_count'),
     })
     .from(labelsTable)
     .leftJoin(channelCountersTable, sql`${channelCountersTable.channelKey} = ${labelsTable.id}::text`)

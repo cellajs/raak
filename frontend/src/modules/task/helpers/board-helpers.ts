@@ -51,8 +51,7 @@ export const makePanelKey = (projectId: string, section: SectionsValue) => {
  * Checks whether a board-layout key identifies a project's base or split panel.
  * Exact prefixes prevent collisions between IDs containing one another.
  */
-const layoutKeyBelongsToProject = (layoutKey: string, projectId: string) =>
-  layoutKey === projectId || layoutKey.startsWith(`${projectId}-`);
+const layoutKeyBelongsToProject = (layoutKey: string, projectId: string) => layoutKey === projectId || layoutKey.startsWith(`${projectId}-`);
 
 /**
  * Recomputes project panel widths after sections change.
@@ -68,10 +67,7 @@ export const computePanelLayoutSplit = (
 
   if (!currentViewSections) {
     const insertIndex = layoutArray.findIndex(([key]) => layoutKeyBelongsToProject(key, projectId));
-    const totalSize = layoutArray.reduce(
-      (sum, [key, size]) => (layoutKeyBelongsToProject(key, projectId) ? sum + size : sum),
-      0,
-    );
+    const totalSize = layoutArray.reduce((sum, [key, size]) => (layoutKeyBelongsToProject(key, projectId) ? sum + size : sum), 0);
     const filtered = layoutArray.filter(([key]) => !layoutKeyBelongsToProject(key, projectId));
     filtered.splice(insertIndex, 0, [projectId, totalSize]);
     return Object.fromEntries(filtered);
@@ -80,10 +76,7 @@ export const computePanelLayoutSplit = (
   const updated = layoutArray.flatMap(([key, size]): [string, number][] => {
     if (!layoutKeyBelongsToProject(key, projectId)) return [[key, size]];
     const percentagePart = size / currentViewSections.length;
-    return sections.map((sectionFilters): [string, number] => [
-      makePanelKey(projectId, sectionFilters),
-      percentagePart,
-    ]);
+    return sections.map((sectionFilters): [string, number] => [makePanelKey(projectId, sectionFilters), percentagePart]);
   });
   return Object.fromEntries(updated);
 };

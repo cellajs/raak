@@ -22,12 +22,7 @@ export type LeaveChannelButtonProps = {
   callback?: (args: CallbackArgs) => void;
 };
 
-export function LeaveChannelButton({
-  channel,
-  buttonProps,
-  redirectPath = appConfig.defaultRedirectPath,
-  callback,
-}: LeaveChannelButtonProps) {
+export function LeaveChannelButton({ channel, buttonProps, redirectPath = appConfig.defaultRedirectPath, callback }: LeaveChannelButtonProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -75,7 +70,7 @@ export function LeaveChannelButton({
       aria-label="Leave"
     >
       <UserRoundXIcon />
-      <span className="ml-1">{t('c:leave')}</span>
+      <span>{t('c:leave')}</span>
     </Button>
   );
 }

@@ -1,7 +1,8 @@
 import { Link } from '@tanstack/react-router';
 import { SearchIcon } from 'lucide-react';
-import { Suspense, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { GenTagSummary } from 'sdk/docs-types';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { Logo } from '~/modules/common/logo';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
@@ -9,16 +10,10 @@ import { openDocsSearch } from '~/modules/docs/search/open-docs-search';
 import { ApiReferenceSection } from '~/modules/docs/sidebar/api-reference-section';
 import { LinksSection } from '~/modules/docs/sidebar/links-section';
 import { PagesSection } from '~/modules/docs/sidebar/pages-section';
-import type { GenTagSummary } from '~/modules/docs/types';
 import { UserTheme } from '~/modules/me/user-theme';
 import { docsConfig } from '~/modules/page/content';
 import { Button } from '~/modules/ui/button';
 import { SidebarContent } from '~/modules/ui/sidebar';
-import { lazyNamed } from '~/utils/lazy-named';
-
-const DebugDropdown = __DEV_TOOLS__
-  ? lazyNamed(() => import('~/modules/common/debug-dropdown'), 'DebugDropdown')
-  : () => null;
 
 interface DocsSidebarProps {
   tags: GenTagSummary[];
@@ -37,7 +32,7 @@ export function DocsSidebar({ tags }: DocsSidebarProps) {
   };
 
   return (
-    <SidebarContent className="min-h-dvh flex-none overflow-visible bg-card pt-2 pb-24">
+    <SidebarContent className="min-h-dvh flex-none overflow-visible bg-card pt-2 pb-12">
       <div aria-hidden="true" className="sticky top-0 z-20 -mb-4 h-2 shrink-0 bg-card" data-slot="sticky-mask" />
 
       <div className="my-2 flex items-center gap-2 px-4 pt-2">
@@ -68,7 +63,7 @@ export function DocsSidebar({ tags }: DocsSidebarProps) {
             aria-label={t('c:search')}
             onClick={() => openDocsSearch(searchTriggerRef)}
           >
-            <SearchIcon className="icon-lg" />
+            <SearchIcon className="size-5" />
           </Button>
           <UserTheme buttonClassName="size-9" />
         </div>
@@ -80,7 +75,7 @@ export function DocsSidebar({ tags }: DocsSidebarProps) {
         .map((section) => {
           switch (section.id) {
             case 'apiReference':
-              return <ApiReferenceSection key={section.id} label={section.label} tags={tags} isMobile={isMobile} />;
+              return <ApiReferenceSection key={section.id} label={section.label} tags={tags} />;
             case 'pages':
               return <PagesSection key={section.id} label={section.label} onClose={closeSheet} />;
             case 'links':
@@ -89,8 +84,6 @@ export function DocsSidebar({ tags }: DocsSidebarProps) {
               return null;
           }
         })}
-
-      <Suspense>{DebugDropdown ? <DebugDropdown className="absolute bottom-0 m-1" /> : null}</Suspense>
     </SidebarContent>
   );
 }

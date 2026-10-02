@@ -71,7 +71,6 @@
               "enum": [6, 5, 4, 3, 2, 1, 0]
             },
             "statusChangedAt": { "type": "string", "required": true },
-            "mentions": { "type": "array", "required": true, "itemType": "string" },
             "checkboxCount": {
               "type": "integer",
               "required": true,
@@ -258,7 +257,6 @@
           "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
           "labels": [],
           "assignedTo": [],
-          "mentions": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
@@ -401,7 +399,6 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
-                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -604,7 +601,6 @@
                 }
               ],
               "assignedTo": [],
-              "mentions": [],
               "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
               "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
               "primaryLabel": {
@@ -688,7 +684,6 @@
                   "entityType": "user"
                 }
               ],
-              "mentions": [],
               "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
               "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
               "primaryLabel": {
@@ -1039,7 +1034,6 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
-                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -1242,7 +1236,6 @@
                 }
               ],
               "assignedTo": [],
-              "mentions": [],
               "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
               "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
               "primaryLabel": {
@@ -1326,7 +1319,6 @@
                   "entityType": "user"
                 }
               ],
-              "mentions": [],
               "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
               "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
               "primaryLabel": {
@@ -1499,7 +1491,6 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
-                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -1746,7 +1737,6 @@
                   "entityType": "user"
                 }
               ],
-              "mentions": [],
               "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
               "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
               "primaryLabel": {
@@ -1821,7 +1811,6 @@
                   "entityType": "user"
                 }
               ],
-              "mentions": [],
               "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
               "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
               "primaryLabel": {
@@ -1913,7 +1902,6 @@
                     "enum": [6, 5, 4, 3, 2, 1, 0]
                   },
                   "statusChangedAt": { "type": "string", "required": true },
-                  "mentions": { "type": "array", "required": true, "itemType": "string" },
                   "checkboxCount": {
                     "type": "integer",
                     "required": true,
@@ -2160,7 +2148,6 @@
                   "entityType": "user"
                 }
               ],
-              "mentions": [],
               "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
               "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
               "primaryLabel": {
@@ -2235,7 +2222,6 @@
                   "entityType": "user"
                 }
               ],
-              "mentions": [],
               "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
               "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
               "primaryLabel": {
@@ -2304,10 +2290,11 @@
       },
       "body": {
         "type": "array",
+        "minItems": 1,
+        "maxItems": 50,
         "itemType": "object",
         "items": {
           "type": "object",
-          "required": true,
           "properties": {
             "name": { "type": "string", "required": false, "maxLength": 255 },
             "description": {
@@ -2375,8 +2362,6 @@
             }
           }
         },
-        "minItems": 1,
-        "maxItems": 50,
         "required": true,
         "contentType": "application/json"
       }
@@ -2555,7 +2540,6 @@
               "enum": [6, 5, 4, 3, 2, 1, 0]
             },
             "statusChangedAt": { "type": "string", "required": true },
-            "mentions": { "type": "array", "required": true, "itemType": "string" },
             "checkboxCount": {
               "type": "integer",
               "required": true,
@@ -2742,7 +2726,6 @@
           "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
           "labels": [],
           "assignedTo": [],
-          "mentions": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
@@ -2881,7 +2864,6 @@
               "enum": [6, 5, 4, 3, 2, 1, 0]
             },
             "statusChangedAt": { "type": "string", "required": true },
-            "mentions": { "type": "array", "required": true, "itemType": "string" },
             "checkboxCount": {
               "type": "integer",
               "required": true,
@@ -3068,7 +3050,6 @@
           "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
           "labels": [],
           "assignedTo": [],
-          "mentions": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
@@ -3137,7 +3118,6 @@
         "properties": {
           "fullResponse": {
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "anyOf": [
               {
                 "type": "string",
@@ -3145,8 +3125,7 @@
                 "enum": ["true", "false"]
               },
               { "type": "boolean", "required": false }
-            ],
-            "ref": "#/components/schemas/BooleanQueryValue"
+            ]
           }
         }
       },

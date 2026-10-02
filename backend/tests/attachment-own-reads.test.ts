@@ -14,11 +14,7 @@ import { setTestConfig } from './test-utils';
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
 const projectId = generateId();
-const attachmentIds = {
-  ownedByA: generateId(),
-  ownedByB: generateId(),
-  ownedByAdmin: generateId(),
-};
+const attachmentIds = { ownedByA: generateId(), ownedByB: generateId(), ownedByAdmin: generateId() };
 
 // Covers row-conditional attachment reads through policy, collection scope,
 // compiled SQL predicate, and HTTP responses.

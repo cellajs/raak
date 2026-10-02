@@ -45,10 +45,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   const onStatusChange = (newStatus: TaskStatus) => {
     revealDraftHostPanel(project.id, newStatus);
 
-    useTaskInteractionStore.getState().updateDraftTask(project.id, {
-      status: newStatus,
-      displayOrder: getDraftDisplayOrder(newStatus, project.id),
-    });
+    useTaskInteractionStore.getState().updateDraftTask(project.id, { status: newStatus, displayOrder: getDraftDisplayOrder(newStatus, project.id) });
   };
 
   // Build status section slots (sticky at their edge, shown/hidden by scroll direction)
@@ -101,10 +98,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
           {topSlot}
 
           {hasContent ? (
-            <div
-              className="[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10"
-              id={`panel-tasks-${project.id}`}
-            >
+            <div className="[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10" id={`panel-tasks-${project.id}`}>
               <WindowVirtualizer ref={virtualizerRef} as="ul" item="li">
                 {tasks.map(renderTask)}
               </WindowVirtualizer>
@@ -136,10 +130,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
           {/* Render tasks */}
           <div className="flex flex-1 flex-col" id={`tasks-list-${project.id}`}>
             {hasContent ? (
-              <div
-                className="grow [&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10"
-                id={`panel-tasks-${project.id}`}
-              >
+              <div className="grow [&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10" id={`panel-tasks-${project.id}`}>
                 {/* startMargin in px based of button size */}
                 <Virtualizer
                   ref={virtualizerRef}

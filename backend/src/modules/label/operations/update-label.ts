@@ -40,20 +40,14 @@ export async function updateLabelOp(
     const opsKeys = Object.keys(rawOps ?? {});
     const memberLevelOnly = opsKeys.length > 0 && opsKeys.every((key) => key === 'description' || key === 'mode');
     if ('description' in (rawOps ?? {}) && before.mode !== 'epic') {
-      throw new AppError(403, 'forbidden', 'warn', {
-        entityType: 'label',
-        meta: { reason: 'Only epic labels carry a description' },
-      });
+      throw new AppError(403, 'forbidden', 'warn', { entityType: 'label', meta: { reason: 'Only epic labels carry a description' } });
     }
 
     // Primary rows are the org's task types; their mode never changes (the schema already
     // limits transitions to secondary <-> epic)
     const modeChange = 'mode' in (rawOps ?? {});
     if (modeChange && before.mode === 'primary') {
-      throw new AppError(403, 'forbidden', 'warn', {
-        entityType: 'label',
-        meta: { reason: 'Primary labels cannot change mode' },
-      });
+      throw new AppError(403, 'forbidden', 'warn', { entityType: 'label', meta: { reason: 'Primary labels cannot change mode' } });
     }
 
     // Other edits on primary/epic labels (identity, appearance) require project-admin
@@ -64,9 +58,7 @@ export async function updateLabelOp(
 
     // Server-origin writes (Yjs description materialization) carry no client field timestamps,
     // so each changed scalar gets a fresh server HLC.
-    const resolved = serverOrigin
-      ? labelContract.resolveServerUpdateOps(before, rawOps)
-      : labelContract.resolveUpdateOps(before, rawOps, stx);
+    const resolved = serverOrigin ? labelContract.resolveServerUpdateOps(before, rawOps) : labelContract.resolveUpdateOps(before, rawOps, stx);
 
     const values: Partial<LabelModel> = {
       ...(resolved.changed ? resolved.values : {}),

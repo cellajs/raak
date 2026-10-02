@@ -11,6 +11,12 @@ type LastUser = Pick<MeUser, 'id' | 'email'>;
 
 export const yjsTokenKey = (entityType: ProductEntityType, entityId: string) => `${entityType}:${entityId}`;
 
+/** i18next emits languageChanged even for the current language, which re-renders every useTranslation consumer. */
+const syncLanguage = (language?: User['language']) => {
+  const lng = language || 'en';
+  if (i18n.language !== lng) i18n.changeLanguage(lng);
+};
+
 interface UserStoreState {
   /** Current user. `null` while signed out; set by the authenticated route guard. */
   user: MeUser | null;
@@ -38,31 +44,19 @@ export const useUserStore = create<UserStoreState>()(
       immer((set) => ({
         ...initStore,
         updateUser: (user) => {
-          set((state) => ({
-            user: {
-              ...state.user,
-              ...user,
-            },
-            lastUser: {
-              id: user.id,
-              email: user.email,
-            },
-          }));
+          set((state) => ({ user: { ...state.user, ...user }, lastUser: { id: user.id, email: user.email } }));
 
-          i18n.changeLanguage(user.language || 'en');
+          syncLanguage(user.language);
         },
         setUser: (user, skipLastUser) => {
           set((state) => {
             state.user = user;
             if (skipLastUser) return;
 
-            state.lastUser = {
-              id: user.id,
-              email: user.email,
-            };
+            state.lastUser = { id: user.id, email: user.email };
           });
 
-          i18n.changeLanguage(user.language || 'en');
+          syncLanguage(user.language);
         },
         setIsSystemAdmin: (isSystemAdmin) => {
           set((state) => {
@@ -71,10 +65,7 @@ export const useUserStore = create<UserStoreState>()(
         },
         setLastUser: (lastUser) => {
           set((state) => {
-            state.lastUser = {
-              id: lastUser.id,
-              email: lastUser.email,
-            };
+            state.lastUser = { id: lastUser.id, email: lastUser.email };
           });
         },
         setYjsToken: (key, token) => {
@@ -91,11 +82,7 @@ export const useUserStore = create<UserStoreState>()(
       {
         version: 1,
         name: `${appConfig.slug}-user`,
-        partialize: (state) => ({
-          user: state.user,
-          isSystemAdmin: state.isSystemAdmin,
-          lastUser: state.lastUser,
-        }),
+        partialize: (state) => ({ user: state.user, isSystemAdmin: state.isSystemAdmin, lastUser: state.lastUser }),
         storage: createJSONStorage(() => localStorage),
       },
     ),

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { dateColumn } from '~/modules/common/data-table/columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { ResendPendingInvitationCell } from '~/modules/memberships/pending-table/resend-pending-cell';
 import type { PendingMembership } from '~/modules/memberships/types';
 import { UserCell } from '~/modules/user/user-cell';
-import { dateShort } from '~/utils/date-short';
 
 /** `canResend`: the viewer holds `update` on the channel, which a resend needs. */
 export const useColumns = (path: { tenantId: string; organizationId: string }, canResend: boolean) => {
@@ -20,11 +20,7 @@ export const useColumns = (path: { tenantId: string; organizationId: string }, c
       renderCell: ({ row, tabIndex }) => {
         if (!row.email) return null;
         return (
-          <a
-            href={`mailto:${row.email}`}
-            tabIndex={tabIndex}
-            className="truncate underline-offset-4 outline-0 ring-0 hover:underline"
-          >
+          <a href={`mailto:${row.email}`} tabIndex={tabIndex} className="truncate underline-offset-4 outline-0 ring-0 hover:underline">
             {row.email}
           </a>
         );
@@ -36,21 +32,9 @@ export const useColumns = (path: { tenantId: string; organizationId: string }, c
 
       width: 100,
       placeholderValue: '-',
-      renderCell: ({ row }) =>
-        row.role ? (
-          <div className="group relative inline-flex h-full w-full items-center gap-1">{t(row.role)}</div>
-        ) : null,
+      renderCell: ({ row }) => (row.role ? <div className="group relative inline-flex size-full items-center gap-1">{t(row.role)}</div> : null),
     },
-    {
-      key: 'createdAt',
-      name: t('c:invited_at'),
-      sortable: true,
-      sortDescendingFirst: true,
-      minBreakpoint: 'md',
-      placeholderValue: '-',
-      renderCell: ({ row }) => dateShort(row.createdAt),
-      minWidth: 120,
-    },
+    dateColumn('createdAt', { name: t('c:invited_at') }),
     {
       key: 'createdBy',
       name: t('c:invited_by'),
@@ -58,8 +42,7 @@ export const useColumns = (path: { tenantId: string; organizationId: string }, c
       minBreakpoint: 'md',
       minWidth: 160,
       placeholderValue: '-',
-      renderCell: ({ row, tabIndex }) =>
-        row.createdBy && <UserCell compactable user={row.createdBy} tabIndex={tabIndex} />,
+      renderCell: ({ row, tabIndex }) => row.createdBy && <UserCell compactable user={row.createdBy} tabIndex={tabIndex} />,
     },
   ];
 

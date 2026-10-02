@@ -32,14 +32,7 @@ interface PanelStatusSectionProps {
  * in/out based on scroll direction, like the floating nav buttons. Visibility
  * state lives here so scroll flips re-render only this header, not the panel.
  */
-export function PanelStatusSection({
-  type,
-  counts,
-  projectId,
-  onToggle,
-  scrollRef,
-  windowMode,
-}: PanelStatusSectionProps) {
+export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRef, windowMode }: PanelStatusSectionProps) {
   const { t } = useTranslation();
   const isVisible = useSectionEdgeVisibility({ edge: type === 'iced' ? 'bottom' : 'top', scrollRef, windowMode });
 
@@ -119,9 +112,7 @@ export function PanelStatusSection({
           className={cn(
             'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-all duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
             // Hidden state slides the button toward its sticky edge
-            isVisible
-              ? 'pointer-events-auto translate-y-0 opacity-100'
-              : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
+            isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
             isIced
               ? 'border-b-sky-500/10 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 max-sm:border-b dark:bg-sky-950 dark:text-sky-500 dark:hover:bg-sky-900 dark:hover:text-sky-400'
               : 'border-t border-t-transparent border-b border-b-green-500/10 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 dark:bg-green-950 dark:text-green-500 dark:hover:bg-green-900 dark:hover:text-green-400',
@@ -145,10 +136,7 @@ export function PanelStatusSection({
               )}
             </div>
           )}
-          <ChevronDownIcon
-            data-rotate={showStatus}
-            className="absolute right-4 transition-transform data-[rotate=true]:rotate-180"
-          />
+          <ChevronDownIcon data-rotate={showStatus} className="absolute right-4 transition-transform data-[rotate=true]:rotate-180" />
         </Button>
       </div>
       {hasOnlyOlderAccepted && showStatus && (

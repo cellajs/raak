@@ -10,9 +10,10 @@ import { LegalContact } from '~/modules/auth/legal/legal-contact';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useCreateRequestMutation } from '~/modules/requests/query';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useUserStore } from '~/modules/user/user-store';
 import { lazyNamed } from '~/utils/lazy-named';
@@ -61,7 +62,7 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
   return (
     <div className="flex w-full flex-col gap-4 md:flex-row md:gap-10">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4 md:space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full flex-col gap-4 md:gap-6">
           <InputFormField
             control={form.control}
             name="name"

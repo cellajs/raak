@@ -32,10 +32,7 @@ export async function createAttachmentsOp(ctx: OrgContext, rawInput: CreateAttac
   const existing = await checkIdempotency(ctx, attachmentsTable, batchStxId);
   if (existing) return { data: await withAuditUsers(ctx, existing), rejectedIds: [] as string[] };
 
-  const currentAttachments = await getOrganizationEntityCount(ctx, {
-    organizationId: organization.id,
-    entityType: 'attachment',
-  });
+  const currentAttachments = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'attachment' });
 
   if (attachmentRestrictions !== 0 && currentAttachments + input.length > attachmentRestrictions) {
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'attachment' });
@@ -77,7 +74,7 @@ export async function createAttachmentsOp(ctx: OrgContext, rawInput: CreateAttac
 
   const createdAttachments = await tenantContext(ctx, async (txCtx) => {
     const rows = await insertAttachments(txCtx, { attachments: attachmentsToInsert });
-    // Inside the transaction, so handlers such as mention derivation join the write.
+    // Inside the transaction, so mutation handlers join the write.
     await dispatchMutation(txCtx, 'attachment.created', { after: rows });
     return rows;
   });

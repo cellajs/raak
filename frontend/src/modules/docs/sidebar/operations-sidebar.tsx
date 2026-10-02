@@ -1,19 +1,17 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import type { GenOperationSummary } from 'sdk/docs-types';
 import { nanoid } from 'shared/utils/nanoid';
 import { usePrerenderTrigger } from '~/hooks/use-prerender';
 import { useCurrentSection } from '~/hooks/use-scroll-spy';
 import { operationsByTagQueryOptions, tagDetailsQueryOptions, tagsQueryOptions } from '~/modules/docs/query';
-import type { GenOperationSummary } from '~/modules/docs/types';
 import { SidebarMenu } from '~/modules/ui/sidebar';
 import { queryClient } from '~/query/query-client';
 import { CollapsibleTagItem } from './collapsible-tag-item';
 import { OperationItem } from './operation-item';
 
 const itemKey = (op: GenOperationSummary) => op.hash;
-const renderItem = (op: GenOperationSummary, _index: number, isActive: boolean) => (
-  <OperationItem operation={op} isActive={isActive} />
-);
+const renderItem = (op: GenOperationSummary, _index: number, isActive: boolean) => <OperationItem operation={op} isActive={isActive} />;
 
 interface OperationsSidebarProps {
   activeTag?: string;
@@ -34,7 +32,8 @@ export function OperationsSidebar({ activeTag }: OperationsSidebarProps) {
         const isExpanded = activeTag === tag.name;
         // Only pass items for expanded tag to avoid mounting all operations upfront
         const tagOperations = isExpanded ? (operationsByTag[tag.name] ?? []) : [];
-        const isActive = hash === `tag/${tag.name}` || hash?.startsWith(`tag/${tag.name}/`);
+        const isAtTag = hash === `tag/${tag.name}`;
+        const isActive = isAtTag || hash?.startsWith(`tag/${tag.name}/`);
         const activeOperationIndex = tagOperations.findIndex((op) => op.hash === hash);
 
         return (
@@ -46,6 +45,7 @@ export function OperationsSidebar({ activeTag }: OperationsSidebarProps) {
             isExpanded={isExpanded}
             layoutId={layoutId}
             isActive={isActive}
+            isAtTag={isAtTag}
             activeItemIndex={activeOperationIndex}
             renderItem={renderItem}
             itemKey={itemKey}

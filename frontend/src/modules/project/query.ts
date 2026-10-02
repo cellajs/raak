@@ -25,11 +25,7 @@ import { ApiError } from '~/lib/api';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { labelQueryKeys } from '~/modules/label/query';
 import { meKeys } from '~/modules/me/query';
-import {
-  addMyMembershipCache,
-  getApiIncludedMembership,
-  upsertMyMembershipCache,
-} from '~/modules/memberships/query-mutations';
+import { addMyMembershipCache, getApiIncludedMembership, upsertMyMembershipCache } from '~/modules/memberships/query-mutations';
 import type { EnrichedProject } from '~/modules/project/types';
 import { workspaceQueryKeys } from '~/modules/workspace/query';
 import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
@@ -52,10 +48,7 @@ registerEntityQueryKeys('project', keys);
 /** Defines React Query cache keys for project. */
 export const projectQueryKeys = {
   ...keys,
-  detail: {
-    ...keys.detail,
-    public: (id: string) => ['project', 'detail', 'public', id] as const,
-  },
+  detail: { ...keys.detail, public: (id: string) => ['project', 'detail', 'public', id] as const },
 };
 
 const findProjectInCache = createCacheFinder<Project>('project');
@@ -65,17 +58,13 @@ const findProjectInCache = createCacheFinder<Project>('project');
  * Returns `EnrichedProject` because cache entries are populated by the enrichment pipeline.
  */
 export const findProjectByIdOrSlug = (idOrSlug: string, tenantId: string): EnrichedProject | undefined =>
-  findProjectInCache((p) => p.id === idOrSlug || (p.slug === idOrSlug && p.tenantId === tenantId)) as
-    | EnrichedProject
-    | undefined;
+  findProjectInCache((p) => p.id === idOrSlug || (p.slug === idOrSlug && p.tenantId === tenantId)) as EnrichedProject | undefined;
 
 /** Reads the cached project's `publicAt` so a new task/attachment inherits its project's publicity at create time. */
 export const getProjectPublicAt = (projectId: string, tenantId: string): string | null =>
   findProjectByIdOrSlug(projectId, tenantId)?.publicAt ?? null;
 
-type ProjectsListParams = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'> & {
-  limit?: number;
-};
+type ProjectsListParams = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'> & { limit?: number };
 
 /**
  * Paginated projects infinite query. `include` is deliberately not part of the cache key because
@@ -105,10 +94,7 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
     queryFn: async ({ pageParam: { page, offset }, signal }) => {
       const requestOffset = String(offset ?? (page ?? 0) * limit);
 
-      const result = await getProjects({
-        query: { ...requestQuery, offset: requestOffset },
-        signal,
-      });
+      const result = await getProjects({ query: { ...requestQuery, offset: requestOffset }, signal });
       // Cache entries are populated by the enrichment pipeline (membership/can/ancestorSlugs).
       return result as { items: EnrichedProject[]; total: number };
     },
@@ -193,10 +179,7 @@ export const useProjectDeleteMutation = () => {
       const deleteText =
         projects.length === 1
           ? t('c:success.delete_resource', { resource: t('c:project') })
-          : t('c:success.delete_counted_resources', {
-              count: projects.length,
-              resources: t('c:project_other').toLowerCase(),
-            });
+          : t('c:success.delete_counted_resources', { count: projects.length, resources: t('c:project_other').toLowerCase() });
       toaster.success(deleteText);
 
       // Invalidate labels table queries
@@ -217,20 +200,11 @@ export const useAssignProjectMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
-  return useMutation<
-    AssignProjectWorkspaceResponse,
-    ApiError,
-    MutationData<AssignProjectWorkspaceData> & { workspaceName: string }
-  >({
+  return useMutation<AssignProjectWorkspaceResponse, ApiError, MutationData<AssignProjectWorkspaceData> & { workspaceName: string }>({
     mutationKey: keys.update,
     mutationFn: ({ path, query }) => assignProjectWorkspace({ path, query }),
     onSuccess: (newProject, { path: { organizationId }, query: { workspaceId }, workspaceName }) => {
-      toaster.success(
-        t('c:success.assign_resource', {
-          resource: `${t('c:project')} ${newProject.name}`,
-          secondResource: workspaceName,
-        }),
-      );
+      toaster.success(t('c:success.assign_resource', { resource: `${t('c:project')} ${newProject.name}`, secondResource: workspaceName }));
 
       const queryKey = workspaceQueryKeys.detail.byId(workspaceId);
       queryClient.invalidateQueries({ queryKey });
@@ -263,11 +237,7 @@ export const useProjectMoveMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
-  return useMutation<
-    MoveProjectToWorkspaceResponse,
-    ApiError,
-    MutationData<MoveProjectToWorkspaceData> & { currentWorkspaceId: string }
-  >({
+  return useMutation<MoveProjectToWorkspaceResponse, ApiError, MutationData<MoveProjectToWorkspaceData> & { currentWorkspaceId: string }>({
     mutationKey: keys.update,
     mutationFn: ({ path, query }) => moveProjectToWorkspace({ path, query }),
     onSuccess: (movedProject, { path: { organizationId }, query: { workspaceId }, currentWorkspaceId }) => {

@@ -25,9 +25,7 @@ export function TaskPanelEmpty({ projectId }: { projectId?: string }) {
               strokeWidth={0.2}
               className={`absolute top-4 right-4 size-50 translate-y-20 rotate-180 scale-x-0 scale-y-75 text-primary opacity-0 transition-all delay-500 duration-500 group-hover/empty:translate-y-0 group-hover/empty:rotate-[130deg] group-hover/empty:scale-x-100 group-hover/empty:opacity-100 max-md:hidden ${readOnlyHide}`}
             />
-            <p
-              className={`inline-flex gap-1 transition-opacity duration-500 group-hover/empty:opacity-100 sm:opacity-0 ${readOnlyHide}`}
-            >
+            <p className={`inline-flex gap-1 transition-opacity duration-500 group-hover/empty:opacity-100 sm:opacity-0 ${readOnlyHide}`}>
               <span>{t('c:click')}</span>
               <span className="text-primary">+</span>
               <span className="text-primary max-sm:hidden">{t('c:task')}</span>

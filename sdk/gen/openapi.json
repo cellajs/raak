@@ -10,6 +10,13 @@
     "description": "⚠️ ATTENTION: PRERELEASE!  \n                  This API is organized into modules based on logical domains (e.g. `auth`, `organizations`, `memberships`).\n                  Each module includes a set of endpoints that expose functionality related to a specific resource or cross resource logic.\n\n                  The documentation is generated from source code using `zod` schemas, converted into OpenAPI via `zod-openapi` and served through the `hono` framework.",
     "x-extensions": [
       {
+        "key": "x-enabled-by",
+        "id": "xEnabledBy",
+        "description": "Config switch the endpoint belongs to: a service, a sign-in method or an OAuth provider; refused before the guards while it is off",
+        "required": false,
+        "kind": "metadata"
+      },
+      {
         "key": "x-guard",
         "id": "xGuard",
         "description": "Authorization middleware applied to the endpoint",
@@ -27,14 +34,6 @@
           "actorGuard": {
             "name": "actor",
             "description": "Requires a session cookie, a secret API key, or an access token and sets the actor"
-          },
-          "crossTenantGuard": {
-            "name": "crossTenant",
-            "description": "Requires userGuard and sets baseDb for cross-tenant access"
-          },
-          "noImpersonationGuard": {
-            "name": "noImpersonation",
-            "description": "Refused while impersonating: the admin acts as the user, never on the account itself"
           },
           "orgGuard": {
             "name": "org",
@@ -54,7 +53,7 @@
           },
           "sysAdminGuard": {
             "name": "sysAdmin",
-            "description": "Requires system admin + IP whitelist"
+            "description": "Requires system admin + IP whitelist, never an impersonation"
           },
           "tenantGuard": {
             "name": "tenant",
@@ -109,6 +108,10 @@
             "name": "serviceBurst",
             "description": "Max 30 requests/second per service account"
           },
+          "mcpRequestLimiter": {
+            "name": "mcpRequest",
+            "description": "Max 30 MCP requests/second per account"
+          },
           "syncReadLimiter": {
             "name": "syncRead",
             "description": "Max 5000 sync-driven reads/hour per user (delta lists, unseen counts)"
@@ -148,20 +151,6 @@
         "key": "x-tool",
         "id": "xTool",
         "description": "MCP tool registration metadata",
-        "required": false,
-        "kind": "metadata"
-      },
-      {
-        "key": "x-service",
-        "id": "x-service",
-        "description": "Service gating the endpoint; route returns 404 when the service is disabled",
-        "required": false,
-        "kind": "metadata"
-      },
-      {
-        "key": "x-strategy",
-        "id": "x-strategy",
-        "description": "Sign-in method the endpoint belongs to; refused while that method is switched off",
         "required": false,
         "kind": "metadata"
       }
@@ -507,37 +496,6 @@
         },
         "x-tags": ["base", "users", "cella"]
       },
-      "OrganizationMinimalBase": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "thumbnailUrl": {
-            "type": ["string", "null"]
-          },
-          "entityType": {
-            "type": "string",
-            "enum": ["organization"]
-          }
-        },
-        "required": ["id", "name", "slug", "thumbnailUrl", "entityType"],
-        "description": "Minimal organization data for references.",
-        "example": {
-          "id": "a0e12a75-1f11-485a-a581-cfcf45f209ef",
-          "name": "Schuster Inc",
-          "slug": "schuster-inc",
-          "thumbnailUrl": null,
-          "entityType": "organization"
-        },
-        "x-tags": ["base", "organizations", "cella"]
-      },
       "UserBase": {
         "type": "object",
         "properties": {
@@ -574,18 +532,7 @@
             "enum": ["user"]
           }
         },
-        "required": [
-          "id",
-          "name",
-          "createdAt",
-          "updatedAt",
-          "slug",
-          "thumbnailUrl",
-          "bannerUrl",
-          "description",
-          "email",
-          "entityType"
-        ],
+        "required": ["id", "name", "createdAt", "updatedAt", "slug", "thumbnailUrl", "bannerUrl", "description", "email", "entityType"],
         "description": "Base user schema with essential fields for identification and display.",
         "example": {
           "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
@@ -633,17 +580,7 @@
             "type": ["string", "null"]
           }
         },
-        "required": [
-          "id",
-          "name",
-          "createdAt",
-          "updatedAt",
-          "tenantId",
-          "entityType",
-          "slug",
-          "thumbnailUrl",
-          "bannerUrl"
-        ],
+        "required": ["id", "name", "createdAt", "updatedAt", "tenantId", "entityType", "slug", "thumbnailUrl", "bannerUrl"],
         "description": "Base schema for entities with memberships (e.g. organization).",
         "example": {
           "id": "288d15c3-2a96-4d92-903e-dcbb54ecd23d",
@@ -704,18 +641,8 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "createdAt",
-          "updatedAt",
-          "description",
-          "createdBy",
-          "updatedBy",
-          "entityType",
-          "keywords"
-        ],
-        "description": "Base schema for content entities with creator tracking (e.g. page, attachment).",
+        "required": ["id", "name", "createdAt", "updatedAt", "description", "createdBy", "updatedBy", "entityType", "keywords"],
+        "description": "Base schema for content entities with creator tracking (e.g. attachment).",
         "example": {
           "id": "7e460470-da58-4733-a7ff-0d31897ecf8d",
           "createdAt": "2024-07-02T14:28:38.152Z",
@@ -857,20 +784,6 @@
         },
         "x-tags": ["base", "cella"]
       },
-      "BooleanQueryValue": {
-        "anyOf": [
-          {
-            "type": "string",
-            "enum": ["true", "false"]
-          },
-          {
-            "type": "boolean"
-          }
-        ],
-        "default": "false",
-        "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
-        "x-tags": ["base", "cella"]
-      },
       "StreamNotification": {
         "type": "object",
         "properties": {
@@ -890,17 +803,7 @@
           },
           "resourceType": {
             "type": ["string", "null"],
-            "enum": [
-              "request",
-              "membership",
-              "inactive_membership",
-              "tenant",
-              "system_role",
-              "service_account",
-              "api_key",
-              "oauth_client",
-              null
-            ]
+            "enum": ["request", "membership", "inactive_membership", "tenant", "system_role", "service_account", "api_key", "oauth_client", null]
           },
           "subjectId": {
             "type": ["string", "null"]
@@ -1077,9 +980,6 @@
           "entityType": {
             "type": "string",
             "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
-          },
-          "logId": {
-            "type": "string"
           },
           "requestId": {
             "type": "string"
@@ -1525,15 +1425,7 @@
                 },
                 "revocationReason": {
                   "type": ["string", "null"],
-                  "enum": [
-                    "sign_out",
-                    "other_session",
-                    "mfa_enabled",
-                    "session_cap",
-                    "replaced",
-                    "impersonation_stopped",
-                    null
-                  ]
+                  "enum": ["sign_out", "other_session", "mfa_enabled", "session_cap", "replaced", "impersonation_stopped", null]
                 },
                 "impersonatorSessionId": {
                   "type": ["string", "null"],
@@ -1618,16 +1510,7 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "id",
-                "userId",
-                "deviceName",
-                "deviceType",
-                "deviceOs",
-                "browser",
-                "nameOnDevice",
-                "createdAt"
-              ]
+              "required": ["id", "userId", "deviceName", "deviceType", "deviceOs", "browser", "nameOnDevice", "createdAt"]
             }
           }
         },
@@ -1862,6 +1745,15 @@
         },
         "required": ["id", "clientId", "clientName", "scopes", "resources", "createdAt", "expiresAt"],
         "description": "An OAuth consent (grant) of the current user.",
+        "example": {
+          "id": "01J9Z2Q0X7ZQ4S5M8NX3F2ABCD",
+          "clientId": "https://vscode.dev/oauth/client-metadata.json",
+          "clientName": "Visual Studio Code",
+          "scopes": ["attachment:read"],
+          "resources": ["http://localhost:3000/mcp/tenant01/org01/mcp"],
+          "createdAt": "2026-09-22T10:00:00.000Z",
+          "expiresAt": "2026-10-22T10:00:00.000Z"
+        },
         "x-tags": ["data", "me", "cella"]
       },
       "Project": {
@@ -2269,12 +2161,6 @@
           "statusChangedAt": {
             "type": "string"
           },
-          "mentions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "checkboxCount": {
             "type": "integer",
             "minimum": -2147483648,
@@ -2409,7 +2295,6 @@
           "displayOrder",
           "status",
           "statusChangedAt",
-          "mentions",
           "checkboxCount",
           "checkedCount",
           "attachments",
@@ -2467,7 +2352,6 @@
           "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
           "labels": [],
           "assignedTo": [],
-          "mentions": [],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
@@ -2481,32 +2365,6 @@
           }
         },
         "x-tags": ["data", "tasks", "app"]
-      },
-      "TenantWithOrganization": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tenant"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "organization": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/OrganizationMinimalBase"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The organization this tenant holds, or null if none"
-              }
-            },
-            "required": ["organization"]
-          }
-        ],
-        "description": "A tenant together with the single organization it holds.",
-        "x-tags": ["data", "tenants", "cella"]
       },
       "Tenant": {
         "type": "object",
@@ -2584,6 +2442,29 @@
           "domainsCount": {
             "type": "integer",
             "description": "Number of domains claimed by this tenant"
+          },
+          "organization": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "thumbnailUrl": {
+                "type": ["string", "null"]
+              },
+              "entityType": {
+                "type": "string",
+                "enum": ["organization"]
+              }
+            },
+            "required": ["id", "name", "slug", "thumbnailUrl", "entityType"],
+            "description": "The organization this tenant holds, or null if none"
           }
         },
         "required": [
@@ -2598,9 +2479,47 @@
           "subscriptionPlan",
           "createdAt",
           "updatedAt",
-          "domainsCount"
+          "domainsCount",
+          "organization"
         ],
         "description": "A tenant representing an isolated data partition for multi-tenancy.",
+        "example": {
+          "id": "l6ddop",
+          "name": "Lubowitz, Waters and Haley",
+          "status": "active",
+          "restrictions": {
+            "quotas": {
+              "user": 1000,
+              "organization": 1,
+              "workspace": 0,
+              "project": 0,
+              "task": 0,
+              "label": 0,
+              "attachment": 100,
+              "serviceAccount": 20,
+              "apiKey": 100
+            },
+            "rateLimits": {
+              "apiPointsPerHour": 1000
+            },
+            "allowUnregisteredClients": true
+          },
+          "authStrategies": [],
+          "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+          "subscriptionId": null,
+          "subscriptionStatus": "none",
+          "subscriptionPlan": null,
+          "createdAt": "2024-02-09T07:11:04.461Z",
+          "updatedAt": "2024-03-30T20:43:34.109Z",
+          "domainsCount": 0,
+          "organization": {
+            "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+            "name": "Lubowitz, Waters and Haley",
+            "slug": "lubowitz-waters-and-haley",
+            "thumbnailUrl": null,
+            "entityType": "organization"
+          }
+        },
         "x-tags": ["data", "tenants", "cella"]
       },
       "ProtectedResourceMetadata": {
@@ -2631,13 +2550,29 @@
             "type": "string"
           }
         },
-        "required": [
-          "resource",
-          "authorization_servers",
-          "scopes_supported",
-          "bearer_methods_supported",
-          "resource_documentation"
-        ]
+        "required": ["resource", "authorization_servers", "scopes_supported", "bearer_methods_supported", "resource_documentation"],
+        "description": "RFC 9728 metadata of a protected resource: the authorization servers that issue its tokens and the scopes it accepts.",
+        "example": {
+          "resource": "http://localhost:3000/api/t/m5jfjs",
+          "authorization_servers": ["http://localhost:3000/oauth"],
+          "scopes_supported": [
+            "organization:read",
+            "organization:write",
+            "workspace:read",
+            "workspace:write",
+            "project:read",
+            "project:write",
+            "task:read",
+            "task:write",
+            "label:read",
+            "label:write",
+            "attachment:read",
+            "attachment:write"
+          ],
+          "bearer_methods_supported": ["header"],
+          "resource_documentation": "http://localhost:3000/docs"
+        },
+        "x-tags": ["data", "oauth-server", "cella"]
       },
       "Organization": {
         "type": "object",
@@ -2796,21 +2731,7 @@
                     },
                     "color": {
                       "type": "string",
-                      "enum": [
-                        "red",
-                        "orange",
-                        "amber",
-                        "yellow",
-                        "green",
-                        "emerald",
-                        "teal",
-                        "sky",
-                        "blue",
-                        "indigo",
-                        "violet",
-                        "pink",
-                        "slate"
-                      ]
+                      "enum": ["red", "orange", "amber", "yellow", "green", "emerald", "teal", "sky", "blue", "indigo", "violet", "pink", "slate"]
                     },
                     "icon": {
                       "type": ["string", "null"],
@@ -3508,7 +3429,6 @@
           "keys": {
             "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text"
           },
-          "mentions": [],
           "projectId": "8fed4f40-cfd7-4da0-a6a8-c118563b74fa",
           "organizationId": "91eb1a57-81a6-485a-87ee-9b7e9b6c234f"
         },
@@ -3718,18 +3638,7 @@
             "type": ["string", "null"]
           }
         },
-        "required": [
-          "id",
-          "tenantId",
-          "name",
-          "status",
-          "bindings",
-          "oauthClientId",
-          "createdBy",
-          "updatedBy",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "tenantId", "name", "status", "bindings", "oauthClientId", "createdBy", "updatedBy", "createdAt", "updatedAt"],
         "description": "The actor an API key runs as, with its role bindings.",
         "example": {
           "id": "764ce6e7-55fc-4f5d-b661-0c777df71d45",
@@ -3750,41 +3659,7 @@
           "updatedAt": "2024-09-01T22:49:17.262Z",
           "updatedBy": null
         },
-        "x-tags": ["service-accounts", "cella"]
-      },
-      "CreatedApiKey": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ApiKey"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "secret": {
-                "type": "string",
-                "description": "The plaintext API key; store it now, it is not shown again."
-              }
-            },
-            "required": ["secret"]
-          }
-        ],
-        "description": "A newly issued API key with its plaintext secret.",
-        "example": {
-          "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
-          "actorId": "6b40b65d-1ea1-4132-892e-876f9e4e268a",
-          "tenantId": "kr2nrm",
-          "name": "connect key",
-          "prefix": "raak-development_sk_test_Ab3d",
-          "last4": "2345",
-          "scopes": ["attachment:read"],
-          "expiresAt": null,
-          "revokedAt": null,
-          "revokedBy": null,
-          "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
-          "createdAt": "2024-08-12T09:36:07.688Z",
-          "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
-        },
-        "x-tags": ["service-accounts", "cella"]
+        "x-tags": ["data", "service-accounts", "cella"]
       },
       "ApiKey": {
         "type": "object",
@@ -3880,7 +3755,7 @@
           "createdBy": "e522e29f-f395-42f7-999b-7ea34c4cb760",
           "createdAt": "2024-11-05T21:01:57.922Z"
         },
-        "x-tags": ["service-accounts", "cella"]
+        "x-tags": ["data", "service-accounts", "cella"]
       }
     },
     "parameters": {}
@@ -4008,7 +3883,6 @@
       "get": {
         "security": [],
         "operationId": "invokeToken",
-        "x-strategy": "per-request",
         "tags": ["auth", "cella"],
         "summary": "Invoke token session",
         "description": "Opens an emailed link of a link-carried token type: a magic link or a provider address verification signs in, a step-up link proves presence on this browser's session, an invitation hands the app a single-use token session in a cookie. Redirects to the app.",
@@ -4177,7 +4051,7 @@
         "tags": ["auth", "cella"],
         "summary": "Accept invitation token as current user",
         "description": "Accepts the membership invitation held in the single-use token session as the signed-in user, also when it was sent to a different email address. Only an invitation not yet bound to another user can be accepted this way.",
-        "x-guard": ["userGuard", "crossTenantGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
         "responses": {
@@ -4234,7 +4108,7 @@
         "tags": ["auth", "cella"],
         "summary": "Start impersonating",
         "description": "Allows a system admin to impersonate a specific user by ID, returning a temporary impersonation session.",
-        "x-guard": ["userGuard", "noImpersonationGuard", "sysAdminGuard"],
+        "x-guard": ["userGuard", "sysAdminGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "requestBody": {
@@ -4418,10 +4292,12 @@
       "post": {
         "security": [],
         "operationId": "sendMagicLink",
-        "x-strategy": "magic",
         "tags": ["auth", "cella"],
         "summary": "Send magic link",
         "description": "Sends a magic link sign-in email to the specified address. Always returns 204 to prevent email enumeration.",
+        "x-enabled-by": {
+          "strategy": "magic"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["magicLinkLimiter", "spamLimiter"],
         "x-cache": [],
@@ -4476,10 +4352,12 @@
       "get": {
         "security": [],
         "operationId": "getPendingMagicLink",
-        "x-strategy": "magic",
         "tags": ["auth", "cella"],
         "summary": "Get pending magic link",
         "description": "For a magic link opened in a browser that did not request it: the address it signs in, so the holder can recognize the account before confirming.",
+        "x-enabled-by": {
+          "strategy": "magic"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -4525,10 +4403,12 @@
       "post": {
         "security": [],
         "operationId": "confirmMagicLink",
-        "x-strategy": "magic",
         "tags": ["auth", "cella"],
         "summary": "Confirm magic link",
         "description": "Signs in with the magic link this browser holds, confirmed from the app page. A form post from the app origin; redirects like opening the link.",
+        "x-enabled-by": {
+          "strategy": "magic"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -4573,10 +4453,12 @@
           }
         ],
         "operationId": "generateTotpKey",
-        "x-strategy": "totp",
         "tags": ["auth", "cella"],
         "summary": "Generate TOTP key",
         "description": "Generates a new TOTP key for current user and returns a provisioning URI and Base32 manual key.",
+        "x-enabled-by": {
+          "strategy": "totp"
+        },
         "x-guard": ["userGuard", "stepUpGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -4633,10 +4515,12 @@
           }
         ],
         "operationId": "createTotp",
-        "x-strategy": "totp",
         "tags": ["auth", "cella"],
         "summary": "Set TOTP",
         "description": "Confirms TOTP setup by verifying a code from the authenticator app for the first time. On success, TOTP is registered for current user.",
+        "x-enabled-by": {
+          "strategy": "totp"
+        },
         "x-guard": ["userGuard", "stepUpGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -4688,7 +4572,6 @@
           }
         ],
         "operationId": "deleteTotp",
-        "x-strategy": "none",
         "tags": ["auth", "cella"],
         "summary": "Delete TOTP",
         "description": "Delete TOTP credential for current user.",
@@ -4724,10 +4607,12 @@
       "post": {
         "security": [],
         "operationId": "signInWithTotp",
-        "x-strategy": "totp",
         "tags": ["auth", "cella"],
         "summary": "Verify TOTP",
         "description": "Validates the TOTP code and completes TOTP based authentication.",
+        "x-enabled-by": {
+          "strategy": "totp"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["totpVerificationLimiter"],
         "x-cache": [],
@@ -4790,10 +4675,12 @@
           }
         ],
         "operationId": "createPasskey",
-        "x-strategy": "passkey",
         "tags": ["auth", "cella"],
         "summary": "Create passkey",
         "description": "Register a passkey for passwordless authentication by verifying a signed challenge and linking it to the current user. Multiple passkeys can be created for different devices/browsers.",
+        "x-enabled-by": {
+          "strategy": "passkey"
+        },
         "x-guard": ["userGuard", "stepUpGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -4912,16 +4799,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id",
-                    "userId",
-                    "deviceName",
-                    "deviceType",
-                    "deviceOs",
-                    "browser",
-                    "nameOnDevice",
-                    "createdAt"
-                  ]
+                  "required": ["id", "userId", "deviceName", "deviceType", "deviceOs", "browser", "nameOnDevice", "createdAt"]
                 }
               }
             }
@@ -4955,7 +4833,6 @@
           }
         ],
         "operationId": "deletePasskey",
-        "x-strategy": "none",
         "tags": ["auth", "cella"],
         "summary": "Delete passkey",
         "description": "Delete a passkey by id from the current user.",
@@ -5002,10 +4879,12 @@
       "post": {
         "security": [],
         "operationId": "generatePasskeyChallenge",
-        "x-strategy": "passkey",
         "tags": ["auth", "cella"],
         "summary": "Generate passkey challenge",
         "description": "Initiates the passkey registration or authentication flow by generating a device bound challenge.",
+        "x-enabled-by": {
+          "strategy": "passkey"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["passkeyChallengeLimiter"],
         "x-cache": [],
@@ -5078,10 +4957,12 @@
       "post": {
         "security": [],
         "operationId": "signInWithPasskey",
-        "x-strategy": "passkey",
         "tags": ["auth", "cella"],
         "summary": "Verify passkey",
         "description": "Validates the signed challenge and completes passkey based authentication.",
+        "x-enabled-by": {
+          "strategy": "passkey"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -5183,10 +5064,12 @@
           }
         ],
         "operationId": "startOAuthConnect",
-        "x-strategy": "oauth",
         "tags": ["auth", "cella"],
         "summary": "Start connecting a provider",
         "description": "Pins this browser's next provider sign-in with `type=connect` to the current user, for ten minutes and once: the provider's callback connects the provider account to the user that started it. Call it right before sending the browser to the provider.",
+        "x-enabled-by": {
+          "strategy": "oauth"
+        },
         "x-guard": ["userGuard", "stepUpGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -5228,10 +5111,13 @@
       "get": {
         "security": [],
         "operationId": "github",
-        "x-strategy": "oauth:github",
         "tags": ["auth", "cella"],
         "summary": "Authenticate with GitHub",
         "description": "Starts OAuth authentication with GitHub. Can be used for account connection, email verification, invitation process, defaults to authentication.",
+        "x-enabled-by": {
+          "strategy": "oauth",
+          "provider": "github"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -5292,10 +5178,13 @@
       "get": {
         "security": [],
         "operationId": "google",
-        "x-strategy": "oauth:google",
         "tags": ["auth", "cella"],
         "summary": "Authenticate with Google",
         "description": "Starts OAuth authentication with Google. Can be used for account connection, email verification, invitation process, defaults to authentication.",
+        "x-enabled-by": {
+          "strategy": "oauth",
+          "provider": "google"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -5356,10 +5245,13 @@
       "get": {
         "security": [],
         "operationId": "microsoft",
-        "x-strategy": "oauth:microsoft",
         "tags": ["auth", "cella"],
         "summary": "Authenticate with Microsoft",
         "description": "Starts OAuth authentication with Microsoft. Can be used for account connection, email verification, invitation process, defaults to authentication.",
+        "x-enabled-by": {
+          "strategy": "oauth",
+          "provider": "microsoft"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -5420,10 +5312,13 @@
       "get": {
         "security": [],
         "operationId": "githubCallback",
-        "x-strategy": "oauth:github",
         "tags": ["auth", "cella"],
         "summary": "Callback for GitHub",
         "description": "Handles GitHub OAuth callback, retrieves user identity, and establishes a session or links account.",
+        "x-enabled-by": {
+          "strategy": "oauth",
+          "provider": "github"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -5432,7 +5327,7 @@
             "schema": {
               "type": "string"
             },
-            "required": true,
+            "required": false,
             "name": "code",
             "in": "query"
           },
@@ -5506,10 +5401,13 @@
       "get": {
         "security": [],
         "operationId": "googleCallback",
-        "x-strategy": "oauth:google",
         "tags": ["auth", "cella"],
         "summary": "Callback for Google",
         "description": "Handles Google OAuth callback, retrieves user identity, and establishes a session or links account.",
+        "x-enabled-by": {
+          "strategy": "oauth",
+          "provider": "google"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -5518,7 +5416,7 @@
             "schema": {
               "type": "string"
             },
-            "required": true,
+            "required": false,
             "name": "code",
             "in": "query"
           },
@@ -5528,6 +5426,30 @@
             },
             "required": true,
             "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error_description",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error_uri",
             "in": "query"
           }
         ],
@@ -5568,10 +5490,13 @@
       "get": {
         "security": [],
         "operationId": "microsoftCallback",
-        "x-strategy": "oauth:microsoft",
         "tags": ["auth", "cella"],
         "summary": "Callback for Microsoft",
         "description": "Handles Microsoft OAuth callback, retrieves user identity, and establishes a session or links account.",
+        "x-enabled-by": {
+          "strategy": "oauth",
+          "provider": "microsoft"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": ["tokenLimiter"],
         "x-cache": [],
@@ -5580,7 +5505,7 @@
             "schema": {
               "type": "string"
             },
-            "required": true,
+            "required": false,
             "name": "code",
             "in": "query"
           },
@@ -5590,6 +5515,30 @@
             },
             "required": true,
             "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error_description",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error_uri",
             "in": "query"
           }
         ],
@@ -5696,7 +5645,7 @@
         "tags": ["auth", "cella"],
         "summary": "Step up with a second factor",
         "description": "Proves the user is present on this session with a passkey assertion (to a step-up passkey challenge) or a TOTP code of a factor they hold. Account-security actions then pass for ten minutes.",
-        "x-guard": ["userGuard", "noImpersonationGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": ["stepUpLimiter"],
         "x-cache": [],
         "requestBody": {
@@ -5787,11 +5736,13 @@
           }
         ],
         "operationId": "getStepUpPasskeyChallenge",
-        "x-strategy": "passkey",
         "tags": ["auth", "cella"],
         "summary": "Get a step-up passkey challenge",
         "description": "Issues a passkey challenge for a step-up of this session, bound to the current user, with the user's passkeys to offer. Only a step-up answers it.",
-        "x-guard": ["userGuard", "noImpersonationGuard"],
+        "x-enabled-by": {
+          "strategy": "passkey"
+        },
+        "x-guard": ["userGuard"],
         "x-rate-limiter": ["passkeyChallengeLimiter"],
         "x-cache": [],
         "responses": {
@@ -5849,7 +5800,7 @@
         "tags": ["auth", "cella"],
         "summary": "Email a step-up link",
         "description": "For a user without a passkey or TOTP: emails a confirmation link that steps up this session when opened in this browser within ten minutes. The link signs nobody in.",
-        "x-guard": ["userGuard", "noImpersonationGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": ["spamLimiter"],
         "x-cache": [],
         "requestBody": {
@@ -5955,16 +5906,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "id",
-                      "tenantId",
-                      "domain",
-                      "verified",
-                      "verificationToken",
-                      "verifiedAt",
-                      "lastCheckedAt",
-                      "createdAt"
-                    ]
+                    "required": ["id", "tenantId", "domain", "verified", "verificationToken", "verifiedAt", "lastCheckedAt", "createdAt"]
                   }
                 }
               }
@@ -6255,16 +6197,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id",
-                    "tenantId",
-                    "domain",
-                    "verified",
-                    "verificationToken",
-                    "verifiedAt",
-                    "lastCheckedAt",
-                    "createdAt"
-                  ]
+                  "required": ["id", "tenantId", "domain", "verified", "verificationToken", "verifiedAt", "lastCheckedAt", "createdAt"]
                 }
               }
             }
@@ -6367,16 +6300,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "id",
-                        "tenantId",
-                        "domain",
-                        "verified",
-                        "verificationToken",
-                        "verifiedAt",
-                        "lastCheckedAt",
-                        "createdAt"
-                      ]
+                      "required": ["id", "tenantId", "domain", "verified", "verificationToken", "verifiedAt", "lastCheckedAt", "createdAt"]
                     },
                     "diagnostics": {
                       "type": "object",
@@ -7158,7 +7082,7 @@
         "tags": ["me", "cella"],
         "summary": "Get list of invitations",
         "description": "Returns a list of pending memberships with entity data.",
-        "x-guard": ["userGuard", "crossTenantGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "responses": {
@@ -7302,7 +7226,7 @@
         "tags": ["me", "cella"],
         "summary": "Revoke sessions",
         "description": "Revokes sessions of the current user by id. The rows stay for the audit trail and the sessions list shows them as revoked for 30 days. Revoking the current session signs out.",
-        "x-guard": ["userGuard", "noImpersonationGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "requestBody": {
@@ -7407,15 +7331,7 @@
                           },
                           "revocationReason": {
                             "type": ["string", "null"],
-                            "enum": [
-                              "sign_out",
-                              "other_session",
-                              "mfa_enabled",
-                              "session_cap",
-                              "replaced",
-                              "impersonation_stopped",
-                              null
-                            ]
+                            "enum": ["sign_out", "other_session", "mfa_enabled", "session_cap", "replaced", "impersonation_stopped", null]
                           },
                           "impersonatorSessionId": {
                             "type": ["string", "null"],
@@ -7509,7 +7425,7 @@
         "tags": ["me", "cella"],
         "summary": "Leave entity",
         "description": "Removes the current user from an entity they are a member of.",
-        "x-guard": ["userGuard", "crossTenantGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
@@ -8390,10 +8306,18 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           }
@@ -9400,10 +9324,18 @@
         "parameters": [
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "toSelf",
             "in": "query"
           }
@@ -9541,7 +9473,6 @@
                   "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
                   "labels": [],
                   "assignedTo": [],
-                  "mentions": [],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
                   "primaryLabel": {
@@ -9738,7 +9669,6 @@
                         }
                       ],
                       "assignedTo": [],
-                      "mentions": [],
                       "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
                       "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
                       "primaryLabel": {
@@ -9822,7 +9752,6 @@
                           "entityType": "user"
                         }
                       ],
-                      "mentions": [],
                       "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
                       "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
                       "primaryLabel": {
@@ -9928,15 +9857,7 @@
                       "type": ["string", "null"]
                     }
                   },
-                  "required": [
-                    "taskId",
-                    "projectId",
-                    "projectSlug",
-                    "organizationId",
-                    "organizationSlug",
-                    "tenantId",
-                    "publicAt"
-                  ]
+                  "required": ["taskId", "projectId", "projectSlug", "organizationId", "organizationSlug", "tenantId", "publicAt"]
                 }
               }
             }
@@ -10142,13 +10063,92 @@
             "description": "Tenants list",
             "content": {
               "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "id": "svjbtq",
+                      "name": "Predovic, Bahringer and Morar",
+                      "status": "active",
+                      "restrictions": {
+                        "quotas": {
+                          "user": 1000,
+                          "organization": 1,
+                          "workspace": 0,
+                          "project": 0,
+                          "task": 0,
+                          "label": 0,
+                          "attachment": 100,
+                          "serviceAccount": 20,
+                          "apiKey": 100
+                        },
+                        "rateLimits": {
+                          "apiPointsPerHour": 1000
+                        },
+                        "allowUnregisteredClients": true
+                      },
+                      "authStrategies": [],
+                      "createdBy": "d91cd87f-54ea-401d-9336-a3f30f204331",
+                      "subscriptionId": null,
+                      "subscriptionStatus": "none",
+                      "subscriptionPlan": null,
+                      "createdAt": "2024-11-25T05:49:32.040Z",
+                      "updatedAt": "2024-12-21T15:03:10.241Z",
+                      "domainsCount": 0,
+                      "organization": {
+                        "id": "ed4a4eac-b4a6-4c0f-ae21-2f50796fe855",
+                        "name": "Predovic, Bahringer and Morar",
+                        "slug": "predovic-bahringer-and-morar",
+                        "thumbnailUrl": null,
+                        "entityType": "organization"
+                      }
+                    },
+                    {
+                      "id": "b2dbwf",
+                      "name": "Crooks, Kuphal and Roob-Blick",
+                      "status": "active",
+                      "restrictions": {
+                        "quotas": {
+                          "user": 1000,
+                          "organization": 1,
+                          "workspace": 0,
+                          "project": 0,
+                          "task": 0,
+                          "label": 0,
+                          "attachment": 100,
+                          "serviceAccount": 20,
+                          "apiKey": 100
+                        },
+                        "rateLimits": {
+                          "apiPointsPerHour": 1000
+                        },
+                        "allowUnregisteredClients": true
+                      },
+                      "authStrategies": [],
+                      "createdBy": "35465948-59fc-43d4-bffc-d93da6f4757f",
+                      "subscriptionId": null,
+                      "subscriptionStatus": "none",
+                      "subscriptionPlan": null,
+                      "createdAt": "2024-01-02T16:12:28.968Z",
+                      "updatedAt": "2024-01-18T17:11:22.322Z",
+                      "domainsCount": 0,
+                      "organization": {
+                        "id": "cc2dc65b-1a01-4eb4-922d-b6339b813cf8",
+                        "name": "Crooks, Kuphal and Roob-Blick",
+                        "slug": "crooks-kuphal-and-roob-blick",
+                        "thumbnailUrl": null,
+                        "entityType": "organization"
+                      }
+                    }
+                  ],
+                  "total": 2
+                },
                 "schema": {
                   "type": "object",
                   "properties": {
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/TenantWithOrganization"
+                        "$ref": "#/components/schemas/Tenant"
                       }
                     },
                     "total": {
@@ -10219,6 +10219,43 @@
             "description": "Created tenant",
             "content": {
               "application/json": {
+                "example": {
+                  "id": "l6ddop",
+                  "name": "Lubowitz, Waters and Haley",
+                  "status": "active",
+                  "restrictions": {
+                    "quotas": {
+                      "user": 1000,
+                      "organization": 1,
+                      "workspace": 0,
+                      "project": 0,
+                      "task": 0,
+                      "label": 0,
+                      "attachment": 100,
+                      "serviceAccount": 20,
+                      "apiKey": 100
+                    },
+                    "rateLimits": {
+                      "apiPointsPerHour": 1000
+                    },
+                    "allowUnregisteredClients": true
+                  },
+                  "authStrategies": [],
+                  "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+                  "subscriptionId": null,
+                  "subscriptionStatus": "none",
+                  "subscriptionPlan": null,
+                  "createdAt": "2024-02-09T07:11:04.461Z",
+                  "updatedAt": "2024-03-30T20:43:34.109Z",
+                  "domainsCount": 0,
+                  "organization": {
+                    "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+                    "name": "Lubowitz, Waters and Haley",
+                    "slug": "lubowitz-waters-and-haley",
+                    "thumbnailUrl": null,
+                    "entityType": "organization"
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Tenant"
                 }
@@ -10343,6 +10380,43 @@
             "description": "Updated tenant",
             "content": {
               "application/json": {
+                "example": {
+                  "id": "l6ddop",
+                  "name": "Lubowitz, Waters and Haley",
+                  "status": "active",
+                  "restrictions": {
+                    "quotas": {
+                      "user": 1000,
+                      "organization": 1,
+                      "workspace": 0,
+                      "project": 0,
+                      "task": 0,
+                      "label": 0,
+                      "attachment": 100,
+                      "serviceAccount": 20,
+                      "apiKey": 100
+                    },
+                    "rateLimits": {
+                      "apiPointsPerHour": 1000
+                    },
+                    "allowUnregisteredClients": true
+                  },
+                  "authStrategies": [],
+                  "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+                  "subscriptionId": null,
+                  "subscriptionStatus": "none",
+                  "subscriptionPlan": null,
+                  "createdAt": "2024-02-09T07:11:04.461Z",
+                  "updatedAt": "2024-03-30T20:43:34.109Z",
+                  "domainsCount": 0,
+                  "organization": {
+                    "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+                    "name": "Lubowitz, Waters and Haley",
+                    "slug": "lubowitz-waters-and-haley",
+                    "thumbnailUrl": null,
+                    "entityType": "organization"
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Tenant"
                 }
@@ -10381,7 +10455,7 @@
         "tags": ["users", "cella"],
         "summary": "Get list of users",
         "description": "Returns a list of users. Only system admins receive the system `role`, and only they may filter or sort by it.",
-        "x-guard": ["userGuard", "crossTenantGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "parameters": [
@@ -10622,7 +10696,7 @@
         "tags": ["users", "cella"],
         "summary": "Get user",
         "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
-        "x-guard": ["userGuard", "crossTenantGuard", "relatableGuard"],
+        "x-guard": ["userGuard", "relatableGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "parameters": [
@@ -10637,10 +10711,18 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           }
@@ -10731,11 +10813,13 @@
     "/{tenantId}/.well-known/oauth-protected-resource": {
       "get": {
         "security": [],
-        "x-service": "oauth",
         "operationId": "getApiProtectedResourceMetadata",
         "tags": ["oauth-server", "cella"],
         "summary": "Protected resource metadata (API)",
         "description": "RFC 9728 metadata of this tenant as an API resource: its resource identifier, the authorization server that issues tokens for it, and the scopes it understands.",
+        "x-enabled-by": {
+          "service": "oauth"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -10755,6 +10839,26 @@
             "description": "Protected resource metadata",
             "content": {
               "application/json": {
+                "example": {
+                  "resource": "http://localhost:3000/api/t/m5jfjs",
+                  "authorization_servers": ["http://localhost:3000/oauth"],
+                  "scopes_supported": [
+                    "organization:read",
+                    "organization:write",
+                    "workspace:read",
+                    "workspace:write",
+                    "project:read",
+                    "project:write",
+                    "task:read",
+                    "task:write",
+                    "label:read",
+                    "label:write",
+                    "attachment:read",
+                    "attachment:write"
+                  ],
+                  "bearer_methods_supported": ["header"],
+                  "resource_documentation": "http://localhost:3000/docs"
+                },
                 "schema": {
                   "$ref": "#/components/schemas/ProtectedResourceMetadata"
                 }
@@ -11465,7 +11569,7 @@
         "tags": ["organizations", "cella", "channel"],
         "summary": "Get list of organizations",
         "description": "Returns a list of organizations.",
-        "x-guard": ["userGuard", "crossTenantGuard", "relatableGuard"],
+        "x-guard": ["userGuard", "relatableGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "parameters": [
@@ -11859,10 +11963,18 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -12603,15 +12715,7 @@
                                             "type": "number"
                                           }
                                         },
-                                        "required": [
-                                          "accepted",
-                                          "reviewed",
-                                          "delivered",
-                                          "finished",
-                                          "started",
-                                          "unstarted",
-                                          "iced"
-                                        ]
+                                        "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
                                       }
                                     },
                                     "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -12830,7 +12934,7 @@
         "operationId": "getProjects",
         "summary": "Get list of projects",
         "description": "Returns a paginated list of projects where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, workspaceId to scope to a specific workspace, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by project name.",
-        "x-guard": ["userGuard", "crossTenantGuard", "relatableGuard"],
+        "x-guard": ["userGuard", "relatableGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "parameters": [
@@ -13105,10 +13209,18 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -13555,15 +13667,7 @@
                                       "type": "number"
                                     }
                                   },
-                                  "required": [
-                                    "accepted",
-                                    "reviewed",
-                                    "delivered",
-                                    "finished",
-                                    "started",
-                                    "unstarted",
-                                    "iced"
-                                  ]
+                                  "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
                                 }
                               },
                               "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -13858,15 +13962,7 @@
                                       "type": "number"
                                     }
                                   },
-                                  "required": [
-                                    "accepted",
-                                    "reviewed",
-                                    "delivered",
-                                    "finished",
-                                    "started",
-                                    "unstarted",
-                                    "iced"
-                                  ]
+                                  "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
                                 }
                               },
                               "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -14170,15 +14266,7 @@
                                       "type": "number"
                                     }
                                   },
-                                  "required": [
-                                    "accepted",
-                                    "reviewed",
-                                    "delivered",
-                                    "finished",
-                                    "started",
-                                    "unstarted",
-                                    "iced"
-                                  ]
+                                  "required": ["accepted", "reviewed", "delivered", "finished", "started", "unstarted", "iced"]
                                 }
                               },
                               "required": ["membership", "entities", "entitiesSelf", "activity"]
@@ -14659,7 +14747,7 @@
         "operationId": "getWorkspaces",
         "summary": "Get list of workspaces",
         "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.",
-        "x-guard": ["userGuard", "crossTenantGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "parameters": [
@@ -14940,10 +15028,18 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "slug",
             "in": "query"
           },
@@ -15185,16 +15281,14 @@
           }
         ],
         "operationId": "getAttachments",
-        "x-tool": {
-          "enabled": true,
-          "description": "List attachments of the organization with optional search, sorting and paging. Returns metadata and the description as text.",
-          "approvalRequired": false,
-          "category": "attachments",
-          "entity": "attachment"
-        },
         "tags": ["attachments", "cella", "product"],
         "summary": "Get attachments",
         "description": "Returns a paginated list of attachments for the organization.",
+        "x-tool": {
+          "description": "List attachments of the organization with optional search, sorting and paging. Returns metadata and the description as text.",
+          "approvalRequired": false,
+          "entity": "attachment"
+        },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["syncReadLimiter"],
         "x-cache": [],
@@ -15332,7 +15426,6 @@
                       "keys": {
                         "original": "uploads/pubibp4ljoerjtgyu7cndg4f/finally_wherever_nasalise.php"
                       },
-                      "mentions": [],
                       "projectId": "f54ea01d-336a-43f3-90f2-043315ebed4a",
                       "organizationId": "eacb4a6c-0fe2-412f-9507-96fe85592b8e"
                     },
@@ -15378,7 +15471,6 @@
                       "keys": {
                         "original": "uploads/pv1fvu0uyumluud11ppu88to/buzzing_brr_hm.rmi"
                       },
-                      "mentions": [],
                       "projectId": "4859fc3d-4ffc-4d93-bda6-f4757fd00cc2",
                       "organizationId": "c65b1a01-eb42-42db-8633-9b813cf84d75"
                     }
@@ -15436,16 +15528,14 @@
           }
         ],
         "operationId": "createAttachments",
-        "x-tool": {
-          "enabled": true,
-          "description": "Register already uploaded files as attachments. Give each a name, filename, MIME type, size and the storage key of the upload.",
-          "approvalRequired": true,
-          "category": "attachments",
-          "entity": "attachment"
-        },
         "tags": ["attachments", "cella", "product"],
         "summary": "Create attachments",
         "description": "Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity.",
+        "x-tool": {
+          "description": "Register already uploaded files as attachments. Give each a name, filename, MIME type, size and the storage key of the upload.",
+          "approvalRequired": true,
+          "entity": "attachment"
+        },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -15594,7 +15684,6 @@
                       "keys": {
                         "original": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml"
                       },
-                      "mentions": [],
                       "projectId": "55b68dde-9bc4-4a07-a5e7-b48057f53a0c",
                       "organizationId": "a26b695c-c9ed-49cd-b1f5-5c6487a8af2c"
                     },
@@ -15640,7 +15729,6 @@
                       "keys": {
                         "original": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4"
                       },
-                      "mentions": [],
                       "projectId": "044316a1-c906-4c0e-9632-932306ebef5b",
                       "organizationId": "683210fb-7a21-4be2-86ba-4ee7e27d3697"
                     }
@@ -15727,7 +15815,6 @@
                       "keys": {
                         "original": "uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml"
                       },
-                      "mentions": [],
                       "projectId": "55b68dde-9bc4-4a07-a5e7-b48057f53a0c",
                       "organizationId": "a26b695c-c9ed-49cd-b1f5-5c6487a8af2c"
                     },
@@ -15773,7 +15860,6 @@
                       "keys": {
                         "original": "uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4"
                       },
-                      "mentions": [],
                       "projectId": "044316a1-c906-4c0e-9632-932306ebef5b",
                       "organizationId": "683210fb-7a21-4be2-86ba-4ee7e27d3697"
                     }
@@ -15845,16 +15931,14 @@
           }
         ],
         "operationId": "deleteAttachments",
-        "x-tool": {
-          "enabled": true,
-          "description": "Delete attachments by id. The stored files stay in storage.",
-          "approvalRequired": true,
-          "category": "attachments",
-          "entity": "attachment"
-        },
         "tags": ["attachments", "cella", "product"],
         "summary": "Delete attachments",
         "description": "Deletes one or more attachment records by ID. This does not delete the underlying file in storage.",
+        "x-tool": {
+          "description": "Delete attachments by id. The stored files stay in storage.",
+          "approvalRequired": true,
+          "entity": "attachment"
+        },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -16136,16 +16220,14 @@
           }
         ],
         "operationId": "getAttachment",
-        "x-tool": {
-          "enabled": true,
-          "description": "Read one attachment: its metadata and the description as text.",
-          "approvalRequired": false,
-          "category": "attachments",
-          "entity": "attachment"
-        },
         "tags": ["attachments", "cella", "product"],
         "summary": "Get attachment",
         "description": "Returns a single attachment by ID. Served from the CDC-invalidated entity detail cache.",
+        "x-tool": {
+          "description": "Read one attachment: its metadata and the description as text.",
+          "approvalRequired": false,
+          "entity": "attachment"
+        },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": [],
         "x-cache": ["productCache"],
@@ -16225,7 +16307,6 @@
                   "keys": {
                     "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text"
                   },
-                  "mentions": [],
                   "projectId": "8fed4f40-cfd7-4da0-a6a8-c118563b74fa",
                   "organizationId": "91eb1a57-81a6-485a-87ee-9b7e9b6c234f"
                 },
@@ -16268,16 +16349,14 @@
           }
         ],
         "operationId": "updateAttachment",
-        "x-tool": {
-          "enabled": true,
-          "description": "Rename an attachment or replace its description.",
-          "approvalRequired": true,
-          "category": "attachments",
-          "entity": "attachment"
-        },
         "tags": ["attachments", "cella", "product"],
         "summary": "Update attachment",
         "description": "Updates metadata of an attachment, such as its name or associated entity.",
+        "x-tool": {
+          "description": "Rename an attachment or replace its description.",
+          "approvalRequired": true,
+          "entity": "attachment"
+        },
         "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -16311,10 +16390,18 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "fullResponse",
             "in": "query"
           }
@@ -16395,7 +16482,6 @@
                   "keys": {
                     "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text"
                   },
-                  "mentions": [],
                   "projectId": "8fed4f40-cfd7-4da0-a6a8-c118563b74fa",
                   "organizationId": "91eb1a57-81a6-485a-87ee-9b7e9b6c234f"
                 },
@@ -17319,11 +17405,13 @@
     "/{tenantId}/{organizationId}/mcp/.well-known/oauth-protected-resource": {
       "get": {
         "security": [],
-        "x-service": "mcp",
         "operationId": "getMcpProtectedResourceMetadata",
         "tags": ["mcp", "cella"],
         "summary": "Protected resource metadata",
         "description": "RFC 9728 metadata of this organization MCP server: its resource identifier, the authorization server that issues tokens for it, and the scopes it understands.",
+        "x-enabled-by": {
+          "service": "mcp"
+        },
         "x-guard": ["publicGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -17352,6 +17440,26 @@
             "description": "Protected resource metadata",
             "content": {
               "application/json": {
+                "example": {
+                  "resource": "http://localhost:3000/mcp/5pooo8/8c598ff2-1070-4bfe-af42-de4764db5aba/mcp",
+                  "authorization_servers": ["http://localhost:3000/oauth"],
+                  "scopes_supported": [
+                    "organization:read",
+                    "organization:write",
+                    "workspace:read",
+                    "workspace:write",
+                    "project:read",
+                    "project:write",
+                    "task:read",
+                    "task:write",
+                    "label:read",
+                    "label:write",
+                    "attachment:read",
+                    "attachment:write"
+                  ],
+                  "bearer_methods_supported": ["header"],
+                  "resource_documentation": "http://localhost:3000/docs"
+                },
                 "schema": {
                   "$ref": "#/components/schemas/ProtectedResourceMetadata"
                 }
@@ -17386,13 +17494,15 @@
             "oauth2": []
           }
         ],
-        "x-service": "mcp",
         "operationId": "handleMcp",
         "tags": ["mcp", "cella"],
         "summary": "MCP endpoint",
         "description": "Model Context Protocol (JSON-RPC 2.0 over Streamable HTTP) endpoint. Requires an access token from the authorization server; exposes the MCP tools that modules registered (initialize, tools/list, tools/call). A call outside the token scopes answers 403 with a WWW-Authenticate challenge naming the scope to step up to.",
+        "x-enabled-by": {
+          "service": "mcp"
+        },
         "x-guard": ["tokenGuard", "tenantGuard", "orgGuard"],
-        "x-rate-limiter": [],
+        "x-rate-limiter": ["mcpRequestLimiter"],
         "x-cache": [],
         "parameters": [
           {
@@ -17613,17 +17723,7 @@
                             "maximum": 140737488355327
                           }
                         },
-                        "required": [
-                          "id",
-                          "tenantId",
-                          "channelType",
-                          "channelId",
-                          "userId",
-                          "role",
-                          "organizationId",
-                          "workspaceId",
-                          "projectId"
-                        ]
+                        "required": ["id", "tenantId", "channelType", "channelId", "userId", "role", "organizationId", "workspaceId", "projectId"]
                       }
                     },
                     "rejectedIds": {
@@ -18009,7 +18109,7 @@
         "tags": ["memberships", "cella"],
         "summary": "Respond to membership invitation",
         "description": "Accepting activates the associated membership. Rejecting simply removes the invitation token.",
-        "x-guard": ["userGuard", "crossTenantGuard"],
+        "x-guard": ["userGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
@@ -18958,7 +19058,38 @@
                       "$ref": "#/components/schemas/ServiceAccount"
                     },
                     "apiKey": {
-                      "$ref": "#/components/schemas/CreatedApiKey"
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ApiKey"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "secret": {
+                              "type": "string",
+                              "description": "The plaintext API key; store it now, it is not shown again."
+                            }
+                          },
+                          "required": ["secret"]
+                        }
+                      ],
+                      "description": "A newly issued API key with its plaintext secret.",
+                      "example": {
+                        "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
+                        "actorId": "6b40b65d-1ea1-4132-892e-876f9e4e268a",
+                        "tenantId": "kr2nrm",
+                        "name": "connect key",
+                        "prefix": "raak-development_sk_test_Ab3d",
+                        "last4": "2345",
+                        "scopes": ["attachment:read"],
+                        "expiresAt": null,
+                        "revokedAt": null,
+                        "revokedBy": null,
+                        "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
+                        "createdAt": "2024-08-12T09:36:07.688Z",
+                        "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
+                      },
+                      "x-tags": ["data", "service-accounts", "cella"]
                     }
                   },
                   "required": ["serviceAccount"]
@@ -19467,7 +19598,38 @@
                   "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedApiKey"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiKey"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "secret": {
+                          "type": "string",
+                          "description": "The plaintext API key; store it now, it is not shown again."
+                        }
+                      },
+                      "required": ["secret"]
+                    }
+                  ],
+                  "description": "A newly issued API key with its plaintext secret.",
+                  "example": {
+                    "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
+                    "actorId": "6b40b65d-1ea1-4132-892e-876f9e4e268a",
+                    "tenantId": "kr2nrm",
+                    "name": "connect key",
+                    "prefix": "raak-development_sk_test_Ab3d",
+                    "last4": "2345",
+                    "scopes": ["attachment:read"],
+                    "expiresAt": null,
+                    "revokedAt": null,
+                    "revokedBy": null,
+                    "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
+                    "createdAt": "2024-08-12T09:36:07.688Z",
+                    "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
+                  },
+                  "x-tags": ["data", "service-accounts", "cella"]
                 }
               }
             }
@@ -19603,10 +19765,8 @@
         "summary": "Create tasks",
         "description": "Creates one or more tasks within a project.",
         "x-tool": {
-          "enabled": true,
           "description": "Create one or more tasks in a project. Requires project ID, task name, and status.",
           "approvalRequired": true,
-          "category": "tasks",
           "entity": "task"
         },
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -19793,7 +19953,6 @@
                           "entityType": "user"
                         }
                       ],
-                      "mentions": [],
                       "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
                       "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
                       "primaryLabel": {
@@ -19868,7 +20027,6 @@
                           "entityType": "user"
                         }
                       ],
-                      "mentions": [],
                       "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
                       "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
                       "primaryLabel": {
@@ -20009,7 +20167,6 @@
                           "entityType": "user"
                         }
                       ],
-                      "mentions": [],
                       "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
                       "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
                       "primaryLabel": {
@@ -20084,7 +20241,6 @@
                           "entityType": "user"
                         }
                       ],
-                      "mentions": [],
                       "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
                       "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
                       "primaryLabel": {
@@ -20163,10 +20319,8 @@
         "summary": "Get list of tasks",
         "description": "Returns a list of tasks within one or more specified projects.",
         "x-tool": {
-          "enabled": true,
           "description": "Search tasks by keyword, status, label, or project. Returns matching task summaries with status and assignees.",
           "approvalRequired": false,
-          "category": "tasks",
           "entity": "task"
         },
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -20346,7 +20500,6 @@
                         }
                       ],
                       "assignedTo": [],
-                      "mentions": [],
                       "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
                       "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
                       "primaryLabel": {
@@ -20430,7 +20583,6 @@
                           "entityType": "user"
                         }
                       ],
-                      "mentions": [],
                       "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
                       "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
                       "primaryLabel": {
@@ -20618,10 +20770,8 @@
         "summary": "Get task",
         "description": "Retrieves a task by its ID.",
         "x-tool": {
-          "enabled": true,
           "description": "Get full task details including description, labels, and assignees.",
           "approvalRequired": false,
-          "category": "tasks",
           "entity": "task"
         },
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -20705,7 +20855,6 @@
                   "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
                   "labels": [],
                   "assignedTo": [],
-                  "mentions": [],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
                   "primaryLabel": {
@@ -20755,10 +20904,8 @@
         "summary": "Update task",
         "description": "Updates a task by ID.",
         "x-tool": {
-          "enabled": true,
           "description": "Update task fields: summary, status, labels, assignees, description, or move to another project.",
           "approvalRequired": true,
-          "category": "tasks",
           "entity": "task"
         },
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -20794,10 +20941,18 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/BooleanQueryValue"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "default": "false"
             },
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "name": "fullResponse",
             "in": "query"
           }
@@ -20944,7 +21099,6 @@
                   "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
                   "labels": [],
                   "assignedTo": [],
-                  "mentions": [],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
                   "primaryLabel": {
@@ -20991,11 +21145,13 @@
             "cookieAuth": []
           }
         ],
-        "x-service": "yjs",
-        "tags": ["yjs", "cella"],
         "operationId": "getYjsToken",
+        "tags": ["yjs", "cella"],
         "summary": "Get Yjs token",
         "description": "Returns an Ed25519-signed token for collaboratively editing one product entity the caller may update. It names the entity, its tenant and organization, and expires after five minutes; the Yjs relay worker verifies it with the public key alone, without a backend callback, and closes the socket when it expires.",
+        "x-enabled-by": {
+          "service": "yjs"
+        },
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],

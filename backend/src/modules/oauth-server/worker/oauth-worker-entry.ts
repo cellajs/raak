@@ -5,7 +5,6 @@ import { setupGracefulShutdown } from 'shared/utils/worker-lifecycle';
 import { env } from '#/env';
 import { baseLog } from '#/lib/pino';
 import { otel } from '#/lib/tracing';
-import { listenForAuthInvalidation } from '#/middlewares/guard/invalidation-listener';
 import { ensureSigningKeys } from '#/modules/oauth-server/keystore';
 import { createProvider } from '#/modules/oauth-server/provider';
 import { createOauthListener } from '#/modules/oauth-server/server';
@@ -28,20 +27,15 @@ export async function startOauthServer(options: { port?: number; inProcess?: boo
   }
 
   await ensureSigningKeys();
-  // Consent reads tenants through the tenant cache, whose entries drop when another process invalidates them.
-  const stopInvalidationListener = listenForAuthInvalidation();
   const provider = await createProvider();
   const server: Server = createServer(createOauthListener(provider));
 
-  server.listen(port, '0.0.0.0', () =>
-    baseLog.info(`OAuth server listening on port ${port} for ${appConfig.oauthUrl}`),
-  );
+  server.listen(port, '0.0.0.0', () => baseLog.info(`OAuth server listening on port ${port} for ${appConfig.oauthUrl}`));
 
   setupGracefulShutdown({
     name: 'oauth-server',
     cleanup: async () => {
       server.close();
-      await stopInvalidationListener();
       if (!options.inProcess) await otel.shutdown();
     },
     log: (msg) => baseLog.info(msg),

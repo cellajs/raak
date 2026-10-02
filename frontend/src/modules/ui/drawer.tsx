@@ -24,8 +24,10 @@ function DrawerOverlay({ className, ...props }: DrawerPrimitive.Backdrop.Props &
     <DrawerPrimitive.Backdrop
       data-slot="drawer-overlay"
       className={cn(
-        'fixed inset-0 z-117 bg-black/50 transition-discrete transition-opacity duration-300 group-has-data-[overlay=dialog]/drawer-portal:z-125 group-has-data-[overlay=dropdown]/drawer-portal:z-299',
-        'data-closed:opacity-0 data-open:opacity-100',
+        'fixed inset-0 z-117 bg-overlay transition-discrete transition-opacity duration-300 group-has-data-[overlay=dialog]/drawer-portal:z-125 group-has-data-[overlay=dropdown]/drawer-portal:z-299',
+        // No data-open opacity: it outranks `starting:` (@starting-style), the only enter hook for a drawer mounted already
+        // open, since Base UI skips data-starting-style then. Opacity defaults to 1.
+        'data-closed:opacity-0',
         'starting:opacity-0 data-starting-style:opacity-0',
         'data-ending-style:opacity-0',
         'data-swiping:opacity-[calc(1-var(--drawer-swipe-progress,0))] data-swiping:transition-none',
@@ -51,10 +53,7 @@ function DrawerContent({
   React.useEffect(() => {
     if (!autoScrollOnDrag || !popupRef.current) return;
     const axis = typeof autoScrollOnDrag === 'string' ? autoScrollOnDrag : undefined;
-    return autoScrollForElements({
-      element: popupRef.current,
-      ...(axis && { getAllowedAxis: () => axis as 'vertical' | 'horizontal' }),
-    });
+    return autoScrollForElements({ element: popupRef.current, ...(axis && { getAllowedAxis: () => axis as 'vertical' | 'horizontal' }) });
   }, [autoScrollOnDrag]);
 
   return (
@@ -76,7 +75,7 @@ function DrawerContent({
             data-slot="drawer-content"
             className={cn(
               // Popup is a flex child of Viewport and scrolls via overflow-y-auto.
-              'group/drawer-content flex touch-auto flex-col overflow-y-auto overscroll-contain bg-background focus-visible:outline-none',
+              'group/drawer-content flex touch-auto flex-col overflow-y-auto overscroll-contain bg-background focus-visible:outline-hidden',
               'transition-discrete transition-transform duration-300 ease-out will-change-transform',
               'data-swiping:select-none data-swiping:transition-none!',
               // Sizing by swipe direction (Viewport flex handles placement)
@@ -146,32 +145,11 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
-  return (
-    <DrawerPrimitive.Title
-      data-slot="drawer-title"
-      className={cn('font-semibold text-foreground', className)}
-      {...props}
-    />
-  );
+  return <DrawerPrimitive.Title data-slot="drawer-title" className={cn('font-semibold text-foreground', className)} {...props} />;
 }
 
 function DrawerDescription({ className, ...props }: DrawerPrimitive.Description.Props) {
-  return (
-    <DrawerPrimitive.Description
-      data-slot="drawer-description"
-      className={cn('text-muted-foreground text-sm', className)}
-      {...props}
-    />
-  );
+  return <DrawerPrimitive.Description data-slot="drawer-description" className={cn('text-muted-foreground text-sm', className)} {...props} />;
 }
 
-export {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-};
+export { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger };

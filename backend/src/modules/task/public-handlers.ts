@@ -18,10 +18,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   // Validate request
   if (!id) throw new AppError(404, 'not_found', 'warn');
 
-  const mainTask = await resolveEntity(
-    { var: { db: getAdminDb('public task reads') } },
-    { entityType: 'task', identifier: id },
-  );
+  const mainTask = await resolveEntity({ var: { db: getAdminDb('public task reads') } }, { entityType: 'task', identifier: id });
   if (!mainTask) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Drafts are never publicly readable: they read as absent to non-authors (the anonymous caller).
@@ -37,11 +34,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
 
   // Relation reads are request-scoped, so carry the task's own tenant and organization.
   const publicCtx = {
-    var: {
-      db: getAdminDb('public task reads'),
-      tenantId: mainTask.tenantId,
-      organizationId: mainTask.organizationId,
-    },
+    var: { db: getAdminDb('public task reads'), tenantId: mainTask.tenantId, organizationId: mainTask.organizationId },
   } as ActorContext;
   const [users, labels] = await getTaskRelations(publicCtx, { tasks: [mainTask] });
 
@@ -55,18 +48,11 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
 
   // Public reads intentionally bypass tenant status checks from tenantGuard. Resolve the project
   // for org scoping only; the project's own publicAt does not gate the list.
-  const project = await resolveEntity(
-    { var: { db: getAdminDb('public task reads') } },
-    { entityType: 'project', identifier: projectId },
-  );
+  const project = await resolveEntity({ var: { db: getAdminDb('public task reads') } }, { entityType: 'project', identifier: projectId });
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 
   const publicCtx = {
-    var: {
-      db: getAdminDb('public task reads'),
-      tenantId: project.tenantId,
-      organizationId: project.organizationId,
-    },
+    var: { db: getAdminDb('public task reads'), tenantId: project.tenantId, organizationId: project.organizationId },
   } as ActorContext;
   const response = await getTasks(publicCtx, [project.id], queryInfo, { publicOnly: true });
   return ctx.json(response, 200);

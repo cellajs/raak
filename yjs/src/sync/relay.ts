@@ -10,14 +10,7 @@ import { descriptionToYUpdate } from '../lib/blocknote-seed';
 import { log } from '../lib/pino';
 import { type CompactionResult, compactDocument } from './compaction';
 import { classifyUpdate, mergeLog } from './document-state';
-import {
-  broadcastToCollab,
-  type CollabSession,
-  claimAwarenessClient,
-  endCollab,
-  getCollab,
-  withDocLock,
-} from './session-manager';
+import { broadcastToCollab, type CollabSession, claimAwarenessClient, endCollab, getCollab, withDocLock } from './session-manager';
 
 /** Message types on the socket: y-websocket's sync and awareness, and the relay's own `Generation`, which must match the frontend's yjs-connections.ts. */
 export const YMessage = { Sync: 0, Awareness: 1, Generation: 4 } as const;
@@ -167,15 +160,14 @@ export async function handleMessage(ctx: SocketContext, ws: WebSocket, data: Uin
     // Presence for another user's client would move or remove their cursor.
     const relayed: AwarenessEntry[] = [];
     for (const entry of entries) {
-      const verdict = claimAwarenessClient(collab, ws, ctx.userId, {
-        clientId: entry.clientId,
-        removes: entry.state === 'null',
-      });
+      const verdict = claimAwarenessClient(collab, ws, ctx.userId, { clientId: entry.clientId, removes: entry.state === 'null' });
       if (verdict === 'refuse') return refuseFrame(scope, ctx.userId, ws, 'Too many awareness clients');
       if (verdict === 'relay') relayed.push(entry);
     }
     if (relayed.length === 0) return;
-    broadcastToCollab(collab, relayed.length === entries.length ? data : encodeAwarenessMessage(relayed), ws);
+    // The sender receives its relayed entries too: y-websocket closes a socket that received nothing for 30 s, and an
+    // editor alone on its document receives nothing else. An entry at the clock the sender holds changes nothing there.
+    broadcastToCollab(collab, relayed.length === entries.length ? data : encodeAwarenessMessage(relayed));
   }
 }
 
@@ -184,9 +176,7 @@ export async function handleMessage(ctx: SocketContext, ws: WebSocket, data: Uin
  * logged update that merges; compaction discards the rest. Null once the document was retired under the session (its
  * row gone, or reseeded by another relay): the session ends, and its sockets reconnect into one that seeds afresh.
  */
-async function loadDocumentState(
-  collab: CollabSession,
-): Promise<{ state: Uint8Array | null; generation: string } | null> {
+async function loadDocumentState(collab: CollabSession): Promise<{ state: Uint8Array | null; generation: string } | null> {
   const { scope } = collab;
   let base = await loadBase(scope);
   if (collab.generation !== null && base?.generation !== collab.generation) {
@@ -205,12 +195,7 @@ async function loadDocumentState(
  * received (a lost frame, a reconnect) are uploaded and logged like any update. Until that reply, the socket's
  * updates are dropped.
  */
-async function handleSyncStep1(
-  ctx: SocketContext,
-  collab: CollabSession,
-  ws: WebSocket,
-  clientStateVector: Uint8Array,
-): Promise<void> {
+async function handleSyncStep1(ctx: SocketContext, collab: CollabSession, ws: WebSocket, clientStateVector: Uint8Array): Promise<void> {
   // A socket that closed while this frame waited has no one to answer.
   if (ws.readyState !== ws.OPEN) return;
   const doc = await withDocLock(collab, () => loadDocumentState(collab));
@@ -239,13 +224,7 @@ async function handleSyncStep1(
  * schedules compaction; one Yjs cannot decode closes its sender. A document retired or reseeded since takes no update:
  * the session ends, and its sockets reconnect into the new generation.
  */
-async function handleSyncUpdate(
-  collab: CollabSession,
-  userId: string,
-  ws: WebSocket,
-  update: Uint8Array,
-  rawMessage: Uint8Array,
-): Promise<void> {
+async function handleSyncUpdate(collab: CollabSession, userId: string, ws: WebSocket, update: Uint8Array, rawMessage: Uint8Array): Promise<void> {
   const kind = classifyUpdate(update);
   // A client's Step2 reply carries nothing when it holds nothing the relay lacks.
   if (kind === 'empty') return;

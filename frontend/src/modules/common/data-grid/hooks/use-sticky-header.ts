@@ -1,15 +1,8 @@
 import type { RefObject } from 'react';
 import { useLayoutEffect } from 'react';
 
-const STICKY_CLASS = 'rdg-header-sticky';
-
 /** Pins measured header cells to the viewport with fixed positioning, syncing horizontal offsets in animation frames. */
-export function useStickyHeader(
-  gridRef: RefObject<HTMLDivElement | null>,
-  headerRowsCount: number,
-  headerRowHeight: number,
-  enabled: boolean,
-) {
+export function useStickyHeader(gridRef: RefObject<HTMLDivElement | null>, headerRowsCount: number, headerRowHeight: number, enabled: boolean) {
   useLayoutEffect(() => {
     const grid = gridRef.current;
     if (!enabled || !grid || headerRowsCount === 0) return;
@@ -21,6 +14,9 @@ export function useStickyHeader(
     let resizeRafId = 0;
     let resizeSettleTimer = 0;
     let isSticky = false;
+    // Grid bounds of the last horizontal sync: vertical scrolling leaves them unchanged, so it skips the per-cell writes.
+    let syncedLeft = Number.NaN;
+    let syncedRight = Number.NaN;
     let headerCells: HTMLElement[] = [];
     let originalStyles: { cssText: string }[] = [];
 
@@ -48,9 +44,7 @@ export function useStickyHeader(
         cell.style.backgroundColor = 'var(--background)';
       }
 
-      // Reserve space so content doesn't jump
-      grid!.style.setProperty('--rdg-sticky-offset', `${headerRowsHeight}px`);
-      grid!.classList.add(STICKY_CLASS);
+      // The grid's template rows keep reserving the header height, so rows don't jump up.
       isSticky = true;
     }
 
@@ -58,19 +52,18 @@ export function useStickyHeader(
       for (let i = 0; i < headerCells.length; i++) {
         headerCells[i].style.cssText = originalStyles[i].cssText;
       }
-      grid!.classList.remove(STICKY_CLASS);
-      grid!.style.removeProperty('--rdg-sticky-offset');
       headerCells = [];
       originalStyles = [];
       isSticky = false;
     }
 
-    function syncHorizontal() {
+    function syncHorizontal(gridRect = grid!.getBoundingClientRect()) {
       if (!isSticky || headerCells.length === 0) return;
-      const gridRect = grid!.getBoundingClientRect();
       const scrollLeft = grid!.scrollLeft;
       const gridLeft = gridRect.left;
       const gridRight = gridRect.right;
+      syncedLeft = gridLeft;
+      syncedRight = gridRight;
 
       let currentLeft = gridLeft - scrollLeft;
       for (const cell of headerCells) {
@@ -111,12 +104,11 @@ export function useStickyHeader(
 
       if (shouldStick && !isSticky) {
         applyFixed();
+        syncHorizontal(rect);
       } else if (!shouldStick && isSticky) {
         removeFixed();
-      }
-
-      if (isSticky) {
-        syncHorizontal();
+      } else if (isSticky && (rect.left !== syncedLeft || rect.right !== syncedRight)) {
+        syncHorizontal(rect);
       }
     }
 
@@ -128,7 +120,7 @@ export function useStickyHeader(
     const onScrollHorizontal = () => {
       if (!isSticky) return;
       cancelAnimationFrame(hScrollRafId);
-      hScrollRafId = requestAnimationFrame(syncHorizontal);
+      hScrollRafId = requestAnimationFrame(() => syncHorizontal());
     };
 
     const onResize = () => {

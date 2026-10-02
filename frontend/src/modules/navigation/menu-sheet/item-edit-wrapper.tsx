@@ -51,22 +51,12 @@ export function MenuItemEditWrapper({
     if (!element) return;
     const data = getDraggableItemData(item, item.membership.displayOrder, 'menuItem', item.entityType);
     return combine(
-      draggable({
-        element,
-        dragHandle: element,
-        canDrag: () => !item.membership.archived,
-        getInitialData: () => data,
-      }),
+      draggable({ element, dragHandle: element, canDrag: () => !item.membership.archived, getInitialData: () => data }),
       dropTargetForElements({
         element,
         canDrop: ({ source }) => handleCanDrop(source.data as DragDropData),
         getIsSticky: () => true,
-        getData: ({ input }) =>
-          attachClosestEdge(data, {
-            element,
-            input,
-            allowedEdges: ['top', 'bottom'],
-          }),
+        getData: ({ input }) => attachClosestEdge(data, { element, input, allowedEdges: ['top', 'bottom'] }),
         onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
         onDrop: () => setClosestEdge(null),
         onDragLeave: () => setClosestEdge(null),
@@ -75,7 +65,7 @@ export function MenuItemEditWrapper({
   }, [item, unarchiveItems]);
 
   return (
-    <li data-submenu={!!item.submenu} className="group/menuOptions relative my-1">
+    <li data-submenu={!!item.submenu} className="group/menu-options relative my-1">
       <div ref={dragRef}>
         <MenuItemEdit item={item} icon={options?.icon} />
         {!item.membership.archived && !!item.submenu?.length && detailedMenu && (

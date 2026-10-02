@@ -54,14 +54,7 @@ interface CreateTaskFormProps {
   onStatusChange?: (status: TaskStatusType) => void;
 }
 
-function CreateTaskForm({
-  projectId,
-  organizationId,
-  className,
-  dialog: isDialog,
-  onSuccess,
-  onStatusChange,
-}: CreateTaskFormProps) {
+function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog, onSuccess, onStatusChange }: CreateTaskFormProps) {
   const { t } = useTranslation();
   const user = useCurrentUser();
 
@@ -85,14 +78,7 @@ function CreateTaskForm({
   const taskMutation = useTaskCreateMutation(tenantId, organizationId);
 
   const formOptions: UseFormProps<NewTaskFormValues> = useMemo(
-    () => ({
-      resolver: zodResolver(createTaskFormSchema),
-      defaultValues: {
-        ...newTaskFormDefaults,
-        id: defaultId,
-        projectId,
-      },
-    }),
+    () => ({ resolver: zodResolver(createTaskFormSchema), defaultValues: { ...newTaskFormDefaults, id: defaultId, projectId } }),
     [],
   );
 
@@ -111,13 +97,8 @@ function CreateTaskForm({
   }, [watchedPrimaryLabelId, primaryLabels, form.setValue]);
 
   // Field watchers key the JSON-based dirty check to relevant changes.
-  const [watchedAssignedTo, watchedLabels, watchedDescription] = useWatch({
-    control: form.control,
-    name: ['assignedTo', 'labels', 'description'],
-  });
-  const isDirty =
-    form.isDirty &&
-    newTaskFormIsDirty({ assignedTo: watchedAssignedTo, labels: watchedLabels, description: watchedDescription });
+  const [watchedAssignedTo, watchedLabels, watchedDescription] = useWatch({ control: form.control, name: ['assignedTo', 'labels', 'description'] });
+  const isDirty = form.isDirty && newTaskFormIsDirty({ assignedTo: watchedAssignedTo, labels: watchedLabels, description: watchedDescription });
 
   const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, setAttachments);
 
@@ -134,15 +115,11 @@ function CreateTaskForm({
 
     // Only add user if task start and it's not already assigned
     const fullAssignedTo =
-      values.status === TaskStatus.Started
-        ? [...new Map([user, ...values.assignedTo].map((u) => [u.id, u])).values()]
-        : values.assignedTo;
+      values.status === TaskStatus.Started ? [...new Map([user, ...values.assignedTo].map((u) => [u.id, u])).values()] : values.assignedTo;
 
     // attachmentCount is presentation-only here: task.attachments is an owned embedding derived from
     // the description media blocks, so the create body carries the id list, never the count.
-    const { attachmentCount: _attachmentCount, ...descriptionProps } = await deriveDescriptionProps(
-      values.description ?? '',
-    );
+    const { attachmentCount: _attachmentCount, ...descriptionProps } = await deriveDescriptionProps(values.description ?? '');
     const newTask = {
       // Task variables
       ...values,
@@ -218,9 +195,7 @@ function CreateTaskForm({
             !isDialog &&
               'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-[3px] before:rounded-full before:bg-primary before:opacity-0',
             !isDialog && isFocused && 'before:opacity-100',
-            isFocused
-              ? 'is-focused focus-visible:outline-none focus-visible:ring-0'
-              : 'focus-visible:ring-1 focus-visible:ring-ring',
+            isFocused ? 'is-focused focus-visible:outline-none focus-visible:ring-0' : 'focus-visible:ring-1 focus-visible:ring-ring',
           )}
         >
           <Suspense fallback={<Spinner className="my-16 h-6 w-6 opacity-50" noDelay />}>
@@ -258,13 +233,7 @@ function CreateTaskForm({
                       }}
                     >
                       {primaryLabels.map((label) => (
-                        <ToggleGroupItem
-                          tabIndex={0}
-                          size="sm"
-                          value={label.id}
-                          className="group min-w-0 flex-1 shrink font-normal"
-                          key={label.id}
-                        >
+                        <ToggleGroupItem tabIndex={0} size="sm" value={label.id} className="group min-w-0 flex-1 shrink font-normal" key={label.id}>
                           <PrimaryLabelIcon label={label} />
                           <span className="ml-2 min-w-0 truncate opacity-75 group-data-pressed:font-medium group-data-pressed:opacity-100">
                             {label.name}
@@ -309,14 +278,8 @@ function CreateTaskForm({
                         {labels.length > 0 ? (
                           labels.map(({ name, id }) => {
                             return (
-                              <div
-                                key={id}
-                                className="flex flex-wrap items-center justify-center rounded-full border bg-border pr-[0.17rem] pl-2 align-center"
-                              >
-                                <Badge
-                                  variant="outline"
-                                  className="h-6 border-0 px-1 font-normal text-[.75rem] text-sm shadow-none last:mr-0"
-                                >
+                              <div key={id} className="flex flex-wrap items-center justify-center rounded-full border bg-border pr-[0.17rem] pl-2">
+                                <Badge variant="outline" className="h-6 border-0 px-1 font-normal text-[.75rem] text-sm shadow-none last:mr-0">
                                   {name}
                                 </Badge>
                                 {/* biome-ignore lint/a11y/useKeyWithClickEvents: element is not keyboard-focusable and handled intentionally via mouse*/}
@@ -405,8 +368,7 @@ function CreateTaskForm({
                         </>
                       ) : (
                         <>
-                          <UserXIcon className="h-4 w-4 opacity-75" />{' '}
-                          <span className="font-normal opacity-75">{t('c:assign_to')}</span>
+                          <UserXIcon className="h-4 w-4 opacity-75" /> <span className="font-normal opacity-75">{t('c:assign_to')}</span>
                         </>
                       )}
                     </Button>
@@ -418,12 +380,8 @@ function CreateTaskForm({
           />
 
           <div className="flex flex-col gap-2 py-2 sm:flex-row">
-            <div className="flex [&:not(.absolute)]:active:translate-y-[.05rem]">
-              <Button
-                type="submit"
-                disabled={!isDirty}
-                className="grow rounded-none rounded-l [&:not(.absolute)]:active:translate-y-0"
-              >
+            <div className="[&:not(.absolute)]:active:press flex">
+              <Button type="submit" disabled={!isDirty} className="grow rounded-none rounded-l [&:not(.absolute)]:active:translate-y-0">
                 <span>
                   {t('c:create')}
                   {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
@@ -477,13 +435,7 @@ function CreateTaskForm({
               >
                 {t('c:cancel')}
               </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                aria-label="close"
-                onClick={handleCloseForm}
-                className={isDirty ? 'hidden' : ''}
-              >
+              <Button type="button" variant="secondary" aria-label="close" onClick={handleCloseForm} className={isDirty ? 'hidden' : ''}>
                 {t('c:close')}
               </Button>
             </div>

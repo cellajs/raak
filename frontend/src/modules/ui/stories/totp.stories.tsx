@@ -6,14 +6,7 @@ import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '~/modu
 /**
  * One-time password (OTP) input components for secure authentication flows.
  */
-const meta: Meta = {
-  title: 'ui/TOTP',
-  component: InputOTP,
-  tags: ['autodocs'],
-  parameters: {
-    layout: 'centered',
-  },
-} satisfies Meta;
+const meta: Meta = { title: 'ui/TOTP', component: InputOTP, tags: ['autodocs'], parameters: { layout: 'centered' } } satisfies Meta;
 
 export default meta;
 
@@ -26,14 +19,14 @@ export const Default: Story = {
   render: function Render() {
     const [value, setValue] = useState('');
     return (
-      <InputOTP maxLength={6} value={value} onChange={(value) => setValue(value)}>
+      <InputOTP length={6} value={value} onValueChange={(value) => setValue(value)}>
         <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
-          <InputOTPSlot index={3} />
-          <InputOTPSlot index={4} />
-          <InputOTPSlot index={5} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
         </InputOTPGroup>
       </InputOTP>
     );
@@ -47,12 +40,12 @@ export const FourDigits: Story = {
   render: function Render() {
     const [value, setValue] = useState('');
     return (
-      <InputOTP maxLength={4} value={value} onChange={(value) => setValue(value)}>
+      <InputOTP length={4} value={value} onValueChange={(value) => setValue(value)}>
         <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
-          <InputOTPSlot index={3} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
         </InputOTPGroup>
       </InputOTP>
     );
@@ -66,15 +59,15 @@ export const WithSeparators: Story = {
   render: function Render() {
     const [value, setValue] = useState('');
     return (
-      <InputOTP maxLength={6} value={value} onChange={(value) => setValue(value)}>
+      <InputOTP length={6} value={value} onValueChange={(value) => setValue(value)}>
         <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
           <InputOTPSeparator />
-          <InputOTPSlot index={3} />
-          <InputOTPSlot index={4} />
-          <InputOTPSlot index={5} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
         </InputOTPGroup>
       </InputOTP>
     );
@@ -88,19 +81,19 @@ export const MultipleGroups: Story = {
   render: function Render() {
     const [value, setValue] = useState('');
     return (
-      <InputOTP maxLength={8} value={value} onChange={(value) => setValue(value)}>
+      <InputOTP length={8} value={value} onValueChange={(value) => setValue(value)}>
         <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
-          <InputOTPSlot index={3} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
         </InputOTPGroup>
         <InputOTPSeparator />
         <InputOTPGroup>
-          <InputOTPSlot index={4} />
-          <InputOTPSlot index={5} />
-          <InputOTPSlot index={6} />
-          <InputOTPSlot index={7} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
         </InputOTPGroup>
       </InputOTP>
     );
@@ -114,14 +107,14 @@ export const Prefilled: Story = {
   render: function Render() {
     const [value, setValue] = useState('123456');
     return (
-      <InputOTP maxLength={6} value={value} onChange={(value) => setValue(value)}>
+      <InputOTP length={6} value={value} onValueChange={(value) => setValue(value)}>
         <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
-          <InputOTPSlot index={3} />
-          <InputOTPSlot index={4} />
-          <InputOTPSlot index={5} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
         </InputOTPGroup>
       </InputOTP>
     );
@@ -135,14 +128,14 @@ export const Disabled: Story = {
   render: function Render() {
     const [value, setValue] = useState('123456');
     return (
-      <InputOTP maxLength={6} value={value} onChange={(value) => setValue(value)} disabled>
+      <InputOTP length={6} value={value} onValueChange={(value) => setValue(value)} disabled>
         <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
-          <InputOTPSlot index={3} />
-          <InputOTPSlot index={4} />
-          <InputOTPSlot index={5} />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
+          <InputOTPSlot />
         </InputOTPGroup>
       </InputOTP>
     );
@@ -157,14 +150,14 @@ export const CustomStyling: Story = {
     const [value, setValue] = useState('');
     return (
       <div className="space-y-4">
-        <InputOTP maxLength={6} value={value} onChange={(value) => setValue(value)} className="gap-4">
+        <InputOTP length={6} value={value} onValueChange={(value) => setValue(value)} className="gap-4">
           <InputOTPGroup>
-            <InputOTPSlot index={0} className="h-12 w-12 text-lg" />
-            <InputOTPSlot index={1} className="h-12 w-12 text-lg" />
-            <InputOTPSlot index={2} className="h-12 w-12 text-lg" />
-            <InputOTPSlot index={3} className="h-12 w-12 text-lg" />
-            <InputOTPSlot index={4} className="h-12 w-12 text-lg" />
-            <InputOTPSlot index={5} className="h-12 w-12 text-lg" />
+            <InputOTPSlot className="size-12 text-lg" />
+            <InputOTPSlot className="size-12 text-lg" />
+            <InputOTPSlot className="size-12 text-lg" />
+            <InputOTPSlot className="size-12 text-lg" />
+            <InputOTPSlot className="size-12 text-lg" />
+            <InputOTPSlot className="size-12 text-lg" />
           </InputOTPGroup>
         </InputOTP>
       </div>
@@ -198,19 +191,14 @@ export const AuthForm: Story = {
         </div>
 
         <div className="space-y-4">
-          <InputOTP
-            maxLength={6}
-            value={value}
-            onChange={(value) => setValue(value)}
-            containerClassName="justify-center"
-          >
+          <InputOTP length={6} value={value} onValueChange={(value) => setValue(value)} className="justify-center">
             <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
+              <InputOTPSlot />
+              <InputOTPSlot />
+              <InputOTPSlot />
+              <InputOTPSlot />
+              <InputOTPSlot />
+              <InputOTPSlot />
             </InputOTPGroup>
           </InputOTP>
 
@@ -220,9 +208,7 @@ export const AuthForm: Story = {
         </div>
 
         <div className="text-center">
-          <button className="text-muted-foreground text-sm underline hover:text-foreground">
-            Didn't receive a code? Resend
-          </button>
+          <button className="text-muted-foreground text-sm underline hover:text-foreground">Didn't receive a code? Resend</button>
         </div>
       </div>
     );
@@ -253,17 +239,17 @@ export const RecoveryCodes: Story = {
           {codes.map((code, index) => (
             <div key={index} className="flex items-center space-x-2">
               <span className="w-20 font-medium text-sm">Code {index + 1}:</span>
-              <InputOTP maxLength={8} value={code} onChange={(value) => handleCodeChange(index, value)}>
+              <InputOTP length={8} validationType="alphanumeric" value={code} onValueChange={(value) => handleCodeChange(index, value)}>
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
+                  <InputOTPSlot />
+                  <InputOTPSlot />
+                  <InputOTPSlot />
+                  <InputOTPSlot />
                   <InputOTPSeparator />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                  <InputOTPSlot index={6} />
-                  <InputOTPSlot index={7} />
+                  <InputOTPSlot />
+                  <InputOTPSlot />
+                  <InputOTPSlot />
+                  <InputOTPSlot />
                 </InputOTPGroup>
               </InputOTP>
             </div>

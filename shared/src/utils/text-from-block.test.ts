@@ -1,17 +1,10 @@
 import type { Block } from '@blocknote/core';
 import { describe, expect, it } from 'vitest';
-import {
-  getSearchableTextFromBlock,
-  getSearchableTextFromUrl,
-  getTextFromBlock,
-  textFromDocument,
-} from './text-from-block.ts';
+import { getSearchableTextFromBlock, getSearchableTextFromUrl, getTextFromBlock, textFromDocument, titleFromDocument } from './text-from-block.ts';
 
 describe('getSearchableTextFromUrl', () => {
   it('extracts host and path tokens but skips query strings and fragments', () => {
-    const text = getSearchableTextFromUrl(
-      'https://linear.app/acme/issue/SSD-123/haptic-feedback?token=secret&utm_source=test#details',
-    );
+    const text = getSearchableTextFromUrl('https://linear.app/acme/issue/SSD-123/haptic-feedback?token=secret&utm_source=test#details');
 
     expect(text).toContain('linear.app');
     expect(text).toContain('linear');
@@ -100,5 +93,38 @@ describe('textFromDocument', () => {
   it('is null for legacy html and absent input', () => {
     expect(textFromDocument('<p>hi</p>')).toBeNull();
     expect(textFromDocument(null)).toBeNull();
+  });
+});
+
+describe('titleFromDocument', () => {
+  const run = (text: string, styles = {}) => ({ type: 'text', text, styles });
+  const heading = (...content: unknown[]) => ({ type: 'heading', props: { level: 1 }, content, children: [] });
+  const titled = (...blocks: unknown[]) => JSON.stringify(blocks);
+
+  it('reads block 0 and joins styled runs as the editor shows them', () => {
+    expect(titleFromDocument(titled(heading(run('Project'), run('X', { bold: true }))))).toBe('ProjectX');
+    const linked = heading(run('See '), { type: 'link', href: 'https://x', content: [run('this')] });
+    expect(titleFromDocument(titled(linked))).toBe('See this');
+  });
+
+  it('reads block 0 whatever its type, since the title template is not enforced', () => {
+    expect(titleFromDocument(titled({ type: 'paragraph', content: [run('First line')], children: [] }))).toBe('First line');
+  });
+
+  it('leaves out the children of block 0, which are body', () => {
+    const child = { type: 'paragraph', content: [run('child')], children: [] };
+    expect(titleFromDocument(titled({ ...heading(run('Title')), children: [child] }))).toBe('Title');
+  });
+
+  it('is empty when block 0 is media, so an image moved to the top does not rename the document', () => {
+    const image = { type: 'image', props: { name: 'photo.png', url: 'https://x/photo.png' }, children: [] };
+    expect(titleFromDocument(titled(image, heading(run('Title'))))).toBe('');
+  });
+
+  it('is empty for an empty title, legacy html and absent input', () => {
+    expect(titleFromDocument(titled(heading()))).toBe('');
+    expect(titleFromDocument('<p>hi</p>')).toBe('');
+    expect(titleFromDocument('[]')).toBe('');
+    expect(titleFromDocument(null)).toBe('');
   });
 });

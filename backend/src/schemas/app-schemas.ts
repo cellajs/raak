@@ -29,9 +29,7 @@ export const setupConfigSchema = z.object({
     .array(primaryLabelDefinitionSchema)
     .min(primaryLabelLimits.min)
     .max(primaryLabelLimits.max)
-    .refine((entries) => new Set(entries.map((e) => e.slug)).size === entries.length, {
-      message: 'Duplicate primary label slugs',
-    }),
+    .refine((entries) => new Set(entries.map((e) => e.slug)).size === entries.length, { message: 'Duplicate primary label slugs' }),
 });
 
 /**

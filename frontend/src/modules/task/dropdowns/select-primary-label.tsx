@@ -1,23 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
+import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
 import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-scaffold';
 import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
-import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList, ComboboxSearchInput } from '~/modules/ui/combobox';
+import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
 import { cn } from '~/utils/cn';
 
 /** Dropdown to pick a task's primary label (task type) from the project's primary set. */
-export function SelectPrimaryLabel({
-  value: currentId,
-  projectId,
-  onChange,
-  taskId,
-  className = '',
-}: SelectPrimaryLabelProps) {
+export function SelectPrimaryLabel({ value: currentId, projectId, onChange, taskId, className = '' }: SelectPrimaryLabelProps) {
   const { t } = useTranslation();
   const primaryLabels = usePrimaryLabels(projectId);
 

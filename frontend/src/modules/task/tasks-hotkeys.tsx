@@ -31,9 +31,9 @@ type StrictBoardPanel = ProjectResizablePanel;
 
 /** Registers keyboard navigation and actions for task views. */
 export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
-  const { tenantId, organization } = useOrganizationLayoutContext();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
   const user = useCurrentUser();
-  const taskMutation = useTaskUpdateMutation(tenantId, organization.id);
+  const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
 
   const search = useSearch({ strict: false }) as BoardSearchParams;
 
@@ -46,21 +46,14 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     const searched = projectTasks.filter((task) => searchFilterFunction(search, task));
 
     const filtered = panel.sectionFilters
-      ? searched.filter((task) =>
-          Object.entries(panel.sectionFilters!).every(([key, value]) =>
-            value.includes(task[key as keyof SectionsValue]),
-          ),
-        )
+      ? searched.filter((task) => Object.entries(panel.sectionFilters!).every(([key, value]) => value.includes(task[key as keyof SectionsValue])))
       : searched;
 
     return filtered;
   };
 
   const findCurrentPanel = (allPanels: StrictBoardPanel[], taskProjectId: string, taskStatus: Task['status']) =>
-    allPanels.find(
-      ({ project, sectionFilters }) =>
-        project.id === taskProjectId && (!sectionFilters || sectionFilters.status.includes(taskStatus)),
-    );
+    allPanels.find(({ project, sectionFilters }) => project.id === taskProjectId && (!sectionFilters || sectionFilters.status.includes(taskStatus)));
 
   // Resolve the focused task and its panel's rendered task list (shared by vertical nav handlers).
   const resolveVerticalNavContext = () => {
@@ -142,8 +135,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
 
     const currentPanelIndex = allPanels.findIndex(
       ({ sectionFilters, project }) =>
-        project.id === currentTask?.projectId &&
-        (!sectionFilters || (!!currentTask && sectionFilters.status.includes(currentTask.status))),
+        project.id === currentTask?.projectId && (!sectionFilters || (!!currentTask && sectionFilters.status.includes(currentTask.status))),
     );
 
     const direction = event.key === 'ArrowRight' ? 1 : -1;
@@ -232,12 +224,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
           onChange: handlers.onAssignedToChange,
         });
       case 'status':
-        return handleTaskDropdownClick({
-          ...base,
-          dropdownType: 'status',
-          value: targetTask.status,
-          onChange: handlers.onStatusChange,
-        });
+        return handleTaskDropdownClick({ ...base, dropdownType: 'status', value: targetTask.status, onChange: handlers.onStatusChange });
       case 'primaryLabel':
         return handleTaskDropdownClick({
           ...base,
@@ -281,11 +268,7 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const coreHotkeys = [...stateHotkeys, ...actionHotkeys];
   useHotkeys(coreHotkeys, gridIgnoreTags);
 
-  const navHotkeys = isSheetOpen
-    ? []
-    : type === 'workspace'
-      ? [...boardNavHotkeys, ...panelNavHotkeys]
-      : panelNavHotkeys;
+  const navHotkeys = isSheetOpen ? [] : type === 'workspace' ? [...boardNavHotkeys, ...panelNavHotkeys] : panelNavHotkeys;
   useHotkeys(navHotkeys, gridIgnoreTags);
 
   return null;

@@ -34,9 +34,7 @@ export function Slider({
         >
           <SliderPrimitive.Indicator
             data-slot="slider-range"
-            className={cn(
-              'absolute bg-primary data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full',
-            )}
+            className="absolute bg-primary data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
           />
         </SliderPrimitive.Track>
         {Array.from({ length: _values.length }, (_, index) => (
@@ -44,7 +42,7 @@ export function Slider({
             data-slot="slider-thumb"
             // biome-ignore lint/suspicious/noArrayIndexKey: slider thumbs are positional and never reordered.
             key={index}
-            className="block size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm ring-ring transition-[color,box-shadow] hover:ring-4 focus-visible:outline-hidden focus-visible:ring-4 data-disabled:pointer-events-none data-disabled:opacity-50"
+            className="focus-effect block size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 hover:ring-ring/30 data-disabled:pointer-events-none data-disabled:opacity-50"
           />
         ))}
       </SliderPrimitive.Control>

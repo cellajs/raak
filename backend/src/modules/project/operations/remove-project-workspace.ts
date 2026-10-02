@@ -11,10 +11,7 @@ import { log } from '#/utils/logger';
 export async function removeProjectWorkspaceOp(ctx: UserContext, id: string) {
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read');
   const membership = requireCurrentUserProjectMembership(ctx, project);
-  const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, {
-    membership,
-    workspaceId: null,
-  });
+  const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, { membership, workspaceId: null });
 
   log.info('Project workspace removed', { projectId: project.id });
 

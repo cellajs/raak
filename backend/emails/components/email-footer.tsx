@@ -14,18 +14,9 @@ export const EmailFooter = ({ supportText }: { supportText: string }) => (
       padding: '0 1.5rem',
     }}
   >
-    {appConfig.name}・{appConfig.company.streetAddress}・{appConfig.company.city}・{appConfig.company.country},{' '}
-    {appConfig.company.postcode}・
-    <Link
-      style={{
-        ...smallTextStyle,
-        color: '#0366d6',
-      }}
-      href={`mailto:${appConfig.supportEmail}`}
-    >
+    {appConfig.name}・{appConfig.company.streetAddress}・{appConfig.company.city}・{appConfig.company.country}, {appConfig.company.postcode}・
+    <Link style={{ ...smallTextStyle, color: '#0366d6' }} href={`mailto:${appConfig.supportEmail}`}>
       {supportText}
     </Link>
   </EmailText>
 );
-
-export const Template = EmailFooter;

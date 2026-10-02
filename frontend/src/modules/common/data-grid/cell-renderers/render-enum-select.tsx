@@ -6,16 +6,9 @@ import { Popover, PopoverContent } from '~/modules/ui/popover';
 import type { RenderEditCellProps } from '../types';
 
 /** Enum-editor defaults: no double commit from the portaled popover, and cell content stays visible. */
-export const enumSelectEditorOptions = {
-  editorType: 'select',
-  commitOnOutsideClick: false,
-  displayCellContent: true,
-} as const;
+export const enumSelectEditorOptions = { editorType: 'select', commitOnOutsideClick: false, displayCellContent: true } as const;
 
-export type EnumSelectOption<TValue extends string> = {
-  value: TValue;
-  label: ReactNode;
-};
+export type EnumSelectOption<TValue extends string> = { value: TValue; label: ReactNode };
 
 type Props<TRow, TValue extends string> = Pick<RenderEditCellProps<TRow>, 'onRowChange' | 'onClose'> & {
   row: TRow;
@@ -74,9 +67,7 @@ export function RenderEnumSelect<TRow extends { id: string }, TValue extends str
     if (!open) onClose();
   };
 
-  const menu = (
-    <EnumSelectMenu currentValue={currentValue} options={options} renderOption={renderOption} onSelect={handleSelect} />
-  );
+  const menu = <EnumSelectMenu currentValue={currentValue} options={options} renderOption={renderOption} onSelect={handleSelect} />;
 
   if (isMobile) {
     return (
@@ -104,7 +95,8 @@ export function RenderEnumSelect<TRow extends { id: string }, TValue extends str
         <PopoverContent
           anchor={anchor}
           align="start"
-          className="z-301 p-0"
+          positionerClassName="z-301"
+          className="p-0"
           // Skip restoration to the replaced anchor cell; EditCell focuses its new cell instance.
           finalFocus={false}
           style={{ width }}
@@ -147,7 +139,7 @@ function EnumSelectMenu<TValue extends string>({
         if (value != null) onSelect(value);
       }}
     >
-      <ComboboxList ref={listRef} className="rounded-lg p-1 outline-none" tabIndex={-1}>
+      <ComboboxList ref={listRef} className="rounded-lg p-1 outline-hidden" tabIndex={-1}>
         {normalized.map((opt) => (
           <ComboboxItem key={opt.value} value={opt.value} className="flex items-center gap-2">
             <span className="flex-1 text-foreground">{opt.label}</span>

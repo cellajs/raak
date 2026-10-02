@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { usePreloadLazyComponents } from '~/hooks/use-preload-lazy-components';
-import { useScrollSpy } from '~/hooks/use-scroll-spy';
+import { RegisterSpySections } from '~/hooks/use-scroll-spy';
 import { type LegalSubject, legalConfig } from '~/modules/auth/legal/legal-config';
 import { SimpleHeader } from '~/modules/common/simple-header';
 import { MarketingLayout } from '~/modules/marketing/layout';
@@ -16,26 +16,11 @@ import { objectEntries } from '~/utils/object-entries';
 export function LegalPage() {
   const { t } = useTranslation();
 
-  const subjects = useMemo(
-    () =>
-      objectEntries(legalConfig).map(([subject]) => ({
-        id: subject,
-        label: legalConfig[subject].label,
-        sections: legalConfig[subject].sections,
-      })),
-    [],
-  );
+  const subjects = useMemo(() => objectEntries(legalConfig).map(([subject, { label, sections }]) => ({ id: subject, label, sections })), []);
 
   const { subject: currentSubject } = useParams({ from: '/_public/_marketing/legal/$subject' });
 
-  // Get section IDs for the current subject
-  const sectionIds = useMemo(
-    () => legalConfig[currentSubject as LegalSubject]?.sections.map((s: { id: string }) => s.id) || [],
-    [currentSubject],
-  );
-
-  // Enable scroll spy near the content - uses useLocation for hash in aside
-  useScrollSpy(sectionIds);
+  const sectionIds = useMemo(() => legalConfig[currentSubject as LegalSubject]?.sections.map((s: { id: string }) => s.id) || [], [currentSubject]);
 
   // Preload all lazy components on mount for instant switching
   const lazyComponents = useMemo(() => subjects.map(({ id }) => legalConfig[id].component), [subjects]);
@@ -44,15 +29,14 @@ export function LegalPage() {
   return (
     <MarketingLayout title={t('c:legal')}>
       <div className="container my-4 gap-4 md:mt-8 md:flex md:flex-row">
-        <div className="mx-auto md:mt-3 md:w-[25%] md:min-w-48">
+        <div className="mx-auto md:mt-3 md:w-1/4 md:min-w-48">
           <div className="group sticky top-3 z-10 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
             <SimpleHeader className="p-3" text={t('c:legal_text', { appName: appConfig.name })} collapseText />
             <LegalAside subjects={subjects} currentSubject={currentSubject} className="py-2" />
           </div>
         </div>
 
-        {/* Main legal content */}
-        <div className="flex min-h-screen flex-col gap-8 md:w-[75%]">
+        <div className="flex min-h-svh flex-col gap-8 md:w-3/4">
           {subjects.map(({ id }) => {
             const isActive = id === currentSubject;
             const Component = legalConfig[id].component;
@@ -64,6 +48,8 @@ export function LegalPage() {
                 >
                   <h2 className="pt-8 pb-4 font-bold text-2xl">{t(legalConfig[id].label)}</h2>
                   <Component />
+                  {/* The lazy text suspends inside MarketingLayout; registering here waits for its sections */}
+                  <RegisterSpySections ids={sectionIds} />
                 </div>
               )
             );

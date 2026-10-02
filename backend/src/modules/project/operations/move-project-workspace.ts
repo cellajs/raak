@@ -13,10 +13,7 @@ export async function moveProjectToWorkspaceOp(ctx: UserContext, id: string, wor
   const { entity: project } = await getValidChannel(ctx, id, 'project', 'read');
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
   const membership = requireCurrentUserProjectMembership(ctx, project);
-  const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, {
-    membership,
-    workspaceId: resolvedWorkspaceId,
-  });
+  const updatedMembership = await setCurrentUserProjectMembershipWorkspace(ctx, { membership, workspaceId: resolvedWorkspaceId });
 
   log.info('Project workspace moved', { projectId: project.id, workspaceId: resolvedWorkspaceId });
 

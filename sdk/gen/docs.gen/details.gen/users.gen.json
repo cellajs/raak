@@ -322,7 +322,6 @@
         "properties": {
           "slug": {
             "required": false,
-            "description": "Boolean query value accepted as a boolean or its lowercase string representation.",
             "anyOf": [
               {
                 "type": "string",
@@ -330,8 +329,7 @@
                 "enum": ["true", "false"]
               },
               { "type": "boolean", "required": false }
-            ],
-            "ref": "#/components/schemas/BooleanQueryValue"
+            ]
           }
         }
       }

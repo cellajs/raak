@@ -7,15 +7,16 @@ import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb as db } from '#/db/db';
 import { lookupIp } from '#/lib/geoip';
-import { getSessionCache, type SessionCacheEntry, setSessionCache } from '#/middlewares/guard/auth-cache';
+import { getCachedSession, setCachedSession } from '#/middlewares/guard/session-cache';
+import { actorsTable } from '#/modules/actors/actors-db';
 import { deleteAuthCookie, getAuthCookie, setAuthCookie } from '#/modules/auth/general/helpers/cookie';
 import { deviceInfo } from '#/modules/auth/general/helpers/device-info';
-import { endSessions } from '#/modules/auth/general/helpers/end-sessions';
 import { enrollDevice } from '#/modules/auth/general/helpers/enroll-device';
 import { type NewDevice, notifySignIn } from '#/modules/auth/general/helpers/notify-sign-in';
-import { type AuthStrategy, type SessionTypes, sessionFactColumns, sessionsTable } from '#/modules/auth/sessions-db';
+import { revokeSessions } from '#/modules/auth/general/helpers/revoke-sessions';
+import { type AuthStrategy, type SessionFacts, type SessionTypes, sessionFactColumns, sessionsTable } from '#/modules/auth/sessions-db';
 import { systemRolesTable } from '#/modules/system/system-roles-db';
-import { userSelect } from '#/modules/user/helpers/select';
+import { type UserWithCounters, userSelect } from '#/modules/user/helpers/select';
 import { userCountersTable } from '#/modules/user/user-counters-db';
 import { type UserModel, usersTable } from '#/modules/user/user-db';
 import { getIp } from '#/utils/get-ip';
@@ -71,7 +72,7 @@ export const evictExcessSessions = async (userId: string): Promise<void> => {
   if (excess.length === 0) return;
 
   const sessionIds = excess.map((s) => s.id);
-  await endSessions({ var: { db } }, { userId, sessionIds, reason: 'session_cap', by: null });
+  await revokeSessions({ var: { db } }, { userId, sessionIds, reason: 'session_cap', by: null });
 };
 
 /** What the sign-in request says about the browser and the network. Raw IP and device id stay in memory; only their hashes are stored. */
@@ -161,7 +162,7 @@ export const createSession = async (
     // A3: a browser holds at most one live session, so repeated sign-ins do not stack up.
     if (session.deviceIdHash) {
       const sessionIds = (await liveOwnSessions(user.id, session.deviceIdHash)).map((s) => s.id);
-      await endSessions({ var: { db } }, { userId: user.id, sessionIds, reason: 'replaced', by: null });
+      await revokeSessions({ var: { db } }, { userId: user.id, sessionIds, reason: 'replaced', by: null });
     }
     await evictExcessSessions(user.id);
   }
@@ -174,10 +175,10 @@ export const createSession = async (
 
   // lastSignInAt lives in user_counters to avoid CDC noise on the users table
   const lastSignInAt = getIsoDate();
-  await db.insert(userCountersTable).values({ userId: user.id, lastSignInAt }).onConflictDoUpdate({
-    target: userCountersTable.userId,
-    set: { lastSignInAt },
-  });
+  await db
+    .insert(userCountersTable)
+    .values({ userId: user.id, lastSignInAt })
+    .onConflictDoUpdate({ target: userCountersTable.userId, set: { lastSignInAt } });
 
   return { sessionId, sessionToken, timeSpan, newDevice };
 };
@@ -186,12 +187,7 @@ export const createSession = async (
  * Signs the user in on this browser: stores a session, sets its cookie and sends the sign-in notices. An impersonation
  * gets a cookie of its own, layered over the admin's session cookie, which stays: stopping returns the browser to it.
  */
-export const setUserSession = async (
-  ctx: Context<Env>,
-  user: UserModel,
-  strategy: AuthStrategy,
-  type: SessionTypes = 'regular',
-): Promise<void> => {
+export const setUserSession = async (ctx: Context<Env>, user: UserModel, strategy: AuthStrategy, type: SessionTypes = 'regular'): Promise<void> => {
   const isSystemAdmin = await db
     .select()
     .from(systemRolesTable)
@@ -205,13 +201,7 @@ export const setUserSession = async (
 
   const context = await collectSignInContext(ctx, type);
   const impersonatorSessionId = type === 'impersonation' ? ctx.var.sessionId : null;
-  const { sessionToken, timeSpan, newDevice } = await createSession(
-    user,
-    context,
-    strategy,
-    type,
-    impersonatorSessionId,
-  );
+  const { sessionToken, timeSpan, newDevice } = await createSession(user, context, strategy, type, impersonatorSessionId);
 
   if (type === 'impersonation') await setAuthCookie(ctx, 'impersonation', sessionToken, timeSpan);
   else {
@@ -225,31 +215,41 @@ export const setUserSession = async (
   if (type !== 'impersonation') log.info('User signed in', { strategy });
 };
 
+/** A live session as a request presents it, with its user. */
+export interface ResolvedSession {
+  session: SessionFacts;
+  user: UserWithCounters;
+  /** Holds the admin system role. The rights also need an allowlisted request address, checked per request. */
+  hasSystemRole: boolean;
+  /** `actors.bindings_version` at this read: the version the user's cached memberships must match. */
+  bindingsVersion: string;
+}
+
 /**
- * The live session a cookie's token names, with its user and whether the user holds the admin system role: from the
- * auth cache, keyed by the token's hash, or else from the database, which stores only that hash. A cached entry
- * answers only to the token itself and stops at the session's expiry; endings drop it through `endSessions`.
+ * The live session a cookie's token names, with its user, whether the user holds the admin system role and the
+ * version of the user's bindings: from the session cache (`session-cache.ts`), keyed by the token's hash, or else read
+ * by that hash, the only form the database stores. A cached entry stops at the session's expiry.
  * @throws AppError 401 `no_session` for an unknown token, `session_revoked` or `session_expired`.
  */
-export const readSession = async (sessionToken: string): Promise<SessionCacheEntry> => {
+export const readSession = async (sessionToken: string): Promise<ResolvedSession> => {
   const secretHash = hashToken(sessionToken);
-
-  const cached = getSessionCache(secretHash);
+  const cached = getCachedSession(secretHash);
   if (cached) {
     if (isExpiredDate(cached.session.expiresAt)) throw new AppError(401, 'session_expired', 'warn');
     return cached;
   }
 
-  // The role is read whatever the address, so the cached entry is right for every request that hits it.
   const [result] = await db
     .select({
       session: sessionFactColumns,
       revokedAt: sessionsTable.revokedAt,
       user: userSelect,
       systemRole: systemRolesTable.role,
+      bindingsVersion: actorsTable.bindingsVersion,
     })
     .from(sessionsTable)
     .innerJoin(usersTable, eq(sessionsTable.userId, usersTable.id))
+    .innerJoin(actorsTable, eq(actorsTable.id, usersTable.id))
     .leftJoin(systemRolesTable, eq(systemRolesTable.userId, usersTable.id))
     .where(eq(sessionsTable.secret, secretHash))
     .limit(1);
@@ -258,8 +258,9 @@ export const readSession = async (sessionToken: string): Promise<SessionCacheEnt
   if (result.revokedAt) throw new AppError(401, 'session_revoked', 'warn');
   if (isExpiredDate(result.session.expiresAt)) throw new AppError(401, 'session_expired', 'warn');
 
-  const entry = { session: result.session, user: result.user, hasSystemRole: result.systemRole === 'admin' };
-  setSessionCache(secretHash, entry);
+  const { session, user, systemRole, bindingsVersion } = result;
+  const entry = { session, user, hasSystemRole: systemRole === 'admin', bindingsVersion };
+  setCachedSession(secretHash, entry);
   return entry;
 };
 
@@ -274,7 +275,7 @@ const refusalAsNull = (err: unknown): null => {
  * of it.
  * @throws AppError 401 without a token, for an unknown, revoked or expired one, or for an impersonation's.
  */
-export const readOwnSession = async (sessionToken: string | undefined): Promise<SessionCacheEntry> => {
+export const readOwnSession = async (sessionToken: string | undefined): Promise<ResolvedSession> => {
   if (!sessionToken) throw new AppError(401, 'unauthorized', 'warn');
   const entry = await readSession(sessionToken);
   if (entry.session.type === 'impersonation') throw new AppError(401, 'unauthorized', 'warn');
@@ -290,15 +291,12 @@ export const readOwnSession = async (sessionToken: string | undefined): Promise<
  * @throws AppError 401 without a session cookie, for an unknown, revoked or expired token, or an impersonation that
  *   this browser's own session does not back.
  */
-export const resolveSession = async (
-  ctx: Context,
-  { clearOnError = false }: { clearOnError?: boolean } = {},
-): Promise<SessionCacheEntry> => {
+export const resolveSession = async (ctx: Context, { clearOnError = false }: { clearOnError?: boolean } = {}): Promise<ResolvedSession> => {
   const sessionToken = await getAuthCookie(ctx, 'session');
   const impersonationToken = await getAuthCookie(ctx, 'impersonation');
 
   // Only a refusal clears the cookie: it holds the only copy of the token, so a failed read (the database away) keeps it.
-  const clearIfRefused = async (cookie: 'session' | 'impersonation', read: () => Promise<SessionCacheEntry>) => {
+  const clearIfRefused = async (cookie: 'session' | 'impersonation', read: () => Promise<ResolvedSession>) => {
     try {
       return await read();
     } catch (err) {
@@ -329,5 +327,4 @@ export const resolveSession = async (
  * expired or revoked token), while a failed read stays the request's failure, so the database being away never reads
  * as signed out.
  */
-export const findSession = (ctx: Context): Promise<SessionCacheEntry | null> =>
-  resolveSession(ctx).catch(refusalAsNull);
+export const findSession = (ctx: Context): Promise<ResolvedSession | null> => resolveSession(ctx).catch(refusalAsNull);

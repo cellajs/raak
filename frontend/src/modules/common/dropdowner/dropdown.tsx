@@ -62,11 +62,16 @@ export function DropdownerDropdown({ dropdown }: { dropdown: InternalDropdown })
   return <PanelDropdown dropdown={dropdown} triggerEl={triggerEl} />;
 }
 
+/** Closes the dropdown unless it was already swapped for another (e.g. a menu item opening a confirmation panel). */
+function removeIfCurrent(key: number) {
+  if (useDropdowner.getState().dropdown?.key === key) useDropdowner.getState().remove();
+}
+
 function MenuDropdown({ dropdown, triggerEl }: { dropdown: InternalDropdown; triggerEl: HTMLElement }) {
   const triggerFocusRef = useLatestRef(triggerEl);
 
   const onOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) useDropdowner.getState().remove();
+    if (!nextOpen) removeIfCurrent(dropdown.key);
   };
 
   return (
@@ -74,10 +79,7 @@ function MenuDropdown({ dropdown, triggerEl }: { dropdown: InternalDropdown; tri
       <Menu.Portal>
         <Menu.Positioner anchor={triggerEl} align={dropdown.align} sideOffset={4} className="z-301">
           <Menu.Popup
-            className={cn(
-              'min-w-32 rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-hidden',
-              dropdown.popupClassName,
-            )}
+            className={cn('min-w-32 rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-hidden', dropdown.popupClassName)}
             finalFocus={triggerFocusRef}
           >
             {dropdown.content}
@@ -92,14 +94,14 @@ function PanelDropdown({ dropdown, triggerEl }: { dropdown: InternalDropdown; tr
   const triggerFocusRef = useLatestRef(triggerEl);
 
   const onOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) useDropdowner.getState().remove();
+    if (!nextOpen) removeIfCurrent(dropdown.key);
   };
 
   return (
     <Popover key={dropdown.key} open={true} onOpenChange={onOpenChange} modal={false}>
-      <PopoverContent anchor={triggerEl} align={dropdown.align} className="z-301 p-0" finalFocus={triggerFocusRef}>
+      <PopoverContent anchor={triggerEl} align={dropdown.align} positionerClassName="z-301" className="p-0" finalFocus={triggerFocusRef}>
         <FocusTrap active initialFocus returnFocus containFocus>
-          <div style={{ display: 'contents' }}>{dropdown.content}</div>
+          <div className="contents">{dropdown.content}</div>
         </FocusTrap>
       </PopoverContent>
     </Popover>

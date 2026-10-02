@@ -1,11 +1,9 @@
 import type { Context } from 'hono';
 import { appConfig } from 'shared';
 import type { Env } from '#/core/context';
+import { assertSwitchOn } from '#/middlewares/config-switch';
 import { handleMagicLink } from '#/modules/auth/general/helpers/handle-magic';
-import {
-  explainOpenedMagicLink,
-  holdMagicLinkOutsideItsBrowser,
-} from '#/modules/auth/magic/helpers/magic-link-browser';
+import { explainOpenedMagicLink, holdMagicLinkOutsideItsBrowser } from '#/modules/auth/magic/helpers/magic-link-browser';
 import { claimMagicLinkOwner } from '#/modules/auth/magic/helpers/magic-sign-up';
 import { handleOAuthVerification } from '#/modules/auth/oauth/helpers/handle-oauth-verification';
 import { openStepUpLink } from '#/modules/auth/step-up/helpers/step-up-link';
@@ -21,7 +19,9 @@ type LinkHandler = (ctx: Context<Env>, rawToken: string) => Promise<Response>;
  * until it says what its link does, so no link falls through to another type's handling.
  */
 export const linkHandlers = {
+  // Only a magic link belongs to a sign-in method, so this route's switch is checked here, per token type.
   magic: async (ctx, rawToken) => {
+    assertSwitchOn({ strategy: 'magic' });
     const held = await holdMagicLinkOutsideItsBrowser(ctx, rawToken);
     if (held) return held;
 
@@ -32,8 +32,7 @@ export const linkHandlers = {
     forgetLinkRequest(ctx, 'magic');
     return handleMagicLink(ctx, token);
   },
-  'oauth-verification': async (ctx, rawToken) =>
-    handleOAuthVerification(ctx, await invokeToken(ctx, { type: 'oauth-verification', rawToken })),
+  'oauth-verification': async (ctx, rawToken) => handleOAuthVerification(ctx, await invokeToken(ctx, { type: 'oauth-verification', rawToken })),
   invitation: async (ctx, rawToken) => {
     const token = await invokeToken(ctx, { type: 'invitation', rawToken });
     log.info('Token invoked, redirecting with single use token in cookie', { tokenId: token.id, userId: token.userId });

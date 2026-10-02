@@ -9,10 +9,7 @@ export const test = {
 
   domain: '',
 
-  services: {
-    mcp: { enabled: true },
-    oauth: { enabled: true },
-  },
+  services: { mcp: { enabled: true }, oauth: { enabled: true } },
 
   frontendUrl: development.frontendUrl,
   backendUrl: development.backendUrl,

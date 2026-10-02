@@ -16,9 +16,7 @@ export const useProjectPublicity = (projectId: string) => {
   if (publicProjectMatch) return true;
 
   if (workspaceMatch || projectMatch) {
-    const cached =
-      findProjectByIdOrSlug(projectId, tenantId) ??
-      queryClient.getQueryData<Project>(projectQueryKeys.detail.byId(projectId));
+    const cached = findProjectByIdOrSlug(projectId, tenantId) ?? queryClient.getQueryData<Project>(projectQueryKeys.detail.byId(projectId));
     return cached?.publicAt !== null && cached?.publicAt !== undefined;
   }
 

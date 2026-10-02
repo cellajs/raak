@@ -15,10 +15,7 @@ import { getRandomColor } from '~/utils/random-color';
 // BlockNote's props are a union (filePanel variants), so Omit must distribute over it
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
-type PassthroughProps = DistributiveOmit<
-  ComponentProps<typeof BlockNote>,
-  'collaboration' | 'defaultValue' | 'updateData' | 'onBeforeLoad' | 'id'
->;
+type PassthroughProps = DistributiveOmit<ComponentProps<typeof BlockNote>, 'collaboration' | 'defaultValue' | 'updateData' | 'onBeforeLoad' | 'id'>;
 
 type CollaborativeBlockNoteProps = PassthroughProps & {
   entityType: ProductEntityType;
@@ -60,13 +57,7 @@ export function CollaborativeBlockNote({
   const isOnline = useOnlineManager();
   const wantsCollaboration = appConfig.services.yjs.enabled && !!appConfig.yjsUrl && isOnline && canEdit;
   // The token names this entity only; the relay closes the socket when it expires, and the refreshed token reconnects it.
-  const { token: yjsToken, refused } = useYjsToken({
-    entityType,
-    entityId,
-    tenantId,
-    organizationId,
-    enabled: wantsCollaboration,
-  });
+  const { token: yjsToken, refused } = useYjsToken({ entityType, entityId, tenantId, organizationId, enabled: wantsCollaboration });
   const canCollaborate = wantsCollaboration && !!yjsToken;
 
   // Once collaborative, hold the connection across an offline blip: releasing it lets the grace period destroy the shared doc under a mounted editor.
@@ -121,7 +112,7 @@ export function CollaborativeBlockNote({
 
   // A reseeded document syncs afresh: the editor comes back on the new fragment once it did.
   const rebuilding = collaborative && !wsReady;
-  if (waitingForSync || rebuilding) return waitingFallback ?? <Spinner className="my-8 h-6 w-6 opacity-50" />;
+  if (waitingForSync || rebuilding) return waitingFallback ?? <Spinner className="my-8 size-6 opacity-50" />;
 
   const uploadHostProps = blockNoteProps.baseFilePanelProps;
 
@@ -156,9 +147,5 @@ export function CollaborativeBlockNote({
   );
 
   // The upload dialog renders above the editor so it survives an editor remount.
-  return uploadHostProps ? (
-    <UploadHostProvider baseFilePanelProps={uploadHostProps}>{editor}</UploadHostProvider>
-  ) : (
-    editor
-  );
+  return uploadHostProps ? <UploadHostProvider baseFilePanelProps={uploadHostProps}>{editor}</UploadHostProvider> : editor;
 }

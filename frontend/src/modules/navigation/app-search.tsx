@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { HistoryIcon, SearchIcon, XIcon } from 'lucide-react';
+import { SearchIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { UserBase } from 'sdk';
@@ -9,25 +9,20 @@ import { useDebounce } from '~/hooks/use-debounce';
 import { useFocusByRef } from '~/hooks/use-focus-by-ref';
 import { useMountedState } from '~/hooks/use-mounted-state';
 import { channelListQueriesByType } from '~/list-queries-config';
+import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { type HistoryEntry, SearchHistoryGroup } from '~/modules/common/search-history-group';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { SearchResultBlock } from '~/modules/navigation/menu-sheet/search-result-block';
 import { useNavigationStore } from '~/modules/navigation/navigation-store';
-import { Button } from '~/modules/ui/button';
-import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxSearchInput,
-} from '~/modules/ui/combobox';
+import { Combobox, ComboboxEmpty, ComboboxList } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { Skeleton } from '~/modules/ui/skeleton';
 import { usersListQueryOptions } from '~/modules/user/query';
 import { getChannelRoute, pageTopHashNav } from '~/utils/channel-route';
-import { addRecentSearch } from '~/utils/recent-searches';
+import { cn } from '~/utils/cn';
+import { addRecentSearch, resolveSearchInput } from '~/utils/recent-searches';
 
 const searchableEntityTypes = ['user', ...appConfig.channelEntityTypes] as const;
 
@@ -36,9 +31,7 @@ function SearchResultsSkeleton() {
   const { hasStarted } = useMountedState();
 
   return (
-    <div
-      className={`flex flex-col gap-4 p-4 transition-opacity duration-300 ${hasStarted ? 'opacity-100' : 'opacity-0'}`}
-    >
+    <div className={cn('flex flex-col gap-4 p-4 transition-opacity duration-300', hasStarted ? 'opacity-100' : 'opacity-0')}>
       {Array.from({ length: 3 }).map((_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholder.
         <div key={i} className="flex items-center gap-3 py-1.5">
@@ -50,7 +43,6 @@ function SearchResultsSkeleton() {
   );
 }
 
-type HistoryEntry = { kind: 'history'; value: string };
 type SearchSelection = EnrichedChannel | UserBase | HistoryEntry;
 
 export function AppSearch() {
@@ -63,8 +55,7 @@ export function AppSearch() {
   const debouncedSearchValue = useDebounce(searchValue, 300, { immediateValue: '' });
   // Group collapse state lives here so it persists across reloads while typing; it resets with the dialog.
   const [collapsedTypes, setCollapsedTypes] = useState<Partial<Record<string, boolean>>>({});
-  const toggleCollapsed = (entityType: string) =>
-    setCollapsedTypes((prev) => ({ ...prev, [entityType]: !prev[entityType] }));
+  const toggleCollapsed = (entityType: string) => setCollapsedTypes((prev) => ({ ...prev, [entityType]: !prev[entityType] }));
 
   const recentSearches = useNavigationStore((state) => state.recentSearches);
 
@@ -88,10 +79,7 @@ export function AppSearch() {
     });
   };
 
-  const userQ = useInfiniteQuery({
-    ...usersListQueryOptions({ q: debouncedSearchValue }),
-    enabled: debouncedSearchValue.length > 0,
-  });
+  const userQ = useInfiniteQuery({ ...usersListQueryOptions({ q: debouncedSearchValue }), enabled: debouncedSearchValue.length > 0 });
 
   const channelResults = Object.fromEntries(
     Object.entries(channelListQueriesByType).map(([entityType, queryOptions]) => [
@@ -123,9 +111,7 @@ export function AppSearch() {
   const hasQuery = debouncedSearchValue.length > 0;
   const isQueryFetching = hasQuery && (userQ.isFetching || Object.values(channelResults).some((q) => q.isFetching));
   const isFetching = isDebouncePending || isQueryFetching;
-  const isLoading =
-    searchValue.length > 0 &&
-    (isDebouncePending || userQ.isLoading || Object.values(channelResults).some((q) => q.isLoading));
+  const isLoading = searchValue.length > 0 && (isDebouncePending || userQ.isLoading || Object.values(channelResults).some((q) => q.isLoading));
 
   const onSelectItem = (item: EnrichedChannel | UserBase) => {
     updateRecentSearches(searchValue);
@@ -154,12 +140,7 @@ export function AppSearch() {
         onSelectItem(selection as EnrichedChannel | UserBase);
       }}
       inputValue={searchValue}
-      onInputValueChange={(value) => {
-        // A bare index picks a history entry, but only while the history list is showing (input was empty).
-        // Otherwise backspacing a value down to a leading digit would swap in an old search.
-        const isHistoryPick = searchValue === '' && /^\d+$/.test(value) && Number(value) < recentSearches.length;
-        setSearchValue(isHistoryPick ? recentSearches[Number(value)] : value);
-      }}
+      onInputValueChange={(value) => setSearchValue(resolveSearchInput(searchValue, value, recentSearches))}
       filter={() => true}
     >
       <div className="rounded-lg shadow-2xl">
@@ -185,44 +166,14 @@ export function AppSearch() {
               </ComboboxEmpty>
             )}
             {notFound && !searchValue.length && !!recentSearches.length && (
-              <ComboboxGroup className="p-1">
-                <div className="bg-popover px-2 py-2 font-medium text-muted-foreground text-xs">{t('c:history')}</div>
-                {recentSearches.map((search, index) => (
-                  <ComboboxItem
-                    key={search}
-                    value={{ kind: 'history', value: search } as HistoryEntry}
-                    className="justify-between"
-                  >
-                    <div className="group flex items-center gap-2 outline-0 ring-0">
-                      <HistoryIcon className="h-5 w-5" />
-                      <span className="truncate font-medium underline-offset-4">{search}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="mx-3 text-xs opacity-50 max-sm:hidden">{index}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 p-0"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          deleteItemFromList(search);
-                        }}
-                      >
-                        <XIcon className="h-5 w-5 opacity-70 hover:opacity-100" />
-                      </Button>
-                    </div>
-                  </ComboboxItem>
-                ))}
-              </ComboboxGroup>
+              <SearchHistoryGroup searches={recentSearches} onRemove={deleteItemFromList} />
             )}
             {isLoading ? (
               <SearchResultsSkeleton />
             ) : (
               <div className="p-1">
                 {(() => {
-                  const firstWithResults = searchableEntityTypes.find(
-                    (entityType) => (data[entityType] ?? []).length > 0,
-                  );
+                  const firstWithResults = searchableEntityTypes.find((entityType) => (data[entityType] ?? []).length > 0);
                   return searchableEntityTypes.map((entityType) => (
                     <SearchResultBlock
                       key={entityType}

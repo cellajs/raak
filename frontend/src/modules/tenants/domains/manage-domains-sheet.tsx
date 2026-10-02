@@ -8,6 +8,7 @@ import { CreateDomainForm, createDomainDialogId } from '~/modules/tenants/domain
 import { DomainTile } from '~/modules/tenants/domains/domain-tile';
 import { domainsQueryOptions } from '~/modules/tenants/query';
 import { Button } from '~/modules/ui/button';
+import { tw } from '~/utils/tw';
 
 interface ManageDomainsContentProps {
   tenant: Tenant;
@@ -27,7 +28,7 @@ export function ManageDomainsContent({ tenant }: ManageDomainsContentProps) {
       id: createDomainDialogId,
       triggerRef: createButtonRef,
       drawerOnMobile: false,
-      className: 'w-auto shadow-none border relative z-60',
+      className: tw('relative z-60 w-auto border shadow-none'),
       container: { ref: createContainerRef },
       title: t('c:create_resource', { resource: t('c:domain').toLowerCase() }),
     });
@@ -45,14 +46,12 @@ export function ManageDomainsContent({ tenant }: ManageDomainsContentProps) {
 
       {isLoading && (
         <div className="flex justify-center py-4">
-          <LoaderCircleIcon className="icon-lg animate-spin text-muted-foreground" />
+          <LoaderCircleIcon className="size-5 animate-spin text-muted-foreground" />
         </div>
       )}
 
       {!isLoading && domains.length === 0 && (
-        <p className="py-4 text-center text-muted-foreground text-sm">
-          {t('c:no_resource_yet', { resource: t('c:domain_other').toLowerCase() })}
-        </p>
+        <p className="py-4 text-center text-muted-foreground text-sm">{t('c:no_resource_yet', { resource: t('c:domain_other').toLowerCase() })}</p>
       )}
 
       <div className="space-y-2">

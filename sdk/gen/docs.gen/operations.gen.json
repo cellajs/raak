@@ -105,7 +105,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["tokenLimiter"],
       "xCache": []
     },
@@ -128,7 +128,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["userGuard", "noImpersonationGuard", "sysAdminGuard"],
+      "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -227,7 +227,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "magic" }
   },
   {
     "id": "getPendingMagicLink",
@@ -250,7 +251,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "magic" }
   },
   {
     "id": "confirmMagicLink",
@@ -273,7 +275,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "magic" }
   },
   {
     "id": "generateTotpKey",
@@ -296,7 +299,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "totp" }
   },
   {
     "id": "createTotp",
@@ -319,7 +323,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "totp" }
   },
   {
     "id": "deleteTotp",
@@ -365,7 +370,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "totp" }
   },
   {
     "id": "createPasskey",
@@ -388,7 +394,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "passkey" }
   },
   {
     "id": "deletePasskey",
@@ -434,7 +441,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "passkey" }
   },
   {
     "id": "signInWithPasskey",
@@ -457,7 +465,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "passkey" }
   },
   {
     "id": "startOAuthConnect",
@@ -480,7 +489,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "oauth" }
   },
   {
     "id": "github",
@@ -503,7 +513,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "oauth", "provider": "github" }
   },
   {
     "id": "google",
@@ -526,7 +537,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "oauth", "provider": "google" }
   },
   {
     "id": "microsoft",
@@ -549,7 +561,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "oauth", "provider": "microsoft" }
   },
   {
     "id": "githubCallback",
@@ -572,7 +585,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "oauth", "provider": "github" }
   },
   {
     "id": "googleCallback",
@@ -595,7 +609,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "oauth", "provider": "google" }
   },
   {
     "id": "microsoftCallback",
@@ -618,7 +633,8 @@
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "oauth", "provider": "microsoft" }
   },
   {
     "id": "getStepUp",
@@ -657,7 +673,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["userGuard", "noImpersonationGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["stepUpLimiter"],
       "xCache": []
     },
@@ -680,14 +696,15 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["userGuard", "noImpersonationGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["passkeyChallengeLimiter"],
       "xCache": []
     },
     "tagsByKind": {
       "module": ["auth"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "strategy": "passkey" }
   },
   {
     "id": "sendStepUpLink",
@@ -703,7 +720,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["userGuard", "noImpersonationGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["spamLimiter"],
       "xCache": []
     },
@@ -1025,7 +1042,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1048,7 +1065,7 @@
     "hasResponseBody": true,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["userGuard", "noImpersonationGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1071,7 +1088,7 @@
     "hasResponseBody": false,
     "hasExample": false,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -1717,7 +1734,7 @@
     "hasParams": true,
     "hasRequestBody": false,
     "hasResponseBody": true,
-    "hasExample": false,
+    "hasExample": true,
     "extensions": {
       "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": [],
@@ -1740,7 +1757,7 @@
     "hasParams": false,
     "hasRequestBody": true,
     "hasResponseBody": true,
-    "hasExample": false,
+    "hasExample": true,
     "extensions": {
       "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
@@ -1763,7 +1780,7 @@
     "hasParams": true,
     "hasRequestBody": true,
     "hasResponseBody": true,
-    "hasExample": false,
+    "hasExample": true,
     "extensions": {
       "xGuard": ["userGuard", "sysAdminGuard"],
       "xRateLimiter": ["pointsLimiter"],
@@ -1788,7 +1805,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1812,7 +1829,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard", "relatableGuard"],
+      "xGuard": ["userGuard", "relatableGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -1834,7 +1851,7 @@
     "hasParams": true,
     "hasRequestBody": false,
     "hasResponseBody": true,
-    "hasExample": false,
+    "hasExample": true,
     "extensions": {
       "xGuard": ["publicGuard"],
       "xRateLimiter": [],
@@ -1843,7 +1860,8 @@
     "tagsByKind": {
       "module": ["oauth-server"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "service": "oauth" }
   },
   {
     "id": "createOrganizations",
@@ -1909,7 +1927,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard", "relatableGuard"],
+      "xGuard": ["userGuard", "relatableGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2034,7 +2052,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard", "relatableGuard"],
+      "xGuard": ["userGuard", "relatableGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2234,7 +2252,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2582,7 +2600,7 @@
     "hasParams": true,
     "hasRequestBody": false,
     "hasResponseBody": true,
-    "hasExample": false,
+    "hasExample": true,
     "extensions": {
       "xGuard": ["publicGuard"],
       "xRateLimiter": [],
@@ -2591,7 +2609,8 @@
     "tagsByKind": {
       "module": ["mcp"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "service": "mcp" }
   },
   {
     "id": "handleMcp",
@@ -2608,13 +2627,14 @@
     "hasExample": false,
     "extensions": {
       "xGuard": ["tokenGuard", "tenantGuard", "orgGuard"],
-      "xRateLimiter": [],
+      "xRateLimiter": ["mcpRequestLimiter"],
       "xCache": []
     },
     "tagsByKind": {
       "module": ["mcp"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "service": "mcp" }
   },
   {
     "id": "membershipInvite",
@@ -2699,7 +2719,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "crossTenantGuard"],
+      "xGuard": ["userGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -3084,6 +3104,7 @@
     "tagsByKind": {
       "module": ["yjs"],
       "owner": ["cella"]
-    }
+    },
+    "enabledBy": { "service": "yjs" }
   }
 ]

@@ -10,6 +10,7 @@ import { pricingPlans } from '~/modules/marketing/marketing-config';
 import { WaitlistForm } from '~/modules/requests/waitlist-form';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
+import { cn } from '~/utils/cn';
 
 export interface PricingPlan {
   id: string;
@@ -29,10 +30,7 @@ export function Pricing() {
 
   const buttonRefs = useRef<Array<RefObject<HTMLButtonElement | null>>>(pricingPlans.map(() => createRef()));
 
-  const handleActionClick = (
-    action: 'sign_in' | 'contact_us' | 'waitlist_request',
-    buttonRef: RefObject<HTMLButtonElement | null>,
-  ) => {
+  const handleActionClick = (action: 'sign_in' | 'contact_us' | 'waitlist_request', buttonRef: RefObject<HTMLButtonElement | null>) => {
     if (action === 'contact_us') return contactFormHandler(buttonRef);
 
     if (action === 'sign_in') {
@@ -50,10 +48,10 @@ export function Pricing() {
     }
   };
 
+  const layoutClass = isFlexLayout ? 'flex flex-col justify-center md:flex-row' : 'grid grid-cols-1 md:grid-cols-3';
+
   return (
-    <div
-      className={`mx-auto mt-8 max-w-7xl ${isFlexLayout ? 'flex flex-col justify-center md:flex-row' : 'grid grid-cols-1 md:grid-cols-3'} gap-8`}
-    >
+    <div className={cn('mx-auto mt-8 max-w-7xl', layoutClass, 'gap-8')}>
       {pricingPlans.map(({ id, borderColor, featureCount, popular, discount, action }, planIndex) => {
         const title = `about:pricing.title_${planIndex + 1}` as TKey;
         const text = `about:pricing.text_${planIndex + 1}` as TKey;
@@ -64,15 +62,14 @@ export function Pricing() {
         return (
           <div
             key={id}
-            className={`relative flex flex-col justify-between rounded-lg border bg-card p-6 ${borderColor} ${
-              isFlexLayout ? 'w-full md:w-1/2 lg:w-1/3' : 'w-full'
-            }`}
+            className={cn(
+              'relative flex flex-col justify-between rounded-lg border bg-card p-6',
+              borderColor,
+              isFlexLayout ? 'w-full md:w-1/2 lg:w-1/3' : 'w-full',
+            )}
           >
             {popular && (
-              <Badge
-                size="sm"
-                className="absolute top-0 left-1/2 -translate-x-2/4 -translate-y-2/4 px-4 py-1 text-center"
-              >
+              <Badge size="sm" className="absolute top-0 left-1/2 -translate-x-2/4 -translate-y-2/4 px-4 py-1 text-center">
                 🚀 {t('about:pricing.popular')}
               </Badge>
             )}
@@ -81,13 +78,13 @@ export function Pricing() {
                 {t(title)}
                 {popular && <SparklesIcon className="ml-1 w-5 text-primary" />}
               </h3>
-              <div className="mt-4 flex items-center justify-center text-gray-600 dark:text-gray-400">
+              <div className="mt-4 flex items-center justify-center text-muted-foreground">
                 {discount && (
                   <Badge size="md" className="mr-2 px-2 py-0 text-lg">
                     {discount}
                   </Badge>
                 )}
-                <span className={`font-bold text-3xl ${discount ? 'mr-2 line-through' : 'mr-1'}`}>{t(price)}</span>
+                <span className={cn('font-bold text-3xl', discount ? 'mr-2 line-through' : 'mr-1')}>{t(price)}</span>
                 <span>/ {t('c:year')}</span>
               </div>
 
@@ -99,7 +96,7 @@ export function Pricing() {
                 {Array.from({ length: featureCount }).map((_, featureIndex) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: list is static and will not be reordered
                   <li key={`${id}-${featureIndex}`} className="flex items-center text-sm">
-                    <CheckIcon className="mr-2 p-1 text-sm text-success" />
+                    <CheckIcon className="mr-2 size-6 p-1 text-sm text-success" />
                     {t(`about:pricing.plan_${planIndex + 1}.${featureIndex + 1}` as TKey)}
                   </li>
                 ))}

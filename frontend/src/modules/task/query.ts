@@ -39,8 +39,7 @@ export const deriveTasksQueryParams = (
   workspace?: { id: string; organizationId: string; tenantId: string },
   project?: { id: string; organizationId: string; tenantId: string },
 ): BaseTasksQueryParam => {
-  if (workspace)
-    return { tenantId: workspace.tenantId, organizationId: workspace.organizationId, workspaceId: workspace.id };
+  if (workspace) return { tenantId: workspace.tenantId, organizationId: workspace.organizationId, workspaceId: workspace.id };
   if (project) return { tenantId: project.tenantId, organizationId: project.organizationId, projectId: project.id };
   throw new Error('Either workspace or project is required to derive task query params');
 };
@@ -65,9 +64,7 @@ type TaskCreateMutationFnVariables = BaseCreateParams & OptimisticCacheFields;
 
 export type TaskUpdateMutationFnVariables = BaseUpdateParams & Partial<OptimisticCacheFields>;
 
-type TasksDeleteMutationFnVariables = {
-  tasksToDelete: Task[];
-};
+type TasksDeleteMutationFnVariables = { tasksToDelete: Task[] };
 
 type TaskCreateFullVars = QueryOrgContext & TaskCreateMutationFnVariables & { stx?: StxBase };
 type TaskUpdateFullVars = QueryOrgContext & TaskUpdateMutationFnVariables & { stx?: StxBase };
@@ -103,15 +100,9 @@ export const taskKeys = {
     /** Override: org-scoped filtered key for prefix matching */
     filtered: (organizationId: string, filters: TaskListFilters) => ['task', 'list', organizationId, filters] as const,
   },
-  detail: {
-    ...baseKeys.detail,
-    public: (id: string) => ['task', 'detail', 'public', id] as const,
-  },
+  detail: { ...baseKeys.detail, public: (id: string) => ['task', 'detail', 'public', id] as const },
   /** Public task list keys (separate from authenticated queries) */
-  publicList: {
-    base: ['task', 'public-list'] as const,
-    filtered: (filters: PublicTaskListFilters) => ['task', 'public-list', filters] as const,
-  },
+  publicList: { base: ['task', 'public-list'] as const, filtered: (filters: PublicTaskListFilters) => ['task', 'public-list', filters] as const },
 };
 
 registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, channelId) => {
@@ -155,16 +146,7 @@ export const getTasksNextPageParam: GetNextPageParamFunction<PageParams, TasksQu
 // Optimistic UI fields are removed before SDK operations.
 
 const createTaskMutationFn = async (vars: TaskCreateFullVars) => {
-  const {
-    tenantId,
-    organizationId,
-    stx,
-    fullLabels: _fl,
-    fullAssignedTo: _fa,
-    isSheet: _is,
-    summary: _summary,
-    ...data
-  } = vars;
+  const { tenantId, organizationId, stx, fullLabels: _fl, fullAssignedTo: _fa, isSheet: _is, summary: _summary, ...data } = vars;
   const effectiveStx = stx ?? createStxForCreate();
   const result = await createTasks({ body: [{ ...data, stx: effectiveStx }], path: { organizationId, tenantId } });
   return result.data[0];
@@ -235,11 +217,7 @@ const applyOptimisticTaskUpdate = (
       }
     }
 
-    const optimisticTask: Task = {
-      ...previousTask,
-      ...optimisticUpdates,
-      updatedAt: new Date().toISOString(),
-    };
+    const optimisticTask: Task = { ...previousTask, ...optimisticUpdates, updatedAt: new Date().toISOString() };
 
     // Cross-project move: remove from old project cache, add to new project cache
     if ('projectId' in mergedOps && mergedOps.projectId !== previousTask.projectId) {
@@ -274,24 +252,13 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
  * Board/table derive views via select() or client-side filtering.
  * Sync (SSE + delta fetch) keeps this fresh; staleTime follows sync liveness.
  */
-export const tasksCanonicalOptions = ({
-  organizationId,
-  tenantId,
-  projectId,
-}: {
-  organizationId: string;
-  tenantId: string;
-  projectId: string;
-}) => {
+export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
   return queryOptions({
     queryKey: taskKeys.list.home(organizationId, projectId),
     queryFn: () => {
       return fetchAllPages(
         ({ limit, offset }) =>
-          getTasks({
-            path: { organizationId, tenantId },
-            query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOff },
-          }),
+          getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOff } }),
         appConfig.requestLimits.tasks,
       );
     },
@@ -337,11 +304,7 @@ export const tasksTableQueryOptions = ({
     queryFn: ({ pageParam: { page, offset }, signal }) => {
       const requestOffset = String(offset || (page || 0) * limit);
 
-      return getTasks({
-        path: { organizationId, tenantId },
-        query: { ...requestQuery, offset: requestOffset },
-        signal,
-      });
+      return getTasks({ path: { organizationId, tenantId }, query: { ...requestQuery, offset: requestOffset }, signal });
     },
     staleTime: syncStaleTime,
     getNextPageParam: getTasksNextPageParam,
@@ -353,22 +316,14 @@ export const tasksTableQueryOptions = ({
  * replay reconciles like the live one. Callbacks take the QueryClient explicitly and derive the org
  * key from durable variables. On replay onMutate does not re-run, so onSettled invalidation recovers.
  */
-const taskCreateOptions = (
-  queryClient: QueryClient,
-): UseMutationOptions<CreateData, Error, TaskCreateFullVars, { optimisticTask: Task }> => ({
+const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateData, Error, TaskCreateFullVars, { optimisticTask: Task }> => ({
   mutationKey: taskKeys.create,
   scope: { id: 'task' },
   mutationFn: createTaskMutationFn,
   meta: { suppressGlobalErrorToast: true },
   onMutate: async ({ fullLabels, fullAssignedTo, isSheet: _isSheet, stx: _stx, tenantId, organizationId, ...rest }) => {
     const orgKey = taskKeys.list.org(organizationId);
-    const optimisticTask = createOptimisticEntity(zTask, {
-      ...rest,
-      tenantId,
-      organizationId,
-      labels: fullLabels,
-      assignedTo: fullAssignedTo,
-    });
+    const optimisticTask = createOptimisticEntity(zTask, { ...rest, tenantId, organizationId, labels: fullLabels, assignedTo: fullAssignedTo });
     await queryClient.cancelQueries({ queryKey: orgKey });
     // Insert into the row's canonical home (project) list only, never filtered/search lists.
     insertEntitiesIntoHome(queryClient, [optimisticTask]);
@@ -448,12 +403,7 @@ const taskUpdateOptions = (
 
     // Cross-project move: server response has authoritative labels/assignedTo
     const isProjectMove = variables.ops && 'projectId' in variables.ops;
-    const merged = mergeServerResponse({
-      cached,
-      serverEntity: updatedTask,
-      mutatedKeys,
-      skipKeys: isProjectMove ? [] : ['labels', 'assignedTo'],
-    });
+    const merged = mergeServerResponse({ cached, serverEntity: updatedTask, mutatedKeys, skipKeys: isProjectMove ? [] : ['labels', 'assignedTo'] });
 
     // The lite response path answers primaryLabel: null, so a merged response must never
     // supply it; rebuild the derived object from the cached label row the id points at.
@@ -475,9 +425,7 @@ const taskUpdateOptions = (
   },
 });
 
-const taskDeleteOptions = (
-  queryClient: QueryClient,
-): UseMutationOptions<DeleteData, Error, TasksDeleteFullVars, { tasksToDelete: Task[] }> => ({
+const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteData, Error, TasksDeleteFullVars, { tasksToDelete: Task[] }> => ({
   mutationKey: taskKeys.delete,
   scope: { id: 'task' },
   mutationFn: deleteTasksMutationFn,
@@ -516,13 +464,7 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
   // Stamp publicAt from the parent project so a new task inherits its project's publicity at create time.
   const prepare = (input: TaskCreateMutationFnVariables): PreparedVars<TaskCreateFullVars> => ({
     kind: 'run',
-    vars: {
-      tenantId,
-      organizationId,
-      ...input,
-      publicAt: getProjectPublicAt(input.projectId, tenantId),
-      stx: createStxForCreate(),
-    },
+    vars: { tenantId, organizationId, ...input, publicAt: getProjectPublicAt(input.projectId, tenantId), stx: createStxForCreate() },
   });
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
@@ -608,9 +550,6 @@ export const fetchTasksForExport = async (params: {
   query: Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
 }) => {
   const { limit, offset = 0, organizationId, tenantId, query } = params;
-  const { items } = await getTasks({
-    query: { ...query, limit: String(limit), offset: String(offset) },
-    path: { organizationId, tenantId },
-  });
+  const { items } = await getTasks({ query: { ...query, limit: String(limit), offset: String(offset) }, path: { organizationId, tenantId } });
   return items;
 };

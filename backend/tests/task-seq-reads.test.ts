@@ -15,13 +15,7 @@ import { setTestConfig } from './test-utils';
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
 const projectId = generateId();
-const taskIds = {
-  seq10: generateId(),
-  seq20: generateId(),
-  seq30Deleted: generateId(),
-  seq40OldAccepted: generateId(),
-  seq50: generateId(),
-};
+const taskIds = { seq10: generateId(), seq20: generateId(), seq30Deleted: generateId(), seq40OldAccepted: generateId(), seq50: generateId() };
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -68,14 +62,7 @@ describe('Task seq reads', async () => {
     };
     const rows = [
       { ...baseTask, id: taskIds.seq50, name: 'seq 50', seq: 50 },
-      {
-        ...baseTask,
-        id: taskIds.seq40OldAccepted,
-        name: 'seq 40 old accepted',
-        seq: 40,
-        status: TaskStatus.Accepted,
-        updatedAt: daysAgo(30),
-      },
+      { ...baseTask, id: taskIds.seq40OldAccepted, name: 'seq 40 old accepted', seq: 40, status: TaskStatus.Accepted, updatedAt: daysAgo(30) },
       { ...baseTask, id: taskIds.seq30Deleted, name: 'seq 30 tombstone', seq: 30, deletedAt: daysAgo(1) },
       { ...baseTask, id: taskIds.seq20, name: 'seq 20', seq: 20 },
       { ...baseTask, id: taskIds.seq10, name: 'seq 10', seq: 10 },

@@ -17,11 +17,12 @@ import { SelectTimezone } from '~/modules/common/form-fields/select-combobox/tim
 import { SelectLanguage } from '~/modules/common/form-fields/select-language';
 import { SelectLanguages } from '~/modules/common/form-fields/select-languages';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { Spinner } from '~/modules/common/spinner';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useOrganizationUpdateMutation } from '~/modules/organization/query';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 
 // welcomeText belongs to the details form; empty optional strings are stored as null.
@@ -53,10 +54,7 @@ export function UpdateOrganizationForm({ organization, callback, sheet: isSheet 
 
   const formOptions: UseFormProps<FormValues> = {
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      ...organization,
-      languages: organization.languages || [],
-    },
+    defaultValues: { ...organization, languages: organization.languages || [] },
   };
 
   const formContainerId = 'update-organization';
@@ -80,7 +78,7 @@ export function UpdateOrganizationForm({ organization, callback, sheet: isSheet 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
         <AvatarFormField
           form={form}
           label={t('c:resource_logo', { resource: t('c:organization') })}
@@ -119,13 +117,7 @@ export function UpdateOrganizationForm({ organization, callback, sheet: isSheet 
           label={t('c:notification_email')}
           description={t('c:notification_email.text')}
         />
-        <InputFormField
-          control={form.control}
-          name="websiteUrl"
-          label={t('c:website_url')}
-          placeholder="https://"
-          type="url"
-        />
+        <InputFormField control={form.control} name="websiteUrl" label={t('c:website_url')} placeholder="https://" type="url" />
         <FormField
           control={form.control}
           name="languages"
@@ -164,12 +156,7 @@ export function UpdateOrganizationForm({ organization, callback, sheet: isSheet 
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:save_changes')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            onClick={() => form.reset()}
-            className={form.isDirty ? '' : 'invisible'}
-          >
+          <Button type="reset" variant="secondary" onClick={() => form.reset()} className={form.isDirty ? '' : 'invisible'}>
             {t('c:cancel')}
           </Button>
         </div>
@@ -189,8 +176,7 @@ function DefaultLanguageField({ form }: { form: ReturnType<typeof useFormWithDra
       render={({ field }) => {
         if (form.loading) return <Spinner />;
 
-        const correctValue =
-          field.value && languages.includes(field.value) ? field.value : languages[0] || appConfig.defaultLanguage;
+        const correctValue = field.value && languages.includes(field.value) ? field.value : languages[0] || appConfig.defaultLanguage;
 
         return (
           <FormItem name="defaultLanguage">

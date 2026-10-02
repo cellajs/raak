@@ -12,11 +12,7 @@ import type {
   UpdateAttachmentFullVars,
   UpdateAttachmentVars,
 } from '~/modules/attachment/query-mutations';
-import {
-  createAttachmentsMutationFn,
-  deleteAttachmentsMutationFn,
-  updateAttachmentMutationFn,
-} from '~/modules/attachment/query-mutations';
+import { createAttachmentsMutationFn, deleteAttachmentsMutationFn, updateAttachmentMutationFn } from '~/modules/attachment/query-mutations';
 import { attachmentsSearchDefaults } from '~/modules/attachment/search-params-schemas';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
@@ -26,7 +22,7 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import type { OrgRoutableItemData } from '~/query/basic/types';
@@ -45,8 +41,7 @@ const keys = {
   ...baseKeys,
   list: {
     ...baseKeys.list,
-    filtered: (organizationId: string, filters: AttachmentFilters) =>
-      ['attachment', 'list', organizationId, filters] as const,
+    filtered: (organizationId: string, filters: AttachmentFilters) => ['attachment', 'list', organizationId, filters] as const,
   },
 };
 // Placement seam: a narrowed delta fetch names the covering home channel; org-wide passes none.
@@ -80,39 +75,22 @@ export const attachmentsListQueryOptions = (params: AttachmentsListParams) => {
   } = params;
 
   const filters = { q, sort, order };
-  const requestQuery = { ...filters, limit: String(limit) };
 
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(organizationId, filters),
-    queryFn: ({ pageParam: { page, offset }, signal }) => {
-      const requestOffset = String(offset ?? (page ?? 0) * limit);
-
-      return getAttachments({
-        path: { tenantId, organizationId },
-        query: { ...requestQuery, offset: requestOffset },
-        signal,
-      });
-    },
-    ...baseInfiniteQueryOptions,
+    ...offsetPaging(limit, (offset, signal) =>
+      getAttachments({ path: { tenantId, organizationId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }),
+    ),
     meta: { persist: false },
     staleTime: syncStaleTime,
   });
 };
 
-export const attachmentsCanonicalOptions = ({
-  organizationId,
-  tenantId,
-}: {
-  organizationId: string;
-  tenantId: string;
-}) => {
+export const attachmentsCanonicalOptions = ({ organizationId, tenantId }: { organizationId: string; tenantId: string }) => {
   return queryOptions({
     queryKey: keys.list.home(organizationId),
     queryFn: async () => {
-      return fetchAllPages(
-        ({ limit, offset }) => getAttachments({ path: { tenantId, organizationId }, query: { limit, offset } }),
-        1000,
-      );
+      return fetchAllPages(({ limit, offset }) => getAttachments({ path: { tenantId, organizationId }, query: { limit, offset } }), 1000);
     },
     staleTime: syncStaleTime,
   });
@@ -134,11 +112,7 @@ export function useAttachmentActivityFeed(tenantId: string, organizationId: stri
   return data ?? [];
 }
 
-export function useGroupAttachments(
-  tenantId: string | undefined,
-  organizationId: string | undefined,
-  groupId: string | undefined,
-) {
+export function useGroupAttachments(tenantId: string | undefined, organizationId: string | undefined, groupId: string | undefined) {
   const { data } = useQuery({
     ...attachmentsCanonicalOptions({ organizationId: organizationId!, tenantId: tenantId! }),
     enabled: !!tenantId && !!organizationId && !!groupId,
@@ -173,8 +147,7 @@ const attachmentCreateOptions = (
   },
   onError: (_err, variables, context) => {
     handleError('create');
-    if (context?.optimisticAttachments)
-      cacheRemove(keys.list.org(variables.organizationId), context.optimisticAttachments);
+    if (context?.optimisticAttachments) cacheRemove(keys.list.org(variables.organizationId), context.optimisticAttachments);
   },
   onSuccess: (result, variables, context) => {
     const orgKey = keys.list.org(variables.organizationId);
@@ -182,8 +155,7 @@ const attachmentCreateOptions = (
     insertEntitiesIntoHome(queryClient, result.data);
   },
   onSettled: (_data, error, variables) => {
-    if (error)
-      invalidateIfLastMutation(queryClient, attachmentsMutationKeyBase, keys.list.org(variables.organizationId));
+    if (error) invalidateIfLastMutation(queryClient, attachmentsMutationKeyBase, keys.list.org(variables.organizationId));
   },
 });
 
@@ -223,8 +195,7 @@ const attachmentUpdateOptions = (
     syncEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
   },
   onSettled: (_data, error, variables) => {
-    if (error)
-      invalidateIfLastMutation(queryClient, attachmentsMutationKeyBase, keys.list.org(variables.organizationId));
+    if (error) invalidateIfLastMutation(queryClient, attachmentsMutationKeyBase, keys.list.org(variables.organizationId));
   },
 });
 
@@ -256,13 +227,10 @@ const attachmentDeleteOptions = (
     const rejectedSet = new Set(rejectedIds);
     const rejectedAttachments = variables.attachments.filter((a) => rejectedSet.has(a.id));
     insertEntitiesIntoHome(queryClient, rejectedAttachments);
-    toaster.info(
-      i18n.t('c:resources_delete_denied', { count: rejectedIds.length, total: variables.attachments.length }),
-    );
+    toaster.info(i18n.t('c:resources_delete_denied', { count: rejectedIds.length, total: variables.attachments.length }));
   },
   onSettled: (_data, error, variables) => {
-    if (error)
-      invalidateIfLastMutation(queryClient, attachmentsMutationKeyBase, keys.list.org(variables.organizationId));
+    if (error) invalidateIfLastMutation(queryClient, attachmentsMutationKeyBase, keys.list.org(variables.organizationId));
   },
 });
 

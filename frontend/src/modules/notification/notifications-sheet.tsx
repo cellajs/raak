@@ -58,13 +58,7 @@ export function NotificationsSheet() {
   );
 }
 
-function NotificationRow({
-  notification,
-  onOpen,
-}: {
-  notification: Notification;
-  onOpen: (body: { ids?: string[] }) => void;
-}) {
+function NotificationRow({ notification, onOpen }: { notification: Notification; onOpen: (body: { ids?: string[] }) => void }) {
   const { t } = useTranslation();
   const relativeDate = useRelativeDate(notification.createdAt);
   const route = getNotificationRoute(notification);
@@ -84,7 +78,7 @@ function NotificationRow({
     <>
       <EntityAvatar
         type="user"
-        className={cn('h-8 w-8 shrink-0', notification.readAt && 'opacity-70')}
+        className={cn('size-8 shrink-0', notification.readAt && 'opacity-70')}
         id={actor?.id ?? 'unknown'}
         name={actor?.name ?? ''}
         url={actor?.thumbnailUrl ?? null}
@@ -98,16 +92,13 @@ function NotificationRow({
             channel: channelName || t('c:unknown'),
           })}
         </span>
-        <span className="text-xs opacity-50">{relativeDate}</span>
+        <span className="text-muted-foreground/70 text-xs">{relativeDate}</span>
       </span>
     </>
   );
 
   // Unread rows carry the full accent (accent/30 is ~3 sRGB steps off the card in light mode); only read rows tint on hover.
-  const className = cn(
-    'flex w-full items-start gap-3 rounded-md px-2 py-2 text-left',
-    notification.readAt ? 'hover:bg-accent/50' : 'bg-accent',
-  );
+  const className = cn('flex w-full items-start gap-3 rounded-md px-2 py-2 text-left', notification.readAt ? 'hover:bg-accent/50' : 'bg-accent');
 
   // An unknown channel type still marks read; it just cannot navigate anywhere sensible.
   if (!route) {

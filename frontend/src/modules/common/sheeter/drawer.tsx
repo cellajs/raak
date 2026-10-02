@@ -1,35 +1,23 @@
-import { AnimatePresence, motion } from 'motion/react';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { ContentKeyTransition } from '~/modules/common/sheeter/sheet';
 import { type InternalSheet, sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '~/modules/ui/drawer';
 import { cn } from '~/utils/cn';
 
 const sideToSwipeDirection = { top: 'up', bottom: 'down', left: 'left', right: 'right' } as const;
 
-export function SheeterDrawer({ sheet }: { sheet: InternalSheet }) {
+export function SheeterDrawer({ sheet, onExited }: { sheet: InternalSheet; onExited?: () => void }) {
   // Drawers on mobile are always modal (overlay + outside click to close)
-  const {
-    id,
-    side,
-    description,
-    title,
-    titleContent = title,
-    headerClassName,
-    className,
-    content,
-    contentKey,
-    open = true,
-  } = sheet;
+  const { id, side, description, title, titleContent = title, headerClassName, className, content, contentKey, open = true } = sheet;
 
   const updateSheet = sheeter.getState().update;
 
-  const isDropdownOpen = useDropdowner((state) => state.dropdown);
+  const isDropdownOpen = useDropdowner((state) => !!state.dropdown);
 
-  const closeSheet = () => sheeter.getState().remove(sheet.id);
-
+  // The provider keeps the removed drawer rendered until it has slid out
   const onOpenChange = (open: boolean) => {
-    updateSheet(sheet.id, { open });
-    if (!open) closeSheet();
+    if (open) updateSheet(sheet.id, { open });
+    else sheeter.getState().remove(sheet.id);
   };
 
   return (
@@ -37,33 +25,17 @@ export function SheeterDrawer({ sheet }: { sheet: InternalSheet }) {
       key={id}
       modal
       open={open}
-      disablePointerDismissal={!!isDropdownOpen}
+      disablePointerDismissal={isDropdownOpen}
       swipeDirection={sideToSwipeDirection[side]}
       onOpenChange={onOpenChange}
+      onOpenChangeComplete={(isOpen) => !isOpen && onExited?.()}
     >
       <DrawerContent id={String(id)} className={className}>
         <DrawerHeader sticky className={cn(headerClassName, !(description || title) && 'hidden')}>
-          <DrawerTitle className={`font-medium ${title ? '' : 'hidden'}`}>{titleContent}</DrawerTitle>
-          <DrawerDescription className={`text-muted-foreground ${description ? '' : 'hidden'}`}>
-            {description}
-          </DrawerDescription>
+          {title && <DrawerTitle className="font-medium">{titleContent}</DrawerTitle>}
+          {description && <DrawerDescription className="text-muted-foreground">{description}</DrawerDescription>}
         </DrawerHeader>
-        {contentKey ? (
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div
-              key={contentKey}
-              className="flex flex-1 flex-col"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.15 }}
-            >
-              {content}
-            </motion.div>
-          </AnimatePresence>
-        ) : (
-          content
-        )}
+        <ContentKeyTransition contentKey={contentKey}>{content}</ContentKeyTransition>
       </DrawerContent>
     </Drawer>
   );

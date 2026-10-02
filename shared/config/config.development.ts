@@ -6,11 +6,7 @@ export const development = {
   name: 'Raak DEVELOPMENT',
   slug: 'raak-development',
 
-  has: {
-    selfRegistration: true,
-    waitlist: true,
-    chatSupport: false,
-  },
+  has: { selfRegistration: true, waitlist: true, chatSupport: false },
 
   domain: '',
   // Same-origin in development too: the Vite dev server proxies /api, /yjs and /mcp
@@ -25,8 +21,5 @@ export const development = {
   // The authorization server runs locally so the MCP consent flow can be exercised end to end.
   services: { oauth: { enabled: true }, mcp: { enabled: true } },
 
-  s3: {
-    publicBucket: 'cella-shared-public',
-    privateBucket: 'cella-shared-private',
-  },
+  s3: { publicBucket: 'cella-shared-public', privateBucket: 'cella-shared-private' },
 } satisfies DeepPartial<typeof _default>;

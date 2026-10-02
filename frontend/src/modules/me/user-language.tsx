@@ -10,6 +10,7 @@ import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { Button } from '~/modules/ui/button';
 import { useUserStore } from '~/modules/user/user-store';
+import { cn } from '~/utils/cn';
 
 interface Props {
   triggerClassName?: string;
@@ -52,16 +53,11 @@ export function UserLanguage({ triggerClassName = '' }: Props) {
             onSelect={() => changeLanguage(lang)}
           >
             <span>{t(`c:${lang}`)}</span>
-            <CheckIcon className={`text-success ${currentLang === lang ? 'visible' : 'invisible'}`} />
+            <CheckIcon className={cn('text-success', currentLang === lang ? 'visible' : 'invisible')} />
           </DropdownActionItem>
         ))}
       </div>,
-      {
-        id: 'user-language',
-        triggerId: 'user-language-trigger',
-        triggerRef,
-        kind: 'menu',
-      },
+      { id: 'user-language', triggerId: 'user-language-trigger', triggerRef, kind: 'menu' },
     );
   };
 
@@ -70,7 +66,7 @@ export function UserLanguage({ triggerClassName = '' }: Props) {
       ref={triggerRef}
       variant="ghost"
       size="icon"
-      className={`data-dropdowner-active:bg-accent ${triggerClassName}`}
+      className={cn('data-dropdowner-active:bg-accent', triggerClassName)}
       aria-label="Change language"
       onClick={openDropdown}
     >

@@ -53,10 +53,7 @@ function buildAssignedToEdit(): EditPayload {
 }
 
 function buildDisplayOrderEdit(): EditPayload {
-  return {
-    ops: { displayOrder: Math.random() * 1000 },
-    stx: buildStx(['displayOrder']),
-  };
+  return { ops: { displayOrder: Math.random() * 1000 }, stx: buildStx(['displayOrder']) };
 }
 
 function buildStatusEdit(): EditPayload {
@@ -74,10 +71,7 @@ function buildDescriptionEdit(): EditPayload {
     '[{"type":"paragraph","content":[{"type":"text","text":"Bug report: users experiencing slow load times on the dashboard."}]}]',
     '[{"type":"paragraph","content":[{"type":"text","text":"Feature spec v2: add support for bulk operations on task lists."}]}]',
   ];
-  return {
-    ops: { description: randomChoice(descriptions) },
-    stx: buildStx(['description']),
-  };
+  return { ops: { description: randomChoice(descriptions) }, stx: buildStx(['description']) };
 }
 
 /**
@@ -85,9 +79,4 @@ function buildDescriptionEdit(): EditPayload {
  * Each produces an `ops` + `stx` payload matching the sync mutation contract
  * for a single field edit.
  */
-export const allEditBuilders: EditBuilder[] = [
-  buildAssignedToEdit,
-  buildDisplayOrderEdit,
-  buildStatusEdit,
-  buildDescriptionEdit,
-];
+export const allEditBuilders: EditBuilder[] = [buildAssignedToEdit, buildDisplayOrderEdit, buildStatusEdit, buildDescriptionEdit];

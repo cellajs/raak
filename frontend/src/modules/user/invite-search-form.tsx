@@ -2,12 +2,13 @@ import { SendIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { SelectRoleRadio } from '~/modules/common/form-fields/select-role-radio';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { useInviteMemberMutation } from '~/modules/memberships/query-mutations';
 import { Badge } from '~/modules/ui/badge';
-import { Button, SubmitButton } from '~/modules/ui/button';
-import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { Button } from '~/modules/ui/button';
+import { Form, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { type InviteFormValues, useInviteFormDraft } from '~/modules/user/invite-users';
 import { UserCombobox } from '~/modules/user/user-combobox';
 
@@ -39,8 +40,7 @@ export function InviteSearchForm({ channel, dialog: isDialog }: Props) {
             const resource = t('c:user', { count: invitesSentCount }).toLowerCase();
             toaster.success(t('c:success.resource_count_invited', { count: invitesSentCount, resource }));
           }
-          if (rejectedIds.length)
-            toaster.info(t('c:still_not_accepted', { count: rejectedIds.length, total: emails.length }));
+          if (rejectedIds.length) toaster.info(t('c:still_not_accepted', { count: rejectedIds.length, total: emails.length }));
 
           if (isDialog) useDialoger.getState().remove();
         },
@@ -51,7 +51,7 @@ export function InviteSearchForm({ channel, dialog: isDialog }: Props) {
   if (form.loading) return null;
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
         <FormField
           control={form.control}
           name="emails"
@@ -67,8 +67,7 @@ export function InviteSearchForm({ channel, dialog: isDialog }: Props) {
           name="role"
           render={({ field: { value, onChange } }) => (
             <FormItem className="flex-row items-center gap-4">
-              <FormLabel>{t('c:role')}:</FormLabel>
-              <SelectRoleRadio value={value} onValueChange={onChange} entityType={channel.entityType} />
+              <SelectRoleRadio value={value} onValueChange={onChange} entityType={channel.entityType} label={`${t('c:role')}:`} />
               <FormMessage />
             </FormItem>
           )}
@@ -80,7 +79,7 @@ export function InviteSearchForm({ channel, dialog: isDialog }: Props) {
                 {form.getValues('emails')?.length}
               </Badge>
             )}
-            <SendIcon className="mr-2" />
+            <SendIcon />
             {t('c:invite')}
           </SubmitButton>
           {form.isDirty && (

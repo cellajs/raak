@@ -17,7 +17,7 @@ export type MutationHandler = (ctx: ActorContext, payload: MutationPayload) => P
 
 const handlers = new Map<TrackedEventType, MutationHandler[]>();
 
-/** Direct registration, for cross-module handlers derived from other modules' declarations (e.g. mention derivation). */
+/** Direct registration, for cross-module handlers derived from other modules' declarations. */
 export function registerMutationHandler(event: TrackedEventType, handler: MutationHandler): void {
   const existing = handlers.get(event);
   if (existing) existing.push(handler);
@@ -33,10 +33,6 @@ onBackendModuleRegister((module) => {
 });
 
 /** Awaits handlers in registration order, rejecting on the first error. Pass a transactional ctx to join the write. */
-export async function dispatchMutation(
-  ctx: ActorContext,
-  event: TrackedEventType,
-  payload: MutationPayload = {},
-): Promise<void> {
+export async function dispatchMutation(ctx: ActorContext, event: TrackedEventType, payload: MutationPayload = {}): Promise<void> {
   for (const handler of handlers.get(event) ?? []) await handler(ctx, payload);
 }

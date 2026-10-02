@@ -5,11 +5,7 @@ import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
 /** Shared by FocusBridge (source) and FocusTarget (destination). */
-export const focusTargets = {
-  sheet: 'focus-target-sheet',
-  content: 'focus-target-content',
-  sidebar: 'focus-target-sidebar',
-} as const;
+export const focusTargets = { sheet: 'focus-target-sheet', content: 'focus-target-content', sidebar: 'focus-target-sidebar' } as const;
 
 /** Invisible landing zone: place it inside the container a FocusBridge should jump to. */
 export function FocusTarget({ target }: { target: keyof typeof focusTargets }) {
@@ -35,22 +31,14 @@ export function FocusBridge({ direction, className }: FocusBridgeProps) {
 
   if (direction === 'to-sheet' && !navSheetOpen) return null;
 
-  const labels = {
-    'to-sheet': t('c:go_to_panel'),
-    'to-content': t('c:go_to_content'),
-    'to-sidebar': t('c:go_to_navigation'),
-  };
+  const labels = { 'to-sheet': t('c:go_to_panel'), 'to-content': t('c:go_to_content'), 'to-sidebar': t('c:go_to_navigation') };
 
-  const targets = {
-    'to-sheet': focusTargets.sheet,
-    'to-content': focusTargets.content,
-    'to-sidebar': focusTargets.sidebar,
-  };
+  const targets = { 'to-sheet': focusTargets.sheet, 'to-content': focusTargets.content, 'to-sidebar': focusTargets.sidebar };
 
   const handleClick = () => {
     if (direction !== 'to-sheet' && !useNavigationStore.getState().keepNavOpen) {
       useSheeter.getState().remove('nav-sheet');
-      // Waits for @base-ui's finalFocus restoration to complete.
+      // Waits a frame for the closing sheet to release the page; its finalFocus then leaves focus on the target.
       requestAnimationFrame(() => focusById(targets[direction]));
       return;
     }

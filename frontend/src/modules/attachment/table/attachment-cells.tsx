@@ -1,25 +1,20 @@
 import { useNavigate } from '@tanstack/react-router';
-import i18n from 'i18next';
-import { CircleAlertIcon, CloudOffIcon, CloudUploadIcon, DownloadIcon, LoaderIcon, TrashIcon } from 'lucide-react';
+import { CircleAlertIcon, CloudOffIcon, CloudUploadIcon, DownloadIcon, LoaderIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import useDownloader from 'react-use-downloader';
 import type { Attachment } from 'sdk';
-import { DeleteAttachments } from '~/modules/attachment/delete-attachments';
 import { openAttachmentDialogSearch } from '~/modules/attachment/dialog/params';
 import { getCloudUrl } from '~/modules/attachment/file-url';
 import { useAttachmentUrl } from '~/modules/attachment/hooks/use-attachment-url';
 import { useBlobUploadStatus } from '~/modules/attachment/hooks/use-blob-upload-status';
 import { attachmentStorage } from '~/modules/attachment/offline/storage-service';
-import type { EllipsisOption } from '~/modules/common/data-table/table-ellipsis';
-import { TableEllipsis } from '~/modules/common/data-table/table-ellipsis';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { MediaThumbnail } from '~/modules/common/media-thumbnail';
-import { PopConfirm } from '~/modules/common/popconfirm';
 import { Spinner } from '~/modules/common/spinner';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { Button } from '~/modules/ui/button';
+import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 interface ThumbnailCellProps {
   row: Attachment;
@@ -29,23 +24,15 @@ interface ThumbnailCellProps {
 export function ThumbnailCell({ row, tabIndex }: ThumbnailCellProps) {
   const { id, filename, contentType, groupId } = row;
   const navigate = useNavigate();
-  const setTriggerRef = useDialoger((state) => state.setTriggerRef);
   const cellRef = useRef<HTMLButtonElement | null>(null);
 
-  const wrapClass = 'relative flex space-x-2 items-center justify-center w-full h-full';
+  const wrapClass = tw('relative flex size-full items-center justify-center gap-2');
 
   // Table cells prefer the tiny thumbnail; non-image types have none and fall back to the mid-size preview.
   const { url } = useAttachmentUrl(row, { preferredVariant: 'thumbnail' });
 
   const handleClick = () => {
-    setTriggerRef(id, cellRef);
-
-    navigate({
-      to: '.',
-      replace: false,
-      resetScroll: false,
-      search: openAttachmentDialogSearch(id, groupId),
-    });
+    navigate({ to: '.', replace: false, resetScroll: false, search: openAttachmentDialogSearch(id, groupId) });
   };
 
   const preview = <MediaThumbnail name={filename} url={url} contentType={contentType} />;
@@ -86,7 +73,7 @@ function SyncStatusBadge({ attachmentId }: { attachmentId: string }) {
 
   return (
     <div
-      className={`absolute -right-0.5 -bottom-0.5 rounded-full p-0.5 ${isFailed ? 'bg-destructive' : 'bg-muted-foreground'}`}
+      className={cn('absolute -right-0.5 -bottom-0.5 rounded-full p-0.5', isFailed ? 'bg-destructive' : 'bg-muted-foreground')}
       data-tooltip="true"
       data-tooltip-content={tooltip}
     >
@@ -144,36 +131,4 @@ export function DownloadCell({ row, tabIndex }: DownloadCellProps) {
       {isInProgress ? <Spinner className="size-4 text-foreground/80" noDelay /> : <DownloadIcon />}
     </Button>
   );
-}
-
-interface EllipsisCellProps {
-  row: Attachment;
-  tabIndex: number;
-  /** Row-resolved delete permission ('own' already collapsed by the column hook). */
-  canDelete: boolean;
-}
-
-export function EllipsisCell({ row, tabIndex, canDelete }: EllipsisCellProps) {
-  // Delete is the only option; without it there is no menu to offer.
-  if (!canDelete) return null;
-
-  const ellipsisOptions: EllipsisOption<Attachment>[] = [
-    {
-      label: i18n.t('c:delete'),
-      icon: TrashIcon,
-      onSelect: (row) => {
-        const { update, remove } = useDropdowner.getState();
-
-        update({
-          content: (
-            <PopConfirm title={i18n.t('c:delete_confirm.text', { name: row.name })}>
-              <DeleteAttachments attachments={[row]} callback={remove} onCancel={remove} />
-            </PopConfirm>
-          ),
-        });
-      },
-    },
-  ];
-
-  return <TableEllipsis row={row} tabIndex={tabIndex} options={ellipsisOptions} />;
 }

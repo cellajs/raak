@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronDownIcon } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { nanoid } from 'shared/utils/nanoid';
@@ -10,7 +9,8 @@ import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
 import type { TKey } from '~/lib/i18n-locales';
 import type { LegalSubject } from '~/modules/auth/legal/legal-config';
 import type { LegalSection } from '~/modules/auth/legal/legal-types';
-import { Button, buttonVariants } from '~/modules/ui/button';
+import { SpyNavItem } from '~/modules/common/spy-nav-item';
+import { buttonVariants } from '~/modules/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/modules/ui/collapsible';
 import { cn } from '~/utils/cn';
 
@@ -36,6 +36,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
   const { t } = useTranslation();
 
   const isMobile = useBreakpointBelow('sm');
+  // Below `md` the aside stacks above the legal text, so a height animation would relayout the text every frame
 
   // Unique layoutId for the animated indicator
   const [layoutId] = useState(() => nanoid());
@@ -65,9 +66,17 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
         const isExpanded = expanded === id;
         // Only show sections with labels in the sidebar
         const subjectSections = sections.filter((s) => s.label);
+        // Collapsing is a re-click at the subject's overview. Further down, the link scrolls back up and the subject stays open.
+        const isAtSubject = isActive && currentSection === 'overview';
 
         return (
-          <Collapsible key={id} open={isExpanded} onOpenChange={() => toggleExpanded(id)}>
+          <Collapsible
+            key={id}
+            open={isExpanded}
+            onOpenChange={(open) => {
+              if (open || isAtSubject) toggleExpanded(id);
+            }}
+          >
             <div className="group/subject relative" data-active={isActive} data-expanded={isExpanded}>
               {/* Rail line - visible when expanded */}
               <div className="pointer-events-none absolute top-4.5 bottom-3 left-2.5 hidden flex-col items-center group-data-[expanded=true]/subject:flex">
@@ -82,6 +91,10 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
                     hashScrollIntoView={{ behavior: 'instant' }}
                     resetScroll={true}
                     draggable={false}
+                    // A link to the current subject only changes the hash, which doesn't scroll
+                    onClick={() => {
+                      if (isActive && !isAtSubject) requestAnimationFrame(() => scrollToSectionById('overview'));
+                    }}
                     className={cn(
                       buttonVariants({ variant: 'ghost' }),
                       'group h-8 w-full pl-5 text-left font-normal opacity-80',
@@ -90,54 +103,29 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
                   />
                 }
               >
-                <div className="absolute left-[0.53rem] h-1 w-1 rounded-full bg-muted-foreground/30 group-data-[expanded=true]/subject:bg-muted-foreground/60" />
+                <div className="absolute left-[0.53rem] size-1 rounded-full bg-muted-foreground/30 group-data-[expanded=true]/subject:bg-muted-foreground/60" />
                 <span className="truncate">{t(label as TKey)}</span>
                 <ChevronDownIcon className="invisible ml-auto size-4 opacity-40 transition-transform duration-200 group-hover:visible group-data-[expanded=true]/subject:rotate-180" />
               </CollapsibleTrigger>
-              <CollapsibleContent keepMounted className="overflow-hidden data-closed:hidden">
+              {/* keepMounted preserves the data-spy-active marks the scroll spy sets on rows outside React */}
+              <CollapsibleContent
+                keepMounted
+                className={'overflow-hidden md:data-closed:animate-collapsible-up md:data-open:animate-collapsible-down'}
+              >
                 <div className="relative flex flex-col px-0 py-1">
-                  {subjectSections.map(({ id: sectionId, label: sectionLabel }) => {
-                    const isSectionActive = isActive && currentSection === sectionId;
-                    return (
-                      <div
-                        key={sectionId}
-                        className="group/section relative"
-                        data-spy-link={sectionId}
-                        data-active={isSectionActive}
-                      >
-                        {isSectionActive && (
-                          <motion.span
-                            layoutId={layoutId}
-                            transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
-                            className="absolute top-2 bottom-2 left-2 ml-px w-[0.20rem] rounded-full bg-primary"
-                          />
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            'group h-8 w-full justify-start gap-2 pl-5 text-left font-normal text-sm opacity-75 hover:bg-accent/50',
-                            'group-data-[spy-active]/section:opacity-100',
-                          )}
-                          render={
-                            <Link
-                              to="."
-                              hash={sectionId}
-                              replace
-                              draggable={false}
-                              onClick={(e) => {
-                                if (e.metaKey || e.ctrlKey) return;
-                                e.preventDefault();
-                                scrollToSectionById(sectionId);
-                              }}
-                            />
-                          }
-                        >
-                          <span className="truncate text-sm">{sectionLabel}</span>
-                        </Button>
-                      </div>
-                    );
-                  })}
+                  {subjectSections.map(({ id: sectionId, label: sectionLabel }) => (
+                    <SpyNavItem
+                      key={sectionId}
+                      id={sectionId}
+                      isActive={isActive && currentSection === sectionId}
+                      layoutId={layoutId}
+                      group="section"
+                      staticIndicator={isMobile}
+                      className="pl-5"
+                    >
+                      {sectionLabel}
+                    </SpyNavItem>
+                  ))}
                 </div>
               </CollapsibleContent>
             </div>

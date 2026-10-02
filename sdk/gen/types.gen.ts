@@ -16,17 +16,6 @@ export type UserMinimalBase = {
 };
 
 /**
- * Minimal organization data for references.
- */
-export type OrganizationMinimalBase = {
-  id: string;
-  name: string;
-  slug: string;
-  thumbnailUrl: string | null;
-  entityType: 'organization';
-};
-
-/**
  * Base user schema with essential fields for identification and display.
  */
 export type UserBase = {
@@ -58,7 +47,7 @@ export type ChannelBase = {
 };
 
 /**
- * Base schema for content entities with creator tracking (e.g. page, attachment).
+ * Base schema for content entities with creator tracking (e.g. attachment).
  */
 export type ProductBase = {
   id: string;
@@ -115,11 +104,6 @@ export type StxBase = {
 };
 
 /**
- * Boolean query value accepted as a boolean or its lowercase string representation.
- */
-export type BooleanQueryValue = 'true' | 'false' | boolean;
-
-/**
  * Realtime notification delivered via SSE for entity and membership changes.
  */
 export type StreamNotification = {
@@ -132,16 +116,7 @@ export type StreamNotification = {
    */
   action: 'create' | 'update' | 'delete' | 'moveOut';
   productType: 'task' | 'label' | 'attachment' | null;
-  resourceType:
-    | 'request'
-    | 'membership'
-    | 'inactive_membership'
-    | 'tenant'
-    | 'system_role'
-    | 'service_account'
-    | 'api_key'
-    | 'oauth_client'
-    | null;
+  resourceType: 'request' | 'membership' | 'inactive_membership' | 'tenant' | 'system_role' | 'service_account' | 'api_key' | 'oauth_client' | null;
   subjectId: string | null;
   organizationId: string | null;
   tenantId: string | null;
@@ -218,7 +193,6 @@ export type ApiError = {
   status: number;
   severity: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
   entityType?: 'user' | 'organization' | 'workspace' | 'project' | 'task' | 'label' | 'attachment';
-  logId?: string;
   requestId?: string;
   path?: string;
   method?: string;
@@ -328,14 +302,7 @@ export type MeAuthData = {
     expiresAt: string;
     revokedAt: string | null;
     revokedBy: string | null;
-    revocationReason:
-      | 'sign_out'
-      | 'other_session'
-      | 'mfa_enabled'
-      | 'session_cap'
-      | 'replaced'
-      | 'impersonation_stopped'
-      | null;
+    revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | 'impersonation_stopped' | null;
     impersonatorSessionId: string | null;
     steppedUpAt: string | null;
     steppedUpVia: 'passkey' | 'totp' | 'email' | null;
@@ -522,7 +489,6 @@ export type Task = {
   displayOrder: number;
   status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
   statusChangedAt: string;
-  mentions: Array<string>;
   checkboxCount: number;
   checkedCount: number;
   attachments: Array<string>;
@@ -550,16 +516,6 @@ export type Task = {
   createdBy: UserMinimalBase | null;
   updatedBy: UserMinimalBase | null;
   stx: StxBase;
-};
-
-/**
- * A tenant together with the single organization it holds.
- */
-export type TenantWithOrganization = Tenant & {
-  /**
-   * The organization this tenant holds, or null if none
-   */
-  organization: OrganizationMinimalBase | null;
 };
 
 /**
@@ -598,8 +554,21 @@ export type Tenant = {
    * Number of domains claimed by this tenant
    */
   domainsCount: number;
+  /**
+   * The organization this tenant holds, or null if none
+   */
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    thumbnailUrl: string | null;
+    entityType: 'organization';
+  } | null;
 };
 
+/**
+ * RFC 9728 metadata of a protected resource: the authorization servers that issue its tokens and the scopes it accepts.
+ */
 export type ProtectedResourceMetadata = {
   resource: string;
   authorization_servers: Array<string>;
@@ -650,20 +619,7 @@ export type Organization = {
     primaryLabels: Array<{
       slug: string;
       name: string;
-      color:
-        | 'red'
-        | 'orange'
-        | 'amber'
-        | 'yellow'
-        | 'green'
-        | 'emerald'
-        | 'teal'
-        | 'sky'
-        | 'blue'
-        | 'indigo'
-        | 'violet'
-        | 'pink'
-        | 'slate';
+      color: 'red' | 'orange' | 'amber' | 'yellow' | 'green' | 'emerald' | 'teal' | 'sky' | 'blue' | 'indigo' | 'violet' | 'pink' | 'slate';
       icon: string | null;
     }>;
   };
@@ -858,16 +814,6 @@ export type ServiceAccount = {
   updatedBy: string | null;
   createdAt: string;
   updatedAt: string | null;
-};
-
-/**
- * A newly issued API key with its plaintext secret.
- */
-export type CreatedApiKey = ApiKey & {
-  /**
-   * The plaintext API key; store it now, it is not shown again.
-   */
-  secret: string;
 };
 
 /**
@@ -1277,8 +1223,7 @@ export type ResendInvitationWithTokenResponses = {
   204: void;
 };
 
-export type ResendInvitationWithTokenResponse =
-  ResendInvitationWithTokenResponses[keyof ResendInvitationWithTokenResponses];
+export type ResendInvitationWithTokenResponse = ResendInvitationWithTokenResponses[keyof ResendInvitationWithTokenResponses];
 
 export type SignOutData = {
   body?: never;
@@ -1807,8 +1752,7 @@ export type GeneratePasskeyChallengeResponses = {
   };
 };
 
-export type GeneratePasskeyChallengeResponse =
-  GeneratePasskeyChallengeResponses[keyof GeneratePasskeyChallengeResponses];
+export type GeneratePasskeyChallengeResponse = GeneratePasskeyChallengeResponses[keyof GeneratePasskeyChallengeResponses];
 
 export type SignInWithPasskeyData = {
   body: {
@@ -2036,7 +1980,7 @@ export type GithubCallbackData = {
   body?: never;
   path?: never;
   query: {
-    code: string;
+    code?: string;
     state: string;
     error?: string;
     error_description?: string;
@@ -2078,8 +2022,11 @@ export type GoogleCallbackData = {
   body?: never;
   path?: never;
   query: {
-    code: string;
+    code?: string;
     state: string;
+    error?: string;
+    error_description?: string;
+    error_uri?: string;
   };
   url: '/auth/google/callback';
 };
@@ -2117,8 +2064,11 @@ export type MicrosoftCallbackData = {
   body?: never;
   path?: never;
   query: {
-    code: string;
+    code?: string;
     state: string;
+    error?: string;
+    error_description?: string;
+    error_uri?: string;
   };
   url: '/auth/microsoft/callback';
 };
@@ -2312,8 +2262,7 @@ export type GetStepUpPasskeyChallengeResponses = {
   };
 };
 
-export type GetStepUpPasskeyChallengeResponse =
-  GetStepUpPasskeyChallengeResponses[keyof GetStepUpPasskeyChallengeResponses];
+export type GetStepUpPasskeyChallengeResponse = GetStepUpPasskeyChallengeResponses[keyof GetStepUpPasskeyChallengeResponses];
 
 export type SendStepUpLinkData = {
   body?: {
@@ -3228,14 +3177,7 @@ export type RevokeMySessionsResponses = {
       expiresAt: string;
       revokedAt: string | null;
       revokedBy: string | null;
-      revocationReason:
-        | 'sign_out'
-        | 'other_session'
-        | 'mfa_enabled'
-        | 'session_cap'
-        | 'replaced'
-        | 'impersonation_stopped'
-        | null;
+      revocationReason: 'sign_out' | 'other_session' | 'mfa_enabled' | 'session_cap' | 'replaced' | 'impersonation_stopped' | null;
       impersonatorSessionId: string | null;
       steppedUpAt: string | null;
       steppedUpVia: 'passkey' | 'totp' | 'email' | null;
@@ -3731,8 +3673,7 @@ export type GetNotificationPreferencesResponses = {
   };
 };
 
-export type GetNotificationPreferencesResponse =
-  GetNotificationPreferencesResponses[keyof GetNotificationPreferencesResponses];
+export type GetNotificationPreferencesResponse = GetNotificationPreferencesResponses[keyof GetNotificationPreferencesResponses];
 
 export type UpdateNotificationPreferencesData = {
   body: {
@@ -3772,8 +3713,7 @@ export type UpdateNotificationPreferencesErrors = {
   429: TooManyRequestsError;
 };
 
-export type UpdateNotificationPreferencesError =
-  UpdateNotificationPreferencesErrors[keyof UpdateNotificationPreferencesErrors];
+export type UpdateNotificationPreferencesError = UpdateNotificationPreferencesErrors[keyof UpdateNotificationPreferencesErrors];
 
 export type UpdateNotificationPreferencesResponses = {
   /**
@@ -3786,8 +3726,7 @@ export type UpdateNotificationPreferencesResponses = {
   };
 };
 
-export type UpdateNotificationPreferencesResponse =
-  UpdateNotificationPreferencesResponses[keyof UpdateNotificationPreferencesResponses];
+export type UpdateNotificationPreferencesResponse = UpdateNotificationPreferencesResponses[keyof UpdateNotificationPreferencesResponses];
 
 export type UnsubscribeNotificationsData = {
   body?: never;
@@ -3835,10 +3774,7 @@ export type GetPublicProjectData = {
     id: string;
   };
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    slug?: BooleanQueryValue;
+    slug?: 'true' | 'false' | boolean;
   };
   url: '/public/projects/{id}';
 };
@@ -4430,10 +4366,7 @@ export type SendNewsletterData = {
   };
   path?: never;
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    toSelf?: BooleanQueryValue;
+    toSelf?: 'true' | 'false' | boolean;
   };
   url: '/system/newsletter';
 };
@@ -4778,7 +4711,7 @@ export type GetTenantsResponses = {
    * Tenants list
    */
   200: {
-    items: Array<TenantWithOrganization>;
+    items: Array<Tenant>;
     total: number;
   };
 };
@@ -4971,10 +4904,7 @@ export type GetUserData = {
     relatableUserId: string;
   };
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    slug?: BooleanQueryValue;
+    slug?: 'true' | 'false' | boolean;
   };
   url: '/users/users/{relatableUserId}';
 };
@@ -5055,8 +4985,7 @@ export type GetApiProtectedResourceMetadataErrors = {
   429: TooManyRequestsError;
 };
 
-export type GetApiProtectedResourceMetadataError =
-  GetApiProtectedResourceMetadataErrors[keyof GetApiProtectedResourceMetadataErrors];
+export type GetApiProtectedResourceMetadataError = GetApiProtectedResourceMetadataErrors[keyof GetApiProtectedResourceMetadataErrors];
 
 export type GetApiProtectedResourceMetadataResponses = {
   /**
@@ -5065,8 +4994,7 @@ export type GetApiProtectedResourceMetadataResponses = {
   200: ProtectedResourceMetadata;
 };
 
-export type GetApiProtectedResourceMetadataResponse =
-  GetApiProtectedResourceMetadataResponses[keyof GetApiProtectedResourceMetadataResponses];
+export type GetApiProtectedResourceMetadataResponse = GetApiProtectedResourceMetadataResponses[keyof GetApiProtectedResourceMetadataResponses];
 
 export type DeleteOrganizationsData = {
   body: {
@@ -5305,10 +5233,7 @@ export type GetOrganizationData = {
     id: string;
   };
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    slug?: BooleanQueryValue;
+    slug?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/{tenantId}/organizations/{id}';
@@ -5376,20 +5301,7 @@ export type UpdateOrganizationData = {
       primaryLabels?: Array<{
         slug: string;
         name: string;
-        color:
-          | 'red'
-          | 'orange'
-          | 'amber'
-          | 'yellow'
-          | 'green'
-          | 'emerald'
-          | 'teal'
-          | 'sky'
-          | 'blue'
-          | 'indigo'
-          | 'violet'
-          | 'pink'
-          | 'slate';
+        color: 'red' | 'orange' | 'amber' | 'yellow' | 'green' | 'emerald' | 'teal' | 'sky' | 'blue' | 'indigo' | 'violet' | 'pink' | 'slate';
         icon: string | null;
       }>;
     };
@@ -5696,10 +5608,7 @@ export type GetProjectData = {
     id: string;
   };
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    slug?: BooleanQueryValue;
+    slug?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/projects/{id}';
@@ -6310,10 +6219,7 @@ export type GetWorkspaceData = {
     id: string;
   };
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    slug?: BooleanQueryValue;
+    slug?: 'true' | 'false' | boolean;
     include?: string;
   };
   url: '/{tenantId}/{organizationId}/workspaces/{id}';
@@ -6764,10 +6670,7 @@ export type UpdateAttachmentData = {
     id: string;
   };
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    fullResponse?: BooleanQueryValue;
+    fullResponse?: 'true' | 'false' | boolean;
   };
   url: '/{tenantId}/{organizationId}/attachments/{id}';
 };
@@ -7170,8 +7073,7 @@ export type GetMcpProtectedResourceMetadataErrors = {
   429: TooManyRequestsError;
 };
 
-export type GetMcpProtectedResourceMetadataError =
-  GetMcpProtectedResourceMetadataErrors[keyof GetMcpProtectedResourceMetadataErrors];
+export type GetMcpProtectedResourceMetadataError = GetMcpProtectedResourceMetadataErrors[keyof GetMcpProtectedResourceMetadataErrors];
 
 export type GetMcpProtectedResourceMetadataResponses = {
   /**
@@ -7180,8 +7082,7 @@ export type GetMcpProtectedResourceMetadataResponses = {
   200: ProtectedResourceMetadata;
 };
 
-export type GetMcpProtectedResourceMetadataResponse =
-  GetMcpProtectedResourceMetadataResponses[keyof GetMcpProtectedResourceMetadataResponses];
+export type GetMcpProtectedResourceMetadataResponse = GetMcpProtectedResourceMetadataResponses[keyof GetMcpProtectedResourceMetadataResponses];
 
 export type HandleMcpData = {
   body: unknown;
@@ -7491,8 +7392,7 @@ export type HandleMembershipInvitationResponses = {
   200: ChannelBase;
 };
 
-export type HandleMembershipInvitationResponse =
-  HandleMembershipInvitationResponses[keyof HandleMembershipInvitationResponses];
+export type HandleMembershipInvitationResponse = HandleMembershipInvitationResponses[keyof HandleMembershipInvitationResponses];
 
 export type GetMembersData = {
   body?: never;
@@ -7888,7 +7788,15 @@ export type CreateServiceAccountResponses = {
    */
   201: {
     serviceAccount: ServiceAccount;
-    apiKey?: CreatedApiKey;
+    /**
+     * A newly issued API key with its plaintext secret.
+     */
+    apiKey?: ApiKey & {
+      /**
+       * The plaintext API key; store it now, it is not shown again.
+       */
+      secret: string;
+    };
   };
 };
 
@@ -8058,9 +7966,14 @@ export type CreateApiKeyError = CreateApiKeyErrors[keyof CreateApiKeyErrors];
 
 export type CreateApiKeyResponses = {
   /**
-   * API key was issued
+   * A newly issued API key with its plaintext secret.
    */
-  201: CreatedApiKey;
+  201: ApiKey & {
+    /**
+     * The plaintext API key; store it now, it is not shown again.
+     */
+    secret: string;
+  };
 };
 
 export type CreateApiKeyResponse = CreateApiKeyResponses[keyof CreateApiKeyResponses];
@@ -8407,10 +8320,7 @@ export type UpdateTaskData = {
     id: string;
   };
   query?: {
-    /**
-     * Boolean query value accepted as a boolean or its lowercase string representation.
-     */
-    fullResponse?: BooleanQueryValue;
+    fullResponse?: 'true' | 'false' | boolean;
   };
   url: '/{tenantId}/{organizationId}/tasks/{id}';
 };

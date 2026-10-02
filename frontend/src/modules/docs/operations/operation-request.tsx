@@ -1,15 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ChevronDownIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { GenOperationDetail } from 'sdk/docs-types';
 import { Button } from '~/modules/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/modules/ui/collapsible';
-import {
-  getTypeCodeForRequest,
-  getZodCodeForRequest,
-  typesIndexQueryOptions,
-  zodIndexQueryOptions,
-} from '../helpers/extract-types';
-import type { GenOperationDetail } from '../types';
+import { getTypeCodeForRequest, getZodCodeForRequest, typesIndexQueryOptions, zodIndexQueryOptions } from '../helpers/extract-types';
 import { ViewerGroup } from '../viewer-group';
 
 interface OperationRequestProps {
@@ -18,6 +13,7 @@ interface OperationRequestProps {
 
 export function OperationRequest({ detail }: OperationRequestProps) {
   const { t } = useTranslation();
+  // Height keyframes run on the main thread and drop frames while the opening panel mounts the viewer
 
   const { data: zodIndex } = useSuspenseQuery(zodIndexQueryOptions);
   const { data: typesIndex } = useSuspenseQuery(typesIndexQueryOptions);
@@ -37,7 +33,7 @@ export function OperationRequest({ detail }: OperationRequestProps) {
           </Button>
         }
       />
-      <CollapsibleContent className="overflow-hidden data-closed:animate-collapsible-up data-open:animate-collapsible-down">
+      <CollapsibleContent className={'overflow-hidden md:data-closed:animate-collapsible-up md:data-open:animate-collapsible-down'}>
         <div className="mt-4">
           <ViewerGroup
             schema={request}

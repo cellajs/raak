@@ -1,15 +1,14 @@
-import { eq } from 'drizzle-orm';
 import { xMiddleware } from '#/core/x-middleware';
 import { baseDb } from '#/db/db';
 import { resolveSession } from '#/modules/auth/general/helpers/session';
-import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { isSystemAccessAllowed } from '#/utils/system-access';
 import { updateLastSeenAt } from '../update-last-seen';
-import { getMembershipCache, setMembershipCache } from './auth-cache';
+import { loadMemberships } from './membership-cache';
 
 /**
  * Authenticates the session (an impersonation only on top of its admin's session) and sets user, session facts,
- * memberships and base db context from short TTL caches.
+ * memberships and base db context: the session is read per request, the memberships come from the cache at its
+ * bindings version.
  */
 export const userGuard = xMiddleware(
   {
@@ -21,7 +20,7 @@ export const userGuard = xMiddleware(
   },
   async (ctx, next) => {
     // A refused cookie is deleted, so the browser stops presenting it.
-    const { session, user, hasSystemRole } = await resolveSession(ctx, { clearOnError: true });
+    const { session, user, hasSystemRole, bindingsVersion } = await resolveSession(ctx, { clearOnError: true });
 
     ctx.set('user', user);
     ctx.set('userId', user.id);
@@ -30,12 +29,7 @@ export const userGuard = xMiddleware(
     ctx.set('isSystemAdmin', hasSystemRole && isSystemAccessAllowed(ctx));
     ctx.set('db', baseDb);
 
-    // Memberships cached separately with longer TTL (keyed by userId)
-    let memberships = getMembershipCache(user.id);
-    if (!memberships) {
-      memberships = await baseDb.select().from(membershipsTable).where(eq(membershipsTable.userId, user.id));
-      setMembershipCache(user.id, memberships);
-    }
+    const memberships = await loadMemberships(user.id, bindingsVersion);
     ctx.set('memberships', memberships);
     ctx.set('actor', { kind: 'user', id: user.id, bindings: memberships, scopes: null });
 

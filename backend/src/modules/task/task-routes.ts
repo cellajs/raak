@@ -2,10 +2,6 @@ import { createXRoute } from '#/core/x-routes';
 import { orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
-import { createTasksOp } from '#/modules/task/operations/create-tasks';
-import { getTaskOp } from '#/modules/task/operations/get-task';
-import { getTasksOp } from '#/modules/task/operations/get-tasks';
-import { updateTaskOp } from '#/modules/task/operations/update-task';
 import { mockBatchTasksResponse, mockTaskResponse, mockTasksResponse } from '#/modules/task/task-mocks';
 import {
   taskCreateManyStxBodySchema,
@@ -34,17 +30,14 @@ const taskRoutes = {
     path: '/',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
+    xTool: {
+      description: 'Create one or more tasks in a project. Requires project ID, task name, and status.',
+      approvalRequired: true,
+      entity: 'task',
+    },
     tags: ['tasks', 'app', 'product'],
     summary: 'Create tasks',
     description: 'Creates one or more tasks within a project.',
-    'x-tool': {
-      enabled: true,
-      description: 'Create one or more tasks in a project. Requires project ID, task name, and status.',
-      approvalRequired: true,
-      category: 'tasks',
-      entity: 'task',
-      execute: (ctx, { body }) => createTasksOp(ctx, body),
-    },
     request: {
       params: tenantOrgParamSchema,
       body: { required: true, content: { 'application/json': { schema: taskCreateManyStxBodySchema } } },
@@ -71,31 +64,19 @@ const taskRoutes = {
     xGuard: [userGuard, tenantGuard, orgGuard],
     // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
+    xTool: {
+      description: 'Search tasks by keyword, status, label, or project. Returns matching task summaries with status and assignees.',
+      approvalRequired: false,
+      entity: 'task',
+    },
     tags: ['tasks', 'app', 'product'],
     summary: 'Get list of tasks',
     description: 'Returns a list of tasks within one or more specified projects.',
-    'x-tool': {
-      enabled: true,
-      description:
-        'Search tasks by keyword, status, label, or project. Returns matching task summaries with status and assignees.',
-      approvalRequired: false,
-      category: 'tasks',
-      entity: 'task',
-      execute: (ctx, { query }) => getTasksOp(ctx, query),
-    },
-    request: {
-      params: tenantOrgParamSchema,
-      query: taskListQuerySchema,
-    },
+    request: { params: tenantOrgParamSchema, query: taskListQuerySchema },
     responses: {
       200: {
         description: 'Tasks',
-        content: {
-          'application/json': {
-            schema: paginationSchema(taskSchema),
-            example: mockTasksResponse(),
-          },
-        },
+        content: { 'application/json': { schema: paginationSchema(taskSchema), example: mockTasksResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -106,17 +87,10 @@ const taskRoutes = {
     path: '/{id}',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xCache: [productCache('task')],
+    xTool: { description: 'Get full task details including description, labels, and assignees.', approvalRequired: false, entity: 'task' },
     tags: ['tasks', 'app', 'product'],
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',
-    'x-tool': {
-      enabled: true,
-      description: 'Get full task details including description, labels, and assignees.',
-      approvalRequired: false,
-      category: 'tasks',
-      entity: 'task',
-      execute: (ctx, { params }) => getTaskOp(ctx, params.id),
-    },
     request: { params: idInTenantOrgParamSchema },
     responses: {
       200: {
@@ -132,19 +106,14 @@ const taskRoutes = {
     path: '/{id}',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
+    xTool: {
+      description: 'Update task fields: summary, status, labels, assignees, description, or move to another project.',
+      approvalRequired: true,
+      entity: 'task',
+    },
     tags: ['tasks', 'app', 'product'],
     summary: 'Update task',
     description: 'Updates a task by ID.',
-    'x-tool': {
-      enabled: true,
-      description: 'Update task fields: summary, status, labels, assignees, description, or move to another project.',
-      approvalRequired: true,
-      category: 'tasks',
-      entity: 'task',
-      // The transaction is server-built, so field timestamps come from the server clock.
-      execute: (ctx, { params, query, body }) =>
-        updateTaskOp(ctx, params.id, body, { fullResponse: query.fullResponse, serverOrigin: true }),
-    },
     request: {
       params: idInTenantOrgParamSchema,
       query: fullResponseQuerySchema,

@@ -1,37 +1,18 @@
 import type { DbContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
-import {
-  deleteProjectMembership,
-  findMaxDisplayOrder,
-  insertProjectMembership,
-} from '#/modules/project/project-queries';
+import { deleteProjectMembership, findMaxDisplayOrder, insertProjectMembership } from '#/modules/project/project-queries';
 import { getValidChannel } from '#/permissions';
 
-type ProjectMembershipTarget = {
-  id: string;
-  entityType: 'project';
-};
+type ProjectMembershipTarget = { id: string; entityType: 'project' };
 
-type ProjectMembership = UserContext['var']['memberships'][number] & {
-  channelType: 'project';
-  projectId: string;
-};
+type ProjectMembership = UserContext['var']['memberships'][number] & { channelType: 'project'; projectId: string };
 
-type SetProjectMembershipWorkspaceInput = {
-  membership: ProjectMembership;
-  workspaceId: string | null;
-  role?: ProjectMembership['role'];
-};
+type SetProjectMembershipWorkspaceInput = { membership: ProjectMembership; workspaceId: string | null; role?: ProjectMembership['role'] };
 
-type ReplaceProjectMembershipWorkspaceInput = SetProjectMembershipWorkspaceInput & {
-  createdBy: string;
-};
+type ReplaceProjectMembershipWorkspaceInput = SetProjectMembershipWorkspaceInput & { createdBy: string };
 
-type UpsertProjectMembershipWorkspaceInput = {
-  project: ProjectMembershipTarget;
-  workspaceId: string | null;
-};
+type UpsertProjectMembershipWorkspaceInput = { project: ProjectMembershipTarget; workspaceId: string | null };
 
 function isProjectMembershipTarget(
   membership: UserContext['var']['memberships'][number],
@@ -47,10 +28,7 @@ export async function resolveProjectWorkspaceId(ctx: UserContext, workspaceId: s
   // workspace, producing a membership whose organizationId (the project's org) mismatches the
   // workspace's org and later fails org-scoped reads (e.g. labels) with a spurious 404.
   if (entity.organizationId !== ctx.var.organization.id) {
-    throw new AppError(403, 'forbidden', 'warn', {
-      entityType: 'workspace',
-      meta: { action: 'assign', reason: 'cross_organization' },
-    });
+    throw new AppError(403, 'forbidden', 'warn', { entityType: 'workspace', meta: { action: 'assign', reason: 'cross_organization' } });
   }
   return entity.id;
 }
@@ -63,10 +41,7 @@ export function requireCurrentUserProjectMembership(ctx: UserContext, project: P
   const membership = findCurrentUserProjectMembership(ctx, project);
 
   if (!membership) {
-    throw new AppError(404, 'not_found', 'warn', {
-      entityType: project.entityType,
-      meta: { membership: 'current_user', projectId: project.id },
-    });
+    throw new AppError(404, 'not_found', 'warn', { entityType: project.entityType, meta: { membership: 'current_user', projectId: project.id } });
   }
 
   return membership;
@@ -81,11 +56,7 @@ export async function replaceProjectMembershipWorkspace(
   return db.transaction(async (tx) => {
     const txCtx: DbContext = { var: { db: tx } };
     const maxOrder = workspaceId
-      ? await findMaxDisplayOrder(txCtx, {
-          userId: membership.userId,
-          channelType: membership.channelType,
-          workspaceId,
-        })
+      ? await findMaxDisplayOrder(txCtx, { userId: membership.userId, channelType: membership.channelType, workspaceId })
       : null;
 
     const displayOrder = workspaceId ? (maxOrder ? maxOrder + 1 : 1) : membership.displayOrder;
@@ -120,35 +91,20 @@ export async function setCurrentUserProjectMembershipWorkspace(
   ctx: UserContext,
   { membership, workspaceId, role }: SetProjectMembershipWorkspaceInput,
 ) {
-  const updatedMembership = await replaceProjectMembershipWorkspace(ctx, {
-    membership,
-    workspaceId,
-    createdBy: ctx.var.user.id,
-    role,
-  });
+  const updatedMembership = await replaceProjectMembershipWorkspace(ctx, { membership, workspaceId, createdBy: ctx.var.user.id, role });
 
-  await invalidateCache.user(ctx.var.db, updatedMembership.userId);
+  invalidateCache.user(updatedMembership.userId);
 
   return updatedMembership;
 }
 
 async function createCurrentUserProjectMembershipInWorkspace(
   ctx: UserContext,
-  {
-    project,
-    workspaceId,
-  }: {
-    project: ProjectMembershipTarget;
-    workspaceId: string;
-  },
+  { project, workspaceId }: { project: ProjectMembershipTarget; workspaceId: string },
 ) {
   const { user, organization } = ctx.var;
 
-  const maxOrder = await findMaxDisplayOrder(ctx, {
-    userId: user.id,
-    channelType: project.entityType,
-    workspaceId,
-  });
+  const maxOrder = await findMaxDisplayOrder(ctx, { userId: user.id, channelType: project.entityType, workspaceId });
 
   const membership = await insertProjectMembership(ctx, {
     values: {
@@ -165,15 +121,12 @@ async function createCurrentUserProjectMembershipInWorkspace(
     },
   });
 
-  await invalidateCache.user(ctx.var.db, membership.userId);
+  invalidateCache.user(membership.userId);
 
   return membership;
 }
 
-export async function upsertCurrentUserProjectMembershipWorkspace(
-  ctx: UserContext,
-  { project, workspaceId }: UpsertProjectMembershipWorkspaceInput,
-) {
+export async function upsertCurrentUserProjectMembershipWorkspace(ctx: UserContext, { project, workspaceId }: UpsertProjectMembershipWorkspaceInput) {
   const existingMembership = findCurrentUserProjectMembership(ctx, project);
 
   if (!existingMembership) {
@@ -181,17 +134,12 @@ export async function upsertCurrentUserProjectMembershipWorkspace(
       return createCurrentUserProjectMembershipInWorkspace(ctx, { project, workspaceId });
     }
 
-    throw new AppError(400, 'invalid_request', 'warn', {
-      message: 'Project membership not found for workspace removal.',
-    });
+    throw new AppError(400, 'invalid_request', 'warn', { message: 'Project membership not found for workspace removal.' });
   }
 
   return setCurrentUserProjectMembershipWorkspace(ctx, {
     membership: existingMembership,
     workspaceId,
-    role:
-      existingMembership.role === 'guest'
-        ? (ctx.var.organization.membership?.role ?? 'member')
-        : existingMembership.role,
+    role: existingMembership.role === 'guest' ? (ctx.var.organization.membership?.role ?? 'member') : existingMembership.role,
   });
 }

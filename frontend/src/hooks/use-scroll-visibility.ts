@@ -6,10 +6,9 @@ const MIN_VISIBLE_MS = 800; // Grace period after showing before a down-scroll m
 const RESET_COOLDOWN_MS = 500; // Post-reset window that swallows layout-driven scroll jank (e.g. drawer close, docs page swap)
 const INITIAL_COOLDOWN_MS = 500; // Brief cooldown on mount to prevent hiding from restored scroll position
 
-/** Shows on scroll up, hides on scroll down; returns `{ isVisible, scrollTop, reset }`. */
+/** Shows on scroll up, hides on scroll down; returns `{ isVisible, reset }`. For a scroll offset threshold use `useScrolledPast`. */
 export const useScrollVisibility = (enabled = true, containerRef?: RefObject<HTMLElement | null>) => {
   const [isVisible, setIsVisible] = useState(true);
-  const [scrollTop, setScrollTop] = useState(0);
   const [container, setContainer] = useState<HTMLElement | Window | null>(null);
   const lastScrollY = useRef(0);
   const lastScrollHeight = useRef(0);
@@ -58,20 +57,16 @@ export const useScrollVisibility = (enabled = true, containerRef?: RefObject<HTM
       return;
     }
 
-    const getScrollHeight = () =>
-      container instanceof Window ? document.documentElement.scrollHeight : container.scrollHeight;
+    const getScrollHeight = () => (container instanceof Window ? document.documentElement.scrollHeight : container.scrollHeight);
 
     // Sync baselines with the actual position to handle restored scroll on page reload
     const initialY = container instanceof Window ? container.scrollY : container.scrollTop;
     lastScrollY.current = initialY;
     lastScrollHeight.current = getScrollHeight();
-    setScrollTop(initialY);
 
     const handleScroll = () => {
       const currentY = container instanceof Window ? container.scrollY : container.scrollTop;
       ticking.current = false;
-
-      setScrollTop(currentY);
 
       // Scroll anchoring turns a content-height change into a non-gesture scroll event: resync without flipping.
       const currentHeight = getScrollHeight();
@@ -113,5 +108,5 @@ export const useScrollVisibility = (enabled = true, containerRef?: RefObject<HTM
     return () => container.removeEventListener('scroll', onScroll);
   }, [enabled, container]);
 
-  return { isVisible, scrollTop, reset };
+  return { isVisible, reset };
 };

@@ -1,9 +1,11 @@
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, SquareSplitHorizontalIcon, UsersIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
@@ -24,14 +26,13 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
   const setPanelSections = useTaskBoardStore((state) => state.setPanelSections);
   const dropPanelSections = useTaskBoardStore((state) => state.dropPanelSections);
 
-  const { organization, tenantId } = useOrganizationLayoutContext();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
+  const { data: organization } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
 
   const projectButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const projectMembership = project.membership;
-  const projectWorkspace = projectMembership?.workspaceId
-    ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId)
-    : undefined;
+  const projectWorkspace = projectMembership?.workspaceId ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId) : undefined;
 
   return (
     <DropdownMenu>
@@ -73,19 +74,13 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
           </DropdownMenuItem>
         )}
         {projectMembership && (
-          <DropdownMenuItem
-            onClick={() => openProjectMembersSheet(project, projectButtonRef)}
-            className="flex items-center gap-2"
-          >
+          <DropdownMenuItem onClick={() => openProjectMembersSheet(project, projectButtonRef)} className="flex items-center gap-2">
             <UsersIcon />
             <span>{t('c:project_members')}</span>
           </DropdownMenuItem>
         )}
         {projectMembership && (
-          <DropdownMenuItem
-            onClick={() => openProjectSettingsSheet(project, projectButtonRef)}
-            className="flex items-center gap-2"
-          >
+          <DropdownMenuItem onClick={() => openProjectSettingsSheet(project, projectButtonRef)} className="flex items-center gap-2">
             <SettingsIcon />
             <span>{t('c:resource_settings', { resource: t('c:project') })}</span>
           </DropdownMenuItem>
@@ -96,15 +91,7 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
             panelsSectionView
               ? dropPanelSections(boardId, project.id)
               : setPanelSections(boardId, project.id, [
-                  {
-                    status: [
-                      TaskStatus.Accepted,
-                      TaskStatus.Reviewed,
-                      TaskStatus.Delivered,
-                      TaskStatus.Finished,
-                      TaskStatus.Started,
-                    ],
-                  },
+                  { status: [TaskStatus.Accepted, TaskStatus.Reviewed, TaskStatus.Delivered, TaskStatus.Finished, TaskStatus.Started] },
                   { status: [TaskStatus.Unstarted, TaskStatus.Iced] },
                 ])
           }

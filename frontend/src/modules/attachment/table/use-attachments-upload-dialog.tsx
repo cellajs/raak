@@ -33,25 +33,17 @@ export const useAttachmentsUploadDialog = (
       createAttachments.mutate(attachments);
     };
 
+    const item = t('c:attachment_other').toLowerCase();
     useUploader.getState().create({
       id: 'upload-attachment',
       personalUpload: false,
       organizationId,
       templateId: 'attachment',
-      restrictions: {
-        maxNumberOfFiles,
-        maxTotalFileSize,
-        allowedFileTypes: ['*/*'],
-      },
+      restrictions: { maxNumberOfFiles, maxTotalFileSize, allowedFileTypes: ['*/*'] },
       plugins: ['webcam', 'image-editor', 'screen-capture', 'audio', 'url'],
       statusEventHandler: { onComplete },
-      title: t('c:upload_item', {
-        item: t('c:attachment_other').toLowerCase(),
-      }),
-      description: t('c:upload_multiple.text', {
-        item: t('c:attachment_other').toLowerCase(),
-        count: maxNumberOfFiles,
-      }),
+      title: t('c:upload_item', { item }),
+      description: t('c:upload_multiple.text', { item, count: maxNumberOfFiles }),
     });
   };
 

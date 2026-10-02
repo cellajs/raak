@@ -14,17 +14,6 @@ export const zUserMinimalBase = z.object({
 });
 
 /**
- * Minimal organization data for references.
- */
-export const zOrganizationMinimalBase = z.object({
-  id: z.string(),
-  name: z.string(),
-  slug: z.string(),
-  thumbnailUrl: z.string().nullable(),
-  entityType: z.enum(['organization']),
-});
-
-/**
  * Base user schema with essential fields for identification and display.
  */
 export const zUserBase = z.object({
@@ -56,7 +45,7 @@ export const zChannelBase = z.object({
 });
 
 /**
- * Base schema for content entities with creator tracking (e.g. page, attachment).
+ * Base schema for content entities with creator tracking (e.g. attachment).
  */
 export const zProductBase = z.object({
   id: z.string(),
@@ -99,11 +88,6 @@ export const zStxBase = z.object({
 });
 
 /**
- * Boolean query value accepted as a boolean or its lowercase string representation.
- */
-export const zBooleanQueryValue = z.union([z.enum(['true', 'false']), z.boolean()]).default('false');
-
-/**
  * Realtime notification delivered via SSE for entity and membership changes.
  */
 export const zStreamNotification = z.object({
@@ -111,16 +95,7 @@ export const zStreamNotification = z.object({
   action: z.enum(['create', 'update', 'delete', 'moveOut']),
   productType: z.enum(['task', 'label', 'attachment']).nullable(),
   resourceType: z
-    .enum([
-      'request',
-      'membership',
-      'inactive_membership',
-      'tenant',
-      'system_role',
-      'service_account',
-      'api_key',
-      'oauth_client',
-    ])
+    .enum(['request', 'membership', 'inactive_membership', 'tenant', 'system_role', 'service_account', 'api_key', 'oauth_client'])
     .nullable(),
   subjectId: z.string().nullable(),
   organizationId: z.string().nullable(),
@@ -154,7 +129,6 @@ export const zApiError = z.object({
   status: z.int().gte(400).lte(599),
   severity: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']),
   entityType: z.enum(['user', 'organization', 'workspace', 'project', 'task', 'label', 'attachment']).optional(),
-  logId: z.string().optional(),
   requestId: z.string().optional(),
   path: z.string().optional(),
   method: z.string().optional(),
@@ -279,9 +253,7 @@ export const zMeAuthData = z.object({
       expiresAt: z.string(),
       revokedAt: z.string().nullable(),
       revokedBy: z.uuid().nullable(),
-      revocationReason: z
-        .enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced', 'impersonation_stopped'])
-        .nullable(),
+      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced', 'impersonation_stopped']).nullable(),
       impersonatorSessionId: z.uuid().nullable(),
       steppedUpAt: z.string().nullable(),
       steppedUpVia: z.enum(['passkey', 'totp', 'email']).nullable(),
@@ -372,9 +344,7 @@ export const zProject = z.object({
   updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
-  toolsConfig: z
-    .union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())])
-    .nullable(),
+  toolsConfig: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())]).nullable(),
   path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
@@ -464,7 +434,6 @@ export const zTask = z.object({
   displayOrder: z.number().gte(-140737488355328).lte(140737488355327),
   status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
   statusChangedAt: z.string(),
-  mentions: z.array(z.string()),
   checkboxCount: z.int().gte(-2147483648).lte(2147483647),
   checkedCount: z.int().gte(-2147483648).lte(2147483647),
   attachments: z.array(z.uuid()),
@@ -520,17 +489,20 @@ export const zTenant = z.object({
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   domainsCount: z.int(),
+  organization: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      thumbnailUrl: z.string().nullable(),
+      entityType: z.enum(['organization']),
+    })
+    .nullable(),
 });
 
 /**
- * A tenant together with the single organization it holds.
+ * RFC 9728 metadata of a protected resource: the authorization servers that issue its tokens and the scopes it accepts.
  */
-export const zTenantWithOrganization = zTenant.and(
-  z.object({
-    organization: zOrganizationMinimalBase.nullable(),
-  }),
-);
-
 export const zProtectedResourceMetadata = z.object({
   resource: z.string(),
   authorization_servers: z.array(z.string()),
@@ -586,21 +558,7 @@ export const zOrganization = z.object({
             .min(2)
             .max(255)
             .regex(/^[\p{L}\d\-., '&()]+$/u),
-          color: z.enum([
-            'red',
-            'orange',
-            'amber',
-            'yellow',
-            'green',
-            'emerald',
-            'teal',
-            'sky',
-            'blue',
-            'indigo',
-            'violet',
-            'pink',
-            'slate',
-          ]),
+          color: z.enum(['red', 'orange', 'amber', 'yellow', 'green', 'emerald', 'teal', 'sky', 'blue', 'indigo', 'violet', 'pink', 'slate']),
           icon: z.string().max(255).nullable(),
         }),
       )
@@ -669,9 +627,7 @@ export const zWorkspace = z.object({
   updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
-  toolsConfig: z
-    .union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())])
-    .nullable(),
+  toolsConfig: z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), z.unknown()), z.array(z.unknown())]).nullable(),
   path: z.string().nullable(),
   organizationId: z.uuid(),
   included: z.object({
@@ -816,15 +772,6 @@ export const zApiKey = z.object({
   createdBy: z.uuid().nullable(),
   createdAt: z.string(),
 });
-
-/**
- * A newly issued API key with its plaintext secret.
- */
-export const zCreatedApiKey = zApiKey.and(
-  z.object({
-    secret: z.string(),
-  }),
-);
 
 /**
  * Auth health status
@@ -1045,7 +992,7 @@ export const zMicrosoftQuery = z.object({
 });
 
 export const zGithubCallbackQuery = z.object({
-  code: z.string(),
+  code: z.string().optional(),
   state: z.string(),
   error: z.string().optional(),
   error_description: z.string().optional(),
@@ -1053,13 +1000,19 @@ export const zGithubCallbackQuery = z.object({
 });
 
 export const zGoogleCallbackQuery = z.object({
-  code: z.string(),
+  code: z.string().optional(),
   state: z.string(),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
+  error_uri: z.string().optional(),
 });
 
 export const zMicrosoftCallbackQuery = z.object({
-  code: z.string(),
+  code: z.string().optional(),
   state: z.string(),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
+  error_uri: z.string().optional(),
 });
 
 /**
@@ -1397,9 +1350,7 @@ export const zRevokeMySessionsResponse = z.object({
       expiresAt: z.string(),
       revokedAt: z.string().nullable(),
       revokedBy: z.uuid().nullable(),
-      revocationReason: z
-        .enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced', 'impersonation_stopped'])
-        .nullable(),
+      revocationReason: z.enum(['sign_out', 'other_session', 'mfa_enabled', 'session_cap', 'replaced', 'impersonation_stopped']).nullable(),
       impersonatorSessionId: z.uuid().nullable(),
       steppedUpAt: z.string().nullable(),
       steppedUpVia: z.enum(['passkey', 'totp', 'email']).nullable(),
@@ -1548,7 +1499,10 @@ export const zGetPublicProjectPath = z.object({
 });
 
 export const zGetPublicProjectQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -1717,7 +1671,10 @@ export const zSendNewsletterBody = z.object({
 });
 
 export const zSendNewsletterQuery = z.object({
-  toSelf: zBooleanQueryValue.optional(),
+  toSelf: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -1799,7 +1756,7 @@ export const zGetTenantsQuery = z.object({
  * Tenants list
  */
 export const zGetTenantsResponse = z.object({
-  items: z.array(zTenantWithOrganization),
+  items: z.array(zTenant),
   total: z.number(),
 });
 
@@ -1883,7 +1840,10 @@ export const zGetUserPath = z.object({
 });
 
 export const zGetUserQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -2036,7 +1996,10 @@ export const zGetOrganizationPath = z.object({
 });
 
 export const zGetOrganizationQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
   include: z.string().optional(),
 });
 
@@ -2091,21 +2054,7 @@ export const zUpdateOrganizationBody = z.object({
               .min(2)
               .max(255)
               .regex(/^[\p{L}\d\-., '&()]+$/u),
-            color: z.enum([
-              'red',
-              'orange',
-              'amber',
-              'yellow',
-              'green',
-              'emerald',
-              'teal',
-              'sky',
-              'blue',
-              'indigo',
-              'violet',
-              'pink',
-              'slate',
-            ]),
+            color: z.enum(['red', 'orange', 'amber', 'yellow', 'green', 'emerald', 'teal', 'sky', 'blue', 'indigo', 'violet', 'pink', 'slate']),
             icon: z.string().max(255).nullable(),
           }),
         )
@@ -2284,7 +2233,10 @@ export const zGetProjectPath = z.object({
 });
 
 export const zGetProjectQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
   include: z.string().optional(),
 });
 
@@ -2633,7 +2585,10 @@ export const zGetWorkspacePath = z.object({
 });
 
 export const zGetWorkspaceQuery = z.object({
-  slug: zBooleanQueryValue.optional(),
+  slug: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
   include: z.string().optional(),
 });
 
@@ -2812,7 +2767,10 @@ export const zUpdateAttachmentPath = z.object({
 });
 
 export const zUpdateAttachmentQuery = z.object({
-  fullResponse: zBooleanQueryValue.optional(),
+  fullResponse: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**
@@ -3075,10 +3033,7 @@ export const zGetMembersPath = z.object({
 
 export const zGetMembersQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z
-    .enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt', 'lastPostedAt'])
-    .optional()
-    .default('lastSeenAt'),
+  sort: z.enum(['id', 'name', 'email', 'role', 'createdAt', 'lastSeenAt', 'lastPostedAt']).optional().default('lastSeenAt'),
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   offset: z.string().regex(/^\d+$/).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
@@ -3265,7 +3220,13 @@ export const zCreateServiceAccountPath = z.object({
  */
 export const zCreateServiceAccountResponse = z.object({
   serviceAccount: zServiceAccount,
-  apiKey: zCreatedApiKey.optional(),
+  apiKey: zApiKey
+    .and(
+      z.object({
+        secret: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 export const zUpdateServiceAccountBody = z.object({
@@ -3339,9 +3300,13 @@ export const zCreateApiKeyPath = z.object({
 });
 
 /**
- * API key was issued
+ * A newly issued API key with its plaintext secret.
  */
-export const zCreateApiKeyResponse = zCreatedApiKey;
+export const zCreateApiKeyResponse = zApiKey.and(
+  z.object({
+    secret: z.string(),
+  }),
+);
 
 export const zRevokeApiKeyPath = z.object({
   tenantId: z.string().max(50),
@@ -3415,15 +3380,7 @@ export const zCreateTasksBody = z
       description: z.string().max(1000000).nullable(),
       projectId: z.uuid(),
       id: z.uuid(),
-      status: z.union([
-        z.literal(6),
-        z.literal(5),
-        z.literal(4),
-        z.literal(3),
-        z.literal(2),
-        z.literal(1),
-        z.literal(0),
-      ]),
+      status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
       primaryLabelId: z.uuid().optional(),
       displayOrder: z.number().optional(),
       labels: z.array(z.uuid()).max(50).optional(),
@@ -3468,9 +3425,7 @@ export const zUpdateTaskBody = z.object({
   ops: z.object({
     name: z.string().max(255).optional(),
     description: z.string().max(1000000).nullish(),
-    status: z
-      .union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)])
-      .optional(),
+    status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]).optional(),
     primaryLabelId: z.uuid().optional(),
     displayOrder: z.number().optional(),
     labels: z
@@ -3498,7 +3453,10 @@ export const zUpdateTaskPath = z.object({
 });
 
 export const zUpdateTaskQuery = z.object({
-  fullResponse: zBooleanQueryValue.optional(),
+  fullResponse: z
+    .union([z.enum(['true', 'false']), z.boolean()])
+    .optional()
+    .default('false'),
 });
 
 /**

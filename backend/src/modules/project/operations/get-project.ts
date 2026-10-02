@@ -20,10 +20,7 @@ export async function getProjectOp(ctx: UserContext, id: string, opts: { bySlug?
     withAuditUser(ctx, project, user),
   ]);
 
-  const included: {
-    counts?: typeof counts & { taskStatusCounts: typeof taskStatusCounts };
-    membership?: ReturnType<typeof toMembershipBase>;
-  } = {};
+  const included: { counts?: typeof counts & { taskStatusCounts: typeof taskStatusCounts }; membership?: ReturnType<typeof toMembershipBase> } = {};
 
   if (counts) included.counts = { ...counts, taskStatusCounts };
 

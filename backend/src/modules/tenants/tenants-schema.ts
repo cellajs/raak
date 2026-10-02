@@ -3,7 +3,8 @@ import { schemaTags } from '#/core/openapi-helpers';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { authStrategiesEnum } from '#/modules/auth/sessions-db';
 import { subscriptionStatusValues, tenantStatusValues, tenantsTable } from '#/modules/tenants/tenants-db';
-import { nullableOrganizationMinimalBaseSchema, paginationQuerySchema, validNameSchema } from '#/schemas';
+import { minimalBaseSchema, paginationQuerySchema, validNameSchema } from '#/schemas';
+import { mockTenantResponse } from './tenants-mocks';
 
 export type TenantStatus = (typeof tenantStatusValues)[number];
 
@@ -15,9 +16,7 @@ const rateLimitsSchema = z.object({
     .number()
     .int()
     .min(0)
-    .describe(
-      'Max API points per hour per user within this tenant (0 = no tenant limit; the global safety ceiling still applies)',
-    ),
+    .describe('Max API points per hour per user within this tenant (0 = no tenant limit; the global safety ceiling still applies)'),
 });
 
 const quotasSchema = z.record(z.string(), z.number().int().min(0)).describe('Entity quotas (0 = unlimited)');
@@ -27,9 +26,7 @@ const restrictionsSchema = z.object({
   rateLimits: rateLimitsSchema,
   allowUnregisteredClients: z
     .boolean()
-    .describe(
-      'Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)',
-    ),
+    .describe('Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)'),
 });
 
 export const tenantSchema = z
@@ -39,34 +36,21 @@ export const tenantSchema = z
       authStrategies: z.array(z.enum(authStrategiesEnum)),
     }).omit({ subscriptionData: true }).shape,
     domainsCount: z.number().int().describe('Number of domains claimed by this tenant'),
+    organization: minimalBaseSchema('organization').nullable().describe('The organization this tenant holds, or null if none'),
   })
   .openapi('Tenant', {
     description: 'A tenant representing an isolated data partition for multi-tenancy.',
+    example: mockTenantResponse(),
     'x-tags': schemaTags('data', 'tenants', 'cella'),
   });
 
-export const tenantWithOrganizationSchema = tenantSchema
-  .extend({
-    organization: nullableOrganizationMinimalBaseSchema.describe('The organization this tenant holds, or null if none'),
-  })
-  .openapi('TenantWithOrganization', {
-    description: 'A tenant together with the single organization it holds.',
-    'x-tags': schemaTags('data', 'tenants', 'cella'),
-  });
-
-export const selfCreateTenantBodySchema = createInsertSchema(tenantsTable, {
-  name: validNameSchema,
-}).pick({ name: true });
+export const selfCreateTenantBodySchema = createInsertSchema(tenantsTable, { name: validNameSchema }).pick({ name: true });
 
 const partialRestrictionsSchema = z
   .object({
     quotas: quotasSchema.optional(),
     allowUnregisteredClients: z.boolean().optional(),
-    rateLimits: z
-      .object({
-        apiPointsPerHour: z.number().int().min(0).optional(),
-      })
-      .optional(),
+    rateLimits: z.object({ apiPointsPerHour: z.number().int().min(0).optional() }).optional(),
   })
   .describe('Partial restrictions override');
 
@@ -77,18 +61,9 @@ export const updateTenantBodySchema = createInsertSchema(tenantsTable, {
   // Allowed sign-in strategies for the tenant's members (empty = all enabled); tenantGuard enforcement waits on the SSO build.
   authStrategies: z.array(z.enum(authStrategiesEnum)),
 })
-  .pick({
-    name: true,
-    status: true,
-    subscriptionId: true,
-    subscriptionStatus: true,
-    subscriptionPlan: true,
-    authStrategies: true,
-  })
+  .pick({ name: true, status: true, subscriptionId: true, subscriptionStatus: true, subscriptionPlan: true, authStrategies: true })
   .partial()
-  .extend({
-    restrictions: partialRestrictionsSchema.optional(),
-  });
+  .extend({ restrictions: partialRestrictionsSchema.optional() });
 
 export const tenantListQuerySchema = paginationQuerySchema.extend({
   sort: z.enum(['createdAt', 'name']).default('createdAt'),

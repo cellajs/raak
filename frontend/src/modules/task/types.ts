@@ -55,15 +55,8 @@ export interface TaskProps {
 }
 export type TaskStatusType = (typeof statusOptions)[number]['value'];
 
-export type DropTarget<T> = Omit<DropTargetRecord, 'data'> & {
-  data: T;
-};
+export type DropTarget<T> = Omit<DropTargetRecord, 'data'> & { data: T };
 
 export type TaskDraggableData = DraggableItemData<Task, 'task'>;
 // Panels carry no per-drop order (unlike tasks), so displayOrder is absent from the drag payload.
-export type PanelDraggableData = Omit<
-  DraggableItemData<{ tasks: Task[]; projectId: string }, 'panel'>,
-  'displayOrder'
-> & {
-  displayOrder?: number;
-};
+export type PanelDraggableData = Omit<DraggableItemData<{ tasks: Task[]; projectId: string }, 'panel'>, 'displayOrder'> & { displayOrder?: number };

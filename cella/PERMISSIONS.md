@@ -95,6 +95,8 @@ export type Access<T extends AccessMembership = AccessMembership> =
 
 Backend handlers never assemble an access by hand: `accessFrom(ctx)` reads the guard-populated actor (`id`, `bindings`, `scopes`) and `isSystemAdmin` off the request context and yields `{ anonymous: true }` when nobody is signed in. `scopes` is required so a hand-built access states its mask: a session passes `null`; an API key or an access token passes what it was issued with, and the decision is `allowed AND the scope covers the action`. Where scopes come from: [Interoperability](./INTEROPERABILITY.md#access-scopes).
 
+A user's bindings are their memberships, which each process caches under `actors.bindings_version`. A trigger on `memberships` gives that column a new random value on every insert, update and delete, cascades included. A token request reads the version at every use. A session request takes it from the cached session, which the writing operation drops (`invalidateCache.user`) and the API process drops when CDC reports the membership change, so a change counts within CDC lag there and within the session cache's 10 seconds elsewhere, whatever wrote it.
+
 ## The policy consulted
 
 **`shared/config/hierarchy-config.ts`**, a fluent builder:
@@ -220,7 +222,7 @@ Unexpected server errors include internal details in client responses only in de
 | An address or provider account another account holds (`oauth_email_exists`, `oauth_conflict`, `oauth_wrong_email`) | 409, severity `warn` | The caller's state, not a fault of the app |
 | Not signed in, or a session that ended | 401 `unauthorized`, `no_session`, `session_expired` or `session_revoked` | The frontend redirects to sign-in on these types alone; any other 401 refuses a proof while signed in |
 | An account-security route without a recent proof of presence | 403 `step_up_required` naming the methods | [Interoperability](./INTEROPERABILITY.md#guards) |
-| An action on the account itself while impersonating: stepping up, revoking the user's sessions, impersonating again, and every `stepUpGuard` route | 403 `impersonation_forbidden` (`noImpersonationGuard`; `stepUpGuard` gives the same answer before its own) | The admin acts as the user, never on the account, its sessions or how it is protected |
+| An action on the account itself while impersonating: stepping up, revoking the user's sessions, every `stepUpGuard` route and every system route, impersonating again included | 403 `impersonation_forbidden` (`refuseImpersonation`: in the step-up and session handlers, and in `stepUpGuard` and `sysAdminGuard` before their own answers) | The admin acts as the user, never on the account, its sessions or how it is protected |
 
 ## Behavior
 

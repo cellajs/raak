@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { config } from 'shared/config/config.default';
 import { describe, expect, it } from 'vitest';
-import { config } from '../../../../../shared/config/config.default';
 import { buildOperationDocsUrl } from '../plugin';
 
 // The docs URL format must match the frontend operations route, which reads `operationTag` and resolves the anchor through generateOperationHash.
@@ -29,9 +29,7 @@ describe('generated sdk.gen.ts docs links', () => {
     const links = source.match(/https?:\/\/[^)\s]*\/docs\/operations\?operationTag=[^)\s]+/g) ?? [];
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) {
-      expect(link).toMatch(
-        new RegExp(`^${escapeRegExp(config.frontendUrl)}/docs/operations\\?operationTag=[^#]+#tag/[^/]+/[A-Z]+/`),
-      );
+      expect(link).toMatch(new RegExp(`^${escapeRegExp(config.frontendUrl)}/docs/operations\\?operationTag=[^#]+#tag/[^/]+/[A-Z]+/`));
     }
   });
 });

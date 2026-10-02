@@ -2,7 +2,6 @@ import { z } from '@hono/zod-openapi';
 import { and, eq, isNull } from 'drizzle-orm';
 import { type Adapter, type AdapterPayload, errors } from 'oidc-provider';
 import { baseDb } from '#/db/db';
-import { clientCache } from '#/modules/oauth-server/client-cache';
 import { oauthClientsTable } from '#/modules/oauth-server/oauth-clients-db';
 import { oidcPayloadsTable } from '#/modules/oauth-server/oidc-payloads-db';
 import { revokeGrant } from '#/modules/oauth-server/revoke-grant';
@@ -25,15 +24,8 @@ export function clientKindOf(client: object): AppClientMetadata['client_kind'] |
   return kind === 'registered' || kind === 'service' ? kind : 'unregistered';
 }
 
+/** Read at every lookup, so a disabled account or a changed redirect URI counts at once in every process. */
 async function findClient(id: string): Promise<AppClientMetadata | undefined> {
-  const cached = clientCache.get(id);
-  if (cached) return cached;
-  const client = await loadClient(id);
-  if (client) clientCache.set(id, client);
-  return client;
-}
-
-async function loadClient(id: string): Promise<AppClientMetadata | undefined> {
   const [app] = await baseDb.select().from(oauthClientsTable).where(eq(oauthClientsTable.id, id)).limit(1);
   if (app) {
     return {
@@ -148,13 +140,7 @@ export class DrizzleAdapter implements Adapter {
     const [spent] = await baseDb
       .update(oidcPayloadsTable)
       .set({ consumedAt: getIsoDate() })
-      .where(
-        and(
-          eq(oidcPayloadsTable.type, this.name),
-          eq(oidcPayloadsTable.id, rowId),
-          isNull(oidcPayloadsTable.consumedAt),
-        ),
-      )
+      .where(and(eq(oidcPayloadsTable.type, this.name), eq(oidcPayloadsTable.id, rowId), isNull(oidcPayloadsTable.consumedAt)))
       .returning({ id: oidcPayloadsTable.id });
     if (spent) return;
 
@@ -170,21 +156,14 @@ export class DrizzleAdapter implements Adapter {
   /** A grant the provider deletes itself (a revoked refresh token, a replayed code) takes its tokens' verdicts along. */
   async destroy(id: string): Promise<void> {
     if (this.name === 'Grant') return revokeGrant({ var: { db: baseDb } }, { grantId: id, withTokens: false });
-    await baseDb
-      .delete(oidcPayloadsTable)
-      .where(and(eq(oidcPayloadsTable.type, this.name), eq(oidcPayloadsTable.id, this.rowId(id))));
+    await baseDb.delete(oidcPayloadsTable).where(and(eq(oidcPayloadsTable.type, this.name), eq(oidcPayloadsTable.id, this.rowId(id))));
   }
 
   async revokeByGrantId(grantId: string): Promise<void> {
-    await baseDb
-      .delete(oidcPayloadsTable)
-      .where(and(eq(oidcPayloadsTable.type, this.name), eq(oidcPayloadsTable.grantId, grantId)));
+    await baseDb.delete(oidcPayloadsTable).where(and(eq(oidcPayloadsTable.type, this.name), eq(oidcPayloadsTable.grantId, grantId)));
   }
 }
 
 function toPayload(row: typeof oidcPayloadsTable.$inferSelect): AdapterPayload {
-  return {
-    ...row.payload,
-    ...(row.consumedAt && { consumed: Math.floor(new Date(row.consumedAt).getTime() / 1000) }),
-  };
+  return { ...row.payload, ...(row.consumedAt && { consumed: Math.floor(new Date(row.consumedAt).getTime() / 1000) }) };
 }

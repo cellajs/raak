@@ -48,13 +48,7 @@ interface QueueRow extends Record<string, unknown> {
  */
 export async function readJobsHealth(): Promise<JobsHealthSnapshot> {
   const schema = sql.raw(JOBS_SCHEMA);
-  const empty: JobsHealthSnapshot = {
-    installed: false,
-    schema: JOBS_SCHEMA,
-    cronOn: null,
-    cronAgeMs: null,
-    queues: [],
-  };
+  const empty: JobsHealthSnapshot = { installed: false, schema: JOBS_SCHEMA, cronOn: null, cronAgeMs: null, queues: [] };
   if (env.NODB) return empty;
 
   const { rows: versions } = await baseDb.execute<{ cron_on: Date | null }>(sql`

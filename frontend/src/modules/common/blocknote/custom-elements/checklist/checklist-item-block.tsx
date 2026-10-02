@@ -6,6 +6,7 @@ import { checklistItemConfig } from 'shared/utils/blocknote-schema-configs';
 import { nanoid } from 'shared/utils/nanoid';
 import { ChecklistItemRender } from '~/modules/common/blocknote/custom-elements/checklist/checklist-item-render';
 import type { CustomBlockNoteEditor, IconType } from '~/modules/common/blocknote/types';
+import { cn } from '~/utils/cn';
 
 // A CustomBlockNoteEditor annotation would make customSchema reference itself through this block spec (TS2502 circular type).
 // biome-ignore lint/suspicious/noExplicitAny: schema-agnostic editor type; see note above
@@ -47,11 +48,20 @@ export const handleChecklistItemEnter = (editor: AnyBlockNoteEditor): boolean =>
   return true;
 };
 
+/** Turns the block at the cursor into a checklist item; returns false for blocks without inline content. */
+const convertToChecklistItem = (editor: AnyBlockNoteEditor): boolean => {
+  const { block } = editor.getTextCursorPosition();
+  if (editor.schema.blockSchema[block.type].content !== 'inline') return false;
+  editor.updateBlock(block, { type: 'checklistItem', props: { checkboxId: nanoid(12) } });
+  return true;
+};
+
 const checklistExtensions = createExtension({
   key: 'checklist-item-shortcuts' as const,
-  keyboardShortcuts: {
-    Enter: ({ editor }) => handleChecklistItemEnter(editor),
-  },
+  // The default schema keeps BlockNote's own checkListItem, whose shortcuts and input rules match the same keys
+  // and text; running first makes them create this block.
+  runsBefore: ['check-list-item-shortcuts'],
+  keyboardShortcuts: { Enter: ({ editor }) => handleChecklistItemEnter(editor), 'Mod-Shift-9': ({ editor }) => convertToChecklistItem(editor) },
   inputRules: [
     {
       find: /^\s?\[\s*]\s$/,
@@ -59,7 +69,7 @@ const checklistExtensions = createExtension({
     },
     {
       find: /^\s?\[[Xx]]\s$/,
-      replace: () => ({ type: 'checklistItem' as const, props: { checkboxId: nanoid(12) } }),
+      replace: () => ({ type: 'checklistItem' as const, props: { checkboxId: nanoid(12), checked: true } }),
     },
   ],
 });
@@ -76,15 +86,9 @@ export const checklistItemBlock = createReactBlockSpec(
       return (
         <div className="checklist-item" data-checked={isChecked}>
           <div contentEditable={false} className="checklist-checkbox-wrapper">
-            <input
-              type="checkbox"
-              checked={isChecked}
-              readOnly
-              data-checkbox-id={block.props.checkboxId}
-              className="checklist-checkbox"
-            />
+            <input type="checkbox" checked={isChecked} readOnly data-checkbox-id={block.props.checkboxId} className="checklist-checkbox" />
           </div>
-          <p className={`checklist-content ${isChecked ? 'checklist-checked' : ''}`} ref={contentRef} />
+          <p className={cn('checklist-content', isChecked && 'checklist-checked')} ref={contentRef} />
         </div>
       );
     },
@@ -96,10 +100,7 @@ export const getChecklistSlashItem = (editor: CustomBlockNoteEditor) => ({
   title: 'Todos',
   key: 'checklistItem',
   onItemClick: () => {
-    insertOrUpdateBlockForSlashMenu(editor, {
-      type: 'checklistItem' as const,
-      props: { checkboxId: nanoid(12) },
-    });
+    insertOrUpdateBlockForSlashMenu(editor, { type: 'checklistItem' as const, props: { checkboxId: nanoid(12) } });
   },
   aliases: ['checklist', 'checkbox', 'todo', 'task', 'check', 'todos'],
   group: 'Basic blocks',

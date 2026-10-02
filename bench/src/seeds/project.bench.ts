@@ -12,9 +12,7 @@ export const TOTAL_PROJECTS = 10;
  * so it is stripped (the registry derives INSERT columns from the row's keys).
  */
 export const loadtestProject = (index: number): InsertProjectModel => {
-  const { description: _description, ...record } = mockProject(`lt-${index}`) as InsertProjectModel & {
-    description?: unknown;
-  };
+  const { description: _description, ...record } = mockProject(`lt-${index}`) as InsertProjectModel & { description?: unknown };
   return {
     ...record,
     id: projectId(index),

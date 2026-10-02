@@ -21,12 +21,7 @@ export const DraftTaskItem = memo(function DraftTaskItem({
   const isFocused = useTaskInteractionStore((s) => s.focusedTaskId === task.id);
   return (
     <FocusTrap key={task.id} mainElementId={task.id} active={isFocused}>
-      <CreateTaskForm
-        projectId={project.id}
-        organizationId={project.organizationId}
-        className="max-sm:p-4"
-        onStatusChange={onStatusChange}
-      />
+      <CreateTaskForm projectId={project.id} organizationId={project.organizationId} className="max-sm:p-4" onStatusChange={onStatusChange} />
     </FocusTrap>
   );
 });

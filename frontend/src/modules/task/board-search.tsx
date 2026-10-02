@@ -73,11 +73,7 @@ export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
   }, [searchQuery]);
 
   return (
-    <InputGroup
-      className="relative flex w-full items-center border-none shadow-none sm:min-w-44"
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-    >
+    <InputGroup className="relative flex w-full items-center border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
       <InputGroupAddon className="pl-1.5">
         <SearchSpinner value={inputValue} isSearching={false} />
       </InputGroupAddon>
@@ -88,9 +84,7 @@ export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
         onFocus={toggleFocus}
         onBlur={toggleFocus}
         placeholder={t('c:search_in_resource', {
-          resource: isInWorkspace
-            ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() })
-            : t('c:project').toLowerCase(),
+          resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
         })}
         className={'h-10 w-full border-0 pl-0! shadow-none'}
         value={inputValue}
@@ -104,10 +98,7 @@ export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
         <Badge
           variant="plain"
           size="micro"
-          className={cn(
-            (!inputValue || !/\s/.test(inputValue)) && 'hidden',
-            'cursor-pointer opacity-70 hover:opacity-100',
-          )}
+          className={cn((!inputValue || !/\s/.test(inputValue)) && 'hidden', 'cursor-pointer opacity-70 hover:opacity-100')}
           onClick={toggleSearchMode}
         >
           {matchMode}

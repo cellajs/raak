@@ -10,7 +10,7 @@ export async function deleteWorkspacesOp(ctx: UserContext, ids: string[]) {
   await deleteWorkspacesByIds(ctx, { ids: allowedIds });
 
   // Invalidate membership cache so deleted memberships are absent from later reads.
-  await invalidateCache.user(ctx.var.db, ctx.var.user.id);
+  invalidateCache.user(ctx.var.user.id);
 
   log.info('Workspaces deleted', { count: allowedIds.length, ids: allowedIds });
   return { data: [], rejectedIds };

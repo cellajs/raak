@@ -7,18 +7,13 @@ import { ResetBlockTypeItem } from '~/modules/common/blocknote/custom-side-menu/
 import type { CustomBlockNoteMenuProps } from '~/modules/common/blocknote/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 
-export function CustomSideMenu({ editor, allowedTypes, headingLevels, titleLevel }: CustomBlockNoteMenuProps) {
+export function CustomSideMenu({ editor, allowedTypes, headingLevels }: CustomBlockNoteMenuProps) {
   return (
     <SideMenuController
       sideMenu={(props) => {
         const sideMenu = useExtension(SideMenuExtension);
-        const block = useExtensionState(SideMenuExtension, {
-          editor,
-          selector: (state) => state?.block,
-        });
+        const block = useExtensionState(SideMenuExtension, { editor, selector: (state) => state?.block });
         if (block === undefined) return null;
-        // Forced-title mode: the title block gets no drag handle or type menu (TypeCellOS/BlockNote#709).
-        if (titleLevel !== undefined && block.id === editor.document[0]?.id) return null;
         return (
           <SideMenu {...props}>
             <DragHandle
@@ -28,7 +23,6 @@ export function CustomSideMenu({ editor, allowedTypes, headingLevels, titleLevel
               editor={editor}
               allowedTypes={allowedTypes}
               headingLevels={headingLevels}
-              titleLevel={titleLevel}
             />
           </SideMenu>
         );
@@ -45,7 +39,6 @@ function DragHandle({
   editor,
   allowedTypes,
   headingLevels,
-  titleLevel,
 }: {
   // biome-ignore lint/suspicious/noExplicitAny: BlockNote extension instance type is not exported
   sideMenu: any;
@@ -55,7 +48,6 @@ function DragHandle({
   editor: CustomBlockNoteMenuProps['editor'];
   allowedTypes: CustomBlockNoteMenuProps['allowedTypes'];
   headingLevels: CustomBlockNoteMenuProps['headingLevels'];
-  titleLevel: CustomBlockNoteMenuProps['titleLevel'];
 }) {
   const portalElement = usePortalElement();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,7 +81,7 @@ function DragHandle({
     <button
       type="button"
       draggable
-      className="bn-button cursor-grab text-gray-400"
+      className="bn-button cursor-grab text-muted-foreground/70"
       aria-label="Drag handle"
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -113,12 +105,7 @@ function DragHandle({
     >
       <DropdownMenuTrigger render={gripButton} />
       <DropdownMenuContent container={portalElement} side="left" className="bn-menu-dropdown bn-drag-handle-menu">
-        <ResetBlockTypeItem
-          editor={editor}
-          allowedTypes={allowedTypes}
-          headingLevels={headingLevels}
-          titleLevel={titleLevel}
-        />
+        <ResetBlockTypeItem editor={editor} allowedTypes={allowedTypes} headingLevels={headingLevels} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

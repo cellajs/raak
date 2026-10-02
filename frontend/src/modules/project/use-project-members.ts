@@ -10,9 +10,7 @@ import { flattenInfiniteData } from '~/query/basic/flatten';
  * membership. Memoized on the query data + projectId for a stable reference.
  */
 export const useProjectMembers = (projectId: string, tenantId: string, organizationId: string): Member[] => {
-  const membersQuery = useInfiniteQuery(
-    membersListQueryOptions({ entityId: projectId, tenantId, organizationId, entityType: 'project' }),
-  );
+  const membersQuery = useInfiniteQuery(membersListQueryOptions({ entityId: projectId, tenantId, organizationId, entityType: 'project' }));
   return useMemo(() => {
     const members = flattenInfiniteData<Member>(membersQuery.data);
     return members.filter(({ membership }) => membership.projectId === projectId);

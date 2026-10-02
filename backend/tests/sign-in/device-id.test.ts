@@ -6,7 +6,7 @@ import { createAppClient } from '../test-client';
 import { clearDatabase, setTestConfig } from '../test-utils';
 
 // The device id is under test, not the authenticator code: every TOTP check passes.
-vi.mock('#/modules/auth/totps/helpers/totps', () => ({ verifyTotp: vi.fn().mockResolvedValue(0) }));
+vi.mock('#/modules/auth/totps/operations/verify-totp', () => ({ verifyTotp: vi.fn().mockResolvedValue(0) }));
 
 setTestConfig({ enabledAuthStrategies: ['passkey', 'totp'] });
 
@@ -18,10 +18,7 @@ describe('device id on sign-in', async () => {
   const signIn = async (user: { id: string; email: string }, deviceCookie?: string) => {
     const mfaToken = await createMfaToken(user);
     const cookies = [authCookie('confirm-mfa', mfaToken), deviceCookie].filter(Boolean).join('; ');
-    const { response } = await call(signInWithTotp, {
-      body: { code: '123456' },
-      headers: { ...defaultHeaders, Cookie: cookies },
-    });
+    const { response } = await call(signInWithTotp, { body: { code: '123456' }, headers: { ...defaultHeaders, Cookie: cookies } });
     expect(response.status).toBe(204);
     return response;
   };

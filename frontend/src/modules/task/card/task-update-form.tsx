@@ -50,12 +50,7 @@ export function TaskUpdateForm({ task, contentApiRef, active = true, onEditorRea
   };
 
   // Task linkage for uploads rides the description's attachmentId block props.
-  const baseFilePanel = useTaskFilePanelProps(
-    task.projectId,
-    tenantId,
-    task.organizationId,
-    attachmentsCreationCallback({ ...task }),
-  );
+  const baseFilePanel = useTaskFilePanelProps(task.projectId, tenantId, task.organizationId, attachmentsCreationCallback({ ...task }));
 
   return (
     <div className={expandedWrapperStyle}>

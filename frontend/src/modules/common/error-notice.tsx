@@ -1,7 +1,7 @@
 import { useRouter, useRouterState } from '@tanstack/react-router';
 import { ChevronUpIcon, HouseIcon, MessageCircleQuestionMarkIcon, RefreshCwIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppFooter } from '~/modules/common/app/app-footer';
 import { Dialoger } from '~/modules/common/dialoger/provider';
@@ -9,6 +9,7 @@ import { type ErrorNoticeError, getErrorInfo, handleAskForHelp } from '~/modules
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '~/modules/ui/card';
 import type { BoundaryType } from '~/routes/types';
+import { cn } from '~/utils/cn';
 
 export type { ErrorNoticeError } from '~/modules/common/error-helpers';
 
@@ -26,17 +27,14 @@ interface ErrorNoticeProps {
 export function ErrorNotice({ error, children, resetErrorBoundary, boundary, homePath = '/' }: ErrorNoticeProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { location } = useRouterState();
+  const errorFromQuery = useRouterState({ select: (s) => s.location.search.error });
+  const severityFromQuery = useRouterState({ select: (s) => s.location.search.severity });
   const contactButtonRef = useRef<HTMLButtonElement>(null);
-
-  const { error: errorFromQuery, severity: severityFromQuery } = location.search;
 
   const [showError, setShowError] = useState(false);
   const severity = error && 'severity' in error ? error.severity : severityFromQuery;
 
   const { title, message } = getErrorInfo({ error, errorFromQuery });
-
-  const dateNow = new Date().toUTCString();
 
   // Reset before a route change so the error state is not retained
   useEffect(() => {
@@ -73,16 +71,16 @@ export function ErrorNotice({ error, children, resetErrorBoundary, boundary, hom
               </CardDescription>
             </CardHeader>
             {error && 'status' in error && (
-              <CardContent className="whitespace-pre-wrap px-0 py-4 font-mono text-red-600">
+              <CardContent className="whitespace-pre-wrap px-0 py-4 font-mono text-destructive">
                 {error.type && (
                   <Button
                     variant="link"
                     size="sm"
                     onClick={() => setShowError((prev) => !prev)}
-                    className="flex w-full items-center whitespace-pre-wrap text-red-600"
+                    className="flex w-full items-center whitespace-pre-wrap text-destructive"
                   >
                     <span>{showError ? t('c:hide_details') : t('c:show_details')}</span>
-                    {<ChevronUpIcon className={`ml-2 transition-transform ${showError ? 'rotate-0' : 'rotate-180'}`} />}
+                    {<ChevronUpIcon className={cn('transition-transform', showError ? 'rotate-0' : 'rotate-180')} />}
                   </Button>
                 )}
 
@@ -96,24 +94,25 @@ export function ErrorNotice({ error, children, resetErrorBoundary, boundary, hom
                       className="overflow-hidden"
                     >
                       <div className="grid grid-cols-[auto_1fr] place-items-start gap-1 pb-4 text-sm">
-                        <div className="place-self-end pr-4 font-medium">Log ID</div>
-                        <div>{error.logId || 'na'}</div>
-                        <div className="place-self-end pr-4 font-medium">Timestamp</div>
-                        <div>{dateNow}</div>
-                        <div className="place-self-end pr-4 font-medium">Message</div>
-                        <div>{error.message || 'na'}</div>
-                        <div className="place-self-end pr-4 font-medium">Type</div>
-                        <div>{error.type || 'na'}</div>
-                        <div className="place-self-end pr-4 font-medium">Resource type</div>
-                        <div>{error.entityType || 'na'}</div>
-                        <div className="place-self-end pr-4 font-medium">HTTP status</div>
-                        <div>{error.status || 'na'}</div>
-                        <div className="place-self-end pr-4 font-medium">Severity</div>
-                        <div>{error.severity || 'na'}</div>
-                        <div className="place-self-end pr-4 font-medium">User ID</div>
-                        <div>{error.userId || 'na'}</div>
-                        <div className="place-self-end pr-4 font-medium">Organization ID</div>
-                        <div>{error.organizationId || 'na'}</div>
+                        {(
+                          [
+                            ['c:request_id', error.requestId],
+                            // A server error carries the moment it was raised; one made in the browser shows the time it renders.
+                            ['c:timestamp', new Date(error.timestamp ?? Date.now()).toUTCString()],
+                            ['c:message', error.message],
+                            ['c:type', error.type],
+                            ['c:resource_type', error.entityType],
+                            ['c:http_status', error.status],
+                            ['c:severity', error.severity],
+                            ['c:user_id', error.userId],
+                            ['c:organization_id', error.organizationId],
+                          ] as const
+                        ).map(([label, value]) => (
+                          <Fragment key={label}>
+                            <div className="place-self-end pr-4 font-medium">{t(label)}</div>
+                            <div>{value || 'na'}</div>
+                          </Fragment>
+                        ))}
                       </div>
                     </motion.div>
                   )}
@@ -126,12 +125,12 @@ export function ErrorNotice({ error, children, resetErrorBoundary, boundary, hom
               ) : (
                 <>
                   <Button onClick={handleGoToHome} variant="secondary">
-                    <HouseIcon className="mr-2" />
+                    <HouseIcon />
                     {t('c:home')}
                   </Button>
                   {!location.pathname.endsWith('/error') && severity !== 'info' && (
                     <Button onClick={handleReload}>
-                      <RefreshCwIcon className="mr-2" />
+                      <RefreshCwIcon />
                       {t('c:reload')}
                     </Button>
                   )}
@@ -139,7 +138,7 @@ export function ErrorNotice({ error, children, resetErrorBoundary, boundary, hom
               )}
               {severity && ['warn', 'error'].includes(severity) && (
                 <Button ref={contactButtonRef} variant="plain" onClick={() => handleAskForHelp(contactButtonRef)}>
-                  <MessageCircleQuestionMarkIcon className="mr-2" />
+                  <MessageCircleQuestionMarkIcon />
                   {t('c:contact_support')}
                 </Button>
               )}

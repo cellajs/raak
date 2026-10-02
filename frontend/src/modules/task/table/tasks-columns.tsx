@@ -4,11 +4,10 @@ import { createContext, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project } from 'sdk';
 import { zUserMinimalBase } from 'sdk/zod.gen';
+import { exportDate } from '~/lib/export';
 import type { RenderCellProps } from '~/modules/common/data-grid';
 import { estimateWrappedLines, SelectColumn } from '~/modules/common/data-grid';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
-import type { TriggerRef } from '~/modules/common/dialoger/use-dialoger';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { getSeenChannelId } from '~/modules/seen/helpers';
@@ -37,15 +36,7 @@ const parseUserCell = (value: unknown): ParsedUserCell | null => {
   return user;
 };
 
-function SummaryCell({
-  row,
-  tabIndex,
-  navigate,
-  setTriggerRef,
-}: RenderCellProps<Task> & {
-  navigate: ReturnType<typeof useNavigate>;
-  setTriggerRef: (id: string, ref: TriggerRef) => void;
-}) {
+function SummaryCell({ row, tabIndex, navigate }: RenderCellProps<Task> & { navigate: ReturnType<typeof useNavigate> }) {
   const cellRef = useRef<HTMLButtonElement | null>(null);
 
   return (
@@ -59,23 +50,11 @@ function SummaryCell({
         if (e.key === 'Enter') cellRef.current?.click();
       }}
       onClick={() => {
-        // Store trigger to bring focus back
-        setTriggerRef(row.id, cellRef);
-
-        navigate({
-          to: '.',
-          replace: false,
-          resetScroll: false,
-          search: (prev) => ({ ...prev, taskSheetId: row.id }),
-        });
+        navigate({ to: '.', replace: false, resetScroll: false, search: (prev) => ({ ...prev, taskSheetId: row.id }) });
       }}
     >
       <div className="whitespace-pre-wrap py-1 leading-5">
-        {row.summary ? (
-          <TaskSummaryHtml html={row.summary} className="pointer-events-none" />
-        ) : (
-          <span className="text-muted">-</span>
-        )}
+        {row.summary ? <TaskSummaryHtml html={row.summary} className="pointer-events-none" /> : <span className="text-muted">-</span>}
       </div>
     </Button>
   );
@@ -87,17 +66,7 @@ function SummaryCell({
  */
 export const TableProjectsContext = createContext<Project[]>([]);
 
-function ProjectCell({
-  row,
-  tabIndex,
-  organization,
-  tenantId,
-}: {
-  row: Task;
-  tabIndex: number;
-  organization?: Organization;
-  tenantId?: string;
-}) {
+function ProjectCell({ row, tabIndex, organization, tenantId }: { row: Task; tabIndex: number; organization?: Organization; tenantId?: string }) {
   const projects = useContext(TableProjectsContext);
   const project = projects.find((p) => p.id === row.projectId);
   if (!project || !organization || !tenantId) return row.projectId;
@@ -113,12 +82,12 @@ function ProjectCell({
     >
       <EntityAvatar
         type="project"
-        className="h-8 w-8 group-hover:font-semibold group-active:translate-y-[.05rem]"
+        className="group-active:press h-8 w-8 group-hover:font-semibold"
         id={project.id}
         name={project.name}
         url={project.thumbnailUrl}
       />
-      <span className="in-data-[is-compact=true]:hidden truncate decoration-foreground/20 underline-offset-3 group-hover:underline group-active:translate-y-[.05rem] group-active:decoration-foreground/50">
+      <span className="group-active:press in-data-[is-compact=true]:hidden truncate decoration-foreground/20 underline-offset-3 group-hover:underline group-active:decoration-foreground/50">
         {project.name}
       </span>
     </Link>
@@ -130,16 +99,10 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const setTriggerRef = useDialoger((state) => state.setTriggerRef);
-
   // Build once to preserve column-management state; changing project data comes from context.
   return useState<ColumnOrColumnGroup<Task>[]>(() => {
     const cols: ColumnOrColumnGroup<Task>[] = [
-      {
-        ...SelectColumn,
-        key: 'checkbox-column',
-        minBreakpoint: 'sm',
-      },
+      { ...SelectColumn, key: 'checkbox-column', minBreakpoint: 'sm' },
       {
         key: 'primaryLabel',
         name: t('c:type'),
@@ -148,11 +111,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
           if (!row.primaryLabel) return null;
           return (
             <>
-              <span
-                className="mr-2 inline-flex shrink-0"
-                data-tooltip="compact"
-                data-tooltip-content={row.primaryLabel.name}
-              >
+              <span className="mr-2 inline-flex shrink-0" data-tooltip="compact" data-tooltip-content={row.primaryLabel.name}>
                 <PrimaryLabelIcon label={row.primaryLabel} />
               </span>
               <span className="in-data-[is-compact=true]:hidden truncate">{row.primaryLabel.name}</span>
@@ -173,7 +132,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         resizable: true,
         wrapText: 3,
         estimateLines: (row, { width }) => estimateWrappedLines(row.summaryLength ?? 0, width),
-        renderCell: (props) => <SummaryCell {...props} navigate={navigate} setTriggerRef={setTriggerRef} />,
+        renderCell: (props) => <SummaryCell {...props} navigate={navigate} />,
       },
       {
         key: 'todos',
@@ -205,7 +164,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
           if (count === 0) return null;
           return (
             <div className="inline-flex items-center gap-1">
-              <PaperclipIcon className="icon-xs -rotate-45 opacity-50" />
+              <PaperclipIcon className="size-3 -rotate-45 opacity-50" />
               <span className="">{count}</span>
             </div>
           );
@@ -228,10 +187,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
                 channelId={getSeenChannelId('task', row)}
                 productType="task"
               />
-              <status.icon
-                className={`mr-2 size-4 shrink-0 fill-current ${statusFillColors[row.status]}`}
-                aria-hidden="true"
-              />
+              <status.icon className={`mr-2 size-4 shrink-0 fill-current ${statusFillColors[row.status]}`} aria-hidden="true" />
               <span>{t(`c:${status.status}`)}</span>
             </>
           );
@@ -246,22 +202,11 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         renderCell: ({ row }) => {
           if (!row.assignedTo.length) return null;
           return (
-            <span
-              className="inline-flex"
-              data-tooltip="compact"
-              data-tooltip-content={row.assignedTo.map((user) => user.name).join(', ')}
-            >
+            <span className="inline-flex" data-tooltip="compact" data-tooltip-content={row.assignedTo.map((user) => user.name).join(', ')}>
               <AvatarGroup limit={3}>
                 <AvatarGroupList>
                   {row.assignedTo.map((user) => (
-                    <EntityAvatar
-                      type="user"
-                      key={user.id}
-                      id={user.id}
-                      name={user.name}
-                      url={user.thumbnailUrl}
-                      className="h-8 w-8 text-xs"
-                    />
+                    <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="h-8 w-8 text-xs" />
                   ))}
                 </AvatarGroupList>
                 <AvatarOverflowIndicator className="h-8 w-8 text-xs" />
@@ -282,11 +227,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
             <div className="flex flex-col">
               {row.labels.map((label) => (
                 <div key={label.id} className="flex items-center gap-1">
-                  <DotIcon
-                    className="size-2 shrink-0 rounded-md text-background"
-                    style={{ background: label.color || undefined }}
-                    strokeWidth={4}
-                  />
+                  <DotIcon className="size-2 shrink-0 rounded-md text-background" style={{ background: label.color || undefined }} strokeWidth={4} />
                   <span className="text-xs">{label.name}</span>
                 </div>
               ))}
@@ -301,9 +242,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         hidden: opts?.hideProject,
         minBreakpoint: 'sm',
         width: 180,
-        renderCell: ({ row, tabIndex }) => (
-          <ProjectCell row={row} tabIndex={tabIndex} organization={opts?.organization} tenantId={opts?.tenantId} />
-        ),
+        renderCell: ({ row, tabIndex }) => <ProjectCell row={row} tabIndex={tabIndex} organization={opts?.organization} tenantId={opts?.tenantId} />,
         modes: { compact: { width: 50 } },
       },
       {
@@ -328,6 +267,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         minBreakpoint: 'sm',
         width: 180,
         renderCell: ({ row }) => dateShort(row.createdAt),
+        exportValue: (row) => exportDate(row.createdAt),
       },
       {
         key: 'updatedBy',
@@ -350,6 +290,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         hidden: true,
         width: 180,
         renderCell: ({ row }) => dateShort(row.updatedAt),
+        exportValue: (row) => exportDate(row.updatedAt),
       },
     ];
     return cols;

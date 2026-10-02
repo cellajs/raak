@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/modules/ui/dropdown-menu';
+import { cn } from '~/utils/cn';
 
 export const notifyBlock = createReactBlockSpec(notifyConfig, {
   render: ({ block, editor, contentRef }) => {
@@ -25,10 +26,7 @@ export const notifyBlock = createReactBlockSpec(notifyConfig, {
         <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
           <DropdownMenuTrigger disabled={!editor.isEditable}>
             <div className={'notify-icon-wrapper'} contentEditable={false}>
-              <Icon
-                className={`notify-icon size-8 ${!editor.isEditable && 'cursor-default'}`}
-                data-notify-icon-type={block.props.type}
-              />
+              <Icon className={cn('notify-icon size-8', !editor.isEditable && 'cursor-default')} data-notify-icon-type={block.props.type} />
             </div>
           </DropdownMenuTrigger>
 
@@ -61,9 +59,7 @@ const insertSlashNotifyItem = (editor: CustomBlockNoteEditor) => ({
   title: 'Notify',
   key: 'notify',
   onItemClick: () => {
-    insertOrUpdateBlockForSlashMenu(editor, {
-      type: 'notify',
-    });
+    insertOrUpdateBlockForSlashMenu(editor, { type: 'notify' });
   },
   aliases: ['notify', 'notification', 'emphasize', 'warning', 'error', 'info', 'success'],
   group: 'Custom',

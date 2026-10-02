@@ -6,11 +6,7 @@ export const getItemsSortedByName = <T extends { name: string }>(items: T[]): T[
   return items.slice().sort((a, b) => a.name.localeCompare(b.name, appConfig.defaultLanguage));
 };
 
-export const sortTaskOrder = (
-  task1: Pick<Task, 'status' | 'displayOrder'>,
-  task2: Pick<Task, 'status' | 'displayOrder'>,
-  reverse = false,
-) => {
+export const sortTaskOrder = (task1: Pick<Task, 'status' | 'displayOrder'>, task2: Pick<Task, 'status' | 'displayOrder'>, reverse = false) => {
   // Primary sort by status (lower status first)
   if (task1.status !== task2.status) return task1.status - task2.status;
 

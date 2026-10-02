@@ -53,18 +53,11 @@ export const projectSchema = z
     'x-tags': schemaTags('data', 'projects', 'app'),
   });
 
-export const projectWithMembershipSchema = projectSchema.extend({
-  included: projectIncludedSchema.extend({ membership: membershipBaseSchema }),
-});
+export const projectWithMembershipSchema = projectSchema.extend({ included: projectIncludedSchema.extend({ membership: membershipBaseSchema }) });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for project */
 export const projectContract = evolutionContract.channel('project', {
-  createItem: z.object({
-    id: validTempIdSchema,
-    name: validNameSchema,
-    slug: validSlugSchema,
-    publicAt: z.string().nullable(),
-  }),
+  createItem: z.object({ id: validTempIdSchema, name: validNameSchema, slug: validSlugSchema, publicAt: z.string().nullable() }),
   updateBody: createInsertSchema(projectsTable, {
     slug: validSlugSchema,
     name: validNameSchema,
@@ -72,13 +65,7 @@ export const projectContract = evolutionContract.channel('project', {
     bannerUrl: validCDNUrlSchema.nullable(),
     publicAt: z.string().nullable(),
   })
-    .pick({
-      slug: true,
-      name: true,
-      thumbnailUrl: true,
-      bannerUrl: true,
-      publicAt: true,
-    })
+    .pick({ slug: true, name: true, thumbnailUrl: true, bannerUrl: true, publicAt: true })
     .partial(),
 });
 

@@ -34,15 +34,8 @@ export function ResendPendingInvitationCell({ tenantId, organizationId, membersh
 
   return (
     <TooltipButton toolTipContent={resent ? t('c:retry_resend_invitation.text') : t('c:resend_invitation.text')}>
-      <Button
-        variant="ghost"
-        size="sm"
-        aria-label="Resend invitation"
-        onClick={onResendClick}
-        loading={isPending}
-        disabled={resent}
-      >
-        <MailIcon className="mr-2" />
+      <Button variant="ghost" size="sm" aria-label="Resend invitation" onClick={onResendClick} loading={isPending} disabled={resent}>
+        <MailIcon />
         {t('c:resend')}
       </Button>
     </TooltipButton>

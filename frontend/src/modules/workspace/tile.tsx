@@ -29,7 +29,7 @@ export function WorkspaceTile({ entity }: { entity: Workspace }) {
       to={to}
       draggable={false}
       params={params}
-      className="tile-link relative w-full rounded-md transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:translate-y-[.05rem]"
+      className="tile-link active:press relative w-full rounded-md transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <Card className="overflow-hidden transition hover:shadow-sm">
         <CardContent>

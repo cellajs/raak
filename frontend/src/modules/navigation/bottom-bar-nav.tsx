@@ -25,11 +25,11 @@ export function BottomBarNav({ triggerNavItem }: BottomBarNavProps) {
     <nav
       id="bottom-bar-nav"
       data-started={hasStarted}
-      className="fixed bottom-0 z-100 flex w-full flex-row justify-between bg-sidebar pb-[env(safe-area-inset-bottom,0px)] shadow-xs transition-transform ease-out group-[.focus-view]/body:hidden group-[.selection-active]/body:translate-y-full data-[started=false]:translate-y-full"
+      className="fixed bottom-0 z-100 flex w-full flex-row justify-between bg-sidebar pb-[env(safe-area-inset-bottom,0px)] shadow-xs transition-transform ease-out focus-view:hidden group-[.selection-active]/body:translate-y-full data-[started=false]:translate-y-full"
     >
       <ul className="flex w-full flex-row justify-between p-1 px-2">
         {getBaseNavItems().map((navItem: NavItem) => (
-          <li key={navItem.id} className="flex transform justify-start">
+          <li key={navItem.id} className="flex justify-start">
             <BottomBarNavButton navItem={navItem} isActive={navSheetOpen === navItem.id} onClick={triggerNavItem} />
           </li>
         ))}

@@ -16,9 +16,7 @@ import { Button } from '~/modules/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '~/modules/ui/popover';
 import { cn } from '~/utils/cn';
 
-const IconPicker = lazy(() =>
-  import('~/modules/common/icon-picker/icon-picker').then((m) => ({ default: m.IconPicker })),
-);
+const IconPicker = lazy(() => import('~/modules/common/icon-picker/icon-picker').then((m) => ({ default: m.IconPicker })));
 
 /** Stable row key getter, defined outside the component to keep its identity stable. */
 function rowKeyGetter(row: PrimaryLabelDefinition) {
@@ -37,7 +35,7 @@ function IconCell({ row, onRowChange }: PickerCellProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger render={<Button variant="ghost" size="icon" aria-label={t('c:icon')} />}>
-        <PrimaryLabelIcon label={row} className="icon-md" />
+        <PrimaryLabelIcon label={row} className="size-4" />
       </PopoverTrigger>
       {/* Portal events bubble through the React tree into the host gridcell, whose mousedown
           steals focus and dismisses the popup before click; stop them at the popup boundary */}
@@ -63,9 +61,7 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger render={<Button variant="ghost" size="icon" aria-label={t('c:color')} />}>
-        <span
-          className={cn('size-4 rounded-full', isLabelColorToken(row.color) ? labelPalette[row.color].dot : 'bg-muted')}
-        />
+        <span className={cn('size-4 rounded-full', isLabelColorToken(row.color) ? labelPalette[row.color].dot : 'bg-muted')} />
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2" onMouseDown={(event) => event.stopPropagation()}>
         <div className="grid grid-cols-7 gap-1">
@@ -79,10 +75,7 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
                 setOpen(false);
                 onRowChange({ ...row, color: token as PrimaryLabelDefinition['color'] });
               }}
-              className={cn(
-                'flex items-center justify-center rounded-md p-1.5 hover:bg-accent',
-                row.color === token && 'bg-accent ring-1 ring-ring',
-              )}
+              className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-accent', row.color === token && 'bg-accent ring-1 ring-ring')}
             >
               <span className={cn('size-4 rounded-full', palette.dot)} />
             </button>
@@ -115,10 +108,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       body: { setupConfig: { primaryLabels } },
     });
 
-  const onRowsChange = (
-    changed: PrimaryLabelDefinition[],
-    { indexes, column }: RowsChangeData<PrimaryLabelDefinition>,
-  ) => {
+  const onRowsChange = (changed: PrimaryLabelDefinition[], { indexes, column }: RowsChangeData<PrimaryLabelDefinition>) => {
     const index = indexes[0];
     if (column.key === 'name') {
       const name = changed[index].name.trim();
@@ -156,7 +146,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       maxWidth: 32,
       cellClass: 'cursor-grab flex items-center justify-center',
       rowDragHandle: true,
-      renderCell: () => <GripVerticalIcon className="icon-sm text-muted-foreground/50" />,
+      renderCell: () => <GripVerticalIcon className="size-3.5 text-muted-foreground/50" />,
     },
     {
       key: 'icon',
@@ -197,7 +187,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
           disabled={rows.length <= primaryLabelLimits.min}
           onClick={() => persist(rows.filter((entry) => entry.slug !== row.slug))}
         >
-          <Trash2Icon className="icon-sm" />
+          <Trash2Icon className="size-3.5" />
         </Button>
       ),
     },
@@ -207,14 +197,8 @@ export function PrimaryLabelsCard({ organization }: Props) {
   // `task-types` element would native-anchor on hash load underneath the sticky header
   return (
     <ToolCard label="c:primary_labels" description={t('c:primary_labels.text')}>
-      <Button
-        variant="outline"
-        size="sm"
-        className="mb-3"
-        disabled={rows.length >= primaryLabelLimits.max || isPending}
-        onClick={addEntry}
-      >
-        <PlusIcon className="icon-sm" />
+      <Button variant="outline" size="sm" className="mb-3" disabled={rows.length >= primaryLabelLimits.max || isPending} onClick={addEntry}>
+        <PlusIcon className="size-3.5" />
         {t('c:add')}
       </Button>
       <DataTable

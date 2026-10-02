@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import i18n from 'i18next';
 import { BellIcon } from 'lucide-react';
 import { type RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +22,8 @@ function openStackedNavSheet(id: NavItemId, content: React.ReactNode, triggerRef
   useSheeter.getState().create(content, {
     id: `${id}-sheet`,
     triggerRef,
+    title: i18n.t(`c:${id}`),
+    headerClassName: 'hidden',
     side: 'left',
     modal: 'trap-focus',
     disablePointerDismissal: true,
@@ -39,11 +42,7 @@ export function MenuSheetHeader() {
   return (
     <div className="relative h-14 p-3 pb-1">
       <div className="flex h-10 items-center justify-between">
-        <Link
-          to="/home"
-          draggable={false}
-          className="focus-effect block rounded-md transition-transform hover:scale-105 active:translate-y-[.05rem]"
-        >
+        <Link to="/home" draggable={false} className="focus-effect active:press block rounded-md transition-transform hover:scale-105">
           <Logo className="mx-1 h-8" />
         </Link>
 

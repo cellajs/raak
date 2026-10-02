@@ -33,9 +33,7 @@ describe('buildStreamNotification propagation hint', () => {
 
   it('classifies a soft-deleted label row as a removal hint', () => {
     const { propagation } = buildStreamNotification(
-      labelEvent({
-        rowData: { id: 'label-1', organizationId: 'org-1', projectId: 'project-1', deletedAt: '2026-07-26T21:00:00Z' },
-      }),
+      labelEvent({ rowData: { id: 'label-1', organizationId: 'org-1', projectId: 'project-1', deletedAt: '2026-07-26T21:00:00Z' } }),
     );
     expect(propagation).toMatchObject({ update: [], remove: ['label-1'] });
   });

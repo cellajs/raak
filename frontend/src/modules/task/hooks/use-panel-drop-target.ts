@@ -1,8 +1,5 @@
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import {
-  autoScrollForElements,
-  autoScrollWindowForElements,
-} from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
+import { autoScrollForElements, autoScrollWindowForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { isCoarsePointerDevice } from '~/modules/task/helpers/mobile-drag-indicator';
@@ -33,12 +30,7 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
 
     return dropTargetForElements({
       element: panelRef.current,
-      getData: () => ({
-        dragItem: true,
-        item: { projectId, tasks: tasksRef.current },
-        type: 'panel',
-        itemType: 'project',
-      }),
+      getData: () => ({ dragItem: true, item: { projectId, tasks: tasksRef.current }, type: 'panel', itemType: 'project' }),
       canDrop: ({ source: { data } }) => {
         if (!isTaskData(data)) return false;
         return canDropTaskIntoProject(data.item.projectId, projectId);
@@ -74,13 +66,8 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
 export function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScroll: boolean) {
   useEffect(() => {
     if (!windowScroll && scrollRef.current) {
-      return autoScrollForElements({
-        element: scrollRef.current,
-        getAllowedAxis: () => 'vertical',
-      });
+      return autoScrollForElements({ element: scrollRef.current, getAllowedAxis: () => 'vertical' });
     }
-    return autoScrollWindowForElements({
-      getAllowedAxis: () => 'vertical',
-    });
+    return autoScrollWindowForElements({ getAllowedAxis: () => 'vertical' });
   }, [scrollRef, windowScroll]);
 }

@@ -2,12 +2,9 @@ import { FileTextIcon, LayoutListIcon, WorkflowIcon } from 'lucide-react';
 import type { TKey } from '~/lib/i18n-locales';
 import type { IconComponent } from '~/modules/common/icons/types';
 import type { DocRenderMode } from '~/modules/page/content';
+import { tw } from '~/utils/tw';
 
-export const renderModeIcons: Record<DocRenderMode, IconComponent> = {
-  default: FileTextIcon,
-  overview: LayoutListIcon,
-  nodeOnly: WorkflowIcon,
-};
+export const renderModeIcons: Record<DocRenderMode, IconComponent> = { default: FileTextIcon, overview: LayoutListIcon, nodeOnly: WorkflowIcon };
 
 /** Literal keys (not a template literal) so the typed-key check and the dead-key sweep both see them. */
 const renderModeLabelKeys = {
@@ -24,11 +21,11 @@ interface RenderModeLabelProps {
   className?: string;
 }
 
-export function RenderModeLabel({ mode, label, className = 'flex items-center gap-1.5' }: RenderModeLabelProps) {
+export function RenderModeLabel({ mode, label, className = tw('flex items-center gap-1.5') }: RenderModeLabelProps) {
   const Icon = renderModeIcons[mode] ?? FileTextIcon;
   return (
     <span className={className}>
-      <Icon className="icon-sm shrink-0 text-muted-foreground" />
+      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="truncate">{label}</span>
     </span>
   );

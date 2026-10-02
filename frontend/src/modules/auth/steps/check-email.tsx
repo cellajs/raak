@@ -9,7 +9,7 @@ import { appConfig } from 'shared';
 import type { z } from 'zod';
 import type { ApiError } from '~/lib/api';
 import { useAuthStore } from '~/modules/auth/auth-store';
-import { SubmitButton } from '~/modules/ui/button';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { Input } from '~/modules/ui/input';
 import { defaultOnInvalid } from '~/utils/form-on-invalid';
@@ -29,10 +29,7 @@ export function CheckEmailStep() {
   const isMobile = window.innerWidth < 640;
   const title = appConfig.has.selfRegistration ? t('c:sign_in_or_up') : t('c:sign_in');
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { email: '' },
-  });
+  const form = useForm<FormValues>({ resolver: zodResolver(formSchema), defaultValues: { email: '' } });
 
   // A browser that never signed in to the address gets the step that does not say whether it has an account.
   const { mutate: _checkEmail, isPending } = useMutation<CheckEmailResponse, ApiError, CheckEmailData['body']>({
@@ -55,7 +52,7 @@ export function CheckEmailStep() {
       <h1 className="mt-4 pb-2 text-center text-2xl">{title}</h1>
 
       {emailEnabled && (
-        <form onSubmit={form.handleSubmit(onSubmit, defaultOnInvalid)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit, defaultOnInvalid)} className="flex flex-col gap-4">
           <FormField
             control={form.control}
             name="email"
@@ -63,14 +60,7 @@ export function CheckEmailStep() {
               // Custom css due to html injection by browser extensions
               <FormItem className="gap-0">
                 <FormControl>
-                  <Input
-                    {...field}
-                    className="h-12"
-                    type="email"
-                    autoFocus={!isMobile}
-                    autoComplete="email"
-                    placeholder={t('c:email')}
-                  />
+                  <Input {...field} className="h-12" type="email" autoFocus={!isMobile} autoComplete="email" placeholder={t('c:email')} />
                 </FormControl>
                 <FormMessage className="mt-2" />
               </FormItem>
@@ -78,7 +68,7 @@ export function CheckEmailStep() {
           />
           <SubmitButton loading={isPending} className="w-full">
             {t('c:continue')}
-            <ArrowRightIcon className="ml-2" />
+            <ArrowRightIcon />
           </SubmitButton>
         </form>
       )}

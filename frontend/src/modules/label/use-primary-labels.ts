@@ -8,9 +8,9 @@ import { labelsCanonicalOptions } from '~/modules/label/query';
  * (first entry is the default for new tasks).
  */
 export const usePrimaryLabels = (projectId: string): Label[] => {
-  const { tenantId, organization } = useOrganizationLayoutContext();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
   const { data } = useQuery({
-    ...labelsCanonicalOptions({ organizationId: organization.id, tenantId, projectId }),
+    ...labelsCanonicalOptions({ organizationId, tenantId, projectId }),
     select: (result) => sortPrimaryLabels(result.items),
   });
   return data ?? [];

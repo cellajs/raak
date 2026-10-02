@@ -11,6 +11,9 @@ import { notificationTypes } from './notification-types';
 export const digestFrequencies = ['off', 'daily', 'weekly'] as const;
 export type DigestFrequency = (typeof digestFrequencies)[number];
 
+/** Cadence of a user without a preferences row, and the column default. */
+export const defaultDigestFrequency: DigestFrequency = 'weekly';
+
 /**
  * Per-recipient inbox rows for mentions and addressed activity, fanned out from the product
  * modules that declare a `notifications` source (see lib/module.ts). Ambient posts stay out:
@@ -57,10 +60,7 @@ export const notificationsTable = snakeCase.table(
     index('notifications_user_unread_index').on(table.userId, table.readAt),
     index('notifications_user_created_index').on(table.userId, table.createdAt.desc()),
     index('notifications_subject_index').on(table.subjectId),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [usersTable.id],
-    }).onDelete('cascade'),
+    foreignKey({ columns: [table.userId], foreignColumns: [usersTable.id] }).onDelete('cascade'),
   ],
 );
 
@@ -77,7 +77,7 @@ export const notificationPreferencesTable = snakeCase.table('notification_prefer
   /** In-app delivery is never opt-out; only email is. */
   mentionEmail: boolean().notNull().default(true),
   commentEmail: boolean().notNull().default(false),
-  digest: varchar({ enum: digestFrequencies }).notNull().default('weekly'),
+  digest: varchar({ enum: digestFrequencies }).notNull().default(defaultDigestFrequency),
   /** Start of the next digest window. Null means "never digested", handled as the first run. */
   lastDigestAt: timestamp({ mode: 'string' }),
   updatedAt: timestampColumns.updatedAt,

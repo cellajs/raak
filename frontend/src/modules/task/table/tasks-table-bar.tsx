@@ -18,10 +18,7 @@ import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
 import { cn } from '~/utils/cn';
 
 type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'> &
-  Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & {
-    isCompact: boolean;
-    setIsCompact: (isCompact: boolean) => void;
-  };
+  Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & { isCompact: boolean; setIsCompact: (isCompact: boolean) => void };
 
 /** Renders the action and filter toolbar for the tasks table. */
 export function TasksTableBar({
@@ -46,13 +43,7 @@ export function TasksTableBar({
     if (!queryParams) return [];
     const { organizationId, tenantId, ...rest } = queryParams;
     const tableQueryParams = { ...searchVars, ...rest };
-    const items = await fetchTasksForExport({
-      limit,
-      offset,
-      organizationId,
-      tenantId,
-      query: tableQueryParams,
-    });
+    const items = await fetchTasksForExport({ limit, offset, organizationId, tenantId, query: tableQueryParams });
     return configureForExport(items, projects);
   };
 
@@ -78,11 +69,7 @@ export function TasksTableBar({
 
       {!searchFocused && !searchVars.q && <TableCount count={total} label="c:task" className="mr-3" />}
       <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns}>
-        <DropdownMenuCheckboxItem
-          className="min-h-8"
-          checked={isCompact}
-          onCheckedChange={() => setIsCompact(!isCompact)}
-        >
+        <DropdownMenuCheckboxItem className="min-h-8" checked={isCompact} onCheckedChange={() => setIsCompact(!isCompact)}>
           {t('c:compact_view')}
         </DropdownMenuCheckboxItem>
       </ColumnsView>

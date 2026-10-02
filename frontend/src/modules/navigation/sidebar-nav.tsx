@@ -10,23 +10,13 @@ import { NavButton } from '~/modules/navigation/nav-buttons';
 import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import { StopImpersonation } from '~/modules/navigation/stop-impersonation';
 import type { NavItem, TriggerNavItemFn } from '~/modules/navigation/types';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-} from '~/modules/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu } from '~/modules/ui/sidebar';
 import { navItems } from '~/nav-config';
 import { lazyNamed } from '~/utils/lazy-named';
 
-const DebugDropdown = __DEV_TOOLS__
-  ? lazyNamed(() => import('~/modules/common/debug-dropdown'), 'DebugDropdown')
-  : () => null;
+const DebugDropdown = __DEV_TOOLS__ ? lazyNamed(() => import('~/modules/common/debug-dropdown'), 'DebugDropdown') : () => null;
 
-const { hasSidebarTextLabels, sidebarWidthExpanded, sidebarWidthCollapsed, sheetPanelWidth } =
-  appConfig.theme.navigation;
+const { hasSidebarTextLabels, sidebarWidthExpanded, sidebarWidthCollapsed, sheetPanelWidth } = appConfig.theme.navigation;
 
 let baseNavItems: NavItem[] | null = null;
 function getBaseNavItems() {
@@ -72,11 +62,7 @@ export function SidebarNav({ triggerNavItem }: SidebarNavProps) {
       ? `calc(${iconBarWidth} + ${sheetPanelWidth})`
       : iconBarWidth;
 
-  const cssVars = {
-    '--icon-bar-w': iconBarWidth,
-    '--sidebar-w': sidebarWidth,
-    '--spacer-w': spacerWidth,
-  } as CSSProperties;
+  const cssVars = { '--icon-bar-w': iconBarWidth, '--sidebar-w': sidebarWidth, '--spacer-w': spacerWidth } as CSSProperties;
 
   return (
     <div className="contents" style={cssVars}>
@@ -84,7 +70,7 @@ export function SidebarNav({ triggerNavItem }: SidebarNavProps) {
       <div
         data-slot="sidebar-spacer"
         data-started={hasStarted}
-        className="relative w-(--spacer-w) bg-transparent group-[.focus-view]/body:hidden data-[started=true]:transition-[width] data-[started=true]:duration-300 data-[started=true]:ease-out"
+        className="relative w-(--spacer-w) bg-transparent focus-view:hidden data-[started=true]:transition-[width] data-[started=true]:duration-300 data-[started=true]:ease-out"
       />
       <Sidebar
         id="sidebar-nav"
@@ -92,11 +78,11 @@ export function SidebarNav({ triggerNavItem }: SidebarNavProps) {
         data-started={hasStarted}
         data-collapsed={isCollapsed}
         data-overlay={isOverlay}
-        className="linear fixed inset-y-0 left-0 z-100 w-(--sidebar-w) border-r-0 transition-[width] duration-200 focus:outline-none group-[.focus-view]/body:hidden data-[started=false]:-translate-x-full"
+        className="fixed inset-y-0 left-0 z-100 w-(--sidebar-w) border-r-0 transition-[width] duration-200 ease-linear focus-view:hidden focus:outline-hidden data-[started=false]:-translate-x-full"
       >
         <FocusTarget target="sidebar" />
         <div className="relative flex h-full flex-row">
-          <div className="linear flex h-full w-(--icon-bar-w) flex-col overflow-hidden transition-[width] duration-200">
+          <div className="flex h-full w-(--icon-bar-w) flex-col overflow-hidden transition-[width] duration-200 ease-linear">
             <SidebarContent className="gap-1">
               <SidebarGroup className="p-0">
                 <SidebarGroupContent>
@@ -115,7 +101,9 @@ export function SidebarNav({ triggerNavItem }: SidebarNavProps) {
               </SidebarGroup>
             </SidebarContent>
             <SidebarFooter className="gap-2 p-0">
-              <Suspense>{DebugDropdown ? <DebugDropdown className="mx-2" /> : null}</Suspense>
+              <Suspense>
+                <DebugDropdown className="mx-2" />
+              </Suspense>
               <SidebarMenu className="gap-1">
                 <StopImpersonation isCollapsed={!isExpanded} />
                 {getFooterNavItems().map((navItem: NavItem) => (

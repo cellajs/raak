@@ -1,15 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { UniqueEnforcer } from 'enforce-unique';
-import {
-  MOCK_REF_DATE,
-  mockBatchResponse,
-  mockChannelColumns,
-  mockPaginated,
-  mockPastIsoDate,
-  mockTenantId,
-  mockUuid,
-  withFakerSeed,
-} from '#/mocks';
+import { MOCK_REF_DATE, mockBatchResponse, mockChannelColumns, mockPaginated, mockPastIsoDate, mockTenantId, mockUuid, withFakerSeed } from '#/mocks';
 import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
 import { mockMembershipBase } from '#/modules/memberships/memberships-mocks';
 import type { InsertProjectModel, ProjectModel } from '#/modules/project/project-db';
@@ -25,20 +16,10 @@ const projectName = new UniqueEnforcer();
  * @param organizationId - Parent organization ID
  */
 const generateProjectBase = (id: string, name: string, createdAt: string, organizationId: string, tenantId: string) => {
-  const publicAt = faker.datatype.boolean()
-    ? faker.date.between({ from: new Date(createdAt), to: MOCK_REF_DATE }).toISOString()
-    : null;
+  const publicAt = faker.datatype.boolean() ? faker.date.between({ from: new Date(createdAt), to: MOCK_REF_DATE }).toISOString() : null;
 
   return {
-    ...mockChannelColumns('project', {
-      id,
-      name,
-      createdAt,
-      updatedAt: createdAt,
-      tenantId,
-      publicAt,
-      channelIds: { organizationId },
-    }),
+    ...mockChannelColumns('project', { id, name, createdAt, updatedAt: createdAt, tenantId, publicAt, channelIds: { organizationId } }),
     organizationId,
   };
 };
@@ -58,13 +39,7 @@ export const mockProject = (suffix?: string): InsertProjectModel => {
  * Generates a mock project API response with deterministic seeding.
  * Adds API-only fields (membership, counts) to the base mock.
  */
-export const mockProjectResponse = (
-  key = 'project:default',
-): ProjectModel & {
-  included: {
-    membership: MembershipBaseModel;
-  };
-} =>
+export const mockProjectResponse = (key = 'project:default'): ProjectModel & { included: { membership: MembershipBaseModel } } =>
   withFakerSeed(key, () => {
     const createdAt = mockPastIsoDate();
     const projectId = mockUuid();
@@ -82,12 +57,7 @@ export const mockProjectResponse = (
       tenantId,
     });
 
-    return {
-      ...base,
-      included: {
-        membership,
-      },
-    };
+    return { ...base, included: { membership } };
   });
 
 export const mockPaginatedProjectsResponse = (count = 2) => mockPaginated(mockProjectResponse, count);

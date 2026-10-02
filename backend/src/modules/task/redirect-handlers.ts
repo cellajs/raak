@@ -27,11 +27,7 @@ const app = new OpenAPIHono<Env>({ defaultHook });
 
 /** Display name of a task's primary label (task type); falls back to 'Task'. */
 const getTaskType = async (primaryLabelId: string) => {
-  const [label] = await db()
-    .select({ name: labelsTable.name })
-    .from(labelsTable)
-    .where(eq(labelsTable.id, primaryLabelId))
-    .limit(1);
+  const [label] = await db().select({ name: labelsTable.name }).from(labelsTable).where(eq(labelsTable.id, primaryLabelId)).limit(1);
   return label?.name ?? 'Task';
 };
 
@@ -99,18 +95,10 @@ app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
       .where(eq(usersTable.id, task.createdBy as string));
   }
 
-  const png = await generateCover({
-    title: task.summary,
-    avatarUrl: createdByUser?.thumbnailUrl || '',
-    name: createdByUser?.name || '',
-  });
+  const png = await generateCover({ title: task.summary, avatarUrl: createdByUser?.thumbnailUrl || '', name: createdByUser?.name || '' });
 
   return new Response(Buffer.from(png), {
-    headers: {
-      'Content-Type': 'image/png',
-      'Content-Length': String(png.byteLength),
-      'Cache-Control': 'public, max-age=3600, immutable',
-    },
+    headers: { 'Content-Type': 'image/png', 'Content-Length': String(png.byteLength), 'Cache-Control': 'public, max-age=3600, immutable' },
   });
 });
 
@@ -123,11 +111,7 @@ app.openapi(taskRedirectRoutes.redirectToTask, async (ctx) => {
     .leftJoin(usersTable, eq(usersTable.id, tasksTable.createdBy))
     .where(and(eq(tasksTable.id, id), isNull(tasksTable.deletedAt)))
     .limit(1);
-  if (!taskRecord)
-    throw new AppError(404, 'not_found', 'warn', {
-      entityType: 'task',
-      willRedirect: true,
-    });
+  if (!taskRecord) throw new AppError(404, 'not_found', 'warn', { entityType: 'task', willRedirect: true });
 
   const { task, createdBy } = taskRecord;
   // Find a project to show the task in.
@@ -138,11 +122,7 @@ app.openapi(taskRedirectRoutes.redirectToTask, async (ctx) => {
     .limit(1);
 
   // No matching project found
-  if (!project)
-    throw new AppError(404, 'not_found', 'warn', {
-      entityType: 'project',
-      willRedirect: true,
-    });
+  if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project', willRedirect: true });
 
   const url = new URL(`${appConfig.frontendUrl}/t/${id}`);
   const redirectUrl = url.toString();
@@ -154,11 +134,7 @@ app.openapi(taskRedirectRoutes.redirectToTask, async (ctx) => {
   const now = new Date();
 
   const sameYear = createdAtDate.getFullYear() === now.getFullYear();
-  const formattedDate = createdAtDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    ...(sameYear ? {} : { year: 'numeric' }),
-  });
+  const formattedDate = createdAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
 
   const taskType = await getTaskType(task.primaryLabelId);
   const taskTitle = `${taskType} in ${project.name || 'Project'} - ${formattedDate}${createdBy ? ` by ${createdBy.name}` : ''}`;

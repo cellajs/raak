@@ -12,13 +12,7 @@ import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } f
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Button, type buttonVariants } from '~/modules/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '~/modules/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
@@ -36,22 +30,14 @@ export function WorkspaceActionButtons() {
   const { data: workspace } = useSuspenseQuery(
     workspaceQueryOptions(initialWorkspace.id, initialWorkspace.organizationId, initialWorkspace.tenantId),
   );
-  const { data: projectsData } = useSuspenseInfiniteQuery(
-    projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }),
-  );
+  const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
   const projects = flattenInfiniteData<Project>(projectsData);
-  const { projectSlug, q: searchQuery } = useSearch({
-    from: '/_app/$tenantId/$organizationSlug/workspace/$slug',
-  });
+  const { projectSlug, q: searchQuery } = useSearch({ from: '/_app/$tenantId/$organizationSlug/workspace/$slug' });
 
   const project: EnrichedProject | undefined = projects.find((p) => p.slug === projectSlug) || projects[0];
   const projectMembership = project?.membership;
 
-  const refs = {
-    add: useRef(null),
-    workspace: useRef(null),
-    project: useRef(null),
-  };
+  const refs = { add: useRef(null), workspace: useRef(null), project: useRef(null) };
 
   const openPreferencesSheet = () =>
     useSheeter.getState().create(
@@ -97,8 +83,8 @@ export function WorkspaceActionButtons() {
             {icon}
             {key === 'add' && (
               <>
-                <span className="ml-1 max-md:hidden xl:hidden">{t('c:add')}</span>
-                <span className="ml-1 max-xl:hidden">{label}</span>
+                <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
+                <span className="max-xl:hidden">{label}</span>
               </>
             )}
           </Button>

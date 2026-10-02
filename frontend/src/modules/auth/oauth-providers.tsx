@@ -65,11 +65,9 @@ export function OAuthProviders({ authStep = 'signIn' }: { authStep: AuthStep }) 
   if (appConfig.enabledOAuthProviders.length < 1) return null;
 
   return (
-    <div data-mode={mode} className="group flex flex-col space-y-2">
+    <div data-mode={mode} className="group flex flex-col gap-2">
       {appConfig.enabledOAuthProviders.map((provider) => {
-        const providerData = mapOAuthProviders.find(
-          (p): p is OAuthProvider & { id: typeof provider } => p.id === provider,
-        );
+        const providerData = mapOAuthProviders.find((p): p is OAuthProvider & { id: typeof provider } => p.id === provider);
 
         if (!providerData) return null;
 
@@ -79,14 +77,13 @@ export function OAuthProviders({ authStep = 'signIn' }: { authStep: AuthStep }) 
             key={provider}
             type="button"
             variant="plain"
-            className="gap-1"
             onClick={() => authenticateWithProvider(providerData.id)}
           >
             <img
               data-provider={provider}
               src={`/static/auth/${provider}-icon.svg`}
               alt={provider}
-              className="mr-1 size-4 data-[provider=github]:group-data-[mode=dark]:invert"
+              className="size-4 data-[provider=github]:group-data-[mode=dark]:invert"
               loading="lazy"
             />
             <span>

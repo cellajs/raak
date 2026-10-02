@@ -1,13 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
+import type { GenComponentSchema, GenInfoSummary, GenOperationDetail, GenOperationSummary, GenSchemaTagSummary, GenTagSummary } from 'sdk/docs-types';
 import { appConfig } from 'shared';
-import type {
-  GenComponentSchema,
-  GenInfoSummary,
-  GenOperationDetail,
-  GenOperationSummary,
-  GenSchemaTagSummary,
-  GenTagSummary,
-} from '~/modules/docs/types';
 
 /** Append the build SHA to a /static URL, so browser and service worker caches roll over per release. */
 export const versionedUrl = (url: string) => `${url}?v=${__APP_VERSION__}`;
@@ -104,9 +97,6 @@ export const schemaTagsQueryOptions = queryOptions({
 export const tagDetailsQueryOptions = (tagName: string) =>
   queryOptions({
     queryKey: docsKeys.tagDetails(tagName),
-    queryFn: () =>
-      tagName
-        ? fetchJson<GenOperationDetail[]>(`${docsBaseUrl}/details.gen/${tagName}.gen.json`)
-        : ([] as GenOperationDetail[]),
+    queryFn: () => (tagName ? fetchJson<GenOperationDetail[]>(`${docsBaseUrl}/details.gen/${tagName}.gen.json`) : ([] as GenOperationDetail[])),
     staleTime: Number.POSITIVE_INFINITY,
   });

@@ -26,9 +26,7 @@ export function parseArgs(argv: string[]): {
   const stack = getFlag(argv, '--stack');
   const sha = getFlag(argv, '--sha');
   if (!stack || !sha)
-    throw new Error(
-      'Usage: deploy-rollout.ts --stack <stack> --sha <git-sha> --primary-json <json> --rest-json <json> [--skip-reap]',
-    );
+    throw new Error('Usage: deploy-rollout.ts --stack <stack> --sha <git-sha> --primary-json <json> --rest-json <json> [--skip-reap]');
   return {
     primary: parseRolloutJson(primaryRaw, '--primary-json'),
     rest: parseRolloutJson(restRaw, '--rest-json'),
@@ -39,14 +37,8 @@ export function parseArgs(argv: string[]): {
 }
 
 /** Build the two-wave plan from the CI rollout matrices. */
-export function buildWavedPlan(args: {
-  primary: RolloutItem[];
-  rest: RolloutItem[];
-  sha: string;
-  skipReap?: boolean;
-}): WavedRolloutPlan {
-  if (args.primary.length > 1)
-    throw new Error(`Expected at most one primary rollout service, got ${args.primary.length}`);
+export function buildWavedPlan(args: { primary: RolloutItem[]; rest: RolloutItem[]; sha: string; skipReap?: boolean }): WavedRolloutPlan {
+  if (args.primary.length > 1) throw new Error(`Expected at most one primary rollout service, got ${args.primary.length}`);
   if (args.primary.length === 0) console.info('No primary rollout service configured: skipping wave 1.');
   const [primaryItem] = args.primary;
   return {
@@ -65,8 +57,7 @@ export async function main(
   process.env.APP_MODE ??= args.stack.split('/').pop();
   const { loadEngineConfig } = await import('../config/engine-config');
   await loadEngineConfig();
-  if (args.sha === 'latest' || args.sha.endsWith(':latest'))
-    throw new Error(`Refusing to deploy non-pinned image tag '${args.sha}'`);
+  if (args.sha === 'latest' || args.sha.endsWith(':latest')) throw new Error(`Refusing to deploy non-pinned image tag '${args.sha}'`);
   const plan = buildWavedPlan(args);
   await runWavedRollout(plan, makeRuntime({ stack: args.stack }));
 }

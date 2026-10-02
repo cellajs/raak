@@ -35,11 +35,7 @@ export function PanelDragHandleButton({ name, fallbackLabel, className, icon, ch
       ref={panelDrag?.registerHandle}
       className={cn(className, panelDrag && 'group/drag cursor-grab active:cursor-grabbing')}
       aria-roledescription={panelDrag ? t('c:sortable') : undefined}
-      aria-label={
-        panelDrag
-          ? t('c:sortable_position', { name, position: panelDrag.index + 1, total: panelDrag.total })
-          : fallbackLabel
-      }
+      aria-label={panelDrag ? t('c:sortable_position', { name, position: panelDrag.index + 1, total: panelDrag.total }) : fallbackLabel}
       onKeyDown={panelDrag?.onKeyDown}
       onClick={panelDrag?.onToggleCollapsed}
     >

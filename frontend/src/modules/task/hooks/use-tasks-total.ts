@@ -3,12 +3,7 @@ import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryKey } from '~/modules/task/public-query';
-import {
-  type BaseTasksQueryParam,
-  type TasksInfiniteQueryData,
-  taskKeys,
-  tasksTableQueryKey,
-} from '~/modules/task/query';
+import { type BaseTasksQueryParam, type TasksInfiniteQueryData, taskKeys, tasksTableQueryKey } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { isQueryData } from '~/query/basic/mutate-query';
 import { queryClient } from '~/query/query-client';
@@ -49,8 +44,7 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
 
         return queries.reduce((total, [, data]) => {
           if (!isQueryData<Task>(data)) return total;
-          if (searchQuery?.length)
-            return total + data.items.filter((task) => searchFilterFunction(search, task)).length;
+          if (searchQuery?.length) return total + data.items.filter((task) => searchFilterFunction(search, task)).length;
           return total + data.total;
         }, 0);
       }
@@ -69,10 +63,7 @@ export const useTasksTotal = (mode: 'board' | 'table', queryParams?: BaseTasksQu
       if (!queryData?.pages.length) return null;
 
       if (highlight) {
-        return queryData.pages.reduce(
-          (total, page) => total + page.items.filter((task) => searchFilterFunction(search, task)).length,
-          0,
-        );
+        return queryData.pages.reduce((total, page) => total + page.items.filter((task) => searchFilterFunction(search, task)).length, 0);
       }
 
       return queryData.pages[queryData.pages.length - 1].total;

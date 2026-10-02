@@ -26,10 +26,7 @@ interface TaskInteractionState {
   reset: () => void;
 }
 
-const initialState: Pick<
-  TaskInteractionState,
-  'selectedTaskIds' | 'selectedLabelIds' | 'focusedTaskId' | 'draftTasks'
-> = {
+const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedLabelIds' | 'focusedTaskId' | 'draftTasks'> = {
   selectedTaskIds: [],
   selectedLabelIds: [],
   focusedTaskId: null,

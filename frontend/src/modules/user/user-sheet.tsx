@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FlameKindlingIcon, ServerCrashIcon, WifiOffIcon } from 'lucide-react';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
-import { Spinner } from '~/modules/common/spinner';
+import { PageSpinner } from '~/modules/common/spinner';
 import { useUserStore } from '~/modules/user/user-store';
 import { userQueryOptions } from './query';
 import { UserProfilePage as UserProfile } from './user-profile';
@@ -12,24 +12,13 @@ export function UserSheet({ id, organizationId }: { id: string; organizationId: 
   const currentUser = useUserStore((state) => state.user);
   const isSelf = currentUser?.id === id;
 
-  const {
-    data: user,
-    isLoading,
-    isError,
-  } = useQuery({
-    ...userQueryOptions(id),
-  });
+  const { data: user, isLoading, isError } = useQuery({ ...userQueryOptions(id) });
 
-  if (isLoading) return <Spinner className="mt-[45vh] h-10 w-10" />;
+  if (isLoading) return <PageSpinner />;
   if (isError) return <ContentPlaceholder icon={ServerCrashIcon} title="error:request_failed" />;
 
   if (!user)
-    return (
-      <ContentPlaceholder
-        icon={isOnline ? FlameKindlingIcon : WifiOffIcon}
-        title={`${isOnline ? 'error:no_user_found' : 'c:offline.text'}`}
-      />
-    );
+    return <ContentPlaceholder icon={isOnline ? FlameKindlingIcon : WifiOffIcon} title={isOnline ? 'error:no_user_found' : 'c:offline.text'} />;
 
   return <UserProfile user={user} organizationId={isSelf ? undefined : organizationId} isSheet />;
 }

@@ -41,13 +41,16 @@ export function FocusView({ className = '', iconOnly }: FocusViewProps) {
     <TooltipButton toolTipContent={t('c:focus_view')} disabled={!iconOnly} className="max-lg:hidden">
       <Button variant={'outline'} className={cn('flex max-lg:hidden', className)} onClick={toggleFocus}>
         {focusView ? <ShrinkIcon /> : <ExpandIcon />}
-        {!iconOnly && <span className="ml-1">{focusView ? t('c:leave_focus_view') : t('c:focus_view')}</span>}
+        {!iconOnly && <span>{focusView ? t('c:leave_focus_view') : t('c:focus_view')}</span>}
       </Button>
     </TooltipButton>
   );
 }
 
-/** Applies focus view styles while the mode is active. Wraps the page's main content. */
+/**
+ * Wraps the page's main content. While focus view is active, everything else in the enclosing `.focus-view-scope`
+ * is hidden; chrome outside a scope opts in with the `focus-view:hidden` variant.
+ */
 export function FocusViewContainer({ children, className = '', disabled }: FocusViewContainerProps) {
   const focusView = useUIStore((state) => state.focusView);
 
@@ -60,7 +63,7 @@ export function FocusViewContainer({ children, className = '', disabled }: Focus
       className={cn(
         'focus-view-container container flex min-h-svh flex-col gap-2 pt-3',
         className,
-        isActive ? 'focused min-h-full w-full min-w-full max-w-none' : '',
+        isActive && 'min-h-full w-full min-w-full max-w-none',
       )}
     >
       {children}

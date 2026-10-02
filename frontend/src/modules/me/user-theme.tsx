@@ -27,19 +27,14 @@ function ThemeDropdownContent({ items, isMobile }: { items: ThemeItem[]; isMobil
       {items.map((item) => (
         <div key={item.key}>
           {item.separator && <div className="my-1 border-t" />}
-          <DropdownActionItem
-            isMobile={isMobile}
-            variant="ghost"
-            className="w-full justify-between gap-4"
-            onSelect={item.onSelect}
-          >
+          <DropdownActionItem isMobile={isMobile} variant="ghost" className="w-full justify-between gap-4" onSelect={item.onSelect}>
             <span className="flex items-center gap-2">
               <span className={item.iconClass} style={item.iconStyle}>
                 <item.icon />
               </span>
               {item.label}
             </span>
-            <CheckIcon className={`text-success ${item.checked ? 'visible' : 'invisible'}`} />
+            <CheckIcon className={cn('text-success', item.checked ? 'visible' : 'invisible')} />
           </DropdownActionItem>
         </div>
       ))}
@@ -74,7 +69,7 @@ export function UserTheme({ buttonClassName = '' }: UserThemeProps) {
         aria-label="changeTheme"
         onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
       >
-        {mode === 'light' ? <SunIcon className="icon-lg" /> : <MoonIcon className="icon-lg" />}
+        {mode === 'light' ? <SunIcon className="size-5" /> : <MoonIcon className="size-5" />}
       </Button>
     );
   }
@@ -136,7 +131,7 @@ export function UserTheme({ buttonClassName = '' }: UserThemeProps) {
       aria-label="Change theme"
       onClick={openDropdown}
     >
-      {mode === 'light' ? <SunIcon className="icon-lg" /> : <MoonIcon className="icon-lg" />}
+      {mode === 'light' ? <SunIcon className="size-5" /> : <MoonIcon className="size-5" />}
     </Button>
   );
 }

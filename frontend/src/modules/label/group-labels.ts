@@ -26,22 +26,13 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
     const aggregates = {
       usedCount: (existing.usedCount ?? 0) + (label.usedCount ?? 0),
       siblingIds: [...existing.siblingIds, label.id],
-      projectIds: existing.projectIds.includes(label.projectId)
-        ? existing.projectIds
-        : [...existing.projectIds, label.projectId],
+      projectIds: existing.projectIds.includes(label.projectId) ? existing.projectIds : [...existing.projectIds, label.projectId],
     };
-    const preferNew =
-      !!opts.preferredProjectId &&
-      label.projectId === opts.preferredProjectId &&
-      existing.projectId !== opts.preferredProjectId;
+    const preferNew = !!opts.preferredProjectId && label.projectId === opts.preferredProjectId && existing.projectId !== opts.preferredProjectId;
     rowMap.set(groupKey, preferNew ? { ...label, ...aggregates } : { ...existing, ...aggregates });
   }
 
-  return Array.from(rowMap.values(), (row) => ({
-    ...row,
-    nameLower: row.name.toLowerCase(),
-    keywordsLower: row.keywords.toLowerCase(),
-  }));
+  return Array.from(rowMap.values(), (row) => ({ ...row, nameLower: row.name.toLowerCase(), keywordsLower: row.keywords.toLowerCase() }));
 };
 
 /** The group row containing a given label id, if any (matched through its slug siblings). */

@@ -56,12 +56,7 @@ export async function probeRoleCapabilities(): Promise<RoleCapabilities | null> 
       replication: row.superuser || row.replication,
     };
     if (!current.rlsBypass || !current.replication) {
-      log.error(
-        'CDC database role cannot bypass RLS on every table or open the slot; seq stamping or replication will fail',
-        {
-          ...current,
-        },
-      );
+      log.error('CDC database role cannot bypass RLS on every table or open the slot; seq stamping or replication will fail', { ...current });
     }
     return current;
   } catch (err) {

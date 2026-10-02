@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider } from '@tanstack/react-router';
 import { BookmarkIcon, InfoIcon, SettingsIcon, ShieldIcon, Trash2Icon } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
+import { expect, waitFor } from 'storybook/test';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
 import { getSection, scrollToSectionById } from '~/hooks/use-scroll-spy-store';
 import { Button } from '~/modules/ui/button';
@@ -30,15 +31,7 @@ const tabs: SidebarTab[] = [
 
 // ─── AsideAnchor (mirrors ~/modules/common/aside-anchor.tsx) ─────────────────
 
-const AsideAnchor = ({
-  id,
-  children,
-  extraOffset,
-}: {
-  id: string;
-  children?: React.ReactNode;
-  extraOffset?: boolean;
-}) => (
+const AsideAnchor = ({ id, children, extraOffset }: { id: string; children?: React.ReactNode; extraOffset?: boolean }) => (
   <div id={`spy-${id}-anchor-wrap`} className="last:mb-12 md:last:mb-[70vh]">
     <div id={`spy-${id}`} className={cn('absolute w-[.05rem]', extraOffset ? '-mt-16 h-16' : '-mt-8 h-8')} />
     {children}
@@ -53,8 +46,8 @@ const SectionCard = ({ id, title, lines = 8 }: { id: string; title: string; line
       <h2 className="mb-4 font-semibold text-xl">{title}</h2>
       {Array.from({ length: lines }, (_, i) => (
         <p key={i} className="mb-3 text-muted-foreground leading-relaxed">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+          veniam, quis nostrud exercitation ullamco.
         </p>
       ))}
     </div>
@@ -72,11 +65,7 @@ const SidebarWithRouter = () => (
         variant="ghost"
         size="lg"
         data-spy-link={id}
-        className={cn(
-          'w-full justify-start text-left hover:bg-accent/50',
-          id.includes('delete') && 'text-red-600',
-          'data-spy-active:bg-secondary',
-        )}
+        className={cn('w-full justify-start text-left hover:bg-accent/50', id.includes('delete') && 'text-red-600', 'data-spy-active:bg-secondary')}
         render={
           <Link
             to="."
@@ -90,7 +79,7 @@ const SidebarWithRouter = () => (
           />
         }
       >
-        <Icon className="mr-2 size-5" /> {label}
+        <Icon className="size-5" /> {label}
       </Button>
     ))}
   </div>
@@ -199,11 +188,7 @@ const TestPanel = () => {
         <button type="button" className="rounded border px-2 py-1 text-xs hover:bg-accent/50" onClick={checkState}>
           Check state
         </button>
-        <button
-          type="button"
-          className="ml-auto rounded border px-2 py-1 text-xs hover:bg-accent/50"
-          onClick={() => setLog([])}
-        >
+        <button type="button" className="ml-auto rounded border px-2 py-1 text-xs hover:bg-accent/50" onClick={() => setLog([])}>
           Clear
         </button>
       </div>
@@ -212,10 +197,7 @@ const TestPanel = () => {
       <div ref={logRef} className="max-h-32 space-y-0.5 overflow-y-auto rounded bg-background/50 p-2 font-mono">
         {log.length === 0 && <div className="text-muted-foreground">Click a button or scroll manually…</div>}
         {log.map((entry, i) => (
-          <div
-            key={i}
-            className={entry.startsWith('✗') ? 'text-red-500' : entry.startsWith('✓') ? 'text-green-600' : ''}
-          >
+          <div key={i} className={entry.startsWith('✗') ? 'text-red-500' : entry.startsWith('✓') ? 'text-green-600' : ''}>
             {entry}
           </div>
         ))}
@@ -226,22 +208,12 @@ const TestPanel = () => {
 
 // ─── Full page layout ────────────────────────────────────────────────────────
 
-const ScrollSpyPage = ({
-  withRouter = true,
-  label,
-  showTests,
-}: {
-  withRouter?: boolean;
-  label?: string;
-  showTests?: boolean;
-}) => (
+const ScrollSpyPage = ({ withRouter = true, label, showTests }: { withRouter?: boolean; label?: string; showTests?: boolean }) => (
   <div className="min-h-svh bg-background text-foreground">
     {/* Sticky header */}
     <div className="sticky top-0 z-10 border-b bg-background/95 p-3 backdrop-blur">
       <h1 className="font-semibold text-base">{label ?? 'Scroll Spy Test'}</h1>
-      <p className="text-muted-foreground text-xs">
-        {withRouter ? 'TanStack Router (production-like)' : 'No Router (isolation)'}
-      </p>
+      <p className="text-muted-foreground text-xs">{withRouter ? 'TanStack Router (production-like)' : 'No Router (isolation)'}</p>
     </div>
 
     <div className="flex">
@@ -285,12 +257,7 @@ const createStoryRouter = (label: string, showTests?: boolean) => {
     ),
   });
 
-  const catchAllRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '$',
-    staticData: { isAuth: false },
-    component: () => null,
-  });
+  const catchAllRoute = createRoute({ getParentRoute: () => rootRoute, path: '$', staticData: { isAuth: false }, component: () => null });
 
   return createRouter({
     routeTree: rootRoute.addChildren([catchAllRoute]),
@@ -348,4 +315,75 @@ export const WithRouter: Story = {
 /** Interactive test: scroll-to buttons, cycle test, and state checker. */
 export const Interactive: Story = {
   render: () => <WithRouterWrapper label="Interactive Test" showTests />,
+};
+
+// ─── Section rules ───────────────────────────────────────────────────────────
+
+const ruleIds = ['intro', 'first', 'pinned', 'next'];
+
+/** Two short anchors at the top and two near the end, so each pair sits past the trigger line together. */
+const RulesPage = () => {
+  useScrollSpy(ruleIds);
+  return (
+    <div>
+      <div id="spy-intro" className="h-10">
+        intro
+      </div>
+      <div id="spy-first" className="h-10">
+        first
+      </div>
+      <div className="h-[250vh]" />
+      <div id="spy-pinned" className="h-10">
+        pinned
+      </div>
+      <div id="spy-next" className="h-10">
+        next
+      </div>
+      <div className="h-screen" />
+    </div>
+  );
+};
+
+/** A section a scroll was sent to stays current while its neighbour is past the trigger too; back at the top, the topmost wins. */
+export const SectionRules: Story = {
+  render: () => <RulesPage />,
+  play: async () => {
+    scrollToSectionById('pinned');
+    await waitFor(() => expect(getSection()).toBe('pinned'));
+
+    // Past the programmatic block (an instant scroll blocks 500ms) and its re-evaluation
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    await expect(getSection()).toBe('pinned');
+
+    // A user scroll releases the pin; at the top, 'first' is past the trigger too but 'intro' is current
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    await waitFor(() => expect(getSection()).toBe('intro'));
+  },
+};
+
+const articleIds = ['article', 'first-heading', 'last-heading'];
+
+/** A docs page shape: a section wrapping the whole article, two headings, and a long last section. */
+const ArticlePage = () => {
+  useScrollSpy(articleIds);
+  return (
+    <div id="spy-article">
+      <div className="h-[50vh]" />
+      <h2 id="spy-first-heading">first heading</h2>
+      <div className="h-screen" />
+      <h2 id="spy-last-heading">last heading</h2>
+      <div className="h-[300vh]" />
+    </div>
+  );
+};
+
+/** After a jump past every heading, the last heading above stays current, even while the article is still in view. */
+export const LongJump: Story = {
+  render: () => <ArticlePage />,
+  play: async () => {
+    await waitFor(() => expect(getSection()).toBe('article'));
+
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+    await waitFor(() => expect(getSection()).toBe('last-heading'));
+  },
 };

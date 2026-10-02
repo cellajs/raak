@@ -5,9 +5,7 @@ import { toaster } from '~/modules/common/toaster/toaster';
 import { publicProjectQueryOptions } from '~/modules/project/query';
 import { queryClient } from '~/query/query-client';
 
-type PublicProjectRouteBeforeLoadArgs = {
-  params: { slug: string; tenantId: string; organizationSlug: string };
-};
+type PublicProjectRouteBeforeLoadArgs = { params: { slug: string; tenantId: string; organizationSlug: string } };
 
 /**
  * beforeLoad logic for the public project route.
@@ -23,12 +21,7 @@ export const publicProjectRouteBeforeLoad = async ({ params }: PublicProjectRout
     // Provide a minimal organization context so shared components
     // (board, table, cards) can access tenantId and organizationId
     // without requiring the authenticated OrganizationLayoutRoute.
-    const organization = {
-      id: project.organizationId,
-      slug: organizationSlug,
-      tenantId,
-      entityType: 'organization' as const,
-    } as Organization;
+    const organization = { id: project.organizationId, slug: organizationSlug, tenantId, entityType: 'organization' as const } as Organization;
 
     return { project, tenantId, organization };
   } catch (err) {

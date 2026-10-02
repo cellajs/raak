@@ -35,16 +35,11 @@ export type DerivedDescriptionProps = {
  * extraction and HTML summary conversion are backend-only. Collected attachment ids
  * are narrowed to UUID shape so they can safely enter the uuid[] host column.
  */
-export const deriveDescriptionProps = async (
-  description: string,
-  preParsed?: ParsedBlock[],
-): Promise<DerivedDescriptionProps> => {
+export const deriveDescriptionProps = async (description: string, preParsed?: ParsedBlock[]): Promise<DerivedDescriptionProps> => {
   const blocks: ParsedBlock[] = preParsed ?? (description ? JSON.parse(description) : []);
 
   // attachmentCount is a client-side presentation stat (attachments.length); the row persists none.
-  const { attachmentCount: _attachmentCount, ...counts } = blocks.length
-    ? countDescriptionBlocks(blocks)
-    : emptyDescriptionCounts();
+  const { attachmentCount: _attachmentCount, ...counts } = blocks.length ? countDescriptionBlocks(blocks) : emptyDescriptionCounts();
   counts.attachments = counts.attachments.filter((id) => validUuidSchema.safeParse(id).success);
 
   const result: DerivedDescriptionProps = { summary: '', summaryLength: 0, keywords: '', ...counts };

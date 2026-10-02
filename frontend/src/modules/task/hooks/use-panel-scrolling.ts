@@ -86,9 +86,7 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
   const icedBoundaryIndex = useMemo(() => tasks.findIndex((t) => t.status === TaskStatus.Iced), [tasks]);
 
   // Pending scroll action set by section toggle, consumed by the effect below
-  const pendingScrollRef = useRef<
-    { action: 'accepted-open' | 'iced-open' } | { action: 'accepted-close'; anchorTaskId: string | null } | null
-  >(null);
+  const pendingScrollRef = useRef<{ action: 'accepted-open' | 'iced-open' } | { action: 'accepted-close'; anchorTaskId: string | null } | null>(null);
 
   const handleSectionToggle = useCallback((expanded: boolean, type: TogglableStatusType) => {
     if (type === 'iced') {
@@ -105,10 +103,7 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
     const virtualizer = virtualizerRef.current;
     const startIndex = virtualizer ? virtualizer.findItemIndex(virtualizer.scrollOffset) : -1;
     const anchor = tasksRef.current[startIndex];
-    pendingScrollRef.current = {
-      action: 'accepted-close',
-      anchorTaskId: anchor && anchor.status !== TaskStatus.Accepted ? anchor.id : null,
-    };
+    pendingScrollRef.current = { action: 'accepted-close', anchorTaskId: anchor && anchor.status !== TaskStatus.Accepted ? anchor.id : null };
   }, []);
 
   // Execute pending scroll after the tasks list updates (new boundary indices are available)
@@ -177,10 +172,7 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
 
       // Check visibility of target index
       const startIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset) ?? 0;
-      const endIndex =
-        virtualizerRef.current?.findItemIndex(
-          virtualizerRef.current.scrollOffset + virtualizerRef.current.viewportSize,
-        ) ?? 0;
+      const endIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset + virtualizerRef.current.viewportSize) ?? 0;
       const targetIndexVisible = targetIndex > startIndex && targetIndex < endIndex;
 
       if (targetIndexVisible) return;
@@ -207,10 +199,7 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
 
     if (targetIndex <= 0) return;
     const startIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset) ?? 0;
-    const endIndex =
-      virtualizerRef.current?.findItemIndex(
-        virtualizerRef.current.scrollOffset + virtualizerRef.current.viewportSize,
-      ) ?? 0;
+    const endIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset + virtualizerRef.current.viewportSize) ?? 0;
     const targetIndexVisible = targetIndex >= startIndex && targetIndex <= endIndex;
 
     if (!targetIndexVisible) {

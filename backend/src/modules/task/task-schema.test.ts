@@ -6,18 +6,11 @@ import { taskCreateManyStxBodySchema, taskSchema, taskUpdateStxBodySchema } from
 const firstId = '00000000-0000-4000-8000-000000000001';
 const secondId = '00000000-0000-4000-8000-000000000002';
 const hlc = '100:0001:aaaaa';
-const stx = (fieldTimestamps: Record<string, string> = {}) => ({
-  mutationId: firstId,
-  sourceId: 'task-schema-test',
-  fieldTimestamps,
-});
+const stx = (fieldTimestamps: Record<string, string> = {}) => ({ mutationId: firstId, sourceId: 'task-schema-test', fieldTimestamps });
 
 describe('task mutation schemas', () => {
   it('accepts only declared task statuses on update', () => {
-    const validUpdate = {
-      ops: { status: TaskStatus.Started },
-      stx: stx({ status: hlc }),
-    };
+    const validUpdate = { ops: { status: TaskStatus.Started }, stx: stx({ status: hlc }) };
     expect(taskUpdateStxBodySchema.safeParse(validUpdate).success).toBe(true);
     expect(taskUpdateStxBodySchema.safeParse({ ...validUpdate, ops: { status: 999 } }).success).toBe(false);
   });

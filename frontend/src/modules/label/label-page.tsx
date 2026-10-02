@@ -7,12 +7,7 @@ import { useSearchParams } from '~/hooks/use-search-params';
 import { Spinner } from '~/modules/common/spinner';
 import { findLabelGroup } from '~/modules/label/group-labels';
 import { LabelFilterButton } from '~/modules/label/label-filter';
-import {
-  labelQueryOptions,
-  labelsQueryOptions,
-  useLabelDeleteMutation,
-  useLabelUpdateMutation,
-} from '~/modules/label/query';
+import { labelQueryOptions, labelsQueryOptions, useLabelDeleteMutation, useLabelUpdateMutation } from '~/modules/label/query';
 import type { LabelsScopeProps } from '~/modules/label/types';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { Badge } from '~/modules/ui/badge';
@@ -33,8 +28,7 @@ type LabelPageProps = LabelsScopeProps & { labelId: string; windowScroll?: boole
  */
 export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPageProps) {
   const { t } = useTranslation();
-  const { organization, tenantId } = useOrganizationLayoutContext();
-  const organizationId = organization.id;
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
 
   const { setSearch } = useSearchParams<{ labelPageId?: string }>({});
 
@@ -47,10 +41,7 @@ export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPage
     tenantId,
     modes: 'secondary,epic',
   });
-  const { data: allLabels } = useInfiniteQuery({
-    ...listOptions,
-    select: ({ pages }) => pages.flatMap(({ items }) => items),
-  });
+  const { data: allLabels } = useInfiniteQuery({ ...listOptions, select: ({ pages }) => pages.flatMap(({ items }) => items) });
 
   const siblingIds = useMemo(() => {
     if (!label) return [];
@@ -79,7 +70,7 @@ export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPage
     return (
       <div className="flex flex-col items-start gap-2 p-2">
         <Button variant="ghost" size="sm" onClick={goBack}>
-          <ArrowLeftIcon className="icon-sm" />
+          <ArrowLeftIcon className="size-3.5" />
           {t('c:back')}
         </Button>
         <span className="p-2 text-muted-foreground text-sm">{t('c:no_results')}</span>
@@ -110,9 +101,7 @@ export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPage
           <Switch
             id={`epic-switch-${label.id}`}
             checked={label.mode === 'epic'}
-            onCheckedChange={(checked) =>
-              updateLabel.mutate({ id: label.id, ops: { mode: checked ? 'epic' : 'secondary' } })
-            }
+            onCheckedChange={(checked) => updateLabel.mutate({ id: label.id, ops: { mode: checked ? 'epic' : 'secondary' } })}
             aria-label={t('c:epic')}
           />
           <label htmlFor={`epic-switch-${label.id}`} className="cursor-pointer select-none pl-1 text-sm leading-none">
@@ -144,7 +133,7 @@ export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPage
       {/* Rows carry their own inner padding (none outside) so bottom borders span full width */}
       <div className="flex items-center gap-1 border-b p-2">
         <Button variant="ghost" size="icon" aria-label={t('c:back')} onClick={goBack} className="shrink-0">
-          <ArrowLeftIcon className="icon-sm" />
+          <ArrowLeftIcon className="size-3.5" />
         </Button>
 
         {/* Edit and display boxes share height, padding and border so the swap causes no layout

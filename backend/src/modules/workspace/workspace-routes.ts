@@ -1,12 +1,8 @@
 import { createXRoute } from '#/core/x-routes';
-import { crossTenantGuard, orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
-import {
-  mockBatchWorkspacesResponse,
-  mockPaginatedWorkspacesResponse,
-  mockWorkspaceResponse,
-} from '#/modules/workspace/workspace-mocks';
+import { mockBatchWorkspacesResponse, mockPaginatedWorkspacesResponse, mockWorkspaceResponse } from '#/modules/workspace/workspace-mocks';
 import {
   workspaceCreateBodySchema,
   workspaceCreateResponseSchema,
@@ -41,22 +37,13 @@ const workspaceRoutes = {
       params: tenantOrgParamSchema,
       body: {
         required: true,
-        content: {
-          'application/json': {
-            schema: workspaceCreateBodySchema,
-          },
-        },
+        content: { 'application/json': { schema: workspaceCreateBodySchema } },
       },
     },
     responses: {
       201: {
         description: 'Workspaces created',
-        content: {
-          'application/json': {
-            schema: workspaceCreateResponseSchema,
-            example: mockBatchWorkspacesResponse(),
-          },
-        },
+        content: { 'application/json': { schema: workspaceCreateResponseSchema, example: mockBatchWorkspacesResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -67,7 +54,7 @@ const workspaceRoutes = {
   getWorkspaces: createXRoute({
     method: 'get',
     path: '/workspaces',
-    xGuard: [userGuard, crossTenantGuard],
+    xGuard: [userGuard],
     tags: ['workspaces', 'app', 'channel'],
     operationId: 'getWorkspaces',
     summary: 'Get list of workspaces',
@@ -81,12 +68,7 @@ const workspaceRoutes = {
     responses: {
       200: {
         description: 'Workspaces',
-        content: {
-          'application/json': {
-            schema: paginationSchema(workspaceSchema),
-            example: mockPaginatedWorkspacesResponse(),
-          },
-        },
+        content: { 'application/json': { schema: paginationSchema(workspaceSchema), example: mockPaginatedWorkspacesResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -102,10 +84,7 @@ const workspaceRoutes = {
     operationId: 'getWorkspace',
     summary: 'Get workspace',
     description: 'Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.',
-    request: {
-      params: idInTenantOrgParamSchema,
-      query: slugIncludeQuerySchema,
-    },
+    request: { params: idInTenantOrgParamSchema, query: slugIncludeQuerySchema },
     responses: {
       200: {
         description: 'Workspace',
@@ -127,22 +106,13 @@ const workspaceRoutes = {
       params: idInTenantOrgParamSchema,
       body: {
         required: true,
-        content: {
-          'application/json': {
-            schema: workspaceUpdateBodySchema,
-          },
-        },
+        content: { 'application/json': { schema: workspaceUpdateBodySchema } },
       },
     },
     responses: {
       200: {
         description: 'Workspace updated',
-        content: {
-          'application/json': {
-            schema: workspaceSchema,
-            example: mockWorkspaceResponse(),
-          },
-        },
+        content: { 'application/json': { schema: workspaceSchema, example: mockWorkspaceResponse() } },
       },
       ...errorResponseRefs,
     },

@@ -1,12 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { labelSlug } from 'shared/config/labels-config';
-import {
-  generateMockEntityChannelIdColumns,
-  mockBatchResponse,
-  mockPaginated,
-  mockProductColumns,
-  withFakerSeed,
-} from '#/mocks';
+import { generateMockEntityChannelIdColumns, mockBatchResponse, mockPaginated, mockProductColumns, withFakerSeed } from '#/mocks';
 import type { LabelModel } from '#/modules/label/label-db';
 
 /**
@@ -18,14 +12,7 @@ import type { LabelModel } from '#/modules/label/label-db';
  */
 export const mockLabel = (key = 'label:default', suffix?: string): LabelModel =>
   withFakerSeed(key, () => {
-    const baseName = faker.helpers.arrayElement([
-      'bug',
-      'feature',
-      'enhancement',
-      'documentation',
-      'urgent',
-      'low priority',
-    ]);
+    const baseName = faker.helpers.arrayElement(['bug', 'feature', 'enhancement', 'documentation', 'urgent', 'low priority']);
     const channelIds = generateMockEntityChannelIdColumns('label');
 
     const name = suffix ? `${baseName}-${suffix}` : baseName;

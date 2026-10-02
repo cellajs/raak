@@ -10,10 +10,7 @@ import { appTitle } from '~/utils/app-title';
  * Main project page with details and navigation.
  */
 export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/project/$slug')({
-  staticData: {
-    isAuth: true,
-    floatingNavButtons: { left: 'menu' },
-  },
+  staticData: { isAuth: true, floatingNavButtons: { left: 'menu' } },
   validateSearch: boardSearchSchema,
   // Absence means default: params equal to the default view are stripped from the URL
   search: { middlewares: [stripSearchParams(boardSearchDefaults)] },

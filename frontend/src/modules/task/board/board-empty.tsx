@@ -45,11 +45,7 @@ export function BoardEmpty({ workspace, publicView }: BoardEmptyProps) {
         titleProps={{ resource: t('c:project_other').toLowerCase() }}
       >
         <div className="max-md:mt-4">
-          {workspace && !publicView ? (
-            <AvailableProjectsEmptyAction workspace={workspace} fallback={createProjectAction} />
-          ) : (
-            createProjectAction
-          )}
+          {workspace && !publicView ? <AvailableProjectsEmptyAction workspace={workspace} fallback={createProjectAction} /> : createProjectAction}
         </div>
       </ContentPlaceholder>
     </div>

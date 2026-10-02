@@ -12,7 +12,12 @@ export type ChannelRouteEntry = {
   /** When shown as a subitem, navigate to a parent entity's route. */
   subitemOf?: { entityType: ChannelEntityType; searchParam: string };
   /** Search params a notification link on this channel opens with, e.g. a product's sheet id keyed by its entity type; the target route's `validateSearch` must declare them or the router strips them. */
-  notificationSearch?: (notification: { entityType: string; subjectId: string }) => Record<string, string>;
+  notificationSearch?: (notification: {
+    entityType: string;
+    subjectId: string;
+    /** Grouping context (a comment's host item); null when the subject is its own context. */
+    contextId: string | null;
+  }) => Record<string, string>;
 };
 
 /**
@@ -25,13 +30,9 @@ export const channelRouteConfig = {
     paramName: 'organizationSlug',
     defaultTabId: 'attachments',
     // The attachments tab reads `attachmentDialogId` and opens that attachment's dialog on top of the grid.
-    notificationSearch: ({ entityType, subjectId }): Record<string, string> =>
-      entityType === 'attachment' ? { attachmentDialogId: subjectId } : {},
+    notificationSearch: ({ entityType, subjectId }): Record<string, string> => (entityType === 'attachment' ? { attachmentDialogId: subjectId } : {}),
   },
-  workspace: {
-    path: '/$tenantId/$organizationSlug/workspace/$slug',
-    paramName: 'slug',
-  },
+  workspace: { path: '/$tenantId/$organizationSlug/workspace/$slug', paramName: 'slug' },
   project: {
     path: '/$tenantId/$organizationSlug/project/$slug',
     paramName: 'slug',

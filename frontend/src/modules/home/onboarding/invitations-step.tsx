@@ -39,19 +39,13 @@ export function InvitationsStep({ children }: { children?: ReactNode }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {invitations.length === 0 && <p className="font-normal text-sm opacity-80">{t('c:no_invitations_left.text')}</p>}
+      {invitations.length === 0 && <p className="font-normal text-muted-foreground text-sm">{t('c:no_invitations_left.text')}</p>}
 
       <ul className="flex flex-col gap-3">
         {invitations.map(({ entity, inactiveMembership }) => (
           <li key={inactiveMembership.id} className="flex items-center gap-3 max-sm:flex-col max-sm:items-stretch">
             <div className="flex min-w-0 grow items-center gap-3">
-              <EntityAvatar
-                type={entity.entityType}
-                className="size-10 shrink-0"
-                id={entity.id}
-                name={entity.name}
-                url={entity.thumbnailUrl}
-              />
+              <EntityAvatar type={entity.entityType} className="size-10 shrink-0" id={entity.id} name={entity.name} url={entity.thumbnailUrl} />
               <p className="min-w-0 text-sm">
                 {t('c:invite_accept_as_account.text', {
                   inviterName: inactiveMembership.createdBy?.name ?? t('c:unknown'),

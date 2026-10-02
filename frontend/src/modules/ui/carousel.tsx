@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
 import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import * as React from 'react';
+import { useLatestRef } from '~/hooks/use-latest-ref';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
 
@@ -49,13 +50,7 @@ function Carousel({
   children,
   ...props
 }: React.ComponentProps<'div'> & CarouselProps) {
-  const [carouselRef, api] = useEmblaCarousel(
-    {
-      ...opts,
-      axis: orientation === 'horizontal' ? 'x' : 'y',
-    },
-    plugins,
-  );
+  const [carouselRef, api] = useEmblaCarousel({ ...opts, axis: orientation === 'horizontal' ? 'x' : 'y' }, plugins);
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
   const [canScrollNext, setCanScrollNext] = React.useState(false);
 
@@ -73,19 +68,8 @@ function Carousel({
     api?.scrollNext();
   };
 
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      scrollPrev();
-    } else if (event.key === 'ArrowRight') {
-      event.preventDefault();
-      scrollNext();
-    }
-  };
-
   // setApi lives in a ref so an inline prop does not re-run this effect and re-register listeners.
-  const setApiRef = React.useRef(setApi);
-  setApiRef.current = setApi;
+  const setApiRef = useLatestRef(setApi);
   React.useEffect(() => {
     if (!api) return;
     setApiRef.current?.(api);
@@ -103,19 +87,26 @@ function Carousel({
     };
   }, [api, onSelect]);
 
-  const handleMouseEnter = () => {
-    if (api && !isDialog) document.addEventListener('keydown', handleKeyDown);
-  };
-
-  const handleMouseLeave = () => {
-    if (!isDialog) document.removeEventListener('keydown', handleKeyDown);
-  };
+  // Arrow keys page the carousel in a dialog, or while the pointer or focus is inside it; text fields keep their arrows.
+  const [pointerInside, setPointerInside] = React.useState(false);
+  const [focusInside, setFocusInside] = React.useState(false);
+  const arrowKeysActive = !!api && (isDialog || pointerInside || focusInside);
 
   React.useEffect(() => {
-    if (!api) return;
-    if (isDialog) document.addEventListener('keydown', handleKeyDown);
+    if (!api || !arrowKeysActive) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        api.scrollPrev();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        api.scrollNext();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [api]);
+  }, [api, arrowKeysActive]);
 
   return (
     <CarouselContext.Provider
@@ -131,8 +122,12 @@ function Carousel({
       }}
     >
       <div
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onMouseEnter={() => setPointerInside(true)}
+        onMouseLeave={() => setPointerInside(false)}
+        onFocus={() => setFocusInside(true)}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusInside(false);
+        }}
         className={cn('relative', className)}
         role="region"
         aria-roledescription="carousel"
@@ -169,12 +164,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function CarouselPrevious({
-  className,
-  variant = 'outline',
-  size = 'icon',
-  ...props
-}: React.ComponentProps<typeof Button>) {
+function CarouselPrevious({ className, variant = 'outline', size = 'icon', ...props }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
   return (
@@ -184,9 +174,7 @@ function CarouselPrevious({
       size={size}
       className={cn(
         'absolute size-8 rounded-full',
-        orientation === 'horizontal'
-          ? 'top-1/2 -left-12 -translate-y-1/2'
-          : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
+        orientation === 'horizontal' ? 'top-1/2 -left-12 -translate-y-1/2' : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
         className,
       )}
       disabled={!canScrollPrev}
@@ -199,12 +187,7 @@ function CarouselPrevious({
   );
 }
 
-function CarouselNext({
-  className,
-  variant = 'outline',
-  size = 'icon',
-  ...props
-}: React.ComponentProps<typeof Button>) {
+function CarouselNext({ className, variant = 'outline', size = 'icon', ...props }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollNext, canScrollNext } = useCarousel();
 
   return (
@@ -214,9 +197,7 @@ function CarouselNext({
       size={size}
       className={cn(
         'absolute size-8 rounded-full',
-        orientation === 'horizontal'
-          ? 'top-1/2 -right-12 -translate-y-1/2'
-          : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
+        orientation === 'horizontal' ? 'top-1/2 -right-12 -translate-y-1/2' : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
         className,
       )}
       disabled={!canScrollNext}
@@ -231,21 +212,10 @@ function CarouselNext({
 
 const dotsVariants = cva('rounded-full transition-all duration-300', {
   variants: {
-    size: {
-      default: 'h-5 w-5 text-xs',
-      sm: 'h-6 w-6 text-sm',
-      lg: 'h-7 w-7 text-md',
-    },
-    gap: {
-      default: 'mx-1',
-      sm: 'mx-1',
-      lg: 'mx-1',
-    },
+    size: { default: 'size-5 text-xs', sm: 'size-6 text-sm', lg: 'size-7 text-md' },
+    gap: { default: 'mx-1', sm: 'mx-1', lg: 'mx-1' },
   },
-  defaultVariants: {
-    size: 'default',
-    gap: 'default',
-  },
+  defaultVariants: { size: 'default', gap: 'default' },
 });
 
 interface CarouselDotsProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof dotsVariants> {}
@@ -257,11 +227,12 @@ function CarouselDots({ className, size, gap, ...props }: CarouselDotsProps) {
 
   React.useEffect(() => {
     if (!api) return;
-    setCurrent(api.selectedScrollSnap());
-    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    onSelect();
+    api.on('select', onSelect);
 
     return () => {
-      api?.off('select', () => setCurrent(api.selectedScrollSnap()));
+      api.off('select', onSelect);
     };
   }, [api]);
 

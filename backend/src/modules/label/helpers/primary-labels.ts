@@ -21,13 +21,7 @@ interface BuildPrimaryLabelRowsOpts {
  * setupConfig entries. Array order becomes displayOrder; the first row is the default
  * primary label for new tasks in the project.
  */
-export const buildPrimaryLabelRows = ({
-  entries,
-  projectId,
-  organizationId,
-  tenantId,
-  createdBy,
-}: BuildPrimaryLabelRowsOpts): InsertLabelModel[] => {
+export const buildPrimaryLabelRows = ({ entries, projectId, organizationId, tenantId, createdBy }: BuildPrimaryLabelRowsOpts): InsertLabelModel[] => {
   const createdAt = getIsoDate();
   return entries.map((entry, index) => ({
     entityType: 'label' as const,
@@ -57,18 +51,13 @@ interface PropagateSetupConfigLabelsOpts {
  * Live primary labels for a set of projects, ordered by displayOrder (default first).
  * Must run inside a tenant context (labels are FORCE-RLS).
  */
-export const findLivePrimaryLabels = async (
-  ctx: DbContext,
-  { projectIds }: { projectIds: string[] },
-): Promise<LabelModel[]> => {
+export const findLivePrimaryLabels = async (ctx: DbContext, { projectIds }: { projectIds: string[] }): Promise<LabelModel[]> => {
   if (projectIds.length === 0) return [];
   const { db } = ctx.var;
   return db
     .select()
     .from(labelsTable)
-    .where(
-      and(inArray(labelsTable.projectId, projectIds), eq(labelsTable.mode, 'primary'), isNull(labelsTable.deletedAt)),
-    )
+    .where(and(inArray(labelsTable.projectId, projectIds), eq(labelsTable.mode, 'primary'), isNull(labelsTable.deletedAt)))
     .orderBy(asc(labelsTable.displayOrder));
 };
 
@@ -174,14 +163,7 @@ export const propagateSetupConfigLabels = async (
   for (const entry of entries) {
     await db
       .update(labelsTable)
-      .set({
-        name: entry.name,
-        color: entry.color,
-        icon: entry.icon,
-        updatedAt,
-        updatedBy,
-        stx: sql`stx - 'changedFields'`,
-      })
+      .set({ name: entry.name, color: entry.color, icon: entry.icon, updatedAt, updatedBy, stx: sql`stx - 'changedFields'` })
       .where(
         and(
           eq(labelsTable.organizationId, organizationId),

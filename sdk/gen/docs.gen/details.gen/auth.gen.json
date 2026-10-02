@@ -780,10 +780,7 @@
           },
           "contentType": "application/json"
         },
-        "example": {
-          "totpUri": "otpauth://totp/App:user@example.com?secret=EXAMPLE-BASE32-KEY&issuer=App",
-          "manualKey": "EXAMPLE-BASE32-KEY"
-        }
+        "example": { "totpUri": "otpauth://totp/App:user@example.com?secret=EXAMPLE-BASE32-KEY&issuer=App", "manualKey": "EXAMPLE-BASE32-KEY" }
       },
       {
         "status": 400,
@@ -1628,7 +1625,7 @@
     "request": {
       "query": {
         "properties": {
-          "code": { "type": "string", "required": true },
+          "code": { "type": "string", "required": false },
           "state": { "type": "string", "required": true },
           "error": { "type": "string", "required": false },
           "error_description": { "type": "string", "required": false },
@@ -1687,8 +1684,11 @@
     "request": {
       "query": {
         "properties": {
-          "code": { "type": "string", "required": true },
-          "state": { "type": "string", "required": true }
+          "code": { "type": "string", "required": false },
+          "state": { "type": "string", "required": true },
+          "error": { "type": "string", "required": false },
+          "error_description": { "type": "string", "required": false },
+          "error_uri": { "type": "string", "required": false }
         }
       }
     }
@@ -1743,8 +1743,11 @@
     "request": {
       "query": {
         "properties": {
-          "code": { "type": "string", "required": true },
-          "state": { "type": "string", "required": true }
+          "code": { "type": "string", "required": false },
+          "state": { "type": "string", "required": true },
+          "error": { "type": "string", "required": false },
+          "error_description": { "type": "string", "required": false },
+          "error_uri": { "type": "string", "required": false }
         }
       }
     }

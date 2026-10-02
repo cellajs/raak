@@ -10,7 +10,6 @@ import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { PopConfirm } from '~/modules/common/popconfirm';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
@@ -63,15 +62,8 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
             isMobile={isMobile}
             icon={Maximize2Icon}
             onSelect={() => {
-              // Bring focus back to the options trigger when the sheet closes
-              useSheeter.getState().setTriggerRef(task.id, triggerRef);
               focusTask(null);
-              navigate({
-                to: '.',
-                resetScroll: false,
-                replace: false,
-                search: (prev) => ({ ...prev, taskSheetId: task.id }),
-              });
+              navigate({ to: '.', resetScroll: false, replace: false, search: (prev) => ({ ...prev, taskSheetId: task.id }) });
               useDropdowner.getState().remove();
             }}
           >
@@ -98,13 +90,7 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
         >
           {t('c:copy_as_link')}
         </DropdownActionItem>
-        <DropdownActionItem
-          isMobile={isMobile}
-          icon={TrashIcon}
-          variant="destructive"
-          onSelect={handleDeleteClick}
-          closeOnSelect={false}
-        >
+        <DropdownActionItem isMobile={isMobile} icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
           {t('c:delete')}
         </DropdownActionItem>
       </>,
@@ -135,15 +121,8 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
                 className="h-6 w-6 text-xs max-sm:hidden"
               />
             </TooltipButton>
-            <TooltipButton
-              toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`}
-              side="bottom"
-              sideOffset={5}
-              hideWhenDetached
-            >
-              <span className="ml-1 text-center text-xs opacity-50">
-                {isOnline ? relativeDate : t('c:update_on_online')}
-              </span>
+            <TooltipButton toolTipContent={`${t('c:created_at')} ${dateShort(task.createdAt)}`} side="bottom" sideOffset={5} hideWhenDetached>
+              <span className="ml-1 text-center text-xs opacity-50">{isOnline ? relativeDate : t('c:update_on_online')}</span>
             </TooltipButton>
           </>
         )}
@@ -159,7 +138,7 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
               className="h-8 w-8 data-dropdowner-active:bg-accent/50"
               size="xs"
             >
-              <EllipsisVerticalIcon className="icon-sm" />
+              <EllipsisVerticalIcon className="size-3.5" />
             </Button>
           </TooltipButton>
 

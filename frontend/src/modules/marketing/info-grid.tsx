@@ -4,7 +4,8 @@ import type { TKey } from '~/lib/i18n-locales';
 import { ExpandableList } from '~/modules/common/expandable-list';
 import type { IconComponent } from '~/modules/common/icons/types';
 import { Badge } from '~/modules/ui/badge';
-import { useUIStore } from '~/modules/ui/ui-store';
+import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 export type InfoGridItem<C extends string = string> = {
   id: string;
@@ -30,12 +31,12 @@ function InfoTile({ id, namespace, layers, image, invertClassName, tileClassName
 
   if (image) {
     return (
-      <div className={`relative overflow-hidden rounded-lg ${tileClassName} p-2`}>
+      <div className={cn('relative overflow-hidden rounded-lg p-2', tileClassName)}>
         <div className="flex h-44 flex-col justify-between gap-2 rounded-md p-6">
           <img
             src={`/static/marketing/features/${id}.svg`}
             alt={t(title)}
-            className={`mb-2 h-8 w-8 object-contain ${invertClassName ?? ''}`}
+            className={cn('mb-2 size-8 object-contain', invertClassName)}
             loading="lazy"
           />
           <h3 className="font-medium">{t(title)}</h3>
@@ -46,7 +47,7 @@ function InfoTile({ id, namespace, layers, image, invertClassName, tileClassName
   }
 
   return (
-    <div className={`rounded-lg ${tileClassName} p-6`}>
+    <div className={cn('rounded-lg p-6', tileClassName)}>
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="font-medium">{t(title)}</h3>
         {layers?.map((layer) => (
@@ -87,11 +88,9 @@ export function InfoGrid<C extends string>({
   image,
   tileClassName,
   expandable,
-  className = 'sm:grid-cols-2 md:grid-cols-3',
+  className = tw('sm:grid-cols-2 md:grid-cols-3'),
 }: InfoGridProps<C>) {
   const { t } = useTranslation();
-  const mode = useUIStore((state) => state.mode);
-  const invertClass = mode === 'dark' ? 'invert' : '';
   const isMediumScreen = useBreakpointAbove('md');
 
   const renderTile = (item: InfoGridItem<C>) => (
@@ -101,7 +100,7 @@ export function InfoGrid<C extends string>({
       namespace={namespace}
       layers={item.layers}
       image={image}
-      invertClassName={invertClass}
+      invertClassName="dark:invert"
       tileClassName={tileClassName}
     />
   );
@@ -117,6 +116,7 @@ export function InfoGrid<C extends string>({
       <div className="space-y-16">
         {categories.map((category) => {
           const CategoryIcon: IconComponent = categoryIcons[category];
+          const categoryItems = items.filter((item) => item.category === category);
           return (
             <div key={category}>
               {!hideCategoryHeader && (
@@ -125,9 +125,7 @@ export function InfoGrid<C extends string>({
                   {t(`about:${namespace}.category_${category}` as TKey)}
                 </h2>
               )}
-              <div className="grid gap-4 md:grid-cols-2">
-                {items.filter((item) => item.category === category).map(renderTile)}
-              </div>
+              <div className="grid gap-4 md:grid-cols-2">{categoryItems.map(renderTile)}</div>
             </div>
           );
         })}
@@ -137,7 +135,7 @@ export function InfoGrid<C extends string>({
 
   // Flat layout, optionally expandable.
   return (
-    <div className={`mx-auto grid max-w-5xl justify-center gap-4 ${className}`}>
+    <div className={cn('mx-auto grid max-w-5xl justify-center gap-4', className)}>
       {expandable ? (
         <ExpandableList<InfoGridItem<C>>
           items={items}

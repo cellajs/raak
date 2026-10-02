@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
-import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
+import { useScrolledPast } from '~/hooks/use-scrolled-past';
 import { GithubIcon } from '~/modules/common/icons/github';
 import { Logo } from '~/modules/common/logo';
 import type { AboutSectionId } from '~/modules/marketing/about/about-page';
@@ -22,9 +22,7 @@ export function MarketingNav() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isMobile = useBreakpointBelow('sm');
 
-  // Track scroll position for scroll-to-top button visibility (mobile floating nav)
-  const { scrollTop } = useScrollVisibility(isMobile);
-  const showScrollTop = scrollTop > 300;
+  const showScrollTop = useScrolledPast(300, isMobile);
 
   const closeDrawer = () => setDrawerOpen(false);
 
@@ -43,7 +41,6 @@ export function MarketingNav() {
           <Link
             to={url}
             hash={hash}
-            replace={location.pathname === '/about'}
             draggable={false}
             onClick={(e) => {
               if (!hash) {
@@ -74,28 +71,13 @@ export function MarketingNav() {
   };
 
   const floatingNavItems: FloatingNavItem[] = [
-    {
-      id: 'marketing-menu',
-      icon: MenuIcon,
-      onClick: () => setDrawerOpen((prev) => !prev),
-      ariaLabel: 'Toggle menu',
-      direction: 'left',
-    },
-    {
-      id: 'marketing-scroll-top',
-      icon: ArrowUpIcon,
-      onClick: scrollToTop,
-      ariaLabel: 'Scroll to top',
-      visible: showScrollTop,
-      direction: 'right',
-    },
+    { id: 'marketing-menu', icon: MenuIcon, onClick: () => setDrawerOpen((prev) => !prev), ariaLabel: 'Toggle menu', direction: 'left' },
+    { id: 'marketing-scroll-top', icon: ArrowUpIcon, onClick: scrollToTop, ariaLabel: 'Scroll to top', visible: showScrollTop, direction: 'right' },
   ];
 
   return (
     <>
-      {isMobile && (
-        <FloatingNav items={floatingNavItems} bodyClass="marketing-floating-nav" resetTrigger={drawerOpen} />
-      )}
+      {isMobile && <FloatingNav items={floatingNavItems} bodyClass="marketing-floating-nav" resetTrigger={drawerOpen} />}
 
       <header className="absolute top-2 z-20 h-16 w-full px-2 sm:top-4 lg:top-8 lg:px-4">
         <div className="mx-auto flex h-full max-w-336 items-center justify-between gap-2">
@@ -109,12 +91,7 @@ export function MarketingNav() {
             >
               <Logo height={36} />
 
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="12"
-                height="12"
-                className="absolute top-0.5 right-0.5 max-md:hidden"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="absolute top-0.5 right-0.5 max-md:hidden">
                 <title>We support Ukraine</title>
                 <g fill="none">
                   <path
@@ -129,9 +106,7 @@ export function MarketingNav() {
               </svg>
             </Link>
 
-            {marketingNavConfig?.length && (
-              <nav className="hidden h-full items-center gap-1 sm:flex md:gap-4">{renderNavItems()}</nav>
-            )}
+            {marketingNavConfig?.length && <nav className="hidden h-full items-center gap-1 sm:flex md:gap-4">{renderNavItems()}</nav>}
           </div>
 
           <div className="flex items-center gap-2 px-2">
@@ -147,7 +122,7 @@ export function MarketingNav() {
                 size="icon"
                 onClick={() => openInNewTab(appConfig.company.githubUrl)}
               >
-                <GithubIcon className="icon-xl" />
+                <GithubIcon className="size-6" />
               </Button>
             )}
 
@@ -174,7 +149,7 @@ export function MarketingNav() {
                   openInNewTab(appConfig.company.githubUrl);
                 }}
               >
-                <GithubIcon className="icon-xl mr-2" />
+                <GithubIcon className="size-6" />
                 Github
               </Button>
             )}

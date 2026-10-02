@@ -27,11 +27,7 @@ interface ProjectBoardPanelProps {
 export function ProjectBoardPanel({ project, publicView, sectionFilters, windowScroll }: ProjectBoardPanelProps) {
   const queryOpts = publicView
     ? publicTasksBoardQueryOptions(project.id)
-    : tasksCanonicalOptions({
-        organizationId: project.organizationId,
-        tenantId: project.tenantId,
-        projectId: project.id,
-      });
+    : tasksCanonicalOptions({ organizationId: project.organizationId, tenantId: project.tenantId, projectId: project.id });
 
   // Both option variants share the same data shape; widen key type via assertion
   const { data } = useSuspenseQuery(queryOpts as ReturnType<typeof tasksCanonicalOptions>);
@@ -44,10 +40,7 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
   // so a lit "+ Task" badge always corresponds to a visible form somewhere on the board.
   const hostSection = draftTask ? resolveDraftHostSection(viewSections, draftTask.status) : null;
   const hostsDraft =
-    !!draftTask &&
-    (sectionFilters
-      ? !!hostSection && makePanelKey(project.id, hostSection) === makePanelKey(project.id, sectionFilters)
-      : true);
+    !!draftTask && (sectionFilters ? !!hostSection && makePanelKey(project.id, hostSection) === makePanelKey(project.id, sectionFilters) : true);
 
   const projectTasksRef = useRef<Task[]>([]);
   const panelTasksRef = useRef<Task[]>([]);

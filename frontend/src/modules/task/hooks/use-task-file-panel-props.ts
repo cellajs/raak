@@ -16,12 +16,7 @@ export const useTaskFilePanelProps = (
 ) => {
   const isPublic = useProjectPublicity(projectId);
   return useMemo(
-    () => ({
-      mediaMode: isPublic ? ('public-attachment' as const) : ('private-attachment' as const),
-      tenantId,
-      organizationId,
-      onComplete,
-    }),
+    () => ({ mediaMode: isPublic ? ('public-attachment' as const) : ('private-attachment' as const), tenantId, organizationId, onComplete }),
     [isPublic, tenantId, organizationId, onComplete],
   );
 };

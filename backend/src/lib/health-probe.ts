@@ -23,10 +23,7 @@ async function runProbe(baseUrl: string): Promise<ProbeResult> {
   try {
     // WebSocket workers advertise ws(s):// URLs, but /health speaks plain HTTP and fetch() rejects the ws scheme
     const httpBase = baseUrl.replace(/^ws(s?):/, 'http$1:');
-    const res = await fetch(`${httpBase}/health?depth=full`, {
-      signal: controller.signal,
-      headers: { accept: 'application/json' },
-    });
+    const res = await fetch(`${httpBase}/health?depth=full`, { signal: controller.signal, headers: { accept: 'application/json' } });
     const latencyMs = Date.now() - startedAt;
     if (!res.ok) return { ok: false, latencyMs, reason: `http_${res.status}` };
     const body = (await res.json()) as Record<string, unknown>;
@@ -58,4 +55,10 @@ export function extractMcpDetails(body: Record<string, unknown>): Record<string,
   return { mode: body.mode ?? null };
 }
 
-export const workerUrls = { yjs: appConfig.yjsUrl, mcp: appConfig.mcpUrl };
+/** Curate the oauth worker's envelope into the status of each of its checks (database, signing key, invalidation). */
+export function extractOauthDetails(body: Record<string, unknown>): Record<string, unknown> {
+  const components = (body.components ?? {}) as Record<string, { status?: string }>;
+  return Object.fromEntries(Object.entries(components).map(([name, component]) => [name, component.status ?? null]));
+}
+
+export const workerUrls = { yjs: appConfig.yjsUrl, mcp: appConfig.mcpUrl, oauth: appConfig.oauthUrl };

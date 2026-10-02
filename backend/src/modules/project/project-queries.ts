@@ -46,9 +46,7 @@ interface DeleteProjectsByIdsOpts {
 export const deleteProjectsByIds = async (ctx: ActorContext, { ids }: DeleteProjectsByIdsOpts) => {
   const { db } = ctx.var;
   const { organizationId } = requestScope(ctx);
-  return db
-    .delete(projectsTable)
-    .where(and(inArray(projectsTable.id, ids), eq(projectsTable.organizationId, organizationId)));
+  return db.delete(projectsTable).where(and(inArray(projectsTable.id, ids), eq(projectsTable.organizationId, organizationId)));
 };
 
 interface FindMaxDisplayOrderOpts {
@@ -58,21 +56,12 @@ interface FindMaxDisplayOrderOpts {
 }
 
 /** Find the max displayOrder for a user's memberships in a workspace. */
-export const findMaxDisplayOrder = async (
-  ctx: DbContext,
-  { userId, channelType, workspaceId }: FindMaxDisplayOrderOpts,
-) => {
+export const findMaxDisplayOrder = async (ctx: DbContext, { userId, channelType, workspaceId }: FindMaxDisplayOrderOpts) => {
   const { db } = ctx.var;
   const [{ maxOrder }] = await db
     .select({ maxOrder: max(membershipsTable.displayOrder) })
     .from(membershipsTable)
-    .where(
-      and(
-        eq(membershipsTable.userId, userId),
-        eq(membershipsTable.channelType, channelType),
-        eq(membershipsTable.workspaceId, workspaceId),
-      ),
-    );
+    .where(and(eq(membershipsTable.userId, userId), eq(membershipsTable.channelType, channelType), eq(membershipsTable.workspaceId, workspaceId)));
   return maxOrder;
 };
 
@@ -83,10 +72,7 @@ interface DeleteProjectMembershipOpts {
   projectId: string;
 }
 
-export const deleteProjectMembership = async (
-  ctx: DbContext,
-  { membershipId, userId, channelId, projectId }: DeleteProjectMembershipOpts,
-) => {
+export const deleteProjectMembership = async (ctx: DbContext, { membershipId, userId, channelId, projectId }: DeleteProjectMembershipOpts) => {
   const { db } = ctx.var;
   return db
     .delete(membershipsTable)
@@ -129,8 +115,7 @@ interface FindProjectsPaginatedOpts {
 /** Get paginated list of projects with total count, membership, optional entity counts. */
 export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPaginatedOpts) => {
   const { db } = ctx.var;
-  const { userId, q, sort, order, offset, limit, organizationId, workspaceId, excludeArchived, role, includeCounts } =
-    opts;
+  const { userId, q, sort, order, offset, limit, organizationId, workspaceId, excludeArchived, role, includeCounts } = opts;
 
   const entityType = 'project';
 
@@ -165,12 +150,7 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
     sort,
     order,
     fallback: ['displayOrder', 'asc'],
-    columns: {
-      id: projectsTable.id,
-      name: projectsTable.name,
-      createdAt: projectsTable.createdAt,
-      displayOrder: membershipsTable.displayOrder,
-    },
+    columns: { id: projectsTable.id, name: projectsTable.name, createdAt: projectsTable.createdAt, displayOrder: membershipsTable.displayOrder },
     tieBreaker: projectsTable.id,
   });
 
@@ -188,10 +168,7 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   let query = db.select(selectShape).from(projectsTable).innerJoin(membershipsTable, membershipOn).$dynamic();
 
   if (countData) {
-    query = query.leftJoin(
-      channelCountersTable,
-      sql`${projectsTable.id}::text = ${channelCountersTable.channelKey}`,
-    ) as typeof query;
+    query = query.leftJoin(channelCountersTable, sql`${projectsTable.id}::text = ${channelCountersTable.channelKey}`) as typeof query;
   }
 
   const itemsQuery = query

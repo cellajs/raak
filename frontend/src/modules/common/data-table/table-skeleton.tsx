@@ -2,6 +2,7 @@ import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useMountedState } from '~/hooks/use-mounted-state';
 import { Skeleton } from '~/modules/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/modules/ui/table';
+import { cn } from '~/utils/cn';
 
 interface DataTableSkeletonProps {
   rowCount?: number;
@@ -26,21 +27,13 @@ export function DataTableSkeleton({
   const effectiveColumnCount = isMobile ? Math.min(columnCount, 3) : columnCount;
 
   return (
-    <div
-      className={`w-full space-y-3 overflow-auto transition-opacity duration-500 ${hasMounted ? 'opacity-100' : 'opacity-0'}`}
-    >
+    <div className={cn('w-full space-y-3 overflow-auto transition-opacity duration-500', hasMounted ? 'opacity-100' : 'opacity-0')}>
       <Table>
         <TableHeader>
           {Array.from({ length: 1 }).map((_, i) => (
             <TableRow key={i.toString()} className="hover:bg-transparent">
               {Array.from({ length: effectiveColumnCount }).map((_, j) => (
-                <TableHead
-                  key={j.toString()}
-                  style={{
-                    width: cellsWidths[j] ? cellsWidths[j] : 'auto',
-                    minWidth: shrinkTable ? cellsWidths[j] : 'auto',
-                  }}
-                >
+                <TableHead key={j.toString()} style={{ width: cellsWidths[j] || 'auto', minWidth: shrinkTable ? cellsWidths[j] : 'auto' }}>
                   <Skeleton className={'mt-2 mb-2 w-full'} style={{ height: `${renderCellHeight}px` }} />
                 </TableHead>
               ))}
@@ -51,13 +44,7 @@ export function DataTableSkeleton({
           {Array.from({ length: rowCount }).map((_, i) => (
             <TableRow key={i.toString()} className="hover:bg-transparent">
               {Array.from({ length: effectiveColumnCount }).map((_, j) => (
-                <TableCell
-                  key={j.toString()}
-                  style={{
-                    width: cellsWidths[j] ? cellsWidths[j] : 'auto',
-                    minWidth: shrinkTable ? cellsWidths[j] : 'auto',
-                  }}
-                >
+                <TableCell key={j.toString()} style={{ width: cellsWidths[j] || 'auto', minWidth: shrinkTable ? cellsWidths[j] : 'auto' }}>
                   <Skeleton className={'w-full'} style={{ height: `${renderCellHeight}px` }} />
                 </TableCell>
               ))}
