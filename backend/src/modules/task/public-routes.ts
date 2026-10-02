@@ -32,18 +32,11 @@ const publicTaskRoutes = {
     operationId: 'getPublicTasks',
     summary: 'Get public tasks',
     description: 'Returns a list of public tasks associated with a specific project. For publicly shared boards.',
-    request: {
-      query: taskListQueryBaseSchema.omit({ workspaceId: true }).extend({ projectId: z.string().max(maxLength.id) }),
-    },
+    request: { query: taskListQueryBaseSchema.omit({ workspaceId: true }).extend({ projectId: z.string().max(maxLength.id) }) },
     responses: {
       200: {
         description: 'Tasks',
-        content: {
-          'application/json': {
-            schema: paginationSchema(taskSchema),
-            example: mockTasksResponse(),
-          },
-        },
+        content: { 'application/json': { schema: paginationSchema(taskSchema), example: mockTasksResponse() } },
       },
       ...errorResponseRefs,
     },

@@ -1,36 +1,28 @@
-import { appConfig } from 'shared';
 import { baseDb } from '#/db/db';
 import { type ActivityEvent, activityBus, getEventData } from '#/lib/activity-bus';
-import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
-import { sendAccountSecurityEmail } from '#/modules/auth/general/helpers/send-account-security-email';
+import { sendSecurityInboxEmail } from '#/modules/auth/general/helpers/send-account-security-email';
 import { findUserById } from '#/modules/user/user-queries';
+import { utcStamp } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
-const securityEmailType = {
-  create: 'system-role-granted',
-  update: 'system-role-changed',
-  delete: 'system-role-revoked',
-} as const;
+const securityEmailType = { create: 'system-role-granted', update: 'system-role-changed', delete: 'system-role-revoked' } as const;
 
 /**
- * Every CDC-observed system-role change drops the user's cached sessions in every process, so the role (and the
- * impersonations it backs) holds only while it is granted, and notifies the security contact.
+ * Every CDC-observed system-role change notifies the security contact. The session listeners drop the user's cached
+ * sessions on the same event, so the role (and the impersonations it backs) holds only while granted.
  */
 const notifySystemRoleChange = async (event: ActivityEvent) => {
   const systemRole = getEventData(event, 'system_role');
   if (!systemRole) return;
 
   try {
-    // The role row is committed by the time CDC reports it: the message goes out on the pool.
-    await invalidateCache.user(baseDb, systemRole.userId);
-
     // On delete the user may already be cascade-deleted; fall back to the raw id
     const user = await findUserById({ var: { db: baseDb } }, { id: systemRole.userId });
 
-    sendAccountSecurityEmail({ email: appConfig.securityEmail, name: 'Security' }, securityEmailType[event.action], {
+    sendSecurityInboxEmail(securityEmailType[event.action], {
       role: systemRole.role,
       userEmail: user?.email ?? systemRole.userId,
-      timestamp: `${new Date().toISOString().slice(0, 19).replace('T', ' ')} UTC`,
+      timestamp: utcStamp(),
     });
   } catch (error) {
     log.error('Failed to handle a system role change', { error, activityId: event.id });

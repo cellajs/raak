@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Synthetic sub-org hierarchy as a real builder instance: 'task' is a product homed at the
 // `project` channel so home-list placement (deepest non-null ancestor) is exercised; base
-// cella only has org-homed attachments.
+// cella only has org-homed attachments. 'comment' is an org-homed product listed per `itemId`.
 vi.mock('shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('shared')>();
   const roles = actual.createRoleRegistry(['member'] as const);
@@ -14,6 +14,7 @@ vi.mock('shared', async (importOriginal) => {
     .organization({ roles: roles.all })
     .channel('project', { parent: 'organization', roles: roles.all })
     .product('task', { parent: 'project' })
+    .product('comment', { parent: 'organization' })
     .build();
   return {
     ...actual,
@@ -28,22 +29,18 @@ vi.mock('shared', async (importOriginal) => {
   };
 });
 
-vi.mock('~/modules/common/blocknote/yjs-editor', () => ({
-  isYjsEditorActive: () => false,
-  getYjsOwnedFields: () => [],
-}));
+vi.mock('~/modules/common/blocknote/yjs-editor', () => ({ isYjsEditorActive: () => false, getYjsOwnedFields: () => [] }));
 
-vi.mock('~/query/offline', () => ({
-  sourceId: 'test-source',
-}));
+vi.mock('~/query/offline', () => ({ sourceId: 'test-source' }));
 
 const { createEntityKeys } = await import('~/query/basic/create-query-keys');
-const { registerEntityQueryKeys } = await import('~/query/basic/entity-query-registry');
+const { registerEntityQueryKeys, registerEqualityFilterKeys } = await import('~/query/basic/entity-query-registry');
 const { queryClient } = await import('~/query/query-client');
-const { fetchRangeAndPatch } = await import('./cache-ops');
+const { fetchEntityAndUpdateList, fetchRangeAndPatch, removeEntity } = await import('./cache-ops');
 
-// The synthetic 'task' type exists only in this file's shared mock, hence the cast.
+// The synthetic 'task' and 'comment' types exist only in this file's shared mock, hence the casts.
 const TASK = 'task' as EntityType;
+const COMMENT = 'comment' as ProductEntityType;
 
 describe('realtime cache ops', () => {
   afterEach(() => {
@@ -54,13 +51,7 @@ describe('realtime cache ops', () => {
   it('removes tombstone rows returned by seq range fetch', async () => {
     const keys = createEntityKeys<Record<string, never>>('attachment');
     registerEntityQueryKeys('attachment', keys, async () => ({
-      items: [
-        {
-          id: 'attachment-1',
-          organizationId: 'org-1',
-          deletedAt: '2026-06-16T20:00:00.000Z',
-        },
-      ],
+      items: [{ id: 'attachment-1', organizationId: 'org-1', deletedAt: '2026-06-16T20:00:00.000Z' }],
       total: 1,
     }));
 
@@ -213,11 +204,7 @@ describe('realtime cache ops', () => {
   it('reports overflow when the seq window overflows one response: no silent 1000-row delta cap', async () => {
     const keys = createEntityKeys<Record<string, never>>('attachment');
     // A full SYNC_CHUNK_SIZE response means more changes may remain beyond this window
-    const items = Array.from({ length: 1000 }, (_, i) => ({
-      id: `att-${i + 1}`,
-      organizationId: 'org-1',
-      seq: i + 1,
-    }));
+    const items = Array.from({ length: 1000 }, (_, i) => ({ id: `att-${i + 1}`, organizationId: 'org-1', seq: i + 1 }));
     registerEntityQueryKeys('attachment', keys, async () => ({ items, total: 1500 }));
 
     const { status } = await fetchRangeAndPatch('attachment', 'org-1', 'tenant-1', '1', keys);
@@ -236,5 +223,161 @@ describe('realtime cache ops', () => {
     const { status } = await fetchRangeAndPatch('attachment', 'org-1', 'tenant-1', '5', keys);
 
     expect(status).toBe('error');
+  });
+});
+
+describe('filtered list refetch for a new row', () => {
+  afterEach(() => {
+    queryClient.clear();
+    vi.restoreAllMocks();
+  });
+
+  const commentKeys = createEntityKeys<{ itemId?: string }>(COMMENT);
+  const newComment = { id: 'comment-2', organizationId: 'org-1', itemId: 'item-1' };
+  const listKey = (filters: Record<string, unknown>) => [...commentKeys.list.org('org-1'), filters];
+
+  // Comment lists are declared to hold only rows whose itemId equals the filter's.
+  function registerComments(items: { id: string; organizationId: string; itemId?: string }[] = [newComment]) {
+    registerEntityQueryKeys(COMMENT, commentKeys, async () => ({ items, total: items.length }));
+    registerEqualityFilterKeys(COMMENT, ['itemId']);
+    queryClient.setQueryDefaults(commentKeys.detail.base, { queryFn: async () => newComment });
+  }
+
+  function seedLists(filtersByName: Record<string, Record<string, unknown>>) {
+    for (const filters of Object.values(filtersByName)) {
+      queryClient.setQueryData(listKey(filters), { items: [], total: 0 });
+    }
+  }
+
+  const isInvalidated = (filters: Record<string, unknown>) => queryClient.getQueryState(listKey(filters))?.isInvalidated;
+
+  const lists = {
+    otherItem: { itemId: 'item-2' },
+    otherItemSorted: { itemId: 'item-2', sort: 'createdAt', order: 'desc', limit: 20 },
+    sameItem: { itemId: 'item-1' },
+    otherItemSearch: { itemId: 'item-2', q: 'hello' },
+    otherItemUndeclared: { itemId: 'item-2', authorId: 'user-1' },
+    sameItemSearch: { itemId: 'item-1', q: 'hello' },
+    sameItemUndeclared: { itemId: 'item-1', authorId: 'user-1' },
+    noItem: { sort: 'createdAt' },
+  };
+
+  it('refetches on a create notification only the lists whose declared filter the row matches', async () => {
+    registerComments();
+    seedLists(lists);
+
+    await fetchEntityAndUpdateList('comment-2', commentKeys, 'create', 'org-1', 'tenant-1', COMMENT);
+
+    expect(isInvalidated(lists.otherItem)).toBe(false);
+    expect(isInvalidated(lists.otherItemSorted)).toBe(false);
+    expect(isInvalidated(lists.sameItem)).toBe(true);
+    // Filters combine with AND: another item rules the row out whatever the search or other filters say
+    expect(isInvalidated(lists.otherItemSearch)).toBe(false);
+    expect(isInvalidated(lists.otherItemUndeclared)).toBe(false);
+    expect(isInvalidated(lists.sameItemSearch)).toBe(true);
+    expect(isInvalidated(lists.sameItemUndeclared)).toBe(true);
+    expect(isInvalidated(lists.noItem)).toBe(true);
+  });
+
+  it('refetches after a delta fetch only the lists that one of the new rows can belong to', async () => {
+    registerComments([newComment, { id: 'comment-3', organizationId: 'org-1', itemId: 'item-3' }]);
+    seedLists({ ...lists, thirdItem: { itemId: 'item-3' } });
+
+    await fetchRangeAndPatch(COMMENT, 'org-1', 'tenant-1', '9,10', commentKeys);
+
+    expect(isInvalidated(lists.otherItem)).toBe(false);
+    expect(isInvalidated(lists.sameItem)).toBe(true);
+    expect(isInvalidated({ itemId: 'item-3' })).toBe(true);
+    expect(isInvalidated(lists.otherItemSearch)).toBe(false);
+    expect(isInvalidated(lists.sameItemSearch)).toBe(true);
+  });
+
+  it('keeps the refetch when the row does not carry the declared field', async () => {
+    registerComments([{ id: 'comment-4', organizationId: 'org-1' }]);
+    seedLists({ otherItem: lists.otherItem });
+
+    await fetchRangeAndPatch(COMMENT, 'org-1', 'tenant-1', '11,11', commentKeys);
+
+    expect(isInvalidated(lists.otherItem)).toBe(true);
+  });
+
+  it('refetches every filtered list of an entity type without declared keys', async () => {
+    const keys = createEntityKeys<Record<string, never>>(TASK);
+    registerEntityQueryKeys(TASK, keys, async () => ({
+      items: [{ id: 'task-9', organizationId: 'org-1', projectId: 'project-1', itemId: 'item-1' }],
+      total: 1,
+    }));
+    const otherItemKey = [...keys.list.org('org-1'), { itemId: 'item-2' }];
+    queryClient.setQueryData(otherItemKey, { items: [], total: 0 });
+
+    await fetchRangeAndPatch(TASK, 'org-1', 'tenant-1', '12,12', keys);
+
+    expect(queryClient.getQueryState(otherItemKey)?.isInvalidated).toBe(true);
+  });
+});
+
+describe('removeEntity', () => {
+  afterEach(() => queryClient.clear());
+
+  const keys = createEntityKeys<Record<string, never>>('attachment');
+  const flatKey = keys.list.home('org-1');
+  const infiniteKey = [...keys.list.org('org-1'), { q: 'report' }];
+  const otherOrgKey = keys.list.home('org-2');
+
+  function seed() {
+    registerEntityQueryKeys('attachment', keys);
+    queryClient.setQueryData(keys.detail.byId('a1'), { id: 'a1' });
+    queryClient.setQueryData(flatKey, { items: [{ id: 'a1' }, { id: 'a2' }], total: 2 });
+    queryClient.setQueryData(infiniteKey, {
+      pages: [
+        { items: [{ id: 'a0' }, { id: 'a1' }], total: 3 },
+        { items: [{ id: 'a2' }], total: 3 },
+      ],
+      pageParams: [
+        { page: 0, offset: 0 },
+        { page: 1, offset: 2 },
+      ],
+    });
+    queryClient.setQueryData(otherOrgKey, { items: [{ id: 'a1' }], total: 1 });
+  }
+
+  it('drops the detail and the row from flat and infinite lists of its organization', () => {
+    seed();
+    const otherOrg = queryClient.getQueryData(otherOrgKey);
+
+    removeEntity('attachment', 'a1', 'org-1');
+
+    expect(queryClient.getQueryData(keys.detail.byId('a1'))).toBeUndefined();
+    expect(queryClient.getQueryData(flatKey)).toEqual({ items: [{ id: 'a2' }], total: 1 });
+    expect(queryClient.getQueryData(infiniteKey)).toEqual({
+      pages: [
+        { items: [{ id: 'a0' }], total: 2 },
+        { items: [{ id: 'a2' }], total: 2 },
+      ],
+      pageParams: [
+        { page: 0, offset: 0 },
+        { page: 1, offset: 2 },
+      ],
+    });
+    // The organization narrows the scan: another organization's list keeps its data object.
+    expect(queryClient.getQueryData(otherOrgKey)).toBe(otherOrg);
+  });
+
+  it('scans every list of the type without an organization', () => {
+    seed();
+
+    removeEntity('attachment', 'a1');
+
+    expect(queryClient.getQueryData(flatKey)).toEqual({ items: [{ id: 'a2' }], total: 1 });
+    expect(queryClient.getQueryData(otherOrgKey)).toEqual({ items: [], total: 0 });
+  });
+
+  it('keeps the data object of a list that does not hold the row', () => {
+    seed();
+    const flat = queryClient.getQueryData(flatKey);
+
+    removeEntity('attachment', 'missing', 'org-1');
+
+    expect(queryClient.getQueryData(flatKey)).toBe(flat);
   });
 });

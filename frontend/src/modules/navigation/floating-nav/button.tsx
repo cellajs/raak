@@ -25,14 +25,7 @@ interface FloatingNavButtonProps {
   direction?: 'left' | 'right';
 }
 
-export function FloatingNavButton({
-  id,
-  icon: Icon,
-  onClick,
-  ariaLabel,
-  className,
-  direction = 'right',
-}: FloatingNavButtonProps) {
+export function FloatingNavButton({ id, icon: Icon, onClick, ariaLabel, className, direction = 'right' }: FloatingNavButtonProps) {
   // A tap that interrupts a momentum scroll cancels the fling, and the browser suppresses its click,
   // so touch taps run on touchend. preventDefault there stops the synthesized click entirely, since
   // it would otherwise hit-test against whatever onClick just mounted (e.g. a drawer overlay) and
@@ -70,14 +63,14 @@ export function FloatingNavButton({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       className={cn(
-        'fixed bottom-[calc(1rem+var(--bottom-inset,0px))] z-105 flex h-14 w-14 transform items-center justify-center rounded-full bg-secondary opacity-100 shadow-xl transition-all duration-300 ease-in-out hover:bg-secondary active:scale-95 data-[direction=right]:right-4 data-[direction=left]:left-4',
-        // Animate out while the floating selection action bar is shown
-        'group-[.selection-active]/body:pointer-events-none group-[.selection-active]/body:-bottom-12 group-[.selection-active]/body:scale-50 group-[.selection-active]/body:opacity-0',
+        'fixed bottom-[calc(1rem+var(--bottom-inset,0px))] z-105 flex size-14 items-center justify-center rounded-full bg-secondary opacity-100 shadow-xl transition-[translate,scale,opacity] duration-300 ease-in-out hover:bg-secondary active:scale-95 data-[direction=right]:right-4 data-[direction=left]:left-4',
+        // Animate out while the floating selection action bar is shown; hiding moves by translate, which skips layout
+        'group-[.selection-active]/body:pointer-events-none group-[.selection-active]/body:translate-y-16 group-[.selection-active]/body:scale-50 group-[.selection-active]/body:opacity-0',
         className,
       )}
       aria-label={ariaLabel ?? 'Navigate'}
     >
-      <Icon className="icon-xl" />
+      <Icon className="size-6" />
     </Button>
   );
 }

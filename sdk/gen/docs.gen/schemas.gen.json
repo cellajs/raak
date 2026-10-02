@@ -175,7 +175,6 @@
       "convertedContentType": null,
       "size": "5480456",
       "keys": { "original": "uploads/472lk4kb8ghakkpvspqur1fa/ick_thoroughly_coincide.text" },
-      "mentions": [],
       "projectId": "8fed4f40-cfd7-4da0-a6a8-c118563b74fa",
       "organizationId": "91eb1a57-81a6-485a-87ee-9b7e9b6c234f"
     }
@@ -274,7 +273,7 @@
       "module": ["entities"],
       "owner": ["cella"]
     },
-    "description": "Base schema for content entities with creator tracking (e.g. page, attachment).",
+    "description": "Base schema for content entities with creator tracking (e.g. attachment).",
     "example": {
       "id": "7e460470-da58-4733-a7ff-0d31897ecf8d",
       "createdAt": "2024-07-02T14:28:38.152Z",
@@ -326,17 +325,7 @@
         "resourceType": {
           "type": ["string", "null"],
           "required": true,
-          "enum": [
-            "request",
-            "membership",
-            "inactive_membership",
-            "tenant",
-            "system_role",
-            "service_account",
-            "api_key",
-            "oauth_client",
-            null
-          ]
+          "enum": ["request", "membership", "inactive_membership", "tenant", "system_role", "service_account", "api_key", "oauth_client", null]
         },
         "subjectId": {
           "type": ["string", "null"],
@@ -622,7 +611,16 @@
       "module": ["me"],
       "owner": ["cella"]
     },
-    "description": "An OAuth consent (grant) of the current user."
+    "description": "An OAuth consent (grant) of the current user.",
+    "example": {
+      "id": "01J9Z2Q0X7ZQ4S5M8NX3F2ABCD",
+      "clientId": "https://vscode.dev/oauth/client-metadata.json",
+      "clientName": "Visual Studio Code",
+      "scopes": ["attachment:read"],
+      "resources": ["http://localhost:3000/mcp/tenant01/org01/mcp"],
+      "createdAt": "2026-09-22T10:00:00.000Z",
+      "expiresAt": "2026-10-22T10:00:00.000Z"
+    }
   },
   {
     "name": "Me",
@@ -708,11 +706,7 @@
           },
           "ref": "#/components/schemas/User"
         },
-        "isSystemAdmin": {
-          "type": "boolean",
-          "required": true,
-          "description": "Whether the current user has system admin privileges."
-        }
+        "isSystemAdmin": { "type": "boolean", "required": true, "description": "Whether the current user has system admin privileges." }
       }
     },
     "schemaTag": "data",
@@ -841,15 +835,7 @@
               "revocationReason": {
                 "type": ["string", "null"],
                 "required": true,
-                "enum": [
-                  "sign_out",
-                  "other_session",
-                  "mfa_enabled",
-                  "session_cap",
-                  "replaced",
-                  "impersonation_stopped",
-                  null
-                ]
+                "enum": ["sign_out", "other_session", "mfa_enabled", "session_cap", "replaced", "impersonation_stopped", null]
               },
               "impersonatorSessionId": {
                 "type": ["string", "null"],
@@ -1157,6 +1143,48 @@
     }
   },
   {
+    "name": "ProtectedResourceMetadata",
+    "ref": "#/components/schemas/ProtectedResourceMetadata",
+    "type": "object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "resource": { "type": "string", "required": true },
+        "authorization_servers": { "type": "array", "required": true, "itemType": "string" },
+        "scopes_supported": { "type": "array", "required": true, "itemType": "string" },
+        "bearer_methods_supported": { "type": "array", "required": true, "itemType": "string" },
+        "resource_documentation": { "type": "string", "required": true }
+      }
+    },
+    "schemaTag": "data",
+    "tagsByKind": {
+      "schema": ["data"],
+      "module": ["oauth-server"],
+      "owner": ["cella"]
+    },
+    "description": "RFC 9728 metadata of a protected resource: the authorization servers that issue its tokens and the scopes it accepts.",
+    "example": {
+      "resource": "http://localhost:3000/api/t/m5jfjs",
+      "authorization_servers": ["http://localhost:3000/oauth"],
+      "scopes_supported": [
+        "organization:read",
+        "organization:write",
+        "workspace:read",
+        "workspace:write",
+        "project:read",
+        "project:write",
+        "task:read",
+        "task:write",
+        "label:read",
+        "label:write",
+        "attachment:read",
+        "attachment:write"
+      ],
+      "bearer_methods_supported": ["header"],
+      "resource_documentation": "http://localhost:3000/docs"
+    }
+  },
+  {
     "name": "Organization",
     "ref": "#/components/schemas/Organization",
     "type": "object",
@@ -1304,21 +1332,7 @@
                   "color": {
                     "type": "string",
                     "required": true,
-                    "enum": [
-                      "red",
-                      "orange",
-                      "amber",
-                      "yellow",
-                      "green",
-                      "emerald",
-                      "teal",
-                      "sky",
-                      "blue",
-                      "indigo",
-                      "violet",
-                      "pink",
-                      "slate"
-                    ]
+                    "enum": ["red", "orange", "amber", "yellow", "green", "emerald", "teal", "sky", "blue", "indigo", "violet", "pink", "slate"]
                   },
                   "icon": {
                     "type": ["string", "null"],
@@ -1592,42 +1606,6 @@
           }
         }
       }
-    }
-  },
-  {
-    "name": "OrganizationMinimalBase",
-    "ref": "#/components/schemas/OrganizationMinimalBase",
-    "type": "object",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "required": true },
-        "name": { "type": "string", "required": true },
-        "slug": { "type": "string", "required": true },
-        "thumbnailUrl": {
-          "type": ["string", "null"],
-          "required": true
-        },
-        "entityType": {
-          "type": "string",
-          "required": true,
-          "enum": ["organization"]
-        }
-      }
-    },
-    "schemaTag": "base",
-    "tagsByKind": {
-      "schema": ["base"],
-      "module": ["organizations"],
-      "owner": ["cella"]
-    },
-    "description": "Minimal organization data for references.",
-    "example": {
-      "id": "a0e12a75-1f11-485a-a581-cfcf45f209ef",
-      "name": "Schuster Inc",
-      "slug": "schuster-inc",
-      "thumbnailUrl": null,
-      "entityType": "organization"
     }
   },
   {
@@ -2007,6 +1985,7 @@
     },
     "schemaTag": "data",
     "tagsByKind": {
+      "schema": ["data"],
       "module": ["service-accounts"],
       "owner": ["cella"]
     },
@@ -2024,88 +2003,6 @@
       "revokedBy": null,
       "createdBy": "e522e29f-f395-42f7-999b-7ea34c4cb760",
       "createdAt": "2024-11-05T21:01:57.922Z"
-    }
-  },
-  {
-    "name": "CreatedApiKey",
-    "ref": "#/components/schemas/CreatedApiKey",
-    "type": "object",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "required": true, "format": "uuid" },
-        "actorId": { "type": "string", "required": true, "format": "uuid" },
-        "tenantId": { "type": "string", "required": true, "maxLength": 24 },
-        "name": { "type": "string", "required": true, "maxLength": 255 },
-        "prefix": { "type": "string", "required": true, "maxLength": 255 },
-        "last4": { "type": "string", "required": true, "maxLength": 4 },
-        "scopes": {
-          "type": ["array", "null"],
-          "required": true,
-          "itemType": "string",
-          "enum": [
-            "organization:read",
-            "organization:write",
-            "workspace:read",
-            "workspace:write",
-            "project:read",
-            "project:write",
-            "task:read",
-            "task:write",
-            "label:read",
-            "label:write",
-            "attachment:read",
-            "attachment:write"
-          ]
-        },
-        "expiresAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
-        "revokedAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
-        "revokedBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
-        "createdBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
-        "createdAt": { "type": "string", "required": true },
-        "secret": {
-          "type": "string",
-          "required": true,
-          "description": "The plaintext API key; store it now, it is not shown again."
-        }
-      },
-      "extendsRef": "#/components/schemas/ApiKey"
-    },
-    "schemaTag": "data",
-    "tagsByKind": {
-      "module": ["service-accounts"],
-      "owner": ["cella"]
-    },
-    "description": "A newly issued API key with its plaintext secret.",
-    "extendsRef": "#/components/schemas/ApiKey",
-    "example": {
-      "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
-      "actorId": "6b40b65d-1ea1-4132-892e-876f9e4e268a",
-      "tenantId": "kr2nrm",
-      "name": "connect key",
-      "prefix": "raak-development_sk_test_Ab3d",
-      "last4": "2345",
-      "scopes": ["attachment:read"],
-      "expiresAt": null,
-      "revokedAt": null,
-      "revokedBy": null,
-      "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
-      "createdAt": "2024-08-12T09:36:07.688Z",
-      "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
     }
   },
   {
@@ -2169,6 +2066,7 @@
     },
     "schemaTag": "data",
     "tagsByKind": {
+      "schema": ["data"],
       "module": ["service-accounts"],
       "owner": ["cella"]
     },
@@ -2259,7 +2157,6 @@
           "enum": [6, 5, 4, 3, 2, 1, 0]
         },
         "statusChangedAt": { "type": "string", "required": true },
-        "mentions": { "type": "array", "required": true, "itemType": "string" },
         "checkboxCount": {
           "type": "integer",
           "required": true,
@@ -2451,7 +2348,6 @@
       "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
       "labels": [],
       "assignedTo": [],
-      "mentions": [],
       "projectId": "b0812db1-9a54-4314-b736-788585846a17",
       "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
       "primaryLabel": {
@@ -2539,10 +2435,25 @@
           "type": ["string", "null"],
           "required": true
         },
-        "domainsCount": {
-          "type": "integer",
+        "domainsCount": { "type": "integer", "required": true, "description": "Number of domains claimed by this tenant" },
+        "organization": {
+          "type": ["object", "null"],
           "required": true,
-          "description": "Number of domains claimed by this tenant"
+          "description": "The organization this tenant holds, or null if none",
+          "properties": {
+            "id": { "type": "string", "required": true },
+            "name": { "type": "string", "required": true },
+            "slug": { "type": "string", "required": true },
+            "thumbnailUrl": {
+              "type": ["string", "null"],
+              "required": true
+            },
+            "entityType": {
+              "type": "string",
+              "required": true,
+              "enum": ["organization"]
+            }
+          }
         }
       }
     },
@@ -2552,105 +2463,42 @@
       "module": ["tenants"],
       "owner": ["cella"]
     },
-    "description": "A tenant representing an isolated data partition for multi-tenancy."
-  },
-  {
-    "name": "TenantWithOrganization",
-    "ref": "#/components/schemas/TenantWithOrganization",
-    "type": "object",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "required": true, "maxLength": 24 },
-        "name": { "type": "string", "required": true, "maxLength": 255 },
-        "status": {
-          "type": "string",
-          "required": true,
-          "enum": ["active", "suspended", "archived"]
+    "description": "A tenant representing an isolated data partition for multi-tenancy.",
+    "example": {
+      "id": "l6ddop",
+      "name": "Lubowitz, Waters and Haley",
+      "status": "active",
+      "restrictions": {
+        "quotas": {
+          "user": 1000,
+          "organization": 1,
+          "workspace": 0,
+          "project": 0,
+          "task": 0,
+          "label": 0,
+          "attachment": 100,
+          "serviceAccount": 20,
+          "apiKey": 100
         },
-        "restrictions": {
-          "type": "object",
-          "required": true,
-          "properties": {
-            "quotas": {
-              "type": "object",
-              "required": true,
-              "description": "Entity quotas (0 = unlimited)",
-              "additionalProperties": { "type": "integer", "required": false, "minimum": 0 }
-            },
-            "rateLimits": {
-              "type": "object",
-              "required": true,
-              "properties": {
-                "apiPointsPerHour": {
-                  "type": "integer",
-                  "required": true,
-                  "description": "Max API points per hour per user within this tenant (0 = no tenant limit; the global safety ceiling still applies)",
-                  "minimum": 0
-                }
-              }
-            },
-            "allowUnregisteredClients": {
-              "type": "boolean",
-              "required": true,
-              "description": "Whether members may consent to OAuth clients that have no registration (AI clients using a Client ID Metadata Document)"
-            }
-          }
-        },
-        "authStrategies": {
-          "type": "array",
-          "required": true,
-          "itemType": "string",
-          "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
-        },
-        "createdBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
-        "subscriptionId": {
-          "type": ["string", "null"],
-          "required": true,
-          "maxLength": 255
-        },
-        "subscriptionStatus": {
-          "type": "string",
-          "required": true,
-          "enum": ["none", "trialing", "active", "past_due", "paused", "canceled"]
-        },
-        "subscriptionPlan": {
-          "type": ["string", "null"],
-          "required": true,
-          "maxLength": 255
-        },
-        "createdAt": { "type": "string", "required": true },
-        "updatedAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
-        "domainsCount": {
-          "type": "integer",
-          "required": true,
-          "description": "Number of domains claimed by this tenant"
-        },
-        "organization": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/OrganizationMinimalBase",
-          "description": "The organization this tenant holds, or null if none",
-          "refDescription": "Minimal organization data for references."
-        }
+        "rateLimits": { "apiPointsPerHour": 1000 },
+        "allowUnregisteredClients": true
       },
-      "extendsRef": "#/components/schemas/Tenant"
-    },
-    "schemaTag": "data",
-    "tagsByKind": {
-      "schema": ["data"],
-      "module": ["tenants"],
-      "owner": ["cella"]
-    },
-    "description": "A tenant together with the single organization it holds.",
-    "extendsRef": "#/components/schemas/Tenant"
+      "authStrategies": [],
+      "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+      "subscriptionId": null,
+      "subscriptionStatus": "none",
+      "subscriptionPlan": null,
+      "createdAt": "2024-02-09T07:11:04.461Z",
+      "updatedAt": "2024-03-30T20:43:34.109Z",
+      "domainsCount": 0,
+      "organization": {
+        "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+        "name": "Lubowitz, Waters and Haley",
+        "slug": "lubowitz-waters-and-haley",
+        "thumbnailUrl": null,
+        "entityType": "organization"
+      }
+    }
   },
   {
     "name": "User",
@@ -3108,7 +2956,6 @@
           "required": false,
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
-        "logId": { "type": "string", "required": false },
         "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
@@ -3171,7 +3018,6 @@
           "required": false,
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
-        "logId": { "type": "string", "required": false },
         "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
@@ -3212,25 +3058,6 @@
     }
   },
   {
-    "name": "BooleanQueryValue",
-    "ref": "#/components/schemas/BooleanQueryValue",
-    "schema": {
-      "anyOf": [
-        {
-          "type": "string",
-          "enum": ["true", "false"]
-        },
-        { "type": "boolean" }
-      ]
-    },
-    "schemaTag": "base",
-    "tagsByKind": {
-      "schema": ["base"],
-      "owner": ["cella"]
-    },
-    "description": "Boolean query value accepted as a boolean or its lowercase string representation."
-  },
-  {
     "name": "ConflictError",
     "ref": "#/components/schemas/ConflictError",
     "type": "object",
@@ -3255,7 +3082,6 @@
           "required": false,
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
-        "logId": { "type": "string", "required": false },
         "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
@@ -3320,7 +3146,6 @@
           "required": false,
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
-        "logId": { "type": "string", "required": false },
         "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
@@ -3385,7 +3210,6 @@
           "required": false,
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
-        "logId": { "type": "string", "required": false },
         "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
@@ -3424,23 +3248,6 @@
       "severity": "warn",
       "timestamp": "2025-01-01T12:00:00.000Z"
     }
-  },
-  {
-    "name": "ProtectedResourceMetadata",
-    "ref": "#/components/schemas/ProtectedResourceMetadata",
-    "type": "object",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "resource": { "type": "string", "required": true },
-        "authorization_servers": { "type": "array", "required": true, "itemType": "string" },
-        "scopes_supported": { "type": "array", "required": true, "itemType": "string" },
-        "bearer_methods_supported": { "type": "array", "required": true, "itemType": "string" },
-        "resource_documentation": { "type": "string", "required": true }
-      }
-    },
-    "schemaTag": "data",
-    "tagsByKind": {}
   },
   {
     "name": "StxBase",
@@ -3511,7 +3318,6 @@
           "required": false,
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
-        "logId": { "type": "string", "required": false },
         "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },
@@ -3576,7 +3382,6 @@
           "required": false,
           "enum": ["user", "organization", "workspace", "project", "task", "label", "attachment"]
         },
-        "logId": { "type": "string", "required": false },
         "requestId": { "type": "string", "required": false },
         "path": { "type": "string", "required": false },
         "method": { "type": "string", "required": false },

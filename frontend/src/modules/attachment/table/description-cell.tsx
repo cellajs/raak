@@ -26,11 +26,10 @@ export function DescriptionCell({ row, editable }: DescriptionCellProps) {
 
   const onDoubleClick = editable
     ? undefined
-    : (event: MouseEvent<HTMLSpanElement>) =>
-        openDescriptionSheetFromCell(row.id, event.currentTarget.closest<HTMLElement>('[role="gridcell"]'));
+    : (event: MouseEvent<HTMLSpanElement>) => openDescriptionSheetFromCell(row.id, event.currentTarget.closest<HTMLElement>('[role="gridcell"]'));
 
   return (
-    <span className="flex h-full w-full items-center font-light" onDoubleClick={onDoubleClick}>
+    <span className="flex size-full items-center font-light" onDoubleClick={onDoubleClick}>
       <span className="truncate">{text}</span>
     </span>
   );

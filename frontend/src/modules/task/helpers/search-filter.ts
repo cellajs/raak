@@ -9,9 +9,7 @@ const descriptionTextCache = new WeakMap<Task, string>();
 const getDescriptionText = (task: Task): string => {
   const cached = descriptionTextCache.get(task);
   if (cached !== undefined) return cached;
-  const text = task.description
-    ? getSearchableTextFromBlocks(JSON.parse(task.description) as Block[]).toLowerCase()
-    : '';
+  const text = task.description ? getSearchableTextFromBlocks(JSON.parse(task.description) as Block[]).toLowerCase() : '';
   descriptionTextCache.set(task, text);
   return text;
 };
@@ -19,10 +17,7 @@ const getDescriptionText = (task: Task): string => {
 /**
  * Search filter function for tasks based on search parameters.
  */
-export const searchFilterFunction = (
-  searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] },
-  task: Task,
-): boolean => {
+export const searchFilterFunction = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
   const { q: searchQuery, matchMode = 'all' } = searchParams;
 
   // Normalize query ('=' highlight marker stripped; match logic is mode-agnostic)

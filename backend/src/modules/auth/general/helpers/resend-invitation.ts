@@ -43,10 +43,7 @@ export const resendInvitationEmail = async (ctx: DbContext, oldToken: TokenRecor
         .for('update');
       if (!invitation) return null;
 
-      const entity = await resolveEntity(txCtx, {
-        entityType: invitation.channelType,
-        identifier: invitation.channelId,
-      });
+      const entity = await resolveEntity(txCtx, { entityType: invitation.channelType, identifier: invitation.channelId });
       if (!entity) return null;
 
       // The new token replaces every older token of the invitation.
@@ -77,7 +74,7 @@ export const resendInvitationEmail = async (ctx: DbContext, oldToken: TokenRecor
   if (invitation) {
     const { entity } = invitation;
     await sendInvitationMails(ctx, {
-      sender: sender ?? { name: 'System', thumbnailUrl: null },
+      sender: sender ?? { name: 'System' },
       channel: { type: invitation.channelType, slug: entity.slug, name: entity.name, role: invitation.role },
       // A channel below the organization carries no default language here: the app's applies.
       organization: 'defaultLanguage' in entity ? entity : null,
@@ -85,7 +82,7 @@ export const resendInvitationEmail = async (ctx: DbContext, oldToken: TokenRecor
     });
     log.info('Membership invitation has been resent', { inactiveMembershipId: invitation.id, tokenId });
   } else {
-    await sendInvitationMails(ctx, { sender: sender ?? { name: 'System', thumbnailUrl: null }, invited });
+    await sendInvitationMails(ctx, { sender: sender ?? { name: 'System' }, invited });
     log.info('System invitation has been resent', { tokenId });
   }
 

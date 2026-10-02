@@ -32,12 +32,7 @@ interface TaskCardContentExpandedProps {
  * We intentionally do NOT apply `inert` here even in read-only mode. `inert` blocks
  * text selection in the entire subtree, preventing read-only users from copying the description.
  */
-export function TaskCardContentExpanded({
-  task,
-  noGutter,
-  onReady,
-  descriptionOverride,
-}: TaskCardContentExpandedProps) {
+export function TaskCardContentExpanded({ task, noGutter, onReady, descriptionOverride }: TaskCardContentExpandedProps) {
   const { tenantId } = useOrganizationLayoutContext();
 
   const description = descriptionOverride ?? task.description;

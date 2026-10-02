@@ -14,11 +14,7 @@ import type { BoardResizablePanel } from '~/modules/task/types';
  *  labels panel trails it, and project panels without an enriched membership (e.g. the
  *  single-project board) sit in between. Finite values keep the fractional reorder math working
  *  when a neighboring panel is dragged against them; user reorders (local orders) override. */
-const kindDefaultOrders: Record<BoardResizablePanel['kind'], number> = {
-  explainer: -1_000_000,
-  project: 0,
-  labels: 1_000_000,
-};
+const kindDefaultOrders: Record<BoardResizablePanel['kind'], number> = { explainer: -1_000_000, project: 0, labels: 1_000_000 };
 
 /** Gap between the seeded default orders of a project's split panels. Small enough to keep the
  *  group at its membership anchor, large enough for `getOrderBetween` to fit drops in between. */
@@ -27,10 +23,7 @@ const splitSectionOrderStep = 0.001;
 /** Resolve a panel's displayOrder.
  *  A device-local order (set by drag) wins; then the server-owned membership order (split panels
  *  offset it by sectionIndex so siblings get distinct, insertable orders); then the kind default. */
-export function getPanelDisplayOrder(
-  panel: BoardResizablePanel,
-  localOrders: Record<string, number> = {},
-): number | undefined {
+export function getPanelDisplayOrder(panel: BoardResizablePanel, localOrders: Record<string, number> = {}): number | undefined {
   const localOrder = localOrders[panel.panelId];
   if (localOrder !== undefined) return localOrder;
 
@@ -63,10 +56,7 @@ export function buildBoardExtraPanels({
 
 /** Sort panels by their resolved displayOrder. Panels without an order keep their
  *  incoming relative position and trail at the end. Pure: returns a new array. */
-export function sortPanelsByOrder(
-  panels: BoardResizablePanel[],
-  localOrders: Record<string, number> = {},
-): BoardResizablePanel[] {
+export function sortPanelsByOrder(panels: BoardResizablePanel[], localOrders: Record<string, number> = {}): BoardResizablePanel[] {
   return panels
     .map((panel, idx) => ({ panel, idx, order: getPanelDisplayOrder(panel, localOrders) }))
     .sort((a, b) => {
@@ -81,14 +71,7 @@ export function sortPanelsByOrder(
 /** What a panel drag-reorder should persist: a server-owned membership update, a local-only
  *  panel order, or nothing (null) when the drop is a no-op. */
 export type PanelReorderResult =
-  | {
-      kind: 'membership';
-      membershipId: string;
-      tenantId: string;
-      organizationId: string;
-      projectId: string;
-      displayOrder: number;
-    }
+  | { kind: 'membership'; membershipId: string; tenantId: string; organizationId: string; projectId: string; displayOrder: number }
   | { kind: 'local'; panelId: string; displayOrder: number }
   | null;
 

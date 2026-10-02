@@ -33,9 +33,7 @@ export const defaultRestrictions = (): Restrictions => {
 
   return {
     quotas,
-    rateLimits: {
-      apiPointsPerHour: appConfig.defaultRestrictions.rateLimits.apiPointsPerHour,
-    },
+    rateLimits: { apiPointsPerHour: appConfig.defaultRestrictions.rateLimits.apiPointsPerHour },
     allowUnregisteredClients: true,
   };
 };

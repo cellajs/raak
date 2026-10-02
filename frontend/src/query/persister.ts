@@ -24,8 +24,7 @@ function isProductQuery(queryKey: unknown): boolean {
 }
 
 /** What the persister writes: a query that succeeded and does not opt out through `meta: { persist: false }` (a bearer token, another account's data). */
-export const shouldPersistQuery = (query: Query): boolean =>
-  query.state.status === 'success' && query.meta?.persist !== false;
+export const shouldPersistQuery = (query: Query): boolean => query.state.status === 'success' && query.meta?.persist !== false;
 
 function getTabSessionId(): string {
   let id = sessionStorage.getItem(SESSION_ID_STORAGE_KEY);
@@ -335,19 +334,13 @@ export function createIDBPersister(scope = 'rq') {
         }
 
         const allQueries: DehydratedQuery[] = [
-          ...productRecords.map((q) => ({
-            queryHash: q.queryHash,
-            queryKey: q.queryKey,
-            state: q.state,
-            dehydratedAt: q.dataUpdatedAt,
-          })),
+          ...productRecords.map((q) => ({ queryHash: q.queryHash, queryKey: q.queryKey, state: q.state, dehydratedAt: q.dataUpdatedAt })),
           ...(meta.channelQueries ?? []),
         ];
 
         // Seed the snapshot the next write diffs against.
-        lastChannelSnapshot = JSON.stringify(
-          (meta.channelQueries ?? []).map((q) => [q.queryHash, q.state.dataUpdatedAt]),
-        );
+        const restoredChannelQueries = meta.channelQueries ?? [];
+        lastChannelSnapshot = JSON.stringify(restoredChannelQueries.map((q) => [q.queryHash, q.state.dataUpdatedAt]));
 
         // Restores shared data, this tab's record, and orphaned tab records; live tabs keep their own, and age substitutes when lock liveness is undetectable.
         const prefix = mutationRecordPrefix(scope);
@@ -369,10 +362,7 @@ export function createIDBPersister(scope = 'rq') {
         return {
           timestamp: meta.timestamp,
           buster: meta.buster,
-          clientState: {
-            queries: allQueries,
-            mutations: restoredMutations,
-          },
+          clientState: { queries: allQueries, mutations: restoredMutations },
         };
       } catch (error) {
         console.error('[QueryPersister] Failed to restore client:', error);

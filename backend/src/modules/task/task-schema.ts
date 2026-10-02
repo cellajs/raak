@@ -7,14 +7,7 @@ import { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import { tasksTable } from '#/modules/task/task-db';
 import { mockTaskResponse } from '#/modules/task/task-mocks';
 import { TaskStatus } from '#/modules/task/task-properties';
-import {
-  batchResponseSchema,
-  maxLength,
-  paginationQuerySchema,
-  stxBaseSchema,
-  validIdSchema,
-  validUuidSchema,
-} from '#/schemas';
+import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validIdSchema, validUuidSchema } from '#/schemas';
 import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/minimal-base';
 
 const taskRelationIdsSchema = validUuidSchema
@@ -23,20 +16,12 @@ const taskRelationIdsSchema = validUuidSchema
   .refine((ids) => new Set(ids).size === ids.length, 'Relation IDs must be unique');
 const taskRelationDeltaSchema = arrayDeltaSchema(validUuidSchema);
 
-const taskInsertSchema = createInsertSchema(tasksTable, {
-  description: z.string().max(maxLength.html).nullable(),
-});
+const taskInsertSchema = createInsertSchema(tasksTable, { description: z.string().max(maxLength.html).nullable() });
 const taskSelectSchema = createSelectSchema(tasksTable);
 
 export const taskSchema = z
   .object({
-    ...taskSelectSchema.omit({
-      labels: true,
-      createdBy: true,
-      assignedTo: true,
-      updatedBy: true,
-      stx: true,
-    }).shape,
+    ...taskSelectSchema.omit({ labels: true, createdBy: true, assignedTo: true, updatedBy: true, stx: true }).shape,
     labels: z.array(labelEmbeddedSchema),
     // Hydrated from primaryLabelId; null only when the referenced row is missing from the relation set
     primaryLabel: labelEmbeddedSchema.nullable(),
@@ -52,23 +37,17 @@ export const taskSchema = z
     'x-tags': schemaTags('data', 'tasks', 'app'),
   });
 
-const taskCreateSchema = taskInsertSchema
-  .pick({
-    name: true,
-    description: true,
-    projectId: true,
-  })
-  .extend({
-    id: validUuidSchema,
-    status: z.enum(TaskStatus),
-    // Optional on the wire: the server falls back to the project's default primary label
-    primaryLabelId: validUuidSchema.optional(),
-    displayOrder: z.number().optional(),
-    labels: taskRelationIdsSchema.optional(),
-    assignedTo: taskRelationIdsSchema.optional(),
-    // Client sets publicity per task (stamped from the project's publicAt on create); omitted -> private.
-    publicAt: z.string().nullable().optional(),
-  });
+const taskCreateSchema = taskInsertSchema.pick({ name: true, description: true, projectId: true }).extend({
+  id: validUuidSchema,
+  status: z.enum(TaskStatus),
+  // Optional on the wire: the server falls back to the project's default primary label
+  primaryLabelId: validUuidSchema.optional(),
+  displayOrder: z.number().optional(),
+  labels: taskRelationIdsSchema.optional(),
+  assignedTo: taskRelationIdsSchema.optional(),
+  // Client sets publicity per task (stamped from the project's publicAt on create); omitted -> private.
+  publicAt: z.string().nullable().optional(),
+});
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seams for task */
 export const taskContract = evolutionContract.product('task', {

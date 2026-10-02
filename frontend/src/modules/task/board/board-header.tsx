@@ -19,11 +19,7 @@ import { cn } from '~/utils/cn';
  * Header component for the task board, including search, task count and action buttons.
  * Used for both project boards and workspace boards, with conditional rendering based on context.
  */
-export function BoardHeader({
-  projects,
-  workspace,
-  publicView,
-}: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
+export function BoardHeader({ projects, workspace, publicView }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
   const { t, i18n } = useTranslation();
   const isInWorkspace = !!workspace;
 
@@ -32,8 +28,7 @@ export function BoardHeader({
   } = useSearchParams<{ q?: string }>({});
 
   // No scope to derive params from in a public view or while a non-workspace board has no projects yet
-  const queryParams =
-    publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
+  const queryParams = publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal('board', queryParams);
   const selectedTaskIds = useTaskInteractionStore((s) => s.selectedTaskIds);
   const setSelectedTaskIds = useTaskInteractionStore((s) => s.setSelectedTaskIds);

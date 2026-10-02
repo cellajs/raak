@@ -1,13 +1,11 @@
 import type { ReactNode, RefObject } from 'react';
 import { create } from 'zustand';
-import { fallbackContentRef } from '~/utils/fallback-content-ref';
+import { blurAndStashTrigger, removeAndNotify, withDefaults } from '~/modules/common/overlay-store-helpers';
 
 /** Element focus returns to on close; read when the sheet closes, so a ref may resolve to a later DOM node. */
 export type TriggerRef = RefObject<HTMLElement | null>;
 
-type SheetContainerOptions = {
-  ref: RefObject<HTMLDivElement | null>;
-};
+type SheetContainerOptions = { ref: RefObject<HTMLDivElement | null> };
 
 export type SheetData = {
   id: string;
@@ -23,7 +21,6 @@ export type SheetData = {
   disablePointerDismissal?: boolean;
   closeSheetOnRouteChange?: boolean;
   container?: SheetContainerOptions;
-  skipAnimation?: boolean;
   /** Key to identify content for animated transitions (used with AnimatePresence). */
   contentKey?: string;
   /** Enable auto-scrolling when dragging elements near edges. */
@@ -31,11 +28,7 @@ export type SheetData = {
   onClose?: (isCleanup?: boolean) => void;
 };
 
-export type InternalSheet = SheetData & {
-  key: number;
-  content: ReactNode;
-  open?: boolean;
-};
+export type InternalSheet = SheetData & { content: ReactNode; open?: boolean };
 
 interface SheetStoreState {
   sheets: InternalSheet[];
@@ -47,33 +40,21 @@ interface SheetStoreState {
   removeOnRouteChange: (opts?: { isCleanup?: boolean }) => void;
   get(id: string): InternalSheet | undefined;
 
-  triggerRefs: Record<string, TriggerRef | null>;
-
+  /** @deprecated No-op: focus returns through `triggerRef` or the focus fallback. Removed in the next release. */
   setTriggerRef: (id: string, ref: TriggerRef) => void;
-  getTriggerRef: (id: string) => TriggerRef | null;
 }
 
 // Manages one or multiple sheets; on mobile they render as drawers.
 export const useSheeter = create<SheetStoreState>()((set, get) => ({
   sheets: [],
-  triggerRefs: {},
 
   create: (content, data) => {
-    if (document.activeElement instanceof HTMLButtonElement || document.activeElement instanceof HTMLAnchorElement) {
-      fallbackContentRef.current = document.activeElement;
-      document.activeElement.blur();
-    }
+    blurAndStashTrigger();
 
-    const defaults = {
-      drawerOnMobile: true,
-      open: true,
-      modal: true,
-      key: Date.now(),
-      closeSheetOnRouteChange: true,
-    };
+    const defaults = { open: true, modal: true, closeSheetOnRouteChange: true };
 
     set((state) => ({
-      sheets: [...state.sheets.filter((s) => s.id !== data.id), { ...defaults, ...data, content }],
+      sheets: [...state.sheets.filter((s) => s.id !== data.id), { ...withDefaults(defaults, data), content }],
     }));
     return data.id;
   },
@@ -82,52 +63,30 @@ export const useSheeter = create<SheetStoreState>()((set, get) => ({
     const existing = get().sheets.find((s) => s.id === data.id);
     if (!existing) return get().create(content, data);
 
-    set((state) => ({
-      sheets: state.sheets.map((s) => (s.id === data.id ? { ...s, ...data, content, open: true } : s)),
-    }));
+    // Merges into the open sheet: an option passed as undefined clears its value.
+    set((state) => ({ sheets: state.sheets.map((s) => (s.id === data.id ? { ...s, ...data, content, open: true } : s)) }));
     return data.id;
   },
 
   update: (id, updates) => {
-    set((state) => ({
-      sheets: state.sheets.map((sheet) => (sheet.id === id ? { ...sheet, ...updates } : sheet)),
-    }));
+    set((state) => ({ sheets: state.sheets.map((sheet) => (sheet.id === id ? { ...sheet, ...updates } : sheet)) }));
   },
 
   remove: (id, opts) => {
     const { sheets } = get();
-    const removeSheets = id ? sheets.filter((sheet) => sheet.id === id) : sheets;
-    if (!removeSheets.length) return;
-
-    // Update the store before onClose: a callback that navigates from inside set() would
-    // interleave a router update with this one and render a stale frame of the sheet.
-    set({ sheets: sheets.filter((sheet) => !removeSheets.includes(sheet)) });
-
-    for (const sheet of removeSheets) sheet.onClose?.(opts?.isCleanup);
+    const toRemove = id === undefined ? sheets : sheets.filter((sheet) => sheet.id === id);
+    removeAndNotify((remaining) => set({ sheets: remaining }), sheets, toRemove, opts);
   },
 
   removeOnRouteChange: (opts) => {
     const { sheets } = get();
-    const removeSheets = sheets.filter((sheet) => sheet.closeSheetOnRouteChange);
-    if (!removeSheets.length) return;
-
-    // Same order as remove: store first, then onClose.
-    set({ sheets: sheets.filter((sheet) => !removeSheets.includes(sheet)) });
-
-    for (const sheet of removeSheets) sheet.onClose?.(opts?.isCleanup);
+    const toRemove = sheets.filter((sheet) => sheet.closeSheetOnRouteChange !== false);
+    removeAndNotify((remaining) => set({ sheets: remaining }), sheets, toRemove, opts);
   },
 
   get: (id) => get().sheets.find((sheet) => sheet.id === id),
 
-  setTriggerRef: (id, ref) => {
-    set((state) => ({
-      triggerRefs: { ...state.triggerRefs, [id]: ref },
-    }));
-  },
-
-  getTriggerRef: (id) => {
-    return get().triggerRefs[id] ?? null;
-  },
+  setTriggerRef: () => {},
 }));
 
 // Non-hook alias for use outside React components, e.g. sheeter.getState()

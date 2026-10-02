@@ -2,11 +2,23 @@
 
 Hono API server on PostgreSQL (Drizzle ORM): authentication, entity CRUD, file uploads, real-time sync, and all server-side business logic. Runs as part of `pnpm dev`.
 
+## Dependencies
+
+tsup bundles the backend into `dist/`, and the production image installs only `dependencies` (`pnpm install --prod`). So
+`dependencies` lists the packages the bundle loads from disk ([keep-on-disk.ts](../shared/src/keep-on-disk.ts)), and every
+other package is a devDependency, runtime libraries included. The build throws on a `dependencies` entry it would inline.
+`pnpm deps:unused` (knip) reports unused and unlisted packages across the workspaces.
+
 ## Query module conventions
 
 Database access for a module lives in `<module>-queries.ts`. Operations and handlers assemble
 authorization and request filters, then call these query functions. Business rules, HTTP response
 shaping, notifications, and cache invalidation stay outside query modules.
+
+A module's `helpers/` holds database-free code only: key formats, crypto, cookies, URL or HTML
+building, column selections. A function that reads or writes is a query. One that combines queries
+with rules, permission checks or side effects is an operation, also when only other operations call
+it.
 
 When adding or changing a query:
 

@@ -18,11 +18,12 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import type { BlockNoteContentFormField as BlockNoteContentFormFieldType } from '~/modules/common/form-fields/blocknote';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectRoles } from '~/modules/common/form-fields/select-roles';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
-import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { Form, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import type { MutationData } from '~/query/types';
 import { lazyNamed } from '~/utils/lazy-named';
 
@@ -54,11 +55,7 @@ export function CreateNewsletterForm({ organizationIds, callback }: CreateNewsle
   const form = useFormWithDraft<FormValues>(formContainerId, { formOptions });
 
   // SendIcon newsletter
-  const { mutate: _sendNewsletter, isPending } = useMutation<
-    SendNewsletterResponse,
-    ApiError,
-    MutationData<SendNewsletterData>
-  >({
+  const { mutate: _sendNewsletter, isPending } = useMutation<SendNewsletterResponse, ApiError, MutationData<SendNewsletterData>>({
     mutationFn: async ({ body, query }) => {
       return await sendNewsletter({ body, query });
     },
@@ -76,11 +73,7 @@ export function CreateNewsletterForm({ organizationIds, callback }: CreateNewsle
     // @blocknote/core off the boot path for everyone who never opens this form.
     const { blocksToHTML } = await import('~/modules/common/blocknote/helpers/blocknote-helpers');
     // Set organizationIds here to avoind having them in draft & converting string blocks to HTML
-    const body = {
-      ...data,
-      organizationIds,
-      content: blocksToHTML(data.content),
-    };
+    const body = { ...data, organizationIds, content: blocksToHTML(data.content) };
     _sendNewsletter({ body, query: { toSelf: !!testOnly } });
   };
 
@@ -102,7 +95,7 @@ export function CreateNewsletterForm({ organizationIds, callback }: CreateNewsle
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} id="newsletter-form" className="h-max space-y-6 pb-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} id="newsletter-form" className="flex h-max flex-col gap-6 pb-8">
         <InputFormField
           control={form.control}
           inputClassName="font-bold"
@@ -122,13 +115,9 @@ export function CreateNewsletterForm({ organizationIds, callback }: CreateNewsle
             id: `${appConfig.name}-blocknote-newsletter`,
             trailingBlock: false,
             className:
-              'min-h-20 pl-10 pr-6 p-3 border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring max-focus-visible:ring-transparent max-focus-visible:ring-offset-0 flex w-full rounded-md border text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-effect disabled:cursor-not-allowed disabled:opacity-50',
+              'min-h-20 pl-10 pr-6 p-3 border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full rounded-md border text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-effect disabled:cursor-not-allowed disabled:opacity-50',
             // Newsletter images go to the public bucket under the system prefix, where email clients load them.
-            baseFilePanelProps: {
-              mediaMode: 'public-no-attachment',
-              templateId: 'newsletter',
-              organizationId: systemUploadPrefix,
-            },
+            baseFilePanelProps: { mediaMode: 'public-no-attachment', templateId: 'newsletter', organizationId: systemUploadPrefix },
             excludeFileBlockTypes: ['video', 'audio', 'file'],
           }}
         />
@@ -138,11 +127,16 @@ export function CreateNewsletterForm({ organizationIds, callback }: CreateNewsle
           name="roles"
           render={({ field: { value, onChange } }) => (
             <FormItem>
-              <FormLabel>
-                {t('c:roles')}
-                <span className="ml-1 opacity-50">*</span>
-              </FormLabel>
-              <SelectRoles value={value} onValueChange={onChange} />
+              <SelectRoles
+                value={value}
+                onValueChange={onChange}
+                label={
+                  <>
+                    {t('c:roles')}
+                    <span className="ml-1 opacity-50">*</span>
+                  </>
+                }
+              />
               <FormMessage />
             </FormItem>
           )}
@@ -158,22 +152,11 @@ export function CreateNewsletterForm({ organizationIds, callback }: CreateNewsle
           <SubmitButton disabled={!canSend()} loading={isPending} icon={<SendIcon />}>
             {testOnly ? t('c:send_test_email') : t('c:send')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={isDirty() ? '' : 'invisible'}
-            aria-label={t('c:cancel')}
-            onClick={cancel}
-          >
+          <Button type="reset" variant="secondary" className={isDirty() ? '' : 'invisible'} aria-label={t('c:cancel')} onClick={cancel}>
             {t('c:cancel')}
           </Button>
           <div className="flex items-center gap-2 max-sm:mt-2">
-            <Checkbox
-              id="testOnly"
-              checked={testOnly}
-              onCheckedChange={(value) => setTestOnly(value)}
-              className="ml-4 size-4"
-            />
+            <Checkbox id="testOnly" checked={testOnly} onCheckedChange={(value) => setTestOnly(value)} className="ml-4 size-4" />
             <label htmlFor="testOnly" className="items-center text-sm">
               {t('c:test_email')}
             </label>

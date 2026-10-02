@@ -71,11 +71,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
             animate={{ x: 0, scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
           >
-            <ToggleGroup
-              type="multiple"
-              onValueChange={updateMode}
-              className="w-full items-stretch gap-2 py-3 max-sm:flex-col sm:h-40 sm:gap-3"
-            >
+            <ToggleGroup type="multiple" onValueChange={updateMode} className="w-full items-stretch gap-2 py-3 max-sm:flex-col sm:h-40 sm:gap-3">
               <ToggleGroupItem
                 size="tile"
                 variant="tile"
@@ -87,23 +83,17 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
                 <ShrubIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
                   <p className="">{t('c:create_project.text')}</p>
-                  <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover:opacity-100">
+                  <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
                     <strong>{t('c:continue')}</strong>
                     <ChevronRightIcon className="ml-1" />
                   </div>
                 </div>
               </ToggleGroupItem>
-              <ToggleGroupItem
-                size="tile"
-                variant="tile"
-                value="select"
-                aria-label="Select project"
-                className="w-auto grow py-6 sm:py-10"
-              >
+              <ToggleGroupItem size="tile" variant="tile" value="select" aria-label="Select project" className="w-auto grow py-6 sm:py-10">
                 <SquareMousePointerIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
                   <div className="">{t('c:select_project')}</div>
-                  <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover:opacity-100">
+                  <div className="mt-1 flex flex-row items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
                     <strong>{t('c:continue')}</strong>
                     <ChevronRightIcon className="ml-1" />
                   </div>
@@ -113,12 +103,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
           </motion.div>
         )}
         {createMode && (
-          <motion.div
-            key="add-form"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="flex flex-col gap-4"
-          >
+          <motion.div key="add-form" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col gap-4">
             {createMode === 'create' ? <CreateProjectForm dialog /> : <SelectProjectForm dialog />}
           </motion.div>
         )}

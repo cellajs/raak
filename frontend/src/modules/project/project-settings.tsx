@@ -39,18 +39,8 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
     if (isSheet) useSheeter.getState().remove('update-project');
   };
 
-  const {
-    isLeavingProject,
-    isRemovingProjectFromWorkspace,
-    leaveProject,
-    projectHasWorkspace,
-    removeProjectFromWorkspace,
-  } = useProjectMembershipActions({
-    boardType,
-    project,
-    tenantId,
-    onSuccess: closeSettingsSheet,
-  });
+  const { isLeavingProject, isRemovingProjectFromWorkspace, leaveProject, projectHasWorkspace, removeProjectFromWorkspace } =
+    useProjectMembershipActions({ boardType, project, tenantId, onSuccess: closeSettingsSheet });
 
   const callback = (deletedProjects: Project[]) => {
     closeSettingsSheet();
@@ -59,12 +49,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
     // so the board defaults to the first remaining project
     const deletedSlugs = new Set(deletedProjects.map(({ slug }) => slug));
     if (projectSlug && deletedSlugs.has(projectSlug)) {
-      navigate({
-        to: '.',
-        params: true,
-        resetScroll: false,
-        search: (prev) => ({ ...prev, projectSlug: undefined }),
-      });
+      navigate({ to: '.', params: true, resetScroll: false, search: (prev) => ({ ...prev, projectSlug: undefined }) });
     }
   };
 
@@ -74,10 +59,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
       title: t('c:delete_resource', { resource: t('c:project').toLowerCase() }),
-      description: t('c:confirm.delete_resource', {
-        name: project.name,
-        resource: t('c:project').toLowerCase(),
-      }),
+      description: t('c:confirm.delete_resource', { name: project.name, resource: t('c:project').toLowerCase() }),
     });
   };
 
@@ -101,9 +83,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
             <CardDescription>{t('c:project_workspace_settings.text')}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
-            {canMoveProjects && (
-              <MoveProjectForm project={project} workspaces={workspaces} onSuccess={closeSettingsSheet} />
-            )}
+            {canMoveProjects && <MoveProjectForm project={project} workspaces={workspaces} onSuccess={closeSettingsSheet} />}
             {projectHasWorkspace && (
               <Button
                 variant="destructive"
@@ -112,7 +92,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
                 onClick={() => removeProjectFromWorkspace()}
                 disabled={isRemovingProjectFromWorkspace}
               >
-                <UnlinkIcon className="mr-2 size-4" />
+                <UnlinkIcon className="size-4" />
                 <span>{isRemovingProjectFromWorkspace ? t('c:loading') : t('c:remove_project_from_workspace')}</span>
               </Button>
             )}
@@ -126,14 +106,8 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
           <CardDescription>{t('c:project_membership_settings.text')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            variant="destructive"
-            className="w-full sm:w-auto"
-            soft
-            onClick={() => leaveProject()}
-            disabled={isLeavingProject}
-          >
-            <LogOutIcon className="mr-2 size-4" />
+          <Button variant="destructive" className="w-full sm:w-auto" soft onClick={() => leaveProject()} disabled={isLeavingProject}>
+            <LogOutIcon className="size-4" />
             <span>{isLeavingProject ? t('c:loading') : t('c:leave_project')}</span>
           </Button>
         </CardContent>
@@ -144,15 +118,12 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
           <CardHeader>
             <CardTitle>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</CardTitle>
             <CardDescription>
-              <Trans
-                i18nKey="c:delete_resource_notice.text"
-                values={{ name: project.name, resource: t('c:project').toLowerCase() }}
-              />
+              <Trans i18nKey="c:delete_resource_notice.text" values={{ name: project.name, resource: t('c:project').toLowerCase() }} />
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
-              <Trash2Icon className="mr-2 h-4 w-4" />
+              <Trash2Icon className="h-4 w-4" />
               <span>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</span>
             </Button>
           </CardContent>

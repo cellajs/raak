@@ -29,9 +29,12 @@ export const tableMetaOf = (kind: TableMeta['kind'], type: string): TableMeta =>
 const DEFAULT_ENTITY: NonNullable<InsertActivityModel['entityType']> = 'attachment';
 const DEFAULT_TABLE = 'attachments';
 
+/** The seeded mock is the same on every call, and reseeding faker per call made a 50,000-event test take 11s, so it is built once. */
+let cdcActivityDefaults: InsertActivityModel | undefined;
+
 /** Activity with explicit test-friendly defaults, based on the backend mockActivity shape. */
 export function mockCdcActivity(overrides: Partial<InsertActivityModel> = {}): InsertActivityModel {
-  return mockActivity('cdc:default', {
+  cdcActivityDefaults ??= mockActivity('cdc:default', {
     action: 'create',
     entityType: DEFAULT_ENTITY,
     resourceType: null,
@@ -42,8 +45,8 @@ export function mockCdcActivity(overrides: Partial<InsertActivityModel> = {}): I
     organizationId: 'org-1',
     changedFields: null,
     stx: null,
-    ...overrides,
   }) as InsertActivityModel;
+  return { ...cdcActivityDefaults, ...overrides };
 }
 
 /** ParseMessageResult fixture. */
@@ -70,12 +73,7 @@ export function mockParseResult(
     type: `${type}.${overrides.action === 'delete' ? 'deleted' : 'created'}` as InsertActivityModel['type'],
   });
 
-  return {
-    activity,
-    rowData: { id: activity.subjectId ?? 'unknown' },
-    oldRowData: null,
-    tableMeta: tableMetaOf(kind, type),
-  };
+  return { activity, rowData: { id: activity.subjectId ?? 'unknown' }, oldRowData: null, tableMeta: tableMetaOf(kind, type) };
 }
 
 type Row = Record<string, unknown> & { id?: string };
@@ -123,18 +121,11 @@ export function mockPendingEvent(overrides: {
   organizationId?: string | null;
   tableMeta?: 'entity' | 'resource';
 }): PendingEvent {
-  return {
-    lsn: overrides.lsn,
-    result: mockParseResult(overrides),
-  };
+  return { lsn: overrides.lsn, result: mockParseResult(overrides) };
 }
 
 /** BatchEvent fixture. */
 export function mockBatchEvent(seq: number, subjectId = `entity-${seq}`): BatchEvent {
   const activity = mockCdcActivity({ subjectId });
-  return {
-    activity: { ...activity, id: `act-${seq}` } as InsertActivityModel & { id: string },
-    rowData: { id: subjectId, seq },
-    seq,
-  };
+  return { activity: { ...activity, id: `act-${seq}` } as InsertActivityModel & { id: string }, rowData: { id: subjectId, seq }, seq };
 }

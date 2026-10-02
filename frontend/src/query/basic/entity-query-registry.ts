@@ -26,6 +26,7 @@ export type DeltaFetchFn = (
 /** Registry decoupling entity modules from stream handlers: modules register keys at load time, stream/cache code looks them up by entityType. */
 const entityQueryKeysRegistry = new Map<string, EntityQueryKeys>();
 const deltaFetchRegistry = new Map<string, DeltaFetchFn>();
+const equalityFilterKeysRegistry = new Map<string, readonly string[]>();
 
 const SENTINEL_ORG = '__org__';
 const SENTINEL_HOME = '__home__';
@@ -34,21 +35,14 @@ const SENTINEL_ID = '__id__';
 /** Validates key builders against the list and detail shapes live routing requires, so a malformed custom key fails at startup and not during sync. */
 function assertKeyContract(entityType: EntityType, keys: EntityQueryKeys): void {
   const carries = (key: readonly unknown[], id: string) =>
-    key.some(
-      (segment) =>
-        segment === id || (segment != null && typeof segment === 'object' && Object.values(segment).includes(id)),
-    );
+    key.some((segment) => segment === id || (segment != null && typeof segment === 'object' && Object.values(segment).includes(id)));
   const fail = (builder: string, requirement: string): never => {
-    throw new Error(
-      `registerEntityQueryKeys(${entityType}): ${builder} must ${requirement} ` +
-        '(createEntityKeys contract - see cella/SYNC_ENGINE.md)',
-    );
+    throw new Error(`registerEntityQueryKeys(${entityType}): ${builder} must ${requirement} (createEntityKeys contract - see cella/SYNC_ENGINE.md)`);
   };
 
   const home = keys.list.home(SENTINEL_ORG, SENTINEL_HOME);
   if (home[0] !== entityType || home[1] !== 'list') fail('list.home(...)', `start with [${entityType}, 'list']`);
-  if (!carries(home, SENTINEL_ORG) || !carries(home, SENTINEL_HOME))
-    fail('list.home(...)', 'carry the org and home-channel ids');
+  if (!carries(home, SENTINEL_ORG) || !carries(home, SENTINEL_HOME)) fail('list.home(...)', 'carry the org and home-channel ids');
 
   const org = keys.list.org(SENTINEL_ORG);
   if (org[0] !== entityType || org[1] !== 'list') fail('list.org(...)', `start with [${entityType}, 'list']`);
@@ -60,11 +54,7 @@ function assertKeyContract(entityType: EntityType, keys: EntityQueryKeys): void 
 }
 
 /** Canonical list data must use home keys, because live sync placement and channel observation derive from that shape; hand-written keys fail validation. */
-export function registerEntityQueryKeys(
-  entityType: EntityType,
-  keys: EntityQueryKeys,
-  deltaFetch?: DeltaFetchFn,
-): void {
+export function registerEntityQueryKeys(entityType: EntityType, keys: EntityQueryKeys, deltaFetch?: DeltaFetchFn): void {
   assertKeyContract(entityType, keys);
   entityQueryKeysRegistry.set(entityType, keys);
   if (deltaFetch) deltaFetchRegistry.set(entityType, deltaFetch);
@@ -93,4 +83,18 @@ export function getRegisteredProductEntityTypes(): ProductEntityType[] {
 /** Undefined when the entity type does not support delta fetching. */
 export function getEntityDeltaFetch(entityType: string): DeltaFetchFn | undefined {
   return deltaFetchRegistry.get(entityType);
+}
+
+/**
+ * Declares list filter keys that a row matches only when its field of the same name equals the filter value, as `itemId` on
+ * a `{ itemId }` list. A new row then skips a filtered list that sets one of these keys to another value; a list that sets
+ * none of them keeps the refetch.
+ */
+export function registerEqualityFilterKeys(entityType: EntityType, filterKeys: readonly string[]): void {
+  equalityFilterKeysRegistry.set(entityType, filterKeys);
+}
+
+/** Undefined when the entity type declared no equality filter keys: every filtered list refetches on a new row. */
+export function getEqualityFilterKeys(entityType: string): readonly string[] | undefined {
+  return equalityFilterKeysRegistry.get(entityType);
 }

@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { appConfig } from 'shared';
 import { HelpText } from '~/modules/common/help-text';
 import { ToolCard } from '~/modules/common/tool-card';
 import { notificationPreferencesQueryOptions, useUpdateNotificationPreferences } from '~/modules/notification/query';
@@ -7,6 +8,7 @@ import { usePushSubscription } from '~/modules/notification/use-push-subscriptio
 import { Label } from '~/modules/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/modules/ui/radio-group';
 import { Switch } from '~/modules/ui/switch';
+import { tw } from '~/utils/tw';
 
 type DigestFrequency = 'off' | 'daily' | 'weekly';
 
@@ -17,7 +19,7 @@ const digestOptions = [
   { value: 'weekly', label: 'c:notifications.digest_weekly' },
 ] as const satisfies { value: DigestFrequency; label: string }[];
 
-const cardClass = 'mx-auto sm:w-full';
+const cardClass = tw('mx-auto sm:w-full');
 
 /** Only email is opt-out: the inbox always fills, so every switch off still delivers the mention. */
 export function AccountNotificationsCard() {
@@ -30,22 +32,16 @@ export function AccountNotificationsCard() {
     <ToolCard label="c:notifications" description={t('c:notifications.text')} className={cardClass}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
-          <Switch
-            id="mentionEmail"
-            checked={data.mentionEmail}
-            onCheckedChange={(mentionEmail) => mutate({ mentionEmail })}
-          />
+          <Switch id="mentionEmail" checked={data.mentionEmail} onCheckedChange={(mentionEmail) => mutate({ mentionEmail })} />
           <Label htmlFor="mentionEmail">{t('c:notifications.mention_email')}</Label>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Switch
-            id="commentEmail"
-            checked={data.commentEmail}
-            onCheckedChange={(commentEmail) => mutate({ commentEmail })}
-          />
-          <Label htmlFor="commentEmail">{t('c:notifications.comment_email')}</Label>
-        </div>
+        {appConfig.has.commentEmail && (
+          <div className="flex items-center gap-4">
+            <Switch id="commentEmail" checked={data.commentEmail} onCheckedChange={(commentEmail) => mutate({ commentEmail })} />
+            <Label htmlFor="commentEmail">{t('c:notifications.comment_email')}</Label>
+          </div>
+        )}
 
         {push.supported && (
           <div className="flex items-center gap-4">

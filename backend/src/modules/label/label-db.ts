@@ -38,19 +38,16 @@ export const labelsTable = snakeCase.table(
     index('labels_created_by_index').on(table.createdBy),
     index('labels_updated_by_index').on(table.updatedBy),
     ...channelRelationIndexes('labels', table, 'label'),
-    foreignKey({
-      columns: [table.tenantId, table.organizationId],
-      foreignColumns: [organizationsTable.tenantId, organizationsTable.id],
-    }).onDelete('cascade'),
+    foreignKey({ columns: [table.tenantId, table.organizationId], foreignColumns: [organizationsTable.tenantId, organizationsTable.id] }).onDelete(
+      'cascade',
+    ),
     tenantSelectPolicy('labels', table),
     ...writeThroughPolicies('labels'),
   ],
 );
 
 // Get table columns and convert to snake_case
-export const labelsTableColumns = Object.fromEntries(
-  Object.entries(getColumns(labelsTable)).map(([key, column]) => [toSnakeCase(column.name), key]),
-);
+export const labelsTableColumns = Object.fromEntries(Object.entries(getColumns(labelsTable)).map(([key, column]) => [toSnakeCase(column.name), key]));
 
 export type LabelModel = typeof labelsTable.$inferSelect;
 export type InsertLabelModel = typeof labelsTable.$inferInsert;

@@ -22,8 +22,7 @@ function TaskSheet({ id, organizationId }: TaskSheetProps) {
 
   // Select public or authenticated options before the unconditional hook call.
   // The cast bridges the factories' incompatible query-key types.
-  const queryOpts =
-    organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
+  const queryOpts = organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
   const { data: task, isLoading, isError } = useQuery(queryOpts as ReturnType<typeof taskQueryOptions>);
 
   const isReadOnly = useIsProjectReadOnly(task?.projectId);

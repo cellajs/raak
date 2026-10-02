@@ -5,10 +5,9 @@
 
 import { useEffect, useState } from 'react';
 import { isDebugMode } from '~/env';
-import { clearSpans, getSpanStats, type SpanData, subscribeToSpans } from '~/lib/tracing';
+import { clearSpans, getSpanStats, getSpans, type SpanData, subscribeToSpans } from '~/lib/tracing';
 
 interface SyncDevtoolsState {
-  isOpen: boolean;
   activeTab: 'spans' | 'stats' | 'timeline';
   filter: string;
 }
@@ -89,15 +88,8 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  title: {
-    color: '#f1f5f9',
-    fontWeight: 600,
-    fontSize: '13px',
-  },
-  tabs: {
-    display: 'flex',
-    gap: '4px',
-  },
+  title: { color: '#f1f5f9', fontWeight: 600, fontSize: '13px' },
+  tabs: { display: 'flex', gap: '4px' },
   tab: {
     padding: '4px 8px',
     background: 'transparent',
@@ -107,15 +99,8 @@ const styles = {
     borderRadius: '4px',
     fontSize: '11px',
   },
-  tabActive: {
-    background: '#334155',
-    color: '#f1f5f9',
-  },
-  content: {
-    flex: 1,
-    overflow: 'auto',
-    padding: '8px',
-  },
+  tabActive: { background: '#334155', color: '#f1f5f9' },
+  content: { flex: 1, overflow: 'auto', padding: '8px' },
   spanRow: {
     display: 'flex',
     alignItems: 'center',
@@ -125,60 +110,16 @@ const styles = {
     marginBottom: '4px',
     background: '#1e293b',
   },
-  spanDot: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-  },
-  spanName: {
-    flex: 1,
-    color: '#e2e8f0',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap' as const,
-  },
-  spanDuration: {
-    color: '#94a3b8',
-    fontSize: '11px',
-  },
-  spanTime: {
-    color: '#64748b',
-    fontSize: '10px',
-  },
-  statCard: {
-    background: '#1e293b',
-    borderRadius: '6px',
-    padding: '12px',
-    marginBottom: '8px',
-  },
-  statLabel: {
-    color: '#94a3b8',
-    fontSize: '10px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-  },
-  statValue: {
-    color: '#f1f5f9',
-    fontSize: '20px',
-    fontWeight: 600,
-    marginTop: '4px',
-  },
-  statGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '8px',
-  },
-  empty: {
-    color: '#64748b',
-    textAlign: 'center' as const,
-    padding: '24px',
-  },
-  actions: {
-    display: 'flex',
-    gap: '8px',
-    padding: '8px',
-    borderTop: '1px solid #334155',
-  },
+  spanDot: { width: '8px', height: '8px', borderRadius: '50%' },
+  spanName: { flex: 1, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
+  spanDuration: { color: '#94a3b8', fontSize: '11px' },
+  spanTime: { color: '#64748b', fontSize: '10px' },
+  statCard: { background: '#1e293b', borderRadius: '6px', padding: '12px', marginBottom: '8px' },
+  statLabel: { color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
+  statValue: { color: '#f1f5f9', fontSize: '20px', fontWeight: 600, marginTop: '4px' },
+  statGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' },
+  empty: { color: '#64748b', textAlign: 'center' as const, padding: '24px' },
+  actions: { display: 'flex', gap: '8px', padding: '8px', borderTop: '1px solid #334155' },
   button: {
     padding: '6px 12px',
     background: '#334155',
@@ -213,19 +154,8 @@ function SpanList({ spans, filter }: { spans: SpanData[]; filter: string }) {
     <div>
       {sorted.map((span) => (
         <div key={span.spanId} style={styles.spanRow}>
-          <div
-            style={{
-              ...styles.spanDot,
-              background: getStatusColor(span.status),
-            }}
-          />
-          <div
-            style={{
-              ...styles.spanName,
-              color: getCategoryColor(span.name),
-            }}
-            title={span.name}
-          >
+          <div style={{ ...styles.spanDot, background: getStatusColor(span.status) }} />
+          <div style={{ ...styles.spanName, color: getCategoryColor(span.name) }} title={span.name}>
             {span.name.replace('sync.', '')}
           </div>
           <div style={styles.spanDuration}>{formatDuration(span.duration)}</div>
@@ -248,9 +178,7 @@ function StatsView({ spans: _spans }: { spans: SpanData[] }) {
         </div>
         <div style={styles.statCard}>
           <div style={styles.statLabel}>Errors</div>
-          <div style={{ ...styles.statValue, color: stats.errorCount > 0 ? '#ef4444' : '#22c55e' }}>
-            {stats.errorCount}
-          </div>
+          <div style={{ ...styles.statValue, color: stats.errorCount > 0 ? '#ef4444' : '#22c55e' }}>{stats.errorCount}</div>
         </div>
       </div>
 
@@ -258,15 +186,7 @@ function StatsView({ spans: _spans }: { spans: SpanData[] }) {
         <div style={styles.statLabel}>Spans by Type</div>
         <div style={{ marginTop: '8px' }}>
           {Object.entries(stats.byPrefix).map(([prefix, count]) => (
-            <div
-              key={prefix}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '4px 0',
-                color: '#e2e8f0',
-              }}
-            >
+            <div key={prefix} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#e2e8f0' }}>
               <span style={{ color: getCategoryColor(prefix) }}>{prefix}</span>
               <span>{count}</span>
             </div>
@@ -278,15 +198,7 @@ function StatsView({ spans: _spans }: { spans: SpanData[] }) {
         <div style={styles.statLabel}>Avg Duration by Type</div>
         <div style={{ marginTop: '8px' }}>
           {Object.entries(stats.avgDurationMs).map(([prefix, avgMs]) => (
-            <div
-              key={prefix}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '4px 0',
-                color: '#e2e8f0',
-              }}
-            >
+            <div key={prefix} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#e2e8f0' }}>
               <span style={{ color: getCategoryColor(prefix) }}>{prefix}</span>
               <span>{formatDuration(avgMs)}</span>
             </div>
@@ -305,9 +217,7 @@ function TimelineView({ spans }: { spans: SpanData[] }) {
       <div style={styles.empty}>
         No end-to-end latency data yet.
         <br />
-        <span style={{ fontSize: '10px', color: '#64748b' }}>
-          Latency is calculated from CDC timestamp to frontend processing.
-        </span>
+        <span style={{ fontSize: '10px', color: '#64748b' }}>Latency is calculated from CDC timestamp to frontend processing.</span>
       </div>
     );
   }
@@ -334,26 +244,11 @@ function TimelineView({ spans }: { spans: SpanData[] }) {
 
             return (
               <div key={span.spanId} style={{ marginBottom: '8px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '10px',
-                    color: '#94a3b8',
-                    marginBottom: '2px',
-                  }}
-                >
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', marginBottom: '2px' }}>
                   <span>{String(span.attributes['sync.entityType'] || 'unknown')}</span>
                   <span>{formatDuration(latency)}</span>
                 </div>
-                <div
-                  style={{
-                    height: '4px',
-                    background: '#334155',
-                    borderRadius: '2px',
-                    overflow: 'hidden',
-                  }}
-                >
+                <div style={{ height: '4px', background: '#334155', borderRadius: '2px', overflow: 'hidden' }}>
                   <div
                     style={{
                       width: `${width}%`,
@@ -373,25 +268,21 @@ function TimelineView({ spans }: { spans: SpanData[] }) {
 }
 
 interface SyncDevtoolsProps {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export function SyncDevtools({ isOpen, onClose }: SyncDevtoolsProps) {
-  const [state, setState] = useState<SyncDevtoolsState>({
-    isOpen: true,
-    activeTab: 'spans',
-    filter: '',
-  });
+export function SyncDevtools({ onClose }: SyncDevtoolsProps) {
+  const [state, setState] = useState<SyncDevtoolsState>({ activeTab: 'spans', filter: '' });
 
-  const [spans, setSpans] = useState<SpanData[]>([]);
+  // Mounted only while open, so seed from the buffer: subscribers get no replay
+  const [spans, setSpans] = useState<SpanData[]>(getSpans);
 
   useEffect(() => {
     const unsubscribe = subscribeToSpans(setSpans);
     return unsubscribe;
   }, []);
 
-  if (!isDebugMode || !isOpen) return null;
+  if (!isDebugMode) return null;
 
   return (
     <div style={styles.container}>
@@ -403,10 +294,7 @@ export function SyncDevtools({ isOpen, onClose }: SyncDevtoolsProps) {
               <button
                 key={tab}
                 type="button"
-                style={{
-                  ...styles.tab,
-                  ...(state.activeTab === tab ? styles.tabActive : {}),
-                }}
+                style={{ ...styles.tab, ...(state.activeTab === tab ? styles.tabActive : {}) }}
                 onClick={() => setState((s) => ({ ...s, activeTab: tab }))}
               >
                 {tab}

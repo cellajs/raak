@@ -17,10 +17,7 @@ import { log } from '#/utils/logger';
 
 type CreateLabelsInput = z.infer<typeof labelCreateManyStxBodySchema>;
 
-export async function createLabelsOp(
-  ctx: UserContext,
-  rawInput: CreateLabelsInput,
-): Promise<{ data: LabelModel[]; rejectedIds: string[] }> {
+export async function createLabelsOp(ctx: UserContext, rawInput: CreateLabelsInput): Promise<{ data: LabelModel[]; rejectedIds: string[] }> {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
   const { organization, tenant } = ctx.var;
@@ -36,19 +33,14 @@ export async function createLabelsOp(
   if (existing) return { data: existing, rejectedIds: [] };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
-  const currentCount = await getOrganizationEntityCount(ctx, {
-    organizationId: organization.id,
-    entityType: 'label',
-  });
+  const currentCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'label' });
 
   if (labelRestrictions !== 0 && currentCount + input.length > labelRestrictions) {
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'label' });
   }
 
   // Creating primary/epic labels requires project-admin authority (project update permission)
-  const managedProjectIds = [
-    ...new Set(input.filter((item) => item.mode !== 'secondary').map((item) => item.projectId)),
-  ];
+  const managedProjectIds = [...new Set(input.filter((item) => item.mode !== 'secondary').map((item) => item.projectId))];
   for (const managedProjectId of managedProjectIds) {
     await getValidChannel(ctx, managedProjectId, 'project', 'update');
   }

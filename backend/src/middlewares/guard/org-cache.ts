@@ -3,10 +3,7 @@ import type { OrganizationModel } from '#/modules/organization/organization-db';
 
 const cacheKey = (tenantId: string, orgId: string) => `${tenantId}:${orgId}`;
 
-const cache = new TTLCache<OrganizationModel>({
-  maxSize: 5000,
-  defaultTtl: 60_000,
-});
+const cache = new TTLCache<OrganizationModel>({ maxSize: 5000, defaultTtl: 60_000 });
 
 export const getOrgCache = (tenantId: string, orgId: string): OrganizationModel | undefined => {
   return cache.get(cacheKey(tenantId, orgId));
@@ -28,5 +25,3 @@ export const invalidateOrgCacheByTenant = (tenantId: string): number => {
 export const clearOrgCache = (): void => {
   cache.clear();
 };
-
-export const orgCacheStats = () => cache.stats;

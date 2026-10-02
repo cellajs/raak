@@ -12,9 +12,10 @@ import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { CreateOrganizationForm } from '~/modules/organization/create-organization-form';
 import { Alert, AlertDescription, AlertTitle } from '~/modules/ui/alert';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useWorkspaceCreateMutation } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
@@ -54,10 +55,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
   // Form with draft in local storage
   const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });
 
-  const organizationId = useWatch({
-    control: form.control,
-    name: 'organizationId',
-  });
+  const organizationId = useWatch({ control: form.control, name: 'organizationId' });
   const { touchedFields, isValid } = useFormState({ control: form.control, name: ['name'] });
 
   const { mutate: create, isPending } = useWorkspaceCreateMutation();
@@ -156,13 +154,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
           <SubmitButton disabled={!isValid} loading={isPending}>
             {t('c:create')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={form.isDirty ? '' : 'invisible'}
-            aria-label="Cancel"
-            onClick={() => form.reset()}
-          >
+          <Button type="reset" variant="secondary" className={form.isDirty ? '' : 'invisible'} aria-label="Cancel" onClick={() => form.reset()}>
             {t('c:cancel')}
           </Button>
         </div>

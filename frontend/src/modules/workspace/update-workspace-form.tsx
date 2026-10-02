@@ -7,8 +7,9 @@ import type { z } from 'zod';
 import { useBeforeUnload } from '~/hooks/use-before-unload';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useUpdateWorkspaceMutation } from '~/modules/workspace/query';
 
@@ -26,12 +27,7 @@ function UpdateWorkspaceForm({ workspace, callback, sheet: isSheet }: Props) {
 
   const { mutate, isPending } = useUpdateWorkspaceMutation();
 
-  const formOptions: UseFormProps<FormValues> = {
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: workspace.name,
-    },
-  };
+  const formOptions: UseFormProps<FormValues> = { resolver: zodResolver(formSchema), defaultValues: { name: workspace.name } };
 
   const formContainerId = 'update-workspace';
   const form = useFormWithDraft<FormValues>(`update-workspace-${workspace.id}`, { formOptions, formContainerId });
@@ -41,10 +37,7 @@ function UpdateWorkspaceForm({ workspace, callback, sheet: isSheet }: Props) {
 
   const onSubmit = (values: FormValues) => {
     mutate(
-      {
-        path: { id: workspace.id, organizationId: workspace.organizationId, tenantId: workspace.tenantId },
-        body: values,
-      },
+      { path: { id: workspace.id, organizationId: workspace.organizationId, tenantId: workspace.tenantId }, body: values },
       {
         onSuccess: (updatedWorkspace) => {
           if (isSheet) useSheeter.getState().remove('update-workspace');
@@ -63,12 +56,7 @@ function UpdateWorkspaceForm({ workspace, callback, sheet: isSheet }: Props) {
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:save_changes')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            onClick={() => form.reset()}
-            className={form.isDirty ? '' : 'invisible'}
-          >
+          <Button type="reset" variant="secondary" onClick={() => form.reset()} className={form.isDirty ? '' : 'invisible'}>
             {t('c:cancel')}
           </Button>
         </div>

@@ -29,11 +29,7 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
   beforeAll(async () => {
     tenant = await createTestTenant(call, 'public-read-routes');
 
-    const baseProject = {
-      tenantId: tenant.tenantId,
-      organizationId: tenant.organization.id,
-      createdBy: tenant.user.id,
-    };
+    const baseProject = { tenantId: tenant.tenantId, organizationId: tenant.organization.id, createdBy: tenant.user.id };
     await db.insert(projectsTable).values([
       {
         ...baseProject,
@@ -42,13 +38,7 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
         slug: `public-project-${publicProjectId.slice(0, 8)}`,
         publicAt: new Date().toISOString(),
       },
-      {
-        ...baseProject,
-        id: privateProjectId,
-        name: 'Private project',
-        slug: `private-project-${privateProjectId.slice(0, 8)}`,
-        publicAt: null,
-      },
+      { ...baseProject, id: privateProjectId, name: 'Private project', slug: `private-project-${privateProjectId.slice(0, 8)}`, publicAt: null },
     ]);
 
     const publicAt = new Date().toISOString();
@@ -65,20 +55,12 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
     await db.insert(tasksTable).values([
       { ...baseTask, id: publicTaskId, name: 'public task', projectId: publicProjectId, publicAt },
       { ...baseTask, id: privateTaskId, name: 'private task', projectId: privateProjectId, publicAt: null },
-      {
-        ...baseTask,
-        id: publicTaskInPrivateProjectId,
-        name: 'public task, private project',
-        projectId: privateProjectId,
-        publicAt,
-      },
+      { ...baseTask, id: publicTaskInPrivateProjectId, name: 'public task, private project', projectId: privateProjectId, publicAt },
     ]);
   });
 
   afterAll(async () => {
-    await db
-      .delete(tasksTable)
-      .where(inArray(tasksTable.id, [publicTaskId, privateTaskId, publicTaskInPrivateProjectId]));
+    await db.delete(tasksTable).where(inArray(tasksTable.id, [publicTaskId, privateTaskId, publicTaskInPrivateProjectId]));
     await db.delete(projectsTable).where(inArray(projectsTable.id, [publicProjectId, privateProjectId]));
     await clearSecurityTestData();
   });
@@ -99,10 +81,7 @@ describe('Public read routes (engine-resolved grants, anonymous actor)', async (
     expect(privateResult.response.status).toBe(403);
 
     // Decoupled: a public task in a private project is readable
-    const decoupledResult = await call(getPublicTask, {
-      path: { id: publicTaskInPrivateProjectId },
-      headers: defaultHeaders,
-    });
+    const decoupledResult = await call(getPublicTask, { path: { id: publicTaskInPrivateProjectId }, headers: defaultHeaders });
     expect(decoupledResult.response.status).toBe(200);
   });
 

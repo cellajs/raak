@@ -3,49 +3,48 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import { ChevronDownIcon } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { GenTagSummary } from 'sdk/docs-types';
 import { operationsQueryOptions, schemasQueryOptions, tagsQueryOptions } from '~/modules/docs/query';
 import { OperationsSidebar } from '~/modules/docs/sidebar/operations-sidebar';
 import { SchemasSidebar } from '~/modules/docs/sidebar/schemas-sidebar';
-import type { GenTagSummary } from '~/modules/docs/types';
 import { buttonVariants } from '~/modules/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/modules/ui/collapsible';
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenuItem } from '~/modules/ui/sidebar';
 import { queryClient } from '~/query/query-client';
 import { cn } from '~/utils/cn';
 
+/** Search params of the operations and schemas routes; the router types location.search as the union of all routes. */
+type DocsSearch = { operationTag?: string; schemaTag?: string; q?: string };
+
 interface ApiReferenceSectionProps {
   label: string;
   tags: GenTagSummary[];
-  isMobile: boolean;
 }
 
 /** Expansion is derived from the route, mutually exclusive, with a per-section forced-collapse override. */
-export function ApiReferenceSection({ label, tags, isMobile }: ApiReferenceSectionProps) {
+export function ApiReferenceSection({ label, tags }: ApiReferenceSectionProps) {
   const { t } = useTranslation();
 
   const { data: schemas } = useQuery(schemasQueryOptions);
 
-  const { location } = useRouterState();
-  const isOperationsRoute = location.pathname === '/docs/operations';
-  const isOperationsTableRoute = location.pathname === '/docs/operations/table';
-  const isSchemasRoute = location.pathname.includes('/docs/schemas');
+  // Narrow selects: the whole router state changes several times per navigation
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeOperationTag = useRouterState({ select: (state) => (state.location.search as DocsSearch).operationTag });
+  const activeSchemaTag = useRouterState({ select: (state) => (state.location.search as DocsSearch).schemaTag });
+  const hasQuery = useRouterState({ select: (state) => !!(state.location.search as DocsSearch).q });
+  const isOperationsRoute = pathname === '/docs/operations';
+  const isOperationsTableRoute = pathname === '/docs/operations/table';
+  const isSchemasRoute = pathname.includes('/docs/schemas');
 
   // Operations expand only in list view, not table view
   const expandedSection = isOperationsRoute ? 'operations' : isSchemasRoute ? 'schemas' : null;
 
   // Start collapsed when landing directly via URL without search params
-  const searchParams = location.search as Record<string, unknown>;
-  const activeOperationTag = searchParams.operationTag as string | undefined;
-  const activeSchemaTag = searchParams.schemaTag as string | undefined;
-  const hasOperationSearchParams = !!activeOperationTag || !!searchParams.q;
+  const hasOperationSearchParams = !!activeOperationTag || hasQuery;
   const hasSchemasSearchParams = !!activeSchemaTag;
-  const [forcedCollapsed, setForcedCollapsed] = useState<string | null>(
-    isOperationsRoute && !hasOperationSearchParams
-      ? 'operations'
-      : isSchemasRoute && !hasSchemasSearchParams
-        ? 'schemas'
-        : null,
-  );
+  const initialForcedCollapsed =
+    isOperationsRoute && !hasOperationSearchParams ? 'operations' : isSchemasRoute && !hasSchemasSearchParams ? 'schemas' : null;
+  const [forcedCollapsed, setForcedCollapsed] = useState<string | null>(initialForcedCollapsed);
 
   const prefetchOperations = () => {
     queryClient.prefetchQuery(operationsQueryOptions);
@@ -58,7 +57,7 @@ export function ApiReferenceSection({ label, tags, isMobile }: ApiReferenceSecti
   return (
     <SidebarGroup>
       <div className="flex items-center gap-3 px-4 pr-1 pb-1">
-        <SidebarGroupLabel className="p-0 lowercase opacity-75">{label}</SidebarGroupLabel>
+        <SidebarGroupLabel className="p-0 text-muted-foreground lowercase">{label}</SidebarGroupLabel>
       </div>
 
       <SidebarGroupContent>
@@ -93,9 +92,7 @@ export function ApiReferenceSection({ label, tags, isMobile }: ApiReferenceSecti
               >
                 <span>{t('c:operation', { count: 2 })}</span>
                 {(!isListMode || expandedSection !== 'operations' || forcedCollapsed === 'operations') && (
-                  <span className="ml-2 text-muted-foreground/90 text-xs">
-                    {tags.reduce((sum, tag) => sum + tag.count, 0)}
-                  </span>
+                  <span className="text-muted-foreground text-xs">{tags.reduce((sum, tag) => sum + tag.count, 0)}</span>
                 )}
                 <ChevronDownIcon
                   className={cn(
@@ -105,12 +102,7 @@ export function ApiReferenceSection({ label, tags, isMobile }: ApiReferenceSecti
                 />
               </CollapsibleTrigger>
             </SidebarMenuItem>
-            <CollapsibleContent
-              className={cn(
-                'overflow-hidden',
-                !isMobile && 'data-closed:animate-collapsible-up data-open:animate-collapsible-down',
-              )}
-            >
+            <CollapsibleContent className={'overflow-hidden md:data-closed:animate-collapsible-up md:data-open:animate-collapsible-down'}>
               <SidebarGroupContent>
                 <Suspense fallback={null}>
                   <OperationsSidebar activeTag={activeOperationTag} />
@@ -147,7 +139,7 @@ export function ApiReferenceSection({ label, tags, isMobile }: ApiReferenceSecti
               >
                 <span>{t('c:schema', { count: 2 })}</span>
                 {(expandedSection !== 'schemas' || forcedCollapsed === 'schemas') && schemas && (
-                  <span className="ml-2 text-muted-foreground/90 text-xs">{schemas.length}</span>
+                  <span className="text-muted-foreground text-xs">{schemas.length}</span>
                 )}
                 <ChevronDownIcon
                   className={cn(
@@ -157,12 +149,7 @@ export function ApiReferenceSection({ label, tags, isMobile }: ApiReferenceSecti
                 />
               </CollapsibleTrigger>
             </SidebarMenuItem>
-            <CollapsibleContent
-              className={cn(
-                'overflow-hidden',
-                !isMobile && 'data-closed:animate-collapsible-up data-open:animate-collapsible-down',
-              )}
-            >
+            <CollapsibleContent className={'overflow-hidden md:data-closed:animate-collapsible-up md:data-open:animate-collapsible-down'}>
               <SidebarGroupContent>
                 <Suspense fallback={null}>
                   <SchemasSidebar activeTag={activeSchemaTag} />

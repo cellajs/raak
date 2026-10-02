@@ -23,8 +23,7 @@ import { ScrollArea } from '~/modules/ui/scroll-area';
 import { cn } from '~/utils/cn';
 
 /** Highlight-mode match over the same columns the server search filters on (name + keywords). */
-const matchesSearch = (row: LabelRow, words: string[]) =>
-  words.every((word) => row.nameLower.includes(word) || row.keywordsLower.includes(word));
+const matchesSearch = (row: LabelRow, words: string[]) => words.every((word) => row.nameLower.includes(word) || row.keywordsLower.includes(word));
 
 /** The panel lists secondary tags and epics; primary labels live on the task cards, not here. */
 const isPanelLabel = (mode: string) => mode !== 'primary';
@@ -42,8 +41,7 @@ const combinePanelLabels = (results: { data?: { items: Label[] }; isLoading: boo
 type LabelListScopeProps = { entityId: string; windowScroll?: boolean };
 
 /** Newest-first by creation, mirroring the tasks table's default order. */
-const byCreatedAtDesc = (a: LabelRow, b: LabelRow) =>
-  a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
+const byCreatedAtDesc = (a: LabelRow, b: LabelRow) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0);
 
 /** Group labels into rows and sort newest-first, then filter (or, in highlight mode, keep all and tint later). */
 const useLabelRows = (labels: Label[], highlight: boolean, words: string[]) =>
@@ -59,12 +57,12 @@ const useLabelRows = (labels: Label[], highlight: boolean, words: string[]) =>
  * user just created visible immediately in the tab that created it, without a refetch.
  */
 function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
-  const { organization, tenantId } = useOrganizationLayoutContext();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
   const { search } = useSearchParams<{ q?: string }>({});
   const { highlight, effectiveQ } = parseSearchQuery(search.q);
 
   const { data, isLoading } = useQuery({
-    ...labelsCanonicalOptions({ organizationId: organization.id, tenantId, projectId: entityId }),
+    ...labelsCanonicalOptions({ organizationId, tenantId, projectId: entityId }),
     select: (result) => result.items.filter((label) => isPanelLabel(label.mode)),
   });
 
@@ -90,7 +88,7 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
  * label therefore shows immediately in the creating tab here too.
  */
 function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
-  const { organization, tenantId } = useOrganizationLayoutContext();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
   const { search } = useSearchParams<{ q?: string }>({});
   const { highlight, effectiveQ } = parseSearchQuery(search.q);
 
@@ -100,9 +98,7 @@ function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   });
 
   const { labels, pending } = useQueries({
-    queries: (projectIds ?? []).map((pid) =>
-      labelsCanonicalOptions({ organizationId: organization.id, tenantId, projectId: pid }),
-    ),
+    queries: (projectIds ?? []).map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
     combine: combinePanelLabels,
   });
   const isLoading = projectIds === undefined || pending;
@@ -151,13 +147,7 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
 
   if (isLoading) return <Spinner className="my-8 h-6 w-6 opacity-50" />;
   if (!rows.length) {
-    return (
-      <ContentPlaceholder
-        icon={BirdIcon}
-        title="c:no_resource_yet"
-        titleProps={{ resource: t('c:label_other').toLowerCase() }}
-      />
-    );
+    return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:label_other').toLowerCase() }} />;
   }
 
   const body = (
@@ -186,9 +176,7 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
             search={(prev) => ({ ...prev, labelPageId: row.id })}
             className="flex min-w-0 grow items-center gap-2 text-left outline-0 ring-0 after:absolute after:inset-0 after:content-['']"
           >
-            <span className="grow truncate opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100">
-              {row.name}
-            </span>
+            <span className="grow truncate opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100">{row.name}</span>
             {row.mode === 'epic' && <Badge variant="secondary">{t('c:epic')}</Badge>}
           </Link>
           {/* Single-cell grid stacks count and avatars in the same right-aligned spot, so the

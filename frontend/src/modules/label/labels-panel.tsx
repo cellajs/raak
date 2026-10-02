@@ -21,12 +21,7 @@ export function LabelsPanel({ entity, entityId, windowScroll }: LabelsScopeProps
   const labelPageId = search.labelPageId;
 
   return (
-    <LocalPanelShell
-      panelId={LABELS_PANEL_ID}
-      icon={<TagIcon />}
-      title={t('c:label_other')}
-      windowScroll={windowScroll}
-    >
+    <LocalPanelShell panelId={LABELS_PANEL_ID} icon={<TagIcon />} title={t('c:label_other')} windowScroll={windowScroll}>
       <div className="flex min-h-0 flex-1 flex-col">
         <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
           {labelPageId ? (

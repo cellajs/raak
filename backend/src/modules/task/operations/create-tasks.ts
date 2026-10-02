@@ -20,10 +20,7 @@ import { log } from '#/utils/logger';
 type CreateTasksInput = z.infer<typeof taskCreateManyStxBodySchema>;
 type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
 
-export async function createTasksOp(
-  ctx: OrgContext,
-  rawInput: CreateTasksInput,
-): Promise<{ data: ReturnTask[]; rejectedIds: string[] }> {
+export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput): Promise<{ data: ReturnTask[]; rejectedIds: string[] }> {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = rawInput.map((item) => taskContract.normalizeCreateItem(item));
   const organization = ctx.var.organization;
@@ -42,10 +39,7 @@ export async function createTasksOp(
   }
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
-  const currentTasksCount = await getOrganizationEntityCount(ctx, {
-    organizationId: organization.id,
-    entityType: 'task',
-  });
+  const currentTasksCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'task' });
 
   if (taskRestrictions !== 0 && currentTasksCount + input.length > taskRestrictions) {
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
@@ -73,10 +67,7 @@ export async function createTasksOp(
         ? (taskInfo.primaryLabelId as string)
         : projectPrimaries[0]?.id;
       if (!primaryLabelId) {
-        throw new AppError(400, 'invalid_request', 'warn', {
-          entityType: 'task',
-          meta: { reason: 'Project has no primary labels' },
-        });
+        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'task', meta: { reason: 'Project has no primary labels' } });
       }
 
       const task = {

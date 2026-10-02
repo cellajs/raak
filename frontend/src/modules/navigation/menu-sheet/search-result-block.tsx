@@ -6,6 +6,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { Badge } from '~/modules/ui/badge';
 import { ComboboxGroup, ComboboxItem, ComboboxSeparator } from '~/modules/ui/combobox';
+import { cn } from '~/utils/cn';
 
 type SearchBlockResult = EnrichedChannel | UserBase;
 
@@ -19,13 +20,7 @@ type SearchBlockProps = {
   onToggleCollapsed: () => void;
 };
 
-export function SearchResultBlock({
-  results,
-  entityType,
-  hideSeparator = false,
-  collapsed,
-  onToggleCollapsed,
-}: SearchBlockProps) {
+export function SearchResultBlock({ results, entityType, hideSeparator = false, collapsed, onToggleCollapsed }: SearchBlockProps) {
   const { t } = useTranslation();
   const isChannelType = isChannel(entityType);
 
@@ -41,9 +36,9 @@ export function SearchResultBlock({
           onClick={onToggleCollapsed}
         >
           {t(entityType)}
-          {collapsed && <span className="ml-3 opacity-70">{results.length}</span>}
+          {collapsed && <span className="ml-3 text-muted-foreground">{results.length}</span>}
           <span className="grow" />
-          <ChevronDownIcon className={`size-4 transition-transform ${!collapsed && 'rotate-180'}`} />
+          <ChevronDownIcon className={cn('size-4 transition-transform', !collapsed && 'rotate-180')} />
         </button>
         {results.map((item: SearchBlockResult) => {
           return (
@@ -52,19 +47,11 @@ export function SearchResultBlock({
               value={item}
               disabled={isChannelType && 'membership' in item && item.membership === null}
               data-already-member={isChannelType && 'membership' in item && item.membership !== null}
-              className={`group w-full justify-between ${collapsed && 'hidden'}`}
+              className={cn('group w-full justify-between', collapsed && 'hidden')}
             >
-              <div className="group flex items-center space-x-2 outline-0 ring-0">
-                <EntityAvatar
-                  type={entityType}
-                  className="h-8 w-8"
-                  id={item.id}
-                  name={item.name}
-                  url={item.thumbnailUrl}
-                />
-                <span className="truncate font-medium underline-offset-4 group-data-[already-member=true]:hover:underline">
-                  {item.name}
-                </span>
+              <div className="flex items-center gap-2 outline-0 ring-0">
+                <EntityAvatar type={entityType} className="size-8" id={item.id} name={item.name} url={item.thumbnailUrl} />
+                <span className="truncate font-medium underline-offset-4 group-data-[already-member=true]:hover:underline">{item.name}</span>
               </div>
 
               <div className="flex items-center">

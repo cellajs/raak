@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { appConfig, type ChannelEntityType, hierarchy } from 'shared';
 import { useOnlineManager } from '~/hooks/use-online-manager';
-import { ResponsiveSelect } from '~/modules/ui/responsive-select';
+import { ResponsiveSelect } from '~/modules/common/form-fields/responsive-select';
 
 interface SelectRoleProps {
   /** Restrict options to this channel entity's role vocabulary; omit for system roles. */
@@ -18,13 +18,7 @@ export function SelectRole({ entityType, onChange, value, className }: SelectRol
 
   const roleOptions = entityType ? hierarchy.getRoles(entityType) : appConfig.systemRoles;
 
-  const options = [
-    { value: 'all', label: t('c:all') },
-    ...roleOptions.map((role) => ({
-      value: role,
-      label: t(role),
-    })),
-  ];
+  const options = [{ value: 'all', label: t('c:all') }, ...roleOptions.map((role) => ({ value: role, label: t(role) }))];
 
   return (
     <ResponsiveSelect

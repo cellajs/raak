@@ -33,11 +33,7 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
     const newIds = updatedLabels.map(({ id }) => id);
     const delta = computeArrayDelta(oldIds, newIds);
     labelsBaseline = updatedLabels;
-    taskMutation.mutate({
-      ...baseTaskInfo,
-      ops: { labels: delta },
-      fullLabels: updatedLabels,
-    });
+    taskMutation.mutate({ ...baseTaskInfo, ops: { labels: delta }, fullLabels: updatedLabels });
   };
 
   // Same baseline-tracking pattern as labels.
@@ -48,11 +44,7 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
     const newIds = updatedUsers.map(({ id }) => id);
     const delta = computeArrayDelta(oldIds, newIds);
     assignedToBaseline = updatedUsers;
-    taskMutation.mutate({
-      ...baseTaskInfo,
-      ops: { assignedTo: delta },
-      fullAssignedTo: updatedUsers,
-    });
+    taskMutation.mutate({ ...baseTaskInfo, ops: { assignedTo: delta }, fullAssignedTo: updatedUsers });
   };
 
   const onStatusChange = async (newStatus: TaskStatusType) => {
@@ -65,8 +57,7 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
 
     // Assign to self if the status is "started", but only if the user is not already assigned
     const sortedAssignedTo = getItemsSortedByName([...currentTask.assignedTo, user]);
-    const shouldAssignToSelf =
-      newStatus === TaskStatus.Started && !currentTask.assignedTo.find(({ id }) => id === user.id);
+    const shouldAssignToSelf = newStatus === TaskStatus.Started && !currentTask.assignedTo.find(({ id }) => id === user.id);
 
     // Optimistic cache state comes from the mutation's onMutate (ops + fullAssignedTo)
 
@@ -79,27 +70,15 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
       statusOps.assignedTo = computeArrayDelta(oldIds, newIds);
     }
 
-    await taskMutation.mutateAsync({
-      ...baseTaskInfo,
-      ops: statusOps,
-      ...(shouldAssignToSelf ? { fullAssignedTo: sortedAssignedTo } : {}),
-    });
+    await taskMutation.mutateAsync({ ...baseTaskInfo, ops: statusOps, ...(shouldAssignToSelf ? { fullAssignedTo: sortedAssignedTo } : {}) });
   };
 
   const onPrimaryLabelChange = (newPrimaryLabelId: string) => {
     if (task.primaryLabelId === newPrimaryLabelId) return;
-    taskMutation.mutate({
-      ...baseTaskInfo,
-      ops: { primaryLabelId: newPrimaryLabelId },
-    });
+    taskMutation.mutate({ ...baseTaskInfo, ops: { primaryLabelId: newPrimaryLabelId } });
   };
 
-  return {
-    onLabelsChange,
-    onAssignedToChange,
-    onStatusChange,
-    onPrimaryLabelChange,
-  };
+  return { onLabelsChange, onAssignedToChange, onStatusChange, onPrimaryLabelChange };
 }
 
 /**

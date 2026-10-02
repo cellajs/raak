@@ -1,10 +1,11 @@
 /// <reference types="vite/client" />
 
+import { readFileSync } from 'node:fs';
 import { appConfig } from 'shared';
 import { describe, expect, it } from 'vitest';
 import enBackend from '../../../locales/en/backend.json';
 import { i18n } from '../../emails/i18n';
-import { type EmailPreviewFixture, emailPreviewFixtures } from '../../emails/preview-fixtures';
+import { type EmailPreviewFixture, emailPreviewFixtures, emailPreviewNames } from '../../emails/preview-fixtures';
 import { render } from '../../emails/renderer/render';
 import { accountSecurityEmail } from '../../emails/templates/account-security';
 
@@ -32,9 +33,12 @@ describe('email translation fallback', () => {
 
 // The cast to the loose fixture type stops the heterogeneous defs collapsing
 // `translate`'s parameter to `never` across the union.
-const templateEntries = (Object.entries(emailPreviewFixtures) as [string, EmailPreviewFixture][]).map(
-  ([name, { def, statics, recipient }]) => ({ name, def, statics, recipient }),
-);
+const templateEntries = (Object.entries(emailPreviewFixtures) as [string, EmailPreviewFixture][]).map(([name, { def, statics, recipient }]) => ({
+  name,
+  def,
+  statics,
+  recipient,
+}));
 
 /** Catches broken components, runtime errors, and keys missing from every language. */
 describe('email template rendering', () => {
@@ -56,6 +60,16 @@ describe('email template rendering', () => {
       });
     }
   }
+});
+
+// Storybook indexes stories from static exports, so each preview needs its own line in the stories file.
+describe('email storybook', () => {
+  it('has a story for every preview', () => {
+    const storiesUrl = new URL('../../../frontend/src/stories/email-templates.stories.tsx', import.meta.url);
+    const stories = readFileSync(storiesUrl, 'utf8');
+    const missing = emailPreviewNames.filter((name) => !stories.includes(`makeEmailStory('${name}')`));
+    expect(missing).toEqual([]);
+  });
 });
 
 /** Details reach these mails from request data (route, tenant name, browser), and the body is rendered as HTML. */
@@ -103,11 +117,7 @@ describe('new sign-in notice location line', () => {
   };
 
   it('names the country when GeoIP resolved one, escaped like every other detail', async () => {
-    const translated = accountSecurityEmail.translate('en', {
-      name: 'Emily',
-      type: 'new-sign-in',
-      details: { ...details, country: 'Nether<lands' },
-    });
+    const translated = accountSecurityEmail.translate('en', { name: 'Emily', type: 'new-sign-in', details: { ...details, country: 'Nether<lands' } });
     const html = await render(accountSecurityEmail.component(translated));
 
     expect(html).toContain('<strong>Location:</strong> Nether&lt;lands (approximate)');

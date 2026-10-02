@@ -17,7 +17,7 @@ const roleBindingSchema = z.object({
   channelType: z.enum(appConfig.channelEntityTypes),
   channelId: validIdSchema,
   organizationId: validIdSchema,
-  // fork: a binding carries its channel's role, and raak's channels declare roles the organization does not (`guest`)
+  // A binding carries its channel's role, and a channel may declare roles the organization does not.
   role: z.enum(roles.all),
 });
 
@@ -26,15 +26,11 @@ export const apiKeyParamSchema = idInTenantOrgParamSchema.extend({ keyId: validI
 
 /** `createdBy` / `updatedBy` stay actor ids: the audit-user hydration resolves users only (service badge is a follow-up). */
 export const serviceAccountSchema = z
-  .object({
-    ...createSelectSchema(serviceAccountsTable).shape,
-    status: z.enum(serviceAccountStatuses),
-    bindings: z.array(roleBindingSchema),
-  })
+  .object({ ...createSelectSchema(serviceAccountsTable).shape, status: z.enum(serviceAccountStatuses), bindings: z.array(roleBindingSchema) })
   .openapi('ServiceAccount', {
     description: 'The actor an API key runs as, with its role bindings.',
     example: mockServiceAccountResponse(),
-    'x-tags': schemaTags('service-accounts', 'cella'),
+    'x-tags': schemaTags('data', 'service-accounts', 'cella'),
   });
 
 export const apiKeySchema = createSelectSchema(apiKeysTable)
@@ -42,17 +38,13 @@ export const apiKeySchema = createSelectSchema(apiKeysTable)
   .openapi('ApiKey', {
     description: 'An API key of a service account; the secret is never returned after creation.',
     example: mockApiKeyResponse(),
-    'x-tags': schemaTags('service-accounts', 'cella'),
+    'x-tags': schemaTags('data', 'service-accounts', 'cella'),
   });
 
 /** Returned once, at creation or roll: the only time the plaintext key exists outside the caller. */
 export const createdApiKeySchema = apiKeySchema
   .extend({ secret: z.string().describe('The plaintext API key; store it now, it is not shown again.') })
-  .openapi('CreatedApiKey', {
-    description: 'A newly issued API key with its plaintext secret.',
-    example: mockCreatedApiKeyResponse(),
-    'x-tags': schemaTags('service-accounts', 'cella'),
-  });
+  .openapi({ description: 'A newly issued API key with its plaintext secret.', example: mockCreatedApiKeyResponse() });
 
 const apiKeyInputSchema = z.object({
   name: validNameSchema,
@@ -76,15 +68,9 @@ export const createServiceAccountBodySchema = z.object({
   key: apiKeyInputSchema.optional(),
 });
 
-export const updateServiceAccountBodySchema = z.object({
-  name: validNameSchema.optional(),
-  status: z.enum(serviceAccountStatuses).optional(),
-});
+export const updateServiceAccountBodySchema = z.object({ name: validNameSchema.optional(), status: z.enum(serviceAccountStatuses).optional() });
 
-export const createServiceAccountResponseSchema = z.object({
-  serviceAccount: serviceAccountSchema,
-  apiKey: createdApiKeySchema.optional(),
-});
+export const createServiceAccountResponseSchema = z.object({ serviceAccount: serviceAccountSchema, apiKey: createdApiKeySchema.optional() });
 
 export const apiKeysResponseSchema = z.object({ items: z.array(apiKeySchema) });
 

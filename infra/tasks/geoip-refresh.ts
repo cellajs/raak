@@ -46,8 +46,7 @@ export type GeoipRefreshResult =
   | { published: false; skipped: 'up-to-date' | 'fresh'; manifest: GeoipManifest }
   | { published: true; manifest: GeoipManifest };
 
-export const databaseUrl = (kind: GeoipKind, month: string): string =>
-  `https://download.db-ip.com/free/dbip-${kind}-lite-${month}.mmdb.gz`;
+export const databaseUrl = (kind: GeoipKind, month: string): string => `https://download.db-ip.com/free/dbip-${kind}-lite-${month}.mmdb.gz`;
 
 export const objectKey = (prefix: string, kind: GeoipKind): string => `${prefix}/dbip-${kind}-lite.mmdb.gz`;
 export const manifestKey = (prefix: string): string => `${prefix}/manifest.json`;

@@ -22,11 +22,7 @@ export function AvailableProjectsEmptyAction({ workspace, fallback }: AvailableP
   const { t } = useTranslation();
 
   const { data, isPending } = useInfiniteQuery(
-    projectsListQueryOptions({
-      organizationId: workspace.organizationId,
-      excludeArchived: 'true',
-      include: 'membership',
-    }),
+    projectsListQueryOptions({ organizationId: workspace.organizationId, excludeArchived: 'true', include: 'membership' }),
   );
   const projects = flattenInfiniteData<EnrichedProject>(data);
   const availableCount = projects.filter((project) => !project.membership?.workspaceId).length;
@@ -36,9 +32,7 @@ export function AvailableProjectsEmptyAction({ workspace, fallback }: AvailableP
 
   return (
     <div className="flex max-w-lg flex-col items-center gap-3">
-      <p className="text-balance text-muted-foreground text-sm">
-        {t('c:unassigned_projects', { count: availableCount })}
-      </p>
+      <p className="text-balance text-muted-foreground text-sm">{t('c:unassigned_projects', { count: availableCount })}</p>
       <Button type="button" variant="plain" onClick={selectExistingProjects}>
         <PlusIcon />
         <span>{t('c:unassigned_projects_action')}</span>

@@ -8,9 +8,6 @@ import { taskQueryOptions } from '~/modules/task/query';
  * stays undefined, so callers should fall back to their own `value` prop.
  */
 export function useTaskQuery(taskId: string | undefined) {
-  const { tenantId, organization } = useOrganizationLayoutContext();
-  return useQuery({
-    ...taskQueryOptions(taskId ?? '', organization.id, tenantId),
-    enabled: !!taskId,
-  });
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
+  return useQuery({ ...taskQueryOptions(taskId ?? '', organizationId, tenantId), enabled: !!taskId });
 }

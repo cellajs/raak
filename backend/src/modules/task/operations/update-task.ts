@@ -4,11 +4,7 @@ import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/helpers/primary-labels';
-import {
-  type DerivedDescriptionProps,
-  deriveDescriptionProps,
-  type ParsedBlock,
-} from '#/modules/task/helpers/description';
+import { type DerivedDescriptionProps, deriveDescriptionProps, type ParsedBlock } from '#/modules/task/helpers/description';
 import { getTaskRelations, hydrateTask, hydrateTaskLite } from '#/modules/task/helpers/hydrate-task';
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { filterExistingAttachmentIds, findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
@@ -25,7 +21,7 @@ type UpdateTaskContext = { var: ActorContext['var'] & Partial<Pick<UserContext['
 
 /**
  * Also the task's Yjs materializer: the relay calls it with `materialized` for a collaborative description.
- * `serverOrigin` stamps the fields with the server clock, for a transaction the server built (an MCP tool, the relay).
+ * `serverOrigin` stamps the fields with the server clock, for a transaction the server built (the Yjs relay).
  */
 export async function updateTaskOp(
   ctx: UpdateTaskContext,
@@ -61,9 +57,7 @@ export async function updateTaskOp(
 
     // Server-origin writes (Yjs description materialization) carry no client field
     // timestamps, so every changed scalar gets a fresh server HLC.
-    const resolved = serverOrigin
-      ? taskContract.resolveServerUpdateOps(entity, rawOps)
-      : taskContract.resolveUpdateOps(entity, rawOps, stx);
+    const resolved = serverOrigin ? taskContract.resolveServerUpdateOps(entity, rawOps) : taskContract.resolveUpdateOps(entity, rawOps, stx);
 
     // Skip DB update if nothing changed
     if (!resolved.changed) {
@@ -72,12 +66,7 @@ export async function updateTaskOp(
       return hydrateTask(entity, users, labels);
     }
 
-    const updateValues: Partial<InsertTaskModel> = {
-      ...resolved.values,
-      updatedAt: getIsoDate(),
-      updatedBy: ctx.var.actor.id,
-      stx: resolved.stx,
-    };
+    const updateValues: Partial<InsertTaskModel> = { ...resolved.values, updatedAt: getIsoDate(), updatedBy: ctx.var.actor.id, stx: resolved.stx };
 
     if (resolved.values.status !== undefined && resolved.values.status !== entity.status) {
       updateValues.statusChangedAt = getIsoDate();
@@ -87,10 +76,7 @@ export async function updateTaskOp(
     if ('projectId' in resolved.values && resolved.values.projectId !== entity.projectId) {
       const newProjectId = resolved.values.projectId as string;
       const userIdsToCheck = (entity.assignedTo as string[]).filter(Boolean);
-      const projectMembers = await findProjectMemberUserIds(txCtx, {
-        projectId: newProjectId,
-        userIds: userIdsToCheck,
-      });
+      const projectMembers = await findProjectMemberUserIds(txCtx, { projectId: newProjectId, userIds: userIdsToCheck });
       const memberSet = new Set(projectMembers.map(({ userId }) => userId));
 
       // Remove assignees not in the target project
@@ -105,15 +91,9 @@ export async function updateTaskOp(
       const targetPrimaries = await findLivePrimaryLabels(txCtx, { projectIds: [newProjectId] });
       const requestedId = resolved.values.primaryLabelId as string | undefined;
       const currentSlug = await findLabelSlugById(txCtx, entity.primaryLabelId);
-      const target =
-        targetPrimaries.find((l) => l.id === requestedId) ??
-        targetPrimaries.find((l) => l.slug === currentSlug) ??
-        targetPrimaries[0];
+      const target = targetPrimaries.find((l) => l.id === requestedId) ?? targetPrimaries.find((l) => l.slug === currentSlug) ?? targetPrimaries[0];
       if (!target) {
-        throw new AppError(400, 'invalid_request', 'warn', {
-          entityType: 'task',
-          meta: { reason: 'Target project has no primary labels' },
-        });
+        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'task', meta: { reason: 'Target project has no primary labels' } });
       }
       updateValues.primaryLabelId = target.id;
     } else if ('primaryLabelId' in resolved.values) {
@@ -130,9 +110,7 @@ export async function updateTaskOp(
     if (resolved.values.description !== undefined && derivedDescription) {
       // Drop ids that don't resolve to a live in-org attachment row (doctored or stale
       // block props must never enter the owned-embedding host array).
-      derivedDescription.attachments = await filterExistingAttachmentIds(txCtx, {
-        ids: derivedDescription.attachments,
-      });
+      derivedDescription.attachments = await filterExistingAttachmentIds(txCtx, { ids: derivedDescription.attachments });
       Object.assign(updateValues, derivedDescription);
     }
 

@@ -19,11 +19,7 @@ export const loadtestTask = (index: number): InsertTaskModel => {
     deletedAt: _deletedAt,
     deletedBy: _deletedBy,
     ...record
-  } = mockTask(`task:loadtest:${index}`) as InsertTaskModel & {
-    statusChangedAt?: unknown;
-    deletedAt?: unknown;
-    deletedBy?: unknown;
-  };
+  } = mockTask(`task:loadtest:${index}`) as InsertTaskModel & { statusChangedAt?: unknown; deletedAt?: unknown; deletedBy?: unknown };
   return {
     ...record,
     id: taskId(index),
@@ -52,11 +48,11 @@ export const loadtestTask = (index: number): InsertTaskModel => {
 };
 
 // Seeds after projects (order 110): tasks FK-reference a project. `labels`,
-// `assigned_to`, `attachments` and `mentions` are native Postgres arrays (see `pgArrayColumns`).
+// `assigned_to` and `attachments` are native Postgres arrays (see `pgArrayColumns`).
 registerBenchSeed({
   table: 'tasks',
   order: 120,
-  pgArrayColumns: ['labels', 'assigned_to', 'attachments', 'mentions'],
+  pgArrayColumns: ['labels', 'assigned_to', 'attachments'],
   idVariant: CORE_ID_VARIANTS.task,
   rows: ({ now }) => Array.from({ length: TOTAL_TASKS }, (_, i) => ({ ...loadtestTask(i), createdAt: now, seq: 0 })),
 });

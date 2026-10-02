@@ -42,11 +42,7 @@ defineBackendModule({
         const nextLabels = primaryLabelsOf(org);
         if (!nextLabels || JSON.stringify(primaryLabelsOf(before[index])) === JSON.stringify(nextLabels)) continue;
         await tenantContext(ctx, (txCtx) =>
-          propagateSetupConfigLabels(txCtx, {
-            entries: nextLabels,
-            organizationId: org.id as string,
-            updatedBy: ctx.var.actor.id,
-          }),
+          propagateSetupConfigLabels(txCtx, { entries: nextLabels, organizationId: org.id as string, updatedBy: ctx.var.actor.id }),
         );
       }
     },

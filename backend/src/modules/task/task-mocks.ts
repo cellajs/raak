@@ -29,10 +29,8 @@ export const mockTask = (key = 'task:default'): TaskModel =>
     const summary = faker.lorem.sentence({ min: 5, max: 15 });
     const checkboxCount = faker.number.int({ min: 0, max: 10 });
     const publicAt =
-      faker.helpers.maybe(
-        () => faker.date.between({ from: new Date(base.createdAt), to: MOCK_REF_DATE }).toISOString(),
-        { probability: 0.3 },
-      ) ?? null;
+      faker.helpers.maybe(() => faker.date.between({ from: new Date(base.createdAt), to: MOCK_REF_DATE }).toISOString(), { probability: 0.3 }) ??
+      null;
 
     return {
       ...base,
@@ -49,7 +47,6 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       attachments: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       labels: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       assignedTo: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 2 } }),
-      mentions: [],
       publicAt,
       // Channel entity columns
       ...channelIds,
@@ -58,15 +55,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
 
 const mockEmbeddedLabel = (id: string, key: string) => {
   const label = mockLabel(key);
-  return {
-    id,
-    name: label.name,
-    slug: label.slug,
-    color: label.color,
-    mode: label.mode,
-    icon: label.icon,
-    projectId: label.projectId,
-  };
+  return { id, name: label.name, slug: label.slug, color: label.color, mode: label.mode, icon: label.icon, projectId: label.projectId };
 };
 
 /** Task wire response with stored relation IDs hydrated to embedded users and labels. */
@@ -77,9 +66,7 @@ export const mockTaskResponse = (key = 'task:default') => {
     ...task,
     labels: task.labels.map((id, index) => mockEmbeddedLabel(id, `${key}:label:${index}`)),
     primaryLabel: mockEmbeddedLabel(task.primaryLabelId, `${key}:primary-label`),
-    assignedTo: task.assignedTo.map((id, index) => ({
-      ...mockUserMinimalBase(`${key}:assigned-to:${index}`, id),
-    })),
+    assignedTo: task.assignedTo.map((id, index) => ({ ...mockUserMinimalBase(`${key}:assigned-to:${index}`, id) })),
     ...mockAuditUsers(task, key),
   };
 };

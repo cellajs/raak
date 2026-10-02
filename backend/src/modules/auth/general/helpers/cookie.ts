@@ -46,8 +46,7 @@ const isLaxCookie = (name: CookieName) =>
   isTokenType(name) ? tokenPolicies[name].sameSite === 'lax' : laxCookies.has(name) || name.startsWith('oauth-state-');
 
 /** Effective wire name: hono prepends `__Host-` when the prefix option is active. For consumers naming the cookie outside this helper. */
-export const authCookieName = (name: CookieName) =>
-  `${prefix === 'host' ? '__Host-' : ''}${appConfig.slug}-${name}-${appConfig.cookieVersion}`;
+export const authCookieName = (name: CookieName) => `${prefix === 'host' ? '__Host-' : ''}${appConfig.slug}-${name}-${appConfig.cookieVersion}`;
 
 const versionedCookieName = (name: CookieName) => `${appConfig.slug}-${name}-${appConfig.cookieVersion}`;
 
@@ -78,9 +77,7 @@ const openAuthCookie = (name: CookieName, sealed: string): string | undefined =>
 
   const presented = sealed.slice(macAt + 1);
   const versionedName = versionedCookieName(name);
-  const valid = cookieSecrets.some((secret) =>
-    safeEqual(presented, cookieMac(secret, versionedName, expiresAt, content)),
-  );
+  const valid = cookieSecrets.some((secret) => safeEqual(presented, cookieMac(secret, versionedName, expiresAt, content)));
   return valid ? content : undefined;
 };
 

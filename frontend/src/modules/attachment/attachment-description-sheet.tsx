@@ -14,6 +14,7 @@ import { membersListQueryOptions } from '~/modules/memberships/query';
 import type { Member } from '~/modules/memberships/types';
 import { findInCache } from '~/query/basic/find-in-list-cache';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { tw } from '~/utils/tw';
 
 const sheetId = 'attachment-description';
 
@@ -35,9 +36,7 @@ function AttachmentDescriptionForm({ attachment }: { attachment: Attachment }) {
   // The map is the home channel's own, so the row is at home for a home-scoped grant.
   const canEdit = resolveCan(channel?.can?.attachment?.update, attachment.createdBy, { row: homeId, channel: homeId });
 
-  const membersQuery = useInfiniteQuery(
-    membersListQueryOptions({ entityId: homeId, entityType: homeType, tenantId, organizationId }),
-  );
+  const membersQuery = useInfiniteQuery(membersListQueryOptions({ entityId: homeId, entityType: homeType, tenantId, organizationId }));
   const members = flattenInfiniteData<Member>(membersQuery.data);
 
   const { mutateAsync } = useAttachmentUpdateMutation(tenantId, organizationId);
@@ -88,7 +87,7 @@ export function openAttachmentDescriptionSheet(attachment: Attachment, triggerRe
       id: sheetId,
       triggerRef,
       side: 'right',
-      className: 'max-w-full lg:max-w-3xl',
+      className: tw('max-w-full lg:max-w-3xl'),
       title: attachment.name,
       description: i18n.t('c:description'),
     },

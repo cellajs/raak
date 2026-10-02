@@ -12,9 +12,7 @@ export const getNewTaskOrder = (
   projectId?: string,
 ) => {
   // Filter out the create-task form, optionally scope to project, and keep the target status
-  const filteredTasks = tasks.filter(
-    (t) => !isDraftTask(t) && (!projectId || t.projectId === projectId) && t.status === status,
-  );
+  const filteredTasks = tasks.filter((t) => !isDraftTask(t) && (!projectId || t.projectId === projectId) && t.status === status);
 
   if (filteredTasks.length === 0) return defaultOrder;
 

@@ -2,21 +2,11 @@ import { type CanvasRenderingContext2D, createCanvas, loadImage } from '@napi-rs
 
 const fontFamily = 'Lucida Sans Unicode';
 
-const fontSizes = {
-  heading: 80,
-  author: 40,
-};
+const fontSizes = { heading: 80, author: 40 };
 
-const fontStyles = {
-  heading: `900 ${fontSizes.heading}px  ${fontFamily}`,
-  author: `700 ${fontSizes.author}px ${fontFamily}`,
-};
+const fontStyles = { heading: `900 ${fontSizes.heading}px  ${fontFamily}`, author: `700 ${fontSizes.author}px ${fontFamily}` };
 
-const colors = {
-  primary: '#ffd166',
-  secondary: 'white',
-  base: '#560bad',
-};
+const colors = { primary: '#ffd166', secondary: 'white', base: '#560bad' };
 
 const avatarSize = 80;
 const avatarBorder = 5;
@@ -28,14 +18,7 @@ const space = 40;
 const canvas = createCanvas(1200, 630);
 const ctx = canvas.getContext('2d');
 
-function wrapText(
-  context: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  lineHeight: number,
-) {
+function wrapText(context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
   const words = text.split(' ');
   let line = '';
 

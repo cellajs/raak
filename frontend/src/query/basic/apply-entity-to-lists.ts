@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { appConfig, hierarchy } from 'shared';
 import { asRecord } from 'shared/utils/as-record';
 import { changeInfiniteQueryData, changeQueryData } from '~/query/basic/helpers';
-import { isInfiniteQueryData, isQueryData } from '~/query/basic/mutate-query';
+import { getQueryItems, isInfiniteQueryData, isQueryData } from '~/query/basic/mutate-query';
 import type { ItemData, OrgRoutableItemData, RoutableItemData } from '~/query/basic/types';
 import { getEntityQueryKeys } from './entity-query-registry';
 
@@ -16,11 +16,7 @@ export function resolveHomeChannelId(entityType: string, entity: ItemData): stri
 }
 
 /** Excludes filtered keys, whose server predicates cannot be reproduced locally. */
-export function matchesCanonicalHome(
-  queryKey: readonly unknown[],
-  organizationId: string,
-  homeChannelId: string,
-): boolean {
+export function matchesCanonicalHome(queryKey: readonly unknown[], organizationId: string, homeChannelId: string): boolean {
   return queryKey.length === 4 && queryKey[2] === organizationId && queryKey[3] === homeChannelId;
 }
 
@@ -66,25 +62,16 @@ export function spliceEntityIntoListCaches(
   for (const [queryKey, queryData] of queryClient.getQueriesData({ queryKey: listPrefix })) {
     sawFilteredList ||= queryKey.slice(2).some((seg) => typeof seg === 'object' && seg !== null);
 
-    let cachedItem: ItemData | undefined;
-    let change: typeof changeQueryData;
-    if (isInfiniteQueryData<ItemData>(queryData)) {
-      cachedItem = queryData.pages.flatMap((p) => p.items).find((item) => item.id === entity.id);
-      change = changeInfiniteQueryData;
-    } else if (isQueryData<ItemData>(queryData)) {
-      cachedItem = queryData.items.find((item) => item.id === entity.id);
-      change = changeQueryData;
-    } else {
-      continue;
-    }
+    if (!isQueryData<ItemData>(queryData) && !isInfiniteQueryData<ItemData>(queryData)) continue;
+    const cachedItem = getQueryItems(queryData).find((item) => item.id === entity.id);
+    const change = isQueryData(queryData) ? changeQueryData : changeInfiniteQueryData;
 
     if (removeOnParentChannelChange && cachedItem && hasParentChannelChanged(cachedItem, entity)) {
       change(queryKey, [entity], 'remove');
       continue;
     }
 
-    const isHomeList =
-      !!organizationId && !!homeChannelId && matchesCanonicalHome(queryKey, organizationId, homeChannelId);
+    const isHomeList = !!organizationId && !!homeChannelId && matchesCanonicalHome(queryKey, organizationId, homeChannelId);
     seen = seen || !!cachedItem;
     spliced ||= !cachedItem && isHomeList;
     change(queryKey, [entity], cachedItem || !isHomeList ? 'update' : 'create');

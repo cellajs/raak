@@ -1,7 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import { importJWK, SignJWT } from 'jose';
 import { nanoid } from 'nanoid';
-import pg from 'pg';
 import {
   createApiKey,
   createServiceAccount,
@@ -17,13 +16,13 @@ import {
   updateServiceAccount,
 } from 'sdk';
 import { appConfig } from 'shared';
-import { testDatabaseUrl } from 'shared/test-db';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { baseDb as db, getAdminDb } from '#/db/db';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
-import { endSessions } from '#/modules/auth/general/helpers/end-sessions';
+import { revokeSessions } from '#/modules/auth/general/helpers/revoke-sessions';
 import type { SessionEndReason } from '#/modules/auth/sessions-db';
 import { stampStepUp } from '#/modules/auth/step-up/helpers/step-up';
+import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { DrizzleAdapter } from '#/modules/oauth-server/adapter';
 import { loadSigningJwks } from '#/modules/oauth-server/keystore';
 import { oauthClientsTable } from '#/modules/oauth-server/oauth-clients-db';
@@ -84,13 +83,6 @@ const cimdDocument = {
   response_types: ['code'],
 };
 
-/**
- * The other processes (api, mcp, oauth): what they hear on `auth_invalidate`, through a listener on a connection of
- * its own. Each keeps its own cached verdicts, so a revocation must reach them at once.
- */
-const otherProcesses = { client: new pg.Client({ connectionString: testDatabaseUrl }), heard: [] as unknown[] };
-const toldOtherProcesses = (message: unknown) =>
-  vi.waitFor(() => expect(otherProcesses.heard).toContainEqual(message), { timeout: 5000 });
 const reasonOf = (error: unknown) => (error as ErrorResponse).meta?.reason;
 
 /** A user's grants with the codes and refresh tokens issued under them (the provider's sessions are left out). */
@@ -98,12 +90,7 @@ const grantRowsOf = (userId: string) =>
   db
     .select({ type: oidcPayloadsTable.type })
     .from(oidcPayloadsTable)
-    .where(
-      and(
-        eq(oidcPayloadsTable.accountId, userId),
-        inArray(oidcPayloadsTable.type, ['Grant', 'AuthorizationCode', 'RefreshToken']),
-      ),
-    );
+    .where(and(eq(oidcPayloadsTable.accountId, userId), inArray(oidcPayloadsTable.type, ['Grant', 'AuthorizationCode', 'RefreshToken'])));
 
 /**
  * A grant is valid only while the grant policy says so: at consent, at every code exchange and refresh, and at the
@@ -116,22 +103,11 @@ describe('OAuth grants', async () => {
 
   beforeAll(async () => {
     oauth = await startTestOauthServer();
-    restoreFetch = serveClientMetadataDocuments({
-      [CIMD_ID]: cimdDocument,
-      [SERVICE_CLAIM_ID]: { ...cimdDocument, client_kind: 'service' },
-    });
-    await otherProcesses.client.connect();
-    // A dropped connection shows as the messages it no longer hears, never as an unhandled error event.
-    otherProcesses.client.on('error', () => {});
-    otherProcesses.client.on('notification', ({ channel, payload }) => {
-      if (channel === 'auth_invalidate' && payload) otherProcesses.heard.push(JSON.parse(payload));
-    });
-    await otherProcesses.client.query('LISTEN auth_invalidate');
+    restoreFetch = serveClientMetadataDocuments({ [CIMD_ID]: cimdDocument, [SERVICE_CLAIM_ID]: { ...cimdDocument, client_kind: 'service' } });
   });
   afterAll(async () => {
     restoreFetch();
     await oauth.close();
-    await otherProcesses.client.end();
   });
   afterEach(async () => await clearSecurityTestData());
 
@@ -163,32 +139,25 @@ describe('OAuth grants', async () => {
     return { access: String(result.body.access_token), refresh: String(result.body.refresh_token) };
   }
 
-  const refresh = (refreshToken: string, clientId = APP_ID) =>
-    refreshAccessToken(oauth.issuer, { clientId, refreshToken });
+  const refresh = (refreshToken: string, clientId = APP_ID) => refreshAccessToken(oauth.issuer, { clientId, refreshToken });
 
   const readAttachments = (ctx: Tenant, jwt: string) =>
-    call(getAttachments, {
-      path: { tenantId: ctx.org.tenantId, organizationId: ctx.org.id },
-      headers: bearerHeaders(jwt),
-    });
+    call(getAttachments, { path: { tenantId: ctx.org.tenantId, organizationId: ctx.org.id }, headers: bearerHeaders(jwt) });
 
-  /** The grant a person's access token names, as the other processes hear of its revocation. */
-  async function grantOf(ctx: Tenant, jwt: string) {
+  /** The grant a person's access token names. */
+  async function grantIdOf(ctx: Tenant, jwt: string) {
     const token = await verifyAccessToken(jwt, { tenantId: ctx.org.tenantId, organizationId: ctx.org.id });
     if (token.kind !== 'user') throw new Error("Expected a person's token");
-    return { grant: { accountId: token.actorId, grantId: token.grantId } };
+    return token.grantId;
   }
 
   async function allowUnregisteredClients(tenantId: string, allow: boolean) {
-    const [tenant] = await db
-      .select({ restrictions: tenantsTable.restrictions })
-      .from(tenantsTable)
-      .where(eq(tenantsTable.id, tenantId));
+    const [tenant] = await db.select({ restrictions: tenantsTable.restrictions }).from(tenantsTable).where(eq(tenantsTable.id, tenantId));
     await db
       .update(tenantsTable)
       .set({ restrictions: { ...normalizeRestrictions(tenant.restrictions), allowUnregisteredClients: allow } })
       .where(eq(tenantsTable.id, tenantId));
-    await invalidateCache.tenant(db, tenantId);
+    invalidateCache.tenant(tenantId);
   }
 
   describe('a grant ends with what it rests on', () => {
@@ -213,17 +182,40 @@ describe('OAuth grants', async () => {
       const read = await readAttachments(ctx, access);
       expect(read.response.status).toBe(401);
       expect(reasonOf(read.error)).toBe('app_not_installed');
-      await toldOtherProcesses({
-        serviceAccount: { id: ctx.installationId, tenantId: ctx.org.tenantId, clientId: APP_ID },
-      });
 
-      const revoked = await grantOf(ctx, access);
       const refused = await refresh(String(rotated.body.refresh_token));
       expect(refused.status).toBe(400);
       expect(refused.body.error).toBe('invalid_grant');
       // The refused grant is deleted with every token issued under it: the client must ask the person again.
       expect(await grantRowsOf(ctx.member.id)).toEqual([]);
-      await toldOtherProcesses(revoked);
+    });
+
+    it('must not act via an access token once another process deleted its grant, even while its verdict is cached', async () => {
+      const ctx = await tenantWithApp();
+      const grant = await consent(ctx);
+      // Positive control, which also caches the grant's verdict at the guard.
+      expect((await readAttachments(ctx, grant.access)).response.status).toBe(200);
+
+      // A revoke in another process: the grant row goes, and nothing drops this process's verdict.
+      const grantId = await grantIdOf(ctx, grant.access);
+      await db.delete(oidcPayloadsTable).where(and(eq(oidcPayloadsTable.type, 'Grant'), eq(oidcPayloadsTable.id, grantId)));
+
+      const read = await readAttachments(ctx, grant.access);
+      expect(read.response.status).toBe(401);
+      expect(reasonOf(read.error)).toBe('grant_revoked');
+    });
+
+    it("must not act via a person's token once another process removed their membership, even while its verdict is cached", async () => {
+      const ctx = await tenantWithApp();
+      const grant = await consent(ctx);
+      expect((await readAttachments(ctx, grant.access)).response.status).toBe(200);
+
+      // A removal in another process: only the trigger on memberships records it.
+      await db.delete(membershipsTable).where(eq(membershipsTable.userId, ctx.member.id));
+
+      const read = await readAttachments(ctx, grant.access);
+      expect(read.response.status).toBe(401);
+      expect(reasonOf(read.error)).toBe('not_a_member');
     });
 
     it('must not keep a deleted account acting via its grant', async () => {
@@ -364,7 +356,6 @@ describe('OAuth grants', async () => {
       const read = await readAttachments(ctx, grant.access);
       expect(read.response.status).toBe(401);
       expect(reasonOf(read.error)).toBe('grant_revoked');
-      await toldOtherProcesses(await grantOf(ctx, grant.access));
     });
 
     it('must not act via an access token after the client revokes its refresh token', async () => {
@@ -384,7 +375,6 @@ describe('OAuth grants', async () => {
       const read = await readAttachments(ctx, grant.access);
       expect(read.response.status).toBe(401);
       expect(reasonOf(read.error)).toBe('grant_revoked');
-      await toldOtherProcesses(await grantOf(ctx, grant.access));
     });
   });
 
@@ -398,11 +388,7 @@ describe('OAuth grants', async () => {
       const { clientId: accountId, clientSecret, keyId } = await serviceAccountWithKey(org, admin.sessionCookie);
       const resource = resourceUri({ face: 'api', tenantId: org.tenantId });
       const mint = (clientSecret: string) =>
-        clientCredentialsToken(
-          oauth.issuer,
-          { clientId: accountId, clientSecret },
-          { scope: 'attachment:read', resource },
-        );
+        clientCredentialsToken(oauth.issuer, { clientId: accountId, clientSecret }, { scope: 'attachment:read', resource });
       const tokenFor = async (clientSecret: string) => {
         const minted = await mint(clientSecret);
         expect(minted.status).toBe(200);
@@ -416,7 +402,7 @@ describe('OAuth grants', async () => {
     /** The token endpoint's answer to a key that no longer authenticates its account: no token. */
     const noClient = { status: 401, body: { error: 'invalid_client' } };
 
-    it('must not act or mint via a service token after its API key is revoked, even while its verdict is cached', async () => {
+    it('must not act or mint via a service token after its API key is revoked', async () => {
       const bot = await botWithKey();
       const second = await call(createApiKey, { path: bot.path, body: { name: 'second' }, headers: bot.headers });
       const secondKey = second.data as { secret: string };
@@ -430,40 +416,44 @@ describe('OAuth grants', async () => {
       const refused = await bot.read(jwt);
       expect(refused.response.status).toBe(401);
       expect(reasonOf(refused.error)).toBe('invalid_api_key');
-      await toldOtherProcesses({ serviceAccount: { id: bot.accountId, tenantId: bot.path.tenantId, clientId: null } });
       expect(await bot.mint(bot.key.secret)).toMatchObject(noClient);
       // Positive control: the account and its other key are untouched.
       expect((await bot.read(await bot.tokenFor(secondKey.secret))).response.status).toBe(200);
     });
 
-    it('must not act via a service token after its account is disabled, even while its verdict is cached', async () => {
+    it('must not act via a service token after its account is disabled', async () => {
       const bot = await botWithKey();
       const jwt = await bot.tokenFor(bot.key.secret);
       expect((await bot.read(jwt)).response.status).toBe(200);
 
-      const disabled = await call(updateServiceAccount, {
-        path: bot.path,
-        body: { status: 'disabled' },
-        headers: bot.headers,
-      });
+      const disabled = await call(updateServiceAccount, { path: bot.path, body: { status: 'disabled' }, headers: bot.headers });
       expect(disabled.response.status).toBe(200);
 
       const refused = await bot.read(jwt);
       expect(refused.response.status).toBe(401);
       expect(reasonOf(refused.error)).toBe('service_account_disabled');
-      await toldOtherProcesses({ serviceAccount: { id: bot.accountId, tenantId: bot.path.tenantId, clientId: null } });
     });
 
-    it('must not mint a service token via a client cached before its account was disabled', async () => {
+    it('must not act via a service token once another process revoked its API key', async () => {
       const bot = await botWithKey();
-      // Positive control, which also caches the client, as the authorization server's process holds it.
+      const jwt = await bot.tokenFor(bot.key.secret);
+      expect((await bot.read(jwt)).response.status).toBe(200);
+
+      // A revoke in another process: the key row changes, and nothing drops what this process holds.
+      await db.update(apiKeysTable).set({ revokedAt: new Date().toISOString() }).where(eq(apiKeysTable.id, bot.key.id));
+
+      const refused = await bot.read(jwt);
+      expect(refused.response.status).toBe(401);
+      expect(reasonOf(refused.error)).toBe('invalid_api_key');
+    });
+
+    it('must not mint a service token once another process disabled its account', async () => {
+      const bot = await botWithKey();
+      // Positive control.
       await bot.tokenFor(bot.key.secret);
 
       // A disable this process has not heard of yet: another process's write, or one outside the API.
-      await db
-        .update(serviceAccountsTable)
-        .set({ status: 'disabled' })
-        .where(eq(serviceAccountsTable.id, bot.accountId));
+      await db.update(serviceAccountsTable).set({ status: 'disabled' }).where(eq(serviceAccountsTable.id, bot.accountId));
 
       expect(await bot.mint(bot.key.secret)).toMatchObject(noClient);
     });
@@ -563,12 +553,7 @@ describe('OAuth grants', async () => {
     /** The member consents in `browser` and the client exchanges the code. */
     async function consentIn(ctx: Tenant, browser: CookieJar) {
       const { code, verifier } = await authorizationCode(oauth.issuer, { ...authorization(ctx), browser });
-      const tokens = await exchangeCode(oauth.issuer, {
-        clientId: APP_ID,
-        redirectUri: REDIRECT_URI,
-        code: code ?? '',
-        verifier,
-      });
+      const tokens = await exchangeCode(oauth.issuer, { clientId: APP_ID, redirectUri: REDIRECT_URI, code: code ?? '', verifier });
       expect(tokens.status).toBe(200);
       return tokens.body;
     }
@@ -613,10 +598,7 @@ describe('OAuth grants', async () => {
       // Consenting there gets the one signed in a grant and a token of their own.
       const granted = await authorizationCodeToken(oauth.issuer, { ...authorization(ctx, APP_ID, other), browser });
       expect(granted.status).toBe(200);
-      const token = await verifyAccessToken(String(granted.body.access_token), {
-        tenantId: ctx.org.tenantId,
-        organizationId: ctx.org.id,
-      });
+      const token = await verifyAccessToken(String(granted.body.access_token), { tenantId: ctx.org.tenantId, organizationId: ctx.org.id });
       expect(token.actorId).toBe(other.id);
       expect(await grantRowsOf(other.id)).toContainEqual({ type: 'Grant' });
       // The member's grant is theirs still, and untouched.
@@ -631,10 +613,7 @@ describe('OAuth grants', async () => {
       // A system admin takes this browser over and impersonates the member, whose provider session is still here.
       const admin = await createSystemAdminUser(`impersonator-${nanoid(8)}@security-test.com`);
       const adminSession = await insertTestSession(admin);
-      const impersonation = await insertTestSession(
-        { id: ctx.member.id },
-        { type: 'impersonation', impersonatorSessionId: adminSession.id },
-      );
+      const impersonation = await insertTestSession({ id: ctx.member.id }, { type: 'impersonation', impersonatorSessionId: adminSession.id });
       browser.add(adminSession.cookie);
       browser.add(impersonation.cookie);
       // Positive control: in the app, this browser now acts as the member.
@@ -651,9 +630,7 @@ describe('OAuth grants', async () => {
       const browser = new CookieJar([ctx.member.sessionCookie]);
       await consentIn(ctx, browser);
       // Positive control: with the member signed in here, a silent request gets a code.
-      expect(
-        (await startAuthorization(oauth.issuer, { ...authorization(ctx), browser, prompt: 'none' })).code,
-      ).toBeTruthy();
+      expect((await startAuthorization(oauth.issuer, { ...authorization(ctx), browser, prompt: 'none' })).code).toBeTruthy();
 
       const other = await createOrgUser(call, ctx.org.tenantId, ctx.org.id, `other-${nanoid(8)}`);
       browser.add(other.sessionCookie);
@@ -667,9 +644,7 @@ describe('OAuth grants', async () => {
       const started = await startAuthorization(oauth.issuer, authorization(ctx));
       expect(started.uid).toBeTruthy();
       const details = (cookie: string) =>
-        fetch(`${new URL(oauth.issuer).origin}/oauth/interaction/${started.uid}/details`, {
-          headers: { Cookie: cookie },
-        });
+        fetch(`${new URL(oauth.issuer).origin}/oauth/interaction/${started.uid}/details`, { headers: { Cookie: cookie } });
 
       // Positive control: with the provider's interaction cookie, the details load.
       expect((await details(started.browser.header())).status).toBe(200);
@@ -692,7 +667,7 @@ describe('OAuth grants', async () => {
         return session;
       };
       const ending = (reason: SessionEndReason, sessionId: string) =>
-        endSessions({ var: { db } }, { userId: user.id, sessionIds: [sessionId], reason, by: null });
+        revokeSessions({ var: { db } }, { userId: user.id, sessionIds: [sessionId], reason, by: null });
 
       for (const reason of ['sign_out', 'other_session', 'mfa_enabled'] as const) {
         await ending(reason, (await signIn()).id);
@@ -725,8 +700,7 @@ describe('OAuth grants', async () => {
     it('must not mint tokens twice via a replayed code, and the replay revokes the grant', async () => {
       const ctx = await tenantWithApp();
       const { code, verifier } = await authorizationCode(oauth.issuer, authorization(ctx));
-      const exchange = () =>
-        exchangeCode(oauth.issuer, { clientId: APP_ID, redirectUri: REDIRECT_URI, code: code ?? '', verifier });
+      const exchange = () => exchangeCode(oauth.issuer, { clientId: APP_ID, redirectUri: REDIRECT_URI, code: code ?? '', verifier });
 
       const first = await exchange();
       expect(first.status).toBe(200);
@@ -743,7 +717,6 @@ describe('OAuth grants', async () => {
       expect(read.response.status).toBe(401);
       expect(reasonOf(read.error)).toBe('grant_revoked');
       expect((await refresh(String(first.body.refresh_token))).body.error).toBe('invalid_grant');
-      await toldOtherProcesses(await grantOf(ctx, access));
     });
 
     it('must not mint tokens via a rotated refresh token, and the replay revokes the grant', async () => {
@@ -764,16 +737,12 @@ describe('OAuth grants', async () => {
       const read = await readAttachments(ctx, access);
       expect(read.response.status).toBe(401);
       expect(reasonOf(read.error)).toBe('grant_revoked');
-      await toldOtherProcesses(await grantOf(ctx, access));
     });
 
     /** Holds every consume back a moment, so each racing request has read the unspent row before any spends it. */
     function widenConsumeRace() {
       const consume = DrizzleAdapter.prototype.consume;
-      return vi.spyOn(DrizzleAdapter.prototype, 'consume').mockImplementation(async function (
-        this: DrizzleAdapter,
-        id,
-      ) {
+      return vi.spyOn(DrizzleAdapter.prototype, 'consume').mockImplementation(async function (this: DrizzleAdapter, id) {
         await new Promise((resolve) => setTimeout(resolve, 50));
         return consume.call(this, id);
       });
@@ -782,17 +751,15 @@ describe('OAuth grants', async () => {
     it('must not mint tokens twice via two concurrent exchanges of one code', async () => {
       const ctx = await tenantWithApp();
       const { code, verifier } = await authorizationCode(oauth.issuer, authorization(ctx));
-      const exchange = () =>
-        exchangeCode(oauth.issuer, { clientId: APP_ID, redirectUri: REDIRECT_URI, code: code ?? '', verifier });
+      const exchange = () => exchangeCode(oauth.issuer, { clientId: APP_ID, redirectUri: REDIRECT_URI, code: code ?? '', verifier });
 
       const race = widenConsumeRace();
       const results = await Promise.all([exchange(), exchange()]).finally(() => race.mockRestore());
       expect(results.map((result) => result.status).sort()).toEqual([200, 400]);
       expect(results.find((result) => result.status === 400)?.body.error).toBe('invalid_grant');
-      // The replay revoked the grant, the winner's tokens with it, here and in the other processes.
+      // The replay revoked the grant, the winner's tokens with it.
       const winner = String(results.find((result) => result.status === 200)?.body.access_token);
       expect((await readAttachments(ctx, winner)).response.status).toBe(401);
-      await toldOtherProcesses(await grantOf(ctx, winner));
     });
 
     it('must not mint tokens twice via two concurrent refreshes with one refresh token', async () => {
@@ -800,9 +767,7 @@ describe('OAuth grants', async () => {
       const grant = await consent(ctx);
 
       const race = widenConsumeRace();
-      const results = await Promise.all([refresh(grant.refresh), refresh(grant.refresh)]).finally(() =>
-        race.mockRestore(),
-      );
+      const results = await Promise.all([refresh(grant.refresh), refresh(grant.refresh)]).finally(() => race.mockRestore());
       expect(results.map((result) => result.status).sort()).toEqual([200, 400]);
       expect(results.find((result) => result.status === 400)?.body.error).toBe('invalid_grant');
     });
@@ -815,12 +780,7 @@ describe('OAuth grants', async () => {
       expect(code).toBeTruthy();
       expect(await stored()).not.toContain(code);
 
-      const tokens = await exchangeCode(oauth.issuer, {
-        clientId: APP_ID,
-        redirectUri: REDIRECT_URI,
-        code: code ?? '',
-        verifier,
-      });
+      const tokens = await exchangeCode(oauth.issuer, { clientId: APP_ID, redirectUri: REDIRECT_URI, code: code ?? '', verifier });
       expect(tokens.status).toBe(200);
       const refreshToken = String(tokens.body.refresh_token);
       const rows = await stored();
@@ -836,12 +796,9 @@ describe('OAuth grants', async () => {
     it('must not mint a service token via the client_credentials grant of a registered app', async () => {
       const org = await createTestOrganization();
       const secret = `partner-secret-${nanoid(16)}`;
-      await db.insert(oauthClientsTable).values({
-        id: 'grant-policy-partner',
-        name: 'Partner',
-        redirectUris: [REDIRECT_URI],
-        secretHash: hashToken(secret),
-      });
+      await db
+        .insert(oauthClientsTable)
+        .values({ id: 'grant-policy-partner', name: 'Partner', redirectUris: [REDIRECT_URI], secretHash: hashToken(secret) });
       const resource = resourceUri({ face: 'api', tenantId: org.tenantId });
 
       const refused = await clientCredentialsToken(
@@ -864,8 +821,7 @@ describe('OAuth grants', async () => {
       const other = await createTestOrganization();
       const admin = await createOrgUser(call, org.tenantId, org.id, `admin-${nanoid(8)}`, adminRole);
       const client = await serviceAccountWithKey(org, admin.sessionCookie);
-      const mint = (resource: string) =>
-        clientCredentialsToken(oauth.issuer, client, { scope: 'attachment:read', resource });
+      const mint = (resource: string) => clientCredentialsToken(oauth.issuer, client, { scope: 'attachment:read', resource });
 
       for (const resource of [
         resourceUri({ face: 'api', tenantId: other.tenantId }),
@@ -917,17 +873,9 @@ describe('OAuth grants', async () => {
       await allowUnregisteredClients(uninstalled.org.tenantId, false);
 
       const cases = [
-        {
-          refusal: 'not_a_member',
-          input: authorization(installed, APP_ID, uninstalled.member),
-          user: uninstalled.member,
-        },
+        { refusal: 'not_a_member', input: authorization(installed, APP_ID, uninstalled.member), user: uninstalled.member },
         { refusal: 'app_not_installed', input: authorization(uninstalled), user: uninstalled.member },
-        {
-          refusal: 'unregistered_clients_not_allowed',
-          input: authorization(uninstalled, CIMD_ID),
-          user: uninstalled.member,
-        },
+        { refusal: 'unregistered_clients_not_allowed', input: authorization(uninstalled, CIMD_ID), user: uninstalled.member },
       ];
       for (const { refusal, input, user } of cases) {
         const result = await authorizationCode(oauth.issuer, input);
@@ -947,21 +895,11 @@ describe('OAuth grants', async () => {
       const ctx = await tenantWithApp();
 
       const unregistered = await authorizationCode(oauth.issuer, authorization(ctx, CIMD_ID));
-      expect(unregistered.consent.client).toEqual({
-        id: CIMD_ID,
-        name: 'mcp-client.example',
-        logoUri: null,
-        kind: 'cimd',
-      });
+      expect(unregistered.consent.client).toEqual({ id: CIMD_ID, name: 'mcp-client.example', logoUri: null, kind: 'cimd' });
 
       // Positive control: a registered app keeps the name and logo a system admin set.
       const registered = await authorizationCode(oauth.issuer, authorization(ctx));
-      expect(registered.consent.client).toEqual({
-        id: APP_ID,
-        name: 'Portfolio',
-        logoUri: APP_LOGO,
-        kind: 'registered',
-      });
+      expect(registered.consent.client).toEqual({ id: APP_ID, name: 'Portfolio', logoUri: APP_LOGO, kind: 'registered' });
     });
 
     it('names the tenant and organization a grant reaches on the consent page', async () => {
@@ -1000,11 +938,7 @@ describe('OAuth grants', async () => {
         .insert(systemRolesTable)
         .values({ id: admin.id, userId: admin.id, role: 'admin', createdAt: new Date().toISOString() });
       const rename = (headers: Record<string, string>) =>
-        call(updateOrganization, {
-          path: { tenantId: ctx.org.tenantId, id: ctx.org.id },
-          body: { name: 'Renamed organization' },
-          headers,
-        });
+        call(updateOrganization, { path: { tenantId: ctx.org.tenantId, id: ctx.org.id }, body: { name: 'Renamed organization' }, headers });
 
       const granted = await authorizationCodeToken(oauth.issuer, {
         ...authorization(ctx, APP_ID, admin),
@@ -1028,10 +962,7 @@ describe('OAuth grants', async () => {
       // A system admin's impersonation of the member, layered on the admin's own session.
       const admin = await createSystemAdminUser(`consent-admin-${nanoid(8)}@security-test.com`);
       const adminSession = await insertTestSession(admin);
-      const impersonating = await insertTestSession(ctx.member, {
-        type: 'impersonation',
-        impersonatorSessionId: adminSession.id,
-      });
+      const impersonating = await insertTestSession(ctx.member, { type: 'impersonation', impersonatorSessionId: adminSession.id });
 
       const refused = await authorizationCode(oauth.issuer, { ...authorization(ctx), sessionCookie: stale.cookie });
       expect(refused.code).toBeNull();

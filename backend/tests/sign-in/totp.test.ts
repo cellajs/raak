@@ -36,9 +36,7 @@ describe('TOTP Authentication', async () => {
 
       const sessionCookie = await createTestSession(user);
 
-      const { response: res, data } = await call(generateTotpKey, {
-        headers: { ...defaultHeaders, Cookie: sessionCookie },
-      });
+      const { response: res, data } = await call(generateTotpKey, { headers: { ...defaultHeaders, Cookie: sessionCookie } });
 
       expect(res.status).toBe(200);
       const response = data as { totpUri: string; manualKey: string };
@@ -52,9 +50,7 @@ describe('TOTP Authentication', async () => {
 
       const sessionCookie = await createTestSession(user);
 
-      const { response: generateRes, data: generateData } = await call(generateTotpKey, {
-        headers: { ...defaultHeaders, Cookie: sessionCookie },
-      });
+      const { response: generateRes, data: generateData } = await call(generateTotpKey, { headers: { ...defaultHeaders, Cookie: sessionCookie } });
 
       expect(generateRes.status).toBe(200);
       const generatedTotp = generateData as { manualKey: string };
@@ -76,6 +72,17 @@ describe('TOTP Authentication', async () => {
     });
   });
 
+  describe('TOTP Setup with an authenticator app in place', () => {
+    it('should refuse a new key and a new authenticator app with 409', async () => {
+      const user = await createTotpUser(signUpUser.email);
+      const headers = { ...defaultHeaders, Cookie: await createTestSession(user, { authStrategy: 'totp' }) };
+
+      await expectRefusal(await call(generateTotpKey, { headers }), 409, 'resource_already_exists');
+      await expectRefusal(await call(createTotp, { body: { code: '123456' }, headers }), 409, 'resource_already_exists');
+      expect(await db.select().from(totpsTable).where(eq(totpsTable.userId, user.id))).toHaveLength(1);
+    });
+  });
+
   describe('TOTP Sign-In Flow', () => {
     it('should sign in with valid TOTP code', async () => {
       const user = await createTotpUser(signUpUser.email);
@@ -83,10 +90,7 @@ describe('TOTP Authentication', async () => {
 
       const { response: res } = await call(signInWithTotp, {
         body: { code: totpCode() },
-        headers: {
-          ...defaultHeaders,
-          Cookie: authCookie('confirm-mfa', mfaToken),
-        },
+        headers: { ...defaultHeaders, Cookie: authCookie('confirm-mfa', mfaToken) },
       });
 
       expect(res.status).toBe(204);
@@ -99,20 +103,14 @@ describe('TOTP Authentication', async () => {
 
       const { response: res, error } = await call(signInWithTotp, {
         body: { code: wrongTotpCode() },
-        headers: {
-          ...defaultHeaders,
-          Cookie: authCookie('confirm-mfa', mfaToken),
-        },
+        headers: { ...defaultHeaders, Cookie: authCookie('confirm-mfa', mfaToken) },
       });
 
       await expectRefusal({ response: res, error }, 401, 'invalid_token');
     });
 
     it('should reject TOTP verification for non-existent user', async () => {
-      const { response: res, error } = await call(signInWithTotp, {
-        body: { code: '123456' },
-        headers: defaultHeaders,
-      });
+      const { response: res, error } = await call(signInWithTotp, { body: { code: '123456' }, headers: defaultHeaders });
 
       await expectRefusal({ response: res, error }, 401, 'confirm-mfa_not_found');
     });
@@ -126,10 +124,7 @@ describe('TOTP Authentication', async () => {
       // No TOTP registered for the user.
       const { response: res, error } = await call(signInWithTotp, {
         body: { code: totpCode() },
-        headers: {
-          ...defaultHeaders,
-          Cookie: authCookie('confirm-mfa', mfaToken),
-        },
+        headers: { ...defaultHeaders, Cookie: authCookie('confirm-mfa', mfaToken) },
       });
 
       await expectRefusal({ response: res, error }, 404, 'not_found');

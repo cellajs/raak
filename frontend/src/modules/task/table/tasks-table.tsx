@@ -26,13 +26,7 @@ const LIMIT = appConfig.requestLimits.tasksTable;
 // Stable identity so it never invalidates DataTable's memoized Row components.
 const rowKeyGetter = (row: Task) => row.id;
 
-export type TaskTableProps = {
-  projects?: Project[];
-  workspace?: Workspace;
-  publicView?: boolean;
-  organization?: Organization;
-  tenantId?: string;
-};
+export type TaskTableProps = { projects?: Project[]; workspace?: Workspace; publicView?: boolean; organization?: Organization; tenantId?: string };
 
 export type ResolvedTaskTableProps = Omit<TaskTableProps, 'projects'> & { projects: Project[] };
 
@@ -47,10 +41,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   });
   // Memoized so the reactive project cells (TableProjectsContext) only re-render when the list
   // actually changes, not on every table render.
-  const projects = useMemo(
-    () => projectsProp ?? flattenInfiniteData<Project>(fetchedData),
-    [projectsProp, fetchedData],
-  );
+  const projects = useMemo(() => projectsProp ?? flattenInfiniteData<Project>(fetchedData), [projectsProp, fetchedData]);
 
   // Table state
   const { q, sort, order } = search;
@@ -95,8 +86,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   // Tint matches among the loaded rows in highlight mode (search-filter strips the marker)
   const rowClass = useMemo(
-    () =>
-      highlight ? (row: Task) => (searchFilterFunction(search, row) ? searchHighlightRowClass : undefined) : undefined,
+    () => (highlight ? (row: Task) => (searchFilterFunction(search, row) ? searchHighlightRowClass : undefined) : undefined),
     [highlight, search],
   );
 
@@ -118,13 +108,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const isRowSelectionDisabled = useCallback((row: Task) => isProjectReadOnly(row.projectId), []);
 
   const noRowsComponent = useMemo(
-    () => (
-      <ContentPlaceholder
-        icon={BirdIcon}
-        title="c:no_resource_yet"
-        titleProps={{ resource: t('c:task_other').toLowerCase() }}
-      />
-    ),
+    () => <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:task_other').toLowerCase() }} />,
     [t],
   );
 

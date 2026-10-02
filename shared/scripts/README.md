@@ -2,20 +2,14 @@
 
 | Script | Purpose | Invocation |
 | --- | --- | --- |
-| `check-doc-style.ts` | CI guard for concrete terminology in authored Markdown and MDX; exits 1 with file and line diagnostics when prose should name a more precise rule, constraint, guarantee, requirement, contract, precondition, or assumption. | `pnpm docs:style`. `pnpm prose:check` runs `pnpm style` (terminology + documentation + all comment rules including placement), the blocking entry point for CI and `pnpm check`. |
-| `check-app-vocabulary.ts` | Enforces the template/app vocabulary rule in `cella/AGENTS.md`. | `pnpm vocabulary:check` |
+| `check-style.ts` | The style check: one pass over the repo files, each finding printed as `file:line:column [rule] "term": message`. Blocking in `pnpm lint`, `pnpm check` and CI. | `pnpm style [paths…]`; `pnpm style:audit` also lists review markers, which never fail. |
+| `check-app-vocabulary.ts` | Template/app vocabulary and product-name rules from `cella/AGENTS.md`. An app adds exceptions, and `proseExclude` prefixes for the prose rules, in `shared/config/vocabulary-allowlist.ts`. | Run by `check-style.ts` |
+| `prose-rules.ts` | The prose rules: every rule reads source comments (`check-comment-style.ts`, which also checks comment placement, and `source-comments.ts`), `docs` rules also Markdown and MDX (`check-doc-style.ts`). | Run by `check-style.ts` |
+| `check-frontend-style.ts` | Frontend conventions Biome cannot express: named function components, no `FC`, zustand stores read through a selector. | Run by `check-style.ts` |
+| `check-tailwind-classes.ts` | Frontend class names that compile to no CSS: class attributes and props, `cn`/`cva`/`clsx`/`tw` arguments and class-named values are checked against the Tailwind design system loaded from the frontend stylesheet that imports `tailwindcss`. Classes that a frontend stylesheet, script or arbitrary selector such as `group-[.x]` uses pass; other intentional markers go in its `markerClasses` (template hooks) or in `markerClasses` of `shared/config/vocabulary-allowlist.ts` (the app's own). Skips `*.test.*` files and classes next to a `${...}` placeholder. | Run by `check-style.ts` |
+| `check-migration-notes.ts` | Shape of the migration notes in `cella/migrations/<id>/`: folder name, a README opening with frontmatter (`syncBreaking`, `clientCacheBump`, `roots` beside a codemod), the title and a summary paragraph, the shape `pnpm cella migrate` reads. | Run by `check-style.ts` |
 | `check-lenses.ts` | Guards the schema-evolution lens system in `shared/src/schema-evolution/`; exits 1 on any violation ([CI guards](../../cella/SCHEMA_EVOLUTION.md#ci-guards)). | `pnpm --filter shared lens:check` |
 | `wait-backend.ts` | Waits for the backend health endpoint. | `tsx shared/scripts/wait-backend.ts [-i interval] [-t timeout]` |
-| `deps-report.ts` | Dependency count and install weight over the pnpm graph; no dependencies of its own, no CI gate. | `pnpm deps`. Flags: `--workspace <name>` limits the run, `--top <n>` ranking length, `--json <path>` writes a snapshot. |
-| `bundle-report.ts` | Shipped frontend bundle size over `frontend/dist`, source maps excluded. | `pnpm deps:bundle` after `pnpm --filter frontend build`, or `pnpm deps:bundle:analyze` to build and report together. `pnpm deps:bundle:check` = the report with `--max-critical-kb` and `--assert-lazy`. Flags: `--top <n>`, `--json <path>`, `--max-critical-kb <n>` (brotli kB), `--assert-lazy`. |
+| Bundle treemap (`frontend/vite.config.ts`) | Per-module view of the shipped frontend chunks, to check which chunk holds a package. | `pnpm deps:bundle:analyze` builds with `ANALYZE=true`, which loads `rollup-plugin-visualizer` and writes `frontend/stats/bundle.html`. |
 | knip (`knip.json`) | Unused dependencies; string-resolved ones knip cannot see (pino transport target in `shared/src/pino.ts`, artillery CLI spawned by `bench/src/bench-cli.ts`) sit under `ignoreDependencies`. | `pnpm deps:unused` |
 
-## deps-report.ts output
-
-Per workspace (each listed separately; `pnpm list -r` truncates shared subtrees): direct dependency counts (prod + dev), transitive closure size, unpacked bytes on disk. The ranking sorts direct dependencies by **exclusive subtree**, the packages reachable through that dependency alone: what removing it reclaims.
-
-## bundle-report.ts output
-
-Raw, gzip and brotli totals, a breakdown by file type, and the **critical path**: every chunk statically reachable from the entry script. The graph derives from the chunks' own static imports and warns when `modulepreload` links drift from it. Chunk grouping in `frontend/vite.config.ts` moves the numbers most: a group captures the dependencies of whatever it matches. `--assert-lazy` fails when a boot chunk's source map contains an on-demand package: @blocknote, @uppy, pdfjs, media-chrome, gleap, shiki grammars, react-scan.
-
-`pnpm deps:bundle:analyze` also sets `ANALYZE=true`, enabling `rollup-plugin-visualizer` in `frontend/vite.config.ts` (never loaded otherwise), which writes a per-module treemap to `frontend/stats/bundle.html`.

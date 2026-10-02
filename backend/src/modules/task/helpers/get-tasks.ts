@@ -20,22 +20,14 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
 /**
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
-export const getTasks = async (
-  ctx: ActorContext,
-  projectIds: string[],
-  queryInfo: QueryInfo,
-  opts?: { publicOnly?: boolean },
-) => {
+export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean }) => {
   const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
   // Highlight-mode clients ('=' prefix) fetch unfiltered; stripping here keeps stray marked
   // queries behaving like their plain form.
   const { effectiveQ: trimmedQuery } = parseSearchQuery(q);
 
   // Get users and labels data in parallel
-  const [tasksUsers, tasksLabels] = await Promise.all([
-    findProjectMembers(ctx, { projectIds }),
-    findLabelsByProjects(ctx, { projectIds }),
-  ]);
+  const [tasksUsers, tasksLabels] = await Promise.all([findProjectMembers(ctx, { projectIds }), findLabelsByProjects(ctx, { projectIds })]);
 
   const tasksSearchFilters: SQL[] = [];
 
@@ -92,13 +84,7 @@ export const getTasks = async (
   );
 
   // Non-delta reads fetch the page and its exact COUNT(*) in parallel; delta reads skip the count.
-  const { items: tasks, total } = await findTasksPaginated(ctx, {
-    filters,
-    orderBy,
-    limit,
-    offset,
-    isDelta: !!seqCursor,
-  });
+  const { items: tasks, total } = await findTasksPaginated(ctx, { filters, orderBy, limit, offset, isDelta: !!seqCursor });
 
   const items = hydrateTasks(tasks, tasksUsers, tasksLabels);
 

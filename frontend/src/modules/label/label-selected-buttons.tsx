@@ -22,12 +22,7 @@ interface LabelSelectedButtonsProps {
 }
 
 /** Floating action bar for label rows selected in the labels panel: remove + clear. */
-export function LabelSelectedButtons({
-  selectedLabelIds,
-  clearSelection,
-  organizationId,
-  tenantId,
-}: LabelSelectedButtonsProps) {
+export function LabelSelectedButtons({ selectedLabelIds, clearSelection, organizationId, tenantId }: LabelSelectedButtonsProps) {
   const { t } = useTranslation();
   const deleteLabels = useLabelDeleteMutation(tenantId, organizationId);
 
@@ -56,7 +51,7 @@ export function LabelSelectedButtons({
       <TooltipButton toolTipContent={t('c:remove_label')} side="top">
         <Button variant="destructive" onClick={onRemove}>
           <TrashIcon />
-          <span className="ml-1">{t('c:remove')}</span>
+          <span className="">{t('c:remove')}</span>
         </Button>
       </TooltipButton>
     </SelectionActionBar>

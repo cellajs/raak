@@ -38,9 +38,7 @@ export function setEngineConfig(config: EngineConfig): void {
 /** The active engine config. Throws when no config has been loaded yet. */
 export function engineConfig(): EngineConfig {
   if (!injected) {
-    throw new Error(
-      'engine-config: no config loaded, await loadEngineConfig() (or call setEngineConfig) before importing engine modules.',
-    );
+    throw new Error('engine-config: no config loaded, await loadEngineConfig() (or call setEngineConfig) before importing engine modules.');
   }
   return injected;
 }
@@ -82,9 +80,7 @@ export async function loadEngineConfig(): Promise<EngineConfig> {
     const mod: Record<string, unknown> = await import(pathToFileURL(configModule).href);
     const candidate = mod.engineConfig ?? mod.default;
     if (!isEngineConfig(candidate)) {
-      throw new Error(
-        `engine-config: module '${configModule}' does not export an EngineConfig ('engineConfig' or default export).`,
-      );
+      throw new Error(`engine-config: module '${configModule}' does not export an EngineConfig ('engineConfig' or default export).`);
     }
     assertValidSlug(candidate.slug);
     setEngineConfig(candidate);

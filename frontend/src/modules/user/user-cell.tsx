@@ -4,7 +4,6 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { UserMinimalBase } from 'sdk';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { cn } from '~/utils/cn';
 import { Button } from '../ui/button';
@@ -25,16 +24,13 @@ export function UserCell({ user, tabIndex, compactable, className, readOnly }: B
   const navigate = useNavigate();
   const cellRef = useRef<HTMLButtonElement | null>(null);
 
-  const setTriggerRef = sheeter.getState().setTriggerRef;
-
   // While compacted the name is visually hidden, so the compact-scoped table tooltip shows it.
-  const compactTooltip =
-    compactable && user.name ? { 'data-tooltip': 'compact', 'data-tooltip-content': user.name } : undefined;
+  const compactTooltip = compactable && user.name ? { 'data-tooltip': 'compact', 'data-tooltip-content': user.name } : undefined;
 
   if (readOnly) {
     return (
       <div className={cn('flex items-center gap-2', className)} {...compactTooltip}>
-        <EntityAvatar type="user" className="h-8 w-8" id={user.id} name={user.name} url={user.thumbnailUrl} />
+        <EntityAvatar type="user" className="size-8" id={user.id} name={user.name} url={user.thumbnailUrl} />
         <span className={cn('truncate', { [compactUserNameClass]: compactable })}>{user.name || '-'}</span>
       </div>
     );
@@ -57,26 +53,13 @@ export function UserCell({ user, tabIndex, compactable, className, readOnly }: B
         if (e.metaKey || e.ctrlKey) return;
         e.preventDefault();
 
-        setTriggerRef(user.id, cellRef);
-
-        navigate({
-          to: '.',
-          replace: false,
-          resetScroll: false,
-          search: (prev) => ({ ...prev, userSheetId: user.id }),
-        });
+        navigate({ to: '.', replace: false, resetScroll: false, search: (prev) => ({ ...prev, userSheetId: user.id }) });
       }}
     >
-      <EntityAvatar
-        type="user"
-        className="h-8 w-8 group-active:translate-y-[.05rem]"
-        id={user.id}
-        name={user.name}
-        url={user.thumbnailUrl}
-      />
+      <EntityAvatar type="user" className="group-active/cell-button:press size-8" id={user.id} name={user.name} url={user.thumbnailUrl} />
       <span
         className={cn(
-          'truncate decoration-foreground/20 underline-offset-3 group-hover:underline group-active:translate-y-[.05rem] group-active:decoration-foreground/50',
+          'group-active/cell-button:press truncate decoration-foreground/20 underline-offset-3 group-hover/cell-button:underline group-active/cell-button:decoration-foreground/50',
           { [compactUserNameClass]: compactable },
         )}
       >

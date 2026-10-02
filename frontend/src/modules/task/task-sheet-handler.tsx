@@ -69,7 +69,7 @@ function TaskSheetHandler() {
     },
     options: {
       side: 'right',
-      className: 'max-w-full lg:max-w-4xl p-0 scrollable',
+      className: 'max-w-full lg:max-w-4xl p-0',
       title: t('c:task'),
       titleContent: taskSheetId ? <TaskSheetTitle taskId={taskSheetId} /> : t('c:task'),
       closeSheetOnEsc: false,

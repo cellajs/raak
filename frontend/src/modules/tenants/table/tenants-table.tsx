@@ -1,13 +1,13 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { BuildingIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { TenantWithOrganization } from 'sdk';
+import type { Tenant } from 'sdk';
 import { appConfig } from 'shared';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import type { RowsChangeData } from '~/modules/common/data-grid';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
+import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { tenantsListQueryOptions, useTenantUpdateMutation } from '~/modules/tenants/query';
 import type { TenantsRouteSearchParams } from '~/modules/tenants/search-params-schemas';
 import { TenantsTableBar } from '~/modules/tenants/table/tenants-bar';
@@ -15,7 +15,7 @@ import { useColumns } from '~/modules/tenants/table/tenants-columns';
 
 const LIMIT = appConfig.requestLimits.users; // Use users limit as fallback
 
-function rowKeyGetter(row: TenantWithOrganization) {
+function rowKeyGetter(row: Tenant) {
   return row.id;
 }
 
@@ -31,27 +31,9 @@ function TenantsTable() {
   const updateTenant = useTenantUpdateMutation();
 
   const queryOptions = tenantsListQueryOptions({ ...search, limit });
-  const {
-    data: rows,
-    isLoading,
-    isFetching,
-    error,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteQuery({
-    ...queryOptions,
-    select: ({ pages }) => pages.flatMap(({ items }) => items),
-  });
+  const { rows, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
 
-  const fetchMore = async () => {
-    if (!hasNextPage || isLoading || isFetching) return;
-    await fetchNextPage();
-  };
-
-  const onRowsChange = (
-    changedRows: TenantWithOrganization[],
-    { indexes, column }: RowsChangeData<TenantWithOrganization>,
-  ) => {
+  const onRowsChange = (changedRows: Tenant[], { indexes, column }: RowsChangeData<Tenant>) => {
     if (column.key !== 'status') return;
     for (const index of indexes) {
       const tenant = changedRows[index];
@@ -68,7 +50,7 @@ function TenantsTable() {
         searchVars={{ ...search, limit }}
         setSearch={setSearch}
       />
-      <DataTable<TenantWithOrganization>
+      <DataTable<Tenant>
         {...{
           rows,
           rowHeight: 52,
@@ -86,11 +68,7 @@ function TenantsTable() {
           sortColumns,
           onSortColumnsChange,
           NoRowsComponent: (
-            <ContentPlaceholder
-              icon={BuildingIcon}
-              title="c:no_resource_yet"
-              titleProps={{ resource: t('c:tenant_other').toLowerCase() }}
-            />
+            <ContentPlaceholder icon={BuildingIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:tenant_other').toLowerCase() }} />
           ),
         }}
       />

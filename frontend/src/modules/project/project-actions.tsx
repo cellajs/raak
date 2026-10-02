@@ -29,10 +29,7 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
   );
 };
 
-export const openProjectSettingsSheet = (
-  project: EnrichedProject,
-  triggerRef?: RefObject<HTMLButtonElement | null>,
-) => {
+export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: RefObject<HTMLButtonElement | null>) => {
   useSheeter.getState().create(
     <div className="container w-full">
       <ProjectSettings project={project} sheet />

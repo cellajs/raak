@@ -19,15 +19,7 @@ const WARM_HOVER_MS = 200;
  *   editor's just-committed content (no cache/SSE race).
  * - Toggles checklist items through the same editor (consistent Yjs path), queued if not yet warm.
  */
-export function CardDescriptionSlot({
-  task,
-  state,
-  isReadOnly,
-}: {
-  task: Task;
-  state: SlotState;
-  isReadOnly: boolean;
-}) {
+export function CardDescriptionSlot({ task, state, isReadOnly }: { task: Task; state: SlotState; isReadOnly: boolean }) {
   const editing = state === 'editing';
 
   const [warm, setWarm] = useState(false);
@@ -118,9 +110,7 @@ export function CardDescriptionSlot({
 
     // Checklist: toggle through the editor (consistent Yjs path) only when the actual checkbox is
     // clicked (its wrapper), not the item text, so the sentence stays clickable to edit.
-    const checkboxId = target
-      .closest('.checklist-checkbox-wrapper')
-      ?.querySelector<HTMLInputElement>('input.checklist-checkbox')?.dataset.checkboxId;
+    const checkboxId = target.closest('.checklist-checkbox-wrapper')?.querySelector<HTMLInputElement>('input.checklist-checkbox')?.dataset.checkboxId;
     if (checkboxId) {
       event.preventDefault();
       event.stopPropagation(); // do not let the card enter editing
@@ -139,12 +129,7 @@ export function CardDescriptionSlot({
   const showBase = !editing;
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClickCapture={handleClickCapture}
-    >
+    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClickCapture={handleClickCapture}>
       {showBase && (
         <div className={holdEditor ? 'invisible absolute inset-0' : ''}>
           {state === 'collapsed' ? (

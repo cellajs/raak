@@ -1,6 +1,5 @@
+import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
-import * as React from 'react';
-import { Slot } from '~/modules/ui/slot';
 import { cn } from '~/utils/cn';
 
 export const badgeVariants = cva(
@@ -8,23 +7,18 @@ export const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-transparent [--intent-color:var(--primary)]',
-        brand: 'border-transparent [--intent-color:var(--brand)]',
-        success: 'border-transparent [--intent-color:var(--success)]',
-        secondary:
-          'border-transparent bg-secondary text-secondary-foreground [--intent-color:var(--secondary)] [a&]:hover:bg-secondary/90',
+        default: 'intent-primary border-transparent',
+        brand: 'intent-brand border-transparent',
+        success: 'intent-success border-transparent',
+        secondary: 'intent-secondary border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
         plain: 'border border-primary/20 bg-primary/5 text-primary',
-        destructive:
-          'border-transparent [--intent-color:var(--destructive)] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
+        destructive: 'intent-destructive border-transparent focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
         outline: 'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
-        warning: 'border-transparent [--intent-color:var(--warning)]',
+        warning: 'intent-warning border-transparent',
       },
-      soft: {
-        true: '',
-        false: '',
-      },
+      soft: { true: '', false: '' },
       size: {
-        micro: 'h-4 py-0 text-[10px]',
+        micro: 'h-4 py-0 text-2xs',
         xs: 'h-5 text-xs',
         sm: 'h-6 text-xs',
         md: 'h-7 text-sm',
@@ -39,11 +33,7 @@ export const badgeVariants = cva(
     // Solid fills gated on `soft: false`, so the soft form never emits `text-<intent>-foreground`
     compoundVariants: [
       // Soft form limited to intent variants
-      {
-        variant: ['default', 'brand', 'success', 'destructive', 'warning'],
-        soft: true,
-        className: 'soft-bg soft-border soft-text shadow-none',
-      },
+      { variant: ['default', 'brand', 'success', 'destructive', 'warning'], soft: true, className: 'soft-bg soft-border soft-text shadow-none' },
       { variant: 'default', soft: false, className: 'bg-primary text-primary-foreground [a&]:hover:bg-primary/90' },
       { variant: 'brand', soft: false, className: 'bg-brand text-brand-foreground [a&]:hover:bg-brand/90' },
       { variant: 'success', soft: false, className: 'bg-success text-success-foreground' },
@@ -54,12 +44,7 @@ export const badgeVariants = cva(
       },
       { variant: 'warning', soft: false, className: 'bg-warning text-warning-foreground' },
     ],
-    defaultVariants: {
-      variant: 'default',
-      soft: false,
-      size: 'xs',
-      context: 'none',
-    },
+    defaultVariants: { variant: 'default', soft: false, size: 'xs', context: 'none' },
   },
 );
 
@@ -70,18 +55,11 @@ export function Badge({
   context,
   size,
   render,
-  children,
   ...props
-}: React.ComponentProps<'span'> & VariantProps<typeof badgeVariants> & { render?: React.ReactElement }) {
-  const computedProps = {
-    'data-slot': 'badge',
-    className: cn(badgeVariants({ variant, soft, size, context }), className),
-    ...props,
-  };
-
-  if (render) {
-    return <Slot {...computedProps}>{React.cloneElement(render, undefined, children)}</Slot>;
-  }
-
-  return <span {...computedProps}>{children}</span>;
+}: useRender.ComponentProps<'span'> & VariantProps<typeof badgeVariants>) {
+  return useRender({
+    defaultTagName: 'span',
+    render,
+    props: { 'data-slot': 'badge', className: cn(badgeVariants({ variant, soft, size, context }), className), ...props },
+  });
 }

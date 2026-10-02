@@ -14,9 +14,7 @@ export function FileOpenPreviewButton() {
   const selectedFileBlock = useMemo(() => {
     if (selectedBlocks.length !== 1) return null;
     const block = selectedBlocks[0];
-    return block.type === 'file' || block.type === 'image' || block.type === 'video' || block.type === 'audio'
-      ? block
-      : null;
+    return block.type === 'file' || block.type === 'image' || block.type === 'video' || block.type === 'audio' ? block : null;
   }, [selectedBlocks]);
 
   if (!selectedFileBlock) return null;
@@ -29,7 +27,7 @@ export function FileOpenPreviewButton() {
       onClick={() => openAttachment(editor, ref, blockUrl)}
       mainTooltip={'Open attachment preview'}
       label={'Open attachment preview'}
-      icon={<ScalingIcon className="icon-sm" />}
+      icon={<ScalingIcon className="size-3.5" />}
     />
   );
 }

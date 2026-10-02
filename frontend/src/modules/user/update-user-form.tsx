@@ -12,13 +12,14 @@ import { AvatarFormField } from '~/modules/common/form-fields/avatar';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectLanguage } from '~/modules/common/form-fields/select-language';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { useStepper } from '~/modules/common/stepper/stepper';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useUpdateSelfMutation } from '~/modules/me/query';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { Input } from '~/modules/ui/input';
 import { Label } from '~/modules/ui/label';
 import { useUserUpdateMutation } from '~/modules/user/query';
@@ -50,10 +51,7 @@ export function UpdateUserForm({ user, callback, sheet: isSheet, compact, childr
   const updateUser = useUserUpdateMutation();
   const isPending = updateSelf.isPending || updateUser.isPending;
 
-  const formOptions: UseFormProps<FormValues> = {
-    resolver: zodResolver(formSchema),
-    defaultValues: user,
-  };
+  const formOptions: UseFormProps<FormValues> = { resolver: zodResolver(formSchema), defaultValues: user };
 
   const formContainerId = 'update-user';
   const form = useFormWithDraft<FormValues>(`${formContainerId}-${user.id}`, { formOptions, formContainerId });
@@ -84,30 +82,12 @@ export function UpdateUserForm({ user, callback, sheet: isSheet, compact, childr
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-        <AvatarFormField
-          form={form}
-          label={children ? '' : t('c:profile_picture')}
-          type="user"
-          name="thumbnailUrl"
-          entity={user}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full flex-col gap-6">
+        <AvatarFormField form={form} label={children ? '' : t('c:profile_picture')} type="user" name="thumbnailUrl" entity={user} />
         {isSelf && (
           <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
-            <InputFormField
-              inputClassName="border"
-              control={form.control}
-              name="firstName"
-              label={t('c:first_name')}
-              required
-            />
-            <InputFormField
-              inputClassName="border"
-              control={form.control}
-              name="lastName"
-              label={t('c:last_name')}
-              required
-            />
+            <InputFormField inputClassName="border" control={form.control} name="firstName" label={t('c:first_name')} required />
+            <InputFormField inputClassName="border" control={form.control} name="lastName" label={t('c:last_name')} required />
           </div>
         )}
 
@@ -123,13 +103,7 @@ export function UpdateUserForm({ user, callback, sheet: isSheet, compact, childr
 
             {isSelf && (
               <>
-                <InputFormField
-                  inputClassName="border"
-                  control={form.control}
-                  name="description"
-                  label={t('c:bio')}
-                  type="textarea"
-                />
+                <InputFormField inputClassName="border" control={form.control} name="description" label={t('c:bio')} type="textarea" />
 
                 <div className="flex flex-col gap-2">
                   <Label>{t('c:email')}</Label>
@@ -145,11 +119,7 @@ export function UpdateUserForm({ user, callback, sheet: isSheet, compact, childr
                         {t('c:language')}
                         <span className="ml-1 opacity-50">*</span>
                       </FormLabel>
-                      <SelectLanguage
-                        options={[...appConfig.languages]}
-                        value={field.value ?? appConfig.defaultLanguage}
-                        onChange={field.onChange}
-                      />
+                      <SelectLanguage options={[...appConfig.languages]} value={field.value ?? appConfig.defaultLanguage} onChange={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -160,9 +130,7 @@ export function UpdateUserForm({ user, callback, sheet: isSheet, compact, childr
                   name="newsletter"
                   render={({ field }) => (
                     <FormItem className="flex-row items-center" name="newsletter">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       <FormLabel>{t('c:newsletter')}</FormLabel>
                       <FormMessage />
                     </FormItem>
@@ -174,19 +142,11 @@ export function UpdateUserForm({ user, callback, sheet: isSheet, compact, childr
         )}
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <SubmitButton
-            disabled={!compact && (!form.isDirty || Object.keys(form.formState.errors).length > 0)}
-            loading={isPending}
-          >
+          <SubmitButton disabled={!compact && (!form.isDirty || Object.keys(form.formState.errors).length > 0)} loading={isPending}>
             {t(`c:${compact ? 'continue' : 'save_changes'}`)}
           </SubmitButton>
           {!children && (
-            <Button
-              type="reset"
-              variant="secondary"
-              onClick={() => form.reset()}
-              className={form.isDirty ? '' : 'invisible'}
-            >
+            <Button type="reset" variant="secondary" onClick={() => form.reset()} className={form.isDirty ? '' : 'invisible'}>
               {t('c:cancel')}
             </Button>
           )}

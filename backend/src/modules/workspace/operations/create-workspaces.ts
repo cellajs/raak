@@ -1,8 +1,9 @@
-import type { UserContext } from '#/core/context';
+import { nanoid } from 'shared/utils/nanoid';
+import type { DbContext, UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
-import { generateUniqueSlug } from '#/modules/entities/helpers/generate-slug';
+import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { withAuditUsers } from '#/modules/user/helpers/audit-user';
@@ -15,6 +16,16 @@ import { createRejectionState, takeWithRestriction } from '#/utils/rejection-uti
 
 type CreateWorkspaceItem = { id: string; name: string };
 
+const generateUniqueSlug = async (ctx: DbContext, baseSlug: string): Promise<string> => {
+  if (await checkSlugAvailable(ctx, baseSlug, 'workspace')) return baseSlug;
+
+  const withSuffix = `${baseSlug}-${nanoid(6)}`;
+  if (await checkSlugAvailable(ctx, withSuffix, 'workspace')) return withSuffix;
+
+  // Final fallback uses enough entropy that collisions are not expected.
+  return `${withSuffix}-${nanoid(10)}`;
+};
+
 export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorkspaceItem[]) {
   // Lens seam: canonicalize old-shape field names before any body access
   const items = rawItems.map((item) => workspaceContract.normalizeBody(item));
@@ -22,17 +33,12 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
   const user = ctx.var.user;
   const organization = ctx.var.organization;
 
-  const currentWorkspacesCount = await getOrganizationEntityCount(ctx, {
-    organizationId: organization.id,
-    entityType: 'workspace',
-  });
+  const currentWorkspacesCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'workspace' });
   const workspaceRestrictions = ctx.var.tenant.restrictions.quotas.workspace;
   const availableSlots = workspaceRestrictions === 0 ? items.length : workspaceRestrictions - currentWorkspacesCount;
 
   const restrictionFiltered =
-    workspaceRestrictions === 0
-      ? { items, rejectionState: createRejectionState() }
-      : takeWithRestriction(items, availableSlots, 'restrict_by_org');
+    workspaceRestrictions === 0 ? { items, rejectionState: createRejectionState() } : takeWithRestriction(items, availableSlots, 'restrict_by_org');
 
   const itemsToCreate = restrictionFiltered.items;
   const rejectionState = restrictionFiltered.rejectionState;
@@ -46,7 +52,7 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
   const workspaceValues = await Promise.all(
     itemsToCreate.map(async (item) => ({
       name: item.name,
-      slug: await generateUniqueSlug(ctx, `${user.slug}-${organization.slug}`, 'workspace'),
+      slug: await generateUniqueSlug(ctx, `${user.slug}-${organization.slug}`),
       createdBy: user.id,
       tenantId: organization.tenantId,
       organizationId: organization.id,
@@ -55,10 +61,7 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
 
   const workspaceRecords = await insertWorkspaces(ctx, { workspaces: workspaceValues });
 
-  log.info('Workspaces created', {
-    count: workspaceRecords.length,
-    ids: workspaceRecords.map((ws) => ws.id),
-  });
+  log.info('Workspaces created', { count: workspaceRecords.length, ids: workspaceRecords.map((ws) => ws.id) });
 
   const membershipInserts = workspaceRecords.map((ws) => ({
     userId: user.id,
@@ -70,7 +73,7 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
 
   // Invalidate membership cache so subsequent requests see the new membership
-  await invalidateCache.user(db, user.id);
+  invalidateCache.user(user.id);
 
   const counts = buildZeroCounts('workspace');
   const membershipByWsId = new Map(createdMemberships.map((m) => [m.workspaceId, m]));

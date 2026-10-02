@@ -12,7 +12,6 @@ import { startGeoipRefresh } from '#/lib/geoip';
 import { serveApi, serveInternal } from '#/lib/listeners';
 import { stopPgBoss } from '#/lib/pg-boss';
 import { otel } from '#/lib/tracing';
-import { listenForAuthInvalidation } from '#/middlewares/guard/invalidation-listener';
 import { registerCacheInvalidation } from '#/middlewares/product-cache/cache-invalidation';
 import { baseApp as app } from '#/routes';
 import { timestamp } from '#/utils/console';
@@ -23,7 +22,7 @@ otel.verifyConnection();
 
 let server: import('@hono/node-server').ServerType | undefined;
 let internalListener: ReturnType<typeof serveInternal> | undefined;
-/** Stops what this process starts besides its listeners: the auth invalidation listener and the GeoIP refresh. */
+/** Stops what this process starts besides its listeners: the GeoIP refresh. */
 const stops: (() => unknown)[] = [];
 
 const startTunnel = appConfig.mode === 'tunnel' ? (await import('../scripts/start-tunnel')).startTunnel : () => null;
@@ -61,7 +60,6 @@ const main = async () => {
   }
 
   registerCacheInvalidation();
-  stops.push(listenForAuthInvalidation());
 
   // Per process, not a scheduled job: every replica keeps its own GeoIP copy current.
   stops.push(startGeoipRefresh());
@@ -69,54 +67,46 @@ const main = async () => {
   // Server-to-server routes (the CDC socket, the Yjs relay) listen apart from the public API.
   internalListener = serveInternal({ port: Number(env.INTERNAL_PORT) });
 
-  server = serveApi(
-    {
-      fetch: app.fetch,
-      port,
-    },
-    async () => {
-      // Single-VM: this API process also runs every enabled service in-process, through each subsystem's own start().
-      if (appConfig.singleVM) {
-        if (appConfig.services.cdc.enabled) {
-          console.warn(
-            `${timestamp()} [startup] singleVM + cdc: API holds the replication slot, deploy must be exclusive (no blue-green)`,
-          );
-          // The replication loop never resolves, so detach it and log failures to prevent unhandled rejections.
-          void (await import('cdc-worker')).runCdcWorker().catch((error) => {
-            console.error(`${timestamp()} [startup] in-process cdc worker crashed:`, error);
-          });
-        }
-        if (appConfig.services.yjs.enabled) await (await import('yjs-worker')).startYjsWorker();
-        (await import('#/modules/yjs/yjs-materializers')).warnWhenNoYjsMaterializer();
-        // Folded workers listen on their own ports (the LB routes each path to the host VM on that port); the API
-        // process keeps PORT for itself.
-        if (appConfig.services.mcp.enabled)
-          await (await import('#/modules/mcp/worker/mcp-worker-entry')).startMcpWorker({
-            port: appConfig.devPorts.mcp,
-          });
-        if (appConfig.services.oauth.enabled)
-          await (await import('#/modules/oauth-server/worker/oauth-worker-entry')).startOauthServer({
-            port: appConfig.devPorts.oauth,
-            inProcess: true,
-          });
-        // The folded jobs worker needs no port: this process's /health carries the jobs component.
-        if (appConfig.services.jobs.enabled)
-          await (await import('#/lib/jobs-worker')).startJobsWorker({ inProcess: true });
+  server = serveApi({ fetch: app.fetch, port }, async () => {
+    // Single-VM: this API process also runs every enabled service in-process, through each subsystem's own start().
+    if (appConfig.singleVM) {
+      if (appConfig.services.cdc.enabled) {
+        console.warn(`${timestamp()} [startup] singleVM + cdc: API holds the replication slot, deploy must be exclusive (no blue-green)`);
+        // The replication loop never resolves, so detach it and log failures to prevent unhandled rejections.
+        void (await import('cdc-worker')).runCdcWorker().catch((error) => {
+          console.error(`${timestamp()} [startup] in-process cdc worker crashed:`, error);
+        });
       }
+      if (appConfig.services.yjs.enabled) await (await import('yjs-worker')).startYjsWorker();
+      (await import('#/modules/yjs/yjs-materializers')).warnWhenNoYjsMaterializer();
+      // Folded workers listen on their own ports (the LB routes each path to the host VM on that port); the API
+      // process keeps PORT for itself.
+      if (appConfig.services.mcp.enabled)
+        await (await import('#/modules/mcp/worker/mcp-worker-entry')).startMcpWorker({
+          port: appConfig.devPorts.mcp,
+          inProcess: true,
+        });
+      if (appConfig.services.oauth.enabled)
+        await (await import('#/modules/oauth-server/worker/oauth-worker-entry')).startOauthServer({
+          port: appConfig.devPorts.oauth,
+          inProcess: true,
+        });
+      // The folded jobs worker needs no port: this process's /health carries the jobs component.
+      if (appConfig.services.jobs.enabled) await (await import('#/lib/jobs-worker')).startJobsWorker({ inProcess: true });
+    }
 
-      const tunnelUrl = await startTunnel();
+    const tunnelUrl = await startTunnel();
 
-      renderAscii();
-      console.info(' ');
+    renderAscii();
+    console.info(' ');
 
-      console.info(`${pc.bold(pc.greenBright(appConfig.name))} 
+    console.info(`${pc.bold(pc.greenBright(appConfig.name))} 
 Frontend: ${pc.bold(pc.cyanBright(appConfig.frontendUrl))} 
 Backend: ${pc.bold(pc.cyanBright(appConfig.backendUrl))} 
 Tunnel: ${pc.bold(pc.magentaBright(tunnelUrl || '-'))}`);
 
-      console.info(' ');
-    },
-  );
+    console.info(' ');
+  });
 };
 
 setupGracefulShutdown({

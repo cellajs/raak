@@ -28,11 +28,7 @@ export async function getProjectsOp(ctx: UserContext, input: GetProjectsInput) {
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');
 
-  const { items: projectResults, total } = await findProjectsPaginated(ctx, {
-    userId: targetUserId,
-    ...queryParams,
-    includeCounts,
-  });
+  const { items: projectResults, total } = await findProjectsPaginated(ctx, { userId: targetUserId, ...queryParams, includeCounts });
 
   // Build response with included wrapper for optional data
   const items = coalesceAuditUsers(projectResults).map((row) => {

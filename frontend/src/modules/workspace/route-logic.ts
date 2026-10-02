@@ -46,9 +46,7 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
   await cacheRestored;
   const projectsQueryOptions = projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' });
   const projectsPrefetch = queryClient.prefetchInfiniteQuery(projectsQueryOptions);
-  queryClient.prefetchInfiniteQuery(
-    projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }),
-  );
+  queryClient.prefetchInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts', excludeArchived: 'true' }));
 
   const prefetchPerProjectQueries = () => {
     const cachedProjects = queryClient.getQueryData(projectsQueryOptions.queryKey);
@@ -57,9 +55,7 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
     const isMobile = window.innerWidth < 640;
 
     // On mobile, only prefetch the active project (from URL or first) to reduce payload
-    const projectsToPrefetch = isMobile
-      ? [allProjects.find((p) => p.slug === search.projectSlug) ?? allProjects[0]].filter(Boolean)
-      : allProjects;
+    const projectsToPrefetch = isMobile ? [allProjects.find((p) => p.slug === search.projectSlug) ?? allProjects[0]].filter(Boolean) : allProjects;
 
     for (const project of projectsToPrefetch) {
       queryClient.prefetchQuery(tasksCanonicalOptions({ organizationId, tenantId, projectId: project.id }));

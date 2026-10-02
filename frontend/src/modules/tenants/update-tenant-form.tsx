@@ -8,11 +8,12 @@ import { useBeforeUnload } from '~/hooks/use-before-unload';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useTenantUpdateMutation } from '~/modules/tenants/query';
-import { Button, SubmitButton } from '~/modules/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
+import { Button } from '~/modules/ui/button';
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/modules/ui/select';
 
 const formSchema = zUpdateTenantBody.pick({ name: true, status: true });
@@ -31,13 +32,7 @@ export function UpdateTenantForm({ tenant, callback, sheet: isSheet }: Props) {
   const { t } = useTranslation();
   const { mutate, isPending } = useTenantUpdateMutation();
 
-  const formOptions: UseFormProps<FormValues> = {
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: tenant.name,
-      status: tenant.status,
-    },
-  };
+  const formOptions: UseFormProps<FormValues> = { resolver: zodResolver(formSchema), defaultValues: { name: tenant.name, status: tenant.status } };
 
   const formContainerId = 'update-tenant';
   const form = useFormWithDraft<FormValues>(`${formContainerId}-${tenant.id}`, { formOptions, formContainerId });
@@ -60,7 +55,7 @@ export function UpdateTenantForm({ tenant, callback, sheet: isSheet }: Props) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
         <FormField
           control={form.control}
@@ -68,20 +63,22 @@ export function UpdateTenantForm({ tenant, callback, sheet: isSheet }: Props) {
           render={({ field }) => (
             <FormItem name="status">
               <FormLabel>{t('c:status')}</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {t(`c:${status}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                items={statusOptions.map((status) => ({ value: status, label: t(`c:${status}`) }))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {t(`c:${status}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -90,12 +87,7 @@ export function UpdateTenantForm({ tenant, callback, sheet: isSheet }: Props) {
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:save_changes')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            onClick={() => form.reset()}
-            className={form.isDirty ? '' : 'invisible'}
-          >
+          <Button type="reset" variant="secondary" onClick={() => form.reset()} className={form.isDirty ? '' : 'invisible'}>
             {t('c:cancel')}
           </Button>
         </div>

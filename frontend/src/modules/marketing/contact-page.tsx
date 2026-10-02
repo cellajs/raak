@@ -15,29 +15,13 @@ interface ContactMethod {
 }
 
 const methods: ContactMethod[] = [
-  {
-    icon: MapPinIcon,
-    title: 'c:visit',
-    link: appConfig.company.googleMapsUrl,
-    text: appConfig.company.streetAddress,
-  },
+  { icon: MapPinIcon, title: 'c:visit', link: appConfig.company.googleMapsUrl, text: appConfig.company.streetAddress },
   { icon: MailIcon, title: 'c:email', link: `mailto:${appConfig.company.email}`, text: appConfig.company.email },
 ];
 
 if (appConfig.company.scheduleCallUrl)
-  methods.push({
-    icon: CalendarCheckIcon,
-    title: 'c:book',
-    link: appConfig.company.scheduleCallUrl,
-    text: 'c:schedule_call.text',
-  });
-if (appConfig.company.tel)
-  methods.push({
-    icon: PhoneCallIcon,
-    title: 'c:call',
-    link: `tel:${appConfig.company.tel}`,
-    text: appConfig.company.tel,
-  });
+  methods.push({ icon: CalendarCheckIcon, title: 'c:book', link: appConfig.company.scheduleCallUrl, text: 'c:schedule_call.text' });
+if (appConfig.company.tel) methods.push({ icon: PhoneCallIcon, title: 'c:call', link: `tel:${appConfig.company.tel}`, text: appConfig.company.tel });
 
 export function ContactPage() {
   const { t } = useTranslation();
@@ -45,17 +29,15 @@ export function ContactPage() {
   return (
     <MarketingLayout title="c:contact_us">
       <div className="container pt-20 pb-16">
-        <h1 className="mb-4 text-center font-semibold text-3xl sm:text-left md:text-4xl">
-          {t('c:leave_message.text')}
-        </h1>
+        <h1 className="mb-4 text-center font-semibold text-3xl sm:text-left md:text-4xl">{t('c:leave_message.text')}</h1>
         <p className="mb-8 text-center text-muted-foreground sm:text-left sm:text-lg">{t('c:contact_us.text')}</p>
         <ContactForm />
       </div>
       <div className="container mb-12">
         <div className="flex flex-wrap justify-evenly gap-2">
           {methods.map((method) => (
-            <div key={t(method.title)} className="mb-10 h-48 w-40 text-center sm:w-48">
-              <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-accent/50 text-primary sm:h-32 sm:w-32">
+            <div key={method.title} className="mb-10 h-48 w-40 text-center sm:w-48">
+              <div className="mx-auto mb-5 flex size-24 items-center justify-center rounded-full bg-accent/50 text-primary sm:size-32">
                 <method.icon className="size-12" strokeWidth={1} />
               </div>
               <div className="text-center">

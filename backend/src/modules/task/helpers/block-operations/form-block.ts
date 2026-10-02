@@ -35,11 +35,7 @@ export const formFileBlocks = async (attachments: (typeof attachmentsTable.$infe
   return result.flat() as Block[];
 };
 
-const typeMap: Record<string, 'audio' | 'image' | 'video' | 'file'> = {
-  audio: 'audio',
-  image: 'image',
-  video: 'video',
-};
+const typeMap: Record<string, 'audio' | 'image' | 'video' | 'file'> = { audio: 'audio', image: 'image', video: 'video' };
 
 const formFileBlock = (id: string, type: 'file' | 'image' | 'video' | 'audio', name: string, url: string) => ({
   id,
@@ -52,10 +48,7 @@ const formFileBlock = (id: string, type: 'file' | 'image' | 'video' | 'audio', n
     attachmentId: id,
     caption: '',
     ...(type !== 'file' && { showPreview: true }),
-    ...((type === 'video' || type === 'image') && {
-      textAlignment: 'left',
-      previewWidth: 512,
-    }),
+    ...((type === 'video' || type === 'image') && { textAlignment: 'left', previewWidth: 512 }),
   },
   children: [],
 });

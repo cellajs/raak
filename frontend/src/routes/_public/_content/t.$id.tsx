@@ -60,9 +60,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
 
       if (hasOrgAccess) {
         const projectMembership = memberships?.find((m) => m.projectId === projectId && m.workspaceId);
-        const workspace = projectMembership?.workspaceId
-          ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId)
-          : undefined;
+        const workspace = projectMembership?.workspaceId ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId) : undefined;
 
         if (workspace) {
           // Redirect to workspace board filtered to this project, with task sheet open
@@ -110,11 +108,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
     }
 
     // Not authenticated + private project, redirect to sign-in with return URL.
-    throw redirect({
-      to: '/auth/authenticate',
-      search: { fromRoot: true, redirect: `/t/${id}` },
-      replace: true,
-    });
+    throw redirect({ to: '/auth/authenticate', search: { fromRoot: true, redirect: `/t/${id}` }, replace: true });
   },
   // This component should never render because beforeLoad always throws a redirect,
   // but we need it for the route to be valid

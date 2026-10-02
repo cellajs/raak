@@ -33,13 +33,7 @@ export function TableEllipsis<T extends { id: string }>({ row, tabIndex, options
           {label}
         </DropdownActionItem>
       )),
-      {
-        id: 'row-dropdown',
-        triggerId: `ellipsis-${row.id}`,
-        triggerRef,
-        align: 'end',
-        kind: 'menu',
-      },
+      { id: 'row-dropdown', triggerId: `ellipsis-${row.id}`, triggerRef, align: 'end', kind: 'menu' },
     );
   };
 

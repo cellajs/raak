@@ -55,10 +55,7 @@ export const getMembershipIndex = <T extends AccessMembership>(memberships: T[])
 };
 
 /** Indexes one entity type's policies by channel type and role. */
-export const buildPolicyIndex = (
-  policies: PolicyMatrix,
-  entityType: ChannelEntityType | ProductEntityType,
-): PolicyIndex => {
+export const buildPolicyIndex = (policies: PolicyMatrix, entityType: ChannelEntityType | ProductEntityType): PolicyIndex => {
   const index: PolicyIndex = new Map();
   const entityPolicies = policies[entityType] ?? [];
   for (const p of entityPolicies) {
@@ -81,10 +78,7 @@ const getOrBuildPolicyIndex = (
 };
 
 /** Resolves a channel subject's own ID before consulting its ancestor IDs. */
-export const getSubjectChannelId = (
-  subject: SubjectForPermission,
-  channelType: ChannelEntityType,
-): string | null | undefined => {
+export const getSubjectChannelId = (subject: SubjectForPermission, channelType: ChannelEntityType): string | null | undefined => {
   if (subject.entityType === channelType && subject.id) {
     return subject.id;
   }
@@ -108,9 +102,7 @@ export const checkWithIndices = <T extends AccessMembership>(
   if (primaryChannel === undefined) throw new Error('checkSubject: orderedChannels must not be empty');
 
   const primaryChannelId = getSubjectChannelId(subject, primaryChannel);
-  const primaryMemberships = primaryChannelId
-    ? (membershipIndex.get(`${primaryChannel}:${primaryChannelId}`) ?? [])
-    : [];
+  const primaryMemberships = primaryChannelId ? (membershipIndex.get(`${primaryChannel}:${primaryChannelId}`) ?? []) : [];
   const resolvedMembership = primaryMemberships[0] ?? null;
 
   if (isSystemAdmin) {
@@ -142,15 +134,12 @@ export const checkWithIndices = <T extends AccessMembership>(
   // Non-elevated grants apply only at the row's home channel; channel subjects keep ancestor
   // elevation. Elevation is per (channelType, role): `${channelType}:${role}` ∈ elevatedGrants.
   const isProductSubject = (subject.entityType as string) !== primaryChannel;
-  const homeChannel =
-    elevatedGrants && isProductSubject ? orderedChannels.find((ct) => getSubjectChannelId(subject, ct)) : undefined;
+  const homeChannel = elevatedGrants && isProductSubject ? orderedChannels.find((ct) => getSubjectChannelId(subject, ct)) : undefined;
 
   for (const channelType of orderedChannels) {
     const channelRoles = getRoles(channelType);
     if (channelRoles.length === 0) {
-      throw new Error(
-        `[Permission] Channel "${channelType}" has no roles defined but is in hierarchy for ${subject.entityType}`,
-      );
+      throw new Error(`[Permission] Channel "${channelType}" has no roles defined but is in hierarchy for ${subject.entityType}`);
     }
 
     const subjectChannelId = getSubjectChannelId(subject, channelType);
@@ -165,12 +154,8 @@ export const checkWithIndices = <T extends AccessMembership>(
       // Missing policy rows deny by default, like omitted actions.
       if (!permissions) continue;
 
-      if (
-        elevatedGrants &&
-        isProductSubject &&
-        !elevatedGrants.has(`${channelType}:${m.role}`) &&
-        channelType !== homeChannel
-      ) {
+      const outsideElevation = elevatedGrants && isProductSubject && !elevatedGrants.has(`${channelType}:${m.role}`) && channelType !== homeChannel;
+      if (outsideElevation) {
         continue;
       }
 
@@ -179,12 +164,7 @@ export const checkWithIndices = <T extends AccessMembership>(
 
         if (policyValue === 1) {
           actions[action].allowed = true;
-          actions[action].grantedBy.push({
-            type: 'membership',
-            channelType,
-            channelId: subjectChannelId,
-            role: m.role,
-          });
+          actions[action].grantedBy.push({ type: 'membership', channelType, channelId: subjectChannelId, role: m.role });
           continue;
         }
 
@@ -263,9 +243,7 @@ export function getAllDecisions<T extends AccessMembership>(
     if (!orderedChannels) {
       const ancestors = resolvedHierarchy.getOrderedAncestors(entityType) as ChannelEntityType[];
       // isChannel returns boolean, so TypeScript cannot narrow entityType.
-      orderedChannels = (
-        resolvedHierarchy.isChannel(entityType) ? [entityType, ...ancestors] : [...ancestors]
-      ) as ChannelEntityType[];
+      orderedChannels = (resolvedHierarchy.isChannel(entityType) ? [entityType, ...ancestors] : [...ancestors]) as ChannelEntityType[];
       channelCache.set(entityType, orderedChannels);
     }
     return orderedChannels;

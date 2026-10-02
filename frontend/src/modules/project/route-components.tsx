@@ -15,13 +15,7 @@ export function ProjectRouteComponent() {
   const { view } = projectApi.useSearch();
   return (
     <Suspense fallback={<Spinner className="mt-[45vh] h-10 w-10" />}>
-      <ProjectPage
-        key={project.slug}
-        projectId={project.id}
-        organizationId={project.organizationId}
-        organization={organization}
-        tenantId={tenantId}
-      >
+      <ProjectPage key={project.slug} projectId={project.id} organizationId={project.organizationId} organization={organization} tenantId={tenantId}>
         {view === 'table' ? (
           <Suspense>
             <TasksTable projects={[project]} organization={organization} tenantId={tenantId} />

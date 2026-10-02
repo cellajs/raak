@@ -9,6 +9,7 @@ import { AlertBanner } from '~/modules/common/alerter/alert-banner';
 import type { IconComponent } from '~/modules/common/icons/types';
 import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import type { UserMenuItem } from '~/modules/me/types';
+import { collapseMotion } from '~/modules/navigation/menu-sheet/helpers/collapse-motion';
 import { collectChannelIds } from '~/modules/navigation/menu-sheet/helpers/collect-channel-ids';
 import { MenuSheetItemsEdit } from '~/modules/navigation/menu-sheet/items-edit-list';
 import { MenuSheetItems } from '~/modules/navigation/menu-sheet/items-list';
@@ -32,13 +33,13 @@ export function MenuSheetSection({ data, options }: MenuSheetSectionProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm', false);
   const { toggleSection, setNavSheetOpen } = navigationStore.getState();
-  const activeSections = useNavigationStore((state) => state.activeSections);
 
   const [isEditing, setIsEditing] = useState(false);
 
+  // Own entries only: toggling one section re-renders that section alone
   const archivedSectionType = `${options.entityType}-archived`;
-  const isArchivedVisible = activeSections?.[archivedSectionType] ?? true;
-  const isSectionVisible = activeSections?.[options.entityType] ?? true;
+  const isArchivedVisible = useNavigationStore((state) => state.activeSections?.[archivedSectionType] ?? true);
+  const isSectionVisible = useNavigationStore((state) => state.activeSections?.[options.entityType] ?? true);
   const archivedItems = data.filter((i) => i.membership?.archived);
   const archivedCount = archivedItems.length;
   const activeChannelIds = collectChannelIds(data, { archived: false });
@@ -57,9 +58,10 @@ export function MenuSheetSection({ data, options }: MenuSheetSectionProps) {
   };
 
   const archiveToggleClick = () => toggleSection(archivedSectionType);
+  const collapse = collapseMotion(isMobile);
 
   return (
-    <div className="group/menuSection px-3" data-visible={isSectionVisible}>
+    <div className="group/menu-section px-3" data-visible={isSectionVisible}>
       <MenuSectionButton
         data={data}
         channelIds={activeChannelIds}
@@ -73,14 +75,9 @@ export function MenuSheetSection({ data, options }: MenuSheetSectionProps) {
         {isEditing && (
           <motion.div
             key="alert"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{
-              height: { duration: 0.3 },
-              opacity: { delay: 0.3, duration: 0.2 },
-            }}
-            style={{ overflow: 'hidden' }}
+            {...collapse}
+            transition={{ height: { duration: 0.3 }, opacity: { delay: 0.3, duration: 0.2 } }}
+            className="overflow-hidden"
           >
             <AlertBanner id="menu_management" variant="plain" icon={InfoIcon} animate>
               {t('c:configure_menu.text')}
@@ -90,26 +87,14 @@ export function MenuSheetSection({ data, options }: MenuSheetSectionProps) {
       </AnimatePresence>
       <AnimatePresence initial={false}>
         {isSectionVisible && (
-          <motion.ul
-            key={options.entityType}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            style={{ overflow: 'hidden' }}
-          >
+          <motion.ul key={options.entityType} {...collapse} transition={{ duration: 0.2, ease: 'easeInOut' }} className="overflow-hidden">
             {isEditing ? (
               <MenuSheetItemsEdit data={data} isArchived={false} options={options} />
             ) : (
               <MenuSheetItems type={options.entityType} data={data} isArchived={false} options={options} />
             )}
             {!!data.length && (
-              <div
-                className="group/archived"
-                data-has-archived={!!archivedCount}
-                data-submenu={false}
-                data-archived-visible={isArchivedVisible}
-              >
+              <div className="group/archived" data-has-archived={!!archivedCount} data-submenu={false} data-archived-visible={isArchivedVisible}>
                 {(!!archivedCount || isEditing) && (
                   <SectionArchiveButton
                     archiveToggleClick={archiveToggleClick}
@@ -121,11 +106,9 @@ export function MenuSheetSection({ data, options }: MenuSheetSectionProps) {
                   {isArchivedVisible && (
                     <motion.ul
                       key={`${options.entityType}-archived`}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
+                      {...collapse}
                       transition={{ duration: 0.2, ease: 'easeInOut' }}
-                      style={{ overflow: 'hidden' }}
+                      className="overflow-hidden"
                     >
                       {isEditing ? (
                         <MenuSheetItemsEdit data={data} isArchived={true} options={options} />

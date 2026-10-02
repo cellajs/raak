@@ -1,6 +1,5 @@
+import { config } from 'shared/config/config.default';
 import { describe, expect, it } from 'vitest';
-import { appConfig } from '../../../../../shared';
-import { config } from '../../../../../shared/config/config.default';
 import { parseOpenApiSpec } from '../parse-spec';
 import type { OpenApiSpec, OpenApiTag } from '../types';
 
@@ -11,11 +10,7 @@ const MODULE_TAG = `${ENTITY_TYPE}s`; // e.g. 'users'
 // Hand-owned fixtures isolate parser transformations from ordinary API contract churn.
 describe('parseOpenApiSpec', () => {
   it('handles minimal spec', () => {
-    const minimalSpec: OpenApiSpec = {
-      openapi: '3.1.0',
-      info: { title: 'Minimal API', version: '1.0.0' },
-      paths: {},
-    };
+    const minimalSpec: OpenApiSpec = { openapi: '3.1.0', info: { title: 'Minimal API', version: '1.0.0' }, paths: {} };
 
     const result = parseOpenApiSpec(minimalSpec);
 
@@ -55,10 +50,7 @@ describe('parseOpenApiSpec', () => {
           },
           AuditRecord: {
             type: 'object',
-            properties: {
-              createdBy: { $ref: '#/components/schemas/NullableUserMinimal' },
-              source: { $ref: '#/components/schemas/StringOrNumber' },
-            },
+            properties: { createdBy: { $ref: '#/components/schemas/NullableUserMinimal' }, source: { $ref: '#/components/schemas/StringOrNumber' } },
             required: ['createdBy'],
           },
         },
@@ -77,10 +69,7 @@ describe('parseOpenApiSpec', () => {
     expect(schemas.NullableUserMinimal.schema.oneOf?.[1]).toMatchObject({
       type: 'object',
       ref: '#/components/schemas/UserMinimal',
-      properties: {
-        id: { type: 'string', required: true },
-        name: { type: 'string', required: true },
-      },
+      properties: { id: { type: 'string', required: true }, name: { type: 'string', required: true } },
     });
     expect(schemas.AuditRecord.schema.properties?.source).toMatchObject({
       required: false,
@@ -137,6 +126,36 @@ describe('parseOpenApiSpec', () => {
     });
   });
 
+  it('lifts scalar facets of array items onto the array and leaves items without a required flag', () => {
+    const spec: OpenApiSpec = {
+      openapi: '3.1.0',
+      info: { title: 'Arrays', version: '1.0.0' },
+      tags: [{ name: 'data', kind: 'schema', 'x-default': true }] as OpenApiTag[],
+      paths: {},
+      components: {
+        schemas: {
+          Row: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+          Ids: { type: 'array', items: { type: 'string', format: 'uuid', maxLength: 36 }, minItems: 1 },
+          Rows: { type: 'array', items: { $ref: '#/components/schemas/Row' } },
+        },
+      },
+    };
+
+    const schemas = Object.fromEntries(parseOpenApiSpec(spec).schemas.map((schema) => [schema.name, schema]));
+
+    expect(schemas.Ids.schema).toEqual({ type: 'array', minItems: 1, itemType: 'string', format: 'uuid', maxLength: 36 });
+    expect(schemas.Rows.schema).toEqual({
+      type: 'array',
+      itemType: 'object',
+      ref: '#/components/schemas/Row',
+      items: {
+        type: 'object',
+        ref: '#/components/schemas/Row',
+        properties: { id: { type: 'string', required: true } },
+      },
+    });
+  });
+
   it('drops hidden-tagged operations from the docs while counting the documented/hidden split', () => {
     const spec: OpenApiSpec = {
       openapi: '3.1.0',
@@ -179,9 +198,7 @@ describe('parseOpenApiSpec', () => {
             operationId: 'getUsers',
             summary: 'Get all users',
             tags: ['users'],
-            responses: {
-              '200': { description: 'Success' },
-            },
+            responses: { '200': { description: 'Success' } },
           },
         },
       },
@@ -190,19 +207,9 @@ describe('parseOpenApiSpec', () => {
     const result = parseOpenApiSpec(spec);
 
     expect(result.operations).toHaveLength(1);
-    expect(result.operations[0]).toMatchObject({
-      id: 'getUsers',
-      method: 'get',
-      path: '/users',
-      tags: ['users'],
-      summary: 'Get all users',
-    });
+    expect(result.operations[0]).toMatchObject({ id: 'getUsers', method: 'get', path: '/users', tags: ['users'], summary: 'Get all users' });
     expect(result.tags).toHaveLength(1);
-    expect(result.tags[0]).toMatchObject({
-      name: 'users',
-      description: 'User operations',
-      count: 1,
-    });
+    expect(result.tags[0]).toMatchObject({ name: 'users', description: 'User operations', count: 1 });
   });
 });
 
@@ -277,19 +284,11 @@ describe('parseOpenApiSpec, golden fixture', () => {
 
   it('produces a deterministic operation hash and capability flags', () => {
     expect(getUsers?.hash).toBe(`tag/${MODULE_TAG}/GET/users`);
-    expect(getUsers).toMatchObject({
-      hasParams: true,
-      hasRequestBody: false,
-      hasResponseBody: true,
-      hasExample: true,
-      deprecated: false,
-    });
+    expect(getUsers).toMatchObject({ hasParams: true, hasRequestBody: false, hasResponseBody: true, hasExample: true, deprecated: false });
   });
 
   it('extracts x-extensions declared in info onto operations', () => {
-    expect(result.info.extensions).toEqual([
-      { key: 'x-guard', id: 'xGuard', description: 'Route guards', kind: 'middleware' },
-    ]);
+    expect(result.info.extensions).toEqual([{ key: 'x-guard', id: 'xGuard', description: 'Route guards', kind: 'middleware' }]);
     expect(getUsers?.extensions).toEqual({ xGuard: ['isAuthenticated'] });
   });
 
@@ -335,23 +334,23 @@ describe('parseOpenApiSpec, golden fixture', () => {
     expect(detail?.request?.query?.properties?.q).toEqual({ type: 'string', required: false });
   });
 
-  it('skips operations gated by a service disabled in this build', () => {
-    const disabled = Object.entries(appConfig.services).find(([, service]) => service.enabled === false)?.[0];
-    if (!disabled) return; // build has no disabled service; nothing to gate
-
+  it('keeps every switched operation and carries its switch, whatever the config the generator runs under', () => {
     const spec = {
       openapi: '3.1.0',
-      info: { title: 'Gated API', version: '1.0.0' },
+      info: { title: 'Switched API', version: '1.0.0' },
       paths: {
-        '/enabled': { get: { operationId: 'enabledOp', responses: { '200': { description: 'OK' } } } },
-        '/gated': {
-          get: { operationId: 'gatedOp', 'x-service': disabled, responses: { '200': { description: 'OK' } } },
+        '/plain': { get: { operationId: 'plainOp', responses: { '200': { description: 'OK' } } } },
+        '/service': { get: { operationId: 'serviceOp', 'x-enabled-by': { service: 'yjs' }, responses: { '200': { description: 'OK' } } } },
+        '/provider': {
+          get: { operationId: 'providerOp', 'x-enabled-by': { strategy: 'oauth', provider: 'google' }, responses: { '200': { description: 'OK' } } },
         },
       },
     } as OpenApiSpec;
 
-    const ids = parseOpenApiSpec(spec).operations.map((o) => o.id);
-    expect(ids).toContain('enabledOp');
-    expect(ids).not.toContain('gatedOp');
+    const byId = new Map(parseOpenApiSpec(spec).operations.map((o) => [o.id, o]));
+    expect([...byId.keys()]).toEqual(['plainOp', 'serviceOp', 'providerOp']);
+    expect(byId.get('plainOp')).not.toHaveProperty('enabledBy');
+    expect(byId.get('serviceOp')?.enabledBy).toEqual({ service: 'yjs' });
+    expect(byId.get('providerOp')?.enabledBy).toEqual({ strategy: 'oauth', provider: 'google' });
   });
 });

@@ -11,6 +11,5 @@ defineFrontendModule({
   name: 'projects',
   owner: 'app',
   scope: ['frontend'],
-  description:
-    'UI for managing projects, the primary collaborative contexts containing tasks, labels, and attachments.',
+  description: 'UI for managing projects, the primary collaborative contexts containing tasks, labels, and attachments.',
 });

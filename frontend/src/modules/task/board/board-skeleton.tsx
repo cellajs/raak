@@ -20,12 +20,7 @@ import { buildBoardExtraPanels, sortPanelsByOrder } from '~/modules/task/board/b
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { BoardSearch } from '~/modules/task/board-search';
-import {
-  formatSectionLabel,
-  normalizePanelWidths,
-  pickViewSections,
-  prepareBoardPanels,
-} from '~/modules/task/helpers/board-helpers';
+import { formatSectionLabel, normalizePanelWidths, pickViewSections, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
 import { statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
 import type { BoardResizablePanel } from '~/modules/task/types';
@@ -122,23 +117,13 @@ export function BoardSkeleton({
         );
       case 'labels':
         return (
-          <LocalPanelShell
-            panelId={panel.panelId}
-            icon={<TagIcon />}
-            title={t('c:label_other')}
-            windowScroll={projectPage}
-          >
+          <LocalPanelShell panelId={panel.panelId} icon={<TagIcon />} title={t('c:label_other')} windowScroll={projectPage}>
             <LocalPanelBodySkeleton />
           </LocalPanelShell>
         );
       case 'explainer':
         return (
-          <LocalPanelShell
-            panelId={panel.panelId}
-            icon={<InfoIcon />}
-            title={t('c:getting_started')}
-            windowScroll={projectPage}
-          >
+          <LocalPanelShell panelId={panel.panelId} icon={<InfoIcon />} title={t('c:getting_started')} windowScroll={projectPage}>
             <LocalPanelBodySkeleton />
           </LocalPanelShell>
         );
@@ -172,10 +157,8 @@ export function BoardSkeleton({
             <>
               <Button className="max-md:hidden" variant="plain">
                 <PlusIcon />
-                <span className="ml-1 max-md:hidden xl:hidden">{t('c:add')}</span>
-                <span className="ml-1 max-xl:hidden">
-                  {t('c:add_resource', { resource: t('c:project').toLowerCase() })}
-                </span>
+                <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
+                <span className="max-xl:hidden">{t('c:add_resource', { resource: t('c:project').toLowerCase() })}</span>
               </Button>
               <Button className="max-md:hidden" variant="outline">
                 <SettingsIcon />
@@ -190,7 +173,7 @@ export function BoardSkeleton({
               <div className="hidden grow sm:block" />
               <Button variant="plain" data-form-dirty={false} className="relative hidden rounded sm:inline-flex">
                 <PlusIcon className="size-4.5" />
-                <span className="ml-1">{t('c:task')}</span>
+                <span className="">{t('c:task')}</span>
               </Button>
               <Button variant="ghost" className="max-sm:hidden">
                 <EllipsisVerticalIcon />
@@ -214,10 +197,7 @@ export function BoardSkeleton({
             <div
               key={panelId}
               className="flex h-full flex-col"
-              style={{
-                minWidth: `${COLLAPSED_PANEL_MIN_WIDTH}px`,
-                ...(width ? { width: `${width}px` } : {}),
-              }}
+              style={{ minWidth: `${COLLAPSED_PANEL_MIN_WIDTH}px`, ...(width ? { width: `${width}px` } : {}) }}
             >
               {renderColumn(panel)}
             </div>
@@ -234,37 +214,35 @@ function StickyMobilePanelHeader({ projectTabs }: { projectTabs: PageTab[] }) {
   return (
     <div className="z-80 block gap-1 border-b bg-background/75 text-center backdrop-blur-xs [scrollbar-width:none] max-sm:overflow-x-auto max-sm:border-t [&::-webkit-scrollbar]:hidden">
       <div className="inline-flex min-w-max gap-1 px-1 sm:flex sm:justify-center">
-        {projectTabs.map(
-          ({ id, path, label, search = {}, params = true, activeOptions = { exact: false, includeSearch: true } }) => (
-            <Link
-              key={id}
-              resetScroll={false}
-              className="focus-effect group relative rounded-sm p-2 last:mr-4 max-sm:p-3 lg:px-4"
-              to={path}
-              draggable={false}
-              params={params}
-              search={search}
-              activeOptions={activeOptions}
-              activeProps={{ 'data-active': true }}
-            >
-              {({ isActive }) => {
-                return (
-                  <>
-                    <span className="block group-active:translate-y-[.05rem]">{label}</span>
-                    {isActive && (
-                      <motion.span
-                        initial={false}
-                        layoutId={layoutId}
-                        transition={{ type: 'spring', duration: 0.4, bounce: 0, delay: 0.1 }}
-                        className="absolute bottom-0 left-2 h-1 w-[calc(100%-1rem)] rounded-sm bg-primary"
-                      />
-                    )}
-                  </>
-                );
-              }}
-            </Link>
-          ),
-        )}
+        {projectTabs.map(({ id, path, label, search = {}, params = true, activeOptions = { exact: false, includeSearch: true } }) => (
+          <Link
+            key={id}
+            resetScroll={false}
+            className="focus-effect group relative rounded-sm p-2 last:mr-4 max-sm:p-3 lg:px-4"
+            to={path}
+            draggable={false}
+            params={params}
+            search={search}
+            activeOptions={activeOptions}
+            activeProps={{ 'data-active': true }}
+          >
+            {({ isActive }) => {
+              return (
+                <>
+                  <span className="group-active:press block">{label}</span>
+                  {isActive && (
+                    <motion.span
+                      initial={false}
+                      layoutId={layoutId}
+                      transition={{ type: 'spring', duration: 0.4, bounce: 0, delay: 0.1 }}
+                      className="absolute bottom-0 left-2 h-1 w-[calc(100%-1rem)] rounded-sm bg-primary"
+                    />
+                  )}
+                </>
+              );
+            }}
+          </Link>
+        ))}
       </div>
     </div>
   );
@@ -332,13 +310,7 @@ function PanelHeaderSkeleton({
             )}
           >
             {!projectPage && isPrimary && (
-              <EntityAvatar
-                className="h-8 w-8"
-                id={project.id}
-                type="project"
-                name={project.name}
-                url={project.thumbnailUrl}
-              />
+              <EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />
             )}
             {(projectPage || !isPrimary) && sectionFilters && (
               <div className={cn('flex justify-center', (projectPage || !isPrimary) && 'min-w-8')}>
@@ -367,7 +339,7 @@ function PanelHeaderSkeleton({
             <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
               <PlusIcon className="size-4.5 transition-transform duration-200" />
 
-              <span className="ml-1">{t('c:task')}</span>
+              <span className="">{t('c:task')}</span>
             </Button>
           </>
         )

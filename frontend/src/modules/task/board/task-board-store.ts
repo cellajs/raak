@@ -21,20 +21,13 @@ interface TaskBoardState {
 
   setPanelSections: (boardId: string, projectId: string, sections: SectionsValue[]) => void;
   dropPanelSections: (boardId: string, projectId: string) => void;
-  togglePanelSectionExpandState: (
-    boardId: string,
-    projectId: string,
-    status: TogglableStatusType,
-    newState?: boolean,
-  ) => void;
+  togglePanelSectionExpandState: (boardId: string, projectId: string, status: TogglableStatusType, newState?: boolean) => void;
 
   reset: () => void; // Resets in-memory state to initial (call on sign-out)
 }
 
 // Default state values
-const initStore: Pick<TaskBoardState, 'panelData'> = {
-  panelData: {},
-};
+const initStore: Pick<TaskBoardState, 'panelData'> = { panelData: {} };
 
 const ensureBoard = (state: TaskBoardState, boardId: string) => {
   if (!state.panelData[boardId]) state.panelData[boardId] = {};
@@ -92,12 +85,7 @@ export const useTaskBoardStore = create<TaskBoardState>()(
 
         reset: () => set(initStore),
       })),
-      {
-        version: 1,
-        name: 'task-board',
-        skipHydration: true,
-        storage: createJSONStorage(() => idbKvStorage('task-board')),
-      },
+      { version: 1, name: 'task-board', skipHydration: true, storage: createJSONStorage(() => idbKvStorage('task-board')) },
     ),
   ),
 );

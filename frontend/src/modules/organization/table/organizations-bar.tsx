@@ -2,17 +2,10 @@ import { MailboxIcon, PlusIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
-import { ColumnsView } from '~/modules/common/data-table/columns-view';
-import { Export } from '~/modules/common/data-table/export';
 import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
-import { TableBarContainer } from '~/modules/common/data-table/table-bar-container';
-import { TableCount } from '~/modules/common/data-table/table-count';
-import { FilterBarActions, FilterBarSearch, TableFilterBar } from '~/modules/common/data-table/table-filter-bar';
-import { TableSearch } from '~/modules/common/data-table/table-search';
+import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/table-bar-shell';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { FocusView } from '~/modules/common/focus-view';
-import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { type SheetTab, SheetTabs } from '~/modules/common/sheet-tabs';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
@@ -22,6 +15,7 @@ import type { EnrichedOrganization, OrganizationsRouteSearchParams } from '~/mod
 import { CreateNewsletterForm } from '~/modules/system/create-newsletter-form';
 import { NewsletterPreview } from '~/modules/system/newsletter-preview';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
+import { tw } from '~/utils/tw';
 
 type OrganizationsTableBarProps = BaseTableBarProps<EnrichedOrganization, OrganizationsRouteSearchParams>;
 
@@ -45,17 +39,7 @@ export function OrganizationsTableBar({
   const newsletterButtonRef = useRef(null);
 
   const { q, order, sort } = searchVars;
-
-  const isFiltered = !!q;
-  const onSearch = (searchString: string) => {
-    clearSelection();
-    setSearch({ q: searchString });
-  };
-
-  const onResetFilters = () => {
-    setSearch({ q: '' });
-    clearSelection();
-  };
+  const barFilters = useTableBarFilters({ searchVars, setSearch, clearSelection, reset: { q: '' } });
 
   const onCreateOrganization = () => {
     removeDialog('create-organization');
@@ -76,7 +60,7 @@ export function OrganizationsTableBar({
       id: 'create-newsletter',
       side: 'right',
       triggerRef: newsletterButtonRef,
-      className: 'max-w-full lg:max-w-4xl',
+      className: tw('max-w-full lg:max-w-4xl'),
       title: t('c:newsletter'),
       titleContent: <UnsavedBadge title={t('c:newsletter')} />,
       description: t('c:newsletter.text'),
@@ -88,57 +72,29 @@ export function OrganizationsTableBar({
     return fetchOrganizationsForExport({ limit, offset, q, sort, order });
   };
 
+  const openCreateDialog = () => {
+    createDialog(<CreateOrganizationForm callback={onCreateOrganization} />, {
+      id: 'create-organization',
+      triggerRef: createButtonRef,
+      className: 'md:max-w-2xl',
+      title: t('c:create_resource', { resource: t('c:organization').toLowerCase() }),
+      titleContent: <UnsavedBadge title={t('c:create_resource', { resource: t('c:organization').toLowerCase() })} />,
+    });
+  };
+
   return (
-    <TableBarContainer searchVars={searchVars}>
-      <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
-        <FilterBarActions>
-          {!isFiltered && (
-            <TableBarButton
-              label="c:create"
-              icon={PlusIcon}
-              onClick={() => {
-                createDialog(<CreateOrganizationForm callback={onCreateOrganization} />, {
-                  id: 'create-organization',
-                  triggerRef: createButtonRef,
-                  className: 'md:max-w-2xl',
-                  title: t('c:create_resource', { resource: t('c:organization').toLowerCase() }),
-                  titleContent: (
-                    <UnsavedBadge title={t('c:create_resource', { resource: t('c:organization').toLowerCase() })} />
-                  ),
-                });
-              }}
-            />
-          )}
-          <TableCount count={total} label="c:organization" isFiltered={isFiltered} onResetFilters={onResetFilters} />
-        </FilterBarActions>
-
-        <div className="sm:grow" />
-
-        <FilterBarSearch>
-          <TableSearch name="organizationSearch" value={q} setQuery={onSearch} />
-        </FilterBarSearch>
-      </TableFilterBar>
-
-      <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns} />
-
-      <Export
-        className="max-lg:hidden"
-        filename={`${appConfig.slug}-organizations`}
-        columns={columns}
-        selectedRows={selected}
-        fetchRows={fetchExport}
-      />
-
-      <FocusView iconOnly />
-
-      <SelectionActionBar count={selected.length} onClear={clearSelection}>
-        <TableBarButton
-          ref={newsletterButtonRef}
-          onClick={openNewsletterSheet}
-          label="c:newsletter"
-          icon={MailboxIcon}
-        />
-      </SelectionActionBar>
-    </TableBarContainer>
+    <TableBarShell
+      {...barFilters}
+      {...{ searchVars, total, columns, setColumns }}
+      label="c:organization"
+      searchName="organizationSearch"
+      actions={<TableBarButton ref={createButtonRef} label="c:create" icon={PlusIcon} onClick={openCreateDialog} />}
+      export={{ filename: `${appConfig.slug}-organizations`, selectedRows: selected, fetchRows: fetchExport }}
+      selection={{
+        count: selected.length,
+        onClear: clearSelection,
+        children: <TableBarButton ref={newsletterButtonRef} onClick={openNewsletterSheet} label="c:newsletter" icon={MailboxIcon} />,
+      }}
+    />
   );
 }

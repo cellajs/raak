@@ -43,10 +43,6 @@ export const statusOptions = [
  * (`statusOptions[value]`), which only works while the array order happens to match
  * the enum values and breaks silently on reorder.
  */
-const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> =>
-  Object.fromEntries(options.map((o) => [o.value, o]));
+const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> => Object.fromEntries(options.map((o) => [o.value, o]));
 
-export const statusOptionsByValue = byValue(statusOptions) as Record<
-  (typeof statusOptions)[number]['value'],
-  (typeof statusOptions)[number]
->;
+export const statusOptionsByValue = byValue(statusOptions) as Record<(typeof statusOptions)[number]['value'], (typeof statusOptions)[number]>;

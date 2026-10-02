@@ -46,9 +46,7 @@ interface DeleteWorkspacesByIdsOpts {
 export const deleteWorkspacesByIds = async (ctx: ActorContext, { ids }: DeleteWorkspacesByIdsOpts) => {
   const { db } = ctx.var;
   const { organizationId } = requestScope(ctx);
-  return db
-    .delete(workspacesTable)
-    .where(and(inArray(workspacesTable.id, ids), eq(workspacesTable.organizationId, organizationId)));
+  return db.delete(workspacesTable).where(and(inArray(workspacesTable.id, ids), eq(workspacesTable.organizationId, organizationId)));
 };
 
 interface FindWorkspacesPaginatedOpts {
@@ -124,10 +122,7 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
   let query = db.select(selectShape).from(workspacesTable).innerJoin(membershipsTable, membershipOn).$dynamic();
 
   if (countData) {
-    query = query.leftJoin(
-      channelCountersTable,
-      sql`${workspacesTable.id}::text = ${channelCountersTable.channelKey}`,
-    ) as typeof query;
+    query = query.leftJoin(channelCountersTable, sql`${workspacesTable.id}::text = ${channelCountersTable.channelKey}`) as typeof query;
   }
 
   const itemsQuery = query

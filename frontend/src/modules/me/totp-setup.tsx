@@ -26,11 +26,7 @@ export function SetupTotp() {
     return () => clearTimeout(timer);
   }, [formVersion]);
 
-  const { mutate, isPending } = useMutation<
-    CreateTotpResponses[201],
-    ApiError | Error,
-    NonNullable<CreateTotpData['body']>
-  >({
+  const { mutate, isPending } = useMutation<CreateTotpResponses[201], ApiError | Error, NonNullable<CreateTotpData['body']>>({
     mutationFn: (body) => withStepUp(() => createTotp({ body })),
     onSuccess: () => {
       useDialoger.getState().remove('setup-totp');
@@ -59,11 +55,7 @@ export function SetupTotp() {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   // A new key once the QR code expired may come after the step-up window: the re-auth dialog opens, then it loads.
-  const { data } = useSuspenseQuery({
-    queryKey: ['totp', 'uri'],
-    queryFn: () => withStepUp(() => generateTotpKey()),
-    staleTime: 0,
-  });
+  const { data } = useSuspenseQuery({ queryKey: ['totp', 'uri'], queryFn: () => withStepUp(() => generateTotpKey()), staleTime: 0 });
 
   const openManualKey = () => {
     useDialoger.getState().create(<TotpManualKey manualKey={data.manualKey} />, {
@@ -76,17 +68,12 @@ export function SetupTotp() {
   };
 
   return (
-    <div className="group flex flex-col space-y-2">
+    <div className="group flex flex-col gap-2">
       <div className="flex items-center justify-center gap-2">
-        <CircleAlertIcon className="icon-sm shrink-0 text-amber-500" />
+        <CircleAlertIcon className="size-3.5 shrink-0 text-warning" />
         <div className="text-muted-foreground text-sm">
           <span>{t('c:totp_manual.footer_description')}</span>
-          <Button
-            ref={triggerRef}
-            variant="none"
-            className="inline h-auto cursor-pointer p-0 underline"
-            onClick={openManualKey}
-          >
+          <Button ref={triggerRef} variant="none" className="inline h-auto cursor-pointer p-0 underline" onClick={openManualKey}>
             {t('c:totp_manual.button_text')}
           </Button>
         </div>
@@ -97,7 +84,7 @@ export function SetupTotp() {
         <div className="flex flex-col items-center gap-3 py-2">
           <p className="text-muted-foreground text-sm">{t('c:totp_qr.expired')}</p>
           <Button variant="plain" onClick={regenerate}>
-            <RefreshCwIcon className="icon-sm" />
+            <RefreshCwIcon className="size-3.5" />
             {t('c:refresh')}
           </Button>
         </div>

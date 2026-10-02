@@ -9,15 +9,7 @@ export type PageDraggableItemData = DraggableItemData<UserMenuItem, 'menuItem'>;
 
 export type NavItemId = (typeof navItems)[number]['id'];
 
-export type TriggerNavItemOptions = {
-  skipAnimation?: boolean;
-};
-
-export type TriggerNavItemFn = (
-  id: NavItemId,
-  ref?: React.RefObject<HTMLButtonElement | null>,
-  options?: TriggerNavItemOptions,
-) => void | Promise<void>;
+export type TriggerNavItemFn = (id: NavItemId, ref?: React.RefObject<HTMLButtonElement | null>) => void | Promise<void>;
 
 export type NavItem = {
   id: NavItemId;
@@ -33,8 +25,4 @@ export type NavItem = {
   badgeSlot?: React.ComponentType<{ isActive: boolean; className?: string }>;
 };
 
-export type EntityRoute = {
-  to: LinkComponentProps['to'];
-  params: LinkComponentProps['params'];
-  search: LinkComponentProps['search'];
-};
+export type EntityRoute = { to: LinkComponentProps['to']; params: LinkComponentProps['params']; search: LinkComponentProps['search'] };

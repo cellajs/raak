@@ -1,9 +1,11 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ChevronDownIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { GenComponentSchema, GenOperationDetail, GenResponseSummary, GenSchema } from 'sdk/docs-types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~/modules/ui/accordion';
 import { Button } from '~/modules/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/modules/ui/collapsible';
+import { cn } from '~/utils/cn';
 import {
   type DefinitionIndex,
   getTypeCodeForResponse,
@@ -13,7 +15,6 @@ import {
 } from '../helpers/extract-types';
 import { getStatusColor } from '../helpers/get-status-color';
 import { schemasQueryOptions } from '../query';
-import type { GenComponentSchema, GenOperationDetail, GenResponseSummary, GenSchema } from '../types';
 import { ViewerGroup } from '../viewer-group';
 
 function resolveResponseSchema(response: GenResponseSummary, schemas: GenComponentSchema[]): GenSchema | undefined {
@@ -32,33 +33,50 @@ interface ResponsesAccordionProps {
   operationId: string;
   zodIndex: DefinitionIndex;
   typesIndex: DefinitionIndex;
+  /** Lists only responses that carry an example, with the first one open in example view. */
+  examplesOnly?: boolean;
 }
 
-function ResponsesAccordion({ responses, schemas, operationId, zodIndex, typesIndex }: ResponsesAccordionProps) {
+export function ResponsesAccordion({ responses: allResponses, schemas, operationId, zodIndex, typesIndex, examplesOnly }: ResponsesAccordionProps) {
   const { t } = useTranslation();
 
+  const responses = examplesOnly ? allResponses.filter((r) => r.example !== undefined) : allResponses;
+
   if (responses.length === 0) {
-    return <div className="py-2 text-muted-foreground text-sm">{t('c:docs.no_responses_defined')}</div>;
+    return (
+      <div className="py-2 text-muted-foreground text-sm">{examplesOnly ? t('c:docs.no_examples_defined') : t('c:docs.no_responses_defined')}</div>
+    );
   }
 
   return (
-    <Accordion className="w-full">
+    <Accordion className="w-full" defaultValue={examplesOnly ? [String(responses[0].status)] : undefined}>
       {responses.map((response) => {
         const schema = resolveResponseSchema(response, schemas);
         return (
           <AccordionItem key={response.status} value={String(response.status)}>
-            <AccordionTrigger className="group py-2 opacity-80 hover:opacity-100 group-data-open:opacity-100">
+            <AccordionTrigger className="group py-2 opacity-80 hover:opacity-100 group-data-open/accordion-header:opacity-100">
               <div className="flex w-full items-center justify-between gap-3 pr-2">
                 <div
-                  className={`rounded px-2 py-0.5 font-mono font-semibold text-sm decoration-transparent group-data-open:opacity-100 ${getStatusColor(response.status)}`}
+                  className={cn(
+                    'rounded px-2 py-0.5 font-mono font-semibold text-sm group-data-open/accordion-header:opacity-100',
+                    !examplesOnly && 'decoration-transparent',
+                    getStatusColor(response.status),
+                  )}
                 >
                   {response.status}
                 </div>
-                <div className="grow text-foreground text-sm group-data-open:text-primary">{response.description}</div>
+                <div
+                  className={cn(
+                    'grow text-sm',
+                    examplesOnly
+                      ? 'text-muted-foreground group-data-open/accordion-header:text-foreground'
+                      : 'text-foreground group-data-open/accordion-header:text-primary',
+                  )}
+                >
+                  {response.description}
+                </div>
                 {response.name && (
-                  <span className="truncate rounded bg-muted px-2 py-0.5 font-mono text-muted-foreground text-xs max-md:hidden">
-                    {response.name}
-                  </span>
+                  <span className="truncate rounded bg-muted px-2 py-0.5 font-mono text-muted-foreground text-xs max-md:hidden">{response.name}</span>
                 )}
               </div>
             </AccordionTrigger>
@@ -69,6 +87,7 @@ function ResponsesAccordion({ responses, schemas, operationId, zodIndex, typesIn
                   zodCode={getZodCodeForResponse(zodIndex, operationId, response.status, response.name)}
                   typeCode={getTypeCodeForResponse(typesIndex, operationId, response.status)}
                   example={response.example}
+                  defaultViewMode={examplesOnly ? 'example' : undefined}
                 />
               ) : (
                 <div className="p-3 text-muted-foreground text-sm">{t('c:docs.no_response_body')}</div>
@@ -87,6 +106,7 @@ interface OperationResponsesProps {
 
 export function OperationResponses({ detail }: OperationResponsesProps) {
   const { t } = useTranslation();
+  // Height keyframes run on the main thread and drop frames while the opening panel mounts the accordion
 
   const { data: schemas } = useSuspenseQuery(schemasQueryOptions);
   const { data: zodIndex } = useSuspenseQuery(zodIndexQueryOptions);
@@ -105,7 +125,7 @@ export function OperationResponses({ detail }: OperationResponsesProps) {
           </Button>
         }
       />
-      <CollapsibleContent className="overflow-hidden data-closed:animate-collapsible-up data-open:animate-collapsible-down">
+      <CollapsibleContent className={'overflow-hidden md:data-closed:animate-collapsible-up md:data-open:animate-collapsible-down'}>
         <div className="mt-2">
           <ResponsesAccordion
             responses={responses}

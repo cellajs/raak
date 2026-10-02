@@ -11,18 +11,11 @@ const meta = {
   title: 'ui/ButtonGroup',
   component: ButtonGroup,
   tags: ['autodocs'],
-  parameters: {
-    layout: 'centered',
-  },
+  parameters: { layout: 'centered' },
   argTypes: {
-    orientation: {
-      control: 'select',
-      options: ['horizontal', 'vertical'],
-    },
+    orientation: { control: 'select', options: ['horizontal', 'vertical'] },
   },
-  args: {
-    orientation: 'horizontal',
-  },
+  args: { orientation: 'horizontal' },
 } satisfies Meta<typeof ButtonGroup>;
 
 export default meta;
@@ -75,15 +68,15 @@ export const WithIcons: Story = {
   render: () => (
     <ButtonGroup>
       <Button variant="outline">
-        <SearchIcon className="mr-2 h-4 w-4" />
+        <SearchIcon className="size-4" />
         Search
       </Button>
       <Button variant="outline">
-        <DownloadIcon className="mr-2 h-4 w-4" />
+        <DownloadIcon className="size-4" />
         Download
       </Button>
       <Button variant="outline">
-        <UploadIcon className="mr-2 h-4 w-4" />
+        <UploadIcon className="size-4" />
         Upload
       </Button>
     </ButtonGroup>
@@ -132,7 +125,7 @@ export const WithSelect: Story = {
         </SelectContent>
       </Select>
       <Button variant="outline">
-        <PlusIcon className="h-4 w-4" />
+        <PlusIcon className="size-4" />
       </Button>
     </ButtonGroup>
   ),

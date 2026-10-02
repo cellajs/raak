@@ -18,7 +18,7 @@ actions that change how an account is protected first ask the session to prove i
 | Provider sign-in | An account at GitHub, Google or Microsoft, stored in `identities` by issuer and subject | `auth/oauth/` |
 | TOTP | A code from an authenticator app; a second factor only, never a first | `auth/totps/` |
 
-`appConfig.enabledAuthStrategies` says which methods are on. Every auth route declares its method with `x-strategy`, and a route of a method that is off answers 400 `forbidden_strategy` before any guard runs. The sign-in page starts by posting the address to `check-email`, which answers `recognized: true` only to a browser that has signed in to that account before (the signed `device-id` cookie plus a `devices` row); every other browser gets the neutral sign-in step, whether or not the address has an account.
+`appConfig.enabledAuthStrategies` says which methods are on. Every auth route names its method as its config switch, `xEnabledBy: { strategy: <method> }` (an OAuth provider's routes add `provider`), so a route of a method that is off answers 400 `forbidden_strategy` (`unsupported_oauth` for a provider) before its guards run; deleting a passkey or TOTP names no switch and stays reachable. The token link route serves every link type, so it checks the magic switch in the magic link's handler. The sign-in page starts by posting the address to `check-email`, which answers `recognized: true` only to a browser that has signed in to that account before (the signed `device-id` cookie plus a `devices` row); every other browser gets the neutral sign-in step, whether or not the address has an account.
 
 A magic-link or provider sign-in ends in `finishSignIn`: a session, or first an MFA challenge when the account requires one. A passkey sign-in sets the session at once. A system administrator signs in, and counts as one, only from an address in `SYSTEM_ADMIN_IP_ALLOWLIST`, which defaults to `none`.
 
@@ -30,9 +30,9 @@ An account is identified by the proofs it holds, never by an address; the identi
 
 ## Sessions
 
-The session cookie carries a random 40-character token; `sessions.secret` stores its SHA-256 hash, so reading the table yields no session. `resolveSession(ctx)` reads the session a request presents from its cookies alone, so any process on the app origin can call it. `readSession(token)` turns a token into its row, from a one-minute cache or the database. `findSession(ctx)` serves requests that may carry no session: a refusal reads as null, while a failed read stays the request's failure, so the database being away never reads as signed out. A session lives a week. A browser holds one live session per account, and an account at most `maxSessionsPerUser` (10) besides impersonations.
+The session cookie carries a random 40-character token; `sessions.secret` stores its SHA-256 hash, so reading the table yields no session. `resolveSession(ctx)` reads the session a request presents from its cookies alone, so any process on the app origin can call it. `readSession(token)` turns a token into its row, from a 10-second cache or the database. The process that revokes a session drops it at once, the API process drops a user's entries when CDC reports a change to the user, a membership or the system role, and any other process stops serving a revoked session within the 10 seconds. `findSession(ctx)` serves requests that may carry no session: a refusal reads as null, while a failed read stays the request's failure, so the database being away never reads as signed out. A session lives a week. A browser holds one live session per account, and an account at most `maxSessionsPerUser` (10) besides impersonations.
 
-Every ending before expiry goes through `endSessions`. It stamps the rows with `revokedAt`, `revokedBy` and a `revocationReason`, tells every process to drop its cached sessions (`auth_invalidate`), and closes the streams bound to them; the row stays for the sessions list.
+Every revocation before expiry goes through `revokeSessions`. It stamps the rows with `revokedAt`, `revokedBy` and a `revocationReason`, drops the user's cached sessions and closes the streams bound to them; the row stays for the sessions list.
 
 | Reason | When |
 | --- | --- |
@@ -48,7 +48,7 @@ A client learns of a lost session from four 401 types, `unauthorized`, `no_sessi
 
 **Devices.** A sign-in sets a 400-day `device-id` cookie and records its per-user hash in `devices`. `PII_HASH_SECRET` peppers the hash so a database leak cannot correlate browsers across accounts. A sign-in from a browser the account has not used before mails the owner, and `check-email` recognizes a browser by it.
 
-**Impersonation.** A system admin's impersonation is a session of its own (`type: 'impersonation'`, one hour) in its own cookie, layered on the admin's session cookie: it authenticates only while that admin session lives, the admin holds the system role and the request comes from an allowed address. The admin acts as the user, never on the account: stepping up, revoking the user's sessions and impersonating again are refused with 403 `impersonation_forbidden` (`noImpersonationGuard`).
+**Impersonation.** A system admin's impersonation is a session of its own (`type: 'impersonation'`, one hour) in its own cookie, layered on the admin's session cookie: it authenticates only while that admin session lives, the admin holds the system role and the request comes from an allowed address. The admin acts as the user, never on the account: stepping up and revoking the user's sessions are refused with 403 `impersonation_forbidden` by their handlers, and every system route, impersonating again included, by `sysAdminGuard`.
 
 ## Cookies
 

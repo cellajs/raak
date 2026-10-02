@@ -6,8 +6,7 @@ import { useUserStore } from '~/modules/user/user-store';
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 /** A zod node exposes its definition tag; anything else is not a schema this walker can read. */
-const isSchema = (value: unknown): value is z.ZodType =>
-  isRecord(value) && isRecord(value.def) && typeof value.def.type === 'string';
+const isSchema = (value: unknown): value is z.ZodType => isRecord(value) && isRecord(value.def) && typeof value.def.type === 'string';
 
 const asSchema = (value: unknown): z.ZodType | undefined => (isSchema(value) ? value : undefined);
 

@@ -9,19 +9,16 @@ import { z } from 'zod';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useAssignProjectMutation } from '~/modules/project/query';
 import { ProjectSuggestionCombobox } from '~/modules/project/suggestions-combobox';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
-const formSchema = z.object({
-  selectedProjects: z.array(zChannelBase).min(1),
-  organizationId: z.string(),
-  workspaceId: z.string(),
-});
+const formSchema = z.object({ selectedProjects: z.array(zChannelBase).min(1), organizationId: z.string(), workspaceId: z.string() });
 type FormValues = z.infer<typeof formSchema>;
 
 interface SelectProjectFormProps {
@@ -44,10 +41,7 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
   });
   const workspaces = flattenInfiniteData<Workspace>(workspacesData);
 
-  const options = useMemo(
-    () => workspaces.map(({ name: label, thumbnailUrl: url, id: value }) => ({ value, label, url })) || [],
-    [workspaces],
-  );
+  const options = useMemo(() => workspaces.map(({ name: label, thumbnailUrl: url, id: value }) => ({ value, label, url })) || [], [workspaces]);
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
@@ -111,29 +105,14 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
             </FormItem>
           )}
         />
-        <SelectParentFormField
-          parentType="workspace"
-          control={form.control}
-          label={t('c:workspace')}
-          options={options}
-          name="workspaceId"
-          disabled
-        />
+        <SelectParentFormField parentType="workspace" control={form.control} label={t('c:workspace')} options={options} name="workspaceId" disabled />
         <div className="flex flex-col gap-2 sm:flex-row">
           <SubmitButton disabled={selectedCount === 0} loading={isPending || pendingCount > 0}>
             {selectedCount > 0
-              ? t('c:add_resource', {
-                  resource: `${selectedCount} ${t('c:project', { count: selectedCount }).toLowerCase()}`,
-                })
+              ? t('c:add_resource', { resource: `${selectedCount} ${t('c:project', { count: selectedCount }).toLowerCase()}` })
               : t('c:select')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={selectedCount > 0 ? '' : 'invisible'}
-            aria-label="Cancel"
-            onClick={() => form.reset()}
-          >
+          <Button type="reset" variant="secondary" className={selectedCount > 0 ? '' : 'invisible'} aria-label="Cancel" onClick={() => form.reset()}>
             {t('c:cancel')}
           </Button>
         </div>

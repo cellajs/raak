@@ -47,10 +47,11 @@ export const totpVerificationLimiter = rateLimiter('failseries', 'totpVerificati
 
 /**
  * Keyed per account: a session guessing second factors is blocked whatever IP it uses; a proof that verifies clears
- * the series.
+ * the series. A wrong factor answers 401 (404 for one the user does not hold); the 403 refusing an impersonation
+ * guesses nothing and spends none of the user's attempts.
  */
 export const stepUpLimiter = rateLimiter('failseries', 'stepUp', ['userId'], {
-  limits: { points: 5, duration: 60 * 60, blockDuration: 60 * 30, successStatusCodes: [200, 201, 204] },
+  limits: { points: 5, duration: 60 * 60, blockDuration: 60 * 30, successStatusCodes: [200, 201, 204], failStatusCodes: [401, 404] },
   description: 'Blocks the account for 30 min after 5 failed second-factor checks on step-up',
 });
 
@@ -101,6 +102,12 @@ export const clientMetadataFetchLimiter = rateLimiter('limit', 'clientMetadataFe
 export const serviceBurstLimiter = rateLimiter('limit', 'serviceBurst', ['actorId'], {
   limits: { points: 30, duration: 1, blockDuration: 0 },
   description: 'Max 30 requests/second per service account',
+});
+
+/** Per-second ceiling for MCP endpoint requests, a bucket of its own: the route a tool call runs charges the burst. */
+export const mcpRequestLimiter = rateLimiter('limit', 'mcpRequest', ['actorId'], {
+  limits: { points: 30, duration: 1, blockDuration: 0 },
+  description: 'Max 30 MCP requests/second per account',
 });
 
 /** Backpressure for the read fan-out one SSE notification triggers; a 429 rides the client's invalidate-and-backoff. */

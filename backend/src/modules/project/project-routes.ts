@@ -1,12 +1,8 @@
 import { createXRoute } from '#/core/x-routes';
-import { crossTenantGuard, orgGuard, relatableGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { orgGuard, relatableGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
-import {
-  mockBatchProjectsResponse,
-  mockPaginatedProjectsResponse,
-  mockProjectResponse,
-} from '#/modules/project/project-mocks';
+import { mockBatchProjectsResponse, mockPaginatedProjectsResponse, mockProjectResponse } from '#/modules/project/project-mocks';
 import {
   projectCreateBodySchema,
   projectCreateResponseSchema,
@@ -38,8 +34,7 @@ const projectRoutes = {
     tags: ['projects', 'app', 'channel'],
     operationId: 'createProjects',
     summary: 'Create projects',
-    description:
-      'Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.',
+    description: 'Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.',
     request: {
       params: tenantOrgParamSchema,
       query: workspaceIdQuerySchema,
@@ -48,12 +43,7 @@ const projectRoutes = {
     responses: {
       201: {
         description: 'Projects created',
-        content: {
-          'application/json': {
-            schema: projectCreateResponseSchema,
-            example: mockBatchProjectsResponse(),
-          },
-        },
+        content: { 'application/json': { schema: projectCreateResponseSchema, example: mockBatchProjectsResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -64,7 +54,7 @@ const projectRoutes = {
   getProjects: createXRoute({
     method: 'get',
     path: '/projects',
-    xGuard: [userGuard, crossTenantGuard, relatableGuard],
+    xGuard: [userGuard, relatableGuard],
     tags: ['projects', 'app', 'channel'],
     operationId: 'getProjects',
     summary: 'Get list of projects',
@@ -79,12 +69,7 @@ const projectRoutes = {
     responses: {
       200: {
         description: 'Projects',
-        content: {
-          'application/json': {
-            schema: paginationSchema(projectSchema),
-            example: mockPaginatedProjectsResponse(),
-          },
-        },
+        content: { 'application/json': { schema: paginationSchema(projectSchema), example: mockPaginatedProjectsResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -100,10 +85,7 @@ const projectRoutes = {
     operationId: 'getProject',
     summary: 'Get project',
     description: 'Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.',
-    request: {
-      params: idInTenantOrgParamSchema,
-      query: slugIncludeQuerySchema,
-    },
+    request: { params: idInTenantOrgParamSchema, query: slugIncludeQuerySchema },
     responses: {
       200: {
         description: 'Project',
@@ -129,9 +111,7 @@ const projectRoutes = {
     responses: {
       200: {
         description: 'Project updated',
-        content: {
-          'application/json': { schema: projectSchema, example: mockProjectResponse() },
-        },
+        content: { 'application/json': { schema: projectSchema, example: mockProjectResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -144,21 +124,12 @@ const projectRoutes = {
     tags: ['projects', 'app', 'channel'],
     operationId: 'assignProjectWorkspace',
     summary: 'Assign project to workspace',
-    description:
-      "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
-    request: {
-      params: idInTenantOrgParamSchema,
-      query: workspaceIdQuerySchema,
-    },
+    description: "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
+    request: { params: idInTenantOrgParamSchema, query: workspaceIdQuerySchema },
     responses: {
       200: {
         description: 'Project assigned to the new workspace',
-        content: {
-          'application/json': {
-            schema: projectWithMembershipSchema,
-            example: mockProjectResponse(),
-          },
-        },
+        content: { 'application/json': { schema: projectWithMembershipSchema, example: mockProjectResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -171,20 +142,12 @@ const projectRoutes = {
     tags: ['projects', 'app', 'channel'],
     operationId: 'removeProjectWorkspace',
     summary: 'Remove project from workspace',
-    description:
-      "Removes the current user's project membership from its assigned workspace without leaving the project.",
-    request: {
-      params: idInTenantOrgParamSchema,
-    },
+    description: "Removes the current user's project membership from its assigned workspace without leaving the project.",
+    request: { params: idInTenantOrgParamSchema },
     responses: {
       200: {
         description: 'Project removed from workspace',
-        content: {
-          'application/json': {
-            schema: projectWithMembershipSchema,
-            example: mockProjectResponse(),
-          },
-        },
+        content: { 'application/json': { schema: projectWithMembershipSchema, example: mockProjectResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -202,12 +165,7 @@ const projectRoutes = {
     responses: {
       200: {
         description: 'Moved project',
-        content: {
-          'application/json': {
-            schema: projectWithMembershipSchema,
-            example: mockProjectResponse(),
-          },
-        },
+        content: { 'application/json': { schema: projectWithMembershipSchema, example: mockProjectResponse() } },
       },
       ...errorResponseRefs,
     },

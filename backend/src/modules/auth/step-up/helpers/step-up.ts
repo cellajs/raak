@@ -2,7 +2,6 @@ import { and, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 import { appConfig } from 'shared';
 import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
-import { refuseImpersonation } from '#/middlewares/guard/no-impersonation-guard';
 import { passkeysTable } from '#/modules/auth/passkeys/passkeys-db';
 import { type SessionFacts, type StepUpProof, sessionsTable } from '#/modules/auth/sessions-db';
 import { totpsTable } from '#/modules/auth/totps/totps-db';
@@ -56,20 +55,26 @@ export const readStepUp = async (session: SessionFacts): Promise<StepUpState> =>
   if (!row) return refused;
 
   const held = { passkey: row.hasPasskey, totp: row.hasTotp };
-  const factors = (['passkey', 'totp'] as const).filter(
-    (factor) => held[factor] && appConfig.enabledAuthStrategies.includes(factor),
-  );
+  const factors = (['passkey', 'totp'] as const).filter((factor) => held[factor] && appConfig.enabledAuthStrategies.includes(factor));
   if (factors.length === 0) {
     return { steppedUp: !!row.stampedVia || row.signedInRecently, methods: ['email', 'sign_in'], factor: null };
   }
 
   // Only a factor the user holds counts: an emailed link stands in for a factor only while the user has none.
   const stampedWith = factors.find((candidate) => candidate === row.stampedVia);
-  const signedInWith = row.signedInRecently
-    ? factors.find((candidate) => candidate === session.authStrategy)
-    : undefined;
+  const signedInWith = row.signedInRecently ? factors.find((candidate) => candidate === session.authStrategy) : undefined;
   const factor = stampedWith ?? signedInWith ?? null;
   return { steppedUp: !!factor, methods: factors, factor };
+};
+
+/**
+ * Refuses an impersonation: the admin acts as the user, never on the account itself, its sessions or how it is
+ * protected. The one spelling of this answer: `requireStepUp`, `sysAdminGuard` and the handlers of stepping up and
+ * revoking sessions.
+ * @throws AppError 403 `impersonation_forbidden`.
+ */
+export const refuseImpersonation = (session: SessionFacts): void => {
+  if (session.type === 'impersonation') throw new AppError(403, 'impersonation_forbidden', 'warn');
 };
 
 /**

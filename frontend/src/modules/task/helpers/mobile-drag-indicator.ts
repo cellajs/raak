@@ -35,8 +35,7 @@ export const resolveMobileTaskDropIndicator = ({
   if (!cards.length) return null;
 
   const overlappingCards = cards.filter(
-    ({ rect }) =>
-      clientX >= rect.left - 24 && clientX <= rect.right + 24 && clientY >= rect.top && clientY <= rect.bottom,
+    ({ rect }) => clientX >= rect.left - 24 && clientX <= rect.right + 24 && clientY >= rect.top && clientY <= rect.bottom,
   );
 
   // A single pass finds the nearest card; strict `<` keeps DOM order for ties.
@@ -53,10 +52,7 @@ export const resolveMobileTaskDropIndicator = ({
 
   if (!candidate) return null;
 
-  return {
-    edge: clientY < candidate.rect.top + candidate.rect.height / 2 ? 'top' : 'bottom',
-    taskId: candidate.element.dataset.taskCardId ?? '',
-  };
+  return { edge: clientY < candidate.rect.top + candidate.rect.height / 2 ? 'top' : 'bottom', taskId: candidate.element.dataset.taskCardId ?? '' };
 };
 
 function getVerticalDistance(rect: DOMRect, clientY: number) {

@@ -1,6 +1,6 @@
 import { type ComponentType, type ReactNode, Suspense } from 'react';
 import { ErrorNotice, type ErrorNoticeError } from '~/modules/common/error-notice';
-import { Spinner } from '~/modules/common/spinner';
+import { PageSpinner } from '~/modules/common/spinner';
 import type { BoundaryType } from '~/routes/types';
 
 export const withSuspense = (Component: ComponentType, fallback?: ReactNode) => {
@@ -13,8 +13,7 @@ export const withSuspense = (Component: ComponentType, fallback?: ReactNode) => 
   return Wrapped;
 };
 
-export const withSuspenseSpinner = (Component: ComponentType) =>
-  withSuspense(Component, <Spinner className="mt-[45vh] h-10 w-10" />);
+export const withSuspenseSpinner = (Component: ComponentType) => withSuspense(Component, <PageSpinner />);
 
 export const createErrorComponent = (boundary: BoundaryType, homePath?: string) => {
   const ErrorComp = ({ error, reset }: { error: unknown; reset: () => void }) => (
@@ -25,9 +24,7 @@ export const createErrorComponent = (boundary: BoundaryType, homePath?: string) 
 };
 
 export const createNotFoundComponent = (boundary: BoundaryType, homePath?: string) => {
-  const NotFoundComp = () => (
-    <ErrorNotice boundary={boundary} error={new Error('Page not found')} homePath={homePath} />
-  );
+  const NotFoundComp = () => <ErrorNotice boundary={boundary} error={new Error('Page not found')} homePath={homePath} />;
   NotFoundComp.displayName = `NotFoundComponent(${boundary})`;
   return NotFoundComp;
 };
@@ -39,5 +36,5 @@ export function ErrorNoticePageComponent() {
 }
 
 export function SpinnerPage() {
-  return <Spinner className="mt-[45vh] h-10 w-10" />;
+  return <PageSpinner />;
 }

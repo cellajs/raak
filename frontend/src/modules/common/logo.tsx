@@ -29,13 +29,7 @@ export function Logo({ className, iconColor, textColor, height = 50, iconOnly = 
       viewBox={`0 -5 ${iconOnly ? 150 : 400} 140`}
     >
       <title>Logo</title>
-      <g
-        id="svg-logo-icon"
-        fill="none"
-        fillRule="evenodd"
-        style={{ transformBox: 'fill-box' }}
-        transform="translate(20 12)"
-      >
+      <g id="svg-logo-icon" fill="none" fillRule="evenodd" style={{ transformBox: 'fill-box' }} transform="translate(20 12)">
         <path
           fill="#1DB954"
           d="M88.29 0 62.665 32.567h23.72C94.458 32.567 101 39.11 101 47.18v27.207C101 82.457 94.457 89 86.387 89H14.613C6.543 89 0 82.457 0 74.387V47.18c0-8.07 6.543-14.613 14.613-14.613H38.49L26.549 10.24 49.61 21.163 88.289 0Z"

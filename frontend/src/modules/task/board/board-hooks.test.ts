@@ -1,3 +1,4 @@
+import '~/query/tests/query-client-env';
 import { describe, expect, it } from 'vitest';
 import type { EnrichedProject } from '~/modules/project/types';
 import type { BoardResizablePanel } from '~/modules/task/types';
@@ -6,32 +7,17 @@ import { computePanelReorder, getPanelDisplayOrder, sortPanelsByOrder } from './
 const makeProjectPanel = (projectId: string, displayOrder: number, panelId = projectId): BoardResizablePanel => ({
   kind: 'project',
   panelId,
-  project: {
-    id: projectId,
-    tenantId: 't',
-    organizationId: 'o',
-    membership: { id: `m-${projectId}`, displayOrder },
-  } as unknown as EnrichedProject,
+  project: { id: projectId, tenantId: 't', organizationId: 'o', membership: { id: `m-${projectId}`, displayOrder } } as unknown as EnrichedProject,
 });
 
 // A section-filtered split panel of a project (sectionIndex seeds its default order offset).
 // Section values are irrelevant to ordering, so filters stay empty.
-const makeSplitPanel = (
-  projectId: string,
-  displayOrder: number,
-  sectionIndex: number,
-  panelId: string,
-): BoardResizablePanel => ({
+const makeSplitPanel = (projectId: string, displayOrder: number, sectionIndex: number, panelId: string): BoardResizablePanel => ({
   kind: 'project',
   panelId,
   sectionFilters: { status: [] },
   sectionIndex,
-  project: {
-    id: projectId,
-    tenantId: 't',
-    organizationId: 'o',
-    membership: { id: `m-${projectId}`, displayOrder },
-  } as unknown as EnrichedProject,
+  project: { id: projectId, tenantId: 't', organizationId: 'o', membership: { id: `m-${projectId}`, displayOrder } } as unknown as EnrichedProject,
 });
 
 // A local non-project panel representing any order-only board column.
@@ -83,32 +69,18 @@ describe('sortPanelsByOrder', () => {
   });
 
   it('intersperses local-only panels by their stored displayOrder', () => {
-    const panels = [
-      makeProjectPanel('a', 30),
-      makeProjectPanel('b', 10),
-      makeExtraPanel('explainer'),
-      makeExtraPanel('ai-chat'),
-    ];
+    const panels = [makeProjectPanel('a', 30), makeProjectPanel('b', 10), makeExtraPanel('explainer'), makeExtraPanel('ai-chat')];
     const sorted = sortPanelsByOrder(panels, { explainer: 5, 'ai-chat': 20 });
     expect(sorted.map((p) => p.panelId)).toEqual(['explainer', 'b', 'ai-chat', 'a']);
   });
 
   it('anchors kind defaults: explainer leads, labels trails, unknown kinds park at the end', () => {
-    const panels = [
-      makeProjectPanel('a', 30),
-      makeLabelsPanel(),
-      makeExtraPanel('explainer'),
-      makeProjectPanel('b', 10),
-    ];
+    const panels = [makeProjectPanel('a', 30), makeLabelsPanel(), makeExtraPanel('explainer'), makeProjectPanel('b', 10)];
     expect(sortPanelsByOrder(panels).map((p) => p.panelId)).toEqual(['explainer', 'b', 'a', 'labels']);
   });
 
   it('keeps split panels grouped at their membership anchor by default', () => {
-    const panels = [
-      makeSplitPanel('a', 20, 0, 'a-status-started'),
-      makeSplitPanel('a', 20, 1, 'a-status-finished'),
-      makeProjectPanel('b', 10),
-    ];
+    const panels = [makeSplitPanel('a', 20, 0, 'a-status-started'), makeSplitPanel('a', 20, 1, 'a-status-finished'), makeProjectPanel('b', 10)];
     expect(sortPanelsByOrder(panels).map((p) => p.panelId)).toEqual(['b', 'a-status-started', 'a-status-finished']);
   });
 

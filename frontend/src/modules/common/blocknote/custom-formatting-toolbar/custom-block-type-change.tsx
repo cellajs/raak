@@ -15,13 +15,7 @@ import { customBlockTypeSwitchItems } from '~/modules/common/blocknote/blocknote
 import { isHeadingMenuItemActive } from '~/modules/common/blocknote/helpers/header-item-select';
 import type { CustomBlockNoteMenuProps } from '~/modules/common/blocknote/types';
 
-export function CustomBlockTypeSelect({
-  headingLevels,
-  titleLevel,
-}: {
-  headingLevels: CustomBlockNoteMenuProps['headingLevels'];
-  titleLevel?: CustomBlockNoteMenuProps['titleLevel'];
-}) {
+export function CustomBlockTypeSelect({ headingLevels }: { headingLevels: CustomBlockNoteMenuProps['headingLevels'] }) {
   const Components = useComponentsContext()!;
   const dict = useDictionary();
   const portalElement = usePortalElement();
@@ -38,8 +32,6 @@ export function CustomBlockTypeSelect({
     if (type === 'heading') {
       if (props?.isToggleable) return false;
       if (typeof props?.level === 'number') {
-        // Forced-title mode: body blocks must not rank at or above the title
-        if (titleLevel !== undefined && props.level <= titleLevel) return false;
         return headingLevels.includes(props.level as (typeof headingLevels)[number]);
       }
     }
@@ -50,9 +42,7 @@ export function CustomBlockTypeSelect({
 
   const selectedItem = filteredItems.find(
     (el) =>
-      el.type === currentBlock.type &&
-      el.props?.level === currentBlock.props.level &&
-      !!el.props?.isToggleable === currentBlock.props.isToggleable,
+      el.type === currentBlock.type && el.props?.level === currentBlock.props.level && !!el.props?.isToggleable === currentBlock.props.isToggleable,
   );
 
   const handleItemClick = (item: BlockTypeSelectItem) => {
@@ -89,24 +79,14 @@ export function CustomBlockTypeSelect({
   return (
     <Components.Generic.Menu.Root portalElement={portalElement}>
       <Components.Generic.Menu.Trigger>
-        <Components.FormattingToolbar.Button
-          className="bn-dropdown-button"
-          label={selectedItem?.name ?? ''}
-          mainTooltip="Select block type"
-        >
+        <Components.FormattingToolbar.Button className="bn-dropdown-button" label={selectedItem?.name ?? ''} mainTooltip="Select block type">
           {selectedItem && <selectedItem.icon />}
           <ChevronDownIcon />
         </Components.FormattingToolbar.Button>
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown className="p-2">
         {fullItems.map(({ title, icon, isSelected, onClick }) => (
-          <Components.Generic.Menu.Item
-            className="bn-menu-item"
-            key={title}
-            onClick={onClick}
-            icon={icon}
-            checked={isSelected}
-          >
+          <Components.Generic.Menu.Item className="bn-menu-item" key={title} onClick={onClick} icon={icon} checked={isSelected}>
             {title}
           </Components.Generic.Menu.Item>
         ))}

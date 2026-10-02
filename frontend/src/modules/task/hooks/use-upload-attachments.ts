@@ -7,11 +7,7 @@ import { createStxForCreate } from '~/query/offline/stx-utils';
 
 /** Provides upload attachments state and actions. */
 export const useUploadAttachments = () => {
-  const { mutate } = useMutation<
-    CreateAttachmentsResponse,
-    ApiError,
-    { body: CreateAttachmentsData['body'] } & CreateAttachmentsData['path']
-  >({
+  const { mutate } = useMutation<CreateAttachmentsResponse, ApiError, { body: CreateAttachmentsData['body'] } & CreateAttachmentsData['path']>({
     mutationKey: ['attachments', 'create'],
     mutationFn: ({ tenantId, organizationId, body }) => createAttachments({ body, path: { tenantId, organizationId } }),
   });
@@ -29,11 +25,7 @@ export const useUploadAttachments = () => {
       const stx = createStxForCreate();
       // Body is array with stx embedded in each item
       const body = createdAttachments.map((att) => ({ ...att, stx }));
-      mutate({
-        body,
-        tenantId,
-        organizationId,
-      });
+      mutate({ body, tenantId, organizationId });
       return createdAttachments;
     };
 

@@ -28,11 +28,7 @@ const docsTileSchema = z.object({
 export const docsSectionIds = ['apiReference', 'pages', 'links'] as const;
 export type DocsSectionId = (typeof docsSectionIds)[number];
 
-const docsSectionSchema = z.object({
-  id: z.enum(docsSectionIds),
-  label: z.string().min(1),
-  visible: z.boolean().default(true),
-});
+const docsSectionSchema = z.object({ id: z.enum(docsSectionIds), label: z.string().min(1), visible: z.boolean().default(true) });
 
 /** Global docs config, authored as the content root `index.mdx` frontmatter; tiles and sections render in array order. */
 const docsConfigSchema = z.object({
@@ -86,6 +82,12 @@ export type DocPage = {
 /** DOM id prefix the mdx pipeline (rehype-slug) puts on heading ids; spy store convention. */
 const HEADING_ID_PREFIX = 'spy-';
 
+/**
+ * Spy section of the page itself: the article wraps every heading, so it is current until the first heading takes over.
+ * Heading slugs never contain a slash, so it can't clash with one (pages do have an `## Overview` heading).
+ */
+export const PAGE_SECTION_ID = 'page/intro';
+
 // Frontmatter and headings come from a build-time index (vite/docs-frontmatter.ts); importing page modules for it would pull every page body into this chunk.
 const metaModules = docsFrontmatter;
 const componentModules = import.meta.glob<ComponentType>('/src/content/docs/**/*.{md,mdx}', { import: 'default' });
@@ -99,11 +101,7 @@ export function pathToSlug(path: string): string {
   return slug.replace(/\/$/, '');
 }
 
-function buildIndex(): {
-  pages: DocPage[];
-  loaders: Map<string, () => Promise<ComponentType>>;
-  config: DocsConfig;
-} {
+function buildIndex(): { pages: DocPage[]; loaders: Map<string, () => Promise<ComponentType>>; config: DocsConfig } {
   const slugs = new Set<string>();
   const parsed: { slug: string; path: string; meta: z.infer<typeof frontmatterSchema>; headings: DocHeading[] }[] = [];
   let config: DocsConfig | null = null;

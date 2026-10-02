@@ -3,13 +3,13 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { ApiError } from 'sdk';
 import type { ColumnOrColumnGroup as GridColumnOrColumnGroup } from '~/modules/common/data-grid';
 
-export type BaseTableSearchVariables<T> = T & {
-  limit: number;
-};
+export type BaseTableSearchVariables<T> = T & { limit: number };
 
 /** Grid columns narrowed to keyed entries for table chrome; the grid filters hidden entries. */
 export type ColumnOrColumnGroup<TData> = GridColumnOrColumnGroup<TData> & {
   key: string;
+  /** The cell a CSV or PDF export writes; without it the export writes the row field named by the key. */
+  exportValue?: (row: TData) => string | number | null | undefined;
 };
 
 export type BaseTableBarProps<T, K> = {

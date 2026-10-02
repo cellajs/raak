@@ -19,7 +19,7 @@ import {
 import { appConfig } from 'shared';
 import type { ApiError } from '~/lib/api';
 import { tenantsSearchDefaults } from '~/modules/tenants/search-params-schemas';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import type { MutationData } from '~/query/types';
 
 type TenantFilters = Omit<NonNullable<GetTenantsData['query']>, 'limit' | 'offset'>;
@@ -27,10 +27,7 @@ type TenantsListParams = TenantFilters & { limit?: number };
 
 /** Tenants are resources, not entities, so their query keys are defined manually. */
 const tenantQueryKeys = {
-  list: {
-    base: ['tenant', 'list'] as const,
-    filtered: (filters: TenantFilters) => ['tenant', 'list', filters] as const,
-  },
+  list: { base: ['tenant', 'list'] as const, filtered: (filters: TenantFilters) => ['tenant', 'list', filters] as const },
   selfCreate: ['tenant', 'self-create'] as const,
   update: ['tenant', 'update'] as const,
 };
@@ -45,15 +42,10 @@ export const tenantsListQueryOptions = (params: TenantsListParams) => {
     limit = appConfig.requestLimits.users, // Use users limit as fallback
   } = params;
   const filters = { q, status, sort, order };
-  const requestQuery = { ...filters, limit: String(limit) };
 
   return infiniteQueryOptions({
     queryKey: tenantQueryKeys.list.filtered(filters),
-    queryFn: ({ pageParam: { page, offset }, signal }) => {
-      const requestOffset = String(offset ?? (page ?? 0) * limit);
-      return getTenants({ query: { ...requestQuery, offset: requestOffset }, signal });
-    },
-    ...baseInfiniteQueryOptions,
+    ...offsetPaging(limit, (offset, signal) => getTenants({ query: { ...filters, ...pageQuery(limit, offset) }, signal })),
     refetchOnMount: true,
   });
 };

@@ -30,10 +30,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
   const changeProject = async (data: { id: string; projectId: string; displayOrder?: number | null }) => {
     await updateTaskRef.current({
       id: data.id,
-      ops: {
-        projectId: data.projectId,
-        ...(typeof data.displayOrder === 'number' && { displayOrder: data.displayOrder }),
-      },
+      ops: { projectId: data.projectId, ...(typeof data.displayOrder === 'number' && { displayOrder: data.displayOrder }) },
       fullLabels: [],
       fullAssignedTo: [],
     });
@@ -76,10 +73,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
         onDrag: ({ source, location }) => {
           if (!isTaskData(source.data)) return;
           activeDragSourceRef.current = source.data.item;
-          latestInputRef.current = {
-            clientX: location.current.input.clientX,
-            clientY: location.current.input.clientY,
-          };
+          latestInputRef.current = { clientX: location.current.input.clientX, clientY: location.current.input.clientY };
           updateMobileIndicator();
         },
         onDrop: async ({
@@ -97,39 +91,23 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
 
           // Extract the source item data and ensure it belongs to the current project
           const { item: sourceItem } = sourceData;
-          const {
-            displayOrder: sourceOrder,
-            projectId: sourceProjectId,
-            status: sourceStatus,
-            id: sourceId,
-          } = sourceItem;
+          const { displayOrder: sourceOrder, projectId: sourceProjectId, status: sourceStatus, id: sourceId } = sourceItem;
 
           try {
             // Resolve mobile drop first: the rect-derived indicator does not depend on Atlaskit's
             // dropTargets, which are frequently empty after touch autoscroll (virtua sets
             // pointer-events: none on the list while scrolling, so the native drag resolves to no
             // drop target). Handling it here keeps mobile drops from becoming a no-op.
-            const mobileTargetTask = mobileIndicator
-              ? cachedTasks().find((task) => task.id === mobileIndicator.taskId)
-              : null;
+            const mobileTargetTask = mobileIndicator ? cachedTasks().find((task) => task.id === mobileIndicator.taskId) : null;
             if (mobileIndicator && mobileTargetTask) {
               const tasks = cachedTasks().filter((task) => task.projectId === mobileTargetTask.projectId);
-              const { targetOrder, edge } = getEdgeAndTargetOrder(
-                mobileTargetTask,
-                sourceItem,
-                mobileIndicator.edge,
-                tasks,
-              );
+              const { targetOrder, edge } = getEdgeAndTargetOrder(mobileTargetTask, sourceItem, mobileIndicator.edge, tasks);
               const newOrder = getRelativeTaskOrder(edge, tasks, targetOrder, sourceId, sourceStatus);
 
               if (newOrder === sourceOrder && sourceProjectId === mobileTargetTask.projectId) return;
 
               if (sourceProjectId !== mobileTargetTask.projectId) {
-                await changeProject({
-                  id: sourceId,
-                  projectId: mobileTargetTask.projectId,
-                  displayOrder: newOrder,
-                });
+                await changeProject({ id: sourceId, projectId: mobileTargetTask.projectId, displayOrder: newOrder });
                 return;
               }
 
@@ -138,10 +116,8 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
             }
 
             // Identify the drop target types (task or column) from Atlaskit's drop targets
-            const taskTargetData =
-              dropTargets.find((el): el is DropTarget<TaskDraggableData> => isTaskData(el.data))?.data ?? null;
-            const columnTargetData =
-              dropTargets.find((el): el is DropTarget<PanelDraggableData> => isPanelData(el.data))?.data ?? null;
+            const taskTargetData = dropTargets.find((el): el is DropTarget<TaskDraggableData> => isTaskData(el.data))?.data ?? null;
+            const columnTargetData = dropTargets.find((el): el is DropTarget<PanelDraggableData> => isPanelData(el.data))?.data ?? null;
 
             // Exit early if no valid drop target exists
             if (!taskTargetData && !columnTargetData) return;
@@ -153,11 +129,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
 
               const order = getNewTaskOrder(sourceStatus, tasks);
 
-              await changeProject({
-                id: sourceId,
-                projectId,
-                displayOrder: order,
-              });
+              await changeProject({ id: sourceId, projectId, displayOrder: order });
 
               return;
             }
@@ -178,11 +150,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
               if (newOrder === sourceOrder && sourceProjectId === targetTask.projectId) return;
 
               if (sourceProjectId !== targetTask.projectId) {
-                await changeProject({
-                  id: sourceId,
-                  projectId: targetTask.projectId,
-                  displayOrder: newOrder,
-                });
+                await changeProject({ id: sourceId, projectId: targetTask.projectId, displayOrder: newOrder });
                 return;
               }
 

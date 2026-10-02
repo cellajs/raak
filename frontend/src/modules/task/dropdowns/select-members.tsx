@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { UserMinimalBase } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import type { Member } from '~/modules/memberships/types';
@@ -18,27 +19,14 @@ import {
 import type { SelectMembersProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
-import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxItemIndicator,
-  ComboboxList,
-  ComboboxSearchInput,
-} from '~/modules/ui/combobox';
+import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
-export function SelectMembers({
-  value: currentAssigned,
-  projectId,
-  onChange,
-  taskId,
-  triggerWidth = 320,
-}: SelectMembersProps) {
+export function SelectMembers({ value: currentAssigned, projectId, onChange, taskId, triggerWidth = 320 }: SelectMembersProps) {
   const { t } = useTranslation();
-  const { tenantId, organization } = useOrganizationLayoutContext();
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
 
-  const projectMembers = useProjectMembers(projectId, tenantId, organization.id);
+  const projectMembers = useProjectMembers(projectId, tenantId, organizationId);
 
   const [selectedMembers, setSelectedMembers] = useLiveSelection(taskId, (t) => t.assignedTo, currentAssigned);
 
@@ -55,8 +43,7 @@ export function SelectMembers({
   const frozenMembers = frozenMembersRef.current ?? projectMembers.slice(0, 6);
 
   const showedMembers = (() => {
-    if (searchValue.length)
-      return projectMembers.filter((m) => m.name.toLowerCase().includes(searchValue.toLowerCase()));
+    if (searchValue.length) return projectMembers.filter((m) => m.name.toLowerCase().includes(searchValue.toLowerCase()));
     if (showAll) return projectMembers;
     return frozenMembers;
   })();
@@ -136,11 +123,7 @@ export function SelectMembers({
             {(user: UserMinimalBase) => {
               const index = showedMembers.findIndex((m) => m.id === user.id);
               return (
-                <ComboboxItem
-                  key={user.id}
-                  value={user}
-                  className="group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal"
-                >
+                <ComboboxItem key={user.id} value={user} className="group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal">
                   <EntityAvatar
                     type="user"
                     id={user.id}

@@ -11,9 +11,10 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { AvatarFormField } from '~/modules/common/form-fields/avatar';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { useProjectUpdateMutation } from '~/modules/project/query';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { cleanUrl } from '~/utils/clean-url';
@@ -36,12 +37,7 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
 
   const formOptions: UseFormProps<FormValues> = {
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      slug: project.slug,
-      name: project.name,
-      thumbnailUrl: cleanUrl(project.thumbnailUrl),
-      publicAt: project.publicAt,
-    },
+    defaultValues: { slug: project.slug, name: project.name, thumbnailUrl: cleanUrl(project.thumbnailUrl), publicAt: project.publicAt },
   };
 
   const formContainerId = 'update-project';
@@ -52,10 +48,7 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
 
   const onSubmit = (values: FormValues) => {
     mutate(
-      {
-        path: { id: project.id, organizationId, tenantId: project.tenantId },
-        body: values,
-      },
+      { path: { id: project.id, organizationId, tenantId: project.tenantId }, body: values },
       {
         onSuccess: (updatedProject) => {
           if (isDialog) useDialoger.getState().remove();
@@ -71,13 +64,7 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <AvatarFormField
-          form={form}
-          label={t('c:resource_logo', { resource: t('c:project') })}
-          type="project"
-          name="thumbnailUrl"
-          entity={project}
-        />
+        <AvatarFormField form={form} label={t('c:resource_logo', { resource: t('c:project') })} type="project" name="thumbnailUrl" entity={project} />
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
         <SlugFormField
           control={form.control}
@@ -93,14 +80,11 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
           render={({ field }) => (
             <FormItem className="flex-row items-center" name="publicAt">
               <FormControl>
-                <Checkbox
-                  checked={field.value !== null}
-                  onCheckedChange={(checked) => field.onChange(checked ? new Date().toISOString() : null)}
-                />
+                <Checkbox checked={field.value !== null} onCheckedChange={(checked) => field.onChange(checked ? new Date().toISOString() : null)} />
               </FormControl>
               <FormLabel>{t('c:public_access')}</FormLabel>
               <p className="flex items-center gap-2">
-                <CircleAlertIcon className="icon-sm shrink-0 text-amber-500" />
+                <CircleAlertIcon className="size-3.5 shrink-0 text-amber-500" />
                 <span className="text-muted-foreground text-sm">{t('c:public_access_warn.text')}</span>
               </p>
               <FormMessage />
@@ -111,12 +95,7 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:save_changes')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            onClick={() => form.reset()}
-            className={form.isDirty ? '' : 'invisible'}
-          >
+          <Button type="reset" variant="secondary" onClick={() => form.reset()} className={form.isDirty ? '' : 'invisible'}>
             {t('c:cancel')}
           </Button>
         </div>

@@ -20,7 +20,5 @@ export async function getTenantsOp(ctx: UserContext, input: GetTenantsInput) {
     conditions.push(eq(tenantsTable.status, status));
   }
 
-  const { items, total } = await findTenantsPaginated(ctx, { filters: conditions, sort, order, limit, offset });
-
-  return { items, total };
+  return findTenantsPaginated(ctx, { filters: conditions, sort, order, limit, offset });
 }

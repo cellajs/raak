@@ -5,11 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { Attachment } from 'sdk';
 import { appConfig } from 'shared';
 import { useSearchParams } from '~/hooks/use-search-params';
-import {
-  attachmentsCanonicalOptions,
-  attachmentsListQueryOptions,
-  useAttachmentUpdateMutation,
-} from '~/modules/attachment/query';
+import { attachmentsCanonicalOptions, attachmentsListQueryOptions, useAttachmentUpdateMutation } from '~/modules/attachment/query';
 import { attachmentsSearchDefaults } from '~/modules/attachment/search-params-schemas';
 import { AttachmentsTableBar } from '~/modules/attachment/table/attachments-bar';
 import { useColumns } from '~/modules/attachment/table/attachments-columns';
@@ -19,6 +15,7 @@ import type { RowsChangeData } from '~/modules/common/data-grid';
 import { DataTable } from '~/modules/common/data-table/data-table';
 import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
+import { useRowSelection } from '~/modules/common/data-table/use-row-selection';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { isDefaultListView } from '~/query/basic/create-query-keys';
 
@@ -55,15 +52,10 @@ function AttachmentsTable({ channel, canUpload, isSheet = false }: AttachmentsTa
   const { q, sort, order } = search;
   const limit = LIMIT;
 
-  const [selected, setSelected] = useState<Attachment[]>([]);
   const columnsFromHook = useColumns(channel, isSheet);
   const [hiddenOverrides, setHiddenOverrides] = useState<Record<string, boolean>>({});
   const columns = useMemo(
-    () =>
-      columnsFromHook.map((col) => ({
-        ...col,
-        hidden: hiddenOverrides[col.key] ?? col.hidden,
-      })),
+    () => columnsFromHook.map((col) => ({ ...col, hidden: hiddenOverrides[col.key] ?? col.hidden })),
     [columnsFromHook, hiddenOverrides],
   );
   const setColumns: React.Dispatch<React.SetStateAction<ColumnOrColumnGroup<Attachment>[]>> = (updater) => {
@@ -81,24 +73,10 @@ function AttachmentsTable({ channel, canUpload, isSheet = false }: AttachmentsTa
   // Default view (no search, default sort) reads the canonical org query that SyncService prefetches; any other filter uses the infinite query.
   const isDefaultView = isDefaultListView({ q, sort, order }, attachmentsSearchDefaults);
 
-  const canonicalOptions = attachmentsCanonicalOptions({
-    tenantId: channel.tenantId,
-    organizationId: channel.id,
-  });
-  const canonical = useQuery({
-    ...canonicalOptions,
-    enabled: isDefaultView,
-    select: selectDefaultViewRows,
-  });
+  const canonicalOptions = attachmentsCanonicalOptions({ tenantId: channel.tenantId, organizationId: channel.id });
+  const canonical = useQuery({ ...canonicalOptions, enabled: isDefaultView, select: selectDefaultViewRows });
 
-  const queryOptions = attachmentsListQueryOptions({
-    tenantId: channel.tenantId,
-    organizationId: channel.id,
-    q,
-    sort,
-    order,
-    limit,
-  });
+  const queryOptions = attachmentsListQueryOptions({ tenantId: channel.tenantId, organizationId: channel.id, q, sort, order, limit });
   const filtered = useInfiniteQuery({
     ...queryOptions,
     enabled: !isDefaultView,
@@ -107,6 +85,7 @@ function AttachmentsTable({ channel, canUpload, isSheet = false }: AttachmentsTa
   });
 
   const { data: rows, isLoading, isFetching, error } = isDefaultView ? canonical : filtered;
+  const { selected, selectedRowIds, onSelectedRowsChange, clearSelection } = useRowSelection(rows);
   const hasNextPage = isDefaultView ? false : filtered.hasNextPage;
 
   const onRowsChange = (changedRows: Attachment[], { indexes, column }: RowsChangeData<Attachment>) => {
@@ -123,21 +102,9 @@ function AttachmentsTable({ channel, canUpload, isSheet = false }: AttachmentsTa
     await filtered.fetchNextPage();
   };
 
-  const onSelectedRowsChange = (value: Set<string>) => {
-    if (rows) setSelected(rows.filter((row) => value.has(row.id)));
-  };
-
-  const selectedRowIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected]);
-
   const NoRowsComponent = (
-    <ContentPlaceholder
-      icon={PaperclipIcon}
-      title="c:no_resource_yet"
-      titleProps={{ resource: t('c:attachment_other').toLowerCase() }}
-    />
+    <ContentPlaceholder icon={PaperclipIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:attachment_other').toLowerCase() }} />
   );
-
-  const clearSelection = () => setSelected([]);
 
   return (
     <>

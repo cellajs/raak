@@ -1,7 +1,7 @@
 import { cva } from 'class-variance-authority';
 
 // Glow colors per status live in card-glow.css ([data-status] sets --glow-color-rgb)
-export const taskCardVariants = cva('task-card', {
+export const taskCardVariants = cva('', {
   variants: {
     status: {
       0: 'border-b-green-500/25 to-green-500/30',
@@ -63,16 +63,8 @@ export const taskBarClass = 'z-85 flex items-center bg-background max-sm:justify
  * header in `panel-status-section` uses a richer, single-use palette and stays inline.
  */
 export const statusSectionColors = {
-  accepted: {
-    fill: 'bg-green-500/5',
-    text: 'text-green-500',
-    border: 'border-b border-b-green-500/10',
-  },
-  iced: {
-    fill: 'bg-sky-500/5',
-    text: 'text-sky-500',
-    border: 'border-t border-t-sky-500/10',
-  },
+  accepted: { fill: 'bg-green-500/5', text: 'text-green-500', border: 'border-b border-b-green-500/10' },
+  iced: { fill: 'bg-sky-500/5', text: 'text-sky-500', border: 'border-t border-t-sky-500/10' },
 } as const;
 
 export const labelColors = [

@@ -40,17 +40,10 @@ export const createTaskFormSchema = z.object({
 export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;
 
 // Derive defaults from schema, override only intentional UX choices
-export const newTaskFormDefaults: NewTaskFormValues = {
-  ...getSchemaDefaults(createTaskFormSchema),
-  status: TaskStatus.Unstarted,
-};
+export const newTaskFormDefaults: NewTaskFormValues = { ...getSchemaDefaults(createTaskFormSchema), status: TaskStatus.Unstarted };
 
 /** Checks whether a new-task form contains unsaved values. */
-export const newTaskFormIsDirty = ({
-  assignedTo,
-  labels,
-  description,
-}: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
+export const newTaskFormIsDirty = ({ assignedTo, labels, description }: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
 // Handles logic for showing or hiding task creation form via Zustand draft state
@@ -82,12 +75,7 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
   };
 
   // Merge form values over default structure, retaining order & id
-  const formTask: Task = {
-    ...defaultTask,
-    ...draftForm,
-    id: defaultTask.id,
-    displayOrder: defaultTask.displayOrder,
-  };
+  const formTask: Task = { ...defaultTask, ...draftForm, id: defaultTask.id, displayOrder: defaultTask.displayOrder };
 
   // ProjectBoardPanel merges this draft into the task list.
   focusTask(id);

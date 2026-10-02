@@ -1,5 +1,6 @@
 import { Trans, useTranslation } from 'react-i18next';
 import type { TKey } from '~/lib/i18n-locales';
+import { cn } from '~/utils/cn';
 
 // Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
 // union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
@@ -32,11 +33,7 @@ export function AboutSectionHeader({ title, text, textComponents, className = ''
 
   return (
     <div className={`mx-auto flex max-w-3xl flex-col justify-center gap-4 ${className}`.trim()}>
-      {title && (
-        <h2 className="font-heading font-semibold text-2xl leading-[1.1] sm:text-center sm:text-3xl md:text-4xl">
-          {t(title)}
-        </h2>
-      )}
+      {title && <h2 className="font-heading font-semibold text-2xl leading-[1.1] sm:text-center sm:text-3xl md:text-4xl">{t(title)}</h2>}
       {text && (
         <p className="text-muted-foreground leading-normal sm:text-center sm:text-lg sm:leading-7">
           <Trans i18nKey={text} components={textComponents} />
@@ -46,20 +43,13 @@ export function AboutSectionHeader({ title, text, textComponents, className = ''
   );
 }
 
-export function AboutSection({
-  title,
-  text,
-  textComponents,
-  sectionId,
-  children,
-  alternate = false,
-}: AboutSectionProps) {
+export function AboutSection({ title, text, textComponents, sectionId, children, alternate = false }: AboutSectionProps) {
   const backgroundClass = alternate ? 'bg-accent/40 dark:bg-transparent' : '';
 
   return (
     <section
       id={sectionId ? `spy-${sectionId}` : undefined}
-      className={`container max-w-none overflow-hidden px-4 py-8 md:py-12 lg:py-20 ${backgroundClass}`}
+      className={cn('container max-w-none overflow-hidden px-4 py-8 md:py-12 lg:py-20', backgroundClass)}
     >
       <AboutSectionHeader title={title} text={text} textComponents={textComponents} className="mb-12" />
       {children}

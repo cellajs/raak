@@ -52,16 +52,7 @@ export const config = {
    * Not entities, but activities are logged for them. Tenant- or system-owned rows only: rows a user owns
    * (sessions, identities, passkeys, emails) are self-audited through the account pages and notifications.
    */
-  resourceTypes: [
-    'request',
-    'membership',
-    'inactive_membership',
-    'tenant',
-    'system_role',
-    'service_account',
-    'api_key',
-    'oauth_client',
-  ] as const,
+  resourceTypes: ['request', 'membership', 'inactive_membership', 'tenant', 'system_role', 'service_account', 'api_key', 'oauth_client'] as const,
 
   /**
    * Product embeddings: declares which product entities are embedded as ID arrays inside
@@ -83,10 +74,7 @@ export const config = {
    * User menu structure of channel entities with optional nested subentities.
    * If subentityType is set, the table must include `${entity}Id` foreign key.
    */
-  menuStructure: [
-    { entityType: 'organization', subentityType: null } as const,
-    { entityType: 'workspace', subentityType: 'project' } as const,
-  ],
+  menuStructure: [{ entityType: 'organization', subentityType: null } as const, { entityType: 'workspace', subentityType: 'project' } as const],
 
   defaultRestrictions: {
     quotas: {
@@ -99,9 +87,7 @@ export const config = {
       serviceAccount: 20,
       apiKey: 100,
     },
-    rateLimits: {
-      apiPointsPerHour: 1000,
-    },
+    rateLimits: { apiPointsPerHour: 1000 },
   } as const,
 
   // System roles
@@ -171,21 +157,14 @@ export const config = {
    * `frontendUrl` carries no port (tunnel mode); otherwise the URL port wins. `internal` is the
    * backend's internal listener, which the cdc and yjs workers dial (`INTERNAL_PORT` overrides it).
    */
-  devPorts: {
-    frontend: 3000,
-    api: 4000,
-    cdcHealth: 4001,
-    yjs: 4002,
-    mcp: 4003,
-    oauth: 4004,
-    internal: 4005,
-    jobs: 4006,
-  },
+  devPorts: { frontend: 3000, api: 4000, cdcHealth: 4001, yjs: 4002, mcp: 4003, oauth: 4004, internal: 4005, jobs: 4006 },
 
   has: {
     pwa: true as boolean,
     /** Web Push delivery for notifications; also needs VAPID_* backend env vars. */
     push: false as boolean,
+    /** Comment and reply emails: shows the preference in the account settings and mails those who turn it on. */
+    commentEmail: false as boolean,
     selfRegistration: false as boolean,
     waitlist: true as boolean,
     uploadEnabled: true as boolean,
@@ -199,7 +178,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v12-access-hardening',
+  clientCacheVersion: 'v13-mentions-from-body',
 
   // Authentication
 
@@ -215,11 +194,7 @@ export const config = {
    */
   maxSessionsPerUser: 10,
 
-  totp: {
-    intervalInSeconds: 30,
-    gracePeriodInSeconds: 60,
-    digits: 6,
-  },
+  totp: { intervalInSeconds: 30, gracePeriodInSeconds: 60, digits: 6 },
 
   // API configuration
 
@@ -252,10 +227,7 @@ export const config = {
 
   // Storage & uploads (S3)
 
-  s3: {
-    region: 'nl-ams',
-    host: 's3.nl-ams.scw.cloud',
-  } as S3ConfigInput,
+  s3: { region: 'nl-ams', host: 's3.nl-ams.scw.cloud' } as S3ConfigInput,
 
   uploadTemplateIds: ['avatar', 'cover', 'attachment', 'newsletter'] as const,
 
@@ -300,22 +272,10 @@ export const config = {
 
   themeColor: '#26262b',
   theme: {
-    navigation: {
-      hasSidebarTextLabels: false,
-      sidebarWidthExpanded: '16rem',
-      sidebarWidthCollapsed: '4rem',
-      sheetPanelWidth: '20rem',
-    },
+    navigation: { hasSidebarTextLabels: false, sidebarWidthExpanded: '16rem', sidebarWidthCollapsed: '4rem', sheetPanelWidth: '20rem' },
     colors: {},
     strokeWidth: 1.5,
-    screenSizes: {
-      xs: '420px',
-      sm: '640px',
-      md: '768px',
-      lg: '1024px',
-      xl: '1280px',
-      '2xl': '1400px',
-    },
+    screenSizes: { xs: '420px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1400px' },
   } as const,
   placeholderColors: [
     'bg-blue-300',
@@ -334,10 +294,7 @@ export const config = {
 
   defaultLanguage: 'en' as const,
   languages: ['en', 'nl'] as const,
-  c: {
-    countries: ['fr', 'de', 'nl', 'ua', 'us', 'gb'],
-    timezones: [],
-  },
+  c: { countries: ['fr', 'de', 'nl', 'ua', 'us', 'gb'], timezones: [] },
 
   // Company details
 
@@ -360,17 +317,12 @@ export const config = {
     element: 'https://matrix.to/#/!fvwljIbZIqzhNvjKvk:matrix.org',
     githubUrl: 'https://github.com/cellajs/cella',
     mapZoom: 4,
-    coordinates: {
-      lat: 51.92760809717153,
-      lng: 4.47421039909924,
-    },
+    coordinates: { lat: 51.92760809717153, lng: 4.47421039909924 },
   },
 
   // User defaults
 
-  defaultUserFlags: {
-    finishedOnboarding: false,
-  },
+  defaultUserFlags: { finishedOnboarding: false },
 
   // Organization defaults
 
@@ -381,7 +333,5 @@ export const config = {
    * `primaryLabels` (min 1, max 6) is provisioned as tracked primary label rows into every
    * new project; array order is display order and the first entry is the default for new tasks.
    */
-  defaultSetupConfig: {
-    primaryLabels: defaultPrimaryLabels,
-  },
+  defaultSetupConfig: { primaryLabels: defaultPrimaryLabels },
 } satisfies RequiredConfig;

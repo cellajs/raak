@@ -5,12 +5,13 @@ import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { baseDb } from '#/db/db';
 import { mailer } from '#/lib/mailer';
-import { findCredentialIdsByUser } from '#/modules/auth/auth-queries';
-import { issuePasskeyChallenge, verifyPasskeyAssertion } from '#/modules/auth/passkeys/helpers/passkey';
-import { readStepUp, stampStepUp } from '#/modules/auth/step-up/helpers/step-up';
+import { issuePasskeyChallenge, verifyPasskeyAssertion } from '#/modules/auth/passkeys/operations/passkey-challenges';
+import { findCredentialIdsByUser } from '#/modules/auth/passkeys/passkeys-queries';
+import { readStepUp, refuseImpersonation, stampStepUp } from '#/modules/auth/step-up/helpers/step-up';
 import { authStepUpRoutes } from '#/modules/auth/step-up/step-up-routes';
 import { issueToken, rememberLinkRequest } from '#/modules/auth/tokens/token-lifecycle';
-import { verifyTotp } from '#/modules/auth/totps/helpers/totps';
+import { tokenLinkUrl } from '#/modules/auth/tokens/token-policies';
+import { verifyTotp } from '#/modules/auth/totps/operations/verify-totp';
 import { defaultHook } from '#/utils/default-hook';
 import { isValidRedirectPath } from '#/utils/is-redirect-url';
 import { log } from '#/utils/logger';
@@ -24,7 +25,8 @@ app.openapi(authStepUpRoutes.getStepUp, async (ctx) => {
 });
 
 app.openapi(authStepUpRoutes.getStepUpPasskeyChallenge, async (ctx) => {
-  const { user } = ctx.var;
+  const { user, session } = ctx.var;
+  refuseImpersonation(session);
 
   // Issued for this account and for a step-up only: a sign-in or MFA challenge never answers as a step-up proof.
   const challenge = await issuePasskeyChallenge(ctx, { purpose: 'step-up', userId: user.id });
@@ -35,6 +37,7 @@ app.openapi(authStepUpRoutes.getStepUpPasskeyChallenge, async (ctx) => {
 
 app.openapi(authStepUpRoutes.stepUp, async (ctx) => {
   const { user, session } = ctx.var;
+  refuseImpersonation(session);
   const { passkeyData, totpCode } = ctx.req.valid('json');
 
   const via = passkeyData ? 'passkey' : totpCode ? 'totp' : null;
@@ -57,6 +60,7 @@ app.openapi(authStepUpRoutes.stepUp, async (ctx) => {
 
 app.openapi(authStepUpRoutes.sendStepUpLink, async (ctx) => {
   const { user, session } = ctx.var;
+  refuseImpersonation(session);
   const { redirect } = ctx.req.valid('json');
 
   // An emailed link stands in for a second factor only while the user holds none.
@@ -79,10 +83,8 @@ app.openapi(authStepUpRoutes.sendStepUpLink, async (ctx) => {
   // Opening the link stamps this session only in this browser.
   await rememberLinkRequest(ctx, 'step-up', token.id);
 
-  const stepUpUrl = `${appConfig.backendAuthUrl}/invoke-token/${token.type}/${rawToken}`;
-  mailer.prepareEmails(stepUpEmail, { stepUpUrl, name: user.name }, [
-    { email: user.email, lng: user.language ?? appConfig.defaultLanguage },
-  ]);
+  const stepUpUrl = tokenLinkUrl('step-up', rawToken);
+  mailer.prepareEmails(stepUpEmail, { stepUpUrl, name: user.name }, [{ email: user.email, lng: user.language ?? appConfig.defaultLanguage }]);
 
   if (appConfig.mode === 'development') console.info(`[step-up] ${user.email} ${stepUpUrl}`);
   log.info('Step-up link sent', { tokenId: token.id });

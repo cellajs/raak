@@ -29,10 +29,7 @@ export function ScrollArea({
   React.useEffect(() => {
     if (!autoScrollOnDrag || !viewportRef.current) return;
     const axis = typeof autoScrollOnDrag === 'string' ? autoScrollOnDrag : undefined;
-    return autoScrollForElements({
-      element: viewportRef.current,
-      ...(axis && { getAllowedAxis: () => axis }),
-    });
+    return autoScrollForElements({ element: viewportRef.current, ...(axis && { getAllowedAxis: () => axis }) });
   }, [autoScrollOnDrag, viewportRef]);
 
   // Base UI's content ResizeObserver cannot fire while the content div is height-pinned to 100%, so a subtree
@@ -63,18 +60,15 @@ export function ScrollArea({
   return (
     <ScrollAreaPrimitive.Root data-slot="scroll-area" className={cn('relative', className)} {...props}>
       <ScrollAreaPrimitive.Viewport
+        data-slot="scroll-area-viewport"
         id={id ? `${id}-viewport` : undefined}
         ref={viewportRef}
-        className={cn('h-full w-full touch-manipulation rounded-[inherit] focus:outline-none', viewportClassName)}
+        className={cn(
+          'size-full touch-manipulation rounded-[inherit] outline-hidden focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset',
+          viewportClassName,
+        )}
       >
-        <ScrollAreaPrimitive.Content
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            minWidth: horizontalScroll ? undefined : 0,
-          }}
-        >
+        <ScrollAreaPrimitive.Content style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: horizontalScroll ? undefined : 0 }}>
           {children}
         </ScrollAreaPrimitive.Content>
       </ScrollAreaPrimitive.Viewport>

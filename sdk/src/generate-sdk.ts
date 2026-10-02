@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createClient } from '@hey-api/openapi-ts';
 import chokidar from 'chokidar';
 import { changeMark, checkMark, crossMark, loadingMark, timestamp } from 'shared/utils/console';
-import { openApiConfig } from '../openapi-ts.config';
+import { createOpenApiConfig } from '../openapi-ts.config';
 
 const watchMode = process.argv.includes('--watch');
 
@@ -143,8 +143,6 @@ const generate = async () => {
 
   const tempSuffix = createHash('sha256').update(`${Date.now()}-${process.pid}`).digest('hex').slice(0, 8);
   const tempOutputPath = resolve(srcDir, `temp-api-gen-${tempSuffix}`);
-  // Docs JSON sits inside the temp tree so all of sdk/gen is generated and compared as one.
-  const tempDocsPath = resolve(tempOutputPath, 'docs.gen');
 
   try {
     try {
@@ -160,55 +158,13 @@ const generate = async () => {
 
     console.info(`${timestamp()} ${loadingMark} Generating SDK to temp folder...`);
 
-    const outputConfig = typeof openApiConfig.output === 'object' ? openApiConfig.output : {};
-    const sourceConfig = 'source' in outputConfig ? outputConfig.source : undefined;
-    const sourceFileName =
-      sourceConfig && typeof sourceConfig === 'object' && 'fileName' in sourceConfig && sourceConfig.fileName
-        ? String(sourceConfig.fileName)
-        : 'openapi';
-
-    // Cast through unknown to handle custom plugin properties not in Hey API's strict types
-    const pluginsWithDocsPath = (openApiConfig.plugins || []).map((plugin) => {
-      if (typeof plugin === 'object' && plugin !== null && 'name' in plugin) {
-        const pluginObj = plugin as unknown as Record<string, unknown>;
-        if (pluginObj.name === 'openapi-parser') {
-          // Custom plugins have their config nested in a 'config' property
-          const existingConfig = (pluginObj.config as Record<string, unknown>) || {};
-          return {
-            ...pluginObj,
-            config: { ...existingConfig, docsOutputPath: tempDocsPath },
-          };
-        }
-      }
-      return plugin;
-    }) as typeof openApiConfig.plugins;
-
-    await createClient({
-      ...openApiConfig,
-      plugins: pluginsWithDocsPath,
-      output: {
-        ...outputConfig,
-        path: tempOutputPath,
-        // Override source path to use absolute path (relative paths break with temp folder)
-        source: sourceConfig
-          ? {
-              ...(typeof sourceConfig === 'object' ? sourceConfig : {}),
-              fileName: sourceFileName,
-              path: tempOutputPath,
-            }
-          : undefined,
-      },
-    });
+    await createClient(createOpenApiConfig(tempOutputPath));
 
     // The temp folder is gitignored, so `--vcs-use-ignore-file=false` keeps biome from skipping it and leaving hey-api's raw output; a non-zero exit is fine, zero files processed is not.
-    const biomeResult = spawnSync(
-      'pnpm',
-      ['biome', 'check', '--write', '--vcs-use-ignore-file=false', tempOutputPath],
-      {
-        cwd: rootDir,
-        encoding: 'utf-8',
-      },
-    );
+    const biomeResult = spawnSync('pnpm', ['biome', 'check', '--write', '--vcs-use-ignore-file=false', tempOutputPath], {
+      cwd: rootDir,
+      encoding: 'utf-8',
+    });
     const biomeOutput = `${biomeResult.stdout ?? ''}${biomeResult.stderr ?? ''}`;
     if (biomeResult.error || /No files were processed/.test(biomeOutput)) {
       console.warn(
@@ -222,9 +178,7 @@ const generate = async () => {
     if (!changed) {
       saveSpecHash();
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
-      console.info(
-        `${timestamp()} [Openapi gen] ${checkMark} Generated SDK unchanged: keeping existing output (${elapsed}s)`,
-      );
+      console.info(`${timestamp()} [Openapi gen] ${checkMark} Generated SDK unchanged: keeping existing output (${elapsed}s)`);
       return;
     }
 
@@ -238,9 +192,7 @@ const generate = async () => {
       }
 
       const newFiles = new Set(getFilesRecursively(tempPath).map((f) => f.slice(tempPath.length)));
-      const oldFiles = existsSync(finalPath)
-        ? getFilesRecursively(finalPath).map((f) => f.slice(finalPath.length))
-        : [];
+      const oldFiles = existsSync(finalPath) ? getFilesRecursively(finalPath).map((f) => f.slice(finalPath.length)) : [];
 
       // Overwrites existing files atomically per file.
       cpSync(tempPath, finalPath, { recursive: true });
@@ -314,10 +266,7 @@ if (watchMode) {
     console.warn(`${timestamp()} ${crossMark} openapi.cache.json not found. Run \`pnpm sdk\` first.`);
   }
 
-  const watcher = chokidar.watch(specPath, {
-    ignoreInitial: true,
-    awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 50 },
-  });
+  const watcher = chokidar.watch(specPath, { ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 50 } });
 
   watcher.on('change', () => {
     void triggerGeneration();

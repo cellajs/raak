@@ -50,9 +50,7 @@ export const BoardPanel = memo(function BoardPanel({
   const { isVisible: showFab } = useScrollVisibility(isMobile);
   const hasDraft = useDraftStore((state) => !!state.dirtyForms[`create-task-${project.id}`]);
 
-  const { expandIced, expandAccepted } = useTaskBoardStore(
-    (state) => state.panelData[boardId]?.[project.id]?.prefs || defaultPanelPrefs,
-  );
+  const { expandIced, expandAccepted } = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.prefs || defaultPanelPrefs);
   const isCollapsed = useBoardStore((state) => {
     const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
     return state.panelCollapseState[panelId];
@@ -70,10 +68,7 @@ export const BoardPanel = memo(function BoardPanel({
   }, [fetchedTasks, search.q, search.matchMode]);
 
   // Sort tasks and filter out accepted and iced based of config
-  const tasks = useMemo(
-    () => prepareBoardTasks(filteredTasks, expandAccepted, expandIced),
-    [filteredTasks, expandIced, expandAccepted],
-  );
+  const tasks = useMemo(() => prepareBoardTasks(filteredTasks, expandAccepted, expandIced), [filteredTasks, expandIced, expandAccepted]);
 
   // Panel-level drop target registered on the outer wrapper so it works in
   // both expanded and collapsed states (mobile uses a different layout).
@@ -110,11 +105,7 @@ export const BoardPanel = memo(function BoardPanel({
   return (
     <div data-search={!!search.q} className="group/panel h-full">
       {isMobile ? (
-        <div
-          ref={panelRef}
-          data-highlighted={highlightProject ? 'true' : undefined}
-          className="group/paneldrop flex h-full flex-col"
-        >
+        <div ref={panelRef} data-highlighted={highlightProject ? 'true' : undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} tasks={tasks} counts={counts} />
           <Button
             size="icon"
@@ -125,7 +116,7 @@ export const BoardPanel = memo(function BoardPanel({
               showFab ? 'opacity-100' : 'pointer-events-none -bottom-12 scale-50 opacity-0'
             }`}
           >
-            <PlusIcon className="icon-xl" strokeWidth={1.5} />
+            <PlusIcon className="size-6" strokeWidth={1.5} />
             {hasDraft && (
               <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">
                 !
@@ -136,11 +127,7 @@ export const BoardPanel = memo(function BoardPanel({
       ) : (
         <div className="flex h-full flex-col">
           <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
-          <div
-            ref={panelRef}
-            data-highlighted={highlightProject ? 'true' : undefined}
-            className="group/paneldrop flex min-h-0 flex-1 flex-col"
-          >
+          <div ref={panelRef} data-highlighted={highlightProject ? 'true' : undefined} className="group/paneldrop flex min-h-0 flex-1 flex-col">
             <BoardPanelContent isCollapsed={!!isCollapsed} collapsedContent={<TaskPanelCollapsed counts={counts} />}>
               <TaskPanelContent project={project} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>

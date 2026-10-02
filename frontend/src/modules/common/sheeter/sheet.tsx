@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
+import type { ReactNode } from 'react';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
@@ -7,7 +8,7 @@ import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '~/modules/ui/sheet';
 import { cn } from '~/utils/cn';
 
-export function SheeterSheet({ sheet }: { sheet: InternalSheet }) {
+export function SheeterSheet({ sheet, onExited }: { sheet: InternalSheet; onExited?: () => void }) {
   const {
     id,
     modal,
@@ -23,7 +24,6 @@ export function SheeterSheet({ sheet }: { sheet: InternalSheet }) {
     closeSheetOnEsc = true,
     disablePointerDismissal,
     container,
-    skipAnimation,
     contentKey,
     autoScrollOnDrag,
   } = sheet;
@@ -31,6 +31,7 @@ export function SheeterSheet({ sheet }: { sheet: InternalSheet }) {
   const isMobile = useBreakpointBelow('sm', false);
   const containerElement = container?.ref?.current ?? null;
 
+  // The provider keeps the removed sheet rendered until it has slid out
   const closeSheet = () => {
     useSheeter.getState().remove(sheet.id);
 
@@ -75,43 +76,70 @@ export function SheeterSheet({ sheet }: { sheet: InternalSheet }) {
     } else closeSheet();
   };
 
-  // Resolved at close time: a trigger inside a grid is replaced by a new node once cell edit mode ends.
-  const finalFocus = triggerRef ? () => triggerRef.current ?? true : undefined;
+  // Resolved once the exit ends: a trigger inside a grid is replaced by a new node once cell edit mode ends. Focus that
+  // left the sheet while it slid out (a focus bridge, the page after a route change) stays where it went.
+  const finalFocus = triggerRef
+    ? () => {
+        const active = document.activeElement;
+        if (active && active !== document.body && !document.getElementById(String(id))?.contains(active)) return false;
+        return triggerRef.current ?? true;
+      }
+    : undefined;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} modal={modal} disablePointerDismissal={disablePointerDismissal}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(isOpen) => !isOpen && onExited?.()}
+      modal={modal}
+      disablePointerDismissal={disablePointerDismissal}
+    >
       <SheetContent
         id={String(id)}
         side={side}
         overlay={modal === true}
-        aria-describedby={undefined}
         container={containerElement}
-        className={cn(className, 'items-start', containerElement && 'z-40', skipAnimation && 'duration-0!')}
+        className={cn('items-start', className, containerElement && 'z-40')}
         initialFocus={isMobile ? false : undefined}
         finalFocus={finalFocus}
         autoScrollOnDrag={autoScrollOnDrag}
       >
         <SheetHeader sticky className={cn(headerClassName, !(title || description) && 'hidden')}>
-          <SheetTitle className={`${title ? '' : 'hidden'} h-6 leading-6`}>{titleContent}</SheetTitle>
-          <SheetDescription className={`${description ? '' : 'hidden'}`}>{description}</SheetDescription>
+          {title && <SheetTitle className="h-6 leading-6">{titleContent}</SheetTitle>}
+          {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        {contentKey ? (
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div
-              key={contentKey}
-              className="flex flex-1 flex-col"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.15 }}
-            >
-              {content}
-            </motion.div>
-          </AnimatePresence>
-        ) : (
-          content
-        )}
+        <ContentKeyTransition contentKey={contentKey}>{content}</ContentKeyTransition>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Ref callback that starts mounting content at the top of its sheet's scroll container; stable, so only mounts call it. */
+function scrollToTop(element: HTMLElement | null) {
+  const scroller = element?.closest('[data-slot="scroll-area-viewport"], [data-slot="drawer-content"]');
+  if (scroller) scroller.scrollTop = 0;
+}
+
+/**
+ * Slides in new content when `contentKey` changes; without a key the content renders as is. The old content leaves
+ * first, at its own scroll position, and the new content then starts at the top.
+ */
+export function ContentKeyTransition({ contentKey, children }: { contentKey?: string; children: ReactNode }) {
+  if (!contentKey) return children;
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={contentKey}
+        ref={scrollToTop}
+        className="flex flex-1 flex-col"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.1 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 }

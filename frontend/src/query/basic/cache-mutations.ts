@@ -1,15 +1,11 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { changeInfiniteQueryData, changeQueryData } from '~/query/basic/helpers';
-import { isInfiniteQueryData, isQueryData } from '~/query/basic/mutate-query';
+import { forEachListQuery, isQueryData } from '~/query/basic/mutate-query';
 import type { ItemData, QueryDataActions } from '~/query/basic/types';
-import { queryClient } from '~/query/query-client';
 
 /** Runs against every query that prefix-matches `queryKey`. */
 function mutateMatchingQueries(queryKey: QueryKey, items: ItemData[], action: QueryDataActions) {
-  for (const [key, data] of queryClient.getQueriesData({ queryKey })) {
-    if (isQueryData(data)) changeQueryData(key, items, action);
-    if (isInfiniteQueryData(data)) changeInfiniteQueryData(key, items, action);
-  }
+  forEachListQuery(queryKey, (key, data) => (isQueryData(data) ? changeQueryData : changeInfiniteQueryData)(key, items, action));
 }
 
 /** Add items to all queries that prefix-match `queryKey`. */
@@ -32,8 +28,5 @@ export function removeDetailQueriesById(client: QueryClient, detailBase: QueryKe
   if (idsToRemove.size === 0) return;
 
   const idIndex = detailBase.length;
-  client.removeQueries({
-    queryKey: detailBase,
-    predicate: ({ queryKey }) => idsToRemove.has(queryKey[idIndex] as string | number),
-  });
+  client.removeQueries({ queryKey: detailBase, predicate: ({ queryKey }) => idsToRemove.has(queryKey[idIndex] as string | number) });
 }

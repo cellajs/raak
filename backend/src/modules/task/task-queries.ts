@@ -63,9 +63,7 @@ export const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }
   if (actor.kind !== 'user') return [];
   const { organizationId } = requestScope(ctx, 'project');
   return db
-    .select({
-      ...getColumns(projectsTable),
-    })
+    .select({ ...getColumns(projectsTable) })
     .from(projectsTable)
     .innerJoin(
       membershipsTable,
@@ -100,10 +98,7 @@ interface FindProjectMemberUserIdsOpts {
   userIds: string[];
 }
 
-export const findProjectMemberUserIds = async (
-  ctx: ActorContext,
-  { projectId, userIds }: FindProjectMemberUserIdsOpts,
-) => {
+export const findProjectMemberUserIds = async (ctx: ActorContext, { projectId, userIds }: FindProjectMemberUserIdsOpts) => {
   const { db } = ctx.var;
   const { organizationId } = requestScope(ctx);
   return db
@@ -130,10 +125,7 @@ export const findProjectMembers = async (ctx: ActorContext, { projectIds }: Find
   return db
     .selectDistinct({ ...userMinimalBaseSelect, entityType: sql<'user'>`'user'` })
     .from(usersTable)
-    .innerJoin(
-      membershipsTable,
-      and(eq(membershipsTable.organizationId, organizationId), inArray(membershipsTable.projectId, projectIds)),
-    )
+    .innerJoin(membershipsTable, and(eq(membershipsTable.organizationId, organizationId), inArray(membershipsTable.projectId, projectIds)))
     .where(eq(usersTable.id, membershipsTable.userId))
     .orderBy(asc(usersTable.name));
 };
@@ -190,10 +182,7 @@ interface FindTasksPaginatedOpts {
  * COUNT(*) is skipped entirely; tasks are always project-scoped and thus never org-wide
  * counter-eligible, so non-delta reads resolve `total` via the exact COUNT(*).
  */
-export const findTasksPaginated = async (
-  ctx: DbContext,
-  { filters, orderBy, limit, offset, isDelta }: FindTasksPaginatedOpts,
-) => {
+export const findTasksPaginated = async (ctx: DbContext, { filters, orderBy, limit, offset, isDelta }: FindTasksPaginatedOpts) => {
   const { db } = ctx.var;
   const itemsQuery = db
     .select()
@@ -223,10 +212,7 @@ interface CountTasksByStatusOpts {
 export const countTasksByStatus = async (ctx: ActorContext, { projectId }: CountTasksByStatusOpts) => {
   const { db } = ctx.var;
   return db
-    .select({
-      status: tasksTable.status,
-      count: count(),
-    })
+    .select({ status: tasksTable.status, count: count() })
     .from(tasksTable)
     .where(and(eq(tasksTable.projectId, projectId), requestScopeWhere(ctx, tasksTable, 'task')))
     .groupBy(tasksTable.status);
@@ -246,13 +232,7 @@ export const filterExistingAttachmentIds = async (ctx: ActorContext, { ids }: Fi
   const rows = await db
     .select({ id: attachmentsTable.id })
     .from(attachmentsTable)
-    .where(
-      and(
-        inArray(attachmentsTable.id, ids),
-        requestScopeWhere(ctx, attachmentsTable, 'attachment'),
-        isNull(attachmentsTable.deletedAt),
-      ),
-    );
+    .where(and(inArray(attachmentsTable.id, ids), requestScopeWhere(ctx, attachmentsTable, 'attachment'), isNull(attachmentsTable.deletedAt)));
   const found = new Set(rows.map((row) => row.id));
   return ids.filter((id) => found.has(id));
 };

@@ -10,9 +10,7 @@ import { useCurrentUser } from '~/modules/user/user-store';
 function WelcomePage() {
   const user = useCurrentUser();
 
-  const [onboarding, setOnboardingState] = useState<OnboardingStates>(
-    user.userFlags.finishedOnboarding ? 'completed' : 'start',
-  );
+  const [onboarding, setOnboardingState] = useState<OnboardingStates>(user.userFlags.finishedOnboarding ? 'completed' : 'start');
   const [createdOrganization, setCreatedOrganization] = useState<Organization | null>(null);
 
   const onOpenChange = (nextOpen: boolean, eventDetails: { reason: string }) => {
@@ -26,10 +24,7 @@ function WelcomePage() {
   return (
     <>
       <Dialog open={onboarding !== 'completed'} onOpenChange={onOpenChange} defaultOpen={true}>
-        <DialogContent
-          aria-describedby={undefined}
-          className="mt-0 flex h-dvh max-h-none min-w-full flex-col overflow-y-auto rounded-none border-0 bg-background/75 p-0"
-        >
+        <DialogContent className="mt-0 flex h-dvh max-h-none min-w-full flex-col overflow-y-auto rounded-none border-0 bg-background/75 p-0">
           <span className="sr-only">
             <DialogTitle>Welcome</DialogTitle>
           </span>

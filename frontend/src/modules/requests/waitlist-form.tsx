@@ -9,9 +9,9 @@ import { appConfig } from 'shared';
 import type { z } from 'zod';
 import type { CallbackArgs } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useCreateRequestMutation } from '~/modules/requests/query';
-import { SubmitButton } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
@@ -31,15 +31,7 @@ interface WaitlistFormProps {
   callback?: (args: CallbackArgs) => void;
 }
 
-export function WaitlistForm({
-  email,
-  inputClassName,
-  buttonContent,
-  buttonClassName,
-  dialog: isDialog,
-  callback,
-  className,
-}: WaitlistFormProps) {
+export function WaitlistForm({ email, inputClassName, buttonContent, buttonClassName, dialog: isDialog, callback, className }: WaitlistFormProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -47,10 +39,7 @@ export function WaitlistForm({
 
   const { mutate: createRequest, isPending } = useCreateRequestMutation();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { email, type: 'waitlist', message: null },
-  });
+  const form = useForm<FormValues>({ resolver: zodResolver(formSchema), defaultValues: { email, type: 'waitlist', message: null } });
 
   const onSubmit = (body: FormValues) => {
     if (!onlineManager.isOnline()) return toaster.warning(t('c:action.offline.text'));
@@ -77,7 +66,7 @@ export function WaitlistForm({
           control={form.control}
           name="email"
           render={({ field }) => (
-            <FormItem className={`${!email ? '' : 'hidden'} w-full grow gap-0`}>
+            <FormItem className={cn('w-full grow gap-0', email && 'hidden')}>
               <FormControl>
                 <Input
                   {...field}
@@ -99,7 +88,7 @@ export function WaitlistForm({
           ) : (
             <>
               {t('c:join')}
-              <ArrowRightIcon className="ml-2" />
+              <ArrowRightIcon />
             </>
           )}
         </SubmitButton>

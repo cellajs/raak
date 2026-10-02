@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mailer, neutralizeBrevoTags } from '#/lib/mailer';
-import { describeDigestRow, renderSectionsHtml } from '#/modules/notification/digest/build-digest';
 import { digestEmail } from '#/modules/notification/emails/digest-email';
 import { mentionEmail } from '#/modules/notification/emails/mention-email';
-import { htmlToExcerpt } from '#/modules/notification/helpers/render-digest-html';
+import { describeDigestRow, htmlToExcerpt, renderSectionsHtml } from '#/modules/notification/helpers/render-digest-html';
 import type { SafeHtmlPolicy } from '../../emails/components/safe-html';
 import { emailPreviewFixtures } from '../../emails/preview-fixtures';
 import { render } from '../../emails/renderer/render';
@@ -22,12 +21,7 @@ const hostile = '<a href="https://evil.example">x</a>{{params.unsubscribeLink|sa
 
 /** pongo2's `escape` filter, which Brevo applies to every param it fills without `|safe`. */
 const pongoEscape = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+  value.replaceAll('&', '&amp;').replaceAll('>', '&gt;').replaceAll('<', '&lt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 
 /**
  * Brevo's side of a send, as pongo2 (its template engine) does it: `{{params.x}}` prints the value escaped,
@@ -73,14 +67,7 @@ afterEach(() => {
  * `{{params.x}}` escaped, and a param declared as app-built HTML through `{{params.x|safe}}`.
  */
 describe('Mails as Brevo fills them', () => {
-  const mentionRecipient = {
-    email: 'mentioned@example.test',
-    lng: 'en',
-    subjectTitle: 'Roadmap',
-    excerpt: 'See this',
-    link,
-    unsubscribeLink,
-  };
+  const mentionRecipient = { email: 'mentioned@example.test', lng: 'en', subjectTitle: 'Roadmap', excerpt: 'See this', link, unsubscribeLink };
 
   it('must not open a Brevo template tag via a name rendered into the mail', async () => {
     const hostileName = '{{ params.excerpt|safe }}{% autoescape off %}{# hidden';
@@ -118,7 +105,7 @@ describe('Mails as Brevo fills them', () => {
   it('fills the params a template names in its translated text (positive control)', async () => {
     const invite = await send(
       systemInviteEmail,
-      { senderName: '{{params.name}}', senderThumbnailUrl: null },
+      { senderName: '{{params.name}}' },
       { email: 'emily@example.test', lng: 'en', name: 'Emily', inviteLink: link },
     );
     expect(invite.html).toContain('Hi Emily,');
@@ -127,7 +114,7 @@ describe('Mails as Brevo fills them', () => {
 
     const verification = await send(
       oauthVerificationEmail,
-      { name: 'Emily', verificationLink: link, providerEmail: 'emily@provider.example', providerName: 'GitHub' },
+      { name: 'Emily', verificationLink: link, providerEmail: 'emily@provider.example', providerName: 'GitHub', isNewUser: false },
       { email: 'emily@example.test', lng: 'en' },
     );
     expect(verification.html).toContain('emily@example.test');
@@ -135,14 +122,7 @@ describe('Mails as Brevo fills them', () => {
 
   it('fills a mention excerpt escaped once', async () => {
     const excerpt = htmlToExcerpt('<p>Tom &amp; Jerry &lt;3</p>', 250);
-    const { html } = await send(
-      mentionEmail,
-      { actorName: 'Jane', channelName: 'Design 101' },
-      {
-        ...mentionRecipient,
-        excerpt,
-      },
-    );
+    const { html } = await send(mentionEmail, { actorName: 'Jane', channelName: 'Design 101' }, { ...mentionRecipient, excerpt });
 
     expect(html).toContain('Tom &amp; Jerry &lt;3');
     expect(html).not.toContain('&amp;amp;');
@@ -153,11 +133,7 @@ describe('Mails as Brevo fills them', () => {
       [{ channelId: 'c1', channelName: hostile, lines: [describeDigestRow('comment', hostile, 'en')], overflow: 0 }],
       'en',
     );
-    const { params, html } = await send(
-      digestEmail,
-      { daily: true },
-      { email: 'reader@example.test', lng: 'en', sectionsHtml, unsubscribeLink },
-    );
+    const { params, html } = await send(digestEmail, { daily: true }, { email: 'reader@example.test', lng: 'en', sectionsHtml, unsubscribeLink });
 
     expect(paramValue(params, 'sectionsHtml')).not.toMatch(tagOpener);
     expect(html).not.toMatch(anchorToEvil);
@@ -168,32 +144,17 @@ describe('Mails as Brevo fills them', () => {
 
   it('renders a digest section as HTML (positive control)', async () => {
     const sectionsHtml = renderSectionsHtml(
-      [
-        {
-          channelId: 'c1',
-          channelName: 'Design 101',
-          lines: [describeDigestRow('comment', 'Roadmap', 'en')],
-          overflow: 2,
-        },
-      ],
+      [{ channelId: 'c1', channelName: 'Design 101', lines: [describeDigestRow('comment', 'Roadmap', 'en')], overflow: 2 }],
       'en',
     );
-    const { html } = await send(
-      digestEmail,
-      { daily: false },
-      { email: 'reader@example.test', lng: 'en', sectionsHtml, unsubscribeLink },
-    );
+    const { html } = await send(digestEmail, { daily: false }, { email: 'reader@example.test', lng: 'en', sectionsHtml, unsubscribeLink });
 
     expect(html).toContain('<h3>Design 101</h3><ul><li>New comment on <strong>Roadmap</strong></li>');
     expect(html).toContain('<li>and 2 more</li></ul>');
   });
 
   it("keeps the mailer's own placeholders for Brevo to fill and escape (positive control)", async () => {
-    const { body, params } = await send(
-      mentionEmail,
-      { actorName: 'Jane', channelName: 'Design 101' },
-      mentionRecipient,
-    );
+    const { body, params } = await send(mentionEmail, { actorName: 'Jane', channelName: 'Design 101' }, mentionRecipient);
 
     for (const key of ['subjectTitle', 'excerpt', 'link']) {
       expect(body.htmlContent).toMatch(new RegExp(`\\{\\{params\\.${key}_[0-9a-f]{16}\\}\\}`));
@@ -205,9 +166,7 @@ describe('Mails as Brevo fills them', () => {
 
 describe('neutralizeBrevoTags', () => {
   /** Renders a template's preview as the mailer does and checks that the pass leaves it as it is. */
-  const expectUnchanged = async <TStatic, TRecipient extends EmailRecipient>(
-    def: EmailTemplateDef<TStatic, TRecipient>,
-  ) => {
+  const expectUnchanged = async <TStatic, TRecipient extends EmailRecipient>(def: EmailTemplateDef<TStatic, TRecipient>) => {
     const htmlParams: Partial<Record<string, SafeHtmlPolicy>> = { ...def.htmlParams };
     const keys = Object.keys(def.preview.recipient);
     const { subject, ...props } = def.translate('en', def.preview.statics);
@@ -226,8 +185,8 @@ describe('neutralizeBrevoTags', () => {
 
   it('keeps |safe only for a declared HTML param', () => {
     const content = '{{params.sectionsHtml|safe}} {{params.link|safe}} {{params.link}} {{params.other}}';
-    expect(
-      neutralizeBrevoTags(content, { params: ['sectionsHtml', 'link'], htmlParams: ['sectionsHtml'] }, 'html'),
-    ).toBe('{{params.sectionsHtml|safe}} &#123;{params.link|safe}} {{params.link}} &#123;{params.other}}');
+    expect(neutralizeBrevoTags(content, { params: ['sectionsHtml', 'link'], htmlParams: ['sectionsHtml'] }, 'html')).toBe(
+      '{{params.sectionsHtml|safe}} &#123;{params.link|safe}} {{params.link}} &#123;{params.other}}',
+    );
   });
 });

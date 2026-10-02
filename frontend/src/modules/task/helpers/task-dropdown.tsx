@@ -33,12 +33,7 @@ export type HandleDropdownProps = CommonDropdownProps &
         /** Open the "Selected" section collapsed even on mobile (labels already visible). */
         initialSelectedCollapsed?: boolean;
       }
-    | {
-        dropdownType: 'assignedTo';
-        value: UserMinimalBase[];
-        projectId: string;
-        onChange: (v: UserMinimalBase[]) => void;
-      }
+    | { dropdownType: 'assignedTo'; value: UserMinimalBase[]; projectId: string; onChange: (v: UserMinimalBase[]) => void }
     | { dropdownType: 'status'; value: TaskStatusType; onChange: (v: TaskStatusType) => void }
     | { dropdownType: 'primaryLabel'; value: string; projectId: string; onChange: (v: string) => void }
   );
@@ -67,21 +62,11 @@ export function handleTaskDropdownClick(props: HandleDropdownProps) {
       />
     );
   } else if (props.dropdownType === 'assignedTo') {
-    component = (
-      <SelectMembers
-        value={props.value}
-        projectId={props.projectId}
-        onChange={props.onChange}
-        taskId={taskId}
-        triggerWidth={width}
-      />
-    );
+    component = <SelectMembers value={props.value} projectId={props.projectId} onChange={props.onChange} taskId={taskId} triggerWidth={width} />;
   } else if (props.dropdownType === 'status') {
     component = <SelectStatus value={props.value} onChange={props.onChange} taskId={taskId} triggerWidth={width} />;
   } else {
-    component = (
-      <SelectPrimaryLabel value={props.value} projectId={props.projectId} onChange={props.onChange} taskId={taskId} />
-    );
+    component = <SelectPrimaryLabel value={props.value} projectId={props.projectId} onChange={props.onChange} taskId={taskId} />;
   }
 
   return useDropdowner.getState().create(component, options);

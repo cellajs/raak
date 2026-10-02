@@ -16,8 +16,9 @@ import type { ConditionalMediationResult } from '~/modules/auth/passkey-credenti
 import { isConditionalMediationAvailable, startConditionalMediation } from '~/modules/auth/passkey-credentials';
 import { PasskeyStrategy } from '~/modules/auth/passkey-strategy';
 import { invitationResumePath, useNavigateAfterAuth } from '~/modules/auth/use-post-auth-redirect';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Form, FormControl, FormField, FormItem } from '~/modules/ui/field';
 import { Input } from '~/modules/ui/input';
 import { useUserStore } from '~/modules/user/user-store';
@@ -32,18 +33,17 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function SignInStep() {
   const { t } = useTranslation();
-  const { email, resetSteps, restrictedMode, setStep, setSignedIn, setMagicLinkMode, inviteOtherAccount } =
-    useAuthStore(
-      useShallow((state) => ({
-        email: state.email,
-        resetSteps: state.resetSteps,
-        restrictedMode: state.restrictedMode,
-        setStep: state.setStep,
-        setSignedIn: state.setSignedIn,
-        setMagicLinkMode: state.setMagicLinkMode,
-        inviteOtherAccount: state.inviteOtherAccount,
-      })),
-    );
+  const { email, resetSteps, restrictedMode, setStep, setSignedIn, setMagicLinkMode, inviteOtherAccount } = useAuthStore(
+    useShallow((state) => ({
+      email: state.email,
+      resetSteps: state.resetSteps,
+      restrictedMode: state.restrictedMode,
+      setStep: state.setStep,
+      setSignedIn: state.setSignedIn,
+      setMagicLinkMode: state.setMagicLinkMode,
+      inviteOtherAccount: state.inviteOtherAccount,
+    })),
+  );
 
   const lastUser = useUserStore((state) => state.lastUser);
   const clearUserStore = useUserStore((state) => state.reset);
@@ -54,10 +54,7 @@ export function SignInStep() {
   const abortRef = useRef<AbortController | null>(null);
   const [conditionalMediationSupported, setConditionalMediationSupported] = useState(false);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { email },
-  });
+  const form = useForm<FormValues>({ resolver: zodResolver(formSchema), defaultValues: { email } });
 
   useEffect(() => {
     if (!enabledStrategies.includes('passkey')) return;
@@ -95,10 +92,7 @@ export function SignInStep() {
 
   const { mutate: sendMagic, isPending: isSending } = useMutation({
     // An invitation in hand: the magic link returns here, so it can be confirmed as the account signed in to.
-    mutationFn: () =>
-      sendMagicLink({
-        body: { email: form.getValues('email'), redirect: tokenId ? invitationResumePath(tokenId) : redirect },
-      }),
+    mutationFn: () => sendMagicLink({ body: { email: form.getValues('email'), redirect: tokenId ? invitationResumePath(tokenId) : redirect } }),
     onSuccess: () => {
       setMagicLinkMode('signin');
       setStep('magicLinkSent', form.getValues('email'));
@@ -137,17 +131,12 @@ export function SignInStep() {
       ) : (
         <h1 className="text-center text-2xl">
           {getTitle()} <br />
-          <AuthEmailButton
-            email={email}
-            onClick={resetAuth}
-            disabled={!!tokenId && !inviteOtherAccount}
-            className="mt-2"
-          />
+          <AuthEmailButton email={email} onClick={resetAuth} disabled={!!tokenId && !inviteOtherAccount} className="mt-2" />
         </h1>
       )}
 
       {(emailEnabled || isMagicLinkEnabled) && (
-        <form onSubmit={form.handleSubmit(onSubmit, defaultOnInvalid)} className="mt-0! flex flex-col gap-4">
+        <form onSubmit={form.handleSubmit(onSubmit, defaultOnInvalid)} className="flex flex-col gap-4">
           <FormField
             control={form.control}
             name="email"
@@ -168,7 +157,7 @@ export function SignInStep() {
             )}
           />
 
-          <SubmitButton loading={isMagicLinkEnabled && isSending} className="w-full gap-2">
+          <SubmitButton loading={isMagicLinkEnabled && isSending} className="w-full">
             {isMagicLinkEnabled ? (
               <>
                 <MailIcon />
@@ -177,7 +166,7 @@ export function SignInStep() {
             ) : (
               <>
                 {t('c:sign_in')}
-                <ArrowRightIcon className="ml-2" />
+                <ArrowRightIcon />
               </>
             )}
           </SubmitButton>

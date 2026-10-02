@@ -9,14 +9,8 @@ import { cn } from '~/utils/cn';
 /** A primitive card component for displaying task information during drag operations */
 export function TaskCardDragPreview({ task }: { task: Task }) {
   return (
-    <Card
-      tabIndex={0}
-      className={cn(
-        'is-collapsed rounded-none border bg-card/50 opacity-60',
-        taskCardVariants({ status: task.status }),
-      )}
-    >
-      <CardContent className="space-between flex flex-col p-4">
+    <Card tabIndex={0} className={cn('rounded-none border bg-card/50 opacity-60', taskCardVariants({ status: task.status }))}>
+      <CardContent className="flex flex-col p-4">
         <div className="flex w-full flex-row gap-1">
           <div className="-ml-0.5">
             <PrimaryLabelIcon label={task.primaryLabel} />

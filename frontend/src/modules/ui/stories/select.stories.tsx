@@ -1,15 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from '~/modules/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '~/modules/ui/select';
+
+/** Value-to-label map: lets the trigger show the label before the popup has ever opened. */
+const items = {
+  apple: 'Apple',
+  banana: 'Banana',
+  blueberry: 'Blueberry',
+  grapes: 'Grapes',
+  pineapple: 'Pineapple',
+  aubergine: 'Aubergine',
+  broccoli: 'Broccoli',
+  carrot: 'Carrot',
+  courgette: 'Courgette',
+  leek: 'Leek',
+  beef: 'Beef',
+  chicken: 'Chicken',
+  lamb: 'Lamb',
+  pork: 'Pork',
+};
 
 /**
  * Displays a list of options for the user to pick from, triggered by a button.
@@ -19,11 +28,9 @@ const meta: Meta<typeof Select> = {
   component: Select,
   tags: ['autodocs'],
   argTypes: {},
-  args: {
-    onValueChange: fn(),
-  },
+  args: { onValueChange: fn() },
   render: (args) => (
-    <Select {...args}>
+    <Select items={items} {...args}>
       <SelectTrigger title="Select" className="w-96">
         <SelectValue placeholder="Select a fruit" />
       </SelectTrigger>
@@ -58,9 +65,7 @@ const meta: Meta<typeof Select> = {
       </SelectContent>
     </Select>
   ),
-  parameters: {
-    layout: 'centered',
-  },
+  parameters: { layout: 'centered' },
 } satisfies Meta<typeof Select>;
 
 export default meta;

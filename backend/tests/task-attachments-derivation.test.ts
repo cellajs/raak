@@ -21,11 +21,7 @@ setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
 const projectId = generateId();
 const taskId = generateId();
-const attachmentIds = {
-  referenced: generateId(),
-  keyReferenced: generateId(),
-  unreferenced: generateId(),
-};
+const attachmentIds = { referenced: generateId(), keyReferenced: generateId(), unreferenced: generateId() };
 // UUID-shaped id with no attachment row behind it (doctored block prop)
 const unknownId = generateId();
 
@@ -36,10 +32,7 @@ const mediaBlock = (type: string, url: string, attachmentId: string) => ({
   children: [],
 });
 
-const updateStx = () => ({
-  ...mockStxBase(`stx:${generateId()}`),
-  fieldTimestamps: { description: generateServerHLC('test-client') },
-});
+const updateStx = () => ({ ...mockStxBase(`stx:${generateId()}`), fieldTimestamps: { description: generateServerHLC('test-client') } });
 
 // Covers the derived host array: task.attachments mirrors description media blocks
 // (attachmentId props), filtered to live in-org rows. The delete cascade is CDC-owned,
@@ -136,10 +129,7 @@ describe('Task attachments derivation (owned embedding host array)', async () =>
     const result = await putDescription(description);
     expect(result.response.status).toBe(200);
 
-    const [task] = await db
-      .select({ attachments: tasksTable.attachments })
-      .from(tasksTable)
-      .where(eq(tasksTable.id, taskId));
+    const [task] = await db.select({ attachments: tasksTable.attachments }).from(tasksTable).where(eq(tasksTable.id, taskId));
     expect([...task.attachments].sort()).toEqual([attachmentIds.referenced, attachmentIds.keyReferenced].sort());
   });
 
@@ -147,10 +137,7 @@ describe('Task attachments derivation (owned embedding host array)', async () =>
     const result = await putDescription('');
     expect(result.response.status).toBe(200);
 
-    const [task] = await db
-      .select({ attachments: tasksTable.attachments })
-      .from(tasksTable)
-      .where(eq(tasksTable.id, taskId));
+    const [task] = await db.select({ attachments: tasksTable.attachments }).from(tasksTable).where(eq(tasksTable.id, taskId));
     expect(task.attachments).toEqual([]);
   });
 
@@ -168,10 +155,7 @@ describe('Task attachments derivation (owned embedding host array)', async () =>
       .where(eq(attachmentsTable.projectId, projectId));
     for (const row of rows) expect(row.deletedAt).toBeNull();
 
-    const [task] = await db
-      .select({ deletedAt: tasksTable.deletedAt })
-      .from(tasksTable)
-      .where(eq(tasksTable.id, taskId));
+    const [task] = await db.select({ deletedAt: tasksTable.deletedAt }).from(tasksTable).where(eq(tasksTable.id, taskId));
     expect(task.deletedAt).not.toBeNull();
   });
 });

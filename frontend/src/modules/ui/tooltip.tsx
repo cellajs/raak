@@ -2,25 +2,14 @@ import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
 import type { ComponentPropsWithoutRef, ReactNode, RefAttributes } from 'react';
 import { cn } from '~/utils/cn';
 
-export function TooltipProvider({
-  delay = 200,
-  timeout = 400,
-  ...props
-}: {
-  children: ReactNode;
-  delay?: number;
-  timeout?: number;
-}) {
+export function TooltipProvider({ delay = 200, timeout = 400, ...props }: { children: ReactNode; delay?: number; timeout?: number }) {
   return <TooltipPrimitive.Provider data-slot="tooltip-provider" delay={delay} timeout={timeout} {...props} />;
 }
 
 export function Tooltip({
   disableHoverablePopup,
   ...props
-}: Omit<TooltipPrimitive.Root.Props, 'children'> & {
-  children?: ReactNode;
-  disableHoverablePopup?: boolean;
-}) {
+}: Omit<TooltipPrimitive.Root.Props, 'children'> & { children?: ReactNode; disableHoverablePopup?: boolean }) {
   return <TooltipPrimitive.Root data-slot="tooltip" disableHoverablePopup={disableHoverablePopup} {...props} />;
 }
 
@@ -54,7 +43,7 @@ export function TooltipContent({
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
-            'fade-in-0 zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 w-fit animate-in text-balance rounded-md bg-muted-foreground px-3 py-1.5 text-primary-foreground text-xs data-closed:animate-out max-sm:hidden',
+            'data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 w-fit origin-(--transform-origin) text-balance rounded-md bg-muted-foreground px-3 py-1.5 text-primary-foreground text-xs data-closed:animate-out data-open:animate-in max-sm:hidden',
             className,
           )}
           {...props}

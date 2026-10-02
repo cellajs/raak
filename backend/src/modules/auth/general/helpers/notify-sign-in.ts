@@ -2,11 +2,11 @@ import { and, eq, gt } from 'drizzle-orm';
 import { appConfig } from 'shared';
 import { baseDb as db } from '#/db/db';
 import { devicesTable } from '#/modules/auth/devices-db';
-import { sendAccountSecurityEmail } from '#/modules/auth/general/helpers/send-account-security-email';
+import { sendAccountSecurityEmail, sendSecurityInboxEmail } from '#/modules/auth/general/helpers/send-account-security-email';
 import type { SignInContext } from '#/modules/auth/general/helpers/session';
 import type { AuthStrategy } from '#/modules/auth/sessions-db';
 import type { UserModel } from '#/modules/user/user-db';
-import { getIsoDate } from '#/utils/iso-date';
+import { getIsoDate, utcStamp } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 import { TimeSpan } from '#/utils/time-span';
 
@@ -28,7 +28,8 @@ const inboxStrategies: AuthStrategy[] = ['magic', 'email'];
 const NOTICE_BUDGET = 3;
 const NOTICE_WINDOW = new TimeSpan(24, 'h');
 
-const strategyLabels: Record<AuthStrategy, string> = {
+/** Sign-in methods as people read them; a provider identity's issuer is its strategy slug. */
+export const strategyLabels: Record<AuthStrategy, string> = {
   passkey: 'Passkey',
   totp: 'Authenticator app',
   github: 'GitHub',
@@ -51,11 +52,7 @@ const countryName = (code: string, language: string) => {
 export const notifySignIn = ({ user, isSystemAdmin, context, strategy, newDevice }: SignInNotice) => {
   // A system admin session goes to the security inbox. Skipped in development, where every local sign-in would mail it.
   if (isSystemAdmin && appConfig.mode !== 'development') {
-    sendAccountSecurityEmail({ email: appConfig.securityEmail, name: 'Security' }, 'sysadmin-signin', {
-      email: user.email,
-      ip: context.rawIp ?? 'unknown',
-      timestamp: new Date().toISOString(),
-    });
+    sendSecurityInboxEmail('sysadmin-signin', { email: user.email, ip: context.rawIp ?? 'unknown', timestamp: new Date().toISOString() });
   }
 
   if (newDevice) void notifyNewSignIn({ user, context, strategy, newDevice });
@@ -75,10 +72,8 @@ export const notifyNewSignIn = async ({
 
   try {
     const since = new Date(Date.now() - NOTICE_WINDOW.milliseconds()).toISOString();
-    const sent = await db.$count(
-      devicesTable,
-      and(eq(devicesTable.userId, user.id), gt(devicesTable.notifiedAt, since)),
-    );
+    const notifiedRecently = and(eq(devicesTable.userId, user.id), gt(devicesTable.notifiedAt, since));
+    const sent = await db.$count(devicesTable, notifiedRecently);
 
     if (sent >= NOTICE_BUDGET) {
       log.info('New sign-in notice skipped: daily budget spent', { userId: user.id });
@@ -91,7 +86,7 @@ export const notifyNewSignIn = async ({
       .where(and(eq(devicesTable.userId, user.id), eq(devicesTable.deviceIdHash, newDevice.deviceIdHash)));
 
     sendAccountSecurityEmail(user, 'new-sign-in', {
-      timestamp: `${new Date().toISOString().slice(0, 19).replace('T', ' ')} UTC`,
+      timestamp: utcStamp(),
       browser: context.device.browser ?? 'unknown',
       os: context.device.os ?? 'unknown',
       // Omitted when GeoIP has no answer: the template then leaves the location line out entirely.

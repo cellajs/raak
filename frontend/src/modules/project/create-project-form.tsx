@@ -10,8 +10,9 @@ import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
+import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useProjectCreateMutation } from '~/modules/project/query';
-import { Button, SubmitButton } from '~/modules/ui/button';
+import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
@@ -30,14 +31,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
   const { workspace } = useWorkspaceContext();
 
   const formOptions: UseFormProps<FormValues> = useMemo(
-    () => ({
-      resolver: zodResolver(formSchema),
-      defaultValues: {
-        name: '',
-        slug: '',
-        publicAt: null,
-      },
-    }),
+    () => ({ resolver: zodResolver(formSchema), defaultValues: { name: '', slug: '', publicAt: null } }),
     [],
   );
 
@@ -60,15 +54,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
         onSuccess: async (createdProject) => {
           form.reset();
           if (isDialog) useDialoger.getState().remove();
-          navigate({
-            to: '.',
-            params: true,
-            resetScroll: false,
-            search: (prev) => ({
-              ...prev,
-              projectSlug: createdProject.slug,
-            }),
-          });
+          navigate({ to: '.', params: true, resetScroll: false, search: (prev) => ({ ...prev, projectSlug: createdProject.slug }) });
         },
       },
     );
@@ -92,10 +78,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
           render={({ field }) => (
             <FormItem className="flex-row items-center" name="publicAt">
               <FormControl>
-                <Checkbox
-                  checked={field.value !== null}
-                  onCheckedChange={(checked) => field.onChange(checked ? new Date().toISOString() : null)}
-                />
+                <Checkbox checked={field.value !== null} onCheckedChange={(checked) => field.onChange(checked ? new Date().toISOString() : null)} />
               </FormControl>
               <FormLabel>{t('c:public_access')}</FormLabel>
               <FormMessage />
@@ -106,13 +89,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:create')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={form.isDirty ? '' : 'invisible'}
-            aria-label="Cancel"
-            onClick={() => form.reset()}
-          >
+          <Button type="reset" variant="secondary" className={form.isDirty ? '' : 'invisible'} aria-label="Cancel" onClick={() => form.reset()}>
             {t('c:cancel')}
           </Button>
         </div>

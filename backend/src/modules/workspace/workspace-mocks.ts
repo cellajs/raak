@@ -24,22 +24,9 @@ const workspaceName = new UniqueEnforcer();
  * @param createdAt - Creation timestamp
  * @param organizationId - Parent organization ID
  */
-const generateWorkspaceBase = (
-  id: string,
-  name: string,
-  createdAt: string,
-  organizationId: string,
-  tenantId: string,
-) => {
+const generateWorkspaceBase = (id: string, name: string, createdAt: string, organizationId: string, tenantId: string) => {
   return {
-    ...mockChannelColumns('workspace', {
-      id,
-      name,
-      createdAt,
-      updatedAt: createdAt,
-      tenantId,
-      channelIds: { organizationId },
-    }),
+    ...mockChannelColumns('workspace', { id, name, createdAt, updatedAt: createdAt, tenantId, channelIds: { organizationId } }),
     organizationId,
   };
 };
@@ -61,12 +48,7 @@ export const mockWorkspace = (suffix?: string): InsertWorkspaceModel => {
  */
 export const mockWorkspaceResponse = (
   key = 'workspace:default',
-): WorkspaceModel & {
-  included: {
-    membership: MembershipBaseModel;
-    counts: ReturnType<typeof generateMockChannelCounts>;
-  };
-} =>
+): WorkspaceModel & { included: { membership: MembershipBaseModel; counts: ReturnType<typeof generateMockChannelCounts> } } =>
   withFakerSeed(key, () => {
     const createdAt = mockPastIsoDate();
     const workspaceId = mockUuid();
@@ -84,13 +66,7 @@ export const mockWorkspaceResponse = (
       tenantId,
     });
 
-    return {
-      ...base,
-      included: {
-        membership,
-        counts: generateMockChannelCounts('workspace', `${key}:counts`),
-      },
-    };
+    return { ...base, included: { membership, counts: generateMockChannelCounts('workspace', `${key}:counts`) } };
   });
 
 export const mockPaginatedWorkspacesResponse = (count = 2) => mockPaginated(mockWorkspaceResponse, count);

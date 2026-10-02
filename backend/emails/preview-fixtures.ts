@@ -1,3 +1,6 @@
+import { commentEmail } from '#/modules/notification/emails/comment-email';
+import { digestEmail } from '#/modules/notification/emails/digest-email';
+import { mentionEmail } from '#/modules/notification/emails/mention-email';
 import {
   accountExistsEmail,
   accountSecurityEmail,
@@ -38,6 +41,9 @@ const previewTemplates = {
   'request-was-sent': requestResponseEmail,
   'request-was-sent-admin': requestInfoEmail,
   'step-up': stepUpEmail,
+  mention: mentionEmail,
+  comment: commentEmail,
+  digest: digestEmail,
   // biome-ignore lint/suspicious/noExplicitAny: registry holds defs with differing generic params
 } satisfies Record<string, EmailTemplateDef<any, any>>;
 

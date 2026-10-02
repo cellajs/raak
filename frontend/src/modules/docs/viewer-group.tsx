@@ -2,10 +2,10 @@ import { BirdIcon, BracesIcon, FileTypeIcon, TextAlignStartIcon } from 'lucide-r
 import { AnimatePresence, motion } from 'motion/react';
 import { Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { GenRequest, GenSchema } from 'sdk/docs-types';
 import { JsonViewer } from '~/modules/common/json-viewer';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { lazyNamed } from '~/utils/lazy-named';
-import type { GenRequest, GenSchema, GenSchemaProperty } from './types';
 
 // Lazy: shiki and its grammars load when the code view opens, not with the docs route.
 const CodeViewer = lazyNamed(() => import('./code-viewer'), 'CodeViewer');
@@ -13,7 +13,7 @@ const CodeViewer = lazyNamed(() => import('./code-viewer'), 'CodeViewer');
 type SchemaViewMode = 'format' | 'zod' | 'type' | 'example';
 
 interface ViewerGroupProps {
-  schema: GenSchema | GenSchemaProperty | GenRequest;
+  schema: GenSchema | GenRequest;
   /** Code to display in zod mode */
   zodCode?: string;
   /** Code to display in type mode */
@@ -24,52 +24,15 @@ interface ViewerGroupProps {
   defaultViewMode?: SchemaViewMode;
 }
 
-export function ViewerGroup({
-  schema,
-  zodCode,
-  typeCode,
-  example,
-  defaultInspectDepth = 5,
-  defaultViewMode = 'format',
-}: ViewerGroupProps) {
+export function ViewerGroup({ schema, zodCode, typeCode, example, defaultInspectDepth = 5, defaultViewMode = 'format' }: ViewerGroupProps) {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<SchemaViewMode>(defaultViewMode);
 
-  const toggleItems: {
-    value: SchemaViewMode;
-    icon: typeof TextAlignStartIcon;
-    label: string;
-    ariaLabel: string;
-    show: boolean;
-  }[] = [
-    {
-      value: 'format',
-      icon: TextAlignStartIcon,
-      label: t('c:docs.format'),
-      ariaLabel: t('c:docs.view_format'),
-      show: true,
-    },
-    {
-      value: 'example',
-      icon: BirdIcon,
-      label: t('c:example'),
-      ariaLabel: t('c:docs.view_example'),
-      show: example !== undefined,
-    },
-    {
-      value: 'zod',
-      icon: BracesIcon,
-      label: t('c:docs.zod'),
-      ariaLabel: t('c:docs.view_zod'),
-      show: !!zodCode,
-    },
-    {
-      value: 'type',
-      icon: FileTypeIcon,
-      label: t('c:type'),
-      ariaLabel: t('c:docs.view_type'),
-      show: !!typeCode,
-    },
+  const toggleItems: { value: SchemaViewMode; icon: typeof TextAlignStartIcon; label: string; ariaLabel: string; show: boolean }[] = [
+    { value: 'format', icon: TextAlignStartIcon, label: t('c:docs.format'), ariaLabel: t('c:docs.view_format'), show: true },
+    { value: 'example', icon: BirdIcon, label: t('c:example'), ariaLabel: t('c:docs.view_example'), show: example !== undefined },
+    { value: 'zod', icon: BracesIcon, label: t('c:docs.zod'), ariaLabel: t('c:docs.view_zod'), show: !!zodCode },
+    { value: 'type', icon: FileTypeIcon, label: t('c:type'), ariaLabel: t('c:docs.view_type'), show: !!typeCode },
   ];
 
   return (
@@ -85,13 +48,8 @@ export function ViewerGroup({
         {toggleItems
           .filter((item) => item.show)
           .map(({ value, icon: Icon, label, ariaLabel }) => (
-            <ToggleGroupItem
-              key={value}
-              value={value}
-              aria-label={ariaLabel}
-              className="opacity-50 hover:opacity-70 data-pressed:opacity-100"
-            >
-              <Icon className="mr-1.5 h-4 w-4" />
+            <ToggleGroupItem key={value} value={value} aria-label={ariaLabel} className="opacity-50 hover:opacity-70 data-pressed:opacity-100">
+              <Icon className="mr-1.5 size-4" />
               <span className="text-xs lowercase">{label}</span>
             </ToggleGroupItem>
           ))}

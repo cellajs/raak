@@ -66,13 +66,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
         initialSelectedCollapsed: !isMobile || isExpandedMobile,
       });
     } else if (dropdownType === 'assignedTo') {
-      handleTaskDropdownClick({
-        ...base,
-        dropdownType,
-        value: task.assignedTo,
-        projectId: task.projectId,
-        onChange: handlers.onAssignedToChange,
-      });
+      handleTaskDropdownClick({ ...base, dropdownType, value: task.assignedTo, projectId: task.projectId, onChange: handlers.onAssignedToChange });
     } else if (dropdownType === 'status') {
       handleTaskDropdownClick({ ...base, dropdownType, value: task.status, onChange: handlers.onStatusChange });
     } else {
@@ -98,7 +92,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
     >
       {task.labels.length > 0 ? (
         isMobile && !isExpandedMobile ? (
-          <div className="flex flex-wrap items-center gap-0.5 truncate font-xs text-[.75rem]">
+          <div className="flex flex-wrap items-center gap-0.5 truncate text-[.75rem]">
             <Badge
               variant="outline"
               key={task.labels[0].id}
@@ -107,10 +101,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               {task.labels[0].name}
             </Badge>
             {task.labels.length > 1 && (
-              <Badge
-                variant="outline"
-                className="flex h-4 justify-center border-0 bg-transparent px-1 py-0 font-normal"
-              >
+              <Badge variant="outline" className="flex h-4 justify-center border-0 bg-transparent px-1 py-0 font-normal">
                 +{task.labels.length - 1}
               </Badge>
             )}
@@ -119,10 +110,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           <div className="flex flex-wrap gap-0.5 truncate">
             {task.labels.map(({ name, id }) => {
               return (
-                <div
-                  key={id}
-                  className="flex max-w-24 flex-wrap items-center justify-center rounded-full px-0 align-center"
-                >
+                <div key={id} className="flex max-w-24 flex-wrap items-center justify-center rounded-full px-0">
                   <Badge
                     variant="outline"
                     key={id}
@@ -145,8 +133,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
     <div
       className={cn(
         'flex flex-col',
-        isExpandedMobile &&
-          'group-[.is-expanded]/task:fade-in group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300',
+        isExpandedMobile && 'group-[.is-expanded]/task:fade-in group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300',
       )}
     >
       {/* On mobile, show labels on their own line above the footer when expanded */}
@@ -180,14 +167,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               <AvatarGroup limit={isMobile ? 2 : 3}>
                 <AvatarGroupList>
                   {task.assignedTo.map((user) => (
-                    <EntityAvatar
-                      type="user"
-                      key={user.id}
-                      id={user.id}
-                      name={user.name}
-                      url={user.thumbnailUrl}
-                      className="h-6 w-6 text-xs"
-                    />
+                    <EntityAvatar type="user" key={user.id} id={user.id} name={user.name} url={user.thumbnailUrl} className="h-6 w-6 text-xs" />
                   ))}
                 </AvatarGroupList>
                 <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
@@ -211,9 +191,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               )}
               {...readOnlyInert}
             >
-              {t(
-                `c:${readOnlyHide ? statusOptionsByValue[task.status].status : statusOptionsByValue[task.status].action}`,
-              )}
+              {t(`c:${readOnlyHide ? statusOptionsByValue[task.status].status : statusOptionsByValue[task.status].action}`)}
             </Button>
           </TooltipButton>
           <TooltipButton toolTipContent={statusTooltip} side="top">
@@ -231,7 +209,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               )}
               {...readOnlyInert}
             >
-              <ChevronDownIcon className="icon-sm" strokeWidth={2} />
+              <ChevronDownIcon className="size-3.5" strokeWidth={2} />
             </Button>
           </TooltipButton>
         </div>

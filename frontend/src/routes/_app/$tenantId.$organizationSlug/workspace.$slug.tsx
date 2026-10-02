@@ -13,10 +13,7 @@ export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/workspac
   validateSearch: boardSearchSchema,
   // Absence means default: params equal to the default view are stripped from the URL
   search: { middlewares: [stripSearchParams(boardSearchDefaults)] },
-  staticData: {
-    isAuth: true,
-    floatingNavButtons: { left: 'menu' },
-  },
+  staticData: { isAuth: true, floatingNavButtons: { left: 'menu' } },
   onLeave: () => resetTaskInteraction(),
   beforeLoad: workspaceRouteBeforeLoad,
   head: ({ match }) => {

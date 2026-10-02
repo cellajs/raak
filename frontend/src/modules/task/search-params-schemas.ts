@@ -9,13 +9,7 @@ const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board'
  * fallbacks. `order` is `desc` so the table opens newest-first; the board ignores order (its panels
  * sort by displayOrder), so this only shapes the table view.
  */
-export const boardSearchDefaults = {
-  q: '',
-  view: 'board',
-  sort: 'createdAt',
-  order: 'desc',
-  matchMode: 'all',
-} as const;
+export const boardSearchDefaults = { q: '', view: 'board', sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
 
 const baseTaskViewSchema = z.object({
   taskSheetId: z.string().optional(),
@@ -30,19 +24,16 @@ const baseTaskViewSchema = z.object({
 
 // Search schemas, some are also used in project routes
 /** Validates URL search parameters for tasks table. */
-export const tasksTableSearchSchema = zGetTasksQuery
-  .pick({ q: true, sort: true, order: true, matchMode: true })
-  .extend({
-    ...baseTaskViewSchema.shape,
-    // Newest-first by default (the API default is ascending); matches `boardSearchDefaults.order`.
-    order: z.enum(['asc', 'desc']).optional().default('desc'),
-  });
+export const tasksTableSearchSchema = zGetTasksQuery.pick({ q: true, sort: true, order: true, matchMode: true }).extend({
+  ...baseTaskViewSchema.shape,
+  // Newest-first by default (the API default is ascending); matches `boardSearchDefaults.order`.
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
+});
 
 /** Validates URL search parameters for tasks board. */
-export const tasksBoardSearchSchema = zGetTasksQuery.pick({ q: true, matchMode: true }).extend({
-  projectSlug: z.string().optional(),
-  ...baseTaskViewSchema.shape,
-});
+export const tasksBoardSearchSchema = zGetTasksQuery
+  .pick({ q: true, matchMode: true })
+  .extend({ projectSlug: z.string().optional(), ...baseTaskViewSchema.shape });
 
 /** Validates URL search parameters for board. */
 export const boardSearchSchema = z.object({ ...tasksBoardSearchSchema.shape, ...tasksTableSearchSchema.shape });

@@ -1,6 +1,6 @@
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import { CheckIcon, ChevronRightIcon, CircleIcon } from 'lucide-react';
-import type { ComponentProps, HTMLAttributes, RefAttributes, RefObject } from 'react';
+import type { ComponentProps, RefAttributes, RefObject } from 'react';
 import { cn } from '~/utils/cn';
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
@@ -20,16 +20,21 @@ function DropdownMenuContent({
   sideOffset = 4,
   side,
   align,
+  alignOffset,
   anchor,
   collisionPadding,
   finalFocus,
   container,
+  positionerClassName,
   ...props
 }: MenuPrimitive.Popup.Props &
   RefAttributes<HTMLDivElement> & {
     sideOffset?: number;
     side?: 'top' | 'bottom' | 'left' | 'right';
     align?: 'start' | 'center' | 'end';
+    alignOffset?: number;
+    /** Classes for the positioner, which owns the stacking layer: put z-index overrides here. */
+    positionerClassName?: string;
     anchor?: Element | null | RefObject<Element | null>;
     collisionPadding?: number;
     finalFocus?: MenuPrimitive.Popup.Props['finalFocus'];
@@ -42,14 +47,15 @@ function DropdownMenuContent({
         sideOffset={sideOffset}
         side={side}
         align={align}
+        alignOffset={alignOffset}
         anchor={anchor}
         collisionPadding={collisionPadding}
-        className="z-270"
+        className={cn('z-270', positionerClassName)}
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn(
-            'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 max-h-(--available-height) min-w-32 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-closed:animate-out data-open:animate-in',
+            'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 max-h-(--available-height) min-w-32 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-hidden data-closed:animate-out data-open:animate-in',
             className,
           )}
           finalFocus={finalFocus}
@@ -69,11 +75,7 @@ function DropdownMenuItem({
   inset,
   variant = 'default',
   ...props
-}: MenuPrimitive.Item.Props &
-  RefAttributes<HTMLDivElement> & {
-    inset?: boolean;
-    variant?: 'default' | 'destructive';
-  }) {
+}: MenuPrimitive.Item.Props & RefAttributes<HTMLDivElement> & { inset?: boolean; variant?: 'default' | 'destructive' }) {
   return (
     <MenuPrimitive.Item
       data-slot="dropdown-menu-item"
@@ -88,11 +90,7 @@ function DropdownMenuItem({
   );
 }
 
-function DropdownMenuCheckboxItem({
-  className,
-  children,
-  ...props
-}: MenuPrimitive.CheckboxItem.Props & RefAttributes<HTMLDivElement>) {
+function DropdownMenuCheckboxItem({ className, children, ...props }: MenuPrimitive.CheckboxItem.Props & RefAttributes<HTMLDivElement>) {
   return (
     <MenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
@@ -115,11 +113,7 @@ function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props & R
   return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
 
-function DropdownMenuRadioItem({
-  className,
-  children,
-  ...props
-}: MenuPrimitive.RadioItem.Props & RefAttributes<HTMLDivElement>) {
+function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.RadioItem.Props & RefAttributes<HTMLDivElement>) {
   return (
     <MenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
@@ -137,14 +131,7 @@ function DropdownMenuRadioItem({
   );
 }
 
-function DropdownMenuLabel({
-  className,
-  inset,
-  ...props
-}: MenuPrimitive.GroupLabel.Props &
-  RefAttributes<HTMLDivElement> & {
-    inset?: boolean;
-  }) {
+function DropdownMenuLabel({ className, inset, ...props }: MenuPrimitive.GroupLabel.Props & RefAttributes<HTMLDivElement> & { inset?: boolean }) {
   return (
     <MenuPrimitive.GroupLabel
       data-slot="dropdown-menu-label"
@@ -156,23 +143,11 @@ function DropdownMenuLabel({
 }
 
 function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props & RefAttributes<HTMLHRElement>) {
-  return (
-    <MenuPrimitive.Separator
-      data-slot="dropdown-menu-separator"
-      className={cn('-mx-1 my-1 h-px bg-border', className)}
-      {...props}
-    />
-  );
+  return <MenuPrimitive.Separator data-slot="dropdown-menu-separator" className={cn('-mx-1 my-1 h-px bg-border', className)} {...props} />;
 }
 
 function DropdownMenuShortcut({ className, ...props }: ComponentProps<'span'>) {
-  return (
-    <span
-      data-slot="dropdown-menu-shortcut"
-      className={cn('ml-auto text-muted-foreground text-xs tracking-widest', className)}
-      {...props}
-    />
-  );
+  return <span data-slot="dropdown-menu-shortcut" className={cn('ml-auto text-muted-foreground text-xs tracking-widest', className)} {...props} />;
 }
 
 function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
@@ -184,10 +159,7 @@ function DropdownMenuSubTrigger({
   inset,
   children,
   ...props
-}: MenuPrimitive.SubmenuTrigger.Props &
-  RefAttributes<HTMLDivElement> & {
-    inset?: boolean;
-  }) {
+}: MenuPrimitive.SubmenuTrigger.Props & RefAttributes<HTMLDivElement> & { inset?: boolean }) {
   return (
     <MenuPrimitive.SubmenuTrigger
       data-slot="dropdown-menu-sub-trigger"
@@ -204,27 +176,25 @@ function DropdownMenuSubTrigger({
   );
 }
 
+/** Submenu popup: the same content surface as the root menu, so long submenus scroll within the viewport. */
 function DropdownMenuSubContent({
+  align = 'start',
+  alignOffset = -3,
+  side = 'right',
+  sideOffset = 0,
   className,
-  container,
   ...props
-}: HTMLAttributes<HTMLDivElement> & {
-  className?: string;
-  container?: MenuPrimitive.Portal.Props['container'];
-}) {
+}: ComponentProps<typeof DropdownMenuContent>) {
   return (
-    <MenuPrimitive.Portal container={container}>
-      <MenuPrimitive.Positioner className="z-270">
-        <MenuPrimitive.Popup
-          data-slot="dropdown-menu-sub-content"
-          className={cn(
-            'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 min-w-32 origin-(--transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-closed:animate-out data-open:animate-in',
-            className,
-          )}
-          {...props}
-        />
-      </MenuPrimitive.Positioner>
-    </MenuPrimitive.Portal>
+    <DropdownMenuContent
+      data-slot="dropdown-menu-sub-content"
+      align={align}
+      alignOffset={alignOffset}
+      side={side}
+      sideOffset={sideOffset}
+      className={cn('shadow-lg', className)}
+      {...props}
+    />
   );
 }
 

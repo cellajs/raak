@@ -1,11 +1,7 @@
 import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/utils/preserve-offset-on-source';
-import {
-  attachClosestEdge,
-  type Edge,
-  extractClosestEdge,
-} from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import type { FocusEvent } from 'react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -44,9 +40,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
   const taskRef = useRef<HTMLDivElement>(null);
   const expandedAtRef = useRef<number>(0);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
-  const mobileClosestEdge = useMobileTaskDragIndicatorStore((store) =>
-    store.indicator?.taskId === task.id ? store.indicator.edge : null,
-  );
+  const mobileClosestEdge = useMobileTaskDragIndicatorStore((store) => (store.indicator?.taskId === task.id ? store.indicator.edge : null));
 
   // Cap editing to expanded in read-only mode
   const effectiveState = isReadOnly && state === 'editing' ? 'expanded' : state;
@@ -72,9 +66,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     if (selection && selection.toString().length > 0 && taskRef.current?.contains(selection.anchorNode)) return;
 
     // Ignore clicks on interactive elements
-    const interactive = clickTarget.closest(
-      'button, a, input, textarea, select, [role="button"], [role="checkbox"], label',
-    );
+    const interactive = clickTarget.closest('button, a, input, textarea, select, [role="button"], [role="checkbox"], label');
     if (interactive) return;
 
     // If collapsed, expand (read-only) or edit (normal)
@@ -136,11 +128,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       },
       getIsSticky: () => true,
       getData: ({ input }) =>
-        attachClosestEdge(getDraggableItemData(task, task.displayOrder, 'task', 'task'), {
-          element,
-          input,
-          allowedEdges: ['top', 'bottom'],
-        }),
+        attachClosestEdge(getDraggableItemData(task, task.displayOrder, 'task', 'task'), { element, input, allowedEdges: ['top', 'bottom'] }),
       onDrag: ({ self: { data: selfData }, source: { data: sourceData } }) => {
         if (!isTaskData(sourceData) || !isTaskData(selfData) || sourceData.item.id === task.id) return;
         setClosestEdge(extractClosestEdge(selfData));
@@ -183,21 +171,18 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         ref={taskRef}
         className={cn(
           'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent to-100% py-0 sm:py-0',
-          task.isMatchingSearch &&
-            (isFocused ? 'bg-green-500/20 hover:bg-green-500/30!' : 'bg-green-300/20 hover:bg-green-300/30!'),
-          effectiveState !== 'collapsed' ? 'is-expanded' : 'is-collapsed',
+          task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30!' : 'bg-green-300/20 hover:bg-green-300/30!'),
+          effectiveState !== 'collapsed' && 'is-expanded',
           dragging ? 'opacity-30' : 'opacity-100',
-          !isSheet && 'focus-visible:is-focused focus-visible:outline-none focus-visible:ring-0',
+          !isSheet && 'focus-visible:outline-none focus-visible:ring-0',
           isFocused && !isSheet && 'is-focused',
-          isSheet
-            ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]'
-            : 'hover:bg-card/20',
+          isSheet ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]' : 'hover:bg-card/20',
           taskCardVariants({ status: task.status }),
         )}
       >
         <CardContent
           id={`${task.id}-content`}
-          className="space-between relative flex flex-col p-1.5! px-2.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
+          className="relative flex flex-col p-1.5! px-2.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
         >
           <SeenMark
             productId={task.id}

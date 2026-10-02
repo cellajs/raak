@@ -16,12 +16,7 @@ export function WorkspaceRouteComponent() {
   const { view } = workspaceRouteApi.useSearch();
   return (
     <Suspense fallback={<Spinner className="mt-[45vh] h-10 w-10" />}>
-      <WorkspacePage
-        key={workspace.slug}
-        workspaceId={workspace.id}
-        organizationId={workspace.organizationId}
-        tenantId={tenantId}
-      >
+      <WorkspacePage key={workspace.slug} workspaceId={workspace.id} organizationId={workspace.organizationId} tenantId={tenantId}>
         {view === 'table' ? (
           <Suspense>
             <TasksTable workspace={workspace} organization={organization} tenantId={tenantId} />

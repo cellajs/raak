@@ -6,13 +6,14 @@ import { contactFormHandler } from '~/modules/common/contact-form/contact-form-h
 import { getDocPage } from '~/modules/page/content';
 import { Button } from '~/modules/ui/button';
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from '~/modules/ui/sidebar';
+import { tw } from '~/utils/tw';
 
 interface LinksSectionProps {
   label: string;
   onClose: () => void;
 }
 
-const rowClass = 'w-full justify-start px-3 font-medium lowercase';
+const rowClass = tw('w-full justify-start px-3 font-medium lowercase');
 
 export function LinksSection({ label, onClose }: LinksSectionProps) {
   const { t } = useTranslation();
@@ -24,16 +25,12 @@ export function LinksSection({ label, onClose }: LinksSectionProps) {
   return (
     <SidebarGroup>
       <div className="flex items-center gap-3 px-4 pr-1 pb-1">
-        <SidebarGroupLabel className="p-0 lowercase opacity-75">{label}</SidebarGroupLabel>
+        <SidebarGroupLabel className="p-0 text-muted-foreground lowercase">{label}</SidebarGroupLabel>
       </div>
       <SidebarGroupContent>
         <SidebarGroup className="flex flex-col gap-1 p-1 pt-0">
           {hasStatusPage && (
-            <Button
-              variant="ghost"
-              className={rowClass}
-              onClick={() => window.open(appConfig.statusUrl, '_blank', 'noopener,noreferrer')}
-            >
+            <Button variant="ghost" className={rowClass} onClick={() => window.open(appConfig.statusUrl, '_blank', 'noopener,noreferrer')}>
               {t('c:status')}
             </Button>
           )}
@@ -42,19 +39,11 @@ export function LinksSection({ label, onClose }: LinksSectionProps) {
             {t('c:contact_us')}
           </Button>
 
-          <Button
-            variant="ghost"
-            className={rowClass}
-            render={<Link to="/auth/authenticate" preload={false} draggable={false} onClick={onClose} />}
-          >
+          <Button variant="ghost" className={rowClass} render={<Link to="/auth/authenticate" preload={false} draggable={false} onClick={onClose} />}>
             {t('c:sign_in')}
           </Button>
 
-          <Button
-            variant="ghost"
-            className={rowClass}
-            render={<Link to="/docs/overview" draggable={false} onClick={onClose} />}
-          >
+          <Button variant="ghost" className={rowClass} render={<Link to="/docs/overview" draggable={false} onClick={onClose} />}>
             openapi.json
           </Button>
 

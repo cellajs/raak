@@ -105,11 +105,10 @@ export function OpenApiSpecViewer() {
   if (isLoading) return <Spinner />;
 
   if (error) {
+    const resource = t('c:docs.openapi_specification').toLowerCase();
     return (
       <div className="flex items-center justify-center p-12">
-        <span className="text-destructive">
-          {t('error:load_resource', { resource: t('c:docs.openapi_specification').toLowerCase() })}
-        </span>
+        <span className="text-destructive">{t('error:load_resource', { resource })}</span>
       </div>
     );
   }
@@ -132,12 +131,7 @@ export function OpenApiSpecViewer() {
           <InputGroupAddon>
             <SearchSpinner value={searchText} isSearching={false} />
           </InputGroupAddon>
-          <InputGroupInput
-            type="text"
-            placeholder={`${t('c:search')}...`}
-            value={searchText}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
+          <InputGroupInput type="text" placeholder={`${t('c:search')}...`} value={searchText} onChange={(e) => handleSearchChange(e.target.value)} />
           <AnimatePresence mode="wait">
             {isSearching ? (
               <motion.div
@@ -149,11 +143,7 @@ export function OpenApiSpecViewer() {
                 className="flex items-center overflow-hidden"
               >
                 <span className="whitespace-nowrap px-2 text-muted-foreground text-xs">
-                  {matchCount > 0
-                    ? currentMatchIndex >= 0
-                      ? `${currentMatchIndex + 1}/${matchCount}`
-                      : `${matchCount}`
-                    : t('c:no_results')}
+                  {matchCount > 0 ? (currentMatchIndex >= 0 ? `${currentMatchIndex + 1}/${matchCount}` : `${matchCount}`) : t('c:no_results')}
                 </span>
                 <button
                   type="button"
@@ -162,7 +152,7 @@ export function OpenApiSpecViewer() {
                   className="rounded p-1 hover:bg-muted disabled:opacity-30"
                   title={t('c:previous')}
                 >
-                  <ChevronUpIcon className="icon-sm" />
+                  <ChevronUpIcon className="size-3.5" />
                 </button>
                 <button
                   type="button"
@@ -171,7 +161,7 @@ export function OpenApiSpecViewer() {
                   className="mr-2 rounded p-1 hover:bg-muted disabled:opacity-30"
                   title={t('c:next')}
                 >
-                  <ChevronDownIcon className="icon-sm" />
+                  <ChevronDownIcon className="size-3.5" />
                 </button>
               </motion.div>
             ) : null}
@@ -201,13 +191,7 @@ export function OpenApiSpecViewer() {
         </Button>
 
         {/* Desktop-only actions; the mobile copy sits above the sticky bar */}
-        <JsonActions
-          url={openApiUrl}
-          data={data}
-          filename="openapi.json"
-          resourceName={t('c:docs.openapi_json')}
-          className="max-sm:hidden"
-        />
+        <JsonActions url={openApiUrl} data={data} filename="openapi.json" resourceName={t('c:docs.openapi_json')} className="max-sm:hidden" />
       </div>
 
       <div ref={viewerContainerRef} className="overflow-x-auto rounded-lg bg-muted/30 p-4">

@@ -37,10 +37,7 @@ export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Wo
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
       title: t('c:delete_resource', { resource: t('c:workspace').toLowerCase() }),
-      description: t('c:confirm.delete_resource', {
-        name: workspace.name,
-        resource: t('c:workspace').toLowerCase(),
-      }),
+      description: t('c:confirm.delete_resource', { name: workspace.name, resource: t('c:workspace').toLowerCase() }),
     });
   };
 
@@ -57,11 +54,7 @@ export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Wo
               if (workspace.slug !== updatedWorkspace.slug) {
                 navigate({
                   to: '/$tenantId/$organizationSlug/workspace/$slug',
-                  params: {
-                    tenantId: workspace.tenantId,
-                    slug: updatedWorkspace.slug,
-                    organizationSlug: updatedWorkspace.organizationId,
-                  },
+                  params: { tenantId: workspace.tenantId, slug: updatedWorkspace.slug, organizationSlug: updatedWorkspace.organizationId },
                   replace: true,
                 });
               }
@@ -74,21 +67,12 @@ export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Wo
         <CardHeader>
           <CardTitle>{t('c:delete_resource', { resource: t('c:workspace').toLowerCase() })}</CardTitle>
           <CardDescription>
-            <Trans
-              i18nKey={'c:delete_workspace_notice.text'}
-              values={{ name: workspace.name, resource: t('c:workspace').toLowerCase() }}
-            />
+            <Trans i18nKey={'c:delete_workspace_notice.text'} values={{ name: workspace.name, resource: t('c:workspace').toLowerCase() }} />
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            disabled={!canDelete}
-            ref={deleteButtonRef}
-            variant="destructive"
-            className="w-full sm:w-auto"
-            onClick={openDeleteDialog}
-          >
-            <Trash2Icon className="mr-2 h-4 w-4" />
+          <Button disabled={!canDelete} ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
+            <Trash2Icon className="h-4 w-4" />
             <span>{t('c:delete_resource', { resource: t('c:workspace').toLowerCase() })}</span>
           </Button>
           {!canDelete && (

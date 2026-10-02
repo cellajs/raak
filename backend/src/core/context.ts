@@ -34,9 +34,7 @@ export type Actor = UserActor | ServiceActor;
 export type ActorBinding = Actor['bindings'][number];
 
 /** Minimal context for query functions that only need a database connection. */
-export type DbContext = {
-  var: Pick<Env['Variables'], 'db'>;
-};
+export type DbContext = { var: Pick<Env['Variables'], 'db'> };
 
 /**
  * Someone acting inside a tenant, whatever proved them: no user row, so it stays callable with an API key or an access token.
@@ -48,17 +46,13 @@ export type ActorContext = {
 };
 
 /** An actor inside a resolved organization: what `orgGuard` guarantees. */
-export type OrgContext = {
-  var: ActorContext['var'] & Pick<Env['Variables'], 'organization' | 'organizationId'>;
-};
+export type OrgContext = { var: ActorContext['var'] & Pick<Env['Variables'], 'organization' | 'organizationId'> };
 
 /**
  * A signed-in user: everything in `OrgContext` plus `user`, `memberships` and the session. `userGuard` guarantees the
  * actor is a `UserActor`; the type keeps the union because Hono hands every handler the same `Env`.
  */
-export type UserContext = {
-  var: Omit<Env['Variables'], 'requestId'>;
-};
+export type UserContext = { var: Omit<Env['Variables'], 'requestId'> };
 
 /**
  * Request variables; the derived contexts pick from them, narrowest first: `DbContext` (a connection),

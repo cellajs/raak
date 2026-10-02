@@ -1,76 +1,26 @@
 import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import type * as React from 'react';
-import { createContext, useContext, useEffect, useRef, useSyncExternalStore } from 'react';
+import { createContext, useContext } from 'react';
 import { cn } from '~/utils/cn';
 
 // Context to pass the current value from Select to SelectItem for reliable checkmarks.
 // Works around a Base UI timing issue where ItemIndicator can show stale selection state.
 const SelectValueContext = createContext<string | null | undefined>(undefined);
 
-// Registry that lets SelectItem children register their displayed label so SelectValue
-// can render the label (e.g. "Banana") for a raw value (e.g. "banana").
-type LabelRegistry = {
-  register: (value: string, label: React.ReactNode) => () => void;
-  getLabel: (value: string | null) => React.ReactNode;
-  subscribe: (listener: () => void) => () => void;
-  getVersion: () => number;
-};
-const SelectLabelRegistryContext = createContext<LabelRegistry | null>(null);
-
-function useLabelRegistry(): LabelRegistry {
-  // Stable registry object so context value identity never changes (avoids infinite re-renders).
-  const ref = useRef<LabelRegistry | null>(null);
-  if (ref.current === null) {
-    const labels = new Map<string, React.ReactNode>();
-    const listeners = new Set<() => void>();
-    let version = 0;
-    const notify = () => {
-      version += 1;
-      listeners.forEach((l) => {
-        l();
-      });
-    };
-    ref.current = {
-      register(value, label) {
-        labels.set(value, label);
-        notify();
-        return () => {
-          labels.delete(value);
-          notify();
-        };
-      },
-      getLabel(value) {
-        if (value == null) return null;
-        return labels.has(value) ? labels.get(value) : value;
-      },
-      subscribe(listener) {
-        listeners.add(listener);
-        return () => listeners.delete(listener);
-      },
-      getVersion: () => version,
-    };
-  }
-  return ref.current;
-}
-
-// Override onValueChange to narrow Base UI's (string | null) to string for all consumers
-type SelectProps = Omit<SelectPrimitive.Root.Props<string>, 'onValueChange'> & {
-  onValueChange?: (value: string) => void;
-};
+// Override onValueChange to narrow Base UI's (string | null) to string for all consumers.
+// Pass `items` when labels differ from values: SelectValue reads them before the popup has ever mounted.
+type SelectProps = Omit<SelectPrimitive.Root.Props<string>, 'onValueChange'> & { onValueChange?: (value: string) => void };
 
 function Select({ onValueChange, value, ...props }: SelectProps) {
-  const registry = useLabelRegistry();
   return (
     <SelectValueContext.Provider value={value}>
-      <SelectLabelRegistryContext.Provider value={registry}>
-        <SelectPrimitive.Root
-          data-slot="select"
-          value={value}
-          onValueChange={onValueChange as SelectPrimitive.Root.Props<string>['onValueChange']}
-          {...props}
-        />
-      </SelectLabelRegistryContext.Provider>
+      <SelectPrimitive.Root
+        data-slot="select"
+        value={value}
+        onValueChange={onValueChange as SelectPrimitive.Root.Props<string>['onValueChange']}
+        {...props}
+      />
     </SelectValueContext.Provider>
   );
 }
@@ -79,28 +29,8 @@ function SelectGroup({ ...props }: SelectPrimitive.Group.Props & React.RefAttrib
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
-function SelectValue({
-  placeholder,
-  ...props
-}: SelectPrimitive.Value.Props &
-  React.RefAttributes<HTMLSpanElement> & {
-    placeholder?: string;
-  }) {
-  const registry = useContext(SelectLabelRegistryContext);
-  // Subscribe so SelectValue re-renders when items register/unregister labels.
-  useSyncExternalStore(
-    registry?.subscribe ?? (() => () => {}),
-    registry?.getVersion ?? (() => 0),
-    registry?.getVersion ?? (() => 0),
-  );
-  return (
-    <>
-      <SelectPrimitive.Value data-slot="select-value" {...props}>
-        {registry ? (value: string | null) => registry.getLabel(value) : undefined}
-      </SelectPrimitive.Value>
-      {placeholder && <span className="hidden [[data-placeholder]_&]:inline">{placeholder}</span>}
-    </>
-  );
+function SelectValue({ ...props }: SelectPrimitive.Value.Props & React.RefAttributes<HTMLSpanElement>) {
+  return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
 function SelectTrigger({
@@ -108,10 +38,7 @@ function SelectTrigger({
   size = 'default',
   children,
   ...props
-}: SelectPrimitive.Trigger.Props &
-  React.RefAttributes<HTMLButtonElement> & {
-    size?: 'sm' | 'default';
-  }) {
+}: SelectPrimitive.Trigger.Props & React.RefAttributes<HTMLButtonElement> & { size?: 'sm' | 'default' }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -123,7 +50,7 @@ function SelectTrigger({
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon render={<ChevronDownIcon className="size-4 text-regular opacity-50" />} />
+      <SelectPrimitive.Icon render={<ChevronDownIcon className="size-4 opacity-50" />} />
     </SelectPrimitive.Trigger>
   );
 }
@@ -170,9 +97,7 @@ function SelectContent({
           {...props}
         >
           <SelectScrollUpButton />
-          <SelectPrimitive.List
-            className={cn('p-1', position === 'popper' && 'w-full min-w-(--anchor-width) scroll-my-1')}
-          >
+          <SelectPrimitive.List className={cn('p-1', position === 'popper' && 'w-full min-w-(--anchor-width) scroll-my-1')}>
             {children}
           </SelectPrimitive.List>
           <SelectScrollDownButton />
@@ -183,28 +108,12 @@ function SelectContent({
 }
 
 function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props & React.RefAttributes<HTMLDivElement>) {
-  return (
-    <SelectPrimitive.GroupLabel
-      data-slot="select-label"
-      className={cn('px-2 py-1.5 text-muted-foreground text-xs', className)}
-      {...props}
-    />
-  );
+  return <SelectPrimitive.GroupLabel data-slot="select-label" className={cn('px-2 py-1.5 text-muted-foreground text-xs', className)} {...props} />;
 }
 
-function SelectItem({
-  className,
-  children,
-  ...props
-}: SelectPrimitive.Item.Props & React.RefAttributes<HTMLDivElement>) {
+function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props & React.RefAttributes<HTMLDivElement>) {
   const selectValue = useContext(SelectValueContext);
-  const registry = useContext(SelectLabelRegistryContext);
   const isSelected = selectValue !== undefined && props.value !== undefined && selectValue === props.value;
-
-  useEffect(() => {
-    if (!registry || typeof props.value !== 'string') return;
-    return registry.register(props.value, children);
-  }, [registry, props.value, children]);
 
   return (
     <SelectPrimitive.Item
@@ -224,23 +133,13 @@ function SelectItem({
   );
 }
 
-function SelectSeparator({
-  className,
-  ...props
-}: SelectPrimitive.Separator.Props & React.RefAttributes<HTMLHRElement>) {
+function SelectSeparator({ className, ...props }: SelectPrimitive.Separator.Props & React.RefAttributes<HTMLHRElement>) {
   return (
-    <SelectPrimitive.Separator
-      data-slot="select-separator"
-      className={cn('pointer-events-none -mx-1 my-1 h-px bg-border', className)}
-      {...props}
-    />
+    <SelectPrimitive.Separator data-slot="select-separator" className={cn('pointer-events-none -mx-1 my-1 h-px bg-border', className)} {...props} />
   );
 }
 
-function SelectScrollUpButton({
-  className,
-  ...props
-}: Partial<SelectPrimitive.ScrollUpArrow.Props> & React.RefAttributes<HTMLDivElement>) {
+function SelectScrollUpButton({ className, ...props }: Partial<SelectPrimitive.ScrollUpArrow.Props> & React.RefAttributes<HTMLDivElement>) {
   return (
     <SelectPrimitive.ScrollUpArrow
       data-slot="select-scroll-up-button"
@@ -252,10 +151,7 @@ function SelectScrollUpButton({
   );
 }
 
-function SelectScrollDownButton({
-  className,
-  ...props
-}: Partial<SelectPrimitive.ScrollDownArrow.Props> & React.RefAttributes<HTMLDivElement>) {
+function SelectScrollDownButton({ className, ...props }: Partial<SelectPrimitive.ScrollDownArrow.Props> & React.RefAttributes<HTMLDivElement>) {
   return (
     <SelectPrimitive.ScrollDownArrow
       data-slot="select-scroll-down-button"

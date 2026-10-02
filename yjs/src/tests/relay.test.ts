@@ -29,14 +29,9 @@ const storage = fakeStorage((call) => gates.get(call));
 vi.mock('../data/storage', () => storage);
 
 // No entity description by default: individual tests override to exercise seeding, and the pg pool in data/db stays uninstantiated.
-vi.mock('../data/entity-content', () => ({
-  loadEntityDescription: vi.fn().mockResolvedValue(null),
-}));
+vi.mock('../data/entity-content', () => ({ loadEntityDescription: vi.fn().mockResolvedValue(null) }));
 
-vi.mock('../sync/materialize', () => ({
-  postMaterialize: vi.fn().mockResolvedValue('ok'),
-  stateToBlocksJson: vi.fn(() => '[]'),
-}));
+vi.mock('../sync/materialize', () => ({ postMaterialize: vi.fn().mockResolvedValue('ok'), stateToBlocksJson: vi.fn(() => '[]') }));
 
 const { handleMessage, peekMessageType, runCompaction } = await import('../sync/relay');
 const { loadEntityDescription } = await import('../data/entity-content');
@@ -251,9 +246,7 @@ describe('handleMessage: sync step 1', () => {
     await storage.appendUpdate(scope, 'user-1', mapUpdate('logged', 1));
     await storage.appendUpdate(scope, 'user-x', undecodableUpdate);
 
-    await expect(
-      handleMessage(c, ws as never, buildSyncStep1(Y.encodeStateVector(new Y.Doc()))),
-    ).resolves.toBeUndefined();
+    await expect(handleMessage(c, ws as never, buildSyncStep1(Y.encodeStateVector(new Y.Doc())))).resolves.toBeUndefined();
     expect(readMap(decodeSyncStep2(ws.sent[1]))).toEqual({ base: true, logged: 1 });
   });
 
@@ -423,6 +416,24 @@ describe('handleMessage: awareness', () => {
     leaveCollab(collab.scope, other as never);
   });
 
+  it('reaches its sender as well as its peers, so an editor alone on its document keeps receiving frames', async () => {
+    const { ctx: c, scope, ws, collab } = session();
+    // Alone on the document: after the handshake its own presence is the only frame the relay sends it, and y-websocket
+    // closes a socket that received nothing for 30 s.
+    const own = buildAwarenessMessage(awarenessUpdate({ clientId: 1 }));
+    await handleMessage(c, ws as never, own);
+    expect(ws.sent).toEqual([own]);
+
+    const peer = mockWebSocket();
+    joinCollab(scope, peer as never);
+    vi.advanceTimersByTime(600);
+    const renewed = buildAwarenessMessage(awarenessUpdate({ clientId: 1, clock: 2 }));
+    await handleMessage(c, ws as never, renewed);
+    expect(ws.sent).toEqual([own, renewed]);
+    expect(peer.sent).toEqual([renewed]);
+    leaveCollab(collab.scope, peer as never);
+  });
+
   it('must not relay presence from an unverified, closing or unjoined socket', async () => {
     const { ctx: c, scope, ws, collab } = session();
     const peer = mockWebSocket();
@@ -463,11 +474,7 @@ describe('handleMessage: awareness ownership', () => {
     expect(peer.ws.sent.map(awarenessClientIds)).toEqual([[10]]);
 
     // A newer clock would win at every peer: a fake cursor under the victim's name, or its removal.
-    await handleMessage(
-      attacker.ctx,
-      attacker.ws as never,
-      buildAwarenessMessage(awarenessUpdate({ clientId: 10, clock: 99, state: null })),
-    );
+    await handleMessage(attacker.ctx, attacker.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 10, clock: 99, state: null })));
     expect(peer.ws.sent).toHaveLength(1);
 
     // Positive control: the attacker's own client is relayed.
@@ -484,13 +491,30 @@ describe('handleMessage: awareness ownership', () => {
     const sender = joined(scope, 'user-sender');
     await handleMessage(other.ctx, other.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 30 })));
 
-    await handleMessage(
-      sender.ctx,
-      sender.ws as never,
-      buildAwarenessMessage(awarenessUpdate({ clientId: 40 }, { clientId: 30, clock: 5 })),
-    );
+    await handleMessage(sender.ctx, sender.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 40 }, { clientId: 30, clock: 5 })));
     expect(peer.ws.sent.map(awarenessClientIds)).toEqual([[30], [40]]);
+    // The sender gets back what its peers get: its own entry alone.
+    expect(sender.ws.sent.map(awarenessClientIds)).toEqual([[30], [40]]);
     for (const ws of [peer.ws, other.ws, sender.ws]) leaveCollab(collab.scope, ws as never);
+  });
+
+  it("must not return another user's client to the sender: a frame of it alone reaches no socket, the sender's included", async () => {
+    const { scope, collab } = session();
+    const victim = joined(scope, 'user-victim');
+    const attacker = joined(scope, 'user-attacker');
+    await handleMessage(victim.ctx, victim.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 10 })));
+
+    await handleMessage(attacker.ctx, attacker.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 10, clock: 99, state: null })));
+    expect(attacker.ws.sent.map(awarenessClientIds)).toEqual([[10]]);
+    expect(victim.ws.sent.map(awarenessClientIds)).toEqual([[10]]);
+    expect(attacker.ws.closed).toBeNull();
+
+    // Positive control: the attacker's own client comes back to it and reaches the victim.
+    vi.advanceTimersByTime(600);
+    await handleMessage(attacker.ctx, attacker.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 20 })));
+    expect(attacker.ws.sent.map(awarenessClientIds)).toEqual([[10], [20]]);
+    expect(victim.ws.sent.map(awarenessClientIds)).toEqual([[10], [20]]);
+    for (const ws of [victim.ws, attacker.ws]) leaveCollab(collab.scope, ws as never);
   });
 
   it("lets a user's new socket take over its client, and frees a client whose socket left", async () => {
@@ -501,20 +525,12 @@ describe('handleMessage: awareness ownership', () => {
 
     // A reconnect of the same user announces the same client before the old socket's close is processed.
     const reconnect = joined(scope, 'user-a');
-    await handleMessage(
-      reconnect.ctx,
-      reconnect.ws as never,
-      buildAwarenessMessage(awarenessUpdate({ clientId: 50, clock: 2 })),
-    );
+    await handleMessage(reconnect.ctx, reconnect.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 50, clock: 2 })));
     expect(peer.ws.sent.map(awarenessClientIds)).toEqual([[50], [50]]);
 
     leaveCollab(collab.scope, reconnect.ws as never);
     const later = joined(scope, 'user-b');
-    await handleMessage(
-      later.ctx,
-      later.ws as never,
-      buildAwarenessMessage(awarenessUpdate({ clientId: 50, clock: 3 })),
-    );
+    await handleMessage(later.ctx, later.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 50, clock: 3 })));
     expect(peer.ws.sent).toHaveLength(3);
     for (const ws of [peer.ws, first.ws, later.ws]) leaveCollab(collab.scope, ws as never);
   });
@@ -548,16 +564,14 @@ describe('handleMessage: awareness ownership', () => {
 
     for (let i = 0; i < 5; i++) {
       vi.advanceTimersByTime(600);
-      await handleMessage(
-        attacker.ctx,
-        attacker.ws as never,
-        buildAwarenessMessage(awarenessUpdate({ clientId: 2_000 + i })),
-      );
+      await handleMessage(attacker.ctx, attacker.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 2_000 + i })));
     }
 
     expect(attacker.ws.closed).toEqual({ code: 4400, reason: 'Too many awareness clients' });
     expect(heldBy(collab, attacker.ws)).toEqual([2000, 2001, 2002, 2003]);
     expect(peer.ws.sent.map(awarenessClientIds)).toEqual([[2000], [2001], [2002], [2003]]);
+    // The refused frame comes back to no one, its sender included.
+    expect(attacker.ws.sent.map(awarenessClientIds)).toEqual([[2000], [2001], [2002], [2003]]);
     // The clients a socket held go with it.
     leaveCollab(collab.scope, attacker.ws as never);
     expect(collab.awarenessOwners.size).toBe(0);
@@ -585,11 +599,7 @@ describe('handleMessage: awareness ownership', () => {
     for (const [i, tab] of tabs.entries()) {
       await handleMessage(tab.ctx, tab.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 70 + i })));
       vi.advanceTimersByTime(600);
-      await handleMessage(
-        editor.ctx,
-        editor.ws as never,
-        buildAwarenessMessage(awarenessUpdate({ clientId: 70 + i, clock: 2 })),
-      );
+      await handleMessage(editor.ctx, editor.ws as never, buildAwarenessMessage(awarenessUpdate({ clientId: 70 + i, clock: 2 })));
     }
     expect(editor.ws.closed).toBeNull();
     expect(heldBy(collab, editor.ws)).toContain(60);

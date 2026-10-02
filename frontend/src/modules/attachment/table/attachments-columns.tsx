@@ -1,13 +1,18 @@
-import { UserIcon } from 'lucide-react';
+import i18n from 'i18next';
+import { TrashIcon, UserIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Attachment } from 'sdk';
 import { hierarchy, resolveCan, seenWindowMs } from 'shared';
-import { DownloadCell, EllipsisCell, ThumbnailCell } from '~/modules/attachment/table/attachment-cells';
+import { DeleteAttachments } from '~/modules/attachment/delete-attachments';
+import { DownloadCell, ThumbnailCell } from '~/modules/attachment/table/attachment-cells';
 import { DescriptionCell, openDescriptionSheetFromCell } from '~/modules/attachment/table/description-cell';
 import { EditCellInput, externalEditorOptions, RenderExternalEditor } from '~/modules/common/data-grid/cell-renderers';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
+import { dateColumn, ellipsisColumn } from '~/modules/common/data-table/columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
+import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { openPopConfirm } from '~/modules/common/popconfirm';
 import type { EnrichedChannel } from '~/modules/entities/types';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { UserCell } from '~/modules/user/user-cell';
@@ -56,12 +61,7 @@ export const useColumns = (channel: EnrichedChannel, isSheet: boolean) => {
         minWidth: 180,
         renderCell: ({ row }) => (
           <>
-            <SeenMark
-              productId={row.id}
-              tenantId={channel.tenantId}
-              organizationId={channel.id}
-              productType="attachment"
-            />
+            <SeenMark productId={row.id} tenantId={channel.tenantId} organizationId={channel.id} productType="attachment" />
             <span className="truncate font-medium">{row.name || '-'}</span>
           </>
         ),
@@ -95,22 +95,28 @@ export const useColumns = (channel: EnrichedChannel, isSheet: boolean) => {
         width: 32,
         renderCell: ({ row, tabIndex }) => <DownloadCell row={row} tabIndex={tabIndex} />,
       },
-      {
-        key: 'ellipsis',
-        name: '',
-        maxBreakpoint: 'sm',
-        width: 32,
-        renderCell: ({ row, tabIndex }) => (
-          <EllipsisCell
-            row={row}
-            tabIndex={tabIndex}
-            canDelete={resolveCan(deleteState, row.createdBy?.id ?? null, userId, {
-              row: hierarchy.resolveDeepestAncestorId('attachment', row),
-              channel: channelId,
-            })}
-          />
-        ),
-      },
+      // Delete is the only row action, so a row the user cannot delete gets no menu.
+      ellipsisColumn<Attachment>((row) => {
+        const canDelete = resolveCan(deleteState, row.createdBy?.id ?? null, userId, {
+          row: hierarchy.resolveDeepestAncestorId('attachment', row),
+          channel: channelId,
+        });
+        if (!canDelete) return [];
+
+        return [
+          {
+            label: i18n.t('c:delete'),
+            icon: TrashIcon,
+            onSelect: (row) => {
+              const { remove } = useDropdowner.getState();
+              openPopConfirm(
+                i18n.t('c:delete_confirm.text', { name: row.name }),
+                <DeleteAttachments attachments={[row]} callback={remove} onCancel={remove} />,
+              );
+            },
+          },
+        ];
+      }, 'sm'),
       {
         key: 'filename',
         name: t('c:filename'),
@@ -118,9 +124,7 @@ export const useColumns = (channel: EnrichedChannel, isSheet: boolean) => {
         resizable: true,
         minWidth: 140,
         renderCell: ({ row }) => (
-          <span className="truncate underline-offset-4 group-hover:underline">
-            {row.filename || <span className="text-muted">-</span>}
-          </span>
+          <span className="truncate underline-offset-4 group-hover:underline">{row.filename || <span className="text-muted">-</span>}</span>
         ),
       },
       {
@@ -129,9 +133,7 @@ export const useColumns = (channel: EnrichedChannel, isSheet: boolean) => {
         minBreakpoint: 'md',
         width: 100,
         renderCell: ({ row }) => (
-          <div className="group relative inline-flex h-full w-full items-center gap-1 opacity-50">
-            {formatBytes(row.size)}
-          </div>
+          <div className="group relative inline-flex size-full items-center gap-1 text-muted-foreground/70">{formatBytes(row.size)}</div>
         ),
       },
       {
@@ -145,35 +147,24 @@ export const useColumns = (channel: EnrichedChannel, isSheet: boolean) => {
 
           return (
             <span
-              className="inline-flex h-full w-full items-center"
+              className="inline-flex size-full items-center"
               data-tooltip={outsideSeenWindow ? 'true' : undefined}
               data-tooltip-content={outsideSeenWindow ? t('c:views_retention_hint') : undefined}
             >
               <UserIcon className="mr-2 opacity-50" />
-              <span className={cn(outsideSeenWindow && 'text-muted-foreground/60')}>{row.viewCount ?? 0}</span>
+              <span className={cn(outsideSeenWindow && 'text-muted-foreground/70')}>{row.viewCount ?? 0}</span>
             </span>
           );
         },
       },
-      {
-        key: 'createdAt',
-        name: t('c:created_at'),
-        sortable: true,
-        sortDescendingFirst: true,
-        hidden: isSheet,
-        minBreakpoint: 'md',
-        minWidth: 120,
-        placeholderValue: '-',
-        renderCell: ({ row }) => dateShort(row.createdAt),
-      },
+      dateColumn('createdAt', { name: t('c:created_at'), hidden: isSheet }),
       {
         key: 'createdBy',
         name: t('c:created_by'),
         hidden: true,
         minWidth: 160,
         placeholderValue: '-',
-        renderCell: ({ row, tabIndex }) =>
-          row.createdBy && <UserCell compactable user={row.createdBy} tabIndex={tabIndex} />,
+        renderCell: ({ row, tabIndex }) => row.createdBy && <UserCell compactable user={row.createdBy} tabIndex={tabIndex} />,
       },
       {
         key: 'updatedAt',
@@ -189,8 +180,7 @@ export const useColumns = (channel: EnrichedChannel, isSheet: boolean) => {
         hidden: true,
         width: 160,
         placeholderValue: '-',
-        renderCell: ({ row, tabIndex }) =>
-          row.updatedBy && <UserCell compactable user={row.updatedBy} tabIndex={tabIndex} />,
+        renderCell: ({ row, tabIndex }) => row.updatedBy && <UserCell compactable user={row.updatedBy} tabIndex={tabIndex} />,
       },
     ],
     [canUpdate, deleteState, channelId, userId, isSheet],

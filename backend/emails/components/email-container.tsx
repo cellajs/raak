@@ -8,13 +8,7 @@ interface EmailContainerProps {
   children: React.ReactNode;
 }
 
-export const EmailContainer = ({
-  previewText,
-  bodyStyle,
-  containerStyle,
-  headChildren,
-  children,
-}: EmailContainerProps) => (
+export const EmailContainer = ({ previewText, bodyStyle, containerStyle, headChildren, children }: EmailContainerProps) => (
   <Html>
     <Head>{headChildren}</Head>
     <Preview>{previewText}</Preview>
@@ -27,11 +21,7 @@ export const EmailContainer = ({
         ...bodyStyle,
       }}
     >
-      <Container style={{ maxWidth: '30rem', width: '100%', margin: '0 auto', ...containerStyle }}>
-        {children}
-      </Container>
+      <Container style={{ maxWidth: '30rem', width: '100%', margin: '0 auto', ...containerStyle }}>{children}</Container>
     </Body>
   </Html>
 );
-
-export const Template = EmailContainer;

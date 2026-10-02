@@ -2,7 +2,7 @@ import { createHash, generateKeyPairSync, randomBytes, sign } from 'node:crypto'
 import { isoCBOR } from '@simplewebauthn/server/helpers';
 import { appConfig } from 'shared';
 
-/** The relying party ID the backend verifies against (`passkeys/helpers/passkey.ts`). */
+/** The relying party ID the backend verifies against (`passkeys/operations/passkey-challenges.ts`). */
 const appRpId = appConfig.mode === 'development' ? 'localhost' : appConfig.domain;
 
 const sha256 = (data: string | Buffer) => createHash('sha256').update(data).digest();
@@ -61,9 +61,7 @@ export function softwarePasskey({ credentialId = randomBytes(16).toString('base6
   const attest = (challenge: string, options: Omit<AssertOptions, 'counter'> = {}) => {
     // Flags: user present, user verified, attested credential data included.
     const { origin = appConfig.frontendUrl, rpId = appRpId, flags = 0x45 } = options;
-    const clientDataJSON = Buffer.from(
-      JSON.stringify({ type: 'webauthn.create', challenge, origin, crossOrigin: false }),
-    );
+    const clientDataJSON = Buffer.from(JSON.stringify({ type: 'webauthn.create', challenge, origin, crossOrigin: false }));
     const idBytes = Buffer.from(credentialId, 'base64url');
     const idLength = Buffer.alloc(2);
     idLength.writeUInt16BE(idBytes.length);

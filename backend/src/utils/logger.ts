@@ -14,9 +14,7 @@ export const isBenchTraffic = (userId?: string, tenantId?: string) => {
 };
 
 /** Ambient log context: the live Hono ctx, or a synthetic { var } for worker jobs. */
-export type LogContext = {
-  var: Partial<Pick<Env['Variables'], 'tenantId' | 'userId' | 'organizationId' | 'requestId'>>;
-} | null;
+export type LogContext = { var: Partial<Pick<Env['Variables'], 'tenantId' | 'userId' | 'organizationId' | 'requestId'>> } | null;
 
 const logContextStorage = new AsyncLocalStorage<LogContext>();
 
@@ -28,13 +26,9 @@ export const runWithLogContext = <T>(ctx: LogContext, fn: () => T): T => logCont
 
 const extractBase = (ctx: LogContext) => {
   if (!ctx?.var) return {};
+  // Pino leaves undefined values out of the line, so unset ids need no guard.
   const { tenantId, userId, organizationId, requestId } = ctx.var;
-  return {
-    ...(tenantId && { tenantId }),
-    ...(userId && { userId }),
-    ...(organizationId && { organizationId }),
-    ...(requestId && { requestId }),
-  };
+  return { tenantId, userId, organizationId, requestId };
 };
 
 const logAt =

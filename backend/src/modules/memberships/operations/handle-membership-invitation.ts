@@ -7,11 +7,7 @@ import { deleteInvitationTokens } from '#/modules/auth/tokens/tokens-queries';
 import { resolveEntity } from '#/modules/entities/entities-queries';
 import { insertMemberships } from '#/modules/memberships/helpers/membership-helpers';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
-import {
-  bindInactiveMemberships,
-  findClaimableInactiveMembership,
-  findInactiveMembershipForUser,
-} from '#/modules/memberships/memberships-queries';
+import { bindInactiveMemberships, findClaimableInactiveMembership, findInactiveMembershipForUser } from '#/modules/memberships/memberships-queries';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
@@ -79,17 +75,12 @@ export async function handleMembershipInvitationOp(
       await deleteInvitationTokens({ var: { db: tx } }, { inactiveMembershipIds: [inactiveMembership.id] });
     }
   });
-
-  // The guards cache the user's memberships: the next request sees the new one, in-app and by token alike.
-  if (acceptOrReject === 'accept') await invalidateCache.user(baseDb, userId);
+  if (acceptOrReject === 'accept') invalidateCache.user(userId);
 
   const organizationId = inactiveMembership.organizationId;
   if (!organizationId) throw new AppError(500, 'server_error', 'error', { entityType: 'organization' });
 
-  const entity = await resolveEntity(
-    { var: { db: baseDb } },
-    { entityType: 'organization', identifier: organizationId },
-  );
+  const entity = await resolveEntity({ var: { db: baseDb } }, { entityType: 'organization', identifier: organizationId });
   if (!entity) throw new AppError(404, 'not_found', 'error', { entityType: 'organization' });
 
   return entity;

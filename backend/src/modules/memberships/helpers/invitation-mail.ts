@@ -1,13 +1,10 @@
 import { appConfig, type ChannelEntityType, type EntityRole } from 'shared';
 import type { DbContext } from '#/core/context';
 import { mailer } from '#/lib/mailer';
+import { tokenLinkUrl } from '#/modules/auth/tokens/token-policies';
 import { findAccountLanguages } from '#/modules/memberships/memberships-queries';
 import { slugFromEmail } from '#/utils/slug-from-email';
 import { memberAddedEmail, memberInviteEmail, memberInviteWithTokenEmail, systemInviteEmail } from '../../../../emails';
-
-/** The link an emailed invitation token opens. */
-export const invitationTokenLink = (rawToken: string) =>
-  `${appConfig.backendAuthUrl}/invoke-token/invitation/${rawToken}`;
 
 export interface InvitedAddress {
   email: string;
@@ -19,7 +16,7 @@ export interface InvitedAddress {
 
 interface InvitationMailOpts {
   /** The inviter: named in the mail, and replies reach them. */
-  sender: { name: string; thumbnailUrl: string | null; email?: string };
+  sender: { name: string; email?: string };
   /** The invited channel and role; a system invitation names none. */
   channel?: { type: ChannelEntityType; slug: string; name: string; role: EntityRole };
   /** Whose default language an address without an account reads. */
@@ -38,18 +35,17 @@ interface InvitationMailOpts {
 export async function sendInvitationMails(ctx: DbContext, opts: InvitationMailOpts): Promise<void> {
   const { sender, channel, organization, invited, added = [] } = opts;
 
-  const languages = await findAccountLanguages(ctx, {
-    userIds: [...invited, ...added].flatMap(({ userId }) => (userId ? [userId] : [])),
-  });
+  const userIds = [...invited, ...added].flatMap(({ userId }) => (userId ? [userId] : []));
+  const languages = await findAccountLanguages(ctx, { userIds });
   const recipient = ({ email, userId }: InvitedAddress) => ({
     email,
     lng: (userId && languages.get(userId)) || organization?.defaultLanguage || appConfig.defaultLanguage,
     name: slugFromEmail(email),
   });
   const withToken = invited.flatMap((address) =>
-    address.rawToken ? [{ ...recipient(address), inviteLink: invitationTokenLink(address.rawToken) }] : [],
+    address.rawToken ? [{ ...recipient(address), inviteLink: tokenLinkUrl('invitation', address.rawToken) }] : [],
   );
-  const senderProps = { senderName: sender.name, senderThumbnailUrl: sender.thumbnailUrl };
+  const senderProps = { senderName: sender.name };
 
   if (!channel) {
     if (withToken.length) await mailer.prepareEmails(systemInviteEmail, senderProps, withToken, sender.email);
@@ -58,9 +54,7 @@ export async function sendInvitationMails(ctx: DbContext, opts: InvitationMailOp
 
   const statics = { ...senderProps, entityName: channel.name, role: channel.role };
   const page = `${appConfig.frontendUrl}/${channel.type}/${channel.slug}`;
-  const withoutToken = invited.flatMap((address) =>
-    address.rawToken ? [] : [{ ...recipient(address), memberInviteLink: page }],
-  );
+  const withoutToken = invited.flatMap((address) => (address.rawToken ? [] : [{ ...recipient(address), memberInviteLink: page }]));
   const addedRecipients = added.map((address) => ({ ...recipient(address), entityLink: page }));
 
   if (withToken.length) await mailer.prepareEmails(memberInviteWithTokenEmail, statics, withToken, sender.email);

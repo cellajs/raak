@@ -80,14 +80,7 @@ export const cards: InfoCard[] = [];
 
 export const pricingPlans: PricingPlan[] = [
   { id: 'free', action: 'waitlist_request', priceId: null, featureCount: 4, borderColor: '', discount: 'Free' },
-  {
-    id: 'pro',
-    action: 'contact_us',
-    priceId: null,
-    featureCount: 6,
-    borderColor: 'ring-4 ring-primary/5',
-    popular: true,
-  },
+  { id: 'pro', action: 'contact_us', priceId: null, featureCount: 6, borderColor: 'ring-4 ring-primary/5', popular: true },
 ];
 
 /*************************************************************************************************
@@ -142,9 +135,7 @@ export const featureCategoryIcons = {} as const;
 
 /** Lists the synchronization features shown on the marketing page. */
 export const syncPageItems: InfoGridItem[] = [];
-export const syncCategoryIcons = {
-  sync: ZapIcon,
-} as const;
+export const syncCategoryIcons = { sync: ZapIcon } as const;
 
 /*************************************************************************************************
  * About - Showcase

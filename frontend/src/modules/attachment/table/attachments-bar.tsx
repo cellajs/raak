@@ -8,16 +8,10 @@ import type { AttachmentsTableProps } from '~/modules/attachment/table/attachmen
 import { useAttachmentsUploadDialog } from '~/modules/attachment/table/use-attachments-upload-dialog';
 import type { AttachmentsRouteSearchParams } from '~/modules/attachment/types';
 import { AlertBanner } from '~/modules/common/alerter/alert-banner';
-import { ColumnsView } from '~/modules/common/data-table/columns-view';
 import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
-import { TableBarContainer } from '~/modules/common/data-table/table-bar-container';
-import { TableCount } from '~/modules/common/data-table/table-count';
-import { FilterBarActions, FilterBarSearch, TableFilterBar } from '~/modules/common/data-table/table-filter-bar';
-import { TableSearch } from '~/modules/common/data-table/table-search';
+import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/table-bar-shell';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { FocusView } from '~/modules/common/focus-view';
-import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
@@ -42,10 +36,7 @@ export function AttachmentsTableBar({
   const isOrganization = channel.entityType === 'organization';
   const organizationId = !isOrganization && 'organizationId' in channel ? String(channel.organizationId) : channel.id;
   const publicAt = 'publicAt' in channel && typeof channel.publicAt === 'string' ? channel.publicAt : null;
-  const placement = {
-    ...(isOrganization ? {} : { [appConfig.entityIdColumnKeys[channel.entityType]]: channel.id }),
-    publicAt,
-  };
+  const placement = { ...(!isOrganization && { [appConfig.entityIdColumnKeys[channel.entityType]]: channel.id }), publicAt };
   const { open } = useAttachmentsUploadDialog(channel.tenantId, organizationId, placement);
   const resolveCan = useResolveCan();
 
@@ -53,28 +44,12 @@ export function AttachmentsTableBar({
 
   const total = useListQueryTotal(queryKey);
 
-  const { q } = searchVars;
-
-  const isFiltered = !!q;
-  const showUpload = canUpload && !isFiltered;
+  const barFilters = useTableBarFilters({ searchVars, setSearch, clearSelection, reset: { q: '' } });
 
   // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
   const deletable = selected.filter((row) =>
-    resolveCan(channel.can?.attachment?.delete, row.createdBy, {
-      row: hierarchy.resolveDeepestAncestorId('attachment', row),
-      channel: channel.id,
-    }),
+    resolveCan(channel.can?.attachment?.delete, row.createdBy, { row: hierarchy.resolveDeepestAncestorId('attachment', row), channel: channel.id }),
   );
-
-  const onSearch = (searchString: string) => {
-    clearSelection();
-    setSearch({ q: searchString });
-  };
-
-  const onResetFilters = () => {
-    setSearch({ q: '' });
-    clearSelection();
-  };
 
   const openDeleteDialog = () => {
     createDialog(<DeleteAttachments dialog attachments={deletable} callback={clearSelection} />, {
@@ -90,26 +65,18 @@ export function AttachmentsTableBar({
   };
 
   return (
-    <>
-      <TableBarContainer searchVars={searchVars}>
-        <TableFilterBar onResetFilters={onResetFilters} isFiltered={isFiltered}>
-          <FilterBarActions>
-            {showUpload && <TableBarButton icon={UploadIcon} label="c:upload" onClick={() => open()} />}
-            <TableCount count={total} label="c:attachment" isFiltered={isFiltered} onResetFilters={onResetFilters} />
-          </FilterBarActions>
-          <div className="sm:grow" />
-          <FilterBarSearch>
-            <TableSearch name="attachmentSearch" value={q} setQuery={onSearch} allowOfflineSearch={true} />
-          </FilterBarSearch>
-        </TableFilterBar>
-
-        <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns} />
-
-        {!isSheet && <FocusView iconOnly />}
-      </TableBarContainer>
-
-      <SelectionActionBar count={selected.length} onClear={clearSelection}>
-        {deletable.length > 0 && (
+    <TableBarShell
+      {...barFilters}
+      {...{ searchVars, total, columns, setColumns }}
+      label="c:attachment"
+      searchName="attachmentSearch"
+      allowOfflineSearch
+      actions={canUpload && <TableBarButton icon={UploadIcon} label="c:upload" onClick={() => open()} />}
+      focusView={!isSheet}
+      selection={{
+        count: selected.length,
+        onClear: clearSelection,
+        children: deletable.length > 0 && (
           <TableBarButton
             ref={deleteButtonRef}
             variant="destructive"
@@ -119,14 +86,15 @@ export function AttachmentsTableBar({
             icon={TrashIcon}
             label="c:delete"
           />
-        )}
-      </SelectionActionBar>
-
-      {!!total && (
-        <AlertBanner id="edit_attachment" variant="plain" className="mb-4" icon={InfoIcon} animate>
-          {t('c:edit_attachment.text')}
-        </AlertBanner>
-      )}
-    </>
+        ),
+      }}
+      after={
+        !!total && (
+          <AlertBanner id="edit_attachment" variant="plain" className="mb-4" icon={InfoIcon} animate>
+            {t('c:edit_attachment.text')}
+          </AlertBanner>
+        )
+      }
+    />
   );
 }

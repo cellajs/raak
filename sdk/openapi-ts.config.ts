@@ -4,36 +4,20 @@ import { defineConfig as openapiParserPlugin } from './src/plugins/openapi-parse
 import { defineConfig as tsdocPlugin } from './src/plugins/tsdoc';
 
 /**
- * Generate the SDK from cached OpenAPI. The incremental wrapper targets a staging directory
- * first so identical output does not trigger writes or HMR.
+ * Generation config for one output directory. The incremental wrapper in `src/generate-sdk.ts` targets a
+ * staging directory first so identical output does not trigger writes or HMR; the CLI targets `./gen` directly.
  */
-export const openApiConfig: UserConfig = {
-  input: {
-    path: '../backend/openapi.cache.json',
-    watch: false,
-  },
-  output: {
-    path: './gen',
-    source: {
-      fileName: 'openapi',
-      path: './gen',
-    },
-  },
-  parser: {
-    transforms: {
-      readWrite: false,
-    },
-  },
+export const createOpenApiConfig = (outputPath: string): UserConfig => ({
+  input: { path: '../backend/openapi.cache.json', watch: false },
+  output: { path: outputPath, source: { fileName: 'openapi', path: outputPath } },
+  parser: { transforms: { readWrite: false } },
   plugins: [
     tsdocPlugin(),
     openapiParserPlugin(),
     'zod',
     { name: '@hey-api/sdk', responseStyle: 'data', validator: 'zod' },
-    {
-      name: '@hey-api/client-fetch',
-      throwOnError: true,
-    },
+    { name: '@hey-api/client-fetch', throwOnError: true },
   ],
-};
+});
 
-export default defineConfig(openApiConfig);
+export default defineConfig(createOpenApiConfig('./gen'));

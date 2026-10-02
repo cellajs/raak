@@ -15,17 +15,13 @@ type Labels = z.infer<typeof labelEmbeddedSchema>;
 type ReturnTask = z.infer<typeof taskSchema>;
 
 /** Map task DB models to hydrated task responses with user and label data. */
-const mapTask = (
-  task: TaskModel,
-  userMap: Map<string, UserMinimalBaseSchemas>,
-  labelMap: Map<string, Labels>,
-): ReturnTask => {
+const mapTask = (task: TaskModel, userMap: Map<string, UserMinimalBaseSchemas>, labelMap: Map<string, Labels>): ReturnTask => {
   const taskLabels = task.labels as string[];
   const taskAssignedTo = [...new Set(task.assignedTo as string[])];
 
   const labels = taskLabels.map((id) => labelMap.get(id)).filter(Boolean) as Labels[];
-  const assignedTo = (taskAssignedTo.map((id) => userMap.get(id)).filter(Boolean) as UserMinimalBaseSchemas[]).sort(
-    (a, b) => a.name.localeCompare(b.name, appConfig.defaultLanguage),
+  const assignedTo = (taskAssignedTo.map((id) => userMap.get(id)).filter(Boolean) as UserMinimalBaseSchemas[]).sort((a, b) =>
+    a.name.localeCompare(b.name, appConfig.defaultLanguage),
   );
 
   return {
@@ -53,9 +49,7 @@ export const hydrateTask = (task: TaskModel, members: UserMinimalBaseSchemas[], 
 
 /** Fetch users and labels referenced by one or more tasks. */
 export const getTaskRelations = async (ctx: ActorContext, { tasks }: { tasks: TaskModel[] }) => {
-  const userIds = Array.from(
-    new Set(tasks.flatMap((t) => [t.createdBy, t.updatedBy, ...t.assignedTo].filter((u) => u !== null))),
-  );
+  const userIds = Array.from(new Set(tasks.flatMap((t) => [t.createdBy, t.updatedBy, ...t.assignedTo].filter((u) => u !== null))));
   const labelIds = Array.from(new Set(tasks.flatMap((t) => [...t.labels, t.primaryLabelId])));
   return findTaskRelations(ctx, { userIds, labelIds });
 };

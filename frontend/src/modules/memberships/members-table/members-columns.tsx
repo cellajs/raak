@@ -2,9 +2,11 @@ import { BoxIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig, type ChannelEntityType, hierarchy, isChannel } from 'shared';
+import { exportDate } from '~/lib/export';
 import { hiddenMemberCountColumns, memberStatIcons } from '~/members-config';
 import { enumSelectEditorOptions, RenderEnumSelect } from '~/modules/common/data-grid/cell-renderers';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
+import { dateColumn } from '~/modules/common/data-table/columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { Member } from '~/modules/memberships/types';
 import { Badge } from '~/modules/ui/badge';
@@ -56,9 +58,8 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
         resizable: true,
         placeholderValue: '-',
         renderCell: ({ row }) =>
-          row.membership ? (
-            <div className="group relative inline-flex h-full w-full items-center gap-1">{t(row.membership.role)}</div>
-          ) : null,
+          row.membership ? <div className="group relative inline-flex size-full items-center gap-1">{t(row.membership.role)}</div> : null,
+        exportValue: (row) => row.membership && t(row.membership.role),
         width: 100,
         ...(isAdmin && {
           editable: true,
@@ -74,17 +75,7 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
           ),
         }),
       },
-      {
-        key: 'createdAt',
-        name: t('c:created_at'),
-        sortable: true,
-        sortDescendingFirst: true,
-        hidden: isSheet,
-        minBreakpoint: 'md',
-        minWidth: 120,
-        placeholderValue: '-',
-        renderCell: ({ row }) => dateShort(row.createdAt),
-      },
+      dateColumn('createdAt', { name: t('c:created_at'), hidden: isSheet }),
       {
         key: 'lastSeenAt',
         name: t('c:last_seen_at'),
@@ -101,6 +92,7 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
               {t('c:inactive')}
             </Badge>
           ),
+        exportValue: (row) => exportDate(row.lastSeenAt),
       },
       // Per-member insight columns from include=counts: when the member last posted in this
       // channel, their authored counts within it, and their sub-channel membership counts.
@@ -116,6 +108,7 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
           const lastPostedAt = row.counts?.activity[memberStatProductTypes[0]];
           return lastPostedAt ? dateShort(new Date(lastPostedAt)) : null;
         },
+        exportValue: (row) => exportDate(row.counts?.activity[memberStatProductTypes[0]]),
       },
       ...memberStatProductTypes.map((type): ColumnOrColumnGroup<Member> => {
         const Icon = memberStatIcons[type] ?? BoxIcon;
@@ -132,13 +125,12 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
               {row.counts?.products[type] ?? '-'}
             </>
           ),
+          exportValue: (row) => row.counts?.products[type],
         };
       }),
       ...hierarchy
         .getOrderedDescendants(entityType)
-        .filter(
-          (type): type is Exclude<ChannelEntityType, 'organization'> => isChannel(type) && type !== 'organization',
-        )
+        .filter((type): type is Exclude<ChannelEntityType, 'organization'> => isChannel(type) && type !== 'organization')
         .map(
           (type): ColumnOrColumnGroup<Member> => ({
             key: `${type}Count`,
@@ -153,6 +145,7 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
                 {row.counts?.memberships[type] ?? '-'}
               </>
             ),
+            exportValue: (row) => row.counts?.memberships[type] as number | undefined,
           }),
         ),
     ];

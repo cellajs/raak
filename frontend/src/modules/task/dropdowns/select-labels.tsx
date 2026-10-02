@@ -8,6 +8,7 @@ import { labelSlug } from 'shared/config/labels-config';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
@@ -27,14 +28,7 @@ import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
 import { labelColors } from '~/modules/task/task-styles';
 import type { TaskLabel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
-import {
-  Combobox,
-  ComboboxGroup,
-  ComboboxGroupLabel,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxSearchInput,
-} from '~/modules/ui/combobox';
+import { Combobox, ComboboxGroup, ComboboxGroupLabel, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { COALESCED } from '~/query/offline/prepared-mutation';
@@ -63,10 +57,7 @@ const renderLabelItem = (
     <ComboboxItem
       key={label.id}
       value={label.slug}
-      className={cn(
-        'group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal',
-        isSelected && 'font-medium',
-      )}
+      className={cn('group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal', isSelected && 'font-medium')}
     >
       <LabelModeIcon className="mr-1 ml-0.5 size-3.5 shrink-0 opacity-50" />
       <div className={cn('grow', label.projectId !== projectId && !isSelected && 'opacity-50')}>{label.name}</div>
@@ -89,15 +80,10 @@ export function SelectLabels({
 }: SelectLabelsProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
-  const { tenantId, organization } = useOrganizationLayoutContext();
-
-  const organizationId = organization.id;
+  const { organizationId, tenantId } = useOrganizationLayoutContext();
 
   // Auto-detect workspace from route context if not passed as prop
-  const workspaceMatch = useMatch({
-    from: '/_app/$tenantId/$organizationSlug/workspace/$slug',
-    shouldThrow: false,
-  });
+  const workspaceMatch = useMatch({ from: '/_app/$tenantId/$organizationSlug/workspace/$slug', shouldThrow: false });
   const workspaceId = workspaceIdProp ?? (workspaceMatch?.context as { workspace?: { id: string } })?.workspace?.id;
 
   // Reactively read the workspace's projects from cache (enabled → subscribes so labels re-scope
@@ -137,10 +123,7 @@ export function SelectLabels({
 
   // Derive initLabels directly from query data. Memoized so a keystroke (searchValue) doesn't rebuild
   // it and invalidate the searchResults / suggestedLabels memos that depend on its identity.
-  const initLabels = useMemo(
-    () => deduplicateLabels(labels, projectId, organizationId),
-    [labels, projectId, organizationId],
-  );
+  const initLabels = useMemo(() => deduplicateLabels(labels, projectId, organizationId), [labels, projectId, organizationId]);
 
   // Search results filtered by query
   const searchResults = useMemo(() => {
@@ -326,17 +309,12 @@ export function SelectLabels({
                 )}
                 <ComboboxGroup>
                   <ComboboxGroupLabel>{t('c:suggested')}</ComboboxGroupLabel>
-                  {suggestedLabels.map((label, index) =>
-                    renderLabelItem(label, selectedLabels, projectId, searchValue, index),
-                  )}
+                  {suggestedLabels.map((label, index) => renderLabelItem(label, selectedLabels, projectId, searchValue, index))}
                 </ComboboxGroup>
               </>
             )}
             {searchValue.trim() !== '' && !projectLabels.some((l) => l.slug === labelSlug(searchValue)) && (
-              <ComboboxItem
-                value={`${CREATE_SENTINEL_PREFIX}${searchValue}`}
-                className={cn(comboboxActionButtonClass, 'mt-1')}
-              >
+              <ComboboxItem value={`${CREATE_SENTINEL_PREFIX}${searchValue}`} className={cn(comboboxActionButtonClass, 'mt-1')}>
                 {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
                 <Badge className="ml-2 flex px-2 py-0" variant="plain">
                   {searchValue}

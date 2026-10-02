@@ -16,15 +16,7 @@ import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
 import { filterWithRejection, takeWithRestriction } from '#/utils/rejection-utils';
 
-const defaultTaskStatusCounts = {
-  accepted: 0,
-  reviewed: 0,
-  delivered: 0,
-  finished: 0,
-  started: 0,
-  unstarted: 0,
-  iced: 0,
-};
+const defaultTaskStatusCounts = { accepted: 0, reviewed: 0, delivered: 0, finished: 0, started: 0, unstarted: 0, iced: 0 };
 
 type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 
@@ -40,10 +32,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   const resolvedWorkspaceId = await resolveProjectWorkspaceId(ctx, workspaceId);
 
   // Check if adding is allowed based on the organization's restrictions
-  const currentProjectsCount = await getOrganizationEntityCount(ctx, {
-    organizationId: organization.id,
-    entityType: 'project',
-  });
+  const currentProjectsCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'project' });
   const projectRestrictions = ctx.var.tenant.restrictions.quotas.project;
 
   const availableSlots = projectRestrictions === 0 ? items.length : projectRestrictions - currentProjectsCount;
@@ -103,7 +92,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
 
   // Invalidate membership cache so subsequent requests see the new membership
-  await invalidateCache.user(db, user.id);
+  invalidateCache.user(user.id);
 
   // Build counts for response
   const counts = buildZeroCounts('project');
@@ -116,10 +105,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
     const membership = membershipByProjectId.get(project.id)!;
     return {
       ...project,
-      included: {
-        membership: toMembershipBase(membership),
-        counts: { ...counts, taskStatusCounts: defaultTaskStatusCounts },
-      },
+      included: { membership: toMembershipBase(membership), counts: { ...counts, taskStatusCounts: defaultTaskStatusCounts } },
     };
   });
 

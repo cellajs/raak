@@ -88,12 +88,7 @@ export const createLogger = ({
     ? { target: 'pino/file', options: { destination: 1 } }
     : {
         target: 'pino-pretty',
-        options: {
-          colorize: true,
-          singleLine: true,
-          ignore: 'pid,hostname',
-          ...transportOptions,
-        },
+        options: { colorize: true, singleLine: true, ignore: 'pid,hostname', ...transportOptions },
       };
 
   // pino-opentelemetry-transport runs in a worker thread with its own OTLP exporter, so it needs
@@ -113,10 +108,7 @@ export const createLogger = ({
               recordProcessorType: 'batch',
               exporterOptions: {
                 protocol: 'http',
-                httpExporterOptions: {
-                  url: MAPLE_LOGS_INGEST_URL,
-                  headers: { 'x-maple-ingest-key': mapleSecretIngestKey },
-                },
+                httpExporterOptions: { url: MAPLE_LOGS_INGEST_URL, headers: { 'x-maple-ingest-key': mapleSecretIngestKey } },
               },
             },
           },
@@ -126,11 +118,7 @@ export const createLogger = ({
   // Without OTel: raw stdout in production (no worker thread), pretty transport in dev.
   const destination =
     injectedDestination ??
-    (otelTarget
-      ? pino.transport({ targets: [consoleTarget, otelTarget] })
-      : isProduction
-        ? undefined
-        : pino.transport(consoleTarget));
+    (otelTarget ? pino.transport({ targets: [consoleTarget, otelTarget] }) : isProduction ? undefined : pino.transport(consoleTarget));
 
   return pino(
     {

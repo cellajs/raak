@@ -86,9 +86,7 @@ export async function waitForImages(opts: WaitOptions): Promise<{ ok: boolean; m
   // allSettled so a fail-fast abort in one poller never leaves a sibling's later rejection unhandled.
   const aborted = outcomes.find((outcome) => outcome.status === 'rejected');
   if (aborted?.status === 'rejected') throw aborted.reason;
-  const missing = outcomes.flatMap((outcome) =>
-    outcome.status === 'fulfilled' && outcome.value ? [outcome.value] : [],
-  );
+  const missing = outcomes.flatMap((outcome) => (outcome.status === 'fulfilled' && outcome.value ? [outcome.value] : []));
 
   return { ok: missing.length === 0, missing };
 }

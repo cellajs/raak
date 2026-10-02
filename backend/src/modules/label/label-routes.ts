@@ -61,19 +61,11 @@ const labelsRoutes = {
     tags: ['labels', 'app', 'product'],
     summary: 'Get list of labels',
     description: 'Returns a list of labels for a given project or workspace.',
-    request: {
-      params: tenantOrgParamSchema,
-      query: labelListQuerySchema,
-    },
+    request: { params: tenantOrgParamSchema, query: labelListQuerySchema },
     responses: {
       200: {
         description: 'Label list',
-        content: {
-          'application/json': {
-            schema: paginationSchema(labelSchema),
-            example: mockPaginatedLabelsResponse(),
-          },
-        },
+        content: { 'application/json': { schema: paginationSchema(labelSchema), example: mockPaginatedLabelsResponse() } },
       },
       ...errorResponseRefs,
     },
@@ -87,9 +79,7 @@ const labelsRoutes = {
     tags: ['labels', 'app', 'product'],
     summary: 'Get label',
     description: 'Retrieves a label by its ID.',
-    request: {
-      params: idInTenantOrgParamSchema,
-    },
+    request: { params: idInTenantOrgParamSchema },
     responses: {
       200: {
         description: 'Label',
@@ -111,11 +101,7 @@ const labelsRoutes = {
       params: idInTenantOrgParamSchema,
       body: {
         required: true,
-        content: {
-          'application/json': {
-            schema: labelUpdateStxBodySchema,
-          },
-        },
+        content: { 'application/json': { schema: labelUpdateStxBodySchema } },
       },
     },
     responses: {

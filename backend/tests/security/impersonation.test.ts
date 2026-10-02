@@ -1,22 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { deleteUsers, getMe, revokeMySessions, signOut, startImpersonation } from 'sdk';
 import { appConfig } from 'shared';
+import { generateId } from 'shared/utils/entity-id';
 import { afterEach, describe, expect, it, onTestFinished } from 'vitest';
-import { baseDb, getAdminDb } from '#/db/db';
+import { getAdminDb } from '#/db/db';
 import { env } from '#/env';
-import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
+import { activityBus } from '#/lib/activity-bus';
 import { systemRolesTable } from '#/modules/system/system-roles-db';
 import { defaultHeaders, overrideConfig } from '../fixtures';
-import {
-  authCookie,
-  cookieChange,
-  createSystemAdminUser,
-  createTestUser,
-  expectRefusal,
-  mailsTo,
-  sessionRow,
-  sessionsOf,
-} from '../helpers';
+import { authCookie, cookieChange, createSystemAdminUser, createTestUser, expectRefusal, mailsTo, sessionRow, sessionsOf } from '../helpers';
 import { createAppClient } from '../test-client';
 import { clearSecurityTestData } from './helpers';
 import {
@@ -52,10 +44,7 @@ describe('impersonation lives on its admin', async () => {
     const admin = await createSystemAdminUser(`${label}-admin@security-test.com`);
     const adminSession = await insertSession(admin);
     const target = await createTestUser(`${label}-target@security-test.com`);
-    const started = await call(startImpersonation, {
-      body: { targetUserId: target.id },
-      headers: adminSession.headers,
-    });
+    const started = await call(startImpersonation, { body: { targetUserId: target.id }, headers: adminSession.headers });
     expect(started.response.status).toBe(204);
     const impersonation = await impersonationSetBy(started.response, adminSession);
     expect(await meAs(impersonation)).toMatchObject({ status: 200, userId: target.id });
@@ -70,17 +59,11 @@ describe('impersonation lives on its admin', async () => {
 
     const alone = await meAs({ ...impersonation, headers: { ...defaultHeaders, Cookie: impersonationCookie } });
     expect(alone.status).toBe(401);
-    const elsewhere = await meAs({
-      ...impersonation,
-      headers: { ...defaultHeaders, Cookie: `${otherSession.cookie}; ${impersonationCookie}` },
-    });
+    const elsewhere = await meAs({ ...impersonation, headers: { ...defaultHeaders, Cookie: `${otherSession.cookie}; ${impersonationCookie}` } });
     expect(elsewhere.status).toBe(401);
     // Its token signed as a session cookie, as a leaked cookie secret allows: an impersonation is never a session.
     const token = decodeURIComponent(impersonationCookie.slice(impersonationCookie.indexOf('=') + 1)).split('.')[0];
-    const asSession = await meAs({
-      ...impersonation,
-      headers: { ...defaultHeaders, Cookie: authCookie('session', token) },
-    });
+    const asSession = await meAs({ ...impersonation, headers: { ...defaultHeaders, Cookie: authCookie('session', token) } });
     await expectRefusal(asSession, 401, 'unauthorized');
 
     expect((await meAs(impersonation)).status).toBe(200);
@@ -110,10 +93,7 @@ describe('impersonation lives on its admin', async () => {
     expect(revoked.response.status).toBe(200);
 
     await expectClosedWith(stream, 'session_replaced');
-    expect(await sessionRow(impersonation.id)).toMatchObject({
-      revocationReason: 'impersonation_stopped',
-      revokedBy: admin.id,
-    });
+    expect(await sessionRow(impersonation.id)).toMatchObject({ revocationReason: 'impersonation_stopped', revokedBy: admin.id });
     expect((await meAs(impersonation)).status).toBe(401);
 
     expectStillOpen(kept.target.id, keptStream);
@@ -145,10 +125,7 @@ describe('impersonation lives on its admin', async () => {
     const { target, impersonation } = await impersonating('layering');
     const other = await createTestUser('layering-other@security-test.com');
 
-    const attempt = await call(startImpersonation, {
-      body: { targetUserId: other.id },
-      headers: impersonation.headers,
-    });
+    const attempt = await call(startImpersonation, { body: { targetUserId: other.id }, headers: impersonation.headers });
     await expectRefusal(attempt, 403, 'impersonation_forbidden');
     expect(cookieChange(attempt.response, 'impersonation')).toBeUndefined();
     expect(await sessionsOf(other.id)).toHaveLength(0);
@@ -172,9 +149,16 @@ describe('impersonation lives on its admin', async () => {
     const { admin, impersonation } = await impersonating('demoted');
     const kept = await impersonating('kept');
 
-    // Roles change outside the API; the change listener drops the admin's cached sessions.
-    await getAdminDb('test arrange').delete(systemRolesTable).where(eq(systemRolesTable.userId, admin.id));
-    await invalidateCache.user(baseDb, admin.id);
+    // Roles change outside the API; CDC reports the delete, which drops the admin's cached sessions.
+    const [role] = await getAdminDb('test arrange').delete(systemRolesTable).where(eq(systemRolesTable.userId, admin.id)).returning();
+    activityBus.emit({
+      id: generateId(),
+      type: 'system_role.deleted',
+      action: 'delete',
+      resourceType: 'system_role',
+      entityType: null,
+      rowData: role,
+    } as never);
 
     const refused = await meAs(impersonation);
     await expectRefusal(refused, 401, 'unauthorized');

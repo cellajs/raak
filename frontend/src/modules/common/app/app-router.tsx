@@ -1,18 +1,19 @@
-import { onlineManager, useIsFetching, useIsRestoring } from '@tanstack/react-query';
+import { useIsRestoring } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
+import { useOnlineManager } from '~/hooks/use-online-manager';
 import { PullToRefresh } from '~/modules/common/pull-to-refresh';
-import { Spinner } from '~/modules/common/spinner';
+import { PageSpinner } from '~/modules/common/spinner';
 import { queryClient } from '~/query/query-client';
 import { router } from '~/routes/router';
 
 /** Waits for the react-query cache to hydrate, so offline router loaders can read getQueryData. */
 export function AppRouter() {
   const isRestoring = useIsRestoring();
-  const isOnline = onlineManager.isOnline();
-  const fetchingCount = useIsFetching();
+  // Subscribed, so pull-to-refresh comes back when the connection does
+  const isOnline = useOnlineManager();
 
   if (isRestoring && !isOnline) {
-    return <Spinner className="mt-[45vh] h-12 w-12" />;
+    return <PageSpinner className="size-12" />;
   }
 
   const handleRefresh = async () => {
@@ -22,11 +23,7 @@ export function AppRouter() {
 
   return (
     <>
-      <PullToRefresh
-        onRefresh={() => handleRefresh()}
-        isFetching={fetchingCount > 0}
-        isDisabled={isRestoring || !isOnline}
-      />
+      <PullToRefresh onRefresh={() => handleRefresh()} isDisabled={isRestoring || !isOnline} />
       <RouterProvider router={router} />
     </>
   );

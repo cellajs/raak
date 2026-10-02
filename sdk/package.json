@@ -4,16 +4,17 @@
   "description": "Auto-generated TypeScript SDK from the backend OpenAPI specification",
   "type": "module",
   "scripts": {
-    "dev": "node --import ../shared/scripts/register.mjs src/generate-sdk.ts --watch",
-    "watch": "node --import ../shared/scripts/register.mjs src/generate-sdk.ts --watch",
+    "dev": "tsx src/generate-sdk.ts --watch",
+    "generate:sdk": "tsx src/generate-sdk.ts",
     "ts": "cd .. && tsgo -p sdk/tsconfig.json --pretty",
     "tsperf": "rm -rf tsconfig.tsbuildinfo && tsgo --noEmit --extendedDiagnostics",
-    "generate:sdk": "node --import ../shared/scripts/register.mjs src/generate-sdk.ts"
+    "watch": "tsx src/generate-sdk.ts --watch"
   },
   "exports": {
     ".": "./gen/index.ts",
     "./client": "./gen/client/index.ts",
-    "./*": "./gen/*.ts"
+    "./*": "./gen/*.ts",
+    "./docs-types": "./src/docs-types.ts"
   },
   "dependencies": {
     "shared": "workspace:*",
@@ -26,6 +27,6 @@
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "chokidar": "^5.0.0",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3"
+    "typescript": "6.0.3"
   }
 }

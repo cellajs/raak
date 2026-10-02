@@ -7,23 +7,11 @@ export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/organiza
   // locked: the tabs arrangement card writes tab hiding; the settings tab itself must stay reachable
   staticData: {
     isAuth: true,
-    navTab: {
-      id: 'settings',
-      label: 'c:settings',
-      description: 'c:tab_settings.text',
-      requires: 'update',
-      locked: true,
-    },
+    navTab: { id: 'settings', label: 'c:settings', description: 'c:tab_settings.text', requires: 'update', locked: true },
   },
   beforeLoad: ({ context }) => {
     // Same grant the tab's `requires: 'update'` hides on; direct URLs get the same gate.
-    requireEntityAction(
-      context.organization,
-      'organization',
-      'organization',
-      'update',
-      '/$tenantId/$organizationSlug/organization',
-    );
+    requireEntityAction(context.organization, 'organization', 'organization', 'update', '/$tenantId/$organizationSlug/organization');
   },
   head: ({ match }) => ({ meta: [{ title: appTitle(`Settings · ${match.context.organization?.name}`) }] }),
   component: OrganizationSettingsComponent,

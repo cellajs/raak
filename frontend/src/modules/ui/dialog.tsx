@@ -30,7 +30,7 @@ function DialogOverlay({
       className={cn(
         disabled
           ? ''
-          : 'data-closed:fade-out-0 data-open:fade-in-0 fixed inset-0 in-[.sheeter-open]:z-125 z-115 bg-black/20 starting:opacity-0 backdrop-blur-xs data-closed:animate-out data-open:animate-in data-starting-style:opacity-0',
+          : 'data-closed:fade-out-0 data-open:fade-in-0 fixed inset-0 in-[.sheeter-open]:z-125 z-115 bg-overlay backdrop-blur-xs duration-200 data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards',
         className,
       )}
       {...props}
@@ -76,7 +76,7 @@ function DialogContent({
           initialFocus={initialFocus}
           finalFocus={finalFocus}
           className={cn(
-            'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 relative in-[.sheeter-open]:z-126 z-116 mx-auto grid w-[95vw] max-w-full starting:scale-95 grid-cols-[minmax(0,1fr)] gap-4 overflow-x-clip rounded-lg bg-background p-4 starting:opacity-0 shadow-lg duration-200 focus-visible:outline-none data-starting-style:scale-95 data-closed:animate-out data-open:animate-in data-starting-style:opacity-0',
+            'data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 relative in-[.sheeter-open]:z-126 z-116 mx-auto grid w-[95vw] max-w-full grid-cols-1 gap-4 overflow-x-clip rounded-lg bg-background p-4 shadow-lg duration-200 focus-visible:outline-hidden data-closed:animate-out data-open:animate-in',
             // Skipped inside a container, which owns its own scroll; inside scroll keeps a screen-edge gap via max-height.
             container ? 'mt-4 overflow-y-clip' : outsideScroll ? 'my-auto' : 'max-h-[calc(100%-2rem)] overflow-y-auto',
             className,
@@ -114,45 +114,15 @@ function DialogHeader({ className, sticky, children, ...props }: React.Component
 }
 
 function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot="dialog-footer"
-      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
-      {...props}
-    />
-  );
+  return <div data-slot="dialog-footer" className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)} {...props} />;
 }
 
 function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props & React.RefAttributes<HTMLParagraphElement>) {
-  return (
-    <DialogPrimitive.Title
-      data-slot="dialog-title"
-      className={cn('font-semibold leading-none', className)}
-      {...props}
-    />
-  );
+  return <DialogPrimitive.Title data-slot="dialog-title" className={cn('font-semibold leading-none', className)} {...props} />;
 }
 
-function DialogDescription({
-  className,
-  ...props
-}: DialogPrimitive.Description.Props & React.RefAttributes<HTMLParagraphElement>) {
-  return (
-    <DialogPrimitive.Description
-      data-slot="dialog-description"
-      className={cn('text-muted-foreground text-sm', className)}
-      {...props}
-    />
-  );
+function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props & React.RefAttributes<HTMLParagraphElement>) {
+  return <DialogPrimitive.Description data-slot="dialog-description" className={cn('text-muted-foreground text-sm', className)} {...props} />;
 }
 
-export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-};
+export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger };

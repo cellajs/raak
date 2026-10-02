@@ -1,0 +1,88 @@
+import { and, eq, gt, inArray, isNull, type SQL } from 'drizzle-orm';
+import type { DbContext } from '#/core/context';
+import type { ActorId } from '#/db/utils/ids';
+import { dropCachedSessions } from '#/middlewares/guard/session-cache';
+import { authEvents } from '#/modules/auth/auth-events';
+import {
+  type SessionEndReason,
+  type SessionModel,
+  type SessionRevocationReason,
+  type SessionTypes,
+  sessionSafeColumns,
+  sessionsTable,
+} from '#/modules/auth/sessions-db';
+import { deleteProviderSessionsOfUser } from '#/modules/oauth-server/oauth-server-queries';
+import { getIsoDate } from '#/utils/iso-date';
+import { log } from '#/utils/logger';
+
+/** Which of the user's live sessions are revoked: these ids, or all of them (optionally of one type). */
+type SessionSelection = { sessionIds: string[] } | { all: true; type?: SessionTypes };
+
+/**
+ * Revocations where the person leaves (signs out, revokes their other sessions, turns MFA on): the authorization
+ * server's sessions of the user are deleted too, so no browser keeps answering OAuth clients for them. Sign-in
+ * housekeeping and a stopped impersonation leave them.
+ */
+const deletesProviderSessions = new Set<SessionEndReason>(['sign_out', 'other_session', 'mfa_enabled']);
+
+export type RevokeSessionsOpts = SessionSelection & {
+  userId: string;
+  reason: SessionEndReason;
+  /** The actor whose request revokes the sessions; null when the server does it during a sign-in. */
+  by: ActorId | null;
+};
+
+/**
+ * The one way sessions end before their expiry. Stamps the user's selected live sessions with `revokedAt`,
+ * `revokedBy` and `revocationReason`, drops the user's cached sessions in this process and closes the streams bound to
+ * them; other processes stop serving the session within the session cache's 10 seconds. A revoked session is never
+ * re-stamped, so the first revocation is the one the sessions list shows; the row stays until the nightly sweep.
+ * `user_deleted` follows the delete, which took the rows along: nothing is stamped, and every stream of the user
+ * closes. An impersonation layered on a revoked session is revoked with it as `impersonation_stopped` (a deleted admin's
+ * rows take theirs along), since only its admin's session can present it.
+ *
+ * The stamps commit inside the caller's transaction when there is one; the cache drop and the streams happen at the
+ * call, so call it last in a transaction.
+ *
+ * @param ctx - Any context with a database; the sign-in paths pass the base pool.
+ * @param opts - The user, which sessions (`sessionIds` or `all`), the reason and the acting actor.
+ * @returns The stamped sessions, secret stripped; empty for `user_deleted` and for sessions that had already ended.
+ */
+export const revokeSessions = async (ctx: DbContext, opts: RevokeSessionsOpts): Promise<SessionModel[]> => {
+  const { userId, reason, by } = opts;
+  if ('sessionIds' in opts && opts.sessionIds.length === 0) return [];
+
+  const selection = 'sessionIds' in opts ? inArray(sessionsTable.id, opts.sessionIds) : undefined;
+  const ofType = 'all' in opts && opts.type ? eq(sessionsTable.type, opts.type) : undefined;
+
+  const { ended, layered } = await ctx.var.db.transaction(async (tx) => {
+    const stamp = (revocationReason: SessionRevocationReason, where: SQL | undefined) =>
+      tx
+        .update(sessionsTable)
+        .set({ revokedAt: getIsoDate(), revokedBy: by, revocationReason })
+        .where(and(isNull(sessionsTable.revokedAt), gt(sessionsTable.expiresAt, getIsoDate()), where))
+        .returning(sessionSafeColumns);
+
+    const stamped = reason === 'user_deleted' ? [] : await stamp(reason, and(eq(sessionsTable.userId, userId), selection, ofType));
+    const endedIds = stamped.map((session) => session.id);
+    const stopped = endedIds.length ? await stamp('impersonation_stopped', inArray(sessionsTable.impersonatorSessionId, endedIds)) : [];
+
+    if (deletesProviderSessions.has(reason)) await deleteProviderSessionsOfUser({ var: { db: tx } }, { userId });
+    return { ended: stamped, layered: stopped };
+  });
+
+  dropCachedSessions(userId);
+  for (const impersonation of layered) dropCachedSessions(impersonation.userId);
+
+  const everySession = 'all' in opts && !opts.type;
+  if (everySession || ended.length > 0) {
+    const sessionIds = everySession ? 'all' : ended.map((session) => session.id);
+    authEvents.emit('session.revoked', { userId, sessionIds, reason });
+  }
+  for (const impersonation of layered) {
+    authEvents.emit('session.revoked', { userId: impersonation.userId, sessionIds: [impersonation.id], reason: 'impersonation_stopped' });
+  }
+  log.info('Sessions revoked', { userId, reason, count: ended.length, impersonationsStopped: layered.length });
+
+  return ended;
+};

@@ -3,6 +3,7 @@ import { useInView } from '~/hooks/use-in-view';
 import type { TKey } from '~/lib/i18n-locales';
 import { useUIStore } from '~/modules/ui/ui-store';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 // Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
 // union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
@@ -31,15 +32,14 @@ export function Hero({ title, text, children, chips }: HeroProps) {
           color-mix(in oklch, var(--primary), black 20%))`,
       }
     : undefined;
-  const sectionClass =
-    'rich-gradient relative flex min-h-[90vh] items-center justify-center space-y-6 py-24 px-4 lg:py-32';
-  const headerClass = `transition-all will-change-transform duration-500 ease-out ${inView ? 'opacity-100' : 'opacity-0 scale-95 translate-y-4'}`;
+  const sectionClass = tw('rich-gradient relative flex min-h-[90vh] items-center justify-center px-4 py-24 lg:py-32');
+  const headerClass = cn('transition-all duration-500 ease-out will-change-transform', inView ? 'opacity-100' : 'translate-y-4 scale-95 opacity-0');
 
   return (
     <section id="spy-welcome" className={sectionClass}>
       <header ref={ref} className={cn('container flex max-w-4xl flex-col items-center gap-4 text-center', headerClass)}>
         <h1 className="mb-6 font-heading text-3xl leading-10 sm:mt-6 sm:text-4xl sm:leading-13 md:text-5xl md:leading-18 lg:text-6xl">
-          <span className={`bg-linear-to-br ${gradientClass} bg-clip-text font-bold`} style={gradientStyle}>
+          <span className={cn('bg-linear-to-br', gradientClass, 'bg-clip-text font-bold')} style={gradientStyle}>
             {t(title)}
           </span>
         </h1>
@@ -49,7 +49,7 @@ export function Hero({ title, text, children, chips }: HeroProps) {
           </h2>
         )}
         {chips && chips.length > 0 && (
-          <div className="mb-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-foreground/70">
+          <div className="mb-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-muted-foreground">
             {chips.map((chip) => (
               <span key={chip}>{t(chip)}</span>
             ))}
@@ -62,36 +62,19 @@ export function Hero({ title, text, children, chips }: HeroProps) {
   );
 }
 
-/**
- * Decorative SVG curve at the edge of a gradient section.
- * Uses absolute positioning inside a `relative` parent for pixel-perfect
- * flush placement regardless of viewport width or resize.
- *
- * @param position - 'bottom' (default): curve at section bottom (gradient → content).
- *                   'top': curve at section top (content → gradient).
- * @param height - CSS height value, e.g. clamp(). Controls curve depth.
- */
-export function BackgroundCurve({
-  height = 'clamp(3rem, 8vw, 8rem)',
-  position = 'bottom',
-}: {
-  height?: string;
-  position?: 'top' | 'bottom';
-}) {
+/** Decorative SVG curve at a gradient section edge; `position` places it at the section top or bottom. */
+export function BackgroundCurve({ height = 'clamp(3rem, 8vw, 8rem)', position = 'bottom' }: { height?: string; position?: 'top' | 'bottom' }) {
   const isTop = position === 'top';
 
   return (
     <svg
       viewBox="0 0 800 100"
       preserveAspectRatio="none"
-      className={`pointer-events-none absolute inset-x-0 w-full ${isTop ? '-top-px' : '-bottom-px'}`}
+      className={cn('pointer-events-none absolute inset-x-0 w-full', isTop ? '-top-px' : '-bottom-px')}
       style={{ height: `calc(${height} + 1px)` }}
       aria-hidden="true"
     >
-      <path
-        fill="var(--background)"
-        d={isTop ? 'M 0 0 L 800 0 L 800 100 Q 400 20 0 100 Z' : 'M 0 100 L 0 0 Q 400 80 800 0 L 800 100 Z'}
-      />
+      <path fill="var(--background)" d={isTop ? 'M 0 0 L 800 0 L 800 100 Q 400 20 0 100 Z' : 'M 0 100 L 0 0 Q 400 80 800 0 L 800 100 Z'} />
     </svg>
   );
 }

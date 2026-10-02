@@ -1,5 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import { create } from 'zustand';
+import { withDefaults } from '~/modules/common/overlay-store-helpers';
 
 export type DropdownKind = 'menu' | 'panel';
 
@@ -23,6 +24,8 @@ export type DropdownData = {
 export type InternalDropdown = DropdownData & {
   key: number;
   content: ReactNode;
+  /** The trigger's accessible name at open time; names the mobile drawer that stands in for the dropdown. */
+  triggerLabel?: string;
   align: 'start' | 'center' | 'end';
   modal: boolean;
   kind: DropdownKind;
@@ -69,9 +72,10 @@ export const useDropdowner = create<DropdownStoreState>((set, get) => ({
     // Blur active element to prevent aria-hidden conflict when modal sets aria-hidden on ancestors
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 
-    set({
-      dropdown: { content, align: 'start', modal: true, kind: 'panel', ...data, key: Date.now() },
-    });
+    const defaults: Pick<InternalDropdown, 'align' | 'modal' | 'kind'> = { align: 'start', modal: true, kind: 'panel' };
+    const trigger = data.triggerRef.current;
+    const triggerLabel = trigger?.getAttribute('aria-label') || trigger?.textContent?.trim() || undefined;
+    set({ dropdown: { ...withDefaults(defaults, data), content, triggerLabel, key: Date.now() } });
 
     return data.id;
   },
@@ -80,9 +84,7 @@ export const useDropdowner = create<DropdownStoreState>((set, get) => ({
     const current = get().dropdown;
     if (!current) return;
 
-    set({
-      dropdown: { ...current, ...updates },
-    });
+    set({ dropdown: { ...current, ...updates } });
   },
 
   remove: () => {

@@ -13,33 +13,18 @@ type InfiniteLoaderProps = {
   fetchMore?: () => Promise<unknown>;
 };
 
-export function InfiniteLoader({
-  hasNextPage,
-  isFetching,
-  isFetchMoreError,
-  hideEndIndicator,
-  fetchMore,
-}: InfiniteLoaderProps) {
+export function InfiniteLoader({ hasNextPage, isFetching, isFetchMoreError, hideEndIndicator, fetchMore }: InfiniteLoaderProps) {
   const { t } = useTranslation();
   const isOnline = useOnlineManager();
 
   // inView is level-triggered state: a sentinel entering view during a fetch is served once that fetch settles.
   const { ref: measureRef, inView } = useInView();
-  useFetchMoreOnDemand({
-    demand: inView,
-    hasNextPage,
-    isFetching: !!isFetching,
-    error: !!isFetchMoreError,
-    fetchMore,
-  });
+  useFetchMoreOnDemand({ demand: inView, hasNextPage, isFetching: !!isFetching, error: !!isFetchMoreError, fetchMore });
 
-  if (isFetchMoreError)
-    return <div className="my-8 text-center text-red-600 text-sm">{t('error:load_more_failed')}</div>;
+  if (isFetchMoreError) return <div className="my-8 text-center text-destructive text-sm">{t('error:load_more_failed')}</div>;
 
   if (!isOnline && hasNextPage)
-    return (
-      <div className="mt-4 w-full text-center text-muted-foreground/50 text-sm italic">{t('c:offline.load_more')}</div>
-    );
+    return <div className="mt-4 w-full text-center text-muted-foreground/70 text-sm italic">{t('c:offline.load_more')}</div>;
 
   return (
     <>
@@ -53,7 +38,7 @@ export function InfiniteLoader({
 
 function AllLoaded() {
   return (
-    <div className="mt-4 mb-10 w-full text-center text-xl opacity-50">
+    <div className="mt-4 mb-10 w-full text-center text-muted-foreground/70 text-xl">
       <div>&#183;</div>
       <div className="-mt-5">&#183;</div>
       <div className="-mt-5">&#183;</div>
@@ -64,7 +49,7 @@ function AllLoaded() {
 
 function Loading() {
   return (
-    <div className="relative top-4 mb-10 flex h-0 w-full animate-pulse items-center justify-center space-x-1 opacity-50">
+    <div className="relative top-4 mb-10 flex h-0 w-full animate-pulse items-center justify-center gap-1 opacity-50">
       <span className="sr-only">Loading...</span>
       <div className="h-1 w-3 animate-bounce rounded-full bg-foreground [animation-delay:-0.3s]" />
       <div className="h-1 w-3 animate-bounce rounded-full bg-foreground [animation-delay:-0.15s]" />

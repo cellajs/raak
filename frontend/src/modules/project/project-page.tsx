@@ -37,10 +37,7 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
   const coverUpdateCallback = (bannerUrl: string) => {
     updateProject.mutate(
       { path: { id: projectId, organizationId, tenantId }, body: { bannerUrl } },
-      {
-        onSuccess: () => toaster.success(t('c:success.upload_cover')),
-        onError: () => toaster.error(t('error:image_upload_failed')),
-      },
+      { onSuccess: () => toaster.success(t('c:success.upload_cover')), onError: () => toaster.error(t('error:image_upload_failed')) },
     );
   };
 
@@ -55,9 +52,7 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
       />
       <TaskSheetHandler />
       <TasksHotkeys boardId={project.id} projects={[project]} type="project" />
-      <FocusViewContainer className="group/project max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
-        {children}
-      </FocusViewContainer>
+      <FocusViewContainer className="group/project max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">{children}</FocusViewContainer>
     </>
   );
 }

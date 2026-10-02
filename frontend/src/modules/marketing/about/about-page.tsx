@@ -49,16 +49,9 @@ function AboutPage() {
             />
           )}
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            onClick={() => scrollToSectionById('product')}
-            className="mt-8"
-            aria-label="Read more"
-          >
+          <Button type="button" variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8" aria-label="Read more">
             <span>{t('about:why')}</span>
-            <ArrowDownIcon className="ml-2 animate-bounce" />
+            <ArrowDownIcon className="animate-bounce" />
           </Button>
         </Hero>
 

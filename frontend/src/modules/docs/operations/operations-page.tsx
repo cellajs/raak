@@ -2,6 +2,7 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { GenOperationSummary } from 'sdk/docs-types';
 import { usePrerenderSection, usePrerenderTrigger } from '~/hooks/use-prerender';
 import { useScrollSpy } from '~/hooks/use-scroll-spy';
 import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
@@ -13,7 +14,6 @@ import { ViewModeToggle } from '~/modules/docs/operations/view-mode-toggle';
 import { operationsByTagQueryOptions, tagDetailsQueryOptions, tagsQueryOptions } from '~/modules/docs/query';
 import { TagExpandLink } from '~/modules/docs/tag-expand-link';
 import { TagOperationsTable } from '~/modules/docs/tag-operations-table';
-import type { GenOperationSummary } from '~/modules/docs/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 import { Collapsible, CollapsibleContent } from '~/modules/ui/collapsible';
 import { queryClient } from '~/query/query-client';
@@ -48,10 +48,10 @@ function OperationsPage() {
   return (
     <div>
       <div className="container">
-        <DocsPageHeader title={t('c:operation', { count: 2 })} />
+        <DocsPageHeader title={t('c:operation', { count: 2 })} className="pb-2" />
       </div>
 
-      <StickyBox className="z-10 bg-background/60 backdrop-blur-xs" placeholderClassName="my-2" hideWhenOutOfView>
+      <StickyBox className="z-10 bg-background/60 backdrop-blur-xs" hideWhenOutOfView>
         <div className="container flex items-center gap-3 py-3">
           <ViewModeToggle />
 

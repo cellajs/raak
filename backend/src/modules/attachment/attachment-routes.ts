@@ -1,12 +1,7 @@
-import { createXRoute } from '#/core/x-routes';
+import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
-import {
-  bulkPointsLimiter,
-  presignedUrlLimiter,
-  singlePointsLimiter,
-  syncReadLimiter,
-} from '#/middlewares/rate-limiter/limiters';
+import { bulkPointsLimiter, presignedUrlLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import {
   attachmentCreateManyStxBodySchema,
   attachmentCreateResponseSchema,
@@ -18,240 +13,116 @@ import {
 } from '#/modules/attachment/attachment-schema';
 import {
   batchResponseSchema,
-  errorResponseRefs,
   fullResponseQuerySchema,
   idInTenantOrgParamSchema,
   idsWithStxBodySchema,
   paginationSchema,
   tenantOrgParamSchema,
 } from '#/schemas';
-import {
-  mockAttachmentResponse,
-  mockBatchAttachmentsResponse,
-  mockPaginatedAttachmentsResponse,
-} from './attachment-mocks';
-import { createAttachmentsOp } from './operations/create-attachments';
-import { deleteAttachmentsOp } from './operations/delete-attachments';
-import { getAttachmentOp } from './operations/get-attachment';
-import { getAttachmentsOp } from './operations/get-attachments';
-import { updateAttachmentOp } from './operations/update-attachment';
+import { mockAttachmentResponse, mockBatchAttachmentsResponse, mockPaginatedAttachmentsResponse } from './attachment-mocks';
 
-const attachmentRoutes = {
-  getAttachments: createXRoute({
-    operationId: 'getAttachments',
-    'x-tool': {
-      enabled: true,
-      description:
-        'List attachments of the organization with optional search, sorting and paging. Returns metadata and the description as text.',
-      approvalRequired: false,
-      category: 'attachments',
-      entity: 'attachment',
-      execute: (ctx, { query }) => getAttachmentsOp(ctx, query),
-    },
+const attachmentRoutes = createXRoutes(['attachments', 'cella', 'product'], {
+  getAttachments: xRoute({
     method: 'get',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
-    tags: ['attachments', 'cella', 'product'],
+    xTool: {
+      description: 'List attachments of the organization with optional search, sorting and paging. Returns metadata and the description as text.',
+      approvalRequired: false,
+      entity: 'attachment',
+    },
     summary: 'Get attachments',
     description: 'Returns a paginated list of attachments for the organization.',
-    request: {
-      params: tenantOrgParamSchema,
-      query: attachmentListQuerySchema,
-    },
-    responses: {
-      200: {
-        description: 'Attachments',
-        content: {
-          'application/json': {
-            schema: paginationSchema(attachmentSchema),
-            example: mockPaginatedAttachmentsResponse(),
-          },
-        },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, query: attachmentListQuerySchema },
+    responses: { 200: json('Attachments', paginationSchema(attachmentSchema), mockPaginatedAttachmentsResponse()) },
   }),
-  createAttachments: createXRoute({
-    operationId: 'createAttachments',
-    'x-tool': {
-      enabled: true,
-      description:
-        'Register already uploaded files as attachments. Give each a name, filename, MIME type, size and the storage key of the upload.',
-      approvalRequired: true,
-      category: 'attachments',
-      entity: 'attachment',
-      execute: (ctx, { body }) => createAttachmentsOp(ctx, body),
-    },
+  createAttachments: xRoute({
     method: 'post',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
-    tags: ['attachments', 'cella', 'product'],
-    summary: 'Create attachments',
-    description:
-      'Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: attachmentCreateManyStxBodySchema } },
-      },
+    xTool: {
+      description: 'Register already uploaded files as attachments. Give each a name, filename, MIME type, size and the storage key of the upload.',
+      approvalRequired: true,
+      entity: 'attachment',
     },
+    summary: 'Create attachments',
+    description: 'Registers one or more new attachments after client side upload. Includes metadata like name, type, and linked entity.',
+    request: { params: tenantOrgParamSchema, body: jsonBody(attachmentCreateManyStxBodySchema) },
     responses: {
-      200: {
-        description: 'Attachments already created (idempotent)',
-        content: {
-          'application/json': { schema: attachmentCreateResponseSchema, example: mockBatchAttachmentsResponse() },
-        },
-      },
-      201: {
-        description: 'Attachments created',
-        content: {
-          'application/json': { schema: attachmentCreateResponseSchema, example: mockBatchAttachmentsResponse() },
-        },
-      },
-      ...errorResponseRefs,
+      200: json('Attachments already created (idempotent)', attachmentCreateResponseSchema, mockBatchAttachmentsResponse()),
+      201: json('Attachments created', attachmentCreateResponseSchema, mockBatchAttachmentsResponse()),
     },
   }),
-  getAttachment: createXRoute({
-    operationId: 'getAttachment',
-    'x-tool': {
-      enabled: true,
-      description: 'Read one attachment: its metadata and the description as text.',
-      approvalRequired: false,
-      category: 'attachments',
-      entity: 'attachment',
-      execute: (ctx, { params }) => getAttachmentOp(ctx, params.id),
-    },
+  getAttachment: xRoute({
     method: 'get',
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xCache: [productCache('attachment')],
-    tags: ['attachments', 'cella', 'product'],
+    xTool: {
+      description: 'Read one attachment: its metadata and the description as text.',
+      approvalRequired: false,
+      entity: 'attachment',
+    },
     summary: 'Get attachment',
     description: 'Returns a single attachment by ID. Served from the CDC-invalidated entity detail cache.',
-    request: {
-      params: idInTenantOrgParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'Attachment',
-        content: { 'application/json': { schema: attachmentSchema, example: mockAttachmentResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: idInTenantOrgParamSchema },
+    responses: { 200: json('Attachment', attachmentSchema, mockAttachmentResponse()) },
   }),
-  updateAttachment: createXRoute({
-    operationId: 'updateAttachment',
-    'x-tool': {
-      enabled: true,
-      description: 'Rename an attachment or replace its description.',
-      approvalRequired: true,
-      category: 'attachments',
-      entity: 'attachment',
-      // The transaction is server-built, so field timestamps come from the server clock.
-      execute: (ctx, { params, body }) => updateAttachmentOp(ctx, params.id, body, { serverOrigin: true }),
-    },
+  updateAttachment: xRoute({
     method: 'put',
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
-    tags: ['attachments', 'cella', 'product'],
+    xTool: {
+      description: 'Rename an attachment or replace its description.',
+      approvalRequired: true,
+      entity: 'attachment',
+    },
     summary: 'Update attachment',
     description: 'Updates metadata of an attachment, such as its name or associated entity.',
-    request: {
-      params: idInTenantOrgParamSchema,
-      query: fullResponseQuerySchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: attachmentUpdateStxBodySchema } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Attachment was updated',
-        content: { 'application/json': { schema: attachmentSchema, example: mockAttachmentResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: idInTenantOrgParamSchema, query: fullResponseQuerySchema, body: jsonBody(attachmentUpdateStxBodySchema) },
+    responses: { 200: json('Attachment was updated', attachmentSchema, mockAttachmentResponse()) },
   }),
-  deleteAttachments: createXRoute({
-    operationId: 'deleteAttachments',
-    'x-tool': {
-      enabled: true,
-      description: 'Delete attachments by id. The stored files stay in storage.',
-      approvalRequired: true,
-      category: 'attachments',
-      entity: 'attachment',
-      execute: (ctx, { body }) => deleteAttachmentsOp(ctx, Array.isArray(body.ids) ? body.ids : [body.ids]),
-    },
+  deleteAttachments: xRoute({
     method: 'delete',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
-    tags: ['attachments', 'cella', 'product'],
+    xTool: {
+      description: 'Delete attachments by id. The stored files stay in storage.',
+      approvalRequired: true,
+      entity: 'attachment',
+    },
     summary: 'Delete attachments',
     description: 'Deletes one or more attachment records by ID. This does not delete the underlying file in storage.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: idsWithStxBodySchema() } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: batchResponseSchema(),
-          },
-        },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(idsWithStxBodySchema()) },
+    responses: { 200: json('Success', batchResponseSchema()) },
   }),
-  getPresignedUrls: createXRoute({
-    operationId: 'getPresignedUrls',
+  getPresignedUrls: xRoute({
     method: 'post',
     path: '/presigned-urls',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [presignedUrlLimiter],
-    tags: ['attachments', 'cella', 'product'],
     summary: 'Get presigned URLs',
     description:
       'Signs download URLs for up to 50 private attachment files in one call, referenced by id + variant. Missing and denied ids come back in a uniform rejectedIds list (no 403/404 split), and the call succeeds even when every item is rejected. Public files should use the public CDN URL directly. Requires organization context.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: presignedUrlsBodySchema } },
-      },
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(presignedUrlsBodySchema) },
     responses: {
-      200: {
-        description: 'Presigned URLs',
-        content: {
-          'application/json': {
-            schema: batchResponseSchema(presignedUrlItemSchema),
-            example: {
-              data: [
-                {
-                  attachmentId: '01890a5d-ac96-774b-b302-0f3e2ae14a2a',
-                  variant: 'thumbnail',
-                  url: 'https://bucket.s3.nl-ams.scw.cloud/key?X-Amz-Signature=…',
-                },
-              ],
-              rejectedIds: [],
-            },
+      200: json('Presigned URLs', batchResponseSchema(presignedUrlItemSchema), {
+        data: [
+          {
+            attachmentId: '01890a5d-ac96-774b-b302-0f3e2ae14a2a',
+            variant: 'thumbnail',
+            url: 'https://bucket.s3.nl-ams.scw.cloud/key?X-Amz-Signature=…',
           },
-        },
-      },
-      ...errorResponseRefs,
+        ],
+        rejectedIds: [],
+      }),
     },
   }),
-};
+});
 
 export { attachmentRoutes };

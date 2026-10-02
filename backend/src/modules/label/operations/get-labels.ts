@@ -88,16 +88,7 @@ export async function getLabelsOp(
     // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
     const orderBy = seqCursor
       ? [sql`seq asc`, sql`id asc`]
-      : getOrderColumns({
-          sort,
-          order,
-          fallback: ['name', 'asc'],
-          columns: {
-            name: sql`name`,
-            usedCount: sql`used_count`,
-          },
-          tieBreaker: sql`id`,
-        });
+      : getOrderColumns({ sort, order, fallback: ['name', 'asc'], columns: { name: sql`name`, usedCount: sql`used_count` }, tieBreaker: sql`id` });
 
     const itemsQuery = db
       .select()
@@ -109,10 +100,7 @@ export async function getLabelsOp(
     const totalSource: ListTotalSource = isDelta
       ? { kind: 'pageLength' }
       : counterEligible
-        ? {
-            kind: 'counter',
-            getTotal: () => getOrganizationEntityCount(readCtx, { organizationId, entityType: 'label' }),
-          }
+        ? { kind: 'counter', getTotal: () => getOrganizationEntityCount(readCtx, { organizationId, entityType: 'label' }) }
         : {
             kind: 'exact',
             getTotal: async () => {

@@ -14,10 +14,7 @@ import { queryClient } from '~/query/query-client';
 const removeMembershipFromCache = (predicate: (membership: MembershipBase) => boolean) => {
   queryClient.setQueryData<{ items: MembershipBase[] }>(meKeys.memberships, (oldData) => {
     if (!oldData) return oldData;
-    return {
-      ...oldData,
-      items: oldData.items.filter((membership) => !predicate(membership)),
-    };
+    return { ...oldData, items: oldData.items.filter((membership) => !predicate(membership)) };
   });
 };
 
@@ -28,12 +25,7 @@ interface UseProjectMembershipActionsArgs {
   onSuccess?: () => void;
 }
 
-export function useProjectMembershipActions({
-  boardType,
-  project,
-  tenantId,
-  onSuccess,
-}: UseProjectMembershipActionsArgs) {
+export function useProjectMembershipActions({ boardType, project, tenantId, onSuccess }: UseProjectMembershipActionsArgs) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const projectMembership = project.membership;
@@ -50,9 +42,7 @@ export function useProjectMembershipActions({
       toaster.success(t('c:success.you_left_entity', { entity: t('c:project').toLowerCase() }));
       onSuccess?.();
 
-      removeMembershipFromCache(
-        (membership) => membership.channelType === 'project' && membership.channelId === project.id,
-      );
+      removeMembershipFromCache((membership) => membership.channelType === 'project' && membership.channelId === project.id);
 
       navigate({ to: boardType === 'workspace' ? '.' : '/home', replace: true });
 
@@ -65,9 +55,7 @@ export function useProjectMembershipActions({
     mutationFn: async () => {
       const workspaceId = projectMembership?.workspaceId;
       if (!workspaceId) throw new Error('Project has no workspace membership to remove.');
-      return await removeProjectWorkspace({
-        path: { id: project.id, organizationId: project.organizationId, tenantId },
-      });
+      return await removeProjectWorkspace({ path: { id: project.id, organizationId: project.organizationId, tenantId } });
     },
     onSuccess: (updatedProject) => {
       toaster.success(t('c:success.project_disconnected'));
@@ -79,11 +67,5 @@ export function useProjectMembershipActions({
     },
   });
 
-  return {
-    isLeavingProject,
-    isRemovingProjectFromWorkspace,
-    leaveProject,
-    projectHasWorkspace,
-    removeProjectFromWorkspace,
-  };
+  return { isLeavingProject, isRemovingProjectFromWorkspace, leaveProject, projectHasWorkspace, removeProjectFromWorkspace };
 }

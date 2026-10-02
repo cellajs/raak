@@ -52,15 +52,8 @@ const taskRedirectRoutes = {
     operationId: 'getTaskCover',
     summary: 'Get task cover',
     description: 'Retrieves the cover image for a task by ID.',
-    request: {
-      params: z.object({
-        id: validIdSchema,
-      }),
-    },
-    responses: {
-      200: { description: 'Success' },
-      ...errorResponseRefs,
-    },
+    request: { params: z.object({ id: validIdSchema }) },
+    responses: { 200: { description: 'Success' }, ...errorResponseRefs },
   }),
 };
 

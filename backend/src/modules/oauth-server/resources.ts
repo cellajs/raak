@@ -1,13 +1,11 @@
-import { appConfig } from 'shared';
+import { accessScopes, appConfig } from 'shared';
 
 /** The two audiences a token from this server can carry: the MCP server of an organization, or the REST API of a tenant. */
 export type ResourceRef = { face: 'mcp'; tenantId: string; organizationId: string } | { face: 'api'; tenantId: string };
 
 /** RFC 8707 resource identifiers are tenant-qualified (D7), so a token never crosses tenants. */
 export function resourceUri(ref: ResourceRef): string {
-  return ref.face === 'mcp'
-    ? `${appConfig.mcpUrl}/${ref.tenantId}/${ref.organizationId}/mcp`
-    : `${appConfig.backendUrl}/t/${ref.tenantId}`;
+  return ref.face === 'mcp' ? `${appConfig.mcpUrl}/${ref.tenantId}/${ref.organizationId}/mcp` : `${appConfig.backendUrl}/t/${ref.tenantId}`;
 }
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -26,4 +24,15 @@ export function parseResource(uri: string): ResourceRef | null {
 /** RFC 9728: where a protected resource publishes its metadata; the `WWW-Authenticate` challenge points here. */
 export function resourceMetadataUrl(ref: ResourceRef): string {
   return `${resourceUri(ref)}/.well-known/oauth-protected-resource`;
+}
+
+/** RFC 9728: the metadata document served at `resourceMetadataUrl`. */
+export function protectedResourceMetadata(ref: ResourceRef) {
+  return {
+    resource: resourceUri(ref),
+    authorization_servers: [appConfig.oauthUrl],
+    scopes_supported: [...accessScopes.all],
+    bearer_methods_supported: ['header'],
+    resource_documentation: `${appConfig.frontendUrl}/docs`,
+  };
 }

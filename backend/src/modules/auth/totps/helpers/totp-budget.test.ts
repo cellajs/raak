@@ -12,7 +12,7 @@ vi.mock('#/middlewares/rate-limiter/helpers', async (importOriginal) =>
 );
 vi.mock('#/modules/auth/general/helpers/send-account-security-email', () => ({ sendAccountSecurityEmail: vi.fn() }));
 
-const { verifyTotp } = await import('#/modules/auth/totps/helpers/totps');
+const { verifyTotp } = await import('#/modules/auth/totps/operations/verify-totp');
 const { sendAccountSecurityEmail } = await import('#/modules/auth/general/helpers/send-account-security-email');
 const { appErrorHandler } = await import('#/lib/error');
 
@@ -25,8 +25,7 @@ function accountChecks() {
     await verifyTotp(ctx, { user, code: await ctx.req.text(), pendingSecret: testTotpSecret });
     return ctx.body(null, 204);
   });
-  const check = async (code: string) =>
-    (await app.request('http://localhost/check', { method: 'POST', body: code })).status;
+  const check = async (code: string) => (await app.request('http://localhost/check', { method: 'POST', body: code })).status;
   return { user, check };
 }
 

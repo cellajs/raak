@@ -41,13 +41,7 @@ function DisplayOptions({ className = '' }: Props) {
 
   return (
     <TooltipButton toolTipContent={t(`c:${hoveredValue ?? currentValue}_view` as TKey)}>
-      <ToggleGroup
-        type="single"
-        variant="merged"
-        className={cn('gap-0', className)}
-        value={currentValue}
-        onValueChange={handleItemChange}
-      >
+      <ToggleGroup type="single" variant="merged" className={cn('gap-0', className)} value={currentValue} onValueChange={handleItemChange}>
         {['board', 'table'].map((value) => (
           <ToggleGroupItem
             key={value}

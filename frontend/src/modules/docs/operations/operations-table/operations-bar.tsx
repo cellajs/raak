@@ -1,20 +1,15 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { GenOperationSummary } from 'sdk/docs-types';
 import { ColumnsView } from '~/modules/common/data-table/columns-view';
 import { TableBarContainer } from '~/modules/common/data-table/table-bar-container';
 import { TableCount } from '~/modules/common/data-table/table-count';
-import {
-  FilterBarActions,
-  FilterBarFilters,
-  FilterBarSearch,
-  TableFilterBar,
-} from '~/modules/common/data-table/table-filter-bar';
+import { FilterBarActions, FilterBarFilters, FilterBarSearch, TableFilterBar } from '~/modules/common/data-table/table-filter-bar';
 import { TableSearch } from '~/modules/common/data-table/table-search';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { FocusView } from '~/modules/common/focus-view';
+import { ResponsiveSelect } from '~/modules/common/form-fields/responsive-select';
 import { ViewModeToggle } from '~/modules/docs/operations/view-mode-toggle';
-import type { GenOperationSummary } from '~/modules/docs/types';
-import { ResponsiveSelect } from '~/modules/ui/responsive-select';
 
 interface OperationsTableBarProps {
   total: number;
@@ -36,14 +31,7 @@ const labelFor = (kind: string, value: string): string => {
   return cap;
 };
 
-export function OperationsTableBar({
-  total,
-  searchVars,
-  setSearch,
-  columns,
-  setColumns,
-  tagFilters,
-}: OperationsTableBarProps) {
+export function OperationsTableBar({ total, searchVars, setSearch, columns, setColumns, tagFilters }: OperationsTableBarProps) {
   const { t } = useTranslation();
   const { q, tag } = searchVars;
 
@@ -66,15 +54,8 @@ export function OperationsTableBar({
     ...Object.keys(tagFilters).filter((k) => !KIND_ORDER.includes(k) && tagFilters[k]?.length),
   ];
 
-  const filterOptions = [
-    { value: 'all', label: t('c:all') },
-    ...orderedKinds.flatMap((kind) =>
-      tagFilters[kind].map((value) => ({
-        value: `${kind}:${value}`,
-        label: labelFor(kind, value),
-      })),
-    ),
-  ];
+  const tagOptions = orderedKinds.flatMap((kind) => tagFilters[kind].map((value) => ({ value: `${kind}:${value}`, label: labelFor(kind, value) })));
+  const filterOptions = [{ value: 'all', label: t('c:all') }, ...tagOptions];
 
   return (
     <TableBarContainer searchVars={searchVars}>

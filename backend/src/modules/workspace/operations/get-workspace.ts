@@ -25,8 +25,7 @@ export async function getWorkspaceOp(ctx: UserContext, id: string, opts: GetWork
 
   const included: { counts?: typeof counts; membership?: ReturnType<typeof toMembershipBase> } = {};
   if (counts) included.counts = counts;
-  if (includeMembership && membership && isMembershipRow(membership))
-    included.membership = toMembershipBase(membership);
+  if (includeMembership && membership && isMembershipRow(membership)) included.membership = toMembershipBase(membership);
 
   return { ...workspaceWithAudit, included };
 }
