@@ -74,7 +74,8 @@ export interface DeployEffects {
   rollout(argv: string[]): Promise<void>;
   verifyVersion(url: string, sha: string): Promise<boolean>;
   publishEntryFiles(opts: { distDir: string; bucket: string; region: string }): Promise<void>;
-  bootDiagnostics(sinceIso?: string): Promise<void>;
+  /** Print the boot bundles of release `sha` (saying so when there is none) and replay its black-box events from `sinceIso` on. */
+  bootDiagnostics(sha: string, sinceIso?: string): Promise<void>;
   group(title: string): void;
   groupEnd(): void;
   info(msg: string): void;
@@ -163,6 +164,9 @@ export async function runDeploy(
       lease = await fx.lease(stack, 'deploy');
     });
     await step('Pre-install Pulumi providers', () => fx.task('install-pulumi-providers'));
+    // Under the lock, before anything plans the stack: drop pointers a failed deploy left behind, so neither the preflight nor the stack update
+    // plans that release's generation again, and adopt the live VM as the overlap partner.
+    await step('Reconcile rollout pointers', () => fx.task('sync-rollout-config', ['--stack', stack, '--reset-pending']));
     // Privileged changes (a database privilege, a VM policy rule) need an operator Apply first: fail here, in seconds, with that command.
     await step('Preflight privileged changes', () => fx.task('preflight-privileged', ['--stack', stack, '--mode', opts.mode]));
 
@@ -242,10 +246,7 @@ export async function runDeploy(
     });
 
     await step('Repair errored LB certificates', () => fx.task('repair-certs', ['--stack', stack]));
-    await step('Base stack update', async () => {
-      await fx.task('sync-rollout-config', ['--stack', stack]);
-      await fx.update(stack);
-    });
+    await step('Base stack update', () => fx.update(stack));
     await step('Verify VM IAM grants', async () => {
       // One assertion per principal: exact sets AND exact path condition; a dormant principal must also hold no key.
       const rows = JSON.parse(env.vm_assert_json) as Array<{ app: string; sets: string[]; condition: string; dormant?: boolean }>;
@@ -294,7 +295,7 @@ export async function runDeploy(
     } catch (err) {
       telemetry?.event(deployEvents.rolloutFailed, { error: errorMessage(err) }, { severity: 'error' });
       fx.info('[deploy] rollout failed; collecting boot diagnostics');
-      await fx.bootDiagnostics(startedAtIso).catch((diagErr) => fx.info(`[deploy] boot diagnostics failed: ${errorMessage(diagErr)}`));
+      await fx.bootDiagnostics(opts.sha, startedAtIso).catch((diagErr) => fx.info(`[deploy] boot diagnostics failed: ${errorMessage(diagErr)}`));
       throw err;
     }
 
@@ -451,14 +452,14 @@ function createRealEffects(): DeployEffects {
           import('../lib/telemetry/sink-key'),
           import('../config/telemetry.config'),
         ]);
-        const key = await sinkIngestKeyFromSecretManager().catch((err) => {
-          console.warn(`[deploy] telemetry ingest key lookup failed: ${errorMessage(err)}`);
-          return undefined;
-        });
-        if (key) {
-          config = { endpoint: telemetrySink.endpoint, headers: { [telemetrySink.keyHeader]: key } };
+        const lookup = await sinkIngestKeyFromSecretManager().catch((err: unknown) => ({ missing: `lookup failed: ${errorMessage(err)}` }));
+        if ('key' in lookup) {
+          config = { endpoint: telemetrySink.endpoint, headers: { [telemetrySink.keyHeader]: lookup.key } };
           // In-process consumers (black-box replay on failure) resolve via env.
-          process.env[telemetrySink.keyEnvVar] ??= key;
+          process.env[telemetrySink.keyEnvVar] ??= lookup.key;
+        } else {
+          // An annotation in CI: a deploy whose telemetry goes nowhere must say so where someone reads it.
+          console.warn(`${inActions ? '::warning::' : ''}[deploy] telemetry ingest key unavailable: ${lookup.missing}`);
         }
       }
       if (!config) console.info('[deploy] telemetry export disabled (no OTLP endpoint or ingest key); black box only');
@@ -542,11 +543,12 @@ function createRealEffects(): DeployEffects {
       return out.ok;
     },
     publishEntryFiles: publishEntryFilesToBucket,
-    async bootDiagnostics(sinceIso) {
+    async bootDiagnostics(sha, sinceIso) {
       const { main: diag } = await import('./diag');
-      await diag([]);
+      // This release's bundles only: an older release's transcript would read like this deploy's boot.
+      await diag(['--sha', sha]);
       // Re-ship black-box events from VMs that died before their exporter was configured; best-effort like all telemetry.
-      await diag(['--replay', ...(sinceIso ? ['--since', sinceIso] : [])]).catch((err) => {
+      await diag(['--replay', '--sha', sha, ...(sinceIso ? ['--since', sinceIso] : [])]).catch((err) => {
         console.warn(`[deploy] black-box replay failed: ${err instanceof Error ? err.message : String(err)}`);
       });
     },

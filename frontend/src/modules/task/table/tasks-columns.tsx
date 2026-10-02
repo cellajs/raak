@@ -54,7 +54,7 @@ function SummaryCell({ row, tabIndex, navigate }: RenderCellProps<Task> & { navi
       }}
     >
       <div className="whitespace-pre-wrap py-1 leading-5">
-        {row.summary ? <TaskSummaryHtml html={row.summary} className="pointer-events-none" /> : <span className="text-muted">-</span>}
+        {row.summary ? <TaskSummaryHtml task={row} className="pointer-events-none" /> : <span className="text-muted">-</span>}
       </div>
     </Button>
   );

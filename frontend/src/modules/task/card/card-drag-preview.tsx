@@ -16,7 +16,7 @@ export function TaskCardDragPreview({ task }: { task: Task }) {
             <PrimaryLabelIcon label={task.primaryLabel} />
           </div>
 
-          <TaskSummaryHtml html={task.summary} className="m-1 inline leading-none opacity-80" />
+          <TaskSummaryHtml task={task} className="m-1 inline leading-none opacity-80" />
         </div>
         <TaskCardFooter task={task} isSheet={false} isSelected={false} />
       </CardContent>

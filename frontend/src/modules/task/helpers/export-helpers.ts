@@ -1,20 +1,15 @@
 import type { Project } from 'sdk';
+import { titleFromDocument } from 'shared/blocknote';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 
 /** Applies print-friendly configuration before exporting a task table. */
 export const configureForExport = (tasks: Task[], projects: Omit<Project, 'counts'>[]): Task[] => {
-  const parser = new DOMParser();
-
   return tasks.map((task) => {
-    // Parse the HTML and extract text content
-    const summaryDoc = parser.parseFromString(task.summary, 'text/html');
-    const summaryText = summaryDoc.body.textContent || '';
-
     const project = projects.find((p) => p.id === task.projectId);
     return {
       ...task,
-      summary: summaryText,
+      summary: titleFromDocument(task.summary),
       labels: task.labels.map((label) => label.name),
       primaryLabelId: task.primaryLabel?.name ?? '-',
       status: statusOptionsByValue[task.status].status,

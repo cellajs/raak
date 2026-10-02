@@ -62,8 +62,7 @@ registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, cha
 /** Defines React Query cache keys for label. */
 export const labelQueryKeys = keys;
 
-// During an active collaboration session, suppress remote persisted values for Yjs-owned
-// fields so they cannot conflict with local editor state.
+// `keywords` is derived from the description, so it follows the description's stamp.
 registerYjsOwnedFields('label', ['description', 'keywords']);
 
 const labelsMutationKeyBase = ['label'] as const;

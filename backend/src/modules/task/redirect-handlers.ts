@@ -10,7 +10,7 @@ import { getAdminDb } from '#/db/db';
 // admin credential still boots and only these routes fail.
 const db = () => getAdminDb('public task link resolution');
 
-import { getTextFromBlock } from 'shared/blocknote';
+import { getTextFromBlock, titleFromDocument } from 'shared/blocknote';
 import type { Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { labelsTable } from '#/modules/label/label-db';
@@ -95,7 +95,11 @@ app.openapi(taskRedirectRoutes.getTaskCover, async (ctx) => {
       .where(eq(usersTable.id, task.createdBy as string));
   }
 
-  const png = await generateCover({ title: task.summary, avatarUrl: createdByUser?.thumbnailUrl || '', name: createdByUser?.name || '' });
+  const png = await generateCover({
+    title: titleFromDocument(task.summary),
+    avatarUrl: createdByUser?.thumbnailUrl || '',
+    name: createdByUser?.name || '',
+  });
 
   return new Response(Buffer.from(png), {
     headers: { 'Content-Type': 'image/png', 'Content-Length': String(png.byteLength), 'Cache-Control': 'public, max-age=3600, immutable' },
