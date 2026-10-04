@@ -58,6 +58,7 @@
     "story": "pnpm --filter frontend storybook",
     "style": "node shared/scripts/check-style.ts",
     "style:audit": "node shared/scripts/check-style.ts --audit",
+    "template:check": "node shared/scripts/check-template-config.ts",
     "test": "pnpm test:full",
     "test:core": "pnpm docker:test && cross-env TEST_MODE=core vitest run --silent=passed-only",
     "test:core:runtime": "pnpm docker:test && cross-env TEST_MODE=core TEST_DB_ROLE=runtime vitest run --project=backend-runtime --silent=passed-only",

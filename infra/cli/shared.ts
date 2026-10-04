@@ -1,35 +1,21 @@
 import { spawnSync } from 'node:child_process';
 import { confirm, input } from '@inquirer/prompts';
 import type { EngineConfig } from '../config/engine-config';
+import { menuPath, type OperatorActionId } from '../lib/operator-actions';
 import type { KeyPair } from '../lib/scaleway/operator-identity';
 import { controlActor, lockKey, makeControlClient, stateBackendUrl, stateBucket } from '../lib/stack/control-store';
 import { generatePassphrase, verifyStackPassphrase } from '../lib/stack/pulumi-passphrase';
 import type { StackContext } from '../lib/stack/stack-context';
 import { acquireLease, installSignalRelease } from '../lib/stack/stack-lease';
-import { crossMark, pc, warningMark } from '../lib/utils/cli-output';
+import { crossMark, type Hint, pc, printFailureHint, warningMark } from '../lib/utils/cli-output';
 import { errorMessage } from '../lib/utils/errors';
+import { isPromptAbort } from './prompts/abort';
 import { maskedSecret } from './prompts/masked-secret';
 
 type AppConfigType = EngineConfig;
 
-/** Infra CLI operation modes */
-export type CliMode =
-  | 'status'
-  | 'resume'
-  | 'rotate'
-  | 'rotate-passphrase'
-  | 'fetch-admin-key'
-  | 'store-passphrase'
-  | 'apply'
-  | 'preview'
-  | 'secrets'
-  | 'reset-database'
-  | 'seed-db'
-  | 'expose-db'
-  | 'unexpose-db'
-  | 'unlock'
-  | 'teardown'
-  | 'geoip-refresh';
+/** Infra CLI operation modes: the ids of the operator action table. */
+export type CliMode = OperatorActionId;
 
 /** Stack information and state, passed to every CLI action handler. */
 export interface InfraContext extends StackContext {
@@ -40,6 +26,36 @@ export interface StepOptions {
   cwd?: string;
   retry?: boolean;
   env?: NodeJS.ProcessEnv;
+}
+
+/**
+ * Ends the running action after it printed its failure. It is thrown, so every `finally` on the way out runs: the menu then lists its rows
+ * again, and a single-action run exits with `exitCode`.
+ */
+export class ActionEnded extends Error {
+  readonly exitCode: number;
+
+  constructor(exitCode: number) {
+    super(`the action ended with exit code ${exitCode}`);
+    this.name = 'ActionEnded';
+    this.exitCode = exitCode;
+  }
+}
+
+/** End the running action with `code` (see {@link ActionEnded}). Call it after printing what went wrong. */
+export function endAction(code = 1): never {
+  throw new ActionEnded(code);
+}
+
+/** Print a failure with the command that recovers from it, then end the running action. */
+export function endActionWithHint(message: string, hint: Hint, code = 1): never {
+  printFailureHint(message, hint);
+  return endAction(code);
+}
+
+/** True for the two errors that end an action on purpose: the action ending itself, and the operator's Ctrl-C at a prompt. A catch-all lets both through. */
+export function endsAction(error: unknown): boolean {
+  return error instanceof ActionEnded || isPromptAbort(error);
 }
 
 /** Non-interactive mode (INFRA_NON_INTERACTIVE=1): every prompt resolves to its default, its env value, or empty; a prompt without a safe default throws. */
@@ -147,21 +163,34 @@ export function pulumiLoginUrl(appConfig: AppConfigType): string {
   return stateBackendUrl(stateBucket(appConfig.slug), appConfig.s3.region);
 }
 
-/** `pulumi login` (exits on failure) plus a best-effort `pulumi stack select` against the S3 state backend; the caller may still be about to init the stack. */
+/** `pulumi login` (ends the action on failure) plus a best-effort `pulumi stack select` against the S3 state backend; the caller may still be about to init the stack. */
 export function pulumiLoginAndSelect(infraDir: string, env: NodeJS.ProcessEnv, appConfig: AppConfigType, targetStack: string): void {
   const login = spawnSync('pulumi', ['login', pulumiLoginUrl(appConfig)], { cwd: infraDir, env, stdio: 'inherit' });
   if (login.status !== 0) {
     console.error(
-      `${crossMark} pulumi login failed (exit ${login.status}). The state bucket admits only the admin and CI deploy applications: put the admin application's key in infra/.env.<mode> as SCW_ADMIN_ACCESS_KEY / SCW_ADMIN_SECRET_KEY (Manage keys & secrets → Fetch admin application key).`,
+      `${crossMark} pulumi login failed (exit ${login.status}). The state bucket admits only the admin and CI deploy applications: put the admin application's key in infra/.env.<mode> as SCW_ADMIN_ACCESS_KEY / SCW_ADMIN_SECRET_KEY (${menuPath('fetch-admin-key')}).`,
     );
-    process.exit(login.status ?? 1);
+    endAction(login.status ?? 1);
   }
   spawnSync('pulumi', ['stack', 'select', targetStack], { cwd: infraDir, env, stdio: 'ignore' });
 }
 
-/** Handle to a held stack lease; `release` logs failures and never throws. */
+/** Handle to a held stack lease; `release` logs failures, never throws, and does nothing on a second call. */
 export interface StackLockHandle {
   release: () => Promise<void>;
+}
+
+/** The leases this process holds, so an action that ends without releasing its own cannot leave the stack locked under the menu. */
+const heldLocks = new Set<StackLockHandle>();
+
+/**
+ * Release every stack lease still held and report how many there were. The menu calls it after each action: a lease renews itself for as
+ * long as the process lives, so one that outlived its action would keep the stack locked until the operator quits.
+ */
+export async function releaseHeldLocks(): Promise<number> {
+  const leftover = [...heldLocks];
+  for (const handle of leftover) await handle.release();
+  return leftover.length;
 }
 
 /** How long an operator run waits for another holder's lease to lapse: longer than one lifetime, so a dead run always frees the stack in time. */
@@ -169,7 +198,7 @@ const OPERATOR_LOCK_WAIT_MS = 5 * 60_000;
 
 /**
  * Take the stack lease so a second operator or CI cannot mutate the stack concurrently. A live lock held by someone else is waited out (a dead
- * run's lease lapses within minutes); a holder that keeps renewing wins, and this run exits pointing at the "Unlock" escape hatch.
+ * run's lease lapses within minutes); a holder that keeps renewing wins, and the action ends pointing at the unlock action.
  * The lease renews itself while held and is released on Ctrl-C, so an interrupted run leaves nothing behind.
  */
 export async function acquireStackLockOrExit(opts: {
@@ -206,19 +235,22 @@ export async function acquireStackLockOrExit(opts: {
     console.error(
       `${warningMark} Stack ${opts.stack} is still locked by ${pc.cyan(result.held.owner)} (operation: ${result.held.operation}, since ${result.held.acquiredAt}).`,
     );
-    console.error(`  If that run is dead, clear it with the CLI "Unlock" action or remove s3://${bucket}/${key}.`);
-    process.exit(1);
+    console.error(`  If that run is dead, clear it with "${menuPath('unlock')}" in the CLI or remove s3://${bucket}/${key}.`);
+    endAction(1);
   }
   const uninstall = installSignalRelease(result.lease, { log: (msg) => console.warn(`${warningMark} ${msg}`) });
-  return {
+  const handle: StackLockHandle = {
     release: async () => {
+      if (!heldLocks.delete(handle)) return;
       uninstall();
       await result.lease.release().catch((e) => console.warn(`${warningMark} failed to release stack lock: ${errorMessage(e)}`));
     },
   };
+  heldLocks.add(handle);
+  return handle;
 }
 
-/** Step runner: runs a labelled command, offering retry on failure; `must` exits the process on a non-zero code. */
+/** Step runner: runs a labelled command, offering retry on failure; `must` ends the action on a non-zero code. */
 export function createStepRunner(infraDir: string, defaultEnv: NodeJS.ProcessEnv) {
   const step = async (
     label: string,
@@ -246,7 +278,7 @@ export function createStepRunner(infraDir: string, defaultEnv: NodeJS.ProcessEnv
     opts: StepOptions = {},
   ) => {
     const code = await step(label, cmd, args, run, opts);
-    if (code !== 0) process.exit(code);
+    if (code !== 0) endAction(code);
   };
 
   return { must };

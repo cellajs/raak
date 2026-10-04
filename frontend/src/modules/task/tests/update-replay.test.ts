@@ -11,7 +11,6 @@ vi.mock('sdk', async (importOriginal) => ({ ...(await importOriginal<typeof impo
 
 import { updateLabelMutationFn } from '~/modules/label/query';
 import { updateTaskMutationFn } from '~/modules/task/query';
-import { recordPausedMutation } from '~/query/offline/mutation-queue';
 
 const ctx = { tenantId: 'ten-1', organizationId: 'org-1' };
 const persistedStx = (mutationId: string) => ({ mutationId, sourceId: 'tab-1', fieldTimestamps: { name: '1710500000123:0001:abcde' } });
@@ -22,17 +21,15 @@ describe('task and label updates replayed from the offline queue', () => {
     expect(updateTask.mock.lastCall?.[0].body.stx.replayed).toBeUndefined();
   });
 
-  it('a task edit that paused offline is flagged and keeps its field timestamps', async () => {
+  it('a task replay reuses the stx persisted in variables: same mutationId and HLCs, no restamp', async () => {
     const stx = persistedStx('task-paused');
-    recordPausedMutation(stx.mutationId);
     await updateTaskMutationFn({ ...ctx, id: 'task-1', ops: { name: 'Renamed' }, stx });
-    expect(updateTask.mock.lastCall?.[0].body.stx).toEqual({ ...stx, replayed: true });
+    expect(updateTask.mock.lastCall?.[0].body.stx).toEqual(stx);
   });
 
-  it('a label edit that paused offline is flagged too', async () => {
+  it('a label replay reuses its persisted stx too', async () => {
     const stx = persistedStx('label-paused');
-    recordPausedMutation(stx.mutationId);
     await updateLabelMutationFn({ ...ctx, id: 'label-1', ops: { name: 'Renamed' }, stx });
-    expect(updateLabel.mock.lastCall?.[0].body.stx).toEqual({ ...stx, replayed: true });
+    expect(updateLabel.mock.lastCall?.[0].body.stx).toEqual(stx);
   });
 });
