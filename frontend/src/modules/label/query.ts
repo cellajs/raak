@@ -21,13 +21,13 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
-import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
+import { createStxForCreate, createStxForDelete, createStxForUpdate, withReplayFlag } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
 import { invalidateEmbeddingHosts, propagateEmbeddedProduct } from '~/query/realtime/propagation';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
@@ -111,16 +111,12 @@ export const labelsQueryOptions = ({
   tenantId,
 }: LabelsListParams) => {
   const filters = { q, sort, order, modes, projectId, workspaceId };
-  const requestQuery = { ...filters, limit: String(limit) };
 
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(organizationId, filters),
-    queryFn: ({ pageParam: { page, offset }, signal }) => {
-      const requestOffset = String(offset ?? (page ?? 0) * limit);
-
-      return getLabels({ query: { ...requestQuery, offset: requestOffset }, path: { organizationId, tenantId }, signal });
-    },
-    ...baseInfiniteQueryOptions,
+    ...offsetPaging(limit, (offset, signal) =>
+      getLabels({ query: { ...filters, ...pageQuery(limit, offset) }, path: { organizationId, tenantId }, signal }),
+    ),
     meta: { persist: false },
     staleTime: syncStaleTime,
   });
@@ -136,8 +132,9 @@ const createLabelMutationFn = async ({ tenantId, organizationId, data, stx }: Cr
   return result.data[0];
 };
 
-const updateLabelMutationFn = async ({ tenantId, organizationId, id, ops, stx }: UpdateLabelFullVars) => {
-  const effectiveStx = stx ?? createStxForUpdate(ops ? Object.keys(ops) : []);
+/** Sends one label update; exported for the replay test. */
+export const updateLabelMutationFn = async ({ tenantId, organizationId, id, ops, stx }: UpdateLabelFullVars) => {
+  const effectiveStx = withReplayFlag(stx ?? createStxForUpdate(ops ? Object.keys(ops) : []));
   return updateLabel({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
 };
 

@@ -1,15 +1,16 @@
-import type { UserContext } from '#/core/context';
+import type { ActorContext } from '#/core/context';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
-import { filterPrimaryLabelDeletes, reassignTasksFromDeletedPrimaries } from '#/modules/label/helpers/primary-labels';
 import { deleteCountersByKeys, deleteLabelsByIds } from '#/modules/label/label-queries';
+import { filterPrimaryLabelDeletes } from '#/modules/label/operations/filter-primary-label-deletes';
+import { reassignTasksFromDeletedPrimaries } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
 import { getIsoDate } from '#/utils/iso-date';
 
-export async function deleteLabelsOp(ctx: UserContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
+export async function deleteLabelsOp(ctx: ActorContext, ids: string[]): Promise<{ data: []; rejectedIds: string[] }> {
   const { allowedIds: permittedIds, rejectedIds } = await splitByPermission(ctx, 'delete', 'label', ids);
   const deletedAt = getIsoDate();
-  const deletedBy = ctx.var.user.id;
+  const deletedBy = ctx.var.actor.id;
   const rejected = new Set(rejectedIds);
 
   await tenantContextIncludingDeleted(ctx, async (txCtx) => {

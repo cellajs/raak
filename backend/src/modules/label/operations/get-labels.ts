@@ -1,28 +1,20 @@
 import type { z } from '@hono/zod-openapi';
-import { count, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
-import type { UserContext } from '#/core/context';
+import type { SQL } from 'drizzle-orm';
+import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
-import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
-import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import type { LabelModel } from '#/modules/label/label-db';
 import { labelsTable } from '#/modules/label/label-db';
-import { buildLabelsListQuery } from '#/modules/label/label-queries';
+import { findLabelsPaginated } from '#/modules/label/label-queries';
 import type { labelListQuerySchema } from '#/modules/label/label-schema';
 import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-queries';
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
-import { getOrderColumns } from '#/utils/order-column';
-import { seqCursorFilters } from '#/utils/seq-cursor';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
-export async function getLabelsOp(
-  ctx: UserContext,
-  input: GetLabelsInput,
-): Promise<{ items: (LabelModel & { usedCount: number })[]; total: number }> {
+export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promise<{ items: (LabelModel & { usedCount: number })[]; total: number }> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const { q, sort, order, offset, limit, seqCursor, modes } = queryInfo;
   const organizationId = ctx.var.organization.id;
@@ -44,73 +36,19 @@ export async function getLabelsOp(
   // Resolve the caller's readable scope (unconditional projects + row-conditional slices,
   // e.g. `read: 'own'`) and compile it to a single row predicate.
   const actor = actorFrom(ctx);
-  const readFilter = resolveCollectionReadFilter(ctx.var.memberships, 'label', organizationId, actor, requested);
+  const readFilter = resolveCollectionReadFilter(ctx.var.actor.bindings, 'label', organizationId, actor, requested);
   const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, labelsTable.projectId, actor);
 
   if (scopeWhere.kind === 'none') {
     return { items: [], total: 0 };
   }
 
+  // Restrict to the caller's readable scope unless org-wide (kind 'all').
+  const filters: SQL[] = scopeWhere.kind === 'where' ? [scopeWhere.where] : [];
+
   // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted labels
   const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
-
-  // Delta reads discard `total`; org-wide unfiltered reads use the O(1) channel counter; everything
-  // narrower (search / modes / project-scoped / row-scoped 'own') falls back to the exact COUNT(*).
-  const isDelta = !!seqCursor;
-  const counterEligible = scopeWhere.kind === 'all' && !q?.trim() && !seqCursor && !modes?.length;
-
-  const result = await read(ctx, async (readCtx) => {
-    const { db } = readCtx.var;
-
-    const labelsFilters: SQL[] = [];
-
-    // Hide tombstones for normal reads; on delta sync they flow through so caches can drop them
-    if (!seqCursor) labelsFilters.push(isNull(labelsTable.deletedAt));
-
-    // Sequence-based delta sync filter
-    labelsFilters.push(...seqCursorFilters(labelsTable.seq, seqCursor));
-
-    // Restrict to the caller's readable scope unless org-wide (kind 'all').
-    if (scopeWhere.kind === 'where') labelsFilters.push(scopeWhere.where);
-
-    // Tokenized search over name + description-derived keywords, mirroring task keyword
-    // matching: every word must hit (AND across words, OR across columns per word).
-    // parseSearchQuery strips the '=' highlight marker so marked queries behave like plain ones.
-    const searchWords = parseSearchQuery(q).effectiveQ.toLowerCase().split(/\s+/).filter(Boolean);
-    for (const word of searchWords) {
-      const wordFilter = or(ilike(labelsTable.name, `%${word}%`), ilike(labelsTable.keywords, `%${word}%`));
-      if (wordFilter) labelsFilters.push(wordFilter);
-    }
-    if (modes?.length) labelsFilters.push(inArray(labelsTable.mode, modes));
-
-    const labelsSubquery = buildLabelsListQuery(readCtx, { filters: labelsFilters }).as('labels');
-
-    // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
-    const orderBy = seqCursor
-      ? [sql`seq asc`, sql`id asc`]
-      : getOrderColumns({ sort, order, fallback: ['name', 'asc'], columns: { name: sql`name`, usedCount: sql`used_count` }, tieBreaker: sql`id` });
-
-    const itemsQuery = db
-      .select()
-      .from(labelsSubquery)
-      .orderBy(...orderBy)
-      .limit(limit)
-      .offset(offset);
-
-    const totalSource: ListTotalSource = isDelta
-      ? { kind: 'pageLength' }
-      : counterEligible
-        ? { kind: 'counter', getTotal: () => getOrganizationEntityCount(readCtx, { organizationId, entityType: 'label' }) }
-        : {
-            kind: 'exact',
-            getTotal: async () => {
-              const [{ total }] = await db.select({ total: count() }).from(labelsSubquery);
-              return total;
-            },
-          };
-
-    return resolveListTotal(itemsQuery, totalSource);
-  });
-
-  return result;
+  return read(ctx, (readCtx) =>
+    findLabelsPaginated(readCtx, { organizationId, filters, orgWide: scopeWhere.kind === 'all', q, modes, sort, order, limit, offset, seqCursor }),
+  );
 }

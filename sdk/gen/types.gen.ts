@@ -7702,10 +7702,10 @@ export type GetMembersResponses = {
             project?: number;
           };
           products: {
-            attachment: number;
+            task: number;
           };
           activity: {
-            attachment: number | null;
+            task: number | null;
           };
         };
       }

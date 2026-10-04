@@ -1,9 +1,9 @@
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { tenantContext } from '#/db/tenant-context';
 import { defineBackendModule } from '#/lib/module';
-import { buildPrimaryLabelRows, propagateSetupConfigLabels } from '#/modules/label/helpers/primary-labels';
+import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
 import { labelHandlers } from '#/modules/label/label-handlers';
-import { insertLabels } from '#/modules/label/label-queries';
+import { insertLabels, propagateSetupConfigLabels } from '#/modules/label/label-queries';
 import { updateLabelOp } from '#/modules/label/operations/update-label';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
 
@@ -34,7 +34,9 @@ defineBackendModule({
           createdBy: ctx.var.actor.id,
         }),
       );
-      if (rows.length) await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: rows }));
+      // On the dispatcher's connection: create-projects dispatches inside its transaction, where the project rows are
+      // not visible to any other connection yet.
+      if (rows.length) await insertLabels(ctx, { labels: rows });
     },
     // Diff-driven: propagate primary-label edits to tracked child rows only when they changed.
     'organization.updated': async (ctx, { before = [], after = [] }) => {

@@ -1,10 +1,12 @@
 import type { SVGProps } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_ICON_STROKE_WIDTH } from '~/modules/task/dropdowns/status-icons/constants';
 
 export function IcedIcon({ ...props }: SVGProps<SVGSVGElement>) {
+  const { t } = useTranslation();
   return (
-    <svg width="1em" height="1em" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-label="Iced" {...props}>
-      <title>Iced</title>
+    <svg width="1em" height="1em" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-label={t('c:iced')} {...props}>
+      <title>{t('c:iced')}</title>
       <rect x="1.25" y="1.25" width="13.5" height="13.5" rx="4.25" fill="none" stroke="#1398E9" strokeWidth={STATUS_ICON_STROKE_WIDTH} />
       <path fillRule="evenodd" clipRule="evenodd" fill="#1398E9" d="M12.7 13.8 2.5 3.6l.8-.8L13.5 13l-.8.8Z" />
       <path fill="#1398E9" d="M2.5 13.2 12.7 3l.8.8L3.3 14l-.8-.8Z" />

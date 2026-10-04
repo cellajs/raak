@@ -1,9 +1,10 @@
 import type { z } from '@hono/zod-openapi';
 import { labelSlug } from 'shared/config/labels-config';
-import type { UserContext } from '#/core/context';
+import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
+import { dispatchMutation } from '#/lib/mutation-bus';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { findLabelsByOrg, insertLabels } from '#/modules/label/label-queries';
@@ -17,7 +18,7 @@ import { log } from '#/utils/logger';
 
 type CreateLabelsInput = z.infer<typeof labelCreateManyStxBodySchema>;
 
-export async function createLabelsOp(ctx: UserContext, rawInput: CreateLabelsInput): Promise<{ data: LabelModel[]; rejectedIds: string[] }> {
+export async function createLabelsOp(ctx: OrgContext, rawInput: CreateLabelsInput): Promise<{ data: LabelModel[]; rejectedIds: string[] }> {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
   const { organization, tenant } = ctx.var;
@@ -60,7 +61,7 @@ export async function createLabelsOp(ctx: UserContext, rawInput: CreateLabelsInp
       tenantId: organization.tenantId,
       organizationId: organization.id,
       createdAt: getIsoDate(),
-      createdBy: ctx.var.user.id,
+      createdBy: ctx.var.actor.id,
       stx: buildStx(stx),
     };
 
@@ -68,7 +69,12 @@ export async function createLabelsOp(ctx: UserContext, rawInput: CreateLabelsInp
     return label;
   });
 
-  const labelRecords = await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: labelsToInsert }));
+  const labelRecords = await tenantContext(ctx, async (txCtx) => {
+    const rows = await insertLabels(txCtx, { labels: labelsToInsert });
+    // Inside the transaction, so mutation handlers join the write.
+    await dispatchMutation(txCtx, 'label.created', { after: rows });
+    return rows;
+  });
 
   log.info('Labels created', { count: labelRecords.length });
 

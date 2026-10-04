@@ -148,7 +148,7 @@ export function BoardSkeleton({
   return (
     <>
       {withHeader && (
-        <div className={taskBarClass}>
+        <div className={taskBarClass} aria-hidden="true" inert>
           <BoardSearch toggleFocus={() => {}} />
 
           <TableCount count={0} label="c:task" className="mr-3" />
@@ -332,7 +332,7 @@ function PanelHeaderSkeleton({
         !projectPage && (
           <>
             {isPrimary && (
-              <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label="Project options">
+              <Button variant="ghost" className="h-8 px-2 max-sm:hidden" aria-label={t('c:resource_options', { resource: t('c:project') })}>
                 <EllipsisVerticalIcon />
               </Button>
             )}

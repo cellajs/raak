@@ -2,7 +2,7 @@ import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizz
 import type { EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
-import { requestScope } from '#/db/utils/request-scope';
+import { requestScopeWhere } from '#/db/utils/request-scope';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -30,11 +30,10 @@ interface UpdateWorkspaceOpts {
 /** Update a workspace by ID and return the updated row. */
 export const updateWorkspace = async (ctx: ActorContext, { id, values }: UpdateWorkspaceOpts) => {
   const { db } = ctx.var;
-  const { organizationId } = requestScope(ctx);
   const [updated] = await db
     .update(workspacesTable)
     .set(values)
-    .where(and(eq(workspacesTable.id, id), eq(workspacesTable.organizationId, organizationId)))
+    .where(and(eq(workspacesTable.id, id), requestScopeWhere(ctx, workspacesTable, 'workspace')))
     .returning();
   return updated;
 };
@@ -45,8 +44,7 @@ interface DeleteWorkspacesByIdsOpts {
 
 export const deleteWorkspacesByIds = async (ctx: ActorContext, { ids }: DeleteWorkspacesByIdsOpts) => {
   const { db } = ctx.var;
-  const { organizationId } = requestScope(ctx);
-  return db.delete(workspacesTable).where(and(inArray(workspacesTable.id, ids), eq(workspacesTable.organizationId, organizationId)));
+  return db.delete(workspacesTable).where(and(inArray(workspacesTable.id, ids), requestScopeWhere(ctx, workspacesTable, 'workspace')));
 };
 
 interface FindWorkspacesPaginatedOpts {

@@ -252,7 +252,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                   <FormControl>
                     <Button
                       type="button"
-                      aria-label="Set labels"
+                      aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
                       variant="input"
                       size="sm"
                       id={`labels-${formId}`}
@@ -280,8 +280,8 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                                 {/* biome-ignore lint/a11y/useKeyWithClickEvents: element is not keyboard-focusable and handled intentionally via mouse*/}
                                 <div
                                   className={cn(
-                                    buttonVariants({ size: 'micro', variant: 'ghost' }),
-                                    'h-5 w-5 rounded-full opacity-70 hover:opacity-100 focus-visible:ring-offset-0 active:translate-y-0',
+                                    buttonVariants({ size: 'micro', variant: 'ghost', press: false }),
+                                    'size-5 rounded-full opacity-70 hover:opacity-100 focus-visible:ring-offset-0',
                                   )}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -297,9 +297,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                         ) : (
                           <>
                             <TagIcon className="opacity-75" />
-                            <span className="ml-2 font-normal opacity-75">
-                              {t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}
-                            </span>
+                            <span className="font-normal opacity-75">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
                           </>
                         )}
                       </div>
@@ -319,10 +317,10 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                 <FormItem>
                   <FormControl>
                     <Button
-                      aria-label="Assign"
+                      aria-label={t('c:assign_to')}
                       variant="input"
                       size="sm"
-                      className="relative flex justify-start gap-2"
+                      className="relative flex justify-start"
                       id={`assignedTo-${formId}`}
                       type="button"
                       onClick={({ currentTarget }) =>
@@ -355,10 +353,10 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                             <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
                           </AvatarGroup>
                           <span className="truncate">
-                            {value.length === 0 && 'Assign to'}
+                            {value.length === 0 && t('c:assign_to')}
                             {value.length === 1 && value[0].name}
                             {value.length === 2 && value.map(({ name }) => name).join(', ')}
-                            {value.length > 2 && `${value.length} assigned`}
+                            {value.length > 2 && t('c:count_assigned', { count: value.length })}
                           </span>
                         </>
                       ) : (
@@ -376,7 +374,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
 
           <div className="flex flex-col gap-2 py-2 sm:flex-row">
             <div className="[&:not(.absolute)]:active:press flex">
-              <Button type="submit" disabled={!isDirty} className="grow rounded-none rounded-l [&:not(.absolute)]:active:translate-y-0">
+              <Button type="submit" disabled={!isDirty} press={false} className="grow rounded-none rounded-l">
                 <span>
                   {t('c:create')}
                   {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
@@ -393,9 +391,10 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                         <Button
                           type="button"
                           disabled={!isDirty}
-                          aria-label="Set status"
+                          aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
                           variant={'default'}
-                          className="relative rounded-none rounded-r border-l border-l-background/25 [&:not(.absolute)]:active:translate-y-0"
+                          press={false}
+                          className="relative rounded-none rounded-r border-l border-l-background/25"
                           id={`status-${formId}`}
                           onClick={({ currentTarget }) =>
                             handleTaskDropdownClick({
@@ -422,7 +421,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                 type="reset"
                 variant="secondary"
                 className={isDirty ? '' : 'hidden'}
-                aria-label="Cancel"
+                aria-label={t('c:cancel')}
                 onClick={() => {
                   form.reset();
                   setEditorKey((k) => k + 1);
@@ -430,7 +429,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
               >
                 {t('c:cancel')}
               </Button>
-              <Button type="button" variant="secondary" aria-label="close" onClick={handleCloseForm} className={isDirty ? 'hidden' : ''}>
+              <Button type="button" variant="secondary" aria-label={t('c:close')} onClick={handleCloseForm} className={isDirty ? 'hidden' : ''}>
                 {t('c:close')}
               </Button>
             </div>

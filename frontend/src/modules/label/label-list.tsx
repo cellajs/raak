@@ -161,7 +161,7 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
           )}
         >
           <Checkbox
-            className="relative z-10 border-foreground/40 opacity-80 group-hover/labelTile:opacity-100 data-[state=checked]:border-primary"
+            className="relative z-10 data-[state=checked]:border-primary"
             checked={selectedLabelIds.includes(row.id)}
             disabled={hasSelectedTasks}
             aria-label={row.name}
@@ -182,7 +182,7 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
           {/* Single-cell grid stacks count and avatars in the same right-aligned spot, so the
               hover swap never shifts the filter button */}
           <div className="grid shrink-0 justify-items-end *:col-start-1 *:row-start-1">
-            <span className="self-center text-muted-foreground/50 text-xs tabular-nums transition-opacity duration-200 group-focus-within/labelTile:opacity-0 group-hover/labelTile:opacity-0 motion-reduce:transition-none">
+            <span className="self-center text-muted-foreground text-xs tabular-nums transition-opacity duration-200 group-focus-within/labelTile:opacity-0 group-hover/labelTile:opacity-0 motion-reduce:transition-none">
               {row.usedCount}
             </span>
             {entity === 'workspace' && row.projectIds.length > 0 && (

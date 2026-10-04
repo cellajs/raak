@@ -48,7 +48,7 @@ export const config = {
    * Product types with per-member stats in the members table (`include=counts` on GET /members):
    * a count and a last-activity stamp per type; the first is the "last posted" sort key.
    */
-  memberStatProductTypes: ['attachment'] as const,
+  memberStatProductTypes: ['task'] as const,
 
   /** Maps entity types to their ID column names, derived from the hierarchy (`${type}Id`). */
   entityIdColumnKeys: hierarchy.idColumnKeys,
@@ -187,7 +187,7 @@ export const config = {
   apiVersion: 'v1',
   // Session cookies use the host-locked __Host- prefix; changing this version invalidates them.
   cookieVersion: 'v3',
-  clientCacheVersion: 'v15-invitation-token',
+  clientCacheVersion: 'v16-member-task-stats',
 
   // Authentication
 

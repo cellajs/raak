@@ -1,6 +1,7 @@
 import type { ActorContext } from '#/core/context';
 import { tenantRead } from '#/db/tenant-context';
-import { getTaskRelations, hydrateTask } from '#/modules/task/helpers/hydrate-task';
+import { hydrateTask } from '#/modules/task/helpers/hydrate-task';
+import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
 import { getValidProduct } from '#/permissions/get-valid-product';
 
 type ReturnTask = ReturnType<typeof hydrateTask>;

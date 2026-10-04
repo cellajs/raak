@@ -1,5 +1,5 @@
-import { createXRoute } from '#/core/x-routes';
-import { orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
+import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchLabelsResponse, mockLabelResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
@@ -10,132 +10,63 @@ import {
   labelSchema,
   labelUpdateStxBodySchema,
 } from '#/modules/label/label-schema';
-import {
-  batchResponseSchema,
-  errorResponseRefs,
-  idInTenantOrgParamSchema,
-  idsWithStxBodySchema,
-  paginationSchema,
-  tenantOrgParamSchema,
-} from '#/schemas';
+import { batchResponseSchema, idInTenantOrgParamSchema, idsWithStxBodySchema, paginationSchema, tenantOrgParamSchema } from '#/schemas';
 
-const labelsRoutes = {
-  /**
-   * Create one or more labels within a project
-   */
-  createLabels: createXRoute({
-    operationId: 'createLabels',
+const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
+  createLabels: xRoute({
     method: 'post',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
-    tags: ['labels', 'app', 'product'],
     summary: 'Create labels',
     description: 'Creates one or more labels within a project.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: { required: true, content: { 'application/json': { schema: labelCreateManyStxBodySchema } } },
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(labelCreateManyStxBodySchema) },
     responses: {
-      200: {
-        description: 'Labels already created (idempotent)',
-        content: { 'application/json': { schema: labelCreateResponseSchema, example: mockBatchLabelsResponse() } },
-      },
-      201: {
-        description: 'Labels created',
-        content: { 'application/json': { schema: labelCreateResponseSchema, example: mockBatchLabelsResponse() } },
-      },
-      ...errorResponseRefs,
+      200: json('Labels already created (idempotent)', labelCreateResponseSchema, mockBatchLabelsResponse()),
+      201: json('Labels created', labelCreateResponseSchema, mockBatchLabelsResponse()),
     },
   }),
-  /**
-   * Get list of labels for a project
-   */
-  getLabels: createXRoute({
-    operationId: 'getLabels',
+  getLabels: xRoute({
     method: 'get',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
-    tags: ['labels', 'app', 'product'],
     summary: 'Get list of labels',
     description: 'Returns a list of labels for a given project or workspace.',
     request: { params: tenantOrgParamSchema, query: labelListQuerySchema },
-    responses: {
-      200: {
-        description: 'Label list',
-        content: { 'application/json': { schema: paginationSchema(labelSchema), example: mockPaginatedLabelsResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Label list', paginationSchema(labelSchema), mockPaginatedLabelsResponse()) },
   }),
-  getLabel: createXRoute({
-    operationId: 'getLabel',
+  getLabel: xRoute({
     method: 'get',
     path: '/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xCache: [productCache('label')],
-    tags: ['labels', 'app', 'product'],
     summary: 'Get label',
     description: 'Retrieves a label by its ID.',
     request: { params: idInTenantOrgParamSchema },
-    responses: {
-      200: {
-        description: 'Label',
-        content: { 'application/json': { schema: labelSchema, example: mockLabelResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Label', labelSchema, mockLabelResponse()) },
   }),
-  updateLabel: createXRoute({
-    operationId: 'updateLabel',
+  updateLabel: xRoute({
     method: 'put',
     path: '/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
-    tags: ['labels', 'app', 'product'],
     summary: 'Update label',
     description: 'Updates a label by ID.',
-    request: {
-      params: idInTenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: labelUpdateStxBodySchema } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Label updated',
-        content: { 'application/json': { schema: labelSchema, example: mockLabelResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: idInTenantOrgParamSchema, body: jsonBody(labelUpdateStxBodySchema) },
+    responses: { 200: json('Label updated', labelSchema, mockLabelResponse()) },
   }),
-  deleteLabels: createXRoute({
-    operationId: 'deleteLabels',
+  deleteLabels: xRoute({
     method: 'delete',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
-    tags: ['labels', 'app', 'product'],
     summary: 'Delete labels',
     description: 'Deletes one or more labels by ID.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: idsWithStxBodySchema() } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Success',
-        content: { 'application/json': { schema: batchResponseSchema() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(idsWithStxBodySchema()) },
+    responses: { 200: json('Success', batchResponseSchema()) },
   }),
-};
+});
 
 export { labelsRoutes };

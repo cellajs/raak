@@ -639,14 +639,14 @@
                         "type": "object",
                         "required": true,
                         "properties": {
-                          "attachment": { "type": "number", "required": true }
+                          "task": { "type": "number", "required": true }
                         }
                       },
                       "activity": {
                         "type": "object",
                         "required": true,
                         "properties": {
-                          "attachment": {
+                          "task": {
                             "type": ["number", "null"],
                             "required": true
                           }

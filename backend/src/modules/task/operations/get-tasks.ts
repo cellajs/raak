@@ -2,7 +2,7 @@ import type { z } from '@hono/zod-openapi';
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
-import { getTasks } from '#/modules/task/helpers/get-tasks';
+import { getTasks } from '#/modules/task/operations/list-tasks';
 import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-queries';
 import type { taskListQuerySchema } from '#/modules/task/task-schema';
 import { actorFrom } from '#/permissions/access';

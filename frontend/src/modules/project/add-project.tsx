@@ -34,7 +34,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
       titleContent: (
         <div className="flex items-center gap-2 max-sm:justify-center">
           {mode[0] ? (
-            <button type="button" aria-label="Go back" onClick={() => updateMode([])}>
+            <button type="button" aria-label={t('c:back')} onClick={() => updateMode([])}>
               {baseTitle}
             </button>
           ) : (
@@ -62,7 +62,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
   };
 
   return (
-    <MotionConfig transition={{ type: 'spring', bounce: 0, duration: 0.4 }}>
+    <MotionConfig reducedMotion="user" transition={{ type: 'spring', bounce: 0, duration: 0.4 }}>
       <AnimatePresence mode="popLayout">
         {!createMode && (
           <motion.div
@@ -76,7 +76,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
                 size="tile"
                 variant="tile"
                 value="create"
-                aria-label="Create project"
+                aria-label={t('c:create_resource', { resource: t('c:project').toLowerCase() })}
                 className="w-auto grow py-6 sm:py-10"
                 id="create-project-option"
               >
@@ -89,7 +89,13 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
                   </div>
                 </div>
               </ToggleGroupItem>
-              <ToggleGroupItem size="tile" variant="tile" value="select" aria-label="Select project" className="w-auto grow py-6 sm:py-10">
+              <ToggleGroupItem
+                size="tile"
+                variant="tile"
+                value="select"
+                aria-label={t('c:select_resource', { resource: t('c:project').toLowerCase() })}
+                className="w-auto grow py-6 sm:py-10"
+              >
                 <SquareMousePointerIcon className="size-12" strokeWidth={1} />
                 <div className="flex flex-col truncate pl-3">
                   <div className="">{t('c:select_project')}</div>

@@ -1,5 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import type { UserContext } from '#/core/context';
+import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
@@ -7,7 +8,7 @@ import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/operations/check-slug';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertMemberships } from '#/modules/memberships/operations/insert-memberships';
-import { resolveProjectWorkspaceId } from '#/modules/project/helpers/project-membership-workspace';
+import { resolveProjectWorkspaceId } from '#/modules/project/operations/project-workspace-membership';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
 import { withAuditUsers } from '#/modules/user/operations/with-audit-users';
@@ -23,7 +24,6 @@ type CreateProjectItem = z.infer<typeof projectCreateBodySchema>[number];
 export async function createProjectsOp(ctx: UserContext, rawItems: CreateProjectItem[], workspaceId: string) {
   // Lens seam: canonicalize old-shape field names before any body access
   const items = rawItems.map((item) => projectContract.normalizeBody(item));
-  const db = ctx.var.db;
   const user = ctx.var.user;
   const organization = ctx.var.organization;
 
@@ -62,34 +62,37 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   // Permission check (same for all items since entityType + org is the same)
   canCreateEntity(ctx, buildSubject('project', { organizationId: organization.id }));
 
-  // Insert projects
-  const projectRecords = await insertProjects(ctx, {
-    projects: itemsToCreate.map((item) => ({
-      entityType: 'project' as const,
-      name: item.name,
-      slug: item.slug,
-      publicAt: item.publicAt,
-      createdBy: user.id,
-      tenantId: organization.tenantId,
-      organizationId: organization.id,
-    })),
+  // One transaction for the rows, the handlers of `project.created` (the label module seeds primary labels) and the
+  // creator's memberships: a failure in any of them leaves no project behind.
+  const { projectRecords, createdMemberships } = await tenantContext(ctx, async (txCtx) => {
+    const projectRecords = await insertProjects(txCtx, {
+      projects: itemsToCreate.map((item) => ({
+        entityType: 'project' as const,
+        name: item.name,
+        slug: item.slug,
+        publicAt: item.publicAt,
+        createdBy: user.id,
+        tenantId: organization.tenantId,
+        organizationId: organization.id,
+      })),
+    });
+
+    await dispatchMutation(txCtx, 'project.created', { after: projectRecords });
+
+    const createdMemberships = await insertMemberships(txCtx, {
+      items: projectRecords.map((project) => ({
+        userId: user.id,
+        createdBy: user.id,
+        role: 'admin' as const,
+        entity: project,
+        extraFields: { workspaceId: resolvedWorkspaceId },
+      })),
+    });
+
+    return { projectRecords, createdMemberships };
   });
 
-  const projectIds = projectRecords.map((p) => p.id);
-
-  log.info('Projects created', { count: projectRecords.length, ids: projectIds });
-
-  await dispatchMutation(ctx, 'project.created', { after: projectRecords });
-
-  const membershipInserts = projectRecords.map((project) => ({
-    userId: user.id,
-    createdBy: user.id,
-    role: 'admin' as const,
-    entity: { ...project, tenantId: organization.tenantId },
-    extraFields: { workspaceId: resolvedWorkspaceId },
-  }));
-
-  const createdMemberships = await insertMemberships({ var: { db } }, { items: membershipInserts });
+  log.info('Projects created', { count: projectRecords.length, ids: projectRecords.map((project) => project.id) });
 
   // Invalidate membership cache so subsequent requests see the new membership
   invalidateCache.user(user.id);

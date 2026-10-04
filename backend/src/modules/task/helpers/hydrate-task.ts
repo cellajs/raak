@@ -1,9 +1,7 @@
 import type { z } from '@hono/zod-openapi';
 import { appConfig } from 'shared';
-import type { ActorContext } from '#/core/context';
 import type { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import type { TaskModel } from '#/modules/task/task-db';
-import { findTaskRelations } from '#/modules/task/task-queries';
 import type { taskSchema } from '#/modules/task/task-schema';
 import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
 import { toUserMinimalBase } from '#/modules/user/helpers/audit-user';
@@ -45,13 +43,6 @@ export const hydrateTasks = (tasks: TaskModel[], members: UserMinimalBaseSchemas
 /** Hydrate a single task. Convenience wrapper around hydrateTasks. */
 export const hydrateTask = (task: TaskModel, members: UserMinimalBaseSchemas[], labels: Labels[]): ReturnTask => {
   return hydrateTasks([task], members, labels)[0];
-};
-
-/** Fetch users and labels referenced by one or more tasks. */
-export const getTaskRelations = async (ctx: ActorContext, { tasks }: { tasks: TaskModel[] }) => {
-  const userIds = Array.from(new Set(tasks.flatMap((t) => [t.createdBy, t.updatedBy, ...t.assignedTo].filter((u) => u !== null))));
-  const labelIds = Array.from(new Set(tasks.flatMap((t) => [...t.labels, t.primaryLabelId])));
-  return findTaskRelations(ctx, { userIds, labelIds });
 };
 
 /**

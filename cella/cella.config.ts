@@ -59,6 +59,7 @@ export default defineConfig({
       'backend/src/schemas/app-schemas.ts',
       'bench/src/seeds/ids.ts',
       'frontend/src/placement-config.ts',
+      'frontend/src/members-config.ts',
       'frontend/src/routes-config.tsx',
       'frontend/src/menu-config.tsx',
       'frontend/src/alert-config.tsx',

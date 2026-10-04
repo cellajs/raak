@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
@@ -11,10 +11,13 @@ import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { PopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
+import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { DeleteTask } from '~/modules/task/delete-task';
-import { focusTask } from '~/modules/task/helpers/focus-task';
+import { focusTask, setTaskCardFocus } from '~/modules/task/helpers/focus-task';
+import { getStepTaskOrder } from '~/modules/task/helpers/order-helpers';
+import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { dateShort } from '~/utils/date-short';
@@ -35,6 +38,14 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
   const { copyToClipboard } = useCopyToClipboard(2000);
 
   const relativeDate = useRelativeDate(task.createdAt, 'ago');
+  const { mutate: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
+
+  // Reordering without dragging: one place up or down within the task's status.
+  const moveTask = (direction: 'up' | 'down') => {
+    const displayOrder = getStepTaskOrder(task, direction);
+    if (displayOrder === null) return;
+    updateTask({ id: task.id, ops: { displayOrder } }, { onSuccess: () => !isSheet && setTaskCardFocus(task.id) });
+  };
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const { create } = useDropdowner.getState();
@@ -90,6 +101,16 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
         >
           {t('c:copy_as_link')}
         </DropdownActionItem>
+        {!isProjectReadOnly(task.projectId) && (
+          <>
+            <DropdownActionItem isMobile={isMobile} icon={ArrowUpIcon} onSelect={() => moveTask('up')}>
+              {t('c:move_up')}
+            </DropdownActionItem>
+            <DropdownActionItem isMobile={isMobile} icon={ArrowDownIcon} onSelect={() => moveTask('down')}>
+              {t('c:move_down')}
+            </DropdownActionItem>
+          </>
+        )}
         <DropdownActionItem isMobile={isMobile} icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
           {t('c:delete')}
         </DropdownActionItem>
@@ -133,7 +154,7 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
           <TooltipButton toolTipContent={t('c:options')} side="bottom" sideOffset={5}>
             <Button
               onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
-              aria-label="Task options"
+              aria-label={t('c:resource_options', { resource: t('c:task') })}
               variant="ghost"
               className="h-8 w-8 data-dropdowner-active:bg-accent/50"
               size="xs"
@@ -148,7 +169,7 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
                 onClick={() => {
                   useTaskCardStore.getState().setTaskState(task.id, 'collapsed');
                 }}
-                aria-label="Collapse"
+                aria-label={t('c:collapse')}
                 variant="ghost"
                 size="xs"
                 className="h-8 w-8"

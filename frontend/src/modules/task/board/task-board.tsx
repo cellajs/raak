@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
+import { MotionConfig } from 'motion/react';
 import { useEffect } from 'react';
 import type { Project, Workspace } from 'sdk';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -61,10 +62,11 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
     return <WorkspaceBoard boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />;
   })();
 
+  // Card layout and form animations follow the system's reduced motion setting.
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <BoardHeader projects={projects} workspace={workspace} publicView={publicView} />
       {BoardView}
-    </>
+    </MotionConfig>
   );
 }
