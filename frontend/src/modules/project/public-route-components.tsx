@@ -12,18 +12,19 @@ const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), '
 const publicProjectApi = getRouteApi('/_public/_content/$tenantId/$organizationSlug/public/project/$slug');
 
 export function PublicProjectRouteComponent() {
-  const { project } = publicProjectApi.useRouteContext();
-  const { view } = publicProjectApi.useSearch();
-  const { data } = useSuspenseQuery(publicProjectQueryOptions(project.id));
+  const projectId = publicProjectApi.useRouteContext({ select: (c) => c.project.id });
+  const view = publicProjectApi.useSearch({ select: (search) => search.view });
+  const { data } = useSuspenseQuery(publicProjectQueryOptions(projectId));
+  const projects = [data];
   return (
     <PublicProjectPage key={data.id} project={data}>
       {view === 'table' ? (
         <Suspense>
-          <TasksTable projects={[data]} publicView />
+          <TasksTable projects={projects} publicView />
         </Suspense>
       ) : (
-        <Suspense fallback={<BoardSkeleton boardId={data.id} projects={[data]} projectPage={true} publicView />}>
-          <Board boardId={data.id} projects={[data]} publicView />
+        <Suspense fallback={<BoardSkeleton boardId={data.id} projects={projects} projectPage={true} publicView />}>
+          <Board boardId={data.id} projects={projects} publicView />
         </Suspense>
       )}
     </PublicProjectPage>

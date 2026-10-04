@@ -1,5 +1,6 @@
 import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { z } from 'zod';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
@@ -42,6 +43,7 @@ export const BoardPanel = memo(function BoardPanel({
   sectionFilters,
   windowScroll,
 }: BoardPanelProps) {
+  const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
   const { search } = useSearchParams<BoardSearchProps>({});
   const boardId = useBoardStore((state) => state.activeBoardId)!;
@@ -111,7 +113,7 @@ export const BoardPanel = memo(function BoardPanel({
             size="icon"
             variant="secondary"
             onClick={() => createTaskAction(project.id, project.organizationId)}
-            aria-label="Create task"
+            aria-label={t('c:create_resource', { resource: t('c:task').toLowerCase() })}
             className={`fixed right-4 bottom-4 z-105 h-14 w-14 transform rounded-full bg-secondary shadow-xl transition-all duration-300 ease-in-out hover:bg-secondary active:scale-95 group-[.selection-active]/body:pointer-events-none group-[.selection-active]/body:-bottom-12 group-[.selection-active]/body:scale-50 group-[.selection-active]/body:opacity-0 ${
               showFab ? 'opacity-100' : 'pointer-events-none -bottom-12 scale-50 opacity-0'
             }`}

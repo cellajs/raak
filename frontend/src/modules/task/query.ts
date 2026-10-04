@@ -1,4 +1,4 @@
-import type { GetNextPageParamFunction, QueryClient, UseMutationOptions } from '@tanstack/react-query';
+import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateTasksData, GetTasksData, StxBase, UpdateTaskData, UserMinimalBase } from 'sdk';
 import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
@@ -19,7 +19,7 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
@@ -29,7 +29,7 @@ import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } f
 import { createStxForCreate, createStxForDelete, createStxForUpdate, withReplayFlag } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
-import type { InfiniteQueryData, PageParams, QueryData, QueryOrgContext } from '~/query/types';
+import type { InfiniteQueryData, QueryData, QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
 export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
@@ -138,13 +138,6 @@ const tasksMutationKeyBase = ['task'] as const;
 const handleError = createResourceError('task');
 
 const findTaskInCache = createCacheFinder<Task>('task');
-
-export const getTasksNextPageParam: GetNextPageParamFunction<PageParams, TasksQueryData> = (lastPage, allPages) => {
-  const { total } = lastPage;
-  const fetchedCount = allPages.reduce((acc, page) => acc + page.items.length, 0);
-  if (fetchedCount >= total) return undefined;
-  return { page: allPages.length, offset: fetchedCount };
-};
 
 // Shared mutation functions rebuild requests from durable variables for interactive and offline replay.
 // Optimistic UI fields are removed before SDK operations.
@@ -289,22 +282,16 @@ export const tasksTableQueryOptions = ({
   tenantId,
   limit = appConfig.requestLimits.tasksTable,
 }: Omit<GetTasksParam, 'acceptedCutOff'> & { limit?: number }) => {
-  const { initialPageParam } = baseInfiniteQueryOptions;
-
-  const requestQuery = { q, sort, order, organizationId, projectId, workspaceId, matchMode, limit: String(limit) };
+  const filters = { q, sort, order, organizationId, projectId, workspaceId, matchMode };
 
   return infiniteQueryOptions({
     queryKey: tasksTableQueryKey({ q, sort, order, matchMode, projectId, workspaceId, organizationId }),
-    initialPageParam,
+    ...offsetPaging(limit, (offset, signal) =>
+      getTasks({ path: { organizationId, tenantId }, query: { ...filters, ...pageQuery(limit, offset) }, signal }),
+    ),
     refetchOnWindowFocus: false,
     meta: { persist: false },
-    queryFn: ({ pageParam: { page, offset }, signal }) => {
-      const requestOffset = String(offset || (page || 0) * limit);
-
-      return getTasks({ path: { organizationId, tenantId }, query: { ...requestQuery, offset: requestOffset }, signal });
-    },
     staleTime: syncStaleTime,
-    getNextPageParam: getTasksNextPageParam,
   });
 };
 

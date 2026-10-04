@@ -133,7 +133,7 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
           <TooltipButton toolTipContent={t('c:options')} side="bottom" sideOffset={5}>
             <Button
               onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
-              aria-label="Task options"
+              aria-label={t('c:resource_options', { resource: t('c:task') })}
               variant="ghost"
               className="h-8 w-8 data-dropdowner-active:bg-accent/50"
               size="xs"
@@ -148,7 +148,7 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
                 onClick={() => {
                   useTaskCardStore.getState().setTaskState(task.id, 'collapsed');
                 }}
-                aria-label="Collapse"
+                aria-label={t('c:collapse')}
                 variant="ghost"
                 size="xs"
                 className="h-8 w-8"

@@ -84,7 +84,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
     <Button
       id={`labels-${task.id}${isSheet ? '-sheet' : ''}`}
       onClick={({ currentTarget }) => onDropdownOpen(currentTarget, 'labels')}
-      aria-label="Set labels"
+      aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
       variant="ghost"
       size="xs"
       className="relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
@@ -157,10 +157,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           <Button
             id={`assignedTo-${task.id}${isSheet ? '-sheet' : ''}`}
             onClick={({ currentTarget }) => onDropdownOpen(currentTarget, 'assignedTo')}
-            aria-label="Assign"
+            aria-label={t('c:assign_to')}
             variant="ghost"
             size="xs"
-            className="relative mr-1 flex min-w-8 justify-center gap-2 px-1 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
+            className="relative mr-1 flex min-w-8 justify-center px-1 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
             {...readOnlyInert}
           >
             {task.assignedTo.length > 0 ? (
@@ -183,8 +183,9 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               disabled={task.status === TaskStatus.Accepted}
               variant="outlineGhost"
               size="xs"
+              press={false}
               className={cn(
-                'relative mr-1 font-normal disabled:opacity-100 [&:not(.absolute)]:active:translate-y-0',
+                'relative mr-1 font-normal disabled:opacity-100',
                 !readOnlyHide && 'sm:rounded-r-none sm:border-r-0',
                 !readOnlyHide && isExpandedMobile && 'rounded-r-none border-r-0',
                 statusButtonVariants({ status: task.status }),
@@ -198,11 +199,12 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             <Button
               id={`status-${task.id}${isSheet ? '-sheet' : ''}`}
               onClick={({ currentTarget }) => onDropdownOpen(currentTarget, 'status')}
-              aria-label="Set status"
+              aria-label={t('c:set_resource', { resource: t('c:status').toLowerCase() })}
               variant="outlineGhost"
               size="xs"
+              press={false}
               className={cn(
-                'relative -ml-1 rounded-none rounded-r px-2 [&:not(.absolute)]:active:translate-y-0 [&>svg]:transition-transform data-dropdowner-active:[&>svg]:rotate-180',
+                'relative -ml-1 rounded-none rounded-r px-2 [&>svg]:transition-transform data-dropdowner-active:[&>svg]:rotate-180',
                 !isExpandedMobile && 'max-sm:hidden',
                 statusButtonVariants({ status: task.status }),
                 readOnlyHide,

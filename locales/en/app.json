@@ -100,5 +100,8 @@
   "update_on_online": "Sync on reconnect",
   "workspace": "Workspace",
   "workspace_other": "Workspaces",
-  "workspace_settings.text": "Update your personal settings for {{name}}."
+  "workspace_settings.text": "Update your personal settings for {{name}}.",
+  "set_resource": "Set {{resource}}",
+  "resource_options": "{{resource}} options",
+  "count_assigned": "{{count}} assigned"
 }

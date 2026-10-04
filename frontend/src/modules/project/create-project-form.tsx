@@ -89,7 +89,13 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:create')}
           </SubmitButton>
-          <Button type="reset" variant="secondary" className={form.isDirty ? '' : 'invisible'} aria-label="Cancel" onClick={() => form.reset()}>
+          <Button
+            type="reset"
+            variant="secondary"
+            className={form.isDirty ? '' : 'invisible'}
+            aria-label={t('c:cancel')}
+            onClick={() => form.reset()}
+          >
             {t('c:cancel')}
           </Button>
         </div>

@@ -32,7 +32,7 @@ import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutat
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { getSimilarQueries } from '~/query/basic/mutate-query';
 import { preserveIncluded } from '~/query/basic/preserve-included';
@@ -87,18 +87,13 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
   // Exclude `include` from cache key so queries with/without counts share the same cache
   const filters = { q, sort, order, organizationId, workspaceId, relatableUserId, role, excludeArchived };
 
-  const requestQuery = { ...filters, include, limit: String(limit) };
-
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(filters),
-    queryFn: async ({ pageParam: { page, offset }, signal }) => {
-      const requestOffset = String(offset ?? (page ?? 0) * limit);
-
-      const result = await getProjects({ query: { ...requestQuery, offset: requestOffset }, signal });
+    ...offsetPaging(limit, async (offset, signal) => {
+      const result = await getProjects({ query: { ...filters, include, ...pageQuery(limit, offset) }, signal });
       // Cache entries are populated by the enrichment pipeline (membership/can/ancestorSlugs).
       return result as { items: EnrichedProject[]; total: number };
-    },
-    ...baseInfiniteQueryOptions,
+    }),
     refetchOnMount: true,
   });
 };

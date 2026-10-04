@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { useReadOnlyInert } from '~/modules/project/use-read-only';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
@@ -11,6 +12,7 @@ import { Button } from '~/modules/ui/button';
  * `group-data-[sheet]` is a no-op outside a sheet, so the collapsed (non-sheet) case is unaffected.
  */
 export function TaskPrimaryLabelButton({ task, isSheet = false }: { task: Task; isSheet?: boolean }) {
+  const { t } = useTranslation();
   const { onPrimaryLabelChange } = useTaskFieldHandlers(task);
   const readOnlyInert = useReadOnlyInert(task.projectId);
 
@@ -28,7 +30,7 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: { task: Task; 
           taskId: task.id,
         })
       }
-      aria-label="Set type"
+      aria-label={t('c:set_resource', { resource: t('c:type').toLowerCase() })}
       variant="ghost"
       size="xs"
       className="relative -ml-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100"

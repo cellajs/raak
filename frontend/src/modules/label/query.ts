@@ -21,7 +21,7 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
@@ -111,16 +111,12 @@ export const labelsQueryOptions = ({
   tenantId,
 }: LabelsListParams) => {
   const filters = { q, sort, order, modes, projectId, workspaceId };
-  const requestQuery = { ...filters, limit: String(limit) };
 
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(organizationId, filters),
-    queryFn: ({ pageParam: { page, offset }, signal }) => {
-      const requestOffset = String(offset ?? (page ?? 0) * limit);
-
-      return getLabels({ query: { ...requestQuery, offset: requestOffset }, path: { organizationId, tenantId }, signal });
-    },
-    ...baseInfiniteQueryOptions,
+    ...offsetPaging(limit, (offset, signal) =>
+      getLabels({ query: { ...filters, ...pageQuery(limit, offset) }, path: { organizationId, tenantId }, signal }),
+    ),
     meta: { persist: false },
     staleTime: syncStaleTime,
   });

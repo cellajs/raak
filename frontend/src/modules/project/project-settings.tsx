@@ -8,6 +8,7 @@ import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import { MoveProjectForm } from '~/modules/project/move-project-form';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -26,7 +27,9 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
   const boardType = useBoardStore((state) => state.activeBoardType);
 
   const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
-  const isAdmin = project.membership?.role === 'admin';
+  const resolveCan = useResolveCan();
+  const canUpdate = resolveCan(project.can?.project?.update, project.createdBy);
+  const canDelete = resolveCan(project.can?.project?.delete, project.createdBy);
 
   const { data: workspacesData } = useInfiniteQuery({
     ...workspacesListQueryOptions({ organizationId: project.organizationId }),
@@ -65,7 +68,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
 
   return (
     <div className="mb-12 flex flex-col gap-8">
-      {isAdmin && (
+      {canUpdate && (
         <Card>
           <CardHeader>
             <CardTitle level={2}>{t('c:general')}</CardTitle>
@@ -113,7 +116,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
         </CardContent>
       </Card>
 
-      {isAdmin && (
+      {canDelete && (
         <Card>
           <CardHeader>
             <CardTitle level={2}>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</CardTitle>

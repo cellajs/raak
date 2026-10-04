@@ -5,6 +5,7 @@ import type { Organization } from 'sdk';
 import { FocusViewContainer } from '~/modules/common/focus-view';
 import { PageHeader } from '~/modules/common/page/header';
 import { toaster } from '~/modules/common/toaster/toaster';
+import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { projectQueryOptions, useProjectUpdateMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
@@ -28,7 +29,9 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
   const { data } = useSuspenseQuery(projectQueryOptions(projectId, organizationId, tenantId));
   const project = data as EnrichedProject;
 
-  const isAdmin = project.membership?.role === 'admin';
+  // From the policy, so an organization admin without a project admin membership gets the same affordances the API grants.
+  const resolveCan = useResolveCan();
+  const canUpdate = resolveCan(project.can?.project?.update, project.createdBy);
 
   const updateProject = useProjectUpdateMutation();
 
@@ -45,7 +48,7 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
     <>
       <PageHeader
         entity={project}
-        canUpdate={isAdmin}
+        canUpdate={canUpdate}
         organizationId={project.organizationId}
         parent={organization}
         coverUpdateCallback={coverUpdateCallback}
