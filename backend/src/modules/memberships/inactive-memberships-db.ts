@@ -26,7 +26,6 @@ export const inactiveMembershipsTable = snakeCase.table(
     userId: uuid()
       .references(() => usersTable.id, { onDelete: 'cascade' })
       .$type<UserId>(),
-    tokenId: uuid(), // References tokens.id logically (no FK due to partitioning)
     role: varchar({ enum: roleEnum }).notNull().default(hierarchy.getLeastPrivilegedRole('organization')),
     rejectedAt: timestamp({ mode: 'string' }),
     remindedAt: timestamp({ mode: 'string' }),

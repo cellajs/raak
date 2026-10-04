@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -23,6 +23,7 @@
       "oauth/src/**",
       "infra/**",
       "bench/src/**",
+      "a11y/src/**",
       "sdk/gen/**",
       "sdk/src/**",
       "locales",
@@ -466,6 +467,7 @@
       // scripts, build configuration, Vite plugins, and CLI runtime.
       "includes": [
         "shared/src/config-builder/app-config.ts",
+        "shared/src/config-builder/dev-port-offset.ts",
         "infra/**",
         "**/scripts/**",
         "**/*.config.ts",

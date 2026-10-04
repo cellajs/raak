@@ -1,17 +1,18 @@
-import { and, count, eq, ilike, inArray, isNull, lte, or, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, ilike, inArray, isNull, lte, max, or, type SQL, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { DbContext, OrgContext, UserContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
+import { actorsTable } from '#/modules/actors/actors-db';
 import { lastPostedAtOrder, memberCountsSelect } from '#/modules/memberships/helpers/member-counts';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
-import { membershipsTable } from '#/modules/memberships/memberships-db';
+import { type InsertMembershipModel, membershipsTable } from '#/modules/memberships/memberships-db';
 import { emailsTable } from '#/modules/user/emails-db';
 import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
-import { memberSelect } from '#/modules/user/helpers/select';
-import { userCountersTable } from '#/modules/user/user-counters-db';
+import { lastSeenOrder, memberSelect, userActorJoin } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
+import { getIsoDate } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
@@ -145,15 +146,56 @@ export const stampInactiveMembershipsReminded = async (ctx: DbContext, { ids, re
   return db.update(inactiveMembershipsTable).set({ remindedAt }).where(inArray(inactiveMembershipsTable.id, ids));
 };
 
-interface UpdateInactiveMembershipTokenOpts {
+interface FindPendingInactiveMembershipOpts {
   id: string;
-  tokenId: string;
+  /** Lock the row for the caller's transaction, so a concurrent answer, rejection or resend waits for it. */
+  forUpdate?: boolean;
 }
 
-/** Point an inactive membership at a fresh invitation token (rotation at deferred dispatch). */
-export const updateInactiveMembershipToken = async (ctx: DbContext, { id, tokenId }: UpdateInactiveMembershipTokenOpts) => {
-  const { db } = ctx.var;
-  return db.update(inactiveMembershipsTable).set({ tokenId }).where(eq(inactiveMembershipsTable.id, id));
+/** A membership invitation by id while it stands: not rejected. */
+export const findPendingInactiveMembership = async (ctx: DbContext, { id, forUpdate = false }: FindPendingInactiveMembershipOpts) => {
+  const query = ctx.var.db
+    .select()
+    .from(inactiveMembershipsTable)
+    .where(and(eq(inactiveMembershipsTable.id, id), isNull(inactiveMembershipsTable.rejectedAt)));
+  const [invitation] = forUpdate ? await query.for('update') : await query;
+  return invitation;
+};
+
+interface FindPendingInactiveMembershipByEmailOpts {
+  email: string;
+}
+
+/** A membership invitation to the address that stands, not rejected; undefined when none does. */
+export const findPendingInactiveMembershipByEmail = async (ctx: DbContext, { email }: FindPendingInactiveMembershipByEmailOpts) => {
+  const [invitation] = await ctx.var.db
+    .select({ id: inactiveMembershipsTable.id })
+    .from(inactiveMembershipsTable)
+    .where(and(eq(inactiveMembershipsTable.email, email), isNull(inactiveMembershipsTable.rejectedAt)))
+    .limit(1);
+  return invitation;
+};
+
+interface FindPendingOrganizationInvitationOpts {
+  email: string;
+  organizationId: string;
+}
+
+/** An invitation to the address into the organization itself that stands, not rejected: it names the role a sign-in must not pre-empt. */
+export const findPendingOrganizationInvitation = async (ctx: DbContext, { email, organizationId }: FindPendingOrganizationInvitationOpts) => {
+  const [invitation] = await ctx.var.db
+    .select({ id: inactiveMembershipsTable.id })
+    .from(inactiveMembershipsTable)
+    .where(
+      and(
+        eq(inactiveMembershipsTable.email, email),
+        eq(inactiveMembershipsTable.channelType, 'organization'),
+        eq(inactiveMembershipsTable.channelId, organizationId),
+        isNull(inactiveMembershipsTable.rejectedAt),
+      ),
+    )
+    .limit(1);
+  return invitation;
 };
 
 interface FindMembershipByIdInOrgOpts {
@@ -341,8 +383,7 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
       name: usersTable.name,
       email: usersTable.email,
       createdAt: usersTable.createdAt,
-      // COALESCE so never-signed-in members sort as oldest: plain DESC is NULLS FIRST in Postgres
-      lastSeenAt: sql`COALESCE((SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id}), '-infinity')`,
+      lastSeenAt: lastSeenOrder,
       role: membershipsTable.role,
       // Latest live product row by the member in the viewed channel; RLS-guarded like the counts
       lastPostedAt: lastPostedAtOrder(entityType, entityId, organizationId),
@@ -359,6 +400,7 @@ export const findMembersPaginated = async (ctx: DbContext, opts: FindMembersPagi
     })
     .from(usersTable)
     .innerJoin(membershipsTable, eq(membershipsTable.userId, usersTable.id))
+    .innerJoin(actorsTable, userActorJoin)
     .where(and(...membersFilters, or(...$or)));
 
   const itemsQuery = membersQuery
@@ -476,4 +518,51 @@ export const findPendingMembershipsPaginated = async (ctx: DbContext, opts: Find
       return total;
     },
   });
+};
+
+interface FindMaxDisplayOrdersOpts {
+  userIds: string[];
+}
+
+/** Each user's highest membership `displayOrder`, the baseline for the next; a user without memberships has no row. */
+export const findMaxDisplayOrders = async (ctx: DbContext, { userIds }: FindMaxDisplayOrdersOpts) => {
+  return ctx.var.db
+    .select({ userId: membershipsTable.userId, maxOrder: max(membershipsTable.displayOrder) })
+    .from(membershipsTable)
+    .where(inArray(membershipsTable.userId, userIds))
+    .groupBy(membershipsTable.userId);
+};
+
+interface InsertMembershipRowsOpts {
+  values: InsertMembershipModel[];
+}
+
+export const insertMembershipRows = async (ctx: DbContext, { values }: InsertMembershipRowsOpts) => {
+  return ctx.var.db.insert(membershipsTable).values(values).returning(membershipBaseSelect);
+};
+
+/** Inserts the membership rows that do not exist yet; the unique constraint skips the others. */
+export const insertMissingMembershipRows = async (ctx: DbContext, { values }: InsertMembershipRowsOpts) => {
+  await ctx.var.db.insert(membershipsTable).values(values).onConflictDoNothing();
+};
+
+interface FindMembershipsByUserIdsOpts {
+  userIds: string[];
+}
+
+export const findMembershipsByUserIds = async (ctx: DbContext, { userIds }: FindMembershipsByUserIdsOpts) => {
+  return ctx.var.db.select().from(membershipsTable).where(inArray(membershipsTable.userId, userIds));
+};
+
+interface InactiveMembershipIdOpts {
+  id: string;
+}
+
+export const deleteInactiveMembership = async (ctx: DbContext, { id }: InactiveMembershipIdOpts) => {
+  await ctx.var.db.delete(inactiveMembershipsTable).where(eq(inactiveMembershipsTable.id, id));
+};
+
+/** Stamps a membership invitation rejected now. */
+export const updateInactiveMembershipRejected = async (ctx: DbContext, { id }: InactiveMembershipIdOpts) => {
+  await ctx.var.db.update(inactiveMembershipsTable).set({ rejectedAt: getIsoDate() }).where(eq(inactiveMembershipsTable.id, id));
 };

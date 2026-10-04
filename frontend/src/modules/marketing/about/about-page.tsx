@@ -31,7 +31,7 @@ function AboutPage() {
     <>
       <MarketingNav />
 
-      <div className="container max-w-none px-0">
+      <main className="container max-w-none px-0">
         {/* Hero landing */}
         <Hero key={'welcome'} title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
           {joinedToWaitlist ? (
@@ -49,9 +49,9 @@ function AboutPage() {
             />
           )}
 
-          <Button type="button" variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8" aria-label="Read more">
+          <Button type="button" variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8">
             <span>{t('about:why')}</span>
-            <ArrowDownIcon className="animate-bounce" />
+            <ArrowDownIcon className="animate-bounce [animation-iteration-count:5] motion-reduce:animate-none" />
           </Button>
         </Hero>
 
@@ -66,7 +66,7 @@ function AboutPage() {
             <FAQ />
           </AboutSection>
         </div>
-      </div>
+      </main>
       <MarketingFooter />
     </>
   );

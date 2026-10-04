@@ -39,9 +39,6 @@ export function CardDescriptionSlot({ task, state, isReadOnly }: { task: Task; s
     slot.cool('hover');
   };
 
-  // A frame later: dev StrictMode remounts the editor view after its ready effect, which would drop the cursor.
-  const handleEditorReady = () => requestAnimationFrame(slot.onEditorReady);
-
   return (
     <DescriptionLayers
       slot={slot}
@@ -54,7 +51,7 @@ export function CardDescriptionSlot({ task, state, isReadOnly }: { task: Task; s
           <TaskCardContentExpanded task={task} descriptionOverride={slot.staticOverride} onReady={slot.onStaticReady} />
         )
       }
-      editor={<TaskUpdateForm task={task} contentApiRef={slot.apiRef} onEditorReady={handleEditorReady} />}
+      editor={<TaskUpdateForm task={task} contentApiRef={slot.apiRef} onEditorReady={slot.onEditorReady} />}
     />
   );
 }

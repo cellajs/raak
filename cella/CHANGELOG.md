@@ -1,5 +1,88 @@
 # Changelog
 
+## [0.16.0](https://github.com/cellajs/cella/compare/0.15.0...0.16.0) (2026-10-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **a11y:** one command runs the audit, contrast is measured, ledger and scope belong to the app ([#1306](https://github.com/cellajs/cella/issues/1306))
+* **frontend:** generative morph animation replaces the bg animation ([#1307](https://github.com/cellajs/cella/issues/1307))
+* **db:** invitations and requests no longer point at a token ([#1295](https://github.com/cellajs/cella/issues/1295))
+* **auth:** the server names the admin behind an impersonation ([#1297](https://github.com/cellajs/cella/issues/1297))
+
+### 🎉 New features
+
+* **a11y:** one command runs the audit, contrast is measured, ledger and scope belong to the app ([#1306](https://github.com/cellajs/cella/issues/1306)) ([8966ae1](https://github.com/cellajs/cella/commit/8966ae16caa4d40e5abe3c5f683da4481fa43e79))
+* **a11y:** the accessibility statement shows the review results and offers a draft conformance report ([#1309](https://github.com/cellajs/cella/issues/1309)) ([a9f1c98](https://github.com/cellajs/cella/commit/a9f1c987366f70c9be937a84755357c8e4abd6de))
+* **frontend:** generative morph animation replaces the bg animation ([#1307](https://github.com/cellajs/cella/issues/1307)) ([dfa7e9c](https://github.com/cellajs/cella/commit/dfa7e9cf694f7fee861adcaf489c095b43b7fe13))
+* **skills:** description driver checks two users, offline and a relay outage ([#1299](https://github.com/cellajs/cella/issues/1299)) ([1b5b217](https://github.com/cellajs/cella/commit/1b5b217f72d7288fa546d450aab4148ec1671eed))
+* **ui:** first-visit menu label on the floating nav button ([#1305](https://github.com/cellajs/cella/issues/1305)) ([fa798f8](https://github.com/cellajs/cella/commit/fa798f8aea3e30291877ac14842469bb03247de9))
+
+
+### 🐞 Bug fixes
+
+* **a11y:** leftovers from the review, reorder without dragging, menu sheet updates again ([#1304](https://github.com/cellajs/cella/issues/1304)) ([372489c](https://github.com/cellajs/cella/commit/372489c79af8e210577ab98eff19b114adafaa5c))
+* **a11y:** status colors, field borders and focus ring meet contrast, plus the agent review's fixes ([#1302](https://github.com/cellajs/cella/issues/1302)) ([ee8157c](https://github.com/cellajs/cella/commit/ee8157cd4e2e5e57e63c2d326e5bec5f0696ee51))
+* **auth:** the server names the admin behind an impersonation ([#1297](https://github.com/cellajs/cella/issues/1297)) ([7df4e3b](https://github.com/cellajs/cella/commit/7df4e3b85d327b4f194268d981afb98672790ef6))
+* **docs:** operations tables get readable column widths, plain method and owner text, full-cell links ([#1303](https://github.com/cellajs/cella/issues/1303)) ([6122544](https://github.com/cellajs/cella/commit/612254400daceaf695f9ea3860c7d0cba1e28442))
+* **skills:** two-tab driver signs in on any checkout, skills match the current code ([#1296](https://github.com/cellajs/cella/issues/1296)) ([bd06066](https://github.com/cellajs/cella/commit/bd060668b8821cb61538e96b799866735ffcb020))
+* **test:** test cleanup empties requests, so a second run on the same database passes ([#1308](https://github.com/cellajs/cella/issues/1308)) ([e8ebaf6](https://github.com/cellajs/cella/commit/e8ebaf6427302a2cbb4e54904de5b490325612d8))
+* **test:** test database reset keeps the dev database; summaries render inline ([#1300](https://github.com/cellajs/cella/issues/1300)) ([b0f7738](https://github.com/cellajs/cella/commit/b0f7738dfdeed7f57bdf044da4c52b3f4f2fbcab))
+* **yjs:** relay sends the latest awareness state its rate limit held back ([#1301](https://github.com/cellajs/cella/issues/1301)) ([34889ae](https://github.com/cellajs/cella/commit/34889ae94110390bc534078064f9f8de5cdb7e66))
+
+
+### 🔧 Small improvements
+
+* **db:** invitations and requests no longer point at a token ([#1295](https://github.com/cellajs/cella/issues/1295)) ([9de6f13](https://github.com/cellajs/cella/commit/9de6f134855045266e8a8e324d7ec99b63e7f595))
+
+## [0.15.0](https://github.com/cellajs/cella/compare/0.14.0...0.15.0) (2026-10-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **db:** user activity times move to actors, unused columns go ([#1292](https://github.com/cellajs/cella/issues/1292))
+* **auth:** institutional sign-in through a federation, connections replace domains ([#1286](https://github.com/cellajs/cella/issues/1286))
+* **auth:** sessions record the sign-in method, not the second factor ([#1283](https://github.com/cellajs/cella/issues/1283))
+* **backend:** auth and database helpers move to queries and operations ([#1278](https://github.com/cellajs/cella/issues/1278))
+
+### 🎉 New features
+
+* accessibility statement, WCAG conformance audit and fixes ([#1281](https://github.com/cellajs/cella/issues/1281)) ([6659666](https://github.com/cellajs/cella/commit/6659666d0d5eb44fe979141404dbf25ea6278457))
+* **auth:** institutional sign-in through a federation, connections replace domains ([#1286](https://github.com/cellajs/cella/issues/1286)) ([e4ae4ae](https://github.com/cellajs/cella/commit/e4ae4ae10d8f2adaa6166e31956ad1a9b64d2bc4))
+* **auth:** sso role seam, recovery link for an address that has an account, federation logo ([#1290](https://github.com/cellajs/cella/issues/1290)) ([a7a1c70](https://github.com/cellajs/cella/commit/a7a1c709d929f0e22e20818d055a51c2d14f5261))
+* **bench:** yjs-typing scenario, plus sse-fanout, cdc-poller and port fixes ([#1285](https://github.com/cellajs/cella/issues/1285)) ([271b4da](https://github.com/cellajs/cella/commit/271b4daab7d210b18b09fab9ba0690fd3f2a3bb5))
+* **dev:** each git worktree runs its dev stack on ports of its own ([#1289](https://github.com/cellajs/cella/issues/1289)) ([b0ae7b0](https://github.com/cellajs/cella/commit/b0ae7b08002daf727ef1ac4602585afee077b640))
+* **yjs:** description sync redesign, release 2: outside writes as updates ([#1279](https://github.com/cellajs/cella/issues/1279)) ([3e832d1](https://github.com/cellajs/cella/commit/3e832d18da234d5790eeaf36c255bc64ff1ed411))
+* **yjs:** description sync redesign, release 3: offline and Yjs over HTTP ([#1282](https://github.com/cellajs/cella/issues/1282)) ([c169a62](https://github.com/cellajs/cella/commit/c169a62029a4f206faafb227c17d58281736665c))
+
+
+### 🐞 Bug fixes
+
+* **auth:** sessions record the sign-in method, not the second factor ([#1283](https://github.com/cellajs/cella/issues/1283)) ([af0b441](https://github.com/cellajs/cella/commit/af0b441a913034ded0a26ca761abae4695afcb8b))
+* **auth:** sign-up keeps the family name ([#1288](https://github.com/cellajs/cella/issues/1288)) ([88cab89](https://github.com/cellajs/cella/commit/88cab893f59d98069c7a197f0f2ecbede971ad03))
+* **blocknote:** raak's release 1 adoption findings ([#1276](https://github.com/cellajs/cella/issues/1276)) ([cc542df](https://github.com/cellajs/cella/commit/cc542dfad76ddd30714ef6f50adbd29d2cf4c129))
+* **dev:** mcp, oauth and jobs workers wait for the api port, not their own ([#1291](https://github.com/cellajs/cella/issues/1291)) ([7bc78af](https://github.com/cellajs/cella/commit/7bc78af8b03e76a0408b7c8c27f08b1e6f104a72))
+* docs and UI tuning ([#1280](https://github.com/cellajs/cella/issues/1280)) ([310e5a4](https://github.com/cellajs/cella/commit/310e5a48a6b09e4d6ec6154bcdd33c2bd3137b58))
+* **infra:** status, Unlock and DB close handle what the outage left behind ([#1275](https://github.com/cellajs/cella/issues/1275)) ([aa6355b](https://github.com/cellajs/cella/commit/aa6355bd96095fdb58cc13f13004fefcb6396869))
+* **sync:** act on raak's 2026-10-02 sync feedback ([#1273](https://github.com/cellajs/cella/issues/1273)) ([220026e](https://github.com/cellajs/cella/commit/220026e6cff9826d4b6caa5317bf6dc394a39461))
+* **yjs:** relay appends notify once per document after commit, batched ([#1284](https://github.com/cellajs/cella/issues/1284)) ([cf9b8b1](https://github.com/cellajs/cella/commit/cf9b8b1dd3dba9faa63e9f3f37107fce592782ce))
+
+
+### 🔧 Small improvements
+
+* **backend:** auth and database helpers move to queries and operations ([#1278](https://github.com/cellajs/cella/issues/1278)) ([27bd9ed](https://github.com/cellajs/cella/commit/27bd9ed36e4fae9c5a3f4712c86294b8adcdd0ad))
+* **db:** user activity times move to actors, unused columns go ([#1292](https://github.com/cellajs/cella/issues/1292)) ([6159972](https://github.com/cellajs/cella/commit/61599721f9cdc7f5fc790182a274e9b7267ca2e2))
+
+
+### 🧹 Chores
+
+* ui tuning ([#1294](https://github.com/cellajs/cella/issues/1294)) ([705ff97](https://github.com/cellajs/cella/commit/705ff97123e32d6b111f87c7b9396679151a5b91))
+
+
+### 🧪 Tests
+
+* **config:** template check skips the federations record and the sso strategy ([#1293](https://github.com/cellajs/cella/issues/1293)) ([ee7d50c](https://github.com/cellajs/cella/commit/ee7d50cc292152ba75f2ed3f0ceeae79dc8cc94e))
+
 ## [0.14.0](https://github.com/cellajs/cella/compare/0.13.0...0.14.0) (2026-10-02)
 
 

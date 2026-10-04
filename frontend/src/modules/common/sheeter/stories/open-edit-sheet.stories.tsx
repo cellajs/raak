@@ -5,7 +5,6 @@ import type { Organization, Tenant } from 'sdk';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Sheeter } from '~/modules/common/sheeter/provider';
 import { openUpdateSheet as openUpdateOrganizationSheet } from '~/modules/organization/table/organizations-columns';
-import { domainsQueryOptions } from '~/modules/tenants/query';
 import { openUpdateSheet as openUpdateTenantSheet } from '~/modules/tenants/table/tenants-columns';
 import { openUpdateUserSheet } from '~/modules/user/table/users-columns';
 import type { BaseUser } from '~/modules/user/types';
@@ -31,7 +30,7 @@ const translations = {
   user: 'User',
   organization: 'Organization',
   tenant: 'Tenant',
-  domain_other: 'Domains',
+  connection_other: 'Connections',
   unsaved_changes: 'Unsaved changes',
 };
 
@@ -52,7 +51,6 @@ const meta = {
   title: 'common/sheeter/openEditSheet',
   component: EditSheetTrigger,
   decorators: [withApp],
-  parameters: { app: { queryData: [[domainsQueryOptions(tenant.id).queryKey, []]] } },
   beforeEach: () => {
     i18n.addResourceBundle('en', 'c', translations, true, true);
     // The user form compares the edited user with the signed-in one.
@@ -128,12 +126,12 @@ export const TenantSheet: Story = {
   args: { open: (triggerRef) => openUpdateTenantSheet(tenant, triggerRef) },
   play: async ({ canvasElement }) => {
     const sheet = await openAndClose(canvasElement, { id: 'update-tenant', title: 'Edit tenant', container: 'container w-full' });
-    // The form card, then the domains card.
+    // The form card, then the connections card.
     const cards = [...sheet.querySelectorAll('[data-slot="card"]')];
     await expect(cards).toHaveLength(2);
     await expect(cards[0]).toHaveClass('mb-4');
     await expect(cards[0].querySelector('form')).not.toBeNull();
     await expect(cards[1]).toHaveClass('mb-20');
-    await expect(cards[1]).toHaveTextContent('Domains');
+    await expect(cards[1]).toHaveTextContent('Connections');
   },
 };

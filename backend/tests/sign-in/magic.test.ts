@@ -4,10 +4,10 @@ import { appConfig } from 'shared';
 import { nanoid } from 'shared/utils/nanoid';
 import { afterEach, describe, expect, it, onTestFinished } from 'vitest';
 import { baseDb as db } from '#/db/db';
-import { addProvenEmail } from '#/modules/auth/general/helpers/mark-email-verified';
+import { actorsTable } from '#/modules/actors/actors-db';
 import { tokensTable } from '#/modules/auth/tokens-db';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
-import { userCountersTable } from '#/modules/user/user-counters-db';
+import { addProvenEmail } from '#/modules/user/operations/email-proof';
 import { usersTable } from '#/modules/user/user-db';
 import { defaultHeaders, signUpUser } from '../fixtures';
 import { authCookie, cookieChange, createTestOrganization, createUser, enableMFAForUser, insertTestToken } from '../helpers';
@@ -19,9 +19,9 @@ setTestConfig({ enabledAuthStrategies: ['magic'], selfRegistration: true });
 
 afterEach(async () => await clearDatabase());
 
-/** Mark a user as returning; without a counters row `lastSignInAt` resolves to null (new user). */
+/** Mark a user as returning; without a stamp `lastSignInAt` resolves to null (new user). */
 async function markReturning(userId: string) {
-  await db.insert(userCountersTable).values({ userId, lastSignInAt: new Date().toISOString() });
+  await db.update(actorsTable).set({ lastSignInAt: new Date().toISOString() }).where(eq(actorsTable.id, userId));
 }
 
 /**
@@ -254,7 +254,7 @@ describe('Magic link authentication', async () => {
   describe('Proven secondary address', () => {
     it('signs in to the account that proved the address, creating no second user', async () => {
       const user = await createUser(signUpUser.email);
-      await addProvenEmail(db, { userId: user.id, email: 'work@example.com', via: 'github' });
+      await addProvenEmail({ var: { db } }, { userId: user.id, email: 'work@example.com', via: 'github' });
 
       const { response: res } = await call(sendMagicLink, { body: { email: 'work@example.com' }, headers: defaultHeaders });
 

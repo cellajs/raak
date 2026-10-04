@@ -45,7 +45,7 @@ export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Wo
     <div className="mb-12 flex flex-col gap-8">
       <Card>
         <CardHeader>
-          <CardTitle>{t('c:general')}</CardTitle>
+          <CardTitle level={2}>{t('c:general')}</CardTitle>
         </CardHeader>
         <CardContent>
           <UpdateWorkspaceForm
@@ -65,7 +65,7 @@ export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Wo
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>{t('c:delete_resource', { resource: t('c:workspace').toLowerCase() })}</CardTitle>
+          <CardTitle level={2}>{t('c:delete_resource', { resource: t('c:workspace').toLowerCase() })}</CardTitle>
           <CardDescription>
             <Trans i18nKey={'c:delete_workspace_notice.text'} values={{ name: workspace.name, resource: t('c:workspace').toLowerCase() }} />
           </CardDescription>

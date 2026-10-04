@@ -10,12 +10,12 @@
         "contentType": "application/json",
         "schema": {
           "type": "object",
-          "description": "The currently authenticated user with their system admin status.",
+          "description": "The signed-in user, with whether they have system admin access on this request and, in an impersonation, the system admin acting as them. A client reads it to learn who is signed in.",
           "properties": {
             "user": {
               "type": "object",
               "required": true,
-              "description": "A user with profile data and activity timestamps.",
+              "description": "A full user account: profile, preferences such as language and newsletter, the MFA setting and activity timestamps. Returned to the user themselves and to system admins; other users see the `UserBase` fields.",
               "properties": {
                 "createdAt": { "type": "string", "required": true },
                 "id": { "type": "string", "required": true, "format": "uuid" },
@@ -78,10 +78,6 @@
                   "type": ["string", "null"],
                   "required": true
                 },
-                "lastStartedAt": {
-                  "type": ["string", "null"],
-                  "required": true
-                },
                 "lastSignInAt": {
                   "type": ["string", "null"],
                   "required": true
@@ -89,7 +85,18 @@
               },
               "ref": "#/components/schemas/User"
             },
-            "isSystemAdmin": { "type": "boolean", "required": true, "description": "Whether the current user has system admin privileges." }
+            "isSystemAdmin": {
+              "type": "boolean",
+              "required": true,
+              "description": "Whether the user holds the system admin role and the request comes from an allowed IP address."
+            },
+            "impersonator": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/UserMinimalBase",
+              "description": "The system admin acting as the user through an impersonation; null on the user's own session.",
+              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
+            }
           },
           "ref": "#/components/schemas/Me",
           "contentType": "application/json"
@@ -113,11 +120,11 @@
             "createdAt": "2024-05-02T20:53:18.498Z",
             "updatedAt": "2024-05-02T20:53:18.498Z",
             "updatedBy": null,
-            "lastStartedAt": "2024-05-02T20:53:18.498Z",
             "lastSignInAt": "2024-05-02T20:53:18.498Z",
             "lastSeenAt": "2024-05-02T20:53:18.498Z"
           },
-          "isSystemAdmin": false
+          "isSystemAdmin": false,
+          "impersonator": null
         }
       },
       {
@@ -175,7 +182,7 @@
         "contentType": "application/json",
         "schema": {
           "type": "object",
-          "description": "A user with profile data and activity timestamps.",
+          "description": "A full user account: profile, preferences such as language and newsletter, the MFA setting and activity timestamps. Returned to the user themselves and to system admins; other users see the `UserBase` fields.",
           "properties": {
             "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
@@ -238,10 +245,6 @@
               "type": ["string", "null"],
               "required": true
             },
-            "lastStartedAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
             "lastSignInAt": {
               "type": ["string", "null"],
               "required": true
@@ -268,7 +271,6 @@
           "createdAt": "2024-06-15T02:53:22.776Z",
           "updatedAt": "2024-06-15T02:53:22.776Z",
           "updatedBy": null,
-          "lastStartedAt": "2024-06-15T02:53:22.776Z",
           "lastSignInAt": "2024-06-15T02:53:22.776Z",
           "lastSeenAt": "2024-06-15T02:53:22.776Z"
         }
@@ -431,7 +433,7 @@
         "contentType": "application/json",
         "schema": {
           "type": "object",
-          "description": "A user with profile data and activity timestamps.",
+          "description": "A full user account: profile, preferences such as language and newsletter, the MFA setting and activity timestamps. Returned to the user themselves and to system admins; other users see the `UserBase` fields.",
           "properties": {
             "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
@@ -494,10 +496,6 @@
               "type": ["string", "null"],
               "required": true
             },
-            "lastStartedAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
             "lastSignInAt": {
               "type": ["string", "null"],
               "required": true
@@ -524,7 +522,6 @@
           "createdAt": "2024-06-15T02:53:22.776Z",
           "updatedAt": "2024-06-15T02:53:22.776Z",
           "updatedBy": null,
-          "lastStartedAt": "2024-06-15T02:53:22.776Z",
           "lastSignInAt": "2024-06-15T02:53:22.776Z",
           "lastSeenAt": "2024-06-15T02:53:22.776Z"
         }
@@ -594,13 +591,38 @@
         "contentType": "application/json",
         "schema": {
           "type": "object",
-          "description": "Authentication metadata for the current user session.",
+          "description": "How the signed-in user signs in: connected OAuth providers, the institutions of their organizations (connected or not), passkeys, whether TOTP is set up, and their live sessions. The account page lists it, where sessions can be ended and sign-in methods changed.",
           "properties": {
             "enabledOAuth": {
               "type": "array",
               "required": true,
               "itemType": "string",
               "enum": ["github"]
+            },
+            "institutions": {
+              "type": "array",
+              "required": true,
+              "itemType": "object",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "connectionId": { "type": "string", "required": true },
+                  "displayName": { "type": "string", "required": true },
+                  "federation": {
+                    "type": "object",
+                    "required": true,
+                    "properties": {
+                      "key": { "type": "string", "required": true },
+                      "label": { "type": "string", "required": true }
+                    }
+                  },
+                  "connected": {
+                    "type": "boolean",
+                    "required": true,
+                    "description": "Whether the account already holds an identity through this connection"
+                  }
+                }
+              }
             },
             "hasTotp": { "type": "boolean", "required": true },
             "sessions": {
@@ -641,6 +663,11 @@
                     "type": "string",
                     "required": true,
                     "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
+                  },
+                  "connectionId": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
                   },
                   "ipHash": {
                     "type": ["string", "null"],
@@ -747,6 +774,7 @@
         },
         "example": {
           "enabledOAuth": ["github"],
+          "institutions": [],
           "hasTotp": false,
           "sessions": [
             {
@@ -760,6 +788,7 @@
               "deviceOs": "iOS",
               "browser": "Edge",
               "authStrategy": "passkey",
+              "connectionId": null,
               "ipHash": null,
               "ipSubnetHash": null,
               "ipCountry": null,
@@ -842,7 +871,7 @@
                   "entity": {
                     "type": "object",
                     "required": true,
-                    "description": "Base schema for entities with memberships (e.g. organization).",
+                    "description": "The fields every channel entity shares, such as organization; a channel owns memberships and roles. Used where a response names a channel without its details, such as the channel an invitation is for.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -872,7 +901,7 @@
                   "inactiveMembership": {
                     "type": "object",
                     "required": true,
-                    "description": "A membership record for a user who has not yet accepted an invitation.",
+                    "description": "An invitation to join a channel that is not accepted yet: the invited email, the role and who invited. It becomes a membership once accepted; the signed-in user's invitations list it with the channel it is for.",
                     "properties": {
                       "createdAt": { "type": "string", "required": true },
                       "id": { "type": "string", "required": true, "format": "uuid" },
@@ -885,11 +914,6 @@
                       "channelId": { "type": "string", "required": true, "format": "uuid" },
                       "email": { "type": "string", "required": true, "maxLength": 255 },
                       "userId": {
-                        "type": ["string", "null"],
-                        "required": true,
-                        "format": "uuid"
-                      },
-                      "tokenId": {
                         "type": ["string", "null"],
                         "required": true,
                         "format": "uuid"
@@ -911,7 +935,7 @@
                         "type": ["object", "null"],
                         "required": true,
                         "ref": "#/components/schemas/UserMinimalBase",
-                        "refDescription": "Minimal user data for references."
+                        "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                       },
                       "organizationId": { "type": "string", "required": true, "format": "uuid" },
                       "workspaceId": {
@@ -954,13 +978,12 @@
                 "channelId": "6fd95285-52d9-45de-b10d-8a4e316d3ad2",
                 "email": "carolyn5@yahoo.com",
                 "userId": "fdad27c1-21b8-4610-ac73-58603f33f5e5",
-                "tokenId": "915e1951-a439-40dc-9303-6bdbd6aea838",
                 "role": "member",
                 "rejectedAt": null,
                 "remindedAt": null,
                 "createdAt": "2024-11-13T15:29:06.546Z",
                 "createdBy": {
-                  "id": "228db2dc-c869-402a-b1c2-b305fd00a860",
+                  "id": "915e1951-a439-40dc-9303-6bdbd6aea838",
                   "name": "Sister Monahan",
                   "slug": "sister.monahan13",
                   "thumbnailUrl": null,
@@ -990,13 +1013,12 @@
                 "channelId": "745044ce-0a11-4cc4-84d6-fece04b9aca9",
                 "email": "orion_king81@hotmail.com",
                 "userId": "ca0c17be-8d73-40a0-95e9-9f5949340302",
-                "tokenId": "7dee4eb2-c5eb-4722-91aa-d911de2e383b",
                 "role": "admin",
                 "rejectedAt": null,
                 "remindedAt": null,
                 "createdAt": "2024-04-11T17:15:50.993Z",
                 "createdBy": {
-                  "id": "dcc8a336-19bf-450f-b2bc-92443279eeb9",
+                  "id": "7dee4eb2-c5eb-4722-91aa-d911de2e383b",
                   "name": "John Morar",
                   "slug": "john.morar34",
                   "thumbnailUrl": null,
@@ -1104,6 +1126,11 @@
                     "type": "string",
                     "required": true,
                     "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
+                  },
+                  "connectionId": {
+                    "type": ["string", "null"],
+                    "required": true,
+                    "format": "uuid"
                   },
                   "ipHash": {
                     "type": ["string", "null"],
@@ -1311,7 +1338,7 @@
         "contentType": "application/json",
         "schema": {
           "type": "object",
-          "description": "A signed token authorizing file uploads to the configured storage provider.",
+          "description": "Permission to upload files with one upload template, signed for the upload service, with the storage prefix the files land under. A client requests one before uploading; the template decides whether files are stored public or private.",
           "properties": {
             "publicBucket": {
               "type": "boolean",
@@ -1426,7 +1453,7 @@
               "ref": "#/components/schemas/MembershipBase",
               "items": {
                 "type": "object",
-                "description": "Core membership fields shared across active and inactive memberships.",
+                "description": "A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.",
                 "properties": {
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
@@ -1530,7 +1557,7 @@
               "ref": "#/components/schemas/ConnectedApp",
               "items": {
                 "type": "object",
-                "description": "An OAuth consent (grant) of the current user.",
+                "description": "An app the signed-in user consented to: its OAuth client, the scopes it may use and when the consent expires. Listed under Connected apps in account settings, where the user can revoke it.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "clientId": { "type": "string", "required": true },

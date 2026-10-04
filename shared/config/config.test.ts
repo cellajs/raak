@@ -10,6 +10,19 @@ export const test = {
   domain: '',
 
   services: { mcp: { enabled: true }, oauth: { enabled: true } },
+  // Test fixture only: the template's SSO suites sign in through a `surfconext` federation, and raak declares none.
+  federations: {
+    surfconext: {
+      label: 'SURFconext',
+      issuer: 'https://connect.test.surfconext.nl',
+      idpMetadataUrl: 'https://metadata.test.surfconext.nl/idps-metadata.xml',
+      scopes: ['openid'],
+      clientAuthMethod: 'client_secret_basic',
+      tenantClaim: 'schac_home_organization',
+      snapshotClaims: ['eduperson_affiliation', 'eduperson_scoped_affiliation'],
+      addressAuthority: true,
+    },
+  },
 
   frontendUrl: development.frontendUrl,
   backendUrl: development.backendUrl,

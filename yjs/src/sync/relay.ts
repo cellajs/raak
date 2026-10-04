@@ -2,15 +2,25 @@ import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import type { WebSocket } from 'ws';
 import * as Y from 'yjs';
-import type { DocKey, SocketContext } from '../constants';
+import { descriptionToSeedOrEmpty } from '#/modules/yjs/helpers/description-update';
+import type { LogNotice } from '#/modules/yjs/helpers/yjs-log';
+import { classifyUpdate, mergeLog } from '#/modules/yjs/helpers/yjs-state';
+import type { DocKey, DocScope, SocketContext } from '../constants';
 import { YJS_AWARENESS_MAX_ENTRIES, YJS_AWARENESS_RATE_LIMIT, YJS_COMPACT_DEBOUNCE_MS, YJS_COMPACT_MAX_WAIT_MS } from '../constants';
-import { loadEntityDescription } from '../data/entity-content';
-import { appendUpdate, ensureDoc, loadBase, readLog } from '../data/storage';
-import { descriptionToYUpdate } from '../lib/blocknote-seed';
+import { appendUpdate, type LogRow, loadDocument, readLogOf, seedDocument } from '../data/storage';
 import { log } from '../lib/pino';
 import { type CompactionResult, compactDocument } from './compaction';
-import { classifyUpdate, mergeLog } from './document-state';
-import { broadcastToCollab, type CollabSession, claimAwarenessClient, endCollab, getCollab, leaveCollab, withDocLock } from './session-manager';
+import {
+  broadcastToCollab,
+  type CollabSession,
+  claimAwarenessClient,
+  endCollab,
+  getCollab,
+  getCollabs,
+  leaveCollab,
+  setUnseenRowHandler,
+  withDocLock,
+} from './session-manager';
 
 /** Message types on the socket: y-websocket's sync and awareness, and the relay's own `Generation` and `Saved`, which must match the frontend's yjs-connections.ts. */
 export const YMessage = {
@@ -24,7 +34,19 @@ const YSync = { Step1: 0, Step2: 1, Update: 2 } as const;
 
 const savedFrame = encoding.encode((encoder) => encoding.writeVarUint(encoder, YMessage.Saved));
 
-const awarenessTimestamps = new WeakMap<WebSocket, number>();
+/** Between two awareness frames a socket relays. */
+const awarenessWindowMs = 1000 / YJS_AWARENESS_RATE_LIMIT;
+
+/** A socket's awareness rate window: what it sent inside the window waits here and is relayed as one frame when the window ends. */
+interface AwarenessWindow {
+  /** When the socket last relayed a frame, epoch ms; 0 before its first. */
+  relayedAt: number;
+  /** The latest entry per client id among the frames held back. */
+  held: Map<number, AwarenessEntry>;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
+const awarenessWindows = new WeakMap<WebSocket, AwarenessWindow>();
 
 /** The frame's leading varint; null when it is cut short or out of range, on which lib0 throws. */
 function readMessageType(decoder: decoding.Decoder): number | null {
@@ -44,6 +66,15 @@ function encodeSyncStep2(update: Uint8Array): Uint8Array {
   const encoder = encoding.createEncoder();
   encoding.writeVarUint(encoder, YMessage.Sync);
   encoding.writeVarUint(encoder, YSync.Step2);
+  encoding.writeVarUint8Array(encoder, update);
+  return encoding.toUint8Array(encoder);
+}
+
+/** A logged row as y-websocket relays a peer's update. */
+function encodeSyncUpdate(update: Uint8Array): Uint8Array {
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, YMessage.Sync);
+  encoding.writeVarUint(encoder, YSync.Update);
   encoding.writeVarUint8Array(encoder, update);
   return encoding.toUint8Array(encoder);
 }
@@ -113,9 +144,69 @@ function encodeAwarenessMessage(entries: AwarenessEntry[]): Uint8Array {
 }
 
 /**
+ * Relays the entries a socket may announce, to every socket of the session, and starts the socket's rate window when
+ * any was relayed. Presence for another user's client would move or remove their cursor, so it is left out, and a
+ * frame of such entries alone (y-websocket re-sends every change it applies) relays nothing and starts no window.
+ */
+function relayAwareness(
+  ctx: SocketContext,
+  collab: CollabSession,
+  ws: WebSocket,
+  rate: AwarenessWindow,
+  entries: AwarenessEntry[],
+  frame?: Uint8Array,
+): void {
+  const relayed: AwarenessEntry[] = [];
+  for (const entry of entries) {
+    const verdict = claimAwarenessClient(collab, ws, ctx.userId, { clientId: entry.clientId, clock: entry.clock, removes: entry.state === 'null' });
+    if (verdict === 'refuse') {
+      refuseFrame(collab.scope, ctx.userId, ws, 'Too many awareness clients');
+      return;
+    }
+    if (verdict === 'relay') relayed.push(entry);
+  }
+  if (relayed.length === 0) return;
+  rate.relayedAt = Date.now();
+  // The sender receives its relayed entries too: y-websocket closes a socket that received nothing for 30 s, and an
+  // editor alone on its document receives nothing else. An entry at the clock the sender holds changes nothing there.
+  broadcastToCollab(collab, frame && relayed.length === entries.length ? frame : encodeAwarenessMessage(relayed));
+}
+
+/**
+ * Holds a socket's entries until its rate window ends: per client the latest state, since only that one matters to a
+ * peer. The position a quick series of cursor moves ends on, an editor's first cursor and a removal right after a move
+ * all arrive inside a window, so dropping them would leave peers with a stale cursor until the client's 15 s renewal.
+ */
+function holdAwareness(
+  ctx: SocketContext,
+  collab: CollabSession,
+  ws: WebSocket,
+  rate: AwarenessWindow,
+  entries: AwarenessEntry[],
+  waitMs: number,
+): void {
+  for (const entry of entries) {
+    const owner = collab.awarenessOwners.get(entry.clientId);
+    if (owner && owner.userId !== ctx.userId) continue;
+    const held = rate.held.get(entry.clientId);
+    if (held ? held.clock <= entry.clock : rate.held.size < YJS_AWARENESS_MAX_ENTRIES) rate.held.set(entry.clientId, entry);
+  }
+  if (rate.held.size === 0) return;
+  rate.timer ??= setTimeout(() => {
+    rate.timer = undefined;
+    const latest = [...rate.held.values()];
+    rate.held.clear();
+    // The socket closed, or its session ended under it, while its entries waited.
+    if (ws.readyState !== ws.OPEN || !getCollab(collab.scope)?.clients.has(ws)) return;
+    relayAwareness(ctx, collab, ws, rate, latest);
+  }, waitMs);
+}
+
+/**
  * Applies one frame. Sync frames reach this only through the socket's serial queue, after entity
  * authorization, so they run in arrival order; awareness is ephemeral, relayed only from an
- * authorized open socket and rate limited per client. Both act in the socket's authorized scope.
+ * authorized open socket, at most YJS_AWARENESS_RATE_LIMIT frames a second per socket. Both act in
+ * the socket's authorized scope.
  */
 export async function handleMessage(ctx: SocketContext, ws: WebSocket, data: Uint8Array): Promise<void> {
   if (data.length < 2) return;
@@ -156,11 +247,6 @@ export async function handleMessage(ctx: SocketContext, ws: WebSocket, data: Uin
     }
   } else if (messageType === YMessage.Awareness) {
     if (ws.readyState !== ws.OPEN) return;
-    const now = Date.now();
-    const lastTime = awarenessTimestamps.get(ws) ?? 0;
-    if (now - lastTime < 1000 / YJS_AWARENESS_RATE_LIMIT) return;
-    awarenessTimestamps.set(ws, now);
-
     let entries: AwarenessEntry[] | null;
     try {
       entries = decodeAwarenessEntries(decoding.readVarUint8Array(decoder));
@@ -170,17 +256,15 @@ export async function handleMessage(ctx: SocketContext, ws: WebSocket, data: Uin
     }
     // A frame with more entries than a client announces reaches no peer and holds no client.
     if (!entries) return;
-    // Presence for another user's client would move or remove their cursor.
-    const relayed: AwarenessEntry[] = [];
-    for (const entry of entries) {
-      const verdict = claimAwarenessClient(collab, ws, ctx.userId, { clientId: entry.clientId, clock: entry.clock, removes: entry.state === 'null' });
-      if (verdict === 'refuse') return refuseFrame(scope, ctx.userId, ws, 'Too many awareness clients');
-      if (verdict === 'relay') relayed.push(entry);
+
+    let rate = awarenessWindows.get(ws);
+    if (!rate) {
+      rate = { relayedAt: 0, held: new Map() };
+      awarenessWindows.set(ws, rate);
     }
-    if (relayed.length === 0) return;
-    // The sender receives its relayed entries too: y-websocket closes a socket that received nothing for 30 s, and an
-    // editor alone on its document receives nothing else. An entry at the clock the sender holds changes nothing there.
-    broadcastToCollab(collab, relayed.length === entries.length ? data : encodeAwarenessMessage(relayed));
+    const waitMs = rate.relayedAt + awarenessWindowMs - Date.now();
+    if (waitMs <= 0 && !rate.timer) relayAwareness(ctx, collab, ws, rate, entries, data);
+    else holdAwareness(ctx, collab, ws, rate, entries, Math.max(waitMs, 0));
   }
 }
 
@@ -190,6 +274,12 @@ export async function handleMessage(ctx: SocketContext, ws: WebSocket, data: Uin
  * drop its cursor at once, without waiting for their 30 s timeout. A client another socket of its user took over stays.
  */
 export function handleLeave(doc: DocKey, ws: WebSocket): void {
+  const rate = awarenessWindows.get(ws);
+  if (rate) {
+    clearTimeout(rate.timer);
+    rate.timer = undefined;
+    rate.held.clear();
+  }
   const released = leaveCollab(doc, ws);
   const collab = getCollab(doc);
   if (!collab || released.length === 0) return;
@@ -197,21 +287,64 @@ export function handleLeave(doc: DocKey, ws: WebSocket): void {
 }
 
 /**
- * The document as the session knows it: the document row (seeded on first sight, under a new generation) plus every
- * logged update that merges; compaction discards the rest. Null once the document was retired under the session (its
- * row gone, or reseeded by another relay): the session ends, and its sockets reconnect into one that seeds afresh.
+ * The seed of a new document: its stored description, and one empty paragraph for none. A description that does not
+ * convert is logged and seeds the empty document too: the session opens, and the next write replaces the description.
  */
-async function loadDocumentState(collab: CollabSession): Promise<{ state: Uint8Array | null; generation: string } | null> {
+function seedFrom(scope: DocScope): (description: string | null) => Uint8Array {
+  return (description) =>
+    descriptionToSeedOrEmpty(description, (err) =>
+      log.warn(`The description of ${scope.entityType}:${scope.entityId} does not convert: seeding an empty document`, { err }),
+    );
+}
+
+/**
+ * Broadcasts the rows the session's sockets lack, oldest first, as sync updates, and counts them seen; returns how many
+ * it sent. A row Yjs cannot decode, or one that carries nothing, reaches no socket. `exclude` is a socket whose
+ * handshake answer carries the rows already.
+ */
+function relayRows(collab: CollabSession, rows: readonly LogRow[], exclude?: WebSocket): number {
+  let relayed = 0;
+  for (const row of rows) {
+    if (collab.seen.has(row.id)) continue;
+    collab.seen.add(row.id);
+    if (classifyUpdate(row.payload) !== 'update') continue;
+    broadcastToCollab(collab, encodeSyncUpdate(row.payload), exclude);
+    relayed++;
+  }
+  return relayed;
+}
+
+/**
+ * The document as the session knows it: the document row (seeded on first sight, under a new generation) plus every
+ * logged update that merges; compaction discards the rest. The read is the handshake's catch-up too: rows the
+ * session's other sockets lack reach them, and `ws`, whose answer carries the whole document, is skipped. Null once
+ * the document was retired under the session (its row gone, or reseeded by another relay) or its entity is gone: the
+ * session ends, and its sockets reconnect.
+ */
+async function loadDocumentState(collab: CollabSession, ws?: WebSocket): Promise<{ state: Uint8Array | null; generation: string } | null> {
   const { scope } = collab;
-  let base = await loadBase(scope);
-  if (collab.generation !== null && base?.generation !== collab.generation) {
+  let document = await loadDocument(scope);
+  if (collab.generation !== null && document?.generation !== collab.generation) {
     endCollab(collab);
     return null;
   }
-  // Fresh document: the server seeds from the stored description, so clients never seed it.
-  base ??= await ensureDoc(scope, descriptionToYUpdate(await loadEntityDescription(scope)));
-  collab.generation = base.generation;
-  return { state: mergeLog(base.state, await readLog(scope)).state, generation: base.generation };
+  // Fresh document: the server seeds it from the stored description, so clients never seed it.
+  document ??= await seedDocument(scope, seedFrom(scope));
+  // Deleted since the socket was authorized: its reconnect is told so.
+  if (!document) {
+    endCollab(collab);
+    return null;
+  }
+  const { state, rejected } = mergeLog(document.base, document.rows);
+  const rows = rejected.length > 0 ? document.rows.filter((row) => !rejected.includes(row)) : document.rows;
+  if (collab.generation === null) {
+    // The session's first load: no socket of it holds any of the document yet, and every handshake answers with all of it.
+    for (const row of rows) collab.seen.add(row.id);
+  } else if (relayRows(collab, rows, ws) > 0) {
+    scheduleCompaction(collab);
+  }
+  collab.generation = document.generation;
+  return { state, generation: document.generation };
 }
 
 /**
@@ -223,7 +356,7 @@ async function loadDocumentState(collab: CollabSession): Promise<{ state: Uint8A
 async function handleSyncStep1(ctx: SocketContext, collab: CollabSession, ws: WebSocket, clientStateVector: Uint8Array): Promise<void> {
   // A socket that closed while this frame waited has no one to answer.
   if (ws.readyState !== ws.OPEN) return;
-  const doc = await withDocLock(collab, () => loadDocumentState(collab));
+  const doc = await withDocLock(collab, () => loadDocumentState(collab, ws));
   if (!doc || ws.readyState !== ws.OPEN) return;
 
   ws.send(encodeGeneration(doc.generation));
@@ -247,8 +380,8 @@ async function handleSyncStep1(ctx: SocketContext, collab: CollabSession, ws: We
 /**
  * Logs the update durably under its sender, in the generation the session loaded, then broadcasts it to peers and
  * schedules compaction; one Yjs cannot decode closes its sender. A document retired or reseeded since takes no update:
- * the session ends, and its sockets reconnect into the new generation. True once the update is logged, or carried
- * nothing: its sender may be told it is saved.
+ * the session ends, and its sockets reconnect. True once the update is logged, or carried nothing: its sender may be
+ * told it is saved. The row counts as seen before its append commits, so its own notification relays nothing.
  */
 async function handleSyncUpdate(collab: CollabSession, userId: string, ws: WebSocket, update: Uint8Array, rawMessage: Uint8Array): Promise<boolean> {
   const kind = classifyUpdate(update);
@@ -264,15 +397,70 @@ async function handleSyncUpdate(collab: CollabSession, userId: string, ws: WebSo
   // document was retired under the session meanwhile, which has ended.
   const generation = collab.generation ?? (await withDocLock(collab, () => loadDocumentState(collab)))?.generation;
   if (!generation) return false;
-  if (!(await appendUpdate(collab.scope, userId, update, generation))) {
+  const appended = await appendUpdate(collab.scope, userId, update, generation, (id) => collab.seen.add(id));
+  if (appended.status === 'malformed' || appended.status === 'too-large') {
+    refuseFrame(collab.scope, userId, ws, appended.status === 'too-large' ? 'Update too large' : 'Malformed update');
+    return false;
+  }
+  if (appended.status === 'no-document' || appended.status === 'stale-generation') {
     endCollab(collab);
     return false;
   }
   // The session ended while the append ran: its peers are gone, no timer may run on it, and its generation is void.
   if (getCollab(collab.scope) !== collab) return false;
+  if (appended.status === 'empty') return true;
   broadcastToCollab(collab, rawMessage, ws);
   scheduleCompaction(collab);
   return true;
+}
+
+/**
+ * Relays every log row of the session's generation its sockets lack (an outside write, or another relay's append),
+ * and schedules compaction for them. Runs on the document lock, after any handshake or compaction in flight, and a
+ * call while one waits there joins it: its read comes later, so a burst of notifications costs at most one read
+ * behind the running one. A session that has not loaded its document has nothing to relay; one whose document is
+ * gone or reseeded ends.
+ */
+export function relayUnseen(collab: CollabSession): Promise<void> {
+  if (collab.queuedCatchUp) return collab.queuedCatchUp;
+  const run = withDocLock(collab, async () => {
+    collab.queuedCatchUp = undefined;
+    const { generation, scope } = collab;
+    if (generation === null || getCollab(scope) !== collab) return;
+    const rows = await readLogOf(scope, generation);
+    if (getCollab(scope) !== collab) return;
+    if (!rows) endCollab(collab);
+    else if (relayRows(collab, rows) > 0) scheduleCompaction(collab);
+  });
+  collab.queuedCatchUp = run;
+  return run;
+}
+
+/** Starts a catch-up that nothing awaits: a failure is logged, and the next notification, touch or handshake retries. */
+function catchUp(collab: CollabSession): void {
+  relayUnseen(collab).catch((err) => log.warn(`Relaying the log of ${collab.scope.entityType}:${collab.scope.entityId} failed`, { err }));
+}
+
+// A live stamp that finds a row the session never relayed means a notification was missed.
+setUnseenRowHandler(catchUp);
+
+/**
+ * Acts on a notification of the Yjs log channel. A retired document's session ends at once with 1013: its entity was
+ * deleted, and each socket's reconnect is closed with 4410. A notice holding any row the session has not relayed is
+ * caught up, not only one whose newest row is new: rows of one batch can commit out of id order, so an earlier read may
+ * have relayed the newest while an older one was uncommitted. The relay's own appends are counted seen before they
+ * commit, so its own batched notices cost nothing. A document without a session on this relay is left alone.
+ */
+export function onLogNotice(notice: LogNotice): void {
+  const collab = getCollab(notice);
+  if (!collab) return;
+  if ('retired' in notice) endCollab(collab);
+  else if (notice.logIds.some((id) => !collab.seen.has(id))) catchUp(collab);
+}
+
+/** Catches every session up, after the log listener (re)connects: what was notified while it was down never arrives. */
+export function relayUnseenEverywhere(): void {
+  for (const collab of getCollabs()) catchUp(collab);
 }
 
 /**
@@ -293,15 +481,22 @@ export function scheduleCompaction(collab: CollabSession): void {
 }
 
 /**
- * Compacts under the document lock; a thrown error counts as retryable and leaves the log in place. A retired document
- * ends the session. The deadline clears as the run starts, whatever its outcome: an update from then on may be logged
- * after the run reads the log, and its window takes a deadline of its own.
+ * Compacts under the document lock, relaying first the rows of the window the session's sockets lack; a thrown error
+ * counts as retryable and leaves the log in place. A retired document ends the session. The deadline clears as the run
+ * starts, whatever its outcome: an update from then on may be logged after the run reads the log, and its window takes
+ * a deadline of its own.
  */
 export async function runCompaction(collab: CollabSession): Promise<CompactionResult> {
   collab.compactDueAt = undefined;
   return withDocLock(collab, async () => {
     try {
-      const result = await compactDocument(collab.scope, collab.generation);
+      const result = await compactDocument(collab.scope, collab.generation, {
+        // Rows a missed notification left unrelayed reach the sockets before they fold into the base.
+        read: (rows) => relayRows(collab, rows),
+        removed: (ids) => {
+          for (const id of ids) collab.seen.delete(id);
+        },
+      });
       if (result === 'retired') endCollab(collab);
       return result;
     } catch (err) {

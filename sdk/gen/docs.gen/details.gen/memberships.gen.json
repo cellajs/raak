@@ -440,7 +440,7 @@
         "contentType": "application/json",
         "schema": {
           "type": "object",
-          "description": "Base schema for entities with memberships (e.g. organization).",
+          "description": "The fields every channel entity shares, such as organization; a channel owns memberships and roles. Used where a response names a channel without its details, such as the channel an invitation is for.",
           "properties": {
             "id": { "type": "string", "required": true },
             "name": { "type": "string", "required": true },
@@ -552,7 +552,7 @@
               "itemType": "object",
               "items": {
                 "type": "object",
-                "description": "Base user schema with essential fields for identification and display.",
+                "description": "The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
@@ -834,7 +834,7 @@
                     "type": ["object", "null"],
                     "required": true,
                     "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "Minimal user data for references."
+                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   }
                 }
               }
@@ -851,7 +851,7 @@
               "role": "member",
               "createdAt": "2024-11-21T01:19:53.533Z",
               "createdBy": {
-                "id": "8d10af2a-4b70-40b6-a3f2-0bc295d29966",
+                "id": "617f1449-7605-4cc9-8f52-1e3f100f6db2",
                 "name": "Agustin Kirlin",
                 "slug": "agustin_kirlin",
                 "thumbnailUrl": null,
@@ -864,7 +864,7 @@
               "role": "member",
               "createdAt": "2024-10-29T04:35:17.725Z",
               "createdBy": {
-                "id": "7d580cc1-edd9-4017-be5b-49fb1c3cc0f3",
+                "id": "ba7cf4de-5ede-48cc-9fef-453bf074c2ef",
                 "name": "Nya Nikolaus",
                 "slug": "nya_nikolaus",
                 "thumbnailUrl": null,

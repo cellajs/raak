@@ -1,13 +1,16 @@
-import { and, count, eq, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, exists, inArray, type SQL, sql } from 'drizzle-orm';
 import { generateId } from 'shared/utils/entity-id';
 import type { DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
+import { actorsTable } from '#/modules/actors/actors-db';
 import { deleteDanglingActors, insertActors } from '#/modules/actors/actors-queries';
+import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { systemRolesTable } from '#/modules/system/system-roles-db';
-import { emailsTable } from '#/modules/user/emails-db';
-import { memberSelect, userSelect } from '#/modules/user/helpers/select';
-import { userCountersTable } from '#/modules/user/user-counters-db';
+import { type EmailProof, emailsTable } from '#/modules/user/emails-db';
+import { userMinimalColumns } from '#/modules/user/helpers/audit-user';
+import { lastSeenOrder, memberSelect, userActorJoin, userSelect } from '#/modules/user/helpers/select';
 import { type InsertUserModel, type UserModel, usersTable } from '#/modules/user/user-db';
+import { getIsoDate } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 
 interface FindUsersPaginatedOpts {
@@ -25,6 +28,7 @@ export const findUsersPaginated = async (ctx: DbContext, opts: FindUsersPaginate
   const baseQuery = db
     .select(usersQuerySelect)
     .from(usersTable)
+    .innerJoin(actorsTable, userActorJoin)
     .leftJoin(systemRolesTable, eq(usersTable.id, systemRolesTable.userId))
     .where(and(...filters));
 
@@ -37,8 +41,7 @@ export const findUsersPaginated = async (ctx: DbContext, opts: FindUsersPaginate
       name: usersTable.name,
       email: usersTable.email,
       createdAt: usersTable.createdAt,
-      // COALESCE so never-signed-in users sort as oldest: plain DESC is NULLS FIRST in Postgres
-      lastSeenAt: sql`COALESCE((SELECT ${userCountersTable.lastSeenAt} FROM ${userCountersTable} WHERE ${userCountersTable.userId} = ${usersTable.id}), '-infinity')`,
+      lastSeenAt: lastSeenOrder,
       role: systemRolesTable.role,
     },
     tieBreaker: usersTable.id,
@@ -68,6 +71,7 @@ export const findUserByEmail = async (ctx: DbContext, { email }: FindUserByEmail
   const [user] = await db
     .select(userSelect)
     .from(usersTable)
+    .innerJoin(actorsTable, userActorJoin)
     .leftJoin(emailsTable, eq(usersTable.id, emailsTable.userId))
     .where(eq(emailsTable.email, email))
     .limit(1);
@@ -80,7 +84,7 @@ interface FindUserByIdOpts {
 
 export const findUserById = async (ctx: DbContext, { id }: FindUserByIdOpts) => {
   const { db } = ctx.var;
-  const [user] = await db.select(userSelect).from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  const [user] = await db.select(userSelect).from(usersTable).innerJoin(actorsTable, userActorJoin).where(eq(usersTable.id, id)).limit(1);
   return user;
 };
 
@@ -93,6 +97,7 @@ export const findUserByFilters = async (ctx: DbContext, { filters }: FindUserByF
   const [user] = await db
     .select(memberSelect)
     .from(usersTable)
+    .innerJoin(actorsTable, userActorJoin)
     .where(and(...filters))
     .limit(1);
   return user;
@@ -116,26 +121,20 @@ interface FindLastSignInAtOpts {
   userId: string;
 }
 
-/** The user's counters row with the time of their last sign-in; undefined for a user who never signed in. */
+/** The time of the user's last sign-in, null for a user who never signed in; undefined when no actor row exists. */
 export const findLastSignInAt = async (ctx: DbContext, { userId }: FindLastSignInAtOpts) => {
-  const [counters] = await ctx.var.db
-    .select({ lastSignInAt: userCountersTable.lastSignInAt })
-    .from(userCountersTable)
-    .where(eq(userCountersTable.userId, userId));
-  return counters;
+  const [actor] = await ctx.var.db.select({ lastSignInAt: actorsTable.lastSignInAt }).from(actorsTable).where(eq(actorsTable.id, userId));
+  return actor;
 };
 
-interface UpsertLastSignInAtOpts {
+interface UpdateLastSignInAtOpts {
   userId: string;
   lastSignInAt: string;
 }
 
-/** lastSignInAt lives in user_counters to avoid CDC noise on the users table. */
-export const upsertLastSignInAt = async (ctx: DbContext, { userId, lastSignInAt }: UpsertLastSignInAtOpts) => {
-  await ctx.var.db
-    .insert(userCountersTable)
-    .values({ userId, lastSignInAt })
-    .onConflictDoUpdate({ target: userCountersTable.userId, set: { lastSignInAt } });
+/** Stamps the sign-in on the user's `actors` row, outside the CDC publication that carries `users`. */
+export const updateLastSignInAt = async (ctx: DbContext, { userId, lastSignInAt }: UpdateLastSignInAtOpts) => {
+  await ctx.var.db.update(actorsTable).set({ lastSignInAt }).where(eq(actorsTable.id, userId));
 };
 
 interface InsertUsersOpts {
@@ -166,4 +165,86 @@ export const insertUsers = async (ctx: DbContext, { users, onConflictDoNothing =
     }
     return inserted;
   });
+};
+
+interface FindEmailOpts {
+  email: string;
+}
+
+/** The email row of an address, whichever account holds it; undefined when none does. */
+export const findEmail = async (ctx: DbContext, { email }: FindEmailOpts) => {
+  const [row] = await ctx.var.db.select().from(emailsTable).where(eq(emailsTable.email, email)).limit(1);
+  return row;
+};
+
+interface EmailProofOpts {
+  userId: string;
+  email: string;
+  via: EmailProof;
+}
+
+/** The columns an inbox proof writes: the stamps every time, `verifiedAt` only when it was never set. */
+const proofStamps = (via: EmailProof, now: string) => ({
+  verifiedAt: sql<string>`coalesce(${emailsTable.verifiedAt}, ${now})`,
+  lastVerifiedVia: via,
+  lastVerifiedAt: now,
+});
+
+/** Stores an address as proven now, `via` the proof. Fails on the unique address when any account holds it. */
+export const insertEmail = async (ctx: DbContext, { userId, email, via }: EmailProofOpts) => {
+  const now = getIsoDate();
+  await ctx.var.db.insert(emailsTable).values({ email, userId, verifiedAt: now, lastVerifiedVia: via, lastVerifiedAt: now });
+};
+
+/** Stamps a proof on the user's own row for the address; undefined when the user has no row for it. */
+export const updateEmailProof = async (ctx: DbContext, { userId, email, via }: EmailProofOpts) => {
+  const [stamped] = await ctx.var.db
+    .update(emailsTable)
+    .set(proofStamps(via, getIsoDate()))
+    .where(and(eq(emailsTable.email, email), eq(emailsTable.userId, userId)))
+    .returning({ id: emailsTable.id });
+  return stamped;
+};
+
+/**
+ * Stores a proven address for the user, or stamps the proof when the row is already theirs, in one statement: insert, or
+ * on a taken address update only when this user holds it. Undefined when another account holds the address.
+ */
+export const upsertProvenEmail = async (ctx: DbContext, { userId, email, via }: EmailProofOpts) => {
+  const now = getIsoDate();
+  const [row] = await ctx.var.db
+    .insert(emailsTable)
+    .values({ email, userId, verifiedAt: now, lastVerifiedVia: via, lastVerifiedAt: now })
+    .onConflictDoUpdate({ target: emailsTable.email, set: proofStamps(via, now), setWhere: eq(emailsTable.userId, userId) })
+    .returning({ id: emailsTable.id });
+  return row;
+};
+
+/** EXISTS filter limiting user rows to those sharing an organization with `myOrgIds`: defense in depth mirroring relatableGuard. */
+export const sharesOrgFilter = (ctx: DbContext, { myOrgIds }: { myOrgIds: string[] }) => {
+  const { db } = ctx.var;
+  return exists(
+    db
+      .select({ id: membershipsTable.id })
+      .from(membershipsTable)
+      .where(and(eq(membershipsTable.userId, usersTable.id), inArray(membershipsTable.organizationId, myOrgIds))),
+  );
+};
+
+interface FindAuditUsersByIdsOpts {
+  ids: string[];
+}
+
+/** The minimal user columns of these users, for resolving `createdBy` and `updatedBy`. */
+export const findAuditUsersByIds = async (ctx: DbContext, { ids }: FindAuditUsersByIdsOpts) => {
+  return ctx.var.db.select(userMinimalColumns).from(usersTable).where(inArray(usersTable.id, ids));
+};
+
+interface FindUserModelsByIdsOpts {
+  ids: string[];
+}
+
+/** Full user rows by id. */
+export const findUserModelsByIds = async (ctx: DbContext, { ids }: FindUserModelsByIdsOpts) => {
+  return ctx.var.db.select().from(usersTable).where(inArray(usersTable.id, ids));
 };

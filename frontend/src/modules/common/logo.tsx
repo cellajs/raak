@@ -7,9 +7,11 @@ interface LogoProps extends React.SVGProps<SVGSVGElement> {
   textColor?: string;
   height?: number;
   iconOnly?: boolean;
+  /** Hover text and accessible name: the app name, or where the link around the logo goes; null when the link has a tooltip. */
+  title?: string | null;
 }
 
-export function Logo({ className, iconColor, textColor, height = 50, iconOnly = false, ...props }: LogoProps) {
+export function Logo({ className, iconColor, textColor, height = 50, iconOnly = false, title = appConfig.name, ...props }: LogoProps) {
   const mode = useUIStore((state) => state.mode);
 
   const defaultTextColor = mode === 'light' ? '#333' : '#fff';
@@ -18,17 +20,18 @@ export function Logo({ className, iconColor, textColor, height = 50, iconOnly = 
   if (!textColor) textColor = defaultTextColor;
   if (!iconColor) iconColor = defaultIconColor;
 
-  return (
-    <svg
-      id="svg-logo"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-      className={className}
-      width="100%"
-      height={height}
-      viewBox={`0 -5 ${iconOnly ? 150 : 400} 140`}
-    >
-      <title>Logo</title>
+  const svgProps = {
+    id: 'svg-logo',
+    xmlns: 'http://www.w3.org/2000/svg',
+    ...props,
+    className,
+    width: '100%',
+    height,
+    viewBox: `0 -5 ${iconOnly ? 150 : 400} 140`,
+  };
+
+  const shapes = (
+    <>
       <g id="svg-logo-icon" fill="none" fillRule="evenodd" style={{ transformBox: 'fill-box' }} transform="translate(20 12)">
         <path
           fill="#1DB954"
@@ -50,6 +53,22 @@ export function Logo({ className, iconColor, textColor, height = 50, iconOnly = 
           />
         </g>
       )}
+    </>
+  );
+
+  // Without a title the logo is decoration: the link around it carries the label.
+  if (!title) {
+    return (
+      <svg aria-hidden="true" {...svgProps}>
+        {shapes}
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...svgProps}>
+      <title>{title}</title>
+      {shapes}
     </svg>
   );
 }

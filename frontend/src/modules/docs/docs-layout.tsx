@@ -5,6 +5,7 @@ import { ArrowUpIcon, MenuIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useBreakpointAbove } from '~/hooks/use-breakpoints';
+import { useFirstTimeHint } from '~/hooks/use-first-time-hint';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import { useScrolledPast } from '~/hooks/use-scrolled-past';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
@@ -29,6 +30,9 @@ function DocsLayout() {
   const [resizedSidebarWidth, setResizedSidebarWidth] = useState<number | null>(null);
 
   const showScrollTop = useScrolledPast(300, !isDesktop);
+  // First-visit affordance: the menu button reads "menu" while at the top of the page
+  const atTop = !useScrolledPast(8, !isDesktop);
+  const showMenuLabel = useFirstTimeHint('floating-menu-docs', !isDesktop && atTop);
 
   const startSidebarResize = (e: React.PointerEvent) => {
     e.preventDefault();
@@ -58,6 +62,15 @@ function DocsLayout() {
     document.addEventListener('pointerup', onUp);
     document.addEventListener('pointercancel', onUp);
     document.body.style.cursor = 'col-resize';
+  };
+
+  // The keyboard path of the same handle: arrows move it in steps, Home and End jump to the limits.
+  const resizeSidebarByKey = (e: React.KeyboardEvent) => {
+    const width = sidebarRef.current?.getBoundingClientRect().width ?? MIN_SIDEBAR_WIDTH;
+    const target = { ArrowLeft: width - 16, ArrowRight: width + 16, Home: MIN_SIDEBAR_WIDTH, End: MAX_SIDEBAR_WIDTH }[e.key];
+    if (target === undefined) return;
+    e.preventDefault();
+    setResizedSidebarWidth(Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, target)));
   };
 
   const { data: tags } = useSuspenseQuery(tagsQueryOptions);
@@ -109,7 +122,15 @@ function DocsLayout() {
   };
 
   const floatingNavItems: FloatingNavItem[] = [
-    { id: 'docs-menu', icon: MenuIcon, onClick: toggleSidebar, ariaLabel: 'Toggle menu', direction: 'left' },
+    {
+      id: 'docs-menu',
+      icon: MenuIcon,
+      onClick: toggleSidebar,
+      ariaLabel: 'Toggle menu',
+      direction: 'left',
+      label: i18n.t('c:menu'),
+      labelVisible: showMenuLabel,
+    },
     {
       id: 'docs-scroll-top',
       icon: ArrowUpIcon,
@@ -139,8 +160,10 @@ function DocsLayout() {
         <ScrollArea className="size-full">{sidebarContent}</ScrollArea>
         <button
           type="button"
-          aria-label="Resize sidebar"
+          aria-label="Resize sidebar: drag, use the left and right arrow keys, or double-click to reset"
           onPointerDown={startSidebarResize}
+          onDoubleClick={() => setResizedSidebarWidth(null)}
+          onKeyDown={resizeSidebarByKey}
           className="absolute top-0 right-0 z-30 h-full w-px cursor-col-resize bg-border transition-colors after:absolute after:inset-y-0 after:-right-1.5 after:w-3 after:content-[''] hover:bg-primary/50 focus-visible:bg-primary"
         />
       </aside>

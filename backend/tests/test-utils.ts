@@ -7,7 +7,7 @@ import { resetOrganizationMockEnforcers } from '#/modules/organization/organizat
 import { resetUserMockEnforcers } from '#/modules/user/user-mocks';
 import { overrideConfig } from './fixtures';
 
-type AuthStrategy = 'passkey' | 'oauth' | 'totp' | 'magic';
+type AuthStrategy = 'passkey' | 'oauth' | 'totp' | 'magic' | 'sso';
 type OAuthProvider = 'github' | 'google' | 'microsoft';
 
 type ConfigOverride = { enabledAuthStrategies?: AuthStrategy[]; enabledOAuthProviders?: OAuthProvider[]; selfRegistration?: boolean };
@@ -29,6 +29,8 @@ export async function clearDatabase() {
     'actors',
     'oidc_payloads',
     'oauth_clients',
+    // No foreign key ties requests to the roots above, and a row left behind trips the unique signup index on the next run.
+    'requests',
   ]);
 }
 

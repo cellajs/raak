@@ -6,7 +6,7 @@
 import '#/modules/activities/activities-module';
 import '#/modules/attachment/attachment-module';
 import '#/modules/auth/auth-module';
-import '#/modules/domains/domains-module';
+import '#/modules/connections/connections-module';
 import '#/modules/entities/entities-module';
 import '#/modules/label/label-module';
 import '#/modules/mcp/mcp-module';

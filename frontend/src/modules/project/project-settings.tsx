@@ -68,7 +68,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
       {isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle>{t('c:general')}</CardTitle>
+            <CardTitle level={2}>{t('c:general')}</CardTitle>
           </CardHeader>
           <CardContent>
             <UpdateProjectForm project={project} sheet={isSheet} />
@@ -79,7 +79,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
       {(canMoveProjects || projectHasWorkspace) && (
         <Card>
           <CardHeader>
-            <CardTitle>{t('c:workspace')}</CardTitle>
+            <CardTitle level={2}>{t('c:workspace')}</CardTitle>
             <CardDescription>{t('c:project_workspace_settings.text')}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
@@ -102,7 +102,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('c:project_membership')}</CardTitle>
+          <CardTitle level={2}>{t('c:project_membership')}</CardTitle>
           <CardDescription>{t('c:project_membership_settings.text')}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -116,7 +116,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
       {isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</CardTitle>
+            <CardTitle level={2}>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</CardTitle>
             <CardDescription>
               <Trans i18nKey="c:delete_resource_notice.text" values={{ name: project.name, resource: t('c:project').toLowerCase() }} />
             </CardDescription>

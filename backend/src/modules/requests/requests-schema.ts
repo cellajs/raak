@@ -8,10 +8,11 @@ import { mockRequestBaseResponse } from './requests-mocks';
 const requestSelectSchema = createSelectSchema(requestsTable);
 
 export const requestSchema = requestSelectSchema
-  .omit({ tokenId: true })
+  .omit({ invitedAt: true })
   .extend({ wasInvited: z.boolean() })
   .openapi('Request', {
-    description: 'A contact or waitlist submission from an unauthenticated user.',
+    description:
+      'A message from the public site: a contact message, a waitlist sign-up or a newsletter subscription. Anyone can send one, signed in or not; system admins list them.',
     example: mockRequestBaseResponse(),
     'x-tags': schemaTags('data', 'requests', 'cella'),
   });

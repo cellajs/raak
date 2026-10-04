@@ -1,7 +1,7 @@
 import type { UserContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { resolveProjectWorkspaceId, upsertCurrentUserProjectMembershipWorkspace } from '#/modules/project/helpers/project-membership-workspace';
-import { withAuditUser } from '#/modules/user/helpers/audit-user';
+import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 

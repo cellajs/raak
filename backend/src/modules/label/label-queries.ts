@@ -1,4 +1,5 @@
 import { and, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import { appConfig } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
 import { requestScopeWhere } from '#/db/utils/request-scope';
@@ -31,9 +32,11 @@ export const insertLabels = async (ctx: DbContext, { labels }: InsertLabelsOpts)
   return db.insert(labelsTable).values(labels).onConflictDoNothing().returning();
 };
 
+export type UpdateLabelValues = PgUpdateSetSource<typeof labelsTable>;
+
 interface UpdateLabelOpts {
   id: string;
-  values: Partial<typeof labelsTable.$inferInsert>;
+  values: UpdateLabelValues;
 }
 
 /** Update a label by ID and return the updated row. */

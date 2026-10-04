@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { ArrowRightIcon, MailIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -10,6 +10,7 @@ import { zCheckEmailBody } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import type { z } from 'zod';
 import { useShallow } from 'zustand/react/shallow';
+import type { ApiError } from '~/lib/api';
 import { AuthEmailButton } from '~/modules/auth/auth-email-button';
 import { useAuthStore } from '~/modules/auth/auth-store';
 import type { ConditionalMediationResult } from '~/modules/auth/passkey-credentials';
@@ -19,7 +20,7 @@ import { invitationResumePath, useNavigateAfterAuth } from '~/modules/auth/use-p
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { Button } from '~/modules/ui/button';
-import { Form, FormControl, FormField, FormItem } from '~/modules/ui/field';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '~/modules/ui/field';
 import { Input } from '~/modules/ui/input';
 import { useUserStore } from '~/modules/user/user-store';
 import { defaultOnInvalid } from '~/utils/form-on-invalid';
@@ -49,6 +50,7 @@ export function SignInStep() {
   const clearUserStore = useUserStore((state) => state.reset);
   const { tokenId, redirect } = useSearch({ from: '/_public/auth/authenticate' });
   const navigateAfterAuth = useNavigateAfterAuth();
+  const navigate = useNavigate();
 
   const isMobile = window.innerWidth < 640;
   const abortRef = useRef<AbortController | null>(null);
@@ -97,6 +99,12 @@ export function SignInStep() {
       setMagicLinkMode('signin');
       setStep('magicLinkSent', form.getValues('email'));
     },
+    // An address an institution governs sends no link: its entry page takes over, keeping the redirect.
+    onError: (error: ApiError) => {
+      const connectionId = error.type === 'sso_required' ? error.meta?.connectionId : undefined;
+      if (typeof connectionId !== 'string') return;
+      navigate({ to: '/auth/sso/$connectionId', params: { connectionId }, search: redirect ? { redirect } : {}, replace: true });
+    },
   });
 
   // Without magic links a passkey signs in: the one the browser offers names the account.
@@ -142,6 +150,7 @@ export function SignInStep() {
             name="email"
             render={({ field }) => (
               <FormItem className={restrictedMode ? '-mb-2 gap-0' : 'hidden'}>
+                <FormLabel className="mb-2">{t('c:email')}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -150,7 +159,7 @@ export function SignInStep() {
                     className="h-12"
                     autoFocus={restrictedMode && !isMobile}
                     autoComplete={restrictedMode ? 'email' : 'off'}
-                    placeholder={t('c:email')}
+                    placeholder="name@example.com"
                   />
                 </FormControl>
               </FormItem>

@@ -45,13 +45,13 @@
                     "type": ["object", "null"],
                     "required": true,
                     "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "Minimal user data for references."
+                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
                     "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "Minimal user data for references."
+                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "publishedAt": {
                     "type": ["string", "null"],
@@ -88,7 +88,7 @@
                       "membership": {
                         "type": "object",
                         "required": true,
-                        "description": "Core membership fields shared across active and inactive memberships.",
+                        "description": "A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.",
                         "properties": {
                           "id": { "type": "string", "required": true, "format": "uuid" },
                           "tenantId": { "type": "string", "required": true, "maxLength": 24 },
@@ -165,7 +165,7 @@
                         "ref": "#/components/schemas/UserMinimalBase",
                         "items": {
                           "type": "object",
-                          "description": "Minimal user data for references.",
+                          "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
                           "properties": {
                             "id": { "type": "string", "required": true },
                             "name": { "type": "string", "required": true },
@@ -468,13 +468,13 @@
                     "type": ["object", "null"],
                     "required": true,
                     "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "Minimal user data for references."
+                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "updatedBy": {
                     "type": ["object", "null"],
                     "required": true,
                     "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "Minimal user data for references."
+                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "publishedAt": {
                     "type": ["string", "null"],
@@ -511,7 +511,7 @@
                       "membership": {
                         "type": "object",
                         "required": false,
-                        "description": "Core membership fields shared across active and inactive memberships.",
+                        "description": "A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.",
                         "properties": {
                           "id": { "type": "string", "required": true, "format": "uuid" },
                           "tenantId": { "type": "string", "required": true, "maxLength": 24 },
@@ -588,7 +588,7 @@
                         "ref": "#/components/schemas/UserMinimalBase",
                         "items": {
                           "type": "object",
-                          "description": "Minimal user data for references.",
+                          "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
                           "properties": {
                             "id": { "type": "string", "required": true },
                             "name": { "type": "string", "required": true },
@@ -831,13 +831,13 @@
               "type": ["object", "null"],
               "required": true,
               "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "Minimal user data for references."
+              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
               "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "Minimal user data for references."
+              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
             },
             "publishedAt": {
               "type": ["string", "null"],
@@ -874,7 +874,7 @@
                 "membership": {
                   "type": "object",
                   "required": false,
-                  "description": "Core membership fields shared across active and inactive memberships.",
+                  "description": "A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.",
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
@@ -951,7 +951,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "Minimal user data for references.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -1132,13 +1132,13 @@
               "type": ["object", "null"],
               "required": true,
               "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "Minimal user data for references."
+              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
             },
             "updatedBy": {
               "type": ["object", "null"],
               "required": true,
               "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "Minimal user data for references."
+              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
             },
             "publishedAt": {
               "type": ["string", "null"],
@@ -1175,7 +1175,7 @@
                 "membership": {
                   "type": "object",
                   "required": false,
-                  "description": "Core membership fields shared across active and inactive memberships.",
+                  "description": "A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.",
                   "properties": {
                     "id": { "type": "string", "required": true, "format": "uuid" },
                     "tenantId": { "type": "string", "required": true, "maxLength": 24 },
@@ -1252,7 +1252,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "Minimal user data for references.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },

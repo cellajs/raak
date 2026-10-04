@@ -1,8 +1,9 @@
-import { useRouter, useRouterState } from '@tanstack/react-router';
-import { ChevronUpIcon, HouseIcon, MessageCircleQuestionMarkIcon, RefreshCwIcon } from 'lucide-react';
+import { Link, useRouter, useRouterState } from '@tanstack/react-router';
+import { BuildingIcon, ChevronUpIcon, HouseIcon, MessageCircleQuestionMarkIcon, RefreshCwIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ApiError } from '~/lib/api';
 import { AppFooter } from '~/modules/common/app/app-footer';
 import { Dialoger } from '~/modules/common/dialoger/provider';
 import { type ErrorNoticeError, getErrorInfo, handleAskForHelp } from '~/modules/common/error-helpers';
@@ -36,6 +37,9 @@ export function ErrorNotice({ error, children, resetErrorBoundary, boundary, hom
 
   const { title, message } = getErrorInfo({ error, errorFromQuery });
 
+  // A tenant that requires signing in through an institution names the connection; its entry page takes it from here.
+  const ssoConnectionId = error instanceof ApiError && error.type === 'sso_required' ? error.meta?.connectionId : undefined;
+
   // Reset before a route change so the error state is not retained
   useEffect(() => {
     const unsub = router.subscribe('onBeforeRouteMount', () => {
@@ -61,7 +65,9 @@ export function ErrorNotice({ error, children, resetErrorBoundary, boundary, hom
         <div className="mx-auto my-auto">
           <Card className="mt-8 w-[80vw] max-w-[80vw] border-none bg-transparent sm:w-160">
             <CardHeader className="p-0 text-center">
-              <CardTitle className="mb-2 justify-center font-normal text-2xl">{title}</CardTitle>
+              <CardTitle level={1} className="mb-2 justify-center font-normal text-2xl">
+                {title}
+              </CardTitle>
               <CardDescription className="flex-col gap-2 p-0 text-base text-foreground">
                 <span className="block">{message}</span>
                 <span className="mt-2 block">
@@ -120,6 +126,14 @@ export function ErrorNotice({ error, children, resetErrorBoundary, boundary, hom
               </CardContent>
             )}
             <CardFooter className="mt-8 flex flex-wrap justify-center gap-2 p-0 max-sm:flex-col max-sm:items-stretch">
+              {typeof ssoConnectionId === 'string' && (
+                <Button
+                  render={<Link to="/auth/sso/$connectionId" params={{ connectionId: ssoConnectionId }} search={{ redirect: location.pathname }} />}
+                >
+                  <BuildingIcon />
+                  {t('c:sign_in_with_your_institution')}
+                </Button>
+              )}
               {children ? (
                 children
               ) : (

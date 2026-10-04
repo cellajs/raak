@@ -1,12 +1,12 @@
 import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
-import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
+import { checkSlugAvailable } from '#/modules/entities/operations/check-slug';
 import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
 import { updateProject } from '#/modules/project/project-queries';
 import { projectContract } from '#/modules/project/project-schema';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
-import { withAuditUser } from '#/modules/user/helpers/audit-user';
+import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';

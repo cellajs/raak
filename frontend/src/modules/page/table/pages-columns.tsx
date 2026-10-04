@@ -33,7 +33,7 @@ export function usePagesTableColumns() {
             maxWidth: 32,
             cellClass: tw('flex cursor-grab items-center justify-center'),
             rowDragHandle: true,
-            renderCell: () => <GripVerticalIcon className="size-3.5 text-muted-foreground/70" />,
+            renderCell: () => <GripVerticalIcon className="size-3.5 text-muted-foreground" />,
           } satisfies ColumnOrColumnGroup<PageTreeRow>,
         ]
       : []),
@@ -59,7 +59,7 @@ export function usePagesTableColumns() {
           {row.draft && <Badge variant="secondary">{t('c:draft')}</Badge>}
           {row._hasChildren && !row._isExpanded && (
             <span
-              className="shrink-0 text-muted-foreground/70 text-xs"
+              className="shrink-0 text-muted-foreground text-xs"
               data-tooltip="true"
               data-tooltip-content={t('c:child_page', { count: row._childCount })}
             >

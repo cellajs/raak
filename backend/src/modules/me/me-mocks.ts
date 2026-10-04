@@ -6,7 +6,11 @@ import { resourceUri } from '#/modules/oauth-server/resources';
 import { mockUserResponse } from '#/modules/user/user-mocks';
 import { mockChannelBase } from '#/schemas/entity-base-mocks';
 
-export const mockMeResponse = (key = 'me:default'): MeResponse => ({ user: mockUserResponse(`${key}:user`), isSystemAdmin: false });
+export const mockMeResponse = (key = 'me:default'): MeResponse => ({
+  user: mockUserResponse(`${key}:user`),
+  isSystemAdmin: false,
+  impersonator: null,
+});
 
 export const mockMeAuthResponse = (key = 'me-auth:default'): MeAuthResponse =>
   withFakerSeed(key, () => {
@@ -15,6 +19,7 @@ export const mockMeAuthResponse = (key = 'me-auth:default'): MeAuthResponse =>
 
     return {
       enabledOAuth: ['github'] as const,
+      institutions: [],
       hasTotp: false,
       sessions: [
         {
@@ -28,6 +33,7 @@ export const mockMeAuthResponse = (key = 'me-auth:default'): MeAuthResponse =>
           deviceOs: faker.helpers.arrayElement(['macOS', 'Windows', 'iOS', 'Android']),
           browser: faker.helpers.arrayElement(['Chrome', 'Firefox', 'Safari', 'Edge']),
           authStrategy: 'passkey' as const,
+          connectionId: null,
           ipHash: null,
           ipSubnetHash: null,
           ipCountry: null,
