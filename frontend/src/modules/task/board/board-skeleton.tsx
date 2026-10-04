@@ -148,7 +148,7 @@ export function BoardSkeleton({
   return (
     <>
       {withHeader && (
-        <div className={taskBarClass}>
+        <div className={taskBarClass} aria-hidden="true" inert>
           <BoardSearch toggleFocus={() => {}} />
 
           <TableCount count={0} label="c:task" className="mr-3" />

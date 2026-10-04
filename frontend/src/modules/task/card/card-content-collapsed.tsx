@@ -15,9 +15,9 @@ export function TaskCardContentCollapsed({ task }: TaskContentCollapsedProps) {
   return (
     <div className="flex w-full flex-row gap-1">
       <TaskPrimaryLabelButton task={task} />
-      <div className="mt-1.5 mb-1 ml-1 inline leading-none opacity-90 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100">
-        <TaskSummaryHtml className="inline leading-none" task={task} />
-        {env.VITE_DEBUG_MODE && <span className="ml-2 text-muted">#{task.displayOrder}</span>}
+      <div className="mt-1.5 mb-1 ml-1 inline leading-tight">
+        <TaskSummaryHtml className="inline leading-tight" task={task} />
+        {env.VITE_DEBUG_MODE && <span className="ml-2 text-muted-foreground">#{task.displayOrder}</span>}
         <TaskCardSummaryButtons task={task} />
       </div>
     </div>

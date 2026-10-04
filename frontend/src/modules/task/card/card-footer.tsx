@@ -87,7 +87,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
       variant="ghost"
       size="xs"
-      className="relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100"
+      className="relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5"
       {...readOnlyInert}
     >
       {task.labels.length > 0 ? (
@@ -96,12 +96,12 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             <Badge
               variant="outline"
               key={task.labels[0].id}
-              className="inline-block h-4 max-w-24 truncate border-0 bg-transparent px-1 py-0 font-normal leading-4 last:mr-0"
+              className="inline-block min-h-4 max-w-24 truncate border-0 bg-transparent px-1 py-0 font-normal leading-4 last:mr-0"
             >
               {task.labels[0].name}
             </Badge>
             {task.labels.length > 1 && (
-              <Badge variant="outline" className="flex h-4 justify-center border-0 bg-transparent px-1 py-0 font-normal">
+              <Badge variant="outline" className="flex min-h-4 justify-center border-0 bg-transparent px-1 py-0 font-normal">
                 +{task.labels.length - 1}
               </Badge>
             )}
@@ -110,11 +110,11 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
           <div className="flex flex-wrap gap-0.5 truncate">
             {task.labels.map(({ name, id }) => {
               return (
-                <div key={id} className="flex max-w-24 flex-wrap items-center justify-center rounded-full px-0">
+                <div key={id} className="flex max-w-full flex-wrap items-center justify-center rounded-full px-0">
                   <Badge
                     variant="outline"
                     key={id}
-                    className="inline-block h-4 max-w-32 shrink truncate border-0 bg-transparent px-1 py-0 font-normal text-[.75rem] leading-4 opacity-75 shadow-none last:mr-0"
+                    className="inline-block min-h-4 max-w-full shrink truncate border-0 bg-transparent px-1 py-0 font-normal text-[.75rem] text-muted-foreground leading-4 shadow-none last:mr-0"
                   >
                     {name}
                   </Badge>
@@ -141,11 +141,8 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       <div className="group-[.is-expanded]/task:fade-in flex flex-row items-center group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300 sm:gap-1">
         {!isSheet && (
           <Checkbox
-            className={cn(
-              'mx-1 border-foreground/40 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 data-[state=checked]:border-primary',
-              !isExpandedMobile && 'max-sm:hidden',
-              readOnlyHide,
-            )}
+            className={cn('mx-1 data-[state=checked]:border-primary', !isExpandedMobile && 'max-sm:hidden', readOnlyHide)}
+            aria-label={t('c:select_resource', { resource: task.name })}
             checked={isSelected}
             disabled={hasSelectedLabels}
             onCheckedChange={(checked) => handleTaskSelect(checked, task)}

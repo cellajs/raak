@@ -62,7 +62,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
   };
 
   return (
-    <MotionConfig transition={{ type: 'spring', bounce: 0, duration: 0.4 }}>
+    <MotionConfig reducedMotion="user" transition={{ type: 'spring', bounce: 0, duration: 0.4 }}>
       <AnimatePresence mode="popLayout">
         {!createMode && (
           <motion.div

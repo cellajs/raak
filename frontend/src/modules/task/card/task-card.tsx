@@ -2,7 +2,7 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/utils/preserve-offset-on-source';
 import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
-import type { FocusEvent } from 'react';
+import type { FocusEvent, KeyboardEvent } from 'react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DropIndicator } from '~/modules/common/drop-indicator';
@@ -149,13 +149,21 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     }
   };
 
+  // A card reached with Tab holds DOM focus only: the board's Enter hotkey reads the focused task from the store.
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' && event.target === event.currentTarget && !isFocused && !isSheet) setTaskCardFocus(task.id);
+  };
+
   const dropIndicatorEdge = mobileClosestEdge ?? closestEdge;
 
   return (
     <FocusTrap mainElementId={task.id} active={isFocused}>
       <Card
         id={isSheet ? `sheet-${task.id}` : task.id}
+        role="article"
+        aria-label={task.name}
         onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
         onBlur={handleCardBlur}
         data-state={effectiveState}
         // status to assign color of a glow
@@ -181,7 +189,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
       >
         <CardContent
           id={`${task.id}-content`}
-          className="relative flex flex-col p-1.5! px-2.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
+          className="relative flex flex-col p-1.5! px-2.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
         >
           <SeenMark
             productId={task.id}
