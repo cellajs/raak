@@ -2,7 +2,7 @@ import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from '
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
-import { requestScope } from '#/db/utils/request-scope';
+import { requestScopeWhere } from '#/db/utils/request-scope';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -30,11 +30,10 @@ interface UpdateProjectOpts {
 /** Update a project by ID and return the updated row. */
 export const updateProject = async (ctx: ActorContext, { id, values }: UpdateProjectOpts) => {
   const { db } = ctx.var;
-  const { organizationId } = requestScope(ctx);
   const [updated] = await db
     .update(projectsTable)
     .set(values)
-    .where(and(eq(projectsTable.id, id), eq(projectsTable.organizationId, organizationId)))
+    .where(and(eq(projectsTable.id, id), requestScopeWhere(ctx, projectsTable, 'project')))
     .returning();
   return updated;
 };
@@ -45,8 +44,7 @@ interface DeleteProjectsByIdsOpts {
 
 export const deleteProjectsByIds = async (ctx: ActorContext, { ids }: DeleteProjectsByIdsOpts) => {
   const { db } = ctx.var;
-  const { organizationId } = requestScope(ctx);
-  return db.delete(projectsTable).where(and(inArray(projectsTable.id, ids), eq(projectsTable.organizationId, organizationId)));
+  return db.delete(projectsTable).where(and(inArray(projectsTable.id, ids), requestScopeWhere(ctx, projectsTable, 'project')));
 };
 
 interface FindMaxDisplayOrderOpts {

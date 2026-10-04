@@ -1,30 +1,22 @@
 import { z } from '@hono/zod-openapi';
-import { createXRoute } from '#/core/x-routes';
+import { createXRoutes, json, xRoute } from '#/core/x-routes';
 import { publicGuard } from '#/middlewares/guard';
 import { mockProjectResponse } from '#/modules/project/project-mocks';
 import { projectSchema } from '#/modules/project/project-schema';
-import { errorResponseRefs, slugQuerySchema, validIdSchema } from '#/schemas';
+import { slugQuerySchema, validIdSchema } from '#/schemas';
 
-const publicProjectRoutes = {
-  getPublicProject: createXRoute({
+const publicProjectRoutes = createXRoutes(['projects', 'app', 'channel'], {
+  getPublicProject: xRoute({
     method: 'get',
     path: '/{id}',
     xGuard: [publicGuard],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'getPublicProject',
     summary: 'Fetch public project by ID',
     description: 'Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.',
     request: { params: z.object({ id: validIdSchema }), query: slugQuerySchema },
     responses: {
-      200: {
-        description: 'Project without membership public',
-        content: {
-          'application/json': { schema: projectSchema.extend({ membership: z.null() }), example: { ...mockProjectResponse(), membership: null } },
-        },
-      },
-      ...errorResponseRefs,
+      200: json('Project without membership public', projectSchema.extend({ membership: z.null() }), { ...mockProjectResponse(), membership: null }),
     },
   }),
-};
+});
 
 export { publicProjectRoutes };

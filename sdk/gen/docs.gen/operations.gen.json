@@ -2178,7 +2178,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2203,7 +2203,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },
@@ -2378,7 +2378,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": [],
       "xCache": []
     },
@@ -2403,7 +2403,7 @@
     "hasResponseBody": true,
     "hasExample": true,
     "extensions": {
-      "xGuard": ["userGuard", "tenantGuard", "orgGuard"],
+      "xGuard": ["actorGuard", "tenantGuard", "orgGuard"],
       "xRateLimiter": ["pointsLimiter"],
       "xCache": []
     },

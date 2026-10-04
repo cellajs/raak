@@ -1,5 +1,5 @@
-import { createXRoute } from '#/core/x-routes';
-import { orgGuard, relatableGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
+import { actorGuard, orgGuard, relatableGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchProjectsResponse, mockPaginatedProjectsResponse, mockProjectResponse } from '#/modules/project/project-mocks';
@@ -14,7 +14,6 @@ import {
 } from '#/modules/project/project-schema';
 import {
   batchResponseSchema,
-  errorResponseRefs,
   idInTenantOrgParamSchema,
   idsBodySchema,
   paginationSchema,
@@ -22,41 +21,21 @@ import {
   tenantOrgParamSchema,
 } from '#/schemas';
 
-const projectRoutes = {
-  /**
-   * Create one or more projects within an organization
-   */
-  createProjects: createXRoute({
+const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
+  createProjects: xRoute({
     method: 'post',
     path: '/{tenantId}/{organizationId}/projects',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'createProjects',
     summary: 'Create projects',
     description: 'Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.',
-    request: {
-      params: tenantOrgParamSchema,
-      query: workspaceIdQuerySchema,
-      body: { required: true, content: { 'application/json': { schema: projectCreateBodySchema } } },
-    },
-    responses: {
-      201: {
-        description: 'Projects created',
-        content: { 'application/json': { schema: projectCreateResponseSchema, example: mockBatchProjectsResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, query: workspaceIdQuerySchema, body: jsonBody(projectCreateBodySchema) },
+    responses: { 201: json('Projects created', projectCreateResponseSchema, mockBatchProjectsResponse()) },
   }),
-  /**
-   * Get list of projects where the current user has a membership (cross-tenant)
-   */
-  getProjects: createXRoute({
+  getProjects: xRoute({
     method: 'get',
     path: '/projects',
     xGuard: [userGuard, relatableGuard],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'getProjects',
     summary: 'Get list of projects',
     description:
       'Returns a paginated list of projects where the current user has a membership. ' +
@@ -66,134 +45,67 @@ const projectRoutes = {
       'role to filter by membership role, excludeArchived to hide archived memberships, ' +
       'and q to search by project name.',
     request: { query: projectListQuerySchema },
-    responses: {
-      200: {
-        description: 'Projects',
-        content: { 'application/json': { schema: paginationSchema(projectSchema), example: mockPaginatedProjectsResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Projects', paginationSchema(projectSchema), mockPaginatedProjectsResponse()) },
   }),
-  /**
-   * Get a project (tenant + org scoped)
-   */
-  getProject: createXRoute({
+  getProject: xRoute({
     method: 'get',
     path: '/{tenantId}/{organizationId}/projects/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'getProject',
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     summary: 'Get project',
     description: 'Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.',
     request: { params: idInTenantOrgParamSchema, query: slugIncludeQuerySchema },
-    responses: {
-      200: {
-        description: 'Project',
-        content: { 'application/json': { schema: projectSchema, example: mockProjectResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Project', projectSchema, mockProjectResponse()) },
   }),
-
-  updateProject: createXRoute({
+  updateProject: xRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'updateProject',
     summary: 'Update project',
     description: 'Updates a project by ID.',
-    request: {
-      params: idInTenantOrgParamSchema,
-      body: { required: true, content: { 'application/json': { schema: projectUpdateBodySchema } } },
-    },
-    responses: {
-      200: {
-        description: 'Project updated',
-        content: { 'application/json': { schema: projectSchema, example: mockProjectResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: idInTenantOrgParamSchema, body: jsonBody(projectUpdateBodySchema) },
+    responses: { 200: json('Project updated', projectSchema, mockProjectResponse()) },
   }),
-  assignProjectWorkspace: createXRoute({
+  assignProjectWorkspace: xRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}/assign-workspace',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'assignProjectWorkspace',
     summary: 'Assign project to workspace',
     description: "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
     request: { params: idInTenantOrgParamSchema, query: workspaceIdQuerySchema },
-    responses: {
-      200: {
-        description: 'Project assigned to the new workspace',
-        content: { 'application/json': { schema: projectWithMembershipSchema, example: mockProjectResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Project assigned to the new workspace', projectWithMembershipSchema, mockProjectResponse()) },
   }),
-  removeProjectWorkspace: createXRoute({
+  removeProjectWorkspace: xRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/projects/{id}/workspace',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'removeProjectWorkspace',
     summary: 'Remove project from workspace',
     description: "Removes the current user's project membership from its assigned workspace without leaving the project.",
     request: { params: idInTenantOrgParamSchema },
-    responses: {
-      200: {
-        description: 'Project removed from workspace',
-        content: { 'application/json': { schema: projectWithMembershipSchema, example: mockProjectResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Project removed from workspace', projectWithMembershipSchema, mockProjectResponse()) },
   }),
-  moveProjectToWorkspace: createXRoute({
+  moveProjectToWorkspace: xRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/projects/{id}/move',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'moveProjectToWorkspace',
     summary: 'Move project between workspaces',
     description: 'Moves a project from one workspace to another.',
     request: { params: idInTenantOrgParamSchema, query: workspaceIdQuerySchema },
-    responses: {
-      200: {
-        description: 'Moved project',
-        content: { 'application/json': { schema: projectWithMembershipSchema, example: mockProjectResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Moved project', projectWithMembershipSchema, mockProjectResponse()) },
   }),
-  deleteProjects: createXRoute({
+  deleteProjects: xRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/projects',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
-    tags: ['projects', 'app', 'channel'],
-    operationId: 'deleteProjects',
     summary: 'Delete projects',
     description: 'Deletes one or more projects by ID.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: idsBodySchema() } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Success',
-        content: { 'application/json': { schema: batchResponseSchema() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(idsBodySchema()) },
+    responses: { 200: json('Success', batchResponseSchema()) },
   }),
-};
+});
 
 export { projectRoutes };

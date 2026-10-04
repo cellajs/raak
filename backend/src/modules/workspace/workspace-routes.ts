@@ -1,5 +1,5 @@
-import { createXRoute } from '#/core/x-routes';
-import { orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
+import { actorGuard, orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
 import { insertEntityLock } from '#/middlewares/insert-entity-lock';
 import { bulkPointsLimiter, singlePointsLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchWorkspacesResponse, mockPaginatedWorkspacesResponse, mockWorkspaceResponse } from '#/modules/workspace/workspace-mocks';
@@ -12,7 +12,6 @@ import {
 } from '#/modules/workspace/workspace-schema';
 import {
   batchResponseSchema,
-  errorResponseRefs,
   idInTenantOrgParamSchema,
   idsBodySchema,
   paginationSchema,
@@ -20,43 +19,21 @@ import {
   tenantOrgParamSchema,
 } from '#/schemas';
 
-const workspaceRoutes = {
-  /**
-   * Create one or more personal workspaces
-   */
-  createWorkspaces: createXRoute({
+const workspaceRoutes = createXRoutes(['workspaces', 'app', 'channel'], {
+  createWorkspaces: xRoute({
     method: 'post',
     path: '/{tenantId}/{organizationId}/workspaces',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [insertEntityLock, bulkPointsLimiter],
-    tags: ['workspaces', 'app', 'channel'],
-    operationId: 'createWorkspaces',
     summary: 'Create workspaces',
     description: 'Creates one or more personal workspaces owned by the current user.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: workspaceCreateBodySchema } },
-      },
-    },
-    responses: {
-      201: {
-        description: 'Workspaces created',
-        content: { 'application/json': { schema: workspaceCreateResponseSchema, example: mockBatchWorkspacesResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(workspaceCreateBodySchema) },
+    responses: { 201: json('Workspaces created', workspaceCreateResponseSchema, mockBatchWorkspacesResponse()) },
   }),
-  /**
-   * Get list of workspaces where the current user has a membership (cross-tenant)
-   */
-  getWorkspaces: createXRoute({
+  getWorkspaces: xRoute({
     method: 'get',
     path: '/workspaces',
     xGuard: [userGuard],
-    tags: ['workspaces', 'app', 'channel'],
-    operationId: 'getWorkspaces',
     summary: 'Get list of workspaces',
     description:
       'Returns a paginated list of workspaces where the current user has a membership. ' +
@@ -65,82 +42,37 @@ const workspaceRoutes = {
       'role to filter by membership role, excludeArchived to hide archived memberships, ' +
       'and q to search by workspace name.',
     request: { query: workspaceListQuerySchema },
-    responses: {
-      200: {
-        description: 'Workspaces',
-        content: { 'application/json': { schema: paginationSchema(workspaceSchema), example: mockPaginatedWorkspacesResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Workspaces', paginationSchema(workspaceSchema), mockPaginatedWorkspacesResponse()) },
   }),
-  /**
-   * Get a workspace (tenant + org scoped)
-   */
-  getWorkspace: createXRoute({
+  getWorkspace: xRoute({
     method: 'get',
     path: '/{tenantId}/{organizationId}/workspaces/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
-    tags: ['workspaces', 'app', 'channel'],
-    operationId: 'getWorkspace',
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     summary: 'Get workspace',
     description: 'Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.',
     request: { params: idInTenantOrgParamSchema, query: slugIncludeQuerySchema },
-    responses: {
-      200: {
-        description: 'Workspace',
-        content: { 'application/json': { schema: workspaceSchema, example: mockWorkspaceResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Workspace', workspaceSchema, mockWorkspaceResponse()) },
   }),
-  updateWorkspace: createXRoute({
+  updateWorkspace: xRoute({
     method: 'put',
     path: '/{tenantId}/{organizationId}/workspaces/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
-    tags: ['workspaces', 'app', 'channel'],
-    operationId: 'updateWorkspace',
     summary: 'Update workspace',
     description: 'Updates a workspace by ID.',
-    request: {
-      params: idInTenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: workspaceUpdateBodySchema } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Workspace updated',
-        content: { 'application/json': { schema: workspaceSchema, example: mockWorkspaceResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: idInTenantOrgParamSchema, body: jsonBody(workspaceUpdateBodySchema) },
+    responses: { 200: json('Workspace updated', workspaceSchema, mockWorkspaceResponse()) },
   }),
-  deleteWorkspaces: createXRoute({
+  deleteWorkspaces: xRoute({
     method: 'delete',
     path: '/{tenantId}/{organizationId}/workspaces',
     xGuard: [userGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
-    tags: ['workspaces', 'app', 'channel'],
-    operationId: 'deleteWorkspaces',
     summary: 'Delete workspaces',
     description: 'Deletes one or more workspaces by ID.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: idsBodySchema() } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Success',
-        content: { 'application/json': { schema: batchResponseSchema() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(idsBodySchema()) },
+    responses: { 200: json('Success', batchResponseSchema()) },
   }),
-};
+});
 
 export { workspaceRoutes };

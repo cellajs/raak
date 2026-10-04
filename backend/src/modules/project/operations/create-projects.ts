@@ -8,7 +8,7 @@ import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/operations/check-slug';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertMemberships } from '#/modules/memberships/operations/insert-memberships';
-import { resolveProjectWorkspaceId } from '#/modules/project/helpers/project-membership-workspace';
+import { resolveProjectWorkspaceId } from '#/modules/project/operations/project-workspace-membership';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
 import { withAuditUsers } from '#/modules/user/operations/with-audit-users';
