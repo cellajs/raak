@@ -20,7 +20,7 @@ import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { preserveIncluded } from '~/query/basic/preserve-included';
 import type { MutationData } from '~/query/types';
@@ -57,16 +57,9 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
   } = params;
 
   const filters = { q, sort, order, organizationId, role, excludeArchived };
-  const requestQuery = { ...filters, include, limit: String(limit) };
-
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(filters),
-    queryFn: ({ pageParam: { page, offset }, signal }) => {
-      const requestOffset = String(offset ?? (page ?? 0) * limit);
-
-      return getWorkspaces({ query: { ...requestQuery, offset: requestOffset }, signal });
-    },
-    ...baseInfiniteQueryOptions,
+    ...offsetPaging(limit, (offset, signal) => getWorkspaces({ query: { ...filters, include, ...pageQuery(limit, offset) }, signal })),
     refetchOnMount: true,
   });
 };

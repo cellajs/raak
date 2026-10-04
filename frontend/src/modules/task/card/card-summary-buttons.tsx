@@ -14,12 +14,12 @@ export function TaskCardSummaryButtons({ task }: { task: Task }) {
   return (
     <>
       {
-        <div className="mt-[-0.15rem] ml-1 inline-flex items-center gap-1 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-sheet/task:opacity-100">
-          {task.expandable && <div className="inline-flex h-5 cursor-pointer py-0 text-sm">...</div>}
+        <div className="mt-[-0.15rem] ml-1 inline-flex items-center gap-1">
+          {task.expandable && <div className="inline-flex min-h-5 cursor-pointer py-0 text-muted-foreground text-sm">...</div>}
           {totalCount > 0 && (
-            <div className="inline-flex h-5 cursor-pointer gap-[.15rem] text-sm">
+            <div className="inline-flex min-h-5 cursor-pointer gap-[.15rem] text-sm">
               <span className="text-success">{checkedCount}</span>
-              <span className="opacity-50">/</span>
+              <span className="text-muted-foreground">/</span>
               <span className="">{totalCount}</span>
             </div>
           )}
@@ -32,7 +32,7 @@ export function TaskCardSummaryButtons({ task }: { task: Task }) {
         </div>
       }
       {/*  in debug mode: show order number to debug drag */}
-      {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-sm opacity-15">#{task.displayOrder}</span>}
+      {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-muted-foreground text-sm">#{task.displayOrder}</span>}
     </>
   );
 }

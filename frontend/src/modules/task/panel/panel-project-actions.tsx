@@ -38,7 +38,9 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
     <DropdownMenu>
       <DropdownMenuTrigger
         className=""
-        render={<Button variant="ghost" className={cn('max-sm:hidden', className)} aria-label="Project options" />}
+        render={
+          <Button variant="ghost" className={cn('max-sm:hidden', className)} aria-label={t('c:resource_options', { resource: t('c:project') })} />
+        }
         ref={projectButtonRef}
       >
         <EllipsisVerticalIcon />

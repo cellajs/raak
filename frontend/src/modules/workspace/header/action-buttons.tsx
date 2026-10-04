@@ -95,7 +95,7 @@ export function WorkspaceActionButtons() {
       <DropdownMenu>
         <DropdownMenuTrigger
           className={`group-data-[search-focused=true]/boardHeader:hidden md:hidden ${searchQuery && 'hidden'}`}
-          render={<Button variant="ghost" aria-label="Workspace options" />}
+          render={<Button variant="ghost" aria-label={t('c:resource_options', { resource: t('c:workspace') })} />}
         >
           <EllipsisVerticalIcon />
         </DropdownMenuTrigger>

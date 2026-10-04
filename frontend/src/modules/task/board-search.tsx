@@ -72,6 +72,10 @@ export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
     if (searchQuery !== inputValue) setInputValue(searchQuery);
   }, [searchQuery]);
 
+  const searchLabel = t('c:search_in_resource', {
+    resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
+  });
+
   return (
     <InputGroup className="relative flex w-full items-center border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
       <InputGroupAddon className="pl-1.5">
@@ -83,9 +87,8 @@ export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
         name="boardSearch"
         onFocus={toggleFocus}
         onBlur={toggleFocus}
-        placeholder={t('c:search_in_resource', {
-          resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
-        })}
+        placeholder={searchLabel}
+        aria-label={searchLabel}
         className={'h-10 w-full border-0 pl-0! shadow-none'}
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
@@ -95,28 +98,32 @@ export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
         {children}
       </InputGroupAddon>
       <InputGroupAddon className="pr-2" align="inline-end">
-        <Badge
-          variant="plain"
-          size="micro"
-          className={cn((!inputValue || !/\s/.test(inputValue)) && 'hidden', 'cursor-pointer opacity-70 hover:opacity-100')}
+        <button
+          type="button"
+          className={cn((!inputValue || !/\s/.test(inputValue)) && 'hidden', 'focus-effect rounded-full')}
+          onMouseDown={preventInputBlur}
           onClick={toggleSearchMode}
         >
-          {matchMode}
-        </Badge>
+          <Badge variant="plain" size="micro" className="cursor-pointer">
+            {matchMode}
+          </Badge>
+        </button>
       </InputGroupAddon>
       <InputGroupAddon className="pr-2" align="inline-end">
-        <CircleXIcon
+        <button
+          type="button"
           id="search-close"
-          className={cn(!inputValue && 'hidden', 'cursor-pointer opacity-70 hover:opacity-100')}
-          onMouseDown={(e) => {
-            preventInputBlur(e);
-
-            if (inputValue) {
-              setSearch({ q: '', matchMode: undefined });
-              setInputValue('');
-            } else inputRef.current?.blur();
+          aria-label={t('c:clear')}
+          className={cn(!inputValue && 'hidden', 'focus-effect cursor-pointer rounded-full')}
+          onMouseDown={preventInputBlur}
+          onClick={() => {
+            setSearch({ q: '', matchMode: undefined });
+            setInputValue('');
+            inputRef.current?.focus();
           }}
-        />
+        >
+          <CircleXIcon />
+        </button>
       </InputGroupAddon>
     </InputGroup>
   );

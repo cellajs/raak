@@ -1,21 +1,21 @@
 import { getRouteApi } from '@tanstack/react-router';
 import { Suspense } from 'react';
-import { Spinner } from '~/modules/common/spinner';
+import { PageSpinner } from '~/modules/common/spinner';
+import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const WorkspacePage = lazyNamed(() => import('~/modules/workspace/workspace-page'), 'WorkspacePage');
 const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
 
-const orgLayoutApi = getRouteApi('/_app/$tenantId/$organizationSlug');
 const workspaceRouteApi = getRouteApi('/_app/$tenantId/$organizationSlug/workspace/$slug');
 
 export function WorkspaceRouteComponent() {
-  const { workspace } = workspaceRouteApi.useRouteContext();
-  const { organization, tenantId } = orgLayoutApi.useRouteContext();
-  const { view } = workspaceRouteApi.useSearch();
+  const { workspace, organization, tenantId } = useWorkspaceContext();
+  const view = workspaceRouteApi.useSearch({ select: (search) => search.view });
+
   return (
-    <Suspense fallback={<Spinner className="mt-[45vh] h-10 w-10" />}>
+    <Suspense fallback={<PageSpinner />}>
       <WorkspacePage key={workspace.slug} workspaceId={workspace.id} organizationId={workspace.organizationId} tenantId={tenantId}>
         {view === 'table' ? (
           <Suspense>

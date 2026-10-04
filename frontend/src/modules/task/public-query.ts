@@ -2,9 +2,9 @@ import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { getPublicTask, getPublicTasks } from 'sdk';
 import { appConfig } from 'shared';
 import type { GetTasksParam } from '~/modules/task/query';
-import { getTasksNextPageParam, taskKeys, tasksTableQueryDefaults } from '~/modules/task/query';
+import { taskKeys, tasksTableQueryDefaults } from '~/modules/task/query';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
-import { baseInfiniteQueryOptions } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 
 export const publicTaskQueryOptions = (id: string) =>
   queryOptions({
@@ -40,24 +40,15 @@ export const publicTasksTableQueryOptions = ({
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,
   matchMode = tasksTableQueryDefaults.matchMode,
-  limit: baseLimit = appConfig.requestLimits.tasksTable,
+  limit = appConfig.requestLimits.tasksTable,
   projectId,
 }: PublicTasksTableParams & { limit?: number }) => {
-  const limit = String(baseLimit);
-  const { initialPageParam } = baseInfiniteQueryOptions;
-
   const query = { q, sort, order, projectId, matchMode };
-  const queryKey = publicTasksTableQueryKey({ q, sort, order, matchMode, projectId });
 
   return infiniteQueryOptions({
-    queryKey,
-    initialPageParam,
+    queryKey: publicTasksTableQueryKey({ q, sort, order, matchMode, projectId }),
+    ...offsetPaging(limit, (offset, signal) => getPublicTasks({ query: { ...query, ...pageQuery(limit, offset) }, signal })),
     refetchOnWindowFocus: false,
-    queryFn: async ({ pageParam: { page, offset: _offset }, signal }) => {
-      const offset = String(_offset || (page || 0) * Number(limit));
-      return await getPublicTasks({ query: { ...query, limit, offset }, signal });
-    },
-    getNextPageParam: getTasksNextPageParam,
     gcTime: 0,
     staleTime: 0,
   });

@@ -112,7 +112,13 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
               ? t('c:add_resource', { resource: `${selectedCount} ${t('c:project', { count: selectedCount }).toLowerCase()}` })
               : t('c:select')}
           </SubmitButton>
-          <Button type="reset" variant="secondary" className={selectedCount > 0 ? '' : 'invisible'} aria-label="Cancel" onClick={() => form.reset()}>
+          <Button
+            type="reset"
+            variant="secondary"
+            className={selectedCount > 0 ? '' : 'invisible'}
+            aria-label={t('c:cancel')}
+            onClick={() => form.reset()}
+          >
             {t('c:cancel')}
           </Button>
         </div>

@@ -33,6 +33,20 @@ export const getRelativeTaskOrder = (edge: Edge, tasks: Task[], order: number, i
   return getRelativeOrder(filteredTasks, order, id, edge, false);
 };
 
+/**
+ * The display order that moves a task one place up or down among the tasks of its project and status, as a drop
+ * on its neighbor's edge would. Null when the task is already first or last. The non-drag way to reorder (WCAG 2.5.7).
+ */
+export const getStepTaskOrder = (task: Task, direction: 'up' | 'down'): number | null => {
+  const siblings = cachedTasks()
+    .filter((t) => t.projectId === task.projectId && t.status === task.status && !isDraftTask(t))
+    .sort(sortTaskOrder);
+  const index = siblings.findIndex((t) => t.id === task.id);
+  const neighbor = index === -1 ? undefined : siblings[direction === 'up' ? index - 1 : index + 1];
+  if (!neighbor) return null;
+  return getRelativeTaskOrder(direction === 'up' ? 'top' : 'bottom', siblings, neighbor.displayOrder, task.id);
+};
+
 export const getNewStatusTaskOrder = (task: Task, newStatus: number) => {
   const oldStatus = task.status;
   const direction = oldStatus - newStatus;

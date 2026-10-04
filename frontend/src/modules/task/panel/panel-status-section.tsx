@@ -114,8 +114,8 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
             // Hidden state slides the button toward its sticky edge
             isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
             isIced
-              ? 'border-b-sky-500/10 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 max-sm:border-b dark:bg-sky-950 dark:text-sky-500 dark:hover:bg-sky-900 dark:hover:text-sky-400'
-              : 'border-t border-t-transparent border-b border-b-green-500/10 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 dark:bg-green-950 dark:text-green-500 dark:hover:bg-green-900 dark:hover:text-green-400',
+              ? 'border-b-sky-500/10 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800 max-sm:border-b dark:bg-sky-950 dark:text-sky-400 dark:hover:bg-sky-900 dark:hover:text-sky-300'
+              : 'border-t border-t-transparent border-b border-b-green-500/10 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-400',
           )}
         >
           <div className="flex gap-1.5">
@@ -140,7 +140,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
         </Button>
       </div>
       {hasOnlyOlderAccepted && showStatus && (
-        <div className="flex gap-4 border-b border-b-green-500/10 bg-green-50 px-4 py-5 text-green-500/70 text-xs dark:bg-green-950">
+        <div className="flex gap-4 border-b border-b-green-500/10 bg-green-50 px-4 py-5 text-green-700 text-xs dark:bg-green-950 dark:text-green-400">
           <InfoIcon className="inline-block" />
           {t('c:older_accepted_table_only', { count: counts.acceptedCutOff })}
         </div>

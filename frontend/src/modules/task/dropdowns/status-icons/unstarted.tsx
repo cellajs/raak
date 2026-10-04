@@ -1,10 +1,12 @@
 import type { SVGProps } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_ICON_STROKE_WIDTH } from '~/modules/task/dropdowns/status-icons/constants';
 
 export function UnstartedIcon({ ...props }: SVGProps<SVGSVGElement>) {
+  const { t } = useTranslation();
   return (
-    <svg width="1em" height="1em" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-label="Backlog" {...props}>
-      <title>Backlog</title>
+    <svg width="1em" height="1em" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-label={t('c:unstarted')} {...props}>
+      <title>{t('c:unstarted')}</title>
       <rect
         x="1.25"
         y="1.25"
