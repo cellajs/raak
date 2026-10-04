@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
-import { getNewTaskOrder } from './order-helpers';
+import { getNewTaskOrder, getStepTaskOrder } from './order-helpers';
 
 // getNewTaskOrder is pure over its args; stub the cache accessor so importing order-helpers
 // doesn't pull the query-client chain (which touches `window`) into the node test env.
-vi.mock('~/modules/task/helpers/active-task', () => ({ cachedTasks: () => [], currentActiveTask: () => undefined }));
+const cache = vi.hoisted(() => ({ tasks: [] as unknown[] }));
+vi.mock('~/modules/task/helpers/active-task', () => ({ cachedTasks: () => cache.tasks, currentActiveTask: () => undefined }));
 
 const orderGap = 10;
 const defaultOrder = 1000;
@@ -43,5 +44,33 @@ describe('getNewTaskOrder', () => {
       task('match', 40, TaskStatus.Unstarted, 'p1'),
     ];
     expect(getNewTaskOrder(TaskStatus.Unstarted, tasks, 'p1')).toBe(40 + orderGap);
+  });
+});
+
+describe('getStepTaskOrder', () => {
+  // Higher display order sits higher in the column.
+  const top = task('top', 30, TaskStatus.Started);
+  const middle = task('middle', 20, TaskStatus.Started);
+  const bottom = task('bottom', 10, TaskStatus.Started);
+  const step = (item: OrderTask, direction: 'up' | 'down') => {
+    cache.tasks = [bottom, task('other-status', 25, TaskStatus.Unstarted), top, task('other-project', 25, TaskStatus.Started, 'p2'), middle];
+    return getStepTaskOrder(item as Task, direction);
+  };
+
+  it('moves a task above its upper neighbor', () => {
+    expect(step(middle, 'up')).toBeGreaterThan(top.displayOrder);
+    expect(step(bottom, 'up')).toBeGreaterThan(middle.displayOrder);
+    expect(step(bottom, 'up')).toBeLessThan(top.displayOrder);
+  });
+
+  it('moves a task below its lower neighbor', () => {
+    expect(step(middle, 'down')).toBeLessThan(bottom.displayOrder);
+    expect(step(top, 'down')).toBeLessThan(middle.displayOrder);
+    expect(step(top, 'down')).toBeGreaterThan(bottom.displayOrder);
+  });
+
+  it('returns null at either end, counting only tasks of the same project and status', () => {
+    expect(step(top, 'up')).toBeNull();
+    expect(step(bottom, 'down')).toBeNull();
   });
 });

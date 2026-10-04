@@ -103,5 +103,6 @@
   "workspace_settings.text": "Update your personal settings for {{name}}.",
   "set_resource": "Set {{resource}}",
   "resource_options": "{{resource}} options",
-  "count_assigned": "{{count}} assigned"
+  "count_assigned": "{{count}} assigned",
+  "board_view": "Board view"
 }

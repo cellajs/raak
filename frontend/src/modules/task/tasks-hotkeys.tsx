@@ -5,6 +5,7 @@ import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -34,6 +35,7 @@ type StrictBoardPanel = ProjectResizablePanel;
 export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const user = useCurrentUser();
+  const keyboardShortcuts = useNavigationStore((state) => state.keyboardShortcuts);
   const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
 
   const search = useSearch({ strict: false }) as BoardSearchParams;
@@ -239,13 +241,16 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     }
   };
 
-  const actionHotkeys: HotkeyItem[] = [
-    ['A', () => hotKeyPress('assignedTo')],
-    ['L', () => hotKeyPress('labels')],
-    ['S', () => hotKeyPress('status')],
-    ['T', () => hotKeyPress('primaryLabel')],
-    ['N', handleNKeyDown],
-  ];
+  // Character keys fire by accident under speech input, so they follow the user's keyboard shortcuts preference (WCAG 2.1.4)
+  const actionHotkeys: HotkeyItem[] = keyboardShortcuts
+    ? [
+        ['A', () => hotKeyPress('assignedTo')],
+        ['L', () => hotKeyPress('labels')],
+        ['S', () => hotKeyPress('status')],
+        ['T', () => hotKeyPress('primaryLabel')],
+        ['N', handleNKeyDown],
+      ]
+    : [];
 
   const stateHotkeys: HotkeyItem[] = [
     ['Escape', handleEscKeyPress],

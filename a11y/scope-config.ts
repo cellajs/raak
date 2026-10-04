@@ -23,12 +23,16 @@ const administeredOrganization = async (api: AuditApi) => {
   return organization ? { id: organization.id, path: `/${organization.tenantId}/${organization.slug}` } : null;
 };
 
-/** Page path of the first workspace or project in that organization. */
+/**
+ * Page path of a workspace or project in that organization: one the audit user administers when there is one, so its
+ * cards are editable and the audit covers the edit affordances, else the first.
+ */
 const firstChannelPath = async (api: AuditApi, type: 'workspace' | 'project') => {
   const organization = await administeredOrganization(api);
   if (!organization) return null;
-  const { items } = await api<{ items: { slug: string }[] }>(`/${type}s?organizationId=${organization.id}&limit=1`);
-  return items[0] ? `${organization.path}/${type}/${items[0].slug}` : null;
+  const list = (role: string) => api<{ items: { slug: string }[] }>(`/${type}s?organizationId=${organization.id}${role}&limit=1`);
+  const [channel] = [...(await list('&role=admin')).items, ...(await list('')).items];
+  return channel ? `${organization.path}/${type}/${channel.slug}` : null;
 };
 
 /**

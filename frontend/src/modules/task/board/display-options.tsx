@@ -46,6 +46,7 @@ function DisplayOptions({ className = '' }: Props) {
           <ToggleGroupItem
             key={value}
             value={value}
+            aria-label={t(`c:${value}_view` as TKey)}
             onMouseEnter={() => setHoveredValue(value)}
             onMouseLeave={() => setHoveredValue(null)}
             onFocus={() => setHoveredValue(value)}

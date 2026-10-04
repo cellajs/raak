@@ -25,13 +25,13 @@ export const statusButtonVariants = cva(
   {
     variants: {
       status: {
-        0: 'text-green-600 [--sc:34_197_94]',
+        0: 'text-green-700 [--sc:34_197_94] dark:text-green-500',
         1: '[--sc:249_115_22]',
         2: '[--sc:234_179_8]',
         3: '[--sc:132_204_22]',
         4: '[--sc:100_116_139]',
         5: '[--sc:100_116_139]',
-        6: 'text-sky-600 [--sc:14_165_233]',
+        6: 'text-sky-700 [--sc:14_165_233] dark:text-sky-500',
       },
     },
   },
@@ -63,8 +63,8 @@ export const taskBarClass = 'z-85 flex items-center bg-background max-sm:justify
  * header in `panel-status-section` uses a richer, single-use palette and stays inline.
  */
 export const statusSectionColors = {
-  accepted: { fill: 'bg-green-500/5', text: 'text-green-500', border: 'border-b border-b-green-500/10' },
-  iced: { fill: 'bg-sky-500/5', text: 'text-sky-500', border: 'border-t border-t-sky-500/10' },
+  accepted: { fill: 'bg-green-500/5', text: 'text-green-700 dark:text-green-400', border: 'border-b border-b-green-500/10' },
+  iced: { fill: 'bg-sky-500/5', text: 'text-sky-700 dark:text-sky-400', border: 'border-t border-t-sky-500/10' },
 } as const;
 
 export const labelColors = [
