@@ -2,6 +2,7 @@ import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 
 import type { ActorContext, DbContext } from '#/core/context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
+import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
@@ -10,6 +11,7 @@ import { projectsTable } from '#/modules/project/project-db';
 import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
+import { getIsoDate } from '#/utils/iso-date';
 
 interface InsertTasksOpts {
   tasks: InsertTaskModel[];
@@ -235,4 +237,37 @@ export const filterExistingAttachmentIds = async (ctx: ActorContext, { ids }: Fi
     .where(and(inArray(attachmentsTable.id, ids), requestScopeWhere(ctx, attachmentsTable, 'attachment'), isNull(attachmentsTable.deletedAt)));
   const found = new Set(rows.map((row) => row.id));
   return ids.filter((id) => found.has(id));
+};
+
+/**
+ * Reassign tasks referencing soft-deleted primary labels to their project's default
+ * (first remaining live primary by displayOrder). Runs in the label delete transaction
+ * because tasks.primaryLabelId is NOT NULL; server-origin write.
+ */
+export const reassignTasksFromDeletedPrimaries = async (
+  ctx: ActorContext,
+  { deletedPrimaryIds, updatedBy }: { deletedPrimaryIds: string[]; updatedBy: string },
+): Promise<void> => {
+  if (deletedPrimaryIds.length === 0) return;
+  const { db } = ctx.var;
+  await db
+    .update(tasksTable)
+    .set({
+      primaryLabelId: sql`(
+        SELECT l.id FROM labels l
+        WHERE l.project_id = ${tasksTable.projectId}
+          AND l.mode = 'primary'
+          AND l.deleted_at IS NULL
+          AND l.id NOT IN (${sql.join(
+            deletedPrimaryIds.map((id) => sql`${id}::uuid`),
+            sql`, `,
+          )})
+        ORDER BY l.display_order ASC NULLS LAST
+        LIMIT 1
+      )`,
+      updatedAt: getIsoDate(),
+      updatedBy,
+      stx: stripChangedFields(tasksTable.stx),
+    })
+    .where(and(inArray(tasksTable.primaryLabelId, deletedPrimaryIds), requestScopeWhere(ctx, tasksTable, 'task')));
 };

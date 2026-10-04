@@ -1,4 +1,4 @@
-import { createXRoute } from '#/core/x-routes';
+import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
@@ -12,7 +12,6 @@ import {
 } from '#/modules/task/task-schema';
 import {
   batchResponseSchema,
-  errorResponseRefs,
   fullResponseQuerySchema,
   idInTenantOrgParamSchema,
   idsWithStxBodySchema,
@@ -20,12 +19,8 @@ import {
   tenantOrgParamSchema,
 } from '#/schemas';
 
-const taskRoutes = {
-  /**
-   * Create one or more tasks within a project
-   */
-  createTasks: createXRoute({
-    operationId: 'createTasks',
+const taskRoutes = createXRoutes(['tasks', 'app', 'product'], {
+  createTasks: xRoute({
     method: 'post',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
@@ -35,30 +30,15 @@ const taskRoutes = {
       approvalRequired: true,
       entity: 'task',
     },
-    tags: ['tasks', 'app', 'product'],
     summary: 'Create tasks',
     description: 'Creates one or more tasks within a project.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: { required: true, content: { 'application/json': { schema: taskCreateManyStxBodySchema } } },
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(taskCreateManyStxBodySchema) },
     responses: {
-      200: {
-        description: 'Tasks already created (idempotent)',
-        content: { 'application/json': { schema: taskCreateResponseSchema, example: mockBatchTasksResponse() } },
-      },
-      201: {
-        description: 'Tasks created',
-        content: { 'application/json': { schema: taskCreateResponseSchema, example: mockBatchTasksResponse() } },
-      },
-      ...errorResponseRefs,
+      200: json('Tasks already created (idempotent)', taskCreateResponseSchema, mockBatchTasksResponse()),
+      201: json('Tasks created', taskCreateResponseSchema, mockBatchTasksResponse()),
     },
   }),
-  /**
-   * Get list of tasks within one or more projects
-   */
-  getTasks: createXRoute({
-    operationId: 'getTasks',
+  getTasks: xRoute({
     method: 'get',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
@@ -69,39 +49,23 @@ const taskRoutes = {
       approvalRequired: false,
       entity: 'task',
     },
-    tags: ['tasks', 'app', 'product'],
     summary: 'Get list of tasks',
     description: 'Returns a list of tasks within one or more specified projects.',
     request: { params: tenantOrgParamSchema, query: taskListQuerySchema },
-    responses: {
-      200: {
-        description: 'Tasks',
-        content: { 'application/json': { schema: paginationSchema(taskSchema), example: mockTasksResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Tasks', paginationSchema(taskSchema), mockTasksResponse()) },
   }),
-  getTask: createXRoute({
-    operationId: 'getTask',
+  getTask: xRoute({
     method: 'get',
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xCache: [productCache('task')],
     xTool: { description: 'Get full task details including description, labels, and assignees.', approvalRequired: false, entity: 'task' },
-    tags: ['tasks', 'app', 'product'],
     summary: 'Get task',
     description: 'Retrieves a task by its ID.',
     request: { params: idInTenantOrgParamSchema },
-    responses: {
-      200: {
-        description: 'Tasks',
-        content: { 'application/json': { schema: taskSchema, example: mockTaskResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    responses: { 200: json('Tasks', taskSchema, mockTaskResponse()) },
   }),
-  updateTask: createXRoute({
-    operationId: 'updateTask',
+  updateTask: xRoute({
     method: 'put',
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
@@ -111,46 +75,21 @@ const taskRoutes = {
       approvalRequired: true,
       entity: 'task',
     },
-    tags: ['tasks', 'app', 'product'],
     summary: 'Update task',
     description: 'Updates a task by ID.',
-    request: {
-      params: idInTenantOrgParamSchema,
-      query: fullResponseQuerySchema,
-      body: {
-        required: true,
-        content: { 'application/json': { schema: taskUpdateStxBodySchema } },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Task updated',
-        content: { 'application/json': { schema: taskSchema, example: mockTaskResponse() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: idInTenantOrgParamSchema, query: fullResponseQuerySchema, body: jsonBody(taskUpdateStxBodySchema) },
+    responses: { 200: json('Task updated', taskSchema, mockTaskResponse()) },
   }),
-  deleteTasks: createXRoute({
-    operationId: 'deleteTasks',
+  deleteTasks: xRoute({
     method: 'delete',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
-    tags: ['tasks', 'app', 'product'],
     summary: 'Delete tasks',
     description: 'Deletes one or more tasks by ID.',
-    request: {
-      params: tenantOrgParamSchema,
-      body: { required: true, content: { 'application/json': { schema: idsWithStxBodySchema(100) } } },
-    },
-    responses: {
-      200: {
-        description: 'Success',
-        content: { 'application/json': { schema: batchResponseSchema() } },
-      },
-      ...errorResponseRefs,
-    },
+    request: { params: tenantOrgParamSchema, body: jsonBody(idsWithStxBodySchema(100)) },
+    responses: { 200: json('Success', batchResponseSchema()) },
   }),
-};
+});
 
 export { taskRoutes };

@@ -1,12 +1,12 @@
 import { getColumns, sql } from 'drizzle-orm';
 import { toSnakeCase } from 'drizzle-orm/casing';
-import { boolean, doublePrecision, foreignKey, index, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, index, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import type { LabelMode } from 'shared/config/labels-config';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
+import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
 import { productColumns } from '#/db/utils/product-columns';
-import { organizationsTable } from '#/modules/organization/organization-db';
 
 /**
  * Labels table is a lightweight product entity table.
@@ -38,9 +38,7 @@ export const labelsTable = snakeCase.table(
     index('labels_created_by_index').on(table.createdBy),
     index('labels_updated_by_index').on(table.updatedBy),
     ...channelRelationIndexes('labels', table, 'label'),
-    foreignKey({ columns: [table.tenantId, table.organizationId], foreignColumns: [organizationsTable.tenantId, organizationsTable.id] }).onDelete(
-      'cascade',
-    ),
+    organizationForeignKey(table),
     tenantSelectPolicy('labels', table),
     ...writeThroughPolicies('labels'),
   ],

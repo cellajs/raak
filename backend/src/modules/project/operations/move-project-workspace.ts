@@ -4,7 +4,7 @@ import {
   requireCurrentUserProjectMembership,
   resolveProjectWorkspaceId,
   setCurrentUserProjectMembershipWorkspace,
-} from '#/modules/project/helpers/project-membership-workspace';
+} from '#/modules/project/operations/project-workspace-membership';
 import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';

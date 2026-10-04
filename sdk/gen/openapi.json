@@ -8821,8 +8821,8 @@
     "/public/projects/{id}": {
       "get": {
         "security": [],
-        "tags": ["projects", "app", "channel"],
         "operationId": "getPublicProject",
+        "tags": ["projects", "app", "channel"],
         "summary": "Fetch public project by ID",
         "description": "Retrieves a public project by ID. Pass ?slug=true to resolve by slug instead.",
         "x-guard": ["publicGuard"],
@@ -9939,8 +9939,8 @@
     "/public/tasks/{id}": {
       "get": {
         "security": [],
-        "tags": ["tasks", "app", "product"],
         "operationId": "getPublicTask",
+        "tags": ["tasks", "app", "product"],
         "summary": "Get public task",
         "description": "Retrieves a task by its ID. For publicly shared.",
         "x-guard": ["publicGuard"],
@@ -10048,8 +10048,8 @@
     "/public/tasks": {
       "get": {
         "security": [],
-        "tags": ["tasks", "app", "product"],
         "operationId": "getPublicTasks",
+        "tags": ["tasks", "app", "product"],
         "summary": "Get public tasks",
         "description": "Returns a list of public tasks associated with a specific project. For publicly shared boards.",
         "x-guard": ["publicGuard"],
@@ -10342,8 +10342,8 @@
     "/t/{id}/resolve": {
       "get": {
         "security": [],
-        "tags": ["tasks", "app", "product"],
         "operationId": "resolveTaskLink",
+        "tags": ["tasks", "app", "product"],
         "summary": "Resolve task link",
         "description": "Returns routing metadata for a task link so the frontend can decide where to redirect the user.",
         "x-guard": ["publicGuard"],
@@ -10419,8 +10419,8 @@
     "/t/{id}/cover": {
       "get": {
         "security": [],
-        "tags": ["tasks", "app", "product"],
         "operationId": "getTaskCover",
+        "tags": ["tasks", "app", "product"],
         "summary": "Get task cover",
         "description": "Retrieves the cover image for a task by ID.",
         "x-guard": ["publicGuard"],
@@ -10465,8 +10465,8 @@
     "/t/{id}": {
       "get": {
         "security": [],
-        "tags": ["tasks", "app", "product"],
         "operationId": "redirectToTask",
+        "tags": ["tasks", "app", "product"],
         "summary": "Redirect to task",
         "description": "Redirects to the canonical route for a task by ID.",
         "x-guard": ["publicGuard"],
@@ -12983,8 +12983,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "createProjects",
+        "tags": ["projects", "app", "channel"],
         "summary": "Create projects",
         "description": "Creates one or more projects within an organization. The current user is assigned as an admin and can invite additional members.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -13345,8 +13345,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "deleteProjects",
+        "tags": ["projects", "app", "channel"],
         "summary": "Delete projects",
         "description": "Deletes one or more projects by ID.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -13456,8 +13456,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "getProjects",
+        "tags": ["projects", "app", "channel"],
         "summary": "Get list of projects",
         "description": "Returns a paginated list of projects where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, workspaceId to scope to a specific workspace, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by project name.",
         "x-guard": ["userGuard", "relatableGuard"],
@@ -13696,13 +13696,19 @@
         "security": [
           {
             "cookieAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth2": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "getProject",
+        "tags": ["projects", "app", "channel"],
         "summary": "Get project",
         "description": "Retrieves a project by ID. Pass ?slug=true to resolve by slug instead.",
-        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
+        "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "parameters": [
@@ -13828,13 +13834,19 @@
         "security": [
           {
             "cookieAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth2": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "updateProject",
+        "tags": ["projects", "app", "channel"],
         "summary": "Update project",
         "description": "Updates a project by ID.",
-        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
+        "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [
@@ -13974,8 +13986,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "assignProjectWorkspace",
+        "tags": ["projects", "app", "channel"],
         "summary": "Assign project to workspace",
         "description": "Assigns a project to a workspace using the provided workspaceId. This does not affect the project's ownership or organization.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -14278,8 +14290,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "removeProjectWorkspace",
+        "tags": ["projects", "app", "channel"],
         "summary": "Remove project from workspace",
         "description": "Removes the current user's project membership from its assigned workspace without leaving the project.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -14573,8 +14585,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["projects", "app", "channel"],
         "operationId": "moveProjectToWorkspace",
+        "tags": ["projects", "app", "channel"],
         "summary": "Move project between workspaces",
         "description": "Moves a project from one workspace to another.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -14877,8 +14889,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["workspaces", "app", "channel"],
         "operationId": "createWorkspaces",
+        "tags": ["workspaces", "app", "channel"],
         "summary": "Create workspaces",
         "description": "Creates one or more personal workspaces owned by the current user.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -15158,8 +15170,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["workspaces", "app", "channel"],
         "operationId": "deleteWorkspaces",
+        "tags": ["workspaces", "app", "channel"],
         "summary": "Delete workspaces",
         "description": "Deletes one or more workspaces by ID.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
@@ -15269,8 +15281,8 @@
             "cookieAuth": []
           }
         ],
-        "tags": ["workspaces", "app", "channel"],
         "operationId": "getWorkspaces",
+        "tags": ["workspaces", "app", "channel"],
         "summary": "Get list of workspaces",
         "description": "Returns a paginated list of workspaces where the current user has a membership. Results are sorted by membership displayOrder (the user’s personal arrangement) in ascending order by default. Optional filters: organizationId to scope to a specific organization, role to filter by membership role, excludeArchived to hide archived memberships, and q to search by workspace name.",
         "x-guard": ["userGuard"],
@@ -15515,13 +15527,19 @@
         "security": [
           {
             "cookieAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth2": []
           }
         ],
-        "tags": ["workspaces", "app", "channel"],
         "operationId": "getWorkspace",
+        "tags": ["workspaces", "app", "channel"],
         "summary": "Get workspace",
         "description": "Retrieves a workspace by ID. Pass ?slug=true to resolve by slug instead.",
-        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
+        "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
         "parameters": [
@@ -15659,13 +15677,19 @@
         "security": [
           {
             "cookieAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {
+            "oauth2": []
           }
         ],
-        "tags": ["workspaces", "app", "channel"],
         "operationId": "updateWorkspace",
+        "tags": ["workspaces", "app", "channel"],
         "summary": "Update workspace",
         "description": "Updates a workspace by ID.",
-        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
+        "x-guard": ["actorGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
         "parameters": [

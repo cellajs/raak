@@ -1,10 +1,10 @@
 import { sql } from 'drizzle-orm';
-import { boolean, doublePrecision, foreignKey, index, integer, snakeCase, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, index, integer, snakeCase, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
+import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
 import { productColumns } from '#/db/utils/product-columns';
-import { organizationsTable } from '#/modules/organization/organization-db';
 
 /**
  * Tasks table is a product entity table.
@@ -46,9 +46,7 @@ export const tasksTable = snakeCase.table(
     index('idx_tasks_assigned_to_gin').using('gin', table.assignedTo),
     // Backs the CDC refcount check: "which live tasks still reference attachment X?"
     index('idx_tasks_attachments_gin').using('gin', table.attachments),
-    foreignKey({ columns: [table.tenantId, table.organizationId], foreignColumns: [organizationsTable.tenantId, organizationsTable.id] }).onDelete(
-      'cascade',
-    ),
+    organizationForeignKey(table),
     tenantSelectPolicy('tasks', table),
     ...writeThroughPolicies('tasks'),
   ],

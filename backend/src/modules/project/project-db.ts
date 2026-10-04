@@ -1,6 +1,6 @@
-import { foreignKey, index, snakeCase, unique, uuid } from 'drizzle-orm/pg-core';
+import { index, snakeCase, unique, uuid } from 'drizzle-orm/pg-core';
 import { channelColumns } from '#/db/utils/channel-columns';
-import { organizationsTable } from '#/modules/organization/organization-db';
+import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
 
 /**
  * Projects table is a channel entity table.
@@ -15,9 +15,7 @@ export const projectsTable = snakeCase.table('projects', { ...channelColumns('pr
   index('projects_updated_by_index').on(table.updatedBy),
   // Compound unique for composite FK targets (memberships, products reference this)
   unique('projects_tenant_id_unique').on(table.tenantId, table.id),
-  foreignKey({ columns: [table.tenantId, table.organizationId], foreignColumns: [organizationsTable.tenantId, organizationsTable.id] }).onDelete(
-    'cascade',
-  ),
+  organizationForeignKey(table),
 ]);
 
 export type ProjectModel = typeof projectsTable.$inferSelect;
