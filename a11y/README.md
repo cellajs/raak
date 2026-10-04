@@ -15,8 +15,8 @@ run. The audit itself takes about two minutes; the first run also builds the fro
 - **Chromium** for Playwright, once: `pnpm --filter a11y exec playwright install chromium`.
 
 `pnpm a11y:run` does the rest: it starts the database (`db_a11y` in `backend/compose.yaml`, port 5470), seeds it on
-the first run, serves the backend with a built frontend 70 ports above the checkout's dev ports, runs the audit and
-stops what it started. It sets the database URLs and the system admin allowlist for that stack itself, so
+the first run, serves the backend, the Yjs relay (when the app runs one) and a built frontend 70 ports above the
+checkout's dev ports, runs the audit and stops what it started. It sets the database URLs and the system admin allowlist for that stack itself, so
 `backend/.env` stays as it is.
 
 The audit signs in as the seeded admin through `pnpm --filter backend session:mint`, so it runs in development only.
@@ -44,7 +44,10 @@ against.
 | `pnpm -C a11y decide --file decisions.json` | Record a reviewer's decisions (an agent's or a person's) with their evidence |
 
 A visit that fails (a page that redirects, a check that cannot run) is reported, the command exits with an error, and
-the run writes `ledger-partial.json`: an incomplete run never replaces the ledger.
+the run writes `ledger-partial.json`: an incomplete run never replaces the ledger. The failed visit leaves
+`failure-<mode>.png` and `failure-<mode>.json` in the state's folder under `a11y/results/review/`: what the page showed
+when the step failed, its console errors, and the steps that ran on that page before. A step often fails on what an
+earlier one left behind, such as a page that fell into its error boundary.
 
 ## How a run works
 

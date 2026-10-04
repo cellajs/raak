@@ -1,17 +1,24 @@
+import { actionCommand, menuPath } from '../operator-actions';
 import type { Check, CheckStatus, CredentialTier, NextAction } from './types';
 
 /** The local setup/manage entrypoint. */
 export const runSetup: NextAction = { description: 'Run the infra CLI (setup on a fresh stack, operator menu otherwise)', command: 'pnpm infra' };
 export const installPulumi: NextAction = { description: 'Install the Pulumi CLI', command: 'brew install pulumi/tap/pulumi' };
-export const manageSecrets: NextAction = { description: 'Set the missing runtime secret(s) via "Manage runtime secrets"', command: 'pnpm infra' };
-export const unlock: NextAction = { description: 'Clear the stale stack lock via "Unlock" (only when no run is in progress)', command: 'pnpm infra' };
+export const manageSecrets: NextAction = {
+  description: `Set the missing runtime secret(s) via "${menuPath('secrets')}"`,
+  command: actionCommand('secrets'),
+};
+export const unlock: NextAction = {
+  description: `Clear the stale stack lock via "${menuPath('unlock')}" (only when no run is in progress)`,
+  command: actionCommand('unlock'),
+};
 export const manageDbEndpoint: NextAction = {
-  description: 'Close the public DB endpoint (or open it again) via "Manage database"',
-  command: 'pnpm infra',
+  description: `Close the public DB endpoint via "${menuPath('db-close')}"`,
+  command: actionCommand('db-close'),
 };
 export const clearPending: NextAction = {
-  description: 'Review the interrupted Pulumi operations via "Stack setup → Unlock" (only when no run is in progress)',
-  command: 'pnpm infra',
+  description: `Review the interrupted Pulumi operations via "${menuPath('unlock')}" (only when no run is in progress)`,
+  command: actionCommand('unlock'),
 };
 
 /** Local, self-contained deploy of the current HEAD for a mode. */

@@ -33,6 +33,9 @@ export default defineConfig({
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
       'CLAUDE.md',
+      // Template-only: it scaffolds a new app from this checkout and asserts the scaffolder's output
+      // (`slug: 'my-app'`, no config.template.ts), which no fork can satisfy.
+      '.github/workflows/create-flow.yml',
       // App identity: brand assets and the app's own locale namespace. cella has no upstream fix
       // to push into these, so they are never synced. Template-consumed copy lives in common.json,
       // never in app.json.
@@ -51,7 +54,7 @@ export default defineConfig({
     pinned: [
       'backend/src/db/channel-tables.ts',
       // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.
-      'backend/src/modules/attachment/helpers/attachment-placement.ts',
+      'backend/src/modules/attachment/attachment-placement.ts',
       'backend/src/modules/auth/sso/role-from-claims.ts',
       'backend/src/modules.ts',
       'backend/src/bundle-config.ts',

@@ -1,11 +1,4 @@
-import type {
-  BaseAuthStrategies,
-  ConfigMode,
-  FederationConfig,
-  ProductEmbedding,
-  RequiredConfig,
-  S3ConfigInput,
-} from '../src/config-builder/types.ts';
+import type { ConfigMode, FederationConfig, ProductEmbedding, RequiredConfig, S3ConfigInput } from '../src/config-builder/types.ts';
 import { nonEmpty } from '../src/config-builder/utils.ts';
 import { hierarchy } from './hierarchy-config.ts';
 import type { PrimaryLabelDefinition } from './labels-config.ts';
@@ -127,7 +120,8 @@ export const config = {
     backend: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/api' },
     cdc: { enabled: true as boolean },
     yjs: { enabled: true as boolean, publicUrl: 'wss://www.raak.dev/yjs' },
-    mcp: { enabled: true as boolean, publicUrl: 'https://www.raak.dev/mcp' },
+    // MCP needs the oauth authorization server to issue its access tokens; both stay off until that is deployed.
+    mcp: { enabled: false as boolean, publicUrl: 'https://www.raak.dev/mcp' },
     oauth: { enabled: false as boolean, publicUrl: 'https://www.raak.dev/oauth' },
     // The job store's maintainer (cron and queue supervision); off means no sweeps or queues run anywhere.
     jobs: { enabled: true as boolean },
@@ -191,8 +185,7 @@ export const config = {
 
   // Authentication
 
-  // Widened from the literal tuple: template code calls `.includes('sso')`, which a tuple without it rejects.
-  enabledAuthStrategies: ['passkey', 'oauth', 'totp', 'magic'] as readonly BaseAuthStrategies[],
+  enabledAuthStrategies: ['passkey', 'oauth', 'totp', 'magic'] as const,
   enabledOAuthProviders: ['github'] as const,
   /** Identity federations institutions sign in through, keyed by federation (the `sso` strategy). Empty: raak has none. */
   federations: {} as Record<string, FederationConfig>,

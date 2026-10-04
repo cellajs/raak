@@ -27,7 +27,7 @@ import { syncStaleTime } from '~/query/basic/sync-stale-config';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
-import { createStxForCreate, createStxForDelete, createStxForUpdate, withReplayFlag } from '~/query/offline/stx-utils';
+import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
 import { invalidateEmbeddingHosts, propagateEmbeddedProduct } from '~/query/realtime/propagation';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
@@ -134,7 +134,7 @@ const createLabelMutationFn = async ({ tenantId, organizationId, data, stx }: Cr
 
 /** Sends one label update; exported for the replay test. */
 export const updateLabelMutationFn = async ({ tenantId, organizationId, id, ops, stx }: UpdateLabelFullVars) => {
-  const effectiveStx = withReplayFlag(stx ?? createStxForUpdate(ops ? Object.keys(ops) : []));
+  const effectiveStx = stx ?? createStxForUpdate(ops ? Object.keys(ops) : []);
   return updateLabel({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
 };
 
