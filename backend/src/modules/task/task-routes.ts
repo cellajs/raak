@@ -1,5 +1,5 @@
 import { createXRoute } from '#/core/x-routes';
-import { orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchTasksResponse, mockTaskResponse, mockTasksResponse } from '#/modules/task/task-mocks';
@@ -28,7 +28,7 @@ const taskRoutes = {
     operationId: 'createTasks',
     method: 'post',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     xTool: {
       description: 'Create one or more tasks in a project. Requires project ID, task name, and status.',
@@ -61,7 +61,7 @@ const taskRoutes = {
     operationId: 'getTasks',
     method: 'get',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
     xTool: {
@@ -85,7 +85,7 @@ const taskRoutes = {
     operationId: 'getTask',
     method: 'get',
     path: '/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xCache: [productCache('task')],
     xTool: { description: 'Get full task details including description, labels, and assignees.', approvalRequired: false, entity: 'task' },
     tags: ['tasks', 'app', 'product'],
@@ -104,7 +104,7 @@ const taskRoutes = {
     operationId: 'updateTask',
     method: 'put',
     path: '/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     xTool: {
       description: 'Update task fields: summary, status, labels, assignees, description, or move to another project.',
@@ -134,7 +134,7 @@ const taskRoutes = {
     operationId: 'deleteTasks',
     method: 'delete',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['tasks', 'app', 'product'],
     summary: 'Delete tasks',

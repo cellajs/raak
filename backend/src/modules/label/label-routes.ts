@@ -1,5 +1,5 @@
 import { createXRoute } from '#/core/x-routes';
-import { orgGuard, tenantGuard, userGuard } from '#/middlewares/guard';
+import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
 import { mockBatchLabelsResponse, mockLabelResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
@@ -27,7 +27,7 @@ const labelsRoutes = {
     operationId: 'createLabels',
     method: 'post',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['labels', 'app', 'product'],
     summary: 'Create labels',
@@ -55,7 +55,7 @@ const labelsRoutes = {
     operationId: 'getLabels',
     method: 'get',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
     tags: ['labels', 'app', 'product'],
@@ -74,7 +74,7 @@ const labelsRoutes = {
     operationId: 'getLabel',
     method: 'get',
     path: '/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xCache: [productCache('label')],
     tags: ['labels', 'app', 'product'],
     summary: 'Get label',
@@ -92,7 +92,7 @@ const labelsRoutes = {
     operationId: 'updateLabel',
     method: 'put',
     path: '/{id}',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [singlePointsLimiter],
     tags: ['labels', 'app', 'product'],
     summary: 'Update label',
@@ -116,7 +116,7 @@ const labelsRoutes = {
     operationId: 'deleteLabels',
     method: 'delete',
     path: '/',
-    xGuard: [userGuard, tenantGuard, orgGuard],
+    xGuard: [actorGuard, tenantGuard, orgGuard],
     xRateLimiter: [bulkPointsLimiter],
     tags: ['labels', 'app', 'product'],
     summary: 'Delete labels',

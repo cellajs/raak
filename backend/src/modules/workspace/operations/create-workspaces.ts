@@ -16,8 +16,9 @@ import { createRejectionState, takeWithRestriction } from '#/utils/rejection-uti
 
 type CreateWorkspaceItem = { id: string; name: string };
 
-const generateUniqueSlug = async (ctx: DbContext, baseSlug: string): Promise<string> => {
-  if (await checkSlugAvailable(ctx, baseSlug, 'workspace')) return baseSlug;
+/** `taken` holds the slugs given out earlier in the same request, which the database does not know yet. */
+const generateUniqueSlug = async (ctx: DbContext, baseSlug: string, taken: Set<string>): Promise<string> => {
+  if (!taken.has(baseSlug) && (await checkSlugAvailable(ctx, baseSlug, 'workspace'))) return baseSlug;
 
   const withSuffix = `${baseSlug}-${nanoid(6)}`;
   if (await checkSlugAvailable(ctx, withSuffix, 'workspace')) return withSuffix;
@@ -49,15 +50,14 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
 
   canCreateEntity(ctx, buildSubject('workspace', { organizationId: organization.id }));
 
-  const workspaceValues = await Promise.all(
-    itemsToCreate.map(async (item) => ({
-      name: item.name,
-      slug: await generateUniqueSlug(ctx, `${user.slug}-${organization.slug}`),
-      createdBy: user.id,
-      tenantId: organization.tenantId,
-      organizationId: organization.id,
-    })),
-  );
+  // One at a time: every item starts from the same base slug, and none of them is inserted yet.
+  const takenSlugs = new Set<string>();
+  const workspaceValues: Parameters<typeof insertWorkspaces>[1]['workspaces'] = [];
+  for (const item of itemsToCreate) {
+    const slug = await generateUniqueSlug(ctx, `${user.slug}-${organization.slug}`, takenSlugs);
+    takenSlugs.add(slug);
+    workspaceValues.push({ name: item.name, slug, createdBy: user.id, tenantId: organization.tenantId, organizationId: organization.id });
+  }
 
   const workspaceRecords = await insertWorkspaces(ctx, { workspaces: workspaceValues });
 

@@ -34,7 +34,9 @@ defineBackendModule({
           createdBy: ctx.var.actor.id,
         }),
       );
-      if (rows.length) await tenantContext(ctx, (txCtx) => insertLabels(txCtx, { labels: rows }));
+      // On the dispatcher's connection: create-projects dispatches inside its transaction, where the project rows are
+      // not visible to any other connection yet.
+      if (rows.length) await insertLabels(ctx, { labels: rows });
     },
     // Diff-driven: propagate primary-label edits to tracked child rows only when they changed.
     'organization.updated': async (ctx, { before = [], after = [] }) => {

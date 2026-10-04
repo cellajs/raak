@@ -1,7 +1,7 @@
 import type { z } from '@hono/zod-openapi';
 import { count, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
-import type { UserContext } from '#/core/context';
+import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
@@ -19,10 +19,7 @@ import { seqCursorFilters } from '#/utils/seq-cursor';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
-export async function getLabelsOp(
-  ctx: UserContext,
-  input: GetLabelsInput,
-): Promise<{ items: (LabelModel & { usedCount: number })[]; total: number }> {
+export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promise<{ items: (LabelModel & { usedCount: number })[]; total: number }> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const { q, sort, order, offset, limit, seqCursor, modes } = queryInfo;
   const organizationId = ctx.var.organization.id;
@@ -44,7 +41,7 @@ export async function getLabelsOp(
   // Resolve the caller's readable scope (unconditional projects + row-conditional slices,
   // e.g. `read: 'own'`) and compile it to a single row predicate.
   const actor = actorFrom(ctx);
-  const readFilter = resolveCollectionReadFilter(ctx.var.memberships, 'label', organizationId, actor, requested);
+  const readFilter = resolveCollectionReadFilter(ctx.var.actor.bindings, 'label', organizationId, actor, requested);
   const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, labelsTable.projectId, actor);
 
   if (scopeWhere.kind === 'none') {

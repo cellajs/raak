@@ -1,5 +1,5 @@
 import type { z } from '@hono/zod-openapi';
-import type { UserContext } from '#/core/context';
+import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
@@ -23,7 +23,7 @@ const trackedFields = ['name', 'color', 'icon', 'slug'] as const;
  * `serverOrigin` stamps the fields with the server clock, for a transaction the server built (the relay).
  */
 export async function updateLabelOp(
-  ctx: UserContext,
+  ctx: OrgContext,
   id: string,
   input: UpdateLabelInput,
   opts: { serverOrigin?: boolean; materialized?: boolean } = {},
@@ -64,7 +64,7 @@ export async function updateLabelOp(
     const values: UpdateLabelValues = {
       ...(resolved.changed ? resolved.values : {}),
       updatedAt: getIsoDate(),
-      updatedBy: ctx.var.user.id,
+      updatedBy: ctx.var.actor.id,
       // The yjs handler and CDC read the stx as the fields this write wrote: a write that changes none drops the earlier set.
       stx: resolved.changed ? resolved.stx : stripChangedFields(labelsTable.stx),
     };

@@ -3157,10 +3157,10 @@ export const zGetMembersResponse = z.object({
               project: z.number().optional(),
             }),
             products: z.object({
-              attachment: z.number(),
+              task: z.number(),
             }),
             activity: z.object({
-              attachment: z.number().nullable(),
+              task: z.number().nullable(),
             }),
           })
           .optional(),

@@ -26,7 +26,7 @@ import { addMutationRegistrar } from '~/query/mutation-registry';
 import { isArrayDelta } from '~/query/offline/array-delta';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
-import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
+import { createStxForCreate, createStxForDelete, createStxForUpdate, withReplayFlag } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { InfiniteQueryData, PageParams, QueryData, QueryOrgContext } from '~/query/types';
@@ -156,10 +156,12 @@ const createTaskMutationFn = async (vars: TaskCreateFullVars) => {
   return result.data[0];
 };
 
-const updateTaskMutationFn = async ({ tenantId, organizationId, id, ops, stx }: TaskUpdateFullVars) => {
+/** Sends one task update; exported for the replay test. */
+export const updateTaskMutationFn = async ({ tenantId, organizationId, id, ops, stx }: TaskUpdateFullVars) => {
   // HLC timestamps only for scalar fields (AWSet fields are commutative).
   const scalarFieldNames = ops ? Object.keys(ops).filter((k) => !isArrayDelta(ops[k as keyof typeof ops])) : [];
-  const effectiveStx = stx ?? createStxForUpdate(scalarFieldNames);
+  // A replayed offline edit keeps its field timestamps, so it loses to an edit made while it was queued.
+  const effectiveStx = withReplayFlag(stx ?? createStxForUpdate(scalarFieldNames));
   return updateTask({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
 };
 
