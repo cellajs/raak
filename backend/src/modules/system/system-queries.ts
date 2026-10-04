@@ -13,10 +13,7 @@ interface FindVerifiedEmailsOpts {
 
 export const findVerifiedEmails = async (ctx: DbContext, { emails }: FindVerifiedEmailsOpts) => {
   const { db } = ctx.var;
-  return db
-    .select({ email: emailsTable.email })
-    .from(emailsTable)
-    .where(and(inArray(emailsTable.email, emails), eq(emailsTable.verified, true)));
+  return db.select({ email: emailsTable.email }).from(emailsTable).where(inArray(emailsTable.email, emails));
 };
 
 interface FindUsersByIdsOpts {
@@ -79,4 +76,17 @@ export const findSystemRole = async (ctx: DbContext, { userId, role }: FindSyste
     .where(and(eq(systemRolesTable.userId, userId), eq(systemRolesTable.role, role)))
     .limit(1);
   return row;
+};
+
+interface FindSystemRoleHoldersOpts {
+  userIds: string[];
+  role: SystemRoleModel['role'];
+}
+
+/** Which of these users hold `role`. */
+export const findSystemRoleHolders = async (ctx: DbContext, { userIds, role }: FindSystemRoleHoldersOpts) => {
+  return ctx.var.db
+    .select({ userId: systemRolesTable.userId })
+    .from(systemRolesTable)
+    .where(and(inArray(systemRolesTable.userId, userIds), eq(systemRolesTable.role, role)));
 };

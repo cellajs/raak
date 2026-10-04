@@ -1,4 +1,5 @@
-import { boolean, index, snakeCase, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { index, snakeCase, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import type { EnabledOAuthProvider, FederationKey } from 'shared';
 import { generateId } from 'shared/utils/entity-id';
 import { maxLength } from '#/db/utils/constraints';
 import type { UserId } from '#/db/utils/ids';
@@ -8,7 +9,7 @@ import { usersTable } from '#/modules/user/user-db';
 /**
  * The inboxes proven to belong to an account: the sign-up address, plus any address whose verification link was clicked
  * (an OAuth connect on another address). A row is written only by such a proof, never on a provider's word alone, and
- * never deleted as a side effect. Every row is a magic-link sign-in identifier. `users.email` stays the primary.
+ * never deleted as a side effect, so every row is verified: a magic-link sign-in identifier. `users.email` stays the primary.
  */
 export const emailsTable = snakeCase.table(
   'emails',
@@ -16,18 +17,23 @@ export const emailsTable = snakeCase.table(
     createdAt: timestampColumns.createdAt,
     id: uuid().primaryKey().$defaultFn(generateId),
     email: varchar({ length: maxLength.field }).notNull().unique(),
-    verified: boolean().notNull().default(false),
     userId: uuid()
       .notNull()
       .references(() => usersTable.id, { onDelete: 'cascade' })
       .$type<UserId>(),
-    verifiedAt: timestamp({ mode: 'string' }), // First inbox proof
+    verifiedAt: timestamp({ mode: 'string' }).notNull(), // First inbox proof
     /** How the most recent proof came in: 'magic' or the provider whose verification link was clicked. Not an actor. */
     lastVerifiedVia: varchar({ length: maxLength.field }),
     lastVerifiedAt: timestamp({ mode: 'string' }),
   },
   (table) => [index('emails_user_id_idx').on(table.userId)],
 );
+
+/**
+ * What proved the inbox: a magic-link click, the click on the verification mail sent for a provider address, or a
+ * sign-in through a federation that operates the mailbox it asserts (`addressAuthority`).
+ */
+export type EmailProof = 'magic' | EnabledOAuthProvider | FederationKey;
 
 export type EmailModel = typeof emailsTable.$inferSelect;
 export type InsertEmailModel = typeof emailsTable.$inferInsert;

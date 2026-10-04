@@ -21,6 +21,8 @@
     "access": "public"
   },
   "scripts": {
+    "a11y": "pnpm -C a11y a11y",
+    "a11y:run": "pnpm -C a11y stack",
     "bench": "pnpm -C bench bench",
     "build": "pnpm run clean && pnpm -r --parallel build",
     "build:dev": "pnpm -r --parallel build:dev",
@@ -36,8 +38,8 @@
     "dev:single": "pnpm run clean && cross-env SINGLE_VM=true pnpm --reporter=append-only -r --parallel --stream --filter backend --filter frontend dev",
     "docker": "pnpm --filter backend docker:up --detach",
     "docker:test": "docker compose -f backend/compose.yaml --profile test up -d --wait db_test",
-    "docker:test:down": "docker compose -f backend/compose.yaml --profile test down",
-    "docker:test:reset": "docker compose -f backend/compose.yaml --profile test down -v",
+    "docker:test:down": "docker compose -f backend/compose.yaml --profile test down db_test",
+    "docker:test:reset": "docker compose -f backend/compose.yaml --profile test down -v db_test",
     "generate": "pnpm --filter backend generate",
     "generate:routes": "pnpm --filter frontend gen:routes",
     "infra": "pnpm infra:compose && pnpm --filter infra cli",

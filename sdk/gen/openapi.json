@@ -25,43 +25,43 @@
         "values": {
           "serviceGuard": {
             "name": "service",
-            "description": "Requires a secret API key or an access token and sets the service account or the consenting user as the actor"
+            "description": "Requires a secret API key or an access token; acts as its service account or consenting user, limited to its scopes"
           },
           "userGuard": {
             "name": "user",
-            "description": "Requires valid session and sets auth context (user, memberships, baseDb)"
+            "description": "Requires a session cookie; acts as the signed-in user"
           },
           "actorGuard": {
             "name": "actor",
-            "description": "Requires a session cookie, a secret API key, or an access token and sets the actor"
+            "description": "Requires a session cookie, a secret API key or an access token; acts as the user or service account it proves"
           },
           "orgGuard": {
             "name": "org",
-            "description": "Validates organization membership within tenant context"
+            "description": "Requires being in the organization: a member of it or of a channel below it, or a system admin"
           },
           "publicGuard": {
             "name": "public",
-            "description": "No authentication required; provides baseDb without RLS context"
+            "description": "No sign-in required"
           },
           "relatableGuard": {
             "name": "relatable",
-            "description": "Checks that the requesting user shares at least one organization with the target user"
+            "description": "Requires sharing an organization with the user the request names, or being a system admin"
           },
           "stepUpGuard": {
             "name": "stepUp",
-            "description": "Requires a recent proof of presence on this session: the enrolled passkey or TOTP, else a fresh sign-in or a confirmed email link. Refuses impersonation."
+            "description": "Requires a recent proof of presence on this session: a passkey or TOTP the user holds, else a fresh sign-in or emailed link; refuses impersonation"
           },
           "sysAdminGuard": {
             "name": "sysAdmin",
-            "description": "Requires system admin + IP whitelist, never an impersonation"
+            "description": "Requires the system admin role and an allowed IP address; refuses impersonation"
           },
           "tenantGuard": {
             "name": "tenant",
-            "description": "Requires userGuard or serviceGuard, validates tenant access, and sets baseDb + tenantId context"
+            "description": "Requires being in the tenant: a member, a system admin, or its creator while it has no organization"
           },
           "tokenGuard": {
             "name": "token",
-            "description": "Requires an access token from the authorization server and sets the consenting user or service account as the actor"
+            "description": "Requires an access token, no session or API key; acts as its service account or consenting user, limited to its scopes"
           }
         }
       },
@@ -74,63 +74,67 @@
         "values": {
           "spamLimiter": {
             "name": "spam",
-            "description": "Max 10 requests/hour per user (per IP when anonymous) for email-sending endpoints"
+            "description": "Emails sent per user, per IP when anonymous: 10 per hour"
           },
           "emailEnumLimiter": {
             "name": "emailEnum",
-            "description": "Max 30 address lookups/hour per IP, then blocks the IP for 30 min"
+            "description": "Address lookups per IP, hits included: 30 per hour, then blocked for 30 minutes"
           },
           "presignedUrlLimiter": {
             "name": "presignedUrl",
-            "description": "Max 2000 requests/hour per user for presigned URLs"
+            "description": "File links per user: 2000 per hour, then blocked for 15 minutes"
           },
           "totpVerificationLimiter": {
             "name": "totpVerification",
-            "description": "Blocks IP for 30 min after 5 failed TOTP attempts"
+            "description": "Failed TOTP codes per IP: 5 per hour, then blocked for 30 minutes"
           },
           "stepUpLimiter": {
             "name": "stepUp",
-            "description": "Blocks the account for 30 min after 5 failed second-factor checks on step-up"
+            "description": "Failed step-up checks per account: 5 per hour, then blocked for 30 minutes"
           },
           "magicLinkLimiter": {
             "name": "magicLink",
-            "description": "Max 2 magic link emails per 30 min per email address"
+            "description": "Magic link emails per address: 2 per 30 minutes"
           },
           "passkeyChallengeLimiter": {
             "name": "passkeyChallenge",
-            "description": "Max 30 passkey challenges/hour per IP"
+            "description": "Passkey challenges per IP: 30 per hour, then blocked for 5 minutes"
           },
           "clientMetadataFetchLimiter": {
             "name": "clientMetadataFetch",
-            "description": "Max 60 client metadata document fetches per minute per IP"
+            "description": "Client metadata fetches per IP: 60 per minute, then blocked for 1 minute"
           },
           "serviceBurstLimiter": {
             "name": "serviceBurst",
-            "description": "Max 30 requests/second per service account"
+            "description": "Requests per actor with an API key or access token: 30 per second"
           },
           "mcpRequestLimiter": {
             "name": "mcpRequest",
-            "description": "Max 30 MCP requests/second per account"
+            "description": "MCP requests per actor: 30 per second"
           },
           "syncReadLimiter": {
             "name": "syncRead",
-            "description": "Max 5000 sync-driven reads/hour per user (delta lists, unseen counts)"
+            "description": "Sync reads per user: 5000 per hour, then blocked for 5 minutes"
           },
           "streamConnectLimiter": {
             "name": "streamConnect",
-            "description": "Max 240 SSE stream connects/hour per user"
+            "description": "Live update stream connections per user: 240 per hour, then blocked for 5 minutes"
+          },
+          "yjsHttpLimiter": {
+            "name": "yjsHttp",
+            "description": "Yjs pulls and pushes per user: 7200 per hour, then blocked for 1 minute"
           },
           "pointsLimiter": {
             "name": "points",
-            "description": "Consumes 1 API point(s) per request against per-tenant hourly budget"
+            "description": "API points per actor in a tenant: 1 per request, 1 per item on bulk routes, up to the tenant hourly budget"
           },
           "tokenLimiter": {
             "name": "token",
-            "description": "Blocks IP for 30 min after 10 consecutive token failures"
+            "description": "Failed link, callback and passkey sign-ins per IP: 10 per hour, then blocked for 30 minutes"
           },
           "insertEntityLock": {
             "name": "insertEntityLock",
-            "description": "Prevents concurrent entity creation for the same tenant"
+            "description": "Creates per tenant: 1 at a time"
           }
         }
       },
@@ -213,15 +217,15 @@
     },
     {
       "name": "auth",
-      "description": "Endpoints for authentication, supporting multiple sign-in methods including OAuth\n    (Google, Microsoft, GitHub) and passkeys (WebAuthn). They cover sign-up, sign-in, email verification,\n    account linking, and impersonation for system admins.",
+      "description": "Endpoints for authentication, supporting multiple sign-in methods including OAuth\n    (Google, Microsoft, GitHub), institutional SSO through a federation (SURFconext) and passkeys (WebAuthn). They\n    cover sign-up, sign-in, email verification, account linking, and impersonation for system admins.",
       "parent": "cella",
       "kind": "module"
     },
     {
-      "name": "domains",
-      "description": "Endpoints for managing custom domains for tenants, including adding domains and verifying\n    ownership. Restricted to system administrators.",
+      "name": "connections",
+      "description": "Connections: the institutions a tenant trusts to assert its members' identities through an SSO\n    federation (SURFconext first). System admins create them per tenant; a connection's id is the public entry key of\n    the tenant's SSO sign-in, and its domains decide which asserted institution the sign-in accepts.",
       "parent": "cella",
-      "kind": "hidden"
+      "kind": "module"
     },
     {
       "name": "entities",
@@ -339,7 +343,7 @@
     },
     {
       "name": "yjs",
-      "description": "Endpoints for Yjs collaborative editing support: a short-lived token per entity for the Yjs relay\n    worker. The relay's materialize route, which writes a compacted collaborative document to its entity, is served\n    on the internal listener only.",
+      "description": "Endpoints for Yjs collaborative editing support: a short-lived token per entity for the Yjs relay\n    worker, and pull and push routes that sync a document through the API while the relay is out of reach. The relay's\n    materialize route, which writes a compacted collaborative document to its entity, is served on the internal\n    listener only.",
       "parent": "cella",
       "kind": "module"
     }
@@ -486,7 +490,7 @@
           }
         },
         "required": ["id", "name", "slug", "thumbnailUrl", "entityType"],
-        "description": "Minimal user data for references.",
+        "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
         "example": {
           "id": "0e0eced6-ecd8-4ea4-906d-160fbd840741",
           "name": "Durward Cummerata",
@@ -533,7 +537,7 @@
           }
         },
         "required": ["id", "name", "createdAt", "updatedAt", "slug", "thumbnailUrl", "bannerUrl", "description", "email", "entityType"],
-        "description": "Base user schema with essential fields for identification and display.",
+        "description": "The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.",
         "example": {
           "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
           "createdAt": "2024-01-28T04:41:50.387Z",
@@ -581,7 +585,7 @@
           }
         },
         "required": ["id", "name", "createdAt", "updatedAt", "tenantId", "entityType", "slug", "thumbnailUrl", "bannerUrl"],
-        "description": "Base schema for entities with memberships (e.g. organization).",
+        "description": "The fields every channel entity shares, such as organization; a channel owns memberships and roles. Used where a response names a channel without its details, such as the channel an invitation is for.",
         "example": {
           "id": "288d15c3-2a96-4d92-903e-dcbb54ecd23d",
           "createdAt": "2024-11-30T08:11:29.841Z",
@@ -642,7 +646,7 @@
           }
         },
         "required": ["id", "name", "createdAt", "updatedAt", "description", "createdBy", "updatedBy", "entityType", "keywords"],
-        "description": "Base schema for content entities with creator tracking (e.g. attachment).",
+        "description": "The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields.",
         "example": {
           "id": "7e460470-da58-4733-a7ff-0d31897ecf8d",
           "createdAt": "2024-07-02T14:28:38.152Z",
@@ -733,7 +737,7 @@
           "workspaceId",
           "projectId"
         ],
-        "description": "Core membership fields shared across active and inactive memberships.",
+        "description": "A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.",
         "example": {
           "id": "ee163b99-3dce-4900-a23a-1256a303215e",
           "tenantId": "7om1aq",
@@ -776,7 +780,7 @@
           }
         },
         "required": ["mutationId", "sourceId", "fieldTimestamps"],
-        "description": "Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.",
+        "description": "The sync envelope on every product write: a mutation ID, a source ID and per-field timestamps. Clients send it with each create and update; the server merges concurrent edits by its timestamps, and a client recognizes its own writes coming back by the source ID.",
         "example": {
           "mutationId": "ad54dc2c-11e4-430b-95c7-39ea0ae52213",
           "sourceId": "7762c287-9155-4500-95f3-d63ec6185e0c",
@@ -907,7 +911,7 @@
           "spreadWindow",
           "propagation"
         ],
-        "description": "Realtime notification delivered via SSE for entity and membership changes.",
+        "description": "A live notification that a product entity or a membership changed, naming the entity, its path and sequence range rather than the row. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.",
         "example": {
           "kind": "product",
           "action": "update",
@@ -945,7 +949,7 @@
             }
           }
         ],
-        "description": "Error returned when the request is malformed or contains invalid data.",
+        "description": "The request is malformed or fails validation (400). `type` names the problem, such as `invalid_request`.",
         "example": {
           "name": "BadRequestError",
           "message": "error:bad_request_action",
@@ -1026,7 +1030,7 @@
           }
         },
         "required": ["name", "message", "type", "status", "severity"],
-        "description": "Standard error response returned by all API endpoints.",
+        "description": "The body of every error response. `type` is a stable code to branch on, `message` is readable text, and `requestId` identifies the request in the server logs.",
         "example": {
           "name": "BadRequestError",
           "message": "error:bad_request_action",
@@ -1052,7 +1056,7 @@
             }
           }
         ],
-        "description": "Error returned when authentication is missing or invalid.",
+        "description": "The request carries no valid session, API key or access token, or it expired (401). Sign in again, or send a valid key or token.",
         "example": {
           "name": "BadRequestError",
           "message": "error:bad_request_action",
@@ -1078,7 +1082,7 @@
             }
           }
         ],
-        "description": "Error returned when the user lacks permission for the requested action.",
+        "description": "The caller is known but may not do this (403): their role denies the action, a recent step-up is required, or the action is refused while impersonating. `type` names the reason, such as `step_up_required`.",
         "example": {
           "name": "BadRequestError",
           "message": "error:bad_request_action",
@@ -1104,7 +1108,7 @@
             }
           }
         ],
-        "description": "Error returned when the requested resource cannot be found.",
+        "description": "The resource does not exist, or the caller may not read it (404). Both get the same answer, so a response never confirms that an id exists.",
         "example": {
           "name": "BadRequestError",
           "message": "error:bad_request_action",
@@ -1130,7 +1134,7 @@
             }
           }
         ],
-        "description": "Error returned when the request conflicts with current resource state.",
+        "description": "The request conflicts with the current state (409), such as a link that belongs to another account (`user_mismatch`) or a create already in progress. Reload the current state before retrying.",
         "example": {
           "name": "BadRequestError",
           "message": "error:bad_request_action",
@@ -1156,7 +1160,7 @@
             }
           }
         ],
-        "description": "Error returned when rate limits are exceeded.",
+        "description": "A rate limit refused the request (429). The `Retry-After` header says when to try again; an operation's rate limiters show what is counted.",
         "example": {
           "name": "BadRequestError",
           "message": "error:bad_request_action",
@@ -1167,6 +1171,182 @@
         },
         "x-tags": ["errors", "cella"]
       },
+      "SsoEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "active", "disabled"],
+            "description": "Only `active` signs in; `pending` means the institution has not activated the app yet"
+          },
+          "federation": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": ["key", "label"]
+          },
+          "institution": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "logoUrl": {
+                "type": ["string", "null"]
+              }
+            },
+            "required": ["displayName", "logoUrl"]
+          },
+          "organization": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "thumbnailUrl": {
+                "type": ["string", "null"]
+              }
+            },
+            "required": ["id", "name", "slug", "thumbnailUrl"]
+          }
+        },
+        "required": ["id", "status", "federation", "institution", "organization"],
+        "description": "The sign-in entry of one institution at one organization: the federation it goes through, the institution, the organization, and whether it is active. Public by the connection's id, which is the link an institution shares.",
+        "example": {
+          "id": "a21c1e15-fff0-4c1c-8eda-a33ceec95d7a",
+          "status": "active",
+          "federation": {
+            "key": "surfconext",
+            "label": "SURFconext"
+          },
+          "institution": {
+            "displayName": "Utrecht University",
+            "logoUrl": null
+          },
+          "organization": {
+            "id": "2bfc5bce-ced7-4d32-8cd1-d7e121a2a0af",
+            "name": "Wuckert - Emmerich",
+            "slug": "wuckert---emmerich",
+            "thumbnailUrl": null
+          }
+        },
+        "x-tags": ["data", "auth", "cella"]
+      },
+      "Connection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "maxLength": 24
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["sso"]
+          },
+          "issuer": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "claimValues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "active", "disabled"]
+          },
+          "jitProvisioning": {
+            "type": "boolean"
+          },
+          "config": {
+            "type": "object",
+            "properties": {
+              "idpEntityIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "description": "The institution's IdP entity ids, passed as login_hint"
+              },
+              "logoUrl": {
+                "type": "string",
+                "maxLength": 255,
+                "format": "uri",
+                "description": "The institution's logo, for the entry page"
+              }
+            }
+          },
+          "createdBy": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": ["string", "null"]
+          }
+        },
+        "required": [
+          "id",
+          "tenantId",
+          "kind",
+          "issuer",
+          "claimValues",
+          "displayName",
+          "status",
+          "jitProvisioning",
+          "config",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "A tenant's trust in an external party that asserts user identities: an institution reached through an SSO federation, whose members sign in to the tenant's organization. Its id is the public key of the tenant's SSO entry page. System admins manage connections per tenant; `pending` until the institution activated the service at the federation.",
+        "example": {
+          "id": "920c1ebd-e058-4d64-bb56-872875fd1102",
+          "tenantId": "gc9llm",
+          "kind": "sso",
+          "issuer": "surfconext",
+          "claimValues": ["uu.nl"],
+          "displayName": "Utrecht University",
+          "status": "active",
+          "jitProvisioning": true,
+          "config": {
+            "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
+          },
+          "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
+          "createdAt": "2024-08-25T16:44:28.368Z",
+          "updatedAt": "2024-10-28T09:20:16.614Z"
+        },
+        "x-tags": ["data", "connections", "cella"]
+      },
       "Me": {
         "type": "object",
         "properties": {
@@ -1175,11 +1355,22 @@
           },
           "isSystemAdmin": {
             "type": "boolean",
-            "description": "Whether the current user has system admin privileges."
+            "description": "Whether the user holds the system admin role and the request comes from an allowed IP address."
+          },
+          "impersonator": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserMinimalBase"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The system admin acting as the user through an impersonation; null on the user's own session."
           }
         },
-        "required": ["user", "isSystemAdmin"],
-        "description": "The currently authenticated user with their system admin status.",
+        "required": ["user", "isSystemAdmin", "impersonator"],
+        "description": "The signed-in user, with whether they have system admin access on this request and, in an impersonation, the system admin acting as them. A client reads it to learn who is signed in.",
         "example": {
           "user": {
             "id": "b0b37ce7-7136-4b90-8970-aee863ab7334",
@@ -1201,11 +1392,11 @@
             "createdAt": "2024-05-02T20:53:18.498Z",
             "updatedAt": "2024-05-02T20:53:18.498Z",
             "updatedBy": null,
-            "lastStartedAt": "2024-05-02T20:53:18.498Z",
             "lastSignInAt": "2024-05-02T20:53:18.498Z",
             "lastSeenAt": "2024-05-02T20:53:18.498Z"
           },
-          "isSystemAdmin": false
+          "isSystemAdmin": false,
+          "impersonator": null
         },
         "x-tags": ["data", "me", "cella"]
       },
@@ -1283,9 +1474,6 @@
           "lastSeenAt": {
             "type": ["string", "null"]
           },
-          "lastStartedAt": {
-            "type": ["string", "null"]
-          },
           "lastSignInAt": {
             "type": ["string", "null"]
           }
@@ -1309,10 +1497,9 @@
           "updatedAt",
           "updatedBy",
           "lastSeenAt",
-          "lastStartedAt",
           "lastSignInAt"
         ],
-        "description": "A user with profile data and activity timestamps.",
+        "description": "A full user account: profile, preferences such as language and newsletter, the MFA setting and activity timestamps. Returned to the user themselves and to system admins; other users see the `UserBase` fields.",
         "example": {
           "id": "3c6f6c47-89c3-4946-870e-f4ee338ae389",
           "entityType": "user",
@@ -1333,7 +1520,6 @@
           "createdAt": "2024-06-15T02:53:22.776Z",
           "updatedAt": "2024-06-15T02:53:22.776Z",
           "updatedBy": null,
-          "lastStartedAt": "2024-06-15T02:53:22.776Z",
           "lastSignInAt": "2024-06-15T02:53:22.776Z",
           "lastSeenAt": "2024-06-15T02:53:22.776Z"
         },
@@ -1347,6 +1533,37 @@
             "items": {
               "type": "string",
               "enum": ["github"]
+            }
+          },
+          "institutions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "connectionId": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "federation": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["key", "label"]
+                },
+                "connected": {
+                  "type": "boolean",
+                  "description": "Whether the account already holds an identity through this connection"
+                }
+              },
+              "required": ["connectionId", "displayName", "federation", "connected"]
             }
           },
           "hasTotp": {
@@ -1388,6 +1605,10 @@
                 "authStrategy": {
                   "type": "string",
                   "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
+                },
+                "connectionId": {
+                  "type": ["string", "null"],
+                  "format": "uuid"
                 },
                 "ipHash": {
                   "type": ["string", "null"],
@@ -1455,6 +1676,7 @@
                 "deviceOs",
                 "browser",
                 "authStrategy",
+                "connectionId",
                 "ipHash",
                 "ipSubnetHash",
                 "ipCountry",
@@ -1514,10 +1736,11 @@
             }
           }
         },
-        "required": ["enabledOAuth", "hasTotp", "sessions", "passkeys"],
-        "description": "Authentication metadata for the current user session.",
+        "required": ["enabledOAuth", "institutions", "hasTotp", "sessions", "passkeys"],
+        "description": "How the signed-in user signs in: connected OAuth providers, the institutions of their organizations (connected or not), passkeys, whether TOTP is set up, and their live sessions. The account page lists it, where sessions can be ended and sign-in methods changed.",
         "example": {
           "enabledOAuth": ["github"],
+          "institutions": [],
           "hasTotp": false,
           "sessions": [
             {
@@ -1531,6 +1754,7 @@
               "deviceOs": "iOS",
               "browser": "Edge",
               "authStrategy": "passkey",
+              "connectionId": null,
               "ipHash": null,
               "ipSubnetHash": null,
               "ipCountry": null,
@@ -1580,10 +1804,6 @@
             "type": ["string", "null"],
             "format": "uuid"
           },
-          "tokenId": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "role": {
             "type": "string",
             "enum": ["admin", "member", "guest"]
@@ -1625,7 +1845,6 @@
           "channelId",
           "email",
           "userId",
-          "tokenId",
           "role",
           "rejectedAt",
           "remindedAt",
@@ -1634,20 +1853,19 @@
           "workspaceId",
           "projectId"
         ],
-        "description": "A membership record for a user who has not yet accepted an invitation.",
+        "description": "An invitation to join a channel that is not accepted yet: the invited email, the role and who invited. It becomes a membership once accepted; the signed-in user's invitations list it with the channel it is for.",
         "example": {
           "id": "4fa889f9-15ca-4730-a060-e4167170b7db",
           "channelType": "organization",
           "channelId": "a6050a0e-4d57-4c82-a942-641f6844a7a8",
           "email": "dixie.ohara@gmail.com",
           "userId": "2506d9e6-5415-468a-814e-d89fa24cf791",
-          "tokenId": "c72c120a-aea2-4d54-840a-eff3fb000b8b",
           "role": "admin",
           "rejectedAt": null,
           "remindedAt": null,
           "createdAt": "2024-02-07T13:46:57.160Z",
           "createdBy": {
-            "id": "ebefcdf1-3a71-453a-99a7-e765c6d86737",
+            "id": "c72c120a-aea2-4d54-840a-eff3fb000b8b",
             "name": "Lizzie Aufderhar",
             "slug": "lizzie_aufderhar85",
             "thumbnailUrl": null,
@@ -1697,7 +1915,7 @@
           }
         },
         "required": ["publicBucket", "sub", "s3", "signature", "params"],
-        "description": "A signed token authorizing file uploads to the configured storage provider.",
+        "description": "Permission to upload files with one upload template, signed for the upload service, with the storage prefix the files land under. A client requests one before uploading; the template decides whether files are stored public or private.",
         "example": {
           "publicBucket": false,
           "sub": "x1lsgegsw6imziogthaolhvy",
@@ -1744,7 +1962,7 @@
           }
         },
         "required": ["id", "clientId", "clientName", "scopes", "resources", "createdAt", "expiresAt"],
-        "description": "An OAuth consent (grant) of the current user.",
+        "description": "An app the signed-in user consented to: its OAuth client, the scopes it may use and when the consent expires. Listed under Connected apps in account settings, where the user can revoke it.",
         "example": {
           "id": "01J9Z2Q0X7ZQ4S5M8NX3F2ABCD",
           "clientId": "https://vscode.dev/oauth/client-metadata.json",
@@ -2074,7 +2292,7 @@
           }
         },
         "required": ["createdAt", "id", "message", "email", "type", "wasInvited"],
-        "description": "A contact or waitlist submission from an unauthenticated user.",
+        "description": "A message from the public site: a contact message, a waitlist sign-up or a newsletter subscription. Anyone can send one, signed in or not; system admins list them.",
         "example": {
           "id": "e68c8b33-2f0c-44fd-8cfc-a9c440c0ea73",
           "email": "al.braun57@gmail.com",
@@ -2439,10 +2657,6 @@
           "updatedAt": {
             "type": ["string", "null"]
           },
-          "domainsCount": {
-            "type": "integer",
-            "description": "Number of domains claimed by this tenant"
-          },
           "organization": {
             "type": ["object", "null"],
             "properties": {
@@ -2479,10 +2693,9 @@
           "subscriptionPlan",
           "createdAt",
           "updatedAt",
-          "domainsCount",
           "organization"
         ],
-        "description": "A tenant representing an isolated data partition for multi-tenancy.",
+        "description": "The top-level isolation and billing boundary. Tenant and organization are 1:1: a tenant holds one organization, or none until that organization is created. System admins list and update tenants; a signed-in user can create one of their own.",
         "example": {
           "id": "l6ddop",
           "name": "Lubowitz, Waters and Haley",
@@ -2511,7 +2724,6 @@
           "subscriptionPlan": null,
           "createdAt": "2024-02-09T07:11:04.461Z",
           "updatedAt": "2024-03-30T20:43:34.109Z",
-          "domainsCount": 0,
           "organization": {
             "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
             "name": "Lubowitz, Waters and Haley",
@@ -2551,7 +2763,7 @@
           }
         },
         "required": ["resource", "authorization_servers", "scopes_supported", "bearer_methods_supported", "resource_documentation"],
-        "description": "RFC 9728 metadata of a protected resource: the authorization servers that issue its tokens and the scopes it accepts.",
+        "description": "How an OAuth client gets an access token for this API or an MCP endpoint (RFC 9728): the authorization servers that issue tokens and the scopes accepted. A client finds it through the `WWW-Authenticate` header of a 401 response.",
         "example": {
           "resource": "http://localhost:3000/api/t/m5jfjs",
           "authorization_servers": ["http://localhost:3000/oauth"],
@@ -2903,7 +3115,7 @@
           "setupConfig",
           "included"
         ],
-        "description": "The main channel entity is an organization.",
+        "description": "The channel entity every other channel nests under, owning memberships and roles. Tenant and organization are 1:1: an organization belongs to one tenant, and that tenant holds no other. Returned with `included` data: the signed-in user's membership, counts and member previews.",
         "example": {
           "createdAt": "2024-12-25T15:04:42.969Z",
           "id": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
@@ -3386,7 +3598,7 @@
           "projectId",
           "organizationId"
         ],
-        "description": "A product entity for file attachment metadata.",
+        "description": "A file in an organization: a product entity that syncs to clients and works offline. It holds the file metadata and storage keys, not the file itself; a client fetches the file through a signed URL.",
         "example": {
           "createdAt": "2024-03-26T07:38:55.267Z",
           "id": "c23c36d8-1d96-4a7b-9dc8-27d21ba6fd64",
@@ -3639,7 +3851,7 @@
           }
         },
         "required": ["id", "tenantId", "name", "status", "bindings", "oauthClientId", "createdBy", "updatedBy", "createdAt", "updatedAt"],
-        "description": "The actor an API key runs as, with its role bindings.",
+        "description": "An actor that is not a person, in one tenant: API keys run as it, and it holds role bindings like a member holds memberships. An organization admin creates one, for example with Create API key in organization settings.",
         "example": {
           "id": "764ce6e7-55fc-4f5d-b661-0c777df71d45",
           "tenantId": "yug3pr",
@@ -3740,7 +3952,7 @@
           "createdBy",
           "createdAt"
         ],
-        "description": "An API key of a service account; the secret is never returned after creation.",
+        "description": "A secret key a service account authenticates with, sent as `Authorization: Bearer` or `x-api-key`. Only its prefix and last four characters are returned after creation; it can expire and be revoked.",
         "example": {
           "id": "f3c10bf5-c7cd-4d71-886d-aaaf26240582",
           "actorId": "e76689f8-afe7-4c1a-aad6-09f237f1bb30",
@@ -3784,9 +3996,25 @@
                     },
                     "retryAfter": {
                       "type": "number"
+                    },
+                    "federations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["key", "label"]
+                      },
+                      "description": "Federations with a connected institution, for the \"sign in with your institution\" entrance"
                     }
                   },
-                  "required": ["restrictedMode"]
+                  "required": ["restrictedMode", "federations"]
                 }
               }
             }
@@ -3993,6 +4221,9 @@
                     "inactiveMembershipId": {
                       "type": "string"
                     },
+                    "ssoConnectionId": {
+                      "type": "string"
+                    },
                     "invitation": {
                       "type": "object",
                       "properties": {
@@ -4172,7 +4403,7 @@
         "operationId": "stopImpersonation",
         "tags": ["auth", "cella"],
         "summary": "Stop impersonating",
-        "description": "Ends impersonation by clearing the current impersonation session and restoring the admin context.",
+        "description": "Ends impersonation by clearing the current impersonation session and restoring the admin context. A request that presents no impersonation gets the same answer.",
         "x-guard": ["userGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -5575,6 +5806,370 @@
         }
       }
     },
+    "/auth/sso/connections/{connectionId}": {
+      "get": {
+        "security": [],
+        "operationId": "getSsoEntry",
+        "tags": ["auth", "cella"],
+        "summary": "Get an SSO entry",
+        "description": "What the entry page of an institution's sign-in shows: the organization, the institution and whether sign-in is active. Public by the connection id, the link an institution shares with its members.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": [],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "connectionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSO entry",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "a21c1e15-fff0-4c1c-8eda-a33ceec95d7a",
+                  "status": "active",
+                  "federation": {
+                    "key": "surfconext",
+                    "label": "SURFconext"
+                  },
+                  "institution": {
+                    "displayName": "Utrecht University",
+                    "logoUrl": null
+                  },
+                  "organization": {
+                    "id": "2bfc5bce-ced7-4d32-8cd1-d7e121a2a0af",
+                    "name": "Wuckert - Emmerich",
+                    "slug": "wuckert---emmerich",
+                    "thumbnailUrl": null
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SsoEntry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/auth/sso/connections/{connectionId}/start": {
+      "get": {
+        "security": [],
+        "operationId": "startSso",
+        "tags": ["auth", "cella"],
+        "summary": "Sign in through an institution",
+        "description": "Sends the browser to the connection's federation, pinned to the institution's identity providers, so its own picker is skipped. `type=connect` links the institution account to the signed-in user instead; other types are refused.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": [],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "connectionId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["auth", "connect", "invite", "verify"],
+              "default": "auth"
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "redirectAfter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the federation",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "required": true
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/auth/sso/federations/{federation}/start": {
+      "get": {
+        "security": [],
+        "operationId": "startSsoFederation",
+        "tags": ["auth", "cella"],
+        "summary": "Sign in through a federation",
+        "description": "Sends the browser to the federation without naming an institution: the federation's own picker lists the connected ones, and the callback finds the connection by the institution the sign-in asserts.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": [],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "federation",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["auth", "connect", "invite", "verify"],
+              "default": "auth"
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "redirectAfter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the federation",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "required": true
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/auth/sso/callback": {
+      "get": {
+        "security": [],
+        "operationId": "ssoCallback",
+        "tags": ["auth", "cella"],
+        "summary": "Callback for SSO",
+        "description": "The redirect URI registered at every federation. Verifies the tokens, asserts the institution against the connection, signs the user in (creating the account and its membership on a first sign-in) or links the identity, and redirects to the frontend.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["tokenLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error_description",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "error_uri",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to frontend",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "required": true
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/auth/sso/recovery-link": {
+      "post": {
+        "security": [],
+        "operationId": "sendSsoRecoveryLink",
+        "tags": ["auth", "cella"],
+        "summary": "Send an SSO recovery link",
+        "description": "For a browser whose institution sign-in was refused because an account already holds the asserted address: mails a magic link to that address, which returns to the account page to connect the institution account. Takes no input; the browser holds the offer for ten minutes and spends it by asking.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
+        "x-guard": ["publicGuard"],
+        "x-rate-limiter": ["spamLimiter"],
+        "x-cache": [],
+        "responses": {
+          "200": {
+            "description": "The address the link was sent to",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["email"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
     "/auth/step-up": {
       "get": {
         "security": [
@@ -5842,17 +6437,20 @@
         }
       }
     },
-    "/tenants/{tenantId}/domains": {
+    "/tenants/{tenantId}/connections": {
       "get": {
         "security": [
           {
             "cookieAuth": []
           }
         ],
-        "operationId": "getDomains",
-        "tags": ["tenants", "cella"],
-        "summary": "List domains for a tenant",
-        "description": "Returns all domains belonging to a tenant, including verification tokens. System admin access required.",
+        "operationId": "getConnections",
+        "tags": ["connections", "cella"],
+        "summary": "Get connections",
+        "description": "The tenant's connections: the institutions whose members sign in to its organization through an SSO federation. System admin access required.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
         "x-guard": ["userGuard", "sysAdminGuard", "tenantGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -5869,44 +6467,31 @@
         ],
         "responses": {
           "200": {
-            "description": "List of domains",
+            "description": "Connections",
             "content": {
               "application/json": {
+                "example": [
+                  {
+                    "id": "920c1ebd-e058-4d64-bb56-872875fd1102",
+                    "tenantId": "gc9llm",
+                    "kind": "sso",
+                    "issuer": "surfconext",
+                    "claimValues": ["uu.nl"],
+                    "displayName": "Utrecht University",
+                    "status": "active",
+                    "jitProvisioning": true,
+                    "config": {
+                      "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
+                    },
+                    "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
+                    "createdAt": "2024-08-25T16:44:28.368Z",
+                    "updatedAt": "2024-10-28T09:20:16.614Z"
+                  }
+                ],
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "tenantId": {
-                        "type": "string",
-                        "maxLength": 24
-                      },
-                      "domain": {
-                        "type": "string",
-                        "maxLength": 255
-                      },
-                      "verified": {
-                        "type": "boolean"
-                      },
-                      "verificationToken": {
-                        "type": ["string", "null"],
-                        "maxLength": 50
-                      },
-                      "verifiedAt": {
-                        "type": ["string", "null"]
-                      },
-                      "lastCheckedAt": {
-                        "type": ["string", "null"]
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["id", "tenantId", "domain", "verified", "verificationToken", "verifiedAt", "lastCheckedAt", "createdAt"]
+                    "$ref": "#/components/schemas/Connection"
                   }
                 }
               }
@@ -5938,10 +6523,13 @@
             "cookieAuth": []
           }
         ],
-        "operationId": "createDomain",
-        "tags": ["tenants", "cella"],
-        "summary": "Add a domain to a tenant",
-        "description": "Adds a new domain to a tenant. The domain starts unverified. System admin access required.",
+        "operationId": "createConnection",
+        "tags": ["connections", "cella"],
+        "summary": "Create connection",
+        "description": "Connects an institution to the tenant: the federation it signs in through, its domains and its IdP entity ids. Starts `pending` until the institution activated the service at the federation; one SSO connection per tenant, and a domain belongs to one connection.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
         "x-guard": ["userGuard", "sysAdminGuard", "tenantGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -5963,53 +6551,82 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "domain": {
+                  "issuer": {
                     "type": "string",
-                    "format": "hostname",
-                    "minLength": 4,
+                    "description": "A federation key in appConfig.federations"
+                  },
+                  "displayName": {
+                    "type": "string",
+                    "minLength": 2,
                     "maxLength": 255,
-                    "pattern": "^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$"
+                    "pattern": "^[\\p{L}\\d\\-., '&()]+$",
+                    "description": "The institution's name, as the federation's metadata lists it"
+                  },
+                  "claimValues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "hostname",
+                      "minLength": 4,
+                      "maxLength": 255,
+                      "pattern": "^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$"
+                    },
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "description": "The institution's domains as the federation asserts them in the tenant claim; a sign-in must assert one of them"
+                  },
+                  "idpEntityIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255
+                    },
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "The institution's IdP entity ids, all passed as login_hint"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "active", "disabled"]
+                  },
+                  "jitProvisioning": {
+                    "type": "boolean"
+                  },
+                  "logoUrl": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "format": "uri"
                   }
                 },
-                "required": ["domain"]
+                "required": ["issuer", "displayName", "claimValues", "idpEntityIds"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Created domain",
+            "description": "Created connection",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "tenantId": {
-                      "type": "string",
-                      "maxLength": 24
-                    },
-                    "domain": {
-                      "type": "string",
-                      "maxLength": 255
-                    },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "verifiedAt": {
-                      "type": ["string", "null"]
-                    },
-                    "lastCheckedAt": {
-                      "type": ["string", "null"]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    }
+                "example": {
+                  "id": "920c1ebd-e058-4d64-bb56-872875fd1102",
+                  "tenantId": "gc9llm",
+                  "kind": "sso",
+                  "issuer": "surfconext",
+                  "claimValues": ["uu.nl"],
+                  "displayName": "Utrecht University",
+                  "status": "active",
+                  "jitProvisioning": true,
+                  "config": {
+                    "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
                   },
-                  "required": ["id", "tenantId", "domain", "verified", "verifiedAt", "lastCheckedAt", "createdAt"]
+                  "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
+                  "createdAt": "2024-08-25T16:44:28.368Z",
+                  "updatedAt": "2024-10-28T09:20:16.614Z"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
                 }
               }
             }
@@ -6035,17 +6652,20 @@
         }
       }
     },
-    "/tenants/{tenantId}/domains/{id}": {
-      "delete": {
+    "/tenants/{tenantId}/connections/{id}": {
+      "put": {
         "security": [
           {
             "cookieAuth": []
           }
         ],
-        "operationId": "deleteDomain",
-        "tags": ["tenants", "cella"],
-        "summary": "Remove a domain",
-        "description": "Removes a domain from a tenant. System admin access required.",
+        "operationId": "updateConnection",
+        "tags": ["connections", "cella"],
+        "summary": "Update connection",
+        "description": "Changes the name, domains, IdP entity ids, status or provisioning of a connection; the federation stays what it was.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
         "x-guard": ["userGuard", "sysAdminGuard", "tenantGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -6069,40 +6689,84 @@
             "in": "path"
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Domain removed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 255,
+                    "pattern": "^[\\p{L}\\d\\-., '&()]+$",
+                    "description": "The institution's name, as the federation's metadata lists it"
+                  },
+                  "claimValues": {
+                    "type": "array",
+                    "items": {
                       "type": "string",
-                      "format": "uuid"
+                      "format": "hostname",
+                      "minLength": 4,
+                      "maxLength": 255,
+                      "pattern": "^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$"
                     },
-                    "tenantId": {
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "description": "The institution's domains as the federation asserts them in the tenant claim; a sign-in must assert one of them"
+                  },
+                  "idpEntityIds": {
+                    "type": "array",
+                    "items": {
                       "type": "string",
-                      "maxLength": 24
-                    },
-                    "domain": {
-                      "type": "string",
+                      "minLength": 1,
                       "maxLength": 255
                     },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "verifiedAt": {
-                      "type": ["string", "null"]
-                    },
-                    "lastCheckedAt": {
-                      "type": ["string", "null"]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    }
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "The institution's IdP entity ids, all passed as login_hint"
                   },
-                  "required": ["id", "tenantId", "domain", "verified", "verifiedAt", "lastCheckedAt", "createdAt"]
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "active", "disabled"]
+                  },
+                  "jitProvisioning": {
+                    "type": "boolean"
+                  },
+                  "logoUrl": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated connection",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "920c1ebd-e058-4d64-bb56-872875fd1102",
+                  "tenantId": "gc9llm",
+                  "kind": "sso",
+                  "issuer": "surfconext",
+                  "claimValues": ["uu.nl"],
+                  "displayName": "Utrecht University",
+                  "status": "active",
+                  "jitProvisioning": true,
+                  "config": {
+                    "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
+                  },
+                  "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
+                  "createdAt": "2024-08-25T16:44:28.368Z",
+                  "updatedAt": "2024-10-28T09:20:16.614Z"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
                 }
               }
             }
@@ -6127,113 +6791,19 @@
           }
         }
       },
-      "get": {
+      "delete": {
         "security": [
           {
             "cookieAuth": []
           }
         ],
-        "operationId": "getDomain",
-        "tags": ["tenants", "cella"],
-        "summary": "Get domain with verification token",
-        "description": "Returns a single domain including its verification token for DNS TXT setup. System admin access required.",
-        "x-guard": ["userGuard", "sysAdminGuard", "tenantGuard"],
-        "x-rate-limiter": [],
-        "x-cache": [],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "tenantId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 50
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Domain with verification token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "tenantId": {
-                      "type": "string",
-                      "maxLength": 24
-                    },
-                    "domain": {
-                      "type": "string",
-                      "maxLength": 255
-                    },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "verificationToken": {
-                      "type": ["string", "null"],
-                      "maxLength": 50
-                    },
-                    "verifiedAt": {
-                      "type": ["string", "null"]
-                    },
-                    "lastCheckedAt": {
-                      "type": ["string", "null"]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["id", "tenantId", "domain", "verified", "verificationToken", "verifiedAt", "lastCheckedAt", "createdAt"]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/TooManyRequestsError"
-          }
-        }
-      }
-    },
-    "/tenants/{tenantId}/domains/{id}/verify": {
-      "post": {
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "operationId": "verifyDomain",
-        "tags": ["tenants", "cella"],
-        "summary": "Verify domain ownership via DNS",
-        "description": "Looks up DNS TXT records for the domain to verify ownership. Checks for a _raak-development-verification.<domain> TXT record matching the verification token.",
+        "operationId": "deleteConnection",
+        "tags": ["connections", "cella"],
+        "summary": "Delete connection",
+        "description": "Removes a connection. Identities and sessions that came through it keep their rows; members stay members.",
+        "x-enabled-by": {
+          "strategy": "sso"
+        },
         "x-guard": ["userGuard", "sysAdminGuard", "tenantGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -6259,66 +6829,27 @@
         ],
         "responses": {
           "200": {
-            "description": "Verification result",
+            "description": "Removed connection",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "domain": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "tenantId": {
-                          "type": "string",
-                          "maxLength": 24
-                        },
-                        "domain": {
-                          "type": "string",
-                          "maxLength": 255
-                        },
-                        "verified": {
-                          "type": "boolean"
-                        },
-                        "verificationToken": {
-                          "type": ["string", "null"],
-                          "maxLength": 50
-                        },
-                        "verifiedAt": {
-                          "type": ["string", "null"]
-                        },
-                        "lastCheckedAt": {
-                          "type": ["string", "null"]
-                        },
-                        "createdAt": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["id", "tenantId", "domain", "verified", "verificationToken", "verifiedAt", "lastCheckedAt", "createdAt"]
-                    },
-                    "diagnostics": {
-                      "type": "object",
-                      "properties": {
-                        "recordsFound": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "expectedToken": {
-                          "type": "string"
-                        }
-                      },
-                      "required": ["recordsFound", "expectedToken"]
-                    }
+                "example": {
+                  "id": "920c1ebd-e058-4d64-bb56-872875fd1102",
+                  "tenantId": "gc9llm",
+                  "kind": "sso",
+                  "issuer": "surfconext",
+                  "claimValues": ["uu.nl"],
+                  "displayName": "Utrecht University",
+                  "status": "active",
+                  "jitProvisioning": true,
+                  "config": {
+                    "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
                   },
-                  "required": ["success", "domain"]
+                  "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
+                  "createdAt": "2024-08-25T16:44:28.368Z",
+                  "updatedAt": "2024-10-28T09:20:16.614Z"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
                 }
               }
             }
@@ -6712,11 +7243,11 @@
                     "createdAt": "2024-05-02T20:53:18.498Z",
                     "updatedAt": "2024-05-02T20:53:18.498Z",
                     "updatedBy": null,
-                    "lastStartedAt": "2024-05-02T20:53:18.498Z",
                     "lastSignInAt": "2024-05-02T20:53:18.498Z",
                     "lastSeenAt": "2024-05-02T20:53:18.498Z"
                   },
-                  "isSystemAdmin": false
+                  "isSystemAdmin": false,
+                  "impersonator": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/Me"
@@ -6839,7 +7370,6 @@
                   "createdAt": "2024-06-15T02:53:22.776Z",
                   "updatedAt": "2024-06-15T02:53:22.776Z",
                   "updatedBy": null,
-                  "lastStartedAt": "2024-06-15T02:53:22.776Z",
                   "lastSignInAt": "2024-06-15T02:53:22.776Z",
                   "lastSeenAt": "2024-06-15T02:53:22.776Z"
                 },
@@ -6962,7 +7492,6 @@
                   "createdAt": "2024-06-15T02:53:22.776Z",
                   "updatedAt": "2024-06-15T02:53:22.776Z",
                   "updatedBy": null,
-                  "lastStartedAt": "2024-06-15T02:53:22.776Z",
                   "lastSignInAt": "2024-06-15T02:53:22.776Z",
                   "lastSeenAt": "2024-06-15T02:53:22.776Z"
                 },
@@ -7014,6 +7543,7 @@
               "application/json": {
                 "example": {
                   "enabledOAuth": ["github"],
+                  "institutions": [],
                   "hasTotp": false,
                   "sessions": [
                     {
@@ -7027,6 +7557,7 @@
                       "deviceOs": "iOS",
                       "browser": "Edge",
                       "authStrategy": "passkey",
+                      "connectionId": null,
                       "ipHash": null,
                       "ipSubnetHash": null,
                       "ipCountry": null,
@@ -7110,13 +7641,12 @@
                         "channelId": "6fd95285-52d9-45de-b10d-8a4e316d3ad2",
                         "email": "carolyn5@yahoo.com",
                         "userId": "fdad27c1-21b8-4610-ac73-58603f33f5e5",
-                        "tokenId": "915e1951-a439-40dc-9303-6bdbd6aea838",
                         "role": "member",
                         "rejectedAt": null,
                         "remindedAt": null,
                         "createdAt": "2024-11-13T15:29:06.546Z",
                         "createdBy": {
-                          "id": "228db2dc-c869-402a-b1c2-b305fd00a860",
+                          "id": "915e1951-a439-40dc-9303-6bdbd6aea838",
                           "name": "Sister Monahan",
                           "slug": "sister.monahan13",
                           "thumbnailUrl": null,
@@ -7146,13 +7676,12 @@
                         "channelId": "745044ce-0a11-4cc4-84d6-fece04b9aca9",
                         "email": "orion_king81@hotmail.com",
                         "userId": "ca0c17be-8d73-40a0-95e9-9f5949340302",
-                        "tokenId": "7dee4eb2-c5eb-4722-91aa-d911de2e383b",
                         "role": "admin",
                         "rejectedAt": null,
                         "remindedAt": null,
                         "createdAt": "2024-04-11T17:15:50.993Z",
                         "createdBy": {
-                          "id": "dcc8a336-19bf-450f-b2bc-92443279eeb9",
+                          "id": "7dee4eb2-c5eb-4722-91aa-d911de2e383b",
                           "name": "John Morar",
                           "slug": "john.morar34",
                           "thumbnailUrl": null,
@@ -7295,6 +7824,10 @@
                             "type": "string",
                             "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
                           },
+                          "connectionId": {
+                            "type": ["string", "null"],
+                            "format": "uuid"
+                          },
                           "ipHash": {
                             "type": ["string", "null"],
                             "maxLength": 64
@@ -7354,6 +7887,7 @@
                           "deviceOs",
                           "browser",
                           "authStrategy",
+                          "connectionId",
                           "ipHash",
                           "ipSubnetHash",
                           "ipCountry",
@@ -9276,7 +9810,6 @@
                   "createdAt": "2024-06-15T02:53:22.776Z",
                   "updatedAt": "2024-06-15T02:53:22.776Z",
                   "updatedBy": null,
-                  "lastStartedAt": "2024-06-15T02:53:22.776Z",
                   "lastSignInAt": "2024-06-15T02:53:22.776Z",
                   "lastSeenAt": "2024-06-15T02:53:22.776Z"
                 },
@@ -10093,7 +10626,6 @@
                       "subscriptionPlan": null,
                       "createdAt": "2024-11-25T05:49:32.040Z",
                       "updatedAt": "2024-12-21T15:03:10.241Z",
-                      "domainsCount": 0,
                       "organization": {
                         "id": "ed4a4eac-b4a6-4c0f-ae21-2f50796fe855",
                         "name": "Predovic, Bahringer and Morar",
@@ -10130,7 +10662,6 @@
                       "subscriptionPlan": null,
                       "createdAt": "2024-01-02T16:12:28.968Z",
                       "updatedAt": "2024-01-18T17:11:22.322Z",
-                      "domainsCount": 0,
                       "organization": {
                         "id": "cc2dc65b-1a01-4eb4-922d-b6339b813cf8",
                         "name": "Crooks, Kuphal and Roob-Blick",
@@ -10247,7 +10778,6 @@
                   "subscriptionPlan": null,
                   "createdAt": "2024-02-09T07:11:04.461Z",
                   "updatedAt": "2024-03-30T20:43:34.109Z",
-                  "domainsCount": 0,
                   "organization": {
                     "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
                     "name": "Lubowitz, Waters and Haley",
@@ -10408,7 +10938,6 @@
                   "subscriptionPlan": null,
                   "createdAt": "2024-02-09T07:11:04.461Z",
                   "updatedAt": "2024-03-30T20:43:34.109Z",
-                  "domainsCount": 0,
                   "organization": {
                     "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
                     "name": "Lubowitz, Waters and Haley",
@@ -10552,7 +11081,6 @@
                       "createdAt": "2024-12-14T16:10:19.376Z",
                       "updatedAt": "2024-12-14T16:10:19.376Z",
                       "updatedBy": null,
-                      "lastStartedAt": "2024-12-14T16:10:19.376Z",
                       "lastSignInAt": "2024-12-14T16:10:19.376Z",
                       "lastSeenAt": "2024-12-14T16:10:19.376Z",
                       "memberships": [
@@ -10592,7 +11120,6 @@
                       "createdAt": "2024-01-03T10:14:05.394Z",
                       "updatedAt": "2024-01-03T10:14:05.394Z",
                       "updatedBy": null,
-                      "lastStartedAt": "2024-01-03T10:14:05.394Z",
                       "lastSignInAt": "2024-01-03T10:14:05.394Z",
                       "lastSeenAt": "2024-01-03T10:14:05.394Z",
                       "memberships": [
@@ -10639,7 +11166,7 @@
                             "required": ["lastSeenAt"]
                           }
                         ],
-                        "description": "Base user schema with essential fields for identification and display.",
+                        "description": "The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.",
                         "example": {
                           "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
                           "createdAt": "2024-01-28T04:41:50.387Z",
@@ -10752,7 +11279,6 @@
                   "createdAt": "2024-06-15T02:53:22.776Z",
                   "updatedAt": "2024-06-15T02:53:22.776Z",
                   "updatedBy": null,
-                  "lastStartedAt": "2024-06-15T02:53:22.776Z",
                   "lastSignInAt": "2024-06-15T02:53:22.776Z",
                   "lastSeenAt": "2024-06-15T02:53:22.776Z"
                 },
@@ -10771,7 +11297,7 @@
                       "required": ["lastSeenAt"]
                     }
                   ],
-                  "description": "Base user schema with essential fields for identification and display.",
+                  "description": "The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.",
                   "example": {
                     "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
                     "createdAt": "2024-01-28T04:41:50.387Z",
@@ -11306,7 +11832,7 @@
                             }
                           }
                         ],
-                        "description": "The main channel entity is an organization.",
+                        "description": "The channel entity every other channel nests under, owning memberships and roles. Tenant and organization are 1:1: an organization belongs to one tenant, and that tenant holds no other. Returned with `included` data: the signed-in user's membership, counts and member previews.",
                         "example": {
                           "createdAt": "2024-12-25T15:04:42.969Z",
                           "id": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
@@ -18490,7 +19016,7 @@
                             "required": ["lastSeenAt", "membership"]
                           }
                         ],
-                        "description": "Base user schema with essential fields for identification and display.",
+                        "description": "The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.",
                         "example": {
                           "id": "6fb222e4-a6f7-4f94-8076-fe0ea7550e0f",
                           "createdAt": "2024-01-28T04:41:50.387Z",
@@ -18657,7 +19183,7 @@
                       "role": "member",
                       "createdAt": "2024-11-21T01:19:53.533Z",
                       "createdBy": {
-                        "id": "8d10af2a-4b70-40b6-a3f2-0bc295d29966",
+                        "id": "617f1449-7605-4cc9-8f52-1e3f100f6db2",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
                         "thumbnailUrl": null,
@@ -18670,7 +19196,7 @@
                       "role": "member",
                       "createdAt": "2024-10-29T04:35:17.725Z",
                       "createdBy": {
-                        "id": "7d580cc1-edd9-4017-be5b-49fb1c3cc0f3",
+                        "id": "ba7cf4de-5ede-48cc-9fef-453bf074c2ef",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
                         "thumbnailUrl": null,
@@ -19073,7 +19599,7 @@
                           "required": ["secret"]
                         }
                       ],
-                      "description": "A newly issued API key with its plaintext secret.",
+                      "description": "A newly created API key with its full secret, returned this once only.",
                       "example": {
                         "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
                         "actorId": "6b40b65d-1ea1-4132-892e-876f9e4e268a",
@@ -19613,7 +20139,7 @@
                       "required": ["secret"]
                     }
                   ],
-                  "description": "A newly issued API key with its plaintext secret.",
+                  "description": "A newly created API key with its full secret, returned this once only.",
                   "example": {
                     "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
                     "actorId": "6b40b65d-1ea1-4132-892e-876f9e4e268a",
@@ -21206,6 +21732,229 @@
                     }
                   },
                   "required": ["token"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/{tenantId}/{organizationId}/yjs/pull": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "pullYjsDocument",
+        "tags": ["yjs", "cella"],
+        "summary": "Pull Yjs document",
+        "description": "Returns what the caller's copy of one product entity's collaborative document lacks, for a client that cannot reach the Yjs relay: the document's generation, an update holding what the caller's state vector lacks, and the server's state vector. A document never opened is seeded from the stored description first, as the relay seeds it. The caller must be allowed to update the entity, as for a Yjs token. A POST, since a state vector can outgrow a URL. Costs no API points.",
+        "x-enabled-by": {
+          "service": "yjs"
+        },
+        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
+        "x-rate-limiter": ["yjsHttpLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "tenantId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "organizationId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entityType": {
+                    "type": "string",
+                    "enum": ["task", "label", "attachment"]
+                  },
+                  "entityId": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "stateVector": {
+                    "type": "string",
+                    "maxLength": 262144,
+                    "format": "base64url",
+                    "description": "The caller's state vector: the answer carries what it lacks"
+                  }
+                },
+                "required": ["entityType", "entityId", "stateVector"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document diff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "generation": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The document's generation: another one than the caller holds means the server reseeded it"
+                    },
+                    "update": {
+                      "type": "string",
+                      "format": "base64url",
+                      "description": "What the caller's state vector lacks, as one Yjs update"
+                    },
+                    "stateVector": {
+                      "type": "string",
+                      "format": "base64url",
+                      "description": "The server's state vector, so the caller can post what the server lacks"
+                    }
+                  },
+                  "required": ["generation", "update", "stateVector"]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          }
+        }
+      }
+    },
+    "/{tenantId}/{organizationId}/yjs/push": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "operationId": "pushYjsUpdate",
+        "tags": ["yjs", "cella"],
+        "summary": "Push Yjs update",
+        "description": "Appends one Yjs update to a product entity's collaborative document, for a client that cannot reach the Yjs relay. The answer follows the commit, so a 200 means the server holds the update; the relay passes it to live sessions and folds it into the document. An update made in another generation than the document's answers 409 `sync_document_replaced` with the current one in `meta.generation`, and with null when the document has no row: pull, which seeds it, then post again. At most 512 KB of update per request, base64url-encoded. The caller must be allowed to update the entity, as for a Yjs token. Costs no API points.",
+        "x-enabled-by": {
+          "service": "yjs"
+        },
+        "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
+        "x-rate-limiter": ["yjsHttpLimiter"],
+        "x-cache": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "tenantId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "required": true,
+            "name": "organizationId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entityType": {
+                    "type": "string",
+                    "enum": ["task", "label", "attachment"]
+                  },
+                  "entityId": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "generation": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The generation the update was made in"
+                  },
+                  "update": {
+                    "type": "string",
+                    "maxLength": 699051,
+                    "format": "base64url",
+                    "description": "One Yjs update of at most 512 KB"
+                  }
+                },
+                "required": ["entityType", "entityId", "generation", "update"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["appended", "empty"],
+                      "description": "`appended` once the update is logged; `empty` when it carried nothing the document lacked"
+                    }
+                  },
+                  "required": ["status"]
                 }
               }
             }

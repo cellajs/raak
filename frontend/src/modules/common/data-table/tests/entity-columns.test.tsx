@@ -284,11 +284,13 @@ describe('csv export', () => {
   // The export writes dates in the long localized format; with a comma in it, the cell is quoted.
   const dateCell = (value: string | number) => `"${dayjs.utc(value).local().format('lll')}"`;
 
-  // fork: count columns follow the app's hierarchy, not the template's attachment-only one
+  // Count columns follow the hierarchy and the members config, so an app's own entities keep these tests valid.
+  // Organizations show the last channel and the first product below them, as organizations-columns does.
   const orgDescendants = hierarchy.getOrderedDescendants('organization');
-  const orgCountTypes = orgDescendants.filter(
-    (type) => type === orgDescendants.filter((t) => isChannel(t)).at(-1) || type === orgDescendants.find((t) => !isChannel(t)),
-  );
+  const lastChannel = orgDescendants.filter((type) => isChannel(type)).at(-1);
+  const firstProduct = orgDescendants.find((type) => !isChannel(type));
+  const orgCountTypes = orgDescendants.filter((type) => type === lastChannel || type === firstProduct);
+  // Members show the stat product types, then the sub-channels, minus the hidden ones.
   const statTypes: readonly string[] = appConfig.memberStatProductTypes;
   const memberCountTypes = [...statTypes, ...orgDescendants.filter((type) => isChannel(type) && type !== 'organization')].filter(
     (type) => !(hiddenMemberCountColumns as readonly string[]).includes(type),
@@ -302,7 +304,6 @@ describe('csv export', () => {
         name: 'Tenant 48',
         createdAt: created,
         membership: { role: 'admin' },
-        // fork: one zero count per visible count column
         included: { counts: { membership: { admin: 2, member: 5 }, entities: Object.fromEntries(orgCountTypes.map((type) => [type, 0])) } },
       },
       { id: 'org-12', name: 'Organization 12', createdAt: null, membership: null, included: {} },
@@ -310,7 +311,6 @@ describe('csv export', () => {
       { id: 'org-7', name: 'Seven', included: { membership: { role: 'member' } } },
     ];
 
-    // fork: count cells per visible count column
     expect(await csvLines(columnsOf(organizations.useColumns), rows)).toEqual([
       `c:name,c:your_role,c:created_at,c:admin,c:member,${cells(orgCountTypes, (type) => `c:${type}`)}`,
       `Tenant 48,admin,${dateCell(created)},2,5,${cells(orgCountTypes, () => '0')}`,
@@ -329,14 +329,13 @@ describe('csv export', () => {
         membership: { role: 'member' },
         createdAt: created,
         lastSeenAt: seenAt,
-        // fork: the app's stat product types
         counts: { memberships: {}, products: Object.fromEntries(statTypes.map((type) => [type, 3])), activity: { [statTypes[0]]: postedAt } },
       },
       { id: 'user-12', name: 'Organization 12', email: null, membership: null, createdAt: null, lastSeenAt: null },
     ];
 
     const columns = columnsOf(() => members.useColumns(true, false, 'organization'));
-    // fork: count cells per visible count column; channel counts are absent from the row
+    // Channel counts are absent from the row, so their cells are dashes.
     expect(await csvLines(columns, rows)).toEqual([
       `c:name,c:email,c:role,c:created_at,c:last_seen_at,c:last_post,${cells(memberCountTypes, (type) => `c:${type}`)}`,
       `Tenant 48,ada@example.com,member,${dateCell(created)},${dateCell(seenAt)},${dateCell(postedAt)},${cells(memberCountTypes, (type) => (statTypes.includes(type) ? '3' : '-'))}`,

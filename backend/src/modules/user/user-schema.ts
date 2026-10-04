@@ -23,13 +23,13 @@ export const userFlagsSchema = z.object(
 
 export const userSchema = createSelectSchema(usersTable, { email: z.email(), language: languageSchema, userFlags: userFlagsSchema })
   .extend({
-    // Timestamps from user_counters table (populated via subqueries in userSelect)
+    // Activity times from the user's actors row (userSelect)
     lastSeenAt: z.string().nullable(),
-    lastStartedAt: z.string().nullable(),
     lastSignInAt: z.string().nullable(),
   })
   .openapi('User', {
-    description: 'A user with profile data and activity timestamps.',
+    description:
+      'A full user account: profile, preferences such as language and newsletter, the MFA setting and activity timestamps. Returned to the user themselves and to system admins; other users see the `UserBase` fields.',
     example: mockUserResponse(),
     'x-tags': schemaTags('data', 'users', 'cella'),
   });

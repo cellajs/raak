@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import { useFirstTimeHint } from '~/hooks/use-first-time-hint';
 import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
 import { useScrolledPast } from '~/hooks/use-scrolled-past';
 import { GithubIcon } from '~/modules/common/icons/github';
@@ -23,6 +24,9 @@ export function MarketingNav() {
   const isMobile = useBreakpointBelow('sm');
 
   const showScrollTop = useScrolledPast(300, isMobile);
+  // First-visit affordance: the menu button reads "menu" while at the top of the page (iOS overscroll stays <= 0, so it counts as top)
+  const atTop = !useScrolledPast(8, isMobile);
+  const showMenuLabel = useFirstTimeHint('floating-menu-marketing', isMobile && atTop);
 
   const closeDrawer = () => setDrawerOpen(false);
 
@@ -71,7 +75,15 @@ export function MarketingNav() {
   };
 
   const floatingNavItems: FloatingNavItem[] = [
-    { id: 'marketing-menu', icon: MenuIcon, onClick: () => setDrawerOpen((prev) => !prev), ariaLabel: 'Toggle menu', direction: 'left' },
+    {
+      id: 'marketing-menu',
+      icon: MenuIcon,
+      onClick: () => setDrawerOpen((prev) => !prev),
+      ariaLabel: 'Toggle menu',
+      direction: 'left',
+      label: t('c:menu'),
+      labelVisible: showMenuLabel,
+    },
     { id: 'marketing-scroll-top', icon: ArrowUpIcon, onClick: scrollToTop, ariaLabel: 'Scroll to top', visible: showScrollTop, direction: 'right' },
   ];
 
@@ -87,9 +99,9 @@ export function MarketingNav() {
               hash=""
               replace={location.pathname === '/about'}
               className="focus-effect relative rounded-md p-0.5 transition-transform sm:active:scale-100 sm:hover:scale-105 md:pr-4"
-              aria-label="Go to about page"
+              aria-label={t('c:go_to_about')}
             >
-              <Logo height={36} />
+              <Logo height={36} title={t('c:go_to_about')} />
 
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="absolute top-0.5 right-0.5 max-md:hidden">
                 <title>We support Ukraine</title>

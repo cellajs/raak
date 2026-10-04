@@ -10,17 +10,20 @@ interface UIStoreState {
   offlineAccess: boolean;
   toggleOfflineAccess: () => void;
 
-  impersonating: boolean;
-  setImpersonating: (status: boolean) => void;
-
   mode: Mode; // Current color mode (default to system preference)
   setMode: (mode: Mode) => void;
 
   theme: Theme; // Selected theme ('none' for default)
   setTheme: (theme: Theme) => void;
 
+  keepMessages: boolean; // Toasts stay until dismissed, for a reader who needs more than a few seconds
+  setKeepMessages: (status: boolean) => void;
+
   publicAlertsSeen: string[]; // Public route alert IDs dismissed before a user DB exists
   setPublicAlertSeen: (alertSeen: string) => void;
+
+  hintsSeen: string[]; // One-time UI hint IDs already shown (e.g. floating nav menu label)
+  setHintSeen: (hint: string) => void;
 
   focusView: boolean;
   setFocusView: (status: boolean) => void;
@@ -32,19 +35,24 @@ interface UIStoreState {
   reset: () => void;
 }
 
-const browserMode = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+// Guarded so tests in a node environment can import modules that reach this store
+const browserMode = typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-const initStore: Pick<UIStoreState, 'mode' | 'theme' | 'offlineAccess' | 'impersonating' | 'publicAlertsSeen' | 'focusView' | 'uiLocks'> = {
+const initStore: Pick<
+  UIStoreState,
+  'mode' | 'theme' | 'offlineAccess' | 'keepMessages' | 'publicAlertsSeen' | 'hintsSeen' | 'focusView' | 'uiLocks'
+> = {
   mode: browserMode,
   theme: 'none',
   offlineAccess: false,
-  impersonating: false,
+  keepMessages: false,
   publicAlertsSeen: [],
+  hintsSeen: [],
   focusView: false,
   uiLocks: [],
 };
 
-/** UI store for non-user-identifiable state: offline access, impersonation, theme. */
+/** UI store for non-user-identifiable state: offline access, theme. */
 export const useUIStore = create<UIStoreState>()(
   devtools(
     persist(
@@ -53,11 +61,6 @@ export const useUIStore = create<UIStoreState>()(
         toggleOfflineAccess: () => {
           set((state) => {
             state.offlineAccess = !state.offlineAccess;
-          });
-        },
-        setImpersonating: (status) => {
-          set((state) => {
-            state.impersonating = status;
           });
         },
         setMode: (mode) => {
@@ -70,9 +73,19 @@ export const useUIStore = create<UIStoreState>()(
             state.theme = theme;
           });
         },
+        setKeepMessages: (status) => {
+          set((state) => {
+            state.keepMessages = status;
+          });
+        },
         setPublicAlertSeen: (alertSeen) => {
           set((state) => {
             if (!state.publicAlertsSeen.includes(alertSeen)) state.publicAlertsSeen.push(alertSeen);
+          });
+        },
+        setHintSeen: (hint) => {
+          set((state) => {
+            if (!state.hintsSeen.includes(hint)) state.hintsSeen.push(hint);
           });
         },
         setFocusView: (status) => {
@@ -95,18 +108,19 @@ export const useUIStore = create<UIStoreState>()(
             }
           });
         },
-        // Partial reset (not `set(initStore)`): only session flags are cleared; mode/theme/uiLocks persist.
-        reset: () => set(() => ({ offlineAccess: false, impersonating: false })),
+        // Partial reset (not `set(initStore)`): only the session flag is cleared; mode/theme/uiLocks persist.
+        reset: () => set(() => ({ offlineAccess: false })),
       })),
       {
         version: 1,
         name: `${appConfig.slug}-ui`,
         partialize: (state) => ({
           offlineAccess: state.offlineAccess,
-          impersonating: state.impersonating,
           mode: state.mode,
           theme: state.theme,
+          keepMessages: state.keepMessages,
           publicAlertsSeen: state.publicAlertsSeen,
+          hintsSeen: state.hintsSeen,
         }),
         storage: createJSONStorage(() => localStorage),
       },

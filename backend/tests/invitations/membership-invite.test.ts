@@ -2,9 +2,9 @@ import { eq } from 'drizzle-orm';
 import { membershipInvite } from 'sdk';
 import { afterEach, describe, expect, it } from 'vitest';
 import { baseDb as db } from '#/db/db';
-import { addProvenEmail } from '#/modules/auth/general/helpers/mark-email-verified';
 import { tokensTable } from '#/modules/auth/tokens-db';
 import { inactiveMembershipsTable } from '#/modules/memberships/inactive-memberships-db';
+import { addProvenEmail } from '#/modules/user/operations/email-proof';
 import { hashToken } from '#/utils/hash-token';
 import { adminRole, defaultHeaders, memberRole } from '../fixtures';
 import {
@@ -70,7 +70,7 @@ describe('Membership Invitation', async () => {
     expect(inactiveMemberships[1].role).toBe(memberRole);
 
     // The last mail carries the link of its own address's token.
-    const [token] = await db.select().from(tokensTable).where(eq(tokensTable.id, inactiveMemberships[1].tokenId!));
+    const [token] = await db.select().from(tokensTable).where(eq(tokensTable.inactiveMembershipId, inactiveMemberships[1].id));
     expect(token.secret).toBe(hashToken(mailedLink('inviteLink').token));
   });
 
@@ -99,7 +99,7 @@ describe('Membership Invitation', async () => {
   it('binds an invitation sent to a proven secondary address of an existing user', async () => {
     const { organization, sessionCookie } = await createOrgAndAdmin();
     const existingUser = await createTestUser('primary@example.com');
-    await addProvenEmail(db, { userId: existingUser.id, email: 'work@example.com', via: 'github' });
+    await addProvenEmail({ var: { db } }, { userId: existingUser.id, email: 'work@example.com', via: 'github' });
 
     const { response: res, data } = await makeInviteRequest(
       organization.tenantId,
@@ -114,7 +114,7 @@ describe('Membership Invitation', async () => {
     const [invitation] = await getInactiveMemberships(organization.id);
     expect(invitation.userId).toBe(existingUser.id);
     // Known address, so no token: the invitation is answered in-app.
-    expect(invitation.tokenId).toBeNull();
+    expect(await db.select().from(tokensTable).where(eq(tokensTable.inactiveMembershipId, invitation.id))).toHaveLength(0);
   });
 
   it('should handle mixed existing and new users', async () => {

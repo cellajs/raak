@@ -28,7 +28,7 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
   const emailLabel = t('c:email').toLowerCase();
   const messageLabel = t('c:message').toLowerCase();
 
-  const formSchema = zCreateRequestBody.extend({ name: z.string().min(2, t('error:name_required')) });
+  const formSchema = zCreateRequestBody.extend({ name: z.string().min(1, t('error:name_required')).min(2, t('error:name_too_short')) });
 
   type FormValues = z.infer<typeof formSchema>;
 
@@ -53,9 +53,6 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
         if (isDialog) useDialoger.getState().remove();
         form.reset();
       },
-      onError: () => {
-        toaster.error(t('error:reported_try_later'));
-      },
     });
   };
 
@@ -67,6 +64,7 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
             control={form.control}
             name="name"
             label={t('c:name')}
+            autocomplete="name"
             placeholder={t('c:placeholder.your_input', { inputLabel: nameLabel })}
             icon={<UserIcon />}
             required
@@ -76,6 +74,7 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
             name="email"
             label={t('c:email')}
             type="email"
+            autocomplete="email"
             placeholder={t('c:placeholder.your_input', { inputLabel: emailLabel })}
             icon={<MailIcon />}
             required

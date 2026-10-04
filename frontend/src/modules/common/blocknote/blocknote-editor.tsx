@@ -9,8 +9,9 @@ import { FilePanelController, GridSuggestionMenuController, useCreateBlockNote }
 import { BlockNoteView } from '@blocknote/shadcn';
 import { type MouseEventHandler, type RefObject, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { appConfig } from 'shared';
+import { mediaBlockTypes } from 'shared/blocknote';
 import { type DescriptionBlock, findSummarySource } from 'shared/utils/derive-description-core';
-import type { WebsocketProvider } from 'y-websocket';
+import type { Awareness } from 'y-protocols/awareness';
 import type { XmlFragment } from 'yjs';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useLatestRef } from '~/hooks/use-latest-ref';
@@ -46,7 +47,8 @@ import { cn } from '~/utils/cn';
 
 /** Yjs connection and cursor identity; passing this bundle switches the editor into collaborative mode. */
 export interface CollaborationBundle {
-  provider: WebsocketProvider;
+  /** BlockNote reads only the Awareness of a provider: the connection's own, which outlives a switch of transport. */
+  provider: { awareness: Awareness };
   fragment: XmlFragment;
   user: { name: string; color: string };
 }
@@ -94,6 +96,7 @@ function BlockNote({
   excludeBlockTypes,
   excludeFileBlockTypes,
   titlePlaceholder,
+  ariaLabel,
   extensions,
   members, // for mentions
   filePanel,
@@ -118,9 +121,14 @@ function BlockNote({
   const collaborative = !!collaboration;
   const blockNoteRef = useRef<HTMLDivElement | null>(null);
 
+  // Without an upload path the menus offer no media blocks: BlockNote's own panel can only embed a URL, which the media
+  // grammar refuses. Stored media blocks still render.
+  const canUpload = !!filePanel || (!!baseFilePanelProps && appConfig.has.uploadEnabled);
   const defaultAllowedBlockTypes = Object.keys(customSchema.blockSpecs) as CustomBlockTypes[];
-  const allowedBlockTypes = defaultAllowedBlockTypes.filter(
-    (type) => !excludeBlockTypes?.includes(type as CustomBlockRegularTypes) && !excludeFileBlockTypes?.includes(type as CustomBlockFileTypes),
+  const allowedBlockTypes = defaultAllowedBlockTypes.filter((type) =>
+    mediaBlockTypes.has(type)
+      ? canUpload && !excludeFileBlockTypes?.includes(type as CustomBlockFileTypes)
+      : !excludeBlockTypes?.includes(type as CustomBlockRegularTypes),
   );
 
   // Parse initial content once at creation time so the undo history starts clean
@@ -137,6 +145,7 @@ function BlockNote({
     // Caller extensions come first: BlockNote keeps the first extension per key and drops later duplicates.
     extensions: [...(extensions ?? []), checkedExtension(), syntaxHighlighter],
     resolveFileUrl: createResolveFileUrl({ baseFilePanelProps }),
+    ...(ariaLabel && { domAttributes: { editor: { 'aria-label': ariaLabel } } }),
   };
 
   const editor = useCreateBlockNote(
@@ -319,9 +328,7 @@ function BlockNote({
         )
       ) : filePanel ? (
         <FilePanelController filePanel={filePanel} />
-      ) : (
-        <FilePanelController />
-      )}
+      ) : null}
     </BlockNoteView>
   );
 }

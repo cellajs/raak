@@ -59,6 +59,31 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.3)(@vitest/browser-playwright@5.0.3)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(jsdom@30.1.1)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  a11y:
+    dependencies:
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.13.0
+        version: 4.13.0(playwright-core@1.63.0)
+      '@types/node':
+        specifier: ^26.6.3
+        version: 26.6.3
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      playwright:
+        specifier: ^1.63.0
+        version: 1.63.0
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
   backend:
     dependencies:
       '@napi-rs/canvas':
@@ -290,6 +315,9 @@ importers:
       ws:
         specifier: ^8.22.0
         version: 8.22.0
+      yjs:
+        specifier: ^13.6.33
+        version: 13.6.33
       yjs-worker:
         specifier: workspace:*
         version: link:../yjs
@@ -327,18 +355,33 @@ importers:
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
+      '@types/ws':
+        specifier: ^8.18.2
+        version: 8.18.2
       artillery:
         specifier: ^2.0.34
         version: 2.0.34(patch_hash=4a3a3ec7f9f0440ca256977f0c66e784c0f7d0be498ebbd7e22bceb54d2f7c4b)(@types/node@26.6.3)(supports-color@8.1.1)
       artillery-plugin-ensure:
         specifier: ^1.27.0
         version: 1.27.0(supports-color@8.1.1)
+      lib0:
+        specifier: ^0.2.119
+        version: 0.2.119
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+      ws:
+        specifier: ^8.22.0
+        version: 8.22.0
+      y-websocket:
+        specifier: ^3.1.0
+        version: 3.1.0(yjs@13.6.33)
+      yjs:
+        specifier: ^13.6.33
+        version: 13.6.33
 
   cdc:
     dependencies:
@@ -703,6 +746,9 @@ importers:
       y-prosemirror:
         specifier: ^1.3.7
         version: 1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
+      y-protocols:
+        specifier: ^1.0.7
+        version: 1.0.7(yjs@13.6.33)
       y-websocket:
         specifier: ^3.1.0
         version: 3.1.0(yjs@13.6.33)
@@ -862,7 +908,7 @@ importers:
         version: 8.7.2(@types/node@26.6.3)
       '@pulumi/pulumi':
         specifier: ^3.266.0
-        version: 3.266.0(typescript@6.0.3)
+        version: 3.266.0(supports-color@8.1.1)(typescript@6.0.3)
       '@pulumi/random':
         specifier: ^4.21.2
         version: 4.21.2(typescript@6.0.3)
@@ -1127,9 +1173,6 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.43.0
         version: 1.43.0
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -1145,7 +1188,7 @@ importers:
     devDependencies:
       '@blocknote/server-util':
         specifier: ^0.55.0
-        version: 0.55.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))
+        version: 0.55.0(@types/hast@3.0.5)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))
       '@hono/node-server':
         specifier: ^2.1.3
         version: 2.1.3(hono@4.13.12)
@@ -1170,6 +1213,9 @@ importers:
       hono:
         specifier: ^4.13.12
         version: 4.13.12
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1
       lib0:
         specifier: ^0.2.119
         version: 0.2.119
@@ -1400,6 +1446,11 @@ packages:
   '@aws/lambda-invoke-store@0.3.0':
     resolution: {integrity: sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ==}
     engines: {node: '>=18.0.0'}
+
+  '@axe-core/playwright@4.13.0':
+    resolution: {integrity: sha512-6YLx+kxXu5GJceG4ozFg+33a2EMTdjYwWGloJ3sb9Kta5pp+ZNS53uxGVog5JetIY8s++P5UrtX+cri+u0VAVg==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@azure/abort-controller@1.1.0':
     resolution: {integrity: sha512-TrRLIoSQVzfAJX9H1JeFjzAoDGcoK1IYX1UImfceTZpsyYfWr09Ss1aHW1y5TrrR3iq6RZLBwJ3E24uwPhwahw==}
@@ -6477,6 +6528,10 @@ packages:
 
   axe-core@4.12.1:
     resolution: {integrity: sha512-s7iGf5GaVMxEG0ENN9x+xTr7GFZCb1ZP/1uATUpCEK2X78nDB3RwbtFCo9pGAf9ru+VwoQ464DkaLEeRM08wJA==}
+    engines: {node: '>=4'}
+
+  axe-core@4.13.0:
+    resolution: {integrity: sha512-UzGt8zg7Ny8djbYMhxl2zuEevVa7r2gJjYY5Lwr1xM7+XU2nd6CkIWFTVcCIbAP63vSz71NaVyyuSk9lHKcy0A==}
     engines: {node: '>=4'}
 
   babel-dead-code-elimination@1.0.12:
@@ -12373,6 +12428,11 @@ snapshots:
 
   '@aws/lambda-invoke-store@0.3.0': {}
 
+  '@axe-core/playwright@4.13.0(playwright-core@1.63.0)':
+    dependencies:
+      axe-core: 4.13.0
+      playwright-core: 1.63.0
+
   '@azure/abort-controller@1.1.0':
     dependencies:
       tslib: 2.8.1
@@ -13428,71 +13488,10 @@ snapshots:
       - y-protocols
       - yjs
 
-  '@blocknote/react@0.55.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)':
-    dependencies:
-      '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@emoji-mart/data': 1.2.1
-      '@floating-ui/react': 0.27.19(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@tiptap/core': 3.31.3(@tiptap/pm@3.31.3)
-      '@tiptap/pm': 3.31.3
-      '@tiptap/react': 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      emoji-mart: 5.6.0
-      fast-deep-equal: 3.1.3
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-      use-sync-external-store: 1.6.0(react@19.3.0)
-    optionalDependencies:
-      '@types/use-sync-external-store': 1.5.0
-    transitivePeerDependencies:
-      - '@floating-ui/dom'
-      - '@lezer/common'
-      - '@lezer/highlight'
-      - '@types/hast'
-      - '@types/react'
-      - '@types/react-dom'
-      - '@y/prosemirror'
-      - '@y/protocols'
-      - '@y/y'
-      - highlight.js
-      - lowlight
-      - refractor
-      - sugar-high
-      - y-prosemirror
-      - y-protocols
-      - yjs
-
   '@blocknote/server-util@0.55.0(@types/hast@3.0.5)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))':
     dependencies:
       '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@blocknote/react': 0.55.0(@types/hast@3.0.5)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@tiptap/pm': 3.31.3
-      jsdom: 29.1.1
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-      yjs: 13.6.33
-    transitivePeerDependencies:
-      - '@floating-ui/dom'
-      - '@lezer/common'
-      - '@lezer/highlight'
-      - '@noble/hashes'
-      - '@types/hast'
-      - '@types/react'
-      - '@types/react-dom'
-      - '@y/prosemirror'
-      - '@y/protocols'
-      - '@y/y'
-      - canvas
-      - highlight.js
-      - lowlight
-      - refractor
-      - sugar-high
-      - y-prosemirror
-      - y-protocols
-
-  '@blocknote/server-util@0.55.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))':
-    dependencies:
-      '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@blocknote/react': 0.55.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@tiptap/pm': 3.31.3
       jsdom: 29.1.1
       react: 19.3.0
@@ -14621,7 +14620,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@npmcli/arborist@9.8.0':
+  '@npmcli/arborist@9.8.0(supports-color@8.1.1)':
     dependencies:
       '@gar/promise-retry': 1.0.3
       '@isaacs/string-locale-compare': 1.1.0
@@ -14647,7 +14646,7 @@ snapshots:
       npm-package-arg: 13.0.2
       npm-pick-manifest: 11.0.3
       npm-registry-fetch: 19.1.1
-      pacote: 21.5.1
+      pacote: 21.5.1(supports-color@8.1.1)
       parse-conflict-json: 5.0.1
       proc-log: 6.1.0
       proggy: 4.0.0
@@ -14691,7 +14690,7 @@ snapshots:
     dependencies:
       cacache: 20.0.4
       json-parse-even-better-errors: 5.0.0
-      pacote: 21.5.1
+      pacote: 21.5.1(supports-color@8.1.1)
       proc-log: 6.1.0
       semver: 7.8.5
     transitivePeerDependencies:
@@ -15828,11 +15827,11 @@ snapshots:
 
   '@protobufjs/utf8@1.1.1': {}
 
-  '@pulumi/pulumi@3.266.0(typescript@6.0.3)':
+  '@pulumi/pulumi@3.266.0(supports-color@8.1.1)(typescript@6.0.3)':
     dependencies:
       '@grpc/grpc-js': 1.14.4
       '@logdna/tail-file': 2.2.0
-      '@npmcli/arborist': 9.8.0
+      '@npmcli/arborist': 9.8.0(supports-color@8.1.1)
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/exporter-trace-otlp-grpc': 0.220.0(@opentelemetry/api@1.9.1)
@@ -15862,7 +15861,7 @@ snapshots:
 
   '@pulumi/random@4.21.2(typescript@6.0.3)':
     dependencies:
-      '@pulumi/pulumi': 3.266.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.266.0(supports-color@8.1.1)(typescript@6.0.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -15870,7 +15869,7 @@ snapshots:
 
   '@pulumiverse/scaleway@1.56.1(typescript@6.0.3)':
     dependencies:
-      '@pulumi/pulumi': 3.266.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.266.0(supports-color@8.1.1)(typescript@6.0.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -16315,10 +16314,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sigstore/tuf@4.0.2':
+  '@sigstore/tuf@4.0.2(supports-color@8.1.1)':
     dependencies:
       '@sigstore/protobuf-specs': 0.5.1
-      tuf-js: 4.1.0
+      tuf-js: 4.1.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -17852,6 +17851,8 @@ snapshots:
       possible-typed-array-names: 1.1.0
 
   axe-core@4.12.1: {}
+
+  axe-core@4.13.0: {}
 
   babel-dead-code-elimination@1.0.12:
     dependencies:
@@ -21463,7 +21464,7 @@ snapshots:
 
   package-manager-detector@1.8.0: {}
 
-  pacote@21.5.1:
+  pacote@21.5.1(supports-color@8.1.1):
     dependencies:
       '@gar/promise-retry': 1.0.3
       '@npmcli/git': 7.0.2
@@ -21479,7 +21480,7 @@ snapshots:
       npm-pick-manifest: 11.0.3
       npm-registry-fetch: 19.1.1
       proc-log: 6.1.0
-      sigstore: 4.1.1
+      sigstore: 4.1.1(supports-color@8.1.1)
       ssri: 13.0.1
       tar: 7.5.22
     transitivePeerDependencies:
@@ -22680,13 +22681,13 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
-  sigstore@4.1.1:
+  sigstore@4.1.1(supports-color@8.1.1):
     dependencies:
       '@sigstore/bundle': 4.0.0
       '@sigstore/core': 3.2.1
       '@sigstore/protobuf-specs': 0.5.1
       '@sigstore/sign': 4.1.1
-      '@sigstore/tuf': 4.0.2
+      '@sigstore/tuf': 4.0.2(supports-color@8.1.1)
       '@sigstore/verify': 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -23198,7 +23199,7 @@ snapshots:
     dependencies:
       tslib: 1.14.1
 
-  tuf-js@4.1.0:
+  tuf-js@4.1.0(supports-color@8.1.1):
     dependencies:
       '@tufjs/models': 4.1.0
       debug: 4.4.3(supports-color@8.1.1)

@@ -6,9 +6,9 @@ import { updateLastSeenAt } from '../update-last-seen';
 import { loadMemberships } from './membership-cache';
 
 /**
- * Authenticates the session (an impersonation only on top of its admin's session) and sets user, session facts,
- * memberships and base db context: the session is read per request, the memberships come from the cache at its
- * bindings version.
+ * Authenticates the session (an impersonation only on top of its admin's session) and sets user, session facts, the
+ * admin behind an impersonation, memberships and base db context: the session is read per request, the memberships
+ * come from the cache at its bindings version.
  */
 export const userGuard = xMiddleware(
   {
@@ -16,22 +16,30 @@ export const userGuard = xMiddleware(
     type: 'x-guard',
     security: [{ cookieAuth: [] }],
     name: 'user',
-    description: 'Requires valid session and sets auth context (user, memberships, baseDb)',
+    description: 'Requires a session cookie; acts as the signed-in user',
   },
   async (ctx, next) => {
     // A refused cookie is deleted, so the browser stops presenting it.
-    const { session, user, hasSystemRole, bindingsVersion } = await resolveSession(ctx, { clearOnError: true });
+    const { session, user, hasSystemRole, bindingsVersion, impersonator } = await resolveSession(ctx, { clearOnError: true });
 
     ctx.set('user', user);
     ctx.set('userId', user.id);
     ctx.set('session', session);
     ctx.set('sessionId', session.id);
+    ctx.set('impersonator', impersonator);
     ctx.set('isSystemAdmin', hasSystemRole && isSystemAccessAllowed(ctx));
     ctx.set('db', baseDb);
 
     const memberships = await loadMemberships(user.id, bindingsVersion);
     ctx.set('memberships', memberships);
-    ctx.set('actor', { kind: 'user', id: user.id, bindings: memberships, scopes: null });
+    ctx.set('actor', {
+      kind: 'user',
+      id: user.id,
+      bindings: memberships,
+      scopes: null,
+      authStrategy: session.authStrategy,
+      connectionId: session.connectionId,
+    });
 
     if (ctx.req.method === 'GET') updateLastSeenAt(user.id);
 

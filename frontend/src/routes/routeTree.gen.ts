@@ -49,6 +49,7 @@ import { Route as PublicContentTIdRouteImport } from './_public/_content/t.$id'
 import { Route as PublicMarketingLegalIndexRouteImport } from './_public/_marketing/legal.index'
 import { Route as PublicMarketingLegalSubjectRouteImport } from './_public/_marketing/legal.$subject'
 import { Route as PublicAuthEmailVerificationReasonRouteImport } from './_public/auth/email-verification.$reason'
+import { Route as PublicAuthSsoConnectionIdRouteImport } from './_public/auth/sso.$connectionId'
 import { Route as AppTenantIdOrganizationSlugOrganizationToolRouteImport } from './_app/$tenantId.$organizationSlug/organization/$tool'
 import { Route as AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport } from './_app/$tenantId.$organizationSlug/organization/attachments'
 import { Route as AppTenantIdOrganizationSlugOrganizationMembersRouteImport } from './_app/$tenantId.$organizationSlug/organization/members'
@@ -264,6 +265,12 @@ const PublicAuthEmailVerificationReasonRoute =
     path: '/email-verification/$reason',
     getParentRoute: () => PublicAuthRouteRoute,
   } as any)
+const PublicAuthSsoConnectionIdRoute =
+  PublicAuthSsoConnectionIdRouteImport.update({
+    id: '/sso/$connectionId',
+    path: '/sso/$connectionId',
+    getParentRoute: () => PublicAuthRouteRoute,
+  } as any)
 const AppTenantIdOrganizationSlugOrganizationToolRoute =
   AppTenantIdOrganizationSlugOrganizationToolRouteImport.update({
     id: '/$tool',
@@ -354,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/t/$id': typeof PublicContentTIdRoute
   '/legal/$subject': typeof PublicMarketingLegalSubjectRoute
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
+  '/auth/sso/$connectionId': typeof PublicAuthSsoConnectionIdRoute
   '/docs/': typeof PublicContentDocsIndexRoute
   '/legal/': typeof PublicMarketingLegalIndexRoute
   '/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
@@ -400,6 +408,7 @@ export interface FileRoutesByTo {
   '/t/$id': typeof PublicContentTIdRoute
   '/legal/$subject': typeof PublicMarketingLegalSubjectRoute
   '/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
+  '/auth/sso/$connectionId': typeof PublicAuthSsoConnectionIdRoute
   '/docs': typeof PublicContentDocsIndexRoute
   '/legal': typeof PublicMarketingLegalIndexRoute
   '/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
@@ -452,6 +461,7 @@ export interface FileRoutesById {
   '/_public/_content/t/$id': typeof PublicContentTIdRoute
   '/_public/_marketing/legal/$subject': typeof PublicMarketingLegalSubjectRoute
   '/_public/auth/email-verification/$reason': typeof PublicAuthEmailVerificationReasonRoute
+  '/_public/auth/sso/$connectionId': typeof PublicAuthSsoConnectionIdRoute
   '/_public/_content/docs/': typeof PublicContentDocsIndexRoute
   '/_public/_marketing/legal/': typeof PublicMarketingLegalIndexRoute
   '/_app/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/t/$id'
     | '/legal/$subject'
     | '/auth/email-verification/$reason'
+    | '/auth/sso/$connectionId'
     | '/docs/'
     | '/legal/'
     | '/$tenantId/$organizationSlug/organization/$tool'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/t/$id'
     | '/legal/$subject'
     | '/auth/email-verification/$reason'
+    | '/auth/sso/$connectionId'
     | '/docs'
     | '/legal'
     | '/$tenantId/$organizationSlug/organization/$tool'
@@ -598,6 +610,7 @@ export interface FileRouteTypes {
     | '/_public/_content/t/$id'
     | '/_public/_marketing/legal/$subject'
     | '/_public/auth/email-verification/$reason'
+    | '/_public/auth/sso/$connectionId'
     | '/_public/_content/docs/'
     | '/_public/_marketing/legal/'
     | '/_app/$tenantId/$organizationSlug/organization/$tool'
@@ -898,6 +911,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAuthEmailVerificationReasonRouteImport
       parentRoute: typeof PublicAuthRouteRoute
     }
+    '/_public/auth/sso/$connectionId': {
+      id: '/_public/auth/sso/$connectionId'
+      path: '/sso/$connectionId'
+      fullPath: '/auth/sso/$connectionId'
+      preLoaderRoute: typeof PublicAuthSsoConnectionIdRouteImport
+      parentRoute: typeof PublicAuthRouteRoute
+    }
     '/_app/$tenantId/$organizationSlug/organization/$tool': {
       id: '/_app/$tenantId/$organizationSlug/organization/$tool'
       path: '/$tool'
@@ -1106,6 +1126,7 @@ interface PublicAuthRouteRouteChildren {
   PublicAuthSignOutRoute: typeof PublicAuthSignOutRoute
   PublicAuthUnsubscribedRoute: typeof PublicAuthUnsubscribedRoute
   PublicAuthEmailVerificationReasonRoute: typeof PublicAuthEmailVerificationReasonRoute
+  PublicAuthSsoConnectionIdRoute: typeof PublicAuthSsoConnectionIdRoute
 }
 
 const PublicAuthRouteRouteChildren: PublicAuthRouteRouteChildren = {
@@ -1118,6 +1139,7 @@ const PublicAuthRouteRouteChildren: PublicAuthRouteRouteChildren = {
   PublicAuthUnsubscribedRoute: PublicAuthUnsubscribedRoute,
   PublicAuthEmailVerificationReasonRoute:
     PublicAuthEmailVerificationReasonRoute,
+  PublicAuthSsoConnectionIdRoute: PublicAuthSsoConnectionIdRoute,
 }
 
 const PublicAuthRouteRouteWithChildren = PublicAuthRouteRoute._addFileChildren(

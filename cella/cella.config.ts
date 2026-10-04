@@ -28,7 +28,7 @@ export default defineConfig({
       'backend/drizzle',
       'frontend/src/content',
       'frontend/public/static/common',
-      'frontend/src/modules/common/bg-animation',
+      'frontend/src/modules/common/morph-animation',
       'frontend/src/routes/routeTree.gen.ts',
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
@@ -43,6 +43,8 @@ export default defineConfig({
       'frontend/src/modules/auth/legal/legal-config.ts',
       'locales/en/app.json',
       'locales/nl/app.json',
+      // Accessibility results are about one product: each app's audit (`pnpm a11y`) writes its own ledger.
+      'json/accessibility-conformance.json',
     ],
     // Paths pinned to the app: the app copy always wins, upstream hunks never merge in. Adopt them by hand
     // from the analyze list ("protected but behind upstream").
@@ -50,6 +52,7 @@ export default defineConfig({
       'backend/src/db/channel-tables.ts',
       // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.
       'backend/src/modules/attachment/helpers/attachment-placement.ts',
+      'backend/src/modules/auth/sso/role-from-claims.ts',
       'backend/src/modules.ts',
       'backend/src/bundle-config.ts',
       'backend/src/db/product-tables.ts',
@@ -62,6 +65,8 @@ export default defineConfig({
       'frontend/src/list-queries-config.tsx',
       'frontend/src/styling/gradients.css',
       'frontend/src/styling/tailwind.css',
+      // The pages and states the accessibility audit covers
+      'a11y/scope-config.ts',
       'locales/en/about.json',
       'locales/nl/about.json',
       'backend/src/mocks/app-product-mocks.ts',

@@ -1,7 +1,7 @@
 import type { UserContext } from '#/core/context';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
-import { withAuditUser } from '#/modules/user/helpers/audit-user';
+import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { updateWorkspace } from '#/modules/workspace/workspace-queries';
 import { workspaceContract } from '#/modules/workspace/workspace-schema';
 import { getValidChannel } from '#/permissions/get-valid-channel';

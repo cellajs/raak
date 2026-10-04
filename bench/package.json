@@ -6,9 +6,10 @@
   "description": "Artillery load-testing scenarios and tooling",
   "scripts": {
     "bench": "tsx src/bench-cli.ts",
-    "ts": "tsgo --pretty",
     "db:seed": "tsx src/data-setup.ts",
-    "db:teardown": "tsx src/data-setup.ts --teardown"
+    "db:teardown": "tsx src/data-setup.ts --teardown",
+    "ts": "tsgo --pretty",
+    "yjs-typing": "tsx src/yjs-typing.ts"
   },
   "dependencies": {
     "@inquirer/prompts": "^8.7.2",
@@ -22,9 +23,14 @@
   "devDependencies": {
     "@types/node": "^26.6.3",
     "@types/pg": "^8.23.1",
+    "@types/ws": "^8.18.2",
     "artillery": "^2.0.34",
     "artillery-plugin-ensure": "^1.27.0",
+    "lib0": "^0.2.119",
     "tsx": "^4.23.15",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "ws": "^8.22.0",
+    "y-websocket": "^3.1.0",
+    "yjs": "^13.6.33"
   }
 }

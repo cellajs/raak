@@ -20,6 +20,7 @@ import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/task/types';
 import { useCurrentUser } from '~/modules/user/user-store';
+import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 
 interface TasksHotkeysProps {
   boardId: string;
@@ -149,6 +150,8 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   };
 
   const handleEscKeyPress = () => {
+    // The Escape that closes a tooltip or hover card stops there: the card and its sheet keep their state (WCAG 1.4.13).
+    if (isHoverContentOpen()) return;
     const task = currentActiveTask(taskSheetId);
     if (!task) return;
 

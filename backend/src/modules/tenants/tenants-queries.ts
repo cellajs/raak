@@ -1,14 +1,13 @@
-import { and, count, eq, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, notInArray, type SQL } from 'drizzle-orm';
 import type { DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
-import { domainsTable } from '#/modules/domains/domains-db';
 import { organizationsTable } from '#/modules/organization/organization-db';
 import { normalizeRestrictions } from '#/modules/tenants/tenant-restrictions';
 import { tenantsTable } from '#/modules/tenants/tenants-db';
 import { getOrderColumns } from '#/utils/order-column';
 import { pick } from '#/utils/pick';
 
-/** Tenant columns a response carries; subscriptionData stays server-side. */
+/** Tenant columns a response carries. */
 const tenantColumns = pick(tenantsTable, [
   'id',
   'name',
@@ -23,27 +22,19 @@ const tenantColumns = pick(tenantsTable, [
   'updatedAt',
 ]);
 
-/** Tenant rows joined with their domains count and the organization each holds (organizations.tenant_id is unique). */
+/** Tenant rows joined with the organization each holds (organizations.tenant_id is unique). */
 const selectTenants = (ctx: DbContext) => {
   const { db } = ctx.var;
-
-  const domainsCountSq = db
-    .select({ tenantId: domainsTable.tenantId, count: count().as('domains_count') })
-    .from(domainsTable)
-    .groupBy(domainsTable.tenantId)
-    .as('domains_count_sq');
 
   return db
     .select({
       ...tenantColumns,
-      domainsCount: sql<number>`coalesce(${domainsCountSq.count}, 0)`.mapWith(Number),
       organizationId: organizationsTable.id,
       organizationName: organizationsTable.name,
       organizationSlug: organizationsTable.slug,
       organizationThumbnailUrl: organizationsTable.thumbnailUrl,
     })
     .from(tenantsTable)
-    .leftJoin(domainsCountSq, eq(tenantsTable.id, domainsCountSq.tenantId))
     .leftJoin(organizationsTable, eq(organizationsTable.tenantId, tenantsTable.id))
     .$dynamic();
 };
@@ -110,6 +101,16 @@ export const findTenantsPaginated = async (ctx: DbContext, opts: FindTenantsPagi
 export const findTenant = async (ctx: DbContext, { where }: { where: SQL | undefined }) => {
   const [row] = await selectTenants(ctx).where(where).limit(1);
   return row ? toTenant(row) : undefined;
+};
+
+interface FindOrphanTenantOpts {
+  createdBy: string;
+}
+
+/** A tenant the user created that holds no organization yet, in its response shape; undefined when none does. */
+export const findOrphanTenant = async (ctx: DbContext, { createdBy }: FindOrphanTenantOpts) => {
+  const tenantsWithOrg = ctx.var.db.select({ tenantId: organizationsTable.tenantId }).from(organizationsTable);
+  return findTenant(ctx, { where: and(eq(tenantsTable.createdBy, createdBy), notInArray(tenantsTable.id, tenantsWithOrg)) });
 };
 
 interface UpdateTenantOpts {

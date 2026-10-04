@@ -5,7 +5,7 @@ export type ClientOptions = {
 };
 
 /**
- * Minimal user data for references.
+ * The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.
  */
 export type UserMinimalBase = {
   id: string;
@@ -16,7 +16,7 @@ export type UserMinimalBase = {
 };
 
 /**
- * Base user schema with essential fields for identification and display.
+ * The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
  */
 export type UserBase = {
   id: string;
@@ -32,7 +32,7 @@ export type UserBase = {
 };
 
 /**
- * Base schema for entities with memberships (e.g. organization).
+ * The fields every channel entity shares, such as organization; a channel owns memberships and roles. Used where a response names a channel without its details, such as the channel an invitation is for.
  */
 export type ChannelBase = {
   id: string;
@@ -47,7 +47,7 @@ export type ChannelBase = {
 };
 
 /**
- * Base schema for content entities with creator tracking (e.g. attachment).
+ * The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields.
  */
 export type ProductBase = {
   id: string;
@@ -62,7 +62,7 @@ export type ProductBase = {
 };
 
 /**
- * Core membership fields shared across active and inactive memberships.
+ * A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.
  */
 export type MembershipBase = {
   id: string;
@@ -80,7 +80,7 @@ export type MembershipBase = {
 };
 
 /**
- * Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.
+ * The sync envelope on every product write: a mutation ID, a source ID and per-field timestamps. Clients send it with each create and update; the server merges concurrent edits by its timestamps, and a client recognizes its own writes coming back by the source ID.
  */
 export type StxBase = {
   /**
@@ -104,7 +104,7 @@ export type StxBase = {
 };
 
 /**
- * Realtime notification delivered via SSE for entity and membership changes.
+ * A live notification that a product entity or a membership changed, naming the entity, its path and sequence range rather than the row. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
  */
 export type StreamNotification = {
   /**
@@ -177,14 +177,14 @@ export type StreamNotification = {
 };
 
 /**
- * Error returned when the request is malformed or contains invalid data.
+ * The request is malformed or fails validation (400). `type` names the problem, such as `invalid_request`.
  */
 export type BadRequestError = ApiError & {
   status?: 400;
 };
 
 /**
- * Standard error response returned by all API endpoints.
+ * The body of every error response. `type` is a stable code to branch on, `message` is readable text, and `requestId` identifies the request in the server logs.
  */
 export type ApiError = {
   name: string;
@@ -205,53 +205,109 @@ export type ApiError = {
 };
 
 /**
- * Error returned when authentication is missing or invalid.
+ * The request carries no valid session, API key or access token, or it expired (401). Sign in again, or send a valid key or token.
  */
 export type UnauthorizedError = ApiError & {
   status?: 401;
 };
 
 /**
- * Error returned when the user lacks permission for the requested action.
+ * The caller is known but may not do this (403): their role denies the action, a recent step-up is required, or the action is refused while impersonating. `type` names the reason, such as `step_up_required`.
  */
 export type ForbiddenError = ApiError & {
   status?: 403;
 };
 
 /**
- * Error returned when the requested resource cannot be found.
+ * The resource does not exist, or the caller may not read it (404). Both get the same answer, so a response never confirms that an id exists.
  */
 export type NotFoundError = ApiError & {
   status?: 404;
 };
 
 /**
- * Error returned when the request conflicts with current resource state.
+ * The request conflicts with the current state (409), such as a link that belongs to another account (`user_mismatch`) or a create already in progress. Reload the current state before retrying.
  */
 export type ConflictError = ApiError & {
   status?: 409;
 };
 
 /**
- * Error returned when rate limits are exceeded.
+ * A rate limit refused the request (429). The `Retry-After` header says when to try again; an operation's rate limiters show what is counted.
  */
 export type TooManyRequestsError = ApiError & {
   status?: 429;
 };
 
 /**
- * The currently authenticated user with their system admin status.
+ * The sign-in entry of one institution at one organization: the federation it goes through, the institution, the organization, and whether it is active. Public by the connection's id, which is the link an institution shares.
+ */
+export type SsoEntry = {
+  id: string;
+  /**
+   * Only `active` signs in; `pending` means the institution has not activated the app yet
+   */
+  status: 'pending' | 'active' | 'disabled';
+  federation: {
+    key: string;
+    label: string;
+  };
+  institution: {
+    displayName: string;
+    logoUrl: string | null;
+  };
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    thumbnailUrl: string | null;
+  } | null;
+};
+
+/**
+ * A tenant's trust in an external party that asserts user identities: an institution reached through an SSO federation, whose members sign in to the tenant's organization. Its id is the public key of the tenant's SSO entry page. System admins manage connections per tenant; `pending` until the institution activated the service at the federation.
+ */
+export type Connection = {
+  id: string;
+  tenantId: string;
+  kind: 'sso';
+  issuer: string;
+  claimValues: Array<string>;
+  displayName: string;
+  status: 'pending' | 'active' | 'disabled';
+  jitProvisioning: boolean;
+  config: {
+    /**
+     * The institution's IdP entity ids, passed as login_hint
+     */
+    idpEntityIds?: Array<string>;
+    /**
+     * The institution's logo, for the entry page
+     */
+    logoUrl?: string;
+  };
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+/**
+ * The signed-in user, with whether they have system admin access on this request and, in an impersonation, the system admin acting as them. A client reads it to learn who is signed in.
  */
 export type Me = {
   user: User;
   /**
-   * Whether the current user has system admin privileges.
+   * Whether the user holds the system admin role and the request comes from an allowed IP address.
    */
   isSystemAdmin: boolean;
+  /**
+   * The system admin acting as the user through an impersonation; null on the user's own session.
+   */
+  impersonator: UserMinimalBase | null;
 };
 
 /**
- * A user with profile data and activity timestamps.
+ * A full user account: profile, preferences such as language and newsletter, the MFA setting and activity timestamps. Returned to the user themselves and to system admins; other users see the `UserBase` fields.
  */
 export type User = {
   createdAt: string;
@@ -274,15 +330,26 @@ export type User = {
   updatedAt: string | null;
   updatedBy: string | null;
   lastSeenAt: string | null;
-  lastStartedAt: string | null;
   lastSignInAt: string | null;
 };
 
 /**
- * Authentication metadata for the current user session.
+ * How the signed-in user signs in: connected OAuth providers, the institutions of their organizations (connected or not), passkeys, whether TOTP is set up, and their live sessions. The account page lists it, where sessions can be ended and sign-in methods changed.
  */
 export type MeAuthData = {
   enabledOAuth: Array<'github'>;
+  institutions: Array<{
+    connectionId: string;
+    displayName: string;
+    federation: {
+      key: string;
+      label: string;
+    };
+    /**
+     * Whether the account already holds an identity through this connection
+     */
+    connected: boolean;
+  }>;
   hasTotp: boolean;
   sessions: Array<{
     id: string;
@@ -293,6 +360,7 @@ export type MeAuthData = {
     deviceOs: string | null;
     browser: string | null;
     authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+    connectionId: string | null;
     ipHash: string | null;
     ipSubnetHash: string | null;
     ipCountry: string | null;
@@ -325,7 +393,7 @@ export type MeAuthData = {
 };
 
 /**
- * A membership record for a user who has not yet accepted an invitation.
+ * An invitation to join a channel that is not accepted yet: the invited email, the role and who invited. It becomes a membership once accepted; the signed-in user's invitations list it with the channel it is for.
  */
 export type InactiveMembership = {
   createdAt: string;
@@ -335,7 +403,6 @@ export type InactiveMembership = {
   channelId: string;
   email: string;
   userId: string | null;
-  tokenId: string | null;
   role: 'admin' | 'member' | 'guest';
   rejectedAt: string | null;
   remindedAt: string | null;
@@ -346,7 +413,7 @@ export type InactiveMembership = {
 };
 
 /**
- * A signed token authorizing file uploads to the configured storage provider.
+ * Permission to upload files with one upload template, signed for the upload service, with the storage prefix the files land under. A client requests one before uploading; the template decides whether files are stored public or private.
  */
 export type UploadToken = {
   /**
@@ -366,7 +433,7 @@ export type UploadToken = {
 };
 
 /**
- * An OAuth consent (grant) of the current user.
+ * An app the signed-in user consented to: its OAuth client, the scopes it may use and when the consent expires. Listed under Connected apps in account settings, where the user can revoke it.
  */
 export type ConnectedApp = {
   id: string;
@@ -455,7 +522,7 @@ export type Project = {
 };
 
 /**
- * A contact or waitlist submission from an unauthenticated user.
+ * A message from the public site: a contact message, a waitlist sign-up or a newsletter subscription. Anyone can send one, signed in or not; system admins list them.
  */
 export type Request = {
   createdAt: string;
@@ -519,7 +586,7 @@ export type Task = {
 };
 
 /**
- * A tenant representing an isolated data partition for multi-tenancy.
+ * The top-level isolation and billing boundary. Tenant and organization are 1:1: a tenant holds one organization, or none until that organization is created. System admins list and update tenants; a signed-in user can create one of their own.
  */
 export type Tenant = {
   id: string;
@@ -551,10 +618,6 @@ export type Tenant = {
   createdAt: string;
   updatedAt: string | null;
   /**
-   * Number of domains claimed by this tenant
-   */
-  domainsCount: number;
-  /**
    * The organization this tenant holds, or null if none
    */
   organization: {
@@ -567,7 +630,7 @@ export type Tenant = {
 };
 
 /**
- * RFC 9728 metadata of a protected resource: the authorization servers that issue its tokens and the scopes it accepts.
+ * How an OAuth client gets an access token for this API or an MCP endpoint (RFC 9728): the authorization servers that issue tokens and the scopes accepted. A client finds it through the `WWW-Authenticate` header of a 401 response.
  */
 export type ProtectedResourceMetadata = {
   resource: string;
@@ -578,7 +641,7 @@ export type ProtectedResourceMetadata = {
 };
 
 /**
- * The main channel entity is an organization.
+ * The channel entity every other channel nests under, owning memberships and roles. Tenant and organization are 1:1: an organization belongs to one tenant, and that tenant holds no other. Returned with `included` data: the signed-in user's membership, counts and member previews.
  */
 export type Organization = {
   createdAt: string;
@@ -719,7 +782,7 @@ export type Workspace = {
 };
 
 /**
- * A product entity for file attachment metadata.
+ * A file in an organization: a product entity that syncs to clients and works offline. It holds the file metadata and storage keys, not the file itself; a client fetches the file through a signed URL.
  */
 export type Attachment = {
   createdAt: string;
@@ -796,7 +859,7 @@ export type Label = {
 };
 
 /**
- * The actor an API key runs as, with its role bindings.
+ * An actor that is not a person, in one tenant: API keys run as it, and it holds role bindings like a member holds memberships. An organization admin creates one, for example with Create API key in organization settings.
  */
 export type ServiceAccount = {
   id: string;
@@ -817,7 +880,7 @@ export type ServiceAccount = {
 };
 
 /**
- * An API key of a service account; the secret is never returned after creation.
+ * A secret key a service account authenticates with, sent as `Authorization: Bearer` or `x-api-key`. Only its prefix and last four characters are returned after creation; it can expire and be revoked.
  */
 export type ApiKey = {
   id: string;
@@ -890,6 +953,13 @@ export type GetAuthHealthResponses = {
   200: {
     restrictedMode: boolean;
     retryAfter?: number;
+    /**
+     * Federations with a connected institution, for the "sign in with your institution" entrance
+     */
+    federations: Array<{
+      key: string;
+      label: string;
+    }>;
   };
 };
 
@@ -1030,6 +1100,7 @@ export type GetTokenDataResponses = {
     email: string;
     userId?: string;
     inactiveMembershipId?: string;
+    ssoConnectionId?: string;
     invitation?: {
       entityType: 'organization' | 'workspace' | 'project';
       entityName: string;
@@ -2102,6 +2173,224 @@ export type MicrosoftCallbackErrors = {
 
 export type MicrosoftCallbackError = MicrosoftCallbackErrors[keyof MicrosoftCallbackErrors];
 
+export type GetSsoEntryData = {
+  body?: never;
+  path: {
+    connectionId: string;
+  };
+  query?: never;
+  url: '/auth/sso/connections/{connectionId}';
+};
+
+export type GetSsoEntryErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type GetSsoEntryError = GetSsoEntryErrors[keyof GetSsoEntryErrors];
+
+export type GetSsoEntryResponses = {
+  /**
+   * SSO entry
+   */
+  200: SsoEntry;
+};
+
+export type GetSsoEntryResponse = GetSsoEntryResponses[keyof GetSsoEntryResponses];
+
+export type StartSsoData = {
+  body?: never;
+  path: {
+    connectionId: string;
+  };
+  query?: {
+    type?: 'auth' | 'connect' | 'invite' | 'verify';
+    redirectAfter?: string;
+  };
+  url: '/auth/sso/connections/{connectionId}/start';
+};
+
+export type StartSsoErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type StartSsoError = StartSsoErrors[keyof StartSsoErrors];
+
+export type StartSsoFederationData = {
+  body?: never;
+  path: {
+    federation: string;
+  };
+  query?: {
+    type?: 'auth' | 'connect' | 'invite' | 'verify';
+    redirectAfter?: string;
+  };
+  url: '/auth/sso/federations/{federation}/start';
+};
+
+export type StartSsoFederationErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type StartSsoFederationError = StartSsoFederationErrors[keyof StartSsoFederationErrors];
+
+export type SsoCallbackData = {
+  body?: never;
+  path?: never;
+  query: {
+    code?: string;
+    state: string;
+    error?: string;
+    error_description?: string;
+    error_uri?: string;
+  };
+  url: '/auth/sso/callback';
+};
+
+export type SsoCallbackErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type SsoCallbackError = SsoCallbackErrors[keyof SsoCallbackErrors];
+
+export type SendSsoRecoveryLinkData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/auth/sso/recovery-link';
+};
+
+export type SendSsoRecoveryLinkErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type SendSsoRecoveryLinkError = SendSsoRecoveryLinkErrors[keyof SendSsoRecoveryLinkErrors];
+
+export type SendSsoRecoveryLinkResponses = {
+  /**
+   * The address the link was sent to
+   */
+  200: {
+    email: string;
+  };
+};
+
+export type SendSsoRecoveryLinkResponse = SendSsoRecoveryLinkResponses[keyof SendSsoRecoveryLinkResponses];
+
 export type GetStepUpData = {
   body?: never;
   path?: never;
@@ -2311,16 +2600,16 @@ export type SendStepUpLinkResponses = {
 
 export type SendStepUpLinkResponse = SendStepUpLinkResponses[keyof SendStepUpLinkResponses];
 
-export type GetDomainsData = {
+export type GetConnectionsData = {
   body?: never;
   path: {
     tenantId: string;
   };
   query?: never;
-  url: '/tenants/{tenantId}/domains';
+  url: '/tenants/{tenantId}/connections';
 };
 
-export type GetDomainsErrors = {
+export type GetConnectionsErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -2347,38 +2636,47 @@ export type GetDomainsErrors = {
   429: TooManyRequestsError;
 };
 
-export type GetDomainsError = GetDomainsErrors[keyof GetDomainsErrors];
+export type GetConnectionsError = GetConnectionsErrors[keyof GetConnectionsErrors];
 
-export type GetDomainsResponses = {
+export type GetConnectionsResponses = {
   /**
-   * List of domains
+   * Connections
    */
-  200: Array<{
-    id: string;
-    tenantId: string;
-    domain: string;
-    verified: boolean;
-    verificationToken: string | null;
-    verifiedAt: string | null;
-    lastCheckedAt: string | null;
-    createdAt: string;
-  }>;
+  200: Array<Connection>;
 };
 
-export type GetDomainsResponse = GetDomainsResponses[keyof GetDomainsResponses];
+export type GetConnectionsResponse = GetConnectionsResponses[keyof GetConnectionsResponses];
 
-export type CreateDomainData = {
+export type CreateConnectionData = {
   body: {
-    domain: string;
+    /**
+     * A federation key in appConfig.federations
+     */
+    issuer: string;
+    /**
+     * The institution's name, as the federation's metadata lists it
+     */
+    displayName: string;
+    /**
+     * The institution's domains as the federation asserts them in the tenant claim; a sign-in must assert one of them
+     */
+    claimValues: Array<string>;
+    /**
+     * The institution's IdP entity ids, all passed as login_hint
+     */
+    idpEntityIds: Array<string>;
+    status?: 'pending' | 'active' | 'disabled';
+    jitProvisioning?: boolean;
+    logoUrl?: string;
   };
   path: {
     tenantId: string;
   };
   query?: never;
-  url: '/tenants/{tenantId}/domains';
+  url: '/tenants/{tenantId}/connections';
 };
 
-export type CreateDomainErrors = {
+export type CreateConnectionErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -2405,36 +2703,28 @@ export type CreateDomainErrors = {
   429: TooManyRequestsError;
 };
 
-export type CreateDomainError = CreateDomainErrors[keyof CreateDomainErrors];
+export type CreateConnectionError = CreateConnectionErrors[keyof CreateConnectionErrors];
 
-export type CreateDomainResponses = {
+export type CreateConnectionResponses = {
   /**
-   * Created domain
+   * Created connection
    */
-  200: {
-    id: string;
-    tenantId: string;
-    domain: string;
-    verified: boolean;
-    verifiedAt: string | null;
-    lastCheckedAt: string | null;
-    createdAt: string;
-  };
+  200: Connection;
 };
 
-export type CreateDomainResponse = CreateDomainResponses[keyof CreateDomainResponses];
+export type CreateConnectionResponse = CreateConnectionResponses[keyof CreateConnectionResponses];
 
-export type DeleteDomainData = {
+export type DeleteConnectionData = {
   body?: never;
   path: {
     tenantId: string;
     id: string;
   };
   query?: never;
-  url: '/tenants/{tenantId}/domains/{id}';
+  url: '/tenants/{tenantId}/connections/{id}';
 };
 
-export type DeleteDomainErrors = {
+export type DeleteConnectionErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -2461,36 +2751,44 @@ export type DeleteDomainErrors = {
   429: TooManyRequestsError;
 };
 
-export type DeleteDomainError = DeleteDomainErrors[keyof DeleteDomainErrors];
+export type DeleteConnectionError = DeleteConnectionErrors[keyof DeleteConnectionErrors];
 
-export type DeleteDomainResponses = {
+export type DeleteConnectionResponses = {
   /**
-   * Domain removed
+   * Removed connection
    */
-  200: {
-    id: string;
-    tenantId: string;
-    domain: string;
-    verified: boolean;
-    verifiedAt: string | null;
-    lastCheckedAt: string | null;
-    createdAt: string;
-  };
+  200: Connection;
 };
 
-export type DeleteDomainResponse = DeleteDomainResponses[keyof DeleteDomainResponses];
+export type DeleteConnectionResponse = DeleteConnectionResponses[keyof DeleteConnectionResponses];
 
-export type GetDomainData = {
-  body?: never;
+export type UpdateConnectionData = {
+  body: {
+    /**
+     * The institution's name, as the federation's metadata lists it
+     */
+    displayName?: string;
+    /**
+     * The institution's domains as the federation asserts them in the tenant claim; a sign-in must assert one of them
+     */
+    claimValues?: Array<string>;
+    /**
+     * The institution's IdP entity ids, all passed as login_hint
+     */
+    idpEntityIds?: Array<string>;
+    status?: 'pending' | 'active' | 'disabled';
+    jitProvisioning?: boolean;
+    logoUrl?: string;
+  };
   path: {
     tenantId: string;
     id: string;
   };
   query?: never;
-  url: '/tenants/{tenantId}/domains/{id}';
+  url: '/tenants/{tenantId}/connections/{id}';
 };
 
-export type GetDomainErrors = {
+export type UpdateConnectionErrors = {
   /**
    * Bad request: problem processing request.
    */
@@ -2517,89 +2815,16 @@ export type GetDomainErrors = {
   429: TooManyRequestsError;
 };
 
-export type GetDomainError = GetDomainErrors[keyof GetDomainErrors];
+export type UpdateConnectionError = UpdateConnectionErrors[keyof UpdateConnectionErrors];
 
-export type GetDomainResponses = {
+export type UpdateConnectionResponses = {
   /**
-   * Domain with verification token
+   * Updated connection
    */
-  200: {
-    id: string;
-    tenantId: string;
-    domain: string;
-    verified: boolean;
-    verificationToken: string | null;
-    verifiedAt: string | null;
-    lastCheckedAt: string | null;
-    createdAt: string;
-  };
+  200: Connection;
 };
 
-export type GetDomainResponse = GetDomainResponses[keyof GetDomainResponses];
-
-export type VerifyDomainData = {
-  body?: never;
-  path: {
-    tenantId: string;
-    id: string;
-  };
-  query?: never;
-  url: '/tenants/{tenantId}/domains/{id}/verify';
-};
-
-export type VerifyDomainErrors = {
-  /**
-   * Bad request: problem processing request.
-   */
-  400: BadRequestError;
-  /**
-   * Unauthorized: authentication required.
-   */
-  401: UnauthorizedError;
-  /**
-   * Forbidden: insufficient permissions.
-   */
-  403: ForbiddenError;
-  /**
-   * Not found: resource does not exist.
-   */
-  404: NotFoundError;
-  /**
-   * Conflict: resource state conflict.
-   */
-  409: ConflictError;
-  /**
-   * Rate limit: too many requests.
-   */
-  429: TooManyRequestsError;
-};
-
-export type VerifyDomainError = VerifyDomainErrors[keyof VerifyDomainErrors];
-
-export type VerifyDomainResponses = {
-  /**
-   * Verification result
-   */
-  200: {
-    success: boolean;
-    domain: {
-      id: string;
-      tenantId: string;
-      domain: string;
-      verified: boolean;
-      verificationToken: string | null;
-      verifiedAt: string | null;
-      lastCheckedAt: string | null;
-      createdAt: string;
-    };
-    diagnostics?: {
-      recordsFound: Array<string>;
-      expectedToken: string;
-    };
-  };
-};
-
-export type VerifyDomainResponse = VerifyDomainResponses[keyof VerifyDomainResponses];
+export type UpdateConnectionResponse = UpdateConnectionResponses[keyof UpdateConnectionResponses];
 
 export type CheckSlugData = {
   body: {
@@ -3168,6 +3393,7 @@ export type RevokeMySessionsResponses = {
       deviceOs: string | null;
       browser: string | null;
       authStrategy: 'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic';
+      connectionId: string | null;
       ipHash: string | null;
       ipSubnetHash: string | null;
       ipCountry: string | null;
@@ -4884,7 +5110,7 @@ export type GetUsersResponses = {
    */
   200: {
     /**
-     * Base user schema with essential fields for identification and display.
+     * The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
      */
     items: Array<
       UserBase & {
@@ -4940,7 +5166,7 @@ export type GetUserError = GetUserErrors[keyof GetUserErrors];
 
 export type GetUserResponses = {
   /**
-   * Base user schema with essential fields for identification and display.
+   * The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
    */
   200: UserBase & {
     lastSeenAt: string | null;
@@ -5105,7 +5331,7 @@ export type CreateOrganizationsResponses = {
    */
   201: {
     /**
-     * The main channel entity is an organization.
+     * The channel entity every other channel nests under, owning memberships and roles. Tenant and organization are 1:1: an organization belongs to one tenant, and that tenant holds no other. Returned with `included` data: the signed-in user's membership, counts and member previews.
      */
     data: Array<
       Organization & {
@@ -7451,7 +7677,7 @@ export type GetMembersResponses = {
    */
   200: {
     /**
-     * Base user schema with essential fields for identification and display.
+     * The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
      */
     items: Array<
       UserBase & {
@@ -7789,7 +8015,7 @@ export type CreateServiceAccountResponses = {
   201: {
     serviceAccount: ServiceAccount;
     /**
-     * A newly issued API key with its plaintext secret.
+     * A newly created API key with its full secret, returned this once only.
      */
     apiKey?: ApiKey & {
       /**
@@ -7966,7 +8192,7 @@ export type CreateApiKeyError = CreateApiKeyErrors[keyof CreateApiKeyErrors];
 
 export type CreateApiKeyResponses = {
   /**
-   * A newly issued API key with its plaintext secret.
+   * A newly created API key with its full secret, returned this once only.
    */
   201: ApiKey & {
     /**
@@ -8415,3 +8641,135 @@ export type GetYjsTokenResponses = {
 };
 
 export type GetYjsTokenResponse = GetYjsTokenResponses[keyof GetYjsTokenResponses];
+
+export type PullYjsDocumentData = {
+  body: {
+    entityType: 'task' | 'label' | 'attachment';
+    entityId: string;
+    /**
+     * The caller's state vector: the answer carries what it lacks
+     */
+    stateVector: string;
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/yjs/pull';
+};
+
+export type PullYjsDocumentErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type PullYjsDocumentError = PullYjsDocumentErrors[keyof PullYjsDocumentErrors];
+
+export type PullYjsDocumentResponses = {
+  /**
+   * Document diff
+   */
+  200: {
+    /**
+     * The document's generation: another one than the caller holds means the server reseeded it
+     */
+    generation: string;
+    /**
+     * What the caller's state vector lacks, as one Yjs update
+     */
+    update: string;
+    /**
+     * The server's state vector, so the caller can post what the server lacks
+     */
+    stateVector: string;
+  };
+};
+
+export type PullYjsDocumentResponse = PullYjsDocumentResponses[keyof PullYjsDocumentResponses];
+
+export type PushYjsUpdateData = {
+  body: {
+    entityType: 'task' | 'label' | 'attachment';
+    entityId: string;
+    /**
+     * The generation the update was made in
+     */
+    generation: string;
+    /**
+     * One Yjs update of at most 512 KB
+     */
+    update: string;
+  };
+  path: {
+    tenantId: string;
+    organizationId: string;
+  };
+  query?: never;
+  url: '/{tenantId}/{organizationId}/yjs/push';
+};
+
+export type PushYjsUpdateErrors = {
+  /**
+   * Bad request: problem processing request.
+   */
+  400: BadRequestError;
+  /**
+   * Unauthorized: authentication required.
+   */
+  401: UnauthorizedError;
+  /**
+   * Forbidden: insufficient permissions.
+   */
+  403: ForbiddenError;
+  /**
+   * Not found: resource does not exist.
+   */
+  404: NotFoundError;
+  /**
+   * Conflict: resource state conflict.
+   */
+  409: ConflictError;
+  /**
+   * Rate limit: too many requests.
+   */
+  429: TooManyRequestsError;
+};
+
+export type PushYjsUpdateError = PushYjsUpdateErrors[keyof PushYjsUpdateErrors];
+
+export type PushYjsUpdateResponses = {
+  /**
+   * Saved
+   */
+  200: {
+    /**
+     * `appended` once the update is logged; `empty` when it carried nothing the document lacked
+     */
+    status: 'appended' | 'empty';
+  };
+};
+
+export type PushYjsUpdateResponse = PushYjsUpdateResponses[keyof PushYjsUpdateResponses];

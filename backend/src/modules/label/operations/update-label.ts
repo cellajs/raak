@@ -2,9 +2,10 @@ import type { z } from '@hono/zod-openapi';
 import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
+import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { dispatchMutation } from '#/lib/mutation-bus';
-import type { LabelModel } from '#/modules/label/label-db';
-import { updateLabel } from '#/modules/label/label-queries';
+import { type LabelModel, labelsTable } from '#/modules/label/label-db';
+import { type UpdateLabelValues, updateLabel } from '#/modules/label/label-queries';
 import { labelContract, type labelUpdateStxBodySchema } from '#/modules/label/label-schema';
 import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
 import { getValidChannel } from '#/permissions';
@@ -60,11 +61,12 @@ export async function updateLabelOp(
     // so each changed scalar gets a fresh server HLC.
     const resolved = serverOrigin ? labelContract.resolveServerUpdateOps(before, rawOps) : labelContract.resolveUpdateOps(before, rawOps, stx);
 
-    const values: Partial<LabelModel> = {
+    const values: UpdateLabelValues = {
       ...(resolved.changed ? resolved.values : {}),
       updatedAt: getIsoDate(),
       updatedBy: ctx.var.user.id,
-      ...(resolved.changed ? { stx: resolved.stx } : {}),
+      // The yjs handler and CDC read the stx as the fields this write wrote: a write that changes none drops the earlier set.
+      stx: resolved.changed ? resolved.stx : stripChangedFields(labelsTable.stx),
     };
 
     if (resolved.changed && 'description' in resolved.values) {

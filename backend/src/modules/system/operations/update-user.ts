@@ -2,7 +2,7 @@ import type { z } from '@hono/zod-openapi';
 import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
-import { checkSlugAvailable } from '#/modules/entities/helpers/check-slug';
+import { checkSlugAvailable } from '#/modules/entities/operations/check-slug';
 import { updateUser } from '#/modules/system/system-queries';
 import { findUserById } from '#/modules/user/user-queries';
 import type { userUpdateBodySchema } from '#/modules/user/user-schema';
@@ -41,7 +41,7 @@ export async function updateUserOp(ctx: UserContext, id: string, input: UpdateUs
   invalidateCache.user(updatedUser.id);
   log.info('User updated', { userId: updatedUser.id });
 
-  // Re-select to include the user_counters subqueries
+  // Re-select to include the activity times of the user's actors row
   const userWithActivity = await findUserById(ctx, { id: updatedUser.id });
 
   return userWithActivity;

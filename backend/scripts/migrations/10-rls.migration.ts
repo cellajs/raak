@@ -42,7 +42,6 @@ export function classifyRlsTables(): { rlsTables: string[]; fullCrudTables: stri
     'users',
     'sessions',
     'devices',
-    'user_counters',
     'tokens',
     'passkeys',
     'passkey_challenges',
@@ -57,7 +56,7 @@ export function classifyRlsTables(): { rlsTables: string[]; fullCrudTables: stri
     'notification_preferences',
     'push_subscriptions',
     'product_counters',
-    'domains',
+    'connections',
     'tenants',
     ...appFullCrudTables,
   ];

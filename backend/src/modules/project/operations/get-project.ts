@@ -2,7 +2,7 @@ import type { UserContext } from '#/core/context';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
 import { getTaskStatusCounts } from '#/modules/task/helpers/get-task-status-counts';
-import { withAuditUser } from '#/modules/user/helpers/audit-user';
+import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions';
 
 export async function getProjectOp(ctx: UserContext, id: string, opts: { bySlug?: boolean; include: string[] }) {

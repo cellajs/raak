@@ -3,7 +3,7 @@
 import * as z from 'zod';
 
 /**
- * Minimal user data for references.
+ * The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.
  */
 export const zUserMinimalBase = z.object({
   id: z.string(),
@@ -14,7 +14,7 @@ export const zUserMinimalBase = z.object({
 });
 
 /**
- * Base user schema with essential fields for identification and display.
+ * The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
  */
 export const zUserBase = z.object({
   id: z.string(),
@@ -30,7 +30,7 @@ export const zUserBase = z.object({
 });
 
 /**
- * Base schema for entities with memberships (e.g. organization).
+ * The fields every channel entity shares, such as organization; a channel owns memberships and roles. Used where a response names a channel without its details, such as the channel an invitation is for.
  */
 export const zChannelBase = z.object({
   id: z.string(),
@@ -45,7 +45,7 @@ export const zChannelBase = z.object({
 });
 
 /**
- * Base schema for content entities with creator tracking (e.g. attachment).
+ * The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields.
  */
 export const zProductBase = z.object({
   id: z.string(),
@@ -60,7 +60,7 @@ export const zProductBase = z.object({
 });
 
 /**
- * Core membership fields shared across active and inactive memberships.
+ * A user's membership in a channel without its audit fields: the role it grants, plus the member's own archive, mute and menu order. Returned for the signed-in user's own memberships, and as `included.membership` on a channel they belong to.
  */
 export const zMembershipBase = z.object({
   id: z.uuid(),
@@ -78,7 +78,7 @@ export const zMembershipBase = z.object({
 });
 
 /**
- * Sync transaction metadata for offline and realtime support, idempotency and HLC-based conflict resolution.
+ * The sync envelope on every product write: a mutation ID, a source ID and per-field timestamps. Clients send it with each create and update; the server merges concurrent edits by its timestamps, and a client recognizes its own writes coming back by the source ID.
  */
 export const zStxBase = z.object({
   mutationId: z.string().max(36),
@@ -88,7 +88,7 @@ export const zStxBase = z.object({
 });
 
 /**
- * Realtime notification delivered via SSE for entity and membership changes.
+ * A live notification that a product entity or a membership changed, naming the entity, its path and sequence range rather than the row. It arrives as a `change` event on `/entities/app/stream`; the client then fetches the changed rows through the regular API.
  */
 export const zStreamNotification = z.object({
   kind: z.enum(['product', 'membership']),
@@ -120,7 +120,7 @@ export const zStreamNotification = z.object({
 });
 
 /**
- * Standard error response returned by all API endpoints.
+ * The body of every error response. `type` is a stable code to branch on, `message` is readable text, and `requestId` identifies the request in the server logs.
  */
 export const zApiError = z.object({
   name: z.string(),
@@ -139,7 +139,7 @@ export const zApiError = z.object({
 });
 
 /**
- * Error returned when the request is malformed or contains invalid data.
+ * The request is malformed or fails validation (400). `type` names the problem, such as `invalid_request`.
  */
 export const zBadRequestError = zApiError.and(
   z.object({
@@ -148,7 +148,7 @@ export const zBadRequestError = zApiError.and(
 );
 
 /**
- * Error returned when authentication is missing or invalid.
+ * The request carries no valid session, API key or access token, or it expired (401). Sign in again, or send a valid key or token.
  */
 export const zUnauthorizedError = zApiError.and(
   z.object({
@@ -157,7 +157,7 @@ export const zUnauthorizedError = zApiError.and(
 );
 
 /**
- * Error returned when the user lacks permission for the requested action.
+ * The caller is known but may not do this (403): their role denies the action, a recent step-up is required, or the action is refused while impersonating. `type` names the reason, such as `step_up_required`.
  */
 export const zForbiddenError = zApiError.and(
   z.object({
@@ -166,7 +166,7 @@ export const zForbiddenError = zApiError.and(
 );
 
 /**
- * Error returned when the requested resource cannot be found.
+ * The resource does not exist, or the caller may not read it (404). Both get the same answer, so a response never confirms that an id exists.
  */
 export const zNotFoundError = zApiError.and(
   z.object({
@@ -175,7 +175,7 @@ export const zNotFoundError = zApiError.and(
 );
 
 /**
- * Error returned when the request conflicts with current resource state.
+ * The request conflicts with the current state (409), such as a link that belongs to another account (`user_mismatch`) or a create already in progress. Reload the current state before retrying.
  */
 export const zConflictError = zApiError.and(
   z.object({
@@ -184,7 +184,7 @@ export const zConflictError = zApiError.and(
 );
 
 /**
- * Error returned when rate limits are exceeded.
+ * A rate limit refused the request (429). The `Retry-After` header says when to try again; an operation's rate limiters show what is counted.
  */
 export const zTooManyRequestsError = zApiError.and(
   z.object({
@@ -193,7 +193,52 @@ export const zTooManyRequestsError = zApiError.and(
 );
 
 /**
- * A user with profile data and activity timestamps.
+ * The sign-in entry of one institution at one organization: the federation it goes through, the institution, the organization, and whether it is active. Public by the connection's id, which is the link an institution shares.
+ */
+export const zSsoEntry = z.object({
+  id: z.string(),
+  status: z.enum(['pending', 'active', 'disabled']),
+  federation: z.object({
+    key: z.string(),
+    label: z.string(),
+  }),
+  institution: z.object({
+    displayName: z.string(),
+    logoUrl: z.string().nullable(),
+  }),
+  organization: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      thumbnailUrl: z.string().nullable(),
+    })
+    .nullable(),
+});
+
+/**
+ * A tenant's trust in an external party that asserts user identities: an institution reached through an SSO federation, whose members sign in to the tenant's organization. Its id is the public key of the tenant's SSO entry page. System admins manage connections per tenant; `pending` until the institution activated the service at the federation.
+ */
+export const zConnection = z.object({
+  id: z.uuid(),
+  tenantId: z.string().max(24),
+  kind: z.enum(['sso']),
+  issuer: z.string().max(255),
+  claimValues: z.array(z.string()),
+  displayName: z.string().max(255),
+  status: z.enum(['pending', 'active', 'disabled']),
+  jitProvisioning: z.boolean(),
+  config: z.object({
+    idpEntityIds: z.array(z.string().min(1).max(255)).optional(),
+    logoUrl: z.url().max(255).optional(),
+  }),
+  createdBy: z.uuid().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+});
+
+/**
+ * A full user account: profile, preferences such as language and newsletter, the MFA setting and activity timestamps. Returned to the user themselves and to system admins; other users see the `UserBase` fields.
  */
 export const zUser = z.object({
   createdAt: z.string(),
@@ -216,23 +261,34 @@ export const zUser = z.object({
   updatedAt: z.string().nullable(),
   updatedBy: z.uuid().nullable(),
   lastSeenAt: z.string().nullable(),
-  lastStartedAt: z.string().nullable(),
   lastSignInAt: z.string().nullable(),
 });
 
 /**
- * The currently authenticated user with their system admin status.
+ * The signed-in user, with whether they have system admin access on this request and, in an impersonation, the system admin acting as them. A client reads it to learn who is signed in.
  */
 export const zMe = z.object({
   user: zUser,
   isSystemAdmin: z.boolean(),
+  impersonator: zUserMinimalBase.nullable(),
 });
 
 /**
- * Authentication metadata for the current user session.
+ * How the signed-in user signs in: connected OAuth providers, the institutions of their organizations (connected or not), passkeys, whether TOTP is set up, and their live sessions. The account page lists it, where sessions can be ended and sign-in methods changed.
  */
 export const zMeAuthData = z.object({
   enabledOAuth: z.array(z.enum(['github'])),
+  institutions: z.array(
+    z.object({
+      connectionId: z.string(),
+      displayName: z.string(),
+      federation: z.object({
+        key: z.string(),
+        label: z.string(),
+      }),
+      connected: z.boolean(),
+    }),
+  ),
   hasTotp: z.boolean(),
   sessions: z.array(
     z.object({
@@ -244,6 +300,7 @@ export const zMeAuthData = z.object({
       deviceOs: z.string().max(255).nullable(),
       browser: z.string().max(255).nullable(),
       authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']),
+      connectionId: z.uuid().nullable(),
       ipHash: z.string().max(64).nullable(),
       ipSubnetHash: z.string().max(64).nullable(),
       ipCountry: z.string().max(2).nullable(),
@@ -276,7 +333,7 @@ export const zMeAuthData = z.object({
 });
 
 /**
- * A membership record for a user who has not yet accepted an invitation.
+ * An invitation to join a channel that is not accepted yet: the invited email, the role and who invited. It becomes a membership once accepted; the signed-in user's invitations list it with the channel it is for.
  */
 export const zInactiveMembership = z.object({
   createdAt: z.string(),
@@ -286,7 +343,6 @@ export const zInactiveMembership = z.object({
   channelId: z.uuid(),
   email: z.string().max(255),
   userId: z.uuid().nullable(),
-  tokenId: z.uuid().nullable(),
   role: z.enum(['admin', 'member', 'guest']),
   rejectedAt: z.string().nullable(),
   remindedAt: z.string().nullable(),
@@ -297,7 +353,7 @@ export const zInactiveMembership = z.object({
 });
 
 /**
- * A signed token authorizing file uploads to the configured storage provider.
+ * Permission to upload files with one upload template, signed for the upload service, with the storage prefix the files land under. A client requests one before uploading; the template decides whether files are stored public or private.
  */
 export const zUploadToken = z.object({
   publicBucket: z.boolean(),
@@ -315,7 +371,7 @@ export const zUploadToken = z.object({
 });
 
 /**
- * An OAuth consent (grant) of the current user.
+ * An app the signed-in user consented to: its OAuth client, the scopes it may use and when the consent expires. Listed under Connected apps in account settings, where the user can revoke it.
  */
 export const zConnectedApp = z.object({
   id: z.string(),
@@ -400,7 +456,7 @@ export const zProject = z.object({
 });
 
 /**
- * A contact or waitlist submission from an unauthenticated user.
+ * A message from the public site: a contact message, a waitlist sign-up or a newsletter subscription. Anyone can send one, signed in or not; system admins list them.
  */
 export const zRequest = z.object({
   createdAt: z.string(),
@@ -468,7 +524,7 @@ export const zTask = z.object({
 });
 
 /**
- * A tenant representing an isolated data partition for multi-tenancy.
+ * The top-level isolation and billing boundary. Tenant and organization are 1:1: a tenant holds one organization, or none until that organization is created. System admins list and update tenants; a signed-in user can create one of their own.
  */
 export const zTenant = z.object({
   id: z.string().max(24),
@@ -488,7 +544,6 @@ export const zTenant = z.object({
   subscriptionPlan: z.string().max(255).nullable(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
-  domainsCount: z.int(),
   organization: z
     .object({
       id: z.string(),
@@ -501,7 +556,7 @@ export const zTenant = z.object({
 });
 
 /**
- * RFC 9728 metadata of a protected resource: the authorization servers that issue its tokens and the scopes it accepts.
+ * How an OAuth client gets an access token for this API or an MCP endpoint (RFC 9728): the authorization servers that issue tokens and the scopes accepted. A client finds it through the `WWW-Authenticate` header of a 401 response.
  */
 export const zProtectedResourceMetadata = z.object({
   resource: z.string(),
@@ -512,7 +567,7 @@ export const zProtectedResourceMetadata = z.object({
 });
 
 /**
- * The main channel entity is an organization.
+ * The channel entity every other channel nests under, owning memberships and roles. Tenant and organization are 1:1: an organization belongs to one tenant, and that tenant holds no other. Returned with `included` data: the signed-in user's membership, counts and member previews.
  */
 export const zOrganization = z.object({
   createdAt: z.string(),
@@ -651,7 +706,7 @@ export const zWorkspace = z.object({
 });
 
 /**
- * A product entity for file attachment metadata.
+ * A file in an organization: a product entity that syncs to clients and works offline. It holds the file metadata and storage keys, not the file itself; a client fetches the file through a signed URL.
  */
 export const zAttachment = z.object({
   createdAt: z.string(),
@@ -716,7 +771,7 @@ export const zLabel = z.object({
 });
 
 /**
- * The actor an API key runs as, with its role bindings.
+ * An actor that is not a person, in one tenant: API keys run as it, and it holds role bindings like a member holds memberships. An organization admin creates one, for example with Create API key in organization settings.
  */
 export const zServiceAccount = z.object({
   id: z.uuid(),
@@ -739,7 +794,7 @@ export const zServiceAccount = z.object({
 });
 
 /**
- * An API key of a service account; the secret is never returned after creation.
+ * A secret key a service account authenticates with, sent as `Authorization: Bearer` or `x-api-key`. Only its prefix and last four characters are returned after creation; it can expire and be revoked.
  */
 export const zApiKey = z.object({
   id: z.uuid(),
@@ -779,6 +834,12 @@ export const zApiKey = z.object({
 export const zGetAuthHealthResponse = z.object({
   restrictedMode: z.boolean(),
   retryAfter: z.number().optional(),
+  federations: z.array(
+    z.object({
+      key: z.string(),
+      label: z.string(),
+    }),
+  ),
 });
 
 export const zCheckEmailBody = z.object({
@@ -809,6 +870,7 @@ export const zGetTokenDataResponse = z.object({
   email: z.email(),
   userId: z.string().optional(),
   inactiveMembershipId: z.string().optional(),
+  ssoConnectionId: z.string().optional(),
   invitation: z
     .object({
       entityType: z.enum(['organization', 'workspace', 'project']),
@@ -1015,6 +1077,48 @@ export const zMicrosoftCallbackQuery = z.object({
   error_uri: z.string().optional(),
 });
 
+export const zGetSsoEntryPath = z.object({
+  connectionId: z.string().max(50),
+});
+
+/**
+ * SSO entry
+ */
+export const zGetSsoEntryResponse = zSsoEntry;
+
+export const zStartSsoPath = z.object({
+  connectionId: z.string().max(50),
+});
+
+export const zStartSsoQuery = z.object({
+  type: z.enum(['auth', 'connect', 'invite', 'verify']).optional().default('auth'),
+  redirectAfter: z.string().optional(),
+});
+
+export const zStartSsoFederationPath = z.object({
+  federation: z.string().min(1).max(64),
+});
+
+export const zStartSsoFederationQuery = z.object({
+  type: z.enum(['auth', 'connect', 'invite', 'verify']).optional().default('auth'),
+  redirectAfter: z.string().optional(),
+});
+
+export const zSsoCallbackQuery = z.object({
+  code: z.string().optional(),
+  state: z.string(),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
+  error_uri: z.string().optional(),
+});
+
+/**
+ * The address the link was sent to
+ */
+export const zSendSsoRecoveryLinkResponse = z.object({
+  email: z.string(),
+});
+
 /**
  * Step-up state
  */
@@ -1067,115 +1171,90 @@ export const zSendStepUpLinkBody = z.object({
  */
 export const zSendStepUpLinkResponse = z.void();
 
-export const zGetDomainsPath = z.object({
+export const zGetConnectionsPath = z.object({
   tenantId: z.string().max(50),
 });
 
 /**
- * List of domains
+ * Connections
  */
-export const zGetDomainsResponse = z.array(
-  z.object({
-    id: z.uuid(),
-    tenantId: z.string().max(24),
-    domain: z.string().max(255),
-    verified: z.boolean(),
-    verificationToken: z.string().max(50).nullable(),
-    verifiedAt: z.string().nullable(),
-    lastCheckedAt: z.string().nullable(),
-    createdAt: z.string(),
-  }),
-);
+export const zGetConnectionsResponse = z.array(zConnection);
 
-export const zCreateDomainBody = z.object({
-  domain: z
+export const zCreateConnectionBody = z.object({
+  issuer: z.string(),
+  displayName: z
     .string()
-    .min(4)
+    .min(2)
     .max(255)
-    .regex(/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/),
+    .regex(/^[\p{L}\d\-., '&()]+$/u),
+  claimValues: z
+    .array(
+      z
+        .string()
+        .min(4)
+        .max(255)
+        .regex(/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/),
+    )
+    .min(1)
+    .max(20),
+  idpEntityIds: z.array(z.string().min(1).max(255)).min(1).max(10),
+  status: z.enum(['pending', 'active', 'disabled']).optional(),
+  jitProvisioning: z.boolean().optional(),
+  logoUrl: z.url().max(255).optional(),
 });
 
-export const zCreateDomainPath = z.object({
+export const zCreateConnectionPath = z.object({
   tenantId: z.string().max(50),
 });
 
 /**
- * Created domain
+ * Created connection
  */
-export const zCreateDomainResponse = z.object({
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  domain: z.string().max(255),
-  verified: z.boolean(),
-  verifiedAt: z.string().nullable(),
-  lastCheckedAt: z.string().nullable(),
-  createdAt: z.string(),
-});
+export const zCreateConnectionResponse = zConnection;
 
-export const zDeleteDomainPath = z.object({
-  tenantId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Domain removed
- */
-export const zDeleteDomainResponse = z.object({
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  domain: z.string().max(255),
-  verified: z.boolean(),
-  verifiedAt: z.string().nullable(),
-  lastCheckedAt: z.string().nullable(),
-  createdAt: z.string(),
-});
-
-export const zGetDomainPath = z.object({
+export const zDeleteConnectionPath = z.object({
   tenantId: z.string().max(50),
   id: z.string().max(50),
 });
 
 /**
- * Domain with verification token
+ * Removed connection
  */
-export const zGetDomainResponse = z.object({
-  id: z.uuid(),
-  tenantId: z.string().max(24),
-  domain: z.string().max(255),
-  verified: z.boolean(),
-  verificationToken: z.string().max(50).nullable(),
-  verifiedAt: z.string().nullable(),
-  lastCheckedAt: z.string().nullable(),
-  createdAt: z.string(),
-});
+export const zDeleteConnectionResponse = zConnection;
 
-export const zVerifyDomainPath = z.object({
-  tenantId: z.string().max(50),
-  id: z.string().max(50),
-});
-
-/**
- * Verification result
- */
-export const zVerifyDomainResponse = z.object({
-  success: z.boolean(),
-  domain: z.object({
-    id: z.uuid(),
-    tenantId: z.string().max(24),
-    domain: z.string().max(255),
-    verified: z.boolean(),
-    verificationToken: z.string().max(50).nullable(),
-    verifiedAt: z.string().nullable(),
-    lastCheckedAt: z.string().nullable(),
-    createdAt: z.string(),
-  }),
-  diagnostics: z
-    .object({
-      recordsFound: z.array(z.string()),
-      expectedToken: z.string(),
-    })
+export const zUpdateConnectionBody = z.object({
+  displayName: z
+    .string()
+    .min(2)
+    .max(255)
+    .regex(/^[\p{L}\d\-., '&()]+$/u)
     .optional(),
+  claimValues: z
+    .array(
+      z
+        .string()
+        .min(4)
+        .max(255)
+        .regex(/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/),
+    )
+    .min(1)
+    .max(20)
+    .optional(),
+  idpEntityIds: z.array(z.string().min(1).max(255)).min(1).max(10).optional(),
+  status: z.enum(['pending', 'active', 'disabled']).optional(),
+  jitProvisioning: z.boolean().optional(),
+  logoUrl: z.url().max(255).optional(),
 });
+
+export const zUpdateConnectionPath = z.object({
+  tenantId: z.string().max(50),
+  id: z.string().max(50),
+});
+
+/**
+ * Updated connection
+ */
+export const zUpdateConnectionResponse = zConnection;
 
 export const zCheckSlugBody = z.object({
   slug: z
@@ -1341,6 +1420,7 @@ export const zRevokeMySessionsResponse = z.object({
       deviceOs: z.string().max(255).nullable(),
       browser: z.string().max(255).nullable(),
       authStrategy: z.enum(['github', 'google', 'microsoft', 'passkey', 'totp', 'email', 'magic']),
+      connectionId: z.uuid().nullable(),
       ipHash: z.string().max(64).nullable(),
       ipSubnetHash: z.string().max(64).nullable(),
       ipCountry: z.string().max(2).nullable(),
@@ -1847,7 +1927,7 @@ export const zGetUserQuery = z.object({
 });
 
 /**
- * Base user schema with essential fields for identification and display.
+ * The user fields shown to other users: name, slug, profile images, description and email. User lookups and member lists return it with the last-seen time added; member lists add the membership too.
  */
 export const zGetUserResponse = zUserBase.and(
   z.object({
@@ -3300,7 +3380,7 @@ export const zCreateApiKeyPath = z.object({
 });
 
 /**
- * A newly issued API key with its plaintext secret.
+ * A newly created API key with its full secret, returned this once only.
  */
 export const zCreateApiKeyResponse = zApiKey.and(
   z.object({
@@ -3479,4 +3559,43 @@ export const zGetYjsTokenQuery = z.object({
  */
 export const zGetYjsTokenResponse = z.object({
   token: z.string(),
+});
+
+export const zPullYjsDocumentBody = z.object({
+  entityType: z.enum(['task', 'label', 'attachment']),
+  entityId: z.string().max(50),
+  stateVector: z.string().max(262144),
+});
+
+export const zPullYjsDocumentPath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Document diff
+ */
+export const zPullYjsDocumentResponse = z.object({
+  generation: z.uuid(),
+  update: z.string(),
+  stateVector: z.string(),
+});
+
+export const zPushYjsUpdateBody = z.object({
+  entityType: z.enum(['task', 'label', 'attachment']),
+  entityId: z.string().max(50),
+  generation: z.uuid(),
+  update: z.string().max(699051),
+});
+
+export const zPushYjsUpdatePath = z.object({
+  tenantId: z.string().max(50),
+  organizationId: z.string().max(50),
+});
+
+/**
+ * Saved
+ */
+export const zPushYjsUpdateResponse = z.object({
+  status: z.enum(['appended', 'empty']),
 });
