@@ -255,6 +255,7 @@ export const zUser = z.object({
   lastName: z.string().max(255).nullable(),
   language: z.enum(['en', 'nl']),
   newsletter: z.boolean(),
+  contrast: z.enum(['system', 'more']),
   userFlags: z.object({
     finishedOnboarding: z.boolean(),
   }),
@@ -583,13 +584,44 @@ export const zOrganization = z.object({
   updatedBy: zUserMinimalBase.nullable(),
   publishedAt: z.string().nullable(),
   publicAt: z.string().nullable(),
-  toolsConfig: z.record(
-    z.string(),
-    z.object({
-      order: z.array(z.string()).optional(),
-      hidden: z.array(z.string()).optional(),
-    }),
-  ),
+  toolsConfig: z.object({
+    'organization.settings': z
+      .object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+      })
+      .optional(),
+    'organization.tabs': z
+      .object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+      })
+      .optional(),
+    'workspace.settings': z
+      .object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+      })
+      .optional(),
+    'workspace.tabs': z
+      .object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+      })
+      .optional(),
+    'project.settings': z
+      .object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+      })
+      .optional(),
+    'project.tabs': z
+      .object({
+        order: z.array(z.string()).optional(),
+        hidden: z.array(z.string()).optional(),
+      })
+      .optional(),
+  }),
   path: z.string().nullable(),
   shortName: z.string().max(255).nullable(),
   country: z.string().max(255).nullable(),
@@ -1341,6 +1373,7 @@ export const zGetMeResponse = zMe;
 
 export const zUpdateMeBody = z.object({
   bannerUrl: z.string().max(2048).nullish(),
+  contrast: z.enum(['system', 'more']).optional(),
   description: z.string().max(1000000).nullish(),
   firstName: z
     .string()
@@ -1707,6 +1740,7 @@ export const zDeleteUsersResponse = z.object({
 
 export const zUpdateUserBody = z.object({
   bannerUrl: z.string().max(2048).nullish(),
+  contrast: z.enum(['system', 'more']).optional(),
   description: z.string().max(1000000).nullish(),
   firstName: z
     .string()
@@ -2144,13 +2178,44 @@ export const zUpdateOrganizationBody = z.object({
     })
     .optional(),
   toolsConfig: z
-    .record(
-      z.string(),
-      z.object({
-        order: z.array(z.string()).optional(),
-        hidden: z.array(z.string()).optional(),
-      }),
-    )
+    .object({
+      'organization.settings': z
+        .object({
+          order: z.array(z.string()).optional(),
+          hidden: z.array(z.string()).optional(),
+        })
+        .optional(),
+      'organization.tabs': z
+        .object({
+          order: z.array(z.string()).optional(),
+          hidden: z.array(z.string()).optional(),
+        })
+        .optional(),
+      'workspace.settings': z
+        .object({
+          order: z.array(z.string()).optional(),
+          hidden: z.array(z.string()).optional(),
+        })
+        .optional(),
+      'workspace.tabs': z
+        .object({
+          order: z.array(z.string()).optional(),
+          hidden: z.array(z.string()).optional(),
+        })
+        .optional(),
+      'project.settings': z
+        .object({
+          order: z.array(z.string()).optional(),
+          hidden: z.array(z.string()).optional(),
+        })
+        .optional(),
+      'project.tabs': z
+        .object({
+          order: z.array(z.string()).optional(),
+          hidden: z.array(z.string()).optional(),
+        })
+        .optional(),
+    })
     .optional(),
 });
 

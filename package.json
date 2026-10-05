@@ -31,7 +31,6 @@
     "check": "pnpm sdk && pnpm --filter backend ts && pnpm -r --filter '!backend' ts && pnpm --filter shared lens:check && pnpm lint:fix",
     "clean": "rimraf backend/dist frontend/dist frontend/stats",
     "deps:bundle:analyze": "cross-env ANALYZE=true pnpm --filter frontend build",
-    "deps:unused": "knip --dependencies",
     "dev": "pnpm run clean && cross-env pnpm --reporter=append-only -r --parallel --stream dev",
     "dev:migration": "pnpm run clean && cross-env DATABASE_URL=postgres://postgres:postgres@0.0.0.0:5555/postgres DATABASE_ADMIN_URL=postgres://postgres:postgres@0.0.0.0:5555/postgres pnpm --reporter=append-only -r --parallel --stream dev",
     "dev:proxy": "pnpm run clean && cross-env pnpm --reporter=append-only -r --parallel --stream --filter backend --filter cdc-worker --filter frontend --filter proxy dev",
@@ -69,7 +68,8 @@
     "test:update": "pnpm docker:test && cross-env TEST_MODE=core vitest run -u",
     "ts": "pnpm -r ts",
     "tsperf": "pnpm --filter backend tsperf && pnpm --filter frontend tsperf && pnpm --filter cdc-worker tsperf && pnpm --filter yjs-worker tsperf",
-    "tunnel": "pnpm run clean && cross-env pnpm --reporter=append-only -r --parallel --stream tunnel"
+    "tunnel": "pnpm run clean && cross-env pnpm --reporter=append-only -r --parallel --stream tunnel",
+    "unused": "knip --dependencies --include files"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

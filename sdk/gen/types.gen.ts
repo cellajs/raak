@@ -324,6 +324,7 @@ export type User = {
   lastName: string | null;
   language: 'en' | 'nl';
   newsletter: boolean;
+  contrast: 'system' | 'more';
   userFlags: {
     finishedOnboarding: boolean;
   };
@@ -658,7 +659,27 @@ export type Organization = {
   publishedAt: string | null;
   publicAt: string | null;
   toolsConfig: {
-    [key: string]: {
+    'organization.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'organization.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'workspace.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'workspace.tabs'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'project.settings'?: {
+      order?: Array<string>;
+      hidden?: Array<string>;
+    };
+    'project.tabs'?: {
       order?: Array<string>;
       hidden?: Array<string>;
     };
@@ -3144,6 +3165,7 @@ export type GetMeResponse = GetMeResponses[keyof GetMeResponses];
 export type UpdateMeData = {
   body: {
     bannerUrl?: string | null;
+    contrast?: 'system' | 'more';
     description?: string | null;
     firstName?: string | null;
     lastName?: string | null;
@@ -4530,6 +4552,7 @@ export type DeleteUsersResponse = DeleteUsersResponses[keyof DeleteUsersResponse
 export type UpdateUserData = {
   body: {
     bannerUrl?: string | null;
+    contrast?: 'system' | 'more';
     description?: string | null;
     firstName?: string | null;
     lastName?: string | null;
@@ -5532,7 +5555,27 @@ export type UpdateOrganizationData = {
       }>;
     };
     toolsConfig?: {
-      [key: string]: {
+      'organization.settings'?: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+      };
+      'organization.tabs'?: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+      };
+      'workspace.settings'?: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+      };
+      'workspace.tabs'?: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+      };
+      'project.settings'?: {
+        order?: Array<string>;
+        hidden?: Array<string>;
+      };
+      'project.tabs'?: {
         order?: Array<string>;
         hidden?: Array<string>;
       };

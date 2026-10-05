@@ -823,6 +823,11 @@
               "enum": ["en", "nl"]
             },
             "newsletter": { "type": "boolean", "required": true },
+            "contrast": {
+              "type": "string",
+              "required": true,
+              "enum": ["system", "more"]
+            },
             "userFlags": {
               "type": "object",
               "required": true,
@@ -885,6 +890,7 @@
         "bannerUrl": null,
         "language": "en",
         "newsletter": true,
+        "contrast": "system",
         "mfaRequired": false,
         "userFlags": { "finishedOnboarding": false },
         "createdAt": "2024-05-02T20:53:18.498Z",
@@ -1419,12 +1425,54 @@
         "toolsConfig": {
           "type": "object",
           "required": true,
-          "additionalProperties": {
-            "type": "object",
-            "required": false,
-            "properties": {
-              "order": { "type": "array", "required": false, "itemType": "string" },
-              "hidden": { "type": "array", "required": false, "itemType": "string" }
+          "properties": {
+            "organization.settings": {
+              "type": "object",
+              "required": false,
+              "properties": {
+                "order": { "type": "array", "required": false, "itemType": "string" },
+                "hidden": { "type": "array", "required": false, "itemType": "string" }
+              }
+            },
+            "organization.tabs": {
+              "type": "object",
+              "required": false,
+              "properties": {
+                "order": { "type": "array", "required": false, "itemType": "string" },
+                "hidden": { "type": "array", "required": false, "itemType": "string" }
+              }
+            },
+            "workspace.settings": {
+              "type": "object",
+              "required": false,
+              "properties": {
+                "order": { "type": "array", "required": false, "itemType": "string" },
+                "hidden": { "type": "array", "required": false, "itemType": "string" }
+              }
+            },
+            "workspace.tabs": {
+              "type": "object",
+              "required": false,
+              "properties": {
+                "order": { "type": "array", "required": false, "itemType": "string" },
+                "hidden": { "type": "array", "required": false, "itemType": "string" }
+              }
+            },
+            "project.settings": {
+              "type": "object",
+              "required": false,
+              "properties": {
+                "order": { "type": "array", "required": false, "itemType": "string" },
+                "hidden": { "type": "array", "required": false, "itemType": "string" }
+              }
+            },
+            "project.tabs": {
+              "type": "object",
+              "required": false,
+              "properties": {
+                "order": { "type": "array", "required": false, "itemType": "string" },
+                "hidden": { "type": "array", "required": false, "itemType": "string" }
+              }
             }
           }
         },
@@ -2727,6 +2775,11 @@
           "enum": ["en", "nl"]
         },
         "newsletter": { "type": "boolean", "required": true },
+        "contrast": {
+          "type": "string",
+          "required": true,
+          "enum": ["system", "more"]
+        },
         "userFlags": {
           "type": "object",
           "required": true,
@@ -2773,6 +2826,7 @@
       "bannerUrl": null,
       "language": "en",
       "newsletter": false,
+      "contrast": "system",
       "mfaRequired": false,
       "userFlags": { "finishedOnboarding": false },
       "createdAt": "2024-06-15T02:53:22.776Z",

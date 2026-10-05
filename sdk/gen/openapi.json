@@ -1385,6 +1385,7 @@
             "bannerUrl": null,
             "language": "en",
             "newsletter": true,
+            "contrast": "system",
             "mfaRequired": false,
             "userFlags": {
               "finishedOnboarding": false
@@ -1455,6 +1456,10 @@
           "newsletter": {
             "type": "boolean"
           },
+          "contrast": {
+            "type": "string",
+            "enum": ["system", "more"]
+          },
           "userFlags": {
             "type": "object",
             "properties": {
@@ -1493,6 +1498,7 @@
           "lastName",
           "language",
           "newsletter",
+          "contrast",
           "userFlags",
           "updatedAt",
           "updatedBy",
@@ -1513,6 +1519,7 @@
           "bannerUrl": null,
           "language": "en",
           "newsletter": false,
+          "contrast": "system",
           "mfaRequired": false,
           "userFlags": {
             "finishedOnboarding": false
@@ -2851,19 +2858,106 @@
           },
           "toolsConfig": {
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "order": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
+            "properties": {
+              "organization.settings": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hidden": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
-                },
-                "hidden": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
+                }
+              },
+              "organization.tabs": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hidden": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "workspace.settings": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hidden": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "workspace.tabs": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hidden": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "project.settings": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hidden": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "project.tabs": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hidden": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -7236,6 +7330,7 @@
                     "bannerUrl": null,
                     "language": "en",
                     "newsletter": true,
+                    "contrast": "system",
                     "mfaRequired": false,
                     "userFlags": {
                       "finishedOnboarding": false
@@ -7298,6 +7393,10 @@
                   "bannerUrl": {
                     "type": ["string", "null"],
                     "maxLength": 2048
+                  },
+                  "contrast": {
+                    "type": "string",
+                    "enum": ["system", "more"]
                   },
                   "description": {
                     "type": ["string", "null"],
@@ -7363,6 +7462,7 @@
                   "bannerUrl": null,
                   "language": "en",
                   "newsletter": false,
+                  "contrast": "system",
                   "mfaRequired": false,
                   "userFlags": {
                     "finishedOnboarding": false
@@ -7485,6 +7585,7 @@
                   "bannerUrl": null,
                   "language": "en",
                   "newsletter": false,
+                  "contrast": "system",
                   "mfaRequired": false,
                   "userFlags": {
                     "finishedOnboarding": false
@@ -9747,6 +9848,10 @@
                     "type": ["string", "null"],
                     "maxLength": 2048
                   },
+                  "contrast": {
+                    "type": "string",
+                    "enum": ["system", "more"]
+                  },
                   "description": {
                     "type": ["string", "null"],
                     "maxLength": 1000000
@@ -9803,6 +9908,7 @@
                   "bannerUrl": null,
                   "language": "en",
                   "newsletter": false,
+                  "contrast": "system",
                   "mfaRequired": false,
                   "userFlags": {
                     "finishedOnboarding": false
@@ -11074,6 +11180,7 @@
                       "bannerUrl": null,
                       "language": "en",
                       "newsletter": false,
+                      "contrast": "system",
                       "mfaRequired": false,
                       "userFlags": {
                         "finishedOnboarding": false
@@ -11113,6 +11220,7 @@
                       "bannerUrl": null,
                       "language": "en",
                       "newsletter": true,
+                      "contrast": "system",
                       "mfaRequired": false,
                       "userFlags": {
                         "finishedOnboarding": false
@@ -11272,6 +11380,7 @@
                   "bannerUrl": null,
                   "language": "en",
                   "newsletter": false,
+                  "contrast": "system",
                   "mfaRequired": false,
                   "userFlags": {
                     "finishedOnboarding": false
@@ -12817,19 +12926,106 @@
                   },
                   "toolsConfig": {
                     "type": "object",
-                    "additionalProperties": {
-                      "type": "object",
-                      "properties": {
-                        "order": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
+                    "properties": {
+                      "organization.settings": {
+                        "type": "object",
+                        "properties": {
+                          "order": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "hidden": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           }
-                        },
-                        "hidden": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
+                        }
+                      },
+                      "organization.tabs": {
+                        "type": "object",
+                        "properties": {
+                          "order": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "hidden": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "workspace.settings": {
+                        "type": "object",
+                        "properties": {
+                          "order": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "hidden": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "workspace.tabs": {
+                        "type": "object",
+                        "properties": {
+                          "order": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "hidden": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "project.settings": {
+                        "type": "object",
+                        "properties": {
+                          "order": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "hidden": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "project.tabs": {
+                        "type": "object",
+                        "properties": {
+                          "order": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "hidden": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         }
                       }

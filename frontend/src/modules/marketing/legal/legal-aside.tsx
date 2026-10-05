@@ -8,7 +8,7 @@ import { useCurrentSection } from '~/hooks/use-scroll-spy';
 import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
 import type { TKey } from '~/lib/i18n-locales';
 import type { LegalSubject } from '~/modules/auth/legal/legal-config';
-import type { LegalSection } from '~/modules/auth/legal/legal-types';
+import { LEGAL_OVERVIEW_ID, type LegalSection } from '~/modules/auth/legal/legal-types';
 import { SpyNavItem } from '~/modules/common/spy-nav-item';
 import { buttonVariants } from '~/modules/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/modules/ui/collapsible';
@@ -16,58 +16,48 @@ import { cn } from '~/utils/cn';
 
 interface LegalSubjectConfig {
   id: LegalSubject;
-  label: string;
+  label: TKey;
   sections: readonly LegalSection[];
 }
 
 interface LegalAsideProps {
-  /** Array of legal subjects with their sections */
   subjects: LegalSubjectConfig[];
-  /** Currently active subject ID */
   currentSubject: LegalSubject;
   className?: string;
 }
 
-/**
- * Legal Aside Component that shows collapsible subjects with section navigation.
- * Receives sections from config.
- */
 export function LegalAside({ subjects, currentSubject, className }: LegalAsideProps) {
   const { t } = useTranslation();
 
   const isMobile = useBreakpointBelow('sm');
   // Below `md` the aside stacks above the legal text, so a height animation would relayout the text every frame
 
-  // Unique layoutId for the animated indicator
   const [layoutId] = useState(() => nanoid());
 
-  // Track which subject is expanded and the previous subject to detect changes
   const [expanded, setExpanded] = useState<LegalSubject | null>(currentSubject);
   const [prevSubject, setPrevSubject] = useState(currentSubject);
 
-  // When currentSubject changes, expand it (sync update during render)
+  // State update during render: expands the newly selected subject.
   if (prevSubject !== currentSubject) {
     setExpanded(currentSubject);
     setPrevSubject(currentSubject);
   }
 
-  // Toggle expanded state for a subject
   const toggleExpanded = (id: LegalSubject) => {
     setExpanded((prev) => (prev === id ? null : id));
   };
 
   const spySection = useCurrentSection();
-  const currentSection = spySection || 'overview';
+  const currentSection = spySection || LEGAL_OVERVIEW_ID;
 
   return (
     <div className={cn('mb-6 flex w-full flex-col gap-2', className)}>
       {subjects.map(({ id, label, sections }) => {
         const isActive = id === currentSubject;
         const isExpanded = expanded === id;
-        // Only show sections with labels in the sidebar
         const subjectSections = sections.filter((s) => s.label);
         // Collapsing is a re-click at the subject's overview. Further down, the link scrolls back up and the subject stays open.
-        const isAtSubject = isActive && currentSection === 'overview';
+        const isAtSubject = isActive && currentSection === LEGAL_OVERVIEW_ID;
 
         return (
           <Collapsible
@@ -78,8 +68,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
             }}
           >
             <div className="group/subject relative" data-active={isActive} data-expanded={isExpanded}>
-              {/* Rail line - visible when expanded */}
-              <div className="pointer-events-none absolute top-4.5 bottom-3 left-2.5 hidden flex-col items-center group-data-[expanded=true]/subject:flex">
+              <div className="pointer-events-none absolute top-5.5 bottom-3 left-2.5 hidden flex-col items-center group-data-[expanded=true]/subject:flex">
                 <div className="w-px flex-1 bg-muted-foreground/30" />
               </div>
               <CollapsibleTrigger
@@ -87,24 +76,25 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
                   <Link
                     to="/legal/$subject"
                     params={{ subject: id }}
-                    hash={isMobile ? '' : 'overview'}
+                    hash={isMobile ? '' : LEGAL_OVERVIEW_ID}
                     hashScrollIntoView={{ behavior: 'instant' }}
                     resetScroll={true}
                     draggable={false}
                     // A link to the current subject only changes the hash, which doesn't scroll
                     onClick={() => {
-                      if (isActive && !isAtSubject) requestAnimationFrame(() => scrollToSectionById('overview'));
+                      if (isActive && !isAtSubject) requestAnimationFrame(() => scrollToSectionById(LEGAL_OVERVIEW_ID));
                     }}
                     className={cn(
                       buttonVariants({ variant: 'ghost' }),
-                      'group focus-inset h-8 w-full pl-5 text-left font-normal opacity-80',
-                      'group-data-[active=true]/subject:bg-accent group-data-[expanded=true]/subject:opacity-100',
+                      'group focus-inset w-full pl-5 text-left font-medium',
+                      'group-data-[active=true]/subject:bg-accent group-data-[active=true]/subject:font-semibold',
                     )}
                   />
                 }
               >
-                <div className="absolute left-[0.53rem] size-1 rounded-full bg-muted-foreground/30 group-data-[expanded=true]/subject:bg-muted-foreground/60" />
-                <span className="truncate">{t(label as TKey)}</span>
+                {/* Caps the guideline, so it shows only alongside it: same color, on its center line, expanded only */}
+                {isActive && isExpanded && <div className="absolute left-[0.53rem] size-1 rounded-full bg-muted-foreground/30" />}
+                <span className="truncate">{t(label)}</span>
                 <ChevronDownIcon className="invisible ml-auto size-4 opacity-40 transition-transform duration-200 group-hover:visible group-data-[expanded=true]/subject:rotate-180" />
               </CollapsibleTrigger>
               {/* keepMounted preserves the data-spy-active marks the scroll spy sets on rows outside React */}
