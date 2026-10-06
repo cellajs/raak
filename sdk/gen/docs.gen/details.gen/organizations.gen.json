@@ -64,12 +64,54 @@
                   "toolsConfig": {
                     "type": "object",
                     "required": true,
-                    "additionalProperties": {
-                      "type": "object",
-                      "required": false,
-                      "properties": {
-                        "order": { "type": "array", "required": false, "itemType": "string" },
-                        "hidden": { "type": "array", "required": false, "itemType": "string" }
+                    "properties": {
+                      "organization.settings": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "organization.tabs": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "workspace.settings": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "workspace.tabs": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "project.settings": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "project.tabs": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
                       }
                     }
                   },
@@ -793,12 +835,54 @@
                   "toolsConfig": {
                     "type": "object",
                     "required": true,
-                    "additionalProperties": {
-                      "type": "object",
-                      "required": false,
-                      "properties": {
-                        "order": { "type": "array", "required": false, "itemType": "string" },
-                        "hidden": { "type": "array", "required": false, "itemType": "string" }
+                    "properties": {
+                      "organization.settings": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "organization.tabs": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "workspace.settings": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "workspace.tabs": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "project.settings": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
+                      },
+                      "project.tabs": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                          "order": { "type": "array", "required": false, "itemType": "string" },
+                          "hidden": { "type": "array", "required": false, "itemType": "string" }
+                        }
                       }
                     }
                   },
@@ -1412,12 +1496,54 @@
             "toolsConfig": {
               "type": "object",
               "required": true,
-              "additionalProperties": {
-                "type": "object",
-                "required": false,
-                "properties": {
-                  "order": { "type": "array", "required": false, "itemType": "string" },
-                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+              "properties": {
+                "organization.settings": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "organization.tabs": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "workspace.settings": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "workspace.tabs": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "project.settings": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "project.tabs": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
                 }
               }
             },
@@ -1905,12 +2031,54 @@
             "toolsConfig": {
               "type": "object",
               "required": true,
-              "additionalProperties": {
-                "type": "object",
-                "required": false,
-                "properties": {
-                  "order": { "type": "array", "required": false, "itemType": "string" },
-                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+              "properties": {
+                "organization.settings": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "organization.tabs": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "workspace.settings": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "workspace.tabs": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "project.settings": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
+                },
+                "project.tabs": {
+                  "type": "object",
+                  "required": false,
+                  "properties": {
+                    "order": { "type": "array", "required": false, "itemType": "string" },
+                    "hidden": { "type": "array", "required": false, "itemType": "string" }
+                  }
                 }
               }
             },
@@ -2442,12 +2610,54 @@
           "toolsConfig": {
             "type": "object",
             "required": false,
-            "additionalProperties": {
-              "type": "object",
-              "required": false,
-              "properties": {
-                "order": { "type": "array", "required": false, "itemType": "string" },
-                "hidden": { "type": "array", "required": false, "itemType": "string" }
+            "properties": {
+              "organization.settings": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
+              },
+              "organization.tabs": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
+              },
+              "workspace.settings": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
+              },
+              "workspace.tabs": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
+              },
+              "project.settings": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
+              },
+              "project.tabs": {
+                "type": "object",
+                "required": false,
+                "properties": {
+                  "order": { "type": "array", "required": false, "itemType": "string" },
+                  "hidden": { "type": "array", "required": false, "itemType": "string" }
+                }
               }
             }
           }

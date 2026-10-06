@@ -33,9 +33,6 @@ export default defineConfig({
       '.github/release-please-manifest.json',
       '.github/release-please-config.json',
       'CLAUDE.md',
-      // Template-only: it scaffolds a new app from this checkout and asserts the scaffolder's output
-      // (`slug: 'my-app'`, no config.template.ts), which no fork can satisfy.
-      '.github/workflows/create-flow.yml',
       // App identity: brand assets and the app's own locale namespace. cella has no upstream fix
       // to push into these, so they are never synced. Template-consumed copy lives in common.json,
       // never in app.json.
@@ -61,12 +58,13 @@ export default defineConfig({
       'backend/src/db/product-tables.ts',
       'backend/src/schemas/app-schemas.ts',
       'bench/src/seeds/ids.ts',
-      'frontend/src/placement-config.ts',
-      'frontend/src/members-config.ts',
       'frontend/src/routes-config.tsx',
-      'frontend/src/menu-config.tsx',
       'frontend/src/alert-config.tsx',
-      'frontend/src/list-queries-config.tsx',
+      // App marketing copy: upstream structural changes are adopted by hand.
+      'frontend/src/modules/marketing/marketing-config.tsx',
+      // The pages the screenshots skill shoots, and where it writes them: raak's routes, not cella's.
+      'cella/skills/screenshots/shots-config.mjs',
+      'frontend/src/entity-sync-queries.ts',
       'frontend/src/styling/gradients.css',
       'frontend/src/styling/tailwind.css',
       // The pages and states the accessibility audit covers
