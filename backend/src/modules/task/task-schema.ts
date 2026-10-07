@@ -86,3 +86,13 @@ export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !dat
 // Stx-wrapped schemas for product entity mutations (items lens-widened via the wire)
 export const taskCreateManyStxBodySchema = taskContract.createItemSchema.array().min(1).max(50);
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);
+
+export const taskLinkSchema = z.object({
+  taskId: z.string(),
+  projectId: z.string(),
+  projectSlug: z.string(),
+  organizationId: z.string(),
+  organizationSlug: z.string(),
+  tenantId: z.string(),
+  publicAt: z.string().nullable(),
+});

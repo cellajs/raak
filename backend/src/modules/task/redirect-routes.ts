@@ -1,6 +1,8 @@
 import { z } from '@hono/zod-openapi';
 import { createXRoutes, json, xRoute } from '#/core/x-routes';
 import { publicGuard } from '#/middlewares/guard';
+import { mockTaskLinkResponse } from '#/modules/task/task-mocks';
+import { taskLinkSchema } from '#/modules/task/task-schema';
 import { validIdSchema } from '#/schemas';
 
 const taskRedirectRoutes = createXRoutes(['tasks', 'app', 'product'], {
@@ -21,18 +23,7 @@ const taskRedirectRoutes = createXRoutes(['tasks', 'app', 'product'], {
     description: 'Returns routing metadata for a task link so the frontend can decide where to redirect the user.',
     request: { params: z.object({ id: validIdSchema }) },
     responses: {
-      200: json(
-        'Task link resolution data',
-        z.object({
-          taskId: z.string(),
-          projectId: z.string(),
-          projectSlug: z.string(),
-          organizationId: z.string(),
-          organizationSlug: z.string(),
-          tenantId: z.string(),
-          publicAt: z.string().nullable(),
-        }),
-      ),
+      200: json('Task link resolution data', taskLinkSchema, mockTaskLinkResponse()),
     },
   }),
   getTaskCover: xRoute({
