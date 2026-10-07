@@ -1,4 +1,4 @@
-import { Building2Icon, CloudIcon, FolderIcon, StickyNoteIcon, UsersIcon, ZapIcon } from 'lucide-react';
+import { Building2Icon, CloudIcon, FolderIcon, StickyNoteIcon, UsersIcon } from 'lucide-react';
 import { appConfig } from 'shared';
 import { nanoid } from 'shared/utils/nanoid';
 import type { TKey } from '~/lib/i18n-locales';
@@ -61,12 +61,6 @@ export const footerSections: FooterSection[] = [
  ************************************************************************************************/
 
 export const legalLinks: FooterLink[] = [{ title: 'c:legal', href: '/legal' }];
-
-/*************************************************************************************************
- * About - Features
- ************************************************************************************************/
-
-export const features: { id: string }[] = [];
 
 /*************************************************************************************************
  * About - Integrations
@@ -132,10 +126,6 @@ export const whyDarkSlides = [
 
 export const featuresPageItems: InfoGridItem[] = [];
 export const featureCategoryIcons = {} as const;
-
-/** Lists the synchronization features shown on the marketing page. */
-export const syncPageItems: InfoGridItem[] = [];
-export const syncCategoryIcons = { sync: ZapIcon } as const;
 
 /*************************************************************************************************
  * About - Showcase

@@ -33,7 +33,7 @@ export async function resolveProjectWorkspaceId(ctx: UserContext, workspaceId: s
   return entity.id;
 }
 
-export function findCurrentUserProjectMembership(ctx: UserContext, project: ProjectMembershipTarget) {
+function findCurrentUserProjectMembership(ctx: UserContext, project: ProjectMembershipTarget) {
   return ctx.var.memberships.find((membership) => isProjectMembershipTarget(membership, project));
 }
 
@@ -47,7 +47,7 @@ export function requireCurrentUserProjectMembership(ctx: UserContext, project: P
   return membership;
 }
 
-export async function replaceProjectMembershipWorkspace(
+async function replaceProjectMembershipWorkspace(
   ctx: DbContext,
   { membership, workspaceId, createdBy, role }: ReplaceProjectMembershipWorkspaceInput,
 ) {

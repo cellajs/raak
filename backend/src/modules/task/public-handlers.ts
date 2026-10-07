@@ -8,7 +8,8 @@ import { hydrateTask } from '#/modules/task/helpers/hydrate-task';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
 import { getTasks } from '#/modules/task/operations/list-tasks';
 import { publicTaskRoutes } from '#/modules/task/public-routes';
-import { buildSubject, checkAccess } from '#/permissions';
+import { checkAccess } from '#/permissions';
+import { buildSubject } from '#/permissions/build-subject';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });

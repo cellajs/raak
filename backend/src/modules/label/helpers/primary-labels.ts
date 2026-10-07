@@ -1,6 +1,6 @@
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { defaultOrder, orderGap } from 'shared/utils/display-order';
-import { createServerStx } from '#/core/stx';
+import { createServerStx } from '#/core/stx/create-server-stx';
 import type { InsertLabelModel } from '#/modules/label/label-db';
 import { getIsoDate } from '#/utils/iso-date';
 

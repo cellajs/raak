@@ -9,7 +9,7 @@ import { organizationsTable } from '#/modules/organization/organization-db';
 import { type InsertProjectModel, projectsTable } from '#/modules/project/project-db';
 import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { type InsertWorkspaceModel, workspacesTable } from '#/modules/workspace/workspace-db';
-import { createServerStx } from '#/core/stx';
+import { createServerStx } from '#/core/stx/create-server-stx';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';

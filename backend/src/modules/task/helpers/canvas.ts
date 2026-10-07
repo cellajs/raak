@@ -95,21 +95,3 @@ export async function generateCover({ title, avatarUrl, name }: Options) {
   // Encode to PNG bytes (Uint8Array)
   return await canvas.encode('png');
 }
-
-export function nodeStreamToWebStream(nodeReadableStream: NodeJS.ReadableStream): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    start(controller) {
-      nodeReadableStream.on('data', (chunk) => {
-        controller.enqueue(chunk);
-      });
-
-      nodeReadableStream.on('end', () => {
-        controller.close();
-      });
-
-      nodeReadableStream.on('error', (err) => {
-        controller.error(err);
-      });
-    },
-  });
-}

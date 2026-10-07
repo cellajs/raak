@@ -35,7 +35,7 @@ export const workspaceSchema = z
     'x-tags': schemaTags('data', 'workspaces', 'app'),
   });
 
-export const workspaceWithMembershipSchema = workspaceSchema.extend({
+const workspaceWithMembershipSchema = workspaceSchema.extend({
   included: workspaceIncludedSchema.extend({ membership: membershipBaseSchema }),
 });
 

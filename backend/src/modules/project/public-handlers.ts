@@ -5,7 +5,8 @@ import { getAdminDb } from '#/db/db';
 import { resolveEntity } from '#/modules/entities/entities-queries';
 import { publicProjectRoutes } from '#/modules/project/public-routes';
 import { withAuditUser } from '#/modules/user/operations/with-audit-users';
-import { buildSubject, checkAccess } from '#/permissions';
+import { checkAccess } from '#/permissions';
+import { buildSubject } from '#/permissions/build-subject';
 import { defaultHook } from '#/utils/default-hook';
 
 const app = new OpenAPIHono<Env>({ defaultHook });
