@@ -20,15 +20,15 @@ import type { DropTarget, PanelDraggableData, TaskDraggableData } from '~/module
 export const useTaskDropMonitor = (tenantId: string, organizationId: string) => {
   const { t } = useTranslation();
 
-  const { mutateAsync: updateTaskMutation } = useTaskUpdateMutation(tenantId, organizationId);
+  const { mutate: updateTaskMutation } = useTaskUpdateMutation(tenantId, organizationId);
   // Stable ref so the monitorForElements effect doesn't re-register on mutation state changes
   const updateTaskRef = useRef(updateTaskMutation);
   updateTaskRef.current = updateTaskMutation;
   const activeDragSourceRef = useRef<TaskDraggableData['item'] | null>(null);
   const latestInputRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
-  const changeProject = async (data: { id: string; projectId: string; displayOrder?: number | null }) => {
-    await updateTaskRef.current({
+  const changeProject = (data: { id: string; projectId: string; displayOrder?: number | null }) => {
+    updateTaskRef.current({
       id: data.id,
       ops: { projectId: data.projectId, ...(typeof data.displayOrder === 'number' && { displayOrder: data.displayOrder }) },
       fullLabels: [],
@@ -76,7 +76,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
           latestInputRef.current = { clientX: location.current.input.clientX, clientY: location.current.input.clientY };
           updateMobileIndicator();
         },
-        onDrop: async ({
+        onDrop: ({
           location: {
             current: { dropTargets },
           },
@@ -107,11 +107,11 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
               if (newOrder === sourceOrder && sourceProjectId === mobileTargetTask.projectId) return;
 
               if (sourceProjectId !== mobileTargetTask.projectId) {
-                await changeProject({ id: sourceId, projectId: mobileTargetTask.projectId, displayOrder: newOrder });
+                changeProject({ id: sourceId, projectId: mobileTargetTask.projectId, displayOrder: newOrder });
                 return;
               }
 
-              await updateTaskRef.current({ id: sourceId, ops: { displayOrder: newOrder } });
+              updateTaskRef.current({ id: sourceId, ops: { displayOrder: newOrder } });
               return;
             }
 
@@ -129,7 +129,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
 
               const order = getNewTaskOrder(sourceStatus, tasks);
 
-              await changeProject({ id: sourceId, projectId, displayOrder: order });
+              changeProject({ id: sourceId, projectId, displayOrder: order });
 
               return;
             }
@@ -150,12 +150,12 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
               if (newOrder === sourceOrder && sourceProjectId === targetTask.projectId) return;
 
               if (sourceProjectId !== targetTask.projectId) {
-                await changeProject({ id: sourceId, projectId: targetTask.projectId, displayOrder: newOrder });
+                changeProject({ id: sourceId, projectId: targetTask.projectId, displayOrder: newOrder });
                 return;
               }
 
               // Execute the mutation with new order
-              await updateTaskRef.current({ id: sourceId, ops: { displayOrder: newOrder } });
+              updateTaskRef.current({ id: sourceId, ops: { displayOrder: newOrder } });
               return;
             }
           } catch (err) {

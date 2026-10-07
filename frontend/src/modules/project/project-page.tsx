@@ -40,7 +40,7 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
   const coverUpdateCallback = (bannerUrl: string) => {
     updateProject.mutate(
       { path: { id: projectId, organizationId, tenantId }, body: { bannerUrl } },
-      { onSuccess: () => toaster.success(t('c:success.upload_cover')), onError: () => toaster.error(t('error:image_upload_failed')) },
+      { onSuccess: () => toaster.success(t('c:success.upload_cover')) },
     );
   };
 
