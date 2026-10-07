@@ -10471,6 +10471,15 @@
             "description": "Task link resolution data",
             "content": {
               "application/json": {
+                "example": {
+                  "taskId": "23e5529d-4682-4055-b05d-ce85317e6ffe",
+                  "projectId": "2395428f-2644-4455-9afe-0ff9981a3da2",
+                  "projectSlug": "awesome-marble-shoes",
+                  "organizationId": "301b2584-56a0-4f38-a9c9-f87af1510ae6",
+                  "organizationSlug": "swaniawski-and-sons",
+                  "tenantId": "ptcupj",
+                  "publicAt": "2024-08-18T06:30:47.640Z"
+                },
                 "schema": {
                   "type": "object",
                   "properties": {

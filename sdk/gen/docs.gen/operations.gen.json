@@ -1760,7 +1760,7 @@
     "hasParams": true,
     "hasRequestBody": false,
     "hasResponseBody": true,
-    "hasExample": false,
+    "hasExample": true,
     "extensions": {
       "xGuard": ["publicGuard"],
       "xRateLimiter": [],

@@ -9,6 +9,8 @@ import {
   withFakerSeed,
 } from '#/mocks';
 import { mockLabel } from '#/modules/label/label-mocks';
+import { mockOrganizationResponse } from '#/modules/organization/organization-mocks';
+import { mockProjectResponse } from '#/modules/project/project-mocks';
 import type { TaskModel } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { mockAuditUsers, mockUserMinimalBase } from '#/schemas/entity-base-mocks';
@@ -74,3 +76,19 @@ export const mockTaskResponse = (key = 'task:default') => {
 export const mockBatchTasksResponse = (count = 2) => mockBatchResponse(mockTaskResponse, count);
 
 export const mockTasksResponse = (count = 2) => mockPaginated(mockTaskResponse, count, 25);
+
+/** Routing metadata as `resolveTaskLink` returns it: the project and organization a task link leads to. */
+export const mockTaskLinkResponse = (key = 'task:default') => {
+  const project = mockProjectResponse(`${key}:project`);
+  const organization = mockOrganizationResponse(`${key}:organization`);
+
+  return {
+    taskId: mockTask(key).id,
+    projectId: project.id,
+    projectSlug: project.slug,
+    organizationId: organization.id,
+    organizationSlug: organization.slug,
+    tenantId: organization.tenantId,
+    publicAt: project.publicAt,
+  };
+};
