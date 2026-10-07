@@ -3,16 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import type { TKey } from '~/lib/i18n-locales';
 import { ContactForm } from '~/modules/common/contact-form/contact-form';
-import type { IconComponent } from '~/modules/common/icons/types';
 import { MarketingLayout } from '~/modules/marketing/layout';
 
-interface ContactMethod {
-  icon: IconComponent;
-  title: TKey;
-  link: string;
-  /** Either a translation key or a raw display value (e.g. an address, email, or phone number). */
-  text: string;
-}
+type ContactMethod = { icon: typeof MapPinIcon; title: TKey; link: string; textKey?: TKey; text?: string };
 
 const methods: ContactMethod[] = [
   { icon: MapPinIcon, title: 'c:visit', link: appConfig.company.googleMapsUrl, text: appConfig.company.streetAddress },
@@ -20,7 +13,7 @@ const methods: ContactMethod[] = [
 ];
 
 if (appConfig.company.scheduleCallUrl)
-  methods.push({ icon: CalendarCheckIcon, title: 'c:book', link: appConfig.company.scheduleCallUrl, text: 'c:schedule_call.text' });
+  methods.push({ icon: CalendarCheckIcon, title: 'c:book', link: appConfig.company.scheduleCallUrl, textKey: 'c:schedule_call.text' });
 if (appConfig.company.tel) methods.push({ icon: PhoneCallIcon, title: 'c:call', link: `tel:${appConfig.company.tel}`, text: appConfig.company.tel });
 
 export function ContactPage() {
@@ -49,7 +42,7 @@ export function ContactPage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {t(method.text as TKey)}
+                    {method.textKey ? t(method.textKey) : method.text}
                     <ArrowUpRightIcon className="-mt-2 ml-1 inline-block text-primary opacity-50 group-hover:opacity-100" />
                   </a>
                 </p>
