@@ -1084,9 +1084,14 @@
         "example": {
           "data": [
             {
-              "attachmentId": "01890a5d-ac96-774b-b302-0f3e2ae14a2a",
+              "attachmentId": "41b543b4-862b-4efa-a0a6-172297810621",
               "variant": "thumbnail",
-              "url": "https://bucket.s3.nl-ams.scw.cloud/key?X-Amz-Signature=…"
+              "url": "https://attachments.s3.nl-ams.scw.cloud/uploads/g9cersdww4bfs8s5tco33lcg/inasmuch.xhtml?X-Amz-Signature=…"
+            },
+            {
+              "attachmentId": "0196c174-2278-441f-9fc3-e08db54efdd4",
+              "variant": "thumbnail",
+              "url": "https://attachments.s3.nl-ams.scw.cloud/uploads/d6hh0iebfum8827w318qwfuf/victoriously.mp4?X-Amz-Signature=…"
             }
           ],
           "rejectedIds": []

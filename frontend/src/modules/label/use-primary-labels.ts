@@ -17,7 +17,7 @@ export const usePrimaryLabels = (projectId: string): Label[] => {
 };
 
 /** Filter a project's label list down to its live primary labels, ordered by displayOrder. */
-export const sortPrimaryLabels = (labels: Label[]): Label[] =>
+const sortPrimaryLabels = (labels: Label[]): Label[] =>
   labels
     .filter((label) => label.mode === 'primary')
     .toSorted((a, b) => (a.displayOrder ?? Number.MAX_SAFE_INTEGER) - (b.displayOrder ?? Number.MAX_SAFE_INTEGER));

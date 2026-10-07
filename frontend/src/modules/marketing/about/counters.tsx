@@ -41,6 +41,7 @@ const lgGridCols: Record<number, string> = {
 };
 const countsGridClass = lgGridCols[counts.length] ?? 'lg:grid-cols-4';
 
+/** @public */
 export function Counters() {
   const { t } = useTranslation();
   const { ref, inView } = useInView({ once: true });

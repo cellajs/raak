@@ -69,7 +69,7 @@
     "ts": "pnpm -r ts",
     "tsperf": "pnpm --filter backend tsperf && pnpm --filter frontend tsperf && pnpm --filter cdc-worker tsperf && pnpm --filter yjs-worker tsperf",
     "tunnel": "pnpm run clean && cross-env pnpm --reporter=append-only -r --parallel --stream tunnel",
-    "unused": "knip --dependencies --include files"
+    "unused": "knip --dependencies --include files,exports,nsExports"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

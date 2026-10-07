@@ -8,7 +8,7 @@ import { cn } from '~/utils/cn';
  * Toggles the board search's '=' highlight query for a label.
  * Matching tasks and label tiles are tinted; toggling the same name clears the query.
  */
-export const useLabelFilterToggle = () => {
+const useLabelFilterToggle = () => {
   const { search, setSearch } = useSearchParams<{ q?: string }>({});
   const activeFilter = search.q ?? '';
 
