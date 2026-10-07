@@ -6,10 +6,6 @@ import { whyDarkSlides, whyItems, whyLightSlides } from '~/modules/marketing/mar
 import { lazyNamed } from '~/utils/lazy-named';
 
 const DeviceMockup = lazyNamed(() => import('~/modules/marketing/device-mockup'), 'DeviceMockup');
-
-// Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
-// union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
-type AboutKey = Extract<TKey, `about:${string}`>;
 export function Why() {
   const { t } = useTranslation();
 
@@ -19,7 +15,7 @@ export function Why() {
         <div className="flex flex-wrap">
           {whyItems.map((item, index) => {
             const title = `about:why.title_${index + 1}` as TKey;
-            const text = `about:why.text_${index + 1}` as AboutKey;
+            const text = `about:why.text_${index + 1}` as TKey;
 
             return (
               <div className="w-full" key={item.id}>
@@ -30,7 +26,7 @@ export function Why() {
                   <div className="w-full">
                     <h3 className="mb-2 font-medium text-xl 2xl:text-[1.38rem]">{t(title)}</h3>
                     <p className="leading-relaxed">
-                      <Trans t={t} i18nKey={text} />
+                      <Trans t={t} i18nKey={text as never} />
                     </p>
                   </div>
                 </div>

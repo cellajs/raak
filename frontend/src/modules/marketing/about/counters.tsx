@@ -7,7 +7,6 @@ import { publicCountsQueryOptions } from '~/modules/marketing/query';
 import { Card, CardContent, CardHeader, CardTitle } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
 
-/** Provides count up state and actions. */
 export function useCountUp(start: number, end: number, duration = 1500) {
   const [value, setValue] = useState(start);
   useEffect(() => {
@@ -52,7 +51,7 @@ export function Counters() {
     <div ref={ref} className={cn('mx-auto grid grid-cols-2 gap-4 md:max-w-5xl', countsGridClass)}>
       {inView &&
         counts.map(({ id, title, icon: Icon }) => {
-          const countValue = data[id];
+          const countValue = data?.[id] ?? 0;
 
           return (
             <Card key={id} className="bg-background">

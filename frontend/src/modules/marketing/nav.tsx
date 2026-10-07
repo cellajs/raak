@@ -84,7 +84,14 @@ export function MarketingNav() {
       label: t('c:menu'),
       labelVisible: showMenuLabel,
     },
-    { id: 'marketing-scroll-top', icon: ArrowUpIcon, onClick: scrollToTop, ariaLabel: 'Scroll to top', visible: showScrollTop, direction: 'right' },
+    {
+      id: 'marketing-scroll-top',
+      icon: ArrowUpIcon,
+      onClick: scrollToTop,
+      ariaLabel: 'Scroll to top',
+      visible: showScrollTop,
+      direction: 'right',
+    },
   ];
 
   return (

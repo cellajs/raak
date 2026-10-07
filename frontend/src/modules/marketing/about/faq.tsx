@@ -4,10 +4,6 @@ import type { TKey } from '~/lib/i18n-locales';
 import { faqsData } from '~/modules/marketing/marketing-config';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~/modules/ui/accordion';
 
-// Narrowed to the `about` namespace: <Trans> re-derives its return type from the full key
-// union, and the unnarrowed TKey union is too large for that to typecheck (TS2590).
-type AboutKey = Extract<TKey, `about:${string}`>;
-
 export function FAQ() {
   const { t } = useTranslation();
   return (
@@ -15,7 +11,7 @@ export function FAQ() {
       <Accordion className="w-full">
         {faqsData.map((faq, index) => {
           const question = `about:faq.question_${index + 1}` as TKey;
-          const answer = `about:faq.answer_${index + 1}` as AboutKey;
+          const answer = `about:faq.answer_${index + 1}` as TKey;
 
           return (
             <AccordionItem key={faq.id} value={faq.id}>
@@ -23,7 +19,7 @@ export function FAQ() {
               <AccordionContent className="px-3 pb-8 text-lg">
                 <Trans
                   t={t}
-                  i18nKey={answer}
+                  i18nKey={answer as never}
                   components={{
                     Link: (
                       <Link
