@@ -121,7 +121,7 @@ export const useProjectCreateMutation = () => {
     mutationKey: keys.create,
     mutationFn: async ({ path, body, query }) => {
       const result = await createProjects({ path, body, query });
-      if (!result.data.length) throw new ApiError({ status: 422, type: 'create_resource' });
+      if (!result.data.length) throw new ApiError({ status: 422, type: 'create_resource', entityType: 'project' });
       return result.data[0] as Project;
     },
     onSuccess: (createdProject) => {

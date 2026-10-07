@@ -29,7 +29,7 @@ import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } f
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
-import type { InfiniteQueryData, QueryData, QueryOrgContext } from '~/query/types';
+import type { InfiniteQueryData, QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
 export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
@@ -68,7 +68,6 @@ type TaskCreateFullVars = QueryOrgContext & TaskCreateMutationFnVariables & { st
 type TaskUpdateFullVars = QueryOrgContext & TaskUpdateMutationFnVariables & { stx?: StxBase };
 type TasksDeleteFullVars = QueryOrgContext & TasksDeleteMutationFnVariables & { stx?: StxBase };
 
-export type TasksQueryData = QueryData<Task>;
 export type TasksInfiniteQueryData = InfiniteQueryData<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
