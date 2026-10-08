@@ -82,7 +82,7 @@ export async function updateTaskOp(
       const currentSlug = await findLabelSlugById(txCtx, entity.primaryLabelId);
       const target = targetPrimaries.find((l) => l.id === requestedId) ?? targetPrimaries.find((l) => l.slug === currentSlug) ?? targetPrimaries[0];
       if (!target) {
-        throw new AppError(400, 'invalid_request', 'warn', { entityType: 'task', meta: { reason: 'Target project has no primary labels' } });
+        throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId: newProjectId } });
       }
       updateValues.primaryLabelId = target.id;
     } else if ('primaryLabelId' in resolved.values) {

@@ -99,12 +99,13 @@ describe('Label description gates (epic documentation)', async () => {
   const path = (id: string) => ({ tenantId: tenant.tenantId, organizationId: tenant.organization.id, id });
 
   it('rejects description ops on secondary labels', async () => {
-    const { response } = await call(updateLabel, {
+    const { response, error } = await call(updateLabel, {
       path: path(secondaryLabelId),
       body: updateOps({ description: descriptionBlocks }),
       headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
     });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(409);
+    expect(error).toMatchObject({ type: 'label_description_epic_only', message: 'Only an epic carries a description.' });
   });
 
   it('lets a project member document an epic (description-only skips the admin gate)', async () => {
@@ -168,11 +169,12 @@ describe('Label description gates (epic documentation)', async () => {
   });
 
   it('never changes mode on a primary label, even for an admin', async () => {
-    const { response } = await call(updateLabel, {
+    const { response, error } = await call(updateLabel, {
       path: path(primaryLabelId),
       body: updateOps({ mode: 'epic' }),
       headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
     });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(409);
+    expect(error).toMatchObject({ type: 'primary_label_mode_fixed', name: 'Mode not changed' });
   });
 });

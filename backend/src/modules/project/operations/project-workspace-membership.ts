@@ -28,7 +28,7 @@ export async function resolveProjectWorkspaceId(ctx: UserContext, workspaceId: s
   // workspace, producing a membership whose organizationId (the project's org) mismatches the
   // workspace's org and later fails org-scoped reads (e.g. labels) with a spurious 404.
   if (entity.organizationId !== ctx.var.organization.id) {
-    throw new AppError(403, 'forbidden', 'warn', { entityType: 'workspace', meta: { action: 'assign', reason: 'cross_organization' } });
+    throw new AppError(409, 'workspace_in_other_organization', 'warn', { entityType: 'workspace' });
   }
   return entity.id;
 }
@@ -134,7 +134,7 @@ export async function upsertCurrentUserProjectMembershipWorkspace(ctx: UserConte
       return createCurrentUserProjectMembershipInWorkspace(ctx, { project, workspaceId });
     }
 
-    throw new AppError(400, 'invalid_request', 'warn', { message: 'Project membership not found for workspace removal.' });
+    throw new AppError(409, 'project_not_in_workspace', 'warn', { entityType: 'project' });
   }
 
   return setCurrentUserProjectMembershipWorkspace(ctx, {
