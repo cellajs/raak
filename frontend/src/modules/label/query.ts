@@ -167,8 +167,8 @@ const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<Create
     insertEntitiesIntoHome(queryClient, [optimisticLabel]);
     return { optimisticLabel };
   },
-  onError: (_err, variables, context) => {
-    handleError('create');
+  onError: (error, variables, context) => {
+    handleError('create', error);
     if (context?.optimisticLabel) cacheRemove(keys.list.org(variables.organizationId), [context.optimisticLabel]);
   },
   onSuccess: (createdLabel, variables, context) => {
@@ -204,8 +204,8 @@ const labelUpdateOptions = (
     }
     return { previousLabel };
   },
-  onError: (_err, variables, context) => {
-    handleError('update');
+  onError: (error, variables, context) => {
+    handleError('update', error);
     if (context?.previousLabel) {
       cacheUpdate(keys.list.org(variables.organizationId), [context.previousLabel]);
       queryClient.setQueryData(keys.detail.byId(context.previousLabel.id), context.previousLabel);
@@ -242,8 +242,8 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
     propagateEmbeddedProduct('label', labelIds, 'remove');
     return { deletedLabels: labels };
   },
-  onError: (_err, variables, context) => {
-    handleError('delete');
+  onError: (error, variables, context) => {
+    handleError('delete', error);
     // Restore each row into its canonical home list only (updates in place elsewhere), never filtered lists.
     if (context?.deletedLabels) insertEntitiesIntoHome(queryClient, context.deletedLabels);
     // Propagation cannot re-insert stripped embedded copies, so hosts recover through a refetch

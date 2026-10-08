@@ -251,7 +251,8 @@
             "lastSeenAt": {
               "type": ["string", "null"],
               "required": true
-            }
+            },
+            "mfaRequired": { "type": "boolean", "required": false }
           },
           "extendsRef": "#/components/schemas/UserBase",
           "contentType": "application/json"
@@ -330,7 +331,8 @@
               },
               { "type": "boolean", "required": false }
             ]
-          }
+          },
+          "include": { "type": "string", "required": false }
         }
       }
     }

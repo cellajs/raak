@@ -80,7 +80,7 @@ export const useWorkspaceCreateMutation = () => {
     mutationKey: keys.create,
     mutationFn: async ({ path, body }) => {
       const result = await createWorkspaces({ path, body });
-      if (!result.data.length) throw new ApiError({ status: 422, type: 'create_resource', entityType: 'workspace' });
+      if (!result.data.length) throw new ApiError({ status: 422, type: 'create_resource', entityType: 'workspace', severity: 'error' });
       return result.data[0] as Workspace;
     },
     onSuccess: (createdWorkspace) => {
