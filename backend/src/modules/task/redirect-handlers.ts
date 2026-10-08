@@ -5,9 +5,8 @@ import { html, raw } from 'hono/html';
 import { appConfig } from 'shared';
 import { getAdminDb } from '#/db/db';
 
-// Public task links resolve for anonymous visitors, so no tenant context exists to scope RLS by:
-// read as admin and gate on the public-read grant. Resolved per request so a process without the
-// admin credential still boots and only these routes fail.
+// Task links resolve for anonymous visitors, so no tenant context exists to scope RLS by: these routes read as
+// admin. Resolved per request so a process without the admin credential still boots and only these routes fail.
 const db = () => getAdminDb('public task link resolution');
 
 import { getTextFromBlock, titleFromDocument } from 'shared/blocknote';
@@ -23,6 +22,9 @@ import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { type UserModel, usersTable } from '#/modules/user/user-db';
 import { defaultHook } from '#/utils/default-hook';
 
+// Previews are intentional for private tasks too: whoever holds a link gets the unfurl, the cover and the routing
+// metadata, so no route here applies the public-read check of `public-handlers.ts`. Do not add one. Opening the
+// task still takes access, which the frontend's `/t/$id` route enforces.
 const app = new OpenAPIHono<Env>({ defaultHook });
 
 /** Display name of a task's primary label (task type); falls back to 'Task'. */
