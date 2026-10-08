@@ -104,6 +104,8 @@ interface FindProjectsPaginatedOpts {
   offset: number;
   limit: number;
   organizationId?: string;
+  /** Limits the list to these organizations: the ones the caller shares with another user whose projects are listed. */
+  organizationIds?: string[];
   workspaceId?: string;
   excludeArchived?: boolean;
   role?: EntityRole;
@@ -113,7 +115,7 @@ interface FindProjectsPaginatedOpts {
 /** Get paginated list of projects with total count, membership, optional entity counts. */
 export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPaginatedOpts) => {
   const { db } = ctx.var;
-  const { userId, q, sort, order, offset, limit, organizationId, workspaceId, excludeArchived, role, includeCounts } = opts;
+  const { userId, q, sort, order, offset, limit, organizationId, organizationIds, workspaceId, excludeArchived, role, includeCounts } = opts;
 
   const entityType = 'project';
 
@@ -135,6 +137,7 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   const projectWhere: SQL[] = [
     ...(q ? [ilike(projectsTable.name, prepareStringForILikeFilter(q))] : []),
     ...(organizationId ? [eq(projectsTable.organizationId, organizationId)] : []),
+    ...(organizationIds ? [inArray(projectsTable.organizationId, organizationIds)] : []),
     ...(workspaceId ? [eq(membershipsTable.workspaceId, workspaceId)] : []),
   ];
 
