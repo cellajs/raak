@@ -67,7 +67,7 @@ export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput)
       ? (taskInfo.primaryLabelId as string)
       : projectPrimaries[0]?.id;
     if (!primaryLabelId) {
-      throw new AppError(400, 'invalid_request', 'warn', { entityType: 'task', meta: { reason: 'Project has no primary labels' } });
+      throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId: taskInfo.projectId } });
     }
 
     const task = {

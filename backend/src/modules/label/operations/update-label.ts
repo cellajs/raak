@@ -41,14 +41,14 @@ export async function updateLabelOp(
     const opsKeys = Object.keys(rawOps ?? {});
     const memberLevelOnly = opsKeys.length > 0 && opsKeys.every((key) => key === 'description' || key === 'mode');
     if ('description' in (rawOps ?? {}) && before.mode !== 'epic') {
-      throw new AppError(403, 'forbidden', 'warn', { entityType: 'label', meta: { reason: 'Only epic labels carry a description' } });
+      throw new AppError(409, 'label_description_epic_only', 'warn', { entityType: 'label' });
     }
 
     // Primary rows are the org's task types; their mode never changes (the schema already
     // limits transitions to secondary <-> epic)
     const modeChange = 'mode' in (rawOps ?? {});
     if (modeChange && before.mode === 'primary') {
-      throw new AppError(403, 'forbidden', 'warn', { entityType: 'label', meta: { reason: 'Primary labels cannot change mode' } });
+      throw new AppError(409, 'primary_label_mode_fixed', 'warn', { entityType: 'label' });
     }
 
     // Other edits on primary/epic labels (identity, appearance) require project-admin

@@ -1,1 +1,12 @@
-{}
+{
+  "label_description_epic_only": "Description not saved",
+  "label_description_epic_only.text": "Only an epic carries a description.",
+  "primary_label_mode_fixed": "Mode not changed",
+  "primary_label_mode_fixed.text": "A task type stays a task type. Only other labels can become an epic.",
+  "project_not_in_workspace": "Nothing to remove",
+  "project_not_in_workspace.text": "This project is not in one of your workspaces.",
+  "project_without_primary_label": "Project has no task type",
+  "project_without_primary_label.text": "Every task needs a task type, and the project has none. Add a task type to the project first.",
+  "workspace_in_other_organization": "Project not assigned",
+  "workspace_in_other_organization.text": "A project can only go into a workspace of its own organization."
+}
