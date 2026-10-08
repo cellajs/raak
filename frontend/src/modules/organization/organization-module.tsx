@@ -77,11 +77,13 @@ defineFrontendModule({
       id: 'organizations',
       label: 'c:organization_other',
       slot: 'user.profile',
-      render: ({ user, isSheet }) => (
-        <div className="container pt-4">
-          <OrganizationsGrid fixedQuery={{ relatableUserId: user.id }} saveDataInSearch={!isSheet} focusView={!isSheet} />
-        </div>
-      ),
+      // fork: inside an organization the profile lists that organization's projects alone (project-module.tsx)
+      render: ({ user, organizationId, isSheet }) =>
+        !organizationId && (
+          <div className="container pt-4">
+            <OrganizationsGrid fixedQuery={{ relatableUserId: user.id }} saveDataInSearch={!isSheet} focusView={!isSheet} />
+          </div>
+        ),
     },
   ],
 });

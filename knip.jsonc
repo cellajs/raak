@@ -62,12 +62,8 @@
         "src/utils/date-full.ts",
         "src/utils/in-numbers-array.ts",
         "src/utils/stable-array.ts",
-        // fork: kept, not yet wired. element.tsx is linked from cella's marketing copy, not raak's pinned
-        // marketing-config; the two grids mirror cella's OrganizationsGrid for a user profile that has no
-        // projects or workspaces section yet. workspaces-grid.tsx keeps tile.tsx reachable.
+        // fork: kept, not yet wired. element.tsx is linked from cella's marketing copy, not raak's pinned marketing-config.
         "src/modules/common/icons/element.tsx",
-        "src/modules/project/projects-grid.tsx",
-        "src/modules/workspace/workspaces-grid.tsx",
         // fork: cella's about sections, which raak's about page does not render yet.
         "src/modules/marketing/about/info-cards.tsx",
         "src/modules/marketing/about/showcase.tsx"

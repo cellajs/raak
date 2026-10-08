@@ -10,6 +10,9 @@ import { CreateWorkspaceForm } from '~/modules/workspace/create-workspace-form';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { getRouter } from '~/routes/-router-instance';
 import { getCreatedChannelRoute } from '~/utils/channel-route';
+import { lazyNamed } from '~/utils/lazy-named';
+
+const WorkspacesGrid = lazyNamed(() => import('~/modules/workspace/workspaces-grid'), 'WorkspacesGrid');
 
 declare module '~/lib/placements' {
   interface ChannelEntityByType {
@@ -45,4 +48,20 @@ defineFrontendModule({
     menuSection: { createAction: createWorkspaceAction, label: 'c:workspace_other', icon: FolderIcon },
     listQuery: (params) => workspacesListQueryOptions(params),
   },
+  tools: [
+    // Shortcuts to the user's workspaces on the home page; the section stays out of the way until a tile exists.
+    {
+      id: 'workspaces',
+      label: 'c:workspace_other',
+      slot: 'home.sections',
+      render: () => (
+        <section aria-labelledby="home-workspaces" className="mt-6 hidden has-[.tile-link]:block">
+          <h2 id="home-workspaces" className="mb-4 font-semibold text-lg">
+            {i18n.t('c:workspace_other')}
+          </h2>
+          <WorkspacesGrid />
+        </section>
+      ),
+    },
+  ],
 });
