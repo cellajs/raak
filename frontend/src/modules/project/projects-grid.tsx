@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Project } from 'sdk';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { BaseEntityGrid, ChannelGridTile, EntityGridBar } from '~/modules/entities/entity-grid';
+import { useUserStore } from '~/modules/user/user-store';
 import { projectsListQueryOptions } from './query';
 
 type ProjectSearch = Parameters<typeof projectsListQueryOptions>[0];
@@ -27,6 +28,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedV
   const { search: baseSearch, setSearch } = useSearchParams({ saveDataInSearch });
 
   const search: ProjectSearch = { ...baseSearch, ...(fixedQuery ?? {}) };
+  const ofAnotherUser = useUserStore((state) => !!search.relatableUserId && search.relatableUserId !== state.user?.id);
 
   const queryOptions = projectsListQueryOptions(search);
 
@@ -48,6 +50,10 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedV
           searchVars={baseSearch}
           label={'c:project'}
           entityType="project"
+          // The role is the listed user's own: the server refuses it as a filter on another user's list
+          roleFilter={!ofAnotherUser}
+          // On a profile the bar is what names these tiles beside the organizations grid, so it stays for a short list
+          alwaysShow={!!search.relatableUserId}
           setSearch={setSearch}
           focusView={focusView}
         />
