@@ -17,5 +17,10 @@ export const vocabularyAllowlist: VocabularyAllowlist = {
   ],
   prefixes: [],
   proseExclude: [],
-  markerClasses: {},
+  markerClasses: {
+    // The auth layout's veil calms the backdrop animation behind the form. raak draws no backdrop animation, so its
+    // pinned gradients.css leaves both classes without a rule and the two elements stay empty.
+    'rich-veil-gradient': 'auth veil, unused without a backdrop animation',
+    'rich-veil-background': 'auth veil, unused without a backdrop animation',
+  },
 };

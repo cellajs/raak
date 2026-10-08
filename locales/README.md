@@ -31,6 +31,7 @@ Settings for `.vscode/settings.json` (gitignored, once per contributor):
 - Two- or three-word translations have a two-word key
 - Above three words is a sentence
 - Action related sentences have a prefix such as `question.`, `confirm.` or `success.`
+- A confirmation that names what it hits wraps that part in `<strong>` (`Revoke API key <strong>{{name}}</strong>?`), never in quotes, and renders through `ConfirmText`, which shows it in bold
 - Other (explanation related) sentences have a suffix `.text`
 - Only the first letter of the first word is uppercase. For explicit lowercase, lowercase at the usage site (`.toLowerCase()` or an interpolation value such as `resourceLowerCase`).
 - Sort JSON translation keys alphabetically
@@ -45,7 +46,7 @@ Settings for `.vscode/settings.json` (gitignored, once per contributor):
 | `about.json` | marketing 'about' page | `about:` |
 | `error.json` | error texts, frontend and backend | `error:` |
 | `backend.json` | pure backend texts, mostly emails | `backend:` |
-| `appError.json` | app-specific error texts, not shipped by cella: create it and register it in `backend/src/lib/i18n-locales.ts` instead of touching cella-owned `error.json` | `appError:`, tried before `error:` (`ns: ['appError', 'error']` in `backend/src/core/error.ts`) |
+| `appError.json` | the app's own error types, kept apart from cella-owned `error.json`. cella ships it empty and never syncs it. Add `<type>` (the title) and `<type>.text` (the explanation), then throw `new AppError(status, '<type>', severity)`: the type is typed from this file | `appError:`, tried before `error:` (`ns: ['appError', 'error']` in `backend/src/core/error.ts`) |
 
 > [!IMPORTANT] `common.json` and `app.json` are **merged into one `c` namespace** at runtime: every key from either file is `t('c:key')`. No `app:` or `common:` namespace exists; `t('app:key')` resolves to nothing. The backend loads `common.json` under the same `c` namespace.
 

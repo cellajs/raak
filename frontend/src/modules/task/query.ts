@@ -321,8 +321,8 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
 
     return { optimisticTask };
   },
-  onError: (_err, variables, context) => {
-    handleError('create');
+  onError: (error, variables, context) => {
+    handleError('create', error);
     if (context?.optimisticTask) cacheRemove(taskKeys.list.org(variables.organizationId), [context.optimisticTask]);
   },
   onSuccess: (createdTask, variables, context) => {
@@ -357,11 +357,11 @@ const taskUpdateOptions = (
     await queryClient.cancelQueries({ queryKey: taskKeys.list.org(variables.organizationId) });
     return applyOptimisticTaskUpdate(queryClient, variables.organizationId, variables);
   },
-  onError: (_err, variables, context) => {
+  onError: (error, variables, context) => {
     // If the task was deleted while this update was in flight, suppress the error
     if (context?.previousTask && !findTaskInCache(context.previousTask.id)) return;
 
-    handleError('update');
+    handleError('update', error);
     if (context?.previousTask) {
       const orgKey = taskKeys.list.org(variables.organizationId);
       // Cross-project move rollback: remove from new project, restore to old
@@ -428,8 +428,8 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
     removeDetailQueriesById(queryClient, taskKeys.detail.base, taskIds);
     return { tasksToDelete };
   },
-  onError: (_err, _variables, context) => {
-    handleError('delete');
+  onError: (error, _variables, context) => {
+    handleError('delete', error);
     if (context?.tasksToDelete) insertEntitiesIntoHome(queryClient, context.tasksToDelete);
   },
   onSuccess: (_data, { tasksToDelete }) => {

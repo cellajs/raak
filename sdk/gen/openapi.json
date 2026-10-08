@@ -3942,9 +3942,24 @@
           },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "lastSeenAt": {
+            "type": ["string", "null"]
           }
         },
-        "required": ["id", "tenantId", "name", "status", "bindings", "oauthClientId", "createdBy", "updatedBy", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "tenantId",
+          "name",
+          "status",
+          "bindings",
+          "oauthClientId",
+          "createdBy",
+          "updatedBy",
+          "createdAt",
+          "updatedAt",
+          "lastSeenAt"
+        ],
         "description": "An actor that is not a person, in one tenant: API keys run as it, and it holds role bindings like a member holds memberships. An organization admin creates one, for example with Create API key in organization settings.",
         "example": {
           "id": "764ce6e7-55fc-4f5d-b661-0c777df71d45",
@@ -3963,7 +3978,8 @@
           "createdBy": "9363c51c-e97a-4ee4-9dbe-ebe841e8f2f9",
           "createdAt": "2024-09-01T22:49:17.262Z",
           "updatedAt": "2024-09-01T22:49:17.262Z",
-          "updatedBy": null
+          "updatedBy": null,
+          "lastSeenAt": "2024-09-01T22:49:17.262Z"
         },
         "x-tags": ["data", "service-accounts", "cella"]
       },
@@ -4025,8 +4041,14 @@
             "format": "uuid"
           },
           "createdBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserMinimalBase"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "createdAt": {
             "type": "string"
@@ -4058,8 +4080,14 @@
           "expiresAt": null,
           "revokedAt": null,
           "revokedBy": null,
-          "createdBy": "e522e29f-f395-42f7-999b-7ea34c4cb760",
-          "createdAt": "2024-11-05T21:01:57.922Z"
+          "createdAt": "2024-11-20T15:58:25.416Z",
+          "createdBy": {
+            "id": "9656def5-1db7-49f5-8767-34aa5a1f68f2",
+            "name": "Jace Kozey",
+            "slug": "jace_kozey68",
+            "thumbnailUrl": null,
+            "entityType": "user"
+          }
         },
         "x-tags": ["data", "service-accounts", "cella"]
       }
@@ -11339,7 +11367,7 @@
         "operationId": "getUser",
         "tags": ["users", "cella"],
         "summary": "Get user",
-        "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead.",
+        "description": "Retrieves a user by ID. The requesting user must share at least one organization membership. Pass ?slug=true to resolve by slug instead. Pass ?include=mfa for `mfaRequired`, which only the user themselves, system admins and admins of an organization the user is a member of receive.",
         "x-guard": ["userGuard", "relatableGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -11368,6 +11396,14 @@
             },
             "required": false,
             "name": "slug",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "include",
             "in": "query"
           }
         ],
@@ -11410,6 +11446,9 @@
                       "properties": {
                         "lastSeenAt": {
                           "type": ["string", "null"]
+                        },
+                        "mfaRequired": {
+                          "type": "boolean"
                         }
                       },
                       "required": ["lastSeenAt"]
@@ -18975,7 +19014,7 @@
         "operationId": "getMembers",
         "tags": ["memberships", "cella"],
         "summary": "Get list of members",
-        "description": "Retrieves members (users) of a channel entity by ID, including their associated membership data.",
+        "description": "Retrieves members (users) of a channel entity by ID, including their associated membership data. Pass ?include=counts for per-member counts, and ?include=mfa for `mfaRequired`, which only admins of the organization receive.",
         "x-guard": ["userGuard", "tenantGuard", "orgGuard"],
         "x-rate-limiter": [],
         "x-cache": [],
@@ -19275,6 +19314,9 @@
                                   }
                                 },
                                 "required": ["memberships", "products", "activity"]
+                              },
+                              "mfaRequired": {
+                                "type": "boolean"
                               }
                             },
                             "required": ["lastSeenAt", "membership"]
@@ -19823,7 +19865,8 @@
                     "createdBy": "9363c51c-e97a-4ee4-9dbe-ebe841e8f2f9",
                     "createdAt": "2024-09-01T22:49:17.262Z",
                     "updatedAt": "2024-09-01T22:49:17.262Z",
-                    "updatedBy": null
+                    "updatedBy": null,
+                    "lastSeenAt": "2024-09-01T22:49:17.262Z"
                   },
                   "apiKey": {
                     "id": "d4710b9b-020b-4142-9ab9-1d886a432815",
@@ -19836,8 +19879,14 @@
                     "expiresAt": null,
                     "revokedAt": null,
                     "revokedBy": null,
-                    "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
-                    "createdAt": "2024-08-12T09:36:07.688Z",
+                    "createdAt": "2024-09-23T23:15:48.299Z",
+                    "createdBy": {
+                      "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
+                      "name": "Stewart VonRueden",
+                      "slug": "stewart_vonrueden",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    },
                     "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                   }
                 },
@@ -19875,8 +19924,14 @@
                         "expiresAt": null,
                         "revokedAt": null,
                         "revokedBy": null,
-                        "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
-                        "createdAt": "2024-08-12T09:36:07.688Z",
+                        "createdAt": "2024-09-23T23:15:48.299Z",
+                        "createdBy": {
+                          "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
+                          "name": "Stewart VonRueden",
+                          "slug": "stewart_vonrueden",
+                          "thumbnailUrl": null,
+                          "entityType": "user"
+                        },
                         "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                       },
                       "x-tags": ["data", "service-accounts", "cella"]
@@ -19991,7 +20046,8 @@
                       "createdBy": "0796fe85-592b-48e6-b71b-17b41ee456f6",
                       "createdAt": "2024-03-18T03:56:02.722Z",
                       "updatedAt": "2024-03-18T03:56:02.722Z",
-                      "updatedBy": null
+                      "updatedBy": null,
+                      "lastSeenAt": "2024-03-18T03:56:02.722Z"
                     },
                     {
                       "id": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
@@ -20010,7 +20066,8 @@
                       "createdBy": "339b813c-f84d-4752-a3c2-ac3827d82be1",
                       "createdAt": "2024-04-20T08:15:05.883Z",
                       "updatedAt": "2024-04-20T08:15:05.883Z",
-                      "updatedBy": null
+                      "updatedBy": null,
+                      "lastSeenAt": "2024-04-20T08:15:05.883Z"
                     }
                   ],
                   "total": 2
@@ -20141,7 +20198,8 @@
                   "createdBy": "9363c51c-e97a-4ee4-9dbe-ebe841e8f2f9",
                   "createdAt": "2024-09-01T22:49:17.262Z",
                   "updatedAt": "2024-09-01T22:49:17.262Z",
-                  "updatedBy": null
+                  "updatedBy": null,
+                  "lastSeenAt": "2024-09-01T22:49:17.262Z"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
@@ -20231,8 +20289,14 @@
                       "expiresAt": null,
                       "revokedAt": null,
                       "revokedBy": null,
-                      "createdBy": "e522e29f-f395-42f7-999b-7ea34c4cb760",
-                      "createdAt": "2024-11-05T21:01:57.922Z"
+                      "createdAt": "2024-11-20T15:58:25.416Z",
+                      "createdBy": {
+                        "id": "9656def5-1db7-49f5-8767-34aa5a1f68f2",
+                        "name": "Jace Kozey",
+                        "slug": "jace_kozey68",
+                        "thumbnailUrl": null,
+                        "entityType": "user"
+                      }
                     }
                   ]
                 },
@@ -20383,8 +20447,14 @@
                   "expiresAt": null,
                   "revokedAt": null,
                   "revokedBy": null,
-                  "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
-                  "createdAt": "2024-08-12T09:36:07.688Z",
+                  "createdAt": "2024-09-23T23:15:48.299Z",
+                  "createdBy": {
+                    "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
+                    "name": "Stewart VonRueden",
+                    "slug": "stewart_vonrueden",
+                    "thumbnailUrl": null,
+                    "entityType": "user"
+                  },
                   "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                 },
                 "schema": {
@@ -20415,8 +20485,14 @@
                     "expiresAt": null,
                     "revokedAt": null,
                     "revokedBy": null,
-                    "createdBy": "b9151091-2c7d-4b2f-b091-683eca24cc52",
-                    "createdAt": "2024-08-12T09:36:07.688Z",
+                    "createdAt": "2024-09-23T23:15:48.299Z",
+                    "createdBy": {
+                      "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
+                      "name": "Stewart VonRueden",
+                      "slug": "stewart_vonrueden",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    },
                     "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                   },
                   "x-tags": ["data", "service-accounts", "cella"]
@@ -20513,8 +20589,14 @@
                   "expiresAt": null,
                   "revokedAt": null,
                   "revokedBy": null,
-                  "createdBy": "e522e29f-f395-42f7-999b-7ea34c4cb760",
-                  "createdAt": "2024-11-05T21:01:57.922Z"
+                  "createdAt": "2024-11-20T15:58:25.416Z",
+                  "createdBy": {
+                    "id": "9656def5-1db7-49f5-8767-34aa5a1f68f2",
+                    "name": "Jace Kozey",
+                    "slug": "jace_kozey68",
+                    "thumbnailUrl": null,
+                    "entityType": "user"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/ApiKey"
