@@ -11,11 +11,34 @@ minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@cellajs/cli'
   - moment@2.31.0
+  - browserslist@4.28.7
+  - brace-expansion@5.0.12
+  - brace-expansion@5.0.11
+  - brace-expansion@5.0.10
+  - '@grpc/grpc-js@1.14.5'
+  - http-cache-semantics@4.2.1
+  - smol-toml@1.8.1
+  - source-map-js@1.2.2
+  - joi@17.13.8
+  - postcss-selector-parser@7.1.6
 overrides:
+  # 7.29.10 makes @tanstack/router-plugin 1.168.42 emit an undefined export for a route whose split
+  # component shares a local binding with a non-split prop (t.$id.tsx), which fails `vite build`.
+  '@babel/traverse': 7.29.7
+  '@grpc/grpc-js@>=1.14.0 <1.14.5': ^1.14.5
+  brace-expansion@>=4.0.0 <5.0.10: ^5.0.10
+  brace-expansion@>=4.0.0 <5.0.11: ^5.0.11
+  brace-expansion@>=4.0.0 <5.0.12: ^5.0.12
+  browserslist@<=4.28.6: ^4.28.7
   csv-parse@<7.0.2: ^7.0.2
   esbuild@<0.28.1: ^0.28.1
+  http-cache-semantics@<=4.2.0: ^4.2.1
+  joi@<17.13.8: ^17.13.8
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   moment@>=2.29.2 <2.31.0: ^2.31.0
+  postcss-selector-parser@<7.1.6: ^7.1.6
+  smol-toml@<=1.8.0: ^1.8.1
+  source-map-js@>=1.0.0 <1.2.2: ^1.2.2
 packageExtensions:
   '@artilleryio/sketches-js':
     dependencies:

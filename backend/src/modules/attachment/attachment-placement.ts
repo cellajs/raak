@@ -106,15 +106,15 @@ export const resolveAttachmentHomeScope = async (ctx: OrgContext, channelId: str
   return entity.id;
 };
 
-/** One seed batch: the organization it belongs to and the ancestor columns its rows carry. */
+/** One seed home: the organization it belongs to and the ancestor columns its rows carry. */
 export interface AttachmentSeedPlacement {
   organizationId: string;
   tenantId: string;
   placement: ResolvedAttachmentPlacement;
 }
 
-// fork: raak seeds one batch per project, mirroring the project's publicity onto its attachments
-/** One batch per seeded project, mirroring the project's publicity onto its attachments. */
+// fork: raak homes seeded attachments at its projects, mirroring the project's publicity onto them
+/** One home per seeded project, mirroring the project's publicity onto its attachments. */
 export const seedAttachmentPlacements = async (db: DB, organizations: { id: string; tenantId: string }[]): Promise<AttachmentSeedPlacement[]> => {
   const organizationIds = new Set(organizations.map((org) => org.id));
   const projects = await db
@@ -124,7 +124,9 @@ export const seedAttachmentPlacements = async (db: DB, organizations: { id: stri
       tenantId: projectsTable.tenantId,
       publicAt: projectsTable.publicAt,
     })
-    .from(projectsTable);
+    .from(projectsTable)
+    // The seed deals assets over an organization's homes in this order, so it has to be stable across runs.
+    .orderBy(projectsTable.id);
 
   return projects
     .filter((project) => organizationIds.has(project.organizationId))

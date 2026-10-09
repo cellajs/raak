@@ -40,7 +40,7 @@ pnpm seed     # apply migrations, DB roles, and seed demo data
 pnpm dev      # run backend + CDC worker + frontend + Yjs relay
 ```
 
-The app is served on a single origin at [http://localhost:3000](http://localhost:3000), with the backend under `/api`. The seed creates an admin user (`admin-test@cellajs.com` by default, set via `ADMIN_EMAIL`); sign in by requesting a magic link for that address.
+The app is served on a single origin at [http://localhost:3010](http://localhost:3010), with the backend under `/api`. The seed creates an admin user (`admin-test@cellajs.com` by default, set via `ADMIN_EMAIL`); sign in by requesting a magic link for that address.
 
 Without outbound email configured (see below), magic links are logged to the backend console instead of being sent, which is all you need for local work.
 
