@@ -70,10 +70,10 @@ export type CatchupView = z.infer<typeof catchupViewSchema>;
 
 /** `views` is the sequence-sync contract: prefix views with org-sequence cursors, answered after prefix authorization. */
 export const streamCatchupBodySchema = z.object({
-  cursor: z
-    .string()
-    .optional()
-    .openapi({ description: 'Last activity cursor received by the client (LSN-based). Omit on first sync.', example: '0-16B3748' }),
+  cursor: z.string().optional().openapi({
+    description: 'Id of the last activity the client received (its commit position and index). Omit on first sync.',
+    example: '00000000-016B3748-00000001',
+  }),
   views: z
     .array(catchupViewSchema)
     .max(256)
@@ -101,11 +101,11 @@ const catchupViewAnswerSchema = z.object({
   frontiers: z
     .record(z.string(), z.number().int())
     .optional()
-    .openapi({ description: 'Per-entityType newest sequence position over the view prefixes (subtree: f:{type}; self: fs:{type})' }),
+    .openapi({ description: 'Per-entityType newest sequence position over the view prefixes (subtree: e:f:{type}; self: e:f:h:{type})' }),
   counts: z
     .record(z.string(), z.number().int())
     .optional()
-    .openapi({ description: 'Per-entityType live row counts summed over the view prefixes (subtree: e:{type}; self: es:{type})' }),
+    .openapi({ description: 'Per-entityType live row counts summed over the view prefixes (subtree: e:c:{type}; self: e:c:h:{type})' }),
 });
 
 export type CatchupViewAnswer = z.infer<typeof catchupViewAnswerSchema>;
@@ -120,6 +120,9 @@ export const appCatchupResponseSchema = z.object({
     .optional()
     .openapi({ description: 'Per-view answers for client-declared views (same order as the request)' }),
   cursor: z.string().nullable().openapi({ description: 'Last activity ID (use as offset for next request)' }),
+  generation: z.number().int().optional().openapi({
+    description: 'Generation of the sync books. A client that holds another one refetches its synced data and takes the frontiers as baselines',
+  }),
 });
 
 export type AppCatchupResponse = z.infer<typeof appCatchupResponseSchema>;

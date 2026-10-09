@@ -2944,7 +2944,7 @@ export type GetAppStreamResponses = {
 export type PostAppCatchupData = {
   body: {
     /**
-     * Last activity cursor received by the client (LSN-based). Omit on first sync.
+     * Id of the last activity the client received (its commit position and index). Omit on first sync.
      */
     cursor?: string;
     /**
@@ -3052,13 +3052,13 @@ export type PostAppCatchupResponses = {
       key: string;
       status: 'ok' | 'opaque' | 'forbidden';
       /**
-       * Per-entityType newest sequence position over the view prefixes (subtree: f:{type}; self: fs:{type})
+       * Per-entityType newest sequence position over the view prefixes (subtree: e:f:{type}; self: e:f:h:{type})
        */
       frontiers?: {
         [key: string]: number;
       };
       /**
-       * Per-entityType live row counts summed over the view prefixes (subtree: e:{type}; self: es:{type})
+       * Per-entityType live row counts summed over the view prefixes (subtree: e:c:{type}; self: e:c:h:{type})
        */
       counts?: {
         [key: string]: number;
@@ -3068,6 +3068,10 @@ export type PostAppCatchupResponses = {
      * Last activity ID (use as offset for next request)
      */
     cursor: string | null;
+    /**
+     * Generation of the sync books. A client that holds another one refetches its synced data and takes the frontiers as baselines
+     */
+    generation?: number;
   };
 };
 

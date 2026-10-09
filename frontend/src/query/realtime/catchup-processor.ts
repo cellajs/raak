@@ -12,6 +12,16 @@ import * as membershipOps from './membership-ops';
 import { invalidateEmbeddedForHost, propagateEmbeddings } from './propagation';
 import { getSyncTier, getTenantIdForOrg } from './sync-priority';
 
+/** Every client learns of a new generation at about the same moment: each waits a random part of this before it refetches. */
+const GENERATION_REFETCH_SPREAD_MS = 10_000;
+
+/** Refetches what is on screen of every synced type and marks the rest stale, after this client's share of the spread. */
+function refetchSyncedQueries(): void {
+  setTimeout(() => {
+    for (const entityType of getRegisteredProductEntityTypes()) cacheOps.invalidateEntityQueries(getEntityQueryKeys(entityType));
+  }, Math.random() * GENERATION_REFETCH_SPREAD_MS);
+}
+
 /**
  * Readable views fetch deltas when their frontier advances; other statuses expose no summaries.
  * Cursors advance only after ingestion, invalidation handoff, or an intentional cache-free skip.
@@ -19,6 +29,10 @@ import { getSyncTier, getTenantIdForOrg } from './sync-priority';
 export async function processAppCatchup(response: PostAppCatchupResponse, baselineOnly = false): Promise<void> {
   const { changes, views } = response;
   const syncState = syncStore.getState();
+
+  // Another generation: the server corrected or rebuilt its sync books, and no cursor of before says anything about
+  // them. Cursors are back at 0, so the views below store their frontiers as baselines.
+  if (syncState.adoptGeneration(response.generation)) refetchSyncedQueries();
   let hadGap = false; // any view still behind the server frontier this cycle
 
   // ── Views: product entity sync per (org, entityType) ──────────────────────
@@ -55,9 +69,10 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
       const frontier = answer.frontiers?.[entityType] ?? 0;
       const clientCursor = syncState.getOrgSeq(organizationId, entityType);
 
-      // First session for this org view: store the frontier and let route loaders or hydration supply the data; refetch only what is already cached.
+      // First session for this org view: store the frontier and let route loaders or hydration supply the data. A list that is
+      // cached already was read before this stream was live, so the frontier says nothing about it: it is refetched.
       if (baselineOnly || clientCursor === 0) {
-        if (!baselineOnly && hasAnyCachedList(keys, organizationId)) {
+        if (hasAnyCachedList(keys, organizationId)) {
           cacheOps.invalidateEntityListForOrg(keys, organizationId, 'active');
           console.debug(`[CatchupProcessor] View ${answer.key}: first session → full refetch`);
         }
@@ -110,7 +125,7 @@ export async function processAppCatchup(response: PostAppCatchupResponse, baseli
   for (const organizationId of orgIds) {
     const { signals, propagation } = changes[organizationId];
 
-    // Seed the org entry so the next catchup request declares views for it; fresh sessions have no stored orgs and learn them from `changes`.
+    // Seed the org entry so the next catchup request declares views for it: an organization the membership cache did not hold yet is learned here.
     syncState.setOrgTenantId(organizationId, syncState.getOrgTenantId(organizationId) ?? '');
 
     // Membership change via the bump-only membership signal; stored after comparison.

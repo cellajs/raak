@@ -7,6 +7,7 @@ import { hasPublishedAt } from '#/db/utils/published-predicate';
 import { activitiesTable } from '#/modules/activities/activities-db';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { productCountersTable } from '#/modules/entities/product-counters-db';
+import { syncStateTable } from '#/modules/entities/sync-state-db';
 import type { membershipCountSchema } from '#/schemas';
 import type { EntityModel, EntityType, ResolvableTable, TableWithIdAndSlug } from '#/tables';
 import { getEntityTable } from '#/tables';
@@ -180,12 +181,25 @@ export const findLatestUserActivityId = async (ctx: DbContext, { organizationIds
   return result[0]?.id ?? null;
 };
 
+/**
+ * The generation of the sync books. The CDC worker moves it on whenever it rebuilt them, and a client that holds
+ * another one refetches.
+ * @param ctx - Carries the connection to read on.
+ * @returns The generation, 1 on a database whose books were never rebuilt.
+ */
+export const findSyncGeneration = async (ctx: DbContext): Promise<number> => {
+  const [state] = await ctx.var.db.select({ generation: syncStateTable.generation }).from(syncStateTable).limit(1);
+  return state?.generation ?? 1;
+};
+
 // Entity resolution queries
 
 interface ResolveEntityOpts<T extends EntityType> {
   entityType: T;
   identifier: string;
   bySlug?: boolean;
+  /** Locks the row until the caller's transaction ends; needs a read-write transaction. */
+  forUpdate?: boolean;
 }
 
 /**
@@ -195,7 +209,7 @@ interface ResolveEntityOpts<T extends EntityType> {
  */
 export async function resolveEntity<T extends EntityType>(
   ctx: DbContext,
-  { entityType, identifier, bySlug = false }: ResolveEntityOpts<T>,
+  { entityType, identifier, bySlug = false, forUpdate = false }: ResolveEntityOpts<T>,
 ): Promise<EntityModel<T> | undefined> {
   const { db } = ctx.var;
   const table = getEntityTable(entityType);
@@ -203,11 +217,13 @@ export async function resolveEntity<T extends EntityType>(
   const identityCondition = bySlug && hasSlug(table) ? eq(table.slug, identifier) : eq(table.id, identifier);
   const condition = hasDeletedAt(table) ? and(identityCondition, isNull(table.deletedAt)) : identityCondition;
 
-  const [entity] = await db
+  const query = db
     .select()
     // biome-ignore lint/suspicious/noExplicitAny: Drizzle .from() rejects generic table types (https://github.com/drizzle-team/drizzle-orm/issues/4367)
     .from(table as any)
     .where(condition);
+  // The lock an UPDATE of non-key columns takes: writers of the row wait, inserts that reference it do not.
+  const [entity] = forUpdate ? await query.for('no key update') : await query;
   return entity as EntityModel<T> | undefined;
 }
 

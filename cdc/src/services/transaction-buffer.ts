@@ -1,139 +1,132 @@
 import type { Pgoutput } from 'pg-logical-replication';
 import type { ChannelIdColumns } from 'shared';
-import { appConfig, isChannel } from 'shared';
+import { isChannel } from 'shared';
 import { RESOURCE_LIMITS } from '../constants';
+import { suppressEmbeddingPropagation } from '../embeddings';
 import { log } from '../lib/pino';
 import type { ParseMessageResult } from '../pipeline/parse-message';
 import type { PendingEvent } from '../types';
 import { channelIdColumnKeys } from '../utils/channel-columns';
+import { commitTimeMs } from '../utils/commit-time';
+import { mergeDelta } from '../utils/compute-unified-deltas';
+import { getCountDeltas } from '../utils/update-counts';
+import { TransactionTooLargeError } from './failure';
 
-/** Reverse lookup: hostProduct to the products embedded into it. */
-const embeddedByHostProduct = new Map<string, Set<string>>();
-for (const { embeddedProduct, hostProduct } of appConfig.productEmbeddings) {
-  const embedded = embeddedByHostProduct.get(hostProduct) ?? new Set<string>();
-  embedded.add(embeddedProduct);
-  embeddedByHostProduct.set(hostProduct, embedded);
-}
-
-const { transactionTimeoutMs } = RESOURCE_LIMITS.buffers;
+/** Prefix of the counter keys that count rows: what a cascaded delete takes off the channels above it. */
+const ENTITY_COUNT_PREFIX = 'e:c:';
 
 /**
- * Buffers CDC events per transaction and suppresses cascaded deletes as they arrive. Tracking
- * deleted channel ids bounds memory to surviving events regardless of cascade size; events outside
- * a transaction pass through directly.
+ * Buffers the changes of one source transaction and suppresses cascaded deletes as they arrive. Tracking
+ * deleted channel ids bounds memory to surviving changes regardless of cascade size; changes outside
+ * a transaction pass through directly. A transaction leaves the buffer whole, at its COMMIT, however
+ * large it is or long it takes to arrive: a part of one is never emitted.
+ *
+ * A suppressed delete is no activity, and it still counted: its row leaves the counts of every channel above the one
+ * that was deleted. Those counts are summed per channel as the deletes arrive and leave with the channel's own delete.
  */
 export class TransactionBuffer {
   private activeXid: number | null = null;
+  /**
+   * When the transaction being buffered committed. Its activities take this as `createdAt`: the activities key is
+   * (id, createdAt), so a change delivered twice has to carry the same time both times to be recorded once.
+   */
+  private commitTime: string | null = null;
+  /** Commit position of the transaction being buffered: with a change's index it is the change's identity. */
+  private commitLsn: string | null = null;
   private pendingEvents: PendingEvent[] = [];
-  private timeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
   /** Channel entity IDs deleted in the current transaction (streaming suppression). */
   private deletedChannelIds = new Set<string>();
 
-  /** Count of events suppressed in the current transaction. */
+  /** Count of changes suppressed in the current transaction. */
   private suppressedCount = 0;
+
+  /** What the suppressed deletes of the current transaction take off the row counts, per channel key. */
+  private cascadeCounts = new Map<string, Record<string, number>>();
 
   private onSurvivingEvents: (events: PendingEvent[]) => Promise<void>;
 
-  constructor(onSurvivingEvents: (events: PendingEvent[]) => Promise<void>) {
+  private maxEvents: number;
+
+  constructor(
+    onSurvivingEvents: (events: PendingEvent[]) => Promise<void>,
+    { maxEvents = RESOURCE_LIMITS.buffers.maxTransactionEvents as number } = {},
+  ) {
     this.onSurvivingEvents = onSurvivingEvents;
+    this.maxEvents = maxEvents;
   }
 
-  onBegin(msg: Pgoutput.MessageBegin): void {
-    // An active transaction here means a lost COMMIT: flush it before starting the new one.
+  /**
+   * Opens a source transaction.
+   * @returns When it committed, in Unix milliseconds; null when its BEGIN carries no time.
+   */
+  onBegin(msg: Pgoutput.MessageBegin): number | null {
+    // A stream sends BEGIN and COMMIT in pairs and every subscription starts with `reset`, so an open transaction
+    // here is one whose COMMIT never came. It was not acknowledged: its changes go, and the slot delivers it again.
     if (this.activeXid !== null) {
-      log.warn('BEGIN received while transaction active, flushing previous', {
+      log.warn('BEGIN received while a transaction is open: dropping its events', {
         prevXid: this.activeXid,
         newXid: msg.xid,
         pendingCount: this.pendingEvents.length,
       });
-      this.flushAll();
     }
 
+    this.reset();
     this.activeXid = msg.xid;
-    this.pendingEvents = [];
-    this.deletedChannelIds.clear();
-    this.suppressedCount = 0;
-    this.startTimeout();
+    const committedAt = commitTimeMs(msg);
+    this.commitTime = committedAt === null ? null : new Date(committedAt).toISOString();
+    this.commitLsn = msg.commitLsn;
+    return committedAt;
   }
 
   /** Drops cascaded child deletes inline once the parent channel entity delete has been seen. */
-  async onEvent(lsn: string, result: ParseMessageResult): Promise<void> {
+  async onEvent(lsn: string, result: ParseMessageResult, index = 0): Promise<void> {
     if (this.activeXid === null) {
-      await this.onSurvivingEvents([{ lsn, result }]);
+      await this.onSurvivingEvents([{ lsn, index, result }]);
       return;
     }
 
     const { activity } = result;
+    if (this.commitTime) activity.createdAt = this.commitTime;
 
     if (activity.action === 'delete' && activity.entityType && isChannel(activity.entityType) && activity.subjectId) {
       this.deletedChannelIds.add(activity.subjectId);
     }
 
-    if (this.deletedChannelIds.size > 0 && this.isCascadedDelete(result)) {
+    if (this.isCascadedDelete(result)) {
+      this.countCascadedDelete(result);
       this.suppressedCount++;
       return;
     }
 
-    this.pendingEvents.push({ lsn, result });
+    this.pendingEvents.push({ lsn, commitLsn: this.commitLsn, index, xid: this.activeXid, result });
+
+    // The transaction is held whole until its commit: past the limit it would take the process's memory with it.
+    if (this.pendingEvents.length > this.maxEvents) {
+      const xid = this.activeXid;
+      this.reset();
+      throw new TransactionTooLargeError(this.maxEvents, xid);
+    }
   }
 
-  /** Emits the surviving buffered events; a second pass catches child deletes that preceded their parent. */
+  /** Emits the surviving buffered changes; a second pass catches child deletes that preceded their parent. */
   async onCommit(): Promise<void> {
-    this.clearTimeout();
-
-    let events = this.pendingEvents;
-    let suppressedCount = this.suppressedCount;
-    const deletedChannelIds = this.deletedChannelIds.size > 0 ? [...this.deletedChannelIds] : null;
-
-    this.activeXid = null;
-    this.pendingEvents = [];
-    this.deletedChannelIds.clear();
-    this.suppressedCount = 0;
-
     // Children that preceded their parent delete in WAL order; the parent-first case is already gone.
-    if (deletedChannelIds && events.length > 1) {
-      const deletedChannelSet = new Set(deletedChannelIds);
-      const filtered: PendingEvent[] = [];
-      for (const event of events) {
-        if (this.isCascadedDeleteByIds(event.result, deletedChannelSet)) {
-          suppressedCount++;
-        } else {
-          filtered.push(event);
-        }
-      }
-      events = filtered;
+    const kept: PendingEvent[] = [];
+    for (const event of this.pendingEvents) {
+      if (this.isCascadedDelete(event.result)) this.countCascadedDelete(event.result);
+      else kept.push(event);
     }
-
+    const suppressedCount = this.suppressedCount + this.pendingEvents.length - kept.length;
     if (suppressedCount > 0) {
-      log.info('Suppressed cascaded delete events', { suppressedCount, processedCount: events.length, deletedChannelIds });
+      log.info('Suppressed cascaded delete events', { suppressedCount, processedCount: kept.length, deletedChannelIds: [...this.deletedChannelIds] });
     }
-
-    if (events.length === 0) return;
-
-    if (events.length === 1) {
-      await this.onSurvivingEvents(events);
-      return;
-    }
-
-    let surviving = events;
+    this.attachCascadeCounts(kept);
+    this.reset();
 
     // Deletes of embedded product A plus updates of its host B: the B updates are cascade noise.
-    if (surviving.length > 1 && embeddedByHostProduct.size > 0) {
-      surviving = this.suppressSoftCascades(surviving);
-    }
-
-    if (surviving.length > 0) {
-      if (surviving.length > 1) {
-        const nonDeleteEvents = surviving.filter((e) => e.result.activity.action !== 'delete');
-        const nonDeleteTypes = new Set(nonDeleteEvents.map((e) => e.result.tableMeta.type));
-        if (nonDeleteTypes.size > 1) {
-          log.warn('Transaction contains non-delete mutations across types', { types: [...nonDeleteTypes] });
-        }
-      }
-
-      await this.onSurvivingEvents(surviving);
-    }
+    const surviving = suppressEmbeddingPropagation(kept);
+    if (surviving.length > 0) await this.onSurvivingEvents(surviving);
   }
 
   /** Whether a transaction is currently being buffered. */
@@ -141,90 +134,48 @@ export class TransactionBuffer {
     return this.activeXid !== null;
   }
 
-  private isCascadedDelete(result: ParseMessageResult): boolean {
-    return this.isCascadedDeleteByIds(result, this.deletedChannelIds);
+  /** Forgets the transaction being buffered: the replication stream starts over and delivers it again. */
+  reset(): void {
+    this.activeXid = null;
+    this.pendingEvents = [];
+    this.deletedChannelIds.clear();
+    this.suppressedCount = 0;
+    this.cascadeCounts = new Map();
   }
 
-  /** Matches on the activity's channel entity id columns. */
-  private isCascadedDeleteByIds(result: ParseMessageResult, deletedChannelIds: Set<string>): boolean {
-    const { activity } = result;
-    if (activity.action !== 'delete') return false;
+  /** Sums what a suppressed delete takes off the row counts. The row is dropped; only numbers per channel are kept. */
+  private countCascadedDelete({ tableMeta, activity, rowData, oldRowData }: ParseMessageResult): void {
+    for (const { channelKey, deltas } of getCountDeltas(tableMeta, activity, rowData, oldRowData ?? null)) {
+      const counts = Object.fromEntries(Object.entries(deltas).filter(([key]) => key.startsWith(ENTITY_COUNT_PREFIX)));
+      if (Object.keys(counts).length > 0) mergeDelta(this.cascadeCounts, channelKey, counts);
+    }
+  }
+
+  /**
+   * Hands the summed counts to the first channel delete that survives: recorded with it, once. Counts on a channel
+   * this transaction deleted are left out: its counter row is nobody's book any more.
+   */
+  private attachCascadeCounts(kept: PendingEvent[]): void {
+    for (const channelId of this.deletedChannelIds) this.cascadeCounts.delete(channelId);
+    if (this.cascadeCounts.size === 0) return;
+    const carrier = kept.find(({ result: { activity } }) => activity.action === 'delete' && activity.entityType && isChannel(activity.entityType));
+    if (carrier) carrier.cascadeCounts = this.cascadeCounts;
+  }
+
+  /** Whether a change is the delete of a row under a channel this transaction deleted, by the activity's channel id columns. */
+  private isCascadedDelete({ activity }: ParseMessageResult): boolean {
+    if (this.deletedChannelIds.size === 0 || activity.action !== 'delete') return false;
 
     // Never suppress the channel entity delete itself.
     if (activity.entityType && isChannel(activity.entityType)) return false;
 
     for (const idColumn of channelIdColumnKeys) {
       const value = (activity as Partial<ChannelIdColumns>)[idColumn];
-      if (typeof value === 'string' && deletedChannelIds.has(value)) {
+      if (typeof value === 'string' && this.deletedChannelIds.has(value)) {
         return true;
       }
     }
 
     return false;
-  }
-
-  /**
-   * Suppresses host-product updates that only propagate an embedded-product delete from the same
-   * transaction; the client already applies these through propagateEmbeddings.
-   */
-  private suppressSoftCascades(events: PendingEvent[]): PendingEvent[] {
-    const deleteTypes = new Set<string>();
-    for (const e of events) {
-      if (e.result.activity.action === 'delete' && e.result.activity.entityType) {
-        deleteTypes.add(e.result.activity.entityType);
-      }
-    }
-
-    if (deleteTypes.size === 0) return events;
-
-    let softSuppressedCount = 0;
-    const kept: PendingEvent[] = [];
-
-    for (const event of events) {
-      const { activity } = event.result;
-      if (activity.action === 'update' && activity.entityType) {
-        const embeddedTypes = embeddedByHostProduct.get(activity.entityType);
-        if (embeddedTypes && [...embeddedTypes].some((s) => deleteTypes.has(s))) {
-          softSuppressedCount++;
-          continue;
-        }
-      }
-      kept.push(event);
-    }
-
-    if (softSuppressedCount > 0) {
-      log.info('Suppressed soft cascade update events', { softSuppressedCount, deleteTypes: [...deleteTypes], survivingCount: kept.length });
-    }
-
-    return kept;
-  }
-
-  /** Fallback: emits every pending event without cascade filtering. */
-  private async flushAll(): Promise<void> {
-    this.clearTimeout();
-    const events = this.pendingEvents;
-    this.activeXid = null;
-    this.pendingEvents = [];
-
-    if (events.length > 0) {
-      await this.onSurvivingEvents(events);
-    }
-  }
-
-  private startTimeout(): void {
-    this.clearTimeout();
-    this.timeoutHandle = setTimeout(() => {
-      if (this.activeXid !== null) {
-        log.warn('Transaction buffer timeout, flushing without filtering', { xid: this.activeXid, count: this.pendingEvents.length });
-        this.flushAll();
-      }
-    }, transactionTimeoutMs);
-  }
-
-  private clearTimeout(): void {
-    if (this.timeoutHandle) {
-      clearTimeout(this.timeoutHandle);
-      this.timeoutHandle = null;
-    }
   }
 }

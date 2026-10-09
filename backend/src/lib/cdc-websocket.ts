@@ -1,49 +1,63 @@
 import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 import { z } from '@hono/zod-openapi';
-import { isValidEventType } from 'shared';
+import { appConfig, isProduct, isValidEventType } from 'shared';
 import { safeEqual } from 'shared/utils/safe-equal';
 import { type WebSocket, WebSocketServer } from 'ws';
-import { env, modeSecret } from '#/env';
+import { modeSecret } from '#/env';
 import { type ActivityEvent, activityBus } from '#/lib/activity-bus';
 import { productCache } from '#/middlewares/product-cache/app-product-cache';
 import { activityActionSchema, activitySchema } from '#/modules/activities/activities-schema';
 import { log } from '#/utils/logger';
 
-/** Validates the CDC worker payload. @see cdc/src/services/activity-service.ts for the producing type. */
-const cdcMessageSchema = z.object({
-  activity: z.object({
-    ...activitySchema.shape,
-    // Override nullable fields that are always present in CDC messages
-    action: activityActionSchema,
-    subjectId: z.string().nullable(),
-    // Org-sequence position stamped by the CDC worker (product entities only)
-    seq: z.number().optional(),
-    // Batch fields for multi-entity transactions; seq..batchUntilSeq ranges may interleave, so `count` is authoritative
-    batchUntilSeq: z.number().optional(),
-    count: z.number().optional(),
-  }),
-  rowData: z.record(z.string(), z.unknown()),
-  // Old-row permission subset when the row's computed location path changed (move-out)
-  movedFrom: z.record(z.string(), z.unknown()).nullable().optional(),
-  // Per-row permission fields for batches: dispatch decides per subscriber across all rows
-  batchRows: z
-    .array(
-      z.object({
-        seq: z.number().optional(),
-        rowData: z.record(z.string(), z.unknown()),
-        movedFrom: z.record(z.string(), z.unknown()).nullable().optional(),
-      }),
-    )
-    .optional(),
-  _trace: z.object({ traceId: z.string(), spanId: z.string(), cdcTimestamp: z.number(), lsn: z.string().optional() }).optional(),
+const rowDataSchema = z.record(z.string(), z.unknown());
+
+/** One product row: its permission fields, its org-sequence position, and for a moved row the permission fields it had before. */
+const messageRowSchema = z.object({
+  rowData: rowDataSchema,
+  seq: z.number().optional(),
+  movedFrom: rowDataSchema.nullable().optional(),
 });
+
+/** The activity of a message's row, or of its first row. `action` and `subjectId` override fields that are always present. */
+const messageActivityShape = { ...activitySchema.shape, action: activityActionSchema, subjectId: z.string().nullable() };
+
+const messageTraceSchema = z
+  .object({ traceId: z.string(), spanId: z.string(), traceFlags: z.number().optional(), cdcTimestamp: z.number(), lsn: z.string().optional() })
+  .optional();
+
+/**
+ * Validates the CDC worker payload: the product rows of one audience as `rows`, or the one whole row of a change that
+ * is no product as `rowData`. @see cdc/src/services/activity-service.ts for the producing type.
+ */
+const cdcMessageSchema = z.union([
+  z.object({ activity: z.object(messageActivityShape), rows: z.array(messageRowSchema).min(1), _trace: messageTraceSchema }),
+  z.object({
+    // `seq` and `batchRows` belong to an older worker's product messages and go together with the lines of `contentOf` that read them.
+    activity: z.object({ ...messageActivityShape, seq: z.number().optional() }),
+    rowData: rowDataSchema,
+    movedFrom: rowDataSchema.nullable().optional(),
+    batchRows: z.array(messageRowSchema).optional(),
+    _trace: messageTraceSchema,
+  }),
+]);
 
 export type CdcMessage = z.infer<typeof cdcMessageSchema>;
 
-const IDLE_TIMEOUT_MS = 90_000;
+/**
+ * What a message holds, as everything behind the socket reads it: the rows of a product message, or the one whole row
+ * of any other.
+ */
+function contentOf(message: CdcMessage): Pick<ActivityEvent, 'rows' | 'rowData'> {
+  if ('rows' in message) return { rows: message.rows, rowData: null };
+  if (!isProduct(message.activity.entityType)) return { rows: null, rowData: message.rowData };
+  // An older worker sends a product row as one whole row, and several as `batchRows`: this can go after one release.
+  const single = { rowData: message.rowData, seq: message.activity.seq, movedFrom: message.movedFrom };
+  return { rows: message.batchRows?.length ? message.batchRows : [single], rowData: null };
+}
 
-const PING_INTERVAL_MS = 30_000;
+/** The worker's health push arrives every 15 seconds, so a connection this long without a message is dead. */
+const IDLE_TIMEOUT_MS = 90_000;
 
 /**
  * Why an upgrade's `x-cdc-secret` is refused, or undefined for the worker's own secret. A process that does not hold
@@ -61,52 +75,48 @@ export function cdcSecretRefusal(presented: string | string[] | undefined): stri
   return typeof presented === 'string' && safeEqual(presented, expected) ? undefined : 'invalid secret';
 }
 
-/** WAL lag alert from the worker's `wal_lag_alert` control message. */
-export interface CdcLagAlert {
-  severity: 'wal_lag_warn' | 'wal_lag_unhealthy';
-  lagBytes: number | null;
-  warnThreshold: number | null;
-  unhealthyThreshold: number | null;
-  slotStatus: string | null;
-  receivedAt: string;
-}
-
-/** Self-reported CDC worker health payload pushed over the WS control channel. */
+/** What the CDC worker reports about itself, pushed every 15 seconds and at once after an incident. */
 export interface CdcWorkerHealth {
-  replicationStatus: string;
-  lastLsn: string | null;
-  messagesSent: number;
-  /** Whether PostgreSQL reports the replication slot as active (real WAL data-plane signal). */
-  slotActive?: boolean | null;
-  /** WAL bytes between the current LSN and the slot's confirmed flush LSN. */
-  lagBytes?: number | null;
-  /** ISO timestamp of the last applied DML change. */
-  lastEventAt?: string | null;
-  /** Whether the worker is currently replaying backlogged WAL. */
-  catchingUp?: boolean;
-  /** Whether the worker's database role effectively bypasses RLS on every RLS-enabled table (owner of never-forced tables, BYPASSRLS, or superuser); null until probed. */
-  rlsBypass?: boolean | null;
-  /** Whether the worker's database role may open a replication slot; null until probed. */
-  roleReplication?: boolean | null;
+  /** The worker's own grade. */
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  /** Why it is not healthy; empty when it is. Stable identifiers such as `replication_stopped`, `api_away`, `reading_again`, `worker_stuck`, `setup_problems`, `slot_inactive`, `slot_lost`, `wal_lag_high`, `wal_lag_critical`, `event_loop_lag`. */
+  reasons: string[];
+  /** Diagnosis for a person: replication status and positions, lag, the failure it reads again from, setup problems, the slot. */
+  details: Record<string, unknown>;
+  /** Generation of the sync books: it moves when the worker rebuilt them. */
+  generation: number;
 }
 
 /**
- * The CDC worker's channel: one live connection, idle peers closed. The internal listener (lib/listeners.ts) routes
- * and authenticates the upgrade before handing it over.
+ * How long no worker may read before clients are told. A restart, a deploy and a second read of a failed flush are
+ * shorter than this.
+ */
+const WORKER_AWAY_AFTER_MS = 60_000;
+
+/** The grades a health report may carry; one with another grade is unreadable. */
+const workerGrades: readonly unknown[] = ['healthy', 'degraded', 'unhealthy'] satisfies CdcWorkerHealth['status'][];
+
+/**
+ * The CDC worker's channel: one live connection, closed after 90 seconds without a message. The internal listener
+ * (lib/listeners.ts) routes and authenticates the upgrade before handing it over.
  */
 class CdcWebSocketServer {
   private wss: WebSocketServer | null = null;
   private currentConnection: WebSocket | null = null;
   private idleTimer: NodeJS.Timeout | null = null;
-  private pingInterval: NodeJS.Timeout | null = null;
 
   // Health metrics
-  private _cdcConnected = false;
   private _lastMessageAt: Date | null = null;
   private _messagesReceived = 0;
   private _parseErrors = 0;
-  private _workerHealth: { payload: CdcWorkerHealth; receivedAt: Date } | null = null;
-  private _lastLagAlert: CdcLagAlert | null = null;
+  private _workerHealth: { health: CdcWorkerHealth | null; receivedAt: Date } | null = null;
+  private _generation: number | null = null;
+  private generationListeners: ((generation: number) => void)[] = [];
+  /**
+   * Since when no worker reads for this process: none is connected, or the one that is reports that it does not read
+   * or that it is unhealthy. Null while one reads. A process that just started has no worker yet.
+   */
+  private notReadingSince: number | null = Date.now();
 
   /** Completes the handshake of an upgrade the internal listener authenticated and takes the connection. */
   accept(request: IncomingMessage, socket: Duplex, head: Buffer): void {
@@ -114,37 +124,40 @@ class CdcWebSocketServer {
     this.wss.handleUpgrade(request, socket, head, (ws) => this.handleConnection(ws));
   }
 
-  /** Accept a CDC worker connection, replacing any live one. */
+  /**
+   * Takes a CDC worker connection in place of the live one. Only the live connection may change the state held here:
+   * a replaced one is closed, and its messages, its close and its errors are ignored from then on.
+   */
   private handleConnection(ws: WebSocket): void {
-    if (this.currentConnection) {
-      log.info('Replacing existing CDC Worker connection');
-      this.currentConnection.close(1000, 'Replaced by new connection');
-    }
-
+    const replaced = this.currentConnection;
     this.currentConnection = ws;
-    this._cdcConnected = true;
+    // A health report belongs to the connection it arrived on, and so does the word that its worker reads.
+    this._workerHealth = null;
+    this.noteReading(false);
     this.resetIdleTimer();
-    this.startPingInterval();
+
+    if (replaced) {
+      log.info('Replacing existing CDC Worker connection');
+      replaced.close(1000, 'Replaced by new connection');
+    }
 
     log.info('CDC Worker connected via WebSocket');
 
     ws.on('message', (data) => {
+      if (ws !== this.currentConnection) return;
       this.resetIdleTimer();
       this.handleMessage(data.toString());
     });
 
-    ws.on('pong', () => {
-      this.resetIdleTimer();
-    });
-
     ws.on('close', (code, reason) => {
+      if (ws !== this.currentConnection) return;
       log.info('CDC Worker disconnected', { code, reason: reason.toString() });
       this.cleanup();
     });
 
     ws.on('error', (err) => {
       log.error('CDC WebSocket error', { err });
-      this.cleanup();
+      if (ws === this.currentConnection) this.cleanup();
     });
   }
 
@@ -153,7 +166,7 @@ class CdcWebSocketServer {
     try {
       const parsed = JSON.parse(data);
 
-      // Handle CDC control messages (e.g. catchup_complete) before schema validation
+      // Control messages (the worker's health report) are no changes: they skip the schema.
       if (parsed?._control) {
         this.handleControlMessage(parsed);
         return;
@@ -179,31 +192,15 @@ class CdcWebSocketServer {
         return;
       }
 
-      // Invalidate each changed entity by id so a later detail fetch re-enriches (entity-keyed cache, no token)
-      const entityType = message.activity.entityType;
-      if (entityType) {
-        if (message.batchRows?.length) {
-          for (const row of message.batchRows) {
-            const id = row.rowData.id;
-            if (typeof id === 'string') productCache.invalidateProduct(entityType, id);
-          }
-        } else if (message.activity.subjectId) {
-          productCache.invalidateProduct(entityType, message.activity.subjectId);
-        }
+      const { rows, rowData } = contentOf(message);
+
+      // Drop the detail cache entry of each changed product row, so a later detail fetch re-enriches (entity-keyed cache, no token)
+      const { entityType } = message.activity;
+      for (const row of rows ?? []) {
+        if (entityType && typeof row.rowData.id === 'string') productCache.invalidateProduct(entityType, row.rowData.id);
       }
 
-      const activityEvent = {
-        ...message.activity,
-        type,
-        rowData: message.rowData,
-        movedFrom: message.movedFrom ?? null,
-        batchRows: message.batchRows ?? null,
-        seq: message.activity.seq ?? null,
-        batchUntilSeq: message.activity.batchUntilSeq ?? null,
-        count: message.activity.count ?? null,
-        propagation: null,
-        trace: message._trace ?? null,
-      } as ActivityEvent;
+      const activityEvent = { ...message.activity, type, rowData, rows, trace: message._trace ?? null } as ActivityEvent;
 
       log.trace('CDC message processed', { type: message.activity.type, subjectId: message.activity.subjectId });
 
@@ -214,47 +211,57 @@ class CdcWebSocketServer {
     }
   }
 
-  /** Handle CDC lifecycle signals such as catchup completion, sent outside the activity stream. */
-  private handleControlMessage(message: { _control: string; [key: string]: unknown }): void {
-    if (message._control === 'catchup_complete') {
-      const eventsProcessed = message.eventsProcessed ?? 0;
-      const catchupDurationMs = message.catchupDurationMs ?? 0;
-
-      // Clear entity caches after counter recalculation.
-      productCache.clear();
-
-      log.info('CDC catchup complete: entity caches cleared', { eventsProcessed, catchupDurationMs });
-      return;
-    }
-
-    if (message._control === 'health') {
-      const payload = message.payload as CdcWorkerHealth | undefined;
-      if (payload?.replicationStatus) {
-        this._workerHealth = { payload, receivedAt: new Date() };
-      }
-      return;
-    }
-
-    if (message._control === 'wal_lag_alert') {
-      const { severity, lagBytes, warnThreshold, unhealthyThreshold, slotStatus } = message as Partial<CdcLagAlert>;
-      const alert: CdcLagAlert = {
-        severity: severity === 'wal_lag_unhealthy' ? 'wal_lag_unhealthy' : 'wal_lag_warn',
-        lagBytes: typeof lagBytes === 'number' ? lagBytes : null,
-        warnThreshold: typeof warnThreshold === 'number' ? warnThreshold : null,
-        unhealthyThreshold: typeof unhealthyThreshold === 'number' ? unhealthyThreshold : null,
-        slotStatus: typeof slotStatus === 'string' ? slotStatus : null,
-        receivedAt: new Date().toISOString(),
-      };
-      this._lastLagAlert = alert;
-      if (alert.severity === 'wal_lag_unhealthy') log.error('CDC WAL lag exceeded the backpressure limit', { ...alert });
-      else log.warn('CDC WAL lag above warning threshold', { ...alert });
-      return;
-    }
-
-    log.warn('Unknown CDC control message', { control: message._control });
+  /**
+   * The first generation the worker reports is where this process starts; a later, other one means the books were
+   * corrected or rebuilt while clients were connected.
+   */
+  private noteGeneration(generation: number | undefined): void {
+    if (typeof generation !== 'number' || generation === this._generation) return;
+    const moved = this._generation !== null;
+    this._generation = generation;
+    if (moved) for (const listener of this.generationListeners) listener(generation);
   }
 
-  /** Reset the idle timer; the connection closes when no activity arrives. */
+  /** Registers what to do when the worker's books move to another generation. */
+  onGenerationChange(listener: (generation: number) => void): void {
+    this.generationListeners.push(listener);
+  }
+
+  /**
+   * Takes what the worker sends beside its changes: its health report. A report of another shape, as a worker of
+   * another release sends during a deploy, is held as unreadable, and its generation still counts. Any other control
+   * message is ignored.
+   */
+  private handleControlMessage(message: { _control: string; payload?: unknown }): void {
+    if (message._control !== 'health') {
+      log.debug('Unknown CDC control message ignored', { control: message._control });
+      return;
+    }
+
+    const payload = (message.payload ?? {}) as Partial<CdcWorkerHealth>;
+    const readable = workerGrades.includes(payload.status) && Array.isArray(payload.reasons);
+    this._workerHealth = { health: readable ? (payload as CdcWorkerHealth) : null, receivedAt: new Date() };
+    // A report this process cannot read says nothing of reading: it is taken as none, like the messages beside it.
+    this.noteReading(readable && payload.status !== 'unhealthy' && payload.details?.replication === 'active');
+    this.noteGeneration(payload.generation);
+  }
+
+  /** Keeps since when no worker reads: the moment reading stopped, until it starts again. */
+  private noteReading(reading: boolean): void {
+    if (reading) this.notReadingSince = null;
+    else this.notReadingSince ??= Date.now();
+  }
+
+  /**
+   * Whether no CDC worker has been reading for a minute. Live changes then reach clients late, so the app stream tells
+   * them and they fall back to a stale time. An app that runs no worker has nothing to wait for and is never away.
+   */
+  isWorkerAway(): boolean {
+    if (!appConfig.services.cdc.enabled) return false;
+    return this.notReadingSince !== null && Date.now() - this.notReadingSince >= WORKER_AWAY_AFTER_MS;
+  }
+
+  /** Starts the idle time anew; a connection that sends no message for 90 seconds is closed. */
   private resetIdleTimer(): void {
     if (this.idleTimer) clearTimeout(this.idleTimer);
     this.idleTimer = setTimeout(() => {
@@ -263,70 +270,29 @@ class CdcWebSocketServer {
     }, IDLE_TIMEOUT_MS);
   }
 
-  private startPingInterval(): void {
-    if (this.pingInterval) clearInterval(this.pingInterval);
-    this.pingInterval = setInterval(() => {
-      if (this.currentConnection?.readyState === 1) {
-        // WebSocket.OPEN
-        this.currentConnection.ping();
-      }
-    }, PING_INTERVAL_MS);
-  }
-
+  /** Forgets the live connection and what it reported. */
   private cleanup(): void {
     if (this.idleTimer) {
       clearTimeout(this.idleTimer);
       this.idleTimer = null;
     }
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
-    }
     this.currentConnection = null;
-    this._cdcConnected = false;
     this._workerHealth = null;
-    this._lastLagAlert = null;
+    this.noteReading(false);
   }
 
-  /** Latest CDC worker self-report received over the WS control channel. */
-  getWorkerHealth(): { payload: CdcWorkerHealth; receivedAt: Date } | null {
+  /** The worker's latest health report on the live connection; `health` is null when its shape could not be read. */
+  getWorkerHealth(): { health: CdcWorkerHealth | null; receivedAt: Date } | null {
     return this._workerHealth;
   }
 
-  /** Last `wal_lag_alert` the worker sent; cleared with the worker's health on disconnect. */
-  getLastLagAlert(): CdcLagAlert | null {
-    return this._lastLagAlert;
-  }
-
-  getHealthStatus(): {
-    cdcConnected: boolean;
-    lastMessageAt: string | null;
-    messagesReceived: number;
-    parseErrors: number;
-    status: 'healthy' | 'degraded' | 'unknown';
-  } {
-    let status: 'healthy' | 'degraded' | 'unknown' = 'unknown';
-
-    if (this._cdcConnected) {
-      const sixtySecondsAgo = Date.now() - 60_000;
-      if (this._lastMessageAt && this._lastMessageAt.getTime() > sixtySecondsAgo) {
-        status = 'healthy';
-      } else if (this._lastMessageAt) {
-        status = 'degraded'; // Connected but no recent messages
-      } else {
-        status = 'healthy'; // Just connected, no messages yet is OK
-      }
-    } else if (!env.NODB) {
-      status = 'degraded';
-    }
-    // In NODB mode without CDC, status remains 'unknown' (not applicable)
-
+  /** The socket as this process sees it: whether a worker is connected, and what arrived over it. */
+  getHealthStatus(): { cdcConnected: boolean; lastMessageAt: string | null; messagesReceived: number; parseErrors: number } {
     return {
-      cdcConnected: this._cdcConnected,
+      cdcConnected: this.currentConnection !== null,
       lastMessageAt: this._lastMessageAt?.toISOString() ?? null,
       messagesReceived: this._messagesReceived,
       parseErrors: this._parseErrors,
-      status,
     };
   }
 

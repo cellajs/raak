@@ -1,5 +1,6 @@
 import { createEntityHierarchy, createRoleRegistry } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DeltaExecutor } from '../utils/apply-unified-deltas';
 import type { BatchUnifiedDeltaPlan } from '../utils/compute-unified-deltas';
 import { changeEvent, tableMetaOf } from './factories';
 
@@ -11,26 +12,18 @@ interface DbOp {
 const dbOps: DbOp[] = [];
 let upsertReturnValue: Record<string, number> = {};
 
-vi.mock('../lib/db', () => {
-  const mockExecute = vi.fn(async (query: any) => {
+/** Stands in for the flush's transaction: records each statement as a counter upsert or another one. */
+const db = {
+  execute: vi.fn(async (query: any) => {
     const chunks = query?.queryChunks ?? [];
     const sqlParts = chunks.map((c: any) => c?.value?.[0] ?? String(c ?? '')).join('');
-    const isCounterUpsert = sqlParts.includes('channel_counters');
-
-    if (isCounterUpsert) {
-      dbOps.push({ type: 'upsert' });
-    } else {
-      dbOps.push({ type: 'execute', sql: 'raw-sql' });
-    }
-
+    dbOps.push(sqlParts.includes('channel_counters') ? { type: 'upsert' } : { type: 'execute', sql: sqlParts });
     return { rows: [{ counts: upsertReturnValue }], rowCount: 1 };
-  });
+  }),
+} as unknown as DeltaExecutor;
 
-  return { cdcDb: { execute: mockExecute } };
-});
-
-const { applyBatchUnifiedDeltas, sumInto } = await import('../utils/apply-unified-deltas');
-const { frontierNodeKeys } = await import('../utils/compute-unified-deltas');
+const { applyBatchUnifiedDeltas } = await import('../utils/apply-unified-deltas');
+const { frontierNodeKeys, mergeDelta } = await import('../utils/compute-unified-deltas');
 
 // Synthetic two-level hierarchy: org > project > task (cella's own config has no sub-org product)
 const roles = createRoleRegistry(['admin', 'member'] as const);
@@ -63,7 +56,7 @@ describe('applyBatchUnifiedDeltas', () => {
       ]),
     };
 
-    await applyBatchUnifiedDeltas(plan, syntheticH);
+    await applyBatchUnifiedDeltas(plan, db, syntheticH);
 
     // Sequential seq values: 3, 4, 5.
     expect(events[0].result.rowData.seq).toBe(3);
@@ -84,14 +77,16 @@ describe('applyBatchUnifiedDeltas', () => {
       ]),
     };
 
-    await applyBatchUnifiedDeltas(plan, syntheticH);
+    await applyBatchUnifiedDeltas(plan, db, syntheticH);
 
     // Phase-1 org reservation, phase-2 org frontier, phase-2 proj-1 counts + frontier.
     const upserts = dbOps.filter((op) => op.type === 'upsert');
     expect(upserts).toHaveLength(3);
-    // One bulk UPDATE per table.
+    // Per table: the rows are locked in id order, then stamped by one bulk UPDATE.
     const executes = dbOps.filter((op) => op.type === 'execute');
-    expect(executes).toHaveLength(1);
+    expect(executes).toHaveLength(2);
+    expect(executes[0].sql).toContain('FOR NO KEY UPDATE');
+    expect(executes[1].sql).toContain('UPDATE');
   });
 
   it('every stamped event bumps frontiers: tombstones of published rows included', async () => {
@@ -111,19 +106,33 @@ describe('applyBatchUnifiedDeltas', () => {
       countDeltasByChannelKey: new Map(),
     };
 
-    await applyBatchUnifiedDeltas(plan, syntheticH);
+    await applyBatchUnifiedDeltas(plan, db, syntheticH);
 
     expect(events[0].result.rowData.seq).toBe(1);
     expect(events[1].result.rowData.seq).toBe(2);
     // Phase-1 org reservation + phase-2 frontier writes (org + proj-1); both events bump.
     expect(dbOps.filter((op) => op.type === 'upsert')).toHaveLength(3);
-    expect(dbOps.filter((op) => op.type === 'execute')).toHaveLength(1);
+    expect(dbOps.filter((op) => op.type === 'execute')).toHaveLength(2);
+  });
+
+  it('stamps a row that changed twice in one flush once, with its last position', async () => {
+    upsertReturnValue = { sequence: 3 };
+    const events = [mockEvent('t1'), mockEvent('t2'), mockEvent('t1')];
+
+    await applyBatchUnifiedDeltas({ orgSequenceGroups: [{ orgKey: 'org-1', count: 3, events }], countDeltasByChannelKey: new Map() }, db, syntheticH);
+
+    // Each event keeps the position it was given, for its notification.
+    expect(events.map((event) => event.result.rowData.seq)).toEqual([1, 2, 3]);
+    const stamp = vi.mocked(db.execute).mock.calls.at(-1)?.[0] as unknown as { queryChunks: unknown[] };
+    const params = JSON.stringify(stamp.queryChunks);
+    expect(params.match(/"t1"/g)).toHaveLength(1);
+    expect(params.match(/"t2"/g)).toHaveLength(1);
   });
 
   it('handles empty plan', async () => {
     const plan: BatchUnifiedDeltaPlan = { orgSequenceGroups: [], countDeltasByChannelKey: new Map() };
 
-    await applyBatchUnifiedDeltas(plan, syntheticH);
+    await applyBatchUnifiedDeltas(plan, db, syntheticH);
     expect(dbOps).toHaveLength(0);
   });
 });
@@ -138,34 +147,49 @@ describe('frontierNodeKeys', () => {
   });
 });
 
-describe('sumInto', () => {
-  it('sums plain delta keys on collision', () => {
-    const target = { sequence: 2, 'e:c:task': 1 };
-    sumInto(target, { 'e:c:task': 2, 'm:c:admin': 1 });
-    expect(target).toEqual({ sequence: 2, 'e:c:task': 3, 'm:c:admin': 1 });
+describe('mergeDelta', () => {
+  /** Merges `deltas` into what channel `org-1` holds, and returns the result. */
+  const merged = (held: Record<string, number>, ...deltas: Record<string, number>[]) => {
+    const map = new Map([['org-1', held]]);
+    for (const delta of deltas) mergeDelta(map, 'org-1', delta);
+    return map.get('org-1');
+  };
+
+  it('adds a count to the one a channel already holds', () => {
+    expect(merged({ membership: 2, 'e:c:task': 1 }, { 'e:c:task': 2, 'm:c:admin': 1 })).toEqual({ membership: 2, 'e:c:task': 3, 'm:c:admin': 1 });
   });
 
-  it('max-merges li:/lu: keys instead of summing (timestamps must not add up)', () => {
-    const target = { 'e:li:h:task': 1_751_000_000_000, 'e:lu:h:task': 1_751_000_000_000 };
-    sumInto(target, { 'e:li:h:task': 1_750_000_000_000, 'e:lu:h:task': 1_750_000_000_000 });
-    expect(target['e:li:h:task']).toBe(1_751_000_000_000);
-    expect(target['e:lu:h:task']).toBe(1_751_000_000_000);
-    sumInto(target, { 'e:li:h:task': 1_752_000_000_000, 'e:lu:h:task': 1_753_000_000_000 });
-    expect(target['e:li:h:task']).toBe(1_752_000_000_000);
-    expect(target['e:lu:h:task']).toBe(1_753_000_000_000);
+  it('must not add up activity stamps: the later one stays', () => {
+    const held = { 'e:li:h:task': 1_751_000_000_000, 'e:lu:h:task': 1_751_000_000_000 };
+
+    expect(merged({ ...held }, { 'e:li:h:task': 1_750_000_000_000, 'e:lu:h:task': 1_750_000_000_000 })).toEqual(held);
+    expect(merged({ ...held }, { 'e:li:h:task': 1_752_000_000_000, 'e:lu:h:task': 1_753_000_000_000 })).toEqual({
+      'e:li:h:task': 1_752_000_000_000,
+      'e:lu:h:task': 1_753_000_000_000,
+    });
   });
 
-  it('max-merges f: keys (frontiers only move forward)', () => {
-    const target = { 'e:f:task': 40 };
-    sumInto(target, { 'e:f:task': 35 });
-    expect(target['e:f:task']).toBe(40);
-    sumInto(target, { 'e:f:task': 41 });
-    expect(target['e:f:task']).toBe(41);
+  it('must not add up frontiers or set one back: the highest stays', () => {
+    expect(merged({ 'e:f:task': 40 }, { 'e:f:task': 35 })).toEqual({ 'e:f:task': 40 });
+    expect(merged({ 'e:f:task': 40 }, { 'e:f:task': 35 }, { 'e:f:task': 41 })).toEqual({ 'e:f:task': 41 });
   });
 
-  it('max-merge keys pass through unchanged when absent from target', () => {
-    const target: Record<string, number> = { sequence: 1 };
-    sumInto(target, { 'e:li:h:task': 1_751_000_000_000, 'e:f:task': 7, 'e:c:task': 1 });
-    expect(target).toEqual({ sequence: 1, 'e:li:h:task': 1_751_000_000_000, 'e:f:task': 7, 'e:c:task': 1 });
+  it('takes a key the channel does not hold yet as it is', () => {
+    expect(merged({ membership: 1 }, { 'e:li:h:task': 1_751_000_000_000, 'e:f:task': 7, 'e:c:task': 1 })).toEqual({
+      membership: 1,
+      'e:li:h:task': 1_751_000_000_000,
+      'e:f:task': 7,
+      'e:c:task': 1,
+    });
+  });
+
+  it('starts a channel it has no deltas for with a copy, so the caller keeps its own object', () => {
+    const map = new Map<string, Record<string, number>>();
+    const first = { 'e:c:task': 1 };
+    mergeDelta(map, 'org-1', first);
+    mergeDelta(map, 'org-1', { 'e:c:task': 1 });
+
+    expect(map.get('org-1')).toEqual({ 'e:c:task': 2 });
+    expect(first).toEqual({ 'e:c:task': 1 });
   });
 });

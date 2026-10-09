@@ -1,40 +1,20 @@
 import { execFileSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { beforeAll, describe, it } from 'vitest';
-import { createBenchProcessEnv } from '../config';
-import { getSchemaVersions, isInfrastructureReady } from '../preflight';
+import { describe, it } from 'vitest';
 
 const __dirname = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
 const BENCH_ROOT = resolve(__dirname, '..', '..');
 
 // Exercise the real short-mode CLI as a smoke check when the local stack is available.
 describe('bench scenarios (short)', () => {
-  let ready = false;
-
-  beforeAll(async () => {
-    if (!(await isInfrastructureReady())) {
-      console.info('[bench smoke] skipped: local stack not reachable (run `pnpm dev` to enable).');
-      return;
-    }
-
-    // The stack on the dev ports may come from another checkout: a schema other than this checkout's means other code.
-    const { applied, checkout } = await getSchemaVersions();
-    if (applied !== checkout) {
-      console.info(
-        `[bench smoke] skipped: the running stack's database is on migration ${applied ?? 'none'}, this checkout on ${checkout}. ` +
-          'Run `pnpm dev` from this checkout to enable.',
-      );
-      return;
-    }
-
-    ready = true;
-  });
-
   it('every scenario completes a short run', () => {
-    if (!ready) return;
-
-    // The exact CLI path users run; a non-zero exit throws and fails the test.
-    execFileSync('tsx', ['src/bench-cli.ts', '--all', '--short'], { cwd: BENCH_ROOT, stdio: 'inherit', env: createBenchProcessEnv() });
+    // The exact CLI path users run; a non-zero exit throws and fails the test. Vitest's NODE_ENV=test is dropped: it puts
+    // the CLI on the test config, with other ports and another session cookie name than the dev stack has. For the same
+    // reason nothing here comes from the bench config, which this process would build in test mode, and the CLI decides
+    // by itself, through `--if-ready`, whether this checkout has a stack to run against.
+    const env = { ...process.env, NODE_ENV: undefined };
+    execFileSync('tsx', ['src/bench-cli.ts', '--all', '--short', '--if-ready'], { cwd: BENCH_ROOT, stdio: 'inherit', env });
   }, 120_000);
 });

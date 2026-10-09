@@ -43,6 +43,65 @@ describe('TransactionBuffer', () => {
     expect(processedEvents).toHaveLength(2);
   });
 
+  it('keeps a transaction whole however long it takes to arrive', async () => {
+    vi.useFakeTimers();
+    try {
+      buffer.onBegin({ tag: 'begin', xid: 2, commitLsn: null, commitTime: BigInt(0) });
+      await buffer.onEvent('0/1', mockParseResult({ action: 'create', entityType: 'attachment' }));
+      // A million-row transaction takes minutes to stream.
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+      await buffer.onEvent('0/2', mockParseResult({ action: 'create', entityType: 'attachment' }));
+
+      expect(onSurvivingEvents).not.toHaveBeenCalled();
+
+      await buffer.onCommit();
+
+      expect(onSurvivingEvents).toHaveBeenCalledTimes(1);
+      expect(processedEvents.map((event) => event.lsn)).toEqual(['0/1', '0/2']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('must not hold a transaction past its limit: it fails there and frees what it held', async () => {
+    const small = new TransactionBuffer(onSurvivingEvents, { maxEvents: 3 });
+    small.onBegin({ tag: 'begin', xid: 9, commitLsn: '0/90', commitTime: BigInt(0) });
+    for (let index = 0; index < 3; index++) await small.onEvent(`0/${index}`, mockParseResult({ action: 'create', entityType: 'attachment' }), index);
+
+    await expect(small.onEvent('0/3', mockParseResult({ action: 'create', entityType: 'attachment' }), 3)).rejects.toThrow(
+      'holds more than 3 changes',
+    );
+
+    // Nothing of it is left: a commit that still came would emit nothing.
+    expect(small.isBuffering).toBe(false);
+    await small.onCommit();
+    expect(onSurvivingEvents).not.toHaveBeenCalled();
+  });
+
+  it('emits no part of a transaction whose COMMIT never came', async () => {
+    buffer.onBegin({ tag: 'begin', xid: 3, commitLsn: null, commitTime: BigInt(0) });
+    await buffer.onEvent('0/1', mockParseResult({ action: 'create', entityType: 'attachment' }));
+
+    buffer.onBegin({ tag: 'begin', xid: 4, commitLsn: null, commitTime: BigInt(0) });
+    await buffer.onEvent('0/5', mockParseResult({ action: 'create', entityType: 'attachment' }));
+    await buffer.onCommit();
+
+    expect(processedEvents.map((event) => event.lsn)).toEqual(['0/5']);
+  });
+
+  it('gives each event its transaction commit time, the same on every delivery', async () => {
+    // As the replication client reports it: microseconds since the Unix epoch.
+    const commitTime = BigInt(Date.parse('2026-10-09T00:00:00.123Z')) * 1000n;
+
+    for (const xid of [7, 8]) {
+      buffer.onBegin({ tag: 'begin', xid, commitLsn: null, commitTime });
+      await buffer.onEvent('0/1', mockParseResult({ action: 'create', entityType: 'attachment' }));
+      await buffer.onCommit();
+    }
+
+    expect(processedEvents.map((event) => event.result.activity.createdAt)).toEqual(['2026-10-09T00:00:00.123Z', '2026-10-09T00:00:00.123Z']);
+  });
+
   it('suppresses cascaded child deletes when the parent channel entity is deleted', async () => {
     buffer.onBegin({ tag: 'begin', xid: 42, commitLsn: null, commitTime: BigInt(0) });
 
@@ -120,26 +179,23 @@ describe('TransactionBuffer', () => {
     expect(processedEvents[0].result.activity.subjectId).toBe('org-1');
   });
 
-  it('handles large cascade without excessive buffering', async () => {
-    buffer.onBegin({ tag: 'begin', xid: 100, commitLsn: null, commitTime: BigInt(0) });
+  it('must not count suppressed deletes towards the limit: a cascade larger than it leaves one change', async () => {
+    const small = new TransactionBuffer(onSurvivingEvents, { maxEvents: 3 });
+    small.onBegin({ tag: 'begin', xid: 100, commitLsn: null, commitTime: BigInt(0) });
+    await small.onEvent('0/0', mockParseResult({ action: 'delete', entityType: 'organization', subjectId: 'org-1' }));
 
-    const org = mockParseResult({ action: 'delete', entityType: 'organization', subjectId: 'org-1' });
-    await buffer.onEvent('0/0', org);
-
-    // 50,000 cascaded child deletes prove suppression stays memory-bounded.
-    for (let i = 0; i < 50_000; i++) {
-      const task = mockParseResult({ action: 'delete', entityType: 'attachment', subjectId: `task-${i}`, organizationId: 'org-1' });
-      await buffer.onEvent(`0/${i + 1}`, task);
+    // Far more cascaded deletes than the buffer holds: each is dropped as it arrives, so none of them is held.
+    for (let i = 0; i < 50; i++) {
+      await small.onEvent(
+        `0/${i + 1}`,
+        mockParseResult({ action: 'delete', entityType: 'attachment', subjectId: `attachment-${i}`, organizationId: 'org-1' }),
+      );
     }
-
-    await buffer.onCommit();
+    await small.onCommit();
 
     expect(processedEvents).toHaveLength(1);
     expect(processedEvents[0].result.activity.entityType).toBe('organization');
-
-    expect(onSurvivingEvents).toHaveBeenCalledTimes(1);
-    expect((onSurvivingEvents as ReturnType<typeof vi.fn>).mock.calls[0][0]).toHaveLength(1);
-  }, 30_000); // Processes 50k events; the default 10s timeout is too tight on loaded CI runners
+  });
 
   it('suppresses child deletes that arrive before parent channel entity delete', async () => {
     buffer.onBegin({ tag: 'begin', xid: 101, commitLsn: null, commitTime: BigInt(0) });
@@ -160,7 +216,17 @@ describe('TransactionBuffer', () => {
     expect(processedEvents[0].result.activity.entityType).toBe('organization');
   });
 
-  it('handles single-event transactions with no overhead', async () => {
+  it('emits a transaction of two types whole, as an organization created with its membership is', async () => {
+    buffer.onBegin({ tag: 'begin', xid: 48, commitLsn: null, commitTime: BigInt(0) });
+    await buffer.onEvent('0/1', mockParseResult({ action: 'create', entityType: 'organization', subjectId: 'org-1' }));
+    await buffer.onEvent('0/2', mockParseResult({ action: 'create', resourceType: 'membership', entityType: null, subjectId: 'mem-1' }));
+    await buffer.onCommit();
+
+    expect(onSurvivingEvents).toHaveBeenCalledTimes(1);
+    expect(processedEvents.map((event) => event.lsn)).toEqual(['0/1', '0/2']);
+  });
+
+  it('emits a single-change transaction once', async () => {
     buffer.onBegin({ tag: 'begin', xid: 46, commitLsn: null, commitTime: BigInt(0) });
 
     const result = mockParseResult({ action: 'create', entityType: 'attachment' });

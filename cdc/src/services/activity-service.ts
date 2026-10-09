@@ -1,133 +1,111 @@
-import { hierarchy, isProduct } from 'shared';
+import { hierarchy, type ProductEntityType } from 'shared';
 import type { InsertActivityModel } from '#/modules/activities/activities-db';
-import { log } from '../lib/pino';
 import type { TraceContext } from '../lib/tracing';
 import { wsClient } from '../network/websocket-client';
-import type { CdcRowData } from '../types';
+import type { CdcRowData, PendingEvent } from '../types';
 import { resolveChannelKey } from '../utils/compute-unified-deltas';
 import { pickPermissionRowData } from '../utils/permission-row-data';
 
-/** Per-row payload for batch messages: permission-relevant fields only (see pickPermissionRowData). */
-export interface CdcBatchRow {
-  seq?: number;
+/**
+ * One product row of a message: the fields that decide who may read it (see `pickPermissionRowData`), the sequence value
+ * the row holds, and for a row whose path changed the same fields of the row before the move, so that dispatch can tell
+ * those who lost access.
+ */
+interface CdcMessageRow {
   rowData: CdcRowData;
-  /** Old-row permission subset when this row's path changed (move-out), else absent. */
+  seq?: number;
   movedFrom?: CdcRowData | null;
 }
 
-/**
- * CDC-to-backend wire payload mirrored by `cdcMessageSchema`. Batch rows carry their own permission
- * data and seq because group ranges need not be contiguous and visibility may differ. `movedFrom`
- * carries the prior permission projection so dispatch can notify subscribers that lost access.
- * @see backend/src/lib/cdc-websocket.ts
- */
-export interface CdcOutboundMessage {
-  activity: InsertActivityModel & { id?: string; seq?: number; batchUntilSeq?: number; count?: number };
-  rowData: CdcRowData;
-  movedFrom?: CdcRowData | null;
-  batchRows?: CdcBatchRow[];
+/** What every message carries: the activity of its row, or of its first row, and the trace it belongs to. */
+interface CdcMessageBase {
+  activity: InsertActivityModel & { id?: string };
   _trace: TraceContext;
 }
 
+/** The message of one row that is no product (a membership, a tenant, a channel): its listeners act on the whole row. */
+interface CdcRowMessage extends CdcMessageBase {
+  rowData: CdcRowData;
+  movedFrom?: CdcRowData | null;
+}
+
 /**
- * Fixed-width activity id: padding preserves commit order under lexical cursor comparisons and makes
- * replay idempotent.
- * @param lsn PostgreSQL WAL position.
- * @returns Zero-padded, dash-joined LSN.
+ * The message of the product rows of one audience, one or more. The API derives the notification from the list: one row
+ * gives its `seq` and the activity's `stx`, more rows give the range of their sequence values and their number.
  */
-export function generateActivityId(lsn: string): string {
+interface CdcProductMessage extends CdcMessageBase {
+  rows: CdcMessageRow[];
+}
+
+/**
+ * What the worker sends the API for a change, mirrored by `cdcMessageSchema`.
+ * @see backend/src/lib/cdc-websocket.ts
+ */
+export type CdcOutboundMessage = CdcRowMessage | CdcProductMessage;
+
+const padLsn = (lsn: string): string | null => {
   const [hi, lo] = lsn.split('/');
-  if (lo === undefined) return lsn; // Not in LSN format.
-  return `${hi.padStart(8, '0')}-${lo.padStart(8, '0')}`;
+  return lo === undefined ? null : `${hi.padStart(8, '0')}-${lo.padStart(8, '0')}`;
+};
+
+/**
+ * Activity id of a change: the commit position of its transaction and its index in that transaction. Both are the
+ * same on every delivery, which makes replay idempotent, no two changes share them, and padding keeps ids in commit
+ * order under lexical comparison. An event outside a transaction takes its own position.
+ * @param event - The change: its LSN, and its transaction's commit LSN and its index there when it has one.
+ * @returns Zero-padded, dash-joined commit LSN and index.
+ */
+export function generateActivityId({ lsn, commitLsn, index = 0 }: Pick<PendingEvent, 'lsn' | 'commitLsn' | 'index'>): string {
+  const position = padLsn(commitLsn ?? lsn);
+  if (position === null) return lsn; // Not in LSN format.
+  return `${position}-${String(index).padStart(8, '0')}`;
 }
 
-function buildActivityPayload(
-  baseActivity: InsertActivityModel & { id?: string },
-  rowData: CdcRowData,
-  traceContext: TraceContext,
-  seq?: number,
-): CdcOutboundMessage {
-  // createActivity already populated the channel entity ids; handlers already compacted rowData.
-  const activity = { ...baseActivity, seq };
-
-  return { activity, rowData, _trace: traceContext };
-}
-
+/**
+ * Sends the message of one row that is no product, with the whole row. A send that fails throws: the caller's flush
+ * fails with it, and the change is delivered again.
+ */
 export function sendMessageToApi(
   activity: InsertActivityModel,
   rowData: CdcRowData,
   traceContext: TraceContext,
-  seq?: number,
   movedFrom?: CdcRowData | null,
 ): void {
-  const payload = buildActivityPayload(activity, rowData, traceContext, seq);
-  if (movedFrom) payload.movedFrom = movedFrom;
-  if (!wsClient.send(payload)) {
-    log.warn('Failed to send message to API');
-  }
+  const message: CdcRowMessage = { activity, rowData, _trace: traceContext };
+  if (movedFrom) message.movedFrom = movedFrom;
+  wsClient.send(message);
 }
 
-/** Payload shape for a batch event (persist-only, no individual WS send). */
-export interface BatchEvent {
+/** One product row of a flush as its message is built from it: its activity, its row and the sequence value the row holds. */
+export interface ProductRow {
   activity: InsertActivityModel & { id: string };
   rowData: CdcRowData;
   seq?: number;
   movedFrom?: CdcRowData | null;
 }
 
-/** One path-and-type group lets clients route by prefix; resources group by organization. */
-function batchPathKey({ activity, rowData }: BatchEvent): string {
-  if (activity.entityType && isProduct(activity.entityType)) {
-    const path = hierarchy.computeProductPath(activity.entityType, rowData);
-    return `${path ?? resolveChannelKey(activity.entityType, rowData, activity)}\0${activity.entityType}`;
-  }
-  return activity.organizationId ?? 'none';
+/** The message of one audience: the first row's activity speaks for all, and each row carries its own permission fields. */
+function buildProductMessage(rows: ProductRow[], traceContext: TraceContext): CdcProductMessage {
+  return {
+    activity: rows[0].activity,
+    rows: rows.map(({ rowData, seq, movedFrom }) => ({ rowData: pickPermissionRowData(rowData), seq, ...(movedFrom ? { movedFrom } : {}) })),
+    _trace: traceContext,
+  };
 }
 
 /**
- * Splits into one message per (path, entityType) group so each describes a single audience. Seqs come
- * from the shared org sequence, so a group's `seq..batchUntilSeq` range may interleave with other
- * groups: `count` and the per-row seqs in `batchRows` are authoritative, range arithmetic is not.
+ * Sends the product rows of one type, one message per audience: the rows under one path, which the same clients may
+ * read. Sequence values come from one order per organization, so those of one audience need not be contiguous: each
+ * row carries its own. A send that fails throws, like `sendMessageToApi`.
  */
-export function sendBatchMessageToApi(events: BatchEvent[], traceContext: TraceContext): void {
-  if (events.length === 0) return;
-
-  const groups = new Map<string, BatchEvent[]>();
-  for (const event of events) {
-    const key = batchPathKey(event);
-    const group = groups.get(key);
-    if (group) group.push(event);
-    else groups.set(key, [event]);
+export function sendProductMessagesToApi(productType: ProductEntityType, rows: ProductRow[], traceContext: TraceContext): void {
+  const audiences = new Map<string, ProductRow[]>();
+  for (const row of rows) {
+    const key = hierarchy.computeProductPath(productType, row.rowData) ?? resolveChannelKey(productType, row.rowData, row.activity);
+    const audience = audiences.get(key);
+    if (audience) audience.push(row);
+    else audiences.set(key, [row]);
   }
 
-  for (const group of groups.values()) {
-    sendBatchGroupToApi(group, traceContext);
-  }
-}
-
-/** Send one per-path batch group as a single message, using the first event as representative. */
-function sendBatchGroupToApi(events: BatchEvent[], traceContext: TraceContext): void {
-  const first = events[0];
-
-  // The min/max range brackets this group's rows but may contain other groups' values in between.
-  const seqs = events.map((e) => e.seq).filter((s): s is number => s !== undefined);
-  const batchUntilSeq = seqs.length > 0 ? Math.max(...seqs) : undefined;
-  const minSeq = seqs.length > 0 ? Math.min(...seqs) : undefined;
-
-  const base = buildActivityPayload(first.activity, first.rowData, traceContext, minSeq);
-  const activity = { ...base.activity, batchUntilSeq, count: events.length };
-
-  // Per-row permission fields: the representative first row alone would mis-dispatch mixed-visibility batches.
-  const batchRows: CdcBatchRow[] = events.map((event) => ({
-    seq: event.seq,
-    rowData: pickPermissionRowData(event.rowData) as CdcRowData,
-    ...(event.movedFrom ? { movedFrom: event.movedFrom } : {}),
-  }));
-
-  // The backend invalidates each row's detail-cache entry from batchRows (see cdc-websocket handleMessage).
-  const payload: CdcOutboundMessage = { ...base, activity, batchRows };
-
-  if (!wsClient.send(payload)) {
-    log.warn('Failed to send batch message to API', { batchSize: events.length });
-  }
+  for (const audience of audiences.values()) wsClient.send(buildProductMessage(audience, traceContext));
 }

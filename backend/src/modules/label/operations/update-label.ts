@@ -33,7 +33,8 @@ export async function updateLabelOp(
 
   // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
   const updated = await tenantContext(ctx, async (txCtx) => {
-    const { entity: before } = await getValidProduct(txCtx, id, 'label', 'update');
+    // Locked: the merge below starts from this row, so no other write may land between the read and the update.
+    const { entity: before } = await getValidProduct(txCtx, id, 'label', 'update', { forUpdate: true });
 
     // Epic documentation and secondary <-> epic transitions are member-level: any project
     // member may document an epic or toggle a label's epic mode. Ops limited to those fields

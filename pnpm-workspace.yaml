@@ -16,7 +16,6 @@ minimumReleaseAgeExclude:
   - brace-expansion@5.0.11
   - brace-expansion@5.0.10
   - '@grpc/grpc-js@1.14.5'
-  - http-cache-semantics@4.2.1
   - smol-toml@1.8.1
   - source-map-js@1.2.2
   - joi@17.13.8
@@ -32,11 +31,12 @@ overrides:
   browserslist@<=4.28.6: ^4.28.7
   csv-parse@<7.0.2: ^7.0.2
   esbuild@<0.28.1: ^0.28.1
-  http-cache-semantics@<=4.2.0: ^4.2.1
+  http-cache-semantics@<=4.2.0: ^4.3.0
   joi@<17.13.8: ^17.13.8
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   moment@>=2.29.2 <2.31.0: ^2.31.0
   postcss-selector-parser@<7.1.6: ^7.1.6
+  shell-quote@>=1.8.4 <1.11.0: ^1.11.0
   smol-toml@<=1.8.0: ^1.8.1
   source-map-js@>=1.0.0 <1.2.2: ^1.2.2
 packageExtensions:
