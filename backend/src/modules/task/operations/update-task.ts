@@ -40,7 +40,8 @@ export async function updateTaskOp(
 
   // Single tenantContext wraps permission check + write to avoid double-transaction pool pressure
   const taskResponse = await tenantContext(ctx, async (txCtx) => {
-    const { entity } = await getValidProduct(txCtx, id, 'task', 'update');
+    // Locked: the merge below starts from this row, so no other write may land between the read and the update.
+    const { entity } = await getValidProduct(txCtx, id, 'task', 'update', { forUpdate: true });
 
     taskContract.assertBlockFields(rawOps, entity.organizationId);
 

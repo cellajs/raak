@@ -5,7 +5,7 @@ import type { TestEntityHierarchyPlan } from 'shared/testing/entity-hierarchy';
 import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { generateServerHLC } from '#/core/stx';
-import { getSeedDb } from '#/db/db';
+import { baseDb, getSeedDb } from '#/db/db';
 import type { ActivityEvent } from '#/lib/activity-bus';
 import { buildInsertableProduct } from '#/mocks';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
@@ -99,7 +99,8 @@ describe('Attachment mentions (template notification source)', async () => {
       .from(notificationsTable)
       .where(and(eq(notificationsTable.userId, userId), eq(notificationsTable.subjectId, attachmentId)));
 
-  const updatedEvent = (actorId: string, overrides: Partial<ActivityEvent> = {}): ActivityEvent =>
+  /** An update of one attachment as the bus delivers it; `subjectIds` makes it an event of several rows. */
+  const updatedEvent = (actorId: string, overrides: Partial<ActivityEvent> = {}, subjectIds = [overrides.subjectId ?? attachmentId]): ActivityEvent =>
     // Test mock: the CDC worker fills the remaining columns; the fan-out reads only these.
     ({
       id: `act:${generateId()}`,
@@ -108,20 +109,18 @@ describe('Attachment mentions (template notification source)', async () => {
       entityType: 'attachment',
       resourceType: null,
       tableName: 'attachments',
-      subjectId: attachmentId,
       userId: actorId,
       tenantId: tenant.tenantId,
       organizationId: tenant.organization.id,
       ...nullAncestorScopes,
       rowData: null,
-      seq: null,
-      batchUntilSeq: null,
-      count: null,
-      propagation: null,
       trace: null,
       stx: null,
       changedFields: ['description'],
       ...overrides,
+      // The activity is that of the first row.
+      subjectId: subjectIds[0],
+      rows: subjectIds.map((id) => ({ rowData: { id } })),
     }) as unknown as ActivityEvent;
 
   beforeAll(async () => {
@@ -308,7 +307,11 @@ describe('Attachment mentions (template notification source)', async () => {
       expect((await putDescription(mentionsOf([member.id]), subjectId)).response.status).toBe(200);
 
       const renamed = updatedEvent(tenant.user.id, { subjectId, changedFields: ['name', 'updatedAt'] });
+      // A rename can notify no one on a source without a recipient rule, so the fan-out does not read the row at all.
+      const read = vi.spyOn(baseDb, 'transaction');
+      onTestFinished(() => read.mockRestore());
       expect(await fanOutNotifications(renamed)).toBe(false);
+      expect(read).not.toHaveBeenCalled();
       expect(await inboxOf(member.id, subjectId)).toEqual([]);
     });
 
@@ -323,6 +326,17 @@ describe('Attachment mentions (template notification source)', async () => {
       expect(await fanOutNotifications(updatedEvent(tenant.user.id, { subjectId }))).toBe(false);
       expect(await inboxOf(member.id, subjectId)).toEqual([{ type: 'mention' }]);
       expect(await inboxOf(other.id, subjectId)).toEqual([{ type: 'mention' }]);
+    });
+
+    it('mentions the users of every row of an event of several rows, whatever its changed fields say', async () => {
+      const subjectIds = [await newSubject(mentionsOf([member.id])), await newSubject(mentionsOf([other.id]))];
+
+      // The changed fields are those of the first row alone: they say nothing about the description of the second.
+      const renamed = updatedEvent(tenant.user.id, { changedFields: ['name', 'updatedAt'] }, subjectIds);
+      expect(await fanOutNotifications(renamed)).toBe(true);
+
+      expect(await inboxOf(member.id, subjectIds[0])).toEqual([{ type: 'mention' }]);
+      expect(await inboxOf(other.id, subjectIds[1])).toEqual([{ type: 'mention' }]);
     });
 
     it('notifies nobody about a mention of an account without read access', async () => {
@@ -474,14 +488,7 @@ describe('Attachment mentions (template notification source)', async () => {
         delete source.declaration.resolveRecipients;
       });
       // A create event: an update skips recipients already notified about the subject.
-      const createdEvent = () =>
-        ({
-          ...updatedEvent(tenant.user.id),
-          id: `act:${generateId()}`,
-          type: 'attachment.created',
-          action: 'create',
-          subjectId: replySubjectId,
-        }) as ActivityEvent;
+      const createdEvent = () => updatedEvent(tenant.user.id, { type: 'attachment.created', action: 'create', subjectId: replySubjectId });
 
       expect(await fanOutNotifications(createdEvent())).toBe(false);
       offerCommentEmail();

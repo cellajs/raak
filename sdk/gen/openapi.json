@@ -78,11 +78,11 @@
           },
           "emailEnumLimiter": {
             "name": "emailEnum",
-            "description": "Address lookups per IP, hits included: 30 per hour, then blocked for 30 minutes"
+            "description": "Address lookups per IP, hits included: 30 per hour"
           },
           "presignedUrlLimiter": {
             "name": "presignedUrl",
-            "description": "File links per user: 2000 per hour, then blocked for 15 minutes"
+            "description": "File link requests per user: 2000 per hour"
           },
           "totpVerificationLimiter": {
             "name": "totpVerification",
@@ -98,7 +98,7 @@
           },
           "passkeyChallengeLimiter": {
             "name": "passkeyChallenge",
-            "description": "Passkey challenges per IP: 30 per hour, then blocked for 5 minutes"
+            "description": "Passkey challenges per IP: 30 per 5 minutes"
           },
           "clientMetadataFetchLimiter": {
             "name": "clientMetadataFetch",
@@ -114,15 +114,15 @@
           },
           "syncReadLimiter": {
             "name": "syncRead",
-            "description": "Sync reads per user: 5000 per hour, then blocked for 5 minutes"
+            "description": "Sync reads per user: 1000 per 5 minutes"
           },
           "streamConnectLimiter": {
             "name": "streamConnect",
-            "description": "Live update stream connections per user: 240 per hour, then blocked for 5 minutes"
+            "description": "Live update stream connections per user: 60 per 5 minutes"
           },
           "yjsHttpLimiter": {
             "name": "yjsHttp",
-            "description": "Yjs pulls and pushes per user: 7200 per hour, then blocked for 1 minute"
+            "description": "Yjs pulls and pushes per user: 600 per minute"
           },
           "pointsLimiter": {
             "name": "points",
@@ -7135,8 +7135,8 @@
                 "properties": {
                   "cursor": {
                     "type": "string",
-                    "description": "Last activity cursor received by the client (LSN-based). Omit on first sync.",
-                    "example": "0-16B3748"
+                    "description": "Id of the last activity the client received (its commit position and index). Omit on first sync.",
+                    "example": "00000000-016B3748-00000001"
                   },
                   "views": {
                     "type": "array",
@@ -7280,14 +7280,14 @@
                             "additionalProperties": {
                               "type": "integer"
                             },
-                            "description": "Per-entityType newest sequence position over the view prefixes (subtree: f:{type}; self: fs:{type})"
+                            "description": "Per-entityType newest sequence position over the view prefixes (subtree: e:f:{type}; self: e:f:h:{type})"
                           },
                           "counts": {
                             "type": "object",
                             "additionalProperties": {
                               "type": "integer"
                             },
-                            "description": "Per-entityType live row counts summed over the view prefixes (subtree: e:{type}; self: es:{type})"
+                            "description": "Per-entityType live row counts summed over the view prefixes (subtree: e:c:{type}; self: e:c:h:{type})"
                           }
                         },
                         "required": ["key", "status"]
@@ -7297,6 +7297,10 @@
                     "cursor": {
                       "type": ["string", "null"],
                       "description": "Last activity ID (use as offset for next request)"
+                    },
+                    "generation": {
+                      "type": "integer",
+                      "description": "Generation of the sync books. A client that holds another one refetches its synced data and takes the frontiers as baselines"
                     }
                   },
                   "required": ["changes", "cursor"]
@@ -17021,7 +17025,7 @@
         "operationId": "getAttachment",
         "tags": ["attachments", "cella", "product"],
         "summary": "Get attachment",
-        "description": "Returns a single attachment by ID. Served from the CDC-invalidated entity detail cache.",
+        "description": "Returns a single attachment by ID. Served from the entity detail cache, which every write to the row drops.",
         "x-tool": {
           "description": "Read one attachment: its metadata and the description as text.",
           "approvalRequired": false,

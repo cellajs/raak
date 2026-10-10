@@ -1,7 +1,7 @@
 import { BASE_URL, SSE_HOLD_MS, SSE_SYNC_MODE } from '../config';
 import { ORG_ID, TENANT_ID } from '../seeds/ids';
 
-export { buildAttachmentEditPayload } from './attachment-edit';
+export { buildAttachmentEditPayload, countEdit } from './attachment-edit';
 export { authenticate } from './auth';
 
 const DEFAULT_WINDOW_MS = 15_000;
@@ -19,7 +19,7 @@ interface Notification {
   productType: string | null;
   seq: number | null;
   batchUntilSeq: number | null;
-  syncWindow: number | null;
+  spreadWindow: number | null;
   channelId: string | null;
   organizationId: string | null;
 }
@@ -47,6 +47,8 @@ export async function subscribeAndReact(context: { vars: Record<string, unknown>
     const started = Date.now();
     try {
       const res = await fetch(`${BASE_URL}/${TENANT_ID}/${ORG_ID}/attachments?seqCursor=${from},${until}&limit=1000`, { headers: { cookie } });
+      // The fetches here bypass Artillery's HTTP engine: their statuses are counted by hand, for the CLI's check on rejected responses.
+      events.emit('counter', `fetch.codes.${res.status}`, 1);
       await res.json();
       events.emit('histogram', 'sync.fetch_ms', Date.now() - started);
       events.emit('counter', 'sync.delta_fetches', 1);
@@ -76,8 +78,9 @@ export async function subscribeAndReact(context: { vars: Record<string, unknown>
       return;
     }
 
-    const window = n.syncWindow || DEFAULT_WINDOW_MS;
-    const delay = Math.min(hashSpread(`${clientId}:${scope}`) % window, TIER_MAX_MS);
+    // As the frontend's scheduler: the server's window where it sends one, and no spread inside a window of 0.
+    const window = n.spreadWindow ?? DEFAULT_WINDOW_MS;
+    const delay = window > 0 ? Math.min(hashSpread(`${clientId}:${scope}`) % window, TIER_MAX_MS) : 0;
     events.emit('histogram', 'sync.reaction_delay_ms', delay);
 
     const created = { from: n.seq, until };
@@ -98,6 +101,7 @@ export async function subscribeAndReact(context: { vars: Record<string, unknown>
   try {
     const started = Date.now();
     const res = await fetch(`${BASE_URL}/entities/app/stream`, { headers: { cookie, accept: 'text/event-stream' }, signal: controller.signal });
+    events.emit('counter', `fetch.codes.${res.status}`, 1);
     if (!res.ok || !res.body) {
       events.emit('counter', 'sse.errors', 1);
       return;

@@ -1,147 +1,181 @@
 import { RESOURCE_LIMITS } from '../constants';
 import { log } from '../lib/pino';
 import type { PendingEvent } from '../types';
-import { metrics } from './cdc-metrics';
 
 /**
- * Cross-transaction micro-batching: accumulates surviving events from committed transactions and
- * flushes them grouped by (tableMeta.type, action), amortizing DB roundtrips across independent
- * single-row commits. windowMs 0 flushes immediately.
+ * Collects the surviving changes of committed source transactions and hands them to `processFlush` in commit order,
+ * so one database transaction records many independent single-row commits. A flush takes every whole source
+ * transaction that is pending, and its position is acknowledged only after `processFlush` resolved.
+ *
+ * A flush that rejects acknowledges nothing: the buffer drops what it holds, refuses new changes and calls `onFailed`,
+ * so the worker reads again from the last acknowledged position. That is the one way a failure is handled: nothing is
+ * retried in place and nothing is left out.
  */
 export class FlushBuffer {
-  private pending: PendingEvent[] = [];
-  private highestLsn: string | null = null;
+  /** Source transactions in commit order, each with its surviving changes. */
+  private pending: PendingEvent[][] = [];
+  private pendingCount = 0;
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
-  private flushing = false;
+  /**
+   * Settles when the last flush or run that was asked for has ended. Each takes its turn after the one asked for
+   * before it, so a run between two flushes gets the next gap, also while changes keep arriving.
+   */
+  private turn: Promise<void> = Promise.resolve();
+  /** Flushes and runs that are in progress or wait for their turn. */
+  private turns = 0;
+  private closedByFailure = false;
 
-  private processEvents: (events: PendingEvent[]) => Promise<void>;
-  private acknowledgeLsn: (lsn: string) => Promise<void>;
+  private processFlush: (transactions: PendingEvent[][]) => Promise<void>;
+  private acknowledge: (position: string) => Promise<void>;
   private windowMs: number;
   private batchSize: number;
 
   /** Called after a flush that left nothing pending. */
   onDrained: (() => void) | null = null;
 
+  /** Called once when a flush rejected, with the position of its first change; the buffer stays closed until `reset`. */
+  onFailed: ((error: unknown, position: string) => void) | null = null;
+
+  /**
+   * @param processFlush - Records the changes of whole source transactions and hands them to the API.
+   * @param acknowledge - Called after every flush that was recorded, with the commit position of its last source transaction.
+   * @param windowMs - How long the first pending change waits for more before it is flushed.
+   * @param batchSize - Pending changes from which a flush starts at once and the caller is held.
+   */
   constructor(
-    processEvents: (events: PendingEvent[]) => Promise<void>,
-    acknowledgeLsn: (lsn: string) => Promise<void>,
+    processFlush: (transactions: PendingEvent[][]) => Promise<void>,
+    acknowledge: (position: string) => Promise<void>,
     windowMs: number,
-    batchSize = RESOURCE_LIMITS.buffers.flushBatchSize,
+    batchSize: number = RESOURCE_LIMITS.buffers.flushBatchSize,
   ) {
-    this.processEvents = processEvents;
-    this.acknowledgeLsn = acknowledgeLsn;
+    this.processFlush = processFlush;
+    this.acknowledge = acknowledge;
     this.windowMs = windowMs;
     this.batchSize = batchSize;
   }
 
+  /**
+   * Takes the surviving changes of one committed source transaction. Resolves at once below the batch size; at or above
+   * it only after the pending changes are flushed, which holds the replication stream while the worker is behind.
+   */
   async enqueue(events: PendingEvent[]): Promise<void> {
-    for (const event of events) {
-      this.pending.push(event);
-      this.highestLsn = event.lsn;
-    }
+    if (events.length === 0 || this.closedByFailure) return;
 
-    if (this.windowMs === 0) {
+    this.pending.push(events);
+    this.pendingCount += events.length;
+
+    if (this.pendingCount >= this.batchSize) {
       await this.flush();
       return;
     }
 
-    if (this.pending.length >= this.batchSize) {
-      await this.flush();
-      return;
-    }
-
-    // Safety cap.
-    if (this.pending.length >= RESOURCE_LIMITS.buffers.maxBufferedEvents) {
-      log.trace('Flush buffer hit size cap, flushing immediately', { count: this.pending.length });
-      await this.flush();
-      return;
-    }
-
-    // Timer fallback for low-traffic periods.
+    // In quiet times the window ends the wait.
     if (!this.flushTimer) {
       this.flushTimer = setTimeout(() => {
         this.flushTimer = null;
-        this.flush();
+        void this.flush();
       }, this.windowMs);
     }
   }
 
-  /** Groups by (type, action), processes each group, then acknowledges the highest LSN. */
+  /**
+   * Flushes what is pending: resolves once every change that was pending at the call is recorded. What arrives
+   * meanwhile goes into a flush of its own, which starts right after whatever waits for the gap between the two.
+   */
   async flush(): Promise<void> {
-    // Re-entrancy guard.
-    if (this.flushing) return;
-
     this.clearTimer();
+    await this.inTurn(() => this.flushPending());
+  }
 
-    const events = this.pending;
-    const lsn = this.highestLsn;
+  private async flushPending(): Promise<void> {
+    if (this.pendingCount === 0 || this.closedByFailure) return;
+
+    const transactions = this.pending;
+    const events = this.pendingCount;
     this.pending = [];
-    this.highestLsn = null;
+    this.pendingCount = 0;
 
-    if (events.length === 0 || !lsn) return;
-
-    this.flushing = true;
-    const flushStart = performance.now();
     try {
-      const groups = new Map<string, PendingEvent[]>();
-      for (const event of events) {
-        const type = event.result.tableMeta.type;
-        const action = event.result.activity.action;
-        const key = `${type}:${action}`;
-        const group = groups.get(key);
-        if (group) group.push(event);
-        else groups.set(key, [event]);
-      }
+      await this.processFlush(transactions);
+    } catch (error) {
+      this.fail(error, transactions[0][0].lsn, events);
+      return;
+    }
 
-      const results = await Promise.allSettled([...groups.values()].map((groupEvents) => this.processEvents(groupEvents)));
+    // The commit of the last source transaction: everything up to it is recorded. A change's own position lies
+    // before that commit, and would leave its transaction to be delivered again.
+    const last = transactions[transactions.length - 1].at(-1) as PendingEvent;
+    await this.acknowledge(last.commitLsn ?? last.lsn);
 
-      for (const result of results) {
-        if (result.status === 'rejected') {
-          log.error('Group processing failed', { err: result.reason });
-        }
-      }
+    if (this.pendingCount > 0) void this.flush();
+    else this.onDrained?.();
+  }
 
-      // The highest LSN implicitly acknowledges all prior ones.
-      await this.acknowledgeLsn(lsn);
-
-      metrics.recordFlush(events.length, performance.now() - flushStart);
-
-      if (events.length > 1) {
-        log.trace('Flush buffer batch processed', { totalEvents: events.length, groups: groups.size });
-      }
+  /**
+   * Runs `fn` while no flush is in progress and holds the next flush until it resolved: what `fn` reads sits exactly
+   * between two flushes. It takes the gap after the flush in progress, however many changes are pending by then.
+   * Changes keep arriving meanwhile and are flushed after it.
+   */
+  async exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await this.inTurn(fn);
     } finally {
-      this.flushing = false;
-
-      // Events that accumulated during this flush.
-      if (this.pending.length > 0) {
-        if (this.windowMs === 0 || this.pending.length >= this.batchSize) {
-          this.flush();
-        } else if (!this.flushTimer) {
-          this.flushTimer = setTimeout(() => {
-            this.flushTimer = null;
-            this.flush();
-          }, this.windowMs);
-        }
-      } else {
-        this.onDrained?.();
-      }
+      if (this.pendingCount > 0) void this.flush();
     }
   }
 
-  /** Graceful shutdown: flushes any remaining events immediately. */
-  async drain(): Promise<void> {
-    this.clearTimer();
-    await this.flush();
+  /** Runs `task` once every flush and run that was asked for before it has ended, whatever their outcome. */
+  private inTurn<T>(task: () => Promise<T>): Promise<T> {
+    this.turns += 1;
+    const run = this.turn.then(task);
+    const ended = () => {
+      this.turns -= 1;
+    };
+    this.turn = run.then(ended, ended);
+    return run;
   }
 
-  /** Number of events currently buffered. */
-  get size(): number {
-    return this.pending.length;
+  /**
+   * Closes the buffer on a failure: of a flush, or of a message that could not be handled before it reached one. What
+   * is pending is dropped, because the stream is read again from the last acknowledged position.
+   * @param error - What failed.
+   * @param position - The position the failure belongs to: a failed flush's first change.
+   * @param events - How many changes the failed flush held.
+   */
+  fail(error: unknown, position: string, events = 0): void {
+    if (this.closedByFailure) return;
+    this.closedByFailure = true;
+    this.dropPending();
+    log.error('Flush failed: position not acknowledged, reading again from the last acknowledged one', { err: error, events, position });
+    this.onFailed?.(error, position);
   }
 
-  /** Nothing buffered and no flush running. */
+  /**
+   * Before a new subscription: drops what is pending, waits for the flush in flight to end, whatever its outcome, and
+   * opens the buffer again. The stream starts over from the acknowledged position, so what is dropped is delivered
+   * again, and nothing of the subscription that ended is still being recorded when this resolves.
+   */
+  async reset(): Promise<void> {
+    this.dropPending();
+    while (this.turns > 0) await this.turn;
+    this.dropPending();
+    this.closedByFailure = false;
+  }
+
+  /** True from a failure until `reset`: nothing is taken, flushed or to be acknowledged meanwhile. */
+  get failed(): boolean {
+    return this.closedByFailure;
+  }
+
+  /** True when nothing is buffered and no flush is in flight. */
   get isIdle(): boolean {
-    return this.pending.length === 0 && !this.flushing;
+    return this.pendingCount === 0 && this.turns === 0;
+  }
+
+  private dropPending(): void {
+    this.clearTimer();
+    this.pending = [];
+    this.pendingCount = 0;
   }
 
   private clearTimer(): void {

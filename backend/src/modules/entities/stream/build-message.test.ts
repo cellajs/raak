@@ -1,45 +1,68 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ActivityEvent } from '#/lib/activity-bus';
-import { buildStreamNotification } from './build-message';
 
-const labelEvent = (overrides: Record<string, unknown>): ActivityEvent =>
+// The template declares no embedding: this one lets a message of its product carry a hint.
+vi.mock('shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('shared')>();
+  return {
+    ...actual,
+    appConfig: { ...actual.appConfig, productEmbeddings: [{ embeddedProduct: 'attachment', hostProduct: 'attachment', hostColumn: 'attachments' }] },
+  };
+});
+
+const { buildStreamNotification } = await import('./build-message');
+
+const ORG = 'org-hint';
+
+/** A row as a message carries it: its permission fields and no content. */
+const row = (id: string, seq: number, deletedAt: string | null = null) => ({ rowData: { id, organizationId: ORG, deletedAt }, seq, movedFrom: null });
+
+/** A product event of one audience. The cast covers the activity columns the builder passes through unread. */
+const event = (action: 'create' | 'update' | 'delete', rows: ReturnType<typeof row>[]) =>
   ({
     id: 'activity-1',
-    type: 'label.updated',
-    action: 'update',
-    entityType: 'label',
+    type: `attachment.${action}d`,
+    action,
+    entityType: 'attachment',
     resourceType: null,
-    tableName: 'labels',
-    subjectId: 'label-1',
+    subjectId: rows[0].rowData.id,
+    organizationId: ORG,
     tenantId: 'tenant-1',
-    organizationId: 'org-1',
-    projectId: 'project-1',
-    rowData: { id: 'label-1', organizationId: 'org-1', projectId: 'project-1', deletedAt: null },
-    seq: 11,
-    batchUntilSeq: null,
-    propagation: null,
-    trace: null,
     stx: null,
-    ...overrides,
+    rowData: null,
+    rows,
+    trace: null,
   }) as unknown as ActivityEvent;
 
-// Hint shape drives whether hosts refresh or strip their embedded copies (task.labels).
-// Soft deletes ride the wire as updates, so classification must read the row, not the action.
-describe('buildStreamNotification propagation hint', () => {
-  it('classifies a live label update as an update hint', () => {
-    const { propagation } = buildStreamNotification(labelEvent({}));
-    expect(propagation).toMatchObject({ update: ['label-1'], remove: [] });
+/**
+ * A host keeps a copy of the rows embedded in it, and the worker drops the host updates that would say so: the hint is
+ * the only word a client gets. It names every row of the message.
+ */
+describe('buildStreamNotification: the propagation hint of an embedded product', () => {
+  it('names the one row of a single-row message', () => {
+    expect(buildStreamNotification(event('update', [row('a1', 7)])).propagation).toMatchObject({
+      embeddedProduct: 'attachment',
+      update: ['a1'],
+      remove: [],
+    });
   });
 
-  it('classifies a soft-deleted label row as a removal hint', () => {
-    const { propagation } = buildStreamNotification(
-      labelEvent({ rowData: { id: 'label-1', organizationId: 'org-1', projectId: 'project-1', deletedAt: '2026-07-26T21:00:00Z' } }),
-    );
-    expect(propagation).toMatchObject({ update: [], remove: ['label-1'] });
+  it('must not name the first row only when a message holds several', () => {
+    const notification = buildStreamNotification(event('update', [row('a1', 7), row('a2', 8), row('a3', 9)]));
+
+    expect(notification.propagation).toMatchObject({ update: ['a1', 'a2', 'a3'], remove: [] });
+    expect(notification).toMatchObject({ seq: 7, batchUntilSeq: 9, count: 3 });
   });
 
-  it('classifies a hard delete as a removal hint', () => {
-    const { propagation } = buildStreamNotification(labelEvent({ action: 'delete', rowData: null }));
-    expect(propagation).toMatchObject({ update: [], remove: ['label-1'] });
+  it('tells a soft delete from an edit row by row, also when the first row is the edit', () => {
+    const notification = buildStreamNotification(event('update', [row('a1', 7), row('a2', 8, '2026-10-01T10:00:00.000Z'), row('a3', 9)]));
+
+    expect(notification.propagation).toMatchObject({ update: ['a1', 'a3'], remove: ['a2'] });
+  });
+
+  it('removes every row of a delete', () => {
+    const notification = buildStreamNotification(event('delete', [row('a1', 0), row('a2', 0)]));
+
+    expect(notification.propagation).toMatchObject({ update: [], remove: ['a1', 'a2'] });
   });
 });

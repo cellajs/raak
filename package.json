@@ -57,6 +57,8 @@
     "story": "pnpm --filter frontend storybook",
     "style": "node shared/scripts/check-style.ts",
     "style:audit": "node shared/scripts/check-style.ts --audit",
+    "sync:rebuild": "pnpm --filter cdc-worker sync rebuild",
+    "sync:verify": "pnpm --filter cdc-worker sync verify",
     "template:check": "node shared/scripts/check-template-config.ts",
     "test": "pnpm test:full",
     "test:core": "pnpm docker:test && cross-env TEST_MODE=core vitest run --silent=passed-only",

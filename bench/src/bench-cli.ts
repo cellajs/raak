@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
@@ -8,11 +8,14 @@ import { fileURLToPath } from 'node:url';
 import { select } from '@inquirer/prompts';
 import ora from 'ora';
 import pg from 'pg';
+import { appConfig } from 'shared';
 import { pc } from 'shared/cli-utils/colors';
 import { printHeader } from 'shared/cli-utils/display';
 import { BENCH_UUID_PREFIX } from 'shared/utils/bench-identity';
-import { createBenchProcessEnv, DB_URL } from './config';
-import { isPostgresReady, isServiceHealthy, SERVICES } from './preflight';
+import { BASE_URL, COOKIE_SECRET, createBenchProcessEnv, DB_URL, SESSION_COOKIE_NAME } from './config';
+import { benchSignInStatus, isPostgresReady, isServiceHealthy, SERVICES, unreadyReason } from './preflight';
+import { rejectedResponses } from './response-codes';
+import { booksFindings, counterFindings, pipelineFindings, settlePipeline } from './verify';
 
 const __dirname = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
 const BENCH_ROOT = resolve(__dirname, '..');
@@ -28,6 +31,7 @@ function parseArgs() {
   let skipSeed = false;
   let all = false;
   let short = false;
+  let ifReady = false;
   let help = false;
 
   for (let i = 0; i < args.length; i++) {
@@ -37,12 +41,13 @@ function parseArgs() {
     else if (arg === '--skip-seed') skipSeed = true;
     else if (arg === '--all') all = true;
     else if (arg === '--short') short = true;
+    else if (arg === '--if-ready') ifReady = true;
     else if (arg === 'help' || arg === '--help' || arg === '-h') help = true;
     // First bare (non-flag) argument is the scenario name.
     else if (!arg.startsWith('-') && scenario === undefined) scenario = arg;
   }
 
-  return { scenario, skipSeed, all, short, help };
+  return { scenario, skipSeed, all, short, ifReady, help };
 }
 
 // ── Scenario discovery ─────────────────────────────────────────────────────
@@ -67,12 +72,13 @@ function scenarioDescription(name: string): string {
 }
 
 function printUsage(scenarios: string[]): void {
-  console.info(`${pc.bold('Usage:')} pnpm bench [scenario] [--all] [--short] [--skip-seed]\n`);
+  console.info(`${pc.bold('Usage:')} pnpm bench [scenario] [--all] [--short] [--skip-seed] [--if-ready]\n`);
   console.info('Run without a scenario for an interactive picker.\n');
   console.info(pc.bold('Flags:'));
   console.info(`  ${'--all'.padEnd(22)}${pc.dim('run every scenario in sequence (quiet, prints a final summary)')}`);
   console.info(`  ${'--short'.padEnd(22)}${pc.dim('quick smoke run (1s/1VU, no thresholds, no baselines)')}`);
-  console.info(`  ${'--skip-seed'.padEnd(22)}${pc.dim('skip bench data seeding')}\n`);
+  console.info(`  ${'--skip-seed'.padEnd(22)}${pc.dim('skip bench data seeding')}`);
+  console.info(`  ${'--if-ready'.padEnd(22)}${pc.dim("do nothing when this checkout's stack is not running")}\n`);
   console.info(pc.bold('Scenarios:'));
   for (const name of scenarios) {
     console.info(`  ${name.padEnd(22)}${pc.dim(scenarioDescription(name))}`);
@@ -111,6 +117,28 @@ async function assertInfrastructureReady(): Promise<void> {
   }
 
   spinner.succeed('infrastructure ready');
+}
+
+/** Bench user 0 signs in before anything is measured: with its cookie rejected, every scenario would time 401s. */
+async function assertBenchSignIn(skipSeed: boolean): Promise<void> {
+  const status = await benchSignInStatus();
+  if (status === 200) return;
+
+  console.error(`${pc.red('✗')} bench user 0 could not sign in: ${BASE_URL}/me answered ${status ?? 'nothing'}`);
+  console.error(
+    pc.dim(
+      `  The cookie is named ${SESSION_COOKIE_NAME}, after config mode "${appConfig.mode}" (APP_MODE or NODE_ENV): the stack must run in that mode.`,
+    ),
+  );
+  console.error(
+    pc.dim(
+      COOKIE_SECRET
+        ? '  It is signed with COOKIE_SECRET from backend/.env: the stack must use the same one.'
+        : '  COOKIE_SECRET is not set: bench reads it from backend/.env.',
+    ),
+  );
+  if (skipSeed) console.error(pc.dim('  With --skip-seed the bench users must be seeded already: run once without it.'));
+  process.exit(1);
 }
 
 /** Password attempts and every budget keyed by a bench user: per-user limits (stream connects, sync reads) span runs. */
@@ -185,13 +213,13 @@ function runArtillery(
   }
 }
 
-/** Samples CDC throughput and latency for every scenario, summarizing only when CDC processed events. A separate process, since `runArtillery` blocks the event loop on `execFileSync`. */
-function startCdcPoller(): { proc: ChildProcess; summary: Promise<string> } {
-  const proc = spawn('tsx', ['src/cdc-poller.ts', '--quiet'], { cwd: BENCH_ROOT, stdio: ['ignore', 'pipe', 'ignore'] });
-  const chunks: string[] = [];
-  proc.stdout?.on('data', (data: Buffer) => chunks.push(data.toString()));
-  const summary = new Promise<string>((res) => proc.on('close', () => res(chunks.join(''))));
-  return { proc, summary };
+/** The counters of an Artillery report, empty when the run left none. */
+function reportCounters(reportPath: string): Record<string, number> {
+  try {
+    return JSON.parse(readFileSync(reportPath, 'utf-8')).aggregate?.counters ?? {};
+  } catch {
+    return {};
+  }
 }
 
 const BASELINES_DIR = resolve(BENCH_ROOT, '.baselines');
@@ -329,16 +357,17 @@ function printComparison(current: BaselineMetrics, baseline: BaselineMetrics | n
   console.info();
 }
 
-/** Combined `--all` table: one row per scenario with key metrics and p95 delta vs baseline. Printed once at the end so the run stays quiet. */
+/** Combined `--all` table: one row per scenario with key metrics, the seconds the CDC worker needed to catch up, and p95 delta vs baseline. Printed once at the end so the run stays quiet. */
 function printAllSummary(results: { name: string; result: ScenarioResult }[]): void {
   console.info(`\n${pc.bold('Summary')} ${pc.dim(': all scenarios')}\n`);
 
-  const cols = `  ${pc.bold('Scenario'.padEnd(22))} ${pc.bold('Req/s'.padStart(8))} ${pc.bold('Mean'.padStart(8))} ${pc.bold('p95'.padStart(8))} ${pc.bold('p99'.padStart(8))} ${pc.bold('Errors'.padStart(8))} ${pc.bold('p95 Δ'.padStart(10))}`;
+  const cols = `  ${pc.bold('Scenario'.padEnd(22))} ${pc.bold('Req/s'.padStart(8))} ${pc.bold('Mean'.padStart(8))} ${pc.bold('p95'.padStart(8))} ${pc.bold('p99'.padStart(8))} ${pc.bold('Errors'.padStart(8))} ${pc.bold('CDC +s'.padStart(8))} ${pc.bold('p95 Δ'.padStart(10))}`;
   console.info(cols);
-  console.info(`  ${'─'.repeat(80)}`);
+  console.info(`  ${'─'.repeat(89)}`);
 
   for (const { name, result } of results) {
-    const { current, baseline, exitCode } = result;
+    const { current, baseline, exitCode, caughtUpMs } = result;
+    const caughtUp = caughtUpMs === null ? '-' : (caughtUpMs / 1000).toFixed(1);
     const fail = exitCode === 0 ? '' : pc.red('  ✗');
 
     if (!current) {
@@ -348,56 +377,65 @@ function printAllSummary(results: { name: string; result: ScenarioResult }[]): v
 
     const delta = baseline ? formatDelta(current.p95, baseline.p95, true) : pc.dim('new');
     console.info(
-      `  ${name.padEnd(22)} ${String(current.requestRate).padStart(8)} ${String(current.mean).padStart(8)} ${String(current.p95).padStart(8)} ${String(current.p99).padStart(8)} ${String(current.errors).padStart(8)} ${delta.padStart(10)}${fail}`,
+      `  ${name.padEnd(22)} ${String(current.requestRate).padStart(8)} ${String(current.mean).padStart(8)} ${String(current.p95).padStart(8)} ${String(current.p99).padStart(8)} ${String(current.errors).padStart(8)} ${caughtUp.padStart(8)} ${delta.padStart(10)}${fail}`,
     );
   }
   console.info();
-}
-
-const cleanupFns: (() => void)[] = [];
-
-function registerCleanup(fn: () => void) {
-  cleanupFns.push(fn);
-}
-
-function cleanup() {
-  for (const fn of cleanupFns) {
-    try {
-      fn();
-    } catch {}
-  }
-  cleanupFns.length = 0;
 }
 
 // ── Run a single scenario ──────────────────────────────────────────────────
 
 interface ScenarioResult {
   exitCode: number;
-  /** Aggregate metrics for this run, or null for short/failed runs. */
+  /** Aggregate metrics for this run, or null for a short or failed run. */
   current: BaselineMetrics | null;
   /** Previous baseline this run was compared against, or null on a first run. */
   baseline: BaselineMetrics | null;
+  /** How long the CDC worker needed after the run to record its writes; null for a run that wrote nothing it counts. */
+  caughtUpMs: number | null;
 }
 
-/** Runs the CDC poller, Artillery, and the baseline compare or save. Short runs produce no comparable metrics and never touch baselines; `quiet` leaves output to the caller's combined summary. */
+/**
+ * Runs Artillery between two readings of what the CDC worker recorded, checks the run, and compares or saves the
+ * baseline. A run fails on rejected responses, on a counter its scenario expects or forbids, where the worker's
+ * record differs from the rows the run wrote, and where the worker's verify finds its books wrong. Short runs produce no comparable metrics and never touch baselines, and
+ * neither does a failed run; `quiet` leaves output to the caller's combined summary.
+ */
 async function runScenario(name: string, { short, quiet }: { short: boolean; quiet: boolean }): Promise<ScenarioResult> {
-  const cdcPoller = startCdcPoller();
-  const stopPoller = () => cdcPoller.proc.kill('SIGINT');
-  registerCleanup(stopPoller);
+  // Whatever was written before, the seed included, is settled first: the run's own writes are then all that changes.
+  const { snapshot: before } = await settlePipeline();
 
   const spinner = quiet ? ora(`running ${name}${short ? ' (short)' : ''}...`).start() : null;
   if (!quiet) console.info(`${pc.cyan('▸')} running ${pc.bold(name)}${short ? pc.dim(' (short)') : ''}...\n`);
 
-  const { exitCode, reportPath } = runArtillery(name, { short, quiet });
+  const { exitCode: artilleryExit, reportPath } = runArtillery(name, { short, quiet });
+  const counters = reportCounters(reportPath);
+  // Rejected responses fail the run, short or not: the latency of a 401 says nothing about the endpoint.
+  const rejected = rejectedResponses(counters);
 
-  // Stop the poller and flush its summary (printed only if CDC saw events).
-  stopPoller();
-  const cdcSummary = (await cdcPoller.summary).trimEnd();
+  const findings = rejected ? [rejected] : counterFindings(readFileSync(resolve(BENCH_ROOT, 'scenarios', `${name}.yaml`), 'utf-8'), counters, short);
+  let pipelineSummary = '';
+  let workerCaughtUpMs: number | null = null;
+  if (!rejected && before) {
+    const written = counters['bench.rows_written'];
+    const { snapshot: after, caughtUpMs } = await settlePipeline(written === undefined ? undefined : before.activities + written);
+    if (caughtUpMs === null) findings.push('the CDC worker did not catch up within 60 s of the run');
+    else if (after) {
+      findings.push(...pipelineFindings(before, after, counters));
+      // The worker's own check of every counter against the tables: a full run ends with it.
+      if (!short) findings.push(...(await booksFindings()));
+      const recorded = after.activities - before.activities;
+      if (written !== undefined) workerCaughtUpMs = caughtUpMs;
+      if (recorded > 0) pipelineSummary = `CDC recorded ${recorded} activities and caught up ${(caughtUpMs / 1000).toFixed(1)} s after the run`;
+    }
+  }
+  const failure = findings.join('; ');
+  const exitCode = artilleryExit || (failure ? 1 : 0);
 
   let current: BaselineMetrics | null = null;
   let baseline: BaselineMetrics | null = null;
 
-  if (!short) {
+  if (!short && !failure) {
     current = extractMetrics(reportPath, name);
     if (current) {
       baseline = loadBaseline(name);
@@ -408,28 +446,22 @@ async function runScenario(name: string, { short, quiet }: { short: boolean; qui
 
   if (spinner) {
     if (exitCode === 0) spinner.succeed(`${name} ${pc.dim('done')}`);
-    else spinner.fail(`${name} ${pc.dim(`exited ${exitCode}`)}`);
+    else spinner.fail(`${name} ${pc.dim(failure || `exited ${exitCode}`)}`);
   }
+  if (!quiet && pipelineSummary) console.info(`${pc.cyan('▸')} ${pipelineSummary}\n`);
+  if (!quiet && failure) console.error(`${pc.red('✗')} ${name}: ${failure}\n`);
 
-  if (!quiet && cdcSummary) console.info(cdcSummary);
-
-  return { exitCode, current, baseline };
+  return { exitCode, current, baseline, caughtUpMs: workerCaughtUpMs };
 }
 
 async function main() {
-  process.on('SIGINT', () => {
-    cleanup();
-    process.exit(130);
-  });
-  process.on('SIGTERM', () => {
-    cleanup();
-    process.exit(143);
-  });
+  process.on('SIGINT', () => process.exit(130));
+  process.on('SIGTERM', () => process.exit(143));
 
   printHeader('bench cli');
 
   const scenarios = discoverScenarios();
-  const { scenario: cliScenario, skipSeed, all, short, help } = parseArgs();
+  const { scenario: cliScenario, skipSeed, all, short, ifReady, help } = parseArgs();
 
   if (scenarios.length === 0) {
     console.error(pc.red('No scenarios found in scenarios/'));
@@ -449,6 +481,13 @@ async function main() {
 
   // ── 1. Infrastructure ──
 
+  // The smoke test's way in: without a stack of this checkout there is nothing to run, and that is no failure.
+  const unready = ifReady ? await unreadyReason() : null;
+  if (unready) {
+    console.info(pc.dim(`skipped: ${unready}.`));
+    process.exit(0);
+  }
+
   await assertInfrastructureReady();
 
   // ── 2. Scenario selection ──
@@ -464,7 +503,6 @@ async function main() {
       .catch((err: Error) => {
         seedSpinner.fail('database seed failed');
         console.error(err.message);
-        cleanup();
         process.exit(1);
       });
   }
@@ -485,7 +523,6 @@ async function main() {
 
       if (selected === 'exit') {
         console.info(pc.dim('\nexited.'));
-        cleanup();
         process.exit(0);
       }
     }
@@ -501,12 +538,12 @@ async function main() {
       .catch((err: Error) => {
         seedSpinner.fail('database seed failed');
         console.error(err.message);
-        cleanup();
         process.exit(1);
       });
   }
 
   if (seedPromise) await seedPromise;
+  await assertBenchSignIn(skipSeed);
 
   // ── 3. Run scenario(s), each from cleared rate limits ──
 
@@ -518,22 +555,18 @@ async function main() {
 
   const results: { name: string; result: ScenarioResult }[] = [];
   let failureCode = 0;
-  try {
-    for (let i = 0; i < toRun.length; i++) {
-      const name = toRun[i];
-      await clearRateLimits();
-      const result = await runScenario(name, { short, quiet });
-      results.push({ name, result });
-      if (result.exitCode !== 0) failureCode = result.exitCode;
+  for (let i = 0; i < toRun.length; i++) {
+    const name = toRun[i];
+    await clearRateLimits();
+    const result = await runScenario(name, { short, quiet });
+    results.push({ name, result });
+    if (result.exitCode !== 0) failureCode = result.exitCode;
 
-      if (pauseSeconds > 0 && i < toRun.length - 1) {
-        const cooldown = ora(`cooling down ${pauseSeconds}s...`).start();
-        await sleep(pauseSeconds * 1000);
-        cooldown.stop();
-      }
+    if (pauseSeconds > 0 && i < toRun.length - 1) {
+      const cooldown = ora(`cooling down ${pauseSeconds}s...`).start();
+      await sleep(pauseSeconds * 1000);
+      cooldown.stop();
     }
-  } finally {
-    cleanup();
   }
 
   if (all) {
@@ -552,6 +585,5 @@ async function main() {
 
 main().catch((err) => {
   console.error(pc.red('bench failed:'), err);
-  cleanup();
   process.exit(1);
 });

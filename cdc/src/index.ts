@@ -1,4 +1,3 @@
-import process from 'node:process';
 import { serve } from '@hono/node-server';
 import { createHealthApp } from 'shared/health-app';
 import { waitForBackend } from 'shared/utils/wait-for-backend';
@@ -9,9 +8,7 @@ import { otel } from './lib/tracing';
 import { getHealthResponse } from './network/health';
 import { startCdcWorker, stopCdcWorker } from './pipeline/worker';
 
-export { startCdcWorker, stopCdcWorker };
-
-/** Entrypoint for both the `cdc` package (split deploy) and the backend `MODE=cdc` shim. */
+/** Entrypoint of the worker: as its own process (`cdc-worker.ts`), and for the backend, which runs it inside the API process in `singleVM` mode. */
 export async function runCdcWorker(): Promise<void> {
   if (env.NODE_ENV === 'development') {
     await waitForBackend();
@@ -20,8 +17,7 @@ export async function runCdcWorker(): Promise<void> {
   otel.start();
   otel.verifyConnection();
 
-  // biome-ignore lint/style/noProcessEnv: RELEASE_SHA is baked into the image by Docker, not part of the validated env schema
-  const version = process.env.RELEASE_SHA ?? 'unknown';
+  const version = env.RELEASE_SHA;
   const healthApp = createHealthApp({
     version,
     full: () => {

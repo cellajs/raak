@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import type { PostAppCatchupResponse } from 'sdk';
 import { currentSchemaVersion } from 'shared/schema-evolution';
 import { createStore } from 'zustand/vanilla';
 import { markBundleStale } from '~/query/schema-version-guard';
@@ -7,8 +8,16 @@ import type { AppStreamNotification } from './types';
 const channelName = 'tab-sync';
 const leaderLockName = 'tab-leader';
 
+/** What the leader's stream says of live delivery: whether the stream itself works, and whether the server's CDC worker reads. */
+export interface SyncHealth {
+  streamHealthy: boolean;
+  workerAway: boolean;
+}
+
 type BroadcastMessage =
   | { type: 'stream-notification'; notification: AppStreamNotification; organizationId: string }
+  | { type: 'catchup'; response: PostAppCatchupResponse; baselineOnly: boolean }
+  | { type: 'sync-health'; health: SyncHealth }
   | { type: 'schema-version'; version: number };
 
 interface TabCoordinatorState {
@@ -32,6 +41,10 @@ export const tabCoordinatorStore = createStore<TabCoordinatorState>((set) => ({
 let broadcastChannel: BroadcastChannel | null = null;
 let lockController: AbortController | null = null;
 const notificationHandlers: Set<(notification: AppStreamNotification, organizationId: string) => void> = new Set();
+const catchupHandlers: Set<(response: PostAppCatchupResponse, baselineOnly: boolean) => void> = new Set();
+const syncHealthHandlers: Set<(health: SyncHealth) => void> = new Set();
+/** What this tab last broadcast as leader, said again to a tab that opens later. */
+let lastSyncHealth: SyncHealth | null = null;
 let initPromise: Promise<void> | null = null;
 
 const isWebLocksAvailable = (): boolean => {
@@ -183,7 +196,13 @@ const handleBroadcastMessage = (event: MessageEvent<BroadcastMessage>): void => 
       // An older tab announced itself after we booted, re-announce so it learns.
       broadcastChannel?.postMessage({ type: 'schema-version', version: currentSchemaVersion } satisfies BroadcastMessage);
     }
+    // Every tab announces its version as it opens: the leader answers with the health of its stream, which a new tab has no way to know.
+    if (store.isLeader && lastSyncHealth) broadcastChannel?.postMessage({ type: 'sync-health', health: lastSyncHealth } satisfies BroadcastMessage);
     return;
+  }
+
+  if (message.type === 'sync-health' && !store.isLeader) {
+    for (const handler of syncHealthHandlers) handler(message.health);
   }
 
   if (message.type === 'stream-notification' && !store.isLeader) {
@@ -192,6 +211,38 @@ const handleBroadcastMessage = (event: MessageEvent<BroadcastMessage>): void => 
       handler(message.notification, message.organizationId);
     }
   }
+
+  if (message.type === 'catchup' && !store.isLeader) {
+    // The leader processes the answer itself, where its request returns.
+    for (const handler of catchupHandlers) handler(message.response, message.baselineOnly);
+  }
+};
+
+/** Called by the leader with each catchup answer: followers send no catchup request of their own. */
+export const broadcastCatchup = (response: PostAppCatchupResponse, baselineOnly: boolean): void => {
+  broadcastChannel?.postMessage({ type: 'catchup', response, baselineOnly } satisfies BroadcastMessage);
+};
+
+/** Followers register here to receive the leader's catchup answers. */
+export const onCatchup = (handler: (response: PostAppCatchupResponse, baselineOnly: boolean) => void): (() => void) => {
+  catchupHandlers.add(handler);
+  return () => {
+    catchupHandlers.delete(handler);
+  };
+};
+
+/** Called by the leader when the health of its stream changes: a follower has no stream of its own to judge by. */
+export const broadcastSyncHealth = (health: SyncHealth): void => {
+  lastSyncHealth = health;
+  broadcastChannel?.postMessage({ type: 'sync-health', health } satisfies BroadcastMessage);
+};
+
+/** Followers register here to receive the health of the leader's stream. */
+export const onSyncHealth = (handler: (health: SyncHealth) => void): (() => void) => {
+  syncHealthHandlers.add(handler);
+  return () => {
+    syncHealthHandlers.delete(handler);
+  };
 };
 
 /** Called by the leader for each SSE notification it receives. */

@@ -111,7 +111,8 @@ Every check takes an `Access` from `accessFrom(ctx)`. Never assemble one by hand
 Model: [Sync engine](./SYNC_ENGINE.md).
 
 - **Stx helpers** (`frontend/src/query/offline/`): `createStxForCreate()`, `createStxForUpdate()`, `createStxForDelete()` build sync transaction metadata from the cached entity version. Idempotency runs through `isTransactionProcessed()` (`backend/src/utils/idempotency.ts`) against the `activities` table.
-- **Realtime backend**: `activityBus` (`backend/src/lib/activity-bus.ts`) → `createStreamDispatcher()` → `streamSubscriberManager` (`backend/src/modules/entities/stream/`, SSE fan-out). `CdcWebSocketServer` (`backend/src/lib/cdc-websocket.ts`) accepts the CDC worker on `/internal/cdc` of the internal listener (`backend/src/lib/listeners.ts`), which serves the server-to-server routes apart from the public API.
+- **Realtime backend**: `activityBus` (`backend/src/lib/activity-bus.ts`) → `createStreamDispatcher()` → `streamSubscriberManager` (`backend/src/modules/entities/stream/`, SSE fan-out). `CdcWebSocketServer` (`backend/src/lib/cdc-websocket.ts`) accepts the CDC worker on `/internal/cdc` of the internal listener (`backend/src/lib/listeners.ts`), which serves the server-to-server routes apart from the public API. One API process per deployment: the worker speaks to one, and that one holds every stream ([Scaling](./ARCHITECTURE.md#scaling)).
+- **Books** (`cdc/src/pipeline/verify.ts`): the worker checks `channel_counters` against the tables daily and rebuilds them when that check finds a difference or in a lost case; every rebuild moves `sync_state.generation`, the API ends app streams with `resync` and clients refetch. Which counter keys sum and which only grow: `backend/src/modules/entities/counter-keys.ts`. Asking the worker for a verify or a rebuild from code: `sync-requests.ts` next to it. What each failure costs: [Sync engine](./SYNC_ENGINE.md#what-happens-when).
 - **Seen-by tracking**: `IntersectionObserver` marks entities seen. A Zustand store batches IDs, flushes on timer + `sendBeacon` on unload, persists flushed IDs in `localUserDb` (`kv` table). Unseen badges decrement optimistically in the query cache. Backend: `seen_by` (one row per user+product), `product_counters` (denormalized counts).
 - **Product cache** (`backend/src/middlewares/product-cache/`): [Sync engine](./SYNC_ENGINE.md#detail-cache).
 - **Sync signals** (`frontend/src/query/realtime/sync-signals.ts`): the only extension point for sync-derived per-user state. Never import module logic into the prioritizer. Contract: [Sync engine](./SYNC_ENGINE.md#fetch-prioritization).
@@ -149,7 +150,7 @@ A child-side host FK (nullable `<host>Id` column on one product pointing at anot
 - Indentation 2 spaces, line width 150, single quotes, Biome defaults for the rest.
 - Zod v4 only: `import { z } from 'zod'`. Backend: `import { z } from '@hono/zod-openapi'`.
 - camelCase variables/functions (constants included), PascalCase components, kebab-case files, snake_case translation keys.
-- JSDoc: backend exports get full JSDoc with params/response. Frontend exports get one line, and none when identifier and types already carry the meaning (`useAttachmentDeleteMutation` earns one: it also cancels paused offline creates). No file-level comments above imports. A comment longer than three prose lines must document a declaration or local executable block. Cross-file architecture, workflows and failure-mode narratives go to the nearest canonical README.
+- JSDoc: backend exports get full JSDoc with params/response. Frontend exports get one line, and none when identifier and types already carry the meaning (`useAttachmentDeleteMutation` earns one: it also cancels paused offline creates). No file-level comments above imports. A comment longer than three prose lines must document a declaration or local executable block. A mechanism that spans files is documented on the declaration that enforces it; a README gets concepts and behaviour only (**READMEs** below).
 - **Comment budget:**
   - **Members**: one line when name and type underdetermine the contract (default, constraint, unit or encoding, null/empty condition, population source), and always for `unknown`, `any` or a bare `string`/`number`/`boolean`. Drop it when a named type carries the meaning (`items: FloatingNavItem[]`) or default and behavior are visible in the same file.
   - **Locals and JSX**: one line of rationale for a local (two lines means rename or extract). JSX keeps the constraint only: `{/* min-h-14 matches the bar row so the grid holds position */}`. Measurement and motivation go in the commit. One comment above a repetitive block covers its shared constraint.
@@ -168,6 +169,7 @@ A child-side host FK (nullable `<host>Id` column on one product pointing at anot
   - `leader tab` / `election` -> cross-tab coordination of the single SSE connection (`tab-coordinator`).
   Name modules for their domain role, not the primitive underneath (`tab-coordinator`, not `leader-lease`). When splitting a module, name the remainder deliberately, never payload plus generic verb.
 - **Docs headings**: `##` headings in `frontend/src/content/docs/**` and in any `.md` those pages import (`cella/*.md`, `bench/README.md`, `cdc/README.md`, `yjs/README.md`) max out at 25 rendered characters (the sidebar truncates longer ones). Measure rendered text, not markup. Only `##` is affected. `cella/CHANGELOG.md` is exempt.
+- **READMEs**: a README explains concepts and behaviour: what the part is for, its terms, its lifecycle told once, the guarantees a reader can rely on, what a user sees when it fails and what a developer does to extend or operate it. Limits, timings, status and close codes, function names, lock modes and race explanations stay in a comment at their declaration: a sentence that has to change when a constant or a function is renamed is a comment. A change in behaviour edits the README sentence that states it and adds none for the mechanism.
 - Storybook: stories in `stories/` inside the module, named `<component-filename>.stories.tsx`.
 - UI primitives: Base UI (`@base-ui/react`), **not** Radix. Shadcn-style components in `frontend/src/modules/ui/` wrap Base UI. When porting from the shadcn registry, start from the base-vega style (closest to cella's sizing). Its `data-horizontal:`/`data-vertical:` variants, `no-scrollbar` and `var(--radius-md)` work as-is; drop the `cn-*` hook classes (shadcn style CSS, not shipped here) and check every state selector against the attributes Base UI emits.
 - Keep existing comment content intact unless cleanup is explicitly requested. Trimming to the comment budget is always in scope (an over-budget comment is a defect).
@@ -201,6 +203,7 @@ Prod deploys are immutable VM generations on Scaleway (Pulumi + S3 control objec
 
 - Use `git` and `gh` CLI. Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`.
 - PRs: concise description, linked issues, passing checks, scoped changes.
+- **PR size**: a PR that adds more lines than it removes ends its description with a `## Size` section. It holds the table that `pnpm cella stats --since origin/main --md` prints, then one line per kind that grew (source, tests, stories, generated, json, docs) saying what those lines are for; for source, also how much of it is comments. Lines that have no reason are the first to cut.
 - Breaking OpenAPI diffs: [Cache-bust](./SCHEMA_EVOLUTION.md#cache-bust-interim).
 
 ## Commands
@@ -210,6 +213,7 @@ Prod deploys are immutable VM generations on Scaleway (Pulumi + S3 control objec
 - `pnpm generate`: Create Drizzle migrations from schema changes.
 - `pnpm sdk`: Regenerate OpenAPI spec and frontend SDK.
 - `pnpm seed`: Seed database with test data.
+- `pnpm sync:verify` / `pnpm sync:rebuild`: Ask the running CDC worker to check its counters against the tables, or to rebuild them: [CDC worker](../cdc/README.md#verify-and-rebuild).
 - `pnpm test`: Run the full test suite with summary coverage.
 - `pnpm infra`: Infra CLI for deployment: [Infra docs](/docs/page/guides/deployment)
 - `pnpm bench`: Run benchmark scenarios: [Bench docs](/docs/page/guides/load-testing)

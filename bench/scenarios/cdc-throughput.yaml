@@ -1,8 +1,8 @@
 # CDC Throughput: measures CDC pipeline lag under increasing write load.
 #
 # Same task edit payloads as task-edit, but a heavier sustained profile to push
-# the CDC pipeline. The CDC health poller runs automatically for every scenario,
-# so replication lag is captured in the run summary.
+# the CDC pipeline. The CLI waits for the CDC worker to catch up after every
+# scenario, so the time it still needed is in the run summary.
 # Each VU loops 10 times. Steps up: 25 → 50 → 75 → 100 arrivals/s.
 config:
   target: "{{ $processEnvironment.BASE_URL }}"
