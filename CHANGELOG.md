@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.1.12](https://github.com/cellajs/raak/compare/0.1.11...0.1.12) (2026-10-10)
+
+
+### 🎉 New features
+
+* **errors:** rule refusals answer with their own error type ([#162](https://github.com/cellajs/raak/issues/162)) ([5333bd8](https://github.com/cellajs/raak/commit/5333bd83b337fd6bd8139c9935cf9ed81a4b92d9))
+* **infra:** production runs on a single VM ([329a068](https://github.com/cellajs/raak/commit/329a068d0960601299c3e097a2c329590afec9a4))
+* project tiles on the user profile, workspace tiles on home ([#163](https://github.com/cellajs/raak/issues/163)) ([e646153](https://github.com/cellajs/raak/commit/e64615329e37ff5699f6453c43a090b2620dc854))
+
+
+### 🐞 Bug fixes
+
+* deleting a primary label answered 400. The task reassignment cast a ([1226148](https://github.com/cellajs/raak/commit/12261483097a96e5b6b304988a923b794011d7ac))
+* **frontend:** bridge cella[#1128](https://github.com/cellajs/raak/issues/1128) so the root CHANGELOG.md compiles in MDX ([#136](https://github.com/cellajs/raak/issues/136)) ([2bcb917](https://github.com/cellajs/raak/commit/2bcb917f790cc600286d925573404fbecdd2a2b3))
+* **frontend:** one error toast per failure ([#157](https://github.com/cellajs/raak/issues/157)) ([8113f8a](https://github.com/cellajs/raak/commit/8113f8ad70fe098d4c3400216b3291789dd3b264))
+* **project:** another user's project list is scoped to the caller ([#161](https://github.com/cellajs/raak/issues/161)) ([8248550](https://github.com/cellajs/raak/commit/8248550c4984650ecafba68caaeeb5a64149a85f))
+* task tools over MCP, offline replay order, member task stats, atomic project create ([#150](https://github.com/cellajs/raak/issues/150)) ([1226148](https://github.com/cellajs/raak/commit/12261483097a96e5b6b304988a923b794011d7ac))
+
+
+### 🔧 Small improvements
+
+* **task:** narrow task-board store subscriptions ([#145](https://github.com/cellajs/raak/issues/145)) ([1efc112](https://github.com/cellajs/raak/commit/1efc11200f29a85bbfb52397538efdd884b3111a))
+* **task:** the task-link example comes from the mocks ([#159](https://github.com/cellajs/raak/issues/159)) ([664c99c](https://github.com/cellajs/raak/commit/664c99cb51ba3320ba5caef68d7f46e25e232153))
+
+
+### 🧹 Chores
+
+* dev ports on 3010 and 4010 to 4016, dependency updates, leaner attachment seed ([#165](https://github.com/cellajs/raak/issues/165)) ([5261873](https://github.com/cellajs/raak/commit/5261873550834fd1af60a9a77c9d045b9749835c))
+* **marketing:** adopt upstream for stale copies ([#158](https://github.com/cellajs/raak/issues/158)) ([e422162](https://github.com/cellajs/raak/commit/e422162b4da7ff81fcf2f346674b0ea8be58ce44))
+* **marketing:** the about-page screenshots are re-shot as WebP ([#167](https://github.com/cellajs/raak/issues/167)) ([7c13f48](https://github.com/cellajs/raak/commit/7c13f4822eb0d51e138cc4e958adcaba52fec482))
+* sync upstream cella ([#140](https://github.com/cellajs/raak/issues/140)) ([47ed7b9](https://github.com/cellajs/raak/commit/47ed7b975c9d8a438e44812e462d36eed492461b))
+* sync upstream cella ([#142](https://github.com/cellajs/raak/issues/142)) ([b51730d](https://github.com/cellajs/raak/commit/b51730dd5662f6575aac6d7acd79bf10ecaa1aec))
+* sync upstream cella v0.10.1 (6b676860) ([#138](https://github.com/cellajs/raak/issues/138)) ([22e895a](https://github.com/cellajs/raak/commit/22e895a3a2499acde86c05321caa88dffdd69163))
+* sync upstream cella v0.10.2 (55af2fac) ([#139](https://github.com/cellajs/raak/issues/139)) ([d514c3c](https://github.com/cellajs/raak/commit/d514c3cf1e5f7277dcca0e1d0ce85c7f594cc28a))
+* sync upstream cella v0.10.4 (0a022a61) ([#141](https://github.com/cellajs/raak/issues/141)) ([2d95e8f](https://github.com/cellajs/raak/commit/2d95e8f2ae3b3f1912c70bb32dbde875e4759bd5))
+* sync upstream cella v0.11.1 (0f57bc7e) ([#143](https://github.com/cellajs/raak/issues/143)) ([2799e75](https://github.com/cellajs/raak/commit/2799e757552c5d5469766f82c4a93500245d76bc))
+* sync upstream cella v0.12.2 (205bab62) ([#146](https://github.com/cellajs/raak/issues/146)) ([aa2f689](https://github.com/cellajs/raak/commit/aa2f689d33c9b5fb5ba12dc303017a8e2693645c))
+* sync upstream cella v0.12.2 (e9a8d485) ([#144](https://github.com/cellajs/raak/issues/144)) ([216afad](https://github.com/cellajs/raak/commit/216afad83b567d15b3608b3d63d3839aa9fa12c2))
+* sync upstream cella v0.13.0 (d84e7e13) ([#147](https://github.com/cellajs/raak/issues/147)) ([b55a3d9](https://github.com/cellajs/raak/commit/b55a3d951e76d35efe8151a6a1847a7058ca647e))
+* sync upstream cella v0.14.0 (79ee6cde) ([#148](https://github.com/cellajs/raak/issues/148)) ([f6f1c7f](https://github.com/cellajs/raak/commit/f6f1c7f2f2d53c92daff651f56b243b96183a993))
+* sync upstream cella v0.16.0 (47a4b6731) ([#154](https://github.com/cellajs/raak/issues/154)) ([d5d88ab](https://github.com/cellajs/raak/commit/d5d88ab06a8d96d267e02ab8de768f0b9218f28c))
+* sync upstream cella v0.16.0 (9d30032c) ([#149](https://github.com/cellajs/raak/issues/149)) ([ba51b53](https://github.com/cellajs/raak/commit/ba51b53262050feda76a46a5e7138c46f4e43177))
+* sync upstream cella v0.16.0 (ef396fff) ([#155](https://github.com/cellajs/raak/issues/155)) ([709cd8b](https://github.com/cellajs/raak/commit/709cd8b273e52031338c4f8fdf2be68dcb1da162))
+* sync upstream cella v0.17.0 (08bd6e28) ([#156](https://github.com/cellajs/raak/issues/156)) ([d8af3e2](https://github.com/cellajs/raak/commit/d8af3e2cd9ae7e63c2503f09b995041697cbc368))
+* sync upstream cella v0.17.0 (73ed1317) ([#160](https://github.com/cellajs/raak/issues/160)) ([717dd98](https://github.com/cellajs/raak/commit/717dd98bcd2ca85876c57f13939dabb19298ea0d))
+* sync upstream cella v0.18.0 (41bf6888) ([#166](https://github.com/cellajs/raak/issues/166)) ([f274af4](https://github.com/cellajs/raak/commit/f274af4f414ac42500c36b60769c49bacfd5be55))
+* sync upstream cella v0.9.8 (45e881a7) ([#135](https://github.com/cellajs/raak/issues/135)) ([1e4a69e](https://github.com/cellajs/raak/commit/1e4a69e52780bef310991fc1ff6240edd1b14936))
+
+
+### 🧪 Tests
+
+* **task:** link previews of a private task are intentional ([#164](https://github.com/cellajs/raak/issues/164)) ([e6bb2f4](https://github.com/cellajs/raak/commit/e6bb2f47cfb0d553bb083d8b7926201152a67f77))
+* yjs suites and bench scenarios fit raak's attachment policy, placement and task edits ([#168](https://github.com/cellajs/raak/issues/168)) ([12a0778](https://github.com/cellajs/raak/commit/12a07787fc85ff79e5eb4373f9b5a3d7ffd5e197))
+
 ## [0.1.11](https://github.com/cellajs/raak/compare/0.1.10...0.1.11) (2026-09-02)
 
 
