@@ -6,4 +6,6 @@ export const production = {
   maintenance: false,
 
   googleMapsKey: 'AIzaSyBc1KkCJr6TNMeAw9XK4OunGVWDSXJAKEM',
+
+  singleVM: true,
 } satisfies DeepPartial<typeof _default>;
