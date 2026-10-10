@@ -42,13 +42,12 @@ function randomChoice<T>(arr: T[]): T {
 
 function buildAssignedToEdit(): EditPayload {
   const count = Math.floor(Math.random() * 3) + 1;
-  const assignees: string[] = [];
-  for (let i = 0; i < count; i++) {
-    assignees.push(userId(Math.floor(Math.random() * 100)));
-  }
+  const assignees = new Set<string>();
+  while (assignees.size < count) assignees.add(userId(Math.floor(Math.random() * 100)));
   return {
-    ops: { assignedTo: { add: assignees, remove: [] } },
-    stx: buildStx(['assignedTo']),
+    ops: { assignedTo: { add: [...assignees], remove: [] } },
+    // A set delta merges per element: the API refuses a field timestamp for it (400).
+    stx: buildStx([]),
   };
 }
 

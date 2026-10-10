@@ -1,5 +1,6 @@
 import { uuidv7 } from 'uuidv7';
-import { attachmentId } from '../seeds/ids';
+import { attachmentId, projectId } from '../seeds/ids';
+import { TOTAL_PROJECTS } from '../seeds/project.bench';
 
 export { authenticate } from './auth';
 
@@ -30,6 +31,8 @@ export function buildChurnBatch(context: { vars: Record<string, unknown> }, _eve
     contentType: 'application/pdf',
     size: '1024',
     keys: { original: '' },
+    // fork: attachments are project-homed, so a batch lands in a seeded bench project
+    projectId: projectId(first % TOTAL_PROJECTS),
     stx,
   }));
   context.vars.deletePayload = { ids, stx: { mutationId: uuidv7(), sourceId: stx.sourceId } };
