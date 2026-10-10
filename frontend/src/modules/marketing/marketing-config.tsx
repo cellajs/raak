@@ -108,16 +108,16 @@ export const whyItems = [{ id: 'simple' }, { id: 'automation' }, { id: 'instant'
 // Slides for light and dark themes
 /** Lists the light-theme slides for the product-benefits section. */
 export const whyLightSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board.png' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table.png' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task.png' },
+  { id: nanoid(), url: '/static/marketing/screenshots/board.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/table.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/task.webp' },
 ];
 
 /** Lists the dark-theme slides for the product-benefits section. */
 export const whyDarkSlides = [
-  { id: nanoid(), url: '/static/marketing/screenshots/board-dark.png' },
-  { id: nanoid(), url: '/static/marketing/screenshots/table-dark.png' },
-  { id: nanoid(), url: '/static/marketing/screenshots/task-dark.png' },
+  { id: nanoid(), url: '/static/marketing/screenshots/board-dark.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/table-dark.webp' },
+  { id: nanoid(), url: '/static/marketing/screenshots/task-dark.webp' },
 ];
 
 /*************************************************************************************************
