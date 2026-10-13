@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { Project, Workspace } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { ConfirmText } from '~/modules/common/confirm-text';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
@@ -60,7 +61,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
       title: t('c:delete_resource', { resource: t('c:project').toLowerCase() }),
-      description: t('c:confirm.delete_resource', { name: project.name, resource: t('c:project').toLowerCase() }),
+      description: <ConfirmText i18nKey="c:confirm.delete_resource" values={{ name: project.name, resource: t('c:project').toLowerCase() }} />,
     });
   };
 
