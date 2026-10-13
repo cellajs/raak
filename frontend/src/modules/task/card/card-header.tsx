@@ -1,10 +1,12 @@
 import { ArrowDownIcon, ArrowUpIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
+import { titleFromDocument } from 'shared/blocknote';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useRelativeDate } from '~/hooks/use-relative-date';
 import { copyBlocksToClipboard } from '~/modules/common/blocknote/helpers/blocknote-helpers';
+import { ConfirmText } from '~/modules/common/confirm-text';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
@@ -55,10 +57,20 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
 
     const handleDeleteClick = () => {
       const { update, remove } = useDropdowner.getState();
+      // `task.name` is empty for a task made in the app: its title is the text of its summary block
+      const title = titleFromDocument(task.summary);
       update({
         kind: 'panel',
         content: (
-          <PopConfirm title={t('c:delete_confirm.text', { name: `"${truncateMiddle(task.name, 20)}"` })}>
+          <PopConfirm
+            title={
+              title ? (
+                <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: truncateMiddle(title, 20) }} />
+              ) : (
+                <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
+              )
+            }
+          >
             <DeleteTask task={task} callback={remove} onCancel={remove} />
           </PopConfirm>
         ),
