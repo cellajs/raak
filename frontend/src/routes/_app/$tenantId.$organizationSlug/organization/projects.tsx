@@ -6,7 +6,8 @@ import { appTitle } from '~/utils/app-title';
 export const Route = createFileRoute('/_app/$tenantId/$organizationSlug/organization/projects')({
   validateSearch: projectsRouteSearchParamsSchema,
   search: { middlewares: [stripSearchParams(projectsSearchDefaults)] },
-  staticData: { isAuth: true, navTab: { id: 'projects', label: 'c:project_other', description: 'c:tab_projects.text' } },
+  // The first tab is the landing tab; cella's own tabs sit at order 0.
+  staticData: { isAuth: true, navTab: { id: 'projects', label: 'c:project_other', description: 'c:tab_projects.text', order: -10 } },
   head: ({ match }) => ({ meta: [{ title: appTitle(`Projects · ${match.context.organization?.name}`) }] }),
   component: OrganizationProjectsComponent,
 });
