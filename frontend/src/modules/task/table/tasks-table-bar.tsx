@@ -8,7 +8,6 @@ import { FocusView } from '~/modules/common/focus-view';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { BoardSearch } from '~/modules/task/board-search';
 import { configureForExport } from '~/modules/task/helpers/export-helpers';
-import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { deriveTasksQueryParams, fetchTasksForExport } from '~/modules/task/query';
 import type { ResolvedTaskTableProps } from '~/modules/task/table/tasks-table';
 import { TaskSelectedButtons } from '~/modules/task/task-selected-buttons';
@@ -18,10 +17,15 @@ import { DropdownMenuCheckboxItem } from '~/modules/ui/dropdown-menu';
 import { cn } from '~/utils/cn';
 
 type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'> &
-  Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & { isCompact: boolean; setIsCompact: (isCompact: boolean) => void };
+  Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & {
+    total: number | null;
+    isCompact: boolean;
+    setIsCompact: (isCompact: boolean) => void;
+  };
 
 /** Renders the action and filter toolbar for the tasks table. */
 export function TasksTableBar({
+  total,
   selected,
   searchVars,
   columns,
@@ -35,7 +39,6 @@ export function TasksTableBar({
 }: TasksTableBarProps) {
   const { t, i18n } = useTranslation();
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
-  const total = useTasksTotal('table', queryParams);
 
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -58,7 +61,7 @@ export function TasksTableBar({
         tenantId={queryParams?.tenantId ?? ''}
       />
 
-      <BoardSearch toggleFocus={toggleSearchFocus}>
+      <BoardSearch isInWorkspace={!!workspace} toggleFocus={toggleSearchFocus}>
         {typeof total === 'number' && searchVars.q && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
             <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>

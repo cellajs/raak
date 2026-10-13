@@ -1,7 +1,7 @@
+import { useSearch } from '@tanstack/react-router';
 import { TagIcon } from 'lucide-react';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from '~/hooks/use-search-params';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { Spinner } from '~/modules/common/spinner';
 // LabelList is eagerly imported (not lazy): the panel is always present on the board, so a separate
@@ -17,8 +17,7 @@ import { LABELS_PANEL_ID } from '~/modules/label/types';
  */
 export function LabelsPanel({ entity, entityId, windowScroll }: LabelsScopeProps & { windowScroll?: boolean }) {
   const { t } = useTranslation();
-  const { search } = useSearchParams<{ labelPageId?: string }>({});
-  const labelPageId = search.labelPageId;
+  const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
   return (
     <LocalPanelShell panelId={LABELS_PANEL_ID} icon={<TagIcon />} title={t('c:label_other')} windowScroll={windowScroll}>

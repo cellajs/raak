@@ -1,6 +1,6 @@
+import { useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from '~/hooks/use-search-params';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import { LabelSelectedButtons } from '~/modules/label/label-selected-buttons';
@@ -23,13 +23,11 @@ export function BoardHeader({ projects, workspace, publicView }: Pick<ResolvedBo
   const { t, i18n } = useTranslation();
   const isInWorkspace = !!workspace;
 
-  const {
-    search: { q: searchQuery = '' },
-  } = useSearchParams<{ q?: string }>({});
+  const searchQuery = useSearch({ strict: false, select: (search) => search.q }) ?? '';
 
   // No scope to derive params from in a public view or while a non-workspace board has no projects yet
   const queryParams = publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
-  const total = useTasksTotal('board', queryParams);
+  const total = useTasksTotal(queryParams);
   const selectedTaskIds = useTaskInteractionStore((s) => s.selectedTaskIds);
   const setSelectedTaskIds = useTaskInteractionStore((s) => s.setSelectedTaskIds);
   const selectedLabelIds = useTaskInteractionStore((s) => s.selectedLabelIds);
@@ -59,7 +57,7 @@ export function BoardHeader({ projects, workspace, publicView }: Pick<ResolvedBo
         tenantId={queryParams?.tenantId ?? ''}
       />
 
-      <BoardSearch toggleFocus={toggleSearchFocus}>
+      <BoardSearch isInWorkspace={isInWorkspace} toggleFocus={toggleSearchFocus}>
         {' '}
         {typeof total === 'number' && searchQuery && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">

@@ -19,7 +19,7 @@ import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/task/types';
+import type { ProjectResizablePanel, Task } from '~/modules/task/types';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 
@@ -38,15 +38,15 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const keyboardShortcuts = useNavigationStore((state) => state.keyboardShortcuts);
   const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
 
-  const search = useSearch({ strict: false }) as BoardSearchParams;
-
-  const taskSheetId = search.taskSheetId;
+  const q = useSearch({ strict: false, select: (search) => search.q });
+  const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
+  const taskSheetId = useSearch({ strict: false, select: (search) => search.taskSheetId });
   const isSheetOpen = !!taskSheetId;
 
   const getVisiblePanelTasks = (panel: StrictBoardPanel) => {
     const boardTasks = cachedTasks();
     const projectTasks = boardTasks.filter(({ projectId }) => projectId === panel.project.id);
-    const searched = projectTasks.filter((task) => searchFilterFunction(search, task));
+    const searched = projectTasks.filter((task) => searchFilterFunction({ q, matchMode }, task));
 
     const filtered = panel.sectionFilters
       ? searched.filter((task) => Object.entries(panel.sectionFilters!).every(([key, value]) => value.includes(task[key as keyof SectionsValue])))

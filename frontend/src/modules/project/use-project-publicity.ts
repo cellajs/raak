@@ -1,17 +1,21 @@
-import { useMatchRoute } from '@tanstack/react-router';
+import { useMatch } from '@tanstack/react-router';
 import type { Project } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { findProjectByIdOrSlug, projectQueryKeys } from '~/modules/project/query';
+import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { queryClient } from '~/query/query-client';
 
 /** Provides project publicity state and actions. */
 export const useProjectPublicity = (projectId: string) => {
-  const matchRoute = useMatchRoute();
   const { tenantId } = useOrganizationLayoutContext();
 
-  const projectMatch = matchRoute({ to: '/$tenantId/$organizationSlug/project/$slug', fuzzy: true });
-  const publicProjectMatch = matchRoute({ to: '/$tenantId/$organizationSlug/public/project/$slug', fuzzy: true });
-  const workspaceMatch = matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
+  const projectMatch = useMatch({ from: '/_app/$tenantId/$organizationSlug/project/$slug', shouldThrow: false, select: () => true });
+  const publicProjectMatch = useMatch({
+    from: '/_public/_content/$tenantId/$organizationSlug/public/project/$slug',
+    shouldThrow: false,
+    select: () => true,
+  });
+  const workspaceMatch = useIsWorkspaceRoute();
 
   if (publicProjectMatch) return true;
 

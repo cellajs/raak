@@ -77,6 +77,14 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     if (!data) return undefined;
     return data.pages.flatMap(({ items }) => items);
   }, [data]);
+
+  // Highlight mode fetches unfiltered, so the total counts the matches among the loaded rows, like the board
+  const total = useMemo(() => {
+    if (!data?.pages.length || !fetchedRows) return null;
+    if (highlight) return fetchedRows.filter((row) => searchFilterFunction(search, row)).length;
+    return data.pages[data.pages.length - 1].total;
+  }, [data, fetchedRows, highlight, search]);
+
   const isOnline = useOnlineManager();
   // Stable row references prevent memoized rows from rerendering on unchanged offline filters.
   const rows = useMemo(() => {
@@ -116,6 +124,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     <TableProjectsContext.Provider value={projects}>
       <div className="flex h-full flex-col gap-4">
         <TasksTableBar
+          total={total}
           selected={selected}
           searchVars={{ ...effectiveSearch, limit }}
           columns={columns}

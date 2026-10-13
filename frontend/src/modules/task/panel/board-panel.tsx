@@ -1,11 +1,10 @@
+import { useSearch } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
-import type { z } from 'zod';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useScrollVisibility } from '~/hooks/use-scroll-visibility';
-import { useSearchParams } from '~/hooks/use-search-params';
 import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
@@ -19,7 +18,6 @@ import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
 import { TaskPanelCollapsed } from '~/modules/task/panel/panel-collapsed';
 import { TaskPanelContent } from '~/modules/task/panel/panel-content';
 import { TaskPanelHeader } from '~/modules/task/panel/panel-header';
-import type { tasksBoardSearchSchema } from '~/modules/task/search-params-schemas';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -33,8 +31,6 @@ export interface BoardPanelProps {
   windowScroll?: boolean;
 }
 
-type BoardSearchProps = z.infer<typeof tasksBoardSearchSchema>;
-
 export const BoardPanel = memo(function BoardPanel({
   fetchedTasks,
   project,
@@ -45,7 +41,8 @@ export const BoardPanel = memo(function BoardPanel({
 }: BoardPanelProps) {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm');
-  const { search } = useSearchParams<BoardSearchProps>({});
+  const q = useSearch({ strict: false, select: (search) => search.q });
+  const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
   const boardId = useBoardStore((state) => state.activeBoardId)!;
 
   // Mobile FAB: auto-hide on scroll, show draft badge
@@ -60,14 +57,14 @@ export const BoardPanel = memo(function BoardPanel({
 
   // Filter tasks based on search and filters; the open create-form draft always stays visible
   const filteredTasks = useMemo(() => {
-    const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || searchFilterFunction(search, task));
+    const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || searchFilterFunction({ q, matchMode }, task));
 
-    const isHighlightMode = parseSearchQuery(search.q).highlight;
+    const isHighlightMode = parseSearchQuery(q).highlight;
     if (!isHighlightMode) return matchedTasks;
 
     const matchedIds = new Set(matchedTasks.map(({ id }) => id));
     return fetchedTasks.map((task) => (matchedIds.has(task.id) ? { ...task, isMatchingSearch: true } : task));
-  }, [fetchedTasks, search.q, search.matchMode]);
+  }, [fetchedTasks, q, matchMode]);
 
   // Sort tasks and filter out accepted and iced based of config
   const tasks = useMemo(() => prepareBoardTasks(filteredTasks, expandAccepted, expandIced), [filteredTasks, expandIced, expandAccepted]);
@@ -105,7 +102,7 @@ export const BoardPanel = memo(function BoardPanel({
   }, [filteredTasks, project.included?.counts?.entities?.task, projectFetchedCount, sectionFilters]);
 
   return (
-    <div data-search={!!search.q} className="group/panel h-full">
+    <div data-search={!!q} className="group/panel h-full">
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject ? 'true' : undefined} className="group/paneldrop flex h-full flex-col">
           <TaskPanelContent project={project} tasks={tasks} counts={counts} />

@@ -9,7 +9,7 @@ import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
 export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardProps) {
-  const { labelPageId } = useSearch({ strict: false }) as { labelPageId?: string };
+  const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
   // Anonymous public views get no label management panel

@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +11,7 @@ import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useProjectCreateMutation } from '~/modules/project/query';
+import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
@@ -26,7 +26,6 @@ interface CreateProjectFormProps {
 
 export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   const { workspace } = useWorkspaceContext();
 
@@ -54,7 +53,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
         onSuccess: async (createdProject) => {
           form.reset();
           if (isDialog) useDialoger.getState().remove();
-          navigate({ to: '.', params: true, resetScroll: false, search: (prev) => ({ ...prev, projectSlug: createdProject.slug }) });
+          selectBoardProject(createdProject.slug);
         },
       },
     );

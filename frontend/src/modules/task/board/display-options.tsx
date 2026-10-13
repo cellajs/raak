@@ -1,4 +1,4 @@
-import { useMatchRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Grid2X2Icon, Rows4Icon, SquareKanbanIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,21 +14,9 @@ interface Props {
 function DisplayOptions({ className = '' }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const matchRoute = useMatchRoute();
 
-  const isInPublicView = matchRoute({ to: '/$tenantId/$organizationSlug/public/project/$slug', fuzzy: true });
-  const isInWorkspace = matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
-
-  // Determine which route we're on for search param extraction
-  const fromRoute = isInPublicView
-    ? ('/_public/_content/$tenantId/$organizationSlug/public/project/$slug' as const)
-    : isInWorkspace
-      ? ('/_app/$tenantId/$organizationSlug/workspace/$slug' as const)
-      : ('/_app/$tenantId/$organizationSlug/project/$slug' as const);
-
-  const { view = 'board' } = useSearch({ from: fromRoute }) as { view?: 'board' | 'table' };
-
-  const currentValue = view || 'board';
+  // Nearest match, not a route picked with matchRoute: while a navigation commits, matchRoute still tests the page being left.
+  const currentValue = useSearch({ strict: false, select: (search) => search.view }) ?? 'board';
   // Null means "not hovering": the tooltip and hover resets fall back to the live currentValue,
   // so a view change while unhovered can't leave a stale captured value behind.
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);

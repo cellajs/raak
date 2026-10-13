@@ -1,9 +1,9 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeftIcon, Trash2Icon } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { useSearchParams } from '~/hooks/use-search-params';
 import { Spinner } from '~/modules/common/spinner';
 import { findLabelGroup } from '~/modules/label/group-labels';
 import { LabelFilterButton } from '~/modules/label/label-filter';
@@ -30,7 +30,7 @@ export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPage
   const { t } = useTranslation();
   const { organizationId, tenantId } = useOrganizationLayoutContext();
 
-  const { setSearch } = useSearchParams<{ labelPageId?: string }>({});
+  const navigate = useNavigate();
 
   const { data: label, isLoading } = useQuery(labelQueryOptions(labelId, organizationId, tenantId));
 
@@ -63,7 +63,7 @@ export function LabelPage({ labelId, entity, entityId, windowScroll }: LabelPage
 
   const [editingName, setEditingName] = useState<string | null>(null);
 
-  const goBack = () => setSearch({ labelPageId: undefined });
+  const goBack = () => navigate({ to: '.', replace: true, resetScroll: false, search: (prev) => ({ ...prev, labelPageId: undefined }) });
 
   if (isLoading) return <Spinner className="my-8 h-6 w-6 opacity-50" />;
   if (!label) {

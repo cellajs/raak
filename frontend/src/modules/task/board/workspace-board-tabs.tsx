@@ -16,7 +16,8 @@ import { lazyNamed } from '~/utils/lazy-named';
 const LabelPage = lazyNamed(() => import('~/modules/label/label-page'), 'LabelPage');
 
 export function WorkspaceBoardTabs({ projects, workspace, publicView }: Pick<ResolvedBoardProps, 'projects' | 'workspace' | 'publicView'>) {
-  const { projectSlug, labelPageId } = useSearch({ strict: false });
+  const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
+  const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
   const sorted = sortByMembership(projects);
 
