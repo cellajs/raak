@@ -28,6 +28,10 @@ import { Button, buttonVariants } from '~/modules/ui/button';
 import { Skeleton } from '~/modules/ui/skeleton';
 import { cn } from '~/utils/cn';
 
+/** The share of the row an open panel gets when the row scrolls: `minWidth * 1.25` in resizable-panels.tsx, which keeps it private. */
+const IDEAL_PANEL_WIDTH = PANEL_MIN_WIDTH * 1.25;
+const COLUMN_GAP = 8;
+
 /** The mobile placeholder column carries no project or kind; desktop columns are real board panels. */
 type SkeletonColumn = { kind: 'mobile'; panelId: string } | BoardResizablePanel;
 
@@ -76,18 +80,6 @@ export function BoardSkeleton({
     return sortPanelsByOrder([...prepareBoardPanels(projects, viewSections), ...extraPanels], localOrders);
   }, [isMobile, projects, viewSections, extraPanels, localOrders]);
 
-  const minContainerWidth = useMemo(() => {
-    if (!panels.length) return 0;
-
-    const regularPanelCount = panels.filter(({ panelId }) => !panelCollapseState[panelId]).length;
-    const collapsedPanelCount = panels.length - regularPanelCount;
-
-    const regularPanelsSize = regularPanelCount * PANEL_MIN_WIDTH;
-    const collapsedPanelsSize = collapsedPanelCount * COLLAPSED_PANEL_MIN_WIDTH;
-
-    return regularPanelsSize + collapsedPanelsSize;
-  }, [panels, panelCollapseState]);
-
   const defaultSizes = useMemo(
     () =>
       normalizePanelWidths(
@@ -96,6 +88,19 @@ export function BoardSkeleton({
       ),
     [storedBoardLayout, panels],
   );
+
+  // The row sizes itself like the live panel group (resizable-panels.md, G6): it fills its parent when every open panel
+  // fits at its ideal width, and otherwise scrolls at the ideal or the stored total, whichever is wider.
+  const rowMinWidth = useMemo(() => {
+    if (isMobile) return undefined;
+    const gaps = Math.max(0, panels.length - 1) * COLUMN_GAP;
+    const total = (openWidth: (panelId: string) => number) =>
+      panels.reduce((sum, { panelId }) => sum + (panelCollapseState[panelId] ? COLLAPSED_PANEL_MIN_WIDTH : openWidth(panelId)), gaps);
+    const ideal = total(() => IDEAL_PANEL_WIDTH);
+    const stored = total((panelId) => defaultSizes[panelId]);
+    // `(ideal - 100%) * 9999` is a switch on the parent's width: far above `stored` while the parent is narrower than `ideal`, negative once it fits.
+    return `max(${ideal}px, min(${stored}px, (${ideal}px - 100%) * 9999))`;
+  }, [isMobile, panels, panelCollapseState, defaultSizes]);
 
   const projectTabs: PageTab[] = projects.map((project) => ({
     id: project.id,
@@ -148,7 +153,7 @@ export function BoardSkeleton({
   return (
     <>
       {withHeader && <BoardHeaderSkeleton isInWorkspace={isInWorkspace} hasProjects={!!projects.length} />}
-      <div className="flex h-full flex-row gap-2" style={{ minWidth: minContainerWidth }}>
+      <div className="flex h-full flex-row" style={{ gap: COLUMN_GAP, minWidth: rowMinWidth }}>
         {panels.map((panel) => {
           const { panelId } = panel;
           if (panel.kind === 'mobile') {
@@ -158,14 +163,12 @@ export function BoardSkeleton({
               </div>
             );
           }
-          const isCollapsed = !!panelCollapseState[panelId];
-          const width = isCollapsed ? COLLAPSED_PANEL_MIN_WIDTH : defaultSizes[panelId];
+          // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
+          const columnStyle = panelCollapseState[panelId]
+            ? { flex: 'none', width: COLLAPSED_PANEL_MIN_WIDTH }
+            : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: PANEL_MIN_WIDTH };
           return (
-            <div
-              key={panelId}
-              className="flex h-full flex-col"
-              style={{ minWidth: `${COLLAPSED_PANEL_MIN_WIDTH}px`, ...(width ? { width: `${width}px` } : {}) }}
-            >
+            <div key={panelId} className="flex h-full flex-col" style={columnStyle}>
               {renderColumn(panel)}
             </div>
           );
