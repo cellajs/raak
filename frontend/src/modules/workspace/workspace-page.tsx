@@ -1,7 +1,6 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
-import { FocusViewContainer } from '~/modules/common/focus-view';
 import type { ChannelEnrichment } from '~/modules/entities/types';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -34,11 +33,11 @@ function WorkspacePage({ workspaceId, organizationId, tenantId, children }: Prop
   useTaskDropMonitor(tenantId, organizationId);
 
   return (
-    <FocusViewContainer className="group/workspace h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
+    <>
       <TaskSheetHandler />
       <TasksHotkeys boardId={workspace.id} projects={projects} type="workspace" />
       {children}
-    </FocusViewContainer>
+    </>
   );
 }
 
