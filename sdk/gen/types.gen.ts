@@ -5830,6 +5830,7 @@ export type GetProjectsData = {
     relatableUserId?: string;
     role?: 'admin' | 'member' | 'guest';
     excludeArchived?: 'true' | 'false';
+    scope?: 'memberships' | 'organization';
     include?: string;
   };
   url: '/projects';

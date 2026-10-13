@@ -80,12 +80,13 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
     relatableUserId,
     role,
     excludeArchived,
+    scope,
     include,
     limit = appConfig.requestLimits.projects,
   } = params;
 
   // Exclude `include` from cache key so queries with/without counts share the same cache
-  const filters = { q, sort, order, organizationId, workspaceId, relatableUserId, role, excludeArchived };
+  const filters = { q, sort, order, organizationId, workspaceId, relatableUserId, role, excludeArchived, scope };
 
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(filters),

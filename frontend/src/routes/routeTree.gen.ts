@@ -54,6 +54,7 @@ import { Route as PublicAuthSsoConnectionIdRouteImport } from './_public/auth/ss
 import { Route as AppTenantIdOrganizationSlugOrganizationToolRouteImport } from './_app/$tenantId.$organizationSlug/organization/$tool'
 import { Route as AppTenantIdOrganizationSlugOrganizationAttachmentsRouteImport } from './_app/$tenantId.$organizationSlug/organization/attachments'
 import { Route as AppTenantIdOrganizationSlugOrganizationMembersRouteImport } from './_app/$tenantId.$organizationSlug/organization/members'
+import { Route as AppTenantIdOrganizationSlugOrganizationProjectsRouteImport } from './_app/$tenantId.$organizationSlug/organization/projects'
 import { Route as AppTenantIdOrganizationSlugOrganizationSettingsRouteImport } from './_app/$tenantId.$organizationSlug/organization/settings'
 import { Route as AppTenantIdOrganizationSlugProjectSlugRouteImport } from './_app/$tenantId.$organizationSlug/project.$slug'
 import { Route as AppTenantIdOrganizationSlugWorkspaceSlugRouteImport } from './_app/$tenantId.$organizationSlug/workspace.$slug'
@@ -296,6 +297,12 @@ const AppTenantIdOrganizationSlugOrganizationMembersRoute =
     path: '/members',
     getParentRoute: () => AppTenantIdOrganizationSlugOrganizationRouteRoute,
   } as any)
+const AppTenantIdOrganizationSlugOrganizationProjectsRoute =
+  AppTenantIdOrganizationSlugOrganizationProjectsRouteImport.update({
+    id: '/projects',
+    path: '/projects',
+    getParentRoute: () => AppTenantIdOrganizationSlugOrganizationRouteRoute,
+  } as any)
 const AppTenantIdOrganizationSlugOrganizationSettingsRoute =
   AppTenantIdOrganizationSlugOrganizationSettingsRouteImport.update({
     id: '/settings',
@@ -375,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   '/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
+  '/$tenantId/$organizationSlug/organization/projects': typeof AppTenantIdOrganizationSlugOrganizationProjectsRoute
   '/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
   '/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
   '/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
@@ -423,6 +431,7 @@ export interface FileRoutesByTo {
   '/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   '/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
+  '/$tenantId/$organizationSlug/organization/projects': typeof AppTenantIdOrganizationSlugOrganizationProjectsRoute
   '/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
   '/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
   '/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
@@ -477,6 +486,7 @@ export interface FileRoutesById {
   '/_app/$tenantId/$organizationSlug/organization/$tool': typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   '/_app/$tenantId/$organizationSlug/organization/attachments': typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   '/_app/$tenantId/$organizationSlug/organization/members': typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
+  '/_app/$tenantId/$organizationSlug/organization/projects': typeof AppTenantIdOrganizationSlugOrganizationProjectsRoute
   '/_app/$tenantId/$organizationSlug/organization/settings': typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
   '/_app/$tenantId/$organizationSlug/project/$slug': typeof AppTenantIdOrganizationSlugProjectSlugRoute
   '/_app/$tenantId/$organizationSlug/workspace/$slug': typeof AppTenantIdOrganizationSlugWorkspaceSlugRoute
@@ -528,6 +538,7 @@ export interface FileRouteTypes {
     | '/$tenantId/$organizationSlug/organization/$tool'
     | '/$tenantId/$organizationSlug/organization/attachments'
     | '/$tenantId/$organizationSlug/organization/members'
+    | '/$tenantId/$organizationSlug/organization/projects'
     | '/$tenantId/$organizationSlug/organization/settings'
     | '/$tenantId/$organizationSlug/project/$slug'
     | '/$tenantId/$organizationSlug/workspace/$slug'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/$tenantId/$organizationSlug/organization/$tool'
     | '/$tenantId/$organizationSlug/organization/attachments'
     | '/$tenantId/$organizationSlug/organization/members'
+    | '/$tenantId/$organizationSlug/organization/projects'
     | '/$tenantId/$organizationSlug/organization/settings'
     | '/$tenantId/$organizationSlug/project/$slug'
     | '/$tenantId/$organizationSlug/workspace/$slug'
@@ -629,6 +641,7 @@ export interface FileRouteTypes {
     | '/_app/$tenantId/$organizationSlug/organization/$tool'
     | '/_app/$tenantId/$organizationSlug/organization/attachments'
     | '/_app/$tenantId/$organizationSlug/organization/members'
+    | '/_app/$tenantId/$organizationSlug/organization/projects'
     | '/_app/$tenantId/$organizationSlug/organization/settings'
     | '/_app/$tenantId/$organizationSlug/project/$slug'
     | '/_app/$tenantId/$organizationSlug/workspace/$slug'
@@ -959,6 +972,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationMembersRouteImport
       parentRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRoute
     }
+    '/_app/$tenantId/$organizationSlug/organization/projects': {
+      id: '/_app/$tenantId/$organizationSlug/organization/projects'
+      path: '/projects'
+      fullPath: '/$tenantId/$organizationSlug/organization/projects'
+      preLoaderRoute: typeof AppTenantIdOrganizationSlugOrganizationProjectsRouteImport
+      parentRoute: typeof AppTenantIdOrganizationSlugOrganizationRouteRoute
+    }
     '/_app/$tenantId/$organizationSlug/organization/settings': {
       id: '/_app/$tenantId/$organizationSlug/organization/settings'
       path: '/settings'
@@ -1028,6 +1048,7 @@ interface AppTenantIdOrganizationSlugOrganizationRouteRouteChildren {
   AppTenantIdOrganizationSlugOrganizationToolRoute: typeof AppTenantIdOrganizationSlugOrganizationToolRoute
   AppTenantIdOrganizationSlugOrganizationAttachmentsRoute: typeof AppTenantIdOrganizationSlugOrganizationAttachmentsRoute
   AppTenantIdOrganizationSlugOrganizationMembersRoute: typeof AppTenantIdOrganizationSlugOrganizationMembersRoute
+  AppTenantIdOrganizationSlugOrganizationProjectsRoute: typeof AppTenantIdOrganizationSlugOrganizationProjectsRoute
   AppTenantIdOrganizationSlugOrganizationSettingsRoute: typeof AppTenantIdOrganizationSlugOrganizationSettingsRoute
 }
 
@@ -1039,6 +1060,8 @@ const AppTenantIdOrganizationSlugOrganizationRouteRouteChildren: AppTenantIdOrga
       AppTenantIdOrganizationSlugOrganizationAttachmentsRoute,
     AppTenantIdOrganizationSlugOrganizationMembersRoute:
       AppTenantIdOrganizationSlugOrganizationMembersRoute,
+    AppTenantIdOrganizationSlugOrganizationProjectsRoute:
+      AppTenantIdOrganizationSlugOrganizationProjectsRoute,
     AppTenantIdOrganizationSlugOrganizationSettingsRoute:
       AppTenantIdOrganizationSlugOrganizationSettingsRoute,
   }

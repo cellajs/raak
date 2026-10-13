@@ -90,5 +90,6 @@ export const projectListQuerySchema = paginationQuerySchema.extend({
   relatableUserId: validIdSchema.optional(),
   role: z.enum(roles.all).optional(),
   excludeArchived: excludeArchivedQuerySchema,
+  scope: z.enum(['memberships', 'organization']).default('memberships'),
   include: includeQuerySchema,
 });

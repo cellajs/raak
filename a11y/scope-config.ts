@@ -96,6 +96,7 @@ export const scope: ScopeState[] = [
   { id: 'account', path: '/account', auth: true },
   { id: 'workspace-board', path: '{workspace}', auth: true },
   { id: 'project-board', path: '{project}', auth: true },
+  { id: 'org-projects', path: '{org}/organization/projects', auth: true },
   { id: 'org-attachments', path: '{org}/organization/attachments', auth: true },
   { id: 'org-members', path: '{org}/organization/members', auth: true },
   { id: 'org-settings', path: '{org}/organization/settings', auth: true },

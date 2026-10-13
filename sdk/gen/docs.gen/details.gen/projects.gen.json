@@ -1243,6 +1243,11 @@
             "required": false,
             "enum": ["true", "false"]
           },
+          "scope": {
+            "type": "string",
+            "required": false,
+            "enum": ["memberships", "organization"]
+          },
           "include": { "type": "string", "required": false }
         }
       }
