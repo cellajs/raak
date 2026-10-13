@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.13](https://github.com/cellajs/raak/compare/0.1.12...0.1.13) (2026-10-13)
+
+
+### 🎉 New features
+
+* **organization:** a projects tab lists every project of the organization ([#172](https://github.com/cellajs/raak/issues/172)) ([8e44b11](https://github.com/cellajs/raak/commit/8e44b11c8fa038bf26f2acefc730800976149f07))
+
+
+### 🐞 Bug fixes
+
+* **blocknote:** a code block in an unsupported language renders as plain text ([5c6e8f0](https://github.com/cellajs/raak/commit/5c6e8f0fd9e4875a9f4ac7932440f1ec7d0020d4))
+* **board:** opening a workspace no longer crashes, board code reads route state one way ([#169](https://github.com/cellajs/raak/issues/169)) ([9f7f672](https://github.com/cellajs/raak/commit/9f7f67215c125b1849d22a402bc3690e94f3892d))
+* **task:** a read-only description shows the forbidden cursor over its checklist boxes ([c3ce182](https://github.com/cellajs/raak/commit/c3ce1825054a2223a80d670002774e24b3737ec2))
+
+
+### 🧹 Chores
+
+* **ui:** a loading workspace shows its board skeleton with the right project columns ([#171](https://github.com/cellajs/raak/issues/171)) ([da43def](https://github.com/cellajs/raak/commit/da43def99a6f73807281b04bf5525ae57ac3b812))
+
 ## [0.1.12](https://github.com/cellajs/raak/compare/0.1.11...0.1.12) (2026-10-10)
 
 
