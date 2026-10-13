@@ -26,8 +26,7 @@ export const publicTasksBoardQueryOptions = (projectId: string) => {
 
 type PublicTasksTableParams = Omit<GetTasksParam, 'acceptedCutOff' | 'organizationId' | 'workspaceId' | 'tenantId'> & { projectId: string };
 
-/** The public tasks-table infinite query key (shared with use-tasks-total's count snapshot). */
-export const publicTasksTableQueryKey = ({
+const publicTasksTableQueryKey = ({
   q,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,

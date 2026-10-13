@@ -14,6 +14,7 @@ import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions'
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
+import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
 /**
@@ -23,9 +24,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
   const { t } = useTranslation();
 
   const boardId = useBoardStore((state) => state.activeBoardId)!;
-  const boardType = useBoardStore((state) => state.activeBoardType)!;
-
-  const isInWorkspace = boardType === 'workspace';
+  const isInWorkspace = useIsWorkspaceRoute();
 
   const panelsSectionView = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);
   const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;

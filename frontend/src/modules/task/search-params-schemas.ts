@@ -33,8 +33,7 @@ export const tasksTableSearchSchema = zGetTasksQuery.pick({ q: true, sort: true,
   order: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
-/** Validates URL search parameters for tasks board. */
-export const tasksBoardSearchSchema = zGetTasksQuery
+const tasksBoardSearchSchema = zGetTasksQuery
   .pick({ q: true, matchMode: true })
   .extend({ projectSlug: z.string().optional(), ...baseTaskViewSchema.shape });
 

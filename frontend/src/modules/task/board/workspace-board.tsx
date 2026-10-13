@@ -12,7 +12,8 @@ import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { ProjectBoardPanel } from '~/modules/task/panel/project-board-panel';
 
 export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardProps) {
-  const { projectSlug, labelPageId } = useSearch({ strict: false }) as { projectSlug?: string; labelPageId?: string };
+  const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
+  const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
   const boardLayoutRef = useRef<BoardLayoutHandle>(null);
 
   const alertsSeen = useAlertStore((s) => s.alertsSeen);

@@ -29,7 +29,7 @@ import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } f
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
-import type { InfiniteQueryData, QueryOrgContext } from '~/query/types';
+import type { QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
 export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
@@ -67,8 +67,6 @@ type TasksDeleteMutationFnVariables = { tasksToDelete: Task[] };
 type TaskCreateFullVars = QueryOrgContext & TaskCreateMutationFnVariables & { stx?: StxBase };
 type TaskUpdateFullVars = QueryOrgContext & TaskUpdateMutationFnVariables & { stx?: StxBase };
 type TasksDeleteFullVars = QueryOrgContext & TasksDeleteMutationFnVariables & { stx?: StxBase };
-
-export type TasksInfiniteQueryData = InfiniteQueryData<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
 type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
@@ -254,11 +252,10 @@ export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: {
   });
 };
 
-/** Shares task-table defaults between query options and count snapshots. */
+/** Task-table defaults shared by the member and public query options. */
 export const tasksTableQueryDefaults = { sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
 
-/** Builds the task-table key without constructing query functions. */
-export const tasksTableQueryKey = ({
+const tasksTableQueryKey = ({
   q,
   sort = tasksTableQueryDefaults.sort,
   order = tasksTableQueryDefaults.order,

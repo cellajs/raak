@@ -1,4 +1,4 @@
-import { Link, useMatchRoute, useParams } from '@tanstack/react-router';
+import { Link, useParams } from '@tanstack/react-router';
 import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo, useRef } from 'react';
@@ -36,6 +36,7 @@ interface BoardSkeletonProps {
   projects?: Project[];
   projectPage?: boolean;
   publicView?: boolean;
+  isInWorkspace?: boolean;
   /** Suppress the top task bar when a real `BoardHeader` already renders above the skeleton. */
   withHeader?: boolean;
   rowCount?: number;
@@ -52,15 +53,14 @@ export function BoardSkeleton({
   projects = [],
   projectPage = false,
   publicView = false,
+  isInWorkspace = false,
   withHeader = true,
   rowCount,
   rowHeight,
 }: BoardSkeletonProps) {
   const { t } = useTranslation();
-  const matchRoute = useMatchRoute();
   const isMobile = useBreakpointBelow('sm');
 
-  const isInWorkspace = !!matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
   const viewSections = useTaskBoardStore(useShallow((state) => pickViewSections(state.panelData[boardId])));
   const panelCollapseState = useBoardStore((state) => state.panelCollapseState);
   const localOrders = useBoardStore((state) => state.boardPanelOrders[boardId]);
@@ -149,7 +149,7 @@ export function BoardSkeleton({
     <>
       {withHeader && (
         <div className={taskBarClass} aria-hidden="true" inert>
-          <BoardSearch toggleFocus={() => {}} />
+          <BoardSearch isInWorkspace={isInWorkspace} toggleFocus={() => {}} />
 
           <TableCount count={0} label="c:task" className="mr-3" />
 

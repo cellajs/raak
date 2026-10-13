@@ -13,6 +13,7 @@ import { TaskStatus } from '~/modules/task/task-properties';
 import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
+import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { cn } from '~/utils/cn';
 
 export function PanelProjectActions({ project, className }: { project: EnrichedProject; className?: string }) {
@@ -20,7 +21,7 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
   const navigate = useNavigate();
 
   const boardId = useBoardStore((state) => state.activeBoardId)!;
-  const boardType = useBoardStore((state) => state.activeBoardType)!;
+  const isInWorkspace = useIsWorkspaceRoute();
 
   const panelsSectionView = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.viewSections);
   const setPanelSections = useTaskBoardStore((state) => state.setPanelSections);
@@ -46,7 +47,7 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
         <EllipsisVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="min-w-48 p-1" align="end">
-        {boardType === 'workspace' && (
+        {isInWorkspace && (
           <DropdownMenuItem
             onClick={() =>
               navigate({
@@ -60,7 +61,7 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
             <span>{t('c:go_to_project')}</span>
           </DropdownMenuItem>
         )}
-        {boardType === 'project' && projectWorkspace && (
+        {!isInWorkspace && projectWorkspace && (
           <DropdownMenuItem
             onClick={() =>
               navigate({

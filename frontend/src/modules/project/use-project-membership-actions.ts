@@ -19,13 +19,13 @@ const removeMembershipFromCache = (predicate: (membership: MembershipBase) => bo
 };
 
 interface UseProjectMembershipActionsArgs {
-  boardType?: string | null;
+  isInWorkspace: boolean;
   project: EnrichedProject;
   tenantId: string;
   onSuccess?: () => void;
 }
 
-export function useProjectMembershipActions({ boardType, project, tenantId, onSuccess }: UseProjectMembershipActionsArgs) {
+export function useProjectMembershipActions({ isInWorkspace, project, tenantId, onSuccess }: UseProjectMembershipActionsArgs) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const projectMembership = project.membership;
@@ -44,7 +44,7 @@ export function useProjectMembershipActions({ boardType, project, tenantId, onSu
 
       removeMembershipFromCache((membership) => membership.channelType === 'project' && membership.channelId === project.id);
 
-      navigate({ to: boardType === 'workspace' ? '.' : '/home', replace: true });
+      navigate({ to: isInWorkspace ? '.' : '/home', replace: true });
 
       cacheRemove(projectListKey, [project]);
       queryClient.invalidateQueries({ queryKey: projectQueryKeys.detail.base });

@@ -35,8 +35,7 @@ function TaskSheetTitle({ taskId }: { taskId: string }) {
  */
 function TaskSheetHandler() {
   const { t } = useTranslation();
-  const search = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const taskSheetId = search.taskSheetId;
+  const taskSheetId = useSearch({ strict: false, select: (search) => search.taskSheetId });
 
   // Suppress any board editor and mark board card to suppress glow while sheet is open.
   // The sheet manages its own editing state

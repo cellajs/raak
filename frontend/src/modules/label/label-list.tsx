@@ -1,11 +1,10 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 import { BirdIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { useSearchParams } from '~/hooks/use-search-params';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
@@ -58,8 +57,8 @@ const useLabelRows = (labels: Label[], highlight: boolean, words: string[]) =>
  */
 function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
-  const { search } = useSearchParams<{ q?: string }>({});
-  const { highlight, effectiveQ } = parseSearchQuery(search.q);
+  const q = useSearch({ strict: false, select: (search) => search.q });
+  const { highlight, effectiveQ } = parseSearchQuery(q);
 
   const { data, isLoading } = useQuery({
     ...labelsCanonicalOptions({ organizationId, tenantId, projectId: entityId }),
@@ -89,8 +88,8 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
  */
 function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
-  const { search } = useSearchParams<{ q?: string }>({});
-  const { highlight, effectiveQ } = parseSearchQuery(search.q);
+  const q = useSearch({ strict: false, select: (search) => search.q });
+  const { highlight, effectiveQ } = parseSearchQuery(q);
 
   const { data: projectIds } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: entityId }),

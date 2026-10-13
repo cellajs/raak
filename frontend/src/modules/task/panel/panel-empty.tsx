@@ -1,14 +1,13 @@
-import { useMatchRoute } from '@tanstack/react-router';
 import { PalmtreeIcon, SearchIcon, UndoIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { useReadOnlyHide } from '~/modules/project/use-read-only';
+import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 
 export function TaskPanelEmpty({ projectId }: { projectId?: string }) {
   const { t } = useTranslation();
 
-  const matchRoute = useMatchRoute();
-  const isInWorkspace = matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
+  const isInWorkspace = useIsWorkspaceRoute();
   const readOnlyHide = useReadOnlyHide(projectId);
 
   return (

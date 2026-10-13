@@ -83,8 +83,12 @@ export function SelectLabels({
   const { organizationId, tenantId } = useOrganizationLayoutContext();
 
   // Auto-detect workspace from route context if not passed as prop
-  const workspaceMatch = useMatch({ from: '/_app/$tenantId/$organizationSlug/workspace/$slug', shouldThrow: false });
-  const workspaceId = workspaceIdProp ?? (workspaceMatch?.context as { workspace?: { id: string } })?.workspace?.id;
+  const routeWorkspaceId = useMatch({
+    from: '/_app/$tenantId/$organizationSlug/workspace/$slug',
+    shouldThrow: false,
+    select: (match) => match.context.workspace?.id,
+  });
+  const workspaceId = workspaceIdProp ?? routeWorkspaceId;
 
   // Reactively read the workspace's projects from cache (enabled → subscribes so labels re-scope
   // when the list updates; in a workspace route the board has already fetched it).

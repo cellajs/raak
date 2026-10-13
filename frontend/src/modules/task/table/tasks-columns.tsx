@@ -1,4 +1,4 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { DotIcon, PaperclipIcon } from 'lucide-react';
 import { createContext, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
+import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
@@ -37,7 +38,7 @@ const parseUserCell = (value: unknown): ParsedUserCell | null => {
   return user;
 };
 
-function SummaryCell({ row, tabIndex, navigate }: RenderCellProps<Task> & { navigate: ReturnType<typeof useNavigate> }) {
+function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
   const cellRef = useRef<HTMLButtonElement | null>(null);
 
   return (
@@ -50,9 +51,7 @@ function SummaryCell({ row, tabIndex, navigate }: RenderCellProps<Task> & { navi
       onKeyDown={(e) => {
         if (e.key === 'Enter') cellRef.current?.click();
       }}
-      onClick={() => {
-        navigate({ to: '.', replace: false, resetScroll: false, search: (prev) => ({ ...prev, taskSheetId: row.id }) });
-      }}
+      onClick={() => openTaskSheet(row.id)}
     >
       <div className="whitespace-pre-wrap py-1 leading-5">
         {row.summary ? <TaskSummaryHtml task={row} className="pointer-events-none" /> : <span className="text-muted">-</span>}
@@ -98,7 +97,6 @@ function ProjectCell({ row, tabIndex, organization, tenantId }: { row: Task; tab
 /** Builds the column definitions for the enclosing table. */
 export const useColumns = (opts?: { hideProject?: boolean; organization?: Organization; tenantId?: string }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   // Build once to preserve column-management state; changing project data comes from context.
   return useState<ColumnOrColumnGroup<Task>[]>(() => {
@@ -133,7 +131,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         resizable: true,
         wrapText: 3,
         estimateLines: (row, { width }) => estimateWrappedLines(row.summaryLength ?? 0, width),
-        renderCell: (props) => <SummaryCell {...props} navigate={navigate} />,
+        renderCell: (props) => <SummaryCell {...props} />,
       },
       {
         key: 'todos',

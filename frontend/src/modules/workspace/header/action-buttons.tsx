@@ -1,5 +1,4 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { useSearch } from '@tanstack/react-router';
 import type { VariantProps } from 'class-variance-authority';
 import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
 import { useRef } from 'react';
@@ -14,7 +13,7 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { Button, type buttonVariants } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { workspaceQueryOptions } from '~/modules/workspace/query';
-import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
+import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
@@ -32,7 +31,8 @@ export function WorkspaceActionButtons() {
   );
   const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId: workspace.id, include: 'counts' }));
   const projects = flattenInfiniteData<Project>(projectsData);
-  const { projectSlug, q: searchQuery } = useSearch({ from: '/_app/$tenantId/$organizationSlug/workspace/$slug' });
+  const projectSlug = workspaceRouteApi.useSearch({ select: (search) => search.projectSlug });
+  const searchQuery = workspaceRouteApi.useSearch({ select: (search) => search.q });
 
   const project: EnrichedProject | undefined = projects.find((p) => p.slug === projectSlug) || projects[0];
   const projectMembership = project?.membership;

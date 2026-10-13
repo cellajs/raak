@@ -1,11 +1,10 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useSearch } from '@tanstack/react-router';
 import { LogOutIcon, Trash2Icon, UnlinkIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { Project, Workspace } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
@@ -14,17 +13,18 @@ import { MoveProjectForm } from '~/modules/project/move-project-form';
 import type { EnrichedProject } from '~/modules/project/types';
 import { UpdateProjectForm } from '~/modules/project/update-project-form';
 import { useProjectMembershipActions } from '~/modules/project/use-project-membership-actions';
+import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
+import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; project: EnrichedProject }) {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { tenantId } = useOrganizationLayoutContext();
-  const { projectSlug } = useSearch({ strict: false }) as { projectSlug?: string };
-  const boardType = useBoardStore((state) => state.activeBoardType);
+  const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
+  const isInWorkspace = useIsWorkspaceRoute();
 
   const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
   const resolveCan = useResolveCan();
@@ -43,7 +43,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
   };
 
   const { isLeavingProject, isRemovingProjectFromWorkspace, leaveProject, projectHasWorkspace, removeProjectFromWorkspace } =
-    useProjectMembershipActions({ boardType, project, tenantId, onSuccess: closeSettingsSheet });
+    useProjectMembershipActions({ isInWorkspace, project, tenantId, onSuccess: closeSettingsSheet });
 
   const callback = (deletedProjects: Project[]) => {
     closeSettingsSheet();
@@ -51,9 +51,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
     // If the deleted project is the currently selected one, clear the search param
     // so the board defaults to the first remaining project
     const deletedSlugs = new Set(deletedProjects.map(({ slug }) => slug));
-    if (projectSlug && deletedSlugs.has(projectSlug)) {
-      navigate({ to: '.', params: true, resetScroll: false, search: (prev) => ({ ...prev, projectSlug: undefined }) });
-    }
+    if (projectSlug && deletedSlugs.has(projectSlug)) selectBoardProject();
   };
 
   const openDeleteDialog = () => {

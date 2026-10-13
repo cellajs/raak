@@ -1,14 +1,11 @@
-import { getRouteApi } from '@tanstack/react-router';
 import { Suspense } from 'react';
 import { PageSpinner } from '~/modules/common/spinner';
-import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
+import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const WorkspacePage = lazyNamed(() => import('~/modules/workspace/workspace-page'), 'WorkspacePage');
 const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
-
-const workspaceRouteApi = getRouteApi('/_app/$tenantId/$organizationSlug/workspace/$slug');
 
 export function WorkspaceRouteComponent() {
   const { workspace, organization, tenantId } = useWorkspaceContext();

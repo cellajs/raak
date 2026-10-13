@@ -39,7 +39,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const togglePanelSectionExpandState = useTaskBoardStore((state) => state.togglePanelSectionExpandState);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
 
-  const { q } = useSearch({ strict: false });
+  const q = useSearch({ strict: false, select: (search) => search.q });
 
   const isIced = type === 'iced';
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;

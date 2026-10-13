@@ -1,4 +1,3 @@
-import { useNavigate } from '@tanstack/react-router';
 import { ArrowDownIcon, ArrowUpIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
@@ -15,6 +14,7 @@ import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { DeleteTask } from '~/modules/task/delete-task';
+import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { focusTask, setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { getStepTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
@@ -30,7 +30,6 @@ interface TaskCardHeaderProps {
 
 export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const isOnline = useOnlineManager();
 
   const shareLink = `${appConfig.backendUrl}/t/${task.id}`;
@@ -74,7 +73,7 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
             icon={Maximize2Icon}
             onSelect={() => {
               focusTask(null);
-              navigate({ to: '.', resetScroll: false, replace: false, search: (prev) => ({ ...prev, taskSheetId: task.id }) });
+              openTaskSheet(task.id);
               useDropdowner.getState().remove();
             }}
           >

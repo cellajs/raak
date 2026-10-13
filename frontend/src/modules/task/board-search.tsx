@@ -1,4 +1,3 @@
-import { useMatchRoute } from '@tanstack/react-router';
 import { CircleXIcon } from 'lucide-react';
 import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,14 +12,12 @@ import { cn } from '~/utils/cn';
 
 interface BoardSearchProps {
   children?: React.ReactNode;
+  isInWorkspace?: boolean;
   toggleFocus: () => void;
 }
 
-export function BoardSearch({ children, toggleFocus }: BoardSearchProps) {
+export function BoardSearch({ children, isInWorkspace, toggleFocus }: BoardSearchProps) {
   const { t } = useTranslation();
-  const matchRoute = useMatchRoute();
-
-  const isInWorkspace = matchRoute({ to: '/$tenantId/$organizationSlug/workspace/$slug', fuzzy: true });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const { isFilterActive } = useContext(TableFilterBarContext);
