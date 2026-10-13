@@ -15,6 +15,7 @@ import { BoardHeader } from '~/modules/task/board/board-header';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
 import { ProjectBoard } from '~/modules/task/board/project-board';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
+import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
 import { WorkspaceBoardTabs } from '~/modules/task/board/workspace-board-tabs';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
@@ -55,7 +56,8 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   useEffect(() => router.subscribe('onBeforeLoad', () => useDialoger.getState().remove('create-task')), [router]);
 
   const BoardView = (() => {
-    if (isLoadingProjects) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} isInWorkspace={!!workspace} />;
+    if (isLoadingProjects && workspace) return <WorkspaceBoardSkeleton workspace={workspace} withHeader={false} />;
+    if (isLoadingProjects) return <BoardSkeleton boardId={boardId} withHeader={false} publicView={publicView} />;
     if (!projects.length) return <BoardEmpty workspace={workspace} publicView={publicView} />;
     if (isMobile) return <WorkspaceBoardTabs projects={projects} workspace={workspace} publicView={publicView} />;
     if (!workspace) return <ProjectBoard boardId={boardId} projects={projects} publicView={publicView} />;

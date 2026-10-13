@@ -147,50 +147,17 @@ export function BoardSkeleton({
 
   return (
     <>
-      {withHeader && (
-        <div className={taskBarClass} aria-hidden="true" inert>
-          <BoardSearch isInWorkspace={isInWorkspace} toggleFocus={() => {}} />
-
-          <TableCount count={0} label="c:task" className="mr-3" />
-
-          {isInWorkspace ? (
-            <>
-              <Button className="max-md:hidden" variant="plain">
-                <PlusIcon />
-                <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
-                <span className="max-xl:hidden">{t('c:add_resource', { resource: t('c:project').toLowerCase() })}</span>
-              </Button>
-              <Button className="max-md:hidden" variant="outline">
-                <SettingsIcon />
-              </Button>
-
-              <Button variant="ghost" className="md:hidden">
-                <EllipsisVerticalIcon />
-              </Button>
-            </>
-          ) : projects.length ? (
-            <>
-              <div className="hidden grow sm:block" />
-              <Button variant="plain" data-form-dirty={false} className="relative hidden rounded sm:inline-flex">
-                <PlusIcon className="size-4.5" />
-                <span className="">{t('c:task')}</span>
-              </Button>
-              <Button variant="ghost" className="max-sm:hidden">
-                <EllipsisVerticalIcon />
-              </Button>
-            </>
-          ) : null}
-
-          <DisplayOptions className="max-sm:hidden" />
-
-          <Button variant={'outline'} className={cn('flex max-lg:hidden')}>
-            <ExpandIcon />
-          </Button>
-        </div>
-      )}
+      {withHeader && <BoardHeaderSkeleton isInWorkspace={isInWorkspace} hasProjects={!!projects.length} />}
       <div className="flex h-full flex-row gap-2" style={{ minWidth: minContainerWidth }}>
         {panels.map((panel) => {
           const { panelId } = panel;
+          if (panel.kind === 'mobile') {
+            return (
+              <div key={panelId} className="flex h-full w-full min-w-0 flex-col">
+                {renderColumn(panel)}
+              </div>
+            );
+          }
           const isCollapsed = !!panelCollapseState[panelId];
           const width = isCollapsed ? COLLAPSED_PANEL_MIN_WIDTH : defaultSizes[panelId];
           return (
@@ -205,6 +172,53 @@ export function BoardSkeleton({
         })}
       </div>
     </>
+  );
+}
+
+/** Inert stand-in for the board's task bar; like the live one, a board without projects shows no task count. */
+export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false }: { isInWorkspace?: boolean; hasProjects?: boolean }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className={taskBarClass} aria-hidden="true" inert>
+      <BoardSearch isInWorkspace={isInWorkspace} toggleFocus={() => {}} />
+
+      <TableCount count={hasProjects ? 0 : null} label="c:task" className="mr-3" />
+
+      {isInWorkspace ? (
+        <>
+          <Button className="max-md:hidden" variant="plain">
+            <PlusIcon />
+            <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
+            <span className="max-xl:hidden">{t('c:add_resource', { resource: t('c:project').toLowerCase() })}</span>
+          </Button>
+          <Button className="max-md:hidden" variant="outline">
+            <SettingsIcon />
+          </Button>
+
+          <Button variant="ghost" className="md:hidden">
+            <EllipsisVerticalIcon />
+          </Button>
+        </>
+      ) : hasProjects ? (
+        <>
+          <div className="hidden grow sm:block" />
+          <Button variant="plain" data-form-dirty={false} className="relative hidden rounded sm:inline-flex">
+            <PlusIcon className="size-4.5" />
+            <span className="">{t('c:task')}</span>
+          </Button>
+          <Button variant="ghost" className="max-sm:hidden">
+            <EllipsisVerticalIcon />
+          </Button>
+        </>
+      ) : null}
+
+      <DisplayOptions className="max-sm:hidden" />
+
+      <Button variant={'outline'} className={cn('flex max-lg:hidden')}>
+        <ExpandIcon />
+      </Button>
+    </div>
   );
 }
 
