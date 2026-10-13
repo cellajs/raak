@@ -42,6 +42,8 @@ export function CardDescriptionSlot({ task, state, isReadOnly }: { task: Task; s
   return (
     <DescriptionLayers
       slot={slot}
+      // The static's checkbox is disabled and lets the pointer through to its wrapper, so the wrapper carries the cursor.
+      className={isReadOnly ? '[&_.checklist-checkbox-wrapper]:cursor-not-allowed' : '[&_.checklist-checkbox-wrapper]:cursor-pointer'}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       staticView={
