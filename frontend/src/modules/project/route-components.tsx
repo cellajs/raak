@@ -10,8 +10,10 @@ import { lazyNamed } from '~/utils/lazy-named';
 const ProjectPage = lazyNamed(() => import('~/modules/project/project-page'), 'ProjectPage');
 const Board = lazyNamed(() => import('~/modules/task/board/task-board'), 'Board');
 const TasksTable = lazyNamed(() => import('~/modules/task/table/tasks-table'), 'TasksTable');
+const ProjectsTable = lazyNamed(() => import('~/modules/project/table/projects-table'), 'ProjectsTable');
 
 const projectApi = getRouteApi('/_app/$tenantId/$organizationSlug/project/$slug');
+const orgProjectsApi = getRouteApi('/_app/$tenantId/$organizationSlug/organization/projects');
 
 export function ProjectRouteComponent() {
   // Ids and the view only: opening a task sheet or searching writes the URL, and the board must not re-render for it.
@@ -36,6 +38,17 @@ export function ProjectRouteComponent() {
           </Suspense>
         )}
       </ProjectPage>
+    </Suspense>
+  );
+}
+
+export function OrganizationProjectsComponent() {
+  const organizationId = orgProjectsApi.useRouteContext({ select: (c) => c.organization.id });
+  const tenantId = orgProjectsApi.useRouteContext({ select: (c) => c.tenantId });
+  const { data } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
+  return (
+    <Suspense>
+      <ProjectsTable key={data.id} organization={data} />
     </Suspense>
   );
 }

@@ -2364,6 +2364,7 @@ export const zGetProjectsQuery = z.object({
   relatableUserId: z.string().max(50).optional(),
   role: z.enum(['admin', 'member', 'guest']).optional(),
   excludeArchived: z.enum(['true', 'false']).optional(),
+  scope: z.enum(['memberships', 'organization']).optional().default('memberships'),
   include: z.string().optional(),
 });
 

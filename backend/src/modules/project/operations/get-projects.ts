@@ -4,6 +4,8 @@ import { AppError } from '#/core/error';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { findProjectsPaginated } from '#/modules/project/project-queries';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
+import { actorFrom } from '#/permissions/access';
+import { resolveChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 
 interface GetProjectsInput {
   q?: string;
@@ -16,13 +18,14 @@ interface GetProjectsInput {
   relatableUserId?: string;
   role?: EntityRole;
   excludeArchived?: boolean;
+  scope?: 'memberships' | 'organization';
   include: string[];
 }
 
 export async function getProjectsOp(ctx: UserContext, input: GetProjectsInput) {
   const user = ctx.var.user;
   const memberships = ctx.var.memberships;
-  const { include, relatableUserId, ...queryParams } = input;
+  const { include, relatableUserId, scope, ...queryParams } = input;
 
   // relatableGuard already verified shared org membership if relatableUserId is provided
   const targetUserId = relatableUserId ?? user.id;
@@ -36,12 +39,23 @@ export async function getProjectsOp(ctx: UserContext, input: GetProjectsInput) {
   if (ofAnotherUser && (queryParams.role || queryParams.excludeArchived || queryParams.workspaceId)) {
     throw new AppError(403, 'forbidden', 'warn', { entityType: 'project', meta: { reason: 'other_user_membership' } });
   }
-  const sort = ofAnotherUser && (!queryParams.sort || queryParams.sort === 'displayOrder') ? ('name' as const) : queryParams.sort;
+
+  // An organization's list is not a membership list: the membership filters and another user's list are refused, never dropped.
+  const organizationWide = scope === 'organization';
+  const { organizationId } = queryParams;
+  if (organizationWide && (!organizationId || relatableUserId || queryParams.role || queryParams.excludeArchived || queryParams.workspaceId)) {
+    throw new AppError(400, 'invalid_request', 'warn', { entityType: 'project', meta: { reason: 'organization_scope' } });
+  }
+  const readScope =
+    organizationWide && organizationId ? resolveChannelCollectionReadScope(memberships, 'project', organizationId, actorFrom(ctx)) : undefined;
+
+  const byName = (ofAnotherUser || organizationWide) && (!queryParams.sort || queryParams.sort === 'displayOrder');
+  const sort = byName ? ('name' as const) : queryParams.sort;
 
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');
 
-  const opts = { userId: targetUserId, ...queryParams, sort, organizationIds: sharedWithCaller, includeCounts };
+  const opts = { userId: targetUserId, ...queryParams, sort, organizationIds: sharedWithCaller, readScope, includeCounts };
   const { items: projectResults, total } = await findProjectsPaginated(ctx, opts);
 
   // Build response with included wrapper for optional data

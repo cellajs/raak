@@ -9,6 +9,7 @@ import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
+import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 import { getOrderColumns } from '#/utils/order-column';
 import { prepareStringForILikeFilter } from '#/utils/sql';
 
@@ -109,13 +110,16 @@ interface FindProjectsPaginatedOpts {
   workspaceId?: string;
   excludeArchived?: boolean;
   role?: EntityRole;
+  /** Lists every project this scope reads, with or without a membership of `userId`; without it only that user's own projects. */
+  readScope?: ChannelCollectionReadScope;
   includeCounts: boolean;
 }
 
 /** Get paginated list of projects with total count, membership, optional entity counts. */
 export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPaginatedOpts) => {
   const { db } = ctx.var;
-  const { userId, q, sort, order, offset, limit, organizationId, organizationIds, workspaceId, excludeArchived, role, includeCounts } = opts;
+  const { userId, q, sort, order, offset, limit, organizationId, organizationIds, workspaceId, excludeArchived, role, readScope, includeCounts } =
+    opts;
 
   const entityType = 'project';
 
@@ -141,11 +145,20 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
     ...(workspaceId ? [eq(membershipsTable.workspaceId, workspaceId)] : []),
   ];
 
-  const baseQuery = db
-    .select({ projectId: projectsTable.id })
-    .from(projectsTable)
-    .innerJoin(membershipsTable, membershipOn)
-    .where(and(...projectWhere));
+  // A read scope LEFT JOINs the membership, so readable projects without one are listed next to the user's own.
+  if (readScope) {
+    const readWhere = buildChannelListReadWhere(readScope, {
+      membershipUserId: membershipsTable.userId,
+      publishedAt: projectsTable.publishedAt,
+      ancestorIdColumns: {},
+    });
+    if (readWhere.kind === 'where') projectWhere.push(readWhere.where);
+  }
+
+  const baseSelect = db.select({ projectId: projectsTable.id }).from(projectsTable);
+  const baseQuery = (readScope ? baseSelect.leftJoin(membershipsTable, membershipOn) : baseSelect.innerJoin(membershipsTable, membershipOn)).where(
+    and(...projectWhere),
+  );
 
   const orderBy = getOrderColumns({
     sort,
@@ -166,7 +179,10 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   } as const;
 
   // Build query - only join count subqueries when includeCounts is true
-  let query = db.select(selectShape).from(projectsTable).innerJoin(membershipsTable, membershipOn).$dynamic();
+  const itemsSelect = db.select(selectShape).from(projectsTable);
+  let query = readScope
+    ? itemsSelect.leftJoin(membershipsTable, membershipOn).$dynamic()
+    : itemsSelect.innerJoin(membershipsTable, membershipOn).$dynamic();
 
   if (countData) {
     query = query.leftJoin(channelCountersTable, sql`${projectsTable.id}::text = ${channelCountersTable.channelKey}`) as typeof query;

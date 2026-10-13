@@ -7,9 +7,10 @@ interface Props {
   projects: Project[];
   dialog?: boolean;
   callback?: (project: Project[]) => void;
+  onCancel?: () => void;
 }
 
-function DeleteProjects({ projects, callback, dialog: isDialog }: Props) {
+function DeleteProjects({ projects, callback, dialog: isDialog, onCancel }: Props) {
   const removeDialog = () => useDialoger.getState().remove();
   const organizationId = projects[0].organizationId;
   const tenantId = projects[0].tenantId;
@@ -28,7 +29,7 @@ function DeleteProjects({ projects, callback, dialog: isDialog }: Props) {
     );
   };
 
-  return <DeleteForm onDelete={onDelete} onCancel={removeDialog} pending={isPending} />;
+  return <DeleteForm onDelete={onDelete} onCancel={onCancel ?? removeDialog} pending={isPending} />;
 }
 
 export { DeleteProjects };

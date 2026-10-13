@@ -45,7 +45,9 @@ const projectRoutes = createXRoutes(['projects', 'app', 'channel'], {
       'role to filter by membership role, excludeArchived to hide archived memberships, ' +
       'and q to search by project name. ' +
       'With relatableUserId it lists that user’s projects in the organizations the caller shares with them, by name; ' +
-      'role, excludeArchived and workspaceId describe that user’s own membership and are refused there.',
+      'role, excludeArchived and workspaceId describe that user’s own membership and are refused there. ' +
+      'With scope=organization and an organizationId it lists every project of that organization the caller may read, ' +
+      'by name, whether or not the caller is a member; the membership filters and relatableUserId are refused there.',
     request: { query: projectListQuerySchema },
     responses: { 200: json('Projects', paginationSchema(projectSchema), mockPaginatedProjectsResponse()) },
   }),
