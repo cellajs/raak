@@ -35,6 +35,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
   return (
     <Combobox<Label>
       inline
+      autoHighlight
       openOnInputClick={false}
       items={primaryLabels}
       itemToStringLabel={(item) => item.name}

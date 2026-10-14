@@ -34,6 +34,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
   return (
     <Combobox<StatusOption>
       inline
+      autoHighlight
       openOnInputClick={false}
       items={statusOptions}
       itemToStringLabel={(item) => t(`c:${item.status}`)}

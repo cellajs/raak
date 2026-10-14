@@ -132,8 +132,11 @@ export function SelectLabels({
   // Search results filtered by query
   const searchResults = useMemo(() => {
     if (!searchValue.length) return [];
-    const matchedLabels = initLabels.filter(({ name }) => name.includes(searchValue));
-    return getItemsSortedByName(matchedLabels);
+    const matchedLabels = getItemsSortedByName(initLabels.filter(({ name }) => name.includes(searchValue)));
+    // The first result is auto-highlighted, so an exact match leads and Enter picks it
+    const exactIndex = matchedLabels.findIndex(({ name }) => name === searchValue);
+    if (exactIndex > 0) matchedLabels.unshift(...matchedLabels.splice(exactIndex, 1));
+    return matchedLabels;
   }, [searchValue, initLabels]);
 
   // Top 8 labels by recency → usedCount → name, excluding already-selected
@@ -243,6 +246,7 @@ export function SelectLabels({
   return (
     <Combobox<string>
       inline
+      autoHighlight
       openOnInputClick={false}
       value={null}
       onValueChange={(value) => handleSelectClick(value)}

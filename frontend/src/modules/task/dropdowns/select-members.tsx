@@ -77,6 +77,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
   return (
     <Combobox<UserMinimalBase, true>
       inline
+      autoHighlight
       multiple
       openOnInputClick={false}
       items={showedMembers}
