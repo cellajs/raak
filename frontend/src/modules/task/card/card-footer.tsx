@@ -3,7 +3,6 @@ import { ChevronDownIcon, TagIcon, UserXIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
@@ -21,6 +20,7 @@ import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { cn } from '~/utils/cn';
+import { dateShort } from '~/utils/date-short';
 
 interface TaskCardFooterProps {
   task: Task;
@@ -43,14 +43,9 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
 
   const handlers = useTaskFieldHandlers(task);
 
-  const statusChangedRelative = useRelativeDate(task.statusChangedAt);
-  const isJustNow = dayjs().diff(dayjs.utc(task.statusChangedAt)) <= 1000;
-  const isRelative = /^\d/.test(statusChangedRelative); // "2h", "5m" → use "ago"; "May 5" → don't
-  const statusTooltip = isJustNow
-    ? t('c:status_updated_just_now')
-    : isRelative
-      ? t('c:status_updated_at', { when: statusChangedRelative })
-      : t('c:status_updated_on', { when: statusChangedRelative });
+  // statusChangedAt defaults to the insert time (empty on an optimistic task), so only a later stamp is a status change
+  const statusChanged = !!task.statusChangedAt && !dayjs(task.statusChangedAt).isSame(task.createdAt, 'second');
+  const statusTooltip = `${statusChanged ? t('c:status_updated') : t('c:created_at')} ${dateShort(statusChanged ? task.statusChangedAt : task.createdAt)}`;
 
   const onDropdownOpen = (currentTarget: EventTarget & HTMLButtonElement, dropdownType: DropdownsType) => {
     const base = { triggerId: currentTarget.id, triggerRef: { current: currentTarget }, taskId: task.id };
