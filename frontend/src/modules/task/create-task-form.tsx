@@ -202,6 +202,8 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
               baseBlockNoteProps={{
                 id: `blocknote-${defaultId}`,
                 editable: isFocused || isDialog,
+                // Tasks open for editing on a single click, Google Keep style: no toolbar on a text selection.
+                formattingToolbar: false,
                 members: projectMembers,
                 className: cn('min-h-16 [&>.bn-editor]:min-h-16', isDialog && 'grow [&>.bn-editor]:grow'),
                 baseFilePanelProps,
