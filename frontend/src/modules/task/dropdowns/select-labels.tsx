@@ -295,10 +295,7 @@ export function SelectLabels({
           <ComboboxList className="p-1!">
             {searchValue ? (
               searchResults.length > 0 ? (
-                <ComboboxGroup>
-                  <ComboboxGroupLabel>{t('c:results')}</ComboboxGroupLabel>
-                  {searchResults.map((label) => renderLabelItem(label, selectedLabels, projectId, searchValue))}
-                </ComboboxGroup>
+                searchResults.map((label) => renderLabelItem(label, selectedLabels, projectId, searchValue))
               ) : (
                 <div className="flex items-center justify-center p-1.5 text-center text-muted-foreground/50 text-sm">
                   {t('c:no_resource_found', { resource: t('c:label_other').toLowerCase() })}
