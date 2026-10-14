@@ -16,7 +16,7 @@ export function DeleteTask({ task, callback, onCancel }: DeleteTaskProps) {
   const onDelete = async () => {
     setIsPending(true);
     try {
-      await deleteMutation.mutateAsync({ tasksToDelete: [task] });
+      await deleteMutation.mutateAsync([task]);
       callback?.();
     } catch {
       // mutation error handling is done in the mutation itself

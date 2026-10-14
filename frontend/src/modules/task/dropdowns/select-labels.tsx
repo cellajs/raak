@@ -231,10 +231,10 @@ export function SelectLabels({
     setSelectedLabels(updatedLabels);
 
     // Create label first, then update task after the server has the referenced label.
-    const createdLabel = await createLabelMutation(newLabelData);
-    // Creates never coalesce, so this always resolves to the created label; the guard narrows the type.
-    if (createdLabel === COALESCED) return;
-    const finalLabels = updatedLabels.map((l) => (l.id === newLabel.id ? createdLabel : l));
+    const createdLabels = await createLabelMutation(newLabelData);
+    // Creates never coalesce, so this always resolves to the created labels; the guard narrows the type.
+    if (createdLabels === COALESCED) return;
+    const finalLabels = updatedLabels.map((l) => (l.id === newLabel.id ? createdLabels[0] : l));
     setSelectedLabels(finalLabels);
     updateTaskLabels(finalLabels);
     trackUsage(organizationId, [newLabelData.slug]);
