@@ -46,18 +46,19 @@ export const newTaskFormDefaults: NewTaskFormValues = { ...getSchemaDefaults(cre
 export const newTaskFormIsDirty = ({ assignedTo, labels, description }: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
 
+/** Closes a project's create-task form; unlike the toggle, a repeated or late call never reopens it. */
+export const closeCreateTaskForm = (projectId: string) => {
+  focusTask(null);
+  useTaskInteractionStore.getState().setDraftTask(projectId, null);
+};
+
 // Handles logic for showing or hiding task creation form via Zustand draft state
 export const toggleCreateTaskForm = (project: { id: string; organizationId: string; tenantId: string }) => {
   const id = `create-task-${project.id}`;
   const store = useTaskInteractionStore.getState();
-  const existingDraft = store.draftTasks[project.id];
 
   // Toggle: if draft already exists, remove it (form open-ness is derived from the draft)
-  if (existingDraft) {
-    focusTask(null);
-    store.setDraftTask(project.id, null);
-    return;
-  }
+  if (store.draftTasks[project.id]) return closeCreateTaskForm(project.id);
 
   // Retrieve draft form data
   const draftForm = useDraftStore.getState().getForm<NewTaskFormValues | undefined>(id);

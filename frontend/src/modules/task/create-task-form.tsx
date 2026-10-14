@@ -20,11 +20,11 @@ import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
 import { useProjectMembers } from '~/modules/project/use-project-members';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import {
+  closeCreateTaskForm,
   createTaskFormSchema,
   type NewTaskFormValues,
   newTaskFormDefaults,
   newTaskFormIsDirty,
-  toggleCreateTaskForm,
 } from '~/modules/task/helpers/create-task';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
@@ -43,6 +43,9 @@ import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { COALESCED } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
+
+const exitDurationS = 0.3;
+const exitFallbackMs = exitDurationS * 1000 + 200;
 
 interface CreateTaskFormProps {
   projectId: string;
@@ -103,13 +106,19 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
 
   const handleCloseForm = () => {
     if (isDialog) useDialoger.getState().remove();
-    else {
-      focusTask(null);
-      toggleCreateTaskForm({ id: projectId, organizationId, tenantId });
-    }
+    else closeCreateTaskForm(projectId);
+  };
+
+  // Runs once per submit, from the exit animation or its timeout fallback: the form can unmount mid-exit
+  // (the virtualized list re-sorts as the new task lands) and an unmounted motion.div never completes.
+  const closeAfterExit = () => {
+    if (!pendingCloseRef.current) return;
+    pendingCloseRef.current = false;
+    handleCloseForm();
   };
 
   const onSubmit = async (values: NewTaskFormValues) => {
+    if (pendingCloseRef.current) return;
     const tasks = cachedTasks();
 
     // Only add user if task start and it's not already assigned
@@ -130,9 +139,12 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
       fullAssignedTo,
     };
 
-    // Keep the submitted values visible until the exit animation completes.
+    // Resetting to the submitted values clears the stored draft and its badge now, while the values stay visible
+    // through the exit animation; a failed create restores the draft in the catch below.
+    form.reset(values);
     pendingCloseRef.current = true;
     setIsExiting(true);
+    setTimeout(closeAfterExit, exitFallbackMs);
 
     // Persist the stashed upload rows; task linkage rides the description's attachmentId props.
     if (attachments.length) {
@@ -165,14 +177,8 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   return (
     <motion.div
       animate={isExiting ? { height: 0, opacity: 0 } : { height: 'auto', opacity: 1 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      onAnimationComplete={() => {
-        if (pendingCloseRef.current) {
-          pendingCloseRef.current = false;
-          form.reset();
-          handleCloseForm();
-        }
-      }}
+      transition={{ duration: exitDurationS, ease: 'easeInOut' }}
+      onAnimationComplete={closeAfterExit}
       className={cn(isExiting && 'overflow-hidden', isDialog && 'flex min-h-0 grow flex-col')}
     >
       <Form {...form}>
