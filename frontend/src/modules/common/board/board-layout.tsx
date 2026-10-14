@@ -164,7 +164,7 @@ export function BoardLayout({
             <ResizableSeparator
               index={i}
               className={cn(
-                'mx-[0.02rem] w-1.5 rounded border border-background bg-transparent transition-all hover:bg-primary/50 focus-visible:bg-primary data-[separator=drag]:bg-primary', // fork: focus lights the bar instead of a ring
+                'mx-[0.02rem] w-1.5 rounded border border-background bg-transparent transition-all hover:bg-primary/50 focus-visible:bg-primary data-[separator=drag]:bg-primary',
                 separatorClassName,
               )}
             />

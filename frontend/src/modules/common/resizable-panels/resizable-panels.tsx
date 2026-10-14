@@ -969,7 +969,7 @@ export function ResizableSeparator({ index, className, children, 'aria-label': a
       aria-controls={ariaControls || undefined}
       tabIndex={0}
       data-separator="inactive"
-      // fork: consumers draw focus in the bar's own color, since a ring has no room between panels; outline-hidden keeps the forced-colors outline
+      // Consumers draw focus in the bar's own color: a ring has no room between panels. outline-hidden keeps the forced-colors outline.
       className={cn('select-none outline-hidden', className)}
       style={{ touchAction: 'none', cursor: 'col-resize', flexShrink: 0 }}
       onPointerDown={handlePointerDown}

@@ -29,7 +29,6 @@ async function renderSeparator(node: ReactNode) {
 
 // No template page renders the board, so the accessibility audit never visits this control.
 describe('ResizableSeparator', () => {
-  // fork: focus is drawn by the consumer's bar color, with the forced-colors outline kept
   it('is a focusable, named, upright separator that keeps the forced-colors outline', async () => {
     const separator = await renderSeparator(<ResizableSeparator index={0} className="w-1.5" />);
     expect(separator.getAttribute('tabindex')).toBe('0');

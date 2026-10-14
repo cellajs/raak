@@ -23,7 +23,6 @@ export function ScrollArea({
   autoScrollOnDrag?: boolean | 'vertical' | 'horizontal';
   /** Disable clicking the scrollbar track to jump scroll position. Only the thumb remains draggable. */
   disableTrackClick?: boolean;
-  // fork: a list of focusable rows needs no extra tab stop on its scroller
   /** Keep the viewport out of the tab order. Only for content that has its own tab stops, which already scroll it. */
   focusableViewport?: boolean;
 }) {
@@ -67,7 +66,6 @@ export function ScrollArea({
         data-slot="scroll-area-viewport"
         id={id ? `${id}-viewport` : undefined}
         ref={viewportRef}
-        // fork: see focusableViewport
         tabIndex={focusableViewport ? undefined : -1}
         className={cn(
           'size-full touch-manipulation rounded-[inherit] outline-hidden focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset',
