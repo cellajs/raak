@@ -118,6 +118,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
           id={project.id}
           className="mx-[-.05rem] min-h-0 flex-1"
           viewportRef={scrollViewportRef}
+          focusableViewport={false}
           viewportClassName="[&>div]:!flex [&>div]:!flex-col [&>div]:!grow [&>div]:!h-auto [&>div]:!min-h-full"
           disableTrackClick
         >
