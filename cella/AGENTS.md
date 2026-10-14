@@ -84,7 +84,8 @@ Every check takes an `Access` from `accessFrom(ctx)`. Never assemble one by hand
 - **Query keys**: `createEntityKeys<Filters>('myEntity')`, registered with `registerEntityQueryKeys('myEntity', keys)` in the module's `query.ts`. Keys follow `[entityType, 'list'|'detail', ...]`.
 - **Optimistic updates**: `cacheCreate` / `cacheUpdate` / `cacheRemove` (`frontend/src/query/basic/cache-mutations.ts`) for cache mutations. Use `createOptimisticEntity(zodSchema, overrides)` for placeholders (fills IDs, timestamps, Zod defaults).
 - **Invalidation**: `invalidateIfLastMutation(queryClient, mutationKey, queryKey)` in `onSettled` avoids over-invalidation with concurrent mutations.
-- **Mutation registry**: in each entity's `query.ts`, `addMutationRegistrar((qc) => { qc.setMutationDefaults(keys.create, { mutationFn: ... }) })` so paused offline mutations resume after reload.
+- **Mutation registry**: in each entity's `query.ts`, `addMutationRegistrar((qc) => { qc.setMutationDefaults(keys.create, { mutationFn: ... }) })` so paused offline mutations resume after reload. The module has to load with the entry (static imports from `main.tsx`): a mutation restored before its defaults exist replays without a `mutationFn`.
+- **Mutation variables**: a product's create, update and delete carry `CreateVariables` (`data: Row[]`), `UpdateVariables` (`id`, `ops`) and `DeleteVariables` (`rows: Row[]`) from `frontend/src/query/offline/mutation-variables.ts`. The queue helpers read a queued mutation through those shapes, never through a cast. A change of shape registers `registerVariablesVersion(key, version, upgrade)` next to the mutation defaults: the persister stores each queued mutation with the version of its shape (`meta.variablesVersion`) and upgrades or quarantines an older one on restore.
 - **Enrichment** (`frontend/src/query/enrichment/`): [Client](./CLIENT.md#subscribers).
 - **Slug resolution**: `fetchSlugCacheId(fetcher, cacheKey)` resolves slug routes to IDs, cached under the entity's detail key.
 
@@ -103,7 +104,7 @@ Every check takes an `Access` from `accessFrom(ctx)`. Never assemble one by hand
 - Per entity: **insert mocks** (`mockUser()` → `Insert*Model`) and **response mocks** (`mockUserResponse()`, deterministic via `withFakerSeed`).
 - OpenAPI examples: pass `mockXResponse()` to `.openapi('Name', { example })` and route `example:`.
 - Seeding (`backend/scripts/seeds/`): `setMockContext('script')` + `mockMany(mockEntity, count)`.
-- Tests: insert mocks via `backend/tests/helpers.ts`. Call `resetXMockEnforcers()` in cleanup (`backend/tests/test-utils.ts`).
+- Tests: insert mocks via `backend/tests/helpers.ts`. A mock that generates a unique value takes its enforcer from `mockUniqueEnforcer()` (`mock-unique.ts`), which `clearDatabase` resets (`backend/tests/test-utils.ts`).
 - Utils: `mockMany()`, `mockPaginated()`, `mockTimestamps()`, `mockPastIsoDate()`, `generateMockChannelIdColumns()` (all configured context columns) / `generateMockEntityChannelIdColumns()` (one product entity's columns).
 
 ## Sync engine
@@ -125,7 +126,7 @@ Model: [Sync engine](./SYNC_ENGINE.md).
 
 Relationships between products are data, never permission indirection (permissions and public read flow through the hierarchy's channel columns). Exactly two mechanisms:
 
-1. **`productEmbeddings` host id arrays**: an id array column on the host product's table, declared in `appConfig.productEmbeddings`. All embedding machinery (CDC cleanup, owned-embedding GC, ref counters, SSE propagation hints, client cache patching) is config-driven. Engine code never changes. `lifecycle: 'shared'` (default): embedded rows live independently, dead references are stripped from hosts. `lifecycle: 'owned'`: the CDC worker soft-deletes rows no live host references.
+1. **`productEmbeddings` host id arrays**: an id array column on the host product's table, declared in `appConfig.productEmbeddings`. All embedding machinery (CDC cleanup, owned-embedding GC, ref counters, SSE propagation hints, client cache patching) is config-driven. Engine code never changes. `lifecycle: 'shared'` (default): embedded rows live independently, dead references are stripped from hosts. `lifecycle: 'owned'`: the CDC worker soft-deletes rows no live host references. A host write keeps the ids that name a live row of its organization with `filterExistingProductIds` (`entities/embedding-queries.ts`).
 2. **The mutation bus** (`defineBackendModule` + `onMutation`/`dispatchMutation`): lifecycle side effects an embedding cannot express (e.g. seeding rows on `project.created`). Handlers run synchronously, optionally inside the write transaction.
 
 A child-side host FK (nullable `<host>Id` column on one product pointing at another) is deprecated: invisible to sync views, CDC, propagation hints and counters. Conversion guide: `cella/migrations/20260730T1009-owned-host-embedding/`.

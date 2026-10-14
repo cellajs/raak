@@ -2069,7 +2069,7 @@ export const updateConnection = <ThrowOnError extends boolean = true>(
 /**
  * Check slug availability
  *
- * Checks whether a given slug is available within a tenant for the specified entity type.
+ * Checks whether a given slug is available for the specified entity type. A slug is unique across all tenants.
  * Primarily used to prevent slug collisions before creating or updating an entity.
  *
  * **POST /entities/{tenantId}/check-slug** ·· [checkSlug](https://www.raak.dev/docs/operations?operationTag=entities#tag/entities/POST/entities/{tenantId}/check-slug) ·· [checkSlug](https://www.raak.dev/docs/operations?operationTag=cella#tag/cella/POST/entities/{tenantId}/check-slug) ·· _entities_cella_

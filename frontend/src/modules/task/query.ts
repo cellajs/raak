@@ -2,7 +2,7 @@ import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateTasksData, GetTasksData, StxBase, UpdateTaskData, UserMinimalBase } from 'sdk';
 import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
-import { zTask } from 'sdk/zod.gen';
+import { zCreateTasksBody, zTask } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { deriveDocument } from 'shared/utils/derive-description-core';
 import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
@@ -99,6 +99,9 @@ export const taskKeys = {
   /** Public task list keys (separate from authenticated queries) */
   publicList: { base: ['task', 'public-list'] as const, filtered: (filters: PublicTaskListFilters) => ['task', 'public-list', filters] as const },
 };
+
+/** The keys a create row takes. An edit of any other field cannot fold into a queued create. */
+const taskCreateKeys = Object.keys(zCreateTasksBody.element.shape);
 
 registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, channelId) => {
   return getTasks({
@@ -465,7 +468,7 @@ export const useTaskUpdateMutation = (tenantId: string, organizationId: string) 
   const prepare = (input: TaskUpdateMutationFnVariables): PreparedVars<TaskUpdateFullVars> => {
     const { id: taskId, ops } = input;
 
-    if (ops && squashIntoPendingCreate(queryClient, taskKeys.create, taskId, ops as Record<string, unknown>)) {
+    if (ops && squashIntoPendingCreate(queryClient, taskKeys.create, taskId, ops as Record<string, unknown>, taskCreateKeys)) {
       applyOptimisticTaskUpdate(queryClient, organizationId, { tenantId, organizationId, ...input });
       return { kind: 'coalesced' };
     }

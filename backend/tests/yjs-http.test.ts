@@ -4,10 +4,10 @@ import pg from 'pg';
 import { deleteAttachments, type PullYjsDocumentResponse, pullYjsDocument, pushYjsUpdate, updateAttachment } from 'sdk';
 import { appConfig } from 'shared';
 import { testDatabaseUrl } from 'shared/test-db';
+import { assumeMemberAttachmentPolicy } from 'shared/testing/member-policy';
 import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
-import { generateServerHLC } from '#/core/stx';
 import { subjectSegment } from '#/middlewares/rate-limiter/helpers';
 import { yjsHttpLimiter } from '#/middlewares/rate-limiter/limiters';
 import { attachmentsTable } from '#/modules/attachment/attachment-db';
@@ -17,10 +17,10 @@ import { decodeLogNotice, YJS_HTTP_CHUNK_BYTES, YJS_LOG_CHANNEL } from '#/module
 import { mergeLog } from '#/modules/yjs/helpers/yjs-state';
 import type { AppendYjsUpdateOpts } from '#/modules/yjs/operations/append-yjs-update';
 import { yjsDocumentsTable, yjsUpdatesTable } from '#/modules/yjs/yjs-db';
-import { mockStxBase } from '#/schemas/sync-transaction-mocks';
+import { mockStxFor } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { adminDb, createSystemAdminUser, createTestSession, type ErrorResponse, expectRefusal, rawJsonRequest } from './helpers';
-import { assumeMemberAttachmentPolicy, clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
+import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { lockWaiters, paragraph, seedAttachment } from './security/yjs-helpers';
 import { createAppClient } from './test-client';
 import { setTestConfig } from './test-utils';
@@ -509,7 +509,7 @@ describe.skipIf(appConfig.services.yjs.enabled === false)('Yjs over HTTP', async
         path: { ...ownScope(), id: entityId },
         body: {
           ops: { description },
-          stx: { ...mockStxBase(`stx:${generateId()}`), fieldTimestamps: { description: generateServerHLC('test-client') } },
+          stx: mockStxFor('description'),
         },
         headers: headers(owner.sessionCookie),
       });

@@ -1,4 +1,4 @@
-import { BoxIcon, ShieldCheckIcon, ShieldMinusIcon } from 'lucide-react';
+import { ShieldCheckIcon, ShieldMinusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig, type ChannelEntityType, hierarchy, isChannel } from 'shared';
@@ -6,10 +6,9 @@ import { getMemberStatIcon, isMemberCountHidden } from '~/lib/entity-modules';
 import { exportDate } from '~/lib/export';
 import { enumSelectEditorOptions, RenderEnumSelect } from '~/modules/common/data-grid/cell-renderers';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
-import { dateColumn, emailColumn } from '~/modules/common/data-table/columns';
+import { countColumn, dateColumn, emailColumn } from '~/modules/common/data-table/columns';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import type { Member } from '~/modules/memberships/types';
-import { Badge } from '~/modules/ui/badge';
 import { UserCell } from '~/modules/user/user-cell';
 import { dateShort } from '~/utils/date-short';
 
@@ -88,15 +87,7 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
         minBreakpoint: 'md',
         minWidth: 120,
         placeholderValue: '-',
-        // An empty lastSeenAt means the member never signed in, which the badge states explicitly
-        renderCell: ({ row }) =>
-          row.lastSeenAt ? (
-            dateShort(row.lastSeenAt)
-          ) : (
-            <Badge variant="secondary" size="xs">
-              {t('c:inactive')}
-            </Badge>
-          ),
+        renderCell: ({ row }) => dateShort(row.lastSeenAt),
         exportValue: (row) => exportDate(row.lastSeenAt),
       },
       // Per-member insight columns from include=counts: when the member last posted in this
@@ -115,42 +106,22 @@ export const useColumns = (isAdmin: boolean, isSheet: boolean, entityType: Chann
         },
         exportValue: (row) => exportDate(row.counts?.activity[memberStatProductTypes[0]]),
       },
-      ...memberStatProductTypes.map((type): ColumnOrColumnGroup<Member> => {
-        const Icon = getMemberStatIcon(type) ?? BoxIcon;
-        return {
-          key: `${type}Count`,
+      ...memberStatProductTypes.map((type) =>
+        countColumn<Member>(`${type}Count`, {
           name: t(`c:${type}`, { count: 2 }),
+          icon: getMemberStatIcon(type),
           hidden: isMemberCountHidden(type),
-          minBreakpoint: 'md',
-          minWidth: 60,
-          maxWidth: 120,
-          renderCell: ({ row }) => (
-            <>
-              <Icon className="mr-2 opacity-50" />
-              {row.counts?.products[type] ?? '-'}
-            </>
-          ),
-          exportValue: (row) => row.counts?.products[type],
-        };
-      }),
+          get: (row) => row.counts?.products[type],
+        }),
+      ),
       ...hierarchy
         .getOrderedDescendants(entityType)
         .filter((type): type is Exclude<ChannelEntityType, 'organization'> => isChannel(type) && type !== 'organization')
-        .map(
-          (type): ColumnOrColumnGroup<Member> => ({
-            key: `${type}Count`,
+        .map((type) =>
+          countColumn<Member>(`${type}Count`, {
             name: t(`c:${type}`, { count: 2, defaultValue: type }),
             hidden: isMemberCountHidden(type),
-            minBreakpoint: 'md',
-            minWidth: 60,
-            maxWidth: 120,
-            renderCell: ({ row }) => (
-              <>
-                <BoxIcon className="mr-2 opacity-50" />
-                {row.counts?.memberships[type] ?? '-'}
-              </>
-            ),
-            exportValue: (row) => row.counts?.memberships[type] as number | undefined,
+            get: (row) => row.counts?.memberships[type] as number | undefined,
           }),
         ),
     ];

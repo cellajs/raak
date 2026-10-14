@@ -3,8 +3,8 @@ import type { InsertAttachmentModel } from '#/modules/attachment/attachment-db';
 import { mockAttachment } from '#/modules/attachment/attachment-mocks';
 import { registerBenchSeed } from '../registry';
 import { TOTAL_ATTACHMENTS } from './attachment-constants';
-import { attachmentId, CORE_ID_VARIANTS, ORG_ID, projectId, TENANT_ID, userId } from './ids';
-import { TOTAL_PROJECTS } from './project.bench';
+import { attachmentSeedOrder, benchAttachmentHome } from './attachment-home';
+import { attachmentId, CORE_ID_VARIANTS, ORG_ID, TENANT_ID, userId } from './ids';
 
 /**
  * Reference implementation for the app seed pattern.
@@ -22,18 +22,16 @@ export const loadtestAttachment = (index: number): InsertAttachmentModel => ({
   bucketName: 'attachments',
   keys: { original: `uploads/xbench/${attachmentId(index)}/xbench-file-${index}.pdf` },
   organizationId: ORG_ID,
-  // Org-homed: the mock invents ids for every ancestor, and nullable ones would reference no seeded channel.
+  // The mock invents ids for every ancestor, and those reference no seeded channel: a nullable one is null unless the app's home names it.
   ...Object.fromEntries(hierarchy.getNullableAncestors('attachment').map((type) => [appConfig.entityIdColumnKeys[type], null])),
-  // fork: attachments are project-homed (FK on project_id), so each row lands in a seeded bench project
-  projectId: projectId(index % TOTAL_PROJECTS),
+  ...benchAttachmentHome(index),
   createdBy: userId(index % 100),
   updatedBy: userId(index % 100),
 });
 
 registerBenchSeed({
   table: 'attachments',
-  // fork: after projects (order 110), the attachment home
-  order: 115,
+  order: attachmentSeedOrder,
   idVariant: CORE_ID_VARIANTS.attachment,
   rows: ({ now }) => Array.from({ length: TOTAL_ATTACHMENTS }, (_, i) => ({ ...loadtestAttachment(i), createdAt: now, seq: 0 })),
 });

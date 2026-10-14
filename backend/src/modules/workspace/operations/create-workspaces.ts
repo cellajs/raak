@@ -75,7 +75,7 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
   // Invalidate membership cache so subsequent requests see the new membership
   invalidateCache.user(user.id);
 
-  const counts = buildZeroCounts('workspace');
+  const counts = buildZeroCounts('workspace', 'admin');
   const membershipByWsId = new Map(createdMemberships.map((m) => [m.workspaceId, m]));
   const workspacesWithAudit = await withAuditUsers(ctx, workspaceRecords, user);
 

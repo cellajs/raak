@@ -23,6 +23,7 @@
   "scripts": {
     "a11y": "pnpm -C a11y a11y",
     "a11y:run": "pnpm -C a11y stack",
+    "app-shape:check": "node shared/scripts/check-app-shaped-config.ts",
     "bench": "pnpm -C bench bench",
     "build": "pnpm run clean && pnpm -r --parallel build",
     "build:dev": "pnpm -r --parallel build:dev",
@@ -35,7 +36,7 @@
     "dev:migration": "pnpm run clean && cross-env DATABASE_URL=postgres://postgres:postgres@0.0.0.0:5555/postgres DATABASE_ADMIN_URL=postgres://postgres:postgres@0.0.0.0:5555/postgres pnpm --reporter=append-only -r --parallel --stream dev",
     "dev:proxy": "pnpm run clean && cross-env pnpm --reporter=append-only -r --parallel --stream --filter backend --filter cdc-worker --filter frontend --filter proxy dev",
     "dev:single": "pnpm run clean && cross-env SINGLE_VM=true pnpm --reporter=append-only -r --parallel --stream --filter backend --filter frontend dev",
-    "docker": "pnpm --filter backend docker:up --detach",
+    "docker": "pnpm --filter backend docker:up --detach --wait",
     "docker:test": "docker compose -f backend/compose.yaml --profile test up -d --wait db_test",
     "docker:test:down": "docker compose -f backend/compose.yaml --profile test down db_test",
     "docker:test:reset": "docker compose -f backend/compose.yaml --profile test down -v db_test",

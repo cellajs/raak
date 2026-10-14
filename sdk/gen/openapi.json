@@ -7007,7 +7007,7 @@
         "operationId": "checkSlug",
         "tags": ["entities", "cella"],
         "summary": "Check slug availability",
-        "description": "Checks whether a given slug is available within a tenant for the specified entity type.\n      Primarily used to prevent slug collisions before creating or updating an entity.",
+        "description": "Checks whether a given slug is available for the specified entity type. A slug is unique across all tenants.\n      Primarily used to prevent slug collisions before creating or updating an entity.",
         "x-guard": ["userGuard", "tenantGuard"],
         "x-rate-limiter": ["pointsLimiter"],
         "x-cache": [],
@@ -7033,7 +7033,7 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 255,
-                    "pattern": "^[a-z0-9]+(-{0,3}[a-z0-9]+)*$"
+                    "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                   },
                   "entityType": {
                     "type": "string",
@@ -7461,7 +7461,7 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 255,
-                    "pattern": "^[a-z0-9]+(-{0,3}[a-z0-9]+)*$"
+                    "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                   },
                   "userFlags": {
                     "type": "object",
@@ -9915,7 +9915,7 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 255,
-                    "pattern": "^[a-z0-9]+(-{0,3}[a-z0-9]+)*$"
+                    "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                   }
                 }
               }
@@ -11622,7 +11622,7 @@
                       "type": "string",
                       "minLength": 2,
                       "maxLength": 255,
-                      "pattern": "^[a-z0-9]+(-{0,3}[a-z0-9]+)*$"
+                      "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                     }
                   },
                   "required": ["id", "name", "slug"]
@@ -12859,7 +12859,7 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 255,
-                    "pattern": "^[a-z0-9]+(-{0,3}[a-z0-9]+)*$"
+                    "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                   },
                   "name": {
                     "type": "string",
@@ -13291,7 +13291,7 @@
                       "type": "string",
                       "minLength": 2,
                       "maxLength": 255,
-                      "pattern": "^[a-z0-9]+(-{0,3}[a-z0-9]+)*$"
+                      "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                     },
                     "publicAt": {
                       "type": ["string", "null"]
@@ -14147,7 +14147,7 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 255,
-                    "pattern": "^[a-z0-9]+(-{0,3}[a-z0-9]+)*$"
+                    "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                   },
                   "name": {
                     "type": "string",

@@ -10,7 +10,7 @@ import type { TKey } from '~/lib/i18n-locales';
 import { assertSurfaceIds, getSlotDescriptors, isPlacementHidden, type PlacementDescriptor, resolvePlacementList, type Slot } from '~/lib/placements';
 import { ActiveTabMarker, useTabIndicator } from '~/modules/common/page/tab-indicator';
 import { type TabNavAvatar, TabNavShell } from '~/modules/common/page/tab-nav-shell';
-import { useScrollReset } from '~/modules/common/scroll-reset';
+import { useScrollResetOnNavigate } from '~/modules/common/scroll-reset';
 import { getRouter } from '~/routes/-router-instance';
 import { truncateMiddle } from '~/utils/truncate-middle';
 
@@ -42,15 +42,23 @@ function getTabsSlot(parentRouteId: string): Slot | undefined {
 export type NavCandidate = PlacementDescriptor & { order: number; path: PageTab['path']; params: PageTab['params'] };
 
 /**
- * Startup check on `appConfig.surfaces`: an id that names no placement of its surface would hide a
- * tab or section in silence. Called once the router exists, so route-declared tabs count. Throws
- * outside production, where a hard crash over one misspelled id would be the worse failure.
+ * Startup check on the tab bars and on `appConfig.surfaces`: a layout whose child routes declare
+ * `navTab` while it names no `tabsSlot` renders an empty bar, and a listed id that names no
+ * placement of its surface would hide a tab or section, both without an error. Called once the
+ * router exists, so route-declared tabs count. Throws outside production, where a hard crash over
+ * one misspelled id would be the worse failure.
  */
 export function assertSurfaces(): void {
   const routesById = getRouter().routesById as unknown as Record<string, AnyRoute>;
   const parentRouteIdForSlot = (slot: Slot) => Object.keys(routesById).find((routeId) => routesById[routeId].options?.staticData?.tabsSlot === slot);
 
   try {
+    for (const [routeId, route] of Object.entries(routesById)) {
+      if (route.options?.staticData?.tabsSlot) continue;
+      if (getChildRoutes(route).some((child) => child.options?.staticData?.navTab)) {
+        throw new Error(`Route '${routeId}' has child routes with a navTab and declares no staticData.tabsSlot, so its tab bar stays empty`);
+      }
+    }
     assertSurfaceIds((slot) => {
       const parentRouteId = parentRouteIdForSlot(slot);
       const tabIds = parentRouteId ? getNavTabCandidates(parentRouteId).map((tab) => tab.id) : [];
@@ -153,7 +161,8 @@ export interface GuardNavTabsOptions {
  * route mounts and fetches. Detection uses {@link isPlacementHidden} on the arrangement layers
  * only, never `requires`/`visibleTo`, whose inputs may still be loading. Config changes while
  * sitting on a tab are handled by {@link useNavTabRedirect}.
- * @throws A history-replacing redirect preserving params, search, and hash.
+ * @throws A history-replacing redirect preserving params and hash, and the search of a bare parent navigation. The search of a
+ * tab it forwards off stays behind: that tab's own sort and filters.
  */
 export function guardNavTabs(
   matches: readonly { routeId: string; fullPath: string; params: unknown }[],
@@ -168,7 +177,8 @@ export function guardNavTabs(
   if (!slot) return;
 
   // Data-defined tabs match on the deepest match's `$tool` param, route tabs on its route path
-  let needsLanding = deepest.routeId === parentRouteId;
+  const fromBareParent = deepest.routeId === parentRouteId;
+  let needsLanding = fromBareParent;
   if (!needsLanding) {
     const candidates = getNavTabCandidates(parentRouteId);
     const toolId = (deepest.params as { tool?: string } | undefined)?.tool;
@@ -181,7 +191,7 @@ export function guardNavTabs(
   const landing = resolveNavTabs(parentRouteId, { slotConfig })[0];
   if (!landing) return;
 
-  throw redirect({ to: landing.path, params: landing.params, search: true, replace: true, hash: true });
+  throw redirect({ to: landing.path, params: landing.params, search: fromBareParent ? true : {}, replace: true, hash: true });
 }
 
 /**
@@ -242,7 +252,7 @@ export function PageTabNav({ tabs: explicitTabs, parentRouteId, grants, pairs, s
     if (!isMobile && hasStarted && tabs[0]) tabRefs.current[tabs[0].id]?.focus();
   }, [hasStarted]);
 
-  const scrollToReset = useScrollReset();
+  const scrollToResetOnNavigate = useScrollResetOnNavigate();
 
   return (
     <TabNavShell title={title} avatar={avatar} className={className} indicator={indicator}>
@@ -262,7 +272,7 @@ export function PageTabNav({ tabs: explicitTabs, parentRouteId, grants, pairs, s
           search={search}
           activeOptions={activeOptions}
           activeProps={{ 'data-active': true }}
-          onClick={scrollToReset}
+          onClick={scrollToResetOnNavigate}
         >
           {({ isActive }) => {
             const showAsActive = isActive || (fallbackToFirst && index === 0);

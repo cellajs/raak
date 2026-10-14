@@ -3,7 +3,7 @@ import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
 import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
-import { productColumns } from '#/db/utils/product-columns';
+import { productColumns, productIndexes } from '#/db/utils/product-columns';
 import type { AttachmentKeys } from '#/modules/attachment/attachment-schema';
 
 /** Each attachment belongs to exactly one tenant and organization: the RLS isolation boundary. */
@@ -30,15 +30,9 @@ export const attachmentsTable = snakeCase.table(
     ...channelRelationColumns('attachment'),
   },
   (table) => [
-    index('attachments_organization_id_index').on(table.organizationId),
-    // Delta-sync reads filter organization_id plus a seq range and order by seq, so this
-    // composite makes the SSE fan-out list reads an index range scan.
-    index('attachments_organization_id_seq_index').on(table.organizationId, table.seq),
-    index('attachments_tenant_id_index').on(table.tenantId),
-    index('attachments_created_by_index').on(table.createdBy),
-    index('attachments_updated_by_index').on(table.updatedBy),
+    ...productIndexes('attachments', table),
     index('attachments_group_id_index').on(table.groupId),
-    // Placement seam: an index per sub-organization ancestor column; none for org-homed rows.
+    // An index per sub-organization ancestor column; none for org-homed rows.
     ...channelRelationIndexes('attachments', table, 'attachment'),
     organizationForeignKey(table),
     tenantSelectPolicy('attachments', table),

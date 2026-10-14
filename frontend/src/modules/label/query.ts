@@ -11,7 +11,7 @@ import {
   type UpdateLabelData,
   updateLabel,
 } from 'sdk';
-import { zLabel } from 'sdk/zod.gen';
+import { zCreateLabelsBody, zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
@@ -61,6 +61,9 @@ registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, cha
 });
 /** Defines React Query cache keys for label. */
 export const labelQueryKeys = keys;
+
+/** The keys a create row takes. An edit of any other field cannot fold into a queued create. */
+const labelCreateKeys = Object.keys(zCreateLabelsBody.element.shape);
 
 // `keywords` is derived from the description, so it follows the description's stamp.
 registerYjsOwnedFields('label', ['description', 'keywords']);
@@ -275,7 +278,7 @@ export const useLabelUpdateMutation = (tenantId: string, organizationId: string)
 
   /** Folding into a queued create issues no update and patches the optimistic row here (onMutate won't run). */
   const prepare = ({ id, ops }: UpdateLabelVars): PreparedVars<UpdateLabelFullVars> => {
-    if (squashIntoPendingCreate(queryClient, keys.create, id, ops)) {
+    if (squashIntoPendingCreate(queryClient, keys.create, id, ops, labelCreateKeys)) {
       const cached = findLabelInCache(id);
       if (cached) {
         const optimisticLabel = { ...cached, ...ops, updatedAt: new Date().toISOString() };

@@ -2,7 +2,9 @@ import { type AnyColumn, and, eq, inArray, isNotNull, isNull, or, type SQL } fro
 import {
   hierarchy as appHierarchy,
   type ChannelEntityType,
+  type ChannelIdColumns,
   type EntityHierarchy,
+  entityIdColumnKey,
   getEntityPolicies,
   getPolicyPermissions,
   type PolicyMatrix,
@@ -11,6 +13,9 @@ import {
 } from 'shared';
 import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
 import type { CollectionReadWhere } from '#/permissions/row-predicates';
+
+/** What the scope reads of a grant: a membership row and a service account's binding both carry it. */
+export type ChannelScopeGrant = Pick<MembershipBaseModel, 'organizationId' | 'channelType' | 'channelId' | 'role'>;
 
 // CHANNEL-entity sibling of `collection-scope.ts`, for sub-org channel types. See "Enforcement paths" in cella/PERMISSIONS.md.
 
@@ -31,7 +36,7 @@ export interface ChannelCollectionReadScope {
 
 export interface ChannelCollectionScopeInput {
   policies: PolicyMatrix;
-  memberships: MembershipBaseModel[];
+  memberships: ChannelScopeGrant[];
   channelType: Exclude<ChannelEntityType, 'organization'>;
   organizationId: string;
   /** Who is asking. Carries the system-admin bypass; required so no call site can forget it. */
@@ -102,12 +107,55 @@ export const resolveChannelCollectionReadScopeForPolicies = ({
  * @public
  */
 export const resolveChannelCollectionReadScope = (
-  memberships: MembershipBaseModel[],
+  memberships: ChannelScopeGrant[],
   channelType: Exclude<ChannelEntityType, 'organization'>,
   organizationId: string,
   actor: PredicateActor,
 ): ChannelCollectionReadScope =>
   resolveChannelCollectionReadScopeForPolicies({ policies: policyMatrix, memberships, channelType, organizationId, actor });
+
+/** A channel row as the draft rule reads it: its publish date and the ancestor ids it carries. */
+export type DraftChannelRow = { id: string; publishedAt: string | null } & Partial<ChannelIdColumns>;
+
+export interface DraftChannelInput extends Omit<ChannelCollectionScopeInput, 'channelType' | 'organizationId'> {
+  channelType: ChannelEntityType;
+  channel: DraftChannelRow;
+}
+
+/** {@link draftChannelVisibleTo} against explicit policies/hierarchy; handlers use the bound wrapper. */
+export const draftChannelVisibleToForPolicies = ({ channelType, channel, memberships, actor, ...scopeInput }: DraftChannelInput): boolean => {
+  if (channel.publishedAt !== null) return true;
+  if (!('anonymous' in actor) && actor.isSystemAdmin) return true;
+  if (memberships.some((membership) => membership.channelType === channelType && membership.channelId === channel.id)) return true;
+  // Nothing sits above the organization, so its draft shows to its own members alone.
+  if (channelType === 'organization' || !channel.organizationId) return false;
+
+  const { organizationId } = channel;
+  const scope = resolveChannelCollectionReadScopeForPolicies({ ...scopeInput, memberships, channelType, organizationId, actor });
+  if (scope.orgWide === 'all') return true;
+
+  return scope.ancestorScopes.some(({ channelType: level, managedIds }) => {
+    const ancestorId = (channel as Record<string, unknown>)[entityIdColumnKey(level)];
+    return typeof ancestorId === 'string' && managedIds.includes(ancestorId);
+  });
+};
+
+/**
+ * Whether a channel shows to the caller as far as its draft state goes: the rule {@link buildChannelListReadWhere}
+ * compiles for a list, read for one row, so a read by id answers for the drafts a list returns and for no other. A
+ * published channel shows. A draft shows to a member of the channel itself and to a caller whose grant on the
+ * organization or on a channel above also holds `update` on the type. The engine's read check stays the caller's.
+ * @param channelType - The type of the channel row.
+ * @param channel - The row, with its publish date and ancestor ids.
+ * @param memberships - The caller's grants: `ctx.var.actor.bindings`.
+ * @param actor - Who is asking; carries the system-admin bypass.
+ */
+export const draftChannelVisibleTo = (
+  channelType: ChannelEntityType,
+  channel: DraftChannelRow,
+  memberships: ChannelScopeGrant[],
+  actor: PredicateActor,
+): boolean => draftChannelVisibleToForPolicies({ policies: policyMatrix, channelType, channel, memberships, actor });
 
 /** The table columns a channel list query exposes to compile the scope into SQL. */
 export interface ChannelListReadColumns {
@@ -123,9 +171,17 @@ export interface ChannelListReadColumns {
 /**
  * Compile a resolved channel read scope into the list query's predicate: own-membership rows ∪
  * org-wide rows ∪ ancestor-scoped rows (published-only for read-only grants). 'none' cannot occur:
- * own membership rows are always in scope. Consumer contract: keep role/archived filters in the
- * membership join ON (never WHERE), map the nested membership only when its id is non-NULL, and
- * expect membership-sourced sort columns NULL for discovery rows (ASC puts NULLs last, members first).
+ * own membership rows are always in scope.
+ *
+ * Consumer contract, as `backend/tests/channel-discovery.test.ts` wires it:
+ * - LEFT JOIN the memberships on the caller's own key alone (channel, type, user). A filter on the membership, such
+ *   as a role, makes it a list of memberships: skip the scope and INNER JOIN.
+ * - AND the predicate with the organization the scope was resolved for: its membership and published branches name
+ *   no organization.
+ * - `excludeArchived` goes in WHERE through {@link excludeArchivedWhere}; in ON it would turn an archived channel
+ *   into a discovery row.
+ * - Map the nested membership only when its id is non-NULL, and expect membership-sourced sort columns NULL for
+ *   discovery rows (ASC puts NULLs last, members first).
  */
 export const buildChannelListReadWhere = (scope: ChannelCollectionReadScope, columns: ChannelListReadColumns): CollectionReadWhere => {
   if (scope.orgWide === 'all') return { kind: 'all' };
