@@ -1,14 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { updateLabel } from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
-import { hashSourceId } from 'shared/utils/hash-source-id';
-import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getSeedDb } from '#/db/db';
 import { labelsTable } from '#/modules/label/label-db';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
-import { mockStxBase } from '#/schemas/sync-transaction-mocks';
+import { mockStxBase, mockStxFor } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
@@ -35,18 +33,7 @@ const descriptionBlocks = JSON.stringify([
   },
 ]);
 
-/** Client-shaped stx with an HLC timestamp per edited field (required by the update schema). */
-const buildStx = (fieldNames: string[]) => {
-  const sourceId = uuidv7();
-  const now = Date.now();
-  const fieldTimestamps: Record<string, string> = {};
-  fieldNames.forEach((field, index) => {
-    fieldTimestamps[field] = `${now}:${String(index).padStart(4, '0')}:${hashSourceId(sourceId)}`;
-  });
-  return { mutationId: uuidv7(), sourceId, fieldTimestamps };
-};
-
-const updateOps = (ops: Record<string, unknown>) => ({ ops, stx: buildStx(Object.keys(ops)) });
+const updateOps = (ops: Record<string, unknown>) => ({ ops, stx: mockStxFor(...Object.keys(ops)) });
 
 // Covers the epic gates on updateLabelOp: only epics carry a description, member-level ops
 // (documenting an epic, toggling secondary <-> epic mode) skip the project-admin gate,

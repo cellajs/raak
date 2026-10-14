@@ -4,7 +4,7 @@ import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
 import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
-import { productColumns } from '#/db/utils/product-columns';
+import { productColumns, productIndexes } from '#/db/utils/product-columns';
 
 /**
  * Tasks table is a product entity table.
@@ -34,11 +34,7 @@ export const tasksTable = snakeCase.table(
     ...channelRelationColumns('task'),
   },
   (table) => [
-    index('tasks_organization_id_index').on(table.organizationId),
-    index('tasks_organization_id_seq_index').on(table.organizationId, table.seq),
-    index('tasks_tenant_id_index').on(table.tenantId),
-    index('tasks_created_by_index').on(table.createdBy),
-    index('tasks_updated_by_index').on(table.updatedBy),
+    ...productIndexes('tasks', table),
     ...channelRelationIndexes('tasks', table, 'task'),
     index('tasks_project_status_index').on(table.projectId, table.status),
     index('tasks_primary_label_id_index').on(table.primaryLabelId),

@@ -1,12 +1,20 @@
 import { faker } from '@faker-js/faker';
-import { UniqueEnforcer } from 'enforce-unique';
-import { MOCK_REF_DATE, mockBatchResponse, mockChannelColumns, mockPaginated, mockPastIsoDate, mockTenantId, mockUuid, withFakerSeed } from '#/mocks';
+import {
+  MOCK_REF_DATE,
+  mockBatchResponse,
+  mockChannelColumns,
+  mockPaginated,
+  mockPastIsoDate,
+  mockTenantId,
+  mockUniqueEnforcer,
+  mockUuid,
+  withFakerSeed,
+} from '#/mocks';
 import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
 import { mockMembershipBase } from '#/modules/memberships/memberships-mocks';
 import type { InsertProjectModel, ProjectModel } from '#/modules/project/project-db';
 
-// Enforces unique project names
-const projectName = new UniqueEnforcer();
+const projectName = mockUniqueEnforcer();
 
 /**
  * Generates base project fields shared between insert and response mocks.

@@ -2311,7 +2311,6 @@
               "required": true,
               "maxLength": 1000000
             },
-            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "status": {
               "type": "integer",
@@ -2338,6 +2337,7 @@
               "type": ["string", "null"],
               "required": false
             },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
               "type": "object",
               "required": true,

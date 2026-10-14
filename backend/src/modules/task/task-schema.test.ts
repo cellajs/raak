@@ -2,15 +2,14 @@ import { OpenAPIRegistry, OpenApiGeneratorV31 } from '@asteasolutions/zod-to-ope
 import { describe, expect, it } from 'vitest';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { taskCreateManyStxBodySchema, taskSchema, taskUpdateStxBodySchema } from '#/modules/task/task-schema';
+import { mockStxFor } from '#/schemas/sync-transaction-mocks';
 
 const firstId = '00000000-0000-4000-8000-000000000001';
 const secondId = '00000000-0000-4000-8000-000000000002';
-const hlc = '100:0001:aaaaa';
-const stx = (fieldTimestamps: Record<string, string> = {}) => ({ mutationId: firstId, sourceId: 'task-schema-test', fieldTimestamps });
 
 describe('task mutation schemas', () => {
   it('accepts only declared task statuses on update', () => {
-    const validUpdate = { ops: { status: TaskStatus.Started }, stx: stx({ status: hlc }) };
+    const validUpdate = { ops: { status: TaskStatus.Started }, stx: mockStxFor('status') };
     expect(taskUpdateStxBodySchema.safeParse(validUpdate).success).toBe(true);
     expect(taskUpdateStxBodySchema.safeParse({ ...validUpdate, ops: { status: 999 } }).success).toBe(false);
   });
@@ -24,7 +23,7 @@ describe('task mutation schemas', () => {
       status: TaskStatus.Unstarted,
       labels: [firstId],
       assignedTo: [secondId],
-      stx: stx(),
+      stx: mockStxFor(),
     };
 
     expect(taskCreateManyStxBodySchema.safeParse([validTask]).success).toBe(true);

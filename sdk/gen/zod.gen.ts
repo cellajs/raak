@@ -2984,13 +2984,13 @@ export const zCreateLabelsBody = z
   .array(
     z.object({
       name: z.string().max(255).optional(),
-      projectId: z.uuid(),
       id: z.uuid(),
       color: z.string().max(255).nullable(),
       mode: z.enum(['primary', 'secondary', 'epic']).optional().default('secondary'),
       slug: z.string().max(255).optional(),
       icon: z.string().max(255).nullish(),
       displayOrder: z.number().optional(),
+      projectId: z.uuid(),
       stx: zStxBase,
     }),
   )
@@ -3529,7 +3529,6 @@ export const zCreateTasksBody = z
     z.object({
       name: z.string().max(255).optional(),
       description: z.string().max(1000000).nullable(),
-      projectId: z.uuid(),
       id: z.uuid(),
       status: z.union([z.literal(6), z.literal(5), z.literal(4), z.literal(3), z.literal(2), z.literal(1), z.literal(0)]),
       primaryLabelId: z.uuid().optional(),
@@ -3537,6 +3536,7 @@ export const zCreateTasksBody = z
       labels: z.array(z.uuid()).max(50).optional(),
       assignedTo: z.array(z.uuid()).max(50).optional(),
       publicAt: z.string().nullish(),
+      projectId: z.uuid(),
       stx: zStxBase,
     }),
   )

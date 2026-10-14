@@ -17378,10 +17378,6 @@
                       "type": "string",
                       "maxLength": 255
                     },
-                    "projectId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
                     "id": {
                       "type": "string",
                       "format": "uuid"
@@ -17406,11 +17402,15 @@
                     "displayOrder": {
                       "type": "number"
                     },
+                    "projectId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
                     }
                   },
-                  "required": ["projectId", "id", "color", "stx"]
+                  "required": ["id", "color", "projectId", "stx"]
                 },
                 "minItems": 1,
                 "maxItems": 50
@@ -20701,10 +20701,6 @@
                       "type": ["string", "null"],
                       "maxLength": 1000000
                     },
-                    "projectId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
                     "id": {
                       "type": "string",
                       "format": "uuid"
@@ -20739,11 +20735,15 @@
                     "publicAt": {
                       "type": ["string", "null"]
                     },
+                    "projectId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
                     "stx": {
                       "$ref": "#/components/schemas/StxBase"
                     }
                   },
-                  "required": ["description", "projectId", "id", "status", "stx"]
+                  "required": ["description", "id", "status", "projectId", "stx"]
                 },
                 "minItems": 1,
                 "maxItems": 50
