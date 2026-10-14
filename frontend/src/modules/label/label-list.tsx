@@ -13,6 +13,7 @@ import { groupLabelRows } from '~/modules/label/group-labels';
 import { LabelFilterButton } from '~/modules/label/label-filter';
 import { type Label, labelsCanonicalOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsScope, LabelsScopeProps } from '~/modules/label/types';
+import { sumLabelCounts, useOpenLabelCounts } from '~/modules/label/use-open-label-counts';
 import { findProjectByIdOrSlug, projectsListQueryOptions } from '~/modules/project/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -67,11 +68,13 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
 
   const words = useMemo(() => toWords(effectiveQ), [effectiveQ]);
   const rows = useLabelRows(data ?? [], highlight, words);
+  const counts = useOpenLabelCounts([entityId]);
 
   return (
     <LabelListView
       entity="project"
       rows={rows}
+      counts={counts}
       isLoading={isLoading}
       highlight={highlight}
       highlightWords={highlight ? words : []}
@@ -104,11 +107,13 @@ function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
 
   const words = useMemo(() => toWords(effectiveQ), [effectiveQ]);
   const rows = useLabelRows(labels, highlight, words);
+  const counts = useOpenLabelCounts(projectIds ?? []);
 
   return (
     <LabelListView
       entity="workspace"
       rows={rows}
+      counts={counts}
       isLoading={isLoading}
       highlight={highlight}
       highlightWords={highlight ? words : []}
@@ -120,6 +125,8 @@ function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
 type LabelListViewProps = {
   entity: LabelsScope;
   rows: LabelRow[];
+  /** Open tasks per label id; undefined while the task lists load. */
+  counts: Map<string, number> | undefined;
   isLoading: boolean;
   highlight: boolean;
   highlightWords: string[];
@@ -130,7 +137,7 @@ type LabelListViewProps = {
  * Renders selectable tag and epic tiles using internal or page scrolling.
  * Standard searches filter rows; '=' queries highlight matches.
  */
-function LabelListView({ entity, rows, isLoading, highlight, highlightWords, windowScroll }: LabelListViewProps) {
+function LabelListView({ entity, rows, counts, isLoading, highlight, highlightWords, windowScroll }: LabelListViewProps) {
   const { t } = useTranslation();
   const { tenantId } = useOrganizationLayoutContext();
 
@@ -182,7 +189,7 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
               hover swap never shifts the filter button */}
           <div className="grid shrink-0 justify-items-end *:col-start-1 *:row-start-1">
             <span className="self-center text-muted-foreground text-xs tabular-nums transition-opacity duration-200 group-focus-within/labelTile:opacity-0 group-hover/labelTile:opacity-0 motion-reduce:transition-none">
-              {row.usedCount}
+              {sumLabelCounts(counts, row.siblingIds)}
             </span>
             {entity === 'workspace' && row.projectIds.length > 0 && (
               <AvatarGroup

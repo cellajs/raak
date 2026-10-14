@@ -14,7 +14,7 @@ import { setTestConfig } from './test-utils';
 
 setTestConfig({ enabledAuthStrategies: ['passkey'] });
 
-type LabelRow = { id: string; name: string; mode: string; usedCount: number };
+type LabelRow = { id: string; name: string; mode: string };
 
 describe('Label lists, primary label deletes and API key reads of their channels', async () => {
   const call = await createAppClient();

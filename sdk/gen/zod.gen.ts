@@ -799,7 +799,6 @@ export const zLabel = z.object({
   projectId: z.uuid(),
   organizationId: z.uuid(),
   stx: zStxBase,
-  usedCount: z.int().gte(0).optional(),
 });
 
 /**
@@ -2959,7 +2958,7 @@ export const zGetLabelsPath = z.object({
 
 export const zGetLabelsQuery = z.object({
   q: z.string().max(255).optional(),
-  sort: z.enum(['name', 'usedCount']).optional().default('name'),
+  sort: z.enum(['name']).optional().default('name'),
   order: z.enum(['asc', 'desc']).optional().default('asc'),
   offset: z.string().regex(/^\d+$/).optional(),
   limit: z.string().regex(/^\d+$/).optional(),

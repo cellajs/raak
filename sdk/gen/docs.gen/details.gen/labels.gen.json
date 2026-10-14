@@ -111,8 +111,7 @@
                       }
                     },
                     "ref": "#/components/schemas/StxBase"
-                  },
-                  "usedCount": { "type": "integer", "required": false, "minimum": 0 }
+                  }
                 },
                 "ref": "#/components/schemas/Label"
               }
@@ -237,7 +236,7 @@
           "sort": {
             "type": "string",
             "required": false,
-            "enum": ["name", "usedCount"]
+            "enum": ["name"]
           },
           "order": {
             "type": "string",
@@ -366,8 +365,7 @@
                       }
                     },
                     "ref": "#/components/schemas/StxBase"
-                  },
-                  "usedCount": { "type": "integer", "required": false, "minimum": 0 }
+                  }
                 },
                 "ref": "#/components/schemas/Label"
               }
@@ -556,8 +554,7 @@
                       }
                     },
                     "ref": "#/components/schemas/StxBase"
-                  },
-                  "usedCount": { "type": "integer", "required": false, "minimum": 0 }
+                  }
                 },
                 "ref": "#/components/schemas/Label"
               }
@@ -960,8 +957,7 @@
                 }
               },
               "ref": "#/components/schemas/StxBase"
-            },
-            "usedCount": { "type": "integer", "required": false, "minimum": 0 }
+            }
           },
           "ref": "#/components/schemas/Label",
           "contentType": "application/json"
@@ -1153,8 +1149,7 @@
                 }
               },
               "ref": "#/components/schemas/StxBase"
-            },
-            "usedCount": { "type": "integer", "required": false, "minimum": 0 }
+            }
           },
           "ref": "#/components/schemas/Label",
           "contentType": "application/json"

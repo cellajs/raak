@@ -4,7 +4,7 @@ import type { LabelRow } from '~/modules/label/types';
 
 /**
  * Group labels into visible rows by slug: rows sharing a slug across projects collapse into one
- * (aggregating usedCount and collecting sibling ids), so a workspace shows a single row per label.
+ * (collecting sibling ids), so a workspace shows a single row per label.
  * Slug is the stable cross-project identity; it survives renames, where the display name does not.
  * The single source of the display grouping rule; the panel table, label page and picker all derive
  * from it. Operations keep their own identity: rename/delete on epics act per row (id), so merged
@@ -24,7 +24,6 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
     }
 
     const aggregates = {
-      usedCount: (existing.usedCount ?? 0) + (label.usedCount ?? 0),
       siblingIds: [...existing.siblingIds, label.id],
       projectIds: existing.projectIds.includes(label.projectId) ? existing.projectIds : [...existing.projectIds, label.projectId],
     };
@@ -43,7 +42,7 @@ export const findLabelGroup = (labels: Label[], labelId: string): LabelRow | und
  * Picker view over the grouped rows: one representative per name (preferring the current
  * project's copy), sorted by recency then name.
  */
-export const deduplicateLabels = (labels: Label[], preferredProjectId: string, organizationId?: string): Label[] => {
+export const deduplicateLabels = (labels: Label[], preferredProjectId: string, organizationId?: string): LabelRow[] => {
   const rows = groupLabelRows(labels, { preferredProjectId });
   const getScore = organizationId ? labelRecencyStore.getState().getScore : undefined;
 

@@ -7,7 +7,7 @@ import { appConfig } from 'shared';
 import { deriveDocument } from 'shared/utils/derive-description-core';
 import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
-import { findLabelInCache, labelQueryKeys } from '~/modules/label/query';
+import { findLabelInCache } from '~/modules/label/query';
 import { getProjectPublicAt } from '~/modules/project/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
@@ -329,11 +329,6 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
     if (context?.optimisticTask && findTaskInCache(context.optimisticTask.id)) {
       cacheUpdate(orgKey, [createdTask]);
     }
-
-    // Backend bumped usedCount, mark label list stale (SSE handles refresh).
-    if (createdTask.labels.length > 0) {
-      queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
-    }
   },
   // Error-only: onSuccess patches cache, SSE handles other users
   onSettled: (_data, error, variables) => {
@@ -399,11 +394,6 @@ const taskUpdateOptions = (
     }
     cacheUpdate(orgKey, [merged]);
     queryClient.setQueryData<Task>(detailKey, (old) => (old ? { ...old, ...merged } : old));
-
-    // Backend managed label usedCount side-effects, mark label list stale (SSE handles refresh).
-    if (variables.ops && ('labels' in variables.ops || 'projectId' in variables.ops)) {
-      queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
-    }
   },
   // Error-only: onSuccess patches cache, SSE handles other users
   onSettled: (_data, error, variables) => {
@@ -428,12 +418,6 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
   onError: (error, _variables, context) => {
     handleError('delete', error);
     if (context?.tasksToDelete) insertEntitiesIntoHome(queryClient, context.tasksToDelete);
-  },
-  onSuccess: (_data, { tasksToDelete }) => {
-    // Backend decremented label usedCount, mark label list stale (SSE handles refresh).
-    if (tasksToDelete.some((t) => t.labels.length > 0)) {
-      queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
-    }
   },
   // Error-only: onMutate removed from all caches, SSE handles other users
   onSettled: (_data, error, variables) => {

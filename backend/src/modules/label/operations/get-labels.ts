@@ -14,7 +14,7 @@ import { buildCollectionReadWhere } from '#/permissions/row-predicates';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
-export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promise<{ items: (LabelModel & { usedCount: number })[]; total: number }> {
+export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promise<{ items: LabelModel[]; total: number }> {
   const { projectId, workspaceId, ...queryInfo } = input;
   const { q, sort, order, offset, limit, seqCursor, modes } = queryInfo;
   const organizationId = ctx.var.organization.id;

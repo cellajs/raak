@@ -22,7 +22,6 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     // Resolve fresh entities from the query cache at action time; list queries overlap, so dedupe by id
     const idSet = new Set(selectedTaskIds);
     const tasksToDelete = [...new Map(cachedTasks().flatMap((task) => (idSet.has(task.id) ? [[task.id, task] as const] : []))).values()];
-    // Backend handles label counter side-effects (usedCount decrement + auto-delete) atomically
     await tasksDeleteMutation({ tasksToDelete });
     clearSelection();
   };

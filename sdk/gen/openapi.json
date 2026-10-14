@@ -3822,10 +3822,6 @@
           },
           "stx": {
             "$ref": "#/components/schemas/StxBase"
-          },
-          "usedCount": {
-            "type": "integer",
-            "minimum": 0
           }
         },
         "required": [
@@ -17679,7 +17675,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["name", "usedCount"],
+              "enum": ["name"],
               "default": "name"
             },
             "required": false,

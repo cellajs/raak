@@ -12,6 +12,7 @@ import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
+import { sumLabelCounts, useOpenLabelCounts } from '~/modules/label/use-open-label-counts';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import {
   ComboboxHotkeyHint,
@@ -110,6 +111,7 @@ export function SelectLabels({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
     combine: combineTaskLabels,
   });
+  const openCounts = useOpenLabelCounts(labelProjectIds);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -139,7 +141,7 @@ export function SelectLabels({
     return matchedLabels;
   }, [searchValue, initLabels]);
 
-  // Top 8 labels by recency → usedCount → name, excluding already-selected
+  // Top 8 labels by recency → open-task count → name, excluding already-selected
   const suggestedLabels = useMemo(() => {
     const selectedSlugs = new Set(selectedLabels.map((l) => l.slug));
     return initLabels
@@ -147,12 +149,12 @@ export function SelectLabels({
       .sort((a, b) => {
         const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
         if (recency !== 0) return recency;
-        const usage = (b.usedCount ?? 0) - (a.usedCount ?? 0);
+        const usage = (sumLabelCounts(openCounts, b.siblingIds) ?? 0) - (sumLabelCounts(openCounts, a.siblingIds) ?? 0);
         if (usage !== 0) return usage;
         return a.name.localeCompare(b.name);
       })
       .slice(0, 8);
-  }, [initLabels, selectedLabels, getScore, organizationId]);
+  }, [initLabels, selectedLabels, getScore, organizationId, openCounts]);
 
   // Combined list for rendering (selected first, then suggested)
   const visibleLabels = useMemo(
@@ -221,7 +223,6 @@ export function SelectLabels({
       color: matchedLabelColor ?? fallbackColor,
       keywords: '',
       projectId,
-      usedCount: 0,
       organizationId: organizationId,
       tenantId,
     };
