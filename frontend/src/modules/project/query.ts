@@ -28,10 +28,11 @@ import { meKeys } from '~/modules/me/query';
 import { addMyMembershipCache, getApiIncludedMembership, upsertMyMembershipCache } from '~/modules/memberships/query-mutations';
 import type { EnrichedProject } from '~/modules/project/types';
 import { workspaceQueryKeys } from '~/modules/workspace/query';
-import { cacheCreate, cacheRemove, cacheUpdate } from '~/query/basic/cache-mutations';
+import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
+import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
 import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { getSimilarQueries } from '~/query/basic/mutate-query';
@@ -74,7 +75,7 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
   const {
     q = '',
     sort = 'displayOrder',
-    order = sort === 'displayOrder' ? 'asc' : 'desc',
+    order = defaultOrderFor(sort),
     organizationId,
     workspaceId,
     relatableUserId,
@@ -183,7 +184,11 @@ export const useProjectDeleteMutation = () => {
       for (const [queryKey] of labelsQueries) queryClient.invalidateQueries({ queryKey });
 
       cacheRemove(listKey, projects);
-      queryClient.invalidateQueries({ queryKey: keys.detail.base });
+      removeDetailQueriesOnceUnobserved(
+        queryClient,
+        keys.detail.base,
+        projects.map(({ id }) => id),
+      );
     },
     onSettled: () => {
       invalidateIfLastMutation(queryClient, keys.all, listKey);

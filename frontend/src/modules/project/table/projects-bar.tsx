@@ -1,22 +1,18 @@
 import { TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { resolveCan } from 'shared';
 import { ConfirmText } from '~/modules/common/confirm-text';
 import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
 import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/table-bar-shell';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import type { EnrichedOrganization } from '~/modules/organization/types';
 import { DeleteProjects } from '~/modules/project/delete-projects';
-import { canOnProject } from '~/modules/project/table/can-on-project';
 import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/project/types';
 import { useUserStore } from '~/modules/user/user-store';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
-type ProjectsTableBarProps = BaseTableBarProps<EnrichedProject, ProjectsRouteSearchParams> & { organization: EnrichedOrganization };
-
 export function ProjectsTableBar({
-  organization,
   selected,
   queryKey,
   searchVars,
@@ -24,7 +20,7 @@ export function ProjectsTableBar({
   columns,
   setColumns,
   clearSelection,
-}: ProjectsTableBarProps) {
+}: BaseTableBarProps<EnrichedProject, ProjectsRouteSearchParams>) {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
   const userId = useUserStore((state) => state.user?.id);
@@ -37,7 +33,7 @@ export function ProjectsTableBar({
   const resourceOf = (count: number) => (count > 1 ? t('c:project_other') : t('c:project')).toLowerCase();
 
   // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
-  const deletable = selected.filter((row) => canOnProject('delete', row, organization.can, userId));
+  const deletable = selected.filter((row) => resolveCan(row.can?.project?.delete, row.createdBy?.id ?? null, userId));
 
   const openDeleteDialog = () => {
     createDialog(<DeleteProjects dialog projects={deletable} callback={clearSelection} />, {

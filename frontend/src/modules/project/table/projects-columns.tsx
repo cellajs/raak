@@ -3,7 +3,7 @@ import i18n from 'i18next';
 import { BoxIcon, GlobeIcon, PencilIcon, ShieldIcon, TrashIcon, UserRoundIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { hierarchy, isProduct } from 'shared';
+import { hierarchy, isProduct, resolveCan } from 'shared';
 import { getMemberStatIcon } from '~/lib/entity-modules';
 import { ConfirmText } from '~/modules/common/confirm-text';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
@@ -16,7 +16,6 @@ import { openPopConfirm } from '~/modules/common/popconfirm';
 import { openEditSheet } from '~/modules/common/sheeter/open-edit-sheet';
 import type { EnrichedOrganization } from '~/modules/organization/types';
 import { DeleteProjects } from '~/modules/project/delete-projects';
-import { canOnProject } from '~/modules/project/table/can-on-project';
 import type { EnrichedProject } from '~/modules/project/types';
 import { UpdateProjectForm } from '~/modules/project/update-project-form';
 import { Button } from '~/modules/ui/button';
@@ -30,7 +29,6 @@ export const useColumns = (organization: EnrichedOrganization) => {
   const { t } = useTranslation();
   const userId = useUserStore((state) => state.user?.id);
   const organizationSlug = organization.slug;
-  const organizationCan = organization.can;
 
   return useMemo(
     (): ColumnOrColumnGroup<EnrichedProject>[] => [
@@ -63,7 +61,7 @@ export const useColumns = (organization: EnrichedOrganization) => {
       },
       ellipsisColumn<EnrichedProject>((row) => {
         const options: EllipsisOption<EnrichedProject>[] = [];
-        if (canOnProject('update', row, organizationCan, userId)) {
+        if (resolveCan(row.can?.project?.update, row.createdBy?.id ?? null, userId)) {
           options.push({
             label: i18n.t('c:edit'),
             icon: PencilIcon,
@@ -78,7 +76,7 @@ export const useColumns = (organization: EnrichedOrganization) => {
             },
           });
         }
-        if (canOnProject('delete', row, organizationCan, userId)) {
+        if (resolveCan(row.can?.project?.delete, row.createdBy?.id ?? null, userId)) {
           options.push({
             label: i18n.t('c:delete'),
             icon: TrashIcon,
@@ -160,6 +158,6 @@ export const useColumns = (organization: EnrichedOrganization) => {
         renderCell: ({ row, tabIndex }) => row.createdBy && <UserCell compactable user={row.createdBy} tabIndex={tabIndex} />,
       },
     ],
-    [t, userId, organizationSlug, organizationCan],
+    [t, userId, organizationSlug],
   );
 };

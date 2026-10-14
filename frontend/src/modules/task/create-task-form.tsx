@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDownIcon, TagIcon, UserXIcon, XIcon } from 'lucide-react';
+import { ChevronDownIcon, TagIcon, UserXIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -36,8 +36,8 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
-import { Badge } from '~/modules/ui/badge';
 import { Button, buttonVariants } from '~/modules/ui/button';
+import { Chip } from '~/modules/ui/chip';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '~/modules/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { useCurrentUser } from '~/modules/user/user-store';
@@ -154,8 +154,8 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
     // Backend handles label usedCount side-effects atomically
     await taskMutation
       .mutateAsync(newTask)
-      // Creates never coalesce, so this always resolves to the created task; the guard narrows the type.
-      .then((createdTask) => createdTask !== COALESCED && onSuccess?.(createdTask))
+      // Creates never coalesce, so this always resolves to the created tasks; the guard narrows the type.
+      .then((createdTasks) => createdTasks !== COALESCED && onSuccess?.(createdTasks[0]))
       .catch(() => {
         const { description, status, fullLabels: labels, fullAssignedTo: assignedTo } = newTask;
         setForm(formId, { description, status, primaryLabelId: values.primaryLabelId, labels, assignedTo });
@@ -257,60 +257,50 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
             render={({ field: { onChange, value: labels } }) => {
               return (
                 <FormItem>
-                  <FormControl>
-                    <Button
-                      type="button"
-                      aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
-                      variant="input"
-                      size="sm"
-                      id={`labels-${formId}`}
-                      className="relative flex h-auto min-h-9 justify-start py-1 hover:bg-accent/20"
-                      onClick={({ currentTarget }) =>
-                        handleTaskDropdownClick({
-                          dropdownType: 'labels',
-                          value: labels,
-                          projectId,
-                          onChange,
-                          triggerId: currentTarget.id,
-                          triggerRef: { current: currentTarget },
-                          triggerWidth: currentTarget.clientWidth,
-                        })
-                      }
-                    >
-                      <div className="flex flex-wrap items-center gap-1 truncate">
-                        {labels.length > 0 ? (
-                          labels.map(({ name, id }) => {
-                            return (
-                              <div key={id} className="flex flex-wrap items-center justify-center rounded-full border bg-border pr-[0.17rem] pl-2">
-                                <Badge variant="outline" className="h-6 border-0 px-1 font-normal text-[.75rem] text-sm shadow-none last:mr-0">
-                                  {name}
-                                </Badge>
-                                {/* biome-ignore lint/a11y/useKeyWithClickEvents: element is not keyboard-focusable and handled intentionally via mouse*/}
-                                <div
-                                  className={cn(
-                                    buttonVariants({ size: 'micro', variant: 'ghost', press: false }),
-                                    'size-5 rounded-full opacity-70 hover:opacity-100 focus-visible:ring-offset-0',
-                                  )}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    onChange(labels.filter((l) => l.name !== name));
-                                  }}
-                                >
-                                  <XIcon strokeWidth={3} />
-                                </div>
-                              </div>
-                            );
+                  <div
+                    className={cn(
+                      buttonVariants({ variant: 'input', size: 'sm', press: false }),
+                      'relative flex h-auto min-h-9 w-full justify-start py-1 hover:bg-accent/20',
+                    )}
+                  >
+                    <FormControl>
+                      <button
+                        type="button"
+                        aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
+                        id={`labels-${formId}`}
+                        className="focus-effect absolute inset-0 rounded-md"
+                        onClick={({ currentTarget }) =>
+                          handleTaskDropdownClick({
+                            dropdownType: 'labels',
+                            value: labels,
+                            projectId,
+                            onChange,
+                            triggerId: currentTarget.id,
+                            triggerRef: { current: currentTarget },
+                            triggerWidth: currentTarget.clientWidth,
                           })
-                        ) : (
-                          <>
-                            <TagIcon className="opacity-75" />
-                            <span className="font-normal opacity-75">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
-                          </>
-                        )}
-                      </div>
-                    </Button>
-                  </FormControl>
+                        }
+                      />
+                    </FormControl>
+                    <div className="pointer-events-none relative flex min-w-0 flex-wrap items-center gap-1 font-normal">
+                      {labels.length > 0 ? (
+                        labels.map(({ name, id }) => (
+                          <Chip
+                            key={id}
+                            onRemove={() => onChange(labels.filter((l) => l.id !== id))}
+                            removeLabel={t('c:remove_resource', { resource: name })}
+                          >
+                            {name}
+                          </Chip>
+                        ))
+                      ) : (
+                        <>
+                          <TagIcon className="opacity-75" />
+                          <span className="opacity-75">{t('c:select_resource', { resource: t('c:label_other').toLowerCase() })}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               );
