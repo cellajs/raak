@@ -876,7 +876,6 @@ export type Label = {
   projectId: string;
   organizationId: string;
   stx: StxBase;
-  usedCount?: number;
 };
 
 /**
@@ -7064,7 +7063,7 @@ export type GetLabelsData = {
   };
   query?: {
     q?: string;
-    sort?: 'name' | 'usedCount';
+    sort?: 'name';
     order?: 'asc' | 'desc';
     offset?: string;
     limit?: string;

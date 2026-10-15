@@ -151,7 +151,6 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
       attachmentsCreationCallback({ organizationId, tenantId, projectId })(attachments);
     }
 
-    // Backend handles label usedCount side-effects atomically
     await taskMutation
       .mutateAsync(newTask)
       // Creates never coalesce, so this always resolves to the created tasks; the guard narrows the type.

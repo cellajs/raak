@@ -8,7 +8,7 @@ import { isRecord } from 'shared/utils/as-record';
 import { deriveDocument } from 'shared/utils/derive-description-core';
 import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
-import { findLabelInCache, labelQueryKeys } from '~/modules/label/query';
+import { findLabelInCache } from '~/modules/label/query';
 import { getProjectPublicAt } from '~/modules/project/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
@@ -328,11 +328,6 @@ const taskCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateD
     // Replace optimistic with real task in-place to preserve DOM element (and ongoing glow animation).
     // An update inserts nothing, so a row an SSE delete removed while the POST was out stays gone.
     cacheUpdate(taskKeys.list.org(variables.organizationId), createdTasks);
-
-    // Backend bumped usedCount, mark label list stale (SSE handles refresh).
-    if (createdTasks.some((task) => task.labels.length > 0)) {
-      queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
-    }
   },
   // Error-only: onSuccess patches cache, SSE handles other users
   onSettled: (_data, error, variables) => {
@@ -396,11 +391,6 @@ const taskUpdateOptions = (
     }
     cacheUpdate(orgKey, [merged]);
     queryClient.setQueryData<Task>(detailKey, (old) => (old ? { ...old, ...merged } : old));
-
-    // Backend managed label usedCount side-effects, mark label list stale (SSE handles refresh).
-    if (variables.ops && ('labels' in variables.ops || 'projectId' in variables.ops)) {
-      queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
-    }
   },
   // Error-only: onSuccess patches cache, SSE handles other users
   onSettled: (_data, error, variables) => {
@@ -425,12 +415,6 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
   onError: (error, _variables, context) => {
     handleError('delete', error);
     if (context?.tasksToDelete) insertEntitiesIntoHome(queryClient, context.tasksToDelete);
-  },
-  onSuccess: (_data, { rows }) => {
-    // Backend decremented label usedCount, mark label list stale (SSE handles refresh).
-    if (rows.some((t) => t.labels.length > 0)) {
-      queryClient.invalidateQueries({ queryKey: labelQueryKeys.list.base, refetchType: 'none' });
-    }
   },
   onSettled: (data, error, variables) => {
     // A refused row left the cache in onMutate: the list read again brings it back with what changed while it was pending.

@@ -1,7 +1,7 @@
 import type { ActorContext } from '#/core/context';
 import { tenantContextIncludingDeleted } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
-import { deleteCountersByKeys, deleteLabelsByIds } from '#/modules/label/label-queries';
+import { deleteLabelsByIds } from '#/modules/label/label-queries';
 import { filterPrimaryLabelDeletes } from '#/modules/label/operations/filter-primary-label-deletes';
 import { reassignTasksFromDeletedPrimaries } from '#/modules/task/task-queries';
 import { splitByPermission } from '#/permissions/split-by-permission';
@@ -22,9 +22,6 @@ export async function deleteLabelsOp(ctx: ActorContext, ids: string[]): Promise<
 
     // Tasks reference exactly one primary label (NOT NULL), so reassignment happens in-transaction
     await reassignTasksFromDeletedPrimaries(txCtx, { deletedPrimaryIds, updatedBy: deletedBy });
-
-    // Counter cleanup is best-effort; orphaned counters are harmless stale cache.
-    await deleteCountersByKeys(txCtx, { keys: allowedIds });
   });
 
   return { data: [], rejectedIds: [...rejected] };

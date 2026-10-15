@@ -13,6 +13,7 @@ import { groupLabelRows } from '~/modules/label/group-labels';
 import { LabelFilterButton } from '~/modules/label/label-filter';
 import { type Label, labelsCanonicalOptions } from '~/modules/label/query';
 import type { LabelRow, LabelsScope, LabelsScopeProps } from '~/modules/label/types';
+import { type LabelUsage, useLabelUsage } from '~/modules/label/use-label-usage';
 import { findProjectByIdOrSlug, projectsListQueryOptions } from '~/modules/project/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -43,12 +44,12 @@ type LabelListScopeProps = { entityId: string; windowScroll?: boolean };
 const byCreatedAtDesc = (a: LabelRow, b: LabelRow) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0);
 
 /** Group labels into rows and sort newest-first, then filter (or, in highlight mode, keep all and tint later). */
-const useLabelRows = (labels: Label[], highlight: boolean, words: string[]) =>
+const useLabelRows = (labels: Label[], usage: LabelUsage, highlight: boolean, words: string[]) =>
   useMemo(() => {
-    const grouped = groupLabelRows(labels).sort(byCreatedAtDesc);
+    const grouped = groupLabelRows(labels, { usage }).sort(byCreatedAtDesc);
     if (highlight || !words.length) return grouped;
     return grouped.filter((row) => matchesSearch(row, words));
-  }, [labels, highlight, words]);
+  }, [labels, usage, highlight, words]);
 
 /**
  * Project scope reads the canonical per-project list (the same key the optimistic create splices
@@ -64,9 +65,10 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
     ...labelsCanonicalOptions({ organizationId, tenantId, projectId: entityId }),
     select: (result) => result.items.filter((label) => isPanelLabel(label.mode)),
   });
+  const usage = useLabelUsage([entityId]);
 
   const words = useMemo(() => toWords(effectiveQ), [effectiveQ]);
-  const rows = useLabelRows(data ?? [], highlight, words);
+  const rows = useLabelRows(data ?? [], usage, highlight, words);
 
   return (
     <LabelListView
@@ -100,10 +102,11 @@ function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
     queries: (projectIds ?? []).map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
     combine: combinePanelLabels,
   });
+  const usage = useLabelUsage(projectIds ?? []);
   const isLoading = projectIds === undefined || pending;
 
   const words = useMemo(() => toWords(effectiveQ), [effectiveQ]);
-  const rows = useLabelRows(labels, highlight, words);
+  const rows = useLabelRows(labels, usage, highlight, words);
 
   return (
     <LabelListView

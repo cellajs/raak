@@ -21,4 +21,4 @@ export interface LabelsScopeProps {
  * `nameLower`/`keywordsLower` are precomputed at grouping time so highlight-mode search does
  * not re-lowercase every row on each render.
  */
-export type LabelRow = Label & { siblingIds: string[]; projectIds: string[]; nameLower: string; keywordsLower: string };
+export type LabelRow = Label & { usedCount: number; siblingIds: string[]; projectIds: string[]; nameLower: string; keywordsLower: string };
