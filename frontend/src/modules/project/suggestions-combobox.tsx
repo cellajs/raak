@@ -11,6 +11,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Badge } from '~/modules/ui/badge';
+import { Chip } from '~/modules/ui/chip';
 import {
   Combobox,
   ComboboxContent,
@@ -84,12 +85,9 @@ export function ProjectSuggestionCombobox({ value, workspaceId, tenantId, target
         }
       >
         {value.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex min-w-0 flex-wrap gap-1">
             {value.map((item) => (
-              <Badge key={item.id} variant="secondary" className="flex items-center gap-1.5 py-1 pr-2 pl-1">
-                <EntityAvatar type={item.entityType} className="h-4 w-4 shrink-0" id={item.id} name={item.name} url={item.thumbnailUrl} />
-                <span className="font-medium text-xs leading-none">{item.name}</span>
-              </Badge>
+              <Chip key={item.id}>{item.name}</Chip>
             ))}
           </div>
         ) : (
