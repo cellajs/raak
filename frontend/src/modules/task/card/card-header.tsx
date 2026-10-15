@@ -10,7 +10,7 @@ import { ConfirmText } from '~/modules/common/confirm-text';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { PopConfirm } from '~/modules/common/popconfirm';
+import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -56,25 +56,17 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
     const triggerRef = { current: currentTarget };
 
     const handleDeleteClick = () => {
-      const { update, remove } = useDropdowner.getState();
+      const { remove } = useDropdowner.getState();
       // `task.name` is empty for a task made in the app: its title is the text of its summary block
       const title = titleFromDocument(task.summary);
-      update({
-        kind: 'panel',
-        content: (
-          <PopConfirm
-            title={
-              title ? (
-                <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: truncateMiddle(title, 20) }} />
-              ) : (
-                <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
-              )
-            }
-          >
-            <DeleteTask task={task} callback={remove} onCancel={remove} />
-          </PopConfirm>
+      openPopConfirm(
+        title ? (
+          <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: truncateMiddle(title, 20) }} />
+        ) : (
+          <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
         ),
-      });
+        <DeleteTask task={task} callback={remove} onCancel={remove} />,
+      );
     };
 
     create(
