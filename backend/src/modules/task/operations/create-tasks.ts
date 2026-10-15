@@ -14,6 +14,7 @@ import { insertTasks } from '#/modules/task/task-queries';
 import { taskContract, type taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
+import { type ResolvedPlacement, resolvePlacement } from '#/permissions/product-placement';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
@@ -21,7 +22,10 @@ import { log } from '#/utils/logger';
 type CreateTasksInput = z.infer<typeof taskCreateManyStxBodySchema>;
 type ReturnTask = Awaited<ReturnType<typeof hydrateTasks>>[number];
 
-export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput): Promise<{ data: ReturnTask[]; rejectedIds: string[] }> {
+export async function createTasksOp(
+  ctx: OrgContext,
+  rawInput: CreateTasksInput,
+): Promise<{ data: ReturnTask[]; rejectedIds: string[]; replayed: boolean }> {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = rawInput.map((item) => taskContract.normalizeCreateItem(item));
   const organization = ctx.var.organization;
@@ -36,7 +40,7 @@ export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput)
   const existing = await checkIdempotency(ctx, tasksTable, batchStxId);
   if (existing) {
     const [users, labels] = await tenantRead(ctx, (readCtx) => getTaskRelations(readCtx, { tasks: existing }));
-    return { data: hydrateTasks(existing, users, labels), rejectedIds: [] };
+    return { data: hydrateTasks(existing, users, labels), rejectedIds: [], replayed: true };
   }
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
@@ -46,28 +50,32 @@ export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput)
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
   }
 
+  const placements: ResolvedPlacement<'task'>[] = [];
+  for (const item of input) placements.push((await resolvePlacement(ctx, 'task', item)).columns);
+
   // Resolve primary labels per project: validate provided ids, default to first by displayOrder
-  const projectIds = [...new Set(input.map((item) => item.projectId))];
+  const projectIds = [...new Set(placements.map(({ projectId }) => projectId))];
   const primaryLabelRows = await tenantRead(ctx, (readCtx) => findLivePrimaryLabels(readCtx, { projectIds }));
   const primariesByProject = new Map<string, typeof primaryLabelRows>();
   for (const row of primaryLabelRows) {
     primariesByProject.set(row.projectId, [...(primariesByProject.get(row.projectId) ?? []), row]);
   }
 
-  const tasksToInsert = input.map(({ stx, id, ...taskInfo }) => {
+  const tasksToInsert = input.map(({ stx, id, ...taskInfo }, index) => {
+    const placement = placements[index];
     // Derived attachments are UUID-shape-checked only: attachment rows created in the
     // same client batch may not be committed yet, so existence is not enforced here.
     taskContract.assertBlockFields(taskInfo, organization.id);
     const descriptionText = String(taskInfo.description ?? '');
     const derived = deriveDescriptionProps(descriptionText);
 
-    const projectPrimaries = primariesByProject.get(taskInfo.projectId) ?? [];
+    const projectPrimaries = primariesByProject.get(placement.projectId) ?? [];
     // Unknown/missing ids fall back to the project default (graceful for offline replays)
     const primaryLabelId = projectPrimaries.some((l) => l.id === taskInfo.primaryLabelId)
       ? (taskInfo.primaryLabelId as string)
       : projectPrimaries[0]?.id;
     if (!primaryLabelId) {
-      throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId: taskInfo.projectId } });
+      throw new AppError(409, 'project_without_primary_label', 'warn', { entityType: 'task', meta: { projectId: placement.projectId } });
     }
 
     const task = {
@@ -77,6 +85,7 @@ export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput)
       entityType: 'task' as const,
       description: descriptionText,
       ...derived,
+      ...placement,
       displayOrder: taskInfo.displayOrder ?? 0,
       tenantId: organization.tenantId,
       organizationId: organization.id,
@@ -101,5 +110,5 @@ export async function createTasksOp(ctx: OrgContext, rawInput: CreateTasksInput)
 
   log.info('Tasks created', { count: createdTasks.length });
 
-  return { data: taskResponses, rejectedIds: [] };
+  return { data: taskResponses, rejectedIds: [], replayed: false };
 }

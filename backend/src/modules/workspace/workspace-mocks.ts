@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { UniqueEnforcer } from 'enforce-unique';
 import {
   generateMockChannelCounts,
   mockBatchResponse,
@@ -7,6 +6,7 @@ import {
   mockPaginated,
   mockPastIsoDate,
   mockTenantId,
+  mockUniqueEnforcer,
   mockUuid,
   withFakerSeed,
 } from '#/mocks';
@@ -14,8 +14,7 @@ import type { MembershipBaseModel } from '#/modules/memberships/helpers/select';
 import { mockMembershipBase } from '#/modules/memberships/memberships-mocks';
 import type { InsertWorkspaceModel, WorkspaceModel } from '#/modules/workspace/workspace-db';
 
-// Enforces unique workspace names
-const workspaceName = new UniqueEnforcer();
+const workspaceName = mockUniqueEnforcer();
 
 /**
  * Generates base workspace fields shared between insert and response mocks.

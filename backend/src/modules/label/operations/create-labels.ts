@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import type { ChannelEntityType } from 'shared';
 import { labelSlug } from 'shared/config/labels-config';
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
@@ -6,19 +7,23 @@ import { buildStx } from '#/core/stx';
 import { tenantContext, tenantRead } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
-import { type LabelModel, labelsTable } from '#/modules/label/label-db';
+import { type InsertLabelModel, type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { findLabelsByOrg, insertLabels } from '#/modules/label/label-queries';
 import { labelContract, type labelCreateManyStxBodySchema } from '#/modules/label/label-schema';
 import { getValidChannel } from '#/permissions';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
+import { resolvePlacement } from '#/permissions/product-placement';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
 type CreateLabelsInput = z.infer<typeof labelCreateManyStxBodySchema>;
 
-export async function createLabelsOp(ctx: OrgContext, rawInput: CreateLabelsInput): Promise<{ data: LabelModel[]; rejectedIds: string[] }> {
+export async function createLabelsOp(
+  ctx: OrgContext,
+  rawInput: CreateLabelsInput,
+): Promise<{ data: LabelModel[]; rejectedIds: string[]; replayed: boolean }> {
   // Lens seam: canonicalize old-shape field names before any body access
   const input = rawInput.map((item) => labelContract.normalizeCreateItem(item));
   const { organization, tenant } = ctx.var;
@@ -31,7 +36,7 @@ export async function createLabelsOp(ctx: OrgContext, rawInput: CreateLabelsInpu
   // Idempotency check
   const batchStxId = input[0].stx.mutationId;
   const existing = await checkIdempotency(ctx, labelsTable, batchStxId);
-  if (existing) return { data: existing, rejectedIds: [] };
+  if (existing) return { data: existing, rejectedIds: [], replayed: true };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
   const currentCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'label' });
@@ -41,21 +46,27 @@ export async function createLabelsOp(ctx: OrgContext, rawInput: CreateLabelsInpu
   }
 
   // Creating primary/epic labels requires project-admin authority (project update permission)
-  const managedProjectIds = [...new Set(input.filter((item) => item.mode !== 'secondary').map((item) => item.projectId))];
-  for (const managedProjectId of managedProjectIds) {
-    await getValidChannel(ctx, managedProjectId, 'project', 'update');
-  }
+  const managedHome = async (homeCtx: OrgContext, id: string, type: ChannelEntityType) => (await getValidChannel(homeCtx, id, type, 'update')).entity;
 
   // Fetch existing labels in org for duplicate check and color matching
   const existingLabels = await tenantRead(ctx, (readCtx) => findLabelsByOrg(readCtx));
 
-  const labelsToInsert = input.map(({ stx, ...labelInfo }) => {
+  const labelsToInsert: InsertLabelModel[] = [];
+  for (const { stx, ...labelInfo } of input) {
     // Maintain same color for labels already in organization
     const sameLabelInOrg = existingLabels.find(({ name }) => name === labelInfo.name);
     if (sameLabelInOrg) labelInfo.color = sameLabelInOrg.color;
 
+    const { columns: placement } = await resolvePlacement(
+      ctx,
+      'label',
+      labelInfo,
+      labelInfo.mode === 'secondary' ? {} : { resolveHome: managedHome },
+    );
+
     const label = {
       ...labelInfo,
+      ...placement,
       slug: labelInfo.slug ?? labelSlug(labelInfo.name ?? 'New label'),
       entityType: 'label' as const,
       tenantId: organization.tenantId,
@@ -66,8 +77,8 @@ export async function createLabelsOp(ctx: OrgContext, rawInput: CreateLabelsInpu
     };
 
     canCreateEntity(ctx, buildSubject('label', label));
-    return label;
-  });
+    labelsToInsert.push(label);
+  }
 
   const labelRecords = await tenantContext(ctx, async (txCtx) => {
     const rows = await insertLabels(txCtx, { labels: labelsToInsert });
@@ -78,5 +89,5 @@ export async function createLabelsOp(ctx: OrgContext, rawInput: CreateLabelsInpu
 
   log.info('Labels created', { count: labelRecords.length });
 
-  return { data: labelRecords, rejectedIds: [] };
+  return { data: labelRecords, rejectedIds: [], replayed: false };
 }

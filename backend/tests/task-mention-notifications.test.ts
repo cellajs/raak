@@ -3,7 +3,6 @@ import { updateTask } from 'sdk';
 import { appConfig } from 'shared';
 import { generateId } from 'shared/utils/entity-id';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { generateServerHLC } from '#/core/stx';
 import { getSeedDb } from '#/db/db';
 import type { ActivityEvent } from '#/lib/activity-bus';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
@@ -12,7 +11,7 @@ import { fanOutNotifications } from '#/modules/notification/operations/fan-out';
 import { projectsTable } from '#/modules/project/project-db';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
-import { mockStxBase } from '#/schemas/sync-transaction-mocks';
+import { mockStxBase, mockStxFor } from '#/schemas/sync-transaction-mocks';
 import { defaultHeaders } from './fixtures';
 import { clearSecurityTestData, createOrgUser, createTestTenant, type TestTenant } from './security/helpers';
 import { createAppClient } from './test-client';
@@ -35,8 +34,6 @@ const paragraphWithMentions = (ids: string[]) => ({
   content: ids.map((id) => ({ type: 'mention', props: { id, name: 'someone', slug: 'someone' } })),
   children: [],
 });
-
-const updateStx = () => ({ ...mockStxBase(`stx:${generateId()}`), fieldTimestamps: { description: generateServerHLC('test-client') } });
 
 const nullAncestorScopes = Object.fromEntries(
   appConfig.channelEntityTypes
@@ -103,7 +100,7 @@ describe('Task mention notifications', async () => {
   const putDescription = async (description: string) =>
     call(updateTask, {
       path: { organizationId: tenant.organization.id, tenantId: tenant.tenantId, id: taskId },
-      body: { ops: { description }, stx: updateStx() },
+      body: { ops: { description }, stx: mockStxFor('description') },
       headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
     });
 

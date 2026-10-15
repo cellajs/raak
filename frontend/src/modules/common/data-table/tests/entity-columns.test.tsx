@@ -42,7 +42,10 @@ const { exportToCsv } = await import('~/lib/export');
 
 /** What a row's delete confirmation asks: the sentence key and the row name it shows in bold. */
 type ConfirmTextProps = { i18nKey: string; values: { name: string } };
-type Column = { key: string; renderCell?: (props: { row: never; tabIndex: number }) => ReactNode } & Record<string, unknown>;
+type Column = { key: string; renderCell?: (props: { row: never; tabIndex: number }) => ReactNode; renderHeaderCell?: () => ReactNode } & Record<
+  string,
+  unknown
+>;
 
 /** Runs a column hook inside a render and returns its columns. */
 function columnsOf(useHook: () => unknown): Column[] {
@@ -67,7 +70,10 @@ const column = (columns: Column[], key: string) => {
 };
 
 /** The column without its renderer and export value, for comparing configuration. */
-const configOf = ({ renderCell, exportValue, ...config }: Column) => config;
+const configOf = ({ renderCell, renderHeaderCell, exportValue, ...config }: Column) => config;
+
+/** The markup of the column's own header, for a column that renders one. */
+const headerMarkup = (col: Column) => renderToStaticMarkup(createElement(Fragment, null, col.renderHeaderCell?.()));
 
 const cellMarkup = (col: Column, row: unknown) =>
   renderToStaticMarkup(createElement(Fragment, null, col.renderCell?.({ row: row as never, tabIndex: 0 })));
@@ -189,6 +195,18 @@ describe('date columns', () => {
   });
 });
 
+describe('count columns', () => {
+  it('organizations: a count abbreviates from a thousand with the exact number on hover, and a missing one is a dash', () => {
+    const [role] = hierarchy.getRoles('organization');
+    const col = column(columnsOf(organizations.useColumns), `${role}Count`);
+    const row = (count?: number) => ({ included: { counts: { membership: { [role]: count } } } });
+
+    expect(cellMarkup(col, row(21312))).toContain('<span data-tooltip="true" data-tooltip-content="21312">21k</span>');
+    expect(cellMarkup(col, row(999))).toContain('<span>999</span>');
+    expect(cellMarkup(col, row())).toContain('<span>-</span>');
+  });
+});
+
 describe('ellipsis columns', () => {
   // Opening a sheet checks the focused element.
   beforeAll(() => {
@@ -212,6 +230,8 @@ describe('ellipsis columns', () => {
     const row = { id: 'row-1', name: 'Row one', tenantId: 'tenant-1' };
 
     expect(configOf(col)).toEqual({ key: 'ellipsis', name: '', width: 32 });
+    // The header shows nothing and names the column for assistive technology.
+    expect(headerMarkup(col)).toBe('<span class="sr-only">c:actions</span>');
     expect(cellMarkup(col, row)).toBe('<span>c:edit|c:delete</span>');
 
     const remove = vi.spyOn(useDropdowner.getState(), 'remove');

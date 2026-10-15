@@ -1,9 +1,8 @@
-import { nanoid } from 'shared/utils/nanoid';
-import type { DbContext, UserContext } from '#/core/context';
+import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
-import { checkSlugAvailable } from '#/modules/entities/operations/check-slug';
+import { generateUniqueSlugs } from '#/modules/entities/operations/generate-unique-slugs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertMemberships } from '#/modules/memberships/operations/insert-memberships';
 import { withAuditUsers } from '#/modules/user/operations/with-audit-users';
@@ -15,17 +14,6 @@ import { log } from '#/utils/logger';
 import { createRejectionState, takeWithRestriction } from '#/utils/rejection-utils';
 
 type CreateWorkspaceItem = { id: string; name: string };
-
-/** `taken` holds the slugs given out earlier in the same request, which the database does not know yet. */
-const generateUniqueSlug = async (ctx: DbContext, baseSlug: string, taken: Set<string>): Promise<string> => {
-  if (!taken.has(baseSlug) && (await checkSlugAvailable(ctx, baseSlug, 'workspace'))) return baseSlug;
-
-  const withSuffix = `${baseSlug}-${nanoid(6)}`;
-  if (await checkSlugAvailable(ctx, withSuffix, 'workspace')) return withSuffix;
-
-  // Final fallback uses enough entropy that collisions are not expected.
-  return `${withSuffix}-${nanoid(10)}`;
-};
 
 export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorkspaceItem[]) {
   // Lens seam: canonicalize old-shape field names before any body access
@@ -50,14 +38,19 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
 
   canCreateEntity(ctx, buildSubject('workspace', { organizationId: organization.id }));
 
-  // One at a time: every item starts from the same base slug, and none of them is inserted yet.
-  const takenSlugs = new Set<string>();
-  const workspaceValues: Parameters<typeof insertWorkspaces>[1]['workspaces'] = [];
-  for (const item of itemsToCreate) {
-    const slug = await generateUniqueSlug(ctx, `${user.slug}-${organization.slug}`, takenSlugs);
-    takenSlugs.add(slug);
-    workspaceValues.push({ name: item.name, slug, createdBy: user.id, tenantId: organization.tenantId, organizationId: organization.id });
-  }
+  const slugBase = `${user.slug}-${organization.slug}`;
+  const slugs = await generateUniqueSlugs(
+    ctx,
+    itemsToCreate.map(() => slugBase),
+    'workspace',
+  );
+  const workspaceValues = itemsToCreate.map((item, index) => ({
+    name: item.name,
+    slug: slugs[index],
+    createdBy: user.id,
+    tenantId: organization.tenantId,
+    organizationId: organization.id,
+  }));
 
   const workspaceRecords = await insertWorkspaces(ctx, { workspaces: workspaceValues });
 
@@ -75,7 +68,7 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
   // Invalidate membership cache so subsequent requests see the new membership
   invalidateCache.user(user.id);
 
-  const counts = buildZeroCounts('workspace');
+  const counts = buildZeroCounts('workspace', 'admin');
   const membershipByWsId = new Map(createdMemberships.map((m) => [m.workspaceId, m]));
   const workspacesWithAudit = await withAuditUsers(ctx, workspaceRecords, user);
 

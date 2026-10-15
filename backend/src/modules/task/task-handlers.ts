@@ -11,8 +11,8 @@ import { defaultHook } from '#/utils/default-hook';
 const app = new OpenAPIHono<Env>({ defaultHook });
 
 app.openapi(taskRoutes.createTasks, async (ctx) => {
-  const result = await createTasksOp(ctx, ctx.req.valid('json'));
-  return ctx.json(result, 201);
+  const { replayed, ...result } = await createTasksOp(ctx, ctx.req.valid('json'));
+  return ctx.json(result, replayed ? 200 : 201);
 });
 
 app.openapi(taskRoutes.getTasks, async (ctx) => {

@@ -4,7 +4,7 @@ import { createLabels, createProjects, createTasks, createWorkspaces, deleteLabe
 import { afterEach, describe, expect, it } from 'vitest';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
-import { mockStxBase } from '#/schemas/sync-transaction-mocks';
+import { mockStxBase, mockStxFor } from '#/schemas/sync-transaction-mocks';
 import { adminRole, defaultHeaders } from './fixtures';
 import { adminDb, createTestOrganization } from './helpers';
 import { bearerHeaders, serviceAccountWithKey } from './oauth-helpers';
@@ -103,6 +103,33 @@ describe('Label lists, primary label deletes and API key reads of their channels
     const all = await call(deleteLabels, { path: ctx.path, body: { ids: rest.map((label) => label.id) }, headers: ctx.headers });
     expect((all.data as { rejectedIds: string[] }).rejectedIds.sort()).toEqual(rest.map((label) => label.id).sort());
     expect((await listLabels(ctx, { modes: 'primary' })).total).toBe(rest.length);
+  });
+
+  it('creates a label or a task only in a project of the request organization', async () => {
+    const ctx = await orgWithProject();
+    const other = await orgWithProject();
+
+    const label = await call(createLabels, {
+      path: ctx.path,
+      body: [{ id: crypto.randomUUID(), name: 'misplaced', color: null, projectId: other.projectId, stx: mockStxFor() }],
+      headers: ctx.headers,
+    });
+    const task = await call(createTasks, {
+      path: ctx.path,
+      body: [
+        {
+          id: crypto.randomUUID(),
+          name: 'Misplaced',
+          description: null,
+          projectId: other.projectId,
+          status: TaskStatus.Unstarted,
+          stx: mockStxFor(),
+        },
+      ],
+      headers: ctx.headers,
+    });
+
+    expect({ label: label.response.status, task: task.response.status }).toEqual({ label: 404, task: 404 });
   });
 
   it('lets an API key read a project and a workspace of its organization', async () => {

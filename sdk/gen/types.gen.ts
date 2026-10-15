@@ -7120,13 +7120,13 @@ export type GetLabelsResponse = GetLabelsResponses[keyof GetLabelsResponses];
 export type CreateLabelsData = {
   body: Array<{
     name?: string;
-    projectId: string;
     id: string;
     color: string | null;
     mode?: 'primary' | 'secondary' | 'epic';
     slug?: string;
     icon?: string | null;
     displayOrder?: number;
+    projectId: string;
     stx: StxBase;
   }>;
   path: {
@@ -8438,7 +8438,6 @@ export type CreateTasksData = {
   body: Array<{
     name?: string;
     description: string | null;
-    projectId: string;
     id: string;
     status: 6 | 5 | 4 | 3 | 2 | 1 | 0;
     primaryLabelId?: string;
@@ -8446,6 +8445,7 @@ export type CreateTasksData = {
     labels?: Array<string>;
     assignedTo?: Array<string>;
     publicAt?: string | null;
+    projectId: string;
     stx: StxBase;
   }>;
   path: {

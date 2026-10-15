@@ -6,6 +6,7 @@ import { evolutionContract } from '#/core/schema-evolution/evolution-contract';
 import { createInsertSchema, createSelectSchema } from '#/db/utils/drizzle-schema';
 import { labelsTable } from '#/modules/label/label-db';
 import { mockLabelResponse } from '#/modules/label/label-mocks';
+import { placementFieldsSchema, validatePlacement } from '#/permissions/product-placement';
 import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validIdSchema, validUuidSchema } from '#/schemas';
 import { iconNameSchema } from '#/schemas/icon-name-schema';
 import { labelSlugSchema } from '#/schemas/label-slug-schema';
@@ -14,13 +15,14 @@ import { pick } from '#/utils/pick';
 const labelInsertSchema = createInsertSchema(labelsTable);
 const labelSelectSchema = createSelectSchema(labelsTable);
 
-const labelCreateSchema = labelInsertSchema.pick({ name: true, projectId: true }).extend({
+const labelCreateSchema = labelInsertSchema.pick({ name: true }).extend({
   id: validUuidSchema,
   color: z.string().max(maxLength.field).nullable(),
   mode: z.enum(labelModes).default('secondary'),
   slug: labelSlugSchema.optional(),
   icon: iconNameSchema.nullable().optional(),
   displayOrder: z.number().optional(),
+  ...placementFieldsSchema('label'),
 });
 
 export const labelSchema = z
@@ -88,5 +90,14 @@ export const labelListQuerySchema = paginationQuerySchema
   })
   .refine((data) => !data.projectId || !data.workspaceId, { message: 'Only one of projectId or workspaceId can be provided' });
 
-export const labelCreateManyStxBodySchema = labelContract.createItemSchema.array().min(1).max(50);
+export const labelCreateManyStxBodySchema = labelContract.createItemSchema
+  .array()
+  .min(1)
+  .max(50)
+  .superRefine((items, ctx) => {
+    items.forEach((item, index) => {
+      const issue = validatePlacement('label', item);
+      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message });
+    });
+  });
 export const labelCreateResponseSchema = batchResponseSchema(labelSchema);

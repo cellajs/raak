@@ -61,7 +61,6 @@ function ProjectsTable({ organization }: ProjectsTableProps) {
   return (
     <>
       <ProjectsTableBar
-        organization={organization}
         queryKey={queryOptions.queryKey}
         selected={selected}
         columns={columns}

@@ -16,10 +16,11 @@ import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
-import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
+import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
+import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
 import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { preserveIncluded } from '~/query/basic/preserve-included';
@@ -48,7 +49,7 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
   const {
     q = '',
     sort = 'displayOrder',
-    order = sort === 'displayOrder' ? 'asc' : 'desc',
+    order = defaultOrderFor(sort),
     organizationId,
     role,
     excludeArchived,
@@ -133,7 +134,7 @@ export const useWorkspaceDeleteMutation = () => {
 
       toaster.success(message);
       cacheRemove(listKey, workspaces);
-      removeDetailQueriesById(
+      removeDetailQueriesOnceUnobserved(
         queryClient,
         keys.detail.base,
         workspaces.map(({ id }) => id),

@@ -98,7 +98,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   invalidateCache.user(user.id);
 
   // Build counts for response
-  const counts = buildZeroCounts('project');
+  const counts = buildZeroCounts('project', 'admin');
   // Map memberships by projectId
   const membershipByProjectId = new Map(createdMemberships.map((m) => [m.projectId, m]));
 

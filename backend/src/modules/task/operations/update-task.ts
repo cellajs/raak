@@ -3,12 +3,13 @@ import type { ActorContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
+import { filterExistingProductIds } from '#/modules/entities/embedding-queries';
 import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/label-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { hydrateTask, hydrateTaskLite } from '#/modules/task/helpers/hydrate-task';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
 import type { InsertTaskModel } from '#/modules/task/task-db';
-import { filterExistingAttachmentIds, findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
+import { findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
 import { taskContract, type taskUpdateStxBodySchema } from '#/modules/task/task-schema';
 import { getValidProduct } from '#/permissions/get-valid-product';
 import { getIsoDate } from '#/utils/iso-date';
@@ -100,7 +101,7 @@ export async function updateTaskOp(
     if (resolved.values.description !== undefined && derivedDescription) {
       // Drop ids that don't resolve to a live in-org attachment row (doctored or stale
       // block props must never enter the owned-embedding host array).
-      derivedDescription.attachments = await filterExistingAttachmentIds(txCtx, { ids: derivedDescription.attachments });
+      derivedDescription.attachments = await filterExistingProductIds(txCtx, { entityType: 'attachment', ids: derivedDescription.attachments });
       Object.assign(updateValues, derivedDescription);
     }
 

@@ -2,9 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { StxBase } from 'sdk';
 import { isArrayDelta, mergeArrayDeltas } from './array-delta';
 import { canCoalesce, isQueued } from './mutation-queue';
-
-type OpsVariables = { id?: string; ops?: Record<string, unknown>; stx?: StxBase };
-type CreateVariables = { id?: string; data?: Array<Record<string, unknown> | undefined> };
+import { createRowsOf, queuedUpdateOf } from './mutation-variables';
 
 // Merge two ops objects: scalar fields are overwritten by `newer`; AWSet deltas are merged via mergeArrayDeltas.
 function mergeOps<TOps extends object>(older: Record<string, unknown>, newer: TOps): Record<string, unknown> & TOps {
@@ -41,13 +39,11 @@ export function squashPendingMutation<TOps extends object>(
   for (const mutation of mutations) {
     if (!isQueued(mutation)) continue;
 
-    const variables = mutation.state.variables as OpsVariables | undefined;
-    if (variables?.id !== entityId) continue;
+    const queued = queuedUpdateOf(mutation.state.variables);
+    if (queued?.id !== entityId) continue;
 
-    if (variables.ops) mergedOps = mergeOps(mergedOps, variables.ops);
-    if (variables.stx?.fieldTimestamps) {
-      inheritedTimestamps = { ...inheritedTimestamps, ...variables.stx.fieldTimestamps };
-    }
+    mergedOps = mergeOps(mergedOps, queued.ops);
+    inheritedTimestamps = { ...inheritedTimestamps, ...queued.fieldTimestamps };
 
     // Remove old mutation; the new one will carry merged ops and merged timestamps.
     mutationCache.remove(mutation);
@@ -70,40 +66,34 @@ export function removePausedCreates(queryClient: QueryClient, createMutationKey:
   for (const mutation of mutationCache.findAll({ mutationKey: createMutationKey })) {
     if (!isQueued(mutation)) continue;
 
-    const variables = mutation.state.variables as CreateVariables | undefined;
-    if (!variables) continue;
+    const { variables } = mutation.state;
+    const rows = createRowsOf(variables);
+    const kept = rows.filter((row) => !(typeof row.id === 'string' && idSet.has(row.id)));
+    if (kept.length === rows.length) continue;
 
-    if (typeof variables.id === 'string' && idSet.has(variables.id)) {
-      cancelled.push(variables.id);
-      mutationCache.remove(mutation);
-      continue;
-    }
-
-    if (Array.isArray(variables.data)) {
-      const kept: typeof variables.data = [];
-      for (const row of variables.data) {
-        const rowId = row && typeof row.id === 'string' ? row.id : undefined;
-        if (rowId && idSet.has(rowId)) cancelled.push(rowId);
-        else kept.push(row);
-      }
-      if (kept.length === variables.data.length) continue;
-      if (kept.length === 0) mutationCache.remove(mutation);
-      else variables.data = kept;
-    }
+    for (const row of rows) if (!kept.includes(row) && typeof row.id === 'string') cancelled.push(row.id);
+    if (kept.length === 0) mutationCache.remove(mutation);
+    else if (typeof variables === 'object' && variables) Object.assign(variables, { data: kept });
   }
 
   return cancelled;
 }
 
-/** Folds scalar updates into a matching queued offline create. Online updates stay serialized, and relative array deltas cannot merge into a create's full-array representation. */
+/**
+ * Folds scalar updates into a matching queued offline create. Online updates stay serialized, and relative array deltas cannot merge into a create's full-array representation.
+ * @param creatableKeys - The keys a create row takes: the keys of the create body's item schema. An edit that names any other key is not folded, since the server would drop that key from the create and no request would carry the edit: it stays an update, queued behind the create.
+ * @returns Whether the edit was folded; false leaves it to the caller to issue the update.
+ */
 export function squashIntoPendingCreate<TOps extends object>(
   queryClient: QueryClient,
   createMutationKey: readonly unknown[],
   entityId: string,
   ops: TOps,
+  creatableKeys: readonly string[],
 ): boolean {
   if (!canCoalesce()) return false;
   if (Object.values(ops).some((value) => isArrayDelta(value))) return false;
+  if (Object.keys(ops).some((key) => !creatableKeys.includes(key))) return false;
 
   const mutationCache = queryClient.getMutationCache();
   const mutations = mutationCache.findAll({ mutationKey: createMutationKey });
@@ -111,10 +101,7 @@ export function squashIntoPendingCreate<TOps extends object>(
   for (const mutation of mutations) {
     if (!isQueued(mutation)) continue;
 
-    const variables = mutation.state.variables as CreateVariables | undefined;
-    if (!variables) continue;
-
-    const target = variables.id === entityId ? (variables as Record<string, unknown>) : variables.data?.find((row) => row?.id === entityId);
+    const target = createRowsOf(mutation.state.variables).find((row) => row.id === entityId);
     if (!target) continue;
 
     Object.assign(target, ops);

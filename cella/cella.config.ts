@@ -72,6 +72,8 @@ export default defineConfig({
       'frontend/src/styling/tailwind.css',
       // The pages and states the accessibility audit covers
       'a11y/scope-config.ts',
+      // Where bench attachments live below the organization
+      'bench/src/seeds/attachment-home.ts',
       'locales/en/about.json',
       'locales/nl/about.json',
       'backend/src/mocks/app-product-mocks.ts',

@@ -696,7 +696,6 @@
           "type": "object",
           "properties": {
             "name": { "type": "string", "required": false, "maxLength": 255 },
-            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "color": {
               "type": ["string", "null"],
@@ -715,6 +714,7 @@
               "maxLength": 255
             },
             "displayOrder": { "type": "number", "required": false },
+            "projectId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
               "type": "object",
               "required": true,

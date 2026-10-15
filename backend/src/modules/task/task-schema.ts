@@ -7,13 +7,10 @@ import { labelEmbeddedSchema } from '#/modules/label/label-schema';
 import { tasksTable } from '#/modules/task/task-db';
 import { mockTaskResponse } from '#/modules/task/task-mocks';
 import { TaskStatus } from '#/modules/task/task-properties';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, validIdSchema, validUuidSchema } from '#/schemas';
+import { placementFieldsSchema, validatePlacement } from '#/permissions/product-placement';
+import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, uniqueIdsSchema, validIdSchema, validUuidSchema } from '#/schemas';
 import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/minimal-base';
 
-const taskRelationIdsSchema = validUuidSchema
-  .array()
-  .max(50)
-  .refine((ids) => new Set(ids).size === ids.length, 'Relation IDs must be unique');
 const taskRelationDeltaSchema = arrayDeltaSchema(validUuidSchema);
 
 const taskInsertSchema = createInsertSchema(tasksTable, { description: z.string().max(maxLength.html).nullable() });
@@ -37,16 +34,17 @@ export const taskSchema = z
     'x-tags': schemaTags('data', 'tasks', 'app'),
   });
 
-const taskCreateSchema = taskInsertSchema.pick({ name: true, description: true, projectId: true }).extend({
+const taskCreateSchema = taskInsertSchema.pick({ name: true, description: true }).extend({
   id: validUuidSchema,
   status: z.enum(TaskStatus),
   // Optional on the wire: the server falls back to the project's default primary label
   primaryLabelId: validUuidSchema.optional(),
   displayOrder: z.number().optional(),
-  labels: taskRelationIdsSchema.optional(),
-  assignedTo: taskRelationIdsSchema.optional(),
+  labels: uniqueIdsSchema().optional(),
+  assignedTo: uniqueIdsSchema().optional(),
   // Client sets publicity per task (stamped from the project's publicAt on create); omitted -> private.
   publicAt: z.string().nullable().optional(),
+  ...placementFieldsSchema('task'),
 });
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seams for task */
@@ -84,7 +82,16 @@ export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !dat
 });
 
 // Stx-wrapped schemas for product entity mutations (items lens-widened via the wire)
-export const taskCreateManyStxBodySchema = taskContract.createItemSchema.array().min(1).max(50);
+export const taskCreateManyStxBodySchema = taskContract.createItemSchema
+  .array()
+  .min(1)
+  .max(50)
+  .superRefine((items, ctx) => {
+    items.forEach((item, index) => {
+      const issue = validatePlacement('task', item);
+      if (issue) ctx.addIssue({ code: 'custom', path: [index, ...issue.path], message: issue.message });
+    });
+  });
 export const taskCreateResponseSchema = batchResponseSchema(taskSchema);
 
 export const taskLinkSchema = z.object({

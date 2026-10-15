@@ -8,13 +8,15 @@ const fakeRoute = (over: Record<string, unknown>) => ({ children: [], options: {
 const routesById: Record<string, unknown> = {};
 vi.mock('~/routes/-router-instance', () => ({ getRouter: () => ({ routesById }) }));
 
-import { appConfig } from 'shared';
+import { assumeNoSurfaces, withSurface } from 'shared/testing/surfaces';
 import type { TKey } from '~/lib/i18n-locales';
 import { defineFrontendModule } from '~/lib/module';
-import { type GuardNavTabsOptions, guardNavTabs, resolveNavTabs } from '~/modules/common/page/tab-nav';
+import { assertSurfaces, type GuardNavTabsOptions, guardNavTabs, resolveNavTabs } from '~/modules/common/page/tab-nav';
 
 // Fixtures use synthetic labels that are not real translation keys.
 const key = (s: string) => s as TKey;
+
+assumeNoSurfaces();
 
 // Tools register once (the registry is process-global); tests re-seed only the routes.
 defineFrontendModule({
@@ -28,19 +30,6 @@ defineFrontendModule({
     { slot: 'system.tabs', id: 'audit', label: key('c:audit'), order: 5, render: () => null },
   ],
 });
-
-/** cella lists no surfaces, so a test that needs one states it and puts the config back. */
-function withSurface(slot: string, ids: readonly string[], run: () => void) {
-  const surfaces = appConfig.surfaces as Record<string, readonly string[] | undefined>;
-  const previous = surfaces[slot];
-  surfaces[slot] = ids;
-  try {
-    run();
-  } finally {
-    if (previous) surfaces[slot] = previous;
-    else delete surfaces[slot];
-  }
-}
 
 /** Builds a parent layout route with two route-file tab children plus a `$tool` host child. */
 function seedRoutes(id: string, tabsSlot: string) {
@@ -106,6 +95,34 @@ describe('resolveNavTabs merges route-file and registry tabs', () => {
   });
 });
 
+describe('assertSurfaces checks the route tree at startup', () => {
+  beforeEach(() => {
+    for (const key of Object.keys(routesById)) delete routesById[key];
+  });
+
+  it('passes a tabbed layout that names its slot, and a listed surface whose ids are all placements', () => {
+    seedRoutes('/org', 'organization.tabs');
+    expect(() => assertSurfaces()).not.toThrow();
+    withSurface('organization.tabs', ['reports', 'members', 'settings'], () => expect(() => assertSurfaces()).not.toThrow());
+  });
+
+  it('throws for a layout with tab routes and no tabsSlot, which would render an empty bar', () => {
+    const members = fakeRoute({
+      path: 'members',
+      fullPath: '/org/members',
+      options: { staticData: { navTab: { id: 'members', label: key('c:members') } } },
+    });
+    routesById['/org'] = fakeRoute({ children: [members] });
+    expect(resolveNavTabs('/org')).toEqual([]);
+    expect(() => assertSurfaces()).toThrowError(/'\/org' has child routes with a navTab and declares no staticData.tabsSlot/);
+  });
+
+  it('throws for a listed id that is neither a route tab nor a tool of the surface', () => {
+    seedRoutes('/org', 'organization.tabs');
+    withSurface('organization.tabs', ['members', 'ghost'], () => expect(() => assertSurfaces()).toThrowError(/lists 'ghost'/));
+  });
+});
+
 describe('guardNavTabs forwards bare-parent and disabled-tab navigations in beforeLoad', () => {
   beforeEach(() => {
     for (const key of Object.keys(routesById)) delete routesById[key];
@@ -153,6 +170,13 @@ describe('guardNavTabs forwards bare-parent and disabled-tab navigations in befo
     // With members hidden the landing becomes the registry reports tab, via the $tool host
     const options = runGuard([parentMatch, membersMatch], { slotConfig: { hidden: ['members'] } });
     expect(options?.to).toBe('/org/$tool');
+  });
+
+  it('leaves behind the search of a tab it forwards off: its sort and filters mean nothing to the landing tab', () => {
+    const membersMatch: Match = { routeId: '/org/members', fullPath: '/org/members', params: {} };
+    const options = runGuard([parentMatch, membersMatch], { slotConfig: { hidden: ['members'] } });
+    expect(options?.search).toEqual({});
+    expect(options).toMatchObject({ replace: true, hash: true });
   });
 
   it('forwards off a registry tab hidden by stored arrangement, matched on the $tool param', () => {

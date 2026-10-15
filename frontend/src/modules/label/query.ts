@@ -7,12 +7,12 @@ import {
   getLabel,
   getLabels,
   type Label,
-  type StxBase,
   type UpdateLabelData,
   updateLabel,
 } from 'sdk';
-import { zLabel } from 'sdk/zod.gen';
+import { zCreateLabelsBody, zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
+import { isRecord } from 'shared/utils/as-record';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
@@ -21,17 +21,18 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
+import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
 import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
 import { addMutationRegistrar } from '~/query/mutation-registry';
+import { type CreateVariables, type DeleteVariables, registerVariablesVersion, type UpdateVariables } from '~/query/offline/mutation-variables';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
 import { invalidateEmbeddingHosts, propagateEmbeddedProduct } from '~/query/realtime/propagation';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
-import type { QueryOrgContext } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
 export type { Label } from 'sdk';
@@ -42,9 +43,9 @@ type UpdateLabelFields = UpdateLabelBody['ops'];
 /** Public update input the hook accepts; the hook enriches it into durable variables. */
 type UpdateLabelVars = { id: string; ops: UpdateLabelFields };
 
-type CreateLabelFullVars = QueryOrgContext & { data: LabelCreateInput; stx?: StxBase };
-type UpdateLabelFullVars = QueryOrgContext & UpdateLabelVars & { stx?: StxBase };
-type DeleteLabelVars = QueryOrgContext & { labels: Label[]; stx?: StxBase };
+type CreateLabelFullVars = CreateVariables<LabelCreateInput>;
+type UpdateLabelFullVars = UpdateVariables<UpdateLabelFields>;
+type DeleteLabelVars = DeleteVariables<Label>;
 
 type LabelFilters = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset'>;
 
@@ -61,6 +62,9 @@ registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, cha
 });
 /** Defines React Query cache keys for label. */
 export const labelQueryKeys = keys;
+
+/** The keys a create row takes. An edit of any other field cannot fold into a queued create. */
+const labelCreateKeys = Object.keys(zCreateLabelsBody.element.shape);
 
 // `keywords` is derived from the description, so it follows the description's stamp.
 registerYjsOwnedFields('label', ['description', 'keywords']);
@@ -105,7 +109,7 @@ export const labelsQueryOptions = ({
   workspaceId,
   modes,
   sort = 'name',
-  order = 'desc',
+  order = defaultOrderFor(sort),
   limit = appConfig.requestLimits.labels,
   organizationId,
   tenantId,
@@ -128,8 +132,8 @@ export const labelsQueryOptions = ({
 
 const createLabelMutationFn = async ({ tenantId, organizationId, data, stx }: CreateLabelFullVars) => {
   const effectiveStx = stx ?? createStxForCreate();
-  const result = await createLabels({ body: [{ ...data, stx: effectiveStx }], path: { organizationId, tenantId } });
-  return result.data[0];
+  const result = await createLabels({ body: data.map((row) => ({ ...row, stx: effectiveStx })), path: { organizationId, tenantId } });
+  return result.data;
 };
 
 /** Sends one label update; exported for the replay test. */
@@ -138,10 +142,10 @@ export const updateLabelMutationFn = async ({ tenantId, organizationId, id, ops,
   return updateLabel({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
 };
 
-const deleteLabelMutationFn = async ({ tenantId, organizationId, labels, stx }: DeleteLabelVars) => {
-  const ids = labels.map(({ id }) => id);
+const deleteLabelMutationFn = async ({ tenantId, organizationId, rows, stx }: DeleteLabelVars) => {
+  const ids = rows.map(({ id }) => id);
   const effectiveStx = stx ?? createStxForDelete();
-  await deleteLabels({ path: { organizationId, tenantId }, body: { ids, stx: effectiveStx } });
+  return deleteLabels({ path: { organizationId, tenantId }, body: { ids, stx: effectiveStx } });
 };
 
 type CreateData = Awaited<ReturnType<typeof createLabelMutationFn>>;
@@ -153,7 +157,7 @@ type DeleteData = Awaited<ReturnType<typeof deleteLabelMutationFn>>;
  * replay reconciles like the live one. Callbacks take the QueryClient explicitly and derive the org
  * key from durable variables. On replay onMutate does not re-run, so onSettled invalidation recovers.
  */
-const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateData, Error, CreateLabelFullVars, { optimisticLabel: Label }> => ({
+const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<CreateData, Error, CreateLabelFullVars, { optimisticLabels: Label[] }> => ({
   mutationKey: keys.create,
   scope: { id: 'label' },
   mutationFn: createLabelMutationFn,
@@ -162,20 +166,20 @@ const labelCreateOptions = (queryClient: QueryClient): UseMutationOptions<Create
     await queryClient.cancelQueries({ queryKey: keys.list.org(organizationId) });
     // organizationId lives on the request path, not the create body, so carry it onto the row: cache
     // placement resolves the canonical home list from the entity itself.
-    const optimisticLabel = createOptimisticEntity(zLabel, { ...data, organizationId });
+    const optimisticLabels = data.map((row) => createOptimisticEntity(zLabel, { ...row, organizationId }));
     // Insert into the label's canonical home (project) list only, never filtered/search lists.
-    insertEntitiesIntoHome(queryClient, [optimisticLabel]);
-    return { optimisticLabel };
+    insertEntitiesIntoHome(queryClient, optimisticLabels);
+    return { optimisticLabels };
   },
   onError: (error, variables, context) => {
     handleError('create', error);
-    if (context?.optimisticLabel) cacheRemove(keys.list.org(variables.organizationId), [context.optimisticLabel]);
+    if (context?.optimisticLabels) cacheRemove(keys.list.org(variables.organizationId), context.optimisticLabels);
   },
-  onSuccess: (createdLabel, variables, context) => {
+  onSuccess: (createdLabels, variables, context) => {
     const orgKey = keys.list.org(variables.organizationId);
-    if (context?.optimisticLabel) cacheRemove(orgKey, [context.optimisticLabel]);
+    if (context?.optimisticLabels) cacheRemove(orgKey, context.optimisticLabels);
     // Upsert into the canonical home (updates in place if a concurrent SSE already inserted it).
-    insertEntitiesIntoHome(queryClient, [createdLabel]);
+    insertEntitiesIntoHome(queryClient, createdLabels);
   },
   onSettled: (_data, error, variables) => {
     if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
@@ -218,7 +222,7 @@ const labelUpdateOptions = (
     const orgKey = keys.list.org(variables.organizationId);
     const cached = findLabelInCache(updatedLabel.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
-    const merged = mergeServerResponse({ cached, serverEntity: updatedLabel, mutatedKeys });
+    const merged = mergeServerResponse({ cached, serverEntity: updatedLabel, mutatedKeys, derivedKeys: { description: ['keywords'] } });
     syncEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
   },
   onSettled: (_data, error, variables) => {
@@ -231,16 +235,16 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
   scope: { id: 'label' },
   mutationFn: deleteLabelMutationFn,
   meta: { suppressGlobalErrorToast: true },
-  onMutate: async ({ organizationId, labels }) => {
+  onMutate: async ({ organizationId, rows }) => {
     const orgKey = keys.list.org(organizationId);
-    const labelIds = labels.map(({ id }) => id);
+    const labelIds = rows.map(({ id }) => id);
     removePendingMutations(queryClient, keys.update, labelIds);
     await queryClient.cancelQueries({ queryKey: orgKey });
-    cacheRemove(orgKey, labels);
+    cacheRemove(orgKey, rows);
     removeDetailQueriesById(queryClient, keys.detail.base, labelIds);
     // Strip embedded copies from host products (e.g. task.labels) so chips disappear immediately
     propagateEmbeddedProduct('label', labelIds, 'remove');
-    return { deletedLabels: labels };
+    return { deletedLabels: rows };
   },
   onError: (error, variables, context) => {
     handleError('delete', error);
@@ -249,8 +253,12 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
     // Propagation cannot re-insert stripped embedded copies, so hosts recover through a refetch
     invalidateEmbeddingHosts('label', variables.organizationId);
   },
-  onSettled: (_data, error, variables) => {
-    if (error) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+  onSuccess: ({ rejectedIds }, variables) => {
+    if (rejectedIds.length > 0) invalidateEmbeddingHosts('label', variables.organizationId);
+  },
+  onSettled: (data, error, variables) => {
+    // A refused row left the cache in onMutate: the list read again brings it back with what changed while it was pending.
+    if (error || data?.rejectedIds.length) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
   },
 });
 
@@ -260,9 +268,9 @@ export const useLabelCreateMutation = (tenantId: string, organizationId: string)
   const mutation = useMutation(labelCreateOptions(queryClient));
 
   // Inject org context + stx so a replay reuses the original mutation id and timestamps; callers pass just the data.
-  const prepare = (data: LabelCreateInput): PreparedVars<CreateLabelFullVars> => ({
+  const prepare = (row: LabelCreateInput): PreparedVars<CreateLabelFullVars> => ({
     kind: 'run',
-    vars: { tenantId, organizationId, data, stx: createStxForCreate() },
+    vars: { tenantId, organizationId, data: [row], stx: createStxForCreate() },
   });
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
@@ -275,7 +283,7 @@ export const useLabelUpdateMutation = (tenantId: string, organizationId: string)
 
   /** Folding into a queued create issues no update and patches the optimistic row here (onMutate won't run). */
   const prepare = ({ id, ops }: UpdateLabelVars): PreparedVars<UpdateLabelFullVars> => {
-    if (squashIntoPendingCreate(queryClient, keys.create, id, ops)) {
+    if (squashIntoPendingCreate(queryClient, keys.create, id, ops, labelCreateKeys)) {
       const cached = findLabelInCache(id);
       if (cached) {
         const optimisticLabel = { ...cached, ...ops, updatedAt: new Date().toISOString() };
@@ -313,7 +321,7 @@ export const useLabelDeleteMutation = (tenantId: string, organizationId: string)
 
     const remaining = labels.filter((l) => !cancelled.has(l.id));
     if (remaining.length === 0) return { kind: 'noop' };
-    return { kind: 'run', vars: { tenantId, organizationId, labels: remaining, stx: createStxForDelete() } };
+    return { kind: 'run', vars: { tenantId, organizationId, rows: remaining, stx: createStxForDelete() } };
   };
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
@@ -334,4 +342,16 @@ addMutationRegistrar((queryClient: QueryClient) => {
   queryClient.setMutationDefaults(keys.create, labelCreateOptions(queryClient));
   queryClient.setMutationDefaults(keys.update, labelUpdateOptions(queryClient));
   queryClient.setMutationDefaults(keys.delete, labelDeleteOptions(queryClient));
+});
+
+// Version 2 carries a create's rows as a list under `data` and a delete's under `rows`; version 1 queued a create's one row
+// under `data` and a delete's rows as `labels`.
+registerVariablesVersion(keys.create, 2, (variables) => {
+  if (!isRecord(variables) || !isRecord(variables.data)) return null;
+  return { ...variables, data: [variables.data] };
+});
+registerVariablesVersion(keys.delete, 2, (variables) => {
+  if (!isRecord(variables) || !Array.isArray(variables.labels)) return null;
+  const { labels, ...rest } = variables;
+  return { ...rest, rows: labels };
 });

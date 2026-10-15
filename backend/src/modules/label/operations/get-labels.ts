@@ -37,7 +37,7 @@ export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promi
   // e.g. `read: 'own'`) and compile it to a single row predicate.
   const actor = actorFrom(ctx);
   const readFilter = resolveCollectionReadFilter(ctx.var.actor.bindings, 'label', organizationId, actor, requested);
-  const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, labelsTable.projectId, actor);
+  const scopeWhere = buildCollectionReadWhere(readFilter, labelsTable, 'label', actor);
 
   if (scopeWhere.kind === 'none') {
     return { items: [], total: 0 };
