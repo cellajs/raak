@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.14](https://github.com/cellajs/raak/compare/0.1.13...0.1.14) (2026-10-15)
+
+
+### 🐞 Bug fixes
+
+* **board:** the board skeleton sizes its columns like the loaded board ([#173](https://github.com/cellajs/raak/issues/173)) ([30c6030](https://github.com/cellajs/raak/commit/30c603068921463322858aaf509497a589d12040))
+* **task:** a created task no longer leaves its draft and an open-but-hidden form behind ([#177](https://github.com/cellajs/raak/issues/177)) ([86dca95](https://github.com/cellajs/raak/commit/86dca9525c327e5c45bb6da06edbd19b30fb97d1))
+* **task:** the create task editor shows no formatting toolbar on a text selection ([#176](https://github.com/cellajs/raak/issues/176)) ([c6ba147](https://github.com/cellajs/raak/commit/c6ba147aff518a40dd37e7cbb27cc138a259363e))
+* **task:** the delete confirmation names the task in bold instead of showing markup ([#175](https://github.com/cellajs/raak/issues/175)) ([23919ba](https://github.com/cellajs/raak/commit/23919ba47766e8ba8288251cece30640343c337a))
+
+
+### 🔧 Small improvements
+
+* **project,task:** the project picker shows Chip pills, and a card's delete confirms through openPopConfirm ([#179](https://github.com/cellajs/raak/issues/179)) ([912d5e9](https://github.com/cellajs/raak/commit/912d5e94ff716db879a90da2e12a44a20ca87bed))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.18.1 (40b3f8e0) ([#178](https://github.com/cellajs/raak/issues/178)) ([31ff74e](https://github.com/cellajs/raak/commit/31ff74e4c644caac22a87aff464dd977309cc418))
+* sync upstream cella v0.18.1 (720af7d3) ([#181](https://github.com/cellajs/raak/issues/181)) ([74166dd](https://github.com/cellajs/raak/commit/74166dd8079ba55ce18551edb2283b1935f9f82c))
+
 ## [0.1.13](https://github.com/cellajs/raak/compare/0.1.12...0.1.13) (2026-10-13)
 
 
