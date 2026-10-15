@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.15](https://github.com/cellajs/raak/compare/0.1.14...0.1.15) (2026-10-15)
+
+
+### 🐞 Bug fixes
+
+* **home:** the workspace tiles show without a visible heading ([#182](https://github.com/cellajs/raak/issues/182)) ([e18a611](https://github.com/cellajs/raak/commit/e18a61130d5062bbd5931450c3e7c03326727b66))
+* **task,project:** org admins list every project's tasks, refused deletes return, one toast per action ([#183](https://github.com/cellajs/raak/issues/183)) ([89c3a98](https://github.com/cellajs/raak/commit/89c3a98adcc9ece0289afbc61a21af77a01d1c39))
+
 ## [0.1.14](https://github.com/cellajs/raak/compare/0.1.13...0.1.14) (2026-10-15)
 
 
