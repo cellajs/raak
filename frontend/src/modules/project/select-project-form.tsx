@@ -10,6 +10,7 @@ import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { useAssignProjectMutation } from '~/modules/project/query';
 import { ProjectSuggestionCombobox } from '~/modules/project/suggestions-combobox';
 import { Button } from '~/modules/ui/button';
@@ -61,15 +62,27 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
 
     setPendingCount(selectedProjects.length);
 
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       selectedProjects.map((project) =>
         assign({
           path: { id: project.id, organizationId: restValues.organizationId, tenantId: workspace.tenantId },
           query: { workspaceId: restValues.workspaceId },
-          workspaceName: workspace.name,
         }),
       ),
     );
+
+    const assigned = results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+    if (assigned.length === 1) {
+      toaster.success(t('c:success.assign_resource', { resource: `${t('c:project')} ${assigned[0].name}`, secondResource: workspace.name }));
+    } else if (assigned.length > 1) {
+      toaster.success(
+        t('c:success.assign_counted_resources', {
+          count: assigned.length,
+          resources: t('c:project_other').toLowerCase(),
+          secondResource: workspace.name,
+        }),
+      );
+    }
 
     setPendingCount(0);
     form.reset();

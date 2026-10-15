@@ -6,8 +6,8 @@ import { iconNameSchema } from '#/schemas/icon-name-schema';
 import { labelSlugSchema } from '#/schemas/label-slug-schema';
 
 /**
- * App-owned fields on template wire schemas (pinned). The template ships empty shapes; raak fills
- * them here so its data validates on the wire and reaches the SDK types without editing the
+ * App-owned fields on template wire schemas (pinned). The template ships empty shapes; apps fill
+ * them here so their data validates on the wire and reaches the SDK types without editing the
  * template schema files that spread them.
  */
 
@@ -20,9 +20,9 @@ const primaryLabelDefinitionSchema = z.object({
 });
 
 /**
- * Wire schema for `organization.setupConfig`: the per-organization primary label set.
- * `primaryLabels` is replaced wholesale on update; array order is display order and the first entry
- * is the default for new tasks.
+ * Wire schema for `organization.setupConfig`, spread into the organization response and update contract: the
+ * per-organization primary label set. `primaryLabels` is replaced wholesale on update; array order is display order
+ * and the first entry is the default for new tasks.
  */
 export const setupConfigSchema = z.object({
   primaryLabels: z

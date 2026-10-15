@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectMoveMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Button } from '~/modules/ui/button';
@@ -53,6 +54,7 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
       },
       {
         onSuccess: () => {
+          toaster.success(t('c:success.project_moved'));
           form.reset();
           onSuccess?.();
         },

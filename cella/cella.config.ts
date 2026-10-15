@@ -9,7 +9,7 @@ export default defineConfig({
     upstreamBranch: 'main',
     upstreamTrack: 'branch',
     syncWithPackages: true,
-    packageJsonSync: ['dependencies', 'devDependencies', 'scripts', 'overrides', 'exports'],
+    packageJsonSync: ['dependencies', 'devDependencies', 'scripts', 'overrides', 'exports', 'engines', 'packageManager'],
     fileLinkMode: 'file',
   },
 
@@ -43,6 +43,8 @@ export default defineConfig({
       'frontend/src/modules/auth/legal/legal-config.ts',
       'locales/en/app.json',
       'locales/nl/app.json',
+      'locales/en/about.json',
+      'locales/nl/about.json',
       // The app's own error types; the template ships both files empty
       'locales/en/appError.json',
       'locales/nl/appError.json',
@@ -55,16 +57,12 @@ export default defineConfig({
       'backend/src/db/channel-tables.ts',
       // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.
       'backend/src/modules/attachment/attachment-placement.ts',
-      'backend/src/modules/auth/sso/role-from-claims.ts',
       'backend/src/modules.ts',
       'backend/src/bundle-config.ts',
       'backend/src/db/product-tables.ts',
       'backend/src/schemas/app-schemas.ts',
-      'bench/src/seeds/ids.ts',
       'frontend/src/routes-config.tsx',
       'frontend/src/alert-config.tsx',
-      // App marketing copy: upstream structural changes are adopted by hand.
-      'frontend/src/modules/marketing/marketing-config.tsx',
       // The pages the screenshots skill shoots, and where it writes them: raak's routes, not cella's.
       'cella/skills/screenshots/shots-config.mjs',
       'frontend/src/entity-sync-queries.ts',
@@ -74,8 +72,6 @@ export default defineConfig({
       'a11y/scope-config.ts',
       // Where bench attachments live below the organization
       'bench/src/seeds/attachment-home.ts',
-      'locales/en/about.json',
-      'locales/nl/about.json',
       'backend/src/mocks/app-product-mocks.ts',
       'frontend/src/query/extra-local-user-stores.ts',
     ],

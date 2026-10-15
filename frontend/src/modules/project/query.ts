@@ -1,5 +1,4 @@
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
 import type { Project } from 'sdk';
 import {
   type AssignProjectWorkspaceData,
@@ -22,8 +21,6 @@ import {
 } from 'sdk';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
-import { toaster } from '~/modules/common/toaster/toaster';
-import { labelQueryKeys } from '~/modules/label/query';
 import { meKeys } from '~/modules/me/query';
 import { addMyMembershipCache, getApiIncludedMembership, upsertMyMembershipCache } from '~/modules/memberships/query-mutations';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -127,7 +124,6 @@ export const useProjectCreateMutation = () => {
       return result.data[0] as Project;
     },
     onSuccess: (createdProject) => {
-      toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
       const membership = getApiIncludedMembership(createdProject);
       if (membership) addMyMembershipCache(membership);
       cacheCreate(listKey, [createdProject]);
@@ -146,7 +142,6 @@ export const useProjectUpdateMutation = () => {
     mutationKey: keys.update,
     mutationFn: ({ path, body }) => updateProject({ path, body }),
     onSuccess: (updatedProject) => {
-      toaster.success(t('c:success.update_resource', { resource: t('c:project') }));
       cacheUpdate(listKey, [updatedProject]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
       // Directly update detail cache so beforeLoad doesn't use stale slug for URL rewrite
@@ -159,10 +154,6 @@ export const useProjectUpdateMutation = () => {
   });
 };
 
-/**
- * Mutation hook for deleting projects. Also invalidates label lists, whose
- * project-scoped rows disappear with the project.
- */
 export const useProjectDeleteMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -172,17 +163,7 @@ export const useProjectDeleteMutation = () => {
     mutationFn: async ({ path, body }) => {
       await deleteProjects({ path, body });
     },
-    onSuccess: (_, { projects, path: { organizationId } }) => {
-      const deleteText =
-        projects.length === 1
-          ? t('c:success.delete_resource', { resource: t('c:project') })
-          : t('c:success.delete_counted_resources', { count: projects.length, resources: t('c:project_other').toLowerCase() });
-      toaster.success(deleteText);
-
-      // Invalidate labels table queries
-      const labelsQueries = getSimilarQueries([...labelQueryKeys.list.base, { organizationId }]);
-      for (const [queryKey] of labelsQueries) queryClient.invalidateQueries({ queryKey });
-
+    onSuccess: (_, { projects }) => {
       cacheRemove(listKey, projects);
       removeDetailQueriesOnceUnobserved(
         queryClient,
@@ -196,23 +177,29 @@ export const useProjectDeleteMutation = () => {
   });
 };
 
+const assignKey = [...keys.update, 'assign'] as const;
+
 /** Provides the React Query mutation for assign project. */
 export const useAssignProjectMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
-  return useMutation<AssignProjectWorkspaceResponse, ApiError, MutationData<AssignProjectWorkspaceData> & { workspaceName: string }>({
-    mutationKey: keys.update,
+  return useMutation<AssignProjectWorkspaceResponse, ApiError, MutationData<AssignProjectWorkspaceData>>({
+    mutationKey: assignKey,
     mutationFn: ({ path, query }) => assignProjectWorkspace({ path, query }),
-    onSuccess: (newProject, { path: { organizationId }, query: { workspaceId }, workspaceName }) => {
-      toaster.success(t('c:success.assign_resource', { resource: `${t('c:project')} ${newProject.name}`, secondResource: workspaceName }));
+    onSuccess: (newProject) => {
+      const membership = getApiIncludedMembership(newProject);
+      if (membership) upsertMyMembershipCache(membership);
 
-      const queryKey = workspaceQueryKeys.detail.byId(workspaceId);
-      queryClient.invalidateQueries({ queryKey });
+      cacheUpdate(listKey, [newProject]);
+    },
+    onSettled: (_data, _error, { path: { organizationId }, query: { workspaceId } }) => {
+      invalidateIfLastMutation(queryClient, keys.all, listKey);
 
-      // Invalidate labels table queries
-      const labelsQueries = getSimilarQueries([...labelQueryKeys.list.base, { organizationId }]);
-      for (const [queryKey] of labelsQueries) queryClient.invalidateQueries({ queryKey });
+      // Assigning several projects runs one mutation each: the last to settle refreshes for all of them.
+      if (queryClient.isMutating({ mutationKey: assignKey }) > 1) return;
+
+      queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.detail.byId(workspaceId) });
 
       // Force-refresh affected project lists so assignment labels are fresh on immediate reopen.
       const projectListQueries = getSimilarQueries([...keys.list.base, { organizationId }]);
@@ -220,15 +207,8 @@ export const useAssignProjectMutation = () => {
         queryClient.invalidateQueries({ queryKey, refetchType: 'all' });
       }
 
-      const membership = getApiIncludedMembership(newProject);
-      if (membership) upsertMyMembershipCache(membership);
-
-      cacheUpdate(listKey, [newProject]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
       queryClient.invalidateQueries({ queryKey: meKeys.memberships });
-    },
-    onSettled: () => {
-      invalidateIfLastMutation(queryClient, keys.all, listKey);
     },
   });
 };
@@ -241,18 +221,12 @@ export const useProjectMoveMutation = () => {
   return useMutation<MoveProjectToWorkspaceResponse, ApiError, MutationData<MoveProjectToWorkspaceData> & { currentWorkspaceId: string }>({
     mutationKey: keys.update,
     mutationFn: ({ path, query }) => moveProjectToWorkspace({ path, query }),
-    onSuccess: (movedProject, { path: { organizationId }, query: { workspaceId }, currentWorkspaceId }) => {
-      toaster.success(t('c:success.project_moved'));
-
+    onSuccess: (movedProject, { query: { workspaceId }, currentWorkspaceId }) => {
       const currentQueryKey = workspaceQueryKeys.detail.byId(currentWorkspaceId);
       queryClient.invalidateQueries({ queryKey: currentQueryKey });
 
       const newQueryKey = workspaceQueryKeys.detail.byId(workspaceId);
       queryClient.invalidateQueries({ queryKey: newQueryKey });
-
-      // Invalidate labels table queries
-      const labelsQueries = getSimilarQueries([...labelQueryKeys.list.base, { organizationId }]);
-      for (const [queryKey] of labelsQueries) queryClient.invalidateQueries({ queryKey });
 
       const membership = getApiIncludedMembership(movedProject);
       if (membership) upsertMyMembershipCache(membership);

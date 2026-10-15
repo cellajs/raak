@@ -17,7 +17,6 @@ export const CORE_ID_VARIANTS = {
   session: 'a007',
   task: 'b008',
   project: 'b009',
-  label: 'b010',
 } as const;
 
 export const TENANT_ID = BENCH_TENANT_ID;
@@ -34,4 +33,3 @@ export const sessionId = (i: number) => benchUuid(CORE_ID_VARIANTS.session, i);
 export const taskId = (i: number) => benchUuid(CORE_ID_VARIANTS.task, i);
 /** @public */
 export const projectId = (i: number) => benchUuid(CORE_ID_VARIANTS.project, i);
-export const labelId = (i: number) => benchUuid(CORE_ID_VARIANTS.label, i);

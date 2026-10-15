@@ -1,5 +1,6 @@
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import i18n from 'i18next';
 import type { CreateTasksData, GetTasksData, UpdateTaskData, UserMinimalBase } from 'sdk';
 import { createTasks, deleteTasks, getTask, getTasks, updateTask } from 'sdk';
 import { zCreateTasksBody, zTask } from 'sdk/zod.gen';
@@ -8,6 +9,7 @@ import { isRecord } from 'shared/utils/as-record';
 import { deriveDocument } from 'shared/utils/derive-description-core';
 import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { findLabelInCache } from '~/modules/label/query';
 import { getProjectPublicAt } from '~/modules/project/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -416,9 +418,17 @@ const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteD
     handleError('delete', error);
     if (context?.tasksToDelete) insertEntitiesIntoHome(queryClient, context.tasksToDelete);
   },
+  onSuccess: (result, variables) => {
+    const rejectedIds = result?.rejectedIds ?? [];
+    if (rejectedIds.length === 0) return;
+    const rejectedSet = new Set(rejectedIds);
+    const rejectedTasks = variables.rows.filter((row) => rejectedSet.has(row.id));
+    insertEntitiesIntoHome(queryClient, rejectedTasks);
+    toaster.info(i18n.t('c:resources_delete_denied', { count: rejectedIds.length, total: variables.rows.length }));
+  },
   onSettled: (data, error, variables) => {
-    // A refused row left the cache in onMutate: the list read again brings it back with what changed while it was pending.
-    if (error || data?.rejectedIds.length) invalidateIfLastMutation(queryClient, tasksMutationKeyBase, taskKeys.list.org(variables.organizationId));
+    // A row put back is as the delete held it: remote changes were kept from the cache while it was pending.
+    if (error || data?.rejectedIds?.length) invalidateIfLastMutation(queryClient, tasksMutationKeyBase, taskKeys.list.org(variables.organizationId));
   },
 });
 

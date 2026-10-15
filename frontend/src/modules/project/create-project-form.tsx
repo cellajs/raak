@@ -10,6 +10,7 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectCreateMutation } from '~/modules/project/query';
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
 import { Button } from '~/modules/ui/button';
@@ -51,6 +52,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
       },
       {
         onSuccess: async (createdProject) => {
+          toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
           form.reset();
           if (isDialog) useDialoger.getState().remove();
           selectBoardProject(createdProject.slug);

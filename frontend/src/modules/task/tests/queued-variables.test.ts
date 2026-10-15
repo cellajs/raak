@@ -103,7 +103,7 @@ describe('a mutation an older bundle queued', () => {
 });
 
 describe('a delete the server refuses', () => {
-  it('marks the task list to be read again: the refused row left the cache when the delete was issued', async () => {
+  it('puts the refused task back and marks the task list to be read again', async () => {
     const homeKey = tasksCanonicalOptions({ ...ctx, projectId }).queryKey;
     queryClient.setQueryData(homeKey, { items: [task('t-1'), task('t-2')], total: 2 });
     deleteTasks.mockImplementation(async () => ({ data: [], rejectedIds: ['t-1'] }));
@@ -111,16 +111,18 @@ describe('a delete the server refuses', () => {
     await callHook(() => useTaskDeleteMutation(ctx.tenantId, ctx.organizationId)).mutateAsync([task('t-1')]);
 
     expect(deleteTasks.mock.lastCall?.[0].body).toMatchObject({ ids: ['t-1'] });
+    expect(queryClient.getQueryData<{ items: Task[] }>(homeKey)?.items.map(({ id }) => id)).toContain('t-1');
     expect(queryClient.getQueryState(homeKey)?.isInvalidated).toBe(true);
   });
 
-  it('marks the label list to be read again', async () => {
+  it('puts the refused label back and marks the label list to be read again', async () => {
     const homeKey = labelsCanonicalOptions({ ...ctx, projectId }).queryKey;
     queryClient.setQueryData(homeKey, { items: [label('l-1')], total: 1 });
     deleteLabels.mockImplementation(async () => ({ data: [], rejectedIds: ['l-1'] }));
 
     await callHook(() => useLabelDeleteMutation(ctx.tenantId, ctx.organizationId)).mutateAsync([label('l-1')]);
 
+    expect(queryClient.getQueryData<{ items: Label[] }>(homeKey)?.items.map(({ id }) => id)).toEqual(['l-1']);
     expect(queryClient.getQueryState(homeKey)?.isInvalidated).toBe(true);
   });
 

@@ -6,7 +6,9 @@ import { TOTAL_PROJECTS } from './project.bench';
  * its row needs. The attachment seed stamps them on its rows and the scenarios that create attachments send the
  * deepest one as the home, so an app says it once, here.
  *
- * Raak's attachments are project-homed (FK on project_id), so each row lands in a seeded bench project.
+ * Empty in the template, whose attachments live in the organization. An app whose attachments live in a channel
+ * returns a seeded channel per column, such as `{ projectId: projectId(index % TOTAL_PROJECTS) }`, and moves
+ * `attachmentSeedOrder` past the seeds of those channels.
  */
 export const benchAttachmentHome = (index: number): Record<string, string> => ({
   projectId: projectId(index % TOTAL_PROJECTS),

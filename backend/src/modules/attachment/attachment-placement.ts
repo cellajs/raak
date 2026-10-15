@@ -10,8 +10,13 @@ export interface AttachmentSeedPlacement {
   placement: ResolvedPlacement<'attachment'>;
 }
 
-// fork: raak homes seeded attachments at its projects, mirroring the project's publicity onto them
-/** One home per seeded project, mirroring the project's publicity onto its attachments. */
+// fork: one home per seeded project, mirroring the project's publicity onto its attachments
+/**
+ * Where the attachment seed homes its rows (app-owned): one batch per organization by default, its rows in the
+ * organization itself. An app whose attachments live in a channel returns one batch per home channel, or an empty
+ * list to skip attachment seeding altogether (e.g. when its dev bucket carries no `seed/` objects). Creates and
+ * list reads place rows by the hierarchy alone, in `#/permissions/product-placement`.
+ */
 export const seedAttachmentPlacements = async (db: DB, organizations: { id: string; tenantId: string }[]): Promise<AttachmentSeedPlacement[]> => {
   const organizationIds = new Set(organizations.map((org) => org.id));
   const projects = await db

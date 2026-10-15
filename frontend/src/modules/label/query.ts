@@ -1,4 +1,5 @@
 import { infiniteQueryOptions, type QueryClient, queryOptions, type UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import i18n from 'i18next';
 import {
   type CreateLabelsData,
   createLabels,
@@ -14,6 +15,7 @@ import { zCreateLabelsBody, zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { isRecord } from 'shared/utils/as-record';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
@@ -209,6 +211,8 @@ const labelUpdateOptions = (
     return { previousLabel };
   },
   onError: (error, variables, context) => {
+    // Deleted while the update was under way: nothing to report, and a rollback would put the row back in the cache.
+    if (context?.previousLabel && !findLabelInCache(context.previousLabel.id)) return;
     handleError('update', error);
     if (context?.previousLabel) {
       cacheUpdate(keys.list.org(variables.organizationId), [context.previousLabel]);
@@ -253,12 +257,18 @@ const labelDeleteOptions = (queryClient: QueryClient): UseMutationOptions<Delete
     // Propagation cannot re-insert stripped embedded copies, so hosts recover through a refetch
     invalidateEmbeddingHosts('label', variables.organizationId);
   },
-  onSuccess: ({ rejectedIds }, variables) => {
-    if (rejectedIds.length > 0) invalidateEmbeddingHosts('label', variables.organizationId);
+  onSuccess: (result, variables) => {
+    const rejectedIds = result?.rejectedIds ?? [];
+    if (rejectedIds.length === 0) return;
+    const rejectedSet = new Set(rejectedIds);
+    const rejectedLabels = variables.rows.filter((row) => rejectedSet.has(row.id));
+    insertEntitiesIntoHome(queryClient, rejectedLabels);
+    toaster.info(i18n.t('c:resources_delete_denied', { count: rejectedIds.length, total: variables.rows.length }));
+    invalidateEmbeddingHosts('label', variables.organizationId);
   },
   onSettled: (data, error, variables) => {
-    // A refused row left the cache in onMutate: the list read again brings it back with what changed while it was pending.
-    if (error || data?.rejectedIds.length) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
+    // A row put back is as the delete held it: remote changes were kept from the cache while it was pending.
+    if (error || data?.rejectedIds?.length) invalidateIfLastMutation(queryClient, labelsMutationKeyBase, keys.list.org(variables.organizationId));
   },
 });
 
