@@ -56,7 +56,7 @@ defineFrontendModule({
       slot: 'home.sections',
       render: () => (
         <section aria-labelledby="home-workspaces" className="mt-6 hidden has-[.tile-link]:block">
-          <h2 id="home-workspaces" className="mb-4 font-semibold text-lg">
+          <h2 id="home-workspaces" className="sr-only">
             {i18n.t('c:workspace_other')}
           </h2>
           <WorkspacesGrid />
