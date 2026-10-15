@@ -30,7 +30,6 @@ export const labelSchema = z
     ...labelSelectSchema.omit({ stx: true, createdBy: true, updatedBy: true }).shape,
     mode: z.enum(labelModes),
     stx: stxBaseSchema,
-    usedCount: z.number().int().min(0).optional(),
   })
   .openapi('Label', {
     description: 'A label used to categorize and filter tasks within a project or workspace.',
@@ -77,7 +76,7 @@ export const labelUpdateStxBodySchema = labelContract.updateBodySchema;
 
 export const labelListQuerySchema = paginationQuerySchema
   .extend({
-    sort: z.enum(['name', 'usedCount']).default('name'),
+    sort: z.enum(['name']).default('name'),
     order: z.enum(['asc', 'desc']).default('asc'),
     // Comma-separated label modes, e.g. ?modes=secondary,epic
     modes: z

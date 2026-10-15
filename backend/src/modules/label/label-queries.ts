@@ -1,25 +1,16 @@
-import { and, asc, count, eq, getColumns, ilike, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
-import { appConfig } from 'shared';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { ActorContext, DbContext } from '#/core/context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScopeWhere } from '#/db/utils/request-scope';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
-import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { getIsoDate } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
-
-/**
- * Counter key holding host references to a label, written by CDC per embedded id
- * as `e:c:<hostProduct>` (see cdc getCountDeltas). Derived from the same embedding
- * config so reader and writer cannot drift apart.
- */
-export const labelUsedCountKey = `e:c:${appConfig.productEmbeddings.find((e) => e.embeddedProduct === 'label')?.hostProduct ?? 'task'}`;
 
 /** Find all labels in an organization (used for duplicate/color matching). */
 export const findLabelsByOrg = async (ctx: ActorContext) => {
@@ -72,30 +63,6 @@ export const deleteLabelsByIds = async (ctx: ActorContext, { ids, deletedAt, del
     .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
     .where(and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)))
     .returning();
-};
-
-interface DeleteCountersByKeysOpts {
-  keys: string[];
-}
-
-export const deleteCountersByKeys = async (ctx: DbContext, { keys }: DeleteCountersByKeysOpts) => {
-  const { db } = ctx.var;
-  return db.delete(channelCountersTable).where(inArray(channelCountersTable.channelKey, keys));
-};
-
-interface GetLabelUsedCountOpts {
-  labelId: string;
-}
-
-/** Get a label's used count from context counters. */
-export const getLabelUsedCount = async (ctx: DbContext, { labelId }: GetLabelUsedCountOpts) => {
-  const { db } = ctx.var;
-  const [counters] = await db
-    .select({ usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>${labelUsedCountKey})::int, 0)` })
-    .from(channelCountersTable)
-    .where(eq(channelCountersTable.channelKey, labelId))
-    .limit(1);
-  return counters?.usedCount ?? 0;
 };
 
 /** Live primary labels for a set of projects, ordered by displayOrder (default first). Runs inside a tenant context. */
@@ -196,7 +163,7 @@ interface FindLabelsPaginatedOpts {
   orgWide: boolean;
   q?: string;
   modes?: LabelModel['mode'][];
-  sort?: 'name' | 'usedCount';
+  sort?: 'name';
   order?: 'asc' | 'desc';
   limit: number;
   offset: number;
@@ -205,9 +172,9 @@ interface FindLabelsPaginatedOpts {
 }
 
 /**
- * A page of labels with their used count. Normal reads hide tombstones; a delta read passes them through so caches can
- * drop rows. The total is the page length for a delta read, the organization counter for an org-wide read without
- * search or mode filter, else a COUNT.
+ * A page of labels. Normal reads hide tombstones; a delta read passes them through so caches can drop rows. The total
+ * is the page length for a delta read, the organization counter for an org-wide read without search or mode filter,
+ * else a COUNT.
  */
 export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPaginatedOpts) => {
   const { db } = ctx.var;
@@ -226,24 +193,17 @@ export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPag
   }
   if (modes?.length) filters.push(inArray(labelsTable.mode, modes));
 
-  const labelsSubquery = db
-    .select({
-      ...getColumns(labelsTable),
-      usedCount: sql<number>`coalesce((${channelCountersTable.counts}->>${labelUsedCountKey})::int, 0)`.as('used_count'),
-    })
-    .from(labelsTable)
-    .leftJoin(channelCountersTable, sql`${channelCountersTable.channelKey} = ${labelsTable.id}::text`)
-    .where(and(requestScopeWhere(ctx, labelsTable, 'label'), ...filters))
-    .as('labels');
+  const whereClause = and(requestScopeWhere(ctx, labelsTable, 'label'), ...filters);
 
   // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
   const orderBy = seqCursor
-    ? [sql`seq asc`, sql`id asc`]
-    : getOrderColumns({ sort, order, fallback: ['name', 'asc'], columns: { name: sql`name`, usedCount: sql`used_count` }, tieBreaker: sql`id` });
+    ? [asc(labelsTable.seq), asc(labelsTable.id)]
+    : getOrderColumns({ sort, order, fallback: ['name', 'asc'], columns: { name: labelsTable.name }, tieBreaker: labelsTable.id });
 
   const itemsQuery = db
     .select()
-    .from(labelsSubquery)
+    .from(labelsTable)
+    .where(whereClause)
     .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
@@ -256,7 +216,7 @@ export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPag
       : {
           kind: 'exact',
           getTotal: async () => {
-            const [{ total }] = await db.select({ total: count() }).from(labelsSubquery);
+            const [{ total }] = await db.select({ total: count() }).from(labelsTable).where(whereClause);
             return total;
           },
         };

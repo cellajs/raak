@@ -695,8 +695,7 @@
             }
           },
           "ref": "#/components/schemas/StxBase"
-        },
-        "usedCount": { "type": "integer", "required": false, "minimum": 0 }
+        }
       }
     },
     "schemaTag": "data",

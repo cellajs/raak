@@ -12,6 +12,7 @@ import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';
 import { type Label, labelsCanonicalOptions, useLabelCreateMutation } from '~/modules/label/query';
+import { useLabelUsage } from '~/modules/label/use-label-usage';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import {
   ComboboxHotkeyHint,
@@ -110,6 +111,7 @@ export function SelectLabels({
     queries: labelProjectIds.map((pid) => labelsCanonicalOptions({ organizationId, tenantId, projectId: pid })),
     combine: combineTaskLabels,
   });
+  const usage = useLabelUsage(labelProjectIds);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -127,7 +129,7 @@ export function SelectLabels({
 
   // Derive initLabels directly from query data. Memoized so a keystroke (searchValue) doesn't rebuild
   // it and invalidate the searchResults / suggestedLabels memos that depend on its identity.
-  const initLabels = useMemo(() => deduplicateLabels(labels, projectId, organizationId), [labels, projectId, organizationId]);
+  const initLabels = useMemo(() => deduplicateLabels(labels, projectId, organizationId, usage), [labels, projectId, organizationId, usage]);
 
   // Search results filtered by query
   const searchResults = useMemo(() => {
@@ -144,8 +146,8 @@ export function SelectLabels({
       .sort((a, b) => {
         const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
         if (recency !== 0) return recency;
-        const usage = (b.usedCount ?? 0) - (a.usedCount ?? 0);
-        if (usage !== 0) return usage;
+        const usageDiff = b.usedCount - a.usedCount;
+        if (usageDiff !== 0) return usageDiff;
         return a.name.localeCompare(b.name);
       })
       .slice(0, 8);
@@ -218,7 +220,6 @@ export function SelectLabels({
       color: matchedLabelColor ?? fallbackColor,
       keywords: '',
       projectId,
-      usedCount: 0,
       organizationId: organizationId,
       tenantId,
     };
