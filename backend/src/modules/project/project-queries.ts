@@ -102,7 +102,7 @@ interface FindProjectsByWorkspaceOpts {
   workspaceId: string;
 }
 
-export const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
+const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
   const { db, actor } = ctx.var;
   // Workspaces group a user's own project memberships; a service account has none.
   if (actor.kind !== 'user') return [];
@@ -127,7 +127,7 @@ interface FindProjectByIdOpts {
   projectId: string;
 }
 
-export const findProjectById = async (ctx: ActorContext, { projectId }: FindProjectByIdOpts) => {
+const findProjectById = async (ctx: ActorContext, { projectId }: FindProjectByIdOpts) => {
   const { db } = ctx.var;
   const { organizationId } = requestScope(ctx);
   const [project] = await db
