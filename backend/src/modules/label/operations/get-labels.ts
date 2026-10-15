@@ -1,13 +1,12 @@
 import type { z } from '@hono/zod-openapi';
 import type { SQL } from 'drizzle-orm';
 import type { OrgContext } from '#/core/context';
-import { AppError } from '#/core/error';
 import { tenantRead, tenantReadIncludingDeleted } from '#/db/tenant-context';
 import type { LabelModel } from '#/modules/label/label-db';
 import { labelsTable } from '#/modules/label/label-db';
 import { findLabelsPaginated } from '#/modules/label/label-queries';
 import type { labelListQuerySchema } from '#/modules/label/label-schema';
-import { findProjectById, findProjectsByWorkspace } from '#/modules/task/task-queries';
+import { resolveProjectNarrowing } from '#/modules/project/project-queries';
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
@@ -19,19 +18,7 @@ export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promi
   const { q, sort, order, offset, limit, seqCursor, modes } = queryInfo;
   const organizationId = ctx.var.organization.id;
 
-  // Resolve the explicit channel narrowing (if any) from the request.
-  let requested: { homeChannelId?: string; homeChannelIds?: string[] } | undefined;
-  if (workspaceId) {
-    // ?workspaceId=…: restrict to the workspace's projects the caller may read.
-    const workspaceProjects = await tenantRead(ctx, (readCtx) => findProjectsByWorkspace(readCtx, { workspaceId }));
-    requested = { homeChannelIds: workspaceProjects.map(({ id }) => id) };
-  }
-  if (projectId) {
-    // ?projectId=…: must exist and be within the caller's readable scope.
-    const project = await tenantRead(ctx, (readCtx) => findProjectById(readCtx, { projectId }));
-    if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
-    requested = { homeChannelId: projectId };
-  }
+  const requested = await resolveProjectNarrowing(ctx, { projectId, workspaceId });
 
   // Resolve the caller's readable scope (unconditional projects + row-conditional slices,
   // e.g. `read: 'own'`) and compile it to a single row predicate.

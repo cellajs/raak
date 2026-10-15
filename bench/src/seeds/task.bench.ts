@@ -1,7 +1,8 @@
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { mockTask } from '#/modules/task/task-mocks';
 import { registerBenchSeed } from '../registry';
-import { CORE_ID_VARIANTS, labelId, ORG_ID, projectId, TENANT_ID, taskId, userId } from './ids';
+import { CORE_ID_VARIANTS, ORG_ID, projectId, TENANT_ID, taskId, userId } from './ids';
+import { labelId } from './label-id';
 import { TOTAL_PROJECTS } from './project.bench';
 
 export const TOTAL_TASKS = 500;

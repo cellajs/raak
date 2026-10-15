@@ -9,6 +9,7 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useUpdateWorkspaceMutation } from '~/modules/workspace/query';
@@ -42,6 +43,7 @@ function UpdateWorkspaceForm({ workspace, callback, sheet: isSheet }: Props) {
         onSuccess: (updatedWorkspace) => {
           if (isSheet) useSheeter.getState().remove('update-workspace');
           form.reset(updatedWorkspace);
+          toaster.success(t('c:success.update_resource', { resource: t('c:workspace') }));
           callback?.(updatedWorkspace);
         },
       },

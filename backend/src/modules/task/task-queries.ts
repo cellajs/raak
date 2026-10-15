@@ -1,4 +1,4 @@
-import { and, asc, count, eq, getColumns, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { ActorContext, DbContext } from '#/core/context';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
@@ -6,7 +6,6 @@ import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
-import { projectsTable } from '#/modules/project/project-db';
 import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
@@ -52,46 +51,6 @@ export const deleteTasksByIds = async (ctx: ActorContext, { ids, deletedAt, dele
     .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
     .where(and(inArray(tasksTable.id, ids), requestScopeWhere(ctx, tasksTable, 'task'), isNull(tasksTable.deletedAt)))
     .returning();
-};
-
-interface FindProjectsByWorkspaceOpts {
-  workspaceId: string;
-}
-
-export const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
-  const { db, actor } = ctx.var;
-  // Workspaces group a user's own project memberships; a service account has none.
-  if (actor.kind !== 'user') return [];
-  const { organizationId } = requestScope(ctx, 'project');
-  return db
-    .select({ ...getColumns(projectsTable) })
-    .from(projectsTable)
-    .innerJoin(
-      membershipsTable,
-      and(
-        eq(membershipsTable.channelType, 'project'),
-        eq(membershipsTable.projectId, projectsTable.id),
-        eq(membershipsTable.workspaceId, workspaceId),
-        eq(membershipsTable.userId, actor.id),
-        eq(membershipsTable.archived, false),
-      ),
-    )
-    .where(eq(projectsTable.organizationId, organizationId));
-};
-
-interface FindProjectByIdOpts {
-  projectId: string;
-}
-
-export const findProjectById = async (ctx: ActorContext, { projectId }: FindProjectByIdOpts) => {
-  const { db } = ctx.var;
-  const { organizationId } = requestScope(ctx);
-  const [project] = await db
-    .select()
-    .from(projectsTable)
-    .where(and(eq(projectsTable.id, projectId), eq(projectsTable.organizationId, organizationId)))
-    .limit(1);
-  return project;
 };
 
 interface FindProjectMemberUserIdsOpts {

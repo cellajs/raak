@@ -1,8 +1,9 @@
 import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from 'drizzle-orm';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
+import { AppError } from '#/core/error';
 import { resolveListTotal } from '#/db/utils/list-total';
-import { requestScopeWhere } from '#/db/utils/request-scope';
+import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
 import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
@@ -95,6 +96,77 @@ export const insertProjectMembership = async (ctx: DbContext, { values }: Insert
   const { db } = ctx.var;
   const [membership] = await db.insert(membershipsTable).values(values).returning(membershipBaseSelect);
   return membership;
+};
+
+interface FindProjectsByWorkspaceOpts {
+  workspaceId: string;
+}
+
+const findProjectsByWorkspace = async (ctx: ActorContext, { workspaceId }: FindProjectsByWorkspaceOpts) => {
+  const { db, actor } = ctx.var;
+  // Workspaces group a user's own project memberships; a service account has none.
+  if (actor.kind !== 'user') return [];
+  const { organizationId } = requestScope(ctx, 'project');
+  return db
+    .select({ ...getColumns(projectsTable) })
+    .from(projectsTable)
+    .innerJoin(
+      membershipsTable,
+      and(
+        eq(membershipsTable.channelType, 'project'),
+        eq(membershipsTable.projectId, projectsTable.id),
+        eq(membershipsTable.workspaceId, workspaceId),
+        eq(membershipsTable.userId, actor.id),
+        eq(membershipsTable.archived, false),
+      ),
+    )
+    .where(eq(projectsTable.organizationId, organizationId));
+};
+
+interface FindProjectByIdOpts {
+  projectId: string;
+}
+
+const findProjectById = async (ctx: ActorContext, { projectId }: FindProjectByIdOpts) => {
+  const { db } = ctx.var;
+  const { organizationId } = requestScope(ctx);
+  const [project] = await db
+    .select()
+    .from(projectsTable)
+    .where(and(eq(projectsTable.id, projectId), eq(projectsTable.organizationId, organizationId)))
+    .limit(1);
+  return project;
+};
+
+/** Ids of every project in the request's organization. */
+export const findOrganizationProjectIds = async (ctx: ActorContext): Promise<string[]> => {
+  const { db } = ctx.var;
+  const { organizationId } = requestScope(ctx);
+  const rows = await db.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.organizationId, organizationId));
+  return rows.map(({ id }) => id);
+};
+
+/** The project-homed list narrowing a product read asked for: `?projectId` must exist, `?workspaceId` spans its projects. */
+export type ProjectNarrowing = { homeChannelId?: string; homeChannelIds?: string[] };
+
+/**
+ * Resolves `?projectId` / `?workspaceId` of a project-homed product list into the narrowing that
+ * `resolveCollectionReadFilter` intersects with the caller's read scope. A project id wins over a workspace id.
+ */
+export const resolveProjectNarrowing = async (
+  ctx: ActorContext,
+  { projectId, workspaceId }: { projectId?: string; workspaceId?: string },
+): Promise<ProjectNarrowing | undefined> => {
+  if (projectId) {
+    const project = await findProjectById(ctx, { projectId });
+    if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
+    return { homeChannelId: projectId };
+  }
+  if (workspaceId) {
+    const workspaceProjects = await findProjectsByWorkspace(ctx, { workspaceId });
+    return { homeChannelIds: workspaceProjects.map(({ id }) => id) };
+  }
+  return undefined;
 };
 
 interface FindProjectsPaginatedOpts {

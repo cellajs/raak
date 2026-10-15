@@ -13,6 +13,7 @@ import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { CreateOrganizationForm } from '~/modules/organization/create-organization-form';
 import { Alert, AlertDescription, AlertTitle } from '~/modules/ui/alert';
 import { Button } from '~/modules/ui/button';
@@ -68,6 +69,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
       },
       {
         onSuccess: (createdWorkspace) => {
+          toaster.success(t('c:success.create_resource', { resource: t('c:workspace') }));
           form.reset();
           if (isDialog) useDialoger.getState().remove();
 

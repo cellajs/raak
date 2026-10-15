@@ -1,5 +1,4 @@
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
 import type { Workspace } from 'sdk';
 import {
   type CreateWorkspacesData,
@@ -14,7 +13,6 @@ import {
 } from 'sdk';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
-import { toaster } from '~/modules/common/toaster/toaster';
 import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
@@ -85,7 +83,6 @@ export const useWorkspaceCreateMutation = () => {
       return result.data[0] as Workspace;
     },
     onSuccess: (createdWorkspace) => {
-      toaster.success(t('c:success.create_resource', { resource: t('c:workspace') }));
       const membership = getApiIncludedMembership(createdWorkspace);
       if (membership) addMyMembershipCache(membership);
       cacheCreate(listKey, [createdWorkspace]);
@@ -104,7 +101,6 @@ export const useUpdateWorkspaceMutation = () => {
     mutationKey: keys.update,
     mutationFn: ({ path, body }) => updateWorkspace({ path, body }),
     onSuccess: (updatedWorkspace) => {
-      toaster.success(t('c:success.update_resource', { resource: t('c:workspace') }));
       cacheUpdate(listKey, [updatedWorkspace]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
       // Directly update detail cache so beforeLoad doesn't use stale slug for URL rewrite
@@ -127,12 +123,6 @@ export const useWorkspaceDeleteMutation = () => {
       await deleteWorkspaces({ path, body });
     },
     onSuccess: (_, { workspaces }) => {
-      const message =
-        workspaces.length > 1
-          ? t('c:success.delete_counted_resources', { count: workspaces.length, resources: t('c:workspace_other').toLowerCase() })
-          : t('c:success.delete_resource', { resource: t('c:workspace') });
-
-      toaster.success(message);
       cacheRemove(listKey, workspaces);
       removeDetailQueriesOnceUnobserved(
         queryClient,

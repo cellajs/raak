@@ -13,6 +13,7 @@ import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectUpdateMutation } from '~/modules/project/query';
 import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
@@ -54,7 +55,7 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
           if (isDialog) useDialoger.getState().remove();
           if (isSheet) useSheeter.getState().remove(formContainerId);
           form.reset(updatedProject);
-
+          toaster.success(t('c:success.update_resource', { resource: t('c:project') }));
           callback?.(updatedProject);
         },
       },
