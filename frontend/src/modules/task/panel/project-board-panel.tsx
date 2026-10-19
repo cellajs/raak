@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useRef } from 'react';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import type { EnrichedProject } from '~/modules/project/types';
 import { type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
@@ -32,15 +33,19 @@ export function ProjectBoardPanel({ project, publicView, sectionFilters, windowS
   // Both option variants share the same data shape; widen key type via assertion
   const { data } = useSuspenseQuery(queryOpts as ReturnType<typeof tasksCanonicalOptions>);
 
+  const isMobile = useBreakpointBelow('sm');
   const draftTask = useTaskInteractionStore((s) => s.draftTasks[project.id]);
   const boardId = useBoardStore((s) => s.activeBoardId)!;
   const viewSections = useTaskBoardStore((s) => s.panelData[boardId]?.[project.id]?.viewSections);
 
   // The open create-form draft renders in exactly one panel and bypasses section filtering,
   // so a lit "+ Task" badge always corresponds to a visible form somewhere on the board.
+  // Mobile creates through a dialog, so no draft row enters its list.
   const hostSection = draftTask ? resolveDraftHostSection(viewSections, draftTask.status) : null;
   const hostsDraft =
-    !!draftTask && (sectionFilters ? !!hostSection && makePanelKey(project.id, hostSection) === makePanelKey(project.id, sectionFilters) : true);
+    !isMobile &&
+    !!draftTask &&
+    (sectionFilters ? !!hostSection && makePanelKey(project.id, hostSection) === makePanelKey(project.id, sectionFilters) : true);
 
   const projectTasksRef = useRef<Task[]>([]);
   const panelTasksRef = useRef<Task[]>([]);

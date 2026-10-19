@@ -161,35 +161,18 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
     }
   }, [tasks, icedBoundaryIndex]);
 
-  const handleCreateFormPosition = useCallback(
-    (targetStatus = TaskStatus.Unstarted) => {
-      const targetIndex = getTargetIndexByStatus(tasks, targetStatus);
-
-      // No scrollViewportRef requirement: in windowScroll mode the ref is never attached,
-      // and the WindowVirtualizer handle supports the same offset/index/scroll API.
-      const virtualizer = virtualizerRef.current;
-      if (!virtualizer || targetIndex === -1) return;
-
-      // Check visibility of target index
-      const startIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset) ?? 0;
-      const endIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset + virtualizerRef.current.viewportSize) ?? 0;
-      const targetIndexVisible = targetIndex > startIndex && targetIndex < endIndex;
-
-      if (targetIndexVisible) return;
-      // Scroll to target index
-      virtualizer.scrollToIndex(targetIndex, { align: 'center', smooth: false });
-    },
-    [tasks],
-  );
-
-  // Desktop: scroll to create task form when it appears
+  // Desktop: bring the create form into view when it opens or a status change moves it, not on every list change.
+  // A frame later, because the virtualizer's offset can still predate a scroll made just before, such as one up to "+ Task".
+  const draftTask = tasks.find(isDraftTask);
+  const draftPlacement = draftTask ? `${draftTask.status}:${draftTask.displayOrder}` : null;
   useEffect(() => {
-    if (isMobile) return;
-    const createForm = tasks.find((t) => isDraftTask(t));
-    if (!createForm) return;
-
-    handleCreateFormPosition(createForm.status);
-  }, [tasks]);
+    if (isMobile || !draftPlacement) return;
+    const frame = requestAnimationFrame(() => {
+      const index = tasksRef.current.findIndex(isDraftTask);
+      if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [draftPlacement]);
 
   // Mobile: scroll to focused task when a new task is added
   useEffect(() => {
