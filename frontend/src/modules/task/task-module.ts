@@ -1,6 +1,8 @@
 import { SquareCheckBigIcon } from 'lucide-react';
 import { defineFrontendModule } from '~/lib/module';
 import { TASK_SHEET_PARAM } from '~/modules/task/search-params-schemas';
+// Registers the mutation defaults before the cache restore, so a queued task mutation replays after a reload
+import '~/modules/task/query';
 
 defineFrontendModule({
   name: 'tasks',

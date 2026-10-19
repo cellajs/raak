@@ -12,6 +12,7 @@ minimumReleaseAgeExclude:
   - '@cellajs/cli'
   - moment@2.31.0
 overrides:
+  # fork: raak's t.$id.tsx route trips a router-plugin emit bug under newer @babel/traverse
   # 7.29.10 makes @tanstack/router-plugin 1.168.42 emit an undefined export for a route whose split
   # component shares a local binding with a non-split prop (t.$id.tsx), which fails `vite build`.
   # Remove once the router plugin fixes that emit, or when `pnpm build` passes without it.

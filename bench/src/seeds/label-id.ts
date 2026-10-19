@@ -1,5 +1,5 @@
-import { BENCH_UUID_PREFIX } from 'shared/utils/bench-identity';
+import { benchUuid } from './ids';
 
 const LABEL_ID_VARIANT = 'b010';
 
-export const labelId = (i: number) => `${BENCH_UUID_PREFIX}${LABEL_ID_VARIANT}-${i.toString(16).padStart(12, '0')}`;
+export const labelId = (i: number) => benchUuid(LABEL_ID_VARIANT, i);

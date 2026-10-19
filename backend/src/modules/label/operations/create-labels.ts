@@ -33,15 +33,20 @@ export async function createLabelsOp(
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'label' });
   }
 
-  // Idempotency check
-  const batchStxId = input[0].stx.mutationId;
-  const existing = await checkIdempotency(ctx, labelsTable, batchStxId);
-  if (existing) return { data: existing, rejectedIds: [], replayed: true };
+  // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
+  const replayed = await checkIdempotency(
+    ctx,
+    labelsTable,
+    input.map((item) => item.id),
+  );
+  const replayedIds = new Set(replayed.map((row) => row.id));
+  const fresh = input.filter((item) => !replayedIds.has(item.id));
+  if (fresh.length === 0) return { data: replayed, rejectedIds: [], replayed: true };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
   const currentCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'label' });
 
-  if (labelRestrictions !== 0 && currentCount + input.length > labelRestrictions) {
+  if (labelRestrictions !== 0 && currentCount + fresh.length > labelRestrictions) {
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'label' });
   }
 
@@ -52,7 +57,7 @@ export async function createLabelsOp(
   const existingLabels = await tenantRead(ctx, (readCtx) => findLabelsByOrg(readCtx));
 
   const labelsToInsert: InsertLabelModel[] = [];
-  for (const { stx, ...labelInfo } of input) {
+  for (const { stx, ...labelInfo } of fresh) {
     // Maintain same color for labels already in organization
     const sameLabelInOrg = existingLabels.find(({ name }) => name === labelInfo.name);
     if (sameLabelInOrg) labelInfo.color = sameLabelInOrg.color;
@@ -89,5 +94,10 @@ export async function createLabelsOp(
 
   log.info('Labels created', { count: labelRecords.length });
 
-  return { data: labelRecords, rejectedIds: [], replayed: false };
+  // An attempt of this create running at the same time and committing first leaves this insert without those rows
+  const insertedIds = new Set(labelRecords.map((row) => row.id));
+  const missingIds = fresh.map((item) => item.id).filter((id) => !insertedIds.has(id));
+  const committedMeanwhile = missingIds.length > 0 ? await checkIdempotency(ctx, labelsTable, missingIds) : [];
+
+  return { data: [...replayed, ...labelRecords, ...committedMeanwhile], rejectedIds: [], replayed: false };
 }

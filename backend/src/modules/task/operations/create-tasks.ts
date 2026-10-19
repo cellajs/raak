@@ -9,7 +9,7 @@ import { findLivePrimaryLabels } from '#/modules/label/label-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
 import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
-import { tasksTable } from '#/modules/task/task-db';
+import { type TaskModel, tasksTable } from '#/modules/task/task-db';
 import { insertTasks } from '#/modules/task/task-queries';
 import { taskContract, type taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
 import { buildSubject } from '#/permissions/build-subject';
@@ -35,23 +35,30 @@ export async function createTasksOp(
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
   }
 
-  // Idempotency check
-  const batchStxId = input[0].stx.mutationId;
-  const existing = await checkIdempotency(ctx, tasksTable, batchStxId);
-  if (existing) {
-    const [users, labels] = await tenantRead(ctx, (readCtx) => getTaskRelations(readCtx, { tasks: existing }));
-    return { data: hydrateTasks(existing, users, labels), rejectedIds: [], replayed: true };
-  }
+  const hydrate = async (tasks: TaskModel[]) => {
+    const [users, labels] = await tenantRead(ctx, (readCtx) => getTaskRelations(readCtx, { tasks }));
+    return hydrateTasks(tasks, users, labels);
+  };
+
+  // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
+  const replayed = await checkIdempotency(
+    ctx,
+    tasksTable,
+    input.map((item) => item.id),
+  );
+  const replayedIds = new Set(replayed.map((row) => row.id));
+  const fresh = input.filter((item) => !replayedIds.has(item.id));
+  if (fresh.length === 0) return { data: await hydrate(replayed), rejectedIds: [], replayed: true };
 
   // Check restriction limits. Concurrent requests may slightly overshoot.
   const currentTasksCount = await getOrganizationEntityCount(ctx, { organizationId: organization.id, entityType: 'task' });
 
-  if (taskRestrictions !== 0 && currentTasksCount + input.length > taskRestrictions) {
+  if (taskRestrictions !== 0 && currentTasksCount + fresh.length > taskRestrictions) {
     throw new AppError(429, 'restrict_by_org', 'warn', { entityType: 'task' });
   }
 
   const placements: ResolvedPlacement<'task'>[] = [];
-  for (const item of input) placements.push((await resolvePlacement(ctx, 'task', item)).columns);
+  for (const item of fresh) placements.push((await resolvePlacement(ctx, 'task', item)).columns);
 
   // Resolve primary labels per project: validate provided ids, default to first by displayOrder
   const projectIds = [...new Set(placements.map(({ projectId }) => projectId))];
@@ -61,7 +68,7 @@ export async function createTasksOp(
     primariesByProject.set(row.projectId, [...(primariesByProject.get(row.projectId) ?? []), row]);
   }
 
-  const tasksToInsert = input.map(({ stx, id, ...taskInfo }, index) => {
+  const tasksToInsert = fresh.map(({ stx, id, ...taskInfo }, index) => {
     const placement = placements[index];
     // Derived attachments are UUID-shape-checked only: attachment rows created in the
     // same client batch may not be committed yet, so existence is not enforced here.
@@ -98,17 +105,18 @@ export async function createTasksOp(
     return task;
   });
 
-  // Insert + hydrate inside tenantContext so RLS session vars are set
-  const { createdTasks, users, labels } = await tenantContext(ctx, async (txCtx) => {
-    const createdTasks = await insertTasks(txCtx, { tasks: tasksToInsert });
-    await dispatchMutation(txCtx, 'task.created', { after: createdTasks });
-    const [users, labels] = await getTaskRelations(txCtx, { tasks: createdTasks });
-    return { createdTasks, users, labels };
+  const createdTasks = await tenantContext(ctx, async (txCtx) => {
+    const rows = await insertTasks(txCtx, { tasks: tasksToInsert });
+    await dispatchMutation(txCtx, 'task.created', { after: rows });
+    return rows;
   });
-
-  const taskResponses = hydrateTasks(createdTasks, users, labels);
 
   log.info('Tasks created', { count: createdTasks.length });
 
-  return { data: taskResponses, rejectedIds: [], replayed: false };
+  // An attempt of this create running at the same time and committing first leaves this insert without those rows
+  const insertedIds = new Set(createdTasks.map((row) => row.id));
+  const missingIds = fresh.map((item) => item.id).filter((id) => !insertedIds.has(id));
+  const committedMeanwhile = missingIds.length > 0 ? await checkIdempotency(ctx, tasksTable, missingIds) : [];
+
+  return { data: await hydrate([...replayed, ...createdTasks, ...committedMeanwhile]), rejectedIds: [], replayed: false };
 }
