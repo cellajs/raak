@@ -57,7 +57,7 @@ export function matchDigitHotkey<T>(items: readonly T[], value: string, options?
  */
 export function ComboboxHotkeyHint({ searching, children }: { searching: boolean; children: ReactNode }) {
   if (searching) return null;
-  return <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">{children}</Kbd>;
+  return <Kbd className="absolute top-2.5 right-2.5 max-sm:hidden">Alt {children}</Kbd>;
 }
 
 /**

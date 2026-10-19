@@ -18,7 +18,12 @@
       "entry": ["src/drive.ts"]
     },
     "backend": {
+      // The drizzle plugin makes every `*-db.ts` an entry, and knip reports no unused export of an entry. Off, the files
+      // are checked like any other: tables are imported through `src/tables.ts`, and an export only drizzle-kit reads
+      // takes `@public`.
+      "drizzle": false,
       "entry": [
+        "drizzle.config.ts",
         "scripts/*.ts",
         // Loaded by readdir in scripts/scripts-discovery.ts.
         "scripts/migrations/*.migration.ts",
@@ -63,7 +68,7 @@
         "src/utils/date-full.ts",
         "src/utils/in-numbers-array.ts",
         "src/utils/stable-array.ts",
-        // fork: kept, not yet wired. element.tsx is linked from cella's marketing copy, not raak's pinned marketing-config.
+        // fork: kept, not yet wired. element.tsx is linked from cella's marketing copy, not raak's app-owned marketing-config.
         "src/modules/common/icons/element.tsx",
         // fork: cella's about sections, which raak's about page does not render yet.
         "src/modules/marketing/about/info-cards.tsx",

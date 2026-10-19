@@ -1,5 +1,4 @@
-import { getColumns, sql } from 'drizzle-orm';
-import { toSnakeCase } from 'drizzle-orm/casing';
+import { sql } from 'drizzle-orm';
 import { boolean, doublePrecision, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import type { LabelMode } from 'shared/config/labels-config';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
@@ -39,9 +38,6 @@ export const labelsTable = snakeCase.table(
     ...writeThroughPolicies('labels'),
   ],
 );
-
-// Get table columns and convert to snake_case
-export const labelsTableColumns = Object.fromEntries(Object.entries(getColumns(labelsTable)).map(([key, column]) => [toSnakeCase(column.name), key]));
 
 export type LabelModel = typeof labelsTable.$inferSelect;
 export type InsertLabelModel = typeof labelsTable.$inferInsert;

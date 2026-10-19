@@ -117,7 +117,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
           placeholder={t('c:assign_to')}
           showClear={false}
         />
-        <ComboboxHotkeyHint searching={!!searchValue.length}>A</ComboboxHotkeyHint>
+        <ComboboxHotkeyHint searching={!!searchValue.length}>U</ComboboxHotkeyHint>
         <ScrollArea className={comboboxScrollClass}>
           <ComboboxList className="p-1">
             {(user: UserMinimalBase) => {
