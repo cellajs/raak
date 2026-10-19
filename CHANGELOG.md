@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.15](https://github.com/cellajs/raak/compare/0.1.14...0.1.15) (2026-10-19)
+
+
+### 🐞 Bug fixes
+
+* **home:** the workspace tiles show without a visible heading ([#182](https://github.com/cellajs/raak/issues/182)) ([e18a611](https://github.com/cellajs/raak/commit/e18a61130d5062bbd5931450c3e7c03326727b66))
+* **task,about:** notification emails title a task by its summary block, the about hero breaks before "One page." ([#185](https://github.com/cellajs/raak/issues/185)) ([1efdf0d](https://github.com/cellajs/raak/commit/1efdf0dc8cea565ac1688e3ac3263046e5aede53))
+* **task,project:** org admins list every project's tasks, refused deletes return, one toast per action ([#183](https://github.com/cellajs/raak/issues/183)) ([89c3a98](https://github.com/cellajs/raak/commit/89c3a98adcc9ece0289afbc61a21af77a01d1c39))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.19.0 (a5964521) ([#186](https://github.com/cellajs/raak/issues/186)) ([acab59e](https://github.com/cellajs/raak/commit/acab59ea0fea22582d539d3163568c53797ad7ea))
+
 ## [0.1.14](https://github.com/cellajs/raak/compare/0.1.13...0.1.14) (2026-10-15)
 
 
