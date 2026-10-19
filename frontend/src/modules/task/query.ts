@@ -1,4 +1,4 @@
-import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
+import type { DefaultError, Mutation, QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import i18n from 'i18next';
 import type { CreateTasksData, GetTasksData, UpdateTaskData, UserMinimalBase } from 'sdk';
@@ -27,13 +27,20 @@ import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { isArrayDelta } from '~/query/offline/array-delta';
-import { type CreateVariables, type DeleteVariables, registerVariablesVersion, type UpdateVariables } from '~/query/offline/mutation-variables';
+import {
+  type CreateVariables,
+  type DeleteVariables,
+  entityIdsOf,
+  registerVariablesVersion,
+  type UpdateVariables,
+} from '~/query/offline/mutation-variables';
 import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse } from '~/query/offline/update-success-utils';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
+import type { QueryData } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
 export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
@@ -233,6 +240,39 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
     initialData: () => findTaskInCache(id),
   });
 
+type TaskCreateMutation = Mutation<CreateData, DefaultError, TaskCreateFullVars, { optimisticTasks: Task[] }>;
+
+/**
+ * Starts one project list read and returns what completes it. The server's snapshot may predate every create that had not
+ * answered when the read started, so their rows the read lacks are carried over: the optimistic row while the create is
+ * out, the stored row once it answered. A failed create, or one of a deleted row, carries nothing.
+ */
+const carryUnansweredCreates = (client: QueryClient, projectId: string) => {
+  const startedAt = Date.now();
+  // The mutation cache is untyped; this key only holds task creates.
+  const creates = () => client.getMutationCache().findAll({ mutationKey: taskKeys.create }) as TaskCreateMutation[];
+  const unanswered = new Set(creates().filter(({ state }) => state.status === 'pending'));
+
+  return (read: QueryData<Task>): QueryData<Task> => {
+    const present = new Set(read.items.map(({ id }) => id));
+    const deleted = new Set(
+      client
+        .getMutationCache()
+        .findAll({ mutationKey: taskKeys.delete })
+        .filter(({ state }) => state.status !== 'error')
+        .flatMap(({ state }) => entityIdsOf(state.variables)),
+    );
+    const carried = creates()
+      .filter((mutation) => unanswered.has(mutation) || mutation.state.submittedAt >= startedAt)
+      .flatMap(({ state }) =>
+        state.status === 'success' ? (state.data ?? []) : state.status === 'pending' ? (state.context?.optimisticTasks ?? []) : [],
+      )
+      .filter((row) => row.projectId === projectId && !present.has(row.id) && !deleted.has(row.id));
+
+    return carried.length ? { items: [...carried, ...read.items], total: read.total + carried.length } : read;
+  };
+};
+
 /**
  * Canonical task query: one flat query per project scope.
  * Fetches all tasks for a project, stored at taskKeys.list.home(organizationId, projectId).
@@ -242,12 +282,14 @@ export const taskQueryOptions = (id: string, organizationId: string, tenantId: s
 export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: { organizationId: string; tenantId: string; projectId: string }) => {
   return queryOptions({
     queryKey: taskKeys.list.home(organizationId, projectId),
-    queryFn: () => {
-      return fetchAllPages(
+    queryFn: async ({ client }) => {
+      const completeRead = carryUnansweredCreates(client, projectId);
+      const read = await fetchAllPages(
         ({ limit, offset }) =>
           getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOff } }),
         appConfig.requestLimits.tasks,
       );
+      return completeRead(read);
     },
     staleTime: syncStaleTime,
   });

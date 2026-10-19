@@ -16,6 +16,11 @@ import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';
 import { ScrollArea } from '~/modules/ui/scroll-area';
+import { cn } from '~/utils/cn';
+
+// virtua keeps measured heights by index and never renders a row it measured at 0px, so that row is never measured again.
+// Opening or closing the create form hands the form's height to whichever row takes its index, and the form collapses to 0px on submit.
+const rowHeightGuard = '[&>ul>li]:min-h-px';
 
 interface PanelProps {
   project: Project;
@@ -76,12 +81,9 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
     if (!isMobile) setActivePanel(project.id);
   };
 
-  // Shared task renderer for both virtualizer branches (drafts are desktop-only)
+  // Shared task renderer for both virtualizer branches
   const renderTask = (task: TaskProps['task']) => {
-    if (isDraftTask(task)) {
-      if (isMobile) return null;
-      return <DraftTaskItem key={task.id} task={task} project={project} onStatusChange={onStatusChange} />;
-    }
+    if (isDraftTask(task)) return <DraftTaskItem key={task.id} task={task} project={project} onStatusChange={onStatusChange} />;
     return <MotionTaskCard key={task.id} task={task} />;
   };
 
@@ -98,7 +100,10 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
           {topSlot}
 
           {hasContent ? (
-            <div className="[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10" id={`panel-tasks-${project.id}`}>
+            <div
+              className={cn(rowHeightGuard, '[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10')}
+              id={`panel-tasks-${project.id}`}
+            >
               <WindowVirtualizer ref={virtualizerRef} as="ul" item="li">
                 {tasks.map(renderTask)}
               </WindowVirtualizer>
@@ -130,7 +135,10 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
           {/* Render tasks */}
           <div className="flex flex-1 flex-col" id={`tasks-list-${project.id}`}>
             {hasContent ? (
-              <div className="grow [&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10" id={`panel-tasks-${project.id}`}>
+              <div
+                className={cn(rowHeightGuard, 'grow [&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10')}
+                id={`panel-tasks-${project.id}`}
+              >
                 {/* startMargin in px based of button size */}
                 <Virtualizer
                   ref={virtualizerRef}
