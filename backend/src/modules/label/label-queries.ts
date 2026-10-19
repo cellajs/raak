@@ -1,4 +1,4 @@
-import { and, asc, count, eq, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, or, type SQL } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
@@ -11,6 +11,7 @@ import { type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { getIsoDate } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { seqCursorFilters } from '#/utils/seq-cursor';
+import { textSearchFilter } from '#/utils/sql';
 
 /** Find all labels in an organization (used for duplicate/color matching). */
 export const findLabelsByOrg = async (ctx: ActorContext) => {
@@ -186,9 +187,8 @@ export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPag
 
   // Tokenized search over name and description-derived keywords, as task keyword matching does: every word must hit
   // (AND across words, OR across columns per word). parseSearchQuery strips the '=' highlight marker.
-  const searchWords = parseSearchQuery(q).effectiveQ.toLowerCase().split(/\s+/).filter(Boolean);
-  for (const word of searchWords) {
-    const wordFilter = or(ilike(labelsTable.name, `%${word}%`), ilike(labelsTable.keywords, `%${word}%`));
+  for (const word of parseSearchQuery(q).terms) {
+    const wordFilter = or(textSearchFilter(labelsTable.name, word), textSearchFilter(labelsTable.keywords, word));
     if (wordFilter) filters.push(wordFilter);
   }
   if (modes?.length) filters.push(inArray(labelsTable.mode, modes));

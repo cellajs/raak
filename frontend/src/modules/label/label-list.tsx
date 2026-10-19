@@ -4,9 +4,11 @@ import { BirdIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
+import { matchesTerms } from 'shared/utils/text-match';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { HighlightText } from '~/modules/common/match-highlight';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
@@ -23,13 +25,10 @@ import { ScrollArea } from '~/modules/ui/scroll-area';
 import { cn } from '~/utils/cn';
 
 /** Highlight-mode match over the same columns the server search filters on (name + keywords). */
-const matchesSearch = (row: LabelRow, words: string[]) => words.every((word) => row.nameLower.includes(word) || row.keywordsLower.includes(word));
+const matchesSearch = (row: LabelRow, terms: string[]) => matchesTerms([row.nameFolded, row.keywordsFolded], terms);
 
 /** The panel lists secondary tags and epics; primary labels live on the task cards, not here. */
 const isPanelLabel = (mode: string) => mode !== 'primary';
-
-/** Split a search query into lowercase words for client-side filtering/highlighting. */
-const toWords = (q: string) => q.toLowerCase().split(/\s+/).filter(Boolean);
 
 // Module-scoped so its identity is stable: useQueries returns a fresh combined value each render
 // unless the combine function is referentially stable (mirrors the label picker, select-labels).
@@ -59,7 +58,7 @@ const useLabelRows = (labels: Label[], usage: LabelUsage, highlight: boolean, wo
 function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const q = useSearch({ strict: false, select: (search) => search.q });
-  const { highlight, effectiveQ } = parseSearchQuery(q);
+  const { highlight, terms } = parseSearchQuery(q);
 
   const { data, isLoading } = useQuery({
     ...labelsCanonicalOptions({ organizationId, tenantId, projectId: entityId }),
@@ -67,8 +66,7 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   });
   const usage = useLabelUsage([entityId]);
 
-  const words = useMemo(() => toWords(effectiveQ), [effectiveQ]);
-  const rows = useLabelRows(data ?? [], usage, highlight, words);
+  const rows = useLabelRows(data ?? [], usage, highlight, terms);
 
   return (
     <LabelListView
@@ -76,7 +74,7 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
       rows={rows}
       isLoading={isLoading}
       highlight={highlight}
-      highlightWords={highlight ? words : []}
+      highlightWords={highlight ? terms : []}
       windowScroll={windowScroll}
     />
   );
@@ -91,7 +89,7 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
 function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const q = useSearch({ strict: false, select: (search) => search.q });
-  const { highlight, effectiveQ } = parseSearchQuery(q);
+  const { highlight, terms } = parseSearchQuery(q);
 
   const { data: projectIds } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: entityId }),
@@ -105,8 +103,7 @@ function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
   const usage = useLabelUsage(projectIds ?? []);
   const isLoading = projectIds === undefined || pending;
 
-  const words = useMemo(() => toWords(effectiveQ), [effectiveQ]);
-  const rows = useLabelRows(labels, usage, highlight, words);
+  const rows = useLabelRows(labels, usage, highlight, terms);
 
   return (
     <LabelListView
@@ -114,7 +111,7 @@ function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
       rows={rows}
       isLoading={isLoading}
       highlight={highlight}
-      highlightWords={highlight ? words : []}
+      highlightWords={highlight ? terms : []}
       windowScroll={windowScroll}
     />
   );
@@ -178,7 +175,9 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
             search={(prev) => ({ ...prev, labelPageId: row.id })}
             className="flex min-w-0 grow items-center gap-2 text-left outline-0 ring-0 after:absolute after:inset-0 after:content-['']"
           >
-            <span className="grow truncate opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100">{row.name}</span>
+            <span className="grow truncate opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100">
+              <HighlightText text={row.name} />
+            </span>
             {row.mode === 'epic' && <Badge variant="secondary">{t('c:epic')}</Badge>}
           </Link>
           {/* Single-cell grid stacks count and avatars in the same right-aligned spot, so the

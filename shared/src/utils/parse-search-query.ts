@@ -1,12 +1,14 @@
+import { parseTerms } from './text-match';
+
 /**
  * Parse a board search query. A leading '=' switches search from filtering to highlighting:
- * consumers keep every row visible and tint the matches. `effectiveQ` is
- * the query with the marker stripped; `highlight` is only true when content follows it.
- * Single source for the marker so frontend views and backend list filters stay in sync.
+ * consumers keep every row visible and tint the matches. `effectiveQ` is the query with the
+ * marker stripped, `terms` its folded words, and `highlight` is only true when content follows
+ * the marker. Single source for the marker so frontend views and backend list filters stay in sync.
  */
-export const parseSearchQuery = (q: string | null | undefined): { highlight: boolean; effectiveQ: string } => {
+export const parseSearchQuery = (q: string | null | undefined): { highlight: boolean; effectiveQ: string; terms: string[] } => {
   const trimmed = q?.trim() ?? '';
   const marked = trimmed.startsWith('=');
   const effectiveQ = (marked ? trimmed.slice(1) : trimmed).trim();
-  return { highlight: marked && effectiveQ.length > 0, effectiveQ };
+  return { highlight: marked && effectiveQ.length > 0, effectiveQ, terms: parseTerms(effectiveQ) };
 };

@@ -12,7 +12,7 @@ import type { QueryData } from '~/query/types';
 // which can schedule a BoardHeader update mid-render of another component and trip React's
 // "setState in render" warning. Hoisted to module scope so useSyncExternalStore doesn't resubscribe
 // on every render.
-const subscribeToTaskCache = (onStoreChange: () => void) =>
+export const subscribeToTaskCache = (onStoreChange: () => void) =>
   queryClient.getQueryCache().subscribe((event) => {
     const key = event.query?.queryKey;
     if (Array.isArray(key) && key[0] === 'task') onStoreChange();

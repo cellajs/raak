@@ -1,3 +1,4 @@
+import { foldText } from 'shared/utils/text-match';
 import { labelRecencyStore } from '~/modules/label/label-recency-store';
 import type { Label } from '~/modules/label/query';
 import type { LabelRow } from '~/modules/label/types';
@@ -13,7 +14,7 @@ import type { LabelUsage } from '~/modules/label/use-label-usage';
  * sibling represents a group (e.g. the current project's copy).
  */
 export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: string; usage?: LabelUsage } = {}): LabelRow[] => {
-  const rowMap = new Map<string, Omit<LabelRow, 'nameLower' | 'keywordsLower'>>();
+  const rowMap = new Map<string, Omit<LabelRow, 'nameFolded' | 'keywordsFolded'>>();
 
   for (const label of labels) {
     const groupKey = label.slug;
@@ -34,7 +35,7 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
     rowMap.set(groupKey, preferNew ? { ...label, ...aggregates } : { ...existing, ...aggregates });
   }
 
-  return Array.from(rowMap.values(), (row) => ({ ...row, nameLower: row.name.toLowerCase(), keywordsLower: row.keywords.toLowerCase() }));
+  return Array.from(rowMap.values(), (row) => ({ ...row, nameFolded: foldText(row.name), keywordsFolded: foldText(row.keywords) }));
 };
 
 /** The group row containing a given label id, if any (matched through its slug siblings). */

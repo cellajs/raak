@@ -10,10 +10,12 @@ import { SelectColumn } from '~/modules/common/data-grid';
 import { estimateWrappedLines } from '~/modules/common/data-grid/utils/wrap-text-utils';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { HighlightText } from '~/modules/common/match-highlight';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
 import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
+import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { statusOptionsByValue } from '~/modules/task/task-properties';
 import { statusFillColors } from '~/modules/task/task-styles';
@@ -55,6 +57,7 @@ function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
     >
       <div className="whitespace-pre-wrap py-1 leading-5">
         {row.summary ? <TaskSummaryHtml task={row} className="pointer-events-none" /> : <span className="text-muted">-</span>}
+        <TaskMatchReason task={row} className="mt-1 whitespace-normal" />
       </div>
     </Button>
   );
@@ -227,7 +230,9 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
               {row.labels.map((label) => (
                 <div key={label.id} className="flex items-center gap-1">
                   <DotIcon className="size-2 shrink-0 rounded-md text-background" style={{ background: label.color || undefined }} strokeWidth={4} />
-                  <span className="text-xs">{label.name}</span>
+                  <span className="text-xs">
+                    <HighlightText text={label.name} />
+                  </span>
                 </div>
               ))}
             </div>

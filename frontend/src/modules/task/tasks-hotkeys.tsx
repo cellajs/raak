@@ -6,14 +6,14 @@ import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
-import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { defaultPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { boardSearchInputId } from '~/modules/task/board-search';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { cachedTasks, currentActiveTask } from '~/modules/task/helpers/active-task';
-import { pickViewSections, prepareBoardPanels, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
+import { pickViewSections, prepareBoardPanels, renderedPanelTasks } from '~/modules/task/helpers/board-helpers';
 import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
-import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
@@ -41,18 +41,6 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const taskSheetId = useSearch({ strict: false, select: (search) => search.taskSheetId });
   const isSheetOpen = !!taskSheetId;
 
-  const getVisiblePanelTasks = (panel: StrictBoardPanel) => {
-    const boardTasks = cachedTasks();
-    const projectTasks = boardTasks.filter(({ projectId }) => projectId === panel.project.id);
-    const searched = projectTasks.filter((task) => searchFilterFunction({ q, matchMode }, task));
-
-    const filtered = panel.sectionFilters
-      ? searched.filter((task) => Object.entries(panel.sectionFilters!).every(([key, value]) => value.includes(task[key as keyof SectionsValue])))
-      : searched;
-
-    return filtered;
-  };
-
   const findCurrentPanel = (allPanels: StrictBoardPanel[], taskProjectId: string, taskStatus: Task['status']) =>
     allPanels.find(({ project, sectionFilters }) => project.id === taskProjectId && (!sectionFilters || sectionFilters.status.includes(taskStatus)));
 
@@ -68,8 +56,8 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     if (currentTaskCard?.dataset.state === 'editing') return null;
 
     const currentPanel = findCurrentPanel(allPanels, currentTask.projectId, currentTask.status) ?? allPanels[0];
-    const { expandAccepted, expandIced } = boardPanelData?.[currentPanel.project.id]?.prefs || defaultPanelPrefs;
-    const visibleTasks = prepareBoardTasks(getVisiblePanelTasks(currentPanel), expandAccepted, expandIced);
+    const prefs = boardPanelData?.[currentPanel.project.id]?.prefs || defaultPanelPrefs;
+    const visibleTasks = renderedPanelTasks(currentPanel, cachedTasks(), { q, matchMode }, prefs);
 
     return { currentTask, visibleTasks };
   };
@@ -143,8 +131,8 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     const nextPanel = allPanels[currentPanelIndex + direction];
     if (!nextPanel) return;
 
-    const { expandAccepted, expandIced } = boardPanelData?.[nextPanel.project.id]?.prefs || defaultPanelPrefs;
-    const visibleTasks = prepareBoardTasks(getVisiblePanelTasks(nextPanel), expandAccepted, expandIced);
+    const prefs = boardPanelData?.[nextPanel.project.id]?.prefs || defaultPanelPrefs;
+    const visibleTasks = renderedPanelTasks(nextPanel, cachedTasks(), { q, matchMode }, prefs);
     const targetTaskId = getFirstViewportTaskId(nextPanel.project.id, visibleTasks) ?? visibleTasks[0]?.id;
     if (targetTaskId) setTaskCardFocus(targetTaskId);
   };
@@ -248,9 +236,20 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     ['Alt + N', handleNKeyDown],
   ];
 
+  // Browser find cannot see virtualized cards: the first press lands in the search box, and a second press typed there is native find.
+  const handleFindKeyDown = (event: KeyboardEvent) => {
+    const input = document.getElementById(boardSearchInputId);
+    if (!(input instanceof HTMLInputElement)) return;
+    event.preventDefault();
+    input.focus();
+    input.select();
+  };
+
   const stateHotkeys: HotkeyItem[] = [
     ['Escape', handleEscKeyPress],
     ['Enter', handleEnterKeyPress],
+    ['meta + f', handleFindKeyDown, { preventDefault: false }],
+    ['ctrl + f', handleFindKeyDown, { preventDefault: false }],
   ];
 
   const boardNavHotkeys: HotkeyItem[] = [

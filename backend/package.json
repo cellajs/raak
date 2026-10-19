@@ -17,6 +17,7 @@
     "generate:openapi": "tsx scripts/generate-openapi.ts",
     "generate:pg": "drizzle-kit generate --config drizzle.config.ts",
     "jobs": "tsx scripts/jobs.ts",
+    "keywords:rederive": "tsx scripts/rederive-keywords.ts",
     "manual-migration": "tsx scripts/manual-migration.ts",
     "migrate": "tsx scripts/migrate.ts",
     "push": "drizzle-kit push",

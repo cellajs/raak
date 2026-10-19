@@ -18,7 +18,7 @@ export interface LabelsScopeProps {
 
 /**
  * A visible labels row: a concrete label plus its cross-project name-group aggregates.
- * `nameLower`/`keywordsLower` are precomputed at grouping time so highlight-mode search does
- * not re-lowercase every row on each render.
+ * `nameFolded`/`keywordsFolded` are precomputed at grouping time so highlight-mode search does
+ * not fold every row on each render.
  */
-export type LabelRow = Label & { usedCount: number; siblingIds: string[]; projectIds: string[]; nameLower: string; keywordsLower: string };
+export type LabelRow = Label & { usedCount: number; siblingIds: string[]; projectIds: string[]; nameFolded: string; keywordsFolded: string };

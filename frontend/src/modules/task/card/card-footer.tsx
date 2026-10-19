@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useRelativeDate } from '~/hooks/use-relative-date';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { HighlightText } from '~/modules/common/match-highlight';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -98,7 +99,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
               key={task.labels[0].id}
               className="inline-block min-h-4 max-w-24 truncate border-0 bg-transparent px-1 py-0 font-normal leading-4 last:mr-0"
             >
-              {task.labels[0].name}
+              <HighlightText text={task.labels[0].name} />
             </Badge>
             {task.labels.length > 1 && (
               <Badge variant="outline" className="flex min-h-4 justify-center border-0 bg-transparent px-1 py-0 font-normal">
@@ -116,7 +117,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
                     key={id}
                     className="inline-block min-h-4 max-w-full shrink truncate border-0 bg-transparent px-1 py-0 font-normal text-[.75rem] text-muted-foreground leading-4 shadow-none last:mr-0"
                   >
-                    {name}
+                    <HighlightText text={name} />
                   </Badge>
                 </div>
               );

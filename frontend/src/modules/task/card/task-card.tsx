@@ -172,6 +172,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         data-project-id={task.projectId}
         data-read-only={isReadOnly ? 'true' : undefined}
         data-sheet={isSheet || undefined}
+        data-match-current={isFocused && !isSheet ? '' : undefined}
         draggable={!isSheet && !isReadOnly && effectiveState === 'collapsed'}
         data-exclude-from-focus-trap="true"
         tabIndex={0}
