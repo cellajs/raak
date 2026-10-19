@@ -71,10 +71,9 @@ export function BoardHeader({
         toggleFocus={toggleSearchFocus}
         matches={{ ids: matchIds, onStep: revealTask, currentId: focusedTaskId }}
       >
-        {' '}
         {typeof total === 'number' && searchQuery && (
-          <div className="flex items-center gap-1 text-muted-foreground text-sm">
-            <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>
+          <div className="mr-1 flex items-center gap-1 text-muted-foreground text-sm">
+            <span>{new Intl.NumberFormat(i18n.language).format(matchIds.length)}</span>
             <span>{t('c:found')}</span>
           </div>
         )}

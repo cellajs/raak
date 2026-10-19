@@ -1,4 +1,4 @@
-import { ChevronDownIcon, ChevronUpIcon, CircleXIcon, FilterIcon, HighlighterIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, CircleXIcon, FilterIcon } from 'lucide-react';
 import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
@@ -96,7 +96,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
     resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
   });
 
-  const modeButtonClass = 'focus-effect rounded-sm p-0.5 text-muted-foreground aria-pressed:bg-accent aria-pressed:text-foreground';
+  const iconButtonClass = 'focus-effect flex size-6 cursor-pointer items-center justify-center rounded-md hover:bg-muted';
 
   return (
     <InputGroup className="relative flex w-full items-center border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
@@ -117,93 +117,59 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
         onChange={(e) => setInputValue(e.target.value)}
       />
 
-      <InputGroupAddon className="pr-2" align="inline-end">
-        {canStep && steps.index >= 0 ? (
-          <span className="text-muted-foreground text-sm tabular-nums">
-            {t('c:match_position', { current: steps.index + 1, total: steps.total })}
-          </span>
-        ) : (
-          children
-        )}
-      </InputGroupAddon>
-      {canStep && (
-        <InputGroupAddon className="pr-1" align="inline-end">
-          <button
-            type="button"
-            aria-label={t('c:previous')}
-            className="focus-effect rounded p-0.5 hover:bg-muted"
-            onMouseDown={preventInputBlur}
-            onClick={steps.previous}
-          >
-            <ChevronUpIcon className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label={t('c:next')}
-            className="focus-effect rounded p-0.5 hover:bg-muted"
-            onMouseDown={preventInputBlur}
-            onClick={steps.next}
-          >
-            <ChevronDownIcon className="size-4" />
-          </button>
-        </InputGroupAddon>
-      )}
       {inputValue && (
-        <InputGroupAddon className="pr-2" align="inline-end">
-          <div role="group" aria-label={t('c:search')} className="flex items-center gap-0.5 rounded-md border p-0.5">
-            <button
-              type="button"
-              aria-pressed={!highlight}
-              aria-label={t('c:filter')}
-              title={t('c:filter')}
-              className={modeButtonClass}
-              onMouseDown={preventInputBlur}
-              onClick={() => setHighlightMode(false)}
-            >
-              <FilterIcon className="size-3.5" />
+        <InputGroupAddon className="gap-1 pr-2 has-[>button]:mr-0" align="inline-end">
+          {canStep && steps.index >= 0 ? (
+            <span className="mr-1 text-muted-foreground text-sm tabular-nums">
+              {t('c:match_position', { current: steps.index + 1, total: steps.total })}
+            </span>
+          ) : (
+            children
+          )}
+          {canStep && (
+            <div className="flex items-center">
+              <button type="button" aria-label={t('c:previous')} className={iconButtonClass} onMouseDown={preventInputBlur} onClick={steps.previous}>
+                <ChevronUpIcon className="size-4" />
+              </button>
+              <button type="button" aria-label={t('c:next')} className={iconButtonClass} onMouseDown={preventInputBlur} onClick={steps.next}>
+                <ChevronDownIcon className="size-4" />
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            aria-pressed={!highlight}
+            aria-label={t('c:filter')}
+            title={t('c:filter')}
+            className={cn(iconButtonClass, 'aria-pressed:bg-success aria-pressed:text-success-foreground aria-pressed:hover:bg-success/90')}
+            onMouseDown={preventInputBlur}
+            onClick={() => setHighlightMode(!highlight)}
+          >
+            <FilterIcon className="size-3.5" />
+          </button>
+          {/\s/.test(inputValue) && (
+            <button type="button" className="focus-effect rounded-full" onMouseDown={preventInputBlur} onClick={toggleSearchMode}>
+              <Badge variant="plain" size="micro" className="cursor-pointer">
+                {matchMode}
+              </Badge>
             </button>
-            <button
-              type="button"
-              aria-pressed={highlight}
-              aria-label={t('c:highlight')}
-              title={t('c:highlight')}
-              className={modeButtonClass}
-              onMouseDown={preventInputBlur}
-              onClick={() => setHighlightMode(true)}
-            >
-              <HighlighterIcon className="size-3.5" />
-            </button>
-          </div>
+          )}
+          <button
+            type="button"
+            id="search-close"
+            aria-label={t('c:clear')}
+            className={iconButtonClass}
+            onMouseDown={preventInputBlur}
+            onClick={() => {
+              setSearch({ q: '', matchMode: undefined });
+              setInputValue('');
+              inputRef.current?.focus();
+            }}
+          >
+            <CircleXIcon className="size-4" />
+          </button>
         </InputGroupAddon>
       )}
-      <InputGroupAddon className="pr-2" align="inline-end">
-        <button
-          type="button"
-          className={cn((!inputValue || !/\s/.test(inputValue)) && 'hidden', 'focus-effect rounded-full')}
-          onMouseDown={preventInputBlur}
-          onClick={toggleSearchMode}
-        >
-          <Badge variant="plain" size="micro" className="cursor-pointer">
-            {matchMode}
-          </Badge>
-        </button>
-      </InputGroupAddon>
-      <InputGroupAddon className="pr-2" align="inline-end">
-        <button
-          type="button"
-          id="search-close"
-          aria-label={t('c:clear')}
-          className={cn(!inputValue && 'hidden', 'focus-effect cursor-pointer rounded-full')}
-          onMouseDown={preventInputBlur}
-          onClick={() => {
-            setSearch({ q: '', matchMode: undefined });
-            setInputValue('');
-            inputRef.current?.focus();
-          }}
-        >
-          <CircleXIcon />
-        </button>
-      </InputGroupAddon>
       <span className="sr-only" aria-live="polite">
         {steps.announcement}
       </span>

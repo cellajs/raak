@@ -8,7 +8,6 @@
   "connect_institution": "{{institution}}-account koppelen",
   "connected_to_institution": "Gekoppeld aan {{institution}}",
   "connect_institution_prompt.text": "Je bent ingelogd. Koppel nu je {{institution}}-account om voortaan daarmee in te loggen.",
-  "highlight": "Markeren",
   "item_one": "{{count}} item",
   "item_other": "{{count}} items",
   "match_position": "{{current}} van {{total}}",
