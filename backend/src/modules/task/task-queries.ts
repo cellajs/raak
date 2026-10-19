@@ -1,6 +1,8 @@
 import { and, asc, count, eq, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { ActorContext, DbContext } from '#/core/context';
+import type { DbOrTx } from '#/db/db';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
+import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { labelsTable } from '#/modules/label/label-db';
@@ -210,3 +212,19 @@ export const reassignTasksFromDeletedPrimaries = async (
     })
     .where(and(inArray(tasksTable.primaryLabelId, deletedPrimaryIds), requestScopeWhere(ctx, tasksTable, 'task')));
 };
+
+const liveTasks = (ids: string[]) => and(inArray(tasksTable.id, ids), isNull(tasksTable.deletedAt), publishedRowsPredicate(tasksTable));
+
+/** A live task's title columns and body, for an instant notification email. */
+export const findTaskNotificationPreview = async (tx: DbOrTx, id: string) => {
+  const [row] = await tx
+    .select({ name: tasksTable.name, summary: tasksTable.summary, description: tasksTable.description })
+    .from(tasksTable)
+    .where(liveTasks([id]))
+    .limit(1);
+  return row;
+};
+
+/** Live tasks' title columns, for notification lists and digests. */
+export const findTaskNotificationTitles = (tx: DbOrTx, ids: string[]) =>
+  tx.select({ id: tasksTable.id, name: tasksTable.name, summary: tasksTable.summary }).from(tasksTable).where(liveTasks(ids));
