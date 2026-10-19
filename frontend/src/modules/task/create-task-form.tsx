@@ -5,7 +5,6 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import type { Attachment } from 'sdk';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
@@ -69,7 +68,6 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   const isFocused = useTaskInteractionStore((s) => s.focusedTaskId === formId);
 
   const [defaultId] = useState(generateId());
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [editorKey, setEditorKey] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const pendingCloseRef = useRef(false);
@@ -102,7 +100,13 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   const [watchedAssignedTo, watchedLabels, watchedDescription] = useWatch({ control: form.control, name: ['assignedTo', 'labels', 'description'] });
   const isDirty = form.isDirty && newTaskFormIsDirty({ assignedTo: watchedAssignedTo, labels: watchedLabels, description: watchedDescription });
 
-  const baseFilePanelProps = useTaskFilePanelProps(projectId, tenantId, organizationId, setAttachments);
+  // Rows are created at upload, as in the update form, so a draft closed or reloaded before submit keeps every upload.
+  const baseFilePanelProps = useTaskFilePanelProps(
+    projectId,
+    tenantId,
+    organizationId,
+    attachmentsCreationCallback({ organizationId, tenantId, projectId }),
+  );
 
   const handleCloseForm = () => {
     if (isDialog) useDialoger.getState().remove();
@@ -145,11 +149,6 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
     pendingCloseRef.current = true;
     setIsExiting(true);
     setTimeout(closeAfterExit, exitFallbackMs);
-
-    // Persist the stashed upload rows; task linkage rides the description's attachmentId props.
-    if (attachments.length) {
-      attachmentsCreationCallback({ organizationId, tenantId, projectId })(attachments);
-    }
 
     await taskMutation
       .mutateAsync(newTask)
