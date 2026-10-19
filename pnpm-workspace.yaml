@@ -17,9 +17,6 @@ overrides:
   # component shares a local binding with a non-split prop (t.$id.tsx), which fails `vite build`.
   # Remove once the router plugin fixes that emit, or when `pnpm build` passes without it.
   '@babel/traverse': 7.29.7
-  '@grpc/grpc-js@>=1.14.0 <1.14.5': ^1.14.5
-  brace-expansion@>=4.0.0 <5.0.12: ^5.0.12
-  browserslist@<=4.28.6: ^4.28.7
   csv-parse@<7.0.2: ^7.0.2
   esbuild@<0.28.1: ^0.28.1
   http-cache-semantics@<=4.2.0: ^4.3.0
@@ -28,7 +25,6 @@ overrides:
   moment@>=2.29.2 <2.31.0: ^2.31.0
   postcss-selector-parser@<7.1.6: ^7.1.6
   shell-quote@>=1.8.4 <1.11.0: ^1.11.0
-  smol-toml@<=1.8.0: ^1.8.1
   source-map-js@>=1.0.0 <1.2.2: ^1.2.2
 packageExtensions:
   '@artilleryio/sketches-js':
