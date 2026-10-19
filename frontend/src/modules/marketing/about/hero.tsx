@@ -39,7 +39,7 @@ export function Hero({ title, text, children, chips }: HeroProps) {
     <section id="spy-welcome" className={sectionClass}>
       <header ref={ref} className={cn('container flex max-w-4xl flex-col items-center gap-4 text-center', headerClass)}>
         <h1 className="mb-6 font-heading text-3xl leading-10 sm:mt-6 sm:text-4xl sm:leading-13 md:text-5xl md:leading-18 lg:text-6xl">
-          <span className={cn('bg-linear-to-br', gradientClass, 'bg-clip-text font-bold')} style={gradientStyle}>
+          <span className={cn('bg-linear-to-br', gradientClass, 'whitespace-pre-line bg-clip-text font-bold')} style={gradientStyle}>
             {t(title)}
           </span>
         </h1>
