@@ -3,10 +3,11 @@ import type { EnrichedProject } from '~/modules/project/types';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
+import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
 import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
-import type { ProjectResizablePanel, Task } from '~/modules/task/types';
+import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/task/types';
 
 const iced = TaskStatus.Iced;
 const accepted = TaskStatus.Accepted;
@@ -159,4 +160,20 @@ export const resetTaskInteraction = (boardKey?: string) => {
   lastInteractionBoardKey = boardKey ?? null;
   useTaskInteractionStore.getState().reset();
   useTaskCardStore.getState().reset();
+};
+
+/** The tasks a panel renders, in render order: the board search, the panel's section filters, then the accepted/iced folds. */
+export const renderedPanelTasks = (
+  panel: ProjectResizablePanel,
+  tasks: Task[],
+  search: { q?: string; matchMode?: BoardSearchParams['matchMode'] },
+  prefs: { expandAccepted: boolean; expandIced: boolean },
+) => {
+  const inPanel = tasks.filter(
+    (task) =>
+      task.projectId === panel.project.id &&
+      searchFilterFunction(search, task) &&
+      (!panel.sectionFilters || Object.entries(panel.sectionFilters).every(([key, value]) => value.includes(task[key as keyof SectionsValue]))),
+  );
+  return prepareBoardTasks(inPanel, prefs.expandAccepted, prefs.expandIced);
 };

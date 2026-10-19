@@ -1,5 +1,6 @@
-import { and, arrayOverlaps, asc, desc, ilike, inArray, isNotNull, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, inArray, isNotNull, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
+import { foldText } from 'shared/utils/text-match';
 import type { z } from 'zod';
 import type { ActorContext } from '#/core/context';
 import { publishedRowsPredicate } from '#/db/utils/published-predicate';
@@ -13,6 +14,7 @@ import { taskListQueryBaseSchema } from '#/modules/task/task-schema';
 import { getOrderColumns } from '#/utils/order-column';
 import { pick } from '#/utils/pick';
 import { seqCursorFilters } from '#/utils/seq-cursor';
+import { textSearchFilter } from '#/utils/sql';
 
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
 type QueryInfo = z.infer<typeof queryInfoSchema>;
@@ -24,32 +26,28 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
   const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
   // Highlight-mode clients ('=' prefix) fetch unfiltered; stripping here keeps stray marked
   // queries behaving like their plain form.
-  const { effectiveQ: trimmedQuery } = parseSearchQuery(q);
+  const { terms } = parseSearchQuery(q);
 
   // Get users and labels data in parallel
   const [tasksUsers, tasksLabels] = await Promise.all([findProjectMembers(ctx, { projectIds }), findLabelsByProjects(ctx, { projectIds })]);
 
   const tasksSearchFilters: SQL[] = [];
 
-  if (trimmedQuery) {
-    const searchKeywords = trimmedQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length > 0) {
+    const filtersByKeyword = terms.map((word) => {
+      const wordFilters: SQL[] = [textSearchFilter(tasksTable.keywords, word)];
 
-    if (searchKeywords.length > 0) {
-      const filtersByKeyword = searchKeywords.map((word) => {
-        const wordFilters: SQL[] = [ilike(tasksTable.keywords, `%${word}%`)];
+      const filteredLabels = tasksLabels.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
+      if (filteredLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, filteredLabels));
 
-        const filteredLabels = tasksLabels.filter(({ name }) => name.toLowerCase().includes(word)).map(({ id }) => id);
-        if (filteredLabels.length > 0) wordFilters.push(arrayOverlaps(tasksTable.labels, filteredLabels));
+      const filteredUsers = tasksUsers.filter(({ name }) => foldText(name).includes(word)).map(({ id }) => id);
+      if (filteredUsers.length > 0) wordFilters.push(arrayOverlaps(tasksTable.assignedTo, filteredUsers));
 
-        const filteredUsers = tasksUsers.filter(({ name }) => name.toLowerCase().includes(word)).map(({ id }) => id);
-        if (filteredUsers.length > 0) wordFilters.push(arrayOverlaps(tasksTable.assignedTo, filteredUsers));
+      return or(...wordFilters);
+    });
 
-        return or(...wordFilters);
-      });
-
-      const searchFilter = matchMode === 'all' ? and(...filtersByKeyword) : or(...filtersByKeyword);
-      if (searchFilter) tasksSearchFilters.push(searchFilter);
-    }
+    const searchFilter = matchMode === 'all' ? and(...filtersByKeyword) : or(...filtersByKeyword);
+    if (searchFilter) tasksSearchFilters.push(searchFilter);
   }
 
   // Sorting. Seq reads (hydration + delta sync) are keyset-paged: seq order makes a

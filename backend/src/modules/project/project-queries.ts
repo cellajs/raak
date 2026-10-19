@@ -1,4 +1,4 @@
-import { and, count, eq, getColumns, ilike, inArray, max, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, getColumns, inArray, max, type SQL, sql } from 'drizzle-orm';
 import type { ChannelEntityType, EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
 import { AppError } from '#/core/error';
@@ -12,7 +12,7 @@ import { projectsTable } from '#/modules/project/project-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
 import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 import { getOrderColumns } from '#/utils/order-column';
-import { prepareStringForILikeFilter } from '#/utils/sql';
+import { textSearchFilter } from '#/utils/sql';
 
 interface InsertProjectsOpts {
   projects: (typeof projectsTable.$inferInsert)[];
@@ -211,7 +211,7 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
   const projectWhere: SQL[] = [
-    ...(q ? [ilike(projectsTable.name, prepareStringForILikeFilter(q))] : []),
+    ...(q ? [textSearchFilter(projectsTable.name, q)] : []),
     ...(organizationId ? [eq(projectsTable.organizationId, organizationId)] : []),
     ...(organizationIds ? [inArray(projectsTable.organizationId, organizationIds)] : []),
     ...(workspaceId ? [eq(membershipsTable.workspaceId, workspaceId)] : []),

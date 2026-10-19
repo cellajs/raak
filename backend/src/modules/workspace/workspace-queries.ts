@@ -1,4 +1,4 @@
-import { and, count, eq, getColumns, ilike, inArray, type SQL, sql } from 'drizzle-orm';
+import { and, count, eq, getColumns, inArray, type SQL, sql } from 'drizzle-orm';
 import type { EntityRole } from 'shared';
 import type { ActorContext, DbContext } from '#/core/context';
 import { resolveListTotal } from '#/db/utils/list-total';
@@ -10,7 +10,7 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
 import { getOrderColumns } from '#/utils/order-column';
-import { prepareStringForILikeFilter } from '#/utils/sql';
+import { textSearchFilter } from '#/utils/sql';
 
 interface InsertWorkspacesOpts {
   workspaces: (typeof workspacesTable.$inferInsert)[];
@@ -83,7 +83,7 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
   const membershipOn = and(membershipKeyOn, membershipFilterOn);
 
   const workspaceWhere: SQL[] = [
-    ...(q ? [ilike(workspacesTable.name, prepareStringForILikeFilter(q))] : []),
+    ...(q ? [textSearchFilter(workspacesTable.name, q)] : []),
     ...(organizationId ? [eq(workspacesTable.organizationId, organizationId)] : []),
   ];
 

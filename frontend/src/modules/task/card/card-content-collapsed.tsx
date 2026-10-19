@@ -1,6 +1,7 @@
 import { env } from '~/env';
 import { TaskCardSummaryButtons } from '~/modules/task/card/card-summary-buttons';
 import { TaskSummaryHtml } from '~/modules/task/card/summary-html';
+import { TaskMatchReason } from '~/modules/task/card/task-match-reason';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import type { Task } from '~/modules/task/types';
 
@@ -19,6 +20,7 @@ export function TaskCardContentCollapsed({ task }: TaskContentCollapsedProps) {
         <TaskSummaryHtml className="inline leading-tight" task={task} />
         {env.VITE_DEBUG_MODE && <span className="ml-2 text-muted-foreground">#{task.displayOrder}</span>}
         <TaskCardSummaryButtons task={task} />
+        <TaskMatchReason task={task} className="mt-1" />
       </div>
     </div>
   );

@@ -24,6 +24,13 @@ export const focusWhenMounted = (id: string, attemptsLeft = 5) => {
   requestAnimationFrame(() => focusWhenMounted(id, attemptsLeft - 1));
 };
 
+/** Makes a task the board's current card and scrolls it into view, leaving DOM focus where it is: stepping from the search box. */
+export const revealTask = (id: string) => {
+  focusTask(id);
+  const task = currentActiveTask(id);
+  if (task) scrollTaskIntoView(task.projectId, id);
+};
+
 export const setTaskCardFocus = (id: string) => {
   focusTask(id);
 

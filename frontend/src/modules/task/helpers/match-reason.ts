@@ -1,0 +1,24 @@
+import { foldText, trimAroundMatch } from 'shared/utils/text-match';
+import { descriptionText, summaryText } from '~/modules/task/helpers/search-filter';
+import type { Task } from '~/modules/task/types';
+
+export type MatchReason = { description?: string; people: string[] };
+
+/**
+ * Why a task matched when nothing it shows contains a term: a window of the description around the
+ * first term hidden below the summary, and the assignees whose names matched. Null when every term
+ * is visible in the summary or a label, or when nothing hidden matched.
+ */
+export const hiddenMatchReason = (task: Task, terms: string[]): MatchReason | null => {
+  if (!terms.length) return null;
+  const visible = [summaryText(task).folded, ...task.labels.map(({ name }) => foldText(name))];
+  const hidden = terms.filter((term) => !visible.some((field) => field.includes(term)));
+  if (!hidden.length) return null;
+
+  const description = descriptionText(task);
+  const inDescription = hidden.filter((term) => description.folded.includes(term));
+  const people = task.assignedTo.filter(({ name }) => hidden.some((term) => foldText(name).includes(term))).map(({ name }) => name);
+  if (!inDescription.length && !people.length) return null;
+
+  return { description: inDescription.length ? trimAroundMatch(description.text, inDescription, 100) : undefined, people };
+};

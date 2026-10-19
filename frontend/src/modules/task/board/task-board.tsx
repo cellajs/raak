@@ -17,6 +17,7 @@ import { ProjectBoard } from '~/modules/task/board/project-board';
 import { WorkspaceBoard } from '~/modules/task/board/workspace-board';
 import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
 import { WorkspaceBoardTabs } from '~/modules/task/board/workspace-board-tabs';
+import { TaskSearchScope } from '~/modules/task/task-search-scope';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
 export interface BoardProps {
@@ -67,8 +68,10 @@ export function Board({ boardId, projects: projectsProp, workspace, publicView }
   // Card layout and form animations follow the system's reduced motion setting.
   return (
     <MotionConfig reducedMotion="user">
-      <BoardHeader projects={projects} workspace={workspace} publicView={publicView} />
-      {BoardView}
+      <TaskSearchScope>
+        <BoardHeader boardId={boardId} projects={projects} workspace={workspace} publicView={publicView} />
+        {BoardView}
+      </TaskSearchScope>
     </MotionConfig>
   );
 }

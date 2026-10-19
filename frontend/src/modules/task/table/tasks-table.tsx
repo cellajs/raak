@@ -18,6 +18,7 @@ import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
 import { TableProjectsContext, useColumns } from '~/modules/task/table/tasks-columns';
 import { TasksTableBar } from '~/modules/task/table/tasks-table-bar';
+import { TaskSearchScope } from '~/modules/task/task-search-scope';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 import { flattenInfiniteData } from '~/query/basic/flatten';
 
@@ -122,46 +123,48 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
 
   return (
     <TableProjectsContext.Provider value={projects}>
-      <div className="flex h-full flex-col gap-4">
-        <TasksTableBar
-          total={total}
-          selected={selected}
-          searchVars={{ ...effectiveSearch, limit }}
-          columns={columns}
-          setColumns={setColumns}
-          projects={projects}
-          workspace={workspace}
-          publicView={publicView}
-          clearSelection={() => setSelected([])}
-          isCompact={isCompact}
-          setIsCompact={setIsCompact}
-        />
-        <DataTable<Task>
-          {...{
-            rows,
-            rowHeight: 52,
-            rowKeyGetter,
-            columns,
-            enableVirtualization: true,
-            enableStickyHeader: true,
-            limit,
-            error,
-            isLoading,
-            isFetching,
-            isFiltered: !highlight && !!q,
-            hasNextPage,
-            fetchMore,
-            rowClass,
-            selectedRows: selectedRowIds,
-            onSelectedRowsChange,
-            isRowSelectionDisabled,
-            isCompact,
-            sortColumns,
-            onSortColumnsChange,
-            NoRowsComponent: noRowsComponent,
-          }}
-        />
-      </div>
+      <TaskSearchScope>
+        <div className="flex h-full flex-col gap-4">
+          <TasksTableBar
+            total={total}
+            selected={selected}
+            searchVars={{ ...effectiveSearch, limit }}
+            columns={columns}
+            setColumns={setColumns}
+            projects={projects}
+            workspace={workspace}
+            publicView={publicView}
+            clearSelection={() => setSelected([])}
+            isCompact={isCompact}
+            setIsCompact={setIsCompact}
+          />
+          <DataTable<Task>
+            {...{
+              rows,
+              rowHeight: 52,
+              rowKeyGetter,
+              columns,
+              enableVirtualization: true,
+              enableStickyHeader: true,
+              limit,
+              error,
+              isLoading,
+              isFetching,
+              isFiltered: !highlight && !!q,
+              hasNextPage,
+              fetchMore,
+              rowClass,
+              selectedRows: selectedRowIds,
+              onSelectedRowsChange,
+              isRowSelectionDisabled,
+              isCompact,
+              sortColumns,
+              onSortColumnsChange,
+              NoRowsComponent: noRowsComponent,
+            }}
+          />
+        </div>
+      </TaskSearchScope>
     </TableProjectsContext.Provider>
   );
 }

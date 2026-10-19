@@ -1,49 +1,45 @@
 import type { Block } from '@blocknote/core';
 import { getSearchableTextFromBlocks } from 'shared/blocknote';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
+import { foldText, matchesTerms } from 'shared/utils/text-match';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 
-// Cache parsed descriptions by task identity. React Query preserves unchanged references,
-// and the WeakMap releases tasks after cache eviction.
-const descriptionTextCache = new WeakMap<Task, string>();
-const getDescriptionText = (task: Task): string => {
-  const cached = descriptionTextCache.get(task);
-  if (cached !== undefined) return cached;
-  const text = task.description ? getSearchableTextFromBlocks(JSON.parse(task.description) as Block[]).toLowerCase() : '';
-  descriptionTextCache.set(task, text);
-  return text;
+type SearchableText = { text: string; folded: string };
+
+// Cached by task identity: React Query preserves unchanged references, and the WeakMaps release
+// tasks after cache eviction.
+const descriptionCache = new WeakMap<Task, SearchableText>();
+const summaryCache = new WeakMap<Task, SearchableText>();
+
+const searchableText = (cache: WeakMap<Task, SearchableText>, task: Task, document: string | null): SearchableText => {
+  const cached = cache.get(task);
+  if (cached) return cached;
+  const text = document ? getSearchableTextFromBlocks(JSON.parse(document) as Block[]) : '';
+  const entry = { text, folded: foldText(text) };
+  cache.set(task, entry);
+  return entry;
 };
 
-/**
- * Search filter function for tasks based on search parameters.
- */
-export const searchFilterFunction = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
-  const { q: searchQuery, matchMode = 'all' } = searchParams;
+/** The description as plain text, parsed once per task object. */
+export const descriptionText = (task: Task) => searchableText(descriptionCache, task, task.description);
 
-  // Normalize query ('=' highlight marker stripped; match logic is mode-agnostic)
-  const rawQuery = parseSearchQuery(searchQuery).effectiveQ.toLowerCase();
+/** The summary (the description's first block) as plain text, parsed once per task object. */
+export const summaryText = (task: Task) => searchableText(summaryCache, task, task.summary);
+
+/** Whether a task matches the board search; list-tasks.ts is the server leg of the same rule. */
+export const searchFilterFunction = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
+  const { q, matchMode = 'all' } = searchParams;
+  const { terms } = parseSearchQuery(q);
 
   // Always allow empty query or create-task
-  if (!rawQuery || task.id.startsWith('create-task')) return true;
+  if (!terms.length || task.id.startsWith('create-task')) return true;
 
-  // Split into keywords
-  const keywords = rawQuery
-    .split(/\s+/)
-    .map((w) => w.trim())
-    .filter(Boolean);
-
-  if (keywords.length === 0) return true; // No filtering if there are no valid search keywords
-
-  // Task fields (description text is parsed once per task via the cache above)
-  const { keywords: taskKeywords, labels, assignedTo } = task;
-  const searchableText = [
-    getDescriptionText(task),
-    taskKeywords.toLowerCase(),
-    ...labels.map(({ name }) => name.toLowerCase()),
-    ...assignedTo.map(({ name }) => name.toLowerCase()),
+  const { keywords, labels, assignedTo } = task;
+  const fields = [
+    descriptionText(task).folded,
+    foldText(keywords),
+    ...labels.map(({ name }) => foldText(name)),
+    ...assignedTo.map(({ name }) => foldText(name)),
   ];
-
-  const matchesKeyword = (keyword: string) => searchableText.some((item) => item.includes(keyword));
-
-  return matchMode === 'all' ? keywords.every(matchesKeyword) : keywords.some(matchesKeyword);
+  return matchesTerms(fields, terms, matchMode);
 };
