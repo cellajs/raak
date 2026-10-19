@@ -30,7 +30,7 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
-import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
+import { offsetPaging, pageQuery, refetchOnMountForIncluded } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { getSimilarQueries } from '~/query/basic/mutate-query';
 import { preserveIncluded } from '~/query/basic/preserve-included';
@@ -93,7 +93,7 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
       // Cache entries are populated by the enrichment pipeline (membership/can/ancestorSlugs).
       return result as { items: EnrichedProject[]; total: number };
     }),
-    refetchOnMount: true,
+    refetchOnMount: refetchOnMountForIncluded(include),
   });
 };
 

@@ -1,6 +1,8 @@
-import type { EntityRole } from 'shared';
+import { type EntityRole, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
+import { findMemberPreviewsByChannels } from '#/modules/memberships/memberships-queries';
+import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
 import { findWorkspacesPaginated } from '#/modules/workspace/workspace-queries';
 
@@ -22,14 +24,25 @@ export async function getWorkspacesOp(ctx: UserContext, input: GetWorkspacesInpu
 
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');
+  const includeMembers = include.includes('members');
 
   const { items: workspaceResults, total } = await findWorkspacesPaginated(ctx, { userId: user.id, ...queryOpts, includeCounts });
 
+  const memberPreviews = includeMembers
+    ? await findMemberPreviewsByChannels(ctx, {
+        channelType: 'workspace',
+        channelIds: workspaceResults.map((ws) => ws.id),
+        role: hierarchy.getRoles('workspace')[0],
+        limit: 3,
+      })
+    : null;
+
   const items = coalesceAuditUsers(workspaceResults).map((ws) => {
     const { membership, counts, ...workspace } = ws;
-    const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts } = {};
+    const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts; members?: UserMinimalBase[] } = {};
     if (includeMembership && membership) included.membership = toMembershipBase(membership);
     if (includeCounts && counts) included.counts = counts;
+    if (memberPreviews) included.members = memberPreviews.get(ws.id) ?? [];
     return { ...workspace, included };
   });
 

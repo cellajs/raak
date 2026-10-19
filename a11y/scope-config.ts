@@ -110,7 +110,7 @@ export const scope: ScopeState[] = [
     path: '/home',
     auth: true,
     open: async (page) => {
-      await page.keyboard.press('Shift+M');
+      await page.keyboard.press('Alt+M');
       await settle(page);
     },
   },
@@ -120,7 +120,7 @@ export const scope: ScopeState[] = [
     path: '/home',
     auth: true,
     open: async (page) => {
-      await page.keyboard.press('Shift+F');
+      await page.keyboard.press('ControlOrMeta+K');
       await settle(page);
     },
   },
@@ -130,7 +130,7 @@ export const scope: ScopeState[] = [
     path: '/home',
     auth: true,
     open: async (page) => {
-      await page.keyboard.press('Shift+A');
+      await page.keyboard.press('Alt+A');
       await settle(page);
     },
   },

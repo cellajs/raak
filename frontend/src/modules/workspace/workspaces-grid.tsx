@@ -40,7 +40,7 @@ export function WorkspacesGrid({ fixedQuery, saveDataInSearch, focusView }: Prop
 
       <BaseEntityGrid
         label="c:workspace"
-        tileComponent={WorkspaceTile}
+        renderTile={(entity) => <WorkspaceTile entity={entity} />}
         skeletonHeight={72}
         entities={data}
         isLoading={isLoading}

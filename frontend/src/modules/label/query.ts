@@ -29,8 +29,9 @@ import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
 import { addMutationRegistrar } from '~/query/mutation-registry';
 import { type CreateVariables, type DeleteVariables, registerVariablesVersion, type UpdateVariables } from '~/query/offline/mutation-variables';
+import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
-import { removePausedCreates, squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
+import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
 import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
 import { invalidateEmbeddingHosts, propagateEmbeddedProduct } from '~/query/realtime/propagation';
@@ -316,23 +317,13 @@ export const useLabelDeleteMutation = (tenantId: string, organizationId: string)
   const queryClient = useQueryClient();
   const mutation = useMutation(labelDeleteOptions(queryClient));
 
-  /** Labels deleted while offline never reached the server: cancel their queued work and keep them out of the request. */
-  const prepare = (labels: Label[]): PreparedVars<DeleteLabelVars> => {
-    const labelIds = labels.map(({ id }) => id);
-    const cancelled = new Set(removePausedCreates(queryClient, keys.create, labelIds));
-
-    if (cancelled.size > 0) {
-      const localOnly = labels.filter((l) => cancelled.has(l.id));
-      const localOnlyIds = localOnly.map(({ id }) => id);
-      removePendingMutations(queryClient, keys.update, localOnlyIds);
-      cacheRemove(keys.list.org(organizationId), localOnly);
-      removeDetailQueriesById(queryClient, keys.detail.base, localOnlyIds);
-    }
-
-    const remaining = labels.filter((l) => !cancelled.has(l.id));
-    if (remaining.length === 0) return { kind: 'noop' };
-    return { kind: 'run', vars: { tenantId, organizationId, rows: remaining, stx: createStxForDelete() } };
-  };
+  const prepare = (labels: Label[]): PreparedVars<DeleteLabelVars> =>
+    prepareProductDelete(queryClient, keys, keys.list.org(organizationId), labels, (rows) => ({
+      tenantId,
+      organizationId,
+      rows,
+      stx: createStxForDelete(),
+    }));
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
 };

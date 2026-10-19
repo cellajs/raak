@@ -1,8 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import type { Project } from 'sdk';
 import { useSearchParams } from '~/hooks/use-search-params';
-import { BaseEntityGrid, ChannelGridTile, EntityGridBar } from '~/modules/entities/entity-grid';
+import { BaseEntityGrid, ChannelTile, EntityGridBar } from '~/modules/entities/entity-grid';
 import { useUserStore } from '~/modules/user/user-store';
 import { projectsListQueryOptions } from './query';
 
@@ -16,11 +15,6 @@ interface Props {
   limitedView?: boolean;
 }
 
-// ChannelGridTile expects org-shaped `included.counts` but the tile only reads
-// `counts.membership.total`, which Projects also provide. Use a wrapper type
-// so BaseEntityGrid infers a Project-compatible generic without a full cast.
-const tileComponent = ChannelGridTile as typeof ChannelGridTile & ((props: { entity: Project }) => React.JSX.Element);
-
 export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedView: initialLimitedView }: Props) {
   const [expanded, setExpanded] = useState(false);
   const limitedView = initialLimitedView && !expanded;
@@ -30,7 +24,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedV
   const search: ProjectSearch = { ...baseSearch, ...(fixedQuery ?? {}) };
   const ofAnotherUser = useUserStore((state) => !!search.relatableUserId && search.relatableUserId !== state.user?.id);
 
-  const queryOptions = projectsListQueryOptions(search);
+  const queryOptions = projectsListQueryOptions({ ...search, include: 'counts,members' });
 
   const q = search.q ?? '';
   const isFiltered = !!q;
@@ -61,7 +55,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedV
 
       <BaseEntityGrid
         label="c:project"
-        tileComponent={tileComponent}
+        renderTile={(entity) => <ChannelTile entity={entity} hideOwnRole={ofAnotherUser} />}
         entities={entities}
         isLoading={isLoading}
         isFetching={isFetching}
@@ -71,6 +65,7 @@ export function ProjectsGrid({ fixedQuery, saveDataInSearch, focusView, limitedV
         isFiltered={isFiltered}
         limitedView={limitedView}
         onExpand={() => setExpanded(true)}
+        queryKey={queryOptions.queryKey}
       />
     </div>
   );

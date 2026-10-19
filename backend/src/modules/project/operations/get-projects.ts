@@ -1,8 +1,10 @@
-import type { EntityRole } from 'shared';
+import { type EntityRole, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
+import { findMemberPreviewsByChannels } from '#/modules/memberships/memberships-queries';
 import { findProjectsPaginated } from '#/modules/project/project-queries';
+import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
 import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
 import { actorFrom } from '#/permissions/access';
 import { resolveChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
@@ -54,18 +56,29 @@ export async function getProjectsOp(ctx: UserContext, input: GetProjectsInput) {
 
   const includeCounts = include.includes('counts');
   const includeMembership = include.includes('membership');
+  const includeMembers = include.includes('members');
 
   const opts = { userId: targetUserId, ...queryParams, sort, organizationIds: sharedWithCaller, readScope, includeCounts };
   const { items: projectResults, total } = await findProjectsPaginated(ctx, opts);
+
+  const memberPreviews = includeMembers
+    ? await findMemberPreviewsByChannels(ctx, {
+        channelType: 'project',
+        channelIds: projectResults.map((project) => project.id),
+        role: hierarchy.getRoles('project')[0],
+        limit: 3,
+      })
+    : null;
 
   // Build response with included wrapper for optional data
   const items = coalesceAuditUsers(projectResults).map((row) => {
     const { membership: listedMembership, counts, ...project } = row;
     // The row joins the listed user's membership; the response carries the caller's own, or none
     const membership = ofAnotherUser ? memberships.find((m) => m.channelType === 'project' && m.projectId === project.id) : listedMembership;
-    const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts } = {};
+    const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts; members?: UserMinimalBase[] } = {};
     if (includeMembership && membership) included.membership = toMembershipBase(membership);
     if (includeCounts && counts) included.counts = counts;
+    if (memberPreviews) included.members = memberPreviews.get(project.id) ?? [];
     return { ...project, included };
   });
 

@@ -5,7 +5,6 @@ import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
-import { useNavigationStore } from '~/modules/navigation/navigation-store';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -35,7 +34,6 @@ type StrictBoardPanel = ProjectResizablePanel;
 export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const user = useCurrentUser();
-  const keyboardShortcuts = useNavigationStore((state) => state.keyboardShortcuts);
   const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
 
   const q = useSearch({ strict: false, select: (search) => search.q });
@@ -241,16 +239,14 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     }
   };
 
-  // Character keys fire by accident under speech input, so they follow the user's keyboard shortcuts preference (WCAG 2.1.4)
-  const actionHotkeys: HotkeyItem[] = keyboardShortcuts
-    ? [
-        ['A', () => hotKeyPress('assignedTo')],
-        ['L', () => hotKeyPress('labels')],
-        ['S', () => hotKeyPress('status')],
-        ['T', () => hotKeyPress('primaryLabel')],
-        ['N', handleNKeyDown],
-      ]
-    : [];
+  // A letter alone fires by accident under speech input (WCAG 2.1.4); Alt + A is the account sheet, so assignee is U
+  const actionHotkeys: HotkeyItem[] = [
+    ['Alt + U', () => hotKeyPress('assignedTo')],
+    ['Alt + L', () => hotKeyPress('labels')],
+    ['Alt + S', () => hotKeyPress('status')],
+    ['Alt + T', () => hotKeyPress('primaryLabel')],
+    ['Alt + N', handleNKeyDown],
+  ];
 
   const stateHotkeys: HotkeyItem[] = [
     ['Escape', handleEscKeyPress],
