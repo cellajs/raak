@@ -1,5 +1,7 @@
 import { defineFrontendModule } from '~/lib/module';
 import { lazyNamed } from '~/utils/lazy-named';
+// Registers the mutation defaults before the cache restore, so a queued label mutation replays after a reload
+import '~/modules/label/query';
 
 const PrimaryLabelsCard = lazyNamed(() => import('~/modules/organization/primary-labels-card'), 'PrimaryLabelsCard');
 
