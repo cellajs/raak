@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.16](https://github.com/cellajs/raak/compare/0.1.15...0.1.16) (2026-10-19)
+
+
+### 🎉 New features
+
+* **task,label:** search matches are marked on the board and in the table, with stepping and a mode toggle ([#187](https://github.com/cellajs/raak/issues/187)) ([1c160e7](https://github.com/cellajs/raak/commit/1c160e77007a5587e5875123d3f9847644b911a6))
+
+
+### 🐞 Bug fixes
+
+* **task:** a created task and a reopened create form no longer vanish from the board ([#189](https://github.com/cellajs/raak/issues/189)) ([d0c9e42](https://github.com/cellajs/raak/commit/d0c9e4241ad60231233acd44fa951877023966b9))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.19.0 (da322dcf) ([#190](https://github.com/cellajs/raak/issues/190)) ([3a202b7](https://github.com/cellajs/raak/commit/3a202b7bfc0c76f90895bd2e4b7d19aa660900fd))
+
 ## [0.1.15](https://github.com/cellajs/raak/compare/0.1.14...0.1.15) (2026-10-19)
 
 
