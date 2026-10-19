@@ -5,8 +5,7 @@ import { useProjectPublicity } from '~/modules/project/use-project-publicity';
 /**
  * Base props for the task attachment upload panel, shared by the create and update forms.
  * Resolves the project's publicity internally and maps it to the panel's media mode;
- * `onComplete` receives the panel-parsed attachments (the create form stashes them to link
- * on submit, the update form links them immediately).
+ * `onComplete` receives the panel-parsed attachments, which both forms persist at once.
  */
 export const useTaskFilePanelProps = (
   projectId: string,
