@@ -42,7 +42,7 @@ function TaskSheet({ id, organizationId }: TaskSheetProps) {
   if (isLoading)
     return (
       <div className="block">
-        <Spinner className="h-10 w-10" />
+        <Spinner size="lg" />
       </div>
     );
 

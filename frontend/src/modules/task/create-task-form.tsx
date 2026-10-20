@@ -207,7 +207,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
             isFocused ? 'is-focused focus-visible:outline-none focus-visible:ring-0' : 'focus-visible:ring-1 focus-visible:ring-ring',
           )}
         >
-          <Suspense fallback={<Spinner className="my-16 h-6 w-6 opacity-50" noDelay />}>
+          <Suspense fallback={<Spinner className="my-16" noDelay />}>
             <BlockNoteContent
               key={editorKey}
               control={form.control}

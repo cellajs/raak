@@ -10,7 +10,7 @@ import { getOrganizationEntityCount } from '#/modules/entities/entities-queries'
 import { type LabelModel, labelsTable } from '#/modules/label/label-db';
 import { getIsoDate } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
-import { seqCursorFilters } from '#/utils/seq-cursor';
+import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
 import { textSearchFilter } from '#/utils/sql';
 
 /** Find all labels in an organization (used for duplicate/color matching). */
@@ -168,22 +168,20 @@ interface FindLabelsPaginatedOpts {
   order?: 'asc' | 'desc';
   limit: number;
   offset: number;
-  /** A delta read: tombstones included, ordered by seq, total from the page length. */
-  seqCursor?: string;
+  /** A range read for sync: deleted rows included, in sequence order, total from the page length. */
+  range?: SeqRange;
 }
 
 /**
- * A page of labels. Normal reads hide tombstones; a delta read passes them through so caches can drop rows. The total
- * is the page length for a delta read, the organization counter for an org-wide read without search or mode filter,
+ * A page of labels. Normal reads hide deleted rows; a range read passes them through so caches can drop them. The total
+ * is the page length for a range read, the organization counter for an org-wide read without search or mode filter,
  * else a COUNT.
  */
 export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPaginatedOpts) => {
   const { db } = ctx.var;
-  const { organizationId, orgWide, q, modes, sort, order, limit, offset, seqCursor } = opts;
-  const filters = [...opts.filters];
-
-  if (!seqCursor) filters.push(isNull(labelsTable.deletedAt));
-  filters.push(...seqCursorFilters(labelsTable.seq, seqCursor));
+  const { organizationId, orgWide, q, modes, sort, order, limit, offset, range } = opts;
+  const rangeRead = seqRangeRead(labelsTable, range);
+  const filters = [...opts.filters, ...rangeRead.where];
 
   // Tokenized search over name and description-derived keywords, as task keyword matching does: every word must hit
   // (AND across words, OR across columns per word). parseSearchQuery strips the '=' highlight marker.
@@ -195,10 +193,8 @@ export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPag
 
   const whereClause = and(requestScopeWhere(ctx, labelsTable, 'label'), ...filters);
 
-  // Seq reads are keyset-paged: seq order (id tiebreak) makes a capped page a clean prefix
-  const orderBy = seqCursor
-    ? [asc(labelsTable.seq), asc(labelsTable.id)]
-    : getOrderColumns({ sort, order, fallback: ['name', 'asc'], columns: { name: labelsTable.name }, tieBreaker: labelsTable.id });
+  const orderBy =
+    rangeRead.orderBy ?? getOrderColumns({ sort, order, fallback: ['name', 'asc'], columns: { name: labelsTable.name }, tieBreaker: labelsTable.id });
 
   const itemsQuery = db
     .select()
@@ -208,8 +204,8 @@ export const findLabelsPaginated = async (ctx: ActorContext, opts: FindLabelsPag
     .limit(limit)
     .offset(offset);
 
-  const counterEligible = orgWide && !q?.trim() && !seqCursor && !modes?.length;
-  const totalSource: ListTotalSource = seqCursor
+  const counterEligible = orgWide && !q?.trim() && !range && !modes?.length;
+  const totalSource: ListTotalSource = range
     ? { kind: 'pageLength' }
     : counterEligible
       ? { kind: 'counter', getTotal: () => getOrganizationEntityCount(ctx, { organizationId, entityType: 'label' }) }

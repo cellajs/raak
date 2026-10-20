@@ -114,7 +114,7 @@ export function AuthenticatePage() {
   if (isLoading || isHealthLoading || signedIn) {
     return (
       <>
-        <Spinner className="size-10" />
+        <Spinner size="lg" />
         {showSlowWarning && (
           <Alert variant="warning">
             <TriangleAlertIcon />

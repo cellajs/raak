@@ -6,11 +6,13 @@ import { getTasks } from '#/modules/task/operations/list-tasks';
 import type { taskListQuerySchema } from '#/modules/task/task-schema';
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
+import { seqRangeOf } from '#/utils/seq-range';
 
 type GetTasksInput = z.infer<typeof taskListQuerySchema>;
 
 export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise<Awaited<ReturnType<typeof getTasks>>> {
   const { projectId, workspaceId, ...queryInfo } = input;
+  const range = seqRangeOf(input);
   const organizationId = ctx.var.organization.id;
 
   const requested = await resolveProjectNarrowing(ctx, { projectId, workspaceId });
@@ -21,10 +23,10 @@ export async function getTasksOp(ctx: OrgContext, input: GetTasksInput): Promise
   const scopedProjectIds = homeChannelIds ?? (await findOrganizationProjectIds(ctx));
   if (scopedProjectIds.length === 0) return { items: [], total: 0 };
 
-  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted tasks
-  const read = queryInfo.seqCursor ? tenantReadIncludingDeleted : tenantRead;
+  // A range read returns deleted rows too, so caches drop them.
+  const read = range ? tenantReadIncludingDeleted : tenantRead;
 
   return read(ctx, async (readCtx) => {
-    return getTasks(readCtx, scopedProjectIds, queryInfo);
+    return getTasks(readCtx, scopedProjectIds, queryInfo, { range });
   });
 }

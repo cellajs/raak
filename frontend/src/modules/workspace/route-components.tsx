@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { FocusViewContainer } from '~/modules/common/focus-view';
-import { PageSpinner } from '~/modules/common/spinner';
+import { Spinner } from '~/modules/common/spinner';
 import { WorkspaceBoardSkeleton } from '~/modules/task/board/workspace-board-skeleton';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { lazyNamed } from '~/utils/lazy-named';
@@ -17,7 +17,7 @@ export function WorkspaceRouteComponent() {
   // The frame sits outside the boundaries so the skeleton lands where the board will.
   return (
     <FocusViewContainer className="group/workspace h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
-      <Suspense fallback={view === 'table' ? <PageSpinner /> : boardSkeleton}>
+      <Suspense fallback={view === 'table' ? <Spinner size="lg" className="mt-[45vh]" /> : boardSkeleton}>
         <WorkspacePage key={workspace.slug} workspaceId={workspace.id} organizationId={workspace.organizationId} tenantId={tenantId}>
           {view === 'table' ? (
             <Suspense>

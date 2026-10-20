@@ -69,6 +69,7 @@
   "child_page": "{{count}} child page",
   "child_page_other": "{{count}} child pages",
   "clear": "Clear",
+  "clear_search": "Clear search",
   "clear_selection": "Clear selection",
   "click": "Click",
   "close": "Close",

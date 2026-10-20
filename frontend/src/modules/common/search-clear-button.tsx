@@ -10,7 +10,7 @@ export function SearchClearButton({ className, ...props }: React.ComponentProps<
   return (
     <button
       type="button"
-      aria-label={t('c:clear')}
+      aria-label={t('c:clear_search')}
       className={cn(
         'focus-effect flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
         className,

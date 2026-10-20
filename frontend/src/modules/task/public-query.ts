@@ -17,8 +17,7 @@ export const publicTaskQueryOptions = (id: string) =>
 export const publicTasksBoardQueryOptions = (projectId: string) => {
   return queryOptions({
     queryKey: taskKeys.publicList.filtered({ projectId, publicAt: true as const }),
-    queryFn: () =>
-      getPublicTasks({ query: { projectId, acceptedCutOff: boardAcceptedCutOff, offset: '0', limit: String(appConfig.requestLimits.tasks) } }),
+    queryFn: () => getPublicTasks({ query: { projectId, acceptedCutOff: boardAcceptedCutOff, offset: 0, limit: appConfig.requestLimits.tasks } }),
     gcTime: 0,
     staleTime: 0,
   });

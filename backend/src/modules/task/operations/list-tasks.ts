@@ -1,4 +1,4 @@
-import { and, arrayOverlaps, asc, desc, inArray, isNotNull, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, inArray, isNotNull, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { foldText } from 'shared/utils/text-match';
 import type { z } from 'zod';
@@ -13,7 +13,7 @@ import { findLabelsByProjects, findProjectMembers, findTasksPaginated } from '#/
 import { taskListQueryBaseSchema } from '#/modules/task/task-schema';
 import { getOrderColumns } from '#/utils/order-column';
 import { pick } from '#/utils/pick';
-import { seqCursorFilters } from '#/utils/seq-cursor';
+import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
 import { textSearchFilter } from '#/utils/sql';
 
 const queryInfoSchema = taskListQueryBaseSchema.omit({ projectId: true, workspaceId: true });
@@ -22,8 +22,9 @@ type QueryInfo = z.infer<typeof queryInfoSchema>;
 /**
  * Get list of tasks for a project, with filtering, sorting, and pagination.
  */
-export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean }) => {
-  const { q, sort, order, acceptedCutOff, matchMode, limit, offset, seqCursor } = queryInfo;
+export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInfo: QueryInfo, opts?: { publicOnly?: boolean; range?: SeqRange }) => {
+  const { q, sort, order, acceptedCutOff, matchMode, limit, offset } = queryInfo;
+  const rangeRead = seqRangeRead(tasksTable, opts?.range);
   // Highlight-mode clients ('=' prefix) fetch unfiltered; stripping here keeps stray marked
   // queries behaving like their plain form.
   const { terms } = parseSearchQuery(q);
@@ -50,39 +51,32 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
     if (searchFilter) tasksSearchFilters.push(searchFilter);
   }
 
-  // Sorting. Seq reads (hydration + delta sync) are keyset-paged: seq order makes a
-  // limit-capped page a clean prefix, so the client can resume from the last seq received.
-  // Id tiebreak keeps ordering stable when per-context counters collide across projects.
-  const orderBy = seqCursor
-    ? [asc(tasksTable.seq), asc(tasksTable.id)]
-    : getOrderColumns({
-        sort,
-        order,
-        fallback: ['createdAt', 'asc'],
-        columns: pick(tasksTable, ['status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
-        append: [desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)), asc(tasksTable.id)],
-      });
+  const orderBy =
+    rangeRead.orderBy ??
+    getOrderColumns({
+      sort,
+      order,
+      fallback: ['createdAt', 'asc'],
+      columns: pick(tasksTable, ['status', 'projectId', 'createdAt', 'createdBy', 'updatedAt']),
+      append: [desc(sql`COALESCE(${tasksTable.displayOrder}, 0)`.mapWith(Number)), asc(tasksTable.id)],
+    });
 
   // Exclude accepted tasks older than cutoff directly in WHERE (avoids separate query + notInArray)
   const acceptedCutOffFilter = acceptedCutOff
     ? sql`NOT (${tasksTable.status} = ${TaskStatus.Accepted} AND coalesce(${tasksTable.updatedAt}, ${tasksTable.createdAt}) <= ${getDateFromToday(acceptedCutOff)})`
     : undefined;
 
-  // Shared WHERE filters. Seq range filters must be AND-combined; inside the OR'd search
-  // group a bounded cursor ("51,150") would degenerate to `seq >= 51 OR seq <= 150` (= all rows).
   const filters = and(
-    ...seqCursorFilters(tasksTable.seq, seqCursor),
+    ...rangeRead.where,
     tasksSearchFilters.length ? or(...tasksSearchFilters) : undefined,
     requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
-    // Hide tombstones for normal reads; on seqCursor delta sync they flow through so caches can drop them
-    seqCursor ? undefined : isNull(tasksTable.deletedAt),
     opts?.publicOnly ? and(isNotNull(tasksTable.publicAt), publishedRowsPredicate(tasksTable)) : undefined,
   );
 
-  // Non-delta reads fetch the page and its exact COUNT(*) in parallel; delta reads skip the count.
-  const { items: tasks, total } = await findTasksPaginated(ctx, { filters, orderBy, limit, offset, isDelta: !!seqCursor });
+  // Normal reads fetch the page and its exact COUNT(*) in parallel; range reads skip the count.
+  const { items: tasks, total } = await findTasksPaginated(ctx, { filters, orderBy, limit, offset, isDelta: !!opts?.range });
 
   const items = hydrateTasks(tasks, tasksUsers, tasksLabels);
 

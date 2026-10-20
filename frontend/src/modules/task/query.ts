@@ -19,7 +19,7 @@ import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
-import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
+import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
@@ -43,7 +43,7 @@ import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { QueryData } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
 
-export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
+export type GetTasksParam = GetTasksData['path'] & Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset' | 'afterSeq' | 'untilSeq'>;
 export type BaseTasksQueryParam = Pick<GetTasksParam, 'workspaceId' | 'projectId' | 'organizationId' | 'tenantId'>;
 
 /** Derives task query parameters directly from entity objects. */
@@ -109,11 +109,8 @@ export const taskKeys = {
 /** The keys a create row takes. An edit of any other field cannot fold into a queued create. */
 const taskCreateKeys = Object.keys(zCreateTasksBody.element.shape);
 
-registerEntityQueryKeys('task', taskKeys, (organizationId, tenantId, seqCursor, channelId) => {
-  return getTasks({
-    path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, projectId: channelId, limit: String(SYNC_CHUNK_SIZE) },
-  });
+registerEntityQueryKeys('task', taskKeys, ({ organizationId, tenantId, channelId, query }) => {
+  return getTasks({ path: { tenantId: tenantId!, organizationId: organizationId! }, query: { ...query, projectId: channelId } });
 });
 
 /**
@@ -570,9 +567,9 @@ export const fetchTasksForExport = async (params: {
   offset?: number;
   organizationId: string;
   tenantId: string;
-  query: Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset'>;
+  query: Omit<NonNullable<GetTasksData['query']>, 'limit' | 'offset' | 'afterSeq' | 'untilSeq'>;
 }) => {
   const { limit, offset = 0, organizationId, tenantId, query } = params;
-  const { items } = await getTasks({ query: { ...query, limit: String(limit), offset: String(offset) }, path: { organizationId, tenantId } });
+  const { items } = await getTasks({ query: { ...query, limit, offset }, path: { organizationId, tenantId } });
   return items;
 };

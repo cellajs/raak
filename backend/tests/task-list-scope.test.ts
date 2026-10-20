@@ -26,7 +26,7 @@ describe('Task list read scope without a project', async () => {
   let tenant: TestTenant;
   let member: Awaited<ReturnType<typeof createOrgUser>>;
 
-  const listTasks = async (cookie: string, query: Record<string, string> = {}) => {
+  const listTasks = async (cookie: string, query: Record<string, string | number> = {}) => {
     const result = await call(getTasks, {
       path: { organizationId: tenant.organization.id, tenantId: tenant.tenantId },
       query,
@@ -70,8 +70,9 @@ describe('Task list read scope without a project', async () => {
       createdBy: tenant.user.id,
     };
     await db.insert(tasksTable).values([
-      { ...baseTask, id: taskA, projectId: projectA, name: 'in A' },
-      { ...baseTask, id: taskB, projectId: projectB, name: 'in B' },
+      // A range read starts after a position, so rows need a seq above 0 as CDC would stamp them
+      { ...baseTask, id: taskA, projectId: projectA, name: 'in A', seq: 1 },
+      { ...baseTask, id: taskB, projectId: projectB, name: 'in B', seq: 2 },
     ]);
   });
 
@@ -87,7 +88,7 @@ describe('Task list read scope without a project', async () => {
     expect(normal.ids).toEqual([taskA, taskB].sort());
     expect(normal.total).toBe(2);
 
-    const delta = await listTasks(tenant.sessionCookie, { seqCursor: '0,999999999' });
+    const delta = await listTasks(tenant.sessionCookie, { afterSeq: 0, untilSeq: 999999999 });
     expect(delta.ids).toEqual([taskA, taskB].sort());
   });
 

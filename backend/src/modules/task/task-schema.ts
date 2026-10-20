@@ -8,7 +8,16 @@ import { tasksTable } from '#/modules/task/task-db';
 import { mockTaskResponse } from '#/modules/task/task-mocks';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { placementFieldsSchema, validatePlacement } from '#/permissions/product-placement';
-import { batchResponseSchema, maxLength, paginationQuerySchema, stxBaseSchema, uniqueIdsSchema, validIdSchema, validUuidSchema } from '#/schemas';
+import {
+  batchResponseSchema,
+  maxLength,
+  paginationQuerySchema,
+  productListQuerySchema,
+  stxBaseSchema,
+  uniqueIdsSchema,
+  validIdSchema,
+  validUuidSchema,
+} from '#/schemas';
 import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/minimal-base';
 
 const taskRelationDeltaSchema = arrayDeltaSchema(validUuidSchema);
@@ -67,17 +76,19 @@ export const taskContract = evolutionContract.product('task', {
 /** Update body using fields pattern for single or multi-field updates with conflict detection */
 export const taskUpdateStxBodySchema = taskContract.updateBodySchema;
 
-/** Base schema without refinement - use this when you need .omit()/.pick() */
-export const taskListQueryBaseSchema = paginationQuerySchema.extend({
+const taskListQueryShape = {
   matchMode: z.enum(['all', 'any']).default('all'),
   sort: z.enum(['projectId', 'status', 'createdBy', 'updatedAt', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('asc'),
   acceptedCutOff: z.coerce.number().positive().optional(),
   projectId: validIdSchema.optional(),
   workspaceId: validIdSchema.optional(),
-});
+};
 
-export const taskListQuerySchema = taskListQueryBaseSchema.refine((data) => !data.projectId || !data.workspaceId, {
+/** Base schema without refinement or range reads - use this when you need .omit()/.pick() */
+export const taskListQueryBaseSchema = paginationQuerySchema.extend(taskListQueryShape);
+
+export const taskListQuerySchema = productListQuerySchema(taskListQueryShape).refine((data) => !data.projectId || !data.workspaceId, {
   message: 'Only one of projectId or workspaceId can be provided',
 });
 

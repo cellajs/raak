@@ -39,7 +39,7 @@ export function TaskCardContentExpanded({ task, noGutter, onReady, descriptionOv
   if (!description) return null;
 
   return (
-    <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
+    <Suspense fallback={<Spinner className="my-4" noDelay />}>
       <BlockNoteFullHtml
         id={`blocknote-${task.id}`}
         defaultValue={description}

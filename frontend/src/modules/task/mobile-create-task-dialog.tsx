@@ -11,7 +11,7 @@ interface MobileCreateTaskDialogProps {
 
 export function MobileCreateTaskDialog({ projectId, organizationId }: MobileCreateTaskDialogProps) {
   return (
-    <Suspense fallback={<Spinner className="mt-[45vh] h-10 w-10" noDelay />}>
+    <Suspense fallback={<Spinner size="lg" className="mt-[45vh]" noDelay />}>
       <CreateTaskForm projectId={projectId} organizationId={organizationId} dialog />
     </Suspense>
   );
