@@ -1,7 +1,6 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
-import type { ChannelEnrichment } from '~/modules/entities/types';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
@@ -24,8 +23,7 @@ interface Props {
  * Workspace page with drag-and-drop task management.
  */
 function WorkspacePage({ workspaceId, organizationId, tenantId, children }: Props) {
-  const { data } = useSuspenseQuery(workspaceQueryOptions(workspaceId, organizationId, tenantId));
-  const workspace = data as typeof data & ChannelEnrichment;
+  useSuspenseQuery(workspaceQueryOptions(workspaceId, organizationId, tenantId));
 
   const { data: projectsData } = useSuspenseInfiniteQuery(projectsListQueryOptions({ workspaceId, include: 'counts' }));
   const projects = flattenInfiniteData<EnrichedProject>(projectsData);
@@ -35,7 +33,7 @@ function WorkspacePage({ workspaceId, organizationId, tenantId, children }: Prop
   return (
     <>
       <TaskSheetHandler />
-      <TasksHotkeys boardId={workspace.id} projects={projects} type="workspace" />
+      <TasksHotkeys projects={projects} />
       {children}
     </>
   );

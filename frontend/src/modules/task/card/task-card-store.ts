@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import type { TaskState } from '~/modules/task/types';
 
 interface TaskCardState {
@@ -69,3 +70,8 @@ export const useTaskCardStore = create<TaskCardState>()(
     { name: 'task-card' },
   ),
 );
+
+// A card stops editing once another board item becomes current, whichever kind of item that is
+useBoardFocusStore.subscribe(({ currentItemId }, prev) => {
+  if (prev.currentItemId && prev.currentItemId !== currentItemId) useTaskCardStore.getState().suppressEdit(prev.currentItemId);
+});

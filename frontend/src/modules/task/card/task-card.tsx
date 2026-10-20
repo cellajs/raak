@@ -5,6 +5,9 @@ import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/prag
 import type { FocusEvent } from 'react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
+import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
 import { DropIndicator } from '~/modules/common/drop-indicator';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { getSeenChannelId } from '~/modules/seen/helpers';
@@ -15,9 +18,6 @@ import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
-import { focusTask, markCurrentItemMounted, setTaskCardFocus, takePendingFocus } from '~/modules/task/helpers/focus-task';
-import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
@@ -67,7 +67,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     const clickTarget = event.target as HTMLElement;
 
     // The store, not isFocused: the mousedown before this click already made the card current through its focus
-    if (!isSheet && useTaskInteractionStore.getState().focusedTaskId !== task.id) setTaskCardFocus(task.id);
+    if (!isSheet && useBoardFocusStore.getState().currentItemId !== task.id) focusItem(task.id);
 
     // Ignore clicks that are text selection (user dragged to highlight) within this card
     const selection = window.getSelection();
@@ -164,10 +164,10 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
   };
 
   // Focus and current are one: a card focused by a click or a script becomes the current task.
-  // Reads the store: setTaskCardFocus updates it before focusing, while isFocused still holds the last render.
+  // Reads the store: focusItem updates it before focusing, while isFocused still holds the last render.
   const handleCardFocus = (event: FocusEvent<HTMLDivElement>) => {
     if (isSheet || event.target !== event.currentTarget) return;
-    if (useTaskInteractionStore.getState().focusedTaskId !== task.id) focusTask(task.id);
+    if (useBoardFocusStore.getState().currentItemId !== task.id) setCurrentItem(task.id);
   };
 
   const cardId = isSheet ? `sheet-${task.id}` : task.id;

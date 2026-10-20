@@ -15,11 +15,6 @@ interface TaskInteractionState {
    */
   selectedLabelIds: string[];
   setSelectedLabelIds: (ids: string[]) => void;
-  focusedTaskId: string | null;
-  setFocusedTaskId: (taskId: string | null) => void;
-  /** The current item (task card or create form) while it is mounted: its panel list then leaves the Tab stop to it. */
-  mountedFocusId: string | null;
-  setMountedFocusId: (id: string | null) => void;
   /**
    * Draft tasks keyed by projectId for inline create-form placeholders. A project's create form
    * is open iff it has a draft here, so consumers derive open-ness from `draftTasks[projectId]`.
@@ -31,20 +26,15 @@ interface TaskInteractionState {
   reset: () => void;
 }
 
-const initialState: Pick<
-  TaskInteractionState,
-  'selectedTaskIds' | 'selectedProjectId' | 'selectedLabelIds' | 'focusedTaskId' | 'mountedFocusId' | 'draftTasks'
-> = {
+const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedProjectId' | 'selectedLabelIds' | 'draftTasks'> = {
   selectedTaskIds: [],
   selectedProjectId: null,
   selectedLabelIds: [],
-  focusedTaskId: null,
-  mountedFocusId: null,
   draftTasks: {},
 };
 
 /**
- * Store to manage task interactions such as selection, focus, and open create forms across the task board.
+ * Store to manage task interactions such as selection and open create forms across the task board. The current item lives in `useBoardFocusStore`.
  * This allows for consistent state management and avoids prop drilling for these common interactions.
  */
 export const useTaskInteractionStore = create<TaskInteractionState>()(
@@ -60,16 +50,6 @@ export const useTaskInteractionStore = create<TaskInteractionState>()(
       setSelectedLabelIds: (ids) => {
         set((state) => {
           state.selectedLabelIds = ids;
-        });
-      },
-      setFocusedTaskId: (id) => {
-        set((state) => {
-          state.focusedTaskId = id;
-        });
-      },
-      setMountedFocusId: (id) => {
-        set((state) => {
-          state.mountedFocusId = id;
         });
       },
       setDraftTask: (projectId, task) => {

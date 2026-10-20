@@ -1,3 +1,4 @@
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
@@ -165,13 +166,11 @@ export const resetTaskInteraction = (boardKey?: string) => {
   if (boardKey && boardKey === lastInteractionBoardKey) return;
   lastInteractionBoardKey = boardKey ?? null;
   useTaskInteractionStore.getState().reset();
+  useBoardFocusStore.getState().reset();
   useTaskCardStore.getState().reset();
 };
 
-/**
- * The tasks a panel renders, in render order: the board search, the panel's section filters, then the accepted/iced folds.
- * A create-form draft in `tasks` passes the filters, as on the board: pass it only for the panel that hosts it.
- */
+/** The tasks a panel renders, in render order: the board search, the panel's section filters, then the accepted/iced folds. */
 export const renderedPanelTasks = (
   panel: ProjectResizablePanel,
   tasks: Task[],
@@ -181,16 +180,8 @@ export const renderedPanelTasks = (
   const inPanel = tasks.filter(
     (task) =>
       task.projectId === panel.project.id &&
-      (isDraftTask(task) ||
-        (searchFilterFunction(search, task) &&
-          (!panel.sectionFilters || Object.entries(panel.sectionFilters).every(([key, value]) => value.includes(task[key as keyof SectionsValue]))))),
+      searchFilterFunction(search, task) &&
+      (!panel.sectionFilters || Object.entries(panel.sectionFilters).every(([key, value]) => value.includes(task[key as keyof SectionsValue]))),
   );
   return prepareBoardTasks(inPanel, prefs.expandAccepted, prefs.expandIced);
-};
-
-/** Whether a board panel hosts its project's open create-form draft: an unsplit panel, or the section `resolveDraftHostSection` picks. */
-export const panelHostsDraft = (panel: ProjectResizablePanel, draft: Task, viewSections: SectionsValue[] | undefined) => {
-  if (!panel.sectionFilters) return true;
-  const hostSection = resolveDraftHostSection(viewSections, draft.status);
-  return !!hostSection && makePanelKey(panel.project.id, hostSection) === panel.panelId;
 };

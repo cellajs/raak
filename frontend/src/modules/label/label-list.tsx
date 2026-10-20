@@ -1,11 +1,13 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { BirdIcon } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { matchesTerms } from 'shared/utils/text-match';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { ListFocusScope } from '~/modules/board-focus/list-focus-scope';
+import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
@@ -103,10 +105,25 @@ type LabelListViewProps = {
  * Renders label tiles using internal or page scrolling.
  * Standard searches filter rows; '=' queries highlight matches.
  */
-function LabelListView({ rows, isLoading, highlight, highlightWords, windowScroll, ...tileProps }: LabelListViewProps) {
+function LabelListView({ rows, isLoading, highlight, highlightWords, windowScroll, navPanelId, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
+
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const itemIds = useMemo(() => rows.map((row) => labelTileDomId(row.id)), [rows]);
+  const itemIdsRef = useRef(itemIds);
+  itemIdsRef.current = itemIds;
+
+  // Every tile is mounted, so bringing one into view is a plain scroll
+  useEffect(() => {
+    if (!navPanelId) return;
+    return registerPanelNav(navPanelId, {
+      items: () => itemIdsRef.current.map((id) => ({ id })),
+      scrollTo: (id) => document.getElementById(id)?.scrollIntoView({ block: 'nearest' }),
+      firstInView: () => firstItemInView(itemIdsRef.current, viewportRef.current),
+    });
+  }, [navPanelId]);
 
   // A label link opens its tile once, then leaves the URL: closing the tile must not leave a stale link behind
   useEffect(() => {
@@ -124,17 +141,28 @@ function LabelListView({ rows, isLoading, highlight, highlightWords, windowScrol
     return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:label_other').toLowerCase() }} />;
   }
 
-  const body = (
+  const list = (
     <ul aria-label={t('c:label_other')}>
       {rows.map((row) => (
-        <LabelTile key={row.id} row={row} highlighted={highlight && matchesSearch(row, highlightWords)} {...tileProps} />
+        <LabelTile key={row.id} row={row} highlighted={highlight && matchesSearch(row, highlightWords)} onBoard={!!navPanelId} {...tileProps} />
       ))}
     </ul>
+  );
+  const body = navPanelId ? (
+    <ListFocusScope itemIds={itemIds} viewportRef={viewportRef}>
+      {list}
+    </ListFocusScope>
+  ) : (
+    list
   );
 
   // With windowScroll the panel grows with content and the page scrolls; otherwise scroll internally
   if (windowScroll) return <div className="flex-1">{body}</div>;
-  return <ScrollArea className="min-h-0 flex-1">{body}</ScrollArea>;
+  return (
+    <ScrollArea className="min-h-0 flex-1" viewportRef={viewportRef}>
+      {body}
+    </ScrollArea>
+  );
 }
 
 /** Labels panel body: canonical per-project list at project scope, aggregated list at workspace scope. */

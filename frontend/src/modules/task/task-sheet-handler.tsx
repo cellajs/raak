@@ -1,12 +1,12 @@
 import { useSearch } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { focusItem } from '~/modules/board-focus/focus-item';
 import { useUrlSheet } from '~/modules/common/sheeter/use-url-sheet';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { TaskSheet } from '~/modules/task/card/task-sheet';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
-import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { taskKeys } from '~/modules/task/query';
 import { Badge } from '~/modules/ui/badge';
@@ -64,7 +64,7 @@ function TaskSheetHandler() {
       if (allTasksMutations.length) triggerTaskGlow(id);
 
       // Restore focus to task card
-      setTaskCardFocus(id);
+      focusItem(id);
     },
     options: {
       side: 'right',

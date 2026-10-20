@@ -1,6 +1,8 @@
 import { useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { revealItem } from '~/modules/board-focus/focus-item';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import { LabelSelectedButtons } from '~/modules/label/label-selected-buttons';
@@ -11,7 +13,6 @@ import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { useMatchingTaskIds } from '~/modules/task/board/use-matching-task-ids';
 import { BoardSearch } from '~/modules/task/board-search';
 import { sortTasksAsOnBoard } from '~/modules/task/helpers/board-helpers';
-import { revealTask } from '~/modules/task/helpers/focus-task';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { deriveTasksQueryParams } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -39,7 +40,7 @@ export function BoardHeader({
   const queryParams = publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal(queryParams);
   const matchIds = useMatchingTaskIds(boardId, projects);
-  const focusedTaskId = useTaskInteractionStore((s) => s.focusedTaskId);
+  const currentItemId = useBoardFocusStore((s) => s.currentItemId);
   const selectedTaskIds = useTaskInteractionStore((s) => s.selectedTaskIds);
   const setSelectedTaskIds = useTaskInteractionStore((s) => s.setSelectedTaskIds);
   const selectedLabelIds = useTaskInteractionStore((s) => s.selectedLabelIds);
@@ -73,7 +74,7 @@ export function BoardHeader({
       <BoardSearch
         isInWorkspace={isInWorkspace}
         toggleFocus={toggleSearchFocus}
-        matches={{ ids: matchIds, onStep: revealTask, currentId: focusedTaskId }}
+        matches={{ ids: matchIds, onStep: revealItem, currentId: currentItemId }}
       >
         {typeof total === 'number' && searchQuery && (
           <div className="mr-1 flex items-center gap-1 text-muted-foreground text-sm">

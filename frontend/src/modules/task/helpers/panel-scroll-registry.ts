@@ -1,29 +1,13 @@
 import type { TaskStatus } from '~/modules/task/task-properties';
 
-type PanelScroller = (taskId: string) => void;
 type PanelStatusScroller = (status: TaskStatus) => void;
 
 /**
- * Per-panel scroll callbacks, keyed by projectId. Task panels use a virtualizer (virtua), so
- * cards outside the viewport are not mounted in the DOM; keyboard navigation and cross-project
- * drags ask the owning panel to scroll their target into view before the card exists.
+ * Per-panel status-band scrollers, keyed by projectId. Task panels use a virtualizer (virtua), so cards outside the
+ * viewport are not mounted in the DOM; cross-project drags ask the owning panels to bring a status band into view.
+ * Keyboard navigation scrolls through the board's panel nav registry.
  */
-const scrollers = new Map<string, PanelScroller>();
 const statusScrollers = new Map<string, Set<PanelStatusScroller>>();
-
-/** Register a panel's scroller. Returns an unregister function for effect cleanup. */
-export const registerPanelScroller = (projectId: string, scroller: PanelScroller) => {
-  scrollers.set(projectId, scroller);
-  return () => {
-    // Only remove if still the same scroller (guards against unmount races on re-register).
-    if (scrollers.get(projectId) === scroller) scrollers.delete(projectId);
-  };
-};
-
-/** Ask the panel owning `projectId` to scroll `taskId` into view. No-op if the panel isn't registered. */
-export const scrollTaskIntoView = (projectId: string, taskId: string) => {
-  scrollers.get(projectId)?.(taskId);
-};
 
 /**
  * Register a panel's status scroller. A Set per projectId because split view mounts several

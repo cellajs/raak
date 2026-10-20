@@ -3,163 +3,41 @@ import type { Project } from 'sdk';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { useBoardStore } from '~/modules/common/board/board-store';
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { BoardNavHotkeys } from '~/modules/board-focus/board-nav-hotkeys';
+import { focusItem } from '~/modules/board-focus/focus-item';
+import { findItemPanelId, getPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
-import { type BoardPanelData, defaultPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { boardSearchInputId } from '~/modules/task/board-search';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
-import { cachedTasks, currentActiveTask } from '~/modules/task/helpers/active-task';
-import { panelHostsDraft, pickViewSections, prepareBoardPanels, renderedPanelTasks } from '~/modules/task/helpers/board-helpers';
+import { currentActiveTask } from '~/modules/task/helpers/active-task';
 import { closeCreateTaskForm, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
-import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import type { ProjectResizablePanel, Task } from '~/modules/task/types';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
 
 interface TasksHotkeysProps {
-  boardId: string;
   projects: Project[];
-  type: 'workspace' | 'project';
 }
 
-type StrictBoardPanel = ProjectResizablePanel;
-
-/** Registers keyboard navigation and actions for task views. */
-export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
+/** Registers task actions for task views, and the board's arrow-key navigation while no task sheet is open. */
+export function TasksHotkeys({ projects }: TasksHotkeysProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
 
-  const q = useSearch({ strict: false, select: (search) => search.q });
-  const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
   const taskSheetId = useSearch({ strict: false, select: (search) => search.taskSheetId });
   const isSheetOpen = !!taskSheetId;
 
-  const isPanelCollapsed = (panel: StrictBoardPanel) => !!useBoardStore.getState().panelCollapseState[panel.panelId];
-
   const currentDraft = () => {
-    const { focusedTaskId, draftTasks } = useTaskInteractionStore.getState();
-    return Object.values(draftTasks).find((draft) => draft.id === focusedTaskId);
-  };
-
-  // The open create form is an item of the panel hosting it, so arrows land on it as on any card
-  const currentNavItem = () => currentDraft() ?? currentActiveTask();
-
-  const findCurrentPanelIndex = (allPanels: StrictBoardPanel[], item: Task, boardPanelData: BoardPanelData | undefined) =>
-    allPanels.findIndex(
-      (panel) =>
-        panel.project.id === item.projectId &&
-        (isDraftTask(item)
-          ? panelHostsDraft(panel, item, boardPanelData?.[item.projectId]?.viewSections)
-          : !panel.sectionFilters || panel.sectionFilters.status.includes(item.status)),
-    );
-
-  const panelNavItems = (panel: StrictBoardPanel, boardPanelData: BoardPanelData | undefined) => {
-    const projectData = boardPanelData?.[panel.project.id];
-    const draft = useTaskInteractionStore.getState().draftTasks[panel.project.id];
-    const tasks = cachedTasks();
-    const items = draft && panelHostsDraft(panel, draft, projectData?.viewSections) ? [...tasks, draft] : tasks;
-    return renderedPanelTasks(panel, items, { q, matchMode }, projectData?.prefs || defaultPanelPrefs);
-  };
-
-  // Resolve the current item and its panel's rendered list (shared by vertical nav handlers).
-  const resolveVerticalNavContext = () => {
-    if (!projects.length) return null;
-    const boardPanelData = useTaskBoardStore.getState().panelData[boardId];
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, pickViewSections(boardPanelData));
-    const currentTask = currentNavItem();
-    if (!currentTask) return null;
-
-    const currentTaskCard = document.getElementById(currentTask.id);
-    if (currentTaskCard?.dataset.state === 'editing') return null;
-
-    const currentPanel = allPanels[findCurrentPanelIndex(allPanels, currentTask, boardPanelData)] ?? allPanels[0];
-    // Its cards are not rendered: moving would make a task current that nobody can see
-    if (isPanelCollapsed(currentPanel)) return null;
-    const visibleTasks = panelNavItems(currentPanel, boardPanelData);
-
-    return { currentTask, visibleTasks };
-  };
-
-  // Navigate one task up/down within a panel.
-  const handleVerticalArrowKeyDown = (event: KeyboardEvent) => {
-    const ctx = resolveVerticalNavContext();
-    if (!ctx) return;
-    const { currentTask, visibleTasks } = ctx;
-
-    const direction = event.key === 'ArrowDown' ? 1 : -1;
-    const currentTaskIndex = visibleTasks.findIndex((task) => task.id === currentTask.id);
-    const nextTask = visibleTasks[currentTaskIndex + direction];
-    if (nextTask) setTaskCardFocus(nextTask.id);
-  };
-
-  // Cmd + Up/Down: jump to the first/last task in the column.
-  const handleColumnEdgeKeyDown = (event: KeyboardEvent) => {
-    const ctx = resolveVerticalNavContext();
-    if (!ctx) return;
-    const { visibleTasks } = ctx;
-
-    const targetTask = event.key === 'ArrowDown' ? visibleTasks.at(-1) : visibleTasks[0];
-    if (targetTask) setTaskCardFocus(targetTask.id);
-  };
-
-  // Option + Up/Down: jump to the first task of the next/previous status group. Does nothing at the edges.
-  const handleStatusGroupKeyDown = (event: KeyboardEvent) => {
-    const ctx = resolveVerticalNavContext();
-    if (!ctx) return;
-    const { currentTask, visibleTasks } = ctx;
-
-    // visibleTasks are sorted by status, so distinct statuses appear in column order.
-    const statusesInOrder = [...new Set(visibleTasks.map((task) => task.status))];
-    const currentStatusIndex = statusesInOrder.indexOf(currentTask.status);
-    const direction = event.key === 'ArrowDown' ? 1 : -1;
-    const targetStatus = statusesInOrder[currentStatusIndex + direction];
-    if (targetStatus === undefined) return; // Already in the first/last status group.
-
-    const targetTask = visibleTasks.find((task) => task.status === targetStatus);
-    if (targetTask) setTaskCardFocus(targetTask.id);
-  };
-
-  // Find the first task whose card is (partially) visible at the top of the panel's scroll viewport.
-  const getFirstViewportTaskId = (projectId: string, visibleTasks: Task[]): string | undefined => {
-    const viewport = document.getElementById(`${projectId}-viewport`);
-    if (!viewport) return undefined;
-    const viewportTop = viewport.getBoundingClientRect().top;
-    for (const task of visibleTasks) {
-      const card = document.getElementById(task.id);
-      if (!card) continue;
-      // First card whose bottom edge clears the viewport top is the first (partially) visible task.
-      if (card.getBoundingClientRect().bottom > viewportTop + 1) return task.id;
-    }
-    return undefined;
-  };
-
-  // Left/Right focuses the first visible task in the target panel.
-  const handleHorizontalArrowKeyDown = (event: KeyboardEvent) => {
-    if (!projects.length) return;
-    const boardPanelData = useTaskBoardStore.getState().panelData[boardId];
-    const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, pickViewSections(boardPanelData));
-    const currentTask = currentNavItem();
-    const currentPanelIndex = currentTask ? findCurrentPanelIndex(allPanels, currentTask, boardPanelData) : -1;
-
-    // Collapsed panels render no cards to land on; Tab reaches their header to expand them
-    const direction = event.key === 'ArrowRight' ? 1 : -1;
-    let nextIndex = currentPanelIndex + direction;
-    while (allPanels[nextIndex] && isPanelCollapsed(allPanels[nextIndex])) nextIndex += direction;
-    const nextPanel = allPanels[nextIndex];
-    if (!nextPanel) return;
-
-    const visibleTasks = panelNavItems(nextPanel, boardPanelData);
-    const targetTaskId = getFirstViewportTaskId(nextPanel.project.id, visibleTasks) ?? visibleTasks[0]?.id;
-    if (targetTaskId) setTaskCardFocus(targetTaskId);
+    const { currentItemId } = useBoardFocusStore.getState();
+    return Object.values(useTaskInteractionStore.getState().draftTasks).find((draft) => draft.id === currentItemId);
   };
 
   const handleEscKeyPress = () => {
@@ -171,11 +49,12 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     const draft = currentDraft();
     if (draft) {
       if (document.activeElement?.id !== draft.id) return;
-      const items = resolveVerticalNavContext()?.visibleTasks ?? [];
+      const panelId = findItemPanelId(draft.id);
+      const items = (panelId && getPanelNav(panelId)?.items()) || [];
       const index = items.findIndex(({ id }) => id === draft.id);
       const neighbour = index === -1 ? undefined : (items[index - 1] ?? items[index + 1]);
       closeCreateTaskForm(draft.projectId);
-      if (neighbour) setTaskCardFocus(neighbour.id);
+      if (neighbour) focusItem(neighbour.id);
       return;
     }
 
@@ -291,27 +170,10 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     ['ctrl + f', handleFindKeyDown, { preventDefault: false }],
   ];
 
-  const boardNavHotkeys: HotkeyItem[] = [
-    ['ArrowRight', handleHorizontalArrowKeyDown],
-    ['ArrowLeft', handleHorizontalArrowKeyDown],
-  ];
-
-  const panelNavHotkeys: HotkeyItem[] = [
-    ['ArrowDown', handleVerticalArrowKeyDown],
-    ['ArrowUp', handleVerticalArrowKeyDown],
-    ['meta + ArrowDown', handleColumnEdgeKeyDown],
-    ['meta + ArrowUp', handleColumnEdgeKeyDown],
-    ['alt + ArrowDown', handleStatusGroupKeyDown],
-    ['alt + ArrowUp', handleStatusGroupKeyDown],
-  ];
-
   const gridIgnoreTags = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', '[role="grid"]'];
 
   const coreHotkeys = [...stateHotkeys, ...actionHotkeys];
   useHotkeys(coreHotkeys, gridIgnoreTags);
 
-  const navHotkeys = isSheetOpen ? [] : type === 'workspace' ? [...boardNavHotkeys, ...panelNavHotkeys] : panelNavHotkeys;
-  useHotkeys(navHotkeys, gridIgnoreTags);
-
-  return null;
+  return <BoardNavHotkeys disabled={isSheetOpen} />;
 }

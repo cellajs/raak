@@ -1,14 +1,14 @@
 import { memo, useEffect, useRef } from 'react';
 import type { Project } from 'sdk';
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { markCurrentItemMounted } from '~/modules/board-focus/focus-item';
+import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
 import { CreateTaskForm } from '~/modules/task/create-task-form';
-import { markCurrentItemMounted } from '~/modules/task/helpers/focus-task';
-import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
 
 /**
- * Memo'd wrapper for draft tasks with a focusedTaskId boolean selector.
+ * Memo'd wrapper for draft tasks with a current-item boolean selector.
  */
 export const DraftTaskItem = memo(function DraftTaskItem({
   task,
@@ -19,7 +19,7 @@ export const DraftTaskItem = memo(function DraftTaskItem({
   project: Project;
   onStatusChange: (status: TaskStatus) => void;
 }) {
-  const isFocused = useTaskInteractionStore((s) => s.focusedTaskId === task.id);
+  const isFocused = useBoardFocusStore((s) => s.currentItemId === task.id);
   const itemRef = useRef<HTMLDivElement>(null);
   useItemControlsTabOrder(itemRef, task.id, isFocused);
   useEffect(() => (isFocused ? markCurrentItemMounted(task.id) : undefined), [isFocused, task.id]);

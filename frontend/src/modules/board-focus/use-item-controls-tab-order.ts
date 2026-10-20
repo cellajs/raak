@@ -3,9 +3,9 @@ import { type RefObject, useEffect, useRef } from 'react';
 const focusableSelector = 'a[href], button, textarea, input, select, [tabindex], [contenteditable="true"]';
 
 /**
- * Keeps a board item's own controls (task card, create form) out of the Tab order until the item is current, so a panel
- * list is one Tab stop and Tab leaves it after the current item's controls. Escape inside a current item returns focus to
- * its main element.
+ * Keeps a board item's own controls (task card, create form, label tile) out of the Tab order until the item is current,
+ * so a panel list is one Tab stop and Tab leaves it after the current item's controls. Escape inside a current item
+ * returns focus to its main element.
  */
 export function useItemControlsTabOrder(containerRef: RefObject<HTMLElement | null>, mainId: string, isCurrent: boolean) {
   const removedRef = useRef(new Set<HTMLElement>());
@@ -34,6 +34,8 @@ export function useItemControlsTabOrder(containerRef: RefObject<HTMLElement | nu
     // Native, not React: React's synthetic event would also bubble in from menus portaled out of the item
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
+      // A text field handles its own Escape (a rename cancels), and moving focus first would blur it into a commit
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
       const main = document.getElementById(mainId);
       if (main && document.activeElement !== main) main.focus();
     };

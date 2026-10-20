@@ -20,7 +20,7 @@ export function LabelsPanel({ entity, entityId, windowScroll }: LabelsScopeProps
     <LocalPanelShell panelId={LABELS_PANEL_ID} icon={<TagIcon />} title={t('c:label_other').toLowerCase()} windowScroll={windowScroll}>
       <div className="flex min-h-0 flex-1 flex-col">
         <Suspense fallback={<Spinner className="my-4" noDelay />}>
-          <LabelList entity={entity} entityId={entityId} windowScroll={windowScroll} />
+          <LabelList entity={entity} entityId={entityId} windowScroll={windowScroll} navPanelId={LABELS_PANEL_ID} />
         </Suspense>
       </div>
     </LocalPanelShell>

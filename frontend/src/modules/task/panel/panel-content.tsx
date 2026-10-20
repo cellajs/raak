@@ -1,7 +1,8 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import type { Project } from 'sdk';
 import { Virtualizer, WindowVirtualizer } from 'virtua';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
+import { ListFocusScope } from '~/modules/board-focus/list-focus-scope';
 import { BoardPanelBody } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
@@ -15,7 +16,6 @@ import { collapsedMainCount } from '~/modules/task/panel/panel-collapsed';
 import { TaskPanelEmpty } from '~/modules/task/panel/panel-empty';
 import { PanelStatusSection } from '~/modules/task/panel/panel-status-section';
 import { PanelTasksContext } from '~/modules/task/panel/panel-tasks-context';
-import { TaskListFocusScope } from '~/modules/task/panel/task-list-focus-scope';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskCounts, TaskProps } from '~/modules/task/types';
@@ -28,13 +28,15 @@ const rowHeightGuard = '[&>ul>li]:min-h-px';
 
 interface PanelProps {
   project: Project;
+  /** The board panel showing these tasks: the project, or one split section of it. */
+  panelId: string;
   tasks: TaskProps['task'][];
   counts: TaskCounts;
   /** When true, uses WindowVirtualizer and grows with content (no internal scrolling) */
   windowScroll?: boolean;
 }
 
-export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks, counts, windowScroll }: PanelProps) {
+export const TaskPanelContent = memo(function TaskPanelContent({ project, panelId, tasks, counts, windowScroll }: PanelProps) {
   const isMobile = useBreakpointBelow('sm');
   const setActivePanel = useBoardStore((state) => state.setActivePanel);
   const hasSelectedTasks = useTaskInteractionStore((s) => s.selectedTaskIds.length > 0);
@@ -43,11 +45,13 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   // new-task scroll-into-view). Kept in a hook so this component stays layout-only.
   const { virtualizerRef, scrollViewportRef, handleSectionToggle } = usePanelScrolling({
     projectId: project.id,
+    panelId,
     tasks,
     isMobile,
     windowScroll: !!windowScroll,
   });
   const sectionWindowMode = isMobile || !!windowScroll;
+  const itemIds = useMemo(() => tasks.map(({ id }) => id), [tasks]);
 
   const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced;
   const draftIndex = tasks.findIndex(isDraftTask);
@@ -122,16 +126,16 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
 
             <div className={hintFadeOut}>
               {hasContent ? (
-                <TaskListFocusScope
+                <ListFocusScope
                   id={`panel-tasks-${project.id}`}
                   className={cn(rowHeightGuard, cardScrollMargin, '[&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10')}
-                  tasks={tasks}
+                  itemIds={itemIds}
                   viewportRef={scrollViewportRef}
                 >
                   <WindowVirtualizer ref={virtualizerRef} as="ul" item="li">
                     {tasks.map(renderTask)}
                   </WindowVirtualizer>
-                </TaskListFocusScope>
+                </ListFocusScope>
               ) : (
                 <TaskPanelEmpty projectId={project.id} />
               )}
@@ -160,10 +164,10 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
             {/* Render tasks */}
             <div className={cn('flex flex-1 flex-col', hintFadeOut)} id={`tasks-list-${project.id}`}>
               {hasContent ? (
-                <TaskListFocusScope
+                <ListFocusScope
                   id={`panel-tasks-${project.id}`}
                   className={cn(rowHeightGuard, cardScrollMargin, 'grow [&_li:has(.is-focused)]:z-10 [&_li:has([data-state=editing])]:z-10')}
-                  tasks={tasks}
+                  itemIds={itemIds}
                   viewportRef={scrollViewportRef}
                 >
                   {/* startMargin: the accepted bar's height (h-9), which stays in the flow above the list */}
@@ -177,7 +181,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
                   >
                     {tasks.map(renderTask)}
                   </Virtualizer>
-                </TaskListFocusScope>
+                </ListFocusScope>
               ) : (
                 <TaskPanelEmpty projectId={project.id} />
               )}

@@ -1,13 +1,10 @@
-import { Link, useParams } from '@tanstack/react-router';
+import { useParams } from '@tanstack/react-router';
 import { EllipsisVerticalIcon, ExpandIcon, FunnelIcon, InfoIcon, PlusIcon, SettingsIcon, TagIcon } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
-import { nanoid } from 'shared/utils/nanoid';
 import { useShallow } from 'zustand/react/shallow';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import type { TKey } from '~/lib/i18n-locales';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { COLLAPSED_PANEL_MIN_WIDTH, PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
@@ -15,9 +12,10 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import type { PageTab } from '~/modules/common/page/tab-nav';
+import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import { buildBoardExtraPanels, sortPanelsByOrder } from '~/modules/task/board/board-hooks';
 import { DisplayOptions } from '~/modules/task/board/display-options';
+import { ProjectTabNav } from '~/modules/task/board/project-tab-nav';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { BoardSearch } from '~/modules/task/board-search';
 import {
@@ -39,6 +37,8 @@ import { cn } from '~/utils/cn';
 /** The share of the row an open panel gets when the row scrolls: `minWidth * 1.25` in resizable-panels.tsx, which keeps it private. */
 const IDEAL_PANEL_WIDTH = PANEL_MIN_WIDTH * 1.25;
 const COLUMN_GAP = 8;
+// A phone wraps a card's title over its own footer row, so mobile cards stand taller than desktop rows
+const MOBILE_ROW_HEIGHT = 110;
 
 /** The mobile placeholder column carries no project or kind; desktop columns are real board panels. */
 type SkeletonColumn = { kind: 'mobile'; panelId: string } | BoardResizablePanel;
@@ -110,22 +110,13 @@ export function BoardSkeleton({
     return `max(${ideal}px, min(${stored}px, (${ideal}px - 100%) * 9999))`;
   }, [isMobile, panels, panelCollapseState, defaultSizes]);
 
-  const projectTabs: PageTab[] = projects.map((project) => ({
-    id: project.id,
-    // Project names are display strings, not keys; PageTabNav's t() falls back to the raw name.
-    label: project.name as TKey,
-    path: '/$tenantId/$organizationSlug/workspace/$slug',
-    search: { projectSlug: project.slug },
-    activeOptions: { exact: false, includeSearch: true },
-  }));
-
   const renderColumn = (panel: SkeletonColumn) => {
     switch (panel.kind) {
       case 'mobile':
         return (
           <>
-            {isInWorkspace && <StickyMobilePanelHeader projectTabs={projectTabs} />}
-            <PanelBodySkeleton rowCount={rowCount} rowHeight={rowHeight} />
+            {isInWorkspace && <ProjectTabNav projects={projects} />}
+            <MobilePanelSkeleton rowCount={rowCount} rowHeight={rowHeight} />
           </>
         );
       case 'labels':
@@ -160,7 +151,7 @@ export function BoardSkeleton({
 
   return (
     <>
-      {withHeader && <BoardHeaderSkeleton isInWorkspace={isInWorkspace} hasProjects={!!projects.length} />}
+      {withHeader && <BoardHeaderSkeleton isInWorkspace={isInWorkspace} hasProjects={!!projects.length} publicView={publicView} />}
       {/* BoardLayout's frame: a loading board scrolls the page no further than the loaded one. */}
       <div
         className={cn(
@@ -195,7 +186,15 @@ export function BoardSkeleton({
 }
 
 /** Inert stand-in for the board's task bar; like the live one, a board without projects shows no task count. */
-export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false }: { isInWorkspace?: boolean; hasProjects?: boolean }) {
+export function BoardHeaderSkeleton({
+  isInWorkspace = false,
+  hasProjects = false,
+  publicView = false,
+}: {
+  isInWorkspace?: boolean;
+  hasProjects?: boolean;
+  publicView?: boolean;
+}) {
   const { t } = useTranslation();
 
   return (
@@ -219,11 +218,17 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
             <EllipsisVerticalIcon />
           </Button>
         </>
-      ) : hasProjects ? (
+      ) : hasProjects && !publicView ? (
         <Button variant="ghost">
           <EllipsisVerticalIcon />
         </Button>
       ) : null}
+
+      {hasProjects && !publicView && (
+        <Button variant="outline" className="sm:hidden">
+          <TagIcon />
+        </Button>
+      )}
 
       <DisplayOptions className="max-sm:hidden" />
 
@@ -234,52 +239,24 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
   );
 }
 
-function StickyMobilePanelHeader({ projectTabs }: { projectTabs: PageTab[] }) {
-  // A stable instance ID preserves the shared-layout underline animation.
-  const layoutId = useRef(nanoid()).current;
+/** The mobile panel while its tasks load, with an inert create button where the live one sits. */
+export function MobilePanelSkeleton({ rowCount, rowHeight = MOBILE_ROW_HEIGHT }: { rowCount?: number; rowHeight?: number }) {
   return (
-    <div className="z-80 block gap-1 border-b bg-background/75 text-center backdrop-blur-xs [scrollbar-width:none] max-sm:overflow-x-auto max-sm:border-t [&::-webkit-scrollbar]:hidden">
-      <div className="inline-flex min-w-max gap-1 px-1 sm:flex sm:justify-center">
-        {projectTabs.map(({ id, path, label, search = {}, params = true, activeOptions = { exact: false, includeSearch: true } }) => (
-          <Link
-            key={id}
-            resetScroll={false}
-            className="focus-effect group relative rounded-sm p-2 last:mr-4 max-sm:p-3 lg:px-4"
-            to={path}
-            draggable={false}
-            params={params}
-            search={search}
-            activeOptions={activeOptions}
-            activeProps={{ 'data-active': true }}
-          >
-            {({ isActive }) => {
-              return (
-                <>
-                  <span className="group-active:press block">{label}</span>
-                  {isActive && (
-                    <motion.span
-                      initial={false}
-                      layoutId={layoutId}
-                      transition={{ type: 'spring', duration: 0.4, bounce: 0, delay: 0.1 }}
-                      className="absolute bottom-0 left-2 h-1 w-[calc(100%-1rem)] rounded-sm bg-primary"
-                    />
-                  )}
-                </>
-              );
-            }}
-          </Link>
-        ))}
+    <>
+      <PanelBodySkeleton rowCount={rowCount} rowHeight={rowHeight} />
+      <div inert>
+        <FloatingNavButton id="create-task-placeholder" icon={PlusIcon} onClick={() => {}} />
       </div>
-    </div>
+    </>
   );
 }
 
 function PanelBodySkeleton({ rowHeight = 88, rowCount = 12 }: { rowHeight?: number; rowCount?: number }) {
   const renderRowHeight = rowHeight - 8;
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border opacity-100 transition-opacity duration-300">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden opacity-100 transition-opacity duration-300 sm:border">
       <div
-        className={`-mt-[.05rem] flex h-8 w-full shrink-0 justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
+        className={`-mt-[.05rem] flex h-9 w-full shrink-0 justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
       />
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations
@@ -287,7 +264,7 @@ function PanelBodySkeleton({ rowHeight = 88, rowCount = 12 }: { rowHeight?: numb
           <Skeleton className={'w-full rounded'} style={{ height: `${renderRowHeight}px` }} />
         </div>
       ))}
-      <div className={`flex h-8 w-full justify-start gap-1 rounded-none ${statusSectionColors.iced.fill} ring-inset`} />
+      <div className={`flex h-9 w-full justify-start gap-1 rounded-none ${statusSectionColors.iced.fill} ring-inset`} />
     </div>
   );
 }

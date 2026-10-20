@@ -1,11 +1,11 @@
 import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
 import { z } from 'zod';
+import { focusWhenMounted, setCurrentItem } from '~/modules/board-focus/focus-item';
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
-import { focusTask, focusWhenMounted } from '~/modules/task/helpers/focus-task';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
@@ -48,7 +48,7 @@ export const newTaskFormIsDirty = ({ assignedTo, labels, description }: Pick<New
 
 /** Closes a project's create-task form; unlike the toggle, a repeated or late call never reopens it. */
 export const closeCreateTaskForm = (projectId: string) => {
-  focusTask(null);
+  setCurrentItem(null);
   useTaskInteractionStore.getState().setDraftTask(projectId, null);
 };
 
@@ -79,7 +79,7 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
   const formTask: Task = { ...defaultTask, ...draftForm, id: defaultTask.id, displayOrder: defaultTask.displayOrder };
 
   // ProjectBoardPanel merges this draft into the task list.
-  focusTask(id);
+  setCurrentItem(id);
   store.setDraftTask(project.id, formTask);
   revealDraftHostPanel(project.id, formTask.status);
 

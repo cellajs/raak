@@ -66,7 +66,7 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
         }
       />
       <TaskSheetHandler />
-      <TasksHotkeys boardId={project.id} projects={[project]} type="project" />
+      <TasksHotkeys projects={[project]} />
       <FocusViewContainer className="group/project max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">{children}</FocusViewContainer>
     </>
   );

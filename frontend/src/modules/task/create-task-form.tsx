@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
@@ -25,13 +27,11 @@ import {
   newTaskFormDefaults,
   newTaskFormIsDirty,
 } from '~/modules/task/helpers/create-task';
-import { focusTask, takePendingFocus } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskStatusType } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
@@ -65,7 +65,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   const setForm = useDraftStore((state) => state.setForm);
 
   const formId = `create-task-${projectId}`;
-  const isFocused = useTaskInteractionStore((s) => s.focusedTaskId === formId);
+  const isFocused = useBoardFocusStore((s) => s.currentItemId === formId);
 
   const [defaultId] = useState(generateId());
   const [editorKey, setEditorKey] = useState(0);
@@ -167,7 +167,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
 
   const handleFormClick = () => {
     if (isDialog || isFocused || isMobile) return;
-    focusTask(formId);
+    setCurrentItem(formId);
   };
 
   // Opened or arrowed onto while still loading: the form takes the pending focus once its element mounts

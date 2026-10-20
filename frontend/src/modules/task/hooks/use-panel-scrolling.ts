@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { VirtualizerHandle } from 'virtua';
+import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
-import { registerPanelScroller, registerPanelStatusScroller } from '~/modules/task/helpers/panel-scroll-registry';
+import { registerPanelStatusScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { usePanelAutoScroll } from '~/modules/task/hooks/use-panel-drop-target';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
 
 interface UsePanelScrollingOptions {
   projectId: string;
+  /** The board panel showing these tasks: a project, or one split section of it. */
+  panelId: string;
   tasks: TaskProps['task'][];
   isMobile: boolean;
   windowScroll: boolean;
@@ -24,14 +27,14 @@ interface UsePanelScrollingOptions {
  * mobile new-task scroll-into-view effects. Effect order is kept identical to the previous
  * inline version.
  */
-export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: UsePanelScrollingOptions) {
-  // Use ref for focusedTaskId so the mobile scroll effect can read it without
+export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowScroll }: UsePanelScrollingOptions) {
+  // Use ref for the current item so the mobile scroll effect can read it without
   // causing ALL panels to re-render on every focus change.
-  const focusedTaskIdRef = useRef(useTaskInteractionStore.getState().focusedTaskId);
+  const currentItemIdRef = useRef(useBoardFocusStore.getState().currentItemId);
   useEffect(
     () =>
-      useTaskInteractionStore.subscribe((s) => {
-        focusedTaskIdRef.current = s.focusedTaskId;
+      useBoardFocusStore.subscribe((s) => {
+        currentItemIdRef.current = s.currentItemId;
       }),
     [],
   );
@@ -44,14 +47,21 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
   const tasksRef = useRef(tasks);
   tasksRef.current = tasks;
 
-  // Register a scroller so keyboard navigation can bring virtualized-out tasks into view before focusing.
+  // Keyboard navigation reads the list in render order, statuses as groups, and brings virtualized-out cards into view
   useEffect(() => {
-    return registerPanelScroller(projectId, (taskId) => {
-      const index = tasksRef.current.findIndex((t) => t.id === taskId);
-      if (index === -1) return;
-      virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
+    return registerPanelNav(panelId, {
+      items: () => tasksRef.current.map(({ id, status }) => ({ id, group: status })),
+      scrollTo: (taskId) => {
+        const index = tasksRef.current.findIndex((t) => t.id === taskId);
+        if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
+      },
+      firstInView: () =>
+        firstItemInView(
+          tasksRef.current.map(({ id }) => id),
+          scrollViewportRef.current,
+        ),
     });
-  }, [projectId]);
+  }, [panelId]);
 
   // Register a status scroller so a cross-project drag can bring the source-status band into
   // view, giving the drag between-card drop targets. Skips when any same-status card is already
@@ -176,9 +186,9 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
 
   // Mobile: scroll to focused task when a new task is added
   useEffect(() => {
-    const focusedTaskId = focusedTaskIdRef.current;
-    if (!isMobile || !focusedTaskId || initialLength.current === tasks.length) return;
-    const targetIndex = tasks.findIndex(({ id }) => id === focusedTaskId);
+    const currentItemId = currentItemIdRef.current;
+    if (!isMobile || !currentItemId || initialLength.current === tasks.length) return;
+    const targetIndex = tasks.findIndex(({ id }) => id === currentItemId);
 
     if (targetIndex <= 0) return;
     const startIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset) ?? 0;
@@ -187,7 +197,7 @@ export function usePanelScrolling({ projectId, tasks, isMobile, windowScroll }: 
 
     if (!targetIndexVisible) {
       virtualizerRef.current?.scrollToIndex(targetIndex, { smooth: false, align: 'center' });
-      requestAnimationFrame(() => triggerTaskGlow(focusedTaskId));
+      requestAnimationFrame(() => triggerTaskGlow(currentItemId));
     }
     initialLength.current++;
   }, [tasks.length]);

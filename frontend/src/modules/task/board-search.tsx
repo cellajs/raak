@@ -3,11 +3,11 @@ import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffec
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from '~/hooks/use-debounce';
 import { useSearchParams } from '~/hooks/use-search-params';
+import { setCurrentItem } from '~/modules/board-focus/focus-item';
 import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-bar';
 import { useMatchSteps } from '~/modules/common/match-highlight';
 import { SearchClearButton } from '~/modules/common/search-clear-button';
 import { SearchSpinner } from '~/modules/common/search-spinner';
-import { focusTask } from '~/modules/task/helpers/focus-task';
 import { Badge } from '~/modules/ui/badge';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/modules/ui/input-group';
 import { cn } from '~/utils/cn';
@@ -49,7 +49,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
     const target = e.target as HTMLElement; // Cast the target to HTMLElement
     if (target.id === 'search-close' && document.activeElement !== inputRef.current) inputRef.current?.focus();
 
-    focusTask(null);
+    setCurrentItem(null);
   };
 
   const preventInputBlur: MouseEventHandler = (e) => {

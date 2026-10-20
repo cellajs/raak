@@ -1,7 +1,7 @@
 import { createFileRoute, stripSearchParams } from '@tanstack/react-router';
+import { setCurrentItem } from '~/modules/board-focus/focus-item';
 import { PublicProjectRouteComponent } from '~/modules/project/public-route-components';
 import { publicProjectRouteBeforeLoad } from '~/modules/project/public-route-logic';
-import { focusTask } from '~/modules/task/helpers/focus-task';
 import { boardSearchDefaults, boardSearchSchema } from '~/modules/task/search-params-schemas';
 import { createErrorComponent } from '~/routes/-route-utils';
 import { appTitle } from '~/utils/app-title';
@@ -16,7 +16,7 @@ export const Route = createFileRoute('/_public/_content/$tenantId/$organizationS
   validateSearch: boardSearchSchema,
   // Absence means default: params equal to the default view are stripped from the URL
   search: { middlewares: [stripSearchParams(boardSearchDefaults)] },
-  onLeave: () => focusTask(null),
+  onLeave: () => setCurrentItem(null),
   beforeLoad: publicProjectRouteBeforeLoad,
   head: ({ match }) => {
     const { project } = match.context;

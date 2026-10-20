@@ -21,6 +21,8 @@ export interface LabelsHostProps {
   /** One tile open at a time, for the narrow drawer. */
   singleExpand?: boolean;
   onFilterToggle?: () => void;
+  /** The board panel hosting the list: its tiles become board items, one Tab stop with arrow-key navigation. */
+  navPanelId?: string;
 }
 
 /**

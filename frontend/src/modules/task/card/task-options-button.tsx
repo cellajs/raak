@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import { titleFromDocument } from 'shared/blocknote';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
+import { setCurrentItem } from '~/modules/board-focus/focus-item';
 import { ConfirmText } from '~/modules/common/confirm-text';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
@@ -12,7 +13,6 @@ import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteTask } from '~/modules/task/delete-task';
 import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
-import { focusTask } from '~/modules/task/helpers/focus-task';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { truncateMiddle } from '~/utils/truncate-middle';
@@ -52,7 +52,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
             isMobile={isMobile}
             icon={Maximize2Icon}
             onSelect={() => {
-              focusTask(null);
+              setCurrentItem(null);
               openTaskSheet(task.id);
               useDropdowner.getState().remove();
             }}

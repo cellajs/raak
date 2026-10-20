@@ -47,10 +47,8 @@ export const BoardPanel = memo(function BoardPanel({
   const { isVisible: showFab } = useScrollVisibility(isMobile);
 
   const { expandIced, expandAccepted } = useTaskBoardStore((state) => state.panelData[boardId]?.[project.id]?.prefs || defaultPanelPrefs);
-  const isCollapsed = useBoardStore((state) => {
-    const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
-    return state.panelCollapseState[panelId];
-  });
+  const panelId = sectionFilters ? makePanelKey(project.id, sectionFilters) : project.id;
+  const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
 
   // Filter tasks based on search and filters; the open create-form draft always stays visible
   const filteredTasks = useMemo(() => {
@@ -102,7 +100,7 @@ export const BoardPanel = memo(function BoardPanel({
     <div data-search={!!q} className="group/panel h-full">
       {isMobile ? (
         <div ref={panelRef} data-highlighted={highlightProject ? 'true' : undefined} className="group/paneldrop flex h-full flex-col">
-          <TaskPanelContent project={project} tasks={tasks} counts={counts} />
+          <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} />
           <FloatingNavButton
             id="create-task"
             icon={PlusIcon}
@@ -116,7 +114,7 @@ export const BoardPanel = memo(function BoardPanel({
           <TaskPanelHeader project={project} sectionFilters={sectionFilters} publicView={publicView} />
           <div ref={panelRef} data-highlighted={highlightProject ? 'true' : undefined} className="group/paneldrop flex min-h-0 flex-1 flex-col">
             <BoardPanelContent isCollapsed={!!isCollapsed} collapsedContent={<TaskPanelCollapsed counts={counts} />}>
-              <TaskPanelContent project={project} tasks={tasks} counts={counts} windowScroll={windowScroll} />
+              <TaskPanelContent project={project} panelId={panelId} tasks={tasks} counts={counts} windowScroll={windowScroll} />
             </BoardPanelContent>
           </div>
         </div>
