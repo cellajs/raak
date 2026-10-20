@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { Suspense } from 'react';
-import { PageSpinner } from '~/modules/common/spinner';
+import { Spinner } from '~/modules/common/spinner';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { projectQueryOptions } from '~/modules/project/query';
 import { BoardSkeleton } from '~/modules/task/board/board-skeleton';
@@ -26,7 +26,7 @@ export function ProjectRouteComponent() {
   const projects = [project];
 
   return (
-    <Suspense fallback={<PageSpinner />}>
+    <Suspense fallback={<Spinner size="lg" className="mt-[45vh]" />}>
       <ProjectPage key={project.slug} projectId={project.id} organizationId={project.organizationId} organization={organization} tenantId={tenantId}>
         {view === 'table' ? (
           <Suspense>

@@ -856,7 +856,7 @@
           },
           "spreadWindow": {
             "type": ["integer", "null"],
-            "description": "Server-suggested spread window (ms) for the lazy delta fetch; scales with channel audience and load, and the client clamps it between its priority tier bounds"
+            "description": "Server-suggested spread window (ms) for the lazy range fetch; scales with channel audience and load, and the client clamps it between its priority tier bounds"
           },
           "propagation": {
             "type": ["object", "null"],
@@ -9415,8 +9415,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -9424,20 +9425,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           }
         ],
@@ -10222,8 +10216,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -10231,20 +10226,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -10698,8 +10686,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -10707,20 +10696,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -11163,8 +11145,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -11172,20 +11155,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -12288,8 +12264,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -12297,20 +12274,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -13740,8 +13710,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -13749,20 +13720,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -15575,8 +15539,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -15584,20 +15549,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -16147,8 +16105,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -16156,8 +16115,10 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
@@ -16165,11 +16126,24 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "description": "Range read for sync: return the rows stamped after this sequence position. Requires untilSeq."
             },
             "required": false,
-            "name": "seqCursor",
+            "description": "Range read for sync: return the rows stamped after this sequence position. Requires untilSeq.",
+            "name": "afterSeq",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Range read for sync: the last sequence position to return. Requires afterSeq."
+            },
+            "required": false,
+            "description": "Range read for sync: the last sequence position to return. Requires afterSeq.",
+            "name": "untilSeq",
             "in": "query"
           },
           {
@@ -17856,8 +17830,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -17865,8 +17840,10 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
@@ -17874,11 +17851,24 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "description": "Range read for sync: return the rows stamped after this sequence position. Requires untilSeq."
             },
             "required": false,
-            "name": "seqCursor",
+            "description": "Range read for sync: return the rows stamped after this sequence position. Requires untilSeq.",
+            "name": "afterSeq",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Range read for sync: the last sequence position to return. Requires afterSeq."
+            },
+            "required": false,
+            "description": "Range read for sync: the last sequence position to return. Requires afterSeq.",
+            "name": "untilSeq",
             "in": "query"
           },
           {
@@ -19240,8 +19230,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -19249,20 +19240,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -19604,8 +19588,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -19613,20 +19598,13 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
-            },
-            "required": false,
-            "name": "seqCursor",
             "in": "query"
           },
           {
@@ -20178,8 +20156,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -20187,8 +20166,10 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
@@ -21433,8 +21414,9 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
             },
             "required": false,
             "name": "offset",
@@ -21442,8 +21424,10 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+$"
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 40
             },
             "required": false,
             "name": "limit",
@@ -21451,11 +21435,24 @@
           },
           {
             "schema": {
-              "type": "string",
-              "pattern": "^\\d+,\\d+$"
+              "type": "integer",
+              "minimum": 0,
+              "description": "Range read for sync: return the rows stamped after this sequence position. Requires untilSeq."
             },
             "required": false,
-            "name": "seqCursor",
+            "description": "Range read for sync: return the rows stamped after this sequence position. Requires untilSeq.",
+            "name": "afterSeq",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Range read for sync: the last sequence position to return. Requires afterSeq."
+            },
+            "required": false,
+            "description": "Range read for sync: the last sequence position to return. Requires afterSeq.",
+            "name": "untilSeq",
             "in": "query"
           },
           {

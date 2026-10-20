@@ -88,7 +88,7 @@ export function LabelTileDetails({ row, indented, canManage }: LabelTileDetailsP
       <AnimatePresence initial={false}>
         {row.mode === 'epic' && (
           <motion.div key="description" {...labelTileReveal} className="border-t">
-            <Suspense fallback={<Spinner className="my-6 h-6 w-6 opacity-50" noDelay />}>
+            <Suspense fallback={<Spinner className="my-6" noDelay />}>
               <LabelDescriptionForm label={row} />
             </Suspense>
           </motion.div>

@@ -19,8 +19,8 @@ const taskIds = { seq10: generateId(), seq20: generateId(), seq30Deleted: genera
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-// Covers task seq reads for delta sync: ordering, tombstones, limits,
-// bounded seqCursor windows, and acceptedCutOff composition.
+// Covers task range reads for sync: ordering, deleted rows, limits,
+// bounded ranges, and acceptedCutOff composition.
 describe('Task seq reads', async () => {
   const call = await createAppClient();
   let tenant: TestTenant;
@@ -78,9 +78,9 @@ describe('Task seq reads', async () => {
     await clearSecurityTestData();
   });
 
-  it('B1: seqCursor reads are seq-ascending; a capped response is a clean prefix', async () => {
-    // sort/order params must NOT override seq ordering on seq reads
-    const result = await listTasks({ seqCursor: '1,999999', limit: '2', sort: 'createdAt', order: 'desc' });
+  it('B1: range reads are seq-ascending; a capped response is a clean prefix', async () => {
+    // sort/order params must NOT override seq ordering on range reads
+    const result = await listTasks({ afterSeq: 0, untilSeq: 999999, limit: 2, sort: 'createdAt', order: 'desc' });
 
     expect(result.status).toBe(200);
     // Rows in seq order are 10, 20, 30 (tombstone), 40, 50. The capped response
@@ -88,40 +88,45 @@ describe('Task seq reads', async () => {
     expect(result.items.map((t) => t.seq)).toEqual([10, 20]);
   });
 
-  it('B2: seqCursor reads include tombstones; normal reads never do', async () => {
-    // Delta read: tombstones flow through so client caches can drop soft-deleted rows
-    const delta = await listTasks({ seqCursor: '1,999999', limit: '100' });
+  it('B2: range reads include tombstones; normal reads never do', async () => {
+    // Range read: tombstones flow through so client caches can drop soft-deleted rows
+    const delta = await listTasks({ afterSeq: 0, untilSeq: 999999, limit: 100 });
     expect(delta.items.map((t) => t.seq)).toEqual([10, 20, 30, 40, 50]);
     const tombstone = delta.items.find((t) => t.seq === 30);
     expect(tombstone?.deletedAt).not.toBeNull();
 
     // Normal read: no tombstones
-    const normal = await listTasks({ limit: '100' });
+    const normal = await listTasks({ limit: 100 });
     expect(normal.items.some((t) => t.id === taskIds.seq30Deleted)).toBe(false);
   });
 
   it('B3: limit above 1000 is rejected, not clamped', async () => {
-    // Validation failures are malformed requests: 400 via the app's defaultHook, never 403
-    const result = await listTasks({ limit: '1001' });
-    expect(result.status).toBe(400);
-    expect(result.items).toEqual([]);
+    // Validation failures are malformed requests: 400 via the app's defaultHook, never 403. The SDK's own request
+    // validation would refuse the limit before sending, so it is skipped to reach the server.
+    const result = await call(getTasks, {
+      path: { organizationId: tenant.organization.id, tenantId: tenant.tenantId },
+      query: { projectId, limit: 1001 },
+      headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
+      requestValidator: undefined,
+    });
+    expect(result.response.status).toBe(400);
   });
 
-  it('B4: bounded seqCursor respects both bounds (seq-filter OR-group regression)', async () => {
-    const result = await listTasks({ seqCursor: '20,40', limit: '100' });
+  it('B4: a bounded range respects both bounds (seq-filter OR-group regression)', async () => {
+    const result = await listTasks({ afterSeq: 19, untilSeq: 40, limit: 100 });
 
     expect(result.status).toBe(200);
-    // Before the fix, "20,40" joined the OR'd search group as (seq >= 20 OR seq <= 40) = all rows
+    // A bound inside the OR'd search group would read (seq > 19 OR seq <= 40) = all rows
     expect(result.items.map((t) => t.seq)).toEqual([20, 30, 40]);
   });
 
-  it('B5: seqCursor composes with acceptedCutOff', async () => {
+  it('B5: a range read composes with acceptedCutOff', async () => {
     // acceptedCutOff is a number in the SDK contract (client-side zod validates it)
-    const result = await listTasks({ seqCursor: '1,999999', acceptedCutOff: 14, limit: '100' });
+    const result = await listTasks({ afterSeq: 0, untilSeq: 999999, acceptedCutOff: 14, limit: 100 });
 
     expect(result.status).toBe(200);
     // seq 40 is Accepted with updatedAt 30 days ago, outside the 14-day window.
-    // The tombstone (30) still flows: seqCursor implies tombstone mode.
+    // The tombstone (30) still flows: a range read includes deleted rows.
     expect(result.items.map((t) => t.seq)).toEqual([10, 20, 30, 50]);
   });
 });

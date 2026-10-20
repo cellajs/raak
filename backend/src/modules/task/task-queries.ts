@@ -140,9 +140,9 @@ interface FindTasksPaginatedOpts {
 }
 
 /**
- * Fetch a paginated page of tasks and its `total`. Delta reads (seqCursor) discard `total`, so the
+ * Fetch a paginated page of tasks and its `total`. Range reads discard `total`, so the
  * COUNT(*) is skipped entirely; tasks are always project-scoped and thus never org-wide
- * counter-eligible, so non-delta reads resolve `total` via the exact COUNT(*).
+ * counter-eligible, so normal reads resolve `total` via the exact COUNT(*).
  */
 export const findTasksPaginated = async (ctx: DbContext, { filters, orderBy, limit, offset, isDelta }: FindTasksPaginatedOpts) => {
   const { db } = ctx.var;

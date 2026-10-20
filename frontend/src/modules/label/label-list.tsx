@@ -119,7 +119,7 @@ function LabelListView({ rows, isLoading, highlight, highlightWords, windowScrol
     navigate({ to: '.', replace: true, resetScroll: false, search: (prev) => ({ ...prev, labelPageId: undefined }) });
   }, [labelPageId, isLoading]);
 
-  if (isLoading) return <Spinner className="my-8 h-6 w-6 opacity-50" />;
+  if (isLoading) return <Spinner className="my-8" />;
   if (!rows.length) {
     return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:label_other').toLowerCase() }} />;
   }

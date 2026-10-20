@@ -40,7 +40,7 @@ export function ExplainerPanel() {
     >
       <ScrollArea id={'explainer-scrollarea'} className="h-full">
         <div className="select-text p-4">
-          <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
+          <Suspense fallback={<Spinner className="my-4" noDelay />}>
             <BlockNoteFullHtml
               id="board-explainer"
               defaultValue={organization.welcomeText || ''}

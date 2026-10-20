@@ -21,7 +21,7 @@ import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
-import { registerEntityQueryKeys, SYNC_CHUNK_SIZE } from '~/query/basic/entity-query-registry';
+import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
 import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
@@ -51,18 +51,15 @@ type CreateLabelFullVars = CreateVariables<LabelCreateInput>;
 type UpdateLabelFullVars = UpdateVariables<UpdateLabelFields>;
 type DeleteLabelVars = DeleteVariables<Label>;
 
-type LabelFilters = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset'>;
+type LabelFilters = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset' | 'afterSeq' | 'untilSeq'>;
 
 const baseKeys = createEntityKeys<LabelFilters>('label');
 const keys = {
   ...baseKeys,
   list: { ...baseKeys.list, filtered: (organizationId: string, filters: LabelFilters) => ['label', 'list', organizationId, filters] as const },
 };
-registerEntityQueryKeys('label', keys, (organizationId, tenantId, seqCursor, channelId) => {
-  return getLabels({
-    path: { tenantId: tenantId!, organizationId: organizationId! },
-    query: { seqCursor, projectId: channelId, limit: String(SYNC_CHUNK_SIZE) },
-  });
+registerEntityQueryKeys('label', keys, ({ organizationId, tenantId, channelId, query }) => {
+  return getLabels({ path: { tenantId: tenantId!, organizationId: organizationId! }, query: { ...query, projectId: channelId } });
 });
 /** Defines React Query cache keys for label. */
 export const labelQueryKeys = keys;
@@ -86,7 +83,8 @@ export const labelQueryOptions = (id: string, organizationId: string, tenantId: 
     initialData: () => findLabelInCache(id),
   });
 
-type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset'> & GetLabelsData['path'] & { limit?: number };
+type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset' | 'afterSeq' | 'untilSeq'> &
+  GetLabelsData['path'] & { limit?: number };
 
 /**
  * Canonical label query: one flat list per project (labels are project-homed, `projectId notNull`),

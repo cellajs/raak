@@ -10,12 +10,14 @@ import { resolveProjectNarrowing } from '#/modules/project/project-queries';
 import { actorFrom } from '#/permissions/access';
 import { resolveCollectionReadFilter } from '#/permissions/collection-scope';
 import { buildCollectionReadWhere } from '#/permissions/row-predicates';
+import { seqRangeOf } from '#/utils/seq-range';
 
 type GetLabelsInput = z.infer<typeof labelListQuerySchema>;
 
 export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promise<{ items: LabelModel[]; total: number }> {
   const { projectId, workspaceId, ...queryInfo } = input;
-  const { q, sort, order, offset, limit, seqCursor, modes } = queryInfo;
+  const { q, sort, order, offset, limit, modes } = queryInfo;
+  const range = seqRangeOf(queryInfo);
   const organizationId = ctx.var.organization.id;
 
   const requested = await resolveProjectNarrowing(ctx, { projectId, workspaceId });
@@ -33,9 +35,9 @@ export async function getLabelsOp(ctx: OrgContext, input: GetLabelsInput): Promi
   // Restrict to the caller's readable scope unless org-wide (kind 'all').
   const filters: SQL[] = scopeWhere.kind === 'where' ? [scopeWhere.where] : [];
 
-  // Delta sync (seqCursor) must see tombstones so the client can remove soft-deleted labels
-  const read = seqCursor ? tenantReadIncludingDeleted : tenantRead;
+  // A range read returns deleted rows too, so caches drop them.
+  const read = range ? tenantReadIncludingDeleted : tenantRead;
   return read(ctx, (readCtx) =>
-    findLabelsPaginated(readCtx, { organizationId, filters, orgWide: scopeWhere.kind === 'all', q, modes, sort, order, limit, offset, seqCursor }),
+    findLabelsPaginated(readCtx, { organizationId, filters, orgWide: scopeWhere.kind === 'all', q, modes, sort, order, limit, offset, range }),
   );
 }

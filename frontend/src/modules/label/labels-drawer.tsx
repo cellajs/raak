@@ -19,7 +19,7 @@ const openLabelsDrawer = ({ entity, entityId }: LabelsScopeProps, triggerRef: Tr
   if (useSheeter.getState().get(LABELS_DRAWER_ID)) return;
 
   useSheeter.getState().create(
-    <Suspense fallback={<Spinner className="my-4 h-6 w-6 opacity-50" noDelay />}>
+    <Suspense fallback={<Spinner className="my-4" noDelay />}>
       <LabelList entity={entity} entityId={entityId} windowScroll selectable={false} singleExpand onFilterToggle={closeLabelsDrawer} />
     </Suspense>,
     { id: LABELS_DRAWER_ID, triggerRef, side: 'right', title: i18n.t('c:label_other').toLowerCase() },
