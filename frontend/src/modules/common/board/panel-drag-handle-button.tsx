@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { usePanelDragHandle } from '~/modules/common/board/board-drag';
+import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import { Button } from '~/modules/ui/button';
 import { Chip } from '~/modules/ui/chip';
 import { cn } from '~/utils/cn';
@@ -18,7 +19,7 @@ interface PanelDragHandleButtonProps {
   icon: ReactNode;
   /** Chip shown under the pointer while dragging; defaults to a chip with the name. */
   preview?: ReactNode;
-  /** Trailing label content (kept visible on hover). */
+  /** Trailing label content (kept visible on hover), shown only while the panel is expanded. */
   children?: ReactNode;
 }
 
@@ -54,7 +55,7 @@ export function PanelDragHandleButton({ name, fallbackLabel, className, icon, pr
             </span>
           )}
         </span>
-        {children}
+        {children && <span className={cn('min-w-0 truncate', hintFadeOut)}>{children}</span>}
       </Button>
       {/* Windows fades a drag preview wider than 280px */}
       {panelDrag?.previewContainer && createPortal(<div className="max-w-64">{preview ?? <Chip>{name}</Chip>}</div>, panelDrag.previewContainer)}

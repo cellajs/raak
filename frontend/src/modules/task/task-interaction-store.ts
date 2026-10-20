@@ -17,6 +17,9 @@ interface TaskInteractionState {
   setSelectedLabelIds: (ids: string[]) => void;
   focusedTaskId: string | null;
   setFocusedTaskId: (taskId: string | null) => void;
+  /** The current item (task card or create form) while it is mounted: its panel list then leaves the Tab stop to it. */
+  mountedFocusId: string | null;
+  setMountedFocusId: (id: string | null) => void;
   /**
    * Draft tasks keyed by projectId for inline create-form placeholders. A project's create form
    * is open iff it has a draft here, so consumers derive open-ness from `draftTasks[projectId]`.
@@ -28,11 +31,15 @@ interface TaskInteractionState {
   reset: () => void;
 }
 
-const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedProjectId' | 'selectedLabelIds' | 'focusedTaskId' | 'draftTasks'> = {
+const initialState: Pick<
+  TaskInteractionState,
+  'selectedTaskIds' | 'selectedProjectId' | 'selectedLabelIds' | 'focusedTaskId' | 'mountedFocusId' | 'draftTasks'
+> = {
   selectedTaskIds: [],
   selectedProjectId: null,
   selectedLabelIds: [],
   focusedTaskId: null,
+  mountedFocusId: null,
   draftTasks: {},
 };
 
@@ -58,6 +65,11 @@ export const useTaskInteractionStore = create<TaskInteractionState>()(
       setFocusedTaskId: (id) => {
         set((state) => {
           state.focusedTaskId = id;
+        });
+      },
+      setMountedFocusId: (id) => {
+        set((state) => {
+          state.mountedFocusId = id;
         });
       },
       setDraftTask: (projectId, task) => {

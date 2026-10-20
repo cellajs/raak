@@ -64,14 +64,10 @@ export const taskCardActionsReveal =
 /** Shared shell classes for the board/table top bar (search, count, actions). */
 export const taskBarClass = 'z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2';
 
-/**
- * Faint accepted/iced section-bar colors, shared by the collapsed-panel sections and the board
- * skeleton so the accepted (green) / iced (sky) hue lives in one place. The interactive toggle
- * header in `panel-status-section` uses a richer, single-use palette and stays inline.
- */
+/** Accepted/iced section-bar colors for the panel section headers, the collapsed panel and the board skeleton, so a strip keeps its fill through a collapse. */
 export const statusSectionColors = {
-  accepted: { fill: 'bg-green-500/5', text: 'text-green-700 dark:text-green-400', border: 'border-b border-b-green-500/10' },
-  iced: { fill: 'bg-sky-500/5', text: 'text-sky-700 dark:text-sky-400', border: 'border-t border-t-sky-500/10' },
+  accepted: { fill: 'bg-green-50 dark:bg-green-950', text: 'text-green-700 dark:text-green-400', border: 'border-b border-b-green-500/10' },
+  iced: { fill: 'bg-sky-50 dark:bg-sky-950', text: 'text-sky-700 dark:text-sky-400', border: 'border-t border-t-sky-500/10' },
 } as const;
 
 export const labelColors = [

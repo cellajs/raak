@@ -243,6 +243,15 @@ export function SelectLabels({
     trackUsage(organizationId, [newLabelData.slug]);
   };
 
+  const createItem = searchValue.trim() !== '' && !projectLabels.some((l) => l.slug === labelSlug(searchValue)) && (
+    <ComboboxItem value={`${CREATE_SENTINEL_PREFIX}${searchValue}`} className={cn(comboboxActionButtonClass, isMobile ? 'mb-1' : 'mt-1')}>
+      {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
+      <Badge className="ml-2 flex px-2 py-0" variant="plain">
+        {searchValue}
+      </Badge>
+    </ComboboxItem>
+  );
+
   return (
     <Combobox<string>
       inline
@@ -296,6 +305,8 @@ export function SelectLabels({
         )}
         <ScrollArea className={comboboxScrollClass}>
           <ComboboxList className="p-1!">
+            {/* The keyboard covers the end of the list on phones, so create comes first there, which also makes it the auto-highlighted Enter target. */}
+            {isMobile && createItem}
             {searchValue ? (
               searchResults.length > 0 ? (
                 <ComboboxGroup>
@@ -320,14 +331,7 @@ export function SelectLabels({
                 </ComboboxGroup>
               </>
             )}
-            {searchValue.trim() !== '' && !projectLabels.some((l) => l.slug === labelSlug(searchValue)) && (
-              <ComboboxItem value={`${CREATE_SENTINEL_PREFIX}${searchValue}`} className={cn(comboboxActionButtonClass, 'mt-1')}>
-                {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
-                <Badge className="ml-2 flex px-2 py-0" variant="plain">
-                  {searchValue}
-                </Badge>
-              </ComboboxItem>
-            )}
+            {!isMobile && createItem}
           </ComboboxList>
           {visibleLabels.length === 0 && searchValue.trim() === '' && (
             <div className="flex items-center justify-center p-1.5 text-muted-foreground/50 text-sm">

@@ -2,6 +2,9 @@ import { CollapsedPanelView, type CollapsedSection } from '~/modules/common/boar
 import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 
+/** Tasks the collapsed panel counts in its middle: everything outside the accepted and iced sections. */
+export const collapsedMainCount = (counts: TaskCounts) => counts.total - counts.iced - counts.accepted;
+
 /**
  * Task-specific collapsed panel mapping TaskCounts to the generic CollapsedPanelView.
  */
@@ -26,7 +29,5 @@ export function TaskPanelCollapsed({ counts }: { counts: TaskCounts }) {
     });
   }
 
-  const mainCount = counts.total - counts.iced - counts.accepted;
-
-  return <CollapsedPanelView mainCount={mainCount} sections={sections} />;
+  return <CollapsedPanelView mainCount={collapsedMainCount(counts)} sections={sections} />;
 }

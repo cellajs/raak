@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import { TooltipButton } from '~/modules/common/tooltip-button';
 import { organizationQueryOptions } from '~/modules/organization/query';
 import { openProjectMembersSheet, openProjectSettingsSheet } from '~/modules/project/project-actions';
 import type { EnrichedProject } from '~/modules/project/types';
@@ -14,9 +15,9 @@ import { Button } from '~/modules/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
-import { cn } from '~/utils/cn';
 
-export function PanelProjectActions({ project, className }: { project: EnrichedProject; className?: string }) {
+/** Project menu: in the project panel header on a workspace board, in the board header on a project page. */
+export function ProjectActionsMenu({ project, className }: { project: EnrichedProject; className?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -37,15 +38,11 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        className=""
-        render={
-          <Button variant="ghost" className={cn('max-sm:hidden', className)} aria-label={t('c:resource_options', { resource: t('c:project') })} />
-        }
-        ref={projectButtonRef}
-      >
-        <EllipsisVerticalIcon />
-      </DropdownMenuTrigger>
+      <TooltipButton toolTipContent={t('c:resource_options', { resource: t('c:project') })}>
+        <DropdownMenuTrigger render={<Button variant="ghost" className={className} />} ref={projectButtonRef}>
+          <EllipsisVerticalIcon />
+        </DropdownMenuTrigger>
+      </TooltipButton>
       <DropdownMenuContent className="min-w-48 p-1" align="end">
         {isInWorkspace && (
           <DropdownMenuItem
@@ -98,7 +95,7 @@ export function PanelProjectActions({ project, className }: { project: EnrichedP
                   { status: [TaskStatus.Unstarted, TaskStatus.Iced] },
                 ])
           }
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 max-sm:hidden"
         >
           <SquareSplitHorizontalIcon />
           {panelsSectionView ? <span>{t('c:merge')}</span> : <span>{t('c:split')}</span>}

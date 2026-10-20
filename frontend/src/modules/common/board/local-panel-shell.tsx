@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react';
-import { BoardPanelContent } from '~/modules/common/board/board-layout';
 import { BoardPanelBody } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { PanelDragHandleButton } from '~/modules/common/board/panel-drag-handle-button';
+import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import { cn } from '~/utils/cn';
+
+// The icon inside the frame stays on collapse, so the frame fades by color: opacity would take the icon along
+const frameBorderFade = 'border-border/[calc(var(--content-opacity,1)*100%)]';
 
 interface LocalPanelShellProps {
   /** Stable persisted panel id (collapse/size/order state key). */
@@ -22,43 +25,40 @@ interface LocalPanelShellProps {
  * body slot. Collapse/resize/drag persistence rides the generic panel stores via panelId.
  */
 export function LocalPanelShell({ panelId, icon, title, headerActions, windowScroll, children }: LocalPanelShellProps) {
-  const isCollapsed = useBoardStore((state) => state.panelCollapseState[panelId]);
+  const isCollapsed = !!useBoardStore((state) => state.panelCollapseState[panelId]);
 
+  // One tree for both states, so the handle stays the same element and keeps focus through a collapse or expand
   return (
-    <BoardPanelContent
-      isCollapsed={!!isCollapsed}
-      collapsedContent={
+    <BoardPanelBody
+      windowScroll={windowScroll}
+      className={cn(
+        'rounded-md rounded-b-none',
+        isCollapsed ? 'sm:border-0' : frameBorderFade,
+        // The header renders inside this frame, so it also spans the board header row
+        // (smaller offset than project panel bodies, which sit below their header).
+        windowScroll ? 'h-full' : 'sm:h-[calc(100vh-var(--local-panel-offset))]',
+      )}
+    >
+      <div
+        className={cn(
+          'flex min-h-13 items-center',
+          isCollapsed
+            ? 'justify-center'
+            : ['justify-between gap-2 truncate border-b bg-card/[calc(var(--content-opacity,1)*100%)] px-2 font-semibold text-sm', frameBorderFade],
+        )}
+      >
         <PanelDragHandleButton
           name={title}
           fallbackLabel={title}
           icon={icon}
-          className="flex h-auto min-h-13 w-12.5 items-center justify-center p-0 hover:bg-transparent"
-        />
-      }
-    >
-      <BoardPanelBody
-        windowScroll={windowScroll}
-        className={cn(
-          'rounded-md rounded-b-none',
-          // The header renders inside this frame, so it also spans the board header row
-          // (smaller offset than project panel bodies, which sit below their header).
-          windowScroll ? 'h-full' : 'sm:h-[calc(100vh-var(--local-panel-offset))]',
-        )}
-      >
-        <div className="flex min-h-13 items-center justify-between gap-2 truncate border-b bg-card px-2 font-semibold text-sm">
-          <PanelDragHandleButton
-            name={title}
-            fallbackLabel={title}
-            icon={icon}
-            className="flex h-8 items-center gap-2 truncate p-2 hover:bg-transparent"
-          >
-            <div className="truncate">{title}</div>
-          </PanelDragHandleButton>
-          <div className="grow" />
-          {headerActions}
-        </div>
-        {children}
-      </BoardPanelBody>
-    </BoardPanelContent>
+          // Collapsed, the panel clips its overflow, so the handle stays a collapsed avatar's size to keep its focus ring in view
+          className={isCollapsed ? 'size-8 p-0 hover:bg-transparent' : 'flex h-8 items-center gap-2 truncate p-2 hover:bg-transparent'}
+        >
+          {!isCollapsed && <div className="truncate">{title}</div>}
+        </PanelDragHandleButton>
+        {!isCollapsed && headerActions && <div className={cn('ml-auto', hintFadeOut)}>{headerActions}</div>}
+      </div>
+      {!isCollapsed && <div className={cn('flex min-h-0 flex-1 flex-col', hintFadeOut)}>{children}</div>}
+    </BoardPanelBody>
   );
 }

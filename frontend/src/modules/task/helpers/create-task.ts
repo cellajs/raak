@@ -62,7 +62,7 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
 
   // Retrieve draft form data
   const draftForm = useDraftStore.getState().getForm<NewTaskFormValues | undefined>(id);
-  const draftStatus = draftForm?.status || TaskStatus.Unstarted;
+  const draftStatus = draftForm?.status ?? TaskStatus.Unstarted;
 
   // Base structure for a draft task with schema defaults and draft-specific overrides.
   const defaultTask: Task = {

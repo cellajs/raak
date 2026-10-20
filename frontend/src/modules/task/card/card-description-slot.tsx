@@ -4,6 +4,7 @@ import { useDescriptionSlot } from '~/modules/common/blocknote/use-description-s
 import { useMatchHighlight } from '~/modules/common/match-highlight';
 import { TaskCardContentCollapsed } from '~/modules/task/card/card-content-collapsed';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
+import { DescriptionEditButton } from '~/modules/task/card/description-edit-button';
 import { TaskUpdateForm } from '~/modules/task/card/task-update-form';
 import type { Task } from '~/modules/task/types';
 
@@ -37,11 +38,16 @@ export function CardDescriptionSlot({
   state,
   isReadOnly,
   animateClose = false,
+  showDragHandle = false,
+  onEditRequest,
 }: {
   task: Task;
   state: SlotState;
   isReadOnly: boolean;
   animateClose?: boolean;
+  showDragHandle?: boolean;
+  /** Starts editing from the keyboard; set while editing may start. */
+  onEditRequest?: () => void;
 }) {
   const slot = useDescriptionSlot({
     editing: state === 'editing',
@@ -65,26 +71,33 @@ export function CardDescriptionSlot({
   };
 
   return (
-    <DescriptionLayers
-      slot={slot}
-      // The static's checkbox is disabled and lets the pointer through to its wrapper, so the wrapper carries the cursor.
-      className={isReadOnly ? '[&_.checklist-checkbox-wrapper]:cursor-not-allowed' : '[&_.checklist-checkbox-wrapper]:cursor-pointer'}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      staticView={
-        state === 'collapsed' ? (
-          <TaskCardContentCollapsed task={task} animateClose={animateClose} />
-        ) : (
+    <div className="relative">
+      <DescriptionLayers
+        slot={slot}
+        // The static's checkbox is disabled and lets the pointer through to its wrapper, so the wrapper carries the cursor.
+        className={isReadOnly ? '[&_.checklist-checkbox-wrapper]:cursor-not-allowed' : '[&_.checklist-checkbox-wrapper]:cursor-pointer'}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        staticView={
+          state === 'collapsed' ? (
+            <TaskCardContentCollapsed task={task} animateClose={animateClose} showDragHandle={showDragHandle} onEditRequest={onEditRequest} />
+          ) : (
+            <PaintMatches>
+              <TaskCardContentExpanded task={task} descriptionOverride={slot.staticOverride} onReady={slot.onStaticReady} />
+            </PaintMatches>
+          )
+        }
+        editor={
           <PaintMatches>
-            <TaskCardContentExpanded task={task} descriptionOverride={slot.staticOverride} onReady={slot.onStaticReady} />
+            <TaskUpdateForm task={task} contentApiRef={slot.apiRef} onEditorReady={slot.onEditorReady} />
           </PaintMatches>
-        )
-      }
-      editor={
-        <PaintMatches>
-          <TaskUpdateForm task={task} contentApiRef={slot.apiRef} onEditorReady={slot.onEditorReady} />
-        </PaintMatches>
-      }
-    />
+        }
+      />
+      {/* Frames the text inside taskDescriptionGutterStyle's padding, clear of the type button in the gutter. Outside the
+          layers, whose click capture would take a key press for a cursor point. */}
+      {onEditRequest && state === 'expanded' && (
+        <DescriptionEditButton onClick={onEditRequest} className="-top-1 -right-2 bottom-3 left-0 sm:left-8" />
+      )}
+    </div>
   );
 }

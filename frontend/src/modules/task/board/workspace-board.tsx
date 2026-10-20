@@ -74,6 +74,7 @@ export function WorkspaceBoard({ boardId, projects, workspace }: ResolvedBoardPr
       panels={layoutPanels}
       defaultLayout={defaultLayout}
       onLayoutChanged={handleLayoutChanged}
+      panelFade="marked"
       reorderable
       onPanelReorder={handlePanelReorder}
     >

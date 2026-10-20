@@ -1,14 +1,16 @@
 import { useSearch } from '@tanstack/react-router';
 import dayjs from 'dayjs';
 import { ChevronDownIcon, InfoIcon } from 'lucide-react';
-import { type RefObject, useEffect, useRef } from 'react';
+import { type RefObject, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBoardStore } from '~/modules/common/board/board-store';
+import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
 import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
+import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { cn } from '~/utils/cn';
@@ -23,7 +25,7 @@ interface PanelStatusSectionProps {
   scrollRef: RefObject<HTMLElement | null>;
   /** Uses window scrolling when true and the viewport element when false. */
   windowMode: boolean;
-  /** Slides the header away and folds its space, whatever the scroll position. */
+  /** Unpins the header: it stays in its place in the list but no longer sticks over the panel's edge. */
   suppressed?: boolean;
 }
 
@@ -37,7 +39,9 @@ interface PanelStatusSectionProps {
 export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRef, windowMode, suppressed }: PanelStatusSectionProps) {
   const { t } = useTranslation();
   const isEdgeVisible = useSectionEdgeVisibility({ edge: type === 'iced' ? 'bottom' : 'top', scrollRef, windowMode });
-  const isVisible = isEdgeVisible && !suppressed;
+  // Keyboard focus must not land on a bar slid out of view
+  const [hasFocus, setHasFocus] = useState(false);
+  const isVisible = isEdgeVisible || hasFocus;
 
   const togglePanelSectionExpandState = useTaskBoardStore((state) => state.togglePanelSectionExpandState);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
@@ -48,6 +52,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;
   const active = isIced ? !!counts.iced : !!counts.accepted || hasOnlyOlderAccepted;
   const count = isIced ? counts.iced : counts.accepted;
+  const colors = statusSectionColors[type];
 
   const showStatus = useTaskBoardStore((state) => {
     const { expandIced, expandAccepted } = state.panelData[boardId]?.[projectId]?.prefs || defaultPanelPrefs;
@@ -76,7 +81,6 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   // so card headers (StickyBox) pin below the bar and glide with its show/hide transition.
   // The registered variable transitions here on the host; consumers track the animating
   // value through calc(). Set imperatively to avoid re-rendering the panel's cards.
-  // The button, not the wrapper, is measured: the wrapper is still mid-unfold when a suppression lifts.
   const wrapperRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -87,12 +91,12 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
     // Fold in the page-level nav offset (mobile tabs) so consumers stack below both bars
     const navPx = Number.parseFloat(getComputedStyle(wrapper).getPropertyValue('--sticky-stack-nav')) || 0;
     host.style.transition = '--sticky-stack-top 300ms ease-in-out';
-    host.style.setProperty('--sticky-stack-top', `${navPx + (isVisible ? (buttonRef.current?.offsetHeight ?? 0) : 0)}px`);
+    host.style.setProperty('--sticky-stack-top', `${navPx + (isVisible && !suppressed ? (buttonRef.current?.offsetHeight ?? 0) : 0)}px`);
     return () => {
       host.style.removeProperty('--sticky-stack-top');
       host.style.removeProperty('transition');
     };
-  }, [isVisible, isIced, active]);
+  }, [isVisible, suppressed, isIced, active]);
 
   if (!active) return null;
 
@@ -101,39 +105,44 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       {/* The wrapper stays sticky and clips the sliding button: overflow-clip does not create a
           scroll container (sticky keeps working) and stops the translated button from extending
           the panel's scrollable overflow, which would churn scrollHeight during the animation.
-          Suppressed, its row folds to 0fr; the button's fixed height would hold the row open, hence the min-h-0 div. */}
+          Suppressed, the inset moves one bar height past the edge: a pinned bar slides out of view, one resting in its
+          own place stays. Folding its space would shift the list, and the browser's scroll anchoring that follows
+          reads as a scroll to useSectionEdgeVisibility, which then flips the bars. */}
       <div
         ref={wrapperRef}
-        inert={suppressed}
         className={cn(
-          'pointer-events-none sticky z-20 -mt-[.05rem] grid shrink-0 overflow-clip transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none',
-          suppressed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
+          'pointer-events-none sticky z-20 -mt-[.05rem] shrink-0 overflow-clip transition-[top,bottom] duration-300 ease-in-out motion-reduce:transition-none',
           // Accepted pins below a page-level sticky nav (mobile tabs); iced pins to the bottom
-          isIced ? 'bottom-0 items-start' : 'top-(--sticky-stack-nav) items-end',
+          isIced ? (suppressed ? '-bottom-9' : 'bottom-0') : suppressed ? '-top-9' : 'top-(--sticky-stack-nav)',
         )}
       >
-        <div className="min-h-0">
-          <Button
-            ref={buttonRef}
-            id={`section-${type}-${projectId}`}
-            onClick={handleToggleClick}
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-all duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
-              // Hidden state slides the button toward its sticky edge
-              isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
-              isIced
-                ? 'border-b-sky-500/10 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800 max-sm:border-b dark:bg-sky-950 dark:text-sky-400 dark:hover:bg-sky-900 dark:hover:text-sky-300'
-                : 'border-t border-t-transparent border-b border-b-green-500/10 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-400',
-            )}
-          >
-            <div className="flex gap-1.5">
-              <span className="min-w-8 text-center">{count}</span>
-              <span>{t(`c:${type}`).toLowerCase()}</span>
-            </div>
+        <Button
+          ref={buttonRef}
+          id={`section-${type}-${projectId}`}
+          onClick={handleToggleClick}
+          onFocus={() => setHasFocus(true)}
+          onBlur={() => setHasFocus(false)}
+          variant="ghost"
+          size="sm"
+          className={cn(
+            'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-all duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
+            // Hidden state slides the button toward its sticky edge
+            isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
+            colors.fill,
+            colors.text,
+            isIced
+              ? 'border-b-sky-500/10 hover:bg-sky-100 hover:text-sky-800 max-sm:border-b dark:hover:bg-sky-900 dark:hover:text-sky-300'
+              : [
+                  'border-t border-t-transparent hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
+                  colors.border,
+                ],
+          )}
+        >
+          <span className="min-w-8 text-center">{count}</span>
+          <span className={cn('ml-0.5 flex gap-1', hintFadeOut)}>
+            <span>{t(`c:${type}`).toLowerCase()}</span>
             {!isIced && (
-              <div className="flex gap-1">
+              <>
                 <span>{t('c:since')}</span>
                 <span>{dateMini(dayjs().subtract(boardAcceptedCutOff, 'day').toISOString())}</span>
                 {counts.accepted !== counts.acceptedCutOff && showTotal && (
@@ -144,14 +153,14 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
                     </span>
                   </div>
                 )}
-              </div>
+              </>
             )}
             <ChevronDownIcon data-rotate={showStatus} className="absolute right-4 transition-transform data-[rotate=true]:rotate-180" />
-          </Button>
-        </div>
+          </span>
+        </Button>
       </div>
-      {hasOnlyOlderAccepted && showStatus && !suppressed && (
-        <div className="flex gap-4 border-b border-b-green-500/10 bg-green-50 px-4 py-5 text-green-700 text-xs dark:bg-green-950 dark:text-green-400">
+      {hasOnlyOlderAccepted && showStatus && (
+        <div className={cn('flex gap-4 px-4 py-5 text-xs', colors.border, colors.fill, colors.text, hintFadeOut)}>
           <InfoIcon className="inline-block" />
           {t('c:older_accepted_table_only', { count: counts.acceptedCutOff })}
         </div>

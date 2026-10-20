@@ -42,7 +42,7 @@ function MobileLabelsDrawerButton({ entity, entityId }: LabelsScopeProps) {
   return (
     <Button
       ref={triggerRef}
-      variant="ghost"
+      variant="outline"
       aria-label={t('c:label_other')}
       className="group-data-[search-focused=true]/boardHeader:hidden"
       onClick={() => openLabelsDrawer({ entity, entityId }, triggerRef)}

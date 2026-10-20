@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import i18n from 'i18next';
-import { BoxIcon, GlobeIcon, PencilIcon, ShieldIcon, TrashIcon, UserRoundIcon } from 'lucide-react';
+import { BoxIcon, GlobeIcon, LockIcon, PencilIcon, ShieldIcon, TrashIcon, UserRoundIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hierarchy, isProduct, resolveCan } from 'shared';
@@ -104,7 +104,10 @@ export const useColumns = (organization: EnrichedOrganization) => {
               {t('c:public')}
             </>
           ) : (
-            <span className="opacity-50">{t('c:private')}</span>
+            <>
+              <LockIcon className="mr-2 opacity-50" />
+              <span className="opacity-50">{t('c:private')}</span>
+            </>
           ),
       },
       dateColumn<EnrichedProject>('lastPost', {

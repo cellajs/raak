@@ -3,16 +3,18 @@ import type { Project } from 'sdk';
 import { useHotkeys } from '~/hooks/use-hot-keys';
 import type { HotkeyItem } from '~/hooks/use-hot-keys-helpers';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useBoardStore } from '~/modules/common/board/board-store';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
-import { defaultPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { type BoardPanelData, defaultPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { boardSearchInputId } from '~/modules/task/board-search';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
 import { cachedTasks, currentActiveTask } from '~/modules/task/helpers/active-task';
-import { pickViewSections, prepareBoardPanels, renderedPanelTasks } from '~/modules/task/helpers/board-helpers';
-import { toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
+import { panelHostsDraft, pickViewSections, prepareBoardPanels, renderedPanelTasks } from '~/modules/task/helpers/board-helpers';
+import { closeCreateTaskForm, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
@@ -41,23 +43,48 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const taskSheetId = useSearch({ strict: false, select: (search) => search.taskSheetId });
   const isSheetOpen = !!taskSheetId;
 
-  const findCurrentPanel = (allPanels: StrictBoardPanel[], taskProjectId: string, taskStatus: Task['status']) =>
-    allPanels.find(({ project, sectionFilters }) => project.id === taskProjectId && (!sectionFilters || sectionFilters.status.includes(taskStatus)));
+  const isPanelCollapsed = (panel: StrictBoardPanel) => !!useBoardStore.getState().panelCollapseState[panel.panelId];
 
-  // Resolve the focused task and its panel's rendered task list (shared by vertical nav handlers).
+  const currentDraft = () => {
+    const { focusedTaskId, draftTasks } = useTaskInteractionStore.getState();
+    return Object.values(draftTasks).find((draft) => draft.id === focusedTaskId);
+  };
+
+  // The open create form is an item of the panel hosting it, so arrows land on it as on any card
+  const currentNavItem = () => currentDraft() ?? currentActiveTask();
+
+  const findCurrentPanelIndex = (allPanels: StrictBoardPanel[], item: Task, boardPanelData: BoardPanelData | undefined) =>
+    allPanels.findIndex(
+      (panel) =>
+        panel.project.id === item.projectId &&
+        (isDraftTask(item)
+          ? panelHostsDraft(panel, item, boardPanelData?.[item.projectId]?.viewSections)
+          : !panel.sectionFilters || panel.sectionFilters.status.includes(item.status)),
+    );
+
+  const panelNavItems = (panel: StrictBoardPanel, boardPanelData: BoardPanelData | undefined) => {
+    const projectData = boardPanelData?.[panel.project.id];
+    const draft = useTaskInteractionStore.getState().draftTasks[panel.project.id];
+    const tasks = cachedTasks();
+    const items = draft && panelHostsDraft(panel, draft, projectData?.viewSections) ? [...tasks, draft] : tasks;
+    return renderedPanelTasks(panel, items, { q, matchMode }, projectData?.prefs || defaultPanelPrefs);
+  };
+
+  // Resolve the current item and its panel's rendered list (shared by vertical nav handlers).
   const resolveVerticalNavContext = () => {
     if (!projects.length) return null;
     const boardPanelData = useTaskBoardStore.getState().panelData[boardId];
     const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, pickViewSections(boardPanelData));
-    const currentTask = currentActiveTask();
+    const currentTask = currentNavItem();
     if (!currentTask) return null;
 
     const currentTaskCard = document.getElementById(currentTask.id);
     if (currentTaskCard?.dataset.state === 'editing') return null;
 
-    const currentPanel = findCurrentPanel(allPanels, currentTask.projectId, currentTask.status) ?? allPanels[0];
-    const prefs = boardPanelData?.[currentPanel.project.id]?.prefs || defaultPanelPrefs;
-    const visibleTasks = renderedPanelTasks(currentPanel, cachedTasks(), { q, matchMode }, prefs);
+    const currentPanel = allPanels[findCurrentPanelIndex(allPanels, currentTask, boardPanelData)] ?? allPanels[0];
+    // Its cards are not rendered: moving would make a task current that nobody can see
+    if (isPanelCollapsed(currentPanel)) return null;
+    const visibleTasks = panelNavItems(currentPanel, boardPanelData);
 
     return { currentTask, visibleTasks };
   };
@@ -120,19 +147,17 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
     if (!projects.length) return;
     const boardPanelData = useTaskBoardStore.getState().panelData[boardId];
     const allPanels: StrictBoardPanel[] = prepareBoardPanels(projects, pickViewSections(boardPanelData));
-    const currentTask = currentActiveTask();
+    const currentTask = currentNavItem();
+    const currentPanelIndex = currentTask ? findCurrentPanelIndex(allPanels, currentTask, boardPanelData) : -1;
 
-    const currentPanelIndex = allPanels.findIndex(
-      ({ sectionFilters, project }) =>
-        project.id === currentTask?.projectId && (!sectionFilters || (!!currentTask && sectionFilters.status.includes(currentTask.status))),
-    );
-
+    // Collapsed panels render no cards to land on; Tab reaches their header to expand them
     const direction = event.key === 'ArrowRight' ? 1 : -1;
-    const nextPanel = allPanels[currentPanelIndex + direction];
+    let nextIndex = currentPanelIndex + direction;
+    while (allPanels[nextIndex] && isPanelCollapsed(allPanels[nextIndex])) nextIndex += direction;
+    const nextPanel = allPanels[nextIndex];
     if (!nextPanel) return;
 
-    const prefs = boardPanelData?.[nextPanel.project.id]?.prefs || defaultPanelPrefs;
-    const visibleTasks = renderedPanelTasks(nextPanel, cachedTasks(), { q, matchMode }, prefs);
+    const visibleTasks = panelNavItems(nextPanel, boardPanelData);
     const targetTaskId = getFirstViewportTaskId(nextPanel.project.id, visibleTasks) ?? visibleTasks[0]?.id;
     if (targetTaskId) setTaskCardFocus(targetTaskId);
   };
@@ -140,6 +165,20 @@ export function TasksHotkeys({ boardId, projects, type }: TasksHotkeysProps) {
   const handleEscKeyPress = () => {
     // The Escape that closes a tooltip or hover card stops there: the card and its sheet keep their state (WCAG 1.4.13).
     if (isHoverContentOpen()) return;
+
+    // On the create form itself (Escape in its editor first steps out to it): close the form, its values kept as a
+    // draft, and move to its neighbour in the list
+    const draft = currentDraft();
+    if (draft) {
+      if (document.activeElement?.id !== draft.id) return;
+      const items = resolveVerticalNavContext()?.visibleTasks ?? [];
+      const index = items.findIndex(({ id }) => id === draft.id);
+      const neighbour = index === -1 ? undefined : (items[index - 1] ?? items[index + 1]);
+      closeCreateTaskForm(draft.projectId);
+      if (neighbour) setTaskCardFocus(neighbour.id);
+      return;
+    }
+
     const task = currentActiveTask(taskSheetId);
     if (!task) return;
 

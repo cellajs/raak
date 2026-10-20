@@ -7,12 +7,13 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { EntityChip } from '~/modules/common/entity-chip';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
+import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
-import { formatSectionLabel, makePanelKey } from '~/modules/task/helpers/board-helpers';
+import { formatSectionLabel, makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
 import { type NewTaskFormValues, newTaskFormIsDirty, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
-import { PanelProjectActions } from '~/modules/task/panel/panel-project-actions';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
+import { TaskStatus } from '~/modules/task/task-properties';
 import { Badge } from '~/modules/ui/badge';
 import { Button } from '~/modules/ui/button';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
@@ -45,6 +46,14 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
 
   const isReadOnly = useIsProjectReadOnly(project.id);
   const isCreateFormOpen = useTaskInteractionStore((s) => s.draftTasks[project.id] !== undefined);
+  const openDraftStatus = useTaskInteractionStore((s) => s.draftTasks[project.id]?.status);
+  const storedDraftStatus = useDraftStore((state) => (state.forms[`create-task-${project.id}`] as NewTaskFormValues | undefined)?.status);
+
+  // Split view: only the panel the form opens in (or has moved to) offers the toggle
+  const hostsCreateButton = (() => {
+    const hostSection = resolveDraftHostSection(panelsSectionView, openDraftStatus ?? storedDraftStatus ?? TaskStatus.Unstarted);
+    return !hostSection || makePanelKey(project.id, hostSection) === panelId;
+  })();
 
   const toggleCreateForm = () => toggleCreateTaskForm(project);
 
@@ -148,8 +157,8 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
           {t('c:read_only')}
         </Badge>
       )}
-      {!publicView && isPrimary && <PanelProjectActions project={project} className="h-8 px-2" />}
-      {!isReadOnly && (
+      {!publicView && isInWorkspace && isPrimary && <ProjectActionsMenu project={project} className="h-8 px-2" />}
+      {!isReadOnly && hostsCreateButton && (
         <Button data-form-dirty={hasDraft} variant="plain" size="xs" className="relative hidden rounded sm:inline-flex" onClick={toggleCreateForm}>
           <Badge className="absolute -top-1 -right-1 z-100 flex in-data-[form-dirty=false]:hidden h-2 w-2 justify-center p-0" />
           <PlusIcon className={cn('size-4.5', 'transition-transform duration-200', isCreateFormOpen && 'rotate-45')} />

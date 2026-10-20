@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDownIcon, TagIcon, UserXIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { type KeyboardEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +25,7 @@ import {
   newTaskFormDefaults,
   newTaskFormIsDirty,
 } from '~/modules/task/helpers/create-task';
-import { focusTask } from '~/modules/task/helpers/focus-task';
+import { focusTask, takePendingFocus } from '~/modules/task/helpers/focus-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
@@ -170,6 +170,16 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
     focusTask(formId);
   };
 
+  // Opened or arrowed onto while still loading: the form takes the pending focus once its element mounts
+  const takeFocus = useCallback((element: HTMLFormElement | null) => takePendingFocus(formId, element), [formId]);
+
+  // On the board the form is an item like a task card: arrows pass over it and Enter steps into its editor
+  const handleFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (isDialog || event.key !== 'Enter' || event.target !== event.currentTarget) return;
+    event.preventDefault();
+    event.currentTarget.querySelector<HTMLElement>('[contenteditable="true"]')?.focus();
+  };
+
   if (form.loading) return null;
 
   return (
@@ -177,20 +187,20 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
       animate={isExiting ? { height: 0, opacity: 0 } : { height: 'auto', opacity: 1 }}
       transition={{ duration: exitDurationS, ease: 'easeInOut' }}
       onAnimationComplete={closeAfterExit}
-      className={cn(isExiting && 'overflow-hidden', isDialog && 'flex min-h-0 grow flex-col')}
+      className={cn(isExiting && 'overflow-hidden', isDialog && 'flex grow flex-col')}
     >
       <Form {...form}>
         <form
           id={formId}
-          // biome-ignore lint/a11y/noNoninteractiveTabindex: to handle focus on tasks change by hotkeys
-          tabIndex={0}
+          ref={takeFocus}
+          tabIndex={isDialog || isFocused ? 0 : -1}
           onClick={handleFormClick}
-          onKeyDown={() => {}}
+          onKeyDown={handleFormKeyDown}
           onSubmit={form.handleSubmit(onSubmit)}
           className={cn(
             className,
             'flex flex-col gap-2 sm:p-3 sm:pl-11',
-            isDialog && 'min-h-0 grow',
+            isDialog && 'grow',
             !isDialog &&
               'relative border-b before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-[3px] before:rounded-full before:bg-primary before:opacity-0',
             !isDialog && isFocused && 'before:opacity-100',
@@ -202,7 +212,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
               key={editorKey}
               control={form.control}
               name="description"
-              containerClassName={isDialog ? 'grow min-h-0' : undefined}
+              containerClassName={isDialog ? 'grow' : undefined}
               baseBlockNoteProps={{
                 id: `blocknote-${defaultId}`,
                 editable: isFocused || isDialog,

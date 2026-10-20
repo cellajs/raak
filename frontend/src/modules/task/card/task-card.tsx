@@ -2,11 +2,10 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/utils/preserve-offset-on-source';
 import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
-import type { FocusEvent, KeyboardEvent } from 'react';
+import type { FocusEvent } from 'react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DropIndicator } from '~/modules/common/drop-indicator';
-import { FocusTrap } from '~/modules/common/focus-trap';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
@@ -16,7 +15,9 @@ import { TaskCardFooter } from '~/modules/task/card/card-footer';
 import { TaskCardHeader } from '~/modules/task/card/card-header';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
-import { setTaskCardFocus } from '~/modules/task/helpers/focus-task';
+import { focusTask, markCurrentItemMounted, setTaskCardFocus, takePendingFocus } from '~/modules/task/helpers/focus-task';
+import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
+import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
@@ -65,7 +66,8 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const clickTarget = event.target as HTMLElement;
 
-    if (!isSheet && !isFocused) setTaskCardFocus(task.id);
+    // The store, not isFocused: the mousedown before this click already made the card current through its focus
+    if (!isSheet && useTaskInteractionStore.getState().focusedTaskId !== task.id) setTaskCardFocus(task.id);
 
     // Ignore clicks that are text selection (user dragged to highlight) within this card
     const selection = window.getSelection();
@@ -161,21 +163,35 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     }
   };
 
-  // A card reached with Tab holds DOM focus only: the board's Enter hotkey reads the focused task from the store.
-  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' && event.target === event.currentTarget && !isFocused && !isSheet) setTaskCardFocus(task.id);
+  // Focus and current are one: a card focused by a click or a script becomes the current task.
+  // Reads the store: setTaskCardFocus updates it before focusing, while isFocused still holds the last render.
+  const handleCardFocus = (event: FocusEvent<HTMLDivElement>) => {
+    if (isSheet || event.target !== event.currentTarget) return;
+    if (useTaskInteractionStore.getState().focusedTaskId !== task.id) focusTask(task.id);
   };
+
+  const cardId = isSheet ? `sheet-${task.id}` : task.id;
+  useItemControlsTabOrder(taskRef, cardId, !!isFocused);
+
+  // Mounting as the current card: take the focus a keypress left for it, and hold the panel list's Tab stop
+  useEffect(() => {
+    if (isSheet || !isFocused) return;
+    takePendingFocus(task.id, taskRef.current);
+    return markCurrentItemMounted(task.id);
+  }, [isSheet, isFocused, task.id]);
+
+  const startEditing = () => (isSheet ? onEdit?.() : useTaskCardStore.getState().setTaskState(task.id, 'editing'));
 
   const dropIndicatorEdge = mobileClosestEdge ?? closestEdge;
 
   return (
-    <FocusTrap mainElementId={task.id} active={isFocused}>
+    <>
       <Card
-        id={isSheet ? `sheet-${task.id}` : task.id}
+        id={cardId}
         role="article"
         aria-label={task.name}
         onClick={handleCardClick}
-        onKeyDown={handleCardKeyDown}
+        onFocus={handleCardFocus}
         onBlur={handleCardBlur}
         data-state={effectiveState}
         // status to assign color of a glow
@@ -186,8 +202,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         data-sheet={isSheet || undefined}
         data-match-current={isFocused && !isSheet ? '' : undefined}
         draggable={!isSheet && !isReadOnly && effectiveState === 'collapsed'}
-        data-exclude-from-focus-trap="true"
-        tabIndex={0}
+        tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
           'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent to-100% py-0 sm:py-0',
@@ -217,10 +232,17 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
               enabled={!isSheet}
               offsetBottom={52}
             >
-              <TaskCardHeader task={task} isSheet={isSheet} animateClose={hasToggled} />
+              <TaskCardHeader task={task} isSheet={isSheet} animateClose={hasToggled} showDragHandle={!isSheet && !isReadOnly} />
             </StickyBox>
           )}
-          <CardDescriptionSlot task={task} state={effectiveState} isReadOnly={isReadOnly} animateClose={hasToggled} />
+          <CardDescriptionSlot
+            task={task}
+            state={effectiveState}
+            isReadOnly={isReadOnly}
+            animateClose={hasToggled}
+            showDragHandle={isFocused && !isSheet && !isReadOnly}
+            onEditRequest={isFocused && !isReadOnly ? startEditing : undefined}
+          />
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />
         </CardContent>
         {dropIndicatorEdge && <DropIndicator edge={dropIndicatorEdge} gap={0.25} />}
@@ -232,7 +254,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
           </div>,
           portalData.container,
         )}
-    </FocusTrap>
+    </>
   );
 });
 

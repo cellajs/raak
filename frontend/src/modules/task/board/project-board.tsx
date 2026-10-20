@@ -45,6 +45,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
       panels={layoutPanels}
       defaultLayout={defaultLayout}
       onLayoutChanged={handleLayoutChanged}
+      panelFade="marked"
       autoHeight
       reorderable={!publicView}
       onPanelReorder={handlePanelReorder}

@@ -5,6 +5,7 @@ import { EntityAvatar } from '~/modules/common/entity-avatar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskDragHandle } from '~/modules/task/card/task-drag-handle';
 import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
 import { taskCardActionsReveal } from '~/modules/task/task-styles';
@@ -16,17 +17,22 @@ interface TaskCardHeaderProps {
   task: Task;
   isSheet?: boolean;
   animateClose?: boolean;
+  showDragHandle?: boolean;
 }
 
-export function TaskCardHeader({ task, isSheet = false, animateClose = false }: TaskCardHeaderProps) {
+export function TaskCardHeader({ task, isSheet = false, animateClose = false, showDragHandle = false }: TaskCardHeaderProps) {
   const { t } = useTranslation();
   const isOnline = useOnlineManager();
 
   const relativeDate = useRelativeDate(task.createdAt, 'ago');
 
   return (
-    <div className="flex w-full flex-row justify-between py-1">
-      <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
+    <div className="flex w-full flex-row items-start justify-between py-1">
+      {/* A phone has no description gutter, so the grip sits beside the type button; from sm up that button drops into the gutter */}
+      <div className={cn('flex shrink-0 sm:flex-col', showDragHandle && 'sm:-mb-8')}>
+        {showDragHandle && <TaskDragHandle task={task} animateIn={animateClose} />}
+        <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
+      </div>
       <div className="ml-1 flex w-full flex-row items-center gap-1">
         {task.createdBy && (
           <>

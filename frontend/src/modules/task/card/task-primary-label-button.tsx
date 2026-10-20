@@ -33,7 +33,7 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: { task: Task; 
       aria-label={t('c:set_resource', { resource: t('c:type').toLowerCase() })}
       variant="ghost"
       size="xs"
-      className="relative -ml-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100"
+      className="focus-inset relative -ml-0.5 opacity-80 group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100"
       {...readOnlyInert}
     >
       <PrimaryLabelIcon label={task.primaryLabel} />

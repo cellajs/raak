@@ -12,16 +12,40 @@ export const focusTask = (taskId: string | null) => {
   setFocusedTaskId(taskId);
 };
 
-// Try to focus a card across a few animation frames, giving virtua time to mount it after scrolling.
-/** Focuses a task once virtualization has mounted its card. */
-export const focusWhenMounted = (id: string, attemptsLeft = 5) => {
-  const taskCard = document.getElementById(id);
-  if (taskCard) {
-    if (document.activeElement !== taskCard) taskCard.focus();
+// One slot: a later keypress overwrites it, so an item that mounts late never takes focus from a newer one.
+let pendingFocusId: string | null = null;
+
+// virtua keeps a freshly mounted row hidden until it has measured it, and a hidden element ignores focus()
+const focusOnceVisible = (id: string, item: HTMLElement) => {
+  if (pendingFocusId !== id || !item.isConnected) return;
+  if (useTaskInteractionStore.getState().focusedTaskId !== id) {
+    pendingFocusId = null;
     return;
   }
-  if (attemptsLeft <= 0) return;
-  requestAnimationFrame(() => focusWhenMounted(id, attemptsLeft - 1));
+  item.focus();
+  if (document.activeElement === item) pendingFocusId = null;
+  else requestAnimationFrame(() => focusOnceVisible(id, item));
+};
+
+/** Focuses a task card or create form now, or as it mounts when virtualization or loading still holds it back. */
+export const focusWhenMounted = (id: string) => {
+  pendingFocusId = id;
+  const item = document.getElementById(id);
+  if (item) focusOnceVisible(id, item);
+};
+
+/** Called by a board item as it mounts, to take the focus left for it while it was not mounted. */
+export const takePendingFocus = (id: string, item: HTMLElement | null) => {
+  if (item && pendingFocusId === id) focusOnceVisible(id, item);
+};
+
+/** Records the current item as mounted. Returns the cleanup that clears it, unless a newer item took its place. */
+export const markCurrentItemMounted = (id: string) => {
+  useTaskInteractionStore.getState().setMountedFocusId(id);
+  return () => {
+    const { mountedFocusId, setMountedFocusId } = useTaskInteractionStore.getState();
+    if (mountedFocusId === id) setMountedFocusId(null);
+  };
 };
 
 /** Makes a task the board's current card and scrolls it into view, leaving DOM focus where it is: stepping from the search box. */
@@ -31,20 +55,14 @@ export const revealTask = (id: string) => {
   if (task) scrollTaskIntoView(task.projectId, id);
 };
 
+/** Makes a task card or the create form current and focuses it, scrolling it into view first when virtualized out. */
 export const setTaskCardFocus = (id: string) => {
   focusTask(id);
 
-  const taskCard = document.getElementById(id);
-  if (taskCard) {
-    if (document.activeElement !== taskCard) taskCard.focus();
-    return;
+  if (!document.getElementById(id)) {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    const task = currentActiveTask(id);
+    if (task) scrollTaskIntoView(task.projectId, id);
   }
-
-  // Card is virtualized out of the DOM: blur the previous element, scroll the target into view, then focus.
-  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-
-  const task = currentActiveTask(id);
-  if (!task) return;
-  scrollTaskIntoView(task.projectId, id);
   focusWhenMounted(id);
 };

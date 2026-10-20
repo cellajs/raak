@@ -96,19 +96,11 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
     >
       {task.labels.length > 0 ? (
         isMobile && !isExpandedMobile ? (
-          <div className="flex flex-wrap items-center gap-0.5 truncate text-[.75rem]">
-            <Badge
-              variant="outline"
-              key={task.labels[0].id}
-              className="inline-block min-h-4 max-w-24 truncate border-0 bg-transparent px-1 py-0 font-normal leading-4 last:mr-0"
-            >
+          <div className="flex flex-wrap items-center gap-0.5 truncate font-normal text-[.75rem] leading-4">
+            <span className="max-w-24 truncate px-1 lowercase">
               <HighlightText text={task.labels[0].name} />
-            </Badge>
-            {task.labels.length > 1 && (
-              <Badge variant="outline" className="flex min-h-4 justify-center border-0 bg-transparent px-1 py-0 font-normal">
-                +{task.labels.length - 1}
-              </Badge>
-            )}
+            </span>
+            {task.labels.length > 1 && <span className="px-1">+{task.labels.length - 1}</span>}
           </div>
         ) : (
           <div className="flex flex-wrap gap-0.5 truncate">

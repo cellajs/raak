@@ -103,3 +103,74 @@ describe('ResizableSeparator', () => {
     expect(separator.getAttribute('aria-valuenow')).toBe('320');
   });
 });
+
+describe('ResizablePanel', () => {
+  it('marks a panel while it opens, so its hintFadeOut content fades in, and leaves a collapsing panel unmarked', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const separator = await renderSeparator(
+        <ResizablePanelGroup id="group" defaultLayout={{ a: 50, b: 400 }}>
+          <ResizablePanel id="a" minWidth={300} collapsedWidth={50} collapsible fade="marked" />
+          <ResizableSeparator index={0} />
+          <ResizablePanel id="b" minWidth={300} collapsedWidth={50} collapsible fade="marked" />
+        </ResizablePanelGroup>,
+      );
+      const panelA = container.querySelector('[data-panel="a"]');
+      const enter = () => act(async () => separator.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+
+      await enter();
+      expect(panelA?.hasAttribute('data-opening')).toBe(true);
+
+      await act(async () => vi.advanceTimersByTime(300));
+      expect(panelA?.hasAttribute('data-opening')).toBe(false);
+
+      await enter();
+      expect(panelA?.hasAttribute('data-opening')).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('Resize hint', () => {
+  it('fades an expanding panel and draws the curtain over its neighbour by the width it takes', async () => {
+    // jsdom has no pointer capture or constructable stylesheets, which a drag uses for its cursor
+    HTMLElement.prototype.setPointerCapture = () => {};
+    vi.stubGlobal(
+      'CSSStyleSheet',
+      class {
+        replaceSync() {}
+      },
+    );
+    Object.defineProperty(document, 'adoptedStyleSheets', { value: [], writable: true, configurable: true });
+    const separator = await renderSeparator(
+      <ResizablePanelGroup id="group" defaultLayout={{ a: 50, b: 400 }}>
+        <ResizablePanel id="a" minWidth={300} collapsedWidth={50} collapsible />
+        <ResizableSeparator index={0} />
+        <ResizablePanel id="b" minWidth={300} collapsedWidth={50} collapsible />
+      </ResizablePanelGroup>,
+    );
+    const panel = (id: string) => container.querySelector<HTMLElement>(`[data-panel="${id}"]`);
+    const curtain = (id: string) => panel(id)?.querySelector<HTMLElement>(':scope > [data-resize-hint]');
+
+    await act(async () => separator.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 100 })));
+    // Half the 250px expand gate
+    await act(async () => document.dispatchEvent(new MouseEvent('pointermove', { clientX: 225, clientY: 40 })));
+
+    expect(panel('a')?.getAttribute('data-resizing')).toBe('expand-right');
+    expect(panel('a')?.style.getPropertyValue('--content-opacity')).toBe('0.5');
+    expect(curtain('a')?.style.getPropertyValue('--hint-strength')).toBe('0');
+
+    expect(panel('b')?.getAttribute('data-resizing')).toBe('cover-left');
+    expect(panel('b')?.style.getPropertyValue('--content-opacity')).toBe('');
+    expect(curtain('b')?.dataset.side).toBe('left');
+    expect(curtain('b')?.style.width).toBe('187.5px');
+    expect(curtain('b')?.style.getPropertyValue('--hint-y')).toBe('40px');
+    expect((separator as HTMLElement).style.getPropertyValue('--hint-strength')).toBe('0.75');
+
+    await act(async () => document.dispatchEvent(new MouseEvent('pointerup')));
+    expect(panel('b')?.hasAttribute('data-resizing')).toBe(false);
+    expect(curtain('b')?.style.width).toBe('');
+    expect((separator as HTMLElement).style.getPropertyValue('--hint-strength')).toBe('');
+  });
+});

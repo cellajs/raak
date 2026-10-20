@@ -1,7 +1,8 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import type { Project } from 'sdk';
-import { FocusTrap } from '~/modules/common/focus-trap';
 import { CreateTaskForm } from '~/modules/task/create-task-form';
+import { markCurrentItemMounted } from '~/modules/task/helpers/focus-task';
+import { useItemControlsTabOrder } from '~/modules/task/hooks/use-item-controls-tab-order';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
@@ -19,9 +20,13 @@ export const DraftTaskItem = memo(function DraftTaskItem({
   onStatusChange: (status: TaskStatus) => void;
 }) {
   const isFocused = useTaskInteractionStore((s) => s.focusedTaskId === task.id);
+  const itemRef = useRef<HTMLDivElement>(null);
+  useItemControlsTabOrder(itemRef, task.id, isFocused);
+  useEffect(() => (isFocused ? markCurrentItemMounted(task.id) : undefined), [isFocused, task.id]);
+
   return (
-    <FocusTrap key={task.id} mainElementId={task.id} active={isFocused}>
+    <div ref={itemRef}>
       <CreateTaskForm projectId={project.id} organizationId={project.organizationId} className="max-sm:p-4" onStatusChange={onStatusChange} />
-    </FocusTrap>
+    </div>
   );
 });

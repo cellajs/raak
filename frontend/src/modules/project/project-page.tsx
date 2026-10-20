@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
 import { FocusViewContainer } from '~/modules/common/focus-view';
@@ -11,6 +11,9 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { useTaskDropMonitor } from '~/modules/task/hooks/use-task-drop-monitor';
 import { TaskSheetHandler } from '~/modules/task/task-sheet-handler';
 import { TasksHotkeys } from '~/modules/task/tasks-hotkeys';
+import { lazyNamed } from '~/utils/lazy-named';
+
+const JoinedButton = lazyNamed(() => import('~/modules/memberships/joined-button'), 'JoinedButton');
 
 interface Props {
   projectId: string;
@@ -52,6 +55,15 @@ export function ProjectPage({ projectId, organizationId, organization, tenantId,
         organizationId={project.organizationId}
         parent={organization}
         coverUpdateCallback={coverUpdateCallback}
+        panel={
+          project.membership && (
+            <Suspense>
+              <div className="flex items-center p-2">
+                <JoinedButton channel={project} role={project.membership.role} />
+              </div>
+            </Suspense>
+          )
+        }
       />
       <TaskSheetHandler />
       <TasksHotkeys boardId={project.id} projects={[project]} type="project" />

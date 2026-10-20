@@ -6,6 +6,7 @@ import { FocusView } from '~/modules/common/focus-view';
 import { LabelSelectedButtons } from '~/modules/label/label-selected-buttons';
 import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
 import { DisplayOptions } from '~/modules/task/board/display-options';
+import { ProjectActionsMenu } from '~/modules/task/board/project-actions-menu';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { useMatchingTaskIds } from '~/modules/task/board/use-matching-task-ids';
 import { BoardSearch } from '~/modules/task/board-search';
@@ -85,6 +86,12 @@ export function BoardHeader({
       {!searchQuery && !searchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
 
       {isInWorkspace && <WorkspaceActionButtons />}
+      {!isInWorkspace && !publicView && projects[0] && (
+        <ProjectActionsMenu
+          project={projects[0]}
+          className={cn('max-sm:group-data-[search-focused=true]/boardHeader:hidden', searchQuery && 'max-sm:hidden')}
+        />
+      )}
 
       {!publicView && projects.length > 0 && <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />}
 

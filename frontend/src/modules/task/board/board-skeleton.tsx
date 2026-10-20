@@ -20,8 +20,16 @@ import { buildBoardExtraPanels, sortPanelsByOrder } from '~/modules/task/board/b
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { BoardSearch } from '~/modules/task/board-search';
-import { formatSectionLabel, normalizePanelWidths, pickViewSections, prepareBoardPanels } from '~/modules/task/helpers/board-helpers';
+import {
+  formatSectionLabel,
+  makePanelKey,
+  normalizePanelWidths,
+  pickViewSections,
+  prepareBoardPanels,
+  resolveDraftHostSection,
+} from '~/modules/task/helpers/board-helpers';
 import type { BoardPanelProps } from '~/modules/task/panel/board-panel';
+import { TaskStatus } from '~/modules/task/task-properties';
 import { statusSectionColors, taskBarClass } from '~/modules/task/task-styles';
 import type { BoardResizablePanel } from '~/modules/task/types';
 import { Button, buttonVariants } from '~/modules/ui/button';
@@ -212,16 +220,9 @@ export function BoardHeaderSkeleton({ isInWorkspace = false, hasProjects = false
           </Button>
         </>
       ) : hasProjects ? (
-        <>
-          <div className="hidden grow sm:block" />
-          <Button variant="plain" data-form-dirty={false} className="relative hidden rounded sm:inline-flex">
-            <PlusIcon className="size-4.5" />
-            <span className="">{t('c:task')}</span>
-          </Button>
-          <Button variant="ghost" className="max-sm:hidden">
-            <EllipsisVerticalIcon />
-          </Button>
-        </>
+        <Button variant="ghost">
+          <EllipsisVerticalIcon />
+        </Button>
       ) : null}
 
       <DisplayOptions className="max-sm:hidden" />
@@ -321,6 +322,11 @@ function PanelHeaderSkeleton({
     return panelsSectionView[0] === sectionFilters;
   })();
 
+  const hostsCreateButton = (() => {
+    const hostSection = resolveDraftHostSection(panelsSectionView, TaskStatus.Unstarted);
+    return !hostSection || makePanelKey(project.id, hostSection) === panelId;
+  })();
+
   return (
     <BoardPanelHeader
       className="bg-background"
@@ -361,11 +367,13 @@ function PanelHeaderSkeleton({
                 <EllipsisVerticalIcon />
               </Button>
             )}
-            <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
-              <PlusIcon className="size-4.5 transition-transform duration-200" />
+            {hostsCreateButton && (
+              <Button data-form variant="plain" size="xs" className="relative hidden rounded sm:inline-flex">
+                <PlusIcon className="size-4.5 transition-transform duration-200" />
 
-              <span className="">{t('c:task')}</span>
-            </Button>
+                <span className="">{t('c:task')}</span>
+              </Button>
+            )}
           </>
         )
       }
