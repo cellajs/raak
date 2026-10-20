@@ -65,6 +65,20 @@
   animation: highlight-flash 1s ease-out forwards;
 }
 
+/* The first summary line fades out under the options button, on the states that reveal it (taskCardActionsReveal).
+   A mask, not a background-colored overlay, so the card's status gradient and search tint show through unchanged. */
+[data-task-card-id]:is(:hover, :focus-within, .is-focused) .task-summary-fade {
+  mask-image: linear-gradient(to left, #000 2.25rem, transparent 4rem), linear-gradient(#000, #000);
+  mask-size:
+    100% 1lh,
+    100% 100%;
+  mask-position:
+    right top,
+    0 0;
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
+}
+
 /* Suppress glow on board cards while their sheet is open */
 [data-suppress-glow][data-highlight-flash] {
   animation: none;

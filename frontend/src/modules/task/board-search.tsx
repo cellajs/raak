@@ -1,11 +1,11 @@
-import { ChevronDownIcon, ChevronUpIcon, CircleXIcon, FilterIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useDebounce } from '~/hooks/use-debounce';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-bar';
 import { useMatchSteps } from '~/modules/common/match-highlight';
+import { SearchClearButton } from '~/modules/common/search-clear-button';
 import { SearchSpinner } from '~/modules/common/search-spinner';
 import { focusTask } from '~/modules/task/helpers/focus-task';
 import { Badge } from '~/modules/ui/badge';
@@ -44,7 +44,6 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
 
   const steps = useMatchSteps(matches?.ids ?? [], matches?.onStep ?? noStep, matches?.currentId);
   const canStep = !!matches?.onStep && steps.total > 0;
-  const { highlight, effectiveQ } = parseSearchQuery(inputValue);
 
   const handleClick: MouseEventHandler = (e) => {
     const target = e.target as HTMLElement; // Cast the target to HTMLElement
@@ -74,8 +73,6 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   };
 
   const toggleSearchMode = () => setSearch({ matchMode: matchMode === 'all' ? 'any' : 'all' });
-
-  const setHighlightMode = (on: boolean) => setInputValue(on ? `=${effectiveQ}` : effectiveQ);
 
   // Update parent query only when debouncedQuery changes
   useEffect(() => {
@@ -126,8 +123,9 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
           ) : (
             children
           )}
+          {/* Too cramped on phones, where stepping is left to Enter */}
           {canStep && (
-            <div className="flex items-center">
+            <div className="flex items-center max-sm:hidden">
               <button type="button" aria-label={t('c:previous')} className={iconButtonClass} onMouseDown={preventInputBlur} onClick={steps.previous}>
                 <ChevronUpIcon className="size-4" />
               </button>
@@ -136,38 +134,28 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
               </button>
             </div>
           )}
-          <button
-            type="button"
-            aria-pressed={!highlight}
-            aria-label={t('c:filter')}
-            title={t('c:filter')}
-            className={cn(iconButtonClass, 'aria-pressed:bg-success aria-pressed:text-success-foreground aria-pressed:hover:bg-success/90')}
-            onMouseDown={preventInputBlur}
-            onClick={() => setHighlightMode(!highlight)}
-          >
-            <FilterIcon className="size-3.5" />
-          </button>
+          {/* Phones show it only for 'any': otherwise a non-default mode from a shared link would be in effect unseen */}
           {/\s/.test(inputValue) && (
-            <button type="button" className="focus-effect rounded-full" onMouseDown={preventInputBlur} onClick={toggleSearchMode}>
+            <button
+              type="button"
+              className={cn('focus-effect rounded-full', matchMode === 'all' && 'max-sm:hidden')}
+              onMouseDown={preventInputBlur}
+              onClick={toggleSearchMode}
+            >
               <Badge variant="plain" size="micro" className="cursor-pointer">
                 {matchMode}
               </Badge>
             </button>
           )}
-          <button
-            type="button"
+          <SearchClearButton
             id="search-close"
-            aria-label={t('c:clear')}
-            className={iconButtonClass}
             onMouseDown={preventInputBlur}
             onClick={() => {
               setSearch({ q: '', matchMode: undefined });
               setInputValue('');
               inputRef.current?.focus();
             }}
-          >
-            <CircleXIcon className="size-4" />
-          </button>
+          />
         </InputGroupAddon>
       )}
       <span className="sr-only" aria-live="polite">

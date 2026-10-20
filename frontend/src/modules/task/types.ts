@@ -52,6 +52,8 @@ export interface TaskProps {
   isSelected: boolean;
   isFocused: boolean;
   isSheet?: boolean;
+  /** Sheet only: a click on the expanded card asks the sheet, which holds its own state, to start editing. */
+  onEdit?: () => void;
 }
 export type TaskStatusType = (typeof statusOptions)[number]['value'];
 

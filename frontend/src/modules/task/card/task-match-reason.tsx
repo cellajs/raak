@@ -1,4 +1,4 @@
-import { FileTextIcon, UsersIcon } from 'lucide-react';
+import { UsersIcon } from 'lucide-react';
 import { HighlightText } from '~/modules/common/match-highlight';
 import { hiddenMatchReason } from '~/modules/task/helpers/match-reason';
 import { useTaskSearchTerms } from '~/modules/task/helpers/use-task-search-terms';
@@ -14,11 +14,8 @@ export function TaskMatchReason({ task, className }: { task: Task; className?: s
   return (
     <div data-match-reason="" className={cn('flex flex-col gap-0.5 text-muted-foreground text-xs leading-tight', className)}>
       {reason.description && (
-        <span className="flex items-start gap-1.5">
-          <FileTextIcon className="mt-px size-3 shrink-0" />
-          <span>
-            <HighlightText text={reason.description} />
-          </span>
+        <span>
+          <HighlightText text={reason.description} />
         </span>
       )}
       {reason.people.length > 0 && (

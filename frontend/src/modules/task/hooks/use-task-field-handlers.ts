@@ -47,10 +47,8 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
     taskMutation.mutate({ ...baseTaskInfo, ops: { assignedTo: delta }, fullAssignedTo: updatedUsers });
   };
 
-  const onStatusChange = async (newStatus: TaskStatusType) => {
+  const onStatusChange = async (newStatus: TaskStatusType, newOrder = getNewStatusTaskOrder(task, newStatus)) => {
     if (task.status === newStatus) return;
-
-    const newOrder = getNewStatusTaskOrder(task, newStatus);
 
     // Read current task from cache to avoid stale closure when called from dropdowner
     const currentTask = findInCache<Task>('task', task.id) ?? task;

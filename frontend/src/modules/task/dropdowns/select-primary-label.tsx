@@ -10,6 +10,7 @@ import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
 import { cn } from '~/utils/cn';
+import { isTouchInteraction } from '~/utils/input-modality';
 
 /** Dropdown to pick a task's primary label (task type) from the project's primary set. */
 export function SelectPrimaryLabel({ value: currentId, projectId, onChange, taskId, className = '' }: SelectPrimaryLabelProps) {
@@ -56,7 +57,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
     >
       <div className={cn(className, 'relative w-48 rounded-lg p-0 max-sm:w-full')}>
         <ComboboxSearchInput
-          autoFocus
+          autoFocus={!isTouchInteraction()}
           value={searchValue}
           wrapClassName="max-sm:hidden"
           className="leading-normal"

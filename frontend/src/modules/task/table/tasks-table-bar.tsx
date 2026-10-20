@@ -19,6 +19,8 @@ import { cn } from '~/utils/cn';
 type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setSearch' | 'queryKey'> &
   Omit<ResolvedTaskTableProps, 'organization' | 'tenantId'> & {
     total: number | null;
+    /** True in highlight mode too, where `searchVars` (what the table and export fetch) carries no query. */
+    hasQuery: boolean;
     isCompact: boolean;
     setIsCompact: (isCompact: boolean) => void;
   };
@@ -26,6 +28,7 @@ type TasksTableBarProps = Omit<BaseTableBarProps<Task, BoardSearchParams>, 'setS
 /** Renders the action and filter toolbar for the tasks table. */
 export function TasksTableBar({
   total,
+  hasQuery,
   selected,
   searchVars,
   columns,
@@ -62,7 +65,7 @@ export function TasksTableBar({
       />
 
       <BoardSearch isInWorkspace={!!workspace} toggleFocus={toggleSearchFocus}>
-        {typeof total === 'number' && searchVars.q && (
+        {typeof total === 'number' && hasQuery && (
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
             <span>{new Intl.NumberFormat(i18n.language).format(total)}</span>
             <span>{t('c:found')}</span>
@@ -70,7 +73,7 @@ export function TasksTableBar({
         )}
       </BoardSearch>
 
-      {!searchFocused && !searchVars.q && <TableCount count={total} label="c:task" className="mr-3" />}
+      {!searchFocused && !hasQuery && <TableCount count={total} label="c:task" className="mr-3" />}
       <ColumnsView className="max-lg:hidden" columns={columns} setColumns={setColumns}>
         <DropdownMenuCheckboxItem className="min-h-8" checked={isCompact} onCheckedChange={() => setIsCompact(!isCompact)}>
           {t('c:compact_view')}

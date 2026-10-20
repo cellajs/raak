@@ -32,7 +32,7 @@ export function TaskCardSummaryButtons({ task }: { task: Task }) {
         </div>
       }
       {/*  in debug mode: show order number to debug drag */}
-      {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-muted-foreground text-sm">#{task.displayOrder}</span>}
+      {env.VITE_DEBUG_UI && <span className="ml-2 text-center text-muted-foreground/50 text-sm">#{task.displayOrder}</span>}
     </>
   );
 }

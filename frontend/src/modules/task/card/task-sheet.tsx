@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { FlameKindlingIcon, ServerCrashIcon, WifiOffIcon } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
@@ -9,6 +10,8 @@ import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { TaskCard } from '~/modules/task/card/task-card';
 import { publicTaskQueryOptions } from '~/modules/task/public-query';
 import { taskQueryOptions } from '~/modules/task/query';
+import { TaskSearchScope } from '~/modules/task/task-search-scope';
+import { isTouchInteraction } from '~/utils/input-modality';
 
 interface TaskSheetProps {
   id: string;
@@ -26,11 +29,13 @@ function TaskSheet({ id, organizationId }: TaskSheetProps) {
   const { data: task, isLoading, isError } = useQuery(queryOpts as ReturnType<typeof taskQueryOptions>);
 
   const isReadOnly = useIsProjectReadOnly(task?.projectId);
+  // A touch open starts expanded, as a touch tap on a board card does: editing would open the on-screen keyboard.
+  const [editing, setEditing] = useState(() => !isTouchInteraction());
 
   // Sheet manages its own editing state, separate from the shared store.
   // Using the store would set the board card to 'editing' too, causing
   // a duplicate editor whose unmount flush overwrites sheet edits.
-  const taskState = isReadOnly ? 'expanded' : 'editing';
+  const taskState = isReadOnly || !editing ? 'expanded' : 'editing';
 
   if (isError) return <ContentPlaceholder icon={ServerCrashIcon} title="error:request_failed" />;
 
@@ -51,9 +56,11 @@ function TaskSheet({ id, organizationId }: TaskSheetProps) {
     );
 
   return (
-    <div>
-      <TaskCard task={task} state={taskState} isSelected={false} isFocused={true} isSheet />
-    </div>
+    <TaskSearchScope>
+      <div>
+        <TaskCard task={task} state={taskState} isSelected={false} isFocused={true} isSheet onEdit={() => setEditing(true)} />
+      </div>
+    </TaskSearchScope>
   );
 }
 

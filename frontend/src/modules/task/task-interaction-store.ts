@@ -6,7 +6,9 @@ import type { Task } from '~/modules/task/types';
 interface TaskInteractionState {
   /** Ids of tasks selected on the board or table; entities resolve from the query cache at action time. */
   selectedTaskIds: string[];
-  setSelectedTaskIds: (ids: string[]) => void;
+  /** Project of the selected tasks, null while none are: a selection stays within one project, so bulk pickers have one set of labels and members. */
+  selectedProjectId: string | null;
+  setSelectedTaskIds: (ids: string[], projectId?: string) => void;
   /**
    * Ids of label rows selected in the labels panel. Task and label selection are mutually exclusive
    * (checkboxes of the other kind disable), so the board header's remove button acts on one kind.
@@ -26,8 +28,9 @@ interface TaskInteractionState {
   reset: () => void;
 }
 
-const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedLabelIds' | 'focusedTaskId' | 'draftTasks'> = {
+const initialState: Pick<TaskInteractionState, 'selectedTaskIds' | 'selectedProjectId' | 'selectedLabelIds' | 'focusedTaskId' | 'draftTasks'> = {
   selectedTaskIds: [],
+  selectedProjectId: null,
   selectedLabelIds: [],
   focusedTaskId: null,
   draftTasks: {},
@@ -41,9 +44,10 @@ export const useTaskInteractionStore = create<TaskInteractionState>()(
   devtools(
     immer((set) => ({
       ...initialState,
-      setSelectedTaskIds: (ids) => {
+      setSelectedTaskIds: (ids, projectId) => {
         set((state) => {
           state.selectedTaskIds = ids;
+          state.selectedProjectId = ids.length ? (projectId ?? state.selectedProjectId) : null;
         });
       },
       setSelectedLabelIds: (ids) => {

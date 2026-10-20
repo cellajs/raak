@@ -34,6 +34,7 @@ import { ScrollArea } from '~/modules/ui/scroll-area';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
 import { COALESCED } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
+import { isTouchInteraction } from '~/utils/input-modality';
 
 // Sentinel prefix for the "create label" row's Combobox value, so it can't
 // collide with a real label name when selection flows through onValueChange.
@@ -134,7 +135,8 @@ export function SelectLabels({
   // Search results filtered by query
   const searchResults = useMemo(() => {
     if (!searchValue.length) return [];
-    const matchedLabels = initLabels.filter(({ name }) => name.includes(searchValue));
+    // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is
+    const matchedLabels = initLabels.filter(({ name }) => name.toLowerCase().replaceAll(' ', '-').includes(searchValue));
     return getItemsSortedByName(matchedLabels);
   }, [searchValue, initLabels]);
 
@@ -175,7 +177,7 @@ export function SelectLabels({
 
     setSearchValue('');
 
-    if (inputRef.current && !isMobile) inputRef.current.focus();
+    if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
 
     const existingLabel = selectedLabels.find((label) => label.slug === value);
     if (existingLabel) {
@@ -205,7 +207,7 @@ export function SelectLabels({
     const existingLabel = projectLabels.find((label) => label.slug === slug);
     if (existingLabel) return handleSelectClick(existingLabel.slug);
 
-    if (inputRef.current && !isMobile) inputRef.current.focus();
+    if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
 
     const matchedLabelColor = labels.find((label) => label.slug === slug)?.color;
     const fallbackColor = labelColors[Math.floor(Math.random() * labelColors.length)];
@@ -264,7 +266,7 @@ export function SelectLabels({
       <div className={comboboxShellClass} style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}>
         <ComboboxSearchInput
           ref={inputRef}
-          autoFocus={!isMobile}
+          autoFocus={!isTouchInteraction()}
           value={searchValue}
           wrapClassName={comboboxInputPinClass}
           className="min-h-10 leading-normal"

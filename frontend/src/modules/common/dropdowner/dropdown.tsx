@@ -104,6 +104,8 @@ function PanelDropdown({ dropdown, triggerEl }: { dropdown: InternalDropdown; tr
         align={dropdown.align}
         positionerClassName="z-301"
         className="p-0"
+        // The focus trap places the initial focus: opened from code, Base UI cannot see a touch open and would focus a text field.
+        initialFocus={false}
         finalFocus={triggerFocusRef}
         aria-label={dropdown.triggerLabel}
       >

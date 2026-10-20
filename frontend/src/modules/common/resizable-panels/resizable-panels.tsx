@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, type Ref, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, type ReactNode, type Ref, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { cn } from '~/utils/cn';
@@ -371,6 +371,7 @@ export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onColl
       panel.element.style.width = `${w}px`;
       panel.element.style.flexShrink = '0';
     }
+    updateSeparatorAria();
   };
 
   const setWidth = (panel: PanelEntry, width: number) => {
@@ -421,6 +422,7 @@ export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onColl
   };
 
   const applyKeyboardStep = (separatorIndex: number, delta: number) => {
+    sortPanels();
     // Compute mode before mutating widths so getBoundingClientRect is fresh
     const autoFill = computeAutoFill();
 
@@ -494,11 +496,13 @@ export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onColl
   };
 
   const toggleCollapseAtSeparator = (separatorIndex: number) => {
+    sortPanels();
     const leftPanel = panelsRef.current[separatorIndex];
     if (leftPanel) togglePanel(leftPanel.id);
   };
 
   const startDrag = (separatorIndex: number, startX: number) => {
+    sortPanels();
     const collapsedAtStart = new Set<string>();
     const snapshot: Record<string, number> = {};
 
@@ -570,6 +574,7 @@ export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onColl
     updateContainerWidth();
   };
 
+  // Reordering moves panel elements without re-registering them, so every separator-index lookup re-sorts first.
   const sortPanels = () => {
     panelsRef.current.sort((a, b) => {
       const pos = a.element.compareDocumentPosition(b.element);
@@ -606,10 +611,26 @@ export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onColl
     delete widthsRef.current[panelId];
     if (dragRef.current) abortDrag();
     updateContainerWidth();
+    updateSeparatorAria();
   };
 
   const registerSeparator = (index: number, element: HTMLDivElement) => {
     separatorsRef.current.set(index, element);
+    updateSeparatorAria();
+  };
+
+  // Separators render before panels register and resizes bypass React, so their value and neighbours are written here.
+  const updateSeparatorAria = () => {
+    sortPanels();
+    for (const [index, element] of separatorsRef.current) {
+      const left = panelsRef.current[index];
+      if (!left) continue;
+      const right = panelsRef.current[index + 1];
+      element.setAttribute('aria-controls', right ? `${left.element.id} ${right.element.id}` : left.element.id);
+      element.setAttribute('aria-valuemin', `${left.collapsible ? left.collapsedWidth : left.minWidth}`);
+      element.setAttribute('aria-valuemax', `${left.minWidth * 2}`);
+      element.setAttribute('aria-valuenow', `${Math.round(widthsRef.current[left.id] ?? left.minWidth)}`);
+    }
   };
 
   const unregisterSeparator = (index: number) => {
@@ -753,6 +774,9 @@ export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onColl
     onReadyRef.current?.({ expandPanel, togglePanel });
   }, []);
 
+  // A reorder re-renders the group but registers nothing
+  useEffect(() => updateSeparatorAria());
+
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
       const drag = dragRef.current;
@@ -785,13 +809,7 @@ export function ResizablePanelGroup({ id, defaultLayout, onLayoutChanged, onColl
   const [registry] = useState(() => ({ registerPanel, unregisterPanel, registerSeparator, unregisterSeparator }));
   const ctxValue = useMemo<PanelGroupContextValue>(() => ({ groupId: id, ...registry }), [id, registry]);
 
-  const dragCtx: SeparatorDragContextValue = {
-    startDrag,
-    applyKeyboardStep,
-    toggleCollapseAtSeparator,
-    getPanels: () => panelsRef.current,
-    getWidths: () => widthsRef.current,
-  };
+  const dragCtx: SeparatorDragContextValue = { startDrag, applyKeyboardStep, toggleCollapseAtSeparator };
 
   return (
     <PanelGroupContext.Provider value={ctxValue}>
@@ -822,6 +840,7 @@ interface PanelProps {
 export function ResizablePanel({ id, minWidth, collapsedWidth = 0, collapsible = false, className, children, ref, ...rest }: PanelProps) {
   const ctx = useContext(PanelGroupContext);
   const internalRef = useRef<HTMLDivElement | null>(null);
+  const domId = useId();
 
   const setRef = (el: HTMLDivElement | null) => {
     internalRef.current = el;
@@ -840,6 +859,7 @@ export function ResizablePanel({ id, minWidth, collapsedWidth = 0, collapsible =
   return (
     <div
       ref={setRef}
+      id={domId}
       className={className}
       data-panel={id}
       // clip, not hidden: hidden makes this a scroll container and captures the panel's sticky elements
@@ -858,8 +878,6 @@ interface SeparatorDragContextValue {
   startDrag: (separatorIndex: number, startX: number) => void;
   applyKeyboardStep: (separatorIndex: number, delta: number) => void;
   toggleCollapseAtSeparator: (separatorIndex: number) => void;
-  getPanels: () => PanelEntry[];
-  getWidths: () => Record<string, number>;
 }
 
 const SeparatorDragContext = createContext<SeparatorDragContextValue | null>(null);
@@ -945,28 +963,14 @@ export function ResizableSeparator({ index, className, children, 'aria-label': a
     }
   };
 
-  const panels = dragCtx?.getPanels() ?? [];
-  const widths = dragCtx?.getWidths() ?? {};
-  const leftPanel = panels[index];
-  const rightPanel = panels[index + 1];
-  const leftId = leftPanel?.id;
-  const rightId = rightPanel?.id;
-  const ariaControls = [leftId, rightId].filter(Boolean).join(' ');
-  const currentLeftWidth = leftId ? (widths[leftId] ?? 0) : 0;
-  const minVal = leftPanel?.collapsible ? leftPanel.collapsedWidth : (leftPanel?.minWidth ?? 0);
-  const maxVal = leftPanel ? leftPanel.minWidth * 2 : 0;
-
   return (
     <div
       ref={ref}
+      // biome-ignore lint/a11y/useAriaPropsForRole: the group writes aria-valuenow once panels register (updateSeparatorAria)
       role="separator"
       aria-label={ariaLabel ?? t('c:resize_panels')}
       // The bar stands upright between two side-by-side panels and moves left and right
       aria-orientation="vertical"
-      aria-valuemin={minVal}
-      aria-valuemax={maxVal === Number.POSITIVE_INFINITY ? undefined : maxVal}
-      aria-valuenow={Math.round(currentLeftWidth)}
-      aria-controls={ariaControls || undefined}
       tabIndex={0}
       data-separator="inactive"
       // Consumers draw focus in the bar's own color: a ring has no room between panels. outline-hidden keeps the forced-colors outline.

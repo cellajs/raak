@@ -21,6 +21,7 @@ import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
 import { getDraggableItemData } from '~/utils/get-draggable-item-data';
+import { isTouchInteraction } from '~/utils/input-modality';
 
 import '~/modules/task/card/card-glow.css';
 import { StickyBox } from '~/modules/common/sticky-box';
@@ -35,7 +36,7 @@ interface PortalDataProps {
 /**
  * Manage task card rendering and interactions, including click/double-click behavior, focus management, and drag-and-drop for reordering.
  */
-const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, isSheet }: TaskProps) {
+const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, isSheet, onEdit }: TaskProps) {
   const taskRef = useRef<HTMLDivElement>(null);
   const expandedAtRef = useRef<number>(0);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
@@ -43,6 +44,15 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
 
   // Cap editing to expanded in read-only mode
   const effectiveState = isReadOnly && state === 'editing' ? 'expanded' : state;
+
+  // The close button pops in and out only when the card opens or closes here, not when a row scrolls back into view
+  const isOpen = effectiveState !== 'collapsed';
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  const [hasToggled, setHasToggled] = useState(false);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    setHasToggled(true);
+  }
 
   const [dragging, setDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
@@ -55,10 +65,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const clickTarget = event.target as HTMLElement;
 
-    // Remaining interactions only apply outside sheet mode
-    if (isSheet) return;
-
-    if (!isFocused) setTaskCardFocus(task.id);
+    if (!isSheet && !isFocused) setTaskCardFocus(task.id);
 
     // Ignore clicks that are text selection (user dragged to highlight) within this card
     const selection = window.getSelection();
@@ -68,10 +75,15 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     const interactive = clickTarget.closest('button, a, input, textarea, select, [role="button"], [role="checkbox"], label');
     if (interactive) return;
 
-    // If collapsed, expand (read-only) or edit (normal)
+    if (isSheet) {
+      if (state === 'expanded' && !isReadOnly) onEdit?.();
+      return;
+    }
+
+    // A touch tap only expands: editing focuses the editor, which opens the on-screen keyboard. A second tap edits at its point.
     if (state === 'collapsed') {
       expandedAtRef.current = Date.now();
-      useTaskCardStore.getState().setTaskState(task.id, isReadOnly ? 'expanded' : 'editing');
+      useTaskCardStore.getState().setTaskState(task.id, isReadOnly || isTouchInteraction() ? 'expanded' : 'editing');
       return;
     }
 
@@ -205,10 +217,10 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
               enabled={!isSheet}
               offsetBottom={52}
             >
-              <TaskCardHeader task={task} isSheet={isSheet} />
+              <TaskCardHeader task={task} isSheet={isSheet} animateClose={hasToggled} />
             </StickyBox>
           )}
-          <CardDescriptionSlot task={task} state={effectiveState} isReadOnly={isReadOnly} />
+          <CardDescriptionSlot task={task} state={effectiveState} isReadOnly={isReadOnly} animateClose={hasToggled} />
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />
         </CardContent>
         {dropIndicatorEdge && <DropIndicator edge={dropIndicatorEdge} gap={0.25} />}

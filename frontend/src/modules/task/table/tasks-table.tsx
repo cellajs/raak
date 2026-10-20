@@ -54,13 +54,15 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   const { sortColumns, setSortColumns: onSortColumnsChange } = useSortColumns(sort, order, setSearch);
 
   // Highlight mode ('=' prefix): fetch unfiltered and tint matches client-side, like the board
-  const { highlight } = parseSearchQuery(q);
+  const { highlight, effectiveQ } = parseSearchQuery(q);
   const effectiveSearch = highlight ? { ...search, q: '' } : search;
 
   const queryParams = publicView ? undefined : deriveTasksQueryParams(workspace, projects[0]);
-  const queryOptions = queryParams
-    ? tasksTableQueryOptions({ ...effectiveSearch, ...queryParams })
-    : publicTasksTableQueryOptions({ ...effectiveSearch, projectId: projects[0]?.id });
+  const optionsFor = (tableSearch: BoardSearchParams) =>
+    queryParams
+      ? tasksTableQueryOptions({ ...tableSearch, ...queryParams })
+      : publicTasksTableQueryOptions({ ...tableSearch, projectId: projects[0]?.id });
+  const queryOptions = optionsFor(effectiveSearch);
 
   // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
   const { data, error, isLoading, isFetching, fetchNextPage, hasNextPage } = useInfiniteQuery(queryOptions as any) as {
@@ -79,12 +81,15 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     return data.pages.flatMap(({ items }) => items);
   }, [data]);
 
-  // Highlight mode fetches unfiltered, so the total counts the matches among the loaded rows, like the board
-  const total = useMemo(() => {
-    if (!data?.pages.length || !fetchedRows) return null;
-    if (highlight) return fetchedRows.filter((row) => searchFilterFunction(search, row)).length;
-    return data.pages[data.pages.length - 1].total;
-  }, [data, fetchedRows, highlight, search]);
+  // Highlight mode counts matches over all tasks, not the loaded rows: the filtered query's total, the cache entry filter
+  // mode reads. Same page size on purpose, since the table key leaves out the limit.
+  // biome-ignore lint/suspicious/noExplicitAny: union of query options with different key shapes
+  const { data: matchData } = useInfiniteQuery({ ...(optionsFor({ ...search, q: effectiveQ }) as any), enabled: highlight }) as {
+    data: InfiniteData<{ items: Task[]; total: number }> | undefined;
+  };
+
+  const countData = highlight ? matchData : data;
+  const total = countData?.pages.length ? countData.pages[countData.pages.length - 1].total : null;
 
   const isOnline = useOnlineManager();
   // Stable row references prevent memoized rows from rerendering on unchanged offline filters.
@@ -105,16 +110,25 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
     await fetchNextPage();
   }, [hasNextPage, isLoading, isFetching, fetchNextPage]);
 
+  const selectedProjectId = selected[0]?.projectId;
+
   const onSelectedRowsChange = useCallback(
     (value: Set<string>) => {
-      if (rows) setSelected(rows.filter((row) => value.has(row.id)));
+      if (!rows) return;
+      const picked = rows.filter((row) => value.has(row.id));
+      // Select-all from an empty selection spans projects; keep the top row's project
+      const projectId = selectedProjectId ?? picked[0]?.projectId;
+      setSelected(picked.filter((row) => row.projectId === projectId));
     },
-    [rows],
+    [rows, selectedProjectId],
   );
 
   const selectedRowIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected]);
 
-  const isRowSelectionDisabled = useCallback((row: Task) => isProjectReadOnly(row.projectId), []);
+  const isRowSelectionDisabled = useCallback(
+    (row: Task) => isProjectReadOnly(row.projectId) || (!!selectedProjectId && row.projectId !== selectedProjectId),
+    [selectedProjectId],
+  );
 
   const noRowsComponent = useMemo(
     () => <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:task_other').toLowerCase() }} />,
@@ -127,6 +141,7 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
         <div className="flex h-full flex-col gap-4">
           <TasksTableBar
             total={total}
+            hasQuery={!!effectiveQ}
             selected={selected}
             searchVars={{ ...effectiveSearch, limit }}
             columns={columns}

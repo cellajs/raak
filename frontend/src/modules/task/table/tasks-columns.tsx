@@ -49,7 +49,7 @@ function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
       ref={cellRef}
       variant="cell"
       tabIndex={tabIndex}
-      className="group inline-flex h-auto w-full flex-wrap justify-start px-0 text-left outline-0 ring-0 focus-visible:ring-0"
+      className="group inline-flex h-auto w-full flex-wrap justify-start px-0 text-left opacity-100 outline-0 ring-0 focus-visible:ring-0"
       onKeyDown={(e) => {
         if (e.key === 'Enter') cellRef.current?.click();
       }}

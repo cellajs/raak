@@ -8,7 +8,7 @@ import type { LabelUsage } from '~/modules/label/use-label-usage';
  * Group labels into visible rows by slug: rows sharing a slug across projects collapse into one
  * (summing their usage and collecting sibling ids), so a workspace shows a single row per label.
  * Slug is the stable cross-project identity; it survives renames, where the display name does not.
- * The single source of the display grouping rule; the panel table, label page and picker all derive
+ * The single source of the display grouping rule; the panel list, label tiles and picker all derive
  * from it. Operations keep their own identity: rename/delete on epics act per row (id), so merged
  * display never cascades a mutation across another project's epic. `preferredProjectId` picks which
  * sibling represents a group (e.g. the current project's copy).
@@ -22,12 +22,19 @@ export const groupLabelRows = (labels: Label[], opts: { preferredProjectId?: str
     const usedCount = opts.usage?.[label.id] ?? 0;
 
     if (!existing) {
-      rowMap.set(groupKey, { ...label, usedCount, siblingIds: [label.id], projectIds: [label.projectId] });
+      rowMap.set(groupKey, {
+        ...label,
+        usedCount,
+        projectUsage: { [label.projectId]: usedCount },
+        siblingIds: [label.id],
+        projectIds: [label.projectId],
+      });
       continue;
     }
 
     const aggregates = {
       usedCount: existing.usedCount + usedCount,
+      projectUsage: { ...existing.projectUsage, [label.projectId]: (existing.projectUsage[label.projectId] ?? 0) + usedCount },
       siblingIds: [...existing.siblingIds, label.id],
       projectIds: existing.projectIds.includes(label.projectId) ? existing.projectIds : [...existing.projectIds, label.projectId],
     };

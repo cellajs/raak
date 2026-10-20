@@ -706,31 +706,31 @@
     },
     "description": "A label used to categorize and filter tasks within a project or workspace.",
     "example": {
-      "createdAt": "2024-09-02T17:17:19.802Z",
-      "id": "a204ed05-0f29-4164-a735-a9ada058dd15",
+      "createdAt": "2024-03-09T03:49:59.043Z",
+      "id": "4776a712-aa20-44ed-b050-f29164735a9a",
       "entityType": "label",
-      "tenantId": "ksz4va",
-      "name": "low priority",
-      "updatedAt": "2024-09-02T17:17:19.802Z",
+      "tenantId": "o1bitt",
+      "name": "paradigm",
+      "updatedAt": "2024-03-09T03:49:59.043Z",
       "stx": {
-        "mutationId": "b09243fb-137e-4d70-b0bc-3f7cbcdb0bf3",
-        "sourceId": "32d34338-9cf3-4daf-9a1a-545541d161f0",
+        "mutationId": "1599cf1d-4b09-4243-bfb1-37ed700bc3f7",
+        "sourceId": "bcdb0bf3-d32d-4343-9389-cf3dafa1a545",
         "fieldTimestamps": {}
       },
-      "description": "Dapifer suffragium culpo sollers canis sunt substantia alter.",
-      "keywords": "texo advenio tondeo",
+      "description": null,
+      "keywords": "",
       "deletedAt": null,
       "deletedBy": null,
       "publicAt": null,
-      "seq": 345,
-      "color": "#bda33a",
+      "seq": 136,
+      "color": "#1d181f",
       "mode": "secondary",
-      "slug": "low-priority",
+      "slug": "paradigm",
       "icon": null,
       "organizationTracked": false,
       "displayOrder": null,
-      "projectId": "c302ccce-62e7-414f-820c-b3ed49d919d4",
-      "organizationId": "4e50ec4c-b313-4024-981d-74aa2d67fc4b"
+      "projectId": "ec302ccc-e62e-4714-9f20-cb3ed49d919d",
+      "organizationId": "24e50ec4-cb31-4302-a481-d74aa2d67fc4"
     }
   },
   {
@@ -2592,12 +2592,12 @@
       "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
       "primaryLabel": {
         "id": "65918c60-6d36-4797-a652-e1ba1149334b",
-        "name": "bug",
-        "slug": "bug",
-        "color": "#cdfeeb",
+        "name": "microservice",
+        "slug": "microservice",
+        "color": "#77fd9d",
         "mode": "secondary",
         "icon": null,
-        "projectId": "91f30266-48e6-4c56-9246-3b7e8b2475f3"
+        "projectId": "291f3026-648e-46c5-8624-63b7e8b2475f"
       }
     }
   },

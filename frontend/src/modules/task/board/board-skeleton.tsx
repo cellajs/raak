@@ -122,7 +122,7 @@ export function BoardSkeleton({
         );
       case 'labels':
         return (
-          <LocalPanelShell panelId={panel.panelId} icon={<TagIcon />} title={t('c:label_other')} windowScroll={projectPage}>
+          <LocalPanelShell panelId={panel.panelId} icon={<TagIcon />} title={t('c:label_other').toLowerCase()} windowScroll={projectPage}>
             <LocalPanelBodySkeleton />
           </LocalPanelShell>
         );
@@ -153,26 +153,34 @@ export function BoardSkeleton({
   return (
     <>
       {withHeader && <BoardHeaderSkeleton isInWorkspace={isInWorkspace} hasProjects={!!projects.length} />}
-      <div className="flex h-full flex-row" style={{ gap: COLUMN_GAP, minWidth: rowMinWidth }}>
-        {panels.map((panel) => {
-          const { panelId } = panel;
-          if (panel.kind === 'mobile') {
+      {/* BoardLayout's frame: a loading board scrolls the page no further than the loaded one. */}
+      <div
+        className={cn(
+          'overflow-x-clip',
+          !projectPage && 'sm:h-[calc(100dvh-var(--board-offset-sm,4rem))] md:h-[calc(100dvh-var(--board-offset-md,4.88rem))]',
+        )}
+      >
+        <div className="flex h-full flex-row" style={{ gap: COLUMN_GAP, minWidth: rowMinWidth }}>
+          {panels.map((panel) => {
+            const { panelId } = panel;
+            if (panel.kind === 'mobile') {
+              return (
+                <div key={panelId} className="flex h-full w-full min-w-0 flex-col">
+                  {renderColumn(panel)}
+                </div>
+              );
+            }
+            // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
+            const columnStyle = panelCollapseState[panelId]
+              ? { flex: 'none', width: COLLAPSED_PANEL_MIN_WIDTH }
+              : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: PANEL_MIN_WIDTH };
             return (
-              <div key={panelId} className="flex h-full w-full min-w-0 flex-col">
+              <div key={panelId} className="flex h-full flex-col" style={columnStyle}>
                 {renderColumn(panel)}
               </div>
             );
-          }
-          // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
-          const columnStyle = panelCollapseState[panelId]
-            ? { flex: 'none', width: COLLAPSED_PANEL_MIN_WIDTH }
-            : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: PANEL_MIN_WIDTH };
-          return (
-            <div key={panelId} className="flex h-full flex-col" style={columnStyle}>
-              {renderColumn(panel)}
-            </div>
-          );
-        })}
+          })}
+        </div>
       </div>
     </>
   );
@@ -268,9 +276,9 @@ function StickyMobilePanelHeader({ projectTabs }: { projectTabs: PageTab[] }) {
 function PanelBodySkeleton({ rowHeight = 88, rowCount = 12 }: { rowHeight?: number; rowCount?: number }) {
   const renderRowHeight = rowHeight - 8;
   return (
-    <div className="flex w-full flex-col overflow-auto border opacity-100 transition-opacity duration-300">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border opacity-100 transition-opacity duration-300">
       <div
-        className={`-mt-[.05rem] flex h-8 w-full justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
+        className={`-mt-[.05rem] flex h-8 w-full shrink-0 justify-start gap-1 rounded-none border-t border-t-transparent ${statusSectionColors.accepted.border} ${statusSectionColors.accepted.fill} ring-inset`}
       />
       {Array.from({ length: rowCount }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is not undergoing mutations

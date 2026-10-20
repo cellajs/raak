@@ -34,7 +34,7 @@ export type HandleDropdownProps = CommonDropdownProps &
         initialSelectedCollapsed?: boolean;
       }
     | { dropdownType: 'assignedTo'; value: UserMinimalBase[]; projectId: string; onChange: (v: UserMinimalBase[]) => void }
-    | { dropdownType: 'status'; value: TaskStatusType; onChange: (v: TaskStatusType) => void }
+    | { dropdownType: 'status'; value?: TaskStatusType; onChange: (v: TaskStatusType) => void }
     | { dropdownType: 'primaryLabel'; value: string; projectId: string; onChange: (v: string) => void }
   );
 

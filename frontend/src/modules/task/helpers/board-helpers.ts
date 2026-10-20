@@ -87,6 +87,12 @@ export const sortByMembership = (projects: EnrichedProject[]) => {
   return [...projects].sort((a, b) => (a.membership?.displayOrder ?? 0) - (b.membership?.displayOrder ?? 0));
 };
 
+/** Orders tasks as the board shows them: panels by membership, then status and display order. */
+export const sortTasksAsOnBoard = (tasks: Task[], projects: EnrichedProject[]) => {
+  const panelIndex = new Map(sortByMembership(projects).map((project, index) => [project.id, index]));
+  return [...tasks].sort((a, b) => (panelIndex.get(a.projectId) ?? 0) - (panelIndex.get(b.projectId) ?? 0) || sortTaskOrder(a, b));
+};
+
 /** projectId → split sections of one board; unsplit projects are absent. */
 export type BoardViewSections = Record<string, SectionsValue[]>;
 

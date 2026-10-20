@@ -46,6 +46,8 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
   const sectionWindowMode = isMobile || !!windowScroll;
 
   const hasContent = !!tasks.length || !!counts.accepted || !!counts.iced;
+  // The sticky status headers would overlap the create form
+  const hostsDraft = tasks.some(isDraftTask);
 
   const onStatusChange = (newStatus: TaskStatus) => {
     revealDraftHostPanel(project.id, newStatus);
@@ -62,6 +64,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
       scrollRef={scrollViewportRef}
       windowMode={sectionWindowMode}
       onToggle={handleSectionToggle}
+      suppressed={hostsDraft}
     />
   ) : undefined;
 
@@ -73,6 +76,7 @@ export const TaskPanelContent = memo(function TaskPanelContent({ project, tasks,
       scrollRef={scrollViewportRef}
       windowMode={sectionWindowMode}
       onToggle={handleSectionToggle}
+      suppressed={hostsDraft}
     />
   ) : undefined;
 

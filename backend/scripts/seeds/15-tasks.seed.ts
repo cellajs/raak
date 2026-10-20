@@ -16,7 +16,7 @@ import { startSpinner, succeedSpinner, warnSpinner } from '#/utils/console';
 import { type DescriptionBlock, findSummarySource } from 'shared/utils/derive-description-core';
 import { nanoid } from 'shared/utils/nanoid';
 import { buildPrimaryLabelRows } from '#/modules/label/helpers/primary-labels';
-import { mockLabel } from '#/modules/label/label-mocks';
+import { mockLabel, mockLabelNames } from '#/modules/label/label-mocks';
 import { mockChannelMembership } from '#/modules/memberships/memberships-mocks';
 import { mockProject } from '#/modules/project/project-mocks';
 import { paragraphBlock, text as inlineText } from './description-document';
@@ -133,6 +133,9 @@ const tasksSeed = async () => {
 
     const numProjects = faker.number.int(projectsPerOrg);
 
+    // Projects draw from one vocabulary per organization, so labels recur across projects and a name keeps one color, as label creation does.
+    const orgLabelVocabulary = mockLabelNames(labelsPerProject * 2).map((name) => ({ name, color: faker.color.rgb() }));
+
     // Phase A: Prepare all project data for this org
     const projectEntries: Array<{ insertProject: InsertProjectModel; memberUserIds: string[] }> = [];
 
@@ -199,10 +202,11 @@ const tasksSeed = async () => {
 
       const getRandomMember = () => memberUserIds[Math.floor(Math.random() * memberUserIds.length)] ?? null;
 
-      const projectLabels: InsertLabelModel[] = Array.from({ length: labelsPerProject }, () => {
-        const label = mockLabel(`label:seed:${seedSuffix()}`, seedSuffix());
+      const projectLabels: InsertLabelModel[] = faker.helpers.arrayElements(orgLabelVocabulary, labelsPerProject).map(({ name, color }) => {
+        const label = mockLabel(`label:seed:${seedSuffix()}`, name);
         return {
           ...label,
+          color,
           id: mockUuid(),
           tenantId: organization.tenantId,
           organizationId: organization.id,

@@ -7,6 +7,6 @@ export const handleTaskSelect = (state: CheckedState, task: Task) => {
   const selectedTaskIds = useTaskInteractionStore.getState().selectedTaskIds;
   const setSelectedTaskIds = useTaskInteractionStore.getState().setSelectedTaskIds;
 
-  if (state === true) return setSelectedTaskIds([...selectedTaskIds, task.id]);
+  if (state === true) return setSelectedTaskIds([...selectedTaskIds, task.id], task.projectId);
   if (state === false) return setSelectedTaskIds(selectedTaskIds.filter((id) => id !== task.id));
 };

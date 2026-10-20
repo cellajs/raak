@@ -82,6 +82,7 @@
   "split": "Split columns",
   "start": "Start",
   "started": "Started",
+  "started_and_copied": "Started & copied to clipboard!",
   "status_updated_at": "Status updated {{when}} ago",
   "status_updated_just_now": "Status updated just now",
   "status_updated_on": "Status updated on {{when}}",

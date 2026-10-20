@@ -54,6 +54,13 @@ export const statusFillColors = {
  */
 export const taskDescriptionGutterStyle = 'pl-1 sm:pl-9 pb-4';
 
+/**
+ * Reveals a task card's action buttons on hover or focus. The collapsed summary fades its first line out under them
+ * on the same states (`.task-summary-fade` in card-glow.css): keep the two in step.
+ */
+export const taskCardActionsReveal =
+  'opacity-0 transition-opacity group-hover/task:opacity-100 group-focus-within/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100 has-data-dropdowner-done:opacity-100';
+
 /** Shared shell classes for the board/table top bar (search, count, actions). */
 export const taskBarClass = 'z-85 flex items-center bg-background max-sm:justify-between max-sm:p-2 sm:gap-2';
 

@@ -4,6 +4,7 @@ import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { PanelDragHandleButton } from '~/modules/common/board/panel-drag-handle-button';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { EntityChip } from '~/modules/common/entity-chip';
 import { useDraftStore } from '~/modules/common/form-draft/draft-store';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
@@ -54,6 +55,7 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
           name={project.name}
           fallbackLabel={project.name}
           icon={<EntityAvatar className="h-8 w-8" id={project.id} type="project" name={project.name} url={project.thumbnailUrl} />}
+          preview={<EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl} />}
           className={cn(
             'flex h-auto items-center gap-2 truncate p-0 no-underline hover:bg-transparent',
             isCollapsed ? 'w-full justify-center' : 'justify-start pr-2',
@@ -78,6 +80,11 @@ export function TaskPanelHeader({ project, sectionFilters, publicView }: Pick<Bo
                   <FunnelIcon className="h-2.5 w-2.5" />
                 </div>
               </div>
+            }
+            preview={
+              <EntityChip type="project" id={project.id} name={project.name} url={project.thumbnailUrl}>
+                {`${project.name} — ${formatSectionLabel(sectionFilters)}`}
+              </EntityChip>
             }
             className={cn('flex h-auto min-w-0 items-center gap-2 p-0 hover:bg-transparent', isCollapsed ? 'w-full justify-center' : 'justify-start')}
           >

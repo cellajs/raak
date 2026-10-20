@@ -1,134 +1,28 @@
-import { ArrowDownIcon, ArrowUpIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, LinkIcon, Maximize2Icon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { appConfig } from 'shared';
-import { titleFromDocument } from 'shared/blocknote';
-import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { useOnlineManager } from '~/hooks/use-online-manager';
 import { useRelativeDate } from '~/hooks/use-relative-date';
-import { copyBlocksToClipboard } from '~/modules/common/blocknote/helpers/blocknote-helpers';
-import { ConfirmText } from '~/modules/common/confirm-text';
-import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
-import { isProjectReadOnly } from '~/modules/project/use-read-only';
+import { CardCloseButton } from '~/modules/task/card/card-close-button';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskOptionsButton } from '~/modules/task/card/task-options-button';
 import { TaskPrimaryLabelButton } from '~/modules/task/card/task-primary-label-button';
-import { DeleteTask } from '~/modules/task/delete-task';
-import { openTaskSheet } from '~/modules/task/helpers/board-navigation';
-import { focusTask, setTaskCardFocus } from '~/modules/task/helpers/focus-task';
-import { getStepTaskOrder } from '~/modules/task/helpers/order-helpers';
-import { useTaskUpdateMutation } from '~/modules/task/query';
+import { taskCardActionsReveal } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
-import { Button } from '~/modules/ui/button';
+import { cn } from '~/utils/cn';
 import { dateShort } from '~/utils/date-short';
-import { truncateMiddle } from '~/utils/truncate-middle';
 
 interface TaskCardHeaderProps {
   task: Task;
   isSheet?: boolean;
+  animateClose?: boolean;
 }
 
-export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
+export function TaskCardHeader({ task, isSheet = false, animateClose = false }: TaskCardHeaderProps) {
   const { t } = useTranslation();
   const isOnline = useOnlineManager();
 
-  const shareLink = `${appConfig.backendUrl}/t/${task.id}`;
-
-  const { copyToClipboard } = useCopyToClipboard(2000);
-
   const relativeDate = useRelativeDate(task.createdAt, 'ago');
-  const { mutate: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
-
-  // Reordering without dragging: one place up or down within the task's status.
-  const moveTask = (direction: 'up' | 'down') => {
-    const displayOrder = getStepTaskOrder(task, direction);
-    if (displayOrder === null) return;
-    updateTask({ id: task.id, ops: { displayOrder } }, { onSuccess: () => !isSheet && setTaskCardFocus(task.id) });
-  };
-
-  const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
-    const { create } = useDropdowner.getState();
-    const isMobile = window.innerWidth < 640;
-    // Anchor the dropdown to the clicked element. The button carries no `id`, because a
-    // caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
-    const triggerRef = { current: currentTarget };
-
-    const handleDeleteClick = () => {
-      const { remove } = useDropdowner.getState();
-      // `task.name` is empty for a task made in the app: its title is the text of its summary block
-      const title = titleFromDocument(task.summary);
-      openPopConfirm(
-        title ? (
-          <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: truncateMiddle(title, 20) }} />
-        ) : (
-          <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
-        ),
-        <DeleteTask task={task} callback={remove} onCancel={remove} />,
-      );
-    };
-
-    create(
-      <>
-        {!isSheet && (
-          <DropdownActionItem
-            isMobile={isMobile}
-            icon={Maximize2Icon}
-            onSelect={() => {
-              focusTask(null);
-              openTaskSheet(task.id);
-              useDropdowner.getState().remove();
-            }}
-          >
-            {t('c:expand')}
-          </DropdownActionItem>
-        )}
-        <DropdownActionItem
-          isMobile={isMobile}
-          icon={CopyIcon}
-          onSelect={async () => {
-            const success = await copyBlocksToClipboard(task.description);
-            if (success) useDropdowner.getState().remove();
-          }}
-        >
-          {t('c:copy_content')}
-        </DropdownActionItem>
-        <DropdownActionItem
-          isMobile={isMobile}
-          icon={LinkIcon}
-          onSelect={() => {
-            copyToClipboard(shareLink);
-            useDropdowner.getState().remove();
-          }}
-        >
-          {t('c:copy_as_link')}
-        </DropdownActionItem>
-        {!isProjectReadOnly(task.projectId) && (
-          <>
-            <DropdownActionItem isMobile={isMobile} icon={ArrowUpIcon} onSelect={() => moveTask('up')}>
-              {t('c:move_up')}
-            </DropdownActionItem>
-            <DropdownActionItem isMobile={isMobile} icon={ArrowDownIcon} onSelect={() => moveTask('down')}>
-              {t('c:move_down')}
-            </DropdownActionItem>
-          </>
-        )}
-        <DropdownActionItem isMobile={isMobile} icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
-          {t('c:delete')}
-        </DropdownActionItem>
-      </>,
-      {
-        id: `task-options-${task.id}`,
-        triggerId: `task-options-btn-${task.id}${isSheet ? '-sheet' : ''}`,
-        triggerRef,
-        align: 'end',
-        kind: 'menu',
-        // Match the task panel header's ellipsis menu width.
-        popupClassName: 'min-w-48',
-      },
-    );
-  };
 
   return (
     <div className="flex w-full flex-row justify-between py-1">
@@ -153,34 +47,10 @@ export function TaskCardHeader({ task, isSheet = false }: TaskCardHeaderProps) {
 
         <div className="grow" />
 
-        <div className="flex flex-row items-center gap-1 opacity-0 transition-opacity group-hover/task:opacity-100 group-[.is-focused]/task:opacity-100 group-data-[sheet]/task:opacity-100">
-          <TooltipButton toolTipContent={t('c:options')} side="bottom" sideOffset={5}>
-            <Button
-              onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
-              aria-label={t('c:resource_options', { resource: t('c:task') })}
-              variant="ghost"
-              className="h-8 w-8 data-dropdowner-active:bg-accent/50"
-              size="xs"
-            >
-              <EllipsisVerticalIcon className="size-3.5" />
-            </Button>
-          </TooltipButton>
-
-          {!isSheet && (
-            <TooltipButton toolTipContent={t('c:close')} side="bottom" sideOffset={5} hideWhenDetached>
-              <Button
-                onClick={() => {
-                  useTaskCardStore.getState().setTaskState(task.id, 'collapsed');
-                }}
-                aria-label={t('c:collapse')}
-                variant="ghost"
-                size="xs"
-                className="h-8 w-8"
-              >
-                <ChevronUpIcon />
-              </Button>
-            </TooltipButton>
-          )}
+        {/* The ellipsis comes last so it sits where a collapsed card shows it */}
+        <div className={cn('flex flex-row items-center gap-1', taskCardActionsReveal)}>
+          {!isSheet && <CardCloseButton animateIn={animateClose} onClick={() => useTaskCardStore.getState().setTaskState(task.id, 'collapsed')} />}
+          <TaskOptionsButton task={task} isSheet={isSheet} />
         </div>
       </div>
     </div>

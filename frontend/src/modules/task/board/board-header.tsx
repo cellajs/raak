@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { TableCount } from '~/modules/common/data-table/table-count';
 import { FocusView } from '~/modules/common/focus-view';
 import { LabelSelectedButtons } from '~/modules/label/label-selected-buttons';
+import { LabelsDrawerButton } from '~/modules/label/labels-drawer';
 import { DisplayOptions } from '~/modules/task/board/display-options';
 import type { ResolvedBoardProps } from '~/modules/task/board/task-board';
 import { useMatchingTaskIds } from '~/modules/task/board/use-matching-task-ids';
 import { BoardSearch } from '~/modules/task/board-search';
+import { sortTasksAsOnBoard } from '~/modules/task/helpers/board-helpers';
 import { revealTask } from '~/modules/task/helpers/focus-task';
 import { useTasksTotal } from '~/modules/task/hooks/use-tasks-total';
 import { deriveTasksQueryParams } from '~/modules/task/query';
@@ -58,6 +60,7 @@ export function BoardHeader({
         clearSelection={clearSelection}
         organizationId={queryParams?.organizationId ?? ''}
         tenantId={queryParams?.tenantId ?? ''}
+        orderTasks={(tasks) => sortTasksAsOnBoard(tasks, projects)}
       />
       <LabelSelectedButtons
         selectedLabelIds={selectedLabelIds}
@@ -82,6 +85,8 @@ export function BoardHeader({
       {!searchQuery && !searchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
 
       {isInWorkspace && <WorkspaceActionButtons />}
+
+      {!publicView && projects.length > 0 && <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />}
 
       <DisplayOptions className="empty:hidden max-sm:hidden" />
 

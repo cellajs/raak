@@ -28,7 +28,8 @@ export type SelectLabelsProps = DropdownLayoutProps & {
 
 export type SelectMembersProps = DropdownLayoutProps & { value: UserMinimalBase[]; projectId: string; onChange: (users: UserMinimalBase[]) => void };
 
-export type SelectStatusProps = DropdownLayoutProps & { value: TaskStatusType; onChange: (newValue: TaskStatusType) => void };
+/** `value` is absent for selected tasks whose statuses differ. */
+export type SelectStatusProps = DropdownLayoutProps & { value?: TaskStatusType; onChange: (newValue: TaskStatusType) => void };
 
 // Primary label uses a fixed width (no CSS-var trigger width), so it doesn't inherit triggerWidth.
 export type SelectPrimaryLabelProps = TaskSubscriptionProps & {

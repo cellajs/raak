@@ -1,6 +1,6 @@
 import type { z } from '@hono/zod-openapi';
 import type { ChannelEntityType } from 'shared';
-import { labelSlug } from 'shared/config/labels-config';
+import { labelName, labelSlug } from 'shared/config/labels-config';
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { buildStx } from '#/core/stx';
@@ -58,6 +58,8 @@ export async function createLabelsOp(
 
   const labelsToInsert: InsertLabelModel[] = [];
   for (const { stx, ...labelInfo } of fresh) {
+    if (labelInfo.name) labelInfo.name = labelName(labelInfo.name, labelInfo.mode);
+
     // Maintain same color for labels already in organization
     const sameLabelInOrg = existingLabels.find(({ name }) => name === labelInfo.name);
     if (sameLabelInOrg) labelInfo.color = sameLabelInOrg.color;

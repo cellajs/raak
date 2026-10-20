@@ -78,7 +78,7 @@ export function MenuItemEdit({ item, siblings, icon: Icon }: MenuItemEditProps) 
 
       <div className="grow truncate text-left group-data-[submenu=false]/menu-options:pl-0">
         <div className="truncate text-md leading-5 group-data-[subitem=true]/options-item:text-xs group-data-[archived=true]/options-item:opacity-70">
-          {item.name} {env.VITE_DEBUG_MODE && <span className="text-muted">#{item.membership.displayOrder}</span>}
+          {item.name} {env.VITE_DEBUG_MODE && <span className="text-muted-foreground/50">#{item.membership.displayOrder}</span>}
         </div>
         <div className="flex items-center gap-2 transition-opacity delay-500">
           <MenuItemEditButton

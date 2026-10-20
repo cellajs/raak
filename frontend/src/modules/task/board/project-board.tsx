@@ -30,7 +30,7 @@ export function ProjectBoard({ boardId, projects, publicView }: ResolvedBoardPro
     [boardId, panels, setPanelOrder],
   );
 
-  /** Opening a label page expands and reveals the labels panel (deep links, filter jumps) */
+  /** A label link expands and reveals the labels panel, whose list then opens that label's tile */
   const lastExpandedLabelPage = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!labelPageId || labelPageId === lastExpandedLabelPage.current) return;

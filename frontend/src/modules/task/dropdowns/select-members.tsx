@@ -1,7 +1,6 @@
 import { type CSSProperties, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { UserMinimalBase } from 'sdk';
-import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
@@ -21,6 +20,7 @@ import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
+import { isTouchInteraction } from '~/utils/input-modality';
 
 export function SelectMembers({ value: currentAssigned, projectId, onChange, taskId, triggerWidth = 320 }: SelectMembersProps) {
   const { t } = useTranslation();
@@ -32,7 +32,6 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
 
   const [searchValue, setSearchValue] = useState('');
   const [showAll, setShowAll] = useState(false);
-  const isMobile = useBreakpointBelow('sm');
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Freeze the initial display list at mount so it stays static during the session
@@ -51,7 +50,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
   const toggleMember = (id: string) => {
     if (!id) return;
     setSearchValue('');
-    if (inputRef.current && !isMobile) inputRef.current.focus();
+    if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
 
     const existing = selectedMembers.find((u) => u.id === id);
     if (existing) {
@@ -110,7 +109,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
       <div className={comboboxShellClass} style={{ '--trigger-width': `${triggerWidth}px` } as CSSProperties}>
         <ComboboxSearchInput
           ref={inputRef}
-          autoFocus
+          autoFocus={!isTouchInteraction()}
           value={searchValue}
           wrapClassName="shrink-0 max-sm:hidden"
           className="min-h-10 rounded-none leading-normal focus-visible:ring-transparent"
@@ -146,7 +145,7 @@ export function SelectMembers({ value: currentAssigned, projectId, onChange, tas
                 className={comboboxActionButtonClass}
                 onClick={() => {
                   setShowAll(!showAll);
-                  if (inputRef.current && !isMobile) inputRef.current.focus();
+                  if (inputRef.current && !isTouchInteraction()) inputRef.current.focus();
                 }}
               >
                 {showAll ? t('c:show_less') : t('c:show_all')}

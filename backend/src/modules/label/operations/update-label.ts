@@ -1,4 +1,5 @@
 import type { z } from '@hono/zod-openapi';
+import { labelName } from 'shared/config/labels-config';
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
@@ -69,6 +70,7 @@ export async function updateLabelOp(
       // The yjs handler and CDC read the stx as the fields this write wrote: a write that changes none drops the earlier set.
       stx: resolved.changed ? resolved.stx : stripChangedFields(labelsTable.stx),
     };
+    if (typeof values.name === 'string') values.name = labelName(values.name, before.mode);
 
     if (resolved.changed && 'description' in resolved.values) {
       const description = resolved.values.description as string | null;

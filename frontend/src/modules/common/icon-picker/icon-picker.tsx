@@ -4,6 +4,7 @@ import lucideIcons from '~/modules/common/icons/lucide-icons.gen.json';
 import { NamedIcon } from '~/modules/common/icons/named-icon';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
+import { isTouchInteraction } from '~/utils/input-modality';
 
 /** Rendering cap per search state; the full set is reachable by narrowing the query. */
 const maxVisible = 96;
@@ -35,7 +36,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
 
   return (
     <div className={cn('flex w-72 flex-col gap-2', className)}>
-      <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('c:search')} autoFocus />
+      <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('c:search')} autoFocus={!isTouchInteraction()} />
       {matches.length === 0 && <span className="p-2 text-muted-foreground text-sm">{t('c:no_results')}</span>}
       <div className="grid max-h-64 grid-cols-8 gap-1 overflow-y-auto" role="listbox" aria-label={t('c:search')}>
         {matches.slice(0, maxVisible).map((name) => (

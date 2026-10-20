@@ -13,6 +13,7 @@ import {
 } from 'sdk';
 import { zCreateLabelsBody, zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
+import { labelName } from 'shared/config/labels-config';
 import { isRecord } from 'shared/utils/as-record';
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { toaster } from '~/modules/common/toaster/toaster';
@@ -281,7 +282,7 @@ export const useLabelCreateMutation = (tenantId: string, organizationId: string)
   // Inject org context + stx so a replay reuses the original mutation id and timestamps; callers pass just the data.
   const prepare = (row: LabelCreateInput): PreparedVars<CreateLabelFullVars> => ({
     kind: 'run',
-    vars: { tenantId, organizationId, data: [row], stx: createStxForCreate() },
+    vars: { tenantId, organizationId, data: [{ ...row, name: row.name && labelName(row.name, row.mode) }], stx: createStxForCreate() },
   });
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };
@@ -293,7 +294,9 @@ export const useLabelUpdateMutation = (tenantId: string, organizationId: string)
   const mutation = useMutation(labelUpdateOptions(queryClient));
 
   /** Folding into a queued create issues no update and patches the optimistic row here (onMutate won't run). */
-  const prepare = ({ id, ops }: UpdateLabelVars): PreparedVars<UpdateLabelFullVars> => {
+  const prepare = ({ id, ops: rawOps }: UpdateLabelVars): PreparedVars<UpdateLabelFullVars> => {
+    // Lowercased here as well as on the server, so the optimistic rows (and task embeds) never show the typed casing
+    const ops = rawOps.name ? { ...rawOps, name: labelName(rawOps.name, findLabelInCache(id)?.mode) } : rawOps;
     if (squashIntoPendingCreate(queryClient, keys.create, id, ops, labelCreateKeys)) {
       const cached = findLabelInCache(id);
       if (cached) {

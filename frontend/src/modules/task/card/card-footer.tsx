@@ -10,6 +10,7 @@ import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import type { DropdownsType } from '~/modules/task/dropdowns/types';
+import { copyStartedTask } from '~/modules/task/helpers/copy-tasks';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { handleTaskSelect } from '~/modules/task/helpers/task-selection';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
@@ -34,10 +35,12 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
   const isMobile = useBreakpointBelow('sm');
   const readOnlyInert = useReadOnlyInert(task.projectId);
   const readOnlyHide = useReadOnlyHide(task.projectId);
+  const labelsHide = task.labels.length ? '' : readOnlyHide;
 
   const taskState = useTaskCardStore((s) => s.states[task.id] ?? 'collapsed');
   // Task and label selection are mutually exclusive so the board header's remove button targets one kind
   const hasSelectedLabels = useTaskInteractionStore((s) => s.selectedLabelIds.length > 0);
+  const isOtherProjectSelected = useTaskInteractionStore((s) => !!s.selectedProjectId && s.selectedProjectId !== task.projectId);
   // On mobile, expanded/editing cards move labels onto their own line above the footer,
   // freeing horizontal space to reveal the select checkbox and status dropdown sub-button.
   const isExpandedMobile = isMobile && taskState !== 'collapsed';
@@ -88,7 +91,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       aria-label={t('c:set_resource', { resource: t('c:label_other').toLowerCase() })}
       variant="ghost"
       size="xs"
-      className="relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5"
+      className={cn('relative flex h-auto min-h-8 min-w-8 px-0.5 py-0.5', labelsHide)}
       {...readOnlyInert}
     >
       {task.labels.length > 0 ? (
@@ -138,14 +141,14 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       )}
     >
       {/* On mobile, show labels on their own line above the footer when expanded */}
-      {isExpandedMobile && <div className="mb-1 flex flex-row items-center">{labelsButton}</div>}
+      {isExpandedMobile && <div className={cn('mb-1 flex flex-row items-center', labelsHide)}>{labelsButton}</div>}
       <div className="group-[.is-expanded]/task:fade-in flex flex-row items-center group-[.is-expanded]/task:animate-in group-[.is-expanded]/task:duration-300 sm:gap-1">
         {!isSheet && (
           <Checkbox
             className={cn('mx-1 data-[state=checked]:border-primary', !isExpandedMobile && 'max-sm:hidden', readOnlyHide)}
             aria-label={t('c:select_resource', { resource: task.name })}
             checked={isSelected}
-            disabled={hasSelectedLabels}
+            disabled={hasSelectedLabels || isOtherProjectSelected}
             onCheckedChange={(checked) => handleTaskSelect(checked, task)}
           />
         )}
@@ -177,7 +180,10 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
 
           <TooltipButton toolTipContent={statusTooltip} side="top">
             <Button
-              onClick={() => handlers.onStatusChange(task.status - 1)}
+              onClick={() => {
+                if (task.status === TaskStatus.Unstarted) copyStartedTask(task);
+                handlers.onStatusChange(task.status - 1);
+              }}
               disabled={task.status === TaskStatus.Accepted}
               variant="outlineGhost"
               size="xs"

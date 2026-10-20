@@ -1,28 +1,21 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
-import { Link, useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { BirdIcon } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { matchesTerms } from 'shared/utils/text-match';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
-import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { HighlightText } from '~/modules/common/match-highlight';
-import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { Spinner } from '~/modules/common/spinner';
 import { groupLabelRows } from '~/modules/label/group-labels';
-import { LabelFilterButton } from '~/modules/label/label-filter';
+import { LabelTile } from '~/modules/label/label-tile';
+import { labelTileDomId, useLabelTileStore } from '~/modules/label/label-tile-store';
 import { type Label, labelsCanonicalOptions } from '~/modules/label/query';
-import type { LabelRow, LabelsScope, LabelsScopeProps } from '~/modules/label/types';
+import type { LabelRow, LabelsHostProps, LabelsScopeProps } from '~/modules/label/types';
 import { type LabelUsage, useLabelUsage } from '~/modules/label/use-label-usage';
-import { findProjectByIdOrSlug, projectsListQueryOptions } from '~/modules/project/query';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
-import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
-import { Badge } from '~/modules/ui/badge';
-import { Checkbox } from '~/modules/ui/checkbox';
+import { projectsListQueryOptions } from '~/modules/project/query';
 import { ScrollArea } from '~/modules/ui/scroll-area';
-import { cn } from '~/utils/cn';
 
 /** Highlight-mode match over the same columns the server search filters on (name + keywords). */
 const matchesSearch = (row: LabelRow, terms: string[]) => matchesTerms([row.nameFolded, row.keywordsFolded], terms);
@@ -37,7 +30,7 @@ const combinePanelLabels = (results: { data?: { items: Label[] }; isLoading: boo
   pending: results.some((r) => r.isLoading),
 });
 
-type LabelListScopeProps = { entityId: string; windowScroll?: boolean };
+type LabelListScopeProps = { entityId: string } & LabelsHostProps;
 
 /** Newest-first by creation, mirroring the tasks table's default order. */
 const byCreatedAtDesc = (a: LabelRow, b: LabelRow) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0);
@@ -55,7 +48,7 @@ const useLabelRows = (labels: Label[], usage: LabelUsage, highlight: boolean, wo
  * into, mirroring the task board), then filters modes/search client-side. That keeps a label a
  * user just created visible immediately in the tab that created it, without a refetch.
  */
-function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
+function ProjectLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const q = useSearch({ strict: false, select: (search) => search.q });
   const { highlight, terms } = parseSearchQuery(q);
@@ -68,16 +61,7 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
 
   const rows = useLabelRows(data ?? [], usage, highlight, terms);
 
-  return (
-    <LabelListView
-      entity="project"
-      rows={rows}
-      isLoading={isLoading}
-      highlight={highlight}
-      highlightWords={highlight ? terms : []}
-      windowScroll={windowScroll}
-    />
-  );
+  return <LabelListView rows={rows} isLoading={isLoading} highlight={highlight} highlightWords={highlight ? terms : []} {...hostProps} />;
 }
 
 /**
@@ -86,7 +70,7 @@ function ProjectLabelList({ entityId, windowScroll }: LabelListScopeProps) {
  * useQueries and groups client-side, mirroring the label picker (select-labels). A just-created
  * label therefore shows immediately in the creating tab here too.
  */
-function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
+function WorkspaceLabelList({ entityId, ...hostProps }: LabelListScopeProps) {
   const { organizationId, tenantId } = useOrganizationLayoutContext();
   const q = useSearch({ strict: false, select: (search) => search.q });
   const { highlight, terms } = parseSearchQuery(q);
@@ -105,44 +89,35 @@ function WorkspaceLabelList({ entityId, windowScroll }: LabelListScopeProps) {
 
   const rows = useLabelRows(labels, usage, highlight, terms);
 
-  return (
-    <LabelListView
-      entity="workspace"
-      rows={rows}
-      isLoading={isLoading}
-      highlight={highlight}
-      highlightWords={highlight ? terms : []}
-      windowScroll={windowScroll}
-    />
-  );
+  return <LabelListView rows={rows} isLoading={isLoading} highlight={highlight} highlightWords={highlight ? terms : []} {...hostProps} />;
 }
 
 type LabelListViewProps = {
-  entity: LabelsScope;
   rows: LabelRow[];
   isLoading: boolean;
   highlight: boolean;
   highlightWords: string[];
-  windowScroll?: boolean;
-};
+} & LabelsHostProps;
 
 /**
- * Renders selectable tag and epic tiles using internal or page scrolling.
+ * Renders label tiles using internal or page scrolling.
  * Standard searches filter rows; '=' queries highlight matches.
  */
-function LabelListView({ entity, rows, isLoading, highlight, highlightWords, windowScroll }: LabelListViewProps) {
+function LabelListView({ rows, isLoading, highlight, highlightWords, windowScroll, ...tileProps }: LabelListViewProps) {
   const { t } = useTranslation();
-  const { tenantId } = useOrganizationLayoutContext();
+  const navigate = useNavigate();
+  const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
-  const selectedLabelIds = useTaskInteractionStore((s) => s.selectedLabelIds);
-  const setSelectedLabelIds = useTaskInteractionStore((s) => s.setSelectedLabelIds);
-  // Task and label selection are mutually exclusive so the shared remove button targets one kind
-  const hasSelectedTasks = useTaskInteractionStore((s) => s.selectedTaskIds.length > 0);
-
-  const handleLabelSelect = (checked: boolean, row: LabelRow) => {
-    if (checked) setSelectedLabelIds([...selectedLabelIds, row.id]);
-    else setSelectedLabelIds(selectedLabelIds.filter((id) => id !== row.id));
-  };
+  // A label link opens its tile once, then leaves the URL: closing the tile must not leave a stale link behind
+  useEffect(() => {
+    if (!labelPageId || isLoading) return;
+    const row = rows.find((candidate) => candidate.siblingIds.includes(labelPageId));
+    if (row) {
+      useLabelTileStore.getState().expand(row.id, tileProps.singleExpand);
+      requestAnimationFrame(() => document.getElementById(labelTileDomId(row.id))?.scrollIntoView({ block: 'nearest' }));
+    }
+    navigate({ to: '.', replace: true, resetScroll: false, search: (prev) => ({ ...prev, labelPageId: undefined }) });
+  }, [labelPageId, isLoading]);
 
   if (isLoading) return <Spinner className="my-8 h-6 w-6 opacity-50" />;
   if (!rows.length) {
@@ -152,66 +127,7 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
   const body = (
     <ul aria-label={t('c:label_other')}>
       {rows.map((row) => (
-        <li
-          key={row.id}
-          className={cn(
-            'group/labelTile relative flex w-full items-center gap-2 border-b px-3 py-2.5 text-sm focus-within:bg-accent/30 hover:bg-accent/30',
-            highlight && matchesSearch(row, highlightWords) && searchHighlightRowClass,
-          )}
-        >
-          <Checkbox
-            className="relative z-10 data-[state=checked]:border-primary"
-            checked={selectedLabelIds.includes(row.id)}
-            disabled={hasSelectedTasks}
-            aria-label={row.name}
-            onCheckedChange={(checked) => handleLabelSelect(checked === true, row)}
-          />
-          {/* Stretched link: the after-overlay makes the whole tile open the label page,
-              while the checkbox and filter button sit above it on their own layer */}
-          <Link
-            to="."
-            replace={false}
-            resetScroll={false}
-            search={(prev) => ({ ...prev, labelPageId: row.id })}
-            className="flex min-w-0 grow items-center gap-2 text-left outline-0 ring-0 after:absolute after:inset-0 after:content-['']"
-          >
-            <span className="grow truncate opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100">
-              <HighlightText text={row.name} />
-            </span>
-            {row.mode === 'epic' && <Badge variant="secondary">{t('c:epic')}</Badge>}
-          </Link>
-          {/* Single-cell grid stacks count and avatars in the same right-aligned spot, so the
-              hover swap never shifts the filter button */}
-          <div className="grid shrink-0 justify-items-end *:col-start-1 *:row-start-1">
-            <span className="self-center text-muted-foreground text-xs tabular-nums transition-opacity duration-200 group-focus-within/labelTile:opacity-0 group-hover/labelTile:opacity-0 motion-reduce:transition-none">
-              {row.usedCount}
-            </span>
-            {entity === 'workspace' && row.projectIds.length > 0 && (
-              <AvatarGroup
-                limit={3}
-                className="opacity-0 transition-opacity duration-200 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100 motion-reduce:transition-none"
-              >
-                <AvatarGroupList>
-                  {row.projectIds
-                    .map((id) => findProjectByIdOrSlug(id, tenantId))
-                    .filter((project) => !!project)
-                    .map((project) => (
-                      <EntityAvatar
-                        type="project"
-                        key={project.id}
-                        id={project.id}
-                        name={project.name}
-                        url={project.thumbnailUrl}
-                        className="h-6 w-6 text-xs"
-                      />
-                    ))}
-                </AvatarGroupList>
-                <AvatarOverflowIndicator className="h-6 w-6 text-xs" />
-              </AvatarGroup>
-            )}
-          </div>
-          <LabelFilterButton name={row.name} size="xs" tabIndex={-1} className="relative z-10" />
-        </li>
+        <LabelTile key={row.id} row={row} highlighted={highlight && matchesSearch(row, highlightWords)} {...tileProps} />
       ))}
     </ul>
   );
@@ -222,10 +138,6 @@ function LabelListView({ entity, rows, isLoading, highlight, highlightWords, win
 }
 
 /** Labels panel body: canonical per-project list at project scope, aggregated list at workspace scope. */
-export function LabelList({ entity, entityId, windowScroll }: LabelsScopeProps & { windowScroll?: boolean }) {
-  return entity === 'workspace' ? (
-    <WorkspaceLabelList entityId={entityId} windowScroll={windowScroll} />
-  ) : (
-    <ProjectLabelList entityId={entityId} windowScroll={windowScroll} />
-  );
+export function LabelList({ entity, entityId, ...hostProps }: LabelsScopeProps & LabelsHostProps) {
+  return entity === 'workspace' ? <WorkspaceLabelList entityId={entityId} {...hostProps} /> : <ProjectLabelList entityId={entityId} {...hostProps} />;
 }
