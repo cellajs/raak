@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.1.18](https://github.com/cellajs/raak/compare/0.1.17...0.1.18) (2026-10-20)
+
+
+### 🎉 New features
+
+* ui progress ([5895f7a](https://github.com/cellajs/raak/commit/5895f7a4532df81ead7a42378892561bfe2f61cb))
+
+
+### 🐞 Bug fixes
+
+* **task:** board search has one filter toggle, aligned controls and a found count that matches stepping ([#193](https://github.com/cellajs/raak/issues/193)) ([0efe920](https://github.com/cellajs/raak/commit/0efe920888e82ca6baca29917b4550858781d296))
+* **task:** teammates see whose device holds a file not uploaded yet, and offline uploads reach them once uploaded ([#196](https://github.com/cellajs/raak/issues/196)) ([516b339](https://github.com/cellajs/raak/commit/516b3395727cf6780b8c31cd43a5d6cde988127e))
+
+
+### 🔧 Small improvements
+
+* **task,label:** task cards draw their type icon inline, so the board no longer stalls while scrolling ([#197](https://github.com/cellajs/raak/issues/197)) ([9232aa6](https://github.com/cellajs/raak/commit/9232aa67d36b7c68a56d08e41df062f674d3e907))
+
+
+### 🧹 Chores
+
+* sync upstream cella v0.20.0 (1abfcd2e) ([#195](https://github.com/cellajs/raak/issues/195)) ([778ccc9](https://github.com/cellajs/raak/commit/778ccc926f5f17efb440122bf853e78e0fcb49a9))
+* sync upstream cella v0.20.0 (82f324f9) ([#198](https://github.com/cellajs/raak/issues/198)) ([3c83d41](https://github.com/cellajs/raak/commit/3c83d41f4343923d4d53ea99941e723a4fcc8e54))
+* tune ui of variant color ([09e2fe5](https://github.com/cellajs/raak/commit/09e2fe561789fff6f5e8b38483a0871fe3547d5d))
+* ui tuning ([ae3a2a3](https://github.com/cellajs/raak/commit/ae3a2a3f5f87b40067bbbca4b514cd8333d2f104))
+
 ## [0.1.17](https://github.com/cellajs/raak/compare/0.1.16...0.1.17) (2026-10-19)
 
 
