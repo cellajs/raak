@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import lucideIcons from '~/modules/common/icons/lucide-icons.gen.json';
-import { SpriteIcon } from '~/modules/common/icons/sprite-icon';
+import { NamedIcon } from '~/modules/common/icons/named-icon';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
 
@@ -19,7 +19,7 @@ interface IconPickerProps {
 }
 
 /**
- * Searchable grid over the full lucide icon set (sprite-rendered), for user-selectable
+ * Searchable grid over the full lucide icon set, for user-selectable
  * entity icons. Matches on name and lucide tag synonyms. Import lazily; the search index
  * is bundled into this chunk.
  */
@@ -48,7 +48,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
             onClick={() => onChange(name)}
             className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-accent', name === value && 'bg-accent ring-1 ring-ring')}
           >
-            <SpriteIcon name={name} className="size-5" />
+            <NamedIcon name={name} className="size-5" />
           </button>
         ))}
       </div>

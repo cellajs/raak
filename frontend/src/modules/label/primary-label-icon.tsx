@@ -1,5 +1,5 @@
 import { TagIcon } from 'lucide-react';
-import { SpriteIcon } from '~/modules/common/icons/sprite-icon';
+import { NamedIcon } from '~/modules/common/icons/named-icon';
 import { isLabelColorToken, labelPalette } from '~/modules/label/label-palette';
 import { cn } from '~/utils/cn';
 
@@ -16,5 +16,5 @@ export function PrimaryLabelIcon({ label, className }: PrimaryLabelIconProps) {
   const colorClass = isLabelColorToken(label?.color) ? labelPalette[label.color].icon : undefined;
   const iconClass = cn('shrink-0 fill-current/20', colorClass, className);
   if (!label?.icon) return <TagIcon className={iconClass} aria-hidden="true" />;
-  return <SpriteIcon name={label.icon} className={iconClass} aria-hidden="true" />;
+  return <NamedIcon name={label.icon} className={iconClass} aria-hidden="true" />;
 }
