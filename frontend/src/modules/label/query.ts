@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, type QueryClient, queryOptions, type UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, queryOptions, type UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import i18n from 'i18next';
 import {
   type CreateLabelsData,
@@ -24,8 +24,6 @@ import { createEntityKeys } from '~/query/basic/create-query-keys';
 import { registerEntityQueryKeys } from '~/query/basic/entity-query-registry';
 import { fetchAllPages } from '~/query/basic/fetch-all-pages';
 import { createCacheFinder } from '~/query/basic/find-in-list-cache';
-import { defaultOrderFor } from '~/query/basic/get-query-key-sort-order';
-import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 import { invalidateIfLastMutation, removePendingMutations } from '~/query/basic/invalidation-helpers';
 import { syncStaleTime } from '~/query/basic/sync-stale-state';
 import { addMutationRegistrar } from '~/query/mutation-registry';
@@ -76,16 +74,6 @@ const handleError = createResourceError('label');
 /** Look up a cached label entity by id across the org's label lists. */
 export const findLabelInCache = createCacheFinder<Label>('label');
 
-export const labelQueryOptions = (id: string, organizationId: string, tenantId: string) =>
-  queryOptions({
-    queryKey: keys.detail.byId(id),
-    queryFn: () => getLabel({ path: { id, organizationId, tenantId } }),
-    initialData: () => findLabelInCache(id),
-  });
-
-type LabelsListParams = Omit<NonNullable<GetLabelsData['query']>, 'limit' | 'offset' | 'afterSeq' | 'untilSeq'> &
-  GetLabelsData['path'] & { limit?: number };
-
 /**
  * Canonical label query: one flat list per project (labels are project-homed, `projectId notNull`),
  * stored at keys.list.home(organizationId, projectId). This is the row's canonical home list live
@@ -101,29 +89,6 @@ export const labelsCanonicalOptions = ({ organizationId, tenantId, projectId }: 
         appConfig.requestLimits.labels,
       );
     },
-    staleTime: syncStaleTime,
-  });
-};
-
-export const labelsQueryOptions = ({
-  q = '',
-  projectId,
-  workspaceId,
-  modes,
-  sort = 'name',
-  order = defaultOrderFor(sort),
-  limit = appConfig.requestLimits.labels,
-  organizationId,
-  tenantId,
-}: LabelsListParams) => {
-  const filters = { q, sort, order, modes, projectId, workspaceId };
-
-  return infiniteQueryOptions({
-    queryKey: keys.list.filtered(organizationId, filters),
-    ...offsetPaging(limit, (offset, signal) =>
-      getLabels({ query: { ...filters, ...pageQuery(limit, offset) }, path: { organizationId, tenantId }, signal }),
-    ),
-    meta: { persist: false },
     staleTime: syncStaleTime,
   });
 };
