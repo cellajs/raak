@@ -14,16 +14,11 @@ import { Button } from '~/modules/ui/button';
 const folded = { width: 0, height: 0, opacity: 0 };
 const unfolded = { width: 'auto', height: 'auto', opacity: 1 };
 
-interface TaskDragHandleProps {
-  task: Task;
-  /** Folded away until it has focus: on a collapsed card the arrow keys move between cards until then. */
-  revealOnFocus?: boolean;
-  /** False mounts it in place, as when an open row scrolls back into view. */
-  animateIn?: boolean;
-}
-
-/** Grip before the type button: unfolding, it pushes that button aside, and once focused the arrow keys step the card within its status. */
-export function TaskDragHandle({ task, revealOnFocus = false, animateIn = true }: TaskDragHandleProps) {
+/**
+ * Grip before the type button, folded away until it has focus, so only a keyboard reaches it. Unfolding, it pushes that
+ * button aside, and the arrow keys step the card within its status: until then they move between cards.
+ */
+export function TaskDragHandle({ task }: { task: Task }) {
   const { t } = useTranslation();
   const panelTasks = usePanelTasks();
   const { mutate: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
@@ -74,8 +69,8 @@ export function TaskDragHandle({ task, revealOnFocus = false, animateIn = true }
       {/* overflow-clip is no scroll container, so focusing the folded button does not scroll it */}
       <motion.div
         className="-ml-0.5 shrink-0 overflow-clip"
-        initial={animateIn ? folded : false}
-        animate={!revealOnFocus || hasFocus ? unfolded : folded}
+        initial={false}
+        animate={hasFocus ? unfolded : folded}
         transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         <Button

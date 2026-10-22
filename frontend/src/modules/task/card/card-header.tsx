@@ -28,9 +28,9 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
   return (
     <div className="flex w-full flex-row items-start justify-between py-1">
-      {/* A phone has no description gutter, so the grip sits beside the type button; from sm up that button drops into the gutter */}
+      {/* A phone has no description gutter, so the grip unfolds beside the type button; from sm up it pushes that button into the gutter */}
       <div className={cn('flex shrink-0 sm:flex-col', showDragHandle && 'sm:-mb-8')}>
-        {showDragHandle && <TaskDragHandle task={task} animateIn={animateClose} />}
+        {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       </div>
       <div className="ml-1 flex w-full flex-row items-center gap-1">

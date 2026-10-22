@@ -26,7 +26,7 @@ export function TaskCardContentCollapsed({ task, animateClose = false, showDragH
   return (
     <div className="relative flex w-full flex-row gap-1">
       <div className="flex shrink-0 flex-col">
-        {showDragHandle && <TaskDragHandle task={task} revealOnFocus />}
+        {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} />
       </div>
       {/* Grows to the card edge so the fade under the options button sits at the edge, not at the end of a short title */}
