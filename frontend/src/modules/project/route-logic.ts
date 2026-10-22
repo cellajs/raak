@@ -32,7 +32,6 @@ export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBe
     slugFetchCacheKey: projectQueryKeys.detail.byId,
     params,
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
-    routeTo: '/$tenantId/$organizationSlug/project/$slug',
   });
 
   // Warm the canonical task and label lists together so the board and its always-present labels

@@ -4,11 +4,12 @@ import { resolveTaskLink } from 'sdk';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
 import { toaster } from '~/modules/common/toaster/toaster';
+import { getMenuData } from '~/modules/navigation/menu-sheet/helpers/get-menu-data';
 import { useUserStore } from '~/modules/user/user-store';
-import { findWorkspaceByIdOrSlug } from '~/modules/workspace/query';
 import { getCachedMemberships } from '~/query/enrichment/helpers';
 import { cacheRestored } from '~/query/query-client';
 import { SpinnerPage } from '~/routes/-route-utils';
+import { getProductRoute } from '~/utils/channel-route';
 
 // Local wrapper so autoCodeSplitting keeps the spinner available to both the (split)
 // component and the (non-split) pendingComponent. The splitter only hoists shared local
@@ -20,12 +21,12 @@ function TaskLinkSpinner() {
 
 /**
  * Task link resolver route.
- * TODO [#16]: review
  *
  * When a user visits /t/:id (redirected from the backend OG/redirect handler),
  * this route resolves the task's context and decides where to send them:
  *
- * - Authenticated + has org access -> private project board with task sheet
+ * - Authenticated + has org access -> the project's page as the menu reaches it (its workspace board when the viewer
+ *   lists it under one, else the project board), task sheet open
  * - Authenticated + no access + public project -> public board with task sheet
  * - Authenticated + no access + private project -> error (no access)
  * - Not authenticated + public project -> public board with task sheet
@@ -52,33 +53,23 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
     const user = useUserStore.getState().user;
 
     if (user) {
-      // Wait for IDB cache restoration so memberships are available
+      // The memberships and channel lists decide the page: the restored cache has them, a fresh device loads them here.
       await cacheRestored;
+      await getMenuData();
 
       const memberships = getCachedMemberships();
       const hasOrgAccess = memberships?.some((m) => m.organizationId === organizationId);
 
       if (hasOrgAccess) {
-        const projectMembership = memberships?.find((m) => m.projectId === projectId && m.workspaceId);
-        const workspace = projectMembership?.workspaceId ? findWorkspaceByIdOrSlug(projectMembership.workspaceId, tenantId) : undefined;
-
-        if (workspace) {
-          // Redirect to workspace board filtered to this project, with task sheet open
-          throw redirect({
-            to: '/$tenantId/$organizationSlug/workspace/$slug',
-            params: { tenantId, organizationSlug: organizationSlug, slug: workspace.slug },
-            search: { projectSlug, taskSheetId: taskId },
-            replace: true,
-          });
-        }
-
-        // No workspace cached, redirect to project board directly.
-        throw redirect({
-          to: '/$tenantId/$organizationSlug/project/$slug',
-          params: { tenantId, organizationSlug: organizationSlug, slug: projectSlug },
-          search: { taskSheetId: taskId },
-          replace: true,
+        const route = getProductRoute({
+          tenantId,
+          organizationId,
+          channelType: 'project',
+          channelId: projectId,
+          entityType: 'task',
+          subjectId: taskId,
         });
+        if (route) throw redirect({ to: route.to, params: route.params, search: route.search, replace: true });
       }
 
       // No org access but project is public, show public view.
