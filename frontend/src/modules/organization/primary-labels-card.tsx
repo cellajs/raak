@@ -112,8 +112,8 @@ export function PrimaryLabelsCard({ organization }: Props) {
     const index = indexes[0];
     if (column.key === 'name') {
       const name = changed[index].name.trim();
-      // Backend validNameSchema requires 2+ chars; skipping persist reverts the edit on close
-      if (name.length < 2 || name === rows[index].name) return;
+      // A name may not be empty; skipping persist reverts the edit on close
+      if (!name || name === rows[index].name) return;
       persist(changed.with(index, { ...changed[index], name }));
       return;
     }
