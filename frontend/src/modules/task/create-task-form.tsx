@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDownIcon, TagIcon, UserXIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { type KeyboardEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -42,6 +41,7 @@ import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { COALESCED } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
+import { formResolver } from '~/utils/form-resolver';
 
 const exitDurationS = 0.3;
 const exitFallbackMs = exitDurationS * 1000 + 200;
@@ -78,7 +78,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   const taskMutation = useTaskCreateMutation(tenantId, organizationId);
 
   const formOptions: UseFormProps<NewTaskFormValues> = useMemo(
-    () => ({ resolver: zodResolver(createTaskFormSchema), defaultValues: { ...newTaskFormDefaults, id: defaultId, projectId } }),
+    () => ({ resolver: formResolver(createTaskFormSchema), defaultValues: { ...newTaskFormDefaults, id: defaultId, projectId } }),
     [],
   );
 
@@ -89,11 +89,13 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   // render-time form.getValues() reads of these fields go stale once dirty
   const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
-  // Default the primary label to the project's first entry once the set has loaded
+  // Default the primary label to the project's first entry once the set has loaded, also over a draft's deleted one
   const primaryLabels = usePrimaryLabels(projectId);
   const watchedPrimaryLabelId = useWatch({ control: form.control, name: 'primaryLabelId' });
   useEffect(() => {
-    if (!watchedPrimaryLabelId && primaryLabels[0]) form.setValue('primaryLabelId', primaryLabels[0].id);
+    // Read live: on mount the draft restore has just set it, after the render that watched it
+    const current = form.getValues('primaryLabelId');
+    if (primaryLabels[0] && !primaryLabels.some(({ id }) => id === current)) form.setValue('primaryLabelId', primaryLabels[0].id);
   }, [watchedPrimaryLabelId, primaryLabels, form.setValue]);
 
   // Field watchers key the JSON-based dirty check to relevant changes.
@@ -191,6 +193,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
     >
       <Form {...form}>
         <form
+          noValidate
           id={formId}
           ref={takeFocus}
           tabIndex={isDialog || isFocused ? 0 : -1}
@@ -383,7 +386,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
               <Button type="submit" disabled={!isDirty} press={false} className="grow rounded-none rounded-l">
                 <span>
                   {t('c:create')}
-                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${t(`c:${statusOptionsByValue[watchedStatus].status}`)}`}
                 </span>
               </Button>
 

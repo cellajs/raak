@@ -1,4 +1,5 @@
-import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
+import type { Label, UserMinimalBase } from 'sdk';
+import { zCreateTasksBody, zTask } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { focusWhenMounted, setCurrentItem } from '~/modules/board-focus/focus-item';
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
@@ -28,13 +29,18 @@ export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus)
   if (draftStatus === TaskStatus.Iced) togglePanelSectionExpandState(boardId, projectId, 'iced', true);
 };
 
+const rowId = z.object({ id: z.string() });
+
+/** A picked row, checked only on the id a create sends: a draft restores rows saved before their schema changed. */
+const pickedRow = <T extends { id: string }>() => z.custom<T>((row) => rowId.safeParse(row).success);
+
 export const createTaskFormSchema = z.object({
   ...zCreateTasksBody.element.omit({ stx: true }).shape,
   status: z.enum(TaskStatus),
   // Empty until the form resolves the project's default primary label (first by displayOrder)
   primaryLabelId: z.string(),
-  assignedTo: z.array(zUserMinimalBase),
-  labels: z.array(zLabel),
+  assignedTo: z.array(pickedRow<UserMinimalBase>()),
+  labels: z.array(pickedRow<Label>()),
 });
 
 export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;

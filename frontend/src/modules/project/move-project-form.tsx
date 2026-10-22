@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -13,8 +12,9 @@ import { useProjectMoveMutation } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
+import { formResolver } from '~/utils/form-resolver';
 
-const formSchema = z.object({ ...zMoveProjectToWorkspacePath.shape, ...zMoveProjectToWorkspaceQuery.shape });
+const formSchema = z.object({ ...zMoveProjectToWorkspacePath.shape, workspaceId: zMoveProjectToWorkspaceQuery.shape.workspaceId.min(1) });
 type FormValues = z.infer<typeof formSchema>;
 
 interface MoveProjectFormProps {
@@ -30,7 +30,7 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
-      resolver: zodResolver(formSchema),
+      resolver: formResolver(formSchema),
       defaultValues: {
         id: project.id,
         organizationId: project.organizationId,
@@ -66,7 +66,7 @@ export function MoveProjectForm({ project, workspaces, onSuccess }: MoveProjectF
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <SelectParentFormField parentType="workspace" control={form.control} label={t('c:workspace')} options={options} name="workspaceId" required />
         <div className="flex flex-col gap-2 sm:flex-row">
           <SubmitButton disabled={!form.isDirty} loading={isPending}>

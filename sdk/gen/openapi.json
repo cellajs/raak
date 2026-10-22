@@ -2284,8 +2284,7 @@
             "format": "uuid"
           },
           "message": {
-            "type": ["string", "null"],
-            "maxLength": 255
+            "type": ["string", "null"]
           },
           "email": {
             "type": "string",
@@ -3032,9 +3031,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     },
                     "color": {
                       "type": "string",
@@ -6676,9 +6675,9 @@
                   },
                   "displayName": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$",
+                    "pattern": "^[^\\p{Cc}<>]+$",
                     "description": "The institution's name, as the federation's metadata lists it"
                   },
                   "claimValues": {
@@ -6817,9 +6816,9 @@
                 "properties": {
                   "displayName": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$",
+                    "pattern": "^[^\\p{Cc}<>]+$",
                     "description": "The institution's name, as the federation's metadata lists it"
                   },
                   "claimValues": {
@@ -7433,15 +7432,15 @@
                   },
                   "firstName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "lastName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "language": {
                     "type": "string",
@@ -9338,7 +9337,7 @@
                   },
                   "message": {
                     "type": ["string", "null"],
-                    "maxLength": 255
+                    "maxLength": 5000
                   }
                 },
                 "required": ["email", "type", "message"]
@@ -9881,15 +9880,15 @@
                   },
                   "firstName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "lastName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "language": {
                     "type": "string",
@@ -10861,9 +10860,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   }
                 },
                 "required": ["name"]
@@ -10973,9 +10972,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "status": {
                     "type": "string",
@@ -11587,9 +11586,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     },
                     "slug": {
                       "type": "string",
@@ -12830,15 +12829,15 @@
                   },
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "shortName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "country": {
                     "type": ["string", "null"],
@@ -12909,9 +12908,9 @@
                             },
                             "name": {
                               "type": "string",
-                              "minLength": 2,
+                              "minLength": 1,
                               "maxLength": 255,
-                              "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                              "pattern": "^[^\\p{Cc}<>]+$"
                             },
                             "color": {
                               "type": "string",
@@ -13250,9 +13249,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     },
                     "slug": {
                       "type": "string",
@@ -14112,9 +14111,9 @@
                   },
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "thumbnailUrl": {
                     "type": ["string", "null"],
@@ -15151,9 +15150,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     }
                   },
                   "required": ["id", "name"]
@@ -15943,9 +15942,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   }
                 }
               }
@@ -19942,9 +19941,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "role": {
                     "type": "string",
@@ -19955,9 +19954,9 @@
                     "properties": {
                       "name": {
                         "type": "string",
-                        "minLength": 2,
+                        "minLength": 1,
                         "maxLength": 255,
-                        "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                        "pattern": "^[^\\p{Cc}<>]+$"
                       },
                       "scopes": {
                         "type": ["array", "null"],
@@ -20317,9 +20316,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "status": {
                     "type": "string",
@@ -20540,9 +20539,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "scopes": {
                     "type": ["array", "null"],

@@ -194,7 +194,7 @@
                             "name": {
                               "type": "string",
                               "required": true,
-                              "minLength": 2,
+                              "minLength": 1,
                               "maxLength": 255
                             },
                             "color": {
@@ -661,7 +661,7 @@
             "name": {
               "type": "string",
               "required": true,
-              "minLength": 2,
+              "minLength": 1,
               "maxLength": 255
             },
             "slug": {
@@ -965,7 +965,7 @@
                             "name": {
                               "type": "string",
                               "required": true,
-                              "minLength": 2,
+                              "minLength": 1,
                               "maxLength": 255
                             },
                             "color": {
@@ -1630,7 +1630,7 @@
                       "name": {
                         "type": "string",
                         "required": true,
-                        "minLength": 2,
+                        "minLength": 1,
                         "maxLength": 255
                       },
                       "color": {
@@ -2165,7 +2165,7 @@
                       "name": {
                         "type": "string",
                         "required": true,
-                        "minLength": 2,
+                        "minLength": 1,
                         "maxLength": 255
                       },
                       "color": {
@@ -2504,13 +2504,13 @@
           "name": {
             "type": "string",
             "required": false,
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 255
           },
           "shortName": {
             "type": ["string", "null"],
             "required": false,
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 255
           },
           "country": {
@@ -2593,7 +2593,7 @@
                     "name": {
                       "type": "string",
                       "required": true,
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255
                     },
                     "color": {
