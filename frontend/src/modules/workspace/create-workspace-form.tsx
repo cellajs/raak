@@ -25,15 +25,13 @@ import { organizationsListQueryOptions } from '../organization/query';
 const formSchema = z.object({
   ...zCreateWorkspacesBody.element.omit({ id: true }).shape,
   ...zCreateWorkspacesPath.shape,
-  // Generated path schema only checks max length; require a selection so
-  // `isValid` correctly disables submit and FormMessage surfaces the error.
+  // The generated path schema only checks max length. tenantId has no input: the organization sets it.
   organizationId: z.string().min(1),
-  tenantId: z.string().min(1),
 });
 type FormValues = z.infer<typeof formSchema>;
 
-// Programmatic field writes (org/tenant/name defaults) must not mark the form dirty or touched,
-// but still revalidate so `isValid` stays accurate.
+// Programmatic field writes (org/tenant/name defaults) must not mark the form dirty or touched; validating clears
+// the error a refused submit left on the field.
 const keepPristine = { shouldDirty: false, shouldTouch: false, shouldValidate: true } as const;
 
 interface CreateWorkspaceFormProps {
@@ -48,7 +46,6 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
   const items = flattenInfiniteData<Organization>(query.data);
 
   const formOptions: UseFormProps<FormValues> = {
-    mode: 'onTouched',
     resolver: formResolver(formSchema),
     defaultValues: { name: '', organizationId: '', tenantId: '' },
   };
@@ -57,7 +54,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
   const form = useFormWithDraft<FormValues>('create-workspace', { formOptions });
 
   const organizationId = useWatch({ control: form.control, name: 'organizationId' });
-  const { touchedFields, isValid } = useFormState({ control: form.control, name: ['name'] });
+  const { touchedFields } = useFormState({ control: form.control, name: ['name'] });
 
   const { mutate: create, isPending } = useWorkspaceCreateMutation();
 
@@ -103,12 +100,12 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
     [form.setValue, form.getValues, touchedFields.name],
   );
 
-  // Async queries mean single-org defaults are not available at first render.
+  // The hidden tenantId follows the organization once the list loads: the sole one, or one a draft restored
   useEffect(() => {
-    if (items.length !== 1 || organizationId) return;
+    const selectedOrg = organizationId ? items.find(({ id }) => id === organizationId) : items.length === 1 ? items[0] : undefined;
+    if (!selectedOrg) return;
 
-    const selectedOrg = items[0];
-    form.setValue('organizationId', selectedOrg.id, keepPristine);
+    if (!organizationId) form.setValue('organizationId', selectedOrg.id, keepPristine);
     onOrganizationSelect(selectedOrg);
   }, [items, organizationId, form.setValue, onOrganizationSelect]);
 
@@ -153,9 +150,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <SubmitButton disabled={!isValid} loading={isPending}>
-            {t('c:create')}
-          </SubmitButton>
+          <SubmitButton loading={isPending}>{t('c:create')}</SubmitButton>
           <Button
             type="reset"
             variant="secondary"
