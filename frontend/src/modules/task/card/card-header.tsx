@@ -28,9 +28,9 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
   return (
     <div className="flex w-full flex-row items-start justify-between py-1">
-      {/* A phone has no description gutter, so the grip sits beside the type button; from sm up that button drops into the gutter */}
+      {/* A phone has no description gutter, so the grip unfolds beside the type button; from sm up it pushes that button into the gutter */}
       <div className={cn('flex shrink-0 sm:flex-col', showDragHandle && 'sm:-mb-8')}>
-        {showDragHandle && <TaskDragHandle task={task} animateIn={animateClose} />}
+        {showDragHandle && <TaskDragHandle task={task} />}
         <TaskPrimaryLabelButton task={task} isSheet={isSheet} />
       </div>
       <div className="ml-1 flex w-full flex-row items-center gap-1">
@@ -53,8 +53,8 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
         <div className="grow" />
 
-        {/* The ellipsis comes last so it sits where a collapsed card shows it */}
-        <div className={cn('flex flex-row items-center gap-1', taskCardActionsReveal)}>
+        {/* The ellipsis comes last so it sits where a collapsed card shows it. A phone has no hover to reveal them. */}
+        <div className={cn('flex flex-row items-center gap-1', taskCardActionsReveal, 'max-sm:opacity-100')}>
           {!isSheet && <CardCloseButton animateIn={animateClose} onClick={() => useTaskCardStore.getState().setTaskState(task.id, 'collapsed')} />}
           <TaskOptionsButton task={task} isSheet={isSheet} />
         </div>

@@ -173,7 +173,12 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
                 expanded ? 'font-semibold hover:bg-accent/50 focus-visible:bg-accent/50' : "after:absolute after:inset-0 after:content-['']",
               )}
             >
-              <span className={cn('truncate', !expanded && 'opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100')}>
+              <span
+                className={cn(
+                  'truncate',
+                  !expanded && 'opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100 max-sm:opacity-100',
+                )}
+              >
                 <HighlightText text={row.name} />
               </span>
             </button>

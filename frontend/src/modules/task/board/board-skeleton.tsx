@@ -225,7 +225,7 @@ export function BoardHeaderSkeleton({
       ) : null}
 
       {hasProjects && !publicView && (
-        <Button variant="outline" className="sm:hidden">
+        <Button variant="ghost" className="sm:hidden">
           <TagIcon />
         </Button>
       )}

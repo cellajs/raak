@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { VirtualizerHandle } from 'virtua';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
-import { registerPanelStatusScroller } from '~/modules/task/helpers/panel-scroll-registry';
+import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { usePanelAutoScroll } from '~/modules/task/hooks/use-panel-drop-target';
 import { TaskStatus } from '~/modules/task/task-properties';
@@ -22,26 +21,13 @@ interface UsePanelScrollingOptions {
 
 /**
  * Owns all of a task panel's scroll machinery so the panel component stays layout-only:
- * the virtualizer/viewport refs, the keyboard-nav scroller registration, drag auto-scroll,
- * status-section visibility, the section-toggle pending scroll, and the desktop create-form /
- * mobile new-task scroll-into-view effects. Effect order is kept identical to the previous
- * inline version.
+ * the virtualizer/viewport refs, the keyboard-nav and status/task scroller registrations, drag
+ * auto-scroll, status-section visibility, the section-toggle pending scroll, and the desktop
+ * create-form scroll-into-view effect.
  */
 export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowScroll }: UsePanelScrollingOptions) {
-  // Use ref for the current item so the mobile scroll effect can read it without
-  // causing ALL panels to re-render on every focus change.
-  const currentItemIdRef = useRef(useBoardFocusStore.getState().currentItemId);
-  useEffect(
-    () =>
-      useBoardFocusStore.subscribe((s) => {
-        currentItemIdRef.current = s.currentItemId;
-      }),
-    [],
-  );
-
   const virtualizerRef = useRef<VirtualizerHandle>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
-  const initialLength = useRef(tasks.length);
 
   // Keep the latest tasks in a ref so the registered scroller always resolves the current index.
   const tasksRef = useRef(tasks);
@@ -63,26 +49,38 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
     });
   }, [panelId]);
 
-  // Register a status scroller so a cross-project drag can bring the source-status band into
-  // view, giving the drag between-card drop targets. Skips when any same-status card is already
-  // visible: scrolling away from usable drop targets under a held drag would disorient.
-  // Instant scroll: a smooth traversal mounts and measures every card along the way (see the
-  // iced-open note below).
+  // A cross-project drag brings the source-status band into view, giving the drag between-card drop targets. It skips
+  // when any same-status card is already visible: scrolling away from usable drop targets under a held drag would
+  // disorient. The mobile create dialog brings the new task into view, since it lands at its status, often off screen.
+  // Instant scroll: a smooth traversal mounts and measures every card along the way (see the iced-open note below).
   useEffect(() => {
-    return registerPanelStatusScroller(projectId, (status) => {
-      const virtualizer = virtualizerRef.current;
-      if (!virtualizer) return;
-      const tasks = tasksRef.current;
-      const targetIndex = getTargetIndexByStatus(tasks, status);
-      if (targetIndex === -1) return;
+    return registerPanelScroller(projectId, {
+      toStatus: (status) => {
+        const virtualizer = virtualizerRef.current;
+        if (!virtualizer) return;
+        const tasks = tasksRef.current;
+        const targetIndex = getTargetIndexByStatus(tasks, status);
+        if (targetIndex === -1) return;
 
-      const startIndex = virtualizer.findItemIndex(virtualizer.scrollOffset);
-      const endIndex = virtualizer.findItemIndex(virtualizer.scrollOffset + virtualizer.viewportSize);
-      for (let i = Math.max(0, startIndex); i <= endIndex && i < tasks.length; i++) {
-        if (tasks[i].status === status && !isDraftTask(tasks[i])) return;
-      }
+        const startIndex = virtualizer.findItemIndex(virtualizer.scrollOffset);
+        const endIndex = virtualizer.findItemIndex(virtualizer.scrollOffset + virtualizer.viewportSize);
+        for (let i = Math.max(0, startIndex); i <= endIndex && i < tasks.length; i++) {
+          if (tasks[i].status === status && !isDraftTask(tasks[i])) return;
+        }
 
-      virtualizer.scrollToIndex(targetIndex, { align: 'center', smooth: false });
+        virtualizer.scrollToIndex(targetIndex, { align: 'center', smooth: false });
+      },
+      toTask: (taskId) => {
+        const virtualizer = virtualizerRef.current;
+        const index = tasksRef.current.findIndex(({ id }) => id === taskId);
+        if (!virtualizer || index === -1) return;
+
+        // A card on an edge can sit under the sticky header or the floating nav, so only one strictly inside counts as visible
+        const startIndex = virtualizer.findItemIndex(virtualizer.scrollOffset);
+        const endIndex = virtualizer.findItemIndex(virtualizer.scrollOffset + virtualizer.viewportSize);
+        if (index <= startIndex || index >= endIndex) virtualizer.scrollToIndex(index, { align: 'center', smooth: false });
+        requestAnimationFrame(() => triggerTaskGlow(taskId));
+      },
     });
   }, [projectId]);
 
@@ -183,24 +181,6 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
     });
     return () => cancelAnimationFrame(frame);
   }, [draftPlacement]);
-
-  // Mobile: scroll to focused task when a new task is added
-  useEffect(() => {
-    const currentItemId = currentItemIdRef.current;
-    if (!isMobile || !currentItemId || initialLength.current === tasks.length) return;
-    const targetIndex = tasks.findIndex(({ id }) => id === currentItemId);
-
-    if (targetIndex <= 0) return;
-    const startIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset) ?? 0;
-    const endIndex = virtualizerRef.current?.findItemIndex(virtualizerRef.current.scrollOffset + virtualizerRef.current.viewportSize) ?? 0;
-    const targetIndexVisible = targetIndex >= startIndex && targetIndex <= endIndex;
-
-    if (!targetIndexVisible) {
-      virtualizerRef.current?.scrollToIndex(targetIndex, { smooth: false, align: 'center' });
-      requestAnimationFrame(() => triggerTaskGlow(currentItemId));
-    }
-    initialLength.current++;
-  }, [tasks.length]);
 
   return { virtualizerRef, scrollViewportRef, handleSectionToggle };
 }

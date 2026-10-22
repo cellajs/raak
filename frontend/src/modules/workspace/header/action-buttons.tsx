@@ -1,9 +1,11 @@
 import { useSuspenseInfiniteQuery, useSuspenseQuery } from '@tanstack/react-query';
 import type { VariantProps } from 'class-variance-authority';
 import { EllipsisVerticalIcon, PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react';
-import { useRef } from 'react';
+import { type RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from 'sdk';
+import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
+import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
@@ -11,11 +13,11 @@ import { createNewProject, openProjectMembersSheet, openProjectSettingsSheet } f
 import { projectsListQueryOptions } from '~/modules/project/query';
 import type { EnrichedProject } from '~/modules/project/types';
 import { Button, type buttonVariants } from '~/modules/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '~/modules/ui/dropdown-menu';
 import { workspaceQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext, workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 import { WorkspaceSettings } from '~/modules/workspace/workspace-settings';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { cn } from '~/utils/cn';
 
 /**
  * Action buttons for the workspace header, including create project and workspace settings.
@@ -39,14 +41,14 @@ export function WorkspaceActionButtons() {
 
   const refs = { add: useRef(null), workspace: useRef(null), project: useRef(null) };
 
-  const openPreferencesSheet = () =>
+  const openPreferencesSheet = (triggerRef: RefObject<HTMLButtonElement | null>) =>
     useSheeter.getState().create(
       <div className="container w-full">
         <WorkspaceSettings workspace={workspace} sheet />
       </div>,
       {
         id: 'update-workspace',
-        triggerRef: refs.workspace,
+        triggerRef,
         side: 'right',
         className: 'max-w-full lg:max-w-4xl',
         title: t('c:resource_settings', { resource: t('c:workspace') }),
@@ -58,7 +60,7 @@ export function WorkspaceActionButtons() {
   const actions = [
     {
       key: 'add',
-      icon: <PlusIcon />,
+      icon: PlusIcon,
       label: t('c:add_resource', { resource: t('c:project').toLowerCase() }),
       onClick: createNewProject,
       ref: refs.add,
@@ -66,7 +68,7 @@ export function WorkspaceActionButtons() {
     },
     {
       key: 'workspace',
-      icon: <SettingsIcon />,
+      icon: SettingsIcon,
       label: t('c:resource_settings', { resource: t('c:workspace') }),
       onClick: openPreferencesSheet,
       ref: refs.workspace,
@@ -74,13 +76,50 @@ export function WorkspaceActionButtons() {
     },
   ];
 
+  const openMobileMenu = (currentTarget: HTMLButtonElement) => {
+    const isMobile = window.innerWidth < 640;
+    const triggerRef = { current: currentTarget };
+    const select = (action: () => void) => () => {
+      useDropdowner.getState().remove();
+      action();
+    };
+
+    useDropdowner.getState().create(
+      <>
+        {actions.map(({ key, icon, label, onClick }) => (
+          <DropdownActionItem key={key} isMobile={isMobile} icon={icon} onSelect={select(() => onClick(triggerRef))}>
+            {label}
+          </DropdownActionItem>
+        ))}
+        {project && projectMembership && (
+          <>
+            <DropdownActionItem isMobile={isMobile} icon={UsersIcon} onSelect={select(() => openProjectMembersSheet(project, triggerRef))}>
+              {t('c:project_members')}
+            </DropdownActionItem>
+            <DropdownActionItem isMobile={isMobile} icon={SettingsIcon} onSelect={select(() => openProjectSettingsSheet(project, triggerRef))}>
+              {t('c:resource_settings', { resource: t('c:project') })}
+            </DropdownActionItem>
+          </>
+        )}
+      </>,
+      {
+        id: 'workspace-options',
+        triggerId: 'workspace-options-btn',
+        triggerRef,
+        align: 'end',
+        kind: 'menu',
+        popupClassName: 'min-w-48',
+      },
+    );
+  };
+
   return (
     <>
       {/* Desktop Buttons */}
-      {actions.map(({ key, icon, label, onClick, ref, variant }) => (
+      {actions.map(({ key, icon: Icon, label, onClick, ref, variant }) => (
         <TooltipButton key={key} className="max-md:hidden" toolTipContent={label}>
-          <Button ref={ref} variant={variant as VariantProps<typeof buttonVariants>['variant']} onClick={onClick}>
-            {icon}
+          <Button ref={ref} variant={variant as VariantProps<typeof buttonVariants>['variant']} onClick={() => onClick(ref)}>
+            <Icon />
             {key === 'add' && (
               <>
                 <span className="max-md:hidden xl:hidden">{t('c:add')}</span>
@@ -91,37 +130,14 @@ export function WorkspaceActionButtons() {
         </TooltipButton>
       ))}
 
-      {/* Mobile Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className={`group-data-[search-focused=true]/boardHeader:hidden md:hidden ${searchQuery && 'hidden'}`}
-          render={<Button variant="ghost" aria-label={t('c:resource_options', { resource: t('c:workspace') })} />}
-        >
-          <EllipsisVerticalIcon />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="min-w-48 p-1" align="end">
-          {actions.map(({ key, icon, label, onClick, ref }) => (
-            <DropdownMenuItem key={key} ref={ref} onClick={onClick} className="flex items-center gap-2">
-              {icon}
-              <span>{label}</span>
-            </DropdownMenuItem>
-          ))}
-          {projectMembership && <DropdownMenuSeparator />}
-
-          {project && projectMembership && (
-            <DropdownMenuItem onClick={() => openProjectMembersSheet(project)} className="flex items-center gap-2">
-              <UsersIcon />
-              <span>{t('c:project_members')}</span>
-            </DropdownMenuItem>
-          )}
-          {project && projectMembership && (
-            <DropdownMenuItem onClick={() => openProjectSettingsSheet(project)} className="flex items-center gap-2">
-              <SettingsIcon />
-              <span>{t('c:resource_settings', { resource: t('c:project') })}</span>
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="ghost"
+        aria-label={t('c:resource_options', { resource: t('c:workspace') })}
+        onClick={({ currentTarget }) => openMobileMenu(currentTarget)}
+        className={cn('data-dropdowner-active:bg-accent/50 group-data-[search-focused=true]/boardHeader:hidden md:hidden', searchQuery && 'hidden')}
+      >
+        <EllipsisVerticalIcon />
+      </Button>
     </>
   );
 }
