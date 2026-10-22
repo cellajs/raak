@@ -35,7 +35,6 @@ export const workspaceRouteBeforeLoad = async ({ params, context, search }: Work
     slugFetchCacheKey: workspaceQueryKeys.detail.byId,
     params,
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
-    routeTo: '/$tenantId/$organizationSlug/workspace/$slug',
   });
 
   // Prefetch projects and tasks so views (board/table) don't waterfall. Labels are project-homed,
