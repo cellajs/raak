@@ -89,11 +89,13 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   // render-time form.getValues() reads of these fields go stale once dirty
   const watchedStatus = useWatch({ control: form.control, name: 'status' });
 
-  // Default the primary label to the project's first entry once the set has loaded
+  // Default the primary label to the project's first entry once the set has loaded, also over a draft's deleted one
   const primaryLabels = usePrimaryLabels(projectId);
   const watchedPrimaryLabelId = useWatch({ control: form.control, name: 'primaryLabelId' });
   useEffect(() => {
-    if (!watchedPrimaryLabelId && primaryLabels[0]) form.setValue('primaryLabelId', primaryLabels[0].id);
+    // Read live: on mount the draft restore has just set it, after the render that watched it
+    const current = form.getValues('primaryLabelId');
+    if (primaryLabels[0] && !primaryLabels.some(({ id }) => id === current)) form.setValue('primaryLabelId', primaryLabels[0].id);
   }, [watchedPrimaryLabelId, primaryLabels, form.setValue]);
 
   // Field watchers key the JSON-based dirty check to relevant changes.
