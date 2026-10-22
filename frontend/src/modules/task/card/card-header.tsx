@@ -53,8 +53,8 @@ export function TaskCardHeader({ task, isSheet = false, animateClose = false, sh
 
         <div className="grow" />
 
-        {/* The ellipsis comes last so it sits where a collapsed card shows it */}
-        <div className={cn('flex flex-row items-center gap-1', taskCardActionsReveal)}>
+        {/* The ellipsis comes last so it sits where a collapsed card shows it. A phone has no hover to reveal them. */}
+        <div className={cn('flex flex-row items-center gap-1', taskCardActionsReveal, 'max-sm:opacity-100')}>
           {!isSheet && <CardCloseButton animateIn={animateClose} onClick={() => useTaskCardStore.getState().setTaskState(task.id, 'collapsed')} />}
           <TaskOptionsButton task={task} isSheet={isSheet} />
         </div>
