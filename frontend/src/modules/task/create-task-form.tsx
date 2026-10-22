@@ -28,6 +28,7 @@ import {
   newTaskFormIsDirty,
 } from '~/modules/task/helpers/create-task';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
+import { revealTask } from '~/modules/task/helpers/panel-scroll-registry';
 import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
 import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
@@ -119,6 +120,8 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
     if (!pendingCloseRef.current) return;
     pendingCloseRef.current = false;
     handleCloseForm();
+    // The dialog's scroll lock puts the board back where it was as the dialog unmounts
+    if (isDialog) requestAnimationFrame(() => revealTask(projectId, defaultId));
   };
 
   const onSubmit = async (values: NewTaskFormValues) => {
