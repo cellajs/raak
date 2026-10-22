@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 import { type UseFormProps, useFormState, useWatch } from 'react-hook-form';
@@ -20,6 +19,7 @@ import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useWorkspaceCreateMutation } from '~/modules/workspace/query';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { formResolver } from '~/utils/form-resolver';
 import { organizationsListQueryOptions } from '../organization/query';
 
 const formSchema = z.object({
@@ -49,7 +49,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
 
   const formOptions: UseFormProps<FormValues> = {
     mode: 'onTouched',
-    resolver: zodResolver(formSchema),
+    resolver: formResolver(formSchema),
     defaultValues: { name: '', organizationId: '', tenantId: '' },
   };
 
@@ -139,7 +139,7 @@ function CreateWorkspaceForm({ callback, dialog: isDialog }: CreateWorkspaceForm
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <SelectParentFormField
           parentType="organization"
           control={form.control}
