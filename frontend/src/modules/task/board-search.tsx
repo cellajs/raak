@@ -1,6 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDebounce } from '~/hooks/use-debounce';
 import { useSearchParams } from '~/hooks/use-search-params';
 import { setCurrentItem } from '~/modules/board-focus/focus-item';
@@ -29,6 +30,7 @@ const noStep = () => {};
 
 export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: BoardSearchProps) {
   const { t } = useTranslation();
+  const isMobile = useBreakpointBelow('sm');
 
   const inputRef = useRef<HTMLInputElement>(null);
   const { isFilterActive } = useContext(TableFilterBarContext);
@@ -107,7 +109,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
         name="boardSearch"
         onFocus={toggleFocus}
         onBlur={toggleFocus}
-        placeholder={searchLabel}
+        placeholder={isMobile ? t('c:placeholder.search') : searchLabel}
         aria-label={searchLabel}
         className={'h-10 w-full border-0 pl-0! shadow-none'}
         value={inputValue}
