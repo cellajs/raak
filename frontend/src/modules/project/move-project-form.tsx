@@ -14,7 +14,7 @@ import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { formResolver } from '~/utils/form-resolver';
 
-const formSchema = z.object({ ...zMoveProjectToWorkspacePath.shape, ...zMoveProjectToWorkspaceQuery.shape });
+const formSchema = z.object({ ...zMoveProjectToWorkspacePath.shape, workspaceId: zMoveProjectToWorkspaceQuery.shape.workspaceId.min(1) });
 type FormValues = z.infer<typeof formSchema>;
 
 interface MoveProjectFormProps {

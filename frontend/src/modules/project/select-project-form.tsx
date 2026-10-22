@@ -101,7 +101,7 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
           control={form.control}
           name="selectedProjects"
           render={({ field: { value, onChange } }) => (
-            <FormItem name={'id'}>
+            <FormItem name="selectedProjects">
               <FormLabel>
                 {t('c:project_other')}
                 <span className="ml-1 opacity-50">*</span>
