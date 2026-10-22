@@ -386,7 +386,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
               <Button type="submit" disabled={!isDirty} press={false} className="grow rounded-none rounded-l">
                 <span>
                   {t('c:create')}
-                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${statusOptionsByValue[watchedStatus].status}`}
+                  {watchedStatus === TaskStatus.Unstarted ? '' : ` & ${t(`c:${statusOptionsByValue[watchedStatus].status}`)}`}
                 </span>
               </Button>
 
