@@ -24,10 +24,8 @@ interface PanelDragHandleButtonProps {
 }
 
 /**
- * A panel header / collapsed-slot button wired as a keyboard-accessible drag handle.
- * Consumes the board's drag context (null when the board isn't reorderable) and applies the
- * shared grab-cursor + sortable ARIA. Per-panel layout is supplied via `className`. On hover the
- * leading `icon` cross-fades to a drag grip so the handle reads as draggable.
+ * A panel header button wired as a keyboard-accessible drag handle from the board's drag context (null when the
+ * board is not reorderable). On hover the `icon` cross-fades to a drag grip.
  */
 export function PanelDragHandleButton({ name, fallbackLabel, className, icon, preview, children }: PanelDragHandleButtonProps) {
   const { t } = useTranslation();
@@ -36,7 +34,6 @@ export function PanelDragHandleButton({ name, fallbackLabel, className, icon, pr
   return (
     <>
       <Button
-        type="button"
         variant="ghost"
         ref={panelDrag?.registerHandle}
         className={cn(className, panelDrag && 'group/drag cursor-grab active:cursor-grabbing')}

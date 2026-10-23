@@ -7,19 +7,14 @@ import { CreateTaskForm } from '~/modules/task/create-task-form';
 import type { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
 
-/**
- * Memo'd wrapper for draft tasks with a current-item boolean selector.
- */
-export const DraftTaskItem = memo(function DraftTaskItem({
-  task,
-  project,
-  onStatusChange,
-}: {
+interface DraftTaskItemProps {
   task: TaskProps['task'];
   project: Project;
   onStatusChange: (status: TaskStatus) => void;
-}) {
-  const isFocused = useBoardFocusStore((s) => s.currentItemId === task.id);
+}
+
+export const DraftTaskItem = memo(function DraftTaskItem({ task, project, onStatusChange }: DraftTaskItemProps) {
+  const isFocused = useBoardFocusStore((state) => state.currentItemId === task.id);
   const itemRef = useRef<HTMLDivElement>(null);
   useItemControlsTabOrder(itemRef, task.id, isFocused);
   useEffect(() => (isFocused ? markCurrentItemMounted(task.id) : undefined), [isFocused, task.id]);

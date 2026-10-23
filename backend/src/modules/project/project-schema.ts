@@ -20,7 +20,7 @@ import {
   validTempIdSchema,
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
-import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
+import { auditShape } from '#/schemas/entity-base';
 
 /** Task status counts for accepted/iced cutoff display */
 const taskStatusCountsSchema = z.object({
@@ -41,8 +41,7 @@ const projectIncludedSchema = baseIncluded.extend({
 export const projectSchema = z
   .object({
     ...createSelectSchema(projectsTable).shape,
-    createdBy: nullableUserMinimalBaseSchema,
-    updatedBy: nullableUserMinimalBaseSchema,
+    ...auditShape,
     createdAt: z.string(),
     updatedAt: z.string().nullable(),
     included: projectIncludedSchema,
@@ -57,15 +56,14 @@ export const projectWithMembershipSchema = projectSchema.extend({ included: proj
 
 /** Wire registration: lens-widened schemas + entity-bound runtime seam for project */
 export const projectContract = evolutionContract.channel('project', {
-  createItem: z.object({ id: validTempIdSchema, name: validNameSchema, slug: validSlugSchema, publicAt: z.string().nullable() }),
+  createItem: z.object({ id: validTempIdSchema, name: validNameSchema, slug: validSlugSchema, public: z.boolean() }),
   updateBody: createInsertSchema(projectsTable, {
     slug: validSlugSchema,
     name: validNameSchema,
     thumbnailUrl: validCDNUrlSchema.nullable(),
     bannerUrl: validCDNUrlSchema.nullable(),
-    publicAt: z.string().nullable(),
   })
-    .pick({ slug: true, name: true, thumbnailUrl: true, bannerUrl: true, publicAt: true })
+    .pick({ slug: true, name: true, thumbnailUrl: true, bannerUrl: true, public: true })
     .partial(),
 });
 

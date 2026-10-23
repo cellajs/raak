@@ -1,54 +1,31 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from '~/hooks/use-search-params';
+import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { BaseEntityGrid, EntityGridBar } from '~/modules/entities/entity-grid';
-import { workspacesListQueryOptions } from './query';
-import { WorkspaceTile } from './tile';
+import { workspacesListQueryOptions } from '~/modules/workspace/query';
+import { WorkspaceTile } from '~/modules/workspace/workspace-tile';
 
-type WorkspaceSearch = Parameters<typeof workspacesListQueryOptions>[0];
-
-interface Props {
-  fixedQuery?: Partial<WorkspaceSearch>;
-  focusView?: boolean;
-  saveDataInSearch?: boolean;
-}
-
-export function WorkspacesGrid({ fixedQuery, saveDataInSearch, focusView }: Props) {
-  const { search: baseSearch, setSearch } = useSearchParams({ saveDataInSearch });
-
-  const search: WorkspaceSearch = { ...baseSearch, ...(fixedQuery ?? {}) };
+export function WorkspacesGrid() {
+  const { search, setSearch } = useSearchParams();
 
   const queryOptions = workspacesListQueryOptions({ ...search, excludeArchived: 'true' });
 
-  const q = search.q ?? '';
-  const isFiltered = !!q;
-
-  const { data, isFetching, isLoading, error, hasNextPage, fetchNextPage } = useInfiniteQuery({
-    ...queryOptions,
-    select: (data) => data.pages.flatMap((p) => p.items),
-  });
+  const { rows: entities, isLoading, isFetching, error, hasNextPage, fetchMore } = useInfiniteRows(queryOptions);
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <EntityGridBar
-        queryKey={queryOptions.queryKey}
-        searchVars={baseSearch}
-        label={'c:workspace'}
-        entityType="workspace"
-        setSearch={setSearch}
-        focusView={focusView}
-      />
+      <EntityGridBar queryKey={queryOptions.queryKey} searchVars={search} label="c:workspace" entityType="workspace" setSearch={setSearch} />
 
       <BaseEntityGrid
         label="c:workspace"
         renderTile={(entity) => <WorkspaceTile entity={entity} />}
         skeletonHeight={72}
-        entities={data}
+        entities={entities}
         isLoading={isLoading}
         isFetching={isFetching}
         error={error}
         hasNextPage={hasNextPage}
-        fetchNextPage={fetchNextPage}
-        isFiltered={isFiltered}
+        fetchNextPage={fetchMore}
+        isFiltered={!!search.q}
       />
     </div>
   );

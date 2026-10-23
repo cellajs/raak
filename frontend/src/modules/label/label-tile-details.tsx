@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
 import { EntityChip } from '~/modules/common/entity-chip';
 import { Spinner } from '~/modules/common/spinner';
 import { useLabelUpdateMutation } from '~/modules/label/query';
@@ -30,30 +29,24 @@ interface LabelTileDetailsProps {
   canManage: boolean;
 }
 
-/**
- * Body of an expanded label tile: the tag/epic switch for members, open tasks per project and,
- * for epics, the collaborative description.
- */
+/** Body of an expanded tile: the epic switch, open tasks per project and, for epics, the description. */
 export function LabelTileDetails({ row, indented, canManage }: LabelTileDetailsProps) {
   const { t } = useTranslation();
-  const { organizationId, tenantId } = useOrganizationLayoutContext();
-  const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
+  const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
 
   const switchId = `epic-switch-${row.id}`;
-  const projects = row.projectIds.map((id) => findProjectByIdOrSlug(id, tenantId)).filter((project) => !!project);
+  const projects = row.projectIds.map((id) => findProjectByIdOrSlug(id, row.tenantId)).filter((project) => !!project);
 
   return (
     <>
       <div className={cn('flex flex-col gap-3 pr-4 pb-3', indented ? 'pl-11' : 'pl-4')}>
-        {/* Promoting acts on this row only; same-slug siblings in other projects stay tags. Read-only viewers get the badge
-            the collapsed tile shows. */}
+        {/* Promoting acts on this row only; same-slug siblings in other projects stay tags */}
         {canManage ? (
           <div className="flex items-center gap-2">
             <Switch
               id={switchId}
               checked={row.mode === 'epic'}
               onCheckedChange={(checked) => updateLabel.mutate({ id: row.id, ops: { mode: checked ? 'epic' : 'secondary' } })}
-              aria-label={t('c:epic')}
             />
             <label htmlFor={switchId} className="cursor-pointer select-none pl-1 text-sm leading-none">
               {t('c:epic')}

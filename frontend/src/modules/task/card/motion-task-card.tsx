@@ -6,15 +6,15 @@ import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import type { TaskProps } from '~/modules/task/types';
 
-/**
- * Memoized wrapper for motion.div + TaskCard.
- * Prevents motion.div from rerendering when the panel rerenders
- * but individual task props haven't changed.
- */
-export const MotionTaskCard = memo(function MotionTaskCard({ task }: { task: TaskProps['task'] }) {
-  const state = useTaskCardStore((s) => s.states[task.id] ?? 'collapsed');
-  const isSelected = useTaskInteractionStore((s) => s.selectedTaskIds.includes(task.id));
-  const isFocused = useBoardFocusStore((s) => s.currentItemId === task.id);
+interface MotionTaskCardProps {
+  task: TaskProps['task'];
+}
+
+/** Prevents motion.div from rerendering when the panel rerenders but individual task props haven't changed. */
+export const MotionTaskCard = memo(function MotionTaskCard({ task }: MotionTaskCardProps) {
+  const state = useTaskCardStore((state) => state.states[task.id] ?? 'collapsed');
+  const isSelected = useTaskInteractionStore((state) => state.selectedTaskIds.includes(task.id));
+  const isFocused = useBoardFocusStore((state) => state.currentItemId === task.id);
 
   return (
     <motion.div layout={state === 'editing' ? false : 'position'} transition={{ duration: 0.3 }}>

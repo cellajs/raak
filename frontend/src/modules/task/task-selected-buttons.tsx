@@ -1,8 +1,8 @@
 import { CheckIcon, CircleDotDashedIcon, CopyIcon, TagIcon, TrashIcon, UserRoundPlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ConfirmText } from '~/modules/common/confirm-text';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
 import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -10,7 +10,7 @@ import { DeleteTasks } from '~/modules/task/delete-tasks';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { buildBulkFieldHandlers } from '~/modules/task/helpers/bulk-field-handlers';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
-import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
+import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -27,21 +27,21 @@ interface TaskSelectedButtonsProps {
 
 type PickerType = 'status' | 'labels' | 'assignedTo';
 
-/** Floating action bar for tasks selected on the board or table, all of one project: copy, set fields, delete + clear. */
+/** Floating action bar for tasks selected on the board or table, all of one project. */
 export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizationId, tenantId, orderTasks }: TaskSelectedButtonsProps) {
   const { t } = useTranslation();
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(tenantId, organizationId);
   const [copied, setCopied] = useState(false);
 
-  // Resolve fresh entities from the query cache at action time; list queries overlap, so dedupe by id
+  // Fresh entities from the query cache at action time; list queries overlap, so dedupe by id
   const resolveSelected = () => {
     const cached = new Map(cachedTasks().map((task) => [task.id, task]));
     const tasks = selectedTaskIds.flatMap((id) => cached.get(id) ?? []);
     return orderTasks?.(tasks) ?? tasks;
   };
 
-  const onCopy = async () => {
+  const handleCopy = async () => {
     const success = await copyTasksToClipboard(resolveSelected());
     if (!success) return toaster.error(t('c:copy_failed'));
     setCopied(true);
@@ -56,9 +56,9 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     const bulk = buildBulkFieldHandlers(tasks, { taskMutation, user });
     const base = { triggerId: `selected-tasks-${dropdownType}`, triggerRef: { current: currentTarget } };
 
-    if (dropdownType === 'status') handleTaskDropdownClick({ ...base, dropdownType, value: bulk.status, onChange: bulk.onStatusChange });
-    else if (dropdownType === 'labels') handleTaskDropdownClick({ ...base, dropdownType, projectId, ...bulk.labels });
-    else handleTaskDropdownClick({ ...base, dropdownType, projectId, ...bulk.assignedTo });
+    if (dropdownType === 'status') openTaskDropdown({ ...base, dropdownType, value: bulk.status, onChange: bulk.onStatusChange });
+    else if (dropdownType === 'labels') openTaskDropdown({ ...base, dropdownType, projectId, ...bulk.labels });
+    else openTaskDropdown({ ...base, dropdownType, projectId, ...bulk.assignedTo });
   };
 
   const resourceOf = (count: number) => (count > 1 ? t('c:task_other') : t('c:task')).toLowerCase();
@@ -67,19 +67,19 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     const tasks = resolveSelected();
     if (!tasks.length) return;
 
-    const { create, remove } = useDialoger.getState();
+    const { create, remove } = dialoger.getState();
     const removeDialog = () => remove('delete-tasks');
-    const onDeleted = () => {
+    const handleDeleted = () => {
       removeDialog();
       clearSelection();
     };
 
-    create(<DeleteTasks tasks={tasks} callback={onDeleted} onCancel={removeDialog} />, {
+    create(<DeleteTasks tasks={tasks} callback={handleDeleted} onCancel={removeDialog} />, {
       id: 'delete-tasks',
       triggerRef: { current: currentTarget },
       className: 'max-w-xl',
       title: t('c:delete_resource', { resource: resourceOf(tasks.length) }),
-      description: <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: tasks.length, resource: resourceOf(tasks.length) }} />,
+      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: tasks.length, resource: resourceOf(tasks.length) }} />,
     });
   };
 
@@ -94,7 +94,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
   return (
     <SelectionActionBar count={selectedTaskIds.length} onClear={clearSelection}>
       <TooltipButton toolTipContent={t('c:copy_content')} side="top">
-        <Button variant="default" aria-label={t('c:copy_content')} onClick={onCopy}>
+        <Button aria-label={t('c:copy_content')} onClick={handleCopy}>
           {copied ? <CheckIcon /> : <CopyIcon />}
           <span className="max-sm:hidden">{t('c:copy')}</span>
         </Button>

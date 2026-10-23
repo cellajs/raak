@@ -7,7 +7,6 @@ import { channelCountersTable } from '#/modules/entities/channel-counters-db';
 import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
-import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
 import { workspacesTable } from '#/modules/workspace/workspace-db';
 import { getOrderColumns } from '#/utils/order-column';
 import { textSearchFilter } from '#/utils/sql';
@@ -108,10 +107,9 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
     tieBreaker: workspacesTable.id,
   });
 
-  const { createdBy: _cb, updatedBy: _mb, ...workspaceCols } = getColumns(workspacesTable);
+  // Writer ids stay ids here; the operation resolves them to references for the page (`withActorRefs`).
   const selectShape = {
-    ...workspaceCols,
-    ...auditUserSelect,
+    ...getColumns(workspacesTable),
     membership: membershipBaseSelect,
     ...(countData && { counts: countData.countsSelect }),
   } as const;
@@ -124,8 +122,6 @@ export const findWorkspacesPaginated = async (ctx: DbContext, opts: FindWorkspac
   }
 
   const itemsQuery = query
-    .leftJoin(createdByUser, eq(createdByUser.id, workspacesTable.createdBy))
-    .leftJoin(updatedByUser, eq(updatedByUser.id, workspacesTable.updatedBy))
     .where(and(...workspaceWhere))
     .orderBy(...orderBy)
     .limit(limit)

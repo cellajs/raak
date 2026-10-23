@@ -1,21 +1,15 @@
-import { DeleteForm } from '~/modules/common/delete-form';
-import { type Label, useLabelDeleteMutation } from '~/modules/label/query';
+import type { Label } from 'sdk';
+import { DeleteItems, type DeleteItemsProps } from '~/modules/common/delete-items';
+import { useLabelDeleteMutation } from '~/modules/label/query';
 
-interface Props {
+interface DeleteLabelsProps extends Pick<DeleteItemsProps<Label, Label[]>, 'dialog' | 'callback' | 'onCancel'> {
   labels: Label[];
-  callback?: () => void;
-  onCancel: () => void;
 }
 
-export function DeleteLabels({ labels, callback, onCancel }: Props) {
+export function DeleteLabels({ labels, ...props }: DeleteLabelsProps) {
   // All labels belong to one organization, so the first one carries the ids.
-  const { mutate: deleteLabels, isPending } = useLabelDeleteMutation(labels[0].tenantId, labels[0].organizationId);
+  const mutation = useLabelDeleteMutation(labels[0].tenantId, labels[0].organizationId);
 
   // The delete is optimistic and queues offline, so the form does not wait for the server.
-  const onDelete = () => {
-    deleteLabels(labels);
-    callback?.();
-  };
-
-  return <DeleteForm allowOfflineDelete onDelete={onDelete} onCancel={onCancel} pending={isPending} />;
+  return <DeleteItems items={labels} mutation={mutation} toVariables={(items) => items} optimistic {...props} />;
 }

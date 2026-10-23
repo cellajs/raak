@@ -1,30 +1,14 @@
-import { useState } from 'react';
-import { DeleteForm } from '~/modules/common/delete-form';
+import { DeleteItems, type DeleteItemsProps } from '~/modules/common/delete-items';
 import { useTaskDeleteMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 
-interface DeleteTasksProps {
-  /** All of one organization, so the first task carries the ids. */
+interface DeleteTasksProps extends Pick<DeleteItemsProps<Task, Task[]>, 'callback' | 'onCancel'> {
   tasks: Task[];
-  callback?: () => void;
-  onCancel?: () => void;
 }
 
-export function DeleteTasks({ tasks, callback, onCancel }: DeleteTasksProps) {
-  const deleteMutation = useTaskDeleteMutation(tasks[0].tenantId, tasks[0].organizationId);
-  const [isPending, setIsPending] = useState(false);
+export function DeleteTasks({ tasks, ...props }: DeleteTasksProps) {
+  // All tasks belong to one organization, so the first one carries the ids.
+  const mutation = useTaskDeleteMutation(tasks[0].tenantId, tasks[0].organizationId);
 
-  const onDelete = async () => {
-    setIsPending(true);
-    try {
-      await deleteMutation.mutateAsync(tasks);
-      callback?.();
-    } catch {
-      // mutation error handling is done in the mutation itself
-    } finally {
-      setIsPending(false);
-    }
-  };
-
-  return <DeleteForm onDelete={onDelete} onCancel={onCancel ?? (() => {})} pending={isPending} />;
+  return <DeleteItems items={tasks} mutation={mutation} toVariables={(items) => items} {...props} />;
 }

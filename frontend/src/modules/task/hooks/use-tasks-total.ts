@@ -1,42 +1,29 @@
 import { useSearch } from '@tanstack/react-router';
 import { useSyncExternalStore } from 'react';
-import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
+import { subscribeToTaskCache } from '~/modules/task/helpers/active-task';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { type BaseTasksQueryParam, taskKeys } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { isQueryData } from '~/query/basic/mutate-query';
 import { queryClient } from '~/query/query-client';
 import type { QueryData } from '~/query/types';
 
-// Subscribe only to task-related query cache updates. A broad subscription re-runs the snapshot for
-// every unrelated query lifecycle event (e.g. an AI chat panel mounting its own useQuery hooks),
-// which can schedule a BoardHeader update mid-render of another component and trip React's
-// "setState in render" warning. Hoisted to module scope so useSyncExternalStore doesn't resubscribe
-// on every render.
-export const subscribeToTaskCache = (onStoreChange: () => void) =>
-  queryClient.getQueryCache().subscribe((event) => {
-    const key = event.query?.queryKey;
-    if (Array.isArray(key) && key[0] === 'task') onStoreChange();
-  });
-
 /** Total of the tasks on the board; while a search is active, the matches among the loaded tasks. */
 export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
   const q = useSearch({ strict: false, select: (search) => search.q });
   const matchMode = useSearch({ strict: false, select: (search) => search.matchMode });
-  const isPublicView = !queryParams;
 
   const isSearching = !!q?.trim();
-  // Exclude tenantId because it is not part of query keys.
-  const { tenantId: _, organizationId, ...scopeFilters } = queryParams ?? { organizationId: '', projectId: '' };
+  const queryKey = queryParams ? taskKeys.list.org(queryParams.organizationId) : taskKeys.publicList.base;
 
   return useSyncExternalStore(subscribeToTaskCache, () => {
-    const queryKey = !isPublicView ? taskKeys.list.org(organizationId) : taskKeys.publicList.filtered({ ...scopeFilters, publicAt: true as const });
     const queries = queryClient.getQueriesData<QueryData<Task>>({ queryKey, type: 'active' });
 
     if (!queries.length) return null;
 
     return queries.reduce((total, [, data]) => {
       if (!isQueryData<Task>(data)) return total;
-      if (isSearching) return total + data.items.filter((task) => searchFilterFunction({ q, matchMode }, task)).length;
+      if (isSearching) return total + data.items.filter((task) => matchesBoardSearch({ q, matchMode }, task)).length;
       return total + data.total;
     }, 0);
   });

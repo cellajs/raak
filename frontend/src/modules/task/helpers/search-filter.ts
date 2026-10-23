@@ -2,12 +2,12 @@ import type { Block } from '@blocknote/core';
 import { getSearchableTextFromBlocks } from 'shared/blocknote';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { foldText, matchesTerms } from 'shared/utils/text-match';
+import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import type { BoardSearchParams, Task } from '~/modules/task/types';
 
 type SearchableText = { text: string; folded: string };
 
-// Cached by task identity: React Query preserves unchanged references, and the WeakMaps release
-// tasks after cache eviction.
+// Cached by task identity: React Query preserves unchanged references, and the WeakMaps release evicted tasks
 const descriptionCache = new WeakMap<Task, SearchableText>();
 const summaryCache = new WeakMap<Task, SearchableText>();
 
@@ -27,12 +27,11 @@ export const descriptionText = (task: Task) => searchableText(descriptionCache, 
 export const summaryText = (task: Task) => searchableText(summaryCache, task, task.summary);
 
 /** Whether a task matches the board search; list-tasks.ts is the server leg of the same rule. */
-export const searchFilterFunction = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
+export const matchesBoardSearch = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
   const { q, matchMode = 'all' } = searchParams;
   const { terms } = parseSearchQuery(q);
 
-  // Always allow empty query or create-task
-  if (!terms.length || task.id.startsWith('create-task')) return true;
+  if (!terms.length || isDraftTask(task)) return true;
 
   const { keywords, labels, assignedTo } = task;
   const fields = [

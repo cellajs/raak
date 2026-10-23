@@ -1,44 +1,33 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo } from 'react';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zCreateProjectsBody } from 'sdk/zod.gen';
 import { generateId } from 'shared/utils/entity-id';
 import type { z } from 'zod';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
+import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SlugFormField } from '~/modules/common/form-fields/slug';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useProjectCreateMutation } from '~/modules/project/query';
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
-import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
+import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = zCreateProjectsBody.element.omit({ id: true });
 type FormValues = z.infer<typeof formSchema>;
-interface CreateProjectFormProps {
-  callback?: () => void;
-  dialog?: boolean;
-}
-
-export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) {
+export function CreateProjectForm() {
   const { t } = useTranslation();
 
   const { workspace } = useWorkspaceContext();
 
-  const formOptions: UseFormProps<FormValues> = useMemo(
-    () => ({ resolver: zodResolver(formSchema), defaultValues: { name: '', slug: '', publicAt: null } }),
-    [],
-  );
+  const formOptions: UseFormProps<FormValues> = { resolver: formResolver(formSchema), defaultValues: { name: '', slug: '', public: false } };
 
-  // Form with draft in local storage
   const form = useFormWithDraft<FormValues>('create-project', { formOptions });
 
-  // Watch to update slug field
   const name = useWatch({ control: form.control, name: 'name' });
 
   const { mutate: create, isPending } = useProjectCreateMutation();
@@ -51,10 +40,10 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
         query: { workspaceId: workspace.id },
       },
       {
-        onSuccess: async (createdProject) => {
+        onSuccess: (createdProject) => {
           toaster.success(t('c:success.create_resource', { resource: t('c:project') }));
           form.reset();
-          if (isDialog) useDialoger.getState().remove();
+          dialoger.getState().remove();
           selectBoardProject(createdProject.slug);
         },
       },
@@ -63,7 +52,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <InputFormField control={form.control} name="name" label={t('c:name')} required autoFocus />
         <SlugFormField
           control={form.control}
@@ -75,11 +64,11 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
         />
         <FormField
           control={form.control}
-          name="publicAt"
+          name="public"
           render={({ field }) => (
-            <FormItem className="flex-row items-center" name="publicAt">
+            <FormItem className="flex-row items-center" name="public">
               <FormControl>
-                <Checkbox checked={field.value !== null} onCheckedChange={(checked) => field.onChange(checked ? new Date().toISOString() : null)} />
+                <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
               </FormControl>
               <FormLabel>{t('c:public_access')}</FormLabel>
               <FormMessage />
@@ -90,15 +79,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
           <SubmitButton disabled={!form.isDirty} loading={isPending}>
             {t('c:create')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={form.isDirty ? '' : 'invisible'}
-            aria-label={t('c:cancel')}
-            onClick={() => form.reset()}
-          >
-            {t('c:cancel')}
-          </Button>
+          <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
         </div>
       </form>
     </Form>

@@ -1,7 +1,7 @@
 import type { ActorContext } from '#/core/context';
+import { withActorRef } from '#/modules/actors/actor-refs';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
-import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions/get-valid-channel';
 
 interface GetWorkspaceOpts {
@@ -19,7 +19,7 @@ export async function getWorkspaceOp(ctx: ActorContext, id: string, opts: GetWor
 
   const [counts, workspaceWithAudit] = await Promise.all([
     includeCounts ? getChannelCounts(ctx, { entityType: 'workspace', entityId: workspace.id }) : undefined,
-    withAuditUser(ctx, workspace),
+    withActorRef(ctx, workspace),
   ]);
 
   const included: { counts?: typeof counts; membership?: ReturnType<typeof toMembershipBase> } = {};

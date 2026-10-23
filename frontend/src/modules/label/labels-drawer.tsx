@@ -1,43 +1,39 @@
 import { useSearch } from '@tanstack/react-router';
 import i18n from 'i18next';
 import { TagIcon } from 'lucide-react';
-import { Suspense, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import { type TriggerRef, useSheeter } from '~/modules/common/sheeter/use-sheeter';
-import { Spinner } from '~/modules/common/spinner';
+import { sheeter, type TriggerRef } from '~/modules/common/sheeter/use-sheeter';
 import { LabelList } from '~/modules/label/label-list';
 import type { LabelsScopeProps } from '~/modules/label/types';
 import { Button } from '~/modules/ui/button';
 
-const LABELS_DRAWER_ID = 'labels-drawer';
+const labelsDrawerId = 'labels-drawer';
 
 // A filter only shows on the board behind the drawer
-const closeLabelsDrawer = () => useSheeter.getState().remove(LABELS_DRAWER_ID);
+const closeLabelsDrawer = () => sheeter.getState().remove(labelsDrawerId);
 
 const openLabelsDrawer = ({ entity, entityId }: LabelsScopeProps, triggerRef: TriggerRef) => {
-  if (useSheeter.getState().get(LABELS_DRAWER_ID)) return;
+  const { get, create } = sheeter.getState();
+  if (get(labelsDrawerId)) return;
 
-  useSheeter.getState().create(
-    <Suspense fallback={<Spinner className="my-4" noDelay />}>
-      <LabelList entity={entity} entityId={entityId} windowScroll selectable={false} singleExpand onFilterToggle={closeLabelsDrawer} />
-    </Suspense>,
-    { id: LABELS_DRAWER_ID, triggerRef, side: 'right', title: i18n.t('c:label_other').toLowerCase() },
-  );
+  const list = <LabelList entity={entity} entityId={entityId} windowScroll selectable={false} singleExpand onFilterToggle={closeLabelsDrawer} />;
+  create(list, { id: labelsDrawerId, triggerRef, side: 'right', title: i18n.t('c:label_other').toLowerCase() });
 };
 
-function MobileLabelsDrawerButton({ entity, entityId }: LabelsScopeProps) {
+function MobileLabelsDrawerButton(props: LabelsScopeProps) {
   const { t } = useTranslation();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const labelPageId = useSearch({ strict: false, select: (search) => search.labelPageId });
 
   // Mirrors the desktop board revealing its labels panel for a label link
   useEffect(() => {
-    if (labelPageId) openLabelsDrawer({ entity, entityId }, triggerRef);
+    if (labelPageId) openLabelsDrawer(props, triggerRef);
   }, [labelPageId]);
 
   // Past the breakpoint the sheeter would turn the drawer into a sheet beside the labels panel
-  useEffect(() => () => useSheeter.getState().remove(LABELS_DRAWER_ID, { isCleanup: true }), []);
+  useEffect(() => () => sheeter.getState().remove(labelsDrawerId, { isCleanup: true }), []);
 
   return (
     <Button
@@ -45,7 +41,7 @@ function MobileLabelsDrawerButton({ entity, entityId }: LabelsScopeProps) {
       variant="ghost"
       aria-label={t('c:label_other')}
       className="group-data-[search-focused=true]/boardHeader:hidden"
-      onClick={() => openLabelsDrawer({ entity, entityId }, triggerRef)}
+      onClick={() => openLabelsDrawer(props, triggerRef)}
     >
       <TagIcon />
     </Button>

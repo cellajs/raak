@@ -1,47 +1,53 @@
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLatestRef } from '~/hooks/use-latest-ref';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
+import { mobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-task-drag-indicator-store';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { getEdgeAndTargetOrder, isPanelData, isTaskData } from '~/modules/task/helpers/drag-and-drop';
 import { isCoarsePointerDevice, resolveMobileTaskDropIndicator } from '~/modules/task/helpers/mobile-drag-indicator';
 import { getNewTaskOrder, getRelativeTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
-import type { DropTarget, PanelDraggableData, TaskDraggableData } from '~/modules/task/types';
+import type { DropTarget, PanelDraggableData, Task, TaskDraggableData } from '~/modules/task/types';
 
-/**
- * Registers the global monitor that commits task drops: same-project reorders, cross-project
- * moves, column drops and the rect-derived mobile drop indicator. Mount once on every page
- * that renders a task board (workspace and project pages).
- */
+/** Registers the global monitor that commits task drops; mount once per page that renders a task board. */
 export const useTaskDropMonitor = (tenantId: string, organizationId: string) => {
   const { t } = useTranslation();
 
   const { mutate: updateTaskMutation } = useTaskUpdateMutation(tenantId, organizationId);
-  // Stable ref so the monitorForElements effect doesn't re-register on mutation state changes
-  const updateTaskRef = useRef(updateTaskMutation);
-  updateTaskRef.current = updateTaskMutation;
+  const updateTaskRef = useLatestRef(updateTaskMutation);
   const activeDragSourceRef = useRef<TaskDraggableData['item'] | null>(null);
   const latestInputRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
-  const changeProject = (data: { id: string; projectId: string; displayOrder?: number | null }) => {
+  const changeProject = (data: { id: string; projectId: string; displayOrder: number }) => {
     updateTaskRef.current({
       id: data.id,
-      ops: { projectId: data.projectId, ...(typeof data.displayOrder === 'number' && { displayOrder: data.displayOrder }) },
+      ops: { projectId: data.projectId, displayOrder: data.displayOrder },
       fullLabels: [],
       fullAssignedTo: [],
     });
   };
 
+  const dropNextToTask = (sourceItem: Task, targetTask: Task, pragmaticEdge: Edge, tasks: Task[]) => {
+    const { id, displayOrder, projectId, status } = sourceItem;
+    const { targetOrder, edge } = getEdgeAndTargetOrder(targetTask, sourceItem, pragmaticEdge, tasks);
+    const newOrder = getRelativeTaskOrder(edge, tasks, targetOrder, id, status);
+
+    if (projectId !== targetTask.projectId) changeProject({ id, projectId: targetTask.projectId, displayOrder: newOrder });
+    else if (newOrder !== displayOrder) updateTaskRef.current({ id, ops: { displayOrder: newOrder } });
+  };
+
   useEffect(() => {
-    const { clearIndicator, setIndicator } = useMobileTaskDragIndicatorStore.getState();
+    const { setIndicator } = mobileTaskDragIndicatorStore.getState();
+    const reportReorderFailure = () => toaster.error(t('error:reorder_resource', { resource: t('c:task') }));
 
     const updateMobileIndicator = () => {
-      if (!isCoarsePointerDevice()) return clearIndicator();
-      if (!activeDragSourceRef.current || !latestInputRef.current) return clearIndicator();
+      if (!isCoarsePointerDevice()) return setIndicator(null);
+      if (!activeDragSourceRef.current || !latestInputRef.current) return setIndicator(null);
 
       const indicator = resolveMobileTaskDropIndicator({
         clientX: latestInputRef.current.clientX,
@@ -52,15 +58,14 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
       setIndicator(indicator?.taskId ? indicator : null);
     };
 
-    const onScroll = () => updateMobileIndicator();
-    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    window.addEventListener('scroll', updateMobileIndicator, { capture: true, passive: true });
 
     return combine(
       () => {
-        window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('scroll', updateMobileIndicator, true);
         activeDragSourceRef.current = null;
         latestInputRef.current = null;
-        clearIndicator();
+        setIndicator(null);
       },
       monitorForElements({
         canMonitor: ({ source: { data } }) => isTaskData(data),
@@ -68,7 +73,7 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
           if (!isTaskData(source.data)) return;
           activeDragSourceRef.current = source.data.item;
           latestInputRef.current = null;
-          clearIndicator();
+          setIndicator(null);
         },
         onDrag: ({ source, location }) => {
           if (!isTaskData(source.data)) return;
@@ -82,87 +87,49 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
           },
           source: { data: sourceData },
         }) => {
-          const mobileIndicator = useMobileTaskDragIndicatorStore.getState().indicator;
-          clearIndicator();
+          const mobileIndicator = mobileTaskDragIndicatorStore.getState().indicator;
+          setIndicator(null);
           activeDragSourceRef.current = null;
           latestInputRef.current = null;
 
           if (!isTaskData(sourceData)) return;
 
-          // Extract the source item data and ensure it belongs to the current project
           const { item: sourceItem } = sourceData;
-          const { displayOrder: sourceOrder, projectId: sourceProjectId, status: sourceStatus, id: sourceId } = sourceItem;
 
           try {
-            // Resolve mobile drop first: the rect-derived indicator does not depend on Atlaskit's
-            // dropTargets, which are frequently empty after touch autoscroll (virtua sets
-            // pointer-events: none on the list while scrolling, so the native drag resolves to no
-            // drop target). Handling it here keeps mobile drops from becoming a no-op.
+            // The mobile drop resolves first: Atlaskit's dropTargets are often empty after touch autoscroll (virtua blocks pointer events)
             const mobileTargetTask = mobileIndicator ? cachedTasks().find((task) => task.id === mobileIndicator.taskId) : null;
             if (mobileIndicator && mobileTargetTask) {
               const tasks = cachedTasks().filter((task) => task.projectId === mobileTargetTask.projectId);
-              const { targetOrder, edge } = getEdgeAndTargetOrder(mobileTargetTask, sourceItem, mobileIndicator.edge, tasks);
-              const newOrder = getRelativeTaskOrder(edge, tasks, targetOrder, sourceId, sourceStatus);
-
-              if (newOrder === sourceOrder && sourceProjectId === mobileTargetTask.projectId) return;
-
-              if (sourceProjectId !== mobileTargetTask.projectId) {
-                changeProject({ id: sourceId, projectId: mobileTargetTask.projectId, displayOrder: newOrder });
-                return;
-              }
-
-              updateTaskRef.current({ id: sourceId, ops: { displayOrder: newOrder } });
+              dropNextToTask(sourceItem, mobileTargetTask, mobileIndicator.edge, tasks);
               return;
             }
 
-            // Identify the drop target types (task or column) from Atlaskit's drop targets
-            const taskTargetData = dropTargets.find((el): el is DropTarget<TaskDraggableData> => isTaskData(el.data))?.data ?? null;
-            const columnTargetData = dropTargets.find((el): el is DropTarget<PanelDraggableData> => isPanelData(el.data))?.data ?? null;
-
-            // Exit early if no valid drop target exists
-            if (!taskTargetData && !columnTargetData) return;
+            const taskTargetData =
+              dropTargets.find((dropTarget): dropTarget is DropTarget<TaskDraggableData> => isTaskData(dropTarget.data))?.data ?? null;
+            const columnTargetData =
+              dropTargets.find((dropTarget): dropTarget is DropTarget<PanelDraggableData> => isPanelData(dropTarget.data))?.data ?? null;
 
             if (columnTargetData && !taskTargetData) {
               const {
                 item: { tasks, projectId },
               } = columnTargetData;
 
-              const order = getNewTaskOrder(sourceStatus, tasks);
-
-              changeProject({ id: sourceId, projectId, displayOrder: order });
-
+              changeProject({ id: sourceItem.id, projectId, displayOrder: getNewTaskOrder(sourceItem.status, tasks) });
               return;
             }
 
             if (taskTargetData && columnTargetData) {
-              const {
-                item: { tasks },
-              } = columnTargetData;
-              const { item: targetTask } = taskTargetData;
-
               const pragmaticEdge = extractClosestEdge(taskTargetData);
-              if (!pragmaticEdge) throw new Error('Invalid drop edge');
+              if (!pragmaticEdge) return reportReorderFailure();
 
-              const { targetOrder, edge } = getEdgeAndTargetOrder(targetTask, sourceItem, pragmaticEdge, tasks);
-              const newOrder = getRelativeTaskOrder(edge, tasks, targetOrder, sourceId, sourceStatus);
-
-              // Exit early if order remains the same within one project
-              if (newOrder === sourceOrder && sourceProjectId === targetTask.projectId) return;
-
-              if (sourceProjectId !== targetTask.projectId) {
-                changeProject({ id: sourceId, projectId: targetTask.projectId, displayOrder: newOrder });
-                return;
-              }
-
-              // Execute the mutation with new order
-              updateTaskRef.current({ id: sourceId, ops: { displayOrder: newOrder } });
-              return;
+              dropNextToTask(sourceItem, taskTargetData.item, pragmaticEdge, columnTargetData.item.tasks);
             }
-          } catch (err) {
-            toaster.error(t('error:reorder_resource', { resource: t('c:task') }));
+          } catch {
+            reportReorderFailure();
           }
         },
       }),
     );
-  }, [organizationId, tenantId, t]);
+  }, [t]);
 };

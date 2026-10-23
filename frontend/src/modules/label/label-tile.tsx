@@ -1,16 +1,15 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { boardFocusStore, useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
 import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
 import { HighlightText } from '~/modules/common/match-highlight';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
-import { LabelFilterButton } from '~/modules/label/label-filter';
+import { LabelFilterButton } from '~/modules/label/label-filter-button';
 import { LabelOptionsButton } from '~/modules/label/label-options-button';
 import { LabelTileDetails, labelTileReveal } from '~/modules/label/label-tile-details';
-import { labelTileDomId, useLabelTileStore } from '~/modules/label/label-tile-store';
+import { labelTileStore, useLabelTileStore } from '~/modules/label/label-tile-store';
 import { useLabelUpdateMutation } from '~/modules/label/query';
 import type { LabelRow, LabelsHostProps } from '~/modules/label/types';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
@@ -20,46 +19,49 @@ import { Badge } from '~/modules/ui/badge';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 // Like a task card's actions: hidden on a collapsed tile until hover or keyboard focus. Pointer events
 // follow the opacity, so a tap lands on the tile and expands it. Focus from a tap must not reveal: the
 // buttons would appear under the finger between press and release, and the browser then fires no click.
-const actionsReveal =
-  'pointer-events-none opacity-0 transition-opacity group-focus-visible/labelTile:pointer-events-auto group-focus-visible/labelTile:opacity-100 group-has-[:focus-visible]/labelTile:pointer-events-auto group-has-[:focus-visible]/labelTile:opacity-100 group-hover/labelTile:pointer-events-auto group-hover/labelTile:opacity-100 has-data-dropdowner-done:opacity-100 motion-reduce:transition-none';
-const metaHide =
-  'transition-opacity group-focus-visible/labelTile:opacity-0 group-has-[:focus-visible]/labelTile:opacity-0 group-hover/labelTile:opacity-0 group-has-data-dropdowner-done/labelTile:opacity-0 motion-reduce:transition-none';
+const actionsReveal = tw(
+  'pointer-events-none opacity-0 transition-opacity group-hover/label-tile:pointer-events-auto group-hover/label-tile:opacity-100 group-focus-visible/label-tile:pointer-events-auto group-focus-visible/label-tile:opacity-100 has-data-dropdowner-done:opacity-100 group-has-[:focus-visible]/label-tile:pointer-events-auto group-has-[:focus-visible]/label-tile:opacity-100 motion-reduce:transition-none',
+);
+const metaHide = tw(
+  'transition-opacity group-hover/label-tile:opacity-0 group-focus-visible/label-tile:opacity-0 group-has-[:focus-visible]/label-tile:opacity-0 group-has-data-dropdowner-done/label-tile:opacity-0 motion-reduce:transition-none',
+);
 // Transparent under the floating filter and options buttons (2 × 2rem + 0.25rem gap), then a 1.5rem fade. A mask
 // fades the text itself, so it works on every row tint (hover, search highlight) and on the transparent panel.
-const nameFade =
-  'group-hover/labelTile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-focus-visible/labelTile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-has-[:focus-visible]/labelTile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)]';
+const nameFade = tw(
+  'group-hover/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-focus-visible/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-has-[:focus-visible]/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)]',
+);
 
-type LabelTileProps = Pick<LabelsHostProps, 'selectable' | 'singleExpand' | 'onFilterToggle'> & {
+interface LabelTileProps extends Pick<LabelsHostProps, 'selectable' | 'singleExpand' | 'onFilterToggle'> {
   row: LabelRow;
   highlighted: boolean;
   /** A tile in the board panel is a board item: one Tab stop for the list, arrow keys between tiles. */
   onBoard?: boolean;
-};
+}
 
-/**
- * One label in the labels list. A click expands it in place, like a task card: the tile grows to show
- * its details and a click on the expanded name renames it. On the board, Enter does the same.
- */
+/** DOM id of a label tile, so a label link can scroll its tile into view. */
+export const labelTileDomId = (labelId: string) => `label-tile-${labelId}`;
+
+/** A click expands the tile in place, like a task card; a click on the expanded name renames it, and on the board Enter does both. */
 export function LabelTile({ row, highlighted, selectable = true, singleExpand, onFilterToggle, onBoard }: LabelTileProps) {
   const { t } = useTranslation();
-  const { organizationId, tenantId } = useOrganizationLayoutContext();
 
-  const expanded = useLabelTileStore((s) => !!s.expandedIds[row.id]);
-  const isSelected = useTaskInteractionStore((s) => s.selectedLabelIds.includes(row.id));
+  const expanded = useLabelTileStore((state) => !!state.expandedIds[row.id]);
+  const isSelected = useTaskInteractionStore((state) => state.selectedLabelIds.includes(row.id));
   // Task and label selection are mutually exclusive so the shared remove button targets one kind
-  const hasSelectedTasks = useTaskInteractionStore((s) => s.selectedTaskIds.length > 0);
+  const hasSelectedTasks = useTaskInteractionStore((state) => state.selectedTaskIds.length > 0);
 
   // Read-only viewers (guest membership or public access) cannot rename, switch mode or delete
   const isReadOnly = useIsProjectReadOnly(row.projectId);
-  const updateLabel = useLabelUpdateMutation(tenantId, organizationId);
+  const updateLabel = useLabelUpdateMutation(row.tenantId, row.organizationId);
   const [editingName, setEditingName] = useState<string | null>(null);
 
   const domId = labelTileDomId(row.id);
-  const isCurrent = useBoardFocusStore((s) => s.currentItemId === domId);
+  const isCurrent = useBoardFocusStore((state) => state.currentItemId === domId);
   const tileRef = useRef<HTMLLIElement>(null);
   // Off the board (the mobile drawer) a tile keeps its controls in the Tab order
   useItemControlsTabOrder(tileRef, domId, isCurrent || !onBoard);
@@ -71,13 +73,13 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
     return markCurrentItemMounted(domId);
   }, [onBoard, isCurrent, domId]);
 
-  const onSelect = (checked: boolean) => {
+  const handleSelect = (checked: boolean) => {
     const { selectedLabelIds, setSelectedLabelIds } = useTaskInteractionStore.getState();
     setSelectedLabelIds(checked ? [...selectedLabelIds, row.id] : selectedLabelIds.filter((id) => id !== row.id));
   };
 
-  const onNameClick = () => {
-    if (!expanded) useLabelTileStore.getState().expand(row.id, singleExpand);
+  const handleNameClick = () => {
+    if (!expanded) labelTileStore.getState().expand(row.id, singleExpand);
     else if (!isReadOnly) setEditingName(row.name);
   };
 
@@ -86,8 +88,10 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
     if (onBoard) requestAnimationFrame(() => tileRef.current?.focus());
   };
 
+  const collapse = () => labelTileStore.getState().collapse(row.id);
+
   const handleTileFocus = () => {
-    if (onBoard && useBoardFocusStore.getState().currentItemId !== domId) setCurrentItem(domId);
+    if (onBoard && boardFocusStore.getState().currentItemId !== domId) setCurrentItem(domId);
   };
 
   // On the tile itself, as on a task card: Enter opens it, then renames it; Escape closes it, then leaves it
@@ -95,10 +99,21 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
     if (!onBoard || event.target !== event.currentTarget) return;
     if (event.key === 'Enter') {
       event.preventDefault();
-      onNameClick();
+      handleNameClick();
     } else if (event.key === 'Escape') {
-      if (expanded) useLabelTileStore.getState().collapse(row.id);
+      if (expanded) collapse();
       else event.currentTarget.blur();
+    }
+  };
+
+  const handleNameKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      commitName();
+      refocusTile();
+    }
+    if (event.key === 'Escape') {
+      setEditingName(null);
+      refocusTile();
     }
   };
 
@@ -120,7 +135,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
       onFocus={handleTileFocus}
       onKeyDown={handleTileKeyDown}
       className={cn(
-        'group/labelTile relative border-b text-sm',
+        'group/label-tile relative border-b text-sm',
         onBoard &&
           'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
         onBoard && isCurrent && 'before:opacity-100',
@@ -131,11 +146,11 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
       <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
         {selectable && (
           <Checkbox
-            className="relative z-10 data-[state=checked]:border-primary"
+            className="z-10"
             checked={isSelected}
             disabled={hasSelectedTasks}
             aria-label={row.name}
-            onCheckedChange={(checked) => onSelect(checked === true)}
+            onCheckedChange={(checked) => handleSelect(checked === true)}
           />
         )}
 
@@ -149,16 +164,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
               autoFocus
               onChange={(event) => setEditingName(event.target.value)}
               onBlur={commitName}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  commitName();
-                  refocusTile();
-                }
-                if (event.key === 'Escape') {
-                  setEditingName(null);
-                  refocusTile();
-                }
-              }}
+              onKeyDown={handleNameKeyDown}
               className="-ml-1.25 h-7 w-auto grow px-1 font-semibold"
             />
           ) : (
@@ -166,17 +172,17 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
               type="button"
               aria-expanded={expanded}
               title={expanded && !isReadOnly ? t('c:edit') : undefined}
-              onClick={onNameClick}
+              onClick={handleNameClick}
               className={cn(
-                '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0 ring-0',
+                '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
                 // Collapsed, an after-overlay stretches the button over the whole tile; the checkbox and buttons sit above it
-                expanded ? 'font-semibold hover:bg-accent/50 focus-visible:bg-accent/50' : "after:absolute after:inset-0 after:content-['']",
+                expanded ? 'font-semibold hover:bg-accent/50 focus-visible:bg-accent/50' : 'after:absolute after:inset-0',
               )}
             >
               <span
                 className={cn(
                   'truncate',
-                  !expanded && 'opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100 max-sm:opacity-100',
+                  !expanded && 'opacity-80 group-focus-within/label-tile:opacity-100 group-hover/label-tile:opacity-100 max-sm:opacity-100',
                 )}
               >
                 <HighlightText text={row.name} />
@@ -193,11 +199,9 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
 
         {/* Floating and in-flow actions share the row's right padding, so filter and options keep their place
             when the tile expands; close joins on their left */}
-        <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : cn('absolute inset-y-0 right-4', actionsReveal))}>
-          <AnimatePresence initial={false}>
-            {expanded && <CardCloseButton key="close" onClick={() => useLabelTileStore.getState().collapse(row.id)} />}
-          </AnimatePresence>
-          <LabelFilterButton name={row.name} size="xs" className="relative z-10 h-8 w-8" onToggle={onFilterToggle} />
+        <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : ['absolute inset-y-0 right-4', actionsReveal])}>
+          <AnimatePresence initial={false}>{expanded && <CardCloseButton key="close" onClick={collapse} />}</AnimatePresence>
+          <LabelFilterButton name={row.name} onToggle={onFilterToggle} />
           <LabelOptionsButton row={row} canManage={!isReadOnly} />
         </div>
       </div>

@@ -54,7 +54,7 @@ describe('Task tools over MCP', async () => {
     const projects = await call(createProjects, {
       path,
       query: { workspaceId: firstId(workspaces) },
-      body: [{ id: `temp-${nanoid()}`, name: 'Roadmap', slug: `roadmap-${crypto.randomUUID().slice(0, 8)}`, publicAt: null }],
+      body: [{ id: `temp-${nanoid()}`, name: 'Roadmap', slug: `roadmap-${crypto.randomUUID().slice(0, 8)}`, public: false }],
       headers,
     });
     expect(projects.response.status).toBe(201);

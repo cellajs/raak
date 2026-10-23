@@ -12,7 +12,6 @@
           "type": "object",
           "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -21,9 +20,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "description": {
               "type": ["string", "null"],
@@ -36,14 +48,12 @@
               "required": true
             },
             "deletedBy": {
-              "type": ["string", "null"],
+              "type": ["object", "null"],
               "required": true,
-              "format": "uuid"
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "seq": {
               "type": "integer",
               "required": true,
@@ -148,7 +158,7 @@
               "ref": "#/components/schemas/UserMinimalBase",
               "items": {
                 "type": "object",
-                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
@@ -165,18 +175,6 @@
                 },
                 "ref": "#/components/schemas/UserMinimalBase"
               }
-            },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
             },
             "stx": {
               "type": "object",
@@ -229,38 +227,63 @@
           "keywords": "minima accedo communis",
           "createdBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "updatedBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 24,
           "expandable": false,
           "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
           "summaryLength": 47,
-          "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-          "displayOrder": 6.85,
-          "status": 2,
+          "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+          "displayOrder": 657.08,
+          "status": 6,
           "statusChangedAt": "2024-11-03T10:38:49.857Z",
           "checkboxCount": 8,
-          "checkedCount": 3,
-          "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-          "labels": [],
-          "assignedTo": [],
+          "checkedCount": 5,
+          "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+          "labels": [
+            {
+              "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+              "name": "online",
+              "slug": "online",
+              "color": "#6b33cb",
+              "mode": "secondary",
+              "icon": null,
+              "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+            }
+          ],
+          "assignedTo": [
+            {
+              "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+              "name": "Leda Hodkiewicz",
+              "slug": "leda.hodkiewicz53",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            },
+            {
+              "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+              "name": "Sylvan Zemlak",
+              "slug": "sylvan_zemlak14",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            }
+          ],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
-            "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+            "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
             "name": "microservice",
             "slug": "microservice",
             "color": "#77fd9d",
@@ -340,7 +363,6 @@
                 "type": "object",
                 "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -349,9 +371,22 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+                  },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
                   "description": {
                     "type": ["string", "null"],
@@ -364,14 +399,12 @@
                     "required": true
                   },
                   "deletedBy": {
-                    "type": ["string", "null"],
+                    "type": ["object", "null"],
                     "required": true,
-                    "format": "uuid"
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -476,7 +509,7 @@
                     "ref": "#/components/schemas/UserMinimalBase",
                     "items": {
                       "type": "object",
-                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
@@ -493,18 +526,6 @@
                       },
                       "ref": "#/components/schemas/UserMinimalBase"
                     }
-                  },
-                  "createdBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
-                  "updatedBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "stx": {
                     "type": "object",
@@ -563,48 +584,38 @@
               "keywords": "sumptus ter arca",
               "createdBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                "kind": "user",
                 "name": "Agustin Kirlin",
                 "slug": "agustin_kirlin",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                "kind": "user",
                 "name": "Agustin Kirlin",
                 "slug": "agustin_kirlin",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 293,
-              "expandable": false,
+              "expandable": true,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Patria itaque spes crudelis tandem eveniet.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 43,
-              "primaryLabelId": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
-              "displayOrder": 671.33,
-              "status": 5,
+              "primaryLabelId": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
+              "displayOrder": 608.18,
+              "status": 2,
               "statusChangedAt": "2024-01-16T07:26:20.219Z",
               "checkboxCount": 8,
-              "checkedCount": 0,
+              "checkedCount": 1,
               "attachments": [],
-              "labels": [
-                {
-                  "id": "93095c24-27b6-45be-9e9b-5a30ea3c071d",
-                  "name": "feed",
-                  "slug": "feed",
-                  "color": "#be4dce",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "00d4cb5c-c208-4309-96a6-e65784a69c8c"
-                }
-              ],
+              "labels": [],
               "assignedTo": [],
               "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
               "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
               "primaryLabel": {
-                "id": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
+                "id": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
                 "name": "gb",
                 "slug": "gb",
                 "color": "#f30cdc",
@@ -629,65 +640,38 @@
               "keywords": "nostrum volva sufficio",
               "createdBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                "kind": "user",
                 "name": "Nya Nikolaus",
                 "slug": "nya_nikolaus",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                "kind": "user",
                 "name": "Nya Nikolaus",
                 "slug": "nya_nikolaus",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": true,
               "seq": 40,
-              "expandable": true,
+              "expandable": false,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Umquam voluntarius tyrannus quis peccatus.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 42,
-              "primaryLabelId": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
-              "displayOrder": 5.94,
-              "status": 3,
+              "primaryLabelId": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
+              "displayOrder": 529.98,
+              "status": 6,
               "statusChangedAt": "2024-11-27T15:18:06.081Z",
               "checkboxCount": 9,
-              "checkedCount": 3,
-              "attachments": [],
-              "labels": [
-                {
-                  "id": "036e4f85-c837-49f0-87f4-6ef29ba47773",
-                  "name": "sensor",
-                  "slug": "sensor",
-                  "color": "#d0cda5",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "6a578392-0d6a-4677-a48e-8975e0fb903e"
-                },
-                {
-                  "id": "13c97fb3-a840-4350-9688-e45464b025fe",
-                  "name": "infrastructures",
-                  "slug": "infrastructures",
-                  "color": "#6dcdee",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "6dcead0b-743c-4ede-8135-577e1aaa42cd"
-                }
-              ],
-              "assignedTo": [
-                {
-                  "id": "49e34c9b-2806-42e4-acac-8381fa303867",
-                  "name": "Sandra Pacocha",
-                  "slug": "sandra_pacocha",
-                  "thumbnailUrl": null,
-                  "entityType": "user"
-                }
-              ],
+              "checkedCount": 5,
+              "attachments": ["1a036e4f-85c8-4379-9f07-f46ef29ba477"],
+              "labels": [],
+              "assignedTo": [],
               "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
               "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
               "primaryLabel": {
-                "id": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
+                "id": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
                 "name": "leverage",
                 "slug": "leverage",
                 "color": "#af215f",
@@ -791,10 +775,7 @@
             "organizationId": { "type": "string", "required": true },
             "organizationSlug": { "type": "string", "required": true },
             "tenantId": { "type": "string", "required": true },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            }
+            "public": { "type": "boolean", "required": true }
           },
           "contentType": "application/json"
         },
@@ -805,7 +786,7 @@
           "organizationId": "301b2584-56a0-4f38-a9c9-f87af1510ae6",
           "organizationSlug": "swaniawski-and-sons",
           "tenantId": "ptcupj",
-          "publicAt": "2024-08-18T06:30:47.640Z"
+          "public": true
         }
       },
       {
@@ -988,7 +969,6 @@
                 "type": "object",
                 "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -997,9 +977,22 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+                  },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
                   "description": {
                     "type": ["string", "null"],
@@ -1012,14 +1005,12 @@
                     "required": true
                   },
                   "deletedBy": {
-                    "type": ["string", "null"],
+                    "type": ["object", "null"],
                     "required": true,
-                    "format": "uuid"
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -1124,7 +1115,7 @@
                     "ref": "#/components/schemas/UserMinimalBase",
                     "items": {
                       "type": "object",
-                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
@@ -1141,18 +1132,6 @@
                       },
                       "ref": "#/components/schemas/UserMinimalBase"
                     }
-                  },
-                  "createdBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
-                  "updatedBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "stx": {
                     "type": "object",
@@ -1211,48 +1190,38 @@
               "keywords": "sumptus ter arca",
               "createdBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                "kind": "user",
                 "name": "Agustin Kirlin",
                 "slug": "agustin_kirlin",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                "kind": "user",
                 "name": "Agustin Kirlin",
                 "slug": "agustin_kirlin",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 293,
-              "expandable": false,
+              "expandable": true,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Patria itaque spes crudelis tandem eveniet.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 43,
-              "primaryLabelId": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
-              "displayOrder": 671.33,
-              "status": 5,
+              "primaryLabelId": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
+              "displayOrder": 608.18,
+              "status": 2,
               "statusChangedAt": "2024-01-16T07:26:20.219Z",
               "checkboxCount": 8,
-              "checkedCount": 0,
+              "checkedCount": 1,
               "attachments": [],
-              "labels": [
-                {
-                  "id": "93095c24-27b6-45be-9e9b-5a30ea3c071d",
-                  "name": "feed",
-                  "slug": "feed",
-                  "color": "#be4dce",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "00d4cb5c-c208-4309-96a6-e65784a69c8c"
-                }
-              ],
+              "labels": [],
               "assignedTo": [],
               "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
               "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
               "primaryLabel": {
-                "id": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
+                "id": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
                 "name": "gb",
                 "slug": "gb",
                 "color": "#f30cdc",
@@ -1277,65 +1246,38 @@
               "keywords": "nostrum volva sufficio",
               "createdBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                "kind": "user",
                 "name": "Nya Nikolaus",
                 "slug": "nya_nikolaus",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                "kind": "user",
                 "name": "Nya Nikolaus",
                 "slug": "nya_nikolaus",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": true,
               "seq": 40,
-              "expandable": true,
+              "expandable": false,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Umquam voluntarius tyrannus quis peccatus.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 42,
-              "primaryLabelId": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
-              "displayOrder": 5.94,
-              "status": 3,
+              "primaryLabelId": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
+              "displayOrder": 529.98,
+              "status": 6,
               "statusChangedAt": "2024-11-27T15:18:06.081Z",
               "checkboxCount": 9,
-              "checkedCount": 3,
-              "attachments": [],
-              "labels": [
-                {
-                  "id": "036e4f85-c837-49f0-87f4-6ef29ba47773",
-                  "name": "sensor",
-                  "slug": "sensor",
-                  "color": "#d0cda5",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "6a578392-0d6a-4677-a48e-8975e0fb903e"
-                },
-                {
-                  "id": "13c97fb3-a840-4350-9688-e45464b025fe",
-                  "name": "infrastructures",
-                  "slug": "infrastructures",
-                  "color": "#6dcdee",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "6dcead0b-743c-4ede-8135-577e1aaa42cd"
-                }
-              ],
-              "assignedTo": [
-                {
-                  "id": "49e34c9b-2806-42e4-acac-8381fa303867",
-                  "name": "Sandra Pacocha",
-                  "slug": "sandra_pacocha",
-                  "thumbnailUrl": null,
-                  "entityType": "user"
-                }
-              ],
+              "checkedCount": 5,
+              "attachments": ["1a036e4f-85c8-4379-9f07-f46ef29ba477"],
+              "labels": [],
+              "assignedTo": [],
               "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
               "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
               "primaryLabel": {
-                "id": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
+                "id": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
                 "name": "leverage",
                 "slug": "leverage",
                 "color": "#af215f",
@@ -1461,7 +1403,6 @@
                 "type": "object",
                 "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -1470,9 +1411,22 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+                  },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
                   "description": {
                     "type": ["string", "null"],
@@ -1485,14 +1439,12 @@
                     "required": true
                   },
                   "deletedBy": {
-                    "type": ["string", "null"],
+                    "type": ["object", "null"],
                     "required": true,
-                    "format": "uuid"
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -1597,7 +1549,7 @@
                     "ref": "#/components/schemas/UserMinimalBase",
                     "items": {
                       "type": "object",
-                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
@@ -1614,18 +1566,6 @@
                       },
                       "ref": "#/components/schemas/UserMinimalBase"
                     }
-                  },
-                  "createdBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
-                  "updatedBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "stx": {
                     "type": "object",
@@ -1695,35 +1635,35 @@
               "keywords": "inflammatio dens demergo",
               "createdBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                "kind": "user",
                 "name": "Bethel Sawayn",
                 "slug": "bethel_sawayn",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                "kind": "user",
                 "name": "Bethel Sawayn",
                 "slug": "bethel_sawayn",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": "2024-11-29T18:50:26.668Z",
+              "public": false,
               "seq": 178,
-              "expandable": false,
+              "expandable": true,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Consectetur speculum ambitus ambitus paulatim condico defessus tergum sodalitas cernuus apostolus convoco stultus.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 114,
-              "primaryLabelId": "cecd0656-766c-4764-a402-4d1a2df88c75",
-              "displayOrder": 892.57,
-              "status": 0,
+              "primaryLabelId": "ddcecd06-5676-46c7-9644-024d1a2df88c",
+              "displayOrder": 322.41,
+              "status": 2,
               "statusChangedAt": "2024-05-08T15:34:56.983Z",
               "checkboxCount": 8,
               "checkedCount": 8,
-              "attachments": ["a5e9543a-04d8-4b64-a877-e7af93a55139"],
+              "attachments": ["f7a5e954-3a04-4d8b-8648-77e7af93a551", "98c6e0a5-40e7-4063-9e8f-4c84bbdf4df2", "50f6a30d-4ca6-4d01-a398-de9a3cc34af7"],
               "labels": [
                 {
-                  "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                  "id": "c55c23f9-8e33-4150-89d3-bfa6839be9d5",
                   "name": "e-commerce",
                   "slug": "e-commerce",
                   "color": "#a7bb3d",
@@ -1732,34 +1672,25 @@
                   "projectId": "05ae7135-ba2a-4541-aea4-472b689abbc7"
                 },
                 {
-                  "id": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
+                  "id": "4ae29955-bb36-42d7-a390-69f310134300",
                   "name": "deliverables",
                   "slug": "deliverables",
                   "color": "#12bff5",
                   "mode": "secondary",
                   "icon": null,
                   "projectId": "46ed6b69-70fd-4222-aa20-b77dfc43c1a4"
-                },
-                {
-                  "id": "5c23f98e-3315-409d-a3bf-a6839be9d514",
-                  "name": "health",
-                  "slug": "health",
-                  "color": "#f4d1c8",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "ea520bd8-fb89-48d9-a223-8d158b572741"
                 }
               ],
               "assignedTo": [
                 {
-                  "id": "29955bb3-62d7-4390-b69f-3101343008a1",
+                  "id": "1dbd76f1-fcc9-475c-aa96-b589ea3834bc",
                   "name": "Ethelyn Hane-Pfeffer",
                   "slug": "ethelyn_hane-pfeffer53",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 },
                 {
-                  "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
+                  "id": "8f20b3f5-48ff-4102-b723-b4075224e9f7",
                   "name": "Margaretta Gutkowski",
                   "slug": "margaretta_gutkowski63",
                   "thumbnailUrl": null,
@@ -1769,7 +1700,7 @@
               "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
               "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
               "primaryLabel": {
-                "id": "cecd0656-766c-4764-a402-4d1a2df88c75",
+                "id": "ddcecd06-5676-46c7-9644-024d1a2df88c",
                 "name": "intranet",
                 "slug": "intranet",
                 "color": "#acfe13",
@@ -1794,35 +1725,35 @@
               "keywords": "aiunt succurro spiritus",
               "createdBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                "kind": "user",
                 "name": "Americo Kutch",
                 "slug": "americo_kutch",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                "kind": "user",
                 "name": "Americo Kutch",
                 "slug": "americo_kutch",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 162,
-              "expandable": false,
+              "expandable": true,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Aegrus avarus verbum alienus adaugeo canonicus tabernus.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 56,
-              "primaryLabelId": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
-              "displayOrder": 378.87,
-              "status": 3,
+              "primaryLabelId": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
+              "displayOrder": 54.02,
+              "status": 4,
               "statusChangedAt": "2024-03-01T09:29:28.225Z",
               "checkboxCount": 9,
               "checkedCount": 4,
-              "attachments": [],
+              "attachments": ["35b3b434-d64d-494b-8d33-c3593f8f02f4"],
               "labels": [
                 {
-                  "id": "b3b434d6-4d94-4bd3-b3c3-593f8f02f435",
+                  "id": "e525b660-9c34-4108-9351-83b385c47726",
                   "name": "kids",
                   "slug": "kids",
                   "color": "#b5ebfd",
@@ -1833,9 +1764,16 @@
               ],
               "assignedTo": [
                 {
-                  "id": "25b6609c-3410-4835-9183-b385c477265f",
+                  "id": "659b2900-8dbf-444d-b5c5-f2c95d31f582",
                   "name": "Zachery Yost",
                   "slug": "zachery.yost84",
+                  "thumbnailUrl": null,
+                  "entityType": "user"
+                },
+                {
+                  "id": "bc9375f7-5ddd-4542-afe6-dd226f10b18a",
+                  "name": "Tim Kautzer",
+                  "slug": "tim.kautzer78",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
@@ -1843,7 +1781,7 @@
               "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
               "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
               "primaryLabel": {
-                "id": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
+                "id": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
                 "name": "open-source",
                 "slug": "open-source",
                 "color": "#2660d8",
@@ -1872,7 +1810,6 @@
                 "type": "object",
                 "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -1881,9 +1818,22 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+                  },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
                   "description": {
                     "type": ["string", "null"],
@@ -1896,14 +1846,12 @@
                     "required": true
                   },
                   "deletedBy": {
-                    "type": ["string", "null"],
+                    "type": ["object", "null"],
                     "required": true,
-                    "format": "uuid"
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -2008,7 +1956,7 @@
                     "ref": "#/components/schemas/UserMinimalBase",
                     "items": {
                       "type": "object",
-                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                      "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                       "properties": {
                         "id": { "type": "string", "required": true },
                         "name": { "type": "string", "required": true },
@@ -2025,18 +1973,6 @@
                       },
                       "ref": "#/components/schemas/UserMinimalBase"
                     }
-                  },
-                  "createdBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
-                  "updatedBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
                   },
                   "stx": {
                     "type": "object",
@@ -2106,35 +2042,35 @@
               "keywords": "inflammatio dens demergo",
               "createdBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                "kind": "user",
                 "name": "Bethel Sawayn",
                 "slug": "bethel_sawayn",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                "kind": "user",
                 "name": "Bethel Sawayn",
                 "slug": "bethel_sawayn",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": "2024-11-29T18:50:26.668Z",
+              "public": false,
               "seq": 178,
-              "expandable": false,
+              "expandable": true,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Consectetur speculum ambitus ambitus paulatim condico defessus tergum sodalitas cernuus apostolus convoco stultus.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 114,
-              "primaryLabelId": "cecd0656-766c-4764-a402-4d1a2df88c75",
-              "displayOrder": 892.57,
-              "status": 0,
+              "primaryLabelId": "ddcecd06-5676-46c7-9644-024d1a2df88c",
+              "displayOrder": 322.41,
+              "status": 2,
               "statusChangedAt": "2024-05-08T15:34:56.983Z",
               "checkboxCount": 8,
               "checkedCount": 8,
-              "attachments": ["a5e9543a-04d8-4b64-a877-e7af93a55139"],
+              "attachments": ["f7a5e954-3a04-4d8b-8648-77e7af93a551", "98c6e0a5-40e7-4063-9e8f-4c84bbdf4df2", "50f6a30d-4ca6-4d01-a398-de9a3cc34af7"],
               "labels": [
                 {
-                  "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                  "id": "c55c23f9-8e33-4150-89d3-bfa6839be9d5",
                   "name": "e-commerce",
                   "slug": "e-commerce",
                   "color": "#a7bb3d",
@@ -2143,34 +2079,25 @@
                   "projectId": "05ae7135-ba2a-4541-aea4-472b689abbc7"
                 },
                 {
-                  "id": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
+                  "id": "4ae29955-bb36-42d7-a390-69f310134300",
                   "name": "deliverables",
                   "slug": "deliverables",
                   "color": "#12bff5",
                   "mode": "secondary",
                   "icon": null,
                   "projectId": "46ed6b69-70fd-4222-aa20-b77dfc43c1a4"
-                },
-                {
-                  "id": "5c23f98e-3315-409d-a3bf-a6839be9d514",
-                  "name": "health",
-                  "slug": "health",
-                  "color": "#f4d1c8",
-                  "mode": "secondary",
-                  "icon": null,
-                  "projectId": "ea520bd8-fb89-48d9-a223-8d158b572741"
                 }
               ],
               "assignedTo": [
                 {
-                  "id": "29955bb3-62d7-4390-b69f-3101343008a1",
+                  "id": "1dbd76f1-fcc9-475c-aa96-b589ea3834bc",
                   "name": "Ethelyn Hane-Pfeffer",
                   "slug": "ethelyn_hane-pfeffer53",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 },
                 {
-                  "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
+                  "id": "8f20b3f5-48ff-4102-b723-b4075224e9f7",
                   "name": "Margaretta Gutkowski",
                   "slug": "margaretta_gutkowski63",
                   "thumbnailUrl": null,
@@ -2180,7 +2107,7 @@
               "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
               "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
               "primaryLabel": {
-                "id": "cecd0656-766c-4764-a402-4d1a2df88c75",
+                "id": "ddcecd06-5676-46c7-9644-024d1a2df88c",
                 "name": "intranet",
                 "slug": "intranet",
                 "color": "#acfe13",
@@ -2205,35 +2132,35 @@
               "keywords": "aiunt succurro spiritus",
               "createdBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                "kind": "user",
                 "name": "Americo Kutch",
                 "slug": "americo_kutch",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "updatedBy": {
                 "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                "kind": "user",
                 "name": "Americo Kutch",
                 "slug": "americo_kutch",
-                "thumbnailUrl": null,
-                "entityType": "user"
+                "thumbnailUrl": null
               },
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 162,
-              "expandable": false,
+              "expandable": true,
               "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Aegrus avarus verbum alienus adaugeo canonicus tabernus.\",\"styles\":{}}],\"children\":[]}]",
               "summaryLength": 56,
-              "primaryLabelId": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
-              "displayOrder": 378.87,
-              "status": 3,
+              "primaryLabelId": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
+              "displayOrder": 54.02,
+              "status": 4,
               "statusChangedAt": "2024-03-01T09:29:28.225Z",
               "checkboxCount": 9,
               "checkedCount": 4,
-              "attachments": [],
+              "attachments": ["35b3b434-d64d-494b-8d33-c3593f8f02f4"],
               "labels": [
                 {
-                  "id": "b3b434d6-4d94-4bd3-b3c3-593f8f02f435",
+                  "id": "e525b660-9c34-4108-9351-83b385c47726",
                   "name": "kids",
                   "slug": "kids",
                   "color": "#b5ebfd",
@@ -2244,9 +2171,16 @@
               ],
               "assignedTo": [
                 {
-                  "id": "25b6609c-3410-4835-9183-b385c477265f",
+                  "id": "659b2900-8dbf-444d-b5c5-f2c95d31f582",
                   "name": "Zachery Yost",
                   "slug": "zachery.yost84",
+                  "thumbnailUrl": null,
+                  "entityType": "user"
+                },
+                {
+                  "id": "bc9375f7-5ddd-4542-afe6-dd226f10b18a",
+                  "name": "Tim Kautzer",
+                  "slug": "tim.kautzer78",
                   "thumbnailUrl": null,
                   "entityType": "user"
                 }
@@ -2254,7 +2188,7 @@
               "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
               "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
               "primaryLabel": {
-                "id": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
+                "id": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
                 "name": "open-source",
                 "slug": "open-source",
                 "color": "#2660d8",
@@ -2352,10 +2286,6 @@
               "maxItems": 50,
               "itemType": "string",
               "format": "uuid"
-            },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": false
             },
             "projectId": { "type": "string", "required": true, "format": "uuid" },
             "stx": {
@@ -2510,7 +2440,6 @@
           "type": "object",
           "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -2519,9 +2448,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "description": {
               "type": ["string", "null"],
@@ -2534,14 +2476,12 @@
               "required": true
             },
             "deletedBy": {
-              "type": ["string", "null"],
+              "type": ["object", "null"],
               "required": true,
-              "format": "uuid"
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "seq": {
               "type": "integer",
               "required": true,
@@ -2646,7 +2586,7 @@
               "ref": "#/components/schemas/UserMinimalBase",
               "items": {
                 "type": "object",
-                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
@@ -2663,18 +2603,6 @@
                 },
                 "ref": "#/components/schemas/UserMinimalBase"
               }
-            },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
             },
             "stx": {
               "type": "object",
@@ -2727,38 +2655,63 @@
           "keywords": "minima accedo communis",
           "createdBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "updatedBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 24,
           "expandable": false,
           "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
           "summaryLength": 47,
-          "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-          "displayOrder": 6.85,
-          "status": 2,
+          "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+          "displayOrder": 657.08,
+          "status": 6,
           "statusChangedAt": "2024-11-03T10:38:49.857Z",
           "checkboxCount": 8,
-          "checkedCount": 3,
-          "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-          "labels": [],
-          "assignedTo": [],
+          "checkedCount": 5,
+          "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+          "labels": [
+            {
+              "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+              "name": "online",
+              "slug": "online",
+              "color": "#6b33cb",
+              "mode": "secondary",
+              "icon": null,
+              "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+            }
+          ],
+          "assignedTo": [
+            {
+              "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+              "name": "Leda Hodkiewicz",
+              "slug": "leda.hodkiewicz53",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            },
+            {
+              "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+              "name": "Sylvan Zemlak",
+              "slug": "sylvan_zemlak14",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            }
+          ],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
-            "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+            "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
             "name": "microservice",
             "slug": "microservice",
             "color": "#77fd9d",
@@ -2834,7 +2787,6 @@
           "type": "object",
           "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -2843,9 +2795,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "description": {
               "type": ["string", "null"],
@@ -2858,14 +2823,12 @@
               "required": true
             },
             "deletedBy": {
-              "type": ["string", "null"],
+              "type": ["object", "null"],
               "required": true,
-              "format": "uuid"
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "seq": {
               "type": "integer",
               "required": true,
@@ -2970,7 +2933,7 @@
               "ref": "#/components/schemas/UserMinimalBase",
               "items": {
                 "type": "object",
-                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
@@ -2987,18 +2950,6 @@
                 },
                 "ref": "#/components/schemas/UserMinimalBase"
               }
-            },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
             },
             "stx": {
               "type": "object",
@@ -3051,38 +3002,63 @@
           "keywords": "minima accedo communis",
           "createdBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "updatedBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 24,
           "expandable": false,
           "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
           "summaryLength": 47,
-          "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-          "displayOrder": 6.85,
-          "status": 2,
+          "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+          "displayOrder": 657.08,
+          "status": 6,
           "statusChangedAt": "2024-11-03T10:38:49.857Z",
           "checkboxCount": 8,
-          "checkedCount": 3,
-          "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-          "labels": [],
-          "assignedTo": [],
+          "checkedCount": 5,
+          "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+          "labels": [
+            {
+              "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+              "name": "online",
+              "slug": "online",
+              "color": "#6b33cb",
+              "mode": "secondary",
+              "icon": null,
+              "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+            }
+          ],
+          "assignedTo": [
+            {
+              "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+              "name": "Leda Hodkiewicz",
+              "slug": "leda.hodkiewicz53",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            },
+            {
+              "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+              "name": "Sylvan Zemlak",
+              "slug": "sylvan_zemlak14",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            }
+          ],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
-            "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+            "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
             "name": "microservice",
             "slug": "microservice",
             "color": "#77fd9d",
@@ -3219,10 +3195,7 @@
                 }
               },
               "projectId": { "type": "string", "required": false, "format": "uuid" },
-              "publicAt": {
-                "type": ["string", "null"],
-                "required": false
-              }
+              "public": { "type": "boolean", "required": false }
             }
           },
           "stx": {

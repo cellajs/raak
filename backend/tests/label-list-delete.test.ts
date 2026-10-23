@@ -32,7 +32,7 @@ describe('Label lists, primary label deletes and API key reads of their channels
     const projects = await call(createProjects, {
       path,
       query: { workspaceId },
-      body: [{ id: `temp-${nanoid()}`, name: 'Roadmap', slug: `roadmap-${crypto.randomUUID().slice(0, 8)}`, publicAt: null }],
+      body: [{ id: `temp-${nanoid()}`, name: 'Roadmap', slug: `roadmap-${crypto.randomUUID().slice(0, 8)}`, public: false }],
       headers,
     });
     return { org, user, path, headers, workspaceId, projectId: firstId(projects) };

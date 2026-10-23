@@ -1,8 +1,8 @@
 import type { ActorContext } from '#/core/context';
+import { withActorRef } from '#/modules/actors/actor-refs';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
 import { getTaskStatusCounts } from '#/modules/task/operations/get-task-status-counts';
-import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions';
 
 export async function getProjectOp(ctx: ActorContext, id: string, opts: { bySlug?: boolean; include: string[] }) {
@@ -16,7 +16,7 @@ export async function getProjectOp(ctx: ActorContext, id: string, opts: { bySlug
   const [counts, taskStatusCounts, projectWithAudit] = await Promise.all([
     includeCounts ? getChannelCounts(ctx, { entityType: 'project', entityId: project.id }) : undefined,
     includeCounts ? getTaskStatusCounts(ctx, project.id) : undefined,
-    withAuditUser(ctx, project),
+    withActorRef(ctx, project),
   ]);
 
   const included: { counts?: typeof counts & { taskStatusCounts: typeof taskStatusCounts }; membership?: ReturnType<typeof toMembershipBase> } = {};

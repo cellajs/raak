@@ -12,10 +12,7 @@ interface PanelNav {
   firstInView: () => string | undefined;
 }
 
-/**
- * Board panels that hold a list of items, keyed by panel id. A panel registers while its list is mounted, so a
- * collapsed panel drops out of keyboard navigation by itself.
- */
+/** Panel lists by panel id. A panel registers while its list is mounted, so a collapsed one drops out of keyboard navigation. */
 const panels = new Map<string, PanelNav>();
 
 /** Registers a panel list. Returns an unregister function for effect cleanup. */
@@ -28,12 +25,11 @@ export const registerPanelNav = (panelId: string, nav: PanelNav) => {
 
 export const getPanelNav = (panelId: string) => panels.get(panelId);
 
-/** The id of the panel whose list holds `itemId`. */
 export const findItemPanelId = (itemId: string) => {
   for (const [panelId, nav] of panels) if (nav.items().some(({ id }) => id === itemId)) return panelId;
 };
 
-/** Asks the panel holding `itemId` to bring it into view. No-op when no registered panel holds it. */
+/** No-op when no registered panel holds the item. */
 export const scrollItemIntoView = (itemId: string) => {
   const panelId = findItemPanelId(itemId);
   if (panelId) panels.get(panelId)?.scrollTo(itemId);

@@ -18,35 +18,35 @@ interface TaskSheetProps {
   organizationId: string | undefined;
 }
 
-function TaskSheet({ id, organizationId }: TaskSheetProps) {
+export function TaskSheet({ id, organizationId }: TaskSheetProps) {
   const isOnline = useOnlineManager();
-  const { tenantId } = useParams({ strict: false });
+  const tenantId = useParams({ strict: false, select: (params) => params.tenantId });
   const { t } = useTranslation();
 
   // Select public or authenticated options before the unconditional hook call.
   // The cast bridges the factories' incompatible query-key types.
-  const queryOpts = organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
-  const { data: task, isLoading, isError } = useQuery(queryOpts as ReturnType<typeof taskQueryOptions>);
+  const queryOptions = organizationId && tenantId ? taskQueryOptions(id, organizationId, tenantId) : publicTaskQueryOptions(id);
+  const { data: task, isLoading, isError } = useQuery(queryOptions as ReturnType<typeof taskQueryOptions>);
 
   const isReadOnly = useIsProjectReadOnly(task?.projectId);
   // A touch open starts expanded, as a touch tap on a board card does: editing would open the on-screen keyboard.
-  const [editing, setEditing] = useState(() => !isTouchInteraction());
+  const [isEditing, setIsEditing] = useState(() => !isTouchInteraction());
 
-  // Sheet manages its own editing state, separate from the shared store.
-  // Using the store would set the board card to 'editing' too, causing
-  // a duplicate editor whose unmount flush overwrites sheet edits.
-  const taskState = isReadOnly || !editing ? 'expanded' : 'editing';
+  // Own editing state: the shared store would set the board card to 'editing' too,
+  // and that duplicate editor's unmount flush would overwrite sheet edits.
+  const taskState = isReadOnly || !isEditing ? 'expanded' : 'editing';
 
   if (isError) return <ContentPlaceholder icon={ServerCrashIcon} title="error:request_failed" />;
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div className="block">
+      <div>
         <Spinner size="lg" />
       </div>
     );
+  }
 
-  if (!task)
+  if (!task) {
     return (
       <ContentPlaceholder
         icon={isOnline ? FlameKindlingIcon : WifiOffIcon}
@@ -54,14 +54,13 @@ function TaskSheet({ id, organizationId }: TaskSheetProps) {
         titleProps={isOnline ? { resource: t('c:task').toLowerCase() } : undefined}
       />
     );
+  }
 
   return (
     <TaskSearchScope>
       <div>
-        <TaskCard task={task} state={taskState} isSelected={false} isFocused={true} isSheet onEdit={() => setEditing(true)} />
+        <TaskCard task={task} state={taskState} isSelected={false} isFocused isSheet onEdit={() => setIsEditing(true)} />
       </div>
     </TaskSearchScope>
   );
 }
-
-export { TaskSheet };

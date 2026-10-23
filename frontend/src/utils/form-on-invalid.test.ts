@@ -26,19 +26,14 @@ describe('defaultOnInvalid', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  it('shows the message a rule of the form wrote itself, and the text of the type for a built-in rule', () => {
+  it('shows the message the field shows, a translation key translated', () => {
     defaultOnInvalid({
       description: { type: 'custom', message: 'Add a file or a description' },
-      name: { type: 'too_small', message: 'Too small: expected string to have >=2 characters' },
+      name: { type: 'too_small', message: 'Use at least 2 characters' },
+      organizationId: { type: 'required', message: 'error:form.required' },
     });
 
-    expect(toastedLines()).toEqual(['Description: Add a file or a description', 'Name: Value is too small']);
-  });
-
-  it('shows the text of the type for a rule that wrote no message', () => {
-    defaultOnInvalid({ description: { type: 'custom' } });
-
-    expect(toastedLines()).toEqual(['Description: Invalid input']);
+    expect(toastedLines()).toEqual(['Description: Add a file or a description', 'Name: Use at least 2 characters', 'Organization ID: Required']);
   });
 
   /** A submitted form holding a visible `name` input and a hidden `email` one, as the submit event names it. */
@@ -52,15 +47,15 @@ describe('defaultOnInvalid', () => {
     return { target: form } as unknown as BaseSyntheticEvent;
   };
 
-  it('leaves out an error its field shows under a visible input, and lists one whose input is hidden', () => {
-    defaultOnInvalid({ name: { type: 'too_small' }, email: { type: 'invalid_format' } }, submitOf());
+  it('toasts only the errors no field shows: one whose input is hidden, and none when every field shows its own', () => {
+    defaultOnInvalid(
+      { name: { type: 'too_small', message: 'Required' }, email: { type: 'invalid_format', message: 'Enter an email address' } },
+      submitOf(),
+    );
+    expect(toastedLines()).toEqual(['Email: Enter an email address']);
 
-    expect(toastedLines()).toEqual(['Email: Format of the input is invalid.']);
-  });
-
-  it('shows the headline alone when every field shows its own error', () => {
-    defaultOnInvalid({ name: { type: 'too_small' } }, submitOf());
-
-    expect(toaster.error).toHaveBeenCalledWith('Form is not yet valid.', { description: undefined });
+    toaster.error.mockClear();
+    defaultOnInvalid({ name: { type: 'too_small', message: 'Required' } }, submitOf());
+    expect(toaster.error).not.toHaveBeenCalled();
   });
 });

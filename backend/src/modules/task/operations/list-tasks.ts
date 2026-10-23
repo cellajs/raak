@@ -1,12 +1,12 @@
-import { and, arrayOverlaps, asc, desc, inArray, isNotNull, or, type SQL, sql } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, desc, eq, inArray, or, type SQL, sql } from 'drizzle-orm';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { foldText } from 'shared/utils/text-match';
 import type { z } from 'zod';
 import type { ActorContext } from '#/core/context';
 import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { requestScopeWhere } from '#/db/utils/request-scope';
-import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { getDateFromToday } from '#/modules/task/helpers/utils';
+import { hydrateTasks } from '#/modules/task/operations/hydrate-task';
 import { tasksTable } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
 import { findLabelsByProjects, findProjectMembers, findTasksPaginated } from '#/modules/task/task-queries';
@@ -72,13 +72,13 @@ export const getTasks = async (ctx: ActorContext, projectIds: string[], queryInf
     requestScopeWhere(ctx, tasksTable, 'task'),
     inArray(tasksTable.projectId, projectIds),
     acceptedCutOffFilter,
-    opts?.publicOnly ? and(isNotNull(tasksTable.publicAt), publishedRowsPredicate(tasksTable)) : undefined,
+    opts?.publicOnly ? and(eq(tasksTable.public, true), publishedRowsPredicate(tasksTable)) : undefined,
   );
 
   // Normal reads fetch the page and its exact COUNT(*) in parallel; range reads skip the count.
   const { items: tasks, total } = await findTasksPaginated(ctx, { filters, orderBy, limit, offset, isDelta: !!opts?.range });
 
-  const items = hydrateTasks(tasks, tasksUsers, tasksLabels);
+  const items = await hydrateTasks(ctx, tasks, tasksUsers, tasksLabels);
 
   return { items, total };
 };

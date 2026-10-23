@@ -14,7 +14,7 @@ export function WorkspaceRouteComponent() {
   const view = workspaceRouteApi.useSearch({ select: (search) => search.view });
   const boardSkeleton = <WorkspaceBoardSkeleton workspace={workspace} />;
 
-  // The frame sits outside the boundaries so the skeleton lands where the board will.
+  // The frame sits outside the Suspense boundaries, so the skeleton renders where the board will.
   return (
     <FocusViewContainer className="group/workspace h-full max-w-none gap-0 p-0 sm:gap-2 sm:p-3 md:gap-3">
       <Suspense fallback={view === 'table' ? <Spinner size="lg" className="mt-[45vh]" /> : boardSkeleton}>

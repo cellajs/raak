@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import lucideIcons from '~/modules/common/icons/lucide-icons.gen.json';
 import { NamedIcon } from '~/modules/common/icons/named-icon';
@@ -10,29 +10,21 @@ import { isTouchInteraction } from '~/utils/input-modality';
 const maxVisible = 96;
 
 const allIconNames = Object.keys(lucideIcons);
-const searchIndex = lucideIcons as Record<string, string[]>;
+const searchIndex: Record<string, string[]> = lucideIcons;
 
 interface IconPickerProps {
-  /** Currently selected lucide icon name, if any */
   value?: string | null;
   onChange: (name: string) => void;
   className?: string;
 }
 
-/**
- * Searchable grid over the full lucide icon set, for user-selectable
- * entity icons. Matches on name and lucide tag synonyms. Import lazily; the search index
- * is bundled into this chunk.
- */
+/** Searchable grid over the lucide icon set, matching names and tag synonyms. Import lazily: the search index is bundled into this chunk. */
 export function IconPicker({ value, onChange, className }: IconPickerProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
 
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return allIconNames;
-    return allIconNames.filter((name) => name.includes(q) || searchIndex[name].some((tag) => tag.includes(q)));
-  }, [query]);
+  const q = query.trim().toLowerCase();
+  const matches = q ? allIconNames.filter((name) => name.includes(q) || searchIndex[name].some((tag) => tag.includes(q))) : allIconNames;
 
   return (
     <div className={cn('flex w-72 flex-col gap-2', className)}>

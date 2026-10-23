@@ -59,7 +59,7 @@ Product tables that opt into drafts use a PostgreSQL publication row filter:
 - Draft creates, edits, and deletes never reach the worker.
 - Soft-deleting a published row flows as an update tombstone.
 
-A channel table has `publishedAt` too, with another meaning and no publication filter. A draft channel records invitations and holds their mail until publish, and it shows only to its own members and to a caller who manages it from above, in a list and by id ([Permissions](./PERMISSIONS.md#enforcement-paths)).
+Every channel table has `publishedAt` too, with the same meaning (null is a draft) and no publication filter: a draft channel records invitations and holds their mail until publish, and it shows only to its own members and to a caller who manages it from above, in a list and by id ([Permissions](./PERMISSIONS.md#enforcement-paths)). The stamp itself is described under [Row stamps](./AGENTS.md#coding-patterns).
 
 ### Moves
 
@@ -134,7 +134,7 @@ The engine keeps no count of how many hosts reference an embedded row. A count s
 
 Product mutations own optimistic updates and replay registration in their query module: `onMutate` patches matching caches, success merges the authoritative server row, failure rolls back where configured. Mutations run with React Query `networkMode: 'offlineFirst'`.
 
-An edit attempted offline retries network errors only, then pauses and enters the persisted replay queue. Server errors, any HTTP status, settle immediately without queueing. Restored paused mutations wait for the first catchup attempt before replay. Online writes never wait.
+An edit attempted offline retries network errors only, then pauses and enters the persisted replay queue. Server errors, any HTTP status, settle immediately without queueing. Restored paused mutations wait for the first catchup attempt before replay, or for the stream to stop reconnecting ([REST fallback](#rest-fallback)). Online writes never wait.
 
 ### Merge metadata
 

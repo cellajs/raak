@@ -9,12 +9,10 @@ import type { DraggableItemData } from '~/utils/get-draggable-item-data';
 
 export type Task = GetTaskResponse & { _draft?: boolean };
 
-/** Embedded label shape as it appears on a task (subset of full Label). */
+/** The label shape embedded in a task, a subset of the full label. */
 export type TaskLabel = NonNullable<Task['labels']>[number];
 
-/** A board column: either a project panel (optionally a section-filtered split of one) or a
- *  local, non-project panel (explainer, labels). The `kind` discriminant replaces
- *  the old "any panel without a project is the explainer" heuristic. */
+/** A board column: a project panel (optionally a section-filtered split of one) or a local panel (explainer, labels), told apart by `kind`. */
 export type BoardResizablePanel =
   | {
       kind: 'project';

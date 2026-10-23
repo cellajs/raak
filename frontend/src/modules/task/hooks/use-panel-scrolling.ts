@@ -1,14 +1,25 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { autoScrollForElements, autoScrollWindowForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
+import { type RefObject, useEffect, useLayoutEffect, useRef } from 'react';
 import type { VirtualizerHandle } from 'virtua';
+import { useLatestRef } from '~/hooks/use-latest-ref';
 import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import type { TogglableStatusType } from '~/modules/task/board/task-board-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
 import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
-import { usePanelAutoScroll } from '~/modules/task/hooks/use-panel-drop-target';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
+
+/** Auto-scrolls the viewport during drags, or the window when the page itself scrolls. */
+function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScroll: boolean) {
+  useEffect(() => {
+    if (!windowScroll && scrollRef.current) {
+      return autoScrollForElements({ element: scrollRef.current, getAllowedAxis: () => 'vertical' });
+    }
+    return autoScrollWindowForElements({ getAllowedAxis: () => 'vertical' });
+  }, [scrollRef, windowScroll]);
+}
 
 interface UsePanelScrollingOptions {
   projectId: string;
@@ -19,26 +30,19 @@ interface UsePanelScrollingOptions {
   windowScroll: boolean;
 }
 
-/**
- * Owns all of a task panel's scroll machinery so the panel component stays layout-only:
- * the virtualizer/viewport refs, the keyboard-nav and status/task scroller registrations, drag
- * auto-scroll, status-section visibility, the section-toggle pending scroll, and the desktop
- * create-form scroll-into-view effect.
- */
+/** Owns a task panel's scroll machinery so the panel component stays layout-only. */
 export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowScroll }: UsePanelScrollingOptions) {
   const virtualizerRef = useRef<VirtualizerHandle>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep the latest tasks in a ref so the registered scroller always resolves the current index.
-  const tasksRef = useRef(tasks);
-  tasksRef.current = tasks;
+  const tasksRef = useLatestRef(tasks);
 
   // Keyboard navigation reads the list in render order, statuses as groups, and brings virtualized-out cards into view
   useEffect(() => {
     return registerPanelNav(panelId, {
       items: () => tasksRef.current.map(({ id, status }) => ({ id, group: status })),
       scrollTo: (taskId) => {
-        const index = tasksRef.current.findIndex((t) => t.id === taskId);
+        const index = tasksRef.current.findIndex((task) => task.id === taskId);
         if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
       },
       firstInView: () =>
@@ -49,12 +53,10 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
     });
   }, [panelId]);
 
-  // A cross-project drag brings the source-status band into view, giving the drag between-card drop targets. It skips
-  // when any same-status card is already visible: scrolling away from usable drop targets under a held drag would
-  // disorient. The mobile create dialog brings the new task into view, since it lands at its status, often off screen.
-  // Instant scroll: a smooth traversal mounts and measures every card along the way (see the iced-open note below).
+  // Both scrolls are instant: a smooth traversal mounts and measures every card on the way (see the iced-open note below).
   useEffect(() => {
     return registerPanelScroller(projectId, {
+      // Skipped when a same-status card is visible: scrolling away from usable drop targets under a held drag would disorient.
       toStatus: (status) => {
         const virtualizer = virtualizerRef.current;
         if (!virtualizer) return;
@@ -70,6 +72,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
 
         virtualizer.scrollToIndex(targetIndex, { align: 'center', smooth: false });
       },
+      // The mobile create dialog's new task goes to its status, often off screen.
       toTask: (taskId) => {
         const virtualizer = virtualizerRef.current;
         const index = tasksRef.current.findIndex(({ id }) => id === taskId);
@@ -84,19 +87,13 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
     });
   }, [projectId]);
 
-  // Auto-scroll the panel's scroll viewport during drag operations.
-  // No-op when scrollViewportRef is unattached (mobile / windowScroll branches).
-  // The drop target itself is registered one level up in `board-panel.tsx`
-  // so it remains live when the panel is collapsed.
   usePanelAutoScroll(scrollViewportRef, isMobile || windowScroll);
 
-  // Index of the first iced task in the sorted list, used by the section-toggle scroll below
-  const icedBoundaryIndex = useMemo(() => tasks.findIndex((t) => t.status === TaskStatus.Iced), [tasks]);
+  const icedBoundaryIndex = tasks.findIndex((task) => task.status === TaskStatus.Iced);
 
-  // Pending scroll action set by section toggle, consumed by the effect below
   const pendingScrollRef = useRef<{ action: 'accepted-open' | 'iced-open' } | { action: 'accepted-close'; anchorTaskId: string | null } | null>(null);
 
-  const handleSectionToggle = useCallback((expanded: boolean, type: TogglableStatusType) => {
+  const handleSectionToggle = (expanded: boolean, type: TogglableStatusType) => {
     if (type === 'iced') {
       if (expanded) pendingScrollRef.current = { action: 'iced-open' };
       return;
@@ -105,16 +102,20 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
       pendingScrollRef.current = { action: 'accepted-open' };
       return;
     }
-    // Collapse: anchor the first visible task so the view keeps its place when the
-    // accepted block above folds away. A null anchor means the viewer was inside the
-    // accepted block itself, whose content is about to disappear: return to the top.
+    // Collapse: anchor the first visible task so the view keeps its place; no anchor means the viewer was inside the folding block, so go to the top
     const virtualizer = virtualizerRef.current;
     const startIndex = virtualizer ? virtualizer.findItemIndex(virtualizer.scrollOffset) : -1;
     const anchor = tasksRef.current[startIndex];
     pendingScrollRef.current = { action: 'accepted-close', anchorTaskId: anchor && anchor.status !== TaskStatus.Accepted ? anchor.id : null };
-  }, []);
+  };
 
-  // Execute pending scroll after the tasks list updates (new boundary indices are available)
+  const scrollToAndGlow = (index: number) => {
+    virtualizerRef.current?.scrollToIndex(index, { align: 'center', smooth: false });
+    const task = tasksRef.current[index];
+    if (task) requestAnimationFrame(() => triggerTaskGlow(task.id));
+  };
+
+  // Runs after the tasks list updates, once the new boundary indices are available
   useLayoutEffect(() => {
     const pending = pendingScrollRef.current;
     if (!pending) return;
@@ -128,49 +129,40 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
         (scrollViewportRef.current ?? window).scrollTo({ top: 0 });
         return;
       }
-      const anchorIndex = tasks.findIndex((t) => t.id === pending.anchorTaskId);
+      const anchorIndex = tasks.findIndex((task) => task.id === pending.anchorTaskId);
       if (anchorIndex >= 0) virtualizer.scrollToIndex(anchorIndex, { align: 'start', smooth: false });
       return;
     }
 
     if (pending.action === 'accepted-open') {
-      // Mirror iced-open: center the boundary (last accepted) so the top half of the viewport
-      // shows accepted tasks, and glow it to preserve orientation. An 'align: nearest' nudge
-      // would park the row at the top edge, hidden behind the sticky accepted bar. Wait one
-      // frame for the virtualizer to lay out the newly-added items; skip when part of the
-      // accepted block is already in view.
+      // Mirrors iced-open: centering keeps the top half on accepted rows ('nearest' would park it behind the sticky accepted bar).
+      // A frame later, for the virtualizer to lay out the added items; skipped when part of the block is in view.
       requestAnimationFrame(() => {
         const v = virtualizerRef.current;
         if (!v) return;
-        const boundary = tasksRef.current.findIndex((t) => t.status !== TaskStatus.Accepted);
+        const boundary = tasksRef.current.findIndex((task) => task.status !== TaskStatus.Accepted);
         const lastAccepted = boundary === -1 ? tasksRef.current.length - 1 : boundary - 1;
         if (lastAccepted < 0) return;
         if (v.findItemIndex(v.scrollOffset) <= lastAccepted) return;
-        v.scrollToIndex(lastAccepted, { align: 'center', smooth: false });
-        const acceptedTask = tasksRef.current[lastAccepted];
-        if (acceptedTask) requestAnimationFrame(() => triggerTaskGlow(acceptedTask.id));
+        scrollToAndGlow(lastAccepted);
       });
       return;
     }
 
-    // iced-open: jump instantly so the virtualizer mounts only the destination window
-    // (a smooth traversal would mount and measure every card along the way, freezing
-    // the main thread for seconds on large lists), and glow the first iced task to
-    // preserve orientation. Skip when the iced boundary is already in view.
+    // iced-open: jumps instantly so the virtualizer mounts only the destination window (a smooth traversal freezes the main thread on large lists).
+    // Glows the first iced task; skipped when the boundary is in view.
     if (icedBoundaryIndex >= 0) {
       requestAnimationFrame(() => {
         const v = virtualizerRef.current;
         if (!v) return;
         if (v.findItemIndex(v.scrollOffset + v.viewportSize) >= icedBoundaryIndex) return;
-        v.scrollToIndex(icedBoundaryIndex, { align: 'center', smooth: false });
-        const icedTask = tasksRef.current[icedBoundaryIndex];
-        if (icedTask) requestAnimationFrame(() => triggerTaskGlow(icedTask.id));
+        scrollToAndGlow(icedBoundaryIndex);
       });
     }
   }, [tasks, icedBoundaryIndex]);
 
-  // Desktop: bring the create form into view when it opens or a status change moves it, not on every list change.
-  // A frame later, because the virtualizer's offset can still predate a scroll made just before, such as one up to "+ Task".
+  // Desktop: brings the create form into view when it opens or a status change moves it.
+  // A frame later, because the virtualizer's offset can predate a scroll made just before (such as up to "+ Task").
   const draftTask = tasks.find(isDraftTask);
   const draftPlacement = draftTask ? `${draftTask.status}:${draftTask.displayOrder}` : null;
   useEffect(() => {

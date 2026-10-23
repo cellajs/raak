@@ -10,7 +10,7 @@ async function csvText(columns: { key: string; name: string }[], rows: Record<st
     return 'blob:export';
   });
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-  await exportToCsv(columns, rows, 'export.csv');
+  exportToCsv(columns, rows, 'export.csv');
   return file ? file.text() : '';
 }
 
@@ -20,22 +20,19 @@ describe('exportToCsv', () => {
     vi.restoreAllMocks();
   });
 
-  it('quotes cells with a comma, a quote or a line break and doubles inner quotes', async () => {
+  it('keeps every value one cell: a comma, a quote or a line break is quoted with inner quotes doubled, a list joined', async () => {
     const columns = [
       { key: 'name', name: 'Name' },
       { key: 'message', name: 'Message' },
+      { key: 'labels', name: 'Labels' },
     ];
     const rows = [
-      { name: 'Plain', message: 'Say "hi"' },
-      { name: 'Smith, Jo', message: 'first line\nsecond line' },
+      { name: 'Plain', message: 'Say "hi"', labels: ['solo'] },
+      { name: 'Smith, Jo', message: 'first line\nsecond line', labels: ['bug', 'ui'] },
     ];
 
-    expect(await csvText(columns, rows)).toBe(['Name,Message', 'Plain,"Say ""hi"""', '"Smith, Jo","first line\nsecond line"'].join('\n'));
-  });
-
-  it('writes a list as one quoted cell', async () => {
-    const rows = [{ labels: ['bug', 'ui'] }, { labels: ['solo'] }];
-
-    expect(await csvText([{ key: 'labels', name: 'Labels' }], rows)).toBe(['Labels', '"bug, ui"', 'solo'].join('\n'));
+    expect(await csvText(columns, rows)).toBe(
+      ['Name,Message,Labels', 'Plain,"Say ""hi""",solo', '"Smith, Jo","first line\nsecond line","bug, ui"'].join('\n'),
+    );
   });
 });

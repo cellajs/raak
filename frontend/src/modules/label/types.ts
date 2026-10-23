@@ -1,20 +1,17 @@
 import type { Label } from 'sdk';
 
-/** Stable id for the always-present labels board panel. Also a persisted board-layout /
- *  collapse-state key, so this string value must not change. */
+/** Persisted as the board layout and collapse key: the value must not change. */
 export const LABELS_PANEL_ID = 'labels';
-
-/** Where a labels view is scoped: one project or a whole workspace. */
-export type LabelsScope = 'project' | 'workspace';
 
 /** Scope contract shared by the labels panel, list, tiles and actions. */
 export interface LabelsScopeProps {
-  entity: LabelsScope;
+  entity: 'project' | 'workspace';
   entityId: string;
 }
 
 /** How the board panel (defaults) or the mobile drawer hosts the labels list. */
 export interface LabelsHostProps {
+  /** The panel grows with its content and the page scrolls; otherwise the list scrolls internally. */
   windowScroll?: boolean;
   /** Off in the drawer: its modal overlay covers the floating selection bar. */
   selectable?: boolean;

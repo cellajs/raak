@@ -5,23 +5,23 @@ import { findProjectByIdOrSlug, projectQueryKeys } from '~/modules/project/query
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { queryClient } from '~/query/query-client';
 
-/** Provides project publicity state and actions. */
+/** Whether the project is public: always on the public route, else read from the cache. */
 export const useProjectPublicity = (projectId: string) => {
   const { tenantId } = useOrganizationLayoutContext();
 
-  const projectMatch = useMatch({ from: '/_app/$tenantId/$organizationSlug/project/$slug', shouldThrow: false, select: () => true });
-  const publicProjectMatch = useMatch({
+  const isProjectRoute = useMatch({ from: '/_app/$tenantId/$organizationSlug/project/$slug', shouldThrow: false, select: () => true });
+  const isPublicProjectRoute = useMatch({
     from: '/_public/_content/$tenantId/$organizationSlug/public/project/$slug',
     shouldThrow: false,
     select: () => true,
   });
-  const workspaceMatch = useIsWorkspaceRoute();
+  const isWorkspaceRoute = useIsWorkspaceRoute();
 
-  if (publicProjectMatch) return true;
+  if (isPublicProjectRoute) return true;
 
-  if (workspaceMatch || projectMatch) {
+  if (isWorkspaceRoute || isProjectRoute) {
     const cached = findProjectByIdOrSlug(projectId, tenantId) ?? queryClient.getQueryData<Project>(projectQueryKeys.detail.byId(projectId));
-    return cached?.publicAt !== null && cached?.publicAt !== undefined;
+    return cached?.public ?? false;
   }
 
   throw new Error('useProjectPublicity must be used within a workspace or project route.');

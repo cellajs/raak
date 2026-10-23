@@ -4145,7 +4145,7 @@ export const getProject = <ThrowOnError extends boolean = true>(
  * @param {string=} options.body.name - `string` (optional)
  * @param {string | null=} options.body.thumbnailUrl - `string | null` (optional)
  * @param {string | null=} options.body.bannerUrl - `string | null` (optional)
- * @param {string | null=} options.body.publicAt - `string | null` (optional)
+ * @param {boolean=} options.body.public - `boolean` (optional)
  * @returns Possible status codes: 200, 400, 401, 403, 404, 409, 429
  */
 export const updateProject = <ThrowOnError extends boolean = true>(

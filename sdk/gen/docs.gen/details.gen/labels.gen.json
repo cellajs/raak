@@ -18,7 +18,6 @@
                 "type": "object",
                 "description": "A label used to categorize and filter tasks within a project or workspace.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -27,6 +26,7 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
@@ -46,10 +46,7 @@
                     "required": true,
                     "format": "uuid"
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -138,7 +135,7 @@
               "keywords": "",
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 215,
               "color": "#e31dfa",
               "mode": "secondary",
@@ -165,7 +162,7 @@
               "keywords": "",
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 118,
               "color": "#eaafed",
               "mode": "secondary",
@@ -288,7 +285,6 @@
                 "type": "object",
                 "description": "A label used to categorize and filter tasks within a project or workspace.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -297,6 +293,7 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
@@ -316,10 +313,7 @@
                     "required": true,
                     "format": "uuid"
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -419,7 +413,7 @@
               "keywords": "",
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 354,
               "color": "#7deecd",
               "mode": "secondary",
@@ -446,7 +440,7 @@
               "keywords": "",
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 187,
               "color": "#ed83ab",
               "mode": "secondary",
@@ -477,7 +471,6 @@
                 "type": "object",
                 "description": "A label used to categorize and filter tasks within a project or workspace.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -486,6 +479,7 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
@@ -505,10 +499,7 @@
                     "required": true,
                     "format": "uuid"
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "seq": {
                     "type": "integer",
                     "required": true,
@@ -608,7 +599,7 @@
               "keywords": "",
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 354,
               "color": "#7deecd",
               "mode": "secondary",
@@ -635,7 +626,7 @@
               "keywords": "",
               "deletedAt": null,
               "deletedBy": null,
-              "publicAt": null,
+              "public": false,
               "seq": 187,
               "color": "#ed83ab",
               "mode": "secondary",
@@ -880,7 +871,6 @@
           "type": "object",
           "description": "A label used to categorize and filter tasks within a project or workspace.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -889,6 +879,7 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
@@ -908,10 +899,7 @@
               "required": true,
               "format": "uuid"
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "seq": {
               "type": "integer",
               "required": true,
@@ -994,7 +982,7 @@
           "keywords": "",
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 136,
           "color": "#1d181f",
           "mode": "secondary",
@@ -1072,7 +1060,6 @@
           "type": "object",
           "description": "A label used to categorize and filter tasks within a project or workspace.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -1081,6 +1068,7 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
@@ -1100,10 +1088,7 @@
               "required": true,
               "format": "uuid"
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "seq": {
               "type": "integer",
               "required": true,
@@ -1186,7 +1171,7 @@
           "keywords": "",
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 136,
           "color": "#1d181f",
           "mode": "secondary",

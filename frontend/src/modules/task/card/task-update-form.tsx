@@ -6,34 +6,29 @@ import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative
 import { checkedExtension } from '~/modules/common/blocknote/custom-elements/checklist/checklist-extension';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
-import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
-import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskCardContentExpanded } from '~/modules/task/card/task-card-content-expanded';
+import { taskCardStore } from '~/modules/task/card/task-card-store';
+import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
 import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
-import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
-import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
+import { taskDescriptionGutterClass } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 // Avoid bare `min-h-8`/`pb-4` here: BlockNoteView copies className to its portal element
 // (see @blocknote/react BlockNoteView), which would add empty trailing height below the editor.
-const expandedStyle = '[&>.bn-editor]:min-h-8 w-full bg-transparent border-none';
-const expandedWrapperStyle = taskDescriptionGutterStyle;
+const expandedEditorClass = tw('w-full border-none bg-transparent [&>.bn-editor]:min-h-8');
 const checkboxExtensions = [checkedExtension({ persisted: true })];
 
 interface TaskUpdateFormProps {
   task: Task;
   /** Exposes the editor's imperative API to the parent slot (handoff, warm-on-hover, checkbox toggle). */
   contentApiRef?: RefObject<BlockNoteContentApi | null>;
-  /** Fires once the editor is mounted. */
   onEditorReady?: () => void;
 }
 
-/**
- * Hosts the collaborative BlockNote editor for editing a task description; the shared
- * CollaborativeBlockNote owns the Yjs connection and its status, this wires task specifics
- * (permission, members, attachments, card-state handlers, cache policy).
- */
+/** Hosts the collaborative editor for a task description; the shared CollaborativeBlockNote owns the Yjs connection. */
 export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdateFormProps) {
   const { tenantId } = useOrganizationLayoutContext();
 
@@ -41,18 +36,17 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
   const canEdit = isUnconditionalCan(project?.can?.task?.update);
 
   const projectMembers = useProjectMembers(task.projectId, tenantId, task.organizationId);
-  const { attachmentsCreationCallback } = useUploadAttachments();
   const updateData = useTaskDescriptionUpdate(task);
 
-  const handleEscapeOrBlur = () => {
-    useTaskCardStore.getState().setTaskState(task.id, 'expanded');
+  const handleExitEditing = () => {
+    taskCardStore.getState().setTaskState(task.id, 'expanded');
   };
 
   // Task linkage for uploads rides the description's attachmentId block props.
-  const baseFilePanel = useTaskFilePanelProps(task.projectId, tenantId, task.organizationId, attachmentsCreationCallback({ ...task }));
+  const baseFilePanel = useTaskFilePanelProps(task.projectId, tenantId, task.organizationId, createTaskUploadPersister(task));
 
   return (
-    <div className={expandedWrapperStyle}>
+    <div className={taskDescriptionGutterClass}>
       <CollaborativeBlockNote
         entityType="task"
         entityId={task.id}
@@ -65,8 +59,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
         onEditorReady={onEditorReady}
         waitingFallback={
           // The static wherever no live editor is, faded and inert only while an editor is coming.
-          // noGutter: the wrapper already applies taskDescriptionGutterStyle, so the preview
-          // aligns with the editor that replaces it and the swap causes no reflow.
+          // noGutter: the wrapper already applies taskDescriptionGutterClass, so the swap causes no reflow.
           <div className={cn(canEdit && 'pointer-events-none select-none opacity-50')}>
             <TaskCardContentExpanded task={task} noGutter />
           </div>
@@ -74,10 +67,10 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
         editable
         // No autoFocus: its deferred focus would move the cursor to the start after the slot placed it.
         members={projectMembers}
-        className={expandedStyle}
+        className={expandedEditorClass}
         dense
-        onEnterClick={handleEscapeOrBlur}
-        onEscapeClick={handleEscapeOrBlur}
+        onEnterClick={handleExitEditing}
+        onEscapeClick={handleExitEditing}
         extensions={checkboxExtensions}
         baseFilePanelProps={baseFilePanel}
         trailingBlock={false}

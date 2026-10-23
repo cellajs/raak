@@ -14,17 +14,18 @@ import { Button } from '~/modules/ui/button';
 const folded = { width: 0, height: 0, opacity: 0 };
 const unfolded = { width: 'auto', height: 'auto', opacity: 1 };
 
-/**
- * Grip before the type button, folded away until it has focus, so only a keyboard reaches it. Unfolding, it pushes that
- * button aside, and the arrow keys step the card within its status: until then they move between cards.
- */
-export function TaskDragHandle({ task }: { task: Task }) {
+interface TaskDragHandleProps {
+  task: Task;
+}
+
+/** Grip before the type button, folded away until focused so only a keyboard reaches it; its arrow keys step the card within its status. */
+export function TaskDragHandle({ task }: TaskDragHandleProps) {
   const { t } = useTranslation();
   const panelTasks = usePanelTasks();
   const { mutate: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const refocusAtOrder = useRef<number | null>(null);
+  const refocusAtOrderRef = useRef<number | null>(null);
   const [hasFocus, setHasFocus] = useState(false);
 
   const statusTasks = (panelTasks ?? []).filter((panelTask) => panelTask.status === task.status && !isDraftTask(panelTask));
@@ -33,20 +34,20 @@ export function TaskDragHandle({ task }: { task: Task }) {
   const move = (step: -1 | 1) => {
     const target = statusTasks[index + step];
     if (!target) return;
-    // Every task of the status, so the card lands right beside its visible neighbor even past tasks the search hides
+    // Every task of the status, so the card moves right beside its visible neighbor even past tasks the search hides
     const allStatusTasks = cachedTasks().filter(
       (cached) => cached.projectId === task.projectId && cached.status === task.status && !isDraftTask(cached),
     );
     const displayOrder = getRelativeTaskOrder(step < 0 ? 'top' : 'bottom', allStatusTasks, target.displayOrder, task.id);
     if (displayOrder === task.displayOrder) return;
-    refocusAtOrder.current = displayOrder;
+    refocusAtOrderRef.current = displayOrder;
     updateTask({ id: task.id, ops: { displayOrder } });
   };
 
   // React re-inserts a row it moves down, and a removed node drops focus
   useLayoutEffect(() => {
-    if (refocusAtOrder.current === null || refocusAtOrder.current !== task.displayOrder) return;
-    refocusAtOrder.current = null;
+    if (refocusAtOrderRef.current === null || refocusAtOrderRef.current !== task.displayOrder) return;
+    refocusAtOrderRef.current = null;
     buttonRef.current?.focus();
   });
 
@@ -58,7 +59,7 @@ export function TaskDragHandle({ task }: { task: Task }) {
 
   // The blur of a re-inserted row has no next target: the grip stays unfolded through the move
   const handleBlur = (event: FocusEvent<HTMLButtonElement>) => {
-    if (!event.relatedTarget && refocusAtOrder.current !== null) return;
+    if (!event.relatedTarget && refocusAtOrderRef.current !== null) return;
     setHasFocus(false);
   };
 
@@ -83,7 +84,7 @@ export function TaskDragHandle({ task }: { task: Task }) {
           onFocus={() => setHasFocus(true)}
           onBlur={handleBlur}
           // Only a collapsed card is draggable, so an open one shows no grab cursor
-          className="focus-inset h-8 w-8 group-data-[state=collapsed]/task:cursor-grab group-data-[state=collapsed]/task:active:cursor-grabbing"
+          className="focus-inset size-8 group-data-[state=collapsed]/task:cursor-grab group-data-[state=collapsed]/task:active:cursor-grabbing"
         >
           <GripVerticalIcon className="size-3.5" />
         </Button>

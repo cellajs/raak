@@ -2,48 +2,41 @@ import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-d
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/utils/preserve-offset-on-source';
 import { attachClosestEdge, type Edge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
-import type { FocusEvent } from 'react';
-import { memo, useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type MouseEvent, memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { focusItem, markCurrentItemMounted, setCurrentItem, takePendingFocus } from '~/modules/board-focus/focus-item';
 import { useItemControlsTabOrder } from '~/modules/board-focus/use-item-controls-tab-order';
 import { DropIndicator } from '~/modules/common/drop-indicator';
+import { StickyBox } from '~/modules/common/sticky-box';
 import { useIsProjectReadOnly } from '~/modules/project/use-read-only';
 import { getSeenChannelId } from '~/modules/seen/helpers';
 import { SeenMark } from '~/modules/seen/seen-mark';
+import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-task-drag-indicator-store';
 import { CardDescriptionSlot } from '~/modules/task/card/card-description-slot';
-import { TaskCardDragPreview } from '~/modules/task/card/card-drag-preview';
-import { TaskCardFooter } from '~/modules/task/card/card-footer';
-import { TaskCardHeader } from '~/modules/task/card/card-header';
-import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { TaskCardDragPreview } from '~/modules/task/card/task-card-drag-preview';
+import { TaskCardFooter } from '~/modules/task/card/task-card-footer';
+import { TaskCardHeader } from '~/modules/task/card/task-card-header';
+import { taskCardStore } from '~/modules/task/card/task-card-store';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
+import { taskCardVariants } from '~/modules/task/task-styles';
 import type { TaskProps } from '~/modules/task/types';
 import { Card, CardContent } from '~/modules/ui/card';
 import { cn } from '~/utils/cn';
 import { getDraggableItemData } from '~/utils/get-draggable-item-data';
 import { isTouchInteraction } from '~/utils/input-modality';
-
 import '~/modules/task/card/card-glow.css';
-import { StickyBox } from '~/modules/common/sticky-box';
-import { useMobileTaskDragIndicatorStore } from '~/modules/task/board/mobile-drag-indicator-store';
-import { taskCardVariants } from '~/modules/task/task-styles';
 
-interface PortalDataProps {
+interface DragPreviewPortal {
   container: HTMLElement;
   rect: DOMRect;
 }
 
-/**
- * Manage task card rendering and interactions, including click/double-click behavior, focus management, and drag-and-drop for reordering.
- */
-const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, isSheet, onEdit }: TaskProps) {
+export const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, isSheet, onEdit }: TaskProps) {
   const taskRef = useRef<HTMLDivElement>(null);
-  const expandedAtRef = useRef<number>(0);
   const isReadOnly = useIsProjectReadOnly(task.projectId);
-  const mobileClosestEdge = useMobileTaskDragIndicatorStore((store) => (store.indicator?.taskId === task.id ? store.indicator.edge : null));
+  const mobileClosestEdge = useMobileTaskDragIndicatorStore((state) => (state.indicator?.taskId === task.id ? state.indicator.edge : null));
 
-  // Cap editing to expanded in read-only mode
   const effectiveState = isReadOnly && state === 'editing' ? 'expanded' : state;
 
   // The close button pops in and out only when the card opens or closes here, not when a row scrolls back into view
@@ -55,47 +48,43 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     setHasToggled(true);
   }
 
-  const [dragging, setDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
-  const [portalData, setPortalData] = useState<PortalDataProps | null>(null);
+  const [portalData, setPortalData] = useState<DragPreviewPortal | null>(null);
 
-  const dragEnd = () => {
+  const clearClosestEdge = () => {
     setClosestEdge(null);
   };
 
-  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const clickTarget = event.target as HTMLElement;
+  const startEditing = () => {
+    if (isSheet) onEdit?.();
+    else taskCardStore.getState().setTaskState(task.id, 'editing');
+  };
 
+  const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
     // The store, not isFocused: the mousedown before this click already made the card current through its focus
     if (!isSheet && useBoardFocusStore.getState().currentItemId !== task.id) focusItem(task.id);
 
-    // Ignore clicks that are text selection (user dragged to highlight) within this card
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0 && taskRef.current?.contains(selection.anchorNode)) return;
 
-    // Ignore clicks on interactive elements
-    const interactive = clickTarget.closest('button, a, input, textarea, select, [role="button"], [role="checkbox"], label');
+    const interactive =
+      event.target instanceof Element && event.target.closest('button, a, input, textarea, select, [role="button"], [role="checkbox"], label');
     if (interactive) return;
 
     if (isSheet) {
-      if (state === 'expanded' && !isReadOnly) onEdit?.();
+      if (state === 'expanded' && !isReadOnly) startEditing();
       return;
     }
 
     // A touch tap only expands: editing focuses the editor, which opens the on-screen keyboard. A second tap edits at its point.
     if (state === 'collapsed') {
-      expandedAtRef.current = Date.now();
-      useTaskCardStore.getState().setTaskState(task.id, isReadOnly || isTouchInteraction() ? 'expanded' : 'editing');
+      taskCardStore.getState().setTaskState(task.id, isReadOnly || isTouchInteraction() ? 'expanded' : 'editing');
       return;
     }
 
     // Clicking the card edges while editing should not exit editing
-    if (state === 'editing') return;
-
-    // Re-enter editing when clicking an expanded card (skip in read-only)
-    if (state === 'expanded' && !isReadOnly) {
-      useTaskCardStore.getState().setTaskState(task.id, 'editing');
-    }
+    if (state === 'expanded' && !isReadOnly) startEditing();
   };
 
   // Register draggable only when collapsed so expanded cards allow text selection
@@ -120,12 +109,11 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
           },
         });
       },
-      onDragStart: () => setDragging(true),
-      onDrop: () => setDragging(false),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
     });
   }, [task, state, isSheet, isReadOnly]);
 
-  // Register drop target (always active for receiving drags from other cards)
   useEffect(() => {
     if (isSheet) return;
     const element = taskRef.current;
@@ -146,20 +134,18 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         if (!isTaskData(sourceData) || !isTaskData(selfData) || sourceData.item.id === task.id) return;
         setClosestEdge(extractClosestEdge(selfData));
       },
-      onDragLeave: dragEnd,
-      onDrop: dragEnd,
+      onDragLeave: clearClosestEdge,
+      onDrop: clearClosestEdge,
     });
-  }, [task, isSheet, isReadOnly]);
+  }, [task, isSheet]);
 
-  // Exit editing only when focus moves to another task card (not to dialogs, portals, or void).
-  // Small delay lets BlockNote's blur handler flush content to cache and
-  // BlockNoteFullHtml's async render complete before the static HTML becomes visible.
+  // Editing exits only when focus moves to another task card, not to dialogs or portals.
+  // The delay lets BlockNote's blur handler flush to the cache and its async render finish before the static HTML shows.
   const handleCardBlur = (event: FocusEvent<HTMLDivElement>) => {
     if (state !== 'editing') return;
-    const nextFocused = event.relatedTarget as HTMLElement | null;
-    // Only exit editing if focus moved to another task card
-    if (nextFocused?.closest?.('[data-task-card-id]') && !taskRef.current?.contains(nextFocused)) {
-      setTimeout(() => useTaskCardStore.getState().setTaskState(task.id, 'expanded'), 50);
+    const nextFocused = event.relatedTarget;
+    if (nextFocused instanceof Element && nextFocused.closest('[data-task-card-id]') && !taskRef.current?.contains(nextFocused)) {
+      setTimeout(() => taskCardStore.getState().setTaskState(task.id, 'expanded'), 50);
     }
   };
 
@@ -180,8 +166,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     return markCurrentItemMounted(task.id);
   }, [isSheet, isFocused, task.id]);
 
-  const startEditing = () => (isSheet ? onEdit?.() : useTaskCardStore.getState().setTaskState(task.id, 'editing'));
-
+  const isCurrent = isFocused && !isSheet;
   const dropIndicatorEdge = mobileClosestEdge ?? closestEdge;
 
   return (
@@ -194,30 +179,29 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
         onFocus={handleCardFocus}
         onBlur={handleCardBlur}
         data-state={effectiveState}
-        // status to assign color of a glow
+        // read by card-glow.css
         data-status={task.status}
         data-task-card-id={task.id}
         data-project-id={task.projectId}
-        data-read-only={isReadOnly ? 'true' : undefined}
+        data-read-only={isReadOnly || undefined}
         data-sheet={isSheet || undefined}
-        data-match-current={isFocused && !isSheet ? '' : undefined}
+        data-match-current={isCurrent || undefined}
         draggable={!isSheet && !isReadOnly && effectiveState === 'collapsed'}
         tabIndex={isSheet || isFocused ? 0 : -1}
         ref={taskRef}
         className={cn(
-          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent to-100% py-0 sm:py-0',
-          task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30!' : 'bg-green-300/20 hover:bg-green-300/30!'),
-          effectiveState !== 'collapsed' && 'is-expanded',
-          dragging ? 'opacity-30' : 'opacity-100',
-          !isSheet && 'focus-visible:outline-none focus-visible:ring-0',
-          isFocused && !isSheet && 'is-focused',
+          'group/task relative rounded-none border-0 border-b bg-linear-to-br bg-transparent from-transparent via-60% via-transparent py-0 sm:py-0',
+          isDragging && 'opacity-30',
+          !isSheet && 'focus-visible:outline-none',
+          isCurrent && 'is-focused',
           isSheet ? 'min-h-[calc(100vh-var(--task-sheet-offset))] p-3 pt-0 sm:min-h-[calc(100vh-var(--task-sheet-offset-sm))]' : 'hover:bg-card/20',
           taskCardVariants({ status: task.status }),
+          task.isMatchingSearch && (isFocused ? 'bg-green-500/20 hover:bg-green-500/30' : 'bg-green-300/20 hover:bg-green-300/30'),
         )}
       >
         <CardContent
           id={`${task.id}-content`}
-          className="relative flex flex-col p-1.5! px-2.5! before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
+          className="relative flex flex-col px-2.5! py-1.5 before:pointer-events-none before:absolute before:inset-y-0 before:left-px before:w-1 before:bg-primary before:opacity-0 group-focus-visible/task:before:opacity-100 group-[.is-focused]/task:before:opacity-100 sm:before:-left-px"
         >
           <SeenMark
             productId={task.id}
@@ -240,7 +224,7 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
             state={effectiveState}
             isReadOnly={isReadOnly}
             animateClose={hasToggled}
-            showDragHandle={isFocused && !isSheet && !isReadOnly}
+            showDragHandle={isCurrent && !isReadOnly}
             onEditRequest={isFocused && !isReadOnly ? startEditing : undefined}
           />
           <TaskCardFooter task={task} isSheet={isSheet} isSelected={isSelected} />
@@ -257,5 +241,3 @@ const TaskCard = memo(function TaskCard({ task, isSelected, isFocused, state, is
     </>
   );
 });
-
-export { TaskCard };

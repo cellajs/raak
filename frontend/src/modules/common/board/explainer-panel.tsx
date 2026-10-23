@@ -11,13 +11,9 @@ import { organizationQueryOptions } from '~/modules/organization/query';
 import { Button } from '~/modules/ui/button';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 
-/** Stable id for the explainer ("getting started") panel. Also a persisted board-layout /
- *  collapse-state key, so this string value must not change. */
+/** Keys the persisted panel layout and collapse state, so the value is fixed. */
 export const EXPLAINER_PANEL_ID = 'explainer';
 
-/**
- * Explainer panel content for a board showing organization welcome text.
- */
 export function ExplainerPanel() {
   const { t } = useTranslation();
 
@@ -25,20 +21,18 @@ export function ExplainerPanel() {
   const { data: organization } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
   const setAlertSeen = useAlertStore((state) => state.setAlertSeen);
 
-  const setAsSeen = () => setAlertSeen('welcome-text');
-
   return (
     <LocalPanelShell
       panelId={EXPLAINER_PANEL_ID}
       icon={<InfoIcon />}
       title={t('c:getting_started')}
       headerActions={
-        <Button variant="ghost" size="sm" className="font-normal opacity-70 hover:opacity-100" onClick={setAsSeen}>
+        <Button variant="ghost" size="sm" className="font-normal opacity-70 hover:opacity-100" onClick={() => setAlertSeen('welcome-text')}>
           <span>{t('c:dont_show_again')}</span>
         </Button>
       }
     >
-      <ScrollArea id={'explainer-scrollarea'} className="h-full">
+      <ScrollArea className="h-full">
         <div className="select-text p-4">
           <Suspense fallback={<Spinner className="my-4" noDelay />}>
             <BlockNoteFullHtml

@@ -2,12 +2,13 @@ import type { z } from '@hono/zod-openapi';
 import type { ActorContext, UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
+import { updateStamps } from '#/db/utils/stamps';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { filterExistingProductIds } from '#/modules/entities/embedding-queries';
 import { findLabelSlugById, findLivePrimaryLabels } from '#/modules/label/label-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
-import { hydrateTask, hydrateTaskLite } from '#/modules/task/helpers/hydrate-task';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
+import { hydrateTask, hydrateTaskLite } from '#/modules/task/operations/hydrate-task';
 import type { InsertTaskModel } from '#/modules/task/task-db';
 import { findProjectMemberUserIds, updateTask } from '#/modules/task/task-queries';
 import { taskContract, type taskUpdateStxBodySchema } from '#/modules/task/task-schema';
@@ -16,7 +17,7 @@ import { getIsoDate } from '#/utils/iso-date';
 
 type UpdateTaskInput = z.infer<typeof taskUpdateStxBodySchema>;
 
-type ReturnTask = ReturnType<typeof hydrateTask>;
+type ReturnTask = Awaited<ReturnType<typeof hydrateTask>>;
 
 /** A session or a user token carries the editor's row; a service account's call only its actor. */
 type UpdateTaskContext = { var: ActorContext['var'] & Partial<Pick<UserContext['var'], 'user'>> };
@@ -54,10 +55,10 @@ export async function updateTaskOp(
     if (!resolved.changed) {
       if (!fullResponse) return hydrateTaskLite(entity, user);
       const [users, labels] = await getTaskRelations(txCtx, { tasks: [entity] });
-      return hydrateTask(entity, users, labels);
+      return hydrateTask(txCtx, entity, users, labels);
     }
 
-    const updateValues: Partial<InsertTaskModel> = { ...resolved.values, updatedAt: getIsoDate(), updatedBy: ctx.var.actor.id, stx: resolved.stx };
+    const updateValues: Partial<InsertTaskModel> = { ...resolved.values, ...updateStamps(ctx.var.actor.id), stx: resolved.stx };
 
     if (resolved.values.status !== undefined && resolved.values.status !== entity.status) {
       updateValues.statusChangedAt = getIsoDate();
@@ -117,7 +118,7 @@ export async function updateTaskOp(
     // Full path: hydrate relations from DB (for 3rd-party consumers)
     const relationSource = 'assignedTo' in resolved.values || 'labels' in resolved.values ? updatedTaskRecord : entity;
     const [users, labels] = await getTaskRelations(txCtx, { tasks: [relationSource] });
-    return hydrateTask(updatedTaskRecord, users, labels);
+    return hydrateTask(txCtx, updatedTaskRecord, users, labels);
   });
 
   return taskResponse;

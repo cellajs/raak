@@ -13,6 +13,7 @@ const listeners = new Set<() => void>();
 const loadIconNodes = () => {
   loading ??= import('#json/lucide-icon-nodes.json').then(
     ({ default: nodes }) => {
+      // The JSON infers plain arrays, not [tag, attrs] tuples
       iconNodes = nodes as unknown as Record<string, IconNode>;
       for (const notify of listeners) notify();
     },

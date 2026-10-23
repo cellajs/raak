@@ -3,7 +3,7 @@ import { getPublicTask, getPublicTasks } from 'sdk';
 import { appConfig } from 'shared';
 import type { GetTasksParam } from '~/modules/task/query';
 import { taskKeys, tasksTableQueryDefaults } from '~/modules/task/query';
-import { boardAcceptedCutOff } from '~/modules/task/task-properties';
+import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { offsetPaging, pageQuery } from '~/query/basic/infinite-query-options';
 
 export const publicTaskQueryOptions = (id: string) =>
@@ -16,8 +16,8 @@ export const publicTaskQueryOptions = (id: string) =>
 
 export const publicTasksBoardQueryOptions = (projectId: string) => {
   return queryOptions({
-    queryKey: taskKeys.publicList.filtered({ projectId, publicAt: true as const }),
-    queryFn: () => getPublicTasks({ query: { projectId, acceptedCutOff: boardAcceptedCutOff, offset: 0, limit: appConfig.requestLimits.tasks } }),
+    queryKey: taskKeys.publicList.filtered({ projectId, public: true }),
+    queryFn: () => getPublicTasks({ query: { projectId, acceptedCutOff: boardAcceptedCutOffDays, offset: 0, limit: appConfig.requestLimits.tasks } }),
     gcTime: 0,
     staleTime: 0,
   });
@@ -31,7 +31,7 @@ const publicTasksTableQueryKey = ({
   order = tasksTableQueryDefaults.order,
   matchMode = tasksTableQueryDefaults.matchMode,
   projectId,
-}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, publicAt: true as const });
+}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, public: true });
 
 export const publicTasksTableQueryOptions = ({
   q,

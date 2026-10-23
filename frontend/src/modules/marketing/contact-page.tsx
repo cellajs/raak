@@ -3,9 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { appConfig } from 'shared';
 import type { TKey } from '~/lib/i18n-locales';
 import { ContactForm } from '~/modules/common/contact-form/contact-form';
+import type { IconComponent } from '~/modules/common/icons/types';
 import { MarketingLayout } from '~/modules/marketing/layout';
 
-type ContactMethod = { icon: typeof MapPinIcon; title: TKey; link: string; textKey?: TKey; text?: string };
+interface ContactMethod {
+  icon: IconComponent;
+  title: TKey;
+  link: string;
+  /** Translation key shown as the link text; wins over `text`. */
+  textKey?: TKey;
+  text?: string;
+}
 
 const methods: ContactMethod[] = [
   { icon: MapPinIcon, title: 'c:visit', link: appConfig.company.directionsUrl, text: appConfig.company.streetAddress },
@@ -22,34 +30,33 @@ export function ContactPage() {
   return (
     <MarketingLayout title="c:contact_us">
       <div className="container pt-20 pb-16">
-        <h1 className="mb-4 text-center font-semibold text-3xl sm:text-left md:text-4xl">{t('c:leave_message.text')}</h1>
+        <h2 className="mb-4 text-center font-semibold text-3xl sm:text-left md:text-4xl">{t('c:leave_message.text')}</h2>
         <p className="mb-8 text-center text-muted-foreground sm:text-left sm:text-lg">{t('c:contact_us.text')}</p>
         <ContactForm />
       </div>
-      <div className="container mb-12">
-        <div className="flex flex-wrap justify-evenly gap-2">
-          {methods.map((method) => (
+      <div className="container mb-12 flex flex-wrap justify-evenly gap-2">
+        {methods.map((method) => {
+          const isWebPage = method.link.startsWith('http');
+          return (
             <div key={method.title} className="mb-10 h-48 w-40 text-center sm:w-48">
               <div className="mx-auto mb-5 flex size-24 items-center justify-center rounded-full bg-accent/50 text-primary sm:size-32">
                 <method.icon className="size-12" strokeWidth={1} />
               </div>
-              <div className="text-center">
-                <h4 className="mb-3 font-semibold text-lg">{t(method.title)}</h4>
-                <p>
-                  <a
-                    href={method.link}
-                    className="group focus-effect link-decoration active:link-decoration-strong rounded-md p-0.5 text-sm hover:underline sm:text-base"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {method.textKey ? t(method.textKey) : method.text}
-                    <ArrowUpRightIcon className="-mt-2 ml-1 inline-block text-primary opacity-50 group-hover:opacity-100" />
-                  </a>
-                </p>
-              </div>
+              <h3 className="mb-3 font-semibold text-lg">{t(method.title)}</h3>
+              <p>
+                <a
+                  href={method.link}
+                  className="group focus-effect link-decoration active:link-decoration-strong rounded-md p-0.5 text-sm hover:underline sm:text-base"
+                  target={isWebPage ? '_blank' : undefined}
+                  rel={isWebPage ? 'noreferrer' : undefined}
+                >
+                  {method.textKey ? t(method.textKey) : method.text}
+                  <ArrowUpRightIcon className="-mt-2 ml-1 inline-block text-primary opacity-50 group-hover:opacity-100" />
+                </a>
+              </p>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </MarketingLayout>
   );

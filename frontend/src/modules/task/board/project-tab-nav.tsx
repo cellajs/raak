@@ -4,8 +4,12 @@ import type { EnrichedProject } from '~/modules/project/types';
 import { sortByMembership } from '~/modules/task/helpers/board-helpers';
 import { workspaceRouteApi } from '~/modules/workspace/use-workspace-context';
 
+interface ProjectTabNavProps {
+  projects: EnrichedProject[];
+}
+
 /** Project tabs of the mobile workspace board, also drawn by its skeleton so the bar does not shift when the board loads. */
-export function ProjectTabNav({ projects }: { projects: EnrichedProject[] }) {
+export function ProjectTabNav({ projects }: ProjectTabNavProps) {
   const projectSlug = workspaceRouteApi.useSearch({ select: (search) => search.projectSlug });
 
   const tabs = sortByMembership(projects).map(

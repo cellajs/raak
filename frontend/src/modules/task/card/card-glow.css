@@ -59,14 +59,13 @@
   --glow-opacity: 0.35;
 }
 
-/* Driven by a data attribute (not a class) so a React re-render of the card cannot clobber it:
-   React reconciles className but leaves attributes it does not manage untouched. */
+/* A data attribute survives a React re-render of the card: React reconciles className but leaves attributes it does not manage. */
 [data-highlight-flash] {
   animation: highlight-flash 1s ease-out forwards;
 }
 
-/* The first summary line fades out under the options button, on the states that reveal it (taskCardActionsReveal).
-   A mask, not a background-colored overlay, so the card's status gradient and search tint show through unchanged. */
+/* The first summary line fades out under the options button, on the states that reveal it (taskCardActionsRevealClass).
+   The mask keeps the card's status gradient and search tint showing through unchanged. */
 [data-task-card-id]:is(:hover, :focus-within, .is-focused) .task-summary-fade {
   mask-image: linear-gradient(to left, #000 2.25rem, transparent 4rem), linear-gradient(#000, #000);
   mask-size:

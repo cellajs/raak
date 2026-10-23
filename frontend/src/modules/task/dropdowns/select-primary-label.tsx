@@ -2,26 +2,23 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
-import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-scaffold';
+import { ComboboxHotkeyHint, comboboxRowClass, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-parts';
 import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
-import { cn } from '~/utils/cn';
 import { isTouchInteraction } from '~/utils/input-modality';
 
 /** Dropdown to pick a task's primary label (task type) from the project's primary set. */
-export function SelectPrimaryLabel({ value: currentId, projectId, onChange, taskId, className = '' }: SelectPrimaryLabelProps) {
+export function SelectPrimaryLabel({ value: currentId, projectId, onChange, taskId }: SelectPrimaryLabelProps) {
   const { t } = useTranslation();
   const primaryLabels = usePrimaryLabels(projectId);
 
-  // Live cache subscription reflects remote SSE primary label changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
   const liveId = liveTask?.primaryLabelId ?? currentId;
 
-  // Derived during render, without a useState/useEffect copy of liveId.
   const selected = primaryLabels.find((label) => label.id === liveId) ?? null;
 
   const [searchValue, setSearchValue] = useState('');
@@ -30,7 +27,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
   const commit = (label: Label) => {
     if (liveId !== label.id) onChange(label.id);
     setSearchValue('');
-    useDropdowner.getState().remove();
+    dropdowner.getState().remove();
   };
 
   return (
@@ -46,7 +43,6 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: selects the corresponding primary label by display order
         const label = matchDigitHotkey(primaryLabels, value);
         if (label) {
           commit(label);
@@ -55,7 +51,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
         setSearchValue(value);
       }}
     >
-      <div className={cn(className, 'relative w-48 rounded-lg p-0 max-sm:w-full')}>
+      <div className="relative w-48 rounded-lg max-sm:w-full">
         <ComboboxSearchInput
           autoFocus={!isTouchInteraction()}
           value={searchValue}
@@ -65,11 +61,11 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
           showClear={false}
         />
         <ComboboxHotkeyHint searching={isSearching}>T</ComboboxHotkeyHint>
-        <ComboboxList className="p-1">
+        <ComboboxList>
           {(label: Label) => {
-            const index = primaryLabels.findIndex((l) => l.id === label.id);
+            const index = primaryLabels.findIndex((primaryLabel) => primaryLabel.id === label.id);
             return (
-              <ComboboxItem key={label.id} value={label} className="group flex h-9 w-full items-center gap-2 pr-2">
+              <ComboboxItem key={label.id} value={label} className={comboboxRowClass}>
                 <PrimaryLabelIcon label={label} />
                 <div className="grow">{label.name}</div>
                 <HotkeyIndexBadge index={isSearching ? undefined : index} />

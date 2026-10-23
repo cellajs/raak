@@ -25,7 +25,7 @@ describe("An organization's project list (scope=organization)", async () => {
     const workspaces = await call(createWorkspaces, { path, body: [{ id: `temp-${crypto.randomUUID()}`, name: 'Home' }], headers });
     const workspaceId = (workspaces.data as { data: { id: string }[] }).data[0].id;
     // Created out of name order, so a list by name is told apart from one by creation
-    const body = ['beta', 'alpha'].map((name) => ({ id: `temp-${crypto.randomUUID()}`, name, slug: `${name}-${unique()}`, publicAt: null }));
+    const body = ['beta', 'alpha'].map((name) => ({ id: `temp-${crypto.randomUUID()}`, name, slug: `${name}-${unique()}`, public: false }));
     const created = await call(createProjects, { path, query: { workspaceId }, body, headers });
     expect(created.response.status).toBe(201);
     const projects = (created.data as { data: { id: string; name: string }[] }).data;

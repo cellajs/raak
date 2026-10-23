@@ -1,5 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
-import { type KeyboardEventHandler, type MouseEventHandler, useContext, useEffect, useRef, useState } from 'react';
+import { type KeyboardEventHandler, type MouseEventHandler, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useDebounce } from '~/hooks/use-debounce';
@@ -9,24 +9,29 @@ import { TableFilterBarContext } from '~/modules/common/data-table/table-filter-
 import { useMatchSteps } from '~/modules/common/match-highlight';
 import { SearchClearButton } from '~/modules/common/search-clear-button';
 import { SearchSpinner } from '~/modules/common/search-spinner';
+import { boardSearchDefaults } from '~/modules/task/search-params-schemas';
+import type { BoardSearchParams } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/modules/ui/input-group';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 /** The input's DOM id, for the find hotkey. */
 export const boardSearchInputId = 'board-search-input';
 
 /** The matching tasks in view order. With `onStep`, Enter and the arrow buttons walk through them. */
-export type BoardSearchMatches = { ids: string[]; onStep?: (id: string) => void; currentId?: string | null };
+type BoardSearchMatches = { ids: string[]; onStep?: (id: string) => void; currentId?: string | null };
 
 interface BoardSearchProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   isInWorkspace?: boolean;
   toggleFocus: () => void;
   matches?: BoardSearchMatches;
 }
 
 const noStep = () => {};
+
+const iconButtonClass = tw('focus-effect flex size-6 cursor-pointer items-center justify-center rounded-md hover:bg-muted');
 
 export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: BoardSearchProps) {
   const { t } = useTranslation();
@@ -36,9 +41,9 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   const { isFilterActive } = useContext(TableFilterBarContext);
 
   const {
-    search: { q: searchQuery = '', matchMode = 'all' },
+    search: { q: searchQuery = boardSearchDefaults.q, matchMode = boardSearchDefaults.matchMode },
     setSearch,
-  } = useSearchParams<{ q?: string; matchMode?: 'all' | 'any' }>({});
+  } = useSearchParams<Pick<BoardSearchParams, 'q' | 'matchMode'>>();
 
   const [inputValue, setInputValue] = useState(searchQuery);
 
@@ -47,26 +52,27 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   const steps = useMatchSteps(matches?.ids ?? [], matches?.onStep ?? noStep, matches?.currentId);
   const canStep = !!matches?.onStep && steps.total > 0;
 
-  const handleClick: MouseEventHandler = (e) => {
-    const target = e.target as HTMLElement; // Cast the target to HTMLElement
-    if (target.id === 'search-close' && document.activeElement !== inputRef.current) inputRef.current?.focus();
+  const handleClick: MouseEventHandler = (event) => {
+    if (event.target instanceof HTMLElement && event.target.id === 'search-close' && document.activeElement !== inputRef.current) {
+      inputRef.current?.focus();
+    }
 
     setCurrentItem(null);
   };
 
-  const preventInputBlur: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const preventInputBlur: MouseEventHandler = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
   };
 
-  const handleKeyDown: KeyboardEventHandler = (e) => {
-    if (e.key === 'Enter' && canStep) {
-      e.preventDefault();
-      if (e.shiftKey) steps.previous();
+  const handleKeyDown: KeyboardEventHandler = (event) => {
+    if (event.key === 'Enter' && canStep) {
+      event.preventDefault();
+      if (event.shiftKey) steps.previous();
       else steps.next();
       return;
     }
-    if (e.key !== 'Escape') return;
+    if (event.key !== 'Escape') return;
 
     if (inputValue) {
       setInputValue('');
@@ -76,17 +82,14 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
 
   const toggleSearchMode = () => setSearch({ matchMode: matchMode === 'all' ? 'any' : 'all' });
 
-  // Update parent query only when debouncedQuery changes
   useEffect(() => {
     if (debouncedQuery !== searchQuery) setSearch({ q: debouncedQuery });
   }, [debouncedQuery]);
 
-  // Focus input when filter button clicked (mobile)
   useEffect(() => {
     if (isFilterActive) inputRef.current?.focus();
   }, [isFilterActive]);
 
-  // Keep input value in sync with searchQuery when it changes externally
   useEffect(() => {
     if (searchQuery !== inputValue) setInputValue(searchQuery);
   }, [searchQuery]);
@@ -95,10 +98,8 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
     resource: isInWorkspace ? t('c:your_resource', { resource: t('c:workspace').toLowerCase() }) : t('c:project').toLowerCase(),
   });
 
-  const iconButtonClass = 'focus-effect flex size-6 cursor-pointer items-center justify-center rounded-md hover:bg-muted';
-
   return (
-    <InputGroup className="relative flex w-full items-center border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
+    <InputGroup className="border-none shadow-none sm:min-w-44" onClick={handleClick} onKeyDown={handleKeyDown}>
       <InputGroupAddon className="pl-1.5">
         <SearchSpinner value={inputValue} isSearching={false} />
       </InputGroupAddon>
@@ -111,9 +112,9 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
         onBlur={toggleFocus}
         placeholder={isMobile ? t('c:placeholder.search') : searchLabel}
         aria-label={searchLabel}
-        className={'h-10 w-full border-0 pl-0! shadow-none'}
+        className="pl-0!"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(event) => setInputValue(event.target.value)}
       />
 
       {inputValue && (

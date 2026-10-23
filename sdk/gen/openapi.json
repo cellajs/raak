@@ -199,6 +199,12 @@
       "kind": "entity"
     },
     {
+      "name": "actors",
+      "description": "Who writes rows: users and service accounts.",
+      "parent": "cella",
+      "kind": "module"
+    },
+    {
       "name": "internal",
       "description": "Operations hidden from the public API reference.",
       "kind": "hidden"
@@ -469,6 +475,37 @@
       }
     },
     "schemas": {
+      "ActorRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["user", "service"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": ["string", "null"]
+          },
+          "thumbnailUrl": {
+            "type": ["string", "null"]
+          }
+        },
+        "required": ["id", "kind", "name", "slug", "thumbnailUrl"],
+        "description": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone.",
+        "example": {
+          "id": "91d9225c-2c64-4773-9f1f-8a6a6004192d",
+          "kind": "user",
+          "name": "Jermey Lowe",
+          "slug": "jermey.lowe27",
+          "thumbnailUrl": null
+        },
+        "x-tags": ["base", "actors", "cella"]
+      },
       "UserMinimalBase": {
         "type": "object",
         "properties": {
@@ -490,7 +527,7 @@
           }
         },
         "required": ["id", "name", "slug", "thumbnailUrl", "entityType"],
-        "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+        "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
         "example": {
           "id": "0e0eced6-ecd8-4ea4-906d-160fbd840741",
           "name": "Durward Cummerata",
@@ -618,26 +655,6 @@
           "description": {
             "type": ["string", "null"]
           },
-          "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "entityType": {
             "type": "string",
             "enum": ["task", "label", "attachment"]
@@ -646,8 +663,8 @@
             "type": "string"
           }
         },
-        "required": ["id", "name", "createdAt", "updatedAt", "description", "createdBy", "updatedBy", "entityType", "keywords"],
-        "description": "The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields.",
+        "required": ["id", "name", "createdAt", "updatedAt", "description", "entityType", "keywords"],
+        "description": "The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields and adds its writers as `ActorRef`s.",
         "example": {
           "id": "7e460470-da58-4733-a7ff-0d31897ecf8d",
           "createdAt": "2024-07-02T14:28:38.152Z",
@@ -655,20 +672,6 @@
           "name": "Capitulus vesco cursim alter.",
           "description": "Veritas itaque basium a. Sufficio ter nostrum cilicium tersus ara. Earum ascit trans somniculosus.",
           "keywords": "sint clementia corrigo",
-          "createdBy": {
-            "id": "8a080cc5-0da6-4562-89b0-d6aaa2323def",
-            "name": "Lue Bartell",
-            "slug": "lue.bartell",
-            "thumbnailUrl": null,
-            "entityType": "user"
-          },
-          "updatedBy": {
-            "id": "6aa2c0f4-8d91-4fa2-85fe-48c3c317d826",
-            "name": "Emiliano Armstrong",
-            "slug": "emiliano.armstrong19",
-            "thumbnailUrl": null,
-            "entityType": "user"
-          },
           "entityType": "attachment"
         },
         "x-tags": ["base", "entities", "cella"]
@@ -1304,15 +1307,31 @@
               }
             }
           },
-          "createdBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "createdAt": {
             "type": "string"
           },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1325,9 +1344,10 @@
           "status",
           "jitProvisioning",
           "config",
-          "createdBy",
           "createdAt",
-          "updatedAt"
+          "createdBy",
+          "updatedAt",
+          "updatedBy"
         ],
         "description": "A tenant's trust in an external party that asserts user identities: an institution reached through an SSO federation, whose members sign in to the tenant's organization. Its id is the public key of the tenant's SSO entry page. System admins manage connections per tenant; `pending` until the institution activated the service at the federation.",
         "example": {
@@ -1342,9 +1362,16 @@
           "config": {
             "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
           },
-          "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-          "createdAt": "2024-08-25T16:44:28.368Z",
-          "updatedAt": "2024-10-28T09:20:16.614Z"
+          "createdBy": {
+            "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+            "kind": "user",
+            "name": "Celestino Cummings",
+            "slug": "celestino.cummings",
+            "thumbnailUrl": null
+          },
+          "updatedBy": null,
+          "createdAt": "2024-12-15T01:10:59.658Z",
+          "updatedAt": "2024-12-23T13:01:02.898Z"
         },
         "x-tags": ["data", "connections", "cella"]
       },
@@ -1473,10 +1500,6 @@
           "updatedAt": {
             "type": ["string", "null"]
           },
-          "updatedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "lastSeenAt": {
             "type": ["string", "null"]
           },
@@ -1502,7 +1525,6 @@
           "contrast",
           "userFlags",
           "updatedAt",
-          "updatedBy",
           "lastSeenAt",
           "lastSignInAt"
         ],
@@ -1825,7 +1847,7 @@
           "createdBy": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/UserMinimalBase"
+                "$ref": "#/components/schemas/ActorRef"
               },
               {
                 "type": "null"
@@ -1874,10 +1896,10 @@
           "createdAt": "2024-02-07T13:46:57.160Z",
           "createdBy": {
             "id": "c72c120a-aea2-4d54-840a-eff3fb000b8b",
+            "kind": "user",
             "name": "Lizzie Aufderhar",
             "slug": "lizzie_aufderhar85",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "organizationId": "a6050a0e-4d57-4c82-a942-641f6844a7a8",
           "workspaceId": null,
@@ -1985,9 +2007,6 @@
       "Project": {
         "type": "object",
         "properties": {
-          "createdAt": {
-            "type": "string"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -2004,8 +2023,31 @@
             "type": "string",
             "maxLength": 255
           },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "slug": {
             "type": "string",
@@ -2019,31 +2061,11 @@
             "type": ["string", "null"],
             "maxLength": 2048
           },
-          "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "publishedAt": {
             "type": ["string", "null"]
           },
-          "publicAt": {
-            "type": ["string", "null"]
+          "public": {
+            "type": "boolean"
           },
           "toolsConfig": {
             "anyOf": [
@@ -2218,19 +2240,19 @@
           }
         },
         "required": [
-          "createdAt",
           "id",
           "entityType",
           "tenantId",
           "name",
+          "createdAt",
+          "createdBy",
           "updatedAt",
+          "updatedBy",
           "slug",
           "thumbnailUrl",
           "bannerUrl",
-          "createdBy",
-          "updatedBy",
           "publishedAt",
-          "publicAt",
+          "public",
           "toolsConfig",
           "path",
           "organizationId",
@@ -2250,7 +2272,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-23T15:24:26.607Z",
-          "publicAt": "2024-12-29T10:59:08.044Z",
+          "public": true,
           "toolsConfig": {},
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -2284,8 +2306,7 @@
             "format": "uuid"
           },
           "message": {
-            "type": ["string", "null"],
-            "maxLength": 255
+            "type": ["string", "null"]
           },
           "email": {
             "type": "string",
@@ -2314,9 +2335,6 @@
       "Task": {
         "type": "object",
         "properties": {
-          "createdAt": {
-            "type": "string"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -2333,8 +2351,31 @@
             "type": "string",
             "maxLength": 255
           },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "description": {
             "type": ["string", "null"],
@@ -2348,11 +2389,17 @@
             "type": ["string", "null"]
           },
           "deletedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "publicAt": {
-            "type": ["string", "null"]
+          "public": {
+            "type": "boolean"
           },
           "seq": {
             "type": "integer",
@@ -2477,42 +2524,24 @@
               "$ref": "#/components/schemas/UserMinimalBase"
             }
           },
-          "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "stx": {
             "$ref": "#/components/schemas/StxBase"
           }
         },
         "required": [
-          "createdAt",
           "id",
           "entityType",
           "tenantId",
           "name",
+          "createdAt",
+          "createdBy",
           "updatedAt",
+          "updatedBy",
           "description",
           "keywords",
           "deletedAt",
           "deletedBy",
-          "publicAt",
+          "public",
           "seq",
           "expandable",
           "summary",
@@ -2529,8 +2558,6 @@
           "labels",
           "primaryLabel",
           "assignedTo",
-          "createdBy",
-          "updatedBy",
           "stx"
         ],
         "description": "A task representing a unit of work, assignable to users with status tracking and labels.",
@@ -2550,38 +2577,63 @@
           "keywords": "minima accedo communis",
           "createdBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "updatedBy": {
             "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+            "kind": "user",
             "name": "Nasir Thompson",
             "slug": "nasir_thompson78",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 24,
           "expandable": false,
           "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
           "summaryLength": 47,
-          "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-          "displayOrder": 6.85,
-          "status": 2,
+          "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+          "displayOrder": 657.08,
+          "status": 6,
           "statusChangedAt": "2024-11-03T10:38:49.857Z",
           "checkboxCount": 8,
-          "checkedCount": 3,
-          "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-          "labels": [],
-          "assignedTo": [],
+          "checkedCount": 5,
+          "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+          "labels": [
+            {
+              "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+              "name": "online",
+              "slug": "online",
+              "color": "#6b33cb",
+              "mode": "secondary",
+              "icon": null,
+              "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+            }
+          ],
+          "assignedTo": [
+            {
+              "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+              "name": "Leda Hodkiewicz",
+              "slug": "leda.hodkiewicz53",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            },
+            {
+              "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+              "name": "Sylvan Zemlak",
+              "slug": "sylvan_zemlak14",
+              "thumbnailUrl": null,
+              "entityType": "user"
+            }
+          ],
           "projectId": "b0812db1-9a54-4314-b736-788585846a17",
           "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
           "primaryLabel": {
-            "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+            "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
             "name": "microservice",
             "slug": "microservice",
             "color": "#77fd9d",
@@ -2643,10 +2695,6 @@
               "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
             }
           },
-          "createdBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "subscriptionId": {
             "type": ["string", "null"],
             "maxLength": 255
@@ -2662,8 +2710,28 @@
           "createdAt": {
             "type": "string"
           },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "organization": {
             "type": ["object", "null"],
@@ -2695,12 +2763,13 @@
           "status",
           "restrictions",
           "authStrategies",
-          "createdBy",
           "subscriptionId",
           "subscriptionStatus",
           "subscriptionPlan",
           "createdAt",
+          "createdBy",
           "updatedAt",
+          "updatedBy",
           "organization"
         ],
         "description": "The top-level isolation and billing boundary. Tenant and organization are 1:1: a tenant holds one organization, or none until that organization is created. System admins list and update tenants; a signed-in user can create one of their own.",
@@ -2726,14 +2795,21 @@
             "allowUnregisteredClients": true
           },
           "authStrategies": [],
-          "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+          "createdBy": {
+            "id": "75b8af80-b170-4f44-867f-4d401a4d1e6a",
+            "kind": "user",
+            "name": "Antonina Trantow",
+            "slug": "antonina_trantow60",
+            "thumbnailUrl": null
+          },
+          "updatedBy": null,
           "subscriptionId": null,
           "subscriptionStatus": "none",
           "subscriptionPlan": null,
-          "createdAt": "2024-02-09T07:11:04.461Z",
-          "updatedAt": "2024-03-30T20:43:34.109Z",
+          "createdAt": "2024-09-23T13:52:39.349Z",
+          "updatedAt": "2024-12-21T03:26:56.687Z",
           "organization": {
-            "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+            "id": "126f212f-7add-440d-a546-1fd1c799cece",
             "name": "Lubowitz, Waters and Haley",
             "slug": "lubowitz-waters-and-haley",
             "thumbnailUrl": null,
@@ -2797,9 +2873,6 @@
       "Organization": {
         "type": "object",
         "properties": {
-          "createdAt": {
-            "type": "string"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -2816,8 +2889,31 @@
             "type": "string",
             "maxLength": 255
           },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "slug": {
             "type": "string",
@@ -2831,31 +2927,11 @@
             "type": ["string", "null"],
             "maxLength": 2048
           },
-          "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "publishedAt": {
             "type": ["string", "null"]
           },
-          "publicAt": {
-            "type": ["string", "null"]
+          "public": {
+            "type": "boolean"
           },
           "toolsConfig": {
             "type": "object",
@@ -3032,9 +3108,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     },
                     "color": {
                       "type": "string",
@@ -3180,19 +3256,19 @@
           }
         },
         "required": [
-          "createdAt",
           "id",
           "entityType",
           "tenantId",
           "name",
+          "createdAt",
+          "createdBy",
           "updatedAt",
+          "updatedBy",
           "slug",
           "thumbnailUrl",
           "bannerUrl",
-          "createdBy",
-          "updatedBy",
           "publishedAt",
-          "publicAt",
+          "public",
           "toolsConfig",
           "path",
           "shortName",
@@ -3224,7 +3300,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-25T15:04:42.969Z",
-          "publicAt": null,
+          "public": false,
           "toolsConfig": {},
           "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
           "shortName": "Spencer,",
@@ -3320,9 +3396,6 @@
       "Workspace": {
         "type": "object",
         "properties": {
-          "createdAt": {
-            "type": "string"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -3339,8 +3412,31 @@
             "type": "string",
             "maxLength": 255
           },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "slug": {
             "type": "string",
@@ -3354,31 +3450,11 @@
             "type": ["string", "null"],
             "maxLength": 2048
           },
-          "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "publishedAt": {
             "type": ["string", "null"]
           },
-          "publicAt": {
-            "type": ["string", "null"]
+          "public": {
+            "type": "boolean"
           },
           "toolsConfig": {
             "anyOf": [
@@ -3466,19 +3542,19 @@
           }
         },
         "required": [
-          "createdAt",
           "id",
           "entityType",
           "tenantId",
           "name",
+          "createdAt",
+          "createdBy",
           "updatedAt",
+          "updatedBy",
           "slug",
           "thumbnailUrl",
           "bannerUrl",
-          "createdBy",
-          "updatedBy",
           "publishedAt",
-          "publicAt",
+          "public",
           "toolsConfig",
           "path",
           "organizationId",
@@ -3498,7 +3574,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-03-18T14:19:46.053Z",
-          "publicAt": null,
+          "public": false,
           "toolsConfig": {},
           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
@@ -3536,9 +3612,6 @@
       "Attachment": {
         "type": "object",
         "properties": {
-          "createdAt": {
-            "type": "string"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -3555,8 +3628,31 @@
             "type": "string",
             "maxLength": 255
           },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "stx": {
             "$ref": "#/components/schemas/StxBase"
@@ -3569,35 +3665,21 @@
             "type": "string",
             "maxLength": 1000000
           },
-          "createdBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updatedBy": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserMinimalBase"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "deletedAt": {
             "type": ["string", "null"]
           },
           "deletedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "publicAt": {
-            "type": ["string", "null"]
+          "public": {
+            "type": "boolean"
           },
           "seq": {
             "type": "integer",
@@ -3667,20 +3749,20 @@
           }
         },
         "required": [
-          "createdAt",
           "id",
           "entityType",
           "tenantId",
           "name",
+          "createdAt",
+          "createdBy",
           "updatedAt",
+          "updatedBy",
           "stx",
           "description",
           "keywords",
-          "createdBy",
-          "updatedBy",
           "deletedAt",
           "deletedBy",
-          "publicAt",
+          "public",
           "seq",
           "publicBucket",
           "bucketName",
@@ -3710,21 +3792,21 @@
           "keywords": "perferendis aiunt animadverto",
           "createdBy": {
             "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+            "kind": "user",
             "name": "Francesco Littel",
             "slug": "francesco_littel16",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "updatedBy": {
             "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+            "kind": "user",
             "name": "Francesco Littel",
             "slug": "francesco_littel16",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "thumbnailUrl": null
           },
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 354,
           "publicBucket": false,
           "bucketName": "attachments",
@@ -3744,9 +3826,6 @@
       "Label": {
         "type": "object",
         "properties": {
-          "createdAt": {
-            "type": "string"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -3762,6 +3841,9 @@
           "name": {
             "type": "string",
             "maxLength": 255
+          },
+          "createdAt": {
+            "type": "string"
           },
           "updatedAt": {
             "type": ["string", "null"]
@@ -3781,8 +3863,8 @@
             "type": ["string", "null"],
             "format": "uuid"
           },
-          "publicAt": {
-            "type": ["string", "null"]
+          "public": {
+            "type": "boolean"
           },
           "seq": {
             "type": "integer",
@@ -3826,17 +3908,17 @@
           }
         },
         "required": [
-          "createdAt",
           "id",
           "entityType",
           "tenantId",
           "name",
+          "createdAt",
           "updatedAt",
           "description",
           "keywords",
           "deletedAt",
           "deletedBy",
-          "publicAt",
+          "public",
           "seq",
           "color",
           "mode",
@@ -3865,7 +3947,7 @@
           "keywords": "",
           "deletedAt": null,
           "deletedBy": null,
-          "publicAt": null,
+          "public": false,
           "seq": 136,
           "color": "#1d181f",
           "mode": "secondary",
@@ -3926,19 +4008,31 @@
             "type": ["string", "null"],
             "maxLength": 255
           },
-          "createdBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
-          "updatedBy": {
-            "type": ["string", "null"],
-            "format": "uuid"
-          },
           "createdAt": {
             "type": "string"
           },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "updatedAt": {
             "type": ["string", "null"]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActorRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "lastSeenAt": {
             "type": ["string", "null"]
@@ -3951,10 +4045,10 @@
           "status",
           "bindings",
           "oauthClientId",
-          "createdBy",
-          "updatedBy",
           "createdAt",
+          "createdBy",
           "updatedAt",
+          "updatedBy",
           "lastSeenAt"
         ],
         "description": "An actor that is not a person, in one tenant: API keys run as it, and it holds role bindings like a member holds memberships. An organization admin creates one, for example with Create API key in organization settings.",
@@ -4040,7 +4134,7 @@
           "createdBy": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/UserMinimalBase"
+                "$ref": "#/components/schemas/ActorRef"
               },
               {
                 "type": "null"
@@ -4079,11 +4173,11 @@
           "revokedBy": null,
           "createdAt": "2024-11-20T15:58:25.416Z",
           "createdBy": {
-            "id": "9656def5-1db7-49f5-8767-34aa5a1f68f2",
-            "name": "Jace Kozey",
-            "slug": "jace_kozey68",
-            "thumbnailUrl": null,
-            "entityType": "user"
+            "id": "f51db79f-5767-434a-9a5a-1f68f22c07d3",
+            "kind": "user",
+            "name": "Ford Thompson",
+            "slug": "ford_thompson68",
+            "thumbnailUrl": null
           }
         },
         "x-tags": ["data", "service-accounts", "cella"]
@@ -6602,9 +6696,16 @@
                     "config": {
                       "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
                     },
-                    "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-                    "createdAt": "2024-08-25T16:44:28.368Z",
-                    "updatedAt": "2024-10-28T09:20:16.614Z"
+                    "createdBy": {
+                      "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+                      "kind": "user",
+                      "name": "Celestino Cummings",
+                      "slug": "celestino.cummings",
+                      "thumbnailUrl": null
+                    },
+                    "updatedBy": null,
+                    "createdAt": "2024-09-15T21:46:43.882Z",
+                    "updatedAt": "2024-12-14T20:47:57.066Z"
                   }
                 ],
                 "schema": {
@@ -6676,9 +6777,9 @@
                   },
                   "displayName": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$",
+                    "pattern": "^[^\\p{Cc}<>]+$",
                     "description": "The institution's name, as the federation's metadata lists it"
                   },
                   "claimValues": {
@@ -6740,9 +6841,16 @@
                   "config": {
                     "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
                   },
-                  "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-                  "createdAt": "2024-08-25T16:44:28.368Z",
-                  "updatedAt": "2024-10-28T09:20:16.614Z"
+                  "createdBy": {
+                    "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+                    "kind": "user",
+                    "name": "Celestino Cummings",
+                    "slug": "celestino.cummings",
+                    "thumbnailUrl": null
+                  },
+                  "updatedBy": null,
+                  "createdAt": "2024-04-04T16:11:15.211Z",
+                  "updatedAt": "2024-06-09T08:48:06.173Z"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -6817,9 +6925,9 @@
                 "properties": {
                   "displayName": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$",
+                    "pattern": "^[^\\p{Cc}<>]+$",
                     "description": "The institution's name, as the federation's metadata lists it"
                   },
                   "claimValues": {
@@ -6880,9 +6988,16 @@
                   "config": {
                     "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
                   },
-                  "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-                  "createdAt": "2024-08-25T16:44:28.368Z",
-                  "updatedAt": "2024-10-28T09:20:16.614Z"
+                  "createdBy": {
+                    "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+                    "kind": "user",
+                    "name": "Celestino Cummings",
+                    "slug": "celestino.cummings",
+                    "thumbnailUrl": null
+                  },
+                  "updatedBy": null,
+                  "createdAt": "2024-01-09T00:29:04.959Z",
+                  "updatedAt": "2024-08-27T13:58:21.402Z"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -6963,9 +7078,16 @@
                   "config": {
                     "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
                   },
-                  "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-                  "createdAt": "2024-08-25T16:44:28.368Z",
-                  "updatedAt": "2024-10-28T09:20:16.614Z"
+                  "createdBy": {
+                    "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+                    "kind": "user",
+                    "name": "Celestino Cummings",
+                    "slug": "celestino.cummings",
+                    "thumbnailUrl": null
+                  },
+                  "updatedBy": null,
+                  "createdAt": "2024-11-30T22:38:44.899Z",
+                  "updatedAt": "2024-12-12T14:38:27.715Z"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -7433,15 +7555,15 @@
                   },
                   "firstName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "lastName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "language": {
                     "type": "string",
@@ -7777,10 +7899,10 @@
                         "createdAt": "2024-11-13T15:29:06.546Z",
                         "createdBy": {
                           "id": "915e1951-a439-40dc-9303-6bdbd6aea838",
+                          "kind": "user",
                           "name": "Sister Monahan",
                           "slug": "sister.monahan13",
-                          "thumbnailUrl": null,
-                          "entityType": "user"
+                          "thumbnailUrl": null
                         },
                         "organizationId": "6fd95285-52d9-45de-b10d-8a4e316d3ad2",
                         "workspaceId": null,
@@ -7812,10 +7934,10 @@
                         "createdAt": "2024-04-11T17:15:50.993Z",
                         "createdBy": {
                           "id": "7dee4eb2-c5eb-4722-91aa-d911de2e383b",
+                          "kind": "user",
                           "name": "John Morar",
                           "slug": "john.morar34",
-                          "thumbnailUrl": null,
-                          "entityType": "user"
+                          "thumbnailUrl": null
                         },
                         "organizationId": "745044ce-0a11-4cc4-84d6-fece04b9aca9",
                         "workspaceId": null,
@@ -9004,7 +9126,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-23T15:24:26.607Z",
-                  "publicAt": "2024-12-29T10:59:08.044Z",
+                  "public": true,
                   "toolsConfig": {},
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -9055,7 +9177,7 @@
                     "createdBy": null,
                     "updatedBy": null,
                     "publishedAt": "2024-12-23T15:24:26.607Z",
-                    "publicAt": "2024-12-29T10:59:08.044Z",
+                    "public": true,
                     "toolsConfig": {},
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -9338,7 +9460,7 @@
                   },
                   "message": {
                     "type": ["string", "null"],
-                    "maxLength": 255
+                    "maxLength": 5000
                   }
                 },
                 "required": ["email", "type", "message"]
@@ -9881,15 +10003,15 @@
                   },
                   "firstName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "lastName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "language": {
                     "type": "string",
@@ -10107,38 +10229,63 @@
                   "keywords": "minima accedo communis",
                   "createdBy": {
                     "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+                    "kind": "user",
                     "name": "Nasir Thompson",
                     "slug": "nasir_thompson78",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "updatedBy": {
                     "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+                    "kind": "user",
                     "name": "Nasir Thompson",
                     "slug": "nasir_thompson78",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 24,
                   "expandable": false,
                   "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
                   "summaryLength": 47,
-                  "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-                  "displayOrder": 6.85,
-                  "status": 2,
+                  "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+                  "displayOrder": 657.08,
+                  "status": 6,
                   "statusChangedAt": "2024-11-03T10:38:49.857Z",
                   "checkboxCount": 8,
-                  "checkedCount": 3,
-                  "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-                  "labels": [],
-                  "assignedTo": [],
+                  "checkedCount": 5,
+                  "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+                  "labels": [
+                    {
+                      "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+                      "name": "online",
+                      "slug": "online",
+                      "color": "#6b33cb",
+                      "mode": "secondary",
+                      "icon": null,
+                      "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+                    }
+                  ],
+                  "assignedTo": [
+                    {
+                      "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+                      "name": "Leda Hodkiewicz",
+                      "slug": "leda.hodkiewicz53",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    },
+                    {
+                      "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+                      "name": "Sylvan Zemlak",
+                      "slug": "sylvan_zemlak14",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    }
+                  ],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
                   "primaryLabel": {
-                    "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+                    "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
                     "name": "microservice",
                     "slug": "microservice",
                     "color": "#77fd9d",
@@ -10287,48 +10434,38 @@
                       "keywords": "sumptus ter arca",
                       "createdBy": {
                         "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                        "kind": "user",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                        "kind": "user",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 293,
-                      "expandable": false,
+                      "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Patria itaque spes crudelis tandem eveniet.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 43,
-                      "primaryLabelId": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
-                      "displayOrder": 671.33,
-                      "status": 5,
+                      "primaryLabelId": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
+                      "displayOrder": 608.18,
+                      "status": 2,
                       "statusChangedAt": "2024-01-16T07:26:20.219Z",
                       "checkboxCount": 8,
-                      "checkedCount": 0,
+                      "checkedCount": 1,
                       "attachments": [],
-                      "labels": [
-                        {
-                          "id": "93095c24-27b6-45be-9e9b-5a30ea3c071d",
-                          "name": "feed",
-                          "slug": "feed",
-                          "color": "#be4dce",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "00d4cb5c-c208-4309-96a6-e65784a69c8c"
-                        }
-                      ],
+                      "labels": [],
                       "assignedTo": [],
                       "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
                       "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
                       "primaryLabel": {
-                        "id": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
+                        "id": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
                         "name": "gb",
                         "slug": "gb",
                         "color": "#f30cdc",
@@ -10353,65 +10490,38 @@
                       "keywords": "nostrum volva sufficio",
                       "createdBy": {
                         "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                        "kind": "user",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                        "kind": "user",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": true,
                       "seq": 40,
-                      "expandable": true,
+                      "expandable": false,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Umquam voluntarius tyrannus quis peccatus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 42,
-                      "primaryLabelId": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
-                      "displayOrder": 5.94,
-                      "status": 3,
+                      "primaryLabelId": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
+                      "displayOrder": 529.98,
+                      "status": 6,
                       "statusChangedAt": "2024-11-27T15:18:06.081Z",
                       "checkboxCount": 9,
-                      "checkedCount": 3,
-                      "attachments": [],
-                      "labels": [
-                        {
-                          "id": "036e4f85-c837-49f0-87f4-6ef29ba47773",
-                          "name": "sensor",
-                          "slug": "sensor",
-                          "color": "#d0cda5",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "6a578392-0d6a-4677-a48e-8975e0fb903e"
-                        },
-                        {
-                          "id": "13c97fb3-a840-4350-9688-e45464b025fe",
-                          "name": "infrastructures",
-                          "slug": "infrastructures",
-                          "color": "#6dcdee",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "6dcead0b-743c-4ede-8135-577e1aaa42cd"
-                        }
-                      ],
-                      "assignedTo": [
-                        {
-                          "id": "49e34c9b-2806-42e4-acac-8381fa303867",
-                          "name": "Sandra Pacocha",
-                          "slug": "sandra_pacocha",
-                          "thumbnailUrl": null,
-                          "entityType": "user"
-                        }
-                      ],
+                      "checkedCount": 5,
+                      "attachments": ["1a036e4f-85c8-4379-9f07-f46ef29ba477"],
+                      "labels": [],
+                      "assignedTo": [],
                       "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
                       "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
                       "primaryLabel": {
-                        "id": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
+                        "id": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
                         "name": "leverage",
                         "slug": "leverage",
                         "color": "#af215f",
@@ -10495,7 +10605,7 @@
                   "organizationId": "301b2584-56a0-4f38-a9c9-f87af1510ae6",
                   "organizationSlug": "swaniawski-and-sons",
                   "tenantId": "ptcupj",
-                  "publicAt": "2024-08-18T06:30:47.640Z"
+                  "public": true
                 },
                 "schema": {
                   "type": "object",
@@ -10518,11 +10628,11 @@
                     "tenantId": {
                       "type": "string"
                     },
-                    "publicAt": {
-                      "type": ["string", "null"]
+                    "public": {
+                      "type": "boolean"
                     }
                   },
-                  "required": ["taskId", "projectId", "projectSlug", "organizationId", "organizationSlug", "tenantId", "publicAt"]
+                  "required": ["taskId", "projectId", "projectSlug", "organizationId", "organizationSlug", "tenantId", "public"]
                 }
               }
             }
@@ -10746,14 +10856,21 @@
                         "allowUnregisteredClients": true
                       },
                       "authStrategies": [],
-                      "createdBy": "d91cd87f-54ea-401d-9336-a3f30f204331",
+                      "createdBy": {
+                        "id": "99a36819-e0f2-470b-88d0-2f92a164c4d7",
+                        "kind": "user",
+                        "name": "Agustin Kirlin",
+                        "slug": "agustin_kirlin65",
+                        "thumbnailUrl": null
+                      },
+                      "updatedBy": null,
                       "subscriptionId": null,
                       "subscriptionStatus": "none",
                       "subscriptionPlan": null,
-                      "createdAt": "2024-11-25T05:49:32.040Z",
-                      "updatedAt": "2024-12-21T15:03:10.241Z",
+                      "createdAt": "2024-04-13T20:05:34.181Z",
+                      "updatedAt": "2024-10-31T09:06:46.365Z",
                       "organization": {
-                        "id": "ed4a4eac-b4a6-4c0f-ae21-2f50796fe855",
+                        "id": "753f94a1-98c1-4615-8723-c96a2eb8349e",
                         "name": "Predovic, Bahringer and Morar",
                         "slug": "predovic-bahringer-and-morar",
                         "thumbnailUrl": null,
@@ -10782,14 +10899,21 @@
                         "allowUnregisteredClients": true
                       },
                       "authStrategies": [],
-                      "createdBy": "35465948-59fc-43d4-bffc-d93da6f4757f",
+                      "createdBy": {
+                        "id": "d296abdd-ef82-40aa-a7f0-4fba2ed8a6dc",
+                        "kind": "user",
+                        "name": "Nya Nikolaus",
+                        "slug": "nya_nikolaus53",
+                        "thumbnailUrl": null
+                      },
+                      "updatedBy": null,
                       "subscriptionId": null,
                       "subscriptionStatus": "none",
                       "subscriptionPlan": null,
-                      "createdAt": "2024-01-02T16:12:28.968Z",
-                      "updatedAt": "2024-01-18T17:11:22.322Z",
+                      "createdAt": "2024-04-09T01:22:25.825Z",
+                      "updatedAt": "2024-11-12T14:30:10.590Z",
                       "organization": {
-                        "id": "cc2dc65b-1a01-4eb4-922d-b6339b813cf8",
+                        "id": "ee99d4a7-78fe-4681-bb34-f0581242f7eb",
                         "name": "Crooks, Kuphal and Roob-Blick",
                         "slug": "crooks-kuphal-and-roob-blick",
                         "thumbnailUrl": null,
@@ -10861,9 +10985,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   }
                 },
                 "required": ["name"]
@@ -10898,14 +11022,21 @@
                     "allowUnregisteredClients": true
                   },
                   "authStrategies": [],
-                  "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+                  "createdBy": {
+                    "id": "75b8af80-b170-4f44-867f-4d401a4d1e6a",
+                    "kind": "user",
+                    "name": "Antonina Trantow",
+                    "slug": "antonina_trantow60",
+                    "thumbnailUrl": null
+                  },
+                  "updatedBy": null,
                   "subscriptionId": null,
                   "subscriptionStatus": "none",
                   "subscriptionPlan": null,
-                  "createdAt": "2024-02-09T07:11:04.461Z",
-                  "updatedAt": "2024-03-30T20:43:34.109Z",
+                  "createdAt": "2024-06-21T13:08:24.596Z",
+                  "updatedAt": "2024-08-31T04:18:30.696Z",
                   "organization": {
-                    "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+                    "id": "2f62a1ec-b670-4977-9023-635d373f5115",
                     "name": "Lubowitz, Waters and Haley",
                     "slug": "lubowitz-waters-and-haley",
                     "thumbnailUrl": null,
@@ -10973,9 +11104,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "status": {
                     "type": "string",
@@ -11058,14 +11189,21 @@
                     "allowUnregisteredClients": true
                   },
                   "authStrategies": [],
-                  "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+                  "createdBy": {
+                    "id": "75b8af80-b170-4f44-867f-4d401a4d1e6a",
+                    "kind": "user",
+                    "name": "Antonina Trantow",
+                    "slug": "antonina_trantow60",
+                    "thumbnailUrl": null
+                  },
+                  "updatedBy": null,
                   "subscriptionId": null,
                   "subscriptionStatus": "none",
                   "subscriptionPlan": null,
-                  "createdAt": "2024-02-09T07:11:04.461Z",
-                  "updatedAt": "2024-03-30T20:43:34.109Z",
+                  "createdAt": "2024-11-21T03:54:51.250Z",
+                  "updatedAt": "2024-12-20T02:28:45.266Z",
                   "organization": {
-                    "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+                    "id": "6efad4fb-3807-4443-ba93-80b83b4687a5",
                     "name": "Lubowitz, Waters and Haley",
                     "slug": "lubowitz-waters-and-haley",
                     "thumbnailUrl": null,
@@ -11587,9 +11725,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     },
                     "slug": {
                       "type": "string",
@@ -11626,7 +11764,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-04-18T21:12:59.543Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "shortName": "Conroy,",
@@ -11730,7 +11868,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-02-24T16:36:46.247Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "b1c0f7ee-0443-416a-81c9-06c0e6329323",
                       "shortName": "Lemke,",
@@ -11980,7 +12118,7 @@
                           "createdBy": null,
                           "updatedBy": null,
                           "publishedAt": "2024-12-25T15:04:42.969Z",
-                          "publicAt": null,
+                          "public": false,
                           "toolsConfig": {},
                           "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
                           "shortName": "Spencer,",
@@ -12339,7 +12477,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-11-21T01:19:53.533Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "bbb36038-9ce8-45db-8d91-cd87f54ea01d",
                       "shortName": "Anderson",
@@ -12443,7 +12581,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-10-29T04:35:17.725Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "772a771f-c150-465e-9635-46594859fc3d",
                       "shortName": "Wiegand,",
@@ -12659,7 +12797,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-25T15:04:42.969Z",
-                  "publicAt": null,
+                  "public": false,
                   "toolsConfig": {},
                   "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
                   "shortName": "Spencer,",
@@ -12830,15 +12968,15 @@
                   },
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "shortName": {
                     "type": ["string", "null"],
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "country": {
                     "type": ["string", "null"],
@@ -12909,9 +13047,9 @@
                             },
                             "name": {
                               "type": "string",
-                              "minLength": 2,
+                              "minLength": 1,
                               "maxLength": 255,
-                              "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                              "pattern": "^[^\\p{Cc}<>]+$"
                             },
                             "color": {
                               "type": "string",
@@ -13073,7 +13211,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-25T15:04:42.969Z",
-                  "publicAt": null,
+                  "public": false,
                   "toolsConfig": {},
                   "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
                   "shortName": "Spencer,",
@@ -13250,9 +13388,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     },
                     "slug": {
                       "type": "string",
@@ -13260,11 +13398,11 @@
                       "maxLength": 255,
                       "pattern": "^[a-zA-Z0-9]+(-{0,3}[a-zA-Z0-9]+)*$"
                     },
-                    "publicAt": {
-                      "type": ["string", "null"]
+                    "public": {
+                      "type": "boolean"
                     }
                   },
-                  "required": ["id", "name", "slug", "publicAt"]
+                  "required": ["id", "name", "slug", "public"]
                 },
                 "minItems": 1,
                 "maxItems": 10
@@ -13292,7 +13430,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-04-18T21:12:59.543Z",
-                      "publicAt": "2024-06-12T19:42:36.076Z",
+                      "public": true,
                       "toolsConfig": {},
                       "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
@@ -13487,7 +13625,7 @@
                           "createdBy": null,
                           "updatedBy": null,
                           "publishedAt": "2024-12-23T15:24:26.607Z",
-                          "publicAt": "2024-12-29T10:59:08.044Z",
+                          "public": true,
                           "toolsConfig": {},
                           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -13813,7 +13951,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-11-21T01:19:53.533Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
                       "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
@@ -13847,7 +13985,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-10-29T04:35:17.725Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
                       "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
@@ -14002,7 +14140,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-23T15:24:26.607Z",
-                  "publicAt": "2024-12-29T10:59:08.044Z",
+                  "public": true,
                   "toolsConfig": {},
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -14112,9 +14250,9 @@
                   },
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "thumbnailUrl": {
                     "type": ["string", "null"],
@@ -14124,8 +14262,8 @@
                     "type": ["string", "null"],
                     "maxLength": 2048
                   },
-                  "publicAt": {
-                    "type": ["string", "null"]
+                  "public": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -14150,7 +14288,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-23T15:24:26.607Z",
-                  "publicAt": "2024-12-29T10:59:08.044Z",
+                  "public": true,
                   "toolsConfig": {},
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -14268,7 +14406,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-23T15:24:26.607Z",
-                  "publicAt": "2024-12-29T10:59:08.044Z",
+                  "public": true,
                   "toolsConfig": {},
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -14455,7 +14593,7 @@
                     "createdBy": null,
                     "updatedBy": null,
                     "publishedAt": "2024-12-23T15:24:26.607Z",
-                    "publicAt": "2024-12-29T10:59:08.044Z",
+                    "public": true,
                     "toolsConfig": {},
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -14563,7 +14701,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-23T15:24:26.607Z",
-                  "publicAt": "2024-12-29T10:59:08.044Z",
+                  "public": true,
                   "toolsConfig": {},
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -14750,7 +14888,7 @@
                     "createdBy": null,
                     "updatedBy": null,
                     "publishedAt": "2024-12-23T15:24:26.607Z",
-                    "publicAt": "2024-12-29T10:59:08.044Z",
+                    "public": true,
                     "toolsConfig": {},
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -14867,7 +15005,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-12-23T15:24:26.607Z",
-                  "publicAt": "2024-12-29T10:59:08.044Z",
+                  "public": true,
                   "toolsConfig": {},
                   "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                   "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -15054,7 +15192,7 @@
                     "createdBy": null,
                     "updatedBy": null,
                     "publishedAt": "2024-12-23T15:24:26.607Z",
-                    "publicAt": "2024-12-29T10:59:08.044Z",
+                    "public": true,
                     "toolsConfig": {},
                     "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
                     "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -15151,9 +15289,9 @@
                     },
                     "name": {
                       "type": "string",
-                      "minLength": 2,
+                      "minLength": 1,
                       "maxLength": 255,
-                      "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                      "pattern": "^[^\\p{Cc}<>]+$"
                     }
                   },
                   "required": ["id", "name"]
@@ -15184,7 +15322,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-04-18T21:12:59.543Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
                       "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
@@ -15304,7 +15442,7 @@
                           "createdBy": null,
                           "updatedBy": null,
                           "publishedAt": "2024-03-18T14:19:46.053Z",
-                          "publicAt": null,
+                          "public": false,
                           "toolsConfig": {},
                           "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
                           "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
@@ -15614,7 +15752,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-11-21T01:19:53.533Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
                       "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
@@ -15660,7 +15798,7 @@
                       "createdBy": null,
                       "updatedBy": null,
                       "publishedAt": "2024-10-29T04:35:17.725Z",
-                      "publicAt": null,
+                      "public": false,
                       "toolsConfig": {},
                       "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
                       "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
@@ -15827,7 +15965,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-03-18T14:19:46.053Z",
-                  "publicAt": null,
+                  "public": false,
                   "toolsConfig": {},
                   "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
                   "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
@@ -15943,9 +16081,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   }
                 }
               }
@@ -15970,7 +16108,7 @@
                   "createdBy": null,
                   "updatedBy": null,
                   "publishedAt": "2024-03-18T14:19:46.053Z",
-                  "publicAt": null,
+                  "public": false,
                   "toolsConfig": {},
                   "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
                   "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",
@@ -16179,21 +16317,21 @@
                       "keywords": "textor temptatio spiritus",
                       "createdBy": {
                         "id": "71b17b41-ee45-46f6-bf29-b747a897a617",
+                        "kind": "user",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "71b17b41-ee45-46f6-bf29-b747a897a617",
+                        "kind": "user",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 467,
                       "publicBucket": false,
                       "bucketName": "attachments",
@@ -16224,21 +16362,21 @@
                       "keywords": "tergiversatio versus sufficio",
                       "createdBy": {
                         "id": "3c2ac382-7d82-4be1-b935-e9d906125ba7",
+                        "kind": "user",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "3c2ac382-7d82-4be1-b935-e9d906125ba7",
+                        "kind": "user",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 309,
                       "publicBucket": false,
                       "bucketName": "attachments",
@@ -16395,9 +16533,6 @@
                       "maxLength": 255,
                       "description": "MIME type of the server-converted variant; null when none."
                     },
-                    "publicAt": {
-                      "type": ["string", "null"]
-                    },
                     "projectId": {
                       "type": "string",
                       "format": "uuid"
@@ -16437,21 +16572,21 @@
                       "keywords": "commodo cohors auctor",
                       "createdBy": {
                         "id": "b4380b29-6f3c-44df-9f2f-e77a8fb8a8a4",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "b4380b29-6f3c-44df-9f2f-e77a8fb8a8a4",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 57,
                       "publicBucket": false,
                       "bucketName": "attachments",
@@ -16482,21 +16617,21 @@
                       "keywords": "alioqui aurum similique",
                       "createdBy": {
                         "id": "3e5ea44c-3c32-4a47-8230-f592f25efbf3",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "3e5ea44c-3c32-4a47-8230-f592f25efbf3",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 205,
                       "publicBucket": false,
                       "bucketName": "attachments",
@@ -16568,21 +16703,21 @@
                       "keywords": "commodo cohors auctor",
                       "createdBy": {
                         "id": "b4380b29-6f3c-44df-9f2f-e77a8fb8a8a4",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "b4380b29-6f3c-44df-9f2f-e77a8fb8a8a4",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 57,
                       "publicBucket": false,
                       "bucketName": "attachments",
@@ -16613,21 +16748,21 @@
                       "keywords": "alioqui aurum similique",
                       "createdBy": {
                         "id": "3e5ea44c-3c32-4a47-8230-f592f25efbf3",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "3e5ea44c-3c32-4a47-8230-f592f25efbf3",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 205,
                       "publicBucket": false,
                       "bucketName": "attachments",
@@ -17065,21 +17200,21 @@
                   "keywords": "perferendis aiunt animadverto",
                   "createdBy": {
                     "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+                    "kind": "user",
                     "name": "Francesco Littel",
                     "slug": "francesco_littel16",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "updatedBy": {
                     "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+                    "kind": "user",
                     "name": "Francesco Littel",
                     "slug": "francesco_littel16",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 354,
                   "publicBucket": false,
                   "bucketName": "attachments",
@@ -17240,21 +17375,21 @@
                   "keywords": "perferendis aiunt animadverto",
                   "createdBy": {
                     "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+                    "kind": "user",
                     "name": "Francesco Littel",
                     "slug": "francesco_littel16",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "updatedBy": {
                     "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+                    "kind": "user",
                     "name": "Francesco Littel",
                     "slug": "francesco_littel16",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 354,
                   "publicBucket": false,
                   "bucketName": "attachments",
@@ -17401,21 +17536,21 @@
                   "keywords": "perferendis aiunt animadverto",
                   "createdBy": {
                     "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+                    "kind": "user",
                     "name": "Francesco Littel",
                     "slug": "francesco_littel16",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "updatedBy": {
                     "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+                    "kind": "user",
                     "name": "Francesco Littel",
                     "slug": "francesco_littel16",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 354,
                   "publicBucket": false,
                   "bucketName": "attachments",
@@ -17573,7 +17708,7 @@
                       "keywords": "",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 354,
                       "color": "#7deecd",
                       "mode": "secondary",
@@ -17600,7 +17735,7 @@
                       "keywords": "",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 187,
                       "color": "#ed83ab",
                       "mode": "secondary",
@@ -17668,7 +17803,7 @@
                       "keywords": "",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 354,
                       "color": "#7deecd",
                       "mode": "secondary",
@@ -17695,7 +17830,7 @@
                       "keywords": "",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 187,
                       "color": "#ed83ab",
                       "mode": "secondary",
@@ -17921,7 +18056,7 @@
                       "keywords": "",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 215,
                       "color": "#e31dfa",
                       "mode": "secondary",
@@ -17948,7 +18083,7 @@
                       "keywords": "",
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 118,
                       "color": "#eaafed",
                       "mode": "secondary",
@@ -18198,7 +18333,7 @@
                   "keywords": "",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 136,
                   "color": "#1d181f",
                   "mode": "secondary",
@@ -18355,7 +18490,7 @@
                   "keywords": "",
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 136,
                   "color": "#1d181f",
                   "mode": "secondary",
@@ -18980,7 +19115,13 @@
                   "muted": false,
                   "archived": false,
                   "createdAt": "2024-10-28T10:38:59.996Z",
-                  "createdBy": "dd6e6795-6b1c-4f91-9b3c-e934d7a0b534",
+                  "createdBy": {
+                    "id": "dd6e6795-6b1c-4f91-9b3c-e934d7a0b534",
+                    "kind": "user",
+                    "name": "Marquis Hudson",
+                    "slug": "marquis.hudson73",
+                    "thumbnailUrl": null
+                  },
                   "updatedAt": "2024-10-28T10:38:59.996Z",
                   "updatedBy": null
                 },
@@ -19015,15 +19156,27 @@
                       "enum": ["admin", "member", "guest"]
                     },
                     "createdBy": {
-                      "type": ["string", "null"],
-                      "format": "uuid"
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/ActorRef"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "updatedAt": {
                       "type": ["string", "null"]
                     },
                     "updatedBy": {
-                      "type": ["string", "null"],
-                      "format": "uuid"
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/ActorRef"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "organizationId": {
                       "type": "string",
@@ -19640,10 +19793,10 @@
                       "createdAt": "2024-11-21T01:19:53.533Z",
                       "createdBy": {
                         "id": "617f1449-7605-4cc9-8f52-1e3f100f6db2",
+                        "kind": "user",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       }
                     },
                     {
@@ -19653,10 +19806,10 @@
                       "createdAt": "2024-10-29T04:35:17.725Z",
                       "createdBy": {
                         "id": "ba7cf4de-5ede-48cc-9fef-453bf074c2ef",
+                        "kind": "user",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       }
                     }
                   ],
@@ -19688,7 +19841,7 @@
                           "createdBy": {
                             "anyOf": [
                               {
-                                "$ref": "#/components/schemas/UserMinimalBase"
+                                "$ref": "#/components/schemas/ActorRef"
                               },
                               {
                                 "type": "null"
@@ -19942,9 +20095,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "role": {
                     "type": "string",
@@ -19955,9 +20108,9 @@
                     "properties": {
                       "name": {
                         "type": "string",
-                        "minLength": 2,
+                        "minLength": 1,
                         "maxLength": 255,
-                        "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                        "pattern": "^[^\\p{Cc}<>]+$"
                       },
                       "scopes": {
                         "type": ["array", "null"],
@@ -20032,11 +20185,11 @@
                     "revokedBy": null,
                     "createdAt": "2024-09-23T23:15:48.299Z",
                     "createdBy": {
-                      "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
-                      "name": "Stewart VonRueden",
-                      "slug": "stewart_vonrueden",
-                      "thumbnailUrl": null,
-                      "entityType": "user"
+                      "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
+                      "kind": "user",
+                      "name": "Sebastian Treutel",
+                      "slug": "sebastian_treutel",
+                      "thumbnailUrl": null
                     },
                     "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                   }
@@ -20077,11 +20230,11 @@
                         "revokedBy": null,
                         "createdAt": "2024-09-23T23:15:48.299Z",
                         "createdBy": {
-                          "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
-                          "name": "Stewart VonRueden",
-                          "slug": "stewart_vonrueden",
-                          "thumbnailUrl": null,
-                          "entityType": "user"
+                          "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
+                          "kind": "user",
+                          "name": "Sebastian Treutel",
+                          "slug": "sebastian_treutel",
+                          "thumbnailUrl": null
                         },
                         "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                       },
@@ -20317,9 +20470,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "status": {
                     "type": "string",
@@ -20445,11 +20598,11 @@
                       "revokedBy": null,
                       "createdAt": "2024-11-20T15:58:25.416Z",
                       "createdBy": {
-                        "id": "9656def5-1db7-49f5-8767-34aa5a1f68f2",
-                        "name": "Jace Kozey",
-                        "slug": "jace_kozey68",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "id": "f51db79f-5767-434a-9a5a-1f68f22c07d3",
+                        "kind": "user",
+                        "name": "Ford Thompson",
+                        "slug": "ford_thompson68",
+                        "thumbnailUrl": null
                       }
                     }
                   ]
@@ -20540,9 +20693,9 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255,
-                    "pattern": "^[\\p{L}\\d\\-., '&()]+$"
+                    "pattern": "^[^\\p{Cc}<>]+$"
                   },
                   "scopes": {
                     "type": ["array", "null"],
@@ -20603,11 +20756,11 @@
                   "revokedBy": null,
                   "createdAt": "2024-09-23T23:15:48.299Z",
                   "createdBy": {
-                    "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
-                    "name": "Stewart VonRueden",
-                    "slug": "stewart_vonrueden",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
+                    "kind": "user",
+                    "name": "Sebastian Treutel",
+                    "slug": "sebastian_treutel",
+                    "thumbnailUrl": null
                   },
                   "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                 },
@@ -20641,11 +20794,11 @@
                     "revokedBy": null,
                     "createdAt": "2024-09-23T23:15:48.299Z",
                     "createdBy": {
-                      "id": "e2d4ee31-6b4c-470d-b649-81d03f61d16d",
-                      "name": "Stewart VonRueden",
-                      "slug": "stewart_vonrueden",
-                      "thumbnailUrl": null,
-                      "entityType": "user"
+                      "id": "316b4c70-d649-481d-b03f-61d16dcebe99",
+                      "kind": "user",
+                      "name": "Sebastian Treutel",
+                      "slug": "sebastian_treutel",
+                      "thumbnailUrl": null
                     },
                     "secret": "raak-development_sk_test_Ab3dEfGhIjKlMnOpQrStUvWxYz0123452yMjBy"
                   },
@@ -20745,11 +20898,11 @@
                   "revokedBy": null,
                   "createdAt": "2024-11-20T15:58:25.416Z",
                   "createdBy": {
-                    "id": "9656def5-1db7-49f5-8767-34aa5a1f68f2",
-                    "name": "Jace Kozey",
-                    "slug": "jace_kozey68",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "id": "f51db79f-5767-434a-9a5a-1f68f22c07d3",
+                    "kind": "user",
+                    "name": "Ford Thompson",
+                    "slug": "ford_thompson68",
+                    "thumbnailUrl": null
                   }
                 },
                 "schema": {
@@ -20872,9 +21025,6 @@
                       },
                       "maxItems": 50
                     },
-                    "publicAt": {
-                      "type": ["string", "null"]
-                    },
                     "projectId": {
                       "type": "string",
                       "format": "uuid"
@@ -20914,35 +21064,39 @@
                       "keywords": "inflammatio dens demergo",
                       "createdBy": {
                         "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": "2024-11-29T18:50:26.668Z",
+                      "public": false,
                       "seq": 178,
-                      "expandable": false,
+                      "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Consectetur speculum ambitus ambitus paulatim condico defessus tergum sodalitas cernuus apostolus convoco stultus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 114,
-                      "primaryLabelId": "cecd0656-766c-4764-a402-4d1a2df88c75",
-                      "displayOrder": 892.57,
-                      "status": 0,
+                      "primaryLabelId": "ddcecd06-5676-46c7-9644-024d1a2df88c",
+                      "displayOrder": 322.41,
+                      "status": 2,
                       "statusChangedAt": "2024-05-08T15:34:56.983Z",
                       "checkboxCount": 8,
                       "checkedCount": 8,
-                      "attachments": ["a5e9543a-04d8-4b64-a877-e7af93a55139"],
+                      "attachments": [
+                        "f7a5e954-3a04-4d8b-8648-77e7af93a551",
+                        "98c6e0a5-40e7-4063-9e8f-4c84bbdf4df2",
+                        "50f6a30d-4ca6-4d01-a398-de9a3cc34af7"
+                      ],
                       "labels": [
                         {
-                          "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                          "id": "c55c23f9-8e33-4150-89d3-bfa6839be9d5",
                           "name": "e-commerce",
                           "slug": "e-commerce",
                           "color": "#a7bb3d",
@@ -20951,34 +21105,25 @@
                           "projectId": "05ae7135-ba2a-4541-aea4-472b689abbc7"
                         },
                         {
-                          "id": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
+                          "id": "4ae29955-bb36-42d7-a390-69f310134300",
                           "name": "deliverables",
                           "slug": "deliverables",
                           "color": "#12bff5",
                           "mode": "secondary",
                           "icon": null,
                           "projectId": "46ed6b69-70fd-4222-aa20-b77dfc43c1a4"
-                        },
-                        {
-                          "id": "5c23f98e-3315-409d-a3bf-a6839be9d514",
-                          "name": "health",
-                          "slug": "health",
-                          "color": "#f4d1c8",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "ea520bd8-fb89-48d9-a223-8d158b572741"
                         }
                       ],
                       "assignedTo": [
                         {
-                          "id": "29955bb3-62d7-4390-b69f-3101343008a1",
+                          "id": "1dbd76f1-fcc9-475c-aa96-b589ea3834bc",
                           "name": "Ethelyn Hane-Pfeffer",
                           "slug": "ethelyn_hane-pfeffer53",
                           "thumbnailUrl": null,
                           "entityType": "user"
                         },
                         {
-                          "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
+                          "id": "8f20b3f5-48ff-4102-b723-b4075224e9f7",
                           "name": "Margaretta Gutkowski",
                           "slug": "margaretta_gutkowski63",
                           "thumbnailUrl": null,
@@ -20988,7 +21133,7 @@
                       "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
                       "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
                       "primaryLabel": {
-                        "id": "cecd0656-766c-4764-a402-4d1a2df88c75",
+                        "id": "ddcecd06-5676-46c7-9644-024d1a2df88c",
                         "name": "intranet",
                         "slug": "intranet",
                         "color": "#acfe13",
@@ -21013,35 +21158,35 @@
                       "keywords": "aiunt succurro spiritus",
                       "createdBy": {
                         "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 162,
-                      "expandable": false,
+                      "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Aegrus avarus verbum alienus adaugeo canonicus tabernus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 56,
-                      "primaryLabelId": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
-                      "displayOrder": 378.87,
-                      "status": 3,
+                      "primaryLabelId": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
+                      "displayOrder": 54.02,
+                      "status": 4,
                       "statusChangedAt": "2024-03-01T09:29:28.225Z",
                       "checkboxCount": 9,
                       "checkedCount": 4,
-                      "attachments": [],
+                      "attachments": ["35b3b434-d64d-494b-8d33-c3593f8f02f4"],
                       "labels": [
                         {
-                          "id": "b3b434d6-4d94-4bd3-b3c3-593f8f02f435",
+                          "id": "e525b660-9c34-4108-9351-83b385c47726",
                           "name": "kids",
                           "slug": "kids",
                           "color": "#b5ebfd",
@@ -21052,9 +21197,16 @@
                       ],
                       "assignedTo": [
                         {
-                          "id": "25b6609c-3410-4835-9183-b385c477265f",
+                          "id": "659b2900-8dbf-444d-b5c5-f2c95d31f582",
                           "name": "Zachery Yost",
                           "slug": "zachery.yost84",
+                          "thumbnailUrl": null,
+                          "entityType": "user"
+                        },
+                        {
+                          "id": "bc9375f7-5ddd-4542-afe6-dd226f10b18a",
+                          "name": "Tim Kautzer",
+                          "slug": "tim.kautzer78",
                           "thumbnailUrl": null,
                           "entityType": "user"
                         }
@@ -21062,7 +21214,7 @@
                       "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
                       "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
                       "primaryLabel": {
-                        "id": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
+                        "id": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
                         "name": "open-source",
                         "slug": "open-source",
                         "color": "#2660d8",
@@ -21128,35 +21280,39 @@
                       "keywords": "inflammatio dens demergo",
                       "createdBy": {
                         "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "b48057f5-3a0c-48a2-96b6-95cc9ed9cd1f",
+                        "kind": "user",
                         "name": "Bethel Sawayn",
                         "slug": "bethel_sawayn",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": "2024-11-29T18:50:26.668Z",
+                      "public": false,
                       "seq": 178,
-                      "expandable": false,
+                      "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Consectetur speculum ambitus ambitus paulatim condico defessus tergum sodalitas cernuus apostolus convoco stultus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 114,
-                      "primaryLabelId": "cecd0656-766c-4764-a402-4d1a2df88c75",
-                      "displayOrder": 892.57,
-                      "status": 0,
+                      "primaryLabelId": "ddcecd06-5676-46c7-9644-024d1a2df88c",
+                      "displayOrder": 322.41,
+                      "status": 2,
                       "statusChangedAt": "2024-05-08T15:34:56.983Z",
                       "checkboxCount": 8,
                       "checkedCount": 8,
-                      "attachments": ["a5e9543a-04d8-4b64-a877-e7af93a55139"],
+                      "attachments": [
+                        "f7a5e954-3a04-4d8b-8648-77e7af93a551",
+                        "98c6e0a5-40e7-4063-9e8f-4c84bbdf4df2",
+                        "50f6a30d-4ca6-4d01-a398-de9a3cc34af7"
+                      ],
                       "labels": [
                         {
-                          "id": "6e0a540e-7063-4e8f-b4c8-4bbdf4df2750",
+                          "id": "c55c23f9-8e33-4150-89d3-bfa6839be9d5",
                           "name": "e-commerce",
                           "slug": "e-commerce",
                           "color": "#a7bb3d",
@@ -21165,34 +21321,25 @@
                           "projectId": "05ae7135-ba2a-4541-aea4-472b689abbc7"
                         },
                         {
-                          "id": "6a30d4ca-6d01-4398-9de9-a3cc34af79ac",
+                          "id": "4ae29955-bb36-42d7-a390-69f310134300",
                           "name": "deliverables",
                           "slug": "deliverables",
                           "color": "#12bff5",
                           "mode": "secondary",
                           "icon": null,
                           "projectId": "46ed6b69-70fd-4222-aa20-b77dfc43c1a4"
-                        },
-                        {
-                          "id": "5c23f98e-3315-409d-a3bf-a6839be9d514",
-                          "name": "health",
-                          "slug": "health",
-                          "color": "#f4d1c8",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "ea520bd8-fb89-48d9-a223-8d158b572741"
                         }
                       ],
                       "assignedTo": [
                         {
-                          "id": "29955bb3-62d7-4390-b69f-3101343008a1",
+                          "id": "1dbd76f1-fcc9-475c-aa96-b589ea3834bc",
                           "name": "Ethelyn Hane-Pfeffer",
                           "slug": "ethelyn_hane-pfeffer53",
                           "thumbnailUrl": null,
                           "entityType": "user"
                         },
                         {
-                          "id": "bd76f1fc-c975-4ca9-b6b5-89ea3834bc98",
+                          "id": "8f20b3f5-48ff-4102-b723-b4075224e9f7",
                           "name": "Margaretta Gutkowski",
                           "slug": "margaretta_gutkowski63",
                           "thumbnailUrl": null,
@@ -21202,7 +21349,7 @@
                       "projectId": "1adbdbf0-8b9a-4f3e-a691-ea12d93d0a05",
                       "organizationId": "eb59fada-0542-4113-8745-6cc6ee256c3c",
                       "primaryLabel": {
-                        "id": "cecd0656-766c-4764-a402-4d1a2df88c75",
+                        "id": "ddcecd06-5676-46c7-9644-024d1a2df88c",
                         "name": "intranet",
                         "slug": "intranet",
                         "color": "#acfe13",
@@ -21227,35 +21374,35 @@
                       "keywords": "aiunt succurro spiritus",
                       "createdBy": {
                         "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "e6329323-06eb-4ef5-bb66-83210fb7a21b",
+                        "kind": "user",
                         "name": "Americo Kutch",
                         "slug": "americo_kutch",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 162,
-                      "expandable": false,
+                      "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Aegrus avarus verbum alienus adaugeo canonicus tabernus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 56,
-                      "primaryLabelId": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
-                      "displayOrder": 378.87,
-                      "status": 3,
+                      "primaryLabelId": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
+                      "displayOrder": 54.02,
+                      "status": 4,
                       "statusChangedAt": "2024-03-01T09:29:28.225Z",
                       "checkboxCount": 9,
                       "checkedCount": 4,
-                      "attachments": [],
+                      "attachments": ["35b3b434-d64d-494b-8d33-c3593f8f02f4"],
                       "labels": [
                         {
-                          "id": "b3b434d6-4d94-4bd3-b3c3-593f8f02f435",
+                          "id": "e525b660-9c34-4108-9351-83b385c47726",
                           "name": "kids",
                           "slug": "kids",
                           "color": "#b5ebfd",
@@ -21266,9 +21413,16 @@
                       ],
                       "assignedTo": [
                         {
-                          "id": "25b6609c-3410-4835-9183-b385c477265f",
+                          "id": "659b2900-8dbf-444d-b5c5-f2c95d31f582",
                           "name": "Zachery Yost",
                           "slug": "zachery.yost84",
+                          "thumbnailUrl": null,
+                          "entityType": "user"
+                        },
+                        {
+                          "id": "bc9375f7-5ddd-4542-afe6-dd226f10b18a",
+                          "name": "Tim Kautzer",
+                          "slug": "tim.kautzer78",
                           "thumbnailUrl": null,
                           "entityType": "user"
                         }
@@ -21276,7 +21430,7 @@
                       "projectId": "2c2db09b-47a2-44f9-b41b-71cc76d330af",
                       "organizationId": "0f8565ad-527c-4313-8a69-d637708656d9",
                       "primaryLabel": {
-                        "id": "699b0a6b-4d21-40ff-8bad-a3066ea097b1",
+                        "id": "d699b0a6-b4d2-410f-8fba-da3066ea097b",
                         "name": "open-source",
                         "slug": "open-source",
                         "color": "#2660d8",
@@ -21516,48 +21670,38 @@
                       "keywords": "sumptus ter arca",
                       "createdBy": {
                         "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                        "kind": "user",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "336a3f30-f204-4331-b5eb-ed4a4eacb4a6",
+                        "kind": "user",
                         "name": "Agustin Kirlin",
                         "slug": "agustin_kirlin",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": false,
                       "seq": 293,
-                      "expandable": false,
+                      "expandable": true,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Patria itaque spes crudelis tandem eveniet.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 43,
-                      "primaryLabelId": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
-                      "displayOrder": 671.33,
-                      "status": 5,
+                      "primaryLabelId": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
+                      "displayOrder": 608.18,
+                      "status": 2,
                       "statusChangedAt": "2024-01-16T07:26:20.219Z",
                       "checkboxCount": 8,
-                      "checkedCount": 0,
+                      "checkedCount": 1,
                       "attachments": [],
-                      "labels": [
-                        {
-                          "id": "93095c24-27b6-45be-9e9b-5a30ea3c071d",
-                          "name": "feed",
-                          "slug": "feed",
-                          "color": "#be4dce",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "00d4cb5c-c208-4309-96a6-e65784a69c8c"
-                        }
-                      ],
+                      "labels": [],
                       "assignedTo": [],
                       "projectId": "5d29966a-04b5-4509-826e-5ef73b6c996a",
                       "organizationId": "0ebb35a6-c4c4-4758-aedb-9ccae3cbd585",
                       "primaryLabel": {
-                        "id": "d35a6717-f3ca-4ae1-ab0d-c373e927500e",
+                        "id": "fd35a671-7f3c-4aae-b1b0-dc373e927500",
                         "name": "gb",
                         "slug": "gb",
                         "color": "#f30cdc",
@@ -21582,65 +21726,38 @@
                       "keywords": "nostrum volva sufficio",
                       "createdBy": {
                         "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                        "kind": "user",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "updatedBy": {
                         "id": "4ffcd93d-a6f4-4757-8fd0-0cc2dc65b1a0",
+                        "kind": "user",
                         "name": "Nya Nikolaus",
                         "slug": "nya_nikolaus",
-                        "thumbnailUrl": null,
-                        "entityType": "user"
+                        "thumbnailUrl": null
                       },
                       "deletedAt": null,
                       "deletedBy": null,
-                      "publicAt": null,
+                      "public": true,
                       "seq": 40,
-                      "expandable": true,
+                      "expandable": false,
                       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Umquam voluntarius tyrannus quis peccatus.\",\"styles\":{}}],\"children\":[]}]",
                       "summaryLength": 42,
-                      "primaryLabelId": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
-                      "displayOrder": 5.94,
-                      "status": 3,
+                      "primaryLabelId": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
+                      "displayOrder": 529.98,
+                      "status": 6,
                       "statusChangedAt": "2024-11-27T15:18:06.081Z",
                       "checkboxCount": 9,
-                      "checkedCount": 3,
-                      "attachments": [],
-                      "labels": [
-                        {
-                          "id": "036e4f85-c837-49f0-87f4-6ef29ba47773",
-                          "name": "sensor",
-                          "slug": "sensor",
-                          "color": "#d0cda5",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "6a578392-0d6a-4677-a48e-8975e0fb903e"
-                        },
-                        {
-                          "id": "13c97fb3-a840-4350-9688-e45464b025fe",
-                          "name": "infrastructures",
-                          "slug": "infrastructures",
-                          "color": "#6dcdee",
-                          "mode": "secondary",
-                          "icon": null,
-                          "projectId": "6dcead0b-743c-4ede-8135-577e1aaa42cd"
-                        }
-                      ],
-                      "assignedTo": [
-                        {
-                          "id": "49e34c9b-2806-42e4-acac-8381fa303867",
-                          "name": "Sandra Pacocha",
-                          "slug": "sandra_pacocha",
-                          "thumbnailUrl": null,
-                          "entityType": "user"
-                        }
-                      ],
+                      "checkedCount": 5,
+                      "attachments": ["1a036e4f-85c8-4379-9f07-f46ef29ba477"],
+                      "labels": [],
+                      "assignedTo": [],
                       "projectId": "c3cc0f3d-f844-49a1-948a-c7c8981cd73a",
                       "organizationId": "bfe99126-641d-443c-bb87-0ceb952be06e",
                       "primaryLabel": {
-                        "id": "00bbd33d-a0ff-45e7-a5ab-ed593eb82aa9",
+                        "id": "600bbd33-da0f-4f5e-a75a-bed593eb82aa",
                         "name": "leverage",
                         "slug": "leverage",
                         "color": "#af215f",
@@ -21893,38 +22010,63 @@
                   "keywords": "minima accedo communis",
                   "createdBy": {
                     "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+                    "kind": "user",
                     "name": "Nasir Thompson",
                     "slug": "nasir_thompson78",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "updatedBy": {
                     "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+                    "kind": "user",
                     "name": "Nasir Thompson",
                     "slug": "nasir_thompson78",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 24,
                   "expandable": false,
                   "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
                   "summaryLength": 47,
-                  "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-                  "displayOrder": 6.85,
-                  "status": 2,
+                  "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+                  "displayOrder": 657.08,
+                  "status": 6,
                   "statusChangedAt": "2024-11-03T10:38:49.857Z",
                   "checkboxCount": 8,
-                  "checkedCount": 3,
-                  "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-                  "labels": [],
-                  "assignedTo": [],
+                  "checkedCount": 5,
+                  "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+                  "labels": [
+                    {
+                      "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+                      "name": "online",
+                      "slug": "online",
+                      "color": "#6b33cb",
+                      "mode": "secondary",
+                      "icon": null,
+                      "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+                    }
+                  ],
+                  "assignedTo": [
+                    {
+                      "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+                      "name": "Leda Hodkiewicz",
+                      "slug": "leda.hodkiewicz53",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    },
+                    {
+                      "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+                      "name": "Sylvan Zemlak",
+                      "slug": "sylvan_zemlak14",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    }
+                  ],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
                   "primaryLabel": {
-                    "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+                    "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
                     "name": "microservice",
                     "slug": "microservice",
                     "color": "#77fd9d",
@@ -22108,8 +22250,8 @@
                         "type": "string",
                         "format": "uuid"
                       },
-                      "publicAt": {
-                        "type": ["string", "null"]
+                      "public": {
+                        "type": "boolean"
                       }
                     }
                   },
@@ -22143,38 +22285,63 @@
                   "keywords": "minima accedo communis",
                   "createdBy": {
                     "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+                    "kind": "user",
                     "name": "Nasir Thompson",
                     "slug": "nasir_thompson78",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "updatedBy": {
                     "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+                    "kind": "user",
                     "name": "Nasir Thompson",
                     "slug": "nasir_thompson78",
-                    "thumbnailUrl": null,
-                    "entityType": "user"
+                    "thumbnailUrl": null
                   },
                   "deletedAt": null,
                   "deletedBy": null,
-                  "publicAt": null,
+                  "public": false,
                   "seq": 24,
                   "expandable": false,
                   "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
                   "summaryLength": 47,
-                  "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-                  "displayOrder": 6.85,
-                  "status": 2,
+                  "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+                  "displayOrder": 657.08,
+                  "status": 6,
                   "statusChangedAt": "2024-11-03T10:38:49.857Z",
                   "checkboxCount": 8,
-                  "checkedCount": 3,
-                  "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-                  "labels": [],
-                  "assignedTo": [],
+                  "checkedCount": 5,
+                  "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+                  "labels": [
+                    {
+                      "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+                      "name": "online",
+                      "slug": "online",
+                      "color": "#6b33cb",
+                      "mode": "secondary",
+                      "icon": null,
+                      "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+                    }
+                  ],
+                  "assignedTo": [
+                    {
+                      "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+                      "name": "Leda Hodkiewicz",
+                      "slug": "leda.hodkiewicz53",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    },
+                    {
+                      "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+                      "name": "Sylvan Zemlak",
+                      "slug": "sylvan_zemlak14",
+                      "thumbnailUrl": null,
+                      "entityType": "user"
+                    }
+                  ],
                   "projectId": "b0812db1-9a54-4314-b736-788585846a17",
                   "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
                   "primaryLabel": {
-                    "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+                    "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
                     "name": "microservice",
                     "slug": "microservice",
                     "color": "#77fd9d",

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('shared', () => ({ appConfig: { slug: 'test' } }));
 
 const { bindLocalUserDb, closeLocalUserDb, notifyOwnerChange } = await import('~/query/local-user-db');
-const { onTabMessage, postTabUpdate, toTabKey } = await import('~/modules/common/blocknote/yjs-tab-channel');
+const { onTabMessage, postTabMessage, yDocKeyString } = await import('~/modules/common/blocknote/yjs-tab-channel');
 type TabMessage = Parameters<Parameters<typeof onTabMessage>[0]>[0];
 
 /** Binds `owner`'s database as sign-in does, and tells the owner listeners, as local-user-storage does once bound. */
@@ -25,7 +25,7 @@ function otherTab(owner: string) {
 const update = (rowId: number | null) =>
   ({
     t: 'update',
-    key: toTabKey({ entityType: 'attachment', entityId: 'doc-1' }),
+    key: yDocKeyString({ entityType: 'attachment', entityId: 'doc-1' }),
     generation: 'gen-1',
     update: new Uint8Array([1, 2]),
     rowId,
@@ -38,24 +38,7 @@ afterEach(() => {
 });
 
 describe('yjs tab channel', () => {
-  it("carries messages between one user's tabs, binary updates included", async () => {
-    signIn('user-a');
-    const tab = otherTab('user-a');
-    const received: TabMessage[] = [];
-    stops.push(
-      onTabMessage((msg) => received.push(msg)),
-      () => tab.channel.close(),
-    );
-
-    postTabUpdate(update(7));
-    tab.channel.postMessage(update(null));
-
-    await vi.waitFor(() => expect(tab.received).toEqual([update(7)]));
-    await vi.waitFor(() => expect(received).toEqual([update(null)]));
-    expect(tab.received[0].t === 'update' && tab.received[0].update).toBeInstanceOf(Uint8Array);
-  });
-
-  it("must not carry one user's edits to another's tabs: the channel follows the bound database", async () => {
+  it("must not carry one user's edits to another's tabs: the channel follows the bound database, and sends nothing while none is bound", async () => {
     signIn('user-a');
     const tabA = otherTab('user-a');
     const tabB = otherTab('user-b');
@@ -66,26 +49,17 @@ describe('yjs tab channel', () => {
       () => tabB.channel.close(),
     );
 
-    signIn('user-b');
-    postTabUpdate(update(1));
-    tabA.channel.postMessage(update(2));
-    tabB.channel.postMessage(update(3));
-
-    await vi.waitFor(() => expect(received).toEqual([update(3)]));
-    await vi.waitFor(() => expect(tabB.received).toEqual([update(1)]));
-    expect(tabA.received).toEqual([]);
-  });
-
-  it('sends nothing while no database is bound (signed out, or impersonating)', async () => {
-    signIn('user-a');
-    const tab = otherTab('user-a');
-    stops.push(() => tab.channel.close());
+    // Signed out, or impersonating: nothing goes out.
     signIn(null);
+    postTabMessage(update(1));
 
-    postTabUpdate(update(1));
-    signIn('user-a');
-    postTabUpdate(update(2));
+    signIn('user-b');
+    postTabMessage(update(2));
+    tabA.channel.postMessage(update(3));
+    tabB.channel.postMessage(update(4));
 
-    await vi.waitFor(() => expect(tab.received).toEqual([update(2)]));
+    await vi.waitFor(() => expect(received).toEqual([update(4)]));
+    await vi.waitFor(() => expect(tabB.received).toEqual([update(2)]));
+    expect(tabA.received).toEqual([]);
   });
 });

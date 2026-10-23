@@ -1,11 +1,10 @@
-import type { MobileTaskDropIndicator } from '~/modules/task/board/mobile-drag-indicator-store';
+import type { MobileTaskDragIndicator } from '~/modules/task/board/mobile-task-drag-indicator-store';
 import type { Task } from '~/modules/task/types';
 
 const taskCardSelector = '[data-task-card-id][data-project-id][data-status]:not([data-sheet="true"])';
 
 const coarsePointerQuery = '(pointer: coarse)';
 
-/** Checks whether the active input device uses coarse pointer controls. */
 export const isCoarsePointerDevice = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia(coarsePointerQuery).matches;
@@ -19,7 +18,7 @@ export const resolveMobileTaskDropIndicator = ({
   clientX: number;
   clientY: number;
   sourceTask: Pick<Task, 'id' | 'projectId' | 'status'>;
-}): MobileTaskDropIndicator | null => {
+}): MobileTaskDragIndicator | null => {
   if (typeof document === 'undefined') return null;
 
   const cards = Array.from(document.querySelectorAll<HTMLElement>(taskCardSelector))

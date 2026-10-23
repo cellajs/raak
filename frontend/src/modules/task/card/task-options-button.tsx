@@ -4,10 +4,10 @@ import { appConfig } from 'shared';
 import { titleFromDocument } from 'shared/blocknote';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { setCurrentItem } from '~/modules/board-focus/focus-item';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { NamedText } from '~/modules/common/named-text';
 import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteTasks } from '~/modules/task/delete-tasks';
@@ -17,29 +17,32 @@ import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
 import { truncateMiddle } from '~/utils/truncate-middle';
 
-/** Ellipsis button that opens a task's options menu, on a collapsed card, an expanded card header and the sheet. */
-export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isSheet?: boolean }) {
+interface TaskOptionsButtonProps {
+  task: Task;
+  isSheet?: boolean;
+}
+
+export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonProps) {
   const { t } = useTranslation();
   const { copyToClipboard } = useCopyToClipboard(2000);
 
   const shareLink = `${appConfig.backendUrl}/t/${task.id}`;
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
-    const { create } = useDropdowner.getState();
+    const { create } = dropdowner.getState();
     const isMobile = window.innerWidth < 640;
-    // Anchor the dropdown to the clicked element. The button carries no `id`, because a
-    // caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
+    // The button carries no `id`: a caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
     const triggerRef = { current: currentTarget };
 
     const handleDeleteClick = () => {
-      const { remove } = useDropdowner.getState();
+      const { remove } = dropdowner.getState();
       // `task.name` is empty for a task made in the app: its title is the text of its summary block
       const title = titleFromDocument(task.summary);
       openPopConfirm(
         title ? (
-          <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: truncateMiddle(title, 20) }} />
+          <NamedText i18nKey="c:delete_confirm.text" name={truncateMiddle(title, 20)} />
         ) : (
-          <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
+          <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
         ),
         <DeleteTasks tasks={[task]} callback={remove} onCancel={remove} />,
       );
@@ -54,7 +57,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
             onSelect={() => {
               setCurrentItem(null);
               openTaskSheet(task.id);
-              useDropdowner.getState().remove();
+              dropdowner.getState().remove();
             }}
           >
             {t('c:expand')}
@@ -65,7 +68,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
           icon={CopyIcon}
           closeOnSelect={false}
           onSelect={async () => {
-            if (await copyTasksToClipboard([task])) useDropdowner.getState().complete(t('c:copied'));
+            if (await copyTasksToClipboard([task])) dropdowner.getState().complete(t('c:copied'));
           }}
         >
           {t('c:copy_content')}
@@ -75,7 +78,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
           icon={LinkIcon}
           closeOnSelect={false}
           onSelect={async () => {
-            if (await copyToClipboard(shareLink)) useDropdowner.getState().complete(t('c:copied'));
+            if (await copyToClipboard(shareLink)) dropdowner.getState().complete(t('c:copied'));
           }}
         >
           {t('c:copy_as_link')}
@@ -90,7 +93,6 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
         triggerRef,
         align: 'end',
         kind: 'menu',
-        // Match the task panel header's ellipsis menu width.
         popupClassName: 'min-w-48',
       },
     );
@@ -102,7 +104,7 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
         onClick={({ currentTarget }) => openOptionsDropdown(currentTarget)}
         aria-label={t('c:resource_options', { resource: t('c:task') })}
         variant="ghost"
-        className="focus-inset h-8 w-8 data-dropdowner-active:bg-accent/50"
+        className="focus-inset size-8 data-dropdowner-active:bg-accent/50"
         size="xs"
       >
         <DropdownerTriggerIcon icon={EllipsisVerticalIcon} className="size-3.5" />

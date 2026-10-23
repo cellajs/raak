@@ -3,6 +3,7 @@ import type { UserContext } from '#/core/context';
 import { tenantContext } from '#/db/tenant-context';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
+import { userActorRef, withActorRefs } from '#/modules/actors/actor-refs';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { checkSlugsAvailable } from '#/modules/entities/operations/check-slug';
@@ -11,7 +12,6 @@ import { insertMemberships } from '#/modules/memberships/operations/insert-membe
 import { resolveProjectWorkspaceId } from '#/modules/project/operations/project-workspace-membership';
 import { insertProjects } from '#/modules/project/project-queries';
 import { projectContract, type projectCreateBodySchema } from '#/modules/project/project-schema';
-import { withAuditUsers } from '#/modules/user/operations/with-audit-users';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
 import { log } from '#/utils/logger';
@@ -70,7 +70,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
         entityType: 'project' as const,
         name: item.name,
         slug: item.slug,
-        publicAt: item.publicAt,
+        public: item.public,
         createdBy: user.id,
         tenantId: organization.tenantId,
         organizationId: organization.id,
@@ -102,7 +102,7 @@ export async function createProjectsOp(ctx: UserContext, rawItems: CreateProject
   // Map memberships by projectId
   const membershipByProjectId = new Map(createdMemberships.map((m) => [m.projectId, m]));
 
-  const projectsWithAudit = await withAuditUsers(ctx, projectRecords, user);
+  const projectsWithAudit = await withActorRefs(ctx, projectRecords, [userActorRef(user)]);
 
   const projectResponses = projectsWithAudit.map((project) => {
     const membership = membershipByProjectId.get(project.id)!;

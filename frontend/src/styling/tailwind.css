@@ -17,7 +17,7 @@
   --font-sans: "Open Sans", ui-sans-serif, sans-serif;
   /* Headings share the sans stack; an app with a heading font sets it here. */
   --font-heading: var(--font-sans);
-  /* 16px at the 18px mobile root, rounded up: iOS zooms into a focused field below 16px. */
+  /* At least 16px at the 19px mobile root: iOS zooms into a focused field below 16px. */
   --text-md: 0.889rem;
   /* Badge and counter text. */
   --text-2xs: 0.6rem;
@@ -287,6 +287,17 @@
 /* Active while a FocusViewContainer is in focus view, e.g. `focus-view:hidden` for chrome outside a `.focus-view-scope`. */
 @custom-variant focus-view (&:where(.focus-view *));
 
+/* Fixed bottom chrome steps aside: the body carries these classes while the selection action bar or the on-screen keyboard is up. */
+@custom-variant chrome-hidden (&:is(.selection-active *, .keyboard-open *));
+
+/* fork: raak's task board: the create-task button hides while the board is empty (no projects). In utilities, because the
+   button's inline-flex utility outranks a base-layer selector. */
+@layer utilities {
+  body:has([data-board-empty]) #create-task {
+    display: none;
+  }
+}
+
 /* Press feedback through a state variant (`active:press`, `group-active/name:press`). `transform` stacks on the
    `translate` of translate utilities, so a centered `-translate-y-1/2` stays centered; an inline transform wins. */
 @utility press {
@@ -357,7 +368,7 @@
   z-index: 111;
 }
 
-/* Keep mobile prose near 16px despite the 18px root. Unlayered rules outrank typography utilities. */
+/* Mobile prose stays at text-md (about 17px), a step below the 19px root. Unlayered rules outrank typography utilities. */
 .prose {
   @apply max-sm:text-md;
 }
@@ -547,10 +558,18 @@
     --bottom-inset: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Small screens enlarge everything through the rem root: 112.5% is 18px at the default size and follows the user's setting. */
+  /* Small screens enlarge everything through the rem root: 118.75% is 19px at the default size and follows the user's setting. */
   /* fork: no overflow-x-clip on html and body (cella #1139) until the board is checked against it on phones. */
   html {
-    @apply font-sans overscroll-none max-sm:text-[112.5%];
+    @apply font-sans overscroll-none max-sm:text-[118.75%];
+
+    /* Native scrollbars and form controls follow the theme. A macOS overlay scrollbar takes its thumb color from the
+       scroller's color-scheme, so a transparent scroller such as the PDF viewer needs it to show a light thumb in dark mode. */
+    color-scheme: light;
+
+    &.dark {
+      color-scheme: dark;
+    }
   }
 
   /* Lucide icons default to 1rem, which scales with the mobile root font size; its px `size` prop never applies.
@@ -585,11 +604,6 @@
   .tsqd-open-btn-container,
   .TanStackRouterDevtools > button {
     display: none !important;
-  }
-
-  /* Serves an app's task board (raak): hide the create-task button when the board is empty (no projects). */
-  body:has([data-board-empty]) #create-task {
-    display: none;
   }
 }
 

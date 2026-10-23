@@ -20,8 +20,7 @@ const countLabelUsage = (results: { data?: { items: Pick<Task, 'labels' | 'statu
 };
 
 /**
- * Label usage counted over the projects' synced board task lists, so it follows every task change without a refetch.
- * Reads the cache only: the board route loads these lists, and a project it has not loaded counts as unused.
+ * Label usage over the projects' cached board task lists (cache only: a project the board has not loaded counts as unused).
  * Accepted tasks are left out: the lists hold only those within `boardAcceptedCutOff`, so counting them would drift with time.
  */
 export const useLabelUsage = (projectIds: string[]): LabelUsage => {

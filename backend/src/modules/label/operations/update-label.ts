@@ -3,6 +3,7 @@ import { labelName } from 'shared/config/labels-config';
 import type { OrgContext } from '#/core/context';
 import { AppError } from '#/core/error';
 import { tenantContext } from '#/db/tenant-context';
+import { updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { dispatchMutation } from '#/lib/mutation-bus';
 import { type LabelModel, labelsTable } from '#/modules/label/label-db';
@@ -12,7 +13,6 @@ import { withSetupConfigDefaults } from '#/modules/organization/helpers/select';
 import { getValidChannel } from '#/permissions';
 import { getValidProduct } from '#/permissions/get-valid-product';
 import { extractKeywordsFromBlocks } from '#/utils/extract-keywords';
-import { getIsoDate } from '#/utils/iso-date';
 
 type UpdateLabelInput = z.infer<typeof labelUpdateStxBodySchema>;
 
@@ -65,8 +65,7 @@ export async function updateLabelOp(
 
     const values: UpdateLabelValues = {
       ...(resolved.changed ? resolved.values : {}),
-      updatedAt: getIsoDate(),
-      updatedBy: ctx.var.actor.id,
+      ...updateStamps(ctx.var.actor.id),
       // The yjs handler and CDC read the stx as the fields this write wrote: a write that changes none drops the earlier set.
       stx: resolved.changed ? resolved.stx : stripChangedFields(labelsTable.stx),
     };

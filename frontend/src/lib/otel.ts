@@ -6,7 +6,10 @@ import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { appConfig } from 'shared';
 import { createSpanStore, createSpanStoreProcessor } from 'shared/tracing';
-import { mapleEnabled } from './maple-enabled';
+import { mapleEnabled } from '~/lib/maple-enabled';
+
+// `@opentelemetry/instrumentation` and `-fetch` are pinned to the line @maple-dev/browser depends on (package.json),
+// so the boot bundle carries one copy of each, shared with Maple's.
 
 /** Devtools ring of completed frontend tracing spans. Only fed when Maple tracing is disabled. */
 export const spanStore = createSpanStore({ maxSpans: 500 });

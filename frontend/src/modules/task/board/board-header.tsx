@@ -21,10 +21,6 @@ import { taskBarClass } from '~/modules/task/task-styles';
 import { WorkspaceActionButtons } from '~/modules/workspace/header/action-buttons';
 import { cn } from '~/utils/cn';
 
-/**
- * Header component for the task board, including search, task count and action buttons.
- * Used for both project boards and workspace boards, with conditional rendering based on context.
- */
 export function BoardHeader({
   boardId,
   projects,
@@ -40,23 +36,22 @@ export function BoardHeader({
   const queryParams = publicView || (!workspace && !projects[0]) ? undefined : deriveTasksQueryParams(workspace, projects[0]);
   const total = useTasksTotal(queryParams);
   const matchIds = useMatchingTaskIds(boardId, projects);
-  const currentItemId = useBoardFocusStore((s) => s.currentItemId);
-  const selectedTaskIds = useTaskInteractionStore((s) => s.selectedTaskIds);
-  const setSelectedTaskIds = useTaskInteractionStore((s) => s.setSelectedTaskIds);
-  const selectedLabelIds = useTaskInteractionStore((s) => s.selectedLabelIds);
-  const setSelectedLabelIds = useTaskInteractionStore((s) => s.setSelectedLabelIds);
+  const currentItemId = useBoardFocusStore((state) => state.currentItemId);
+  const selectedTaskIds = useTaskInteractionStore((state) => state.selectedTaskIds);
+  const setSelectedTaskIds = useTaskInteractionStore((state) => state.setSelectedTaskIds);
+  const selectedLabelIds = useTaskInteractionStore((state) => state.selectedLabelIds);
+  const setSelectedLabelIds = useTaskInteractionStore((state) => state.setSelectedLabelIds);
 
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  const toggleSearchFocus = () => setSearchFocused((prev) => !prev);
+  const toggleSearchFocus = () => setIsSearchFocused((prev) => !prev);
   const clearSelection = () => {
     setSelectedTaskIds([]);
     setSelectedLabelIds([]);
   };
 
   return (
-    <div data-search-focused={searchFocused} className={cn('group/boardHeader', taskBarClass)}>
-      {/* Floating bottom action bars; task and label selection are mutually exclusive */}
+    <div data-search-focused={isSearchFocused} className={cn('group/boardHeader', taskBarClass)}>
       <TaskSelectedButtons
         selectedTaskIds={selectedTaskIds}
         clearSelection={clearSelection}
@@ -79,7 +74,7 @@ export function BoardHeader({
         )}
       </BoardSearch>
 
-      {!searchQuery && !searchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
+      {!searchQuery && !isSearchFocused && <TableCount count={total} label="c:task" className="mr-3" />}
 
       {isInWorkspace && <WorkspaceActionButtons />}
       {!isInWorkspace && !publicView && projects[0] && (
@@ -91,7 +86,7 @@ export function BoardHeader({
 
       {!publicView && projects.length > 0 && <LabelsDrawerButton entity={workspace ? 'workspace' : 'project'} entityId={workspace?.id ?? boardId} />}
 
-      <DisplayOptions className="empty:hidden max-sm:hidden" />
+      <DisplayOptions className="max-sm:hidden" />
 
       <FocusView iconOnly />
     </div>

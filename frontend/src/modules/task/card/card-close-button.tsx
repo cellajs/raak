@@ -20,7 +20,7 @@ interface CardCloseButtonProps {
   animateIn?: boolean;
 }
 
-/** Collapse button of an open task card or label tile: slides and fades in from the right and back out, out as an `AnimatePresence` child. */
+/** Collapse button of an open card or tile; slides in from the right and exits as an `AnimatePresence` child. */
 export function CardCloseButton({ onClick, animateIn = true }: CardCloseButtonProps) {
   const { t } = useTranslation();
 
@@ -28,7 +28,7 @@ export function CardCloseButton({ onClick, animateIn = true }: CardCloseButtonPr
     <MotionConfig reducedMotion="user">
       <motion.span className="inline-flex" variants={slide} initial={animateIn ? 'hidden' : false} animate="shown" exit="gone">
         <TooltipButton toolTipContent={t('c:close')} side="top" sideOffset={5} hideWhenDetached>
-          <Button onClick={onClick} aria-label={t('c:collapse')} variant="ghost" size="xs" className="focus-inset h-8 w-8">
+          <Button onClick={onClick} aria-label={t('c:collapse')} variant="ghost" size="xs" className="focus-inset size-8">
             <XIcon />
           </Button>
         </TooltipButton>
@@ -37,10 +37,7 @@ export function CardCloseButton({ onClick, animateIn = true }: CardCloseButtonPr
   );
 }
 
-/**
- * The close button sliding out from where it stood, for a task card whose header unmounts with the collapse. Decorative and
- * gone once it ends; it keeps the button's hover backdrop while the pointer is still on it.
- */
+/** Decorative copy of the close button that slides out after a collapse unmounts the header; it keeps the hover backdrop. */
 export function CardCloseExit() {
   const [done, setDone] = useState(false);
   if (done) return null;
@@ -49,7 +46,7 @@ export function CardCloseExit() {
     <MotionConfig reducedMotion="user">
       <motion.span
         aria-hidden
-        className={buttonVariants({ variant: 'ghost', size: 'xs', className: 'h-8 w-8' })}
+        className={buttonVariants({ variant: 'ghost', size: 'xs', className: 'size-8' })}
         variants={slide}
         initial="shown"
         animate="gone"

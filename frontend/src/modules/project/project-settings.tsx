@@ -1,13 +1,12 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { LogOutIcon, Trash2Icon, UnlinkIcon } from 'lucide-react';
 import { useRef } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
-import type { Project, Workspace } from 'sdk';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { ConfirmText } from '~/modules/common/confirm-text';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { useTranslation } from 'react-i18next';
+import type { Project } from 'sdk';
+import type { CallbackArgs } from '~/modules/common/data-table/types';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
+import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import { MoveProjectForm } from '~/modules/project/move-project-form';
@@ -17,13 +16,15 @@ import { useProjectMembershipActions } from '~/modules/project/use-project-membe
 import { selectBoardProject } from '~/modules/task/helpers/board-navigation';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
-import { workspacesListQueryOptions } from '~/modules/workspace/query';
+import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
-import { flattenInfiniteData } from '~/query/basic/flatten';
 
-export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; project: EnrichedProject }) {
+interface ProjectSettingsProps {
+  project: EnrichedProject;
+}
+
+export function ProjectSettings({ project }: ProjectSettingsProps) {
   const { t } = useTranslation();
-  const { tenantId } = useOrganizationLayoutContext();
   const projectSlug = useSearch({ strict: false, select: (search) => search.projectSlug });
   const isInWorkspace = useIsWorkspaceRoute();
 
@@ -32,36 +33,31 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
   const canUpdate = resolveCan(project.can?.project?.update, project.createdBy);
   const canDelete = resolveCan(project.can?.project?.delete, project.createdBy);
 
-  const { data: workspacesData } = useInfiniteQuery({
-    ...workspacesListQueryOptions({ organizationId: project.organizationId }),
-    refetchOnMount: false,
-  });
-  const workspaces = flattenInfiniteData<Workspace>(workspacesData);
+  const workspaces = useOrganizationWorkspaces(project.organizationId);
   const canMoveProjects = workspaces.length > 1;
 
   const closeSettingsSheet = () => {
-    if (isSheet) useSheeter.getState().remove('update-project');
+    sheeter.getState().remove('update-project');
   };
 
   const { isLeavingProject, isRemovingProjectFromWorkspace, leaveProject, projectHasWorkspace, removeProjectFromWorkspace } =
-    useProjectMembershipActions({ isInWorkspace, project, tenantId, onSuccess: closeSettingsSheet });
+    useProjectMembershipActions({ isInWorkspace, project, onSuccess: closeSettingsSheet });
 
-  const callback = (deletedProjects: Project[]) => {
+  const handleDeleted = (args: CallbackArgs<Project[]>) => {
+    if (args.status !== 'success') return;
     closeSettingsSheet();
 
-    // If the deleted project is the currently selected one, clear the search param
-    // so the board defaults to the first remaining project
-    const deletedSlugs = new Set(deletedProjects.map(({ slug }) => slug));
-    if (projectSlug && deletedSlugs.has(projectSlug)) selectBoardProject();
+    // Clearing the param makes the board default to the first remaining project.
+    if (projectSlug === project.slug) selectBoardProject();
   };
 
   const openDeleteDialog = () => {
-    useDialoger.getState().create(<DeleteProjects dialog projects={[project]} callback={callback} />, {
+    dialoger.getState().create(<DeleteProjects dialog projects={[project]} callback={handleDeleted} />, {
       id: 'delete-project',
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
       title: t('c:delete_resource', { resource: t('c:project').toLowerCase() }),
-      description: <ConfirmText i18nKey="c:confirm.delete_resource" values={{ name: project.name, resource: t('c:project').toLowerCase() }} />,
+      description: <NamedText i18nKey="c:confirm.delete_resource" name={project.name} values={{ resource: t('c:project').toLowerCase() }} />,
     });
   };
 
@@ -73,7 +69,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
             <CardTitle level={2}>{t('c:general')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <UpdateProjectForm project={project} sheet={isSheet} />
+            <UpdateProjectForm project={project} />
           </CardContent>
         </Card>
       )}
@@ -91,10 +87,10 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
                 variant="destructive"
                 className="w-full sm:w-fit"
                 soft
-                onClick={() => removeProjectFromWorkspace()}
+                onClick={removeProjectFromWorkspace}
                 disabled={isRemovingProjectFromWorkspace}
               >
-                <UnlinkIcon className="size-4" />
+                <UnlinkIcon />
                 <span>{isRemovingProjectFromWorkspace ? t('c:loading') : t('c:remove_project_from_workspace')}</span>
               </Button>
             )}
@@ -108,8 +104,8 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
           <CardDescription>{t('c:project_membership_settings.text')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="destructive" className="w-full sm:w-auto" soft onClick={() => leaveProject()} disabled={isLeavingProject}>
-            <LogOutIcon className="size-4" />
+          <Button variant="destructive" className="w-full sm:w-auto" soft onClick={leaveProject} disabled={isLeavingProject}>
+            <LogOutIcon />
             <span>{isLeavingProject ? t('c:loading') : t('c:leave_project')}</span>
           </Button>
         </CardContent>
@@ -120,12 +116,12 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
           <CardHeader>
             <CardTitle level={2}>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</CardTitle>
             <CardDescription>
-              <Trans i18nKey="c:delete_resource_notice.text" values={{ name: project.name, resource: t('c:project').toLowerCase() }} />
+              <NamedText i18nKey="c:delete_resource_notice.text" name={project.name} values={{ resource: t('c:project').toLowerCase() }} />
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button ref={deleteButtonRef} variant="destructive" className="w-full sm:w-auto" onClick={openDeleteDialog}>
-              <Trash2Icon className="h-4 w-4" />
+              <Trash2Icon />
               <span>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</span>
             </Button>
           </CardContent>

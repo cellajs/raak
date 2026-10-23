@@ -1,5 +1,4 @@
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Workspace } from 'sdk';
 import {
   type CreateWorkspacesData,
   createWorkspaces,
@@ -10,9 +9,11 @@ import {
   getWorkspaces,
   type UpdateWorkspaceData,
   updateWorkspace,
+  type Workspace,
 } from 'sdk';
 import { appConfig } from 'shared';
 import { ApiError } from '~/lib/api';
+import { useInfiniteRows } from '~/modules/common/data-table/use-infinite-rows';
 import { addMyMembershipCache, getApiIncludedMembership } from '~/modules/memberships/query-mutations';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesOnceUnobserved } from '~/query/basic/cache-mutations';
 import { createEntityKeys } from '~/query/basic/create-query-keys';
@@ -24,25 +25,22 @@ import { invalidateIfLastMutation } from '~/query/basic/invalidation-helpers';
 import { preserveIncluded } from '~/query/basic/preserve-included';
 import type { MutationData } from '~/query/types';
 
-type WorkspaceFilters = Omit<GetWorkspacesData['query'], 'limit' | 'offset'>;
+type WorkspaceFilters = Omit<NonNullable<GetWorkspacesData['query']>, 'limit' | 'offset'>;
 
 const keys = createEntityKeys<WorkspaceFilters>('workspace');
 
-// Register query keys for dynamic lookup in stream handlers
 registerEntityQueryKeys('workspace', keys);
 
-/** Defines React Query cache keys for workspace. */
 export const workspaceQueryKeys = keys;
 
 const findWorkspaceInCache = createCacheFinder<Workspace>('workspace');
 
-/** Find a workspace in cache by id or slug. Slug matches are scoped to the given tenant. */
 export const findWorkspaceByIdOrSlug = (idOrSlug: string, tenantId: string): Workspace | undefined =>
-  findWorkspaceInCache((ws) => ws.id === idOrSlug || (ws.slug === idOrSlug && ws.tenantId === tenantId));
+  findWorkspaceInCache((workspace) => workspace.id === idOrSlug || (workspace.slug === idOrSlug && workspace.tenantId === tenantId));
 
-type WorkspacesListParams = Omit<NonNullable<GetWorkspacesData['query']>, 'limit' | 'offset'> & { limit?: number };
+type WorkspacesListParams = WorkspaceFilters & { limit?: number };
 
-/** Paginated workspaces infinite query. `include` is deliberately not part of the cache key. */
+/** `include` is left out of the cache key. */
 export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) => {
   const {
     q = '',
@@ -63,6 +61,10 @@ export const workspacesListQueryOptions = (params: WorkspacesListParams = {}) =>
   });
 };
 
+/** The organization's workspaces from the list cache, which the menu fills. */
+export const useOrganizationWorkspaces = (organizationId: string) =>
+  useInfiniteRows({ ...workspacesListQueryOptions({ organizationId }), refetchOnMount: false }).rows ?? [];
+
 export const workspaceQueryOptions = (id: string, organizationId: string, tenantId: string) =>
   queryOptions({
     queryKey: keys.detail.byId(id),
@@ -80,7 +82,7 @@ export const useWorkspaceCreateMutation = () => {
     mutationFn: async ({ path, body }) => {
       const result = await createWorkspaces({ path, body });
       if (!result.data.length) throw new ApiError({ status: 422, type: 'create_resource', entityType: 'workspace', severity: 'error' });
-      return result.data[0] as Workspace;
+      return result.data[0];
     },
     onSuccess: (createdWorkspace) => {
       const membership = getApiIncludedMembership(createdWorkspace);
@@ -93,7 +95,7 @@ export const useWorkspaceCreateMutation = () => {
   });
 };
 
-export const useUpdateWorkspaceMutation = () => {
+export const useWorkspaceUpdateMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
@@ -103,7 +105,7 @@ export const useUpdateWorkspaceMutation = () => {
     onSuccess: (updatedWorkspace) => {
       cacheUpdate(listKey, [updatedWorkspace]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
-      // Directly update detail cache so beforeLoad doesn't use stale slug for URL rewrite
+      // Seeds the detail cache so the URL rewrite after a slug change sees the new slug.
       queryClient.setQueryData(keys.detail.byId(updatedWorkspace.id), updatedWorkspace);
     },
     onSettled: () => {

@@ -1,22 +1,18 @@
 import { type RefObject, useEffect, useState } from 'react';
 
-const SCROLL_THRESHOLD = 10; // Minimum accumulated scroll delta counted as a direction signal
-const CONFIRM_SIGNALS = 2; // Same-direction scroll events required before a flip
-const EDGE_EPSILON = 4; // Distance from a scroll edge where a header sits at its natural position
+const scrollThreshold = 10; // Minimum accumulated scroll delta counted as a direction signal
+const confirmSignals = 2; // Same-direction scroll events before a flip, so a virtualizer correction does not read as a gesture
+const edgeEpsilon = 4; // Distance from a scroll edge where a header sits at its natural position
 
 interface UseSectionEdgeVisibilityOptions {
-  /** Which scroll edge the header pins to: accepted pins top, iced pins bottom */
+  /** Accepted pins to the top, iced to the bottom. */
   edge: 'top' | 'bottom';
-  /** Ref to the scrollable viewport (desktop ScrollArea viewport) */
   scrollRef: RefObject<HTMLElement | null>;
-  /** Uses window scrolling when true and the viewport element when false. */
+  /** Scrolls the window when true, else the `scrollRef` viewport. */
   windowMode: boolean;
 }
 
-/**
- * Shows a sticky status header while scrolling toward its edge and hides it while leaving.
- * Two same-direction events prevent virtualizer corrections from resembling gestures.
- */
+/** Shows a sticky status header while scrolling toward its edge and hides it while leaving. */
 export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSectionEdgeVisibilityOptions) {
   const [visible, setVisible] = useState(edge === 'top');
 
@@ -29,7 +25,7 @@ export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSec
         ? { y: viewport.scrollTop, max: viewport.scrollHeight - viewport.clientHeight }
         : { y: window.scrollY, max: document.documentElement.scrollHeight - window.innerHeight };
 
-    const atEdge = (y: number, max: number) => (edge === 'top' ? y <= EDGE_EPSILON : y >= max - EDGE_EPSILON);
+    const atEdge = (y: number, max: number) => (edge === 'top' ? y <= edgeEpsilon : y >= max - edgeEpsilon);
 
     const initial = metrics();
     setVisible(atEdge(initial.y, initial.max));
@@ -47,23 +43,22 @@ export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSec
 
       const delta = y - lastY;
       // Sub-threshold moves keep the stale baseline so small deltas accumulate
-      if (Math.abs(delta) <= SCROLL_THRESHOLD) return;
+      if (Math.abs(delta) <= scrollThreshold) return;
       lastY = y;
 
       const newDir = delta < 0 ? -1 : 1;
       dirSignals = newDir === dir ? dirSignals + events : events;
       dir = newDir;
-      if (dirSignals < CONFIRM_SIGNALS) return;
+      if (dirSignals < confirmSignals) return;
 
       const towardsEdge = edge === 'top' ? dir === -1 : dir === 1;
       if (towardsEdge) setVisible(true);
       else setVisible(atEdge(y, max));
     };
 
-    // Coalesce scroll bursts into one check per animation frame, counting the
-    // events behind each check so a coalesced gesture still confirms a flip
+    // One check per frame; counting the events behind it lets a coalesced gesture still confirm a flip
     let raf = 0;
-    const onScroll = () => {
+    const handleScroll = () => {
       pendingEvents++;
       if (raf) return;
       raf = requestAnimationFrame(() => {
@@ -72,9 +67,9 @@ export function useSectionEdgeVisibility({ edge, scrollRef, windowMode }: UseSec
       });
     };
 
-    target.addEventListener('scroll', onScroll, { passive: true });
+    target.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
-      target.removeEventListener('scroll', onScroll);
+      target.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(raf);
     };
   }, [edge, scrollRef, windowMode]);

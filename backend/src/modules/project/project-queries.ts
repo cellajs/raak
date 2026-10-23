@@ -9,7 +9,6 @@ import { getChannelCountsSelect } from '#/modules/entities/entities-queries';
 import { membershipBaseSelect } from '#/modules/memberships/helpers/select';
 import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { projectsTable } from '#/modules/project/project-db';
-import { auditUserSelect, createdByUser, updatedByUser } from '#/modules/user/helpers/audit-user';
 import { buildChannelListReadWhere, type ChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 import { getOrderColumns } from '#/utils/order-column';
 import { textSearchFilter } from '#/utils/sql';
@@ -242,10 +241,9 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
 
   const countData = includeCounts ? getChannelCountsSelect(entityType) : null;
 
-  const { createdBy: _cb, updatedBy: _mb, ...projectCols } = getColumns(projectsTable);
+  // Writer ids stay ids here; the operation resolves them to references for the page (`withActorRefs`).
   const selectShape = {
-    ...projectCols,
-    ...auditUserSelect,
+    ...getColumns(projectsTable),
     membership: membershipBaseSelect,
     ...(countData && { counts: countData.countsSelect }),
   } as const;
@@ -261,8 +259,6 @@ export const findProjectsPaginated = async (ctx: DbContext, opts: FindProjectsPa
   }
 
   const itemsQuery = query
-    .leftJoin(createdByUser, eq(createdByUser.id, projectsTable.createdBy))
-    .leftJoin(updatedByUser, eq(updatedByUser.id, projectsTable.updatedBy))
     .where(and(...projectWhere))
     .orderBy(...orderBy)
     .limit(limit)

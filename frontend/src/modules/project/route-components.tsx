@@ -17,9 +17,9 @@ const orgProjectsApi = getRouteApi('/_app/$tenantId/$organizationSlug/organizati
 
 export function ProjectRouteComponent() {
   // Ids and the view only: opening a task sheet or searching writes the URL, and the board must not re-render for it.
-  const projectId = projectApi.useRouteContext({ select: (c) => c.project.id });
-  const organizationId = projectApi.useRouteContext({ select: (c) => c.organization.id });
-  const tenantId = projectApi.useRouteContext({ select: (c) => c.tenantId });
+  const projectId = projectApi.useRouteContext({ select: (context) => context.project.id });
+  const organizationId = projectApi.useRouteContext({ select: (context) => context.organization.id });
+  const tenantId = projectApi.useRouteContext({ select: (context) => context.tenantId });
   const view = projectApi.useSearch({ select: (search) => search.view });
   const { data: project } = useSuspenseQuery(projectQueryOptions(projectId, organizationId, tenantId));
   const { data: organization } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
@@ -27,13 +27,13 @@ export function ProjectRouteComponent() {
 
   return (
     <Suspense fallback={<Spinner size="lg" className="mt-[45vh]" />}>
-      <ProjectPage key={project.slug} projectId={project.id} organizationId={project.organizationId} organization={organization} tenantId={tenantId}>
+      <ProjectPage key={project.slug} project={project} organization={organization}>
         {view === 'table' ? (
           <Suspense>
             <TasksTable projects={projects} organization={organization} tenantId={tenantId} />
           </Suspense>
         ) : (
-          <Suspense fallback={<BoardSkeleton boardId={project.id} projects={projects} projectPage={true} />}>
+          <Suspense fallback={<BoardSkeleton boardId={project.id} projects={projects} projectPage />}>
             <Board boardId={project.id} projects={projects} />
           </Suspense>
         )}
@@ -43,8 +43,8 @@ export function ProjectRouteComponent() {
 }
 
 export function OrganizationProjectsComponent() {
-  const organizationId = orgProjectsApi.useRouteContext({ select: (c) => c.organization.id });
-  const tenantId = orgProjectsApi.useRouteContext({ select: (c) => c.tenantId });
+  const organizationId = orgProjectsApi.useRouteContext({ select: (context) => context.organization.id });
+  const tenantId = orgProjectsApi.useRouteContext({ select: (context) => context.tenantId });
   const { data } = useSuspenseQuery(organizationQueryOptions(organizationId, tenantId));
   return (
     <Suspense>

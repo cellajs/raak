@@ -16,15 +16,14 @@ import {
   validTempIdSchema,
 } from '#/schemas';
 import { channelIncludedSchema } from '#/schemas/channel-included';
-import { nullableUserMinimalBaseSchema } from '#/schemas/minimal-base';
+import { auditShape } from '#/schemas/entity-base';
 
 const workspaceIncludedSchema = channelIncludedSchema('workspace');
 
 export const workspaceSchema = z
   .object({
     ...createSelectSchema(workspacesTable).shape,
-    createdBy: nullableUserMinimalBaseSchema,
-    updatedBy: nullableUserMinimalBaseSchema,
+    ...auditShape,
     createdAt: z.string(),
     updatedAt: z.string().nullable(),
     included: workspaceIncludedSchema,

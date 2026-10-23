@@ -1,12 +1,11 @@
 import { type CSSProperties, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
-import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
-import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-scaffold';
+import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { ComboboxHotkeyHint, comboboxRowClass, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-parts';
 import type { SelectStatusProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { statusOptions, statusOptionsByValue } from '~/modules/task/task-properties';
-import { statusFillColors } from '~/modules/task/task-styles';
 import type { TaskStatusType } from '~/modules/task/types';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxItemIndicator, ComboboxList } from '~/modules/ui/combobox';
 import { isTouchInteraction } from '~/utils/input-modality';
@@ -16,20 +15,17 @@ type StatusOption = (typeof statusOptions)[number];
 export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWidth = 240 }: SelectStatusProps) {
   const { t } = useTranslation();
 
-  // Live cache subscription reflects remote SSE status changes while open.
   const { data: liveTask } = useTaskQuery(taskId);
   const liveStatus = liveTask?.status ?? currentStatus;
 
-  // Derived during render, without a useState/useEffect copy of liveStatus.
   const selectedStatus = liveStatus === undefined ? null : statusOptionsByValue[liveStatus];
 
   const [searchValue, setSearchValue] = useState('');
 
   const commit = (status: TaskStatusType) => {
-    if (!statusOptions.some((s) => s.value === status)) return;
     if (liveStatus !== status) onChange(status);
     setSearchValue('');
-    useDropdowner.getState().remove();
+    dropdowner.getState().remove();
   };
 
   return (
@@ -45,8 +41,7 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
       }}
       inputValue={searchValue}
       onInputValueChange={(value) => {
-        // Digit hotkey: 1-7 selects status by index
-        const status = matchDigitHotkey(statusOptions, value, { max: 7 });
+        const status = matchDigitHotkey(statusOptions, value);
         if (status) {
           commit(status.value);
           return;
@@ -64,12 +59,12 @@ export function SelectStatus({ value: currentStatus, onChange, taskId, triggerWi
           showClear={false}
         />
         <ComboboxHotkeyHint searching={!!searchValue.length}>S</ComboboxHotkeyHint>
-        <ComboboxList className="p-1">
+        <ComboboxList>
           {(status: StatusOption) => {
-            const index = statusOptions.findIndex((s) => s.value === status.value);
+            const index = statusOptions.findIndex((option) => option.value === status.value);
             return (
-              <ComboboxItem key={status.value} value={status} className="group flex h-9 w-full items-center gap-2 rounded-md pr-2 leading-normal">
-                <status.icon className={`size-4 fill-current group-hover:opacity-100 ${statusFillColors[status.value]}`} />
+              <ComboboxItem key={status.value} value={status} className={comboboxRowClass}>
+                <status.icon />
                 <div className="grow">{t(`c:${status.status}`)}</div>
                 <ComboboxItemIndicator className="text-success" />
                 <HotkeyIndexBadge index={searchValue ? undefined : index} />

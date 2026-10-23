@@ -1,8 +1,8 @@
 import { GripVerticalIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization } from 'sdk';
-import { labelSlug, type PrimaryLabelDefinition, primaryLabelLimits } from 'shared/config/labels-config';
+import { labelColorTokens, labelSlug, type PrimaryLabelDefinition, primaryLabelLimits } from 'shared/config/labels-config';
 import type { RowsChangeData } from '~/modules/common/data-grid';
 import { EditCellInput } from '~/modules/common/data-grid/cell-renderers';
 import { DataTable } from '~/modules/common/data-table/data-table';
@@ -15,10 +15,13 @@ import { useOrganizationUpdateMutation } from '~/modules/organization/query';
 import { Button } from '~/modules/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '~/modules/ui/popover';
 import { cn } from '~/utils/cn';
+import { lazyNamed } from '~/utils/lazy-named';
+import { tw } from '~/utils/tw';
 
-const IconPicker = lazy(() => import('~/modules/common/icon-picker/icon-picker').then((m) => ({ default: m.IconPicker })));
+const centeredCellClass = tw('flex items-center justify-center');
 
-/** Stable row key getter, defined outside the component to keep its identity stable. */
+const IconPicker = lazyNamed(() => import('~/modules/common/icon-picker/icon-picker'), 'IconPicker');
+
 function rowKeyGetter(row: PrimaryLabelDefinition) {
   return row.slug;
 }
@@ -65,7 +68,7 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2" onMouseDown={(event) => event.stopPropagation()}>
         <div className="grid grid-cols-7 gap-1">
-          {Object.entries(labelPalette).map(([token, palette]) => (
+          {labelColorTokens.map((token) => (
             <button
               key={token}
               type="button"
@@ -73,11 +76,11 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
               aria-label={token}
               onClick={() => {
                 setOpen(false);
-                onRowChange({ ...row, color: token as PrimaryLabelDefinition['color'] });
+                onRowChange({ ...row, color: token });
               }}
               className={cn('flex items-center justify-center rounded-md p-1.5 hover:bg-accent', row.color === token && 'bg-accent ring-1 ring-ring')}
             >
-              <span className={cn('size-4 rounded-full', palette.dot)} />
+              <span className={cn('size-4 rounded-full', labelPalette[token].dot)} />
             </button>
           ))}
         </div>
@@ -86,17 +89,15 @@ function ColorCell({ row, onRowChange }: PickerCellProps) {
   );
 }
 
-interface Props {
+interface PrimaryLabelsCardProps {
   organization: Organization;
 }
 
 /**
- * Admin card managing the organization's primary label set (setupConfig.primaryLabels): the task
- * types provisioned into every new project, in a data grid with drag reorder and in-place cell
- * editing. Every interaction persists immediately. Slugs are derived from the name on add and stay
- * stable afterwards, since they are the identity that organization tracking matches on.
+ * Admin card for the organization's primary labels (setupConfig.primaryLabels), the task types provisioned into every
+ * new project. Slugs derive from the name on add and then stay fixed: organization tracking matches on them.
  */
-export function PrimaryLabelsCard({ organization }: Props) {
+export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
   const { t } = useTranslation();
   const { mutate, isPending } = useOrganizationUpdateMutation();
 
@@ -108,7 +109,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       body: { setupConfig: { primaryLabels } },
     });
 
-  const onRowsChange = (changed: PrimaryLabelDefinition[], { indexes, column }: RowsChangeData<PrimaryLabelDefinition>) => {
+  const handleRowsChange = (changed: PrimaryLabelDefinition[], { indexes, column }: RowsChangeData<PrimaryLabelDefinition>) => {
     const index = indexes[0];
     if (column.key === 'name') {
       const name = changed[index].name.trim();
@@ -120,7 +121,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
     if (column.key === 'icon' || column.key === 'color') persist(changed);
   };
 
-  const onRowReorder = (fromIdx: number, toIdx: number, edge: 'top' | 'bottom') => {
+  const handleRowReorder = (fromIdx: number, toIdx: number, edge: 'top' | 'bottom') => {
     const next = [...rows];
     const [moved] = next.splice(fromIdx, 1);
     let insertAt = edge === 'bottom' ? toIdx + 1 : toIdx;
@@ -132,7 +133,6 @@ export function PrimaryLabelsCard({ organization }: Props) {
   const addEntry = () => {
     const name = t('c:label');
     const slugBase = labelSlug(name) || 'label';
-    // Slugs are identity: suffix until unique within the set
     let slug = slugBase;
     for (let i = 2; rows.some((row) => row.slug === slug); i++) slug = `${slugBase}-${i}`;
     persist([...rows, { slug, name, color: 'blue', icon: null }]);
@@ -144,7 +144,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       name: '',
       width: 32,
       maxWidth: 32,
-      cellClass: 'cursor-grab flex items-center justify-center',
+      cellClass: cn(centeredCellClass, 'cursor-grab'),
       rowDragHandle: true,
       renderCell: () => <GripVerticalIcon className="size-3.5 text-muted-foreground/50" />,
     },
@@ -152,7 +152,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       key: 'icon',
       name: t('c:icon'),
       width: 56,
-      cellClass: 'flex items-center justify-center',
+      cellClass: centeredCellClass,
       headerCellClass: 'text-center',
       renderCell: ({ row, onRowChange }) => <IconCell row={row} onRowChange={onRowChange} />,
     },
@@ -160,7 +160,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       key: 'color',
       name: t('c:color'),
       width: 56,
-      cellClass: 'flex items-center justify-center',
+      cellClass: centeredCellClass,
       headerCellClass: 'text-center',
       renderCell: ({ row, onRowChange }) => <ColorCell row={row} onRowChange={onRowChange} />,
     },
@@ -170,7 +170,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       minWidth: 140,
       renderCell: ({ row }) => <span className="truncate">{row.name}</span>,
       renderEditCell: ({ row, onRowChange }) => (
-        <EditCellInput value={row.name} onChange={(e) => onRowChange({ ...row, name: e.target.value })} autoFocus />
+        <EditCellInput value={row.name} onChange={(event) => onRowChange({ ...row, name: event.target.value })} autoFocus />
       ),
     },
     {
@@ -178,7 +178,7 @@ export function PrimaryLabelsCard({ organization }: Props) {
       name: '',
       width: 32,
       maxWidth: 32,
-      cellClass: 'flex items-center justify-center',
+      cellClass: centeredCellClass,
       renderCell: ({ row }) => (
         <Button
           variant="ghost"
@@ -210,8 +210,8 @@ export function PrimaryLabelsCard({ organization }: Props) {
         cellSelectionMode="cell"
         enableVirtualization={false}
         className="mb-0"
-        onRowsChange={onRowsChange}
-        onRowReorder={onRowReorder}
+        onRowsChange={handleRowsChange}
+        onRowReorder={handleRowReorder}
         onCellClick={({ column, selectCell }) => {
           if (column.key === 'name') selectCell(true);
         }}

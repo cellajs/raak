@@ -1,5 +1,4 @@
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Project } from 'sdk';
 import {
   type AssignProjectWorkspaceData,
   type AssignProjectWorkspaceResponse,
@@ -15,6 +14,10 @@ import {
   type MoveProjectToWorkspaceData,
   type MoveProjectToWorkspaceResponse,
   moveProjectToWorkspace,
+  type Project,
+  type RemoveProjectWorkspaceData,
+  type RemoveProjectWorkspaceResponse,
+  removeProjectWorkspace,
   type UpdateProjectData,
   type UpdateProjectResponse,
   updateProject,
@@ -36,38 +39,25 @@ import { getSimilarQueries } from '~/query/basic/mutate-query';
 import { preserveIncluded } from '~/query/basic/preserve-included';
 import type { MutationData } from '~/query/types';
 
-type ProjectFilters = Omit<GetProjectsData['query'], 'limit' | 'offset'>;
+type ProjectFilters = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'>;
 
 const keys = createEntityKeys<ProjectFilters>('project');
 
-// Register query keys for dynamic lookup in stream handlers
 registerEntityQueryKeys('project', keys);
 
-/** Defines React Query cache keys for project. */
 export const projectQueryKeys = {
   ...keys,
   detail: { ...keys.detail, public: (id: string) => ['project', 'detail', 'public', id] as const },
 };
 
-const findProjectInCache = createCacheFinder<Project>('project');
+const findProjectInCache = createCacheFinder<EnrichedProject>('project');
 
-/**
- * Find a project in cache by id or slug. Slug matches are scoped to the given tenant.
- * Returns `EnrichedProject` because cache entries are populated by the enrichment pipeline.
- */
 export const findProjectByIdOrSlug = (idOrSlug: string, tenantId: string): EnrichedProject | undefined =>
-  findProjectInCache((p) => p.id === idOrSlug || (p.slug === idOrSlug && p.tenantId === tenantId)) as EnrichedProject | undefined;
+  findProjectInCache((project) => project.id === idOrSlug || (project.slug === idOrSlug && project.tenantId === tenantId));
 
-/** Reads the cached project's `publicAt` so a new task/attachment inherits its project's publicity at create time. */
-export const getProjectPublicAt = (projectId: string, tenantId: string): string | null =>
-  findProjectByIdOrSlug(projectId, tenantId)?.publicAt ?? null;
+type ProjectsListParams = ProjectFilters & { limit?: number };
 
-type ProjectsListParams = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'> & { limit?: number };
-
-/**
- * Paginated projects infinite query. `include` is deliberately not part of the cache key because
- * queries with/without counts share one cache for offline behavior; the most recent fetch wins.
- */
+/** `include` is left out of the cache key: queries with and without counts share one cache for offline behavior, and the latest fetch wins. */
 export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
   const {
     q = '',
@@ -83,14 +73,13 @@ export const projectsListQueryOptions = (params: ProjectsListParams = {}) => {
     limit = appConfig.requestLimits.projects,
   } = params;
 
-  // Exclude `include` from cache key so queries with/without counts share the same cache
   const filters = { q, sort, order, organizationId, workspaceId, relatableUserId, role, excludeArchived, scope };
 
   return infiniteQueryOptions({
     queryKey: keys.list.filtered(filters),
     ...offsetPaging(limit, async (offset, signal) => {
       const result = await getProjects({ query: { ...filters, include, ...pageQuery(limit, offset) }, signal });
-      // Cache entries are populated by the enrichment pipeline (membership/can/ancestorSlugs).
+      // The enrichment pipeline adds membership, can and ancestorSlugs to cached entries.
       return result as { items: EnrichedProject[]; total: number };
     }),
     refetchOnMount: refetchOnMountForIncluded(include),
@@ -121,7 +110,7 @@ export const useProjectCreateMutation = () => {
     mutationFn: async ({ path, body, query }) => {
       const result = await createProjects({ path, body, query });
       if (!result.data.length) throw new ApiError({ status: 422, type: 'create_resource', entityType: 'project', severity: 'error' });
-      return result.data[0] as Project;
+      return result.data[0];
     },
     onSuccess: (createdProject) => {
       const membership = getApiIncludedMembership(createdProject);
@@ -144,7 +133,7 @@ export const useProjectUpdateMutation = () => {
     onSuccess: (updatedProject) => {
       cacheUpdate(listKey, [updatedProject]);
       queryClient.invalidateQueries({ queryKey: keys.detail.base });
-      // Directly update detail cache so beforeLoad doesn't use stale slug for URL rewrite
+      // Written directly so beforeLoad rewrites the URL to the new slug, not the cached old one.
       queryClient.setQueryData(keys.detail.byId(updatedProject.id), updatedProject);
     },
     onSettled: () => {
@@ -179,8 +168,7 @@ export const useProjectDeleteMutation = () => {
 
 const assignKey = [...keys.update, 'assign'] as const;
 
-/** Provides the React Query mutation for assign project. */
-export const useAssignProjectMutation = () => {
+export const useProjectAssignMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
 
@@ -213,7 +201,6 @@ export const useAssignProjectMutation = () => {
   });
 };
 
-/** Provides the React Query mutation for project move. */
 export const useProjectMoveMutation = () => {
   const queryClient = useQueryClient();
   const listKey = keys.list.base;
@@ -237,6 +224,19 @@ export const useProjectMoveMutation = () => {
     },
     onSettled: () => {
       invalidateIfLastMutation(queryClient, keys.all, listKey);
+    },
+  });
+};
+
+export const useProjectRemoveWorkspaceMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<RemoveProjectWorkspaceResponse, ApiError, MutationData<RemoveProjectWorkspaceData>>({
+    mutationFn: ({ path }) => removeProjectWorkspace({ path }),
+    onSuccess: (updatedProject) => {
+      const membership = getApiIncludedMembership(updatedProject);
+      if (membership) upsertMyMembershipCache(membership);
+      queryClient.invalidateQueries({ queryKey: keys.list.base, refetchType: 'active' });
     },
   });
 };

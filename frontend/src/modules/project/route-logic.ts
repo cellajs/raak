@@ -11,13 +11,9 @@ type ProjectRouteBeforeLoadArgs = {
   context: { organization: { id: string } };
 };
 
-/**
- * beforeLoad logic for the project route.
- * Resolves the project by slug or ID, seeds caches, and rewrites the URL to use the slug.
- */
+/** beforeLoad of the project route: resolves the project by slug or ID, seeds caches and rewrites the URL to the slug. */
 export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBeforeLoadArgs) => {
-  // Reset on entering another project (onLeave does not fire when only params change); keyed so
-  // search-param-only navigations within the same project keep the selection.
+  // onLeave does not fire when only params change, so the reset is keyed by project; search-param-only navigations keep the selection.
   resetTaskInteraction(`project:${params.tenantId}:${params.slug}`);
 
   const { slug, tenantId } = params;
@@ -34,10 +30,8 @@ export const projectRouteBeforeLoad = async ({ params, context }: ProjectRouteBe
     buildSlugOverrides: (entity) => ({ slug: entity.slug }),
   });
 
-  // Warm the canonical task and label lists together so the board and its always-present labels
-  // panel don't waterfall on mount (labels otherwise render a beat after tasks). Fire-and-forget.
-  // Await cache restore first so an already-synced list is visible and these prefetches no-op;
-  // without it a reload races restore, sees an empty cache, and refetches everything.
+  // Fire-and-forget warm-up so the board and its labels panel don't waterfall on mount. Awaiting cache restore first lets
+  // an already-synced list make these prefetches no-ops; without it a reload sees an empty cache and refetches everything.
   await cacheRestored;
   queryClient.prefetchQuery(tasksCanonicalOptions({ organizationId, tenantId, projectId: projectData.id }));
   queryClient.prefetchQuery(labelsCanonicalOptions({ organizationId, tenantId, projectId: projectData.id }));

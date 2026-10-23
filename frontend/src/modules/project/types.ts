@@ -5,5 +5,5 @@ import type { projectsRouteSearchParamsSchema } from '~/modules/project/search-p
 
 export type ProjectsRouteSearchParams = z.infer<typeof projectsRouteSearchParamsSchema>;
 
-/** Frontend-enriched project type with client-side cache enrichment fields. */
+/** Project with the membership, permissions and ancestor slugs the cache adds. */
 export type EnrichedProject = Project & ChannelEnrichment;

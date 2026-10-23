@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
-import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { type TogglableStatusType, useProjectPanelPrefs, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
 import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
-import { boardAcceptedCutOff } from '~/modules/task/task-properties';
+import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -29,35 +29,28 @@ interface PanelStatusSectionProps {
   suppressed?: boolean;
 }
 
-/**
- * A section header for "Accepted" or "Iced" tasks within a project panel.
- * Displays the count of tasks in that status, and allows toggling visibility.
- * The header is sticky at its edge (accepted top, iced bottom) and animates
- * in/out based on scroll direction, like the floating nav buttons. Visibility
- * state lives here so scroll flips re-render only this header, not the panel.
- */
+/** Sticky header of the Accepted or Iced section, with its count and expand toggle; it hides on scroll like the floating nav buttons. */
 export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRef, windowMode, suppressed }: PanelStatusSectionProps) {
   const { t } = useTranslation();
+  // Visibility lives here so scroll flips re-render only this header, not the panel
   const isEdgeVisible = useSectionEdgeVisibility({ edge: type === 'iced' ? 'bottom' : 'top', scrollRef, windowMode });
-  // Keyboard focus must not land on a bar slid out of view
+  // A focused bar stays visible: keyboard focus never rests on a bar slid out of view
   const [hasFocus, setHasFocus] = useState(false);
   const isVisible = isEdgeVisible || hasFocus;
 
-  const togglePanelSectionExpandState = useTaskBoardStore((state) => state.togglePanelSectionExpandState);
+  const setPanelSectionExpanded = useTaskBoardStore((state) => state.setPanelSectionExpanded);
   const boardId = useBoardStore((state) => state.activeBoardId)!;
 
   const q = useSearch({ strict: false, select: (search) => search.q });
 
   const isIced = type === 'iced';
   const hasOnlyOlderAccepted = !isIced && !counts.accepted && counts.acceptedCutOff > 0;
-  const active = isIced ? !!counts.iced : !!counts.accepted || hasOnlyOlderAccepted;
+  const isActive = isIced ? !!counts.iced : !!counts.accepted || hasOnlyOlderAccepted;
   const count = isIced ? counts.iced : counts.accepted;
   const colors = statusSectionColors[type];
 
-  const showStatus = useTaskBoardStore((state) => {
-    const { expandIced, expandAccepted } = state.panelData[boardId]?.[projectId]?.prefs || defaultPanelPrefs;
-    return isIced ? expandIced : expandAccepted;
-  });
+  const { expandIced, expandAccepted } = useProjectPanelPrefs(projectId);
+  const isExpanded = isIced ? expandIced : expandAccepted;
 
   const { highlight: isHighlightSearch, effectiveQ } = parseSearchQuery(q);
   const showTotal = !effectiveQ.length || isHighlightSearch;
@@ -67,20 +60,16 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
   useEffect(() => {
     const prev = prevCountRef.current;
     prevCountRef.current = count;
-    if (count > prev && !showStatus) {
-      triggerSectionGlow(type, projectId);
-    }
-  }, [count, showStatus, type, projectId]);
+    if (count > prev && !isExpanded) triggerSectionGlow(type, projectId);
+  }, [count, isExpanded, type, projectId]);
 
   const handleToggleClick = () => {
-    onToggle?.(!showStatus, type);
-    togglePanelSectionExpandState(boardId, projectId, type);
+    onToggle?.(!isExpanded, type);
+    setPanelSectionExpanded(boardId, projectId, type, !isExpanded);
   };
 
-  // Publish the accepted bar's pinned height as a sticky-stack offset on the panel content,
-  // so card headers (StickyBox) pin below the bar and glide with its show/hide transition.
-  // The registered variable transitions here on the host; consumers track the animating
-  // value through calc(). Set imperatively to avoid re-rendering the panel's cards.
+  // Publishes the accepted bar's pinned height as --sticky-stack-top on the panel content, so card headers (StickyBox)
+  // pin below the bar and glide with its transition. Set imperatively to avoid re-rendering the panel's cards.
   const wrapperRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -96,9 +85,9 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
       host.style.removeProperty('--sticky-stack-top');
       host.style.removeProperty('transition');
     };
-  }, [isVisible, suppressed, isIced, active]);
+  }, [isVisible, suppressed, isIced, isActive]);
 
-  if (!active) return null;
+  if (!isActive) return null;
 
   return (
     <>
@@ -125,17 +114,14 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
           variant="ghost"
           size="sm"
           className={cn(
-            'relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs ring-inset transition-all duration-300 ease-in-out focus-visible:ring-offset-0 sm:px-2',
-            // Hidden state slides the button toward its sticky edge
-            isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : ['opacity-0', isIced ? 'translate-y-full' : '-translate-y-full'],
+            'focus-inset relative flex w-full justify-start gap-1 rounded-none px-1.5 text-xs transition-[translate,opacity,color,background-color,border-color,box-shadow] duration-300 ease-in-out sm:px-2',
+            isVisible ? 'pointer-events-auto' : isIced ? 'translate-y-full opacity-0' : '-translate-y-full opacity-0',
             colors.fill,
             colors.text,
             isIced
               ? 'border-b-sky-500/10 hover:bg-sky-100 hover:text-sky-800 max-sm:border-b dark:hover:bg-sky-900 dark:hover:text-sky-300'
-              : [
-                  'border-t border-t-transparent hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
-                  colors.border,
-                ],
+              : 'border-t border-t-transparent hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-400',
+            !isIced && colors.border,
           )}
         >
           <span className="min-w-8 text-center">{count}</span>
@@ -144,9 +130,9 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
             {!isIced && (
               <>
                 <span>{t('c:since')}</span>
-                <span>{dateMini(dayjs().subtract(boardAcceptedCutOff, 'day').toISOString())}</span>
+                <span>{dateMini(dayjs().subtract(boardAcceptedCutOffDays, 'day').toISOString())}</span>
                 {counts.accepted !== counts.acceptedCutOff && showTotal && (
-                  <div className="text-xs">
+                  <div>
                     <span className="mr-2 ml-1">•</span>
                     <span>
                       {counts.accepted + counts.acceptedCutOff} {t('c:in_total')}
@@ -155,13 +141,13 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
                 )}
               </>
             )}
-            <ChevronDownIcon data-rotate={showStatus} className="absolute right-4 transition-transform data-[rotate=true]:rotate-180" />
+            <ChevronDownIcon data-rotate={isExpanded} className="absolute right-4 transition-transform data-[rotate=true]:rotate-180" />
           </span>
         </Button>
       </div>
-      {hasOnlyOlderAccepted && showStatus && (
+      {hasOnlyOlderAccepted && isExpanded && (
         <div className={cn('flex gap-4 px-4 py-5 text-xs', colors.border, colors.fill, colors.text, hintFadeOut)}>
-          <InfoIcon className="inline-block" />
+          <InfoIcon />
           {t('c:older_accepted_table_only', { count: counts.acceptedCutOff })}
         </div>
       )}

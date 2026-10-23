@@ -1,21 +1,19 @@
-import { t } from 'i18next';
+import i18n from 'i18next';
 import type { RefObject } from 'react';
 import type { Project } from 'sdk';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
-import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
+import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { MembersTable } from '~/modules/memberships/members-table/members-table';
-import { AddProjects } from '~/modules/project/add-project';
+import { AddProjects } from '~/modules/project/add-projects';
 import { ProjectSettings } from '~/modules/project/project-settings';
 import type { EnrichedProject } from '~/modules/project/types';
 import { fallbackContentRef } from '~/utils/fallback-content-ref';
 
 export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject<HTMLButtonElement | null>) => {
-  const channel = { ...project, tenantId: project.tenantId };
-
-  useSheeter.getState().create(
-    <div className="container w-full">
-      <MembersTable channel={channel} isSheet />
+  sheeter.getState().create(
+    <div className="container">
+      <MembersTable channel={project} isSheet />
     </div>,
     {
       id: 'project-members',
@@ -23,53 +21,43 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
       side: 'right',
       headerClassName: 'static',
       className: 'max-w-full lg:max-w-4xl',
-      title: t('c:project_members'),
-      description: t('c:project_members.text'),
+      title: i18n.t('c:project_members'),
+      description: i18n.t('c:project_members.text'),
     },
   );
 };
 
 export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: RefObject<HTMLButtonElement | null>) => {
-  useSheeter.getState().create(
-    <div className="container w-full">
-      <ProjectSettings project={project} sheet />
+  sheeter.getState().create(
+    <div className="container">
+      <ProjectSettings project={project} />
     </div>,
     {
       id: 'update-project',
       triggerRef: triggerRef || fallbackContentRef,
       side: 'right',
       className: 'max-w-full lg:max-w-4xl',
-      title: t('c:resource_settings', { resource: t('c:project') }),
-      titleContent: <UnsavedBadge title={t('c:resource_settings', { resource: t('c:project') })} />,
-      description: t('c:project_settings.text', { name: project.name }),
+      title: i18n.t('c:resource_settings', { resource: i18n.t('c:project') }),
+      titleContent: <UnsavedBadge title={i18n.t('c:resource_settings', { resource: i18n.t('c:project') })} />,
+      description: i18n.t('c:project_settings.text', { name: project.name }),
     },
   );
 };
 
-/** Creates a project and opens its page. */
-export const createNewProject = () => {
-  const title = t('c:add_resource', { resource: t('c:project').toLowerCase() });
-  useDialoger.getState().create(<AddProjects dialog />, {
+const openAddProjectsDialog = (mode?: 'select') => {
+  const title = i18n.t('c:add_resource', { resource: i18n.t('c:project').toLowerCase() });
+  dialoger.getState().create(<AddProjects mode={mode} />, {
     triggerRef: { current: null },
     className: 'md:max-w-4xl',
     id: 'create-project',
     title,
     titleContent: <UnsavedBadge title={title} />,
-    description: t('c:add_projects.text'),
+    description: i18n.t('c:add_projects.text'),
   });
 };
 
-/**
- * Opens the add-projects dialog directly on the "select existing projects" step.
- */
-export const selectExistingProjects = () => {
-  const title = t('c:add_resource', { resource: t('c:project').toLowerCase() });
-  useDialoger.getState().create(<AddProjects dialog mode="select" />, {
-    triggerRef: { current: null },
-    className: 'md:max-w-4xl',
-    id: 'create-project',
-    title,
-    titleContent: <UnsavedBadge title={title} />,
-    description: t('c:add_projects.text'),
-  });
-};
+/** Opens the add-projects dialog, where a project is created or an existing one selected. */
+export const createNewProject = () => openAddProjectsDialog();
+
+/** Opens the add-projects dialog directly on the "select existing projects" step. */
+export const selectExistingProjects = () => openAddProjectsDialog('select');

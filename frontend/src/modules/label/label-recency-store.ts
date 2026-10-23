@@ -10,11 +10,9 @@ interface LabelRecencyState {
   usageMap: Record<string, number>; // "orgId:labelSlug" → epoch ms
   trackUsage: (organizationId: string, slugs: string[]) => void;
   getScore: (organizationId: string, slug: string) => number;
-  clear: () => void;
-  reset: () => void; // Resets in-memory state to initial (call on sign-out)
+  reset: () => void;
 }
 
-/** Provides access to recently selected label state. */
 export const useLabelRecencyStore = create<LabelRecencyState>()(
   devtools(
     persist(
@@ -25,7 +23,6 @@ export const useLabelRecencyStore = create<LabelRecencyState>()(
             const now = Date.now();
             const updated = { ...state.usageMap };
             for (const slug of slugs) updated[`${organizationId}:${slug}`] = now;
-            // Evict oldest beyond cap
             const entries = Object.entries(updated);
             if (entries.length > maxEntries) {
               entries.sort((a, b) => b[1] - a[1]);
@@ -34,7 +31,6 @@ export const useLabelRecencyStore = create<LabelRecencyState>()(
             return { usageMap: updated };
           }),
         getScore: (organizationId, slug) => get().usageMap[`${organizationId}:${slug}`] ?? 0,
-        clear: () => set({ usageMap: {} }),
         reset: () => set({ usageMap: {} }),
       }),
       {

@@ -1,12 +1,50 @@
 [
   {
+    "name": "ActorRef",
+    "ref": "#/components/schemas/ActorRef",
+    "type": "object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "required": true },
+        "kind": {
+          "type": "string",
+          "required": true,
+          "enum": ["user", "service"]
+        },
+        "name": { "type": "string", "required": true },
+        "slug": {
+          "type": ["string", "null"],
+          "required": true
+        },
+        "thumbnailUrl": {
+          "type": ["string", "null"],
+          "required": true
+        }
+      }
+    },
+    "schemaTag": "base",
+    "tagsByKind": {
+      "schema": ["base"],
+      "module": ["actors"],
+      "owner": ["cella"]
+    },
+    "description": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone.",
+    "example": {
+      "id": "91d9225c-2c64-4773-9f1f-8a6a6004192d",
+      "kind": "user",
+      "name": "Jermey Lowe",
+      "slug": "jermey.lowe27",
+      "thumbnailUrl": null
+    }
+  },
+  {
     "name": "Attachment",
     "ref": "#/components/schemas/Attachment",
     "type": "object",
     "schema": {
       "type": "object",
       "properties": {
-        "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "entityType": {
           "type": "string",
@@ -15,9 +53,22 @@
         },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
         "name": { "type": "string", "required": true, "maxLength": 255 },
+        "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "stx": {
           "type": "object",
@@ -56,31 +107,17 @@
           "maxLength": 1000000
         },
         "keywords": { "type": "string", "required": true, "maxLength": 1000000 },
-        "createdBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
-        "updatedBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
         "deletedAt": {
           "type": ["string", "null"],
           "required": true
         },
         "deletedBy": {
-          "type": ["string", "null"],
+          "type": ["object", "null"],
           "required": true,
-          "format": "uuid"
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
-        "publicAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
+        "public": { "type": "boolean", "required": true },
         "seq": {
           "type": "integer",
           "required": true,
@@ -151,21 +188,21 @@
       "keywords": "perferendis aiunt animadverto",
       "createdBy": {
         "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+        "kind": "user",
         "name": "Francesco Littel",
         "slug": "francesco_littel16",
-        "thumbnailUrl": null,
-        "entityType": "user"
+        "thumbnailUrl": null
       },
       "updatedBy": {
         "id": "5bad021e-befc-468f-bf35-e959b96d6abd",
+        "kind": "user",
         "name": "Francesco Littel",
         "slug": "francesco_littel16",
-        "thumbnailUrl": null,
-        "entityType": "user"
+        "thumbnailUrl": null
       },
       "deletedAt": null,
       "deletedBy": null,
-      "publicAt": null,
+      "public": false,
       "seq": 354,
       "publicBucket": false,
       "bucketName": "attachments",
@@ -291,15 +328,22 @@
             }
           }
         },
-        "createdBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
         "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         }
       }
     },
@@ -322,9 +366,16 @@
       "config": {
         "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
       },
-      "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-      "createdAt": "2024-08-25T16:44:28.368Z",
-      "updatedAt": "2024-10-28T09:20:16.614Z"
+      "createdBy": {
+        "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+        "kind": "user",
+        "name": "Celestino Cummings",
+        "slug": "celestino.cummings",
+        "thumbnailUrl": null
+      },
+      "updatedBy": null,
+      "createdAt": "2024-12-15T01:10:59.658Z",
+      "updatedAt": "2024-12-23T13:01:02.898Z"
     }
   },
   {
@@ -395,18 +446,6 @@
           "type": ["string", "null"],
           "required": true
         },
-        "createdBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
-        "updatedBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
         "entityType": {
           "type": "string",
           "required": true,
@@ -421,7 +460,7 @@
       "module": ["entities"],
       "owner": ["cella"]
     },
-    "description": "The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields.",
+    "description": "The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields and adds its writers as `ActorRef`s.",
     "example": {
       "id": "7e460470-da58-4733-a7ff-0d31897ecf8d",
       "createdAt": "2024-07-02T14:28:38.152Z",
@@ -429,20 +468,6 @@
       "name": "Capitulus vesco cursim alter.",
       "description": "Veritas itaque basium a. Sufficio ter nostrum cilicium tersus ara. Earum ascit trans somniculosus.",
       "keywords": "sint clementia corrigo",
-      "createdBy": {
-        "id": "8a080cc5-0da6-4562-89b0-d6aaa2323def",
-        "name": "Lue Bartell",
-        "slug": "lue.bartell",
-        "thumbnailUrl": null,
-        "entityType": "user"
-      },
-      "updatedBy": {
-        "id": "6aa2c0f4-8d91-4fa2-85fe-48c3c317d826",
-        "name": "Emiliano Armstrong",
-        "slug": "emiliano.armstrong19",
-        "thumbnailUrl": null,
-        "entityType": "user"
-      },
       "entityType": "attachment"
     }
   },
@@ -602,7 +627,6 @@
     "schema": {
       "type": "object",
       "properties": {
-        "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "entityType": {
           "type": "string",
@@ -611,6 +635,7 @@
         },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
         "name": { "type": "string", "required": true, "maxLength": 255 },
+        "createdAt": { "type": "string", "required": true },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
@@ -630,10 +655,7 @@
           "required": true,
           "format": "uuid"
         },
-        "publicAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
+        "public": { "type": "boolean", "required": true },
         "seq": {
           "type": "integer",
           "required": true,
@@ -721,7 +743,7 @@
       "keywords": "",
       "deletedAt": null,
       "deletedBy": null,
-      "publicAt": null,
+      "public": false,
       "seq": 136,
       "color": "#1d181f",
       "mode": "secondary",
@@ -838,11 +860,6 @@
               "type": ["string", "null"],
               "required": true
             },
-            "updatedBy": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "lastSeenAt": {
               "type": ["string", "null"],
               "required": true
@@ -864,7 +881,7 @@
           "required": true,
           "ref": "#/components/schemas/UserMinimalBase",
           "description": "The system admin acting as the user through an impersonation; null on the user's own session.",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
+          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`."
         }
       }
     },
@@ -1218,8 +1235,8 @@
         "createdBy": {
           "type": ["object", "null"],
           "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "organizationId": { "type": "string", "required": true, "format": "uuid" },
         "workspaceId": {
@@ -1253,10 +1270,10 @@
       "createdAt": "2024-02-07T13:46:57.160Z",
       "createdBy": {
         "id": "c72c120a-aea2-4d54-840a-eff3fb000b8b",
+        "kind": "user",
         "name": "Lizzie Aufderhar",
         "slug": "lizzie_aufderhar85",
-        "thumbnailUrl": null,
-        "entityType": "user"
+        "thumbnailUrl": null
       },
       "organizationId": "a6050a0e-4d57-4c82-a942-641f6844a7a8",
       "workspaceId": null,
@@ -1377,7 +1394,6 @@
     "schema": {
       "type": "object",
       "properties": {
-        "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "entityType": {
           "type": "string",
@@ -1386,9 +1402,22 @@
         },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
         "name": { "type": "string", "required": true, "maxLength": 255 },
+        "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "slug": { "type": "string", "required": true, "maxLength": 255 },
         "thumbnailUrl": {
@@ -1401,26 +1430,11 @@
           "required": true,
           "maxLength": 2048
         },
-        "createdBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
-        "updatedBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
         "publishedAt": {
           "type": ["string", "null"],
           "required": true
         },
-        "publicAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
+        "public": { "type": "boolean", "required": true },
         "toolsConfig": {
           "type": "object",
           "required": true,
@@ -1554,7 +1568,7 @@
                   "name": {
                     "type": "string",
                     "required": true,
-                    "minLength": 2,
+                    "minLength": 1,
                     "maxLength": 255
                   },
                   "color": {
@@ -1711,7 +1725,7 @@
               "ref": "#/components/schemas/UserMinimalBase",
               "items": {
                 "type": "object",
-                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
@@ -1753,7 +1767,7 @@
       "createdBy": null,
       "updatedBy": null,
       "publishedAt": "2024-12-25T15:04:42.969Z",
-      "publicAt": null,
+      "public": false,
       "toolsConfig": {},
       "path": "7aa47ec1-149b-44dc-b1fd-c23099d93e7d",
       "shortName": "Spencer,",
@@ -1843,7 +1857,6 @@
     "schema": {
       "type": "object",
       "properties": {
-        "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "entityType": {
           "type": "string",
@@ -1852,9 +1865,22 @@
         },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
         "name": { "type": "string", "required": true, "maxLength": 255 },
+        "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "slug": { "type": "string", "required": true, "maxLength": 255 },
         "thumbnailUrl": {
@@ -1867,26 +1893,11 @@
           "required": true,
           "maxLength": 2048
         },
-        "createdBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
-        "updatedBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
         "publishedAt": {
           "type": ["string", "null"],
           "required": true
         },
-        "publicAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
+        "public": { "type": "boolean", "required": true },
         "toolsConfig": {
           "required": true,
           "anyOf": [
@@ -2055,7 +2066,7 @@
               "ref": "#/components/schemas/UserMinimalBase",
               "items": {
                 "type": "object",
-                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
@@ -2097,7 +2108,7 @@
       "createdBy": null,
       "updatedBy": null,
       "publishedAt": "2024-12-23T15:24:26.607Z",
-      "publicAt": "2024-12-29T10:59:08.044Z",
+      "public": true,
       "toolsConfig": {},
       "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
       "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -2130,8 +2141,7 @@
         "id": { "type": "string", "required": true, "format": "uuid" },
         "message": {
           "type": ["string", "null"],
-          "required": true,
-          "maxLength": 255
+          "required": true
         },
         "email": { "type": "string", "required": true, "maxLength": 255 },
         "type": {
@@ -2206,8 +2216,8 @@
         "createdBy": {
           "type": ["object", "null"],
           "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "createdAt": { "type": "string", "required": true }
       }
@@ -2232,11 +2242,11 @@
       "revokedBy": null,
       "createdAt": "2024-11-20T15:58:25.416Z",
       "createdBy": {
-        "id": "9656def5-1db7-49f5-8767-34aa5a1f68f2",
-        "name": "Jace Kozey",
-        "slug": "jace_kozey68",
-        "thumbnailUrl": null,
-        "entityType": "user"
+        "id": "f51db79f-5767-434a-9a5a-1f68f22c07d3",
+        "kind": "user",
+        "name": "Ford Thompson",
+        "slug": "ford_thompson68",
+        "thumbnailUrl": null
       }
     }
   },
@@ -2282,20 +2292,22 @@
           "required": true,
           "maxLength": 255
         },
-        "createdBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
-        "updatedBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
         "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "lastSeenAt": {
           "type": ["string", "null"],
@@ -2338,7 +2350,6 @@
     "schema": {
       "type": "object",
       "properties": {
-        "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "entityType": {
           "type": "string",
@@ -2347,9 +2358,22 @@
         },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
         "name": { "type": "string", "required": true, "maxLength": 255 },
+        "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "description": {
           "type": ["string", "null"],
@@ -2362,14 +2386,12 @@
           "required": true
         },
         "deletedBy": {
-          "type": ["string", "null"],
+          "type": ["object", "null"],
           "required": true,
-          "format": "uuid"
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
-        "publicAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
+        "public": { "type": "boolean", "required": true },
         "seq": {
           "type": "integer",
           "required": true,
@@ -2474,7 +2496,7 @@
           "ref": "#/components/schemas/UserMinimalBase",
           "items": {
             "type": "object",
-            "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+            "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
             "properties": {
               "id": { "type": "string", "required": true },
               "name": { "type": "string", "required": true },
@@ -2491,18 +2513,6 @@
             },
             "ref": "#/components/schemas/UserMinimalBase"
           }
-        },
-        "createdBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
-        "updatedBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
         },
         "stx": {
           "type": "object",
@@ -2560,38 +2570,63 @@
       "keywords": "minima accedo communis",
       "createdBy": {
         "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+        "kind": "user",
         "name": "Nasir Thompson",
         "slug": "nasir_thompson78",
-        "thumbnailUrl": null,
-        "entityType": "user"
+        "thumbnailUrl": null
       },
       "updatedBy": {
         "id": "6f74a048-46c2-422d-b985-61f6076a97e8",
+        "kind": "user",
         "name": "Nasir Thompson",
         "slug": "nasir_thompson78",
-        "thumbnailUrl": null,
-        "entityType": "user"
+        "thumbnailUrl": null
       },
       "deletedAt": null,
       "deletedBy": null,
-      "publicAt": null,
+      "public": false,
       "seq": 24,
       "expandable": false,
       "summary": "[{\"type\":\"paragraph\",\"props\":{},\"content\":[{\"type\":\"text\",\"text\":\"Pauper cognatus mollitia ipsum videlicet color.\",\"styles\":{}}],\"children\":[]}]",
       "summaryLength": 47,
-      "primaryLabelId": "65918c60-6d36-4797-a652-e1ba1149334b",
-      "displayOrder": 6.85,
-      "status": 2,
+      "primaryLabelId": "f65918c6-06d3-4679-a765-2e1ba1149334",
+      "displayOrder": 657.08,
+      "status": 6,
       "statusChangedAt": "2024-11-03T10:38:49.857Z",
       "checkboxCount": 8,
-      "checkedCount": 3,
-      "attachments": ["a4c6237f-3b08-4a14-90ae-bca91ac453da"],
-      "labels": [],
-      "assignedTo": [],
+      "checkedCount": 5,
+      "attachments": ["7a4c6237-f3b0-48a1-a40a-ebca91ac453d"],
+      "labels": [
+        {
+          "id": "33bead8e-b4aa-403e-bf4c-0d11f393576d",
+          "name": "online",
+          "slug": "online",
+          "color": "#6b33cb",
+          "mode": "secondary",
+          "icon": null,
+          "projectId": "02875b7a-9002-45d4-b42a-c8fe3c75bf66"
+        }
+      ],
+      "assignedTo": [
+        {
+          "id": "1bd9b59d-920f-4efc-bfba-f6558e12ed45",
+          "name": "Leda Hodkiewicz",
+          "slug": "leda.hodkiewicz53",
+          "thumbnailUrl": null,
+          "entityType": "user"
+        },
+        {
+          "id": "364075b8-c760-4085-a1ce-4a094ba4383f",
+          "name": "Sylvan Zemlak",
+          "slug": "sylvan_zemlak14",
+          "thumbnailUrl": null,
+          "entityType": "user"
+        }
+      ],
       "projectId": "b0812db1-9a54-4314-b736-788585846a17",
       "organizationId": "3d599e70-96c0-4d27-8dd6-201a0d868a32",
       "primaryLabel": {
-        "id": "65918c60-6d36-4797-a652-e1ba1149334b",
+        "id": "f65918c6-06d3-4679-a765-2e1ba1149334",
         "name": "microservice",
         "slug": "microservice",
         "color": "#77fd9d",
@@ -2650,11 +2685,6 @@
           "itemType": "string",
           "enum": ["github", "google", "microsoft", "passkey", "totp", "email", "magic"]
         },
-        "createdBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
-        },
         "subscriptionId": {
           "type": ["string", "null"],
           "required": true,
@@ -2671,9 +2701,21 @@
           "maxLength": 255
         },
         "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "organization": {
           "type": ["object", "null"],
@@ -2723,14 +2765,21 @@
         "allowUnregisteredClients": true
       },
       "authStrategies": [],
-      "createdBy": "97e6acf3-d1c3-4967-a839-e8b32adde60a",
+      "createdBy": {
+        "id": "75b8af80-b170-4f44-867f-4d401a4d1e6a",
+        "kind": "user",
+        "name": "Antonina Trantow",
+        "slug": "antonina_trantow60",
+        "thumbnailUrl": null
+      },
+      "updatedBy": null,
       "subscriptionId": null,
       "subscriptionStatus": "none",
       "subscriptionPlan": null,
-      "createdAt": "2024-02-09T07:11:04.461Z",
-      "updatedAt": "2024-03-30T20:43:34.109Z",
+      "createdAt": "2024-09-23T13:52:39.349Z",
+      "updatedAt": "2024-12-21T03:26:56.687Z",
       "organization": {
-        "id": "c6e2f31a-be0a-4e1a-a760-f0b106b6bbcb",
+        "id": "126f212f-7add-440d-a546-1fd1c799cece",
         "name": "Lubowitz, Waters and Haley",
         "slug": "lubowitz-waters-and-haley",
         "thumbnailUrl": null,
@@ -2801,11 +2850,6 @@
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
-        },
-        "updatedBy": {
-          "type": ["string", "null"],
-          "required": true,
-          "format": "uuid"
         },
         "lastSeenAt": {
           "type": ["string", "null"],
@@ -2934,7 +2978,7 @@
       "module": ["users"],
       "owner": ["cella"]
     },
-    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
     "example": {
       "id": "0e0eced6-ecd8-4ea4-906d-160fbd840741",
       "name": "Durward Cummerata",
@@ -2950,7 +2994,6 @@
     "schema": {
       "type": "object",
       "properties": {
-        "createdAt": { "type": "string", "required": true },
         "id": { "type": "string", "required": true, "format": "uuid" },
         "entityType": {
           "type": "string",
@@ -2959,9 +3002,22 @@
         },
         "tenantId": { "type": "string", "required": true, "maxLength": 24 },
         "name": { "type": "string", "required": true, "maxLength": 255 },
+        "createdAt": { "type": "string", "required": true },
+        "createdBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+        },
         "updatedAt": {
           "type": ["string", "null"],
           "required": true
+        },
+        "updatedBy": {
+          "type": ["object", "null"],
+          "required": true,
+          "ref": "#/components/schemas/ActorRef",
+          "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
         },
         "slug": { "type": "string", "required": true, "maxLength": 255 },
         "thumbnailUrl": {
@@ -2974,26 +3030,11 @@
           "required": true,
           "maxLength": 2048
         },
-        "createdBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
-        "updatedBy": {
-          "type": ["object", "null"],
-          "required": true,
-          "ref": "#/components/schemas/UserMinimalBase",
-          "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-        },
         "publishedAt": {
           "type": ["string", "null"],
           "required": true
         },
-        "publicAt": {
-          "type": ["string", "null"],
-          "required": true
-        },
+        "public": { "type": "boolean", "required": true },
         "toolsConfig": {
           "required": true,
           "anyOf": [
@@ -3098,7 +3139,7 @@
               "ref": "#/components/schemas/UserMinimalBase",
               "items": {
                 "type": "object",
-                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                 "properties": {
                   "id": { "type": "string", "required": true },
                   "name": { "type": "string", "required": true },
@@ -3140,7 +3181,7 @@
       "createdBy": null,
       "updatedBy": null,
       "publishedAt": "2024-03-18T14:19:46.053Z",
-      "publicAt": null,
+      "public": false,
       "toolsConfig": {},
       "path": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428/37b34924-612e-454b-9d73-98fa9290dee1",
       "organizationId": "a753dfd7-e9f3-49a8-ae6c-a11055a5d428",

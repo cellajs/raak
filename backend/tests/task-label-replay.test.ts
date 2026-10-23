@@ -31,7 +31,7 @@ describe('Replayed task and label creates', async () => {
       await call(createProjects, {
         path,
         query: { workspaceId },
-        body: [{ id: `temp-${nanoid()}`, name: 'Replays', slug: `replays-${crypto.randomUUID().slice(0, 8)}`, publicAt: null }],
+        body: [{ id: `temp-${nanoid()}`, name: 'Replays', slug: `replays-${crypto.randomUUID().slice(0, 8)}`, public: false }],
         headers,
       }),
     );

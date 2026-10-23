@@ -14,10 +14,7 @@ interface AvailableProjectsEmptyActionProps {
   fallback: ReactNode;
 }
 
-/**
- * Empty-board action shown when the user can add existing organization projects
- * that are not assigned to a workspace yet.
- */
+/** Empty-board action to add organization projects that are not assigned to a workspace yet. */
 export function AvailableProjectsEmptyAction({ workspace, fallback }: AvailableProjectsEmptyActionProps) {
   const { t } = useTranslation();
 
@@ -28,7 +25,7 @@ export function AvailableProjectsEmptyAction({ workspace, fallback }: AvailableP
   const availableCount = projects.filter((project) => !project.membership?.workspaceId).length;
 
   if (isPending) return null;
-  if (availableCount === 0) return <>{fallback}</>;
+  if (availableCount === 0) return fallback;
 
   return (
     <div className="flex max-w-lg flex-col items-center gap-3">

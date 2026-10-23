@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 interface BoardFocusState {
-  /** DOM id of the board's current item: a task card, the create-task form or a label tile. One for the whole board. */
+  /** DOM id of the board's current item: a task card, the create-task form or a label tile. */
   currentItemId: string | null;
   /** The current item while it is mounted: its panel list then leaves the Tab stop to it. */
   mountedItemId: string | null;
@@ -18,3 +18,5 @@ export const useBoardFocusStore = create<BoardFocusState>()((set) => ({
   setMountedItemId: (mountedItemId) => set({ mountedItemId }),
   reset: () => set({ currentItemId: null, mountedItemId: null }),
 }));
+
+export { useBoardFocusStore as boardFocusStore };

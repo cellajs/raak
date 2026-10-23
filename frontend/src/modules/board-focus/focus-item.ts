@@ -1,8 +1,8 @@
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import { boardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { scrollItemIntoView } from '~/modules/board-focus/panel-nav-registry';
 
 /** Makes an item the board's current one, or clears it, without moving DOM focus. */
-export const setCurrentItem = (id: string | null) => useBoardFocusStore.getState().setCurrentItemId(id);
+export const setCurrentItem = (id: string | null) => boardFocusStore.getState().setCurrentItemId(id);
 
 // One slot: a later keypress overwrites it, so an item that mounts late never takes focus from a newer one.
 let pendingFocusId: string | null = null;
@@ -10,7 +10,7 @@ let pendingFocusId: string | null = null;
 // virtua keeps a freshly mounted row hidden until it has measured it, and a hidden element ignores focus()
 const focusOnceVisible = (id: string, item: HTMLElement) => {
   if (pendingFocusId !== id || !item.isConnected) return;
-  if (useBoardFocusStore.getState().currentItemId !== id) {
+  if (boardFocusStore.getState().currentItemId !== id) {
     pendingFocusId = null;
     return;
   }
@@ -33,9 +33,9 @@ export const takePendingFocus = (id: string, item: HTMLElement | null) => {
 
 /** Records the current item as mounted. Returns the cleanup that clears it, unless a newer item took its place. */
 export const markCurrentItemMounted = (id: string) => {
-  useBoardFocusStore.getState().setMountedItemId(id);
+  boardFocusStore.getState().setMountedItemId(id);
   return () => {
-    const { mountedItemId, setMountedItemId } = useBoardFocusStore.getState();
+    const { mountedItemId, setMountedItemId } = boardFocusStore.getState();
     if (mountedItemId === id) setMountedItemId(null);
   };
 };

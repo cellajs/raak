@@ -1,72 +1,51 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
 import type { UseFormProps } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import type { Workspace } from 'sdk';
 import { zChannelBase } from 'sdk/zod.gen';
 import { z } from 'zod';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
+import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { SelectParentFormField } from '~/modules/common/form-fields/select-combobox/parent';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
-import { useAssignProjectMutation } from '~/modules/project/query';
-import { ProjectSuggestionCombobox } from '~/modules/project/suggestions-combobox';
-import { Button } from '~/modules/ui/button';
+import { ProjectSuggestionCombobox } from '~/modules/project/project-suggestion-combobox';
+import { useProjectAssignMutation } from '~/modules/project/query';
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
-import { workspacesListQueryOptions } from '~/modules/workspace/query';
+import { useOrganizationWorkspaces } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
-import { flattenInfiniteData } from '~/query/basic/flatten';
+import { formResolver } from '~/utils/form-resolver';
 
-const formSchema = z.object({ selectedProjects: z.array(zChannelBase).min(1), organizationId: z.string(), workspaceId: z.string() });
+const formSchema = z.object({ selectedProjects: z.array(zChannelBase).min(1), workspaceId: z.string() });
 type FormValues = z.infer<typeof formSchema>;
 
-interface SelectProjectFormProps {
-  dialog?: boolean;
-  callback?: () => void;
-}
-
 /** Lets users assign existing projects to the current workspace. */
-export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectFormProps) {
+export function SelectProjectForm() {
   const { t } = useTranslation();
   const { workspace, organization } = useWorkspaceContext();
 
   const organizationId = workspace.organizationId;
   const workspaceId = workspace.id;
 
-  // Get workspaces for this organization from cache (populated by menu)
-  const { data: workspacesData } = useInfiniteQuery({
-    ...workspacesListQueryOptions({ organizationId: workspace.organizationId }),
-    refetchOnMount: false,
-  });
-  const workspaces = flattenInfiniteData<Workspace>(workspacesData);
+  const workspaces = useOrganizationWorkspaces(organizationId);
 
-  const options = useMemo(() => workspaces.map(({ name: label, thumbnailUrl: url, id: value }) => ({ value, label, url })) || [], [workspaces]);
+  const options = workspaces.map(({ name: label, thumbnailUrl: url, id: value }) => ({ value, label, url }));
 
-  const formOptions: UseFormProps<FormValues> = useMemo(
-    () => ({
-      resolver: zodResolver(formSchema),
-      defaultValues: { selectedProjects: [], organizationId, workspaceId },
-    }),
-    [workspaceId],
-  );
+  const formOptions: UseFormProps<FormValues> = {
+    resolver: formResolver(formSchema),
+    defaultValues: { selectedProjects: [], workspaceId },
+  };
 
   const form = useFormWithDraft<FormValues>(`select-project-${workspaceId}`, { formOptions });
 
-  const { mutateAsync: assign, isPending } = useAssignProjectMutation();
-  const [pendingCount, setPendingCount] = useState(0);
+  const { mutateAsync: assign } = useProjectAssignMutation();
 
-  const onSubmit = async ({ selectedProjects, ...restValues }: FormValues) => {
-    if (!selectedProjects.length) return;
-
-    setPendingCount(selectedProjects.length);
-
+  const onSubmit = async ({ selectedProjects }: FormValues) => {
     const results = await Promise.allSettled(
       selectedProjects.map((project) =>
         assign({
-          path: { id: project.id, organizationId: restValues.organizationId, tenantId: workspace.tenantId },
-          query: { workspaceId: restValues.workspaceId },
+          path: { id: project.id, organizationId, tenantId: workspace.tenantId },
+          query: { workspaceId },
         }),
       ),
     );
@@ -84,19 +63,17 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
       );
     }
 
-    setPendingCount(0);
     form.reset();
-    callback?.();
-    if (isDialog) useDialoger.getState().remove();
+    dialoger.getState().remove();
   };
 
-  const selectedCount = form.watch('selectedProjects')?.length ?? 0;
+  const selectedCount = useWatch({ control: form.control, name: 'selectedProjects' })?.length ?? 0;
 
   if (form.loading) return null;
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="selectedProjects"
@@ -111,7 +88,7 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
                 onChange={onChange}
                 workspaceId={workspace.id}
                 tenantId={workspace.tenantId}
-                targetOrgId={workspace.organizationId}
+                organizationId={workspace.organizationId}
                 organizationName={organization.name}
               />
               <FormMessage />
@@ -120,20 +97,12 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
         />
         <SelectParentFormField parentType="workspace" control={form.control} label={t('c:workspace')} options={options} name="workspaceId" disabled />
         <div className="flex flex-col gap-2 sm:flex-row">
-          <SubmitButton disabled={selectedCount === 0} loading={isPending || pendingCount > 0}>
+          <SubmitButton disabled={selectedCount === 0} loading={form.formState.isSubmitting}>
             {selectedCount > 0
               ? t('c:add_resource', { resource: `${selectedCount} ${t('c:project', { count: selectedCount }).toLowerCase()}` })
               : t('c:select')}
           </SubmitButton>
-          <Button
-            type="reset"
-            variant="secondary"
-            className={selectedCount > 0 ? '' : 'invisible'}
-            aria-label={t('c:cancel')}
-            onClick={() => form.reset()}
-          >
-            {t('c:cancel')}
-          </Button>
+          <CancelButton dirty={selectedCount > 0} onClick={() => form.reset()} />
         </div>
       </form>
     </Form>

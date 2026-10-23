@@ -2,14 +2,7 @@ import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import type { Task } from '~/modules/task/types';
 
-/**
- * Track a task's multi-select field (labels / assignedTo) locally while its dropdown is open.
- *
- * The dropdowner renders a snapshot, so the `value` prop won't update on cache changes. This
- * subscribes to the task in cache (via `taskId`) and reconciles local state whenever the live
- * field changes, comparing by id set so local optimistic echoes don't cause redundant writes.
- * Falls back to `fallback` for create-task forms where no cached task exists yet.
- */
+/** Local state for a task's labels or assignees while its dropdown is open; follows the cached task, `fallback` serves create forms. */
 export const useLiveSelection = <T extends { id: string }>(
   taskId: string | undefined,
   select: (task: Task) => T[],
@@ -20,14 +13,14 @@ export const useLiveSelection = <T extends { id: string }>(
 
   const [selected, setSelected] = useState<T[]>(live);
 
-  // Reconcile only when the live field changes (deps intentionally exclude `selected`).
+  // Deps exclude `selected` on purpose: reconcile only when the live field changes
   useEffect(() => {
     const localIds = selected
-      .map((x) => x.id)
+      .map((item) => item.id)
       .sort()
       .join(',');
     const remoteIds = live
-      .map((x) => x.id)
+      .map((item) => item.id)
       .sort()
       .join(',');
     if (localIds !== remoteIds) setSelected(live);

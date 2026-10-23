@@ -1,10 +1,11 @@
 import { sql } from 'drizzle-orm';
-import { boolean, doublePrecision, index, integer, snakeCase, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, index, integer, snakeCase, text, uuid, varchar } from 'drizzle-orm/pg-core';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
 import { maxLength } from '#/db/utils/constraints';
 import { organizationForeignKey } from '#/db/utils/organization-foreign-key';
 import { productColumns, productIndexes } from '#/db/utils/product-columns';
+import { isoTimestamp } from '#/db/utils/timestamp-columns';
 
 /**
  * Tasks table is a product entity table.
@@ -22,7 +23,7 @@ export const tasksTable = snakeCase.table(
     primaryLabelId: uuid().notNull(),
     displayOrder: doublePrecision().notNull(),
     status: integer().notNull(),
-    statusChangedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+    statusChangedAt: isoTimestamp().defaultNow().notNull(),
     labels: text().array().notNull().default(sql`'{}'::text[]`),
     assignedTo: text().array().notNull().default(sql`'{}'::text[]`),
     checkboxCount: integer().default(0).notNull(),
@@ -30,7 +31,6 @@ export const tasksTable = snakeCase.table(
     // Derived from description media blocks (attachmentId props). Owned-lifecycle
     // productEmbedding host column: the CDC worker GCs attachment rows it no longer references.
     attachments: uuid().array().notNull().default(sql`'{}'::uuid[]`),
-    // publicAt comes from productColumns (base column); non-member public read is gated on it.
     ...channelRelationColumns('task'),
   },
   (table) => [

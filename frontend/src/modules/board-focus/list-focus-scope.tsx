@@ -1,5 +1,5 @@
-import { type FocusEvent, type ReactNode, type RefObject, useMemo } from 'react';
-import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
+import type { FocusEvent, ReactNode, RefObject } from 'react';
+import { boardFocusStore, useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
 import { focusItem } from '~/modules/board-focus/focus-item';
 import { firstItemInView } from '~/modules/board-focus/panel-nav-registry';
 import { cn } from '~/utils/cn';
@@ -19,12 +19,14 @@ interface ListFocusScopeProps {
  * to its current item, or else to the first item in view, making that one current.
  */
 export function ListFocusScope({ id, className, itemIds, viewportRef, children }: ListFocusScopeProps) {
-  const ids = useMemo(() => new Set(itemIds), [itemIds]);
-  const itemHoldsStop = useBoardFocusStore((s) => !!s.mountedItemId && s.mountedItemId === s.currentItemId && ids.has(s.mountedItemId));
+  const ids = new Set(itemIds);
+  const itemHoldsStop = useBoardFocusStore(
+    (state) => !!state.mountedItemId && state.mountedItemId === state.currentItemId && ids.has(state.mountedItemId),
+  );
 
   const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
-    const { currentItemId } = useBoardFocusStore.getState();
+    const { currentItemId } = boardFocusStore.getState();
     const targetId = currentItemId && ids.has(currentItemId) ? currentItemId : firstItemInView(itemIds, viewportRef.current);
     if (targetId) focusItem(targetId);
   };

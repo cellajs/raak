@@ -2,36 +2,36 @@ import { zCreateTasksBody, zLabel, zTask, zUserMinimalBase } from 'sdk/zod.gen';
 import { z } from 'zod';
 import { focusWhenMounted, setCurrentItem } from '~/modules/board-focus/focus-item';
 import { blocknoteFieldIsDirty } from '~/modules/common/blocknote/helpers/blocknote-field-is-dirty';
-import { useBoardStore } from '~/modules/common/board/board-store';
-import { useDraftStore } from '~/modules/common/form-draft/draft-store';
-import { useTaskBoardStore } from '~/modules/task/board/task-board-store';
+import { boardStore } from '~/modules/common/board/board-store';
+import { draftStore } from '~/modules/common/form-draft/draft-store';
+import { taskBoardStore } from '~/modules/task/board/task-board-store';
 import { makePanelKey, resolveDraftHostSection } from '~/modules/task/helpers/board-helpers';
 import { getDraftDisplayOrder } from '~/modules/task/helpers/order-helpers';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
-import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
+import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 import { getSchemaDefaults } from '~/query/basic/create-optimistic';
 
 /** Expands the panel (and accepted/iced section) that will host the create-task form. */
 export const revealDraftHostPanel = (projectId: string, draftStatus: TaskStatus) => {
-  const boardId = useBoardStore.getState().activeBoardId;
+  const boardId = boardStore.getState().activeBoardId;
   if (!boardId) return;
 
-  const viewSections = useTaskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
+  const viewSections = taskBoardStore.getState().panelData[boardId]?.[projectId]?.viewSections;
   const hostSection = resolveDraftHostSection(viewSections, draftStatus);
   const panelId = hostSection ? makePanelKey(projectId, hostSection) : projectId;
-  useBoardStore.getState().togglePanelCollapsedState(panelId, false);
+  boardStore.getState().togglePanelCollapsedState(panelId, false);
 
-  const { togglePanelSectionExpandState } = useTaskBoardStore.getState();
-  if (draftStatus === TaskStatus.Accepted) togglePanelSectionExpandState(boardId, projectId, 'accepted', true);
-  if (draftStatus === TaskStatus.Iced) togglePanelSectionExpandState(boardId, projectId, 'iced', true);
+  const { setPanelSectionExpanded } = taskBoardStore.getState();
+  if (draftStatus === TaskStatus.Accepted) setPanelSectionExpanded(boardId, projectId, 'accepted', true);
+  if (draftStatus === TaskStatus.Iced) setPanelSectionExpanded(boardId, projectId, 'iced', true);
 };
 
 export const createTaskFormSchema = z.object({
   ...zCreateTasksBody.element.omit({ stx: true }).shape,
   status: z.enum(TaskStatus),
-  // Empty until the form resolves the project's default primary label (first by displayOrder)
+  // Empty until the form resolves the project's default primary label
   primaryLabelId: z.string(),
   assignedTo: z.array(zUserMinimalBase),
   labels: z.array(zLabel),
@@ -39,32 +39,30 @@ export const createTaskFormSchema = z.object({
 
 export type NewTaskFormValues = z.infer<typeof createTaskFormSchema>;
 
-// Derive defaults from schema, override only intentional UX choices
 export const newTaskFormDefaults: NewTaskFormValues = { ...getSchemaDefaults(createTaskFormSchema), status: TaskStatus.Unstarted };
 
-/** Checks whether a new-task form contains unsaved values. */
 export const newTaskFormIsDirty = ({ assignedTo, labels, description }: Pick<NewTaskFormValues, 'assignedTo' | 'labels' | 'description'>) =>
   assignedTo.length > 0 || labels.length > 0 || (!!description && blocknoteFieldIsDirty(description));
+
+/** The create-task form's element id; card-glow.css styles ids starting with `create-task-`. */
+export const createTaskFormId = (projectId: string) => `create-task-${projectId}`;
 
 /** Closes a project's create-task form; unlike the toggle, a repeated or late call never reopens it. */
 export const closeCreateTaskForm = (projectId: string) => {
   setCurrentItem(null);
-  useTaskInteractionStore.getState().setDraftTask(projectId, null);
+  taskInteractionStore.getState().setDraftTask(projectId, null);
 };
 
-// Handles logic for showing or hiding task creation form via Zustand draft state
+/** Opens a project's create-task form, or closes it when open; its open-ness is derived from the draft. */
 export const toggleCreateTaskForm = (project: { id: string; organizationId: string; tenantId: string }) => {
-  const id = `create-task-${project.id}`;
-  const store = useTaskInteractionStore.getState();
+  const id = createTaskFormId(project.id);
+  const store = taskInteractionStore.getState();
 
-  // Toggle: if draft already exists, remove it (form open-ness is derived from the draft)
   if (store.draftTasks[project.id]) return closeCreateTaskForm(project.id);
 
-  // Retrieve draft form data
-  const draftForm = useDraftStore.getState().getForm<NewTaskFormValues | undefined>(id);
+  const draftForm = draftStore.getState().getForm<NewTaskFormValues | undefined>(id);
   const draftStatus = draftForm?.status ?? TaskStatus.Unstarted;
 
-  // Base structure for a draft task with schema defaults and draft-specific overrides.
   const defaultTask: Task = {
     ...getSchemaDefaults(zTask),
     id,
@@ -75,15 +73,14 @@ export const toggleCreateTaskForm = (project: { id: string; organizationId: stri
     _draft: true,
   };
 
-  // Merge form values over default structure, retaining order & id
   const formTask: Task = { ...defaultTask, ...draftForm, id: defaultTask.id, displayOrder: defaultTask.displayOrder };
 
-  // ProjectBoardPanel merges this draft into the task list.
+  // ProjectBoardPanel merges the draft into the task list.
   setCurrentItem(id);
   store.setDraftTask(project.id, formTask);
   revealDraftHostPanel(project.id, formTask.status);
 
-  // Focus the form element and trigger glow after React renders
+  // The form mounts after React renders the draft
   focusWhenMounted(id);
   setTimeout(() => triggerTaskGlow(id), 100);
 };

@@ -1,9 +1,9 @@
 import { type EntityRole, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
+import { withActorRefs } from '#/modules/actors/actor-refs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { findMemberPreviewsByChannels } from '#/modules/memberships/memberships-queries';
-import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
-import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
+import type { UserMinimalBase } from '#/modules/user/helpers/user-minimal';
 import { findWorkspacesPaginated } from '#/modules/workspace/workspace-queries';
 
 interface GetWorkspacesInput {
@@ -37,7 +37,7 @@ export async function getWorkspacesOp(ctx: UserContext, input: GetWorkspacesInpu
       })
     : null;
 
-  const items = coalesceAuditUsers(workspaceResults).map((ws) => {
+  const items = (await withActorRefs(ctx, workspaceResults)).map((ws) => {
     const { membership, counts, ...workspace } = ws;
     const included: { membership?: ReturnType<typeof toMembershipBase>; counts?: typeof counts; members?: UserMinimalBase[] } = {};
     if (includeMembership && membership) included.membership = toMembershipBase(membership);

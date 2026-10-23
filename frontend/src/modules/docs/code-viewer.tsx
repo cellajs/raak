@@ -1,49 +1,44 @@
+import { createHighlighterCore } from '@shikijs/core';
+import { createJavaScriptRawEngine } from '@shikijs/engine-javascript/raw';
 import { useEffect, useState } from 'react';
-import { createHighlighterCore } from 'shiki/core';
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
-import { bundledLanguages } from 'shiki/langs';
-import { bundledThemes } from 'shiki/themes';
 import { useUIStore } from '~/modules/ui/ui-store';
 
 interface CodeViewerProps {
+  /** TypeScript source, zod schemas included. */
   code: string;
-  language: 'typescript' | 'zod';
 }
 
 /**
- * Built from `shiki/core` with the themes and grammar named explicitly. The `shiki` entry bundles
- * every engine, which places the Oniguruma WASM build on the boot path; the app CSP has no
- * 'unsafe-eval', so the JavaScript regex engine is always the one used.
+ * One grammar and two themes (the editor's code blocks use the same), imported by path so the build emits only those chunks.
+ * The grammar comes precompiled, for the raw JavaScript engine: the app CSP allows no WebAssembly, which shiki's Oniguruma engine needs.
  */
 let highlighterPromise: ReturnType<typeof createHighlighterCore> | null = null;
 const getHighlighter = () => {
   highlighterPromise ??= createHighlighterCore({
-    themes: [bundledThemes['github-dark-default'], bundledThemes['github-light-default']],
-    langs: [bundledLanguages.typescript],
-    engine: createJavaScriptRegexEngine(),
+    themes: [import('@shikijs/themes/github-dark-default'), import('@shikijs/themes/github-light-default')],
+    langs: [import('@shikijs/langs-precompiled/typescript')],
+    engine: createJavaScriptRawEngine(),
   });
   return highlighterPromise;
 };
 
-export function CodeViewer({ code, language }: CodeViewerProps) {
-  // `html: null` means highlighting failed and the code renders as plain text.
-  const [state, setState] = useState<{ html: string | null; isLoading: boolean }>({ html: '', isLoading: true });
+export function CodeViewer({ code }: CodeViewerProps) {
+  // `undefined` while highlighting; `null` when it failed, and the code renders as plain text
+  const [html, setHtml] = useState<string | null>();
   const mode = useUIStore((state) => state.mode);
 
   useEffect(() => {
     let cancelled = false;
-    setState((prev) => ({ ...prev, isLoading: true }));
+    setHtml(undefined);
 
+    const theme = mode === 'dark' ? 'github-dark-default' : 'github-light-default';
     const highlight = async () => {
       try {
         const highlighter = await getHighlighter();
-        const highlighted = highlighter.codeToHtml(code, {
-          lang: 'typescript',
-          theme: mode === 'dark' ? 'github-dark-default' : 'github-light-default',
-        });
-        if (!cancelled) setState({ html: highlighted, isLoading: false });
+        const highlighted = highlighter.codeToHtml(code, { lang: 'typescript', theme });
+        if (!cancelled) setHtml(highlighted);
       } catch {
-        if (!cancelled) setState({ html: null, isLoading: false });
+        if (!cancelled) setHtml(null);
       }
     };
 
@@ -51,13 +46,13 @@ export function CodeViewer({ code, language }: CodeViewerProps) {
     return () => {
       cancelled = true;
     };
-  }, [code, language, mode]);
+  }, [code, mode]);
 
-  if (state.isLoading) {
+  if (html === undefined) {
     return <div className="h-24 animate-pulse rounded bg-muted" />;
   }
 
-  if (state.html === null) {
+  if (html === null) {
     return (
       <div className="text-sm">
         <pre>
@@ -69,9 +64,9 @@ export function CodeViewer({ code, language }: CodeViewerProps) {
 
   return (
     <div
-      className="text-sm [&_code]:bg-transparent! [&_pre]:bg-transparent!"
+      className="text-sm [&_pre]:bg-transparent!"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki output is safe
-      dangerouslySetInnerHTML={{ __html: state.html }}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }

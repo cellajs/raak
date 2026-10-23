@@ -5,30 +5,26 @@ import type { TaskState } from '~/modules/task/types';
 
 interface TaskCardState {
   states: Record<string, TaskState>;
-  /** Set a task's view state (collapsed / expanded / editing).
-   *  When entering editing, all other editing tasks are demoted to expanded. */
-  setTaskState: (taskId: string, state: TaskState) => void;
-  /** Revert an editing task to expanded; keep collapsed tasks collapsed. */
+  /** Sets a task's view state; entering editing demotes every other editing task to expanded. */
+  setTaskState: (taskId: string, taskState: TaskState) => void;
+  /** Reverts an editing task to expanded; collapsed tasks stay collapsed. */
   suppressEdit: (taskId: string) => void;
-  /** Demote every editing task to expanded (single-editor rule, e.g. when the sheet opens). */
+  /** Demotes every editing task to expanded (single-editor rule, e.g. when the sheet opens). */
   suppressAllEditing: () => void;
-  /** Clear all per-task view state. Call when leaving a workspace/board so the map can't grow forever. */
+  /** Clears all view state; called when leaving a board so the map cannot grow forever. */
   reset: () => void;
 }
 
-/** Provides access to shared task-card interaction state. */
 export const useTaskCardStore = create<TaskCardState>()(
   devtools(
     (set) => ({
       states: {},
-      setTaskState: (taskId, state) =>
+      setTaskState: (taskId, taskState) =>
         set(
-          (s) => {
-            if (s.states[taskId] === state) return s;
-            const next = { ...s.states, [taskId]: state };
-            // Enforce single editor: demote all other editing tasks
-
-            if (state === 'editing') {
+          (state) => {
+            if (state.states[taskId] === taskState) return state;
+            const next = { ...state.states, [taskId]: taskState };
+            if (taskState === 'editing') {
               for (const id in next) {
                 if (id !== taskId && next[id] === 'editing') next[id] = 'expanded';
               }
@@ -40,27 +36,27 @@ export const useTaskCardStore = create<TaskCardState>()(
         ),
       suppressEdit: (taskId) =>
         set(
-          (s) => {
-            const cur = s.states[taskId] ?? 'collapsed';
-            const next = cur === 'collapsed' ? 'collapsed' : ('expanded' as TaskState);
-            if (s.states[taskId] === next) return s;
-            return { states: { ...s.states, [taskId]: next } };
+          (state) => {
+            const current = state.states[taskId] ?? 'collapsed';
+            const next: TaskState = current === 'collapsed' ? 'collapsed' : 'expanded';
+            if (state.states[taskId] === next) return state;
+            return { states: { ...state.states, [taskId]: next } };
           },
           undefined,
           'suppressEdit',
         ),
       suppressAllEditing: () =>
         set(
-          (s) => {
+          (state) => {
             let changed = false;
-            const next = { ...s.states };
+            const next = { ...state.states };
             for (const id in next) {
               if (next[id] === 'editing') {
                 next[id] = 'expanded';
                 changed = true;
               }
             }
-            return changed ? { states: next } : s;
+            return changed ? { states: next } : state;
           },
           undefined,
           'suppressAllEditing',
@@ -75,3 +71,5 @@ export const useTaskCardStore = create<TaskCardState>()(
 useBoardFocusStore.subscribe(({ currentItemId }, prev) => {
   if (prev.currentItemId && prev.currentItemId !== currentItemId) useTaskCardStore.getState().suppressEdit(prev.currentItemId);
 });
+
+export { useTaskCardStore as taskCardStore };

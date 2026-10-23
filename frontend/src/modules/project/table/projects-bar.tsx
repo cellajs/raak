@@ -1,15 +1,14 @@
 import { TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { resolveCan } from 'shared';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
 import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/table-bar-shell';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
+import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/project/types';
-import { useUserStore } from '~/modules/user/user-store';
 import { useListQueryTotal } from '~/query/basic/use-list-query-total';
 
 export function ProjectsTableBar({
@@ -23,27 +22,24 @@ export function ProjectsTableBar({
 }: BaseTableBarProps<EnrichedProject, ProjectsRouteSearchParams>) {
   const { t } = useTranslation();
   const createDialog = useDialoger((state) => state.create);
-  const userId = useUserStore((state) => state.user?.id);
+  const resolveCan = useResolveCan();
 
-  const deleteButtonRef = useRef(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
   const total = useListQueryTotal(queryKey);
   const barFilters = useTableBarFilters({ searchVars, setSearch, clearSelection, reset: { q: '' } });
 
-  const resourceOf = (count: number) => (count > 1 ? t('c:project_other') : t('c:project')).toLowerCase();
-
   // Bulk delete acts only on rows this user may delete; the badge shows that count when it differs from the selection.
-  const deletable = selected.filter((row) => resolveCan(row.can?.project?.delete, row.createdBy?.id ?? null, userId));
+  const deletable = selected.filter((row) => resolveCan(row.can?.project?.delete, row.createdBy));
 
   const openDeleteDialog = () => {
+    const resource = t('c:project', { count: deletable.length }).toLowerCase();
     createDialog(<DeleteProjects dialog projects={deletable} callback={clearSelection} />, {
       id: 'delete-projects',
       triggerRef: deleteButtonRef,
       className: 'max-w-xl',
-      title: t('c:delete_resource', { resource: resourceOf(deletable.length) }),
-      description: (
-        <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: deletable.length, resource: resourceOf(deletable.length) }} />
-      ),
+      title: t('c:delete_resource', { resource }),
+      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: deletable.length, resource }} />,
     });
   };
 
@@ -61,7 +57,6 @@ export function ProjectsTableBar({
             ref={deleteButtonRef}
             variant="destructive"
             onClick={openDeleteDialog}
-            className="relative"
             badge={deletable.length < selected.length ? deletable.length : undefined}
             icon={TrashIcon}
             label="c:delete"

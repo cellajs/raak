@@ -51,15 +51,22 @@
                   }
                 }
               },
-              "createdBy": {
-                "type": ["string", "null"],
-                "required": true,
-                "format": "uuid"
-              },
               "createdAt": { "type": "string", "required": true },
+              "createdBy": {
+                "type": ["object", "null"],
+                "required": true,
+                "ref": "#/components/schemas/ActorRef",
+                "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+              },
               "updatedAt": {
                 "type": ["string", "null"],
                 "required": true
+              },
+              "updatedBy": {
+                "type": ["object", "null"],
+                "required": true,
+                "ref": "#/components/schemas/ActorRef",
+                "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
               }
             },
             "ref": "#/components/schemas/Connection"
@@ -79,9 +86,16 @@
             "config": {
               "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
             },
-            "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-            "createdAt": "2024-08-25T16:44:28.368Z",
-            "updatedAt": "2024-10-28T09:20:16.614Z"
+            "createdBy": {
+              "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+              "kind": "user",
+              "name": "Celestino Cummings",
+              "slug": "celestino.cummings",
+              "thumbnailUrl": null
+            },
+            "updatedBy": null,
+            "createdAt": "2024-09-15T21:46:43.882Z",
+            "updatedAt": "2024-12-14T20:47:57.066Z"
           }
         ]
       },
@@ -186,15 +200,22 @@
                 }
               }
             },
-            "createdBy": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             }
           },
           "ref": "#/components/schemas/Connection",
@@ -212,9 +233,16 @@
           "config": {
             "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
           },
-          "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-          "createdAt": "2024-08-25T16:44:28.368Z",
-          "updatedAt": "2024-10-28T09:20:16.614Z"
+          "createdBy": {
+            "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+            "kind": "user",
+            "name": "Celestino Cummings",
+            "slug": "celestino.cummings",
+            "thumbnailUrl": null
+          },
+          "updatedBy": null,
+          "createdAt": "2024-12-15T01:10:59.658Z",
+          "updatedAt": "2024-12-23T13:01:02.898Z"
         }
       },
       {
@@ -274,7 +302,7 @@
             "type": "string",
             "required": true,
             "description": "The institution's name, as the federation's metadata lists it",
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 255
           },
           "claimValues": {
@@ -366,15 +394,22 @@
                 }
               }
             },
-            "createdBy": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             }
           },
           "ref": "#/components/schemas/Connection",
@@ -392,9 +427,16 @@
           "config": {
             "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
           },
-          "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-          "createdAt": "2024-08-25T16:44:28.368Z",
-          "updatedAt": "2024-10-28T09:20:16.614Z"
+          "createdBy": {
+            "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+            "kind": "user",
+            "name": "Celestino Cummings",
+            "slug": "celestino.cummings",
+            "thumbnailUrl": null
+          },
+          "updatedBy": null,
+          "createdAt": "2024-12-15T01:10:59.658Z",
+          "updatedAt": "2024-12-23T13:01:02.898Z"
         }
       },
       {
@@ -454,7 +496,7 @@
             "type": "string",
             "required": false,
             "description": "The institution's name, as the federation's metadata lists it",
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 255
           },
           "claimValues": {
@@ -546,15 +588,22 @@
                 }
               }
             },
-            "createdBy": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             }
           },
           "ref": "#/components/schemas/Connection",
@@ -572,9 +621,16 @@
           "config": {
             "idpEntityIds": ["https://login.uu.nl/nidp/saml2/metadata"]
           },
-          "createdBy": "3a1733e5-db1b-4f23-a822-aff57488fb99",
-          "createdAt": "2024-08-25T16:44:28.368Z",
-          "updatedAt": "2024-10-28T09:20:16.614Z"
+          "createdBy": {
+            "id": "67b5bbbb-1dbd-49a5-af29-8ff28c16ce92",
+            "kind": "user",
+            "name": "Celestino Cummings",
+            "slug": "celestino.cummings",
+            "thumbnailUrl": null
+          },
+          "updatedBy": null,
+          "createdAt": "2024-12-15T01:10:59.658Z",
+          "updatedAt": "2024-12-23T13:01:02.898Z"
         }
       },
       {

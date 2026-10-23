@@ -1,27 +1,22 @@
+import type { ReactNode } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { TKey } from '~/lib/i18n-locales';
 import { cn } from '~/utils/cn';
 
-interface AboutSectionProps {
-  /** When set, renders a `spy-<sectionId>` anchor for scroll-spy nav (used on the about page). */
-  sectionId?: string;
-  title?: TKey;
-  text?: TKey;
-  /** Optional components to interpolate into `text` (e.g. links) via <Trans>. */
-  textComponents?: readonly React.ReactElement[] | Record<string, React.ReactElement>;
-  children?: React.ReactNode;
-  alternate?: boolean;
-}
-
 interface AboutSectionHeaderProps {
   title?: TKey;
   text?: TKey;
-  textComponents?: readonly React.ReactElement[] | Record<string, React.ReactElement>;
   className?: string;
 }
 
-/** @public */
-export function AboutSectionHeader({ title, text, textComponents, className = '' }: AboutSectionHeaderProps) {
+interface AboutSectionProps extends Omit<AboutSectionHeaderProps, 'className'> {
+  /** Sets the section's id to `spy-<sectionId>`, which the scroll spy observes. */
+  sectionId?: string;
+  children?: ReactNode;
+  alternate?: boolean;
+}
+
+function AboutSectionHeader({ title, text, className }: AboutSectionHeaderProps) {
   const { t } = useTranslation();
 
   if (!title && !text) {
@@ -29,26 +24,24 @@ export function AboutSectionHeader({ title, text, textComponents, className = ''
   }
 
   return (
-    <div className={`mx-auto flex max-w-3xl flex-col justify-center gap-4 ${className}`.trim()}>
+    <div className={cn('mx-auto flex max-w-3xl flex-col gap-4', className)}>
       {title && <h2 className="font-heading font-semibold text-2xl leading-[1.1] sm:text-center sm:text-3xl md:text-4xl">{t(title)}</h2>}
       {text && (
-        <p className="text-muted-foreground leading-normal sm:text-center sm:text-lg sm:leading-7">
-          <Trans i18nKey={text as never} components={textComponents} />
+        <p className="text-muted-foreground sm:text-center sm:text-lg sm:leading-7">
+          <Trans i18nKey={text as never} />
         </p>
       )}
     </div>
   );
 }
 
-export function AboutSection({ title, text, textComponents, sectionId, children, alternate = false }: AboutSectionProps) {
-  const backgroundClass = alternate ? 'bg-accent/40 dark:bg-transparent' : '';
-
+export function AboutSection({ title, text, sectionId, children, alternate }: AboutSectionProps) {
   return (
     <section
       id={sectionId ? `spy-${sectionId}` : undefined}
-      className={cn('container max-w-none overflow-hidden px-4 py-8 md:py-12 lg:py-20', backgroundClass)}
+      className={cn('overflow-hidden px-4 py-8 md:py-12 lg:py-20', alternate && 'bg-accent/40 dark:bg-transparent')}
     >
-      <AboutSectionHeader title={title} text={text} textComponents={textComponents} className="mb-12" />
+      <AboutSectionHeader title={title} text={text} className="mb-12" />
       {children}
     </section>
   );

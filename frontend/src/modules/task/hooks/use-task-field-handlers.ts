@@ -3,49 +3,41 @@ import { getNewStatusTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import { TaskStatus } from '~/modules/task/task-properties';
-import type { Task, TaskLabel, TaskStatusType } from '~/modules/task/types';
+import type { Task, TaskStatusType } from '~/modules/task/types';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { findInCache } from '~/query/basic/find-in-list-cache';
-import { computeArrayDelta } from '~/query/offline/array-delta';
+import { type ArrayDelta, computeArrayDelta } from '~/query/offline/array-delta';
 
 interface FieldHandlerDeps {
   taskMutation: ReturnType<typeof useTaskUpdateMutation>;
   user: UserMinimalBase;
 }
 
-/**
- * Pure function that builds field-level onChange handlers for an existing task.
- * Can be called from hooks or plain functions alike.
- */
+// Deltas run against the previous selection, not the dropdown-open snapshot; findInCache is stale after squashed mutations' onSuccess
+const trackedListHandler = <T extends { id: string }>(initial: T[], onChange: (delta: ArrayDelta, updated: T[]) => void) => {
+  let baseline = initial;
+  return (updated: T[]) => {
+    const delta = computeArrayDelta(
+      baseline.map(({ id }) => id),
+      updated.map(({ id }) => id),
+    );
+    baseline = updated;
+    onChange(delta, updated);
+  };
+};
+
+/** Field-level onChange handlers for an existing task; callable from hooks and plain functions. */
 export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
   const { taskMutation, user } = deps;
 
   const baseTaskInfo = { id: task.id };
 
-  // Track last-applied labels across calls so consecutive clicks in the same
-  // dropdown session compute deltas against the previous selection, not the
-  // dropdown-open snapshot. Avoids re-sending already-removed/added IDs.
-  // findInCache is unsafe: squashed mutations' onSuccess can write stale arrays.
-  let labelsBaseline: TaskLabel[] | null = null;
-  const onLabelsChange = (updatedLabels: TaskLabel[]) => {
-    const baseline = labelsBaseline ?? task.labels;
-    const oldIds = baseline.map(({ id }) => id);
-    const newIds = updatedLabels.map(({ id }) => id);
-    const delta = computeArrayDelta(oldIds, newIds);
-    labelsBaseline = updatedLabels;
-    taskMutation.mutate({ ...baseTaskInfo, ops: { labels: delta }, fullLabels: updatedLabels });
-  };
-
-  // Same baseline-tracking pattern as labels.
-  let assignedToBaseline: UserMinimalBase[] | null = null;
-  const onAssignedToChange = (updatedUsers: UserMinimalBase[]) => {
-    const baseline = assignedToBaseline ?? task.assignedTo;
-    const oldIds = baseline.map(({ id }) => id);
-    const newIds = updatedUsers.map(({ id }) => id);
-    const delta = computeArrayDelta(oldIds, newIds);
-    assignedToBaseline = updatedUsers;
-    taskMutation.mutate({ ...baseTaskInfo, ops: { assignedTo: delta }, fullAssignedTo: updatedUsers });
-  };
+  const onLabelsChange = trackedListHandler(task.labels, (delta, fullLabels) =>
+    taskMutation.mutate({ ...baseTaskInfo, ops: { labels: delta }, fullLabels }),
+  );
+  const onAssignedToChange = trackedListHandler(task.assignedTo, (delta, fullAssignedTo) =>
+    taskMutation.mutate({ ...baseTaskInfo, ops: { assignedTo: delta }, fullAssignedTo }),
+  );
 
   const onStatusChange = async (newStatus: TaskStatusType, newOrder = getNewStatusTaskOrder(task, newStatus)) => {
     if (task.status === newStatus) return;
@@ -53,15 +45,10 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
     // Read current task from cache to avoid stale closure when called from dropdowner
     const currentTask = findInCache<Task>('task', task.id) ?? task;
 
-    // Assign to self if the status is "started", but only if the user is not already assigned
     const sortedAssignedTo = getItemsSortedByName([...currentTask.assignedTo, user]);
-    const shouldAssignToSelf = newStatus === TaskStatus.Started && !currentTask.assignedTo.find(({ id }) => id === user.id);
+    const shouldAssignToSelf = newStatus === TaskStatus.Started && !currentTask.assignedTo.some(({ id }) => id === user.id);
 
-    // Optimistic cache state comes from the mutation's onMutate (ops + fullAssignedTo)
-
-    // Combine status + assignedTo + displayOrder into a single mutation when both change
-    const statusOps: Record<string, unknown> = { status: newStatus };
-    if (typeof newOrder === 'number') statusOps.displayOrder = newOrder;
+    const statusOps: Record<string, unknown> = { status: newStatus, displayOrder: newOrder };
     if (shouldAssignToSelf) {
       const oldIds = currentTask.assignedTo.map(({ id }) => id);
       const newIds = sortedAssignedTo.map(({ id }) => id);
@@ -79,16 +66,11 @@ export function buildFieldHandlers(task: Task, deps: FieldHandlerDeps) {
   return { onLabelsChange, onAssignedToChange, onStatusChange, onPrimaryLabelChange };
 }
 
-/**
- * Hook that returns field-level onChange handlers for an existing task.
- * Each handler wraps the task update mutation with optimistic updates.
- */
+/** Field-level onChange handlers for an existing task, each wrapping the task update mutation. */
 export const useTaskFieldHandlers = (task: Task) => {
   const user = useCurrentUser();
   const taskMutation = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
-  // Intentionally NOT memoized: the label/assignee baselines (see buildFieldHandlers) rely on fresh
-  // handlers per render + the dropdowner capturing one instance per open session. Memoizing would
-  // either never hold (taskMutation is a new object each render) or leak a baseline across sessions.
+  // Not memoized: the baselines need one handler instance per dropdown session, which the dropdowner captures at open
   return buildFieldHandlers(task, { taskMutation, user });
 };

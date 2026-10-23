@@ -8,18 +8,15 @@ import { scrollToSectionById } from '~/hooks/use-scroll-spy-store';
 import { FAQ } from '~/modules/marketing/about/faq';
 import { Hero } from '~/modules/marketing/about/hero';
 import { AboutSection } from '~/modules/marketing/about/section';
-import '~/modules/marketing/about/glow-button.css';
 import { Why } from '~/modules/marketing/about/why';
 import { MarketingFooter } from '~/modules/marketing/footer';
 import { MarketingNav } from '~/modules/marketing/nav';
 import { WaitlistForm } from '~/modules/requests/waitlist-form';
 import { Button } from '~/modules/ui/button';
 
-export type AboutSectionId = (typeof aboutSectionIds)[number];
+const aboutSectionIds = ['welcome', 'product', 'faqs'] as const;
 
-const aboutSectionIds = ['welcome', 'product', 'faqs'];
-
-function AboutPage() {
+export function AboutPage() {
   const { t } = useTranslation();
   const isMobile = useBreakpointBelow('sm', false);
 
@@ -31,9 +28,8 @@ function AboutPage() {
     <>
       <MarketingNav />
 
-      <main className="container max-w-none px-0">
-        {/* Hero landing */}
-        <Hero key={'welcome'} title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
+      <main>
+        <Hero title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
           {joinedToWaitlist ? (
             <span className="flex items-center justify-between gap-2 rounded-full border-2 border-success px-4 py-3.5 ring-4 ring-primary/5">
               <CheckIcon className="size-8 text-success" />
@@ -44,25 +40,23 @@ function AboutPage() {
               className="md:flex-row"
               buttonClassName="h-14 rounded-full ring-4 md:max-w-40 ring-primary/10"
               inputClassName="xs:min-w-80 w-full py-6 h-14 px-8 rounded-full border border-gray-400/40 bg-background/50 text-base/6 ring-4 ring-primary/10 transition focus:border-gray-400 focus:outline-hidden focus-visible:ring-primary/20"
-              buttonContent={`${t('c:waitlist_request')}`}
+              buttonContent={t('c:waitlist_request')}
               callback={() => setJoinedToWaitlist(true)}
             />
           )}
 
-          <Button type="button" variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8">
+          <Button variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8">
             <span>{t('about:why')}</span>
-            <ArrowDownIcon className="animate-bounce [animation-iteration-count:5] motion-reduce:animate-none" />
+            <ArrowDownIcon className="repeat-5 animate-bounce motion-reduce:animate-none" />
           </Button>
         </Hero>
 
         <div className="my-12">
-          {/* Why this product */}
-          <AboutSection key={'product'} sectionId="product" title="about:title_2" text="about:text_2">
+          <AboutSection sectionId="product" title="about:title_2" text="about:text_2">
             <Why />
           </AboutSection>
 
-          {/* FAQs */}
-          <AboutSection key={'faqs'} sectionId="faqs" title="about:title_7" alternate={true}>
+          <AboutSection sectionId="faqs" title="about:title_7" alternate>
             <FAQ />
           </AboutSection>
         </div>
@@ -71,5 +65,3 @@ function AboutPage() {
     </>
   );
 }
-
-export { AboutPage };

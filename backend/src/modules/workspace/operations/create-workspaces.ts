@@ -1,11 +1,11 @@
 import type { UserContext } from '#/core/context';
 import { invalidateCache } from '#/middlewares/guard/invalidate-cache';
+import { userActorRef, withActorRefs } from '#/modules/actors/actor-refs';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { buildZeroCounts } from '#/modules/entities/helpers/build-zero-counts';
 import { generateUniqueSlugs } from '#/modules/entities/operations/generate-unique-slugs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { insertMemberships } from '#/modules/memberships/operations/insert-memberships';
-import { withAuditUsers } from '#/modules/user/operations/with-audit-users';
 import { insertWorkspaces } from '#/modules/workspace/workspace-queries';
 import { workspaceContract } from '#/modules/workspace/workspace-schema';
 import { buildSubject } from '#/permissions/build-subject';
@@ -70,7 +70,7 @@ export async function createWorkspacesOp(ctx: UserContext, rawItems: CreateWorks
 
   const counts = buildZeroCounts('workspace', 'admin');
   const membershipByWsId = new Map(createdMemberships.map((m) => [m.workspaceId, m]));
-  const workspacesWithAudit = await withAuditUsers(ctx, workspaceRecords, user);
+  const workspacesWithAudit = await withActorRefs(ctx, workspaceRecords, [userActorRef(user)]);
 
   const workspaceResponses = workspacesWithAudit.map((ws) => {
     const membership = membershipByWsId.get(ws.id)!;
