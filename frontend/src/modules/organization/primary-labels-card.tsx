@@ -16,6 +16,9 @@ import { Button } from '~/modules/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '~/modules/ui/popover';
 import { cn } from '~/utils/cn';
 import { lazyNamed } from '~/utils/lazy-named';
+import { tw } from '~/utils/tw';
+
+const centeredCellClass = tw('flex items-center justify-center');
 
 const IconPicker = lazyNamed(() => import('~/modules/common/icon-picker/icon-picker'), 'IconPicker');
 
@@ -145,7 +148,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       name: '',
       width: 32,
       maxWidth: 32,
-      cellClass: 'cursor-grab flex items-center justify-center',
+      cellClass: cn(centeredCellClass, 'cursor-grab'),
       rowDragHandle: true,
       renderCell: () => <GripVerticalIcon className="size-3.5 text-muted-foreground/50" />,
     },
@@ -153,7 +156,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       key: 'icon',
       name: t('c:icon'),
       width: 56,
-      cellClass: 'flex items-center justify-center',
+      cellClass: centeredCellClass,
       headerCellClass: 'text-center',
       renderCell: ({ row, onRowChange }) => <IconCell row={row} onRowChange={onRowChange} />,
     },
@@ -161,7 +164,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       key: 'color',
       name: t('c:color'),
       width: 56,
-      cellClass: 'flex items-center justify-center',
+      cellClass: centeredCellClass,
       headerCellClass: 'text-center',
       renderCell: ({ row, onRowChange }) => <ColorCell row={row} onRowChange={onRowChange} />,
     },
@@ -179,7 +182,7 @@ export function PrimaryLabelsCard({ organization }: PrimaryLabelsCardProps) {
       name: '',
       width: 32,
       maxWidth: 32,
-      cellClass: 'flex items-center justify-center',
+      cellClass: centeredCellClass,
       renderCell: ({ row }) => (
         <Button
           variant="ghost"

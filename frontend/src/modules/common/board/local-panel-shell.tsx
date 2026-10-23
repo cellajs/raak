@@ -4,9 +4,10 @@ import { useBoardStore } from '~/modules/common/board/board-store';
 import { PanelDragHandleButton } from '~/modules/common/board/panel-drag-handle-button';
 import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 // The icon inside the frame stays on collapse, so the frame fades by color: opacity would take the icon along
-const frameBorderFade = 'border-border/[calc(var(--content-opacity,1)*100%)]';
+const frameBorderFade = tw('border-border/[calc(var(--content-opacity,1)*100%)]');
 
 interface LocalPanelShellProps {
   /** Stable persisted panel id (collapse/size/order state key). */
@@ -52,7 +53,7 @@ export function LocalPanelShell({ panelId, icon, title, headerActions, windowScr
           fallbackLabel={title}
           icon={icon}
           // Collapsed, the panel clips its overflow, so the handle stays a collapsed avatar's size to keep its focus ring in view
-          className={isCollapsed ? 'size-8 p-0 hover:bg-transparent' : 'flex h-8 items-center gap-2 truncate p-2 hover:bg-transparent'}
+          className={isCollapsed ? 'size-8 p-0 hover:bg-transparent' : 'h-8 truncate p-2 hover:bg-transparent'}
         >
           {!isCollapsed && <div className="truncate">{title}</div>}
         </PanelDragHandleButton>

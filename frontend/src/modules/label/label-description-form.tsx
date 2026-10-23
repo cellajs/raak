@@ -4,10 +4,11 @@ import { CollaborativeBlockNote } from '~/modules/common/blocknote/collaborative
 import { useLabelDescriptionUpdate } from '~/modules/label/use-label-description-update';
 import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
+import { tw } from '~/utils/tw';
 
-const editorClass = '[&>.bn-editor]:min-h-24 w-full bg-transparent border-none';
+const editorClass = tw('w-full border-none bg-transparent [&>.bn-editor]:min-h-24');
 /** Left gutter gives the block drag handle (side menu) room; it renders outside the text edge. */
-const gutterClass = 'pt-3 pr-4 pb-5 pl-2 sm:pl-9';
+const gutterClass = tw('pt-3 pr-4 pb-5 pl-2 sm:pl-9');
 
 /**
  * Hosts the collaborative BlockNote editor for documenting an epic label; the shared

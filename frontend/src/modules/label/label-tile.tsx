@@ -19,18 +19,22 @@ import { Badge } from '~/modules/ui/badge';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Input } from '~/modules/ui/input';
 import { cn } from '~/utils/cn';
+import { tw } from '~/utils/tw';
 
 // Like a task card's actions: hidden on a collapsed tile until hover or keyboard focus. Pointer events
 // follow the opacity, so a tap lands on the tile and expands it. Focus from a tap must not reveal: the
 // buttons would appear under the finger between press and release, and the browser then fires no click.
-const actionsReveal =
-  'pointer-events-none opacity-0 transition-opacity group-focus-visible/labelTile:pointer-events-auto group-focus-visible/labelTile:opacity-100 group-has-[:focus-visible]/labelTile:pointer-events-auto group-has-[:focus-visible]/labelTile:opacity-100 group-hover/labelTile:pointer-events-auto group-hover/labelTile:opacity-100 has-data-dropdowner-done:opacity-100 motion-reduce:transition-none';
-const metaHide =
-  'transition-opacity group-focus-visible/labelTile:opacity-0 group-has-[:focus-visible]/labelTile:opacity-0 group-hover/labelTile:opacity-0 group-has-data-dropdowner-done/labelTile:opacity-0 motion-reduce:transition-none';
+const actionsReveal = tw(
+  'pointer-events-none opacity-0 transition-opacity group-hover/label-tile:pointer-events-auto group-hover/label-tile:opacity-100 group-focus-visible/label-tile:pointer-events-auto group-focus-visible/label-tile:opacity-100 has-data-dropdowner-done:opacity-100 group-has-[:focus-visible]/label-tile:pointer-events-auto group-has-[:focus-visible]/label-tile:opacity-100 motion-reduce:transition-none',
+);
+const metaHide = tw(
+  'transition-opacity group-hover/label-tile:opacity-0 group-focus-visible/label-tile:opacity-0 group-has-[:focus-visible]/label-tile:opacity-0 group-has-data-dropdowner-done/label-tile:opacity-0 motion-reduce:transition-none',
+);
 // Transparent under the floating filter and options buttons (2 × 2rem + 0.25rem gap), then a 1.5rem fade. A mask
 // fades the text itself, so it works on every row tint (hover, search highlight) and on the transparent panel.
-const nameFade =
-  'group-hover/labelTile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-focus-visible/labelTile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-has-[:focus-visible]/labelTile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)]';
+const nameFade = tw(
+  'group-hover/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-focus-visible/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)] group-has-[:focus-visible]/label-tile:[mask-image:linear-gradient(to_left,transparent_4.25rem,black_5.75rem)]',
+);
 
 interface LabelTileProps extends Pick<LabelsHostProps, 'selectable' | 'singleExpand' | 'onFilterToggle'> {
   row: LabelRow;
@@ -132,7 +136,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
       onFocus={handleTileFocus}
       onKeyDown={handleTileKeyDown}
       className={cn(
-        'group/labelTile relative border-b text-sm',
+        'group/label-tile relative border-b text-sm',
         onBoard &&
           'outline-none before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary before:opacity-0',
         onBoard && isCurrent && 'before:opacity-100',
@@ -143,7 +147,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
       <div className="flex min-h-11 items-center gap-2 px-4 py-1.5">
         {selectable && (
           <Checkbox
-            className="relative z-10 data-[state=checked]:border-primary"
+            className="z-10"
             checked={isSelected}
             disabled={hasSelectedTasks}
             aria-label={row.name}
@@ -171,15 +175,15 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
               title={expanded && !isReadOnly ? t('c:edit') : undefined}
               onClick={handleNameClick}
               className={cn(
-                '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0 ring-0',
+                '-ml-1.25 flex h-7 min-w-0 items-center rounded-md border border-transparent px-1 text-left outline-0',
                 // Collapsed, an after-overlay stretches the button over the whole tile; the checkbox and buttons sit above it
-                expanded ? 'font-semibold hover:bg-accent/50 focus-visible:bg-accent/50' : "after:absolute after:inset-0 after:content-['']",
+                expanded ? 'font-semibold hover:bg-accent/50 focus-visible:bg-accent/50' : 'after:absolute after:inset-0',
               )}
             >
               <span
                 className={cn(
                   'truncate',
-                  !expanded && 'opacity-80 group-focus-within/labelTile:opacity-100 group-hover/labelTile:opacity-100 max-sm:opacity-100',
+                  !expanded && 'opacity-80 group-focus-within/label-tile:opacity-100 group-hover/label-tile:opacity-100 max-sm:opacity-100',
                 )}
               >
                 <HighlightText text={row.name} />
@@ -196,7 +200,7 @@ export function LabelTile({ row, highlighted, selectable = true, singleExpand, o
 
         {/* Floating and in-flow actions share the row's right padding, so filter and options keep their place
             when the tile expands; close joins on their left */}
-        <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : cn('absolute inset-y-0 right-4', actionsReveal))}>
+        <div className={cn('flex items-center gap-1', expanded ? 'shrink-0' : ['absolute inset-y-0 right-4', actionsReveal])}>
           <AnimatePresence initial={false}>
             {expanded && <CardCloseButton key="close" onClick={() => labelTileStore.getState().collapse(row.id)} />}
           </AnimatePresence>

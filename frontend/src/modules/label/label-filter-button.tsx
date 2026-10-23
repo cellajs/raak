@@ -26,7 +26,7 @@ export function LabelFilterButton({ name, onToggle }: LabelFilterButtonProps) {
           setSearch({ q: isActive ? '' : `=${name}` });
           onToggle?.();
         }}
-        className={cn('relative z-10 h-8 w-8 opacity-60 hover:opacity-100', isActive && 'text-primary opacity-100')}
+        className={cn('size-8 opacity-60 hover:opacity-100', isActive && 'text-primary opacity-100')}
       >
         <ListFilterIcon />
       </Button>
