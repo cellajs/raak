@@ -13,6 +13,7 @@
   "connected_to_institution": "Gekoppeld aan {{institution}}",
   "connected_to_provider": "Account gekoppeld aan {{provider}}",
   "connect_institution_prompt.text": "Je bent ingelogd. Koppel nu je {{institution}}-account om voortaan daarmee in te loggen.",
+  "highlight": "Markeren",
   "item_one": "{{count}} item",
   "item_other": "{{count}} items",
   "local_only": "Alleen op dit apparaat",
