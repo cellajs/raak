@@ -7,14 +7,14 @@ import { dispatchMutation } from '#/lib/mutation-bus';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { findLivePrimaryLabels } from '#/modules/label/label-queries';
 import { deriveDescriptionProps } from '#/modules/task/helpers/description';
-import { hydrateTasks } from '#/modules/task/helpers/hydrate-task';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
+import { hydrateTasks } from '#/modules/task/operations/hydrate-task';
 import { type TaskModel, tasksTable } from '#/modules/task/task-db';
 import { insertTasks } from '#/modules/task/task-queries';
 import { taskContract, type taskCreateManyStxBodySchema } from '#/modules/task/task-schema';
 import { buildSubject } from '#/permissions/build-subject';
 import { canCreateEntity } from '#/permissions/can-create';
-import { type ResolvedPlacement, resolvePlacement } from '#/permissions/product-placement';
+import { type PlacementHome, type ResolvedPlacement, resolvePlacement } from '#/permissions/product-placement';
 import { checkIdempotency } from '#/utils/idempotency';
 import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
@@ -37,7 +37,7 @@ export async function createTasksOp(
 
   const hydrate = async (tasks: TaskModel[]) => {
     const [users, labels] = await tenantRead(ctx, (readCtx) => getTaskRelations(readCtx, { tasks }));
-    return hydrateTasks(tasks, users, labels);
+    return hydrateTasks(ctx, tasks, users, labels);
   };
 
   // Rows an earlier attempt of this create wrote come back as they are; only the other items are created.
@@ -58,7 +58,12 @@ export async function createTasksOp(
   }
 
   const placements: ResolvedPlacement<'task'>[] = [];
-  for (const item of fresh) placements.push((await resolvePlacement(ctx, 'task', item)).columns);
+  const homes: (PlacementHome | null)[] = [];
+  for (const item of fresh) {
+    const { columns, home } = await resolvePlacement(ctx, 'task', item);
+    placements.push(columns);
+    homes.push(home);
+  }
 
   // Resolve primary labels per project: validate provided ids, default to first by displayOrder
   const projectIds = [...new Set(placements.map(({ projectId }) => projectId))];
@@ -93,6 +98,8 @@ export async function createTasksOp(
       description: descriptionText,
       ...derived,
       ...placement,
+      // Public read is the project's decision, copied onto the row; a client cannot widen it.
+      public: homes[index]?.entity.public ?? false,
       displayOrder: taskInfo.displayOrder ?? 0,
       tenantId: organization.tenantId,
       organizationId: organization.id,

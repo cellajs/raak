@@ -294,7 +294,7 @@ const tasksSeed = async () => {
           organizationId: organization.id,
           projectId,
           // Mirror the parent project's publicity locally (no runtime inherit helper in seeds).
-          publicAt: insertProject.publicAt ?? null,
+          public: insertProject.public ?? false,
           summary: summarySource ? JSON.stringify([summarySource]) : '',
           summaryLength,
           keywords,

@@ -1,7 +1,7 @@
 import { TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
 import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteLabels } from '~/modules/label/delete-labels';
@@ -60,7 +60,7 @@ export function LabelSelectedButtons({ selectedLabelIds, clearSelection }: Label
       triggerRef: { current: currentTarget },
       className: 'max-w-xl',
       title: t('c:delete_resource', { resource: resourceOf(count) }),
-      description: <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count, resource: resourceOf(count) }} />,
+      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count, resource: resourceOf(count) }} />,
     });
   };
 

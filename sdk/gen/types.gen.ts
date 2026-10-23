@@ -5,7 +5,18 @@ export type ClientOptions = {
 };
 
 /**
- * The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.
+ * Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone.
+ */
+export type ActorRef = {
+  id: string;
+  kind: 'user' | 'service';
+  name: string;
+  slug: string | null;
+  thumbnailUrl: string | null;
+};
+
+/**
+ * The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.
  */
 export type UserMinimalBase = {
   id: string;
@@ -50,7 +61,7 @@ export type ChannelBase = {
 };
 
 /**
- * The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields.
+ * The fields every product entity shares, such as attachment: user-facing content that inherits access from its channel and syncs to clients. No endpoint returns it on its own; every product response starts with these fields and adds its writers as `ActorRef`s.
  */
 export type ProductBase = {
   id: string;
@@ -58,8 +69,6 @@ export type ProductBase = {
   createdAt: string;
   updatedAt: string | null;
   description: string | null;
-  createdBy: UserMinimalBase | null;
-  updatedBy: UserMinimalBase | null;
   entityType: 'task' | 'label' | 'attachment';
   keywords: string;
 };
@@ -289,9 +298,10 @@ export type Connection = {
      */
     logoUrl?: string;
   };
-  createdBy: string | null;
   createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
 };
 
 /**
@@ -332,7 +342,6 @@ export type User = {
     finishedOnboarding: boolean;
   };
   updatedAt: string | null;
-  updatedBy: string | null;
   lastSeenAt: string | null;
   lastSignInAt: string | null;
 };
@@ -410,7 +419,7 @@ export type InactiveMembership = {
   role: 'admin' | 'member' | 'guest';
   rejectedAt: string | null;
   remindedAt: string | null;
-  createdBy: UserMinimalBase | null;
+  createdBy: ActorRef | null;
   organizationId: string;
   workspaceId: string | null;
   projectId: string | null;
@@ -453,19 +462,19 @@ export type ConnectedApp = {
  * A project that organizes tasks and members within an organization.
  */
 export type Project = {
-  createdAt: string;
   id: string;
   entityType: 'project';
   tenantId: string;
   name: string;
+  createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase | null;
-  updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
-  publicAt: string | null;
+  public: boolean;
   toolsConfig:
     | string
     | number
@@ -541,17 +550,19 @@ export type Request = {
  * A task representing a unit of work, assignable to users with status tracking and labels.
  */
 export type Task = {
-  createdAt: string;
   id: string;
   entityType: 'task';
   tenantId: string;
   name: string;
+  createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
   description: string | null;
   keywords: string;
   deletedAt: string | null;
-  deletedBy: string | null;
-  publicAt: string | null;
+  deletedBy: ActorRef | null;
+  public: boolean;
   seq: number;
   expandable: boolean;
   summary: string;
@@ -584,8 +595,6 @@ export type Task = {
     projectId: string;
   } | null;
   assignedTo: Array<UserMinimalBase>;
-  createdBy: UserMinimalBase | null;
-  updatedBy: UserMinimalBase | null;
   stx: StxBase;
 };
 
@@ -615,12 +624,13 @@ export type Tenant = {
     allowUnregisteredClients: boolean;
   };
   authStrategies: Array<'github' | 'google' | 'microsoft' | 'passkey' | 'totp' | 'email' | 'magic'>;
-  createdBy: string | null;
   subscriptionId: string | null;
   subscriptionStatus: 'none' | 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled';
   subscriptionPlan: string | null;
   createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
   /**
    * The organization this tenant holds, or null if none
    */
@@ -648,19 +658,19 @@ export type ProtectedResourceMetadata = {
  * The channel entity every other channel nests under, owning memberships and roles. Tenant and organization are 1:1: an organization belongs to one tenant, and that tenant holds no other. Returned with `included` data: the signed-in user's membership, counts and member previews.
  */
 export type Organization = {
-  createdAt: string;
   id: string;
   entityType: 'organization';
   tenantId: string;
   name: string;
+  createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase | null;
-  updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
-  publicAt: string | null;
+  public: boolean;
   toolsConfig: {
     'organization.settings'?: {
       order?: Array<string>;
@@ -757,19 +767,19 @@ export type Organization = {
  * A personal workspace that groups projects and tasks within an organization.
  */
 export type Workspace = {
-  createdAt: string;
   id: string;
   entityType: 'workspace';
   tenantId: string;
   name: string;
+  createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
   slug: string;
   thumbnailUrl: string | null;
   bannerUrl: string | null;
-  createdBy: UserMinimalBase | null;
-  updatedBy: UserMinimalBase | null;
   publishedAt: string | null;
-  publicAt: string | null;
+  public: boolean;
   toolsConfig:
     | string
     | number
@@ -809,20 +819,20 @@ export type Workspace = {
  * A file in an organization: a product entity that syncs to clients and works offline. It holds the file metadata and storage keys, not the file itself; a client fetches the file through a signed URL.
  */
 export type Attachment = {
-  createdAt: string;
   id: string;
   entityType: 'attachment';
   tenantId: string;
   name: string;
+  createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
   stx: StxBase;
   description: string | null;
   keywords: string;
-  createdBy: UserMinimalBase | null;
-  updatedBy: UserMinimalBase | null;
   deletedAt: string | null;
-  deletedBy: string | null;
-  publicAt: string | null;
+  deletedBy: ActorRef | null;
+  public: boolean;
   seq: number;
   /**
    * When true, the file is stored in the public bucket and served from the CDN without a presigned URL.
@@ -858,17 +868,17 @@ export type Attachment = {
  * A label used to categorize and filter tasks within a project or workspace.
  */
 export type Label = {
-  createdAt: string;
   id: string;
   entityType: 'label';
   tenantId: string;
   name: string;
+  createdAt: string;
   updatedAt: string | null;
   description: string | null;
   keywords: string;
   deletedAt: string | null;
   deletedBy: string | null;
-  publicAt: string | null;
+  public: boolean;
   seq: number;
   color: string | null;
   mode: 'primary' | 'secondary' | 'epic';
@@ -896,10 +906,10 @@ export type ServiceAccount = {
     role: 'admin' | 'member' | 'guest';
   }>;
   oauthClientId: string | null;
-  createdBy: string | null;
-  updatedBy: string | null;
   createdAt: string;
+  createdBy: ActorRef | null;
   updatedAt: string | null;
+  updatedBy: ActorRef | null;
   lastSeenAt: string | null;
 };
 
@@ -930,7 +940,7 @@ export type ApiKey = {
   expiresAt: string | null;
   revokedAt: string | null;
   revokedBy: string | null;
-  createdBy: UserMinimalBase | null;
+  createdBy: ActorRef | null;
   createdAt: string;
 };
 
@@ -4817,7 +4827,7 @@ export type ResolveTaskLinkResponses = {
     organizationId: string;
     organizationSlug: string;
     tenantId: string;
-    publicAt: string | null;
+    public: boolean;
   };
 };
 
@@ -5698,7 +5708,7 @@ export type CreateProjectsData = {
     id: string;
     name: string;
     slug: string;
-    publicAt: string | null;
+    public: boolean;
   }>;
   path: {
     tenantId: string;
@@ -5931,7 +5941,7 @@ export type UpdateProjectData = {
     name?: string;
     thumbnailUrl?: string | null;
     bannerUrl?: string | null;
-    publicAt?: string | null;
+    public?: boolean;
   };
   path: {
     tenantId: string;
@@ -6739,7 +6749,6 @@ export type CreateAttachmentsData = {
      * MIME type of the server-converted variant; null when none.
      */
     convertedContentType?: string | null;
-    publicAt?: string | null;
     projectId: string;
     stx: StxBase;
   }>;
@@ -7675,9 +7684,9 @@ export type UpdateMembershipResponses = {
     channelId: string;
     userId: string;
     role: 'admin' | 'member' | 'guest';
-    createdBy: string | null;
+    createdBy: ActorRef | null;
     updatedAt: string | null;
-    updatedBy: string | null;
+    updatedBy: ActorRef | null;
     organizationId: string;
     workspaceId: string | null;
     projectId: string | null;
@@ -7893,7 +7902,7 @@ export type GetPendingMembershipsResponses = {
       email: string;
       role: 'admin' | 'member' | 'guest' | null;
       createdAt: string;
-      createdBy: UserMinimalBase | null;
+      createdBy: ActorRef | null;
     }>;
     total: number;
   };
@@ -8518,7 +8527,6 @@ export type CreateTasksData = {
     displayOrder?: number;
     labels?: Array<string>;
     assignedTo?: Array<string>;
-    publicAt?: string | null;
     projectId: string;
     stx: StxBase;
   }>;
@@ -8662,7 +8670,7 @@ export type UpdateTaskData = {
         remove?: Array<string>;
       };
       projectId?: string;
-      publicAt?: string | null;
+      public?: boolean;
     };
     stx: StxBase;
   };

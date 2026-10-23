@@ -1,10 +1,10 @@
 import type { ActorContext } from '#/core/context';
 import { tenantRead } from '#/db/tenant-context';
-import { hydrateTask } from '#/modules/task/helpers/hydrate-task';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
+import { hydrateTask } from '#/modules/task/operations/hydrate-task';
 import { getValidProduct } from '#/permissions/get-valid-product';
 
-type ReturnTask = ReturnType<typeof hydrateTask>;
+type ReturnTask = Awaited<ReturnType<typeof hydrateTask>>;
 
 export async function getTaskOp(ctx: ActorContext, id: string): Promise<ReturnTask> {
   const { mainTask, users, labels } = await tenantRead(ctx, async (readCtx) => {
@@ -13,5 +13,5 @@ export async function getTaskOp(ctx: ActorContext, id: string): Promise<ReturnTa
     return { mainTask, users, labels };
   });
 
-  return hydrateTask(mainTask, users, labels);
+  return hydrateTask(ctx, mainTask, users, labels);
 }

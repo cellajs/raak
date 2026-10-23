@@ -21,7 +21,7 @@ export const useProjectPublicity = (projectId: string) => {
 
   if (workspaceMatch || projectMatch) {
     const cached = findProjectByIdOrSlug(projectId, tenantId) ?? queryClient.getQueryData<Project>(projectQueryKeys.detail.byId(projectId));
-    return cached?.publicAt !== null && cached?.publicAt !== undefined;
+    return cached?.public ?? false;
   }
 
   throw new Error('useProjectPublicity must be used within a workspace or project route.');

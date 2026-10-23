@@ -1,8 +1,8 @@
 import { CheckIcon, CircleDotDashedIcon, CopyIcon, TagIcon, TrashIcon, UserRoundPlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
 import { SelectionActionBar } from '~/modules/common/selection-action-bar';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { TooltipButton } from '~/modules/common/tooltip-button';
@@ -79,7 +79,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
       triggerRef: { current: currentTarget },
       className: 'max-w-xl',
       title: t('c:delete_resource', { resource: resourceOf(tasks.length) }),
-      description: <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: tasks.length, resource: resourceOf(tasks.length) }} />,
+      description: <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: tasks.length, resource: resourceOf(tasks.length) }} />,
     });
   };
 

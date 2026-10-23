@@ -29,7 +29,7 @@ export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
   const { tenantId: _, organizationId, ...scopeFilters } = queryParams ?? { organizationId: '', projectId: '' };
 
   return useSyncExternalStore(subscribeToTaskCache, () => {
-    const queryKey = !isPublicView ? taskKeys.list.org(organizationId) : taskKeys.publicList.filtered({ ...scopeFilters, publicAt: true as const });
+    const queryKey = !isPublicView ? taskKeys.list.org(organizationId) : taskKeys.publicList.filtered({ ...scopeFilters, public: true as const });
     const queries = queryClient.getQueriesData<QueryData<Task>>({ queryKey, type: 'active' });
 
     if (!queries.length) return null;

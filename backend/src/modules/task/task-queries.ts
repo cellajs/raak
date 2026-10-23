@@ -1,9 +1,11 @@
 import { and, asc, count, eq, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import type { ActorContext, DbContext } from '#/core/context';
 import type { DbOrTx } from '#/db/db';
+import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { publishedRowsPredicate } from '#/db/utils/published-predicate';
 import { requestScope, requestScopeWhere } from '#/db/utils/request-scope';
+import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { labelsTable } from '#/modules/label/label-db';
 import { labelEmbeddedSelect } from '#/modules/label/label-schema';
@@ -11,7 +13,6 @@ import { membershipsTable } from '#/modules/memberships/memberships-db';
 import { type InsertTaskModel, tasksTable } from '#/modules/task/task-db';
 import { userMinimalBaseSelect } from '#/modules/user/helpers/select';
 import { usersTable } from '#/modules/user/user-db';
-import { getIsoDate } from '#/utils/iso-date';
 
 interface InsertTasksOpts {
   tasks: InsertTaskModel[];
@@ -41,16 +42,16 @@ export const updateTask = async (ctx: ActorContext, { id, values }: UpdateTaskOp
 
 interface DeleteTasksByIdsOpts {
   ids: string[];
-  deletedBy: string;
-  deletedAt: string;
+  /** Who deletes: stamped as the tombstone and as the row's last write. */
+  actorId: ActorId;
 }
 
 /** Soft-delete tasks by IDs and return the affected rows. */
-export const deleteTasksByIds = async (ctx: ActorContext, { ids, deletedAt, deletedBy }: DeleteTasksByIdsOpts) => {
+export const deleteTasksByIds = async (ctx: ActorContext, { ids, actorId }: DeleteTasksByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .update(tasksTable)
-    .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
+    .set(deleteStamps(actorId))
     .where(and(inArray(tasksTable.id, ids), requestScopeWhere(ctx, tasksTable, 'task'), isNull(tasksTable.deletedAt)))
     .returning();
 };
@@ -187,7 +188,7 @@ export const countTasksByStatus = async (ctx: ActorContext, { projectId }: Count
  */
 export const reassignTasksFromDeletedPrimaries = async (
   ctx: ActorContext,
-  { deletedPrimaryIds, updatedBy }: { deletedPrimaryIds: string[]; updatedBy: string },
+  { deletedPrimaryIds, updatedBy }: { deletedPrimaryIds: string[]; updatedBy: ActorId },
 ): Promise<void> => {
   if (deletedPrimaryIds.length === 0) return;
   const { db } = ctx.var;
@@ -206,8 +207,7 @@ export const reassignTasksFromDeletedPrimaries = async (
         ORDER BY l.display_order ASC NULLS LAST
         LIMIT 1
       )`,
-      updatedAt: getIsoDate(),
-      updatedBy,
+      ...updateStamps(updatedBy),
       stx: stripChangedFields(tasksTable.stx),
     })
     .where(and(inArray(tasksTable.primaryLabelId, deletedPrimaryIds), requestScopeWhere(ctx, tasksTable, 'task')));

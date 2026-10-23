@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
@@ -13,6 +12,7 @@ import { toaster } from '~/modules/common/toaster/toaster';
 import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useUpdateWorkspaceMutation } from '~/modules/workspace/query';
+import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = zUpdateWorkspaceBody;
 type FormValues = z.infer<typeof formSchema>;
@@ -28,7 +28,7 @@ function UpdateWorkspaceForm({ workspace, callback, sheet: isSheet }: Props) {
 
   const { mutate, isPending } = useUpdateWorkspaceMutation();
 
-  const formOptions: UseFormProps<FormValues> = { resolver: zodResolver(formSchema), defaultValues: { name: workspace.name } };
+  const formOptions: UseFormProps<FormValues> = { resolver: formResolver(formSchema), defaultValues: { name: workspace.name } };
 
   const formContainerId = 'update-workspace';
   const form = useFormWithDraft<FormValues>(`update-workspace-${workspace.id}`, { formOptions, formContainerId });
@@ -52,7 +52,7 @@ function UpdateWorkspaceForm({ workspace, callback, sheet: isSheet }: Props) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
         <div className="flex flex-col gap-2 sm:flex-row">
           <SubmitButton disabled={!form.isDirty} loading={isPending}>

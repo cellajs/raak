@@ -5,13 +5,13 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hierarchy, isProduct, resolveCan } from 'shared';
 import { getMemberStatIcon } from '~/lib/entity-modules';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { CheckboxColumn } from '~/modules/common/data-table/checkbox-column';
 import { dateColumn, ellipsisColumn } from '~/modules/common/data-table/columns';
 import type { EllipsisOption } from '~/modules/common/data-table/table-ellipsis';
 import type { ColumnOrColumnGroup } from '~/modules/common/data-table/types';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
+import { NamedText } from '~/modules/common/named-text';
 import { openPopConfirm } from '~/modules/common/popconfirm';
 import { openEditSheet } from '~/modules/common/sheeter/open-edit-sheet';
 import type { EnrichedOrganization } from '~/modules/organization/types';
@@ -19,7 +19,7 @@ import { DeleteProjects } from '~/modules/project/delete-projects';
 import type { EnrichedProject } from '~/modules/project/types';
 import { UpdateProjectForm } from '~/modules/project/update-project-form';
 import { Button } from '~/modules/ui/button';
-import { UserCell } from '~/modules/user/user-cell';
+import { ActorCell } from '~/modules/user/actor-cell';
 import { useUserStore } from '~/modules/user/user-store';
 
 const projectRoles = hierarchy.getRoles('project');
@@ -83,7 +83,7 @@ export const useColumns = (organization: EnrichedOrganization) => {
             onSelect: (project) => {
               const close = () => useDropdowner.getState().remove();
               openPopConfirm(
-                <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: project.name }} />,
+                <NamedText i18nKey="c:delete_confirm.text" name={project.name} />,
                 <DeleteProjects projects={[project]} callback={close} onCancel={close} />,
               );
             },
@@ -92,13 +92,13 @@ export const useColumns = (organization: EnrichedOrganization) => {
         return options;
       }),
       {
-        key: 'publicAt',
+        key: 'public',
         name: t('c:public_access'),
         minBreakpoint: 'md',
         minWidth: 100,
         maxWidth: 160,
         renderCell: ({ row }) =>
-          row.publicAt ? (
+          row.public ? (
             <>
               <GlobeIcon className="mr-2 opacity-50" />
               {t('c:public')}
@@ -158,7 +158,7 @@ export const useColumns = (organization: EnrichedOrganization) => {
         hidden: true,
         minWidth: 160,
         placeholderValue: '-',
-        renderCell: ({ row, tabIndex }) => row.createdBy && <UserCell compactable user={row.createdBy} tabIndex={tabIndex} />,
+        renderCell: ({ row, tabIndex }) => row.createdBy && <ActorCell compactable actor={row.createdBy} tabIndex={tabIndex} />,
       },
     ],
     [t, userId, organizationSlug],

@@ -46,7 +46,7 @@ describe('Creating workspaces and projects', async () => {
     id: `temp-${crypto.randomUUID()}`,
     name,
     slug: `${name}-${crypto.randomUUID().slice(0, 8)}`,
-    publicAt: null,
+    public: false,
   });
 
   it('gives every workspace of one request a slug of its own', async () => {

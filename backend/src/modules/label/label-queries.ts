@@ -3,12 +3,13 @@ import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import type { PrimaryLabelDefinition } from 'shared/config/labels-config';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import type { ActorContext, DbContext } from '#/core/context';
+import type { ActorId } from '#/db/utils/ids';
 import { type ListTotalSource, resolveListTotal } from '#/db/utils/list-total';
 import { requestScopeWhere } from '#/db/utils/request-scope';
+import { deleteStamps, updateStamps } from '#/db/utils/stamps';
 import { stripChangedFields } from '#/db/utils/strip-changed-fields';
 import { getOrganizationEntityCount } from '#/modules/entities/entities-queries';
 import { type LabelModel, labelsTable } from '#/modules/label/label-db';
-import { getIsoDate } from '#/utils/iso-date';
 import { getOrderColumns } from '#/utils/order-column';
 import { type SeqRange, seqRangeRead } from '#/utils/seq-range';
 import { textSearchFilter } from '#/utils/sql';
@@ -52,16 +53,16 @@ export const updateLabel = async (ctx: ActorContext, { id, values }: UpdateLabel
 
 interface DeleteLabelsByIdsOpts {
   ids: string[];
-  deletedBy: string;
-  deletedAt: string;
+  /** Who deletes: stamped as the tombstone and as the row's last write. */
+  actorId: ActorId;
 }
 
 /** Soft-delete labels by IDs. */
-export const deleteLabelsByIds = async (ctx: ActorContext, { ids, deletedAt, deletedBy }: DeleteLabelsByIdsOpts) => {
+export const deleteLabelsByIds = async (ctx: ActorContext, { ids, actorId }: DeleteLabelsByIdsOpts) => {
   const { db } = ctx.var;
   return db
     .update(labelsTable)
-    .set({ deletedAt, deletedBy, updatedAt: deletedAt, updatedBy: deletedBy })
+    .set(deleteStamps(actorId))
     .where(and(inArray(labelsTable.id, ids), requestScopeWhere(ctx, labelsTable, 'label'), isNull(labelsTable.deletedAt)))
     .returning();
 };
@@ -124,7 +125,7 @@ export const countLivePrimaryLabels = async (ctx: ActorContext, { projectId }: {
 interface PropagateSetupConfigLabelsOpts {
   entries: PrimaryLabelDefinition[];
   organizationId: string;
-  updatedBy: string;
+  updatedBy: ActorId;
 }
 
 /**
@@ -139,11 +140,10 @@ export const propagateSetupConfigLabels = async (
   { entries, organizationId, updatedBy }: PropagateSetupConfigLabelsOpts,
 ): Promise<void> => {
   const { db } = ctx.var;
-  const updatedAt = getIsoDate();
   for (const entry of entries) {
     await db
       .update(labelsTable)
-      .set({ name: entry.name, color: entry.color, icon: entry.icon, updatedAt, updatedBy, stx: stripChangedFields(labelsTable.stx) })
+      .set({ name: entry.name, color: entry.color, icon: entry.icon, ...updateStamps(updatedBy), stx: stripChangedFields(labelsTable.stx) })
       .where(
         and(
           eq(labelsTable.organizationId, organizationId),

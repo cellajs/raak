@@ -1,11 +1,11 @@
 import { type EntityRole, hierarchy } from 'shared';
 import type { UserContext } from '#/core/context';
 import { AppError } from '#/core/error';
+import { withActorRefs } from '#/modules/actors/actor-refs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { findMemberPreviewsByChannels } from '#/modules/memberships/memberships-queries';
 import { findProjectsPaginated } from '#/modules/project/project-queries';
-import type { UserMinimalBase } from '#/modules/user/helpers/audit-user';
-import { coalesceAuditUsers } from '#/modules/user/helpers/audit-user';
+import type { UserMinimalBase } from '#/modules/user/helpers/user-minimal';
 import { actorFrom } from '#/permissions/access';
 import { resolveChannelCollectionReadScope } from '#/permissions/channel-collection-scope';
 
@@ -71,7 +71,7 @@ export async function getProjectsOp(ctx: UserContext, input: GetProjectsInput) {
     : null;
 
   // Build response with included wrapper for optional data
-  const items = coalesceAuditUsers(projectResults).map((row) => {
+  const items = (await withActorRefs(ctx, projectResults)).map((row) => {
     const { membership: listedMembership, counts, ...project } = row;
     // The row joins the listed user's membership; the response carries the caller's own, or none
     const membership = ofAnotherUser ? memberships.find((m) => m.channelType === 'project' && m.projectId === project.id) : listedMembership;

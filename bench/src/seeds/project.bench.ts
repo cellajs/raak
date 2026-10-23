@@ -20,7 +20,7 @@ export const loadtestProject = (index: number): InsertProjectModel => {
     name: `Load Test Project ${index}`,
     slug: `xbench-project-${index}`,
     organizationId: ORG_ID,
-    publicAt: null,
+    public: false,
   };
 };
 

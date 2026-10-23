@@ -2,11 +2,11 @@ import { TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { resolveCan } from 'shared';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { TableBarButton } from '~/modules/common/data-table/table-bar-button';
 import { TableBarShell, useTableBarFilters } from '~/modules/common/data-table/table-bar-shell';
 import type { BaseTableBarProps } from '~/modules/common/data-table/types';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
 import { DeleteProjects } from '~/modules/project/delete-projects';
 import type { EnrichedProject, ProjectsRouteSearchParams } from '~/modules/project/types';
 import { useUserStore } from '~/modules/user/user-store';
@@ -42,7 +42,7 @@ export function ProjectsTableBar({
       className: 'max-w-xl',
       title: t('c:delete_resource', { resource: resourceOf(deletable.length) }),
       description: (
-        <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: deletable.length, resource: resourceOf(deletable.length) }} />
+        <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: deletable.length, resource: resourceOf(deletable.length) }} />
       ),
     });
   };

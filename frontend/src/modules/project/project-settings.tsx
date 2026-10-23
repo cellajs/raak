@@ -2,11 +2,11 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { LogOutIcon, Trash2Icon, UnlinkIcon } from 'lucide-react';
 import { useRef } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import type { Project, Workspace } from 'sdk';
 import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { useResolveCan } from '~/modules/entities/use-resolve-can';
 import { DeleteProjects } from '~/modules/project/delete-projects';
@@ -61,7 +61,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
       title: t('c:delete_resource', { resource: t('c:project').toLowerCase() }),
-      description: <ConfirmText i18nKey="c:confirm.delete_resource" values={{ name: project.name, resource: t('c:project').toLowerCase() }} />,
+      description: <NamedText i18nKey="c:confirm.delete_resource" name={project.name} values={{ resource: t('c:project').toLowerCase() }} />,
     });
   };
 
@@ -120,7 +120,7 @@ export function ProjectSettings({ sheet: isSheet, project }: { sheet?: boolean; 
           <CardHeader>
             <CardTitle level={2}>{t('c:delete_resource', { resource: t('c:project').toLowerCase() })}</CardTitle>
             <CardDescription>
-              <Trans i18nKey="c:delete_resource_notice.text" values={{ name: project.name, resource: t('c:project').toLowerCase() }} />
+              <NamedText i18nKey="c:delete_resource_notice.text" name={project.name} values={{ resource: t('c:project').toLowerCase() }} />
             </CardDescription>
           </CardHeader>
           <CardContent>

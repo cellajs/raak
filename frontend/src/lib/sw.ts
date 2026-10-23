@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
-import { CacheFirst, ExpirationPlugin, type PrecacheEntry, Serwist, StaleWhileRevalidate } from 'serwist';
+import { ExpirationPlugin, type PrecacheEntry, Serwist, StaleWhileRevalidate } from 'serwist';
 
-declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: (PrecacheEntry | string)[] };
+declare const self: ServiceWorkerGlobalScope & { __SW_MANIFEST: (PrecacheEntry | string)[] };
 
 declare const __BACKEND_URL__: string;
 
@@ -9,9 +9,12 @@ declare const __BACKEND_URL__: string;
 const apiPathPrefix = new URL(__BACKEND_URL__, self.location.origin).pathname.replace(/\/+$/, '');
 const navigationDenylist = apiPathPrefix ? [new RegExp(`^${apiPathPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`)] : [];
 
+/** Docs files outside docs.gen/: the OpenAPI spec, and the type and zod indexes the docs code view reads. */
+const docsFiles = new Set(['/static/openapi.json', '/static/types.gen.ts', '/static/zod.gen.ts']);
+
 // `skipWaiting: false` keeps the update prompt: Serwist listens for the client's `{type: 'SKIP_WAITING'}` message.
 const serwist = new Serwist({
-  precacheEntries: self.__WB_MANIFEST,
+  precacheEntries: self.__SW_MANIFEST,
   skipWaiting: false,
   clientsClaim: true,
   precacheOptions: {
@@ -24,19 +27,10 @@ const serwist = new Serwist({
   runtimeCaching: [
     {
       // Docs files keep stable names per release; the app appends ?v=<sha> so each release keys fresh cache entries.
-      matcher: ({ url }) =>
-        url.origin === self.location.origin && (url.pathname.startsWith('/static/docs.gen/') || url.pathname === '/static/openapi.json'),
+      matcher: ({ url }) => url.origin === self.location.origin && (url.pathname.startsWith('/static/docs.gen/') || docsFiles.has(url.pathname)),
       handler: new StaleWhileRevalidate({
         cacheName: 'docs-gen',
         plugins: [new ExpirationPlugin({ maxEntries: 40 })],
-      }),
-    },
-    {
-      // Grammar/theme chunks are excluded from the precache (globIgnores in vite.config.ts) and content-hashed.
-      matcher: ({ url }) => url.origin === self.location.origin && /^\/assets\/grammars-/.test(url.pathname),
-      handler: new CacheFirst({
-        cacheName: 'grammars',
-        plugins: [new ExpirationPlugin({ maxEntries: 80 })],
       }),
     },
   ],
@@ -80,11 +74,10 @@ async function handleNotificationPush(data: NotificationPushData): Promise<void>
 /** Recount hint: the push carries no number; the API recount is authoritative and cheap. */
 async function updateUnreadBadge(): Promise<void> {
   try {
-    const res = await fetch(`${__BACKEND_URL__}/notifications?limit=1`, { credentials: 'include' });
-    if (!res.ok) return;
-    const { unreadCount }: { unreadCount: number } = await res.json();
-    if (unreadCount > 0) (self.navigator as Navigator).setAppBadge(unreadCount);
-    else (self.navigator as Navigator).clearAppBadge();
+    const response = await fetch(`${__BACKEND_URL__}/notifications?limit=1`, { credentials: 'include' });
+    if (!response.ok) return;
+    const { unreadCount }: { unreadCount: number } = await response.json();
+    await (unreadCount > 0 ? self.navigator.setAppBadge(unreadCount) : self.navigator.clearAppBadge());
   } catch {
     // Network error or expired auth: leave the badge unchanged.
   }
@@ -108,13 +101,11 @@ async function focusOrOpenApp(url: string): Promise<void> {
   if ('navigate' in existing) await existing.navigate(url);
 }
 
-// The push service rotated the subscription: re-subscribe with the same key and re-register, or
-// the device silently stops receiving until the user toggles push off and on again.
-self.addEventListener('pushsubscriptionchange', ((event: ExtendableEvent & { oldSubscription?: PushSubscription }) => {
-  event.waitUntil(resubscribe(event.oldSubscription));
-}) as EventListener);
+// The push service rotated the subscription: re-subscribe with the same key and re-register, or the device receives no
+// pushes until the user toggles push off and on again.
+self.addEventListener('pushsubscriptionchange', (event) => event.waitUntil(resubscribe(event.oldSubscription)));
 
-async function resubscribe(oldSubscription?: PushSubscription): Promise<void> {
+async function resubscribe(oldSubscription: PushSubscription | null): Promise<void> {
   try {
     const applicationServerKey = oldSubscription?.options.applicationServerKey ?? undefined;
     const subscription = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });

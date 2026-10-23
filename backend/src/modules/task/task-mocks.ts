@@ -1,19 +1,11 @@
 import { faker } from '@faker-js/faker';
-import {
-  generateMockEntityChannelIdColumns,
-  MOCK_REF_DATE,
-  mockBatchResponse,
-  mockPaginated,
-  mockProductColumns,
-  mockUuid,
-  withFakerSeed,
-} from '#/mocks';
+import { generateMockEntityChannelIdColumns, mockBatchResponse, mockPaginated, mockProductColumns, mockUuid, withFakerSeed } from '#/mocks';
 import { mockLabel } from '#/modules/label/label-mocks';
 import { mockOrganizationResponse } from '#/modules/organization/organization-mocks';
 import { mockProjectResponse } from '#/modules/project/project-mocks';
 import type { TaskModel } from '#/modules/task/task-db';
 import { TaskStatus } from '#/modules/task/task-properties';
-import { mockAuditUsers, mockUserMinimalBase } from '#/schemas/entity-base-mocks';
+import { mockActorRefs, mockUserMinimalBase } from '#/schemas/entity-base-mocks';
 
 const taskStatuses = Object.values(TaskStatus).filter((status): status is TaskStatus => typeof status === 'number');
 
@@ -30,9 +22,6 @@ export const mockTask = (key = 'task:default'): TaskModel =>
     const channelIds = generateMockEntityChannelIdColumns('task');
     const summaryText = faker.lorem.sentence({ min: 5, max: 15 });
     const checkboxCount = faker.number.int({ min: 0, max: 10 });
-    const publicAt =
-      faker.helpers.maybe(() => faker.date.between({ from: new Date(base.createdAt), to: MOCK_REF_DATE }).toISOString(), { probability: 0.3 }) ??
-      null;
 
     return {
       ...base,
@@ -49,7 +38,7 @@ export const mockTask = (key = 'task:default'): TaskModel =>
       attachments: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       labels: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 3 } }),
       assignedTo: faker.helpers.multiple(() => mockUuid(), { count: { min: 0, max: 2 } }),
-      publicAt,
+      public: faker.datatype.boolean({ probability: 0.3 }),
       // Channel entity columns
       ...channelIds,
     };
@@ -69,7 +58,8 @@ export const mockTaskResponse = (key = 'task:default') => {
     labels: task.labels.map((id, index) => mockEmbeddedLabel(id, `${key}:label:${index}`)),
     primaryLabel: mockEmbeddedLabel(task.primaryLabelId, `${key}:primary-label`),
     assignedTo: task.assignedTo.map((id, index) => ({ ...mockUserMinimalBase(`${key}:assigned-to:${index}`, id) })),
-    ...mockAuditUsers(task, key),
+    ...mockActorRefs(task, key),
+    deletedBy: null,
   };
 };
 
@@ -89,6 +79,6 @@ export const mockTaskLinkResponse = (key = 'task:default') => {
     organizationId: organization.id,
     organizationSlug: organization.slug,
     tenantId: organization.tenantId,
-    publicAt: project.publicAt,
+    public: project.public,
   };
 };

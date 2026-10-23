@@ -1,7 +1,7 @@
 import type { UserContext } from '#/core/context';
+import { withActorRef } from '#/modules/actors/actor-refs';
 import { toMembershipBase } from '#/modules/memberships/helpers/select';
 import { resolveProjectWorkspaceId, upsertCurrentUserProjectMembershipWorkspace } from '#/modules/project/operations/project-workspace-membership';
-import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions';
 import { log } from '#/utils/logger';
 
@@ -12,7 +12,7 @@ export async function assignProjectWorkspaceOp(ctx: UserContext, id: string, wor
 
   log.info('Project workspace assigned', { projectId: project.id, workspaceId: resolvedWorkspaceId });
 
-  const projectWithAudit = await withAuditUser(ctx, project);
+  const projectWithAudit = await withActorRef(ctx, project);
 
   return { ...projectWithAudit, included: { membership: toMembershipBase(updatedMembership) } };
 }

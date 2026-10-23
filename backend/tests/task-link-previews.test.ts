@@ -47,7 +47,6 @@ describe('Task link previews of a private task', async () => {
       tenantId: tenant.tenantId,
       organizationId: tenant.organization.id,
       ...project,
-      publicAt: null,
       createdBy: tenant.user.id,
     });
     await db.insert(tasksTable).values({
@@ -61,7 +60,6 @@ describe('Task link previews of a private task', async () => {
       primaryLabelId: crypto.randomUUID(),
       displayOrder: 1,
       status: TaskStatus.Unstarted,
-      publicAt: null,
       stx: mockStxBase(),
       createdBy: tenant.user.id,
     });
@@ -101,7 +99,7 @@ describe('Task link previews of a private task', async () => {
       organizationId: tenant.organization.id,
       organizationSlug: tenant.organization.slug,
       tenantId: tenant.tenantId,
-      publicAt: null,
+      public: false,
     });
   });
 

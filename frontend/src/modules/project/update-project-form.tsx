@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { CircleAlertIcon } from 'lucide-react';
 import type { UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +18,7 @@ import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { cleanUrl } from '~/utils/clean-url';
+import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = zUpdateProjectBody;
 type FormValues = z.infer<typeof formSchema>;
@@ -37,8 +37,8 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
   const { mutate, isPending } = useProjectUpdateMutation();
 
   const formOptions: UseFormProps<FormValues> = {
-    resolver: zodResolver(formSchema),
-    defaultValues: { slug: project.slug, name: project.name, thumbnailUrl: cleanUrl(project.thumbnailUrl), publicAt: project.publicAt },
+    resolver: formResolver(formSchema),
+    defaultValues: { slug: project.slug, name: project.name, thumbnailUrl: cleanUrl(project.thumbnailUrl), public: project.public },
   };
 
   const formContainerId = 'update-project';
@@ -64,7 +64,7 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <AvatarFormField form={form} label={t('c:resource_logo', { resource: t('c:project') })} type="project" name="thumbnailUrl" entity={project} />
         <InputFormField control={form.control} name="name" label={t('c:name')} required />
         <SlugFormField
@@ -77,11 +77,11 @@ function UpdateProjectForm({ project, callback, dialog: isDialog, sheet: isSheet
         />
         <FormField
           control={form.control}
-          name="publicAt"
+          name="public"
           render={({ field }) => (
-            <FormItem className="flex-row items-center" name="publicAt">
+            <FormItem className="flex-row items-center" name="public">
               <FormControl>
-                <Checkbox checked={field.value !== null} onCheckedChange={(checked) => field.onChange(checked ? new Date().toISOString() : null)} />
+                <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
               </FormControl>
               <FormLabel>{t('c:public_access')}</FormLabel>
               <p className="flex items-center gap-2">

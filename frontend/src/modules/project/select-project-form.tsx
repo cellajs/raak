@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { UseFormProps } from 'react-hook-form';
@@ -18,6 +17,7 @@ import { Form, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/
 import { workspacesListQueryOptions } from '~/modules/workspace/query';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
 import { flattenInfiniteData } from '~/query/basic/flatten';
+import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = z.object({ selectedProjects: z.array(zChannelBase).min(1), organizationId: z.string(), workspaceId: z.string() });
 type FormValues = z.infer<typeof formSchema>;
@@ -46,7 +46,7 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
 
   const formOptions: UseFormProps<FormValues> = useMemo(
     () => ({
-      resolver: zodResolver(formSchema),
+      resolver: formResolver(formSchema),
       defaultValues: { selectedProjects: [], organizationId, workspaceId },
     }),
     [workspaceId],
@@ -96,7 +96,7 @@ export function SelectProjectForm({ dialog: isDialog, callback }: SelectProjectF
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="selectedProjects"

@@ -3,16 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Artillery load-testing scenarios and tooling",
+  "description": "Load-testing scenarios and their runner",
   "scripts": {
-    "bench": "tsx src/bench-cli.ts",
-    "db:seed": "tsx src/data-setup.ts",
-    "db:teardown": "tsx src/data-setup.ts --teardown",
+    "bench": "tsx --no-experimental-webstorage src/bench-cli.ts",
     "ts": "tsgo --pretty",
-    "yjs-typing": "tsx src/yjs-typing.ts"
+    "db:seed": "tsx src/data-setup.ts",
+    "db:teardown": "tsx src/data-setup.ts --teardown"
   },
   "dependencies": {
-    "@inquirer/prompts": "^8.7.3",
+    "@inquirer/prompts": "^8.7.4",
     "nanoid": "^6.0.2",
     "ora": "^9.4.1",
     "pg": "^8.23.1",
@@ -24,8 +23,6 @@
     "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.2",
-    "artillery": "^2.0.34",
-    "artillery-plugin-ensure": "^1.27.0",
     "lib0": "^0.2.119",
     "tsx": "^4.23.15",
     "typescript": "6.0.3",

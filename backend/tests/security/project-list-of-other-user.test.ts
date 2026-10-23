@@ -43,7 +43,7 @@ describe("Another user's project list", async () => {
       const headers = headersOf(listed);
       const workspaces = await call(createWorkspaces, { path, body: [{ id: `temp-${crypto.randomUUID()}`, name: 'Home' }], headers });
       const workspaceId = (workspaces.data as { data: { id: string }[] }).data[0].id;
-      const body = [{ id: `temp-${crypto.randomUUID()}`, name, slug: `${name}-${unique()}`, publicAt: null }];
+      const body = [{ id: `temp-${crypto.randomUUID()}`, name, slug: `${name}-${unique()}`, public: false }];
       const result = await call(createProjects, { path, query: { workspaceId }, body, headers });
       expect(result.response.status).toBe(201);
     }

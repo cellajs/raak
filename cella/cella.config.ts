@@ -50,12 +50,14 @@ export default defineConfig({
       'locales/nl/appError.json',
       // Accessibility results are about one product: each app's audit (`pnpm a11y`) writes its own ledger.
       'json/accessibility-conformance.json',
+      // raak's marketing has no sync-engine page; without this, each upstream edit of the route brings it back.
+      'frontend/src/routes/_public/_marketing/sync-engine.tsx',
     ],
     // Paths pinned to the app: the app copy always wins, upstream hunks never merge in. Adopt them by hand
     // from the analyze list ("protected but behind upstream").
     pinned: [
       'backend/src/db/channel-tables.ts',
-      // Project-homed attachments: home column, publicAt inheritance, list scope and seed batches.
+      // Project-homed attachments: home column, public flag inheritance, list scope and seed batches.
       'backend/src/modules/attachment/attachment-placement.ts',
       'backend/src/modules.ts',
       'backend/src/bundle-config.ts',

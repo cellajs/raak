@@ -4,10 +4,10 @@ import { appConfig } from 'shared';
 import { titleFromDocument } from 'shared/blocknote';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
 import { setCurrentItem } from '~/modules/board-focus/focus-item';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { NamedText } from '~/modules/common/named-text';
 import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteTasks } from '~/modules/task/delete-tasks';
@@ -37,9 +37,9 @@ export function TaskOptionsButton({ task, isSheet = false }: { task: Task; isShe
       const title = titleFromDocument(task.summary);
       openPopConfirm(
         title ? (
-          <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: truncateMiddle(title, 20) }} />
+          <NamedText i18nKey="c:delete_confirm.text" name={truncateMiddle(title, 20)} />
         ) : (
-          <ConfirmText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
+          <NamedText i18nKey="c:confirm.delete_counted_resource" values={{ count: 1, resource: t('c:task').toLowerCase() }} />
         ),
         <DeleteTasks tasks={[task]} callback={remove} onCancel={remove} />,
       );

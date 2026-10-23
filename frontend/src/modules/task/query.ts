@@ -11,7 +11,6 @@ import { registerDescriptionDerivation } from '~/modules/common/blocknote/descri
 import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { findLabelInCache } from '~/modules/label/query';
-import { getProjectPublicAt } from '~/modules/project/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { boardAcceptedCutOff } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
@@ -77,7 +76,7 @@ type TasksDeleteFullVars = DeleteVariables<Task>;
 /** Retains API literal unions for task-list sorting and matching filters. */
 type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
 /** Separate key space for public (unauthenticated) task queries */
-type PublicTaskListFilters = TaskListFilters & { publicAt: true };
+type PublicTaskListFilters = TaskListFilters & { public: true };
 
 const baseKeys = createEntityKeys<TaskListFilters>('task');
 
@@ -478,10 +477,9 @@ export const useTaskCreateMutation = (tenantId: string, organizationId: string) 
   const mutation = useMutation(taskCreateOptions(queryClient));
 
   // Inject org context + stx so a replay reuses the original mutation id and timestamps; callers pass the task data.
-  // Stamp publicAt from the parent project so a new task inherits its project's publicity at create time.
   const prepare = (input: TaskCreateMutationFnVariables): PreparedVars<TaskCreateFullVars> => ({
     kind: 'run',
-    vars: { tenantId, organizationId, data: [{ ...input, publicAt: getProjectPublicAt(input.projectId, tenantId) }], stx: createStxForCreate() },
+    vars: { tenantId, organizationId, data: [input], stx: createStxForCreate() },
   });
 
   return { ...mutation, ...buildPreparedHandlers(mutation, prepare) };

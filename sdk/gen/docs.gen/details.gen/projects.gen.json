@@ -10,7 +10,6 @@
           "type": "object",
           "description": "A project that organizes tasks and members within an organization.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -19,9 +18,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "slug": { "type": "string", "required": true, "maxLength": 255 },
             "thumbnailUrl": {
@@ -34,26 +46,11 @@
               "required": true,
               "maxLength": 2048
             },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
             "publishedAt": {
               "type": ["string", "null"],
               "required": true
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "toolsConfig": {
               "required": true,
               "anyOf": [
@@ -222,7 +219,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -260,7 +257,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-23T15:24:26.607Z",
-          "publicAt": "2024-12-29T10:59:08.044Z",
+          "public": true,
           "toolsConfig": {},
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -366,7 +363,6 @@
                 "type": "object",
                 "description": "A project that organizes tasks and members within an organization.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -375,9 +371,22 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+                  },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
                   "slug": { "type": "string", "required": true, "maxLength": 255 },
                   "thumbnailUrl": {
@@ -390,26 +399,11 @@
                     "required": true,
                     "maxLength": 2048
                   },
-                  "createdBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
-                  "updatedBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
                   "publishedAt": {
                     "type": ["string", "null"],
                     "required": true
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "toolsConfig": {
                     "required": true,
                     "anyOf": [
@@ -578,7 +572,7 @@
                         "ref": "#/components/schemas/UserMinimalBase",
                         "items": {
                           "type": "object",
-                          "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                          "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                           "properties": {
                             "id": { "type": "string", "required": true },
                             "name": { "type": "string", "required": true },
@@ -632,7 +626,7 @@
               "createdBy": null,
               "updatedBy": null,
               "publishedAt": "2024-04-18T21:12:59.543Z",
-              "publicAt": "2024-06-12T19:42:36.076Z",
+              "public": true,
               "toolsConfig": {},
               "path": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64/9f9d2b57-55b6-48dd-9e9b-c4a075e7b480",
               "organizationId": "7f53a0c8-a26b-4695-acc9-ed9cd1f55c64",
@@ -724,7 +718,7 @@
             "name": {
               "type": "string",
               "required": true,
-              "minLength": 2,
+              "minLength": 1,
               "maxLength": 255
             },
             "slug": {
@@ -733,10 +727,7 @@
               "minLength": 2,
               "maxLength": 255
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            }
+            "public": { "type": "boolean", "required": true }
           }
         },
         "required": true,
@@ -856,7 +847,6 @@
                 "type": "object",
                 "description": "A project that organizes tasks and members within an organization.",
                 "properties": {
-                  "createdAt": { "type": "string", "required": true },
                   "id": { "type": "string", "required": true, "format": "uuid" },
                   "entityType": {
                     "type": "string",
@@ -865,9 +855,22 @@
                   },
                   "tenantId": { "type": "string", "required": true, "maxLength": 24 },
                   "name": { "type": "string", "required": true, "maxLength": 255 },
+                  "createdAt": { "type": "string", "required": true },
+                  "createdBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+                  },
                   "updatedAt": {
                     "type": ["string", "null"],
                     "required": true
+                  },
+                  "updatedBy": {
+                    "type": ["object", "null"],
+                    "required": true,
+                    "ref": "#/components/schemas/ActorRef",
+                    "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
                   },
                   "slug": { "type": "string", "required": true, "maxLength": 255 },
                   "thumbnailUrl": {
@@ -880,26 +883,11 @@
                     "required": true,
                     "maxLength": 2048
                   },
-                  "createdBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
-                  "updatedBy": {
-                    "type": ["object", "null"],
-                    "required": true,
-                    "ref": "#/components/schemas/UserMinimalBase",
-                    "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-                  },
                   "publishedAt": {
                     "type": ["string", "null"],
                     "required": true
                   },
-                  "publicAt": {
-                    "type": ["string", "null"],
-                    "required": true
-                  },
+                  "public": { "type": "boolean", "required": true },
                   "toolsConfig": {
                     "required": true,
                     "anyOf": [
@@ -1068,7 +1056,7 @@
                         "ref": "#/components/schemas/UserMinimalBase",
                         "items": {
                           "type": "object",
-                          "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                          "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                           "properties": {
                             "id": { "type": "string", "required": true },
                             "name": { "type": "string", "required": true },
@@ -1111,7 +1099,7 @@
               "createdBy": null,
               "updatedBy": null,
               "publishedAt": "2024-11-21T01:19:53.533Z",
-              "publicAt": null,
+              "public": false,
               "toolsConfig": {},
               "path": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c/bbb36038-9ce8-45db-8d91-cd87f54ea01d",
               "organizationId": "36a3f30f-2043-4315-8ebe-d4a4eacb4a6c",
@@ -1145,7 +1133,7 @@
               "createdBy": null,
               "updatedBy": null,
               "publishedAt": "2024-10-29T04:35:17.725Z",
-              "publicAt": null,
+              "public": false,
               "toolsConfig": {},
               "path": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01/772a771f-c150-465e-9635-46594859fc3d",
               "organizationId": "ffcd93da-6f47-457f-bd00-cc2dc65b1a01",
@@ -1270,7 +1258,6 @@
           "type": "object",
           "description": "A project that organizes tasks and members within an organization.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -1279,9 +1266,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "slug": { "type": "string", "required": true, "maxLength": 255 },
             "thumbnailUrl": {
@@ -1294,26 +1294,11 @@
               "required": true,
               "maxLength": 2048
             },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
             "publishedAt": {
               "type": ["string", "null"],
               "required": true
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "toolsConfig": {
               "required": true,
               "anyOf": [
@@ -1482,7 +1467,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -1519,7 +1504,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-23T15:24:26.607Z",
-          "publicAt": "2024-12-29T10:59:08.044Z",
+          "public": true,
           "toolsConfig": {},
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -1623,7 +1608,6 @@
           "type": "object",
           "description": "A project that organizes tasks and members within an organization.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -1632,9 +1616,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "slug": { "type": "string", "required": true, "maxLength": 255 },
             "thumbnailUrl": {
@@ -1647,26 +1644,11 @@
               "required": true,
               "maxLength": 2048
             },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
             "publishedAt": {
               "type": ["string", "null"],
               "required": true
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "toolsConfig": {
               "required": true,
               "anyOf": [
@@ -1835,7 +1817,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -1872,7 +1854,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-23T15:24:26.607Z",
-          "publicAt": "2024-12-29T10:59:08.044Z",
+          "public": true,
           "toolsConfig": {},
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -1957,7 +1939,7 @@
           "name": {
             "type": "string",
             "required": false,
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 255
           },
           "thumbnailUrl": {
@@ -1970,10 +1952,7 @@
             "required": false,
             "maxLength": 2048
           },
-          "publicAt": {
-            "type": ["string", "null"],
-            "required": false
-          }
+          "public": { "type": "boolean", "required": false }
         },
         "required": true,
         "contentType": "application/json"
@@ -1991,7 +1970,6 @@
           "type": "object",
           "description": "A project that organizes tasks and members within an organization.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -2000,9 +1978,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "slug": { "type": "string", "required": true, "maxLength": 255 },
             "thumbnailUrl": {
@@ -2015,26 +2006,11 @@
               "required": true,
               "maxLength": 2048
             },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
             "publishedAt": {
               "type": ["string", "null"],
               "required": true
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "toolsConfig": {
               "required": true,
               "anyOf": [
@@ -2203,7 +2179,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -2240,7 +2216,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-23T15:24:26.607Z",
-          "publicAt": "2024-12-29T10:59:08.044Z",
+          "public": true,
           "toolsConfig": {},
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -2331,7 +2307,6 @@
           "type": "object",
           "description": "A project that organizes tasks and members within an organization.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -2340,9 +2315,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "slug": { "type": "string", "required": true, "maxLength": 255 },
             "thumbnailUrl": {
@@ -2355,26 +2343,11 @@
               "required": true,
               "maxLength": 2048
             },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
             "publishedAt": {
               "type": ["string", "null"],
               "required": true
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "toolsConfig": {
               "required": true,
               "anyOf": [
@@ -2543,7 +2516,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -2580,7 +2553,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-23T15:24:26.607Z",
-          "publicAt": "2024-12-29T10:59:08.044Z",
+          "public": true,
           "toolsConfig": {},
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",
@@ -2666,7 +2639,6 @@
           "type": "object",
           "description": "A project that organizes tasks and members within an organization.",
           "properties": {
-            "createdAt": { "type": "string", "required": true },
             "id": { "type": "string", "required": true, "format": "uuid" },
             "entityType": {
               "type": "string",
@@ -2675,9 +2647,22 @@
             },
             "tenantId": { "type": "string", "required": true, "maxLength": 24 },
             "name": { "type": "string", "required": true, "maxLength": 255 },
+            "createdAt": { "type": "string", "required": true },
+            "createdBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
+            },
             "updatedAt": {
               "type": ["string", "null"],
               "required": true
+            },
+            "updatedBy": {
+              "type": ["object", "null"],
+              "required": true,
+              "ref": "#/components/schemas/ActorRef",
+              "refDescription": "Who wrote a row: a user or a service account, with the id, kind, name and avatar a cell renders. Embedded wherever a row names its writer, as `createdBy`, `updatedBy` and `deletedBy`; null once the actor is gone."
             },
             "slug": { "type": "string", "required": true, "maxLength": 255 },
             "thumbnailUrl": {
@@ -2690,26 +2675,11 @@
               "required": true,
               "maxLength": 2048
             },
-            "createdBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
-            "updatedBy": {
-              "type": ["object", "null"],
-              "required": true,
-              "ref": "#/components/schemas/UserMinimalBase",
-              "refDescription": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`."
-            },
             "publishedAt": {
               "type": ["string", "null"],
               "required": true
             },
-            "publicAt": {
-              "type": ["string", "null"],
-              "required": true
-            },
+            "public": { "type": "boolean", "required": true },
             "toolsConfig": {
               "required": true,
               "anyOf": [
@@ -2878,7 +2848,7 @@
                   "ref": "#/components/schemas/UserMinimalBase",
                   "items": {
                     "type": "object",
-                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a row names a user, such as `createdBy` and `updatedBy`.",
+                    "description": "The smallest user shape: id, name, slug and avatar. Embedded wherever a response names a user: a member list, the actor of a notification. A row names its writers as `ActorRef`.",
                     "properties": {
                       "id": { "type": "string", "required": true },
                       "name": { "type": "string", "required": true },
@@ -2915,7 +2885,7 @@
           "createdBy": null,
           "updatedBy": null,
           "publishedAt": "2024-12-23T15:24:26.607Z",
-          "publicAt": "2024-12-29T10:59:08.044Z",
+          "public": true,
           "toolsConfig": {},
           "path": "8d1fb6ac-563d-4100-a551-0de949e5047f/443206fd-844c-4621-b306-2eb1788f0c15",
           "organizationId": "8d1fb6ac-563d-4100-a551-0de949e5047f",

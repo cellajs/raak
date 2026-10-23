@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
 import { type UseFormProps, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +16,7 @@ import { Button } from '~/modules/ui/button';
 import { Checkbox } from '~/modules/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/modules/ui/field';
 import { useWorkspaceContext } from '~/modules/workspace/use-workspace-context';
+import { formResolver } from '~/utils/form-resolver';
 
 const formSchema = zCreateProjectsBody.element.omit({ id: true });
 type FormValues = z.infer<typeof formSchema>;
@@ -31,7 +31,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
   const { workspace } = useWorkspaceContext();
 
   const formOptions: UseFormProps<FormValues> = useMemo(
-    () => ({ resolver: zodResolver(formSchema), defaultValues: { name: '', slug: '', publicAt: null } }),
+    () => ({ resolver: formResolver(formSchema), defaultValues: { name: '', slug: '', public: false } }),
     [],
   );
 
@@ -63,7 +63,7 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <InputFormField control={form.control} name="name" label={t('c:name')} required autoFocus />
         <SlugFormField
           control={form.control}
@@ -75,11 +75,11 @@ export function CreateProjectForm({ dialog: isDialog }: CreateProjectFormProps) 
         />
         <FormField
           control={form.control}
-          name="publicAt"
+          name="public"
           render={({ field }) => (
-            <FormItem className="flex-row items-center" name="publicAt">
+            <FormItem className="flex-row items-center" name="public">
               <FormControl>
-                <Checkbox checked={field.value !== null} onCheckedChange={(checked) => field.onChange(checked ? new Date().toISOString() : null)} />
+                <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
               </FormControl>
               <FormLabel>{t('c:public_access')}</FormLabel>
               <FormMessage />

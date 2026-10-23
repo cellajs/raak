@@ -5,8 +5,8 @@ import { useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { Workspace } from 'sdk';
 import { appConfig } from 'shared';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { NamedText } from '~/modules/common/named-text';
 import { useSheeter } from '~/modules/common/sheeter/use-sheeter';
 import { Button } from '~/modules/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/modules/ui/card';
@@ -38,7 +38,7 @@ export function WorkspaceSettings({ workspace, sheet: isSheet }: { workspace: Wo
       triggerRef: deleteButtonRef,
       className: 'md:max-w-xl',
       title: t('c:delete_resource', { resource: t('c:workspace').toLowerCase() }),
-      description: <ConfirmText i18nKey="c:confirm.delete_resource" values={{ name: workspace.name, resource: t('c:workspace').toLowerCase() }} />,
+      description: <NamedText i18nKey="c:confirm.delete_resource" name={workspace.name} values={{ resource: t('c:workspace').toLowerCase() }} />,
     });
   };
 

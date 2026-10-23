@@ -48,7 +48,7 @@ app.openapi(taskRedirectRoutes.resolveTaskLink, async (ctx) => {
       slug: projectsTable.slug,
       organizationId: projectsTable.organizationId,
       tenantId: projectsTable.tenantId,
-      publicAt: projectsTable.publicAt,
+      public: projectsTable.public,
     })
     .from(projectsTable)
     .where(eq(projectsTable.id, task.projectId))
@@ -72,7 +72,7 @@ app.openapi(taskRedirectRoutes.resolveTaskLink, async (ctx) => {
       organizationId: project.organizationId,
       organizationSlug: organization.slug,
       tenantId: project.tenantId,
-      publicAt: project.publicAt,
+      public: project.public,
     },
     200,
   );

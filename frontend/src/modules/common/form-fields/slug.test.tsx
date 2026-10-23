@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useForm } from 'react-hook-form';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { checkSlug } = vi.hoisted(() => ({ checkSlug: vi.fn(async (_request: { body: { slug: string } }) => undefined) }));
 vi.mock('sdk', () => ({ checkSlug }));
@@ -24,7 +24,7 @@ function SlugForm() {
   );
 }
 
-/** Types into the field as a browser does: the value lands on the element, then the input event fires. */
+/** Types into the field as a browser does: the element takes the value, then the input event fires. */
 const type = async (input: HTMLInputElement, value: string) => {
   const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
   await act(async () => {
@@ -35,8 +35,12 @@ const type = async (input: HTMLInputElement, value: string) => {
 
 describe('SlugFormField', () => {
   const container = document.createElement('div');
-  const root = createRoot(container);
+  let root: ReturnType<typeof createRoot>;
 
+  beforeEach(() => {
+    root = createRoot(container);
+    checkSlug.mockReset().mockResolvedValue(undefined);
+  });
   afterEach(() => act(() => root.unmount()));
 
   it('holds what is typed in the form a slug is stored in, and checks that form', async () => {

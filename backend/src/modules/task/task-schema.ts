@@ -18,7 +18,8 @@ import {
   validIdSchema,
   validUuidSchema,
 } from '#/schemas';
-import { nullableUserMinimalBaseSchema, userMinimalBaseSchema } from '#/schemas/minimal-base';
+import { auditShape, tombstoneShape } from '#/schemas/entity-base';
+import { userMinimalBaseSchema } from '#/schemas/minimal-base';
 
 const taskRelationDeltaSchema = arrayDeltaSchema(validUuidSchema);
 
@@ -27,14 +28,14 @@ const taskSelectSchema = createSelectSchema(tasksTable);
 
 export const taskSchema = z
   .object({
-    ...taskSelectSchema.omit({ labels: true, createdBy: true, assignedTo: true, updatedBy: true, stx: true }).shape,
+    ...taskSelectSchema.omit({ labels: true, assignedTo: true, stx: true }).shape,
     labels: z.array(labelEmbeddedSchema),
     // Hydrated from primaryLabelId; null only when the referenced row is missing from the relation set
     primaryLabel: labelEmbeddedSchema.nullable(),
     status: z.enum(TaskStatus),
     assignedTo: z.array(userMinimalBaseSchema),
-    createdBy: nullableUserMinimalBaseSchema,
-    updatedBy: nullableUserMinimalBaseSchema,
+    ...auditShape,
+    ...tombstoneShape,
     stx: stxBaseSchema,
   })
   .openapi('Task', {
@@ -51,8 +52,6 @@ const taskCreateSchema = taskInsertSchema.pick({ name: true, description: true }
   displayOrder: z.number().optional(),
   labels: uniqueIdsSchema().optional(),
   assignedTo: uniqueIdsSchema().optional(),
-  // Client sets publicity per task (stamped from the project's publicAt on create); omitted -> private.
-  publicAt: z.string().nullable().optional(),
   ...placementFieldsSchema('task'),
 });
 
@@ -68,7 +67,7 @@ export const taskContract = evolutionContract.product('task', {
     labels: taskRelationDeltaSchema,
     assignedTo: taskRelationDeltaSchema,
     projectId: validUuidSchema,
-    publicAt: z.string().nullable(),
+    public: z.boolean(),
   },
   blockFields: ['description'],
 });
@@ -112,5 +111,5 @@ export const taskLinkSchema = z.object({
   organizationId: z.string(),
   organizationSlug: z.string(),
   tenantId: z.string(),
-  publicAt: z.string().nullable(),
+  public: z.boolean(),
 });

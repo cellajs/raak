@@ -24,7 +24,7 @@ export const seedAttachmentPlacements = async (db: DB, organizations: { id: stri
       id: projectsTable.id,
       organizationId: projectsTable.organizationId,
       tenantId: projectsTable.tenantId,
-      publicAt: projectsTable.publicAt,
+      public: projectsTable.public,
     })
     .from(projectsTable)
     // The seed deals assets over an organization's homes in this order, so it has to be stable across runs.
@@ -35,6 +35,6 @@ export const seedAttachmentPlacements = async (db: DB, organizations: { id: stri
     .map((project) => ({
       organizationId: project.organizationId,
       tenantId: project.tenantId,
-      placement: { projectId: project.id, publicAt: project.publicAt },
+      placement: { projectId: project.id, public: project.public },
     }));
 };

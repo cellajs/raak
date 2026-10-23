@@ -252,11 +252,6 @@
               "type": ["string", "null"],
               "required": true
             },
-            "updatedBy": {
-              "type": ["string", "null"],
-              "required": true,
-              "format": "uuid"
-            },
             "lastSeenAt": {
               "type": ["string", "null"],
               "required": true
@@ -362,13 +357,13 @@
           "firstName": {
             "type": ["string", "null"],
             "required": false,
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 255
           },
           "lastName": {
             "type": ["string", "null"],
             "required": false,
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 255
           },
           "language": {

@@ -3,7 +3,6 @@ import { DotIcon, PaperclipIcon } from 'lucide-react';
 import { createContext, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Organization, Project } from 'sdk';
-import { zUserMinimalBase } from 'sdk/zod.gen';
 import { exportDate } from '~/lib/export';
 import type { RenderCellProps } from '~/modules/common/data-grid';
 import { SelectColumn } from '~/modules/common/data-grid';
@@ -22,23 +21,8 @@ import { statusFillColors } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { AvatarGroup, AvatarGroupList, AvatarOverflowIndicator } from '~/modules/ui/avatar';
 import { Button } from '~/modules/ui/button';
-import { UserCell } from '~/modules/user/user-cell';
+import { ActorCell } from '~/modules/user/actor-cell';
 import { dateShort } from '~/utils/date-short';
-
-// The creator/updater cells parse the same row object on every render; under virtualization that
-// re-fires on scroll for rows already on screen. Cache the parse per user object: a row's identity
-// from the query cache changes only when the row updates, so this runs once per distinct value.
-type ParsedUserCell = ReturnType<typeof zUserMinimalBase.parse>;
-const userCellCache = new WeakMap<object, ParsedUserCell | null>();
-const parseUserCell = (value: unknown): ParsedUserCell | null => {
-  if (!value || typeof value !== 'object') return null;
-  const cached = userCellCache.get(value);
-  if (cached !== undefined) return cached;
-  const result = zUserMinimalBase.safeParse(value);
-  const user = result.success ? result.data : null;
-  userCellCache.set(value, user);
-  return user;
-};
 
 function SummaryCell({ row, tabIndex }: RenderCellProps<Task>) {
   const cellRef = useRef<HTMLButtonElement | null>(null);
@@ -256,11 +240,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         minBreakpoint: 'sm',
         width: 180,
         placeholderValue: '-',
-        renderCell: ({ row, tabIndex }) => {
-          const user = parseUserCell(row.createdBy);
-          if (!user) return null;
-          return <UserCell compactable user={user} tabIndex={tabIndex} />;
-        },
+        renderCell: ({ row, tabIndex }) => row.createdBy && <ActorCell compactable actor={row.createdBy} tabIndex={tabIndex} />,
         // Compact toggle: creator avatar merges inline before the created date
         modes: { compact: { merge: { into: 'createdAt', side: 'left' } } },
       },
@@ -279,11 +259,7 @@ export const useColumns = (opts?: { hideProject?: boolean; organization?: Organi
         hidden: true,
         width: 180,
         placeholderValue: '-',
-        renderCell: ({ row, tabIndex }) => {
-          const user = parseUserCell(row.updatedBy);
-          if (!user) return null;
-          return <UserCell compactable user={user} tabIndex={tabIndex} />;
-        },
+        renderCell: ({ row, tabIndex }) => row.updatedBy && <ActorCell compactable actor={row.updatedBy} tabIndex={tabIndex} />,
         // Compact toggle: updater avatar merges inline before the updated date
         modes: { compact: { merge: { into: 'updatedAt', side: 'left' } } },
       },

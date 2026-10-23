@@ -1,14 +1,14 @@
 import type { ActorContext } from '#/core/context';
 import { AppError } from '#/core/error';
+import { updateStamps } from '#/db/utils/stamps';
+import { withActorRef } from '#/modules/actors/actor-refs';
 import { getChannelCounts } from '#/modules/entities/entities-queries';
 import { checkSlugAvailable } from '#/modules/entities/operations/check-slug';
 import { isMembershipRow, toMembershipBase } from '#/modules/memberships/helpers/select';
 import { updateProject } from '#/modules/project/project-queries';
 import { projectContract } from '#/modules/project/project-schema';
 import { getTaskStatusCounts } from '#/modules/task/operations/get-task-status-counts';
-import { withAuditUser } from '#/modules/user/operations/with-audit-users';
 import { getValidChannel } from '#/permissions';
-import { getIsoDate } from '#/utils/iso-date';
 import { log } from '#/utils/logger';
 
 export async function updateProjectOp(ctx: ActorContext, id: string, rawInput: Record<string, unknown>) {
@@ -24,7 +24,7 @@ export async function updateProjectOp(ctx: ActorContext, id: string, rawInput: R
     if (!slugAvailable) throw new AppError(409, 'slug_exists', 'warn', { entityType: 'project', meta: { slug } });
   }
 
-  const values = { ...input, updatedAt: getIsoDate(), updatedBy: ctx.var.actor.id };
+  const values = { ...input, ...updateStamps(ctx.var.actor.id) };
   const updatedProjectRecord = await updateProject(ctx, { id: project.id, values });
 
   log.info('Project updated', { projectId: updatedProjectRecord.id });
@@ -35,7 +35,7 @@ export async function updateProjectOp(ctx: ActorContext, id: string, rawInput: R
     getTaskStatusCounts(ctx, updatedProjectRecord.id),
   ]);
 
-  const projectWithAudit = await withAuditUser(ctx, updatedProjectRecord);
+  const projectWithAudit = await withActorRef(ctx, updatedProjectRecord);
   const included = {
     ...(membership && isMembershipRow(membership) && { membership: toMembershipBase(membership) }),
     counts: { ...counts, taskStatusCounts },

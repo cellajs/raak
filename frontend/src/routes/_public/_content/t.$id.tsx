@@ -47,7 +47,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
       throw err;
     }
 
-    const { taskId, projectId, projectSlug, organizationId, organizationSlug, tenantId, publicAt } = resolved;
+    const { taskId, projectId, projectSlug, organizationId, organizationSlug, tenantId, public: isPublic } = resolved;
 
     // Check if user is authenticated (set by PublicLayoutRoute.beforeLoad, inherited via PublicContentLayoutRoute)
     const user = useUserStore.getState().user;
@@ -73,7 +73,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
       }
 
       // No org access but project is public, show public view.
-      if (publicAt) {
+      if (isPublic) {
         throw redirect({
           to: '/$tenantId/$organizationSlug/public/project/$slug',
           params: { tenantId, organizationSlug, slug: projectSlug },
@@ -88,7 +88,7 @@ export const Route = createFileRoute('/_public/_content/t/$id')({
     }
 
     // Not authenticated
-    if (publicAt) {
+    if (isPublic) {
       // Public project, redirect to public board.
       throw redirect({
         to: '/$tenantId/$organizationSlug/public/project/$slug',

@@ -16,7 +16,7 @@ export const publicTaskQueryOptions = (id: string) =>
 
 export const publicTasksBoardQueryOptions = (projectId: string) => {
   return queryOptions({
-    queryKey: taskKeys.publicList.filtered({ projectId, publicAt: true as const }),
+    queryKey: taskKeys.publicList.filtered({ projectId, public: true as const }),
     queryFn: () => getPublicTasks({ query: { projectId, acceptedCutOff: boardAcceptedCutOff, offset: 0, limit: appConfig.requestLimits.tasks } }),
     gcTime: 0,
     staleTime: 0,
@@ -31,7 +31,7 @@ const publicTasksTableQueryKey = ({
   order = tasksTableQueryDefaults.order,
   matchMode = tasksTableQueryDefaults.matchMode,
   projectId,
-}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, publicAt: true as const });
+}: PublicTasksTableParams) => taskKeys.publicList.filtered({ q, sort, order, projectId, matchMode, public: true as const });
 
 export const publicTasksTableQueryOptions = ({
   q,

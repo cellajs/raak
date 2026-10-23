@@ -4,8 +4,8 @@ import type { ActorContext, Env } from '#/core/context';
 import { AppError } from '#/core/error';
 import { getAdminDb } from '#/db/db';
 import { resolveEntity } from '#/modules/entities/entities-queries';
-import { hydrateTask } from '#/modules/task/helpers/hydrate-task';
 import { getTaskRelations } from '#/modules/task/operations/get-task-relations';
+import { hydrateTask } from '#/modules/task/operations/hydrate-task';
 import { getTasks } from '#/modules/task/operations/list-tasks';
 import { publicTaskRoutes } from '#/modules/task/public-routes';
 import { checkAccess } from '#/permissions';
@@ -27,7 +27,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   if (isUnpublishedDraft(mainTask)) throw new AppError(404, 'not_found', 'warn', { entityType: 'task' });
 
   // Public reads intentionally bypass tenant status checks from tenantGuard.
-  // Anonymous engine check: publicRead() makes the task readable once its own publicAt is set
+  // Anonymous engine check: publicRead() makes the task readable once its own `public` is set
   // (inherited from the parent project at create time, then row-local; no cascade).
   const subject = buildSubject('task', mainTask, { id: mainTask.id, row: mainTask });
   if (!checkAccess({ anonymous: true }, 'read', subject).allowed) {
@@ -40,7 +40,7 @@ app.openapi(publicTaskRoutes.getPublicTask, async (ctx) => {
   } as ActorContext;
   const [users, labels] = await getTaskRelations(publicCtx, { tasks: [mainTask] });
 
-  const taskResponse = hydrateTask(mainTask, users, labels);
+  const taskResponse = await hydrateTask(publicCtx, mainTask, users, labels);
 
   return ctx.json(taskResponse, 200);
 });
@@ -49,7 +49,7 @@ app.openapi(publicTaskRoutes.getPublicTasks, async (ctx) => {
   const { projectId, ...queryInfo } = ctx.req.valid('query');
 
   // Public reads intentionally bypass tenant status checks from tenantGuard. Resolve the project
-  // for org scoping only; the project's own publicAt does not gate the list.
+  // for org scoping only; the project's own `public` does not gate the list.
   const project = await resolveEntity({ var: { db: getAdminDb('public task reads') } }, { entityType: 'project', identifier: projectId });
   if (!project) throw new AppError(404, 'not_found', 'warn', { entityType: 'project' });
 

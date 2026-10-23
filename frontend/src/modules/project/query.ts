@@ -58,10 +58,6 @@ const findProjectInCache = createCacheFinder<Project>('project');
 export const findProjectByIdOrSlug = (idOrSlug: string, tenantId: string): EnrichedProject | undefined =>
   findProjectInCache((p) => p.id === idOrSlug || (p.slug === idOrSlug && p.tenantId === tenantId)) as EnrichedProject | undefined;
 
-/** Reads the cached project's `publicAt` so a new task/attachment inherits its project's publicity at create time. */
-export const getProjectPublicAt = (projectId: string, tenantId: string): string | null =>
-  findProjectByIdOrSlug(projectId, tenantId)?.publicAt ?? null;
-
 type ProjectsListParams = Omit<NonNullable<GetProjectsData['query']>, 'limit' | 'offset'> & { limit?: number };
 
 /**

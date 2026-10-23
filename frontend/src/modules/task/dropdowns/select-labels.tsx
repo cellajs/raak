@@ -32,7 +32,7 @@ import { Badge } from '~/modules/ui/badge';
 import { Combobox, ComboboxGroup, ComboboxGroupLabel, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
 import { ScrollArea } from '~/modules/ui/scroll-area';
 import { createOptimisticEntity } from '~/query/basic/create-optimistic';
-import { COALESCED } from '~/query/offline/prepared-mutation';
+import { coalescedResult } from '~/query/offline/prepared-mutation';
 import { cn } from '~/utils/cn';
 import { isTouchInteraction } from '~/utils/input-modality';
 
@@ -236,7 +236,7 @@ export function SelectLabels({
     // Create label first, then update task after the server has the referenced label.
     const createdLabels = await createLabelMutation(newLabelData);
     // Creates never coalesce, so this always resolves to the created labels; the guard narrows the type.
-    if (createdLabels === COALESCED) return;
+    if (createdLabels === coalescedResult) return;
     const finalLabels = updatedLabels.map((l) => (l.id === newLabel.id ? createdLabels[0] : l));
     setSelectedLabels(finalLabels);
     updateTaskLabels(finalLabels);

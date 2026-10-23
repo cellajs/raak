@@ -1,5 +1,5 @@
 import { useBoardFocusStore } from '~/modules/board-focus/board-focus-store';
-import { PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
+import { panelMinWidth } from '~/modules/common/board/board-layout';
 import type { EnrichedProject } from '~/modules/project/types';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
@@ -144,7 +144,7 @@ export const normalizePanelWidths = (storedLayout: Record<string, number>, curre
 
   for (const id of currentProjectIds) {
     // Use stored pixel width if available, otherwise fall back to the panel minimum width
-    layout[id] = storedLayout[id] ?? PANEL_MIN_WIDTH;
+    layout[id] = storedLayout[id] ?? panelMinWidth;
   }
 
   return layout;

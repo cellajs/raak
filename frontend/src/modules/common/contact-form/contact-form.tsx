@@ -1,47 +1,50 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { MailIcon, MessageSquareIcon, SendIcon, UserIcon } from 'lucide-react';
+import { MailIcon, MessageSquareIcon, SendIcon } from 'lucide-react';
 import { Suspense } from 'react';
 import type { SubmitHandler, UseFormProps } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zCreateRequestBody } from 'sdk/zod.gen';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { useBreakpointAbove } from '~/hooks/use-breakpoints';
 import { LegalContact } from '~/modules/auth/legal/legal-contact';
-import { useDialoger } from '~/modules/common/dialoger/use-dialoger';
+import { dialoger } from '~/modules/common/dialoger/use-dialoger';
 import { useFormWithDraft } from '~/modules/common/form-draft/use-draft-form';
+import { CancelButton } from '~/modules/common/form-fields/cancel-button';
 import { InputFormField } from '~/modules/common/form-fields/input';
 import { SubmitButton } from '~/modules/common/form-fields/submit-button';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { useCreateRequestMutation } from '~/modules/requests/query';
-import { Button } from '~/modules/ui/button';
 import { Form } from '~/modules/ui/field';
 import { useUserStore } from '~/modules/user/user-store';
+import { formResolver } from '~/utils/form-resolver';
 import { lazyNamed } from '~/utils/lazy-named';
 
 const ContactFormMap = lazyNamed(() => import('~/modules/common/contact-form/contact-form-map'), 'ContactFormMap');
 
-export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
+export const contactFormDialogId = 'contact-form';
+
+// The request stores an email and a message; a contact request without a message says nothing
+const formSchema = zCreateRequestBody.extend({ message: zCreateRequestBody.shape.message.unwrap().trim().min(1) });
+
+type FormValues = z.infer<typeof formSchema>;
+
+interface ContactFormProps {
+  /** Rendered in the contact dialog, which a sent message closes. */
+  dialog?: boolean;
+}
+
+export function ContactForm({ dialog: isDialog }: ContactFormProps) {
   const { t } = useTranslation();
   const user = useUserStore((state) => state.user);
-  const isMediumScreen = useBreakpointAbove('lg');
-  const nameLabel = t('c:name').toLowerCase();
+  const isLargeScreen = useBreakpointAbove('lg');
   const emailLabel = t('c:email').toLowerCase();
   const messageLabel = t('c:message').toLowerCase();
 
-  const formSchema = zCreateRequestBody.extend({ name: z.string().min(1, t('error:name_required')).min(2, t('error:name_too_short')) });
-
-  type FormValues = z.infer<typeof formSchema>;
-
   const formOptions: UseFormProps<FormValues> = {
-    resolver: zodResolver(formSchema),
-    defaultValues: { name: user?.name ?? '', email: user?.email ?? '', message: '', type: 'contact' },
+    resolver: formResolver(formSchema),
+    defaultValues: { email: user?.email ?? '', message: '', type: 'contact' },
   };
 
   const form = useFormWithDraft<FormValues>('contact-form', { formOptions });
-
-  const cancel = () => {
-    form.reset();
-  };
 
   const { mutate: createRequest, isPending } = useCreateRequestMutation();
 
@@ -50,7 +53,7 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
       onSuccess: () => {
         toaster.success(t('c:message_sent.text'));
 
-        if (isDialog) useDialoger.getState().remove();
+        if (isDialog) dialoger.getState().remove(contactFormDialogId);
         form.reset();
       },
     });
@@ -59,24 +62,14 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
   return (
     <div className="flex w-full flex-col gap-4 md:flex-row md:gap-10">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full flex-col gap-4 md:gap-6">
-          <InputFormField
-            control={form.control}
-            name="name"
-            label={t('c:name')}
-            labelClassName="max-sm:sr-only"
-            autocomplete="name"
-            placeholder={t('c:placeholder.your_input', { inputLabel: nameLabel })}
-            icon={<UserIcon />}
-            required
-          />
+        <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex w-full flex-col gap-4 md:gap-6">
           <InputFormField
             control={form.control}
             name="email"
             label={t('c:email')}
             labelClassName="max-sm:sr-only"
             type="email"
-            autocomplete="email"
+            autoComplete="email"
             placeholder={t('c:placeholder.your_input', { inputLabel: emailLabel })}
             icon={<MailIcon />}
             required
@@ -89,24 +82,24 @@ export function ContactForm({ dialog: isDialog }: { dialog?: boolean }) {
             type="textarea"
             placeholder={t('c:placeholder.your_input', { inputLabel: messageLabel })}
             icon={<MessageSquareIcon />}
+            required
           />
           <div className="flex flex-col gap-2 sm:flex-row">
             <SubmitButton loading={isPending} icon={<SendIcon />}>
               {t('c:send')}
             </SubmitButton>
-            <Button type="reset" variant="secondary" onClick={cancel} className={form.isDirty ? '' : 'invisible'}>
-              {t('c:cancel')}
-            </Button>
+            <CancelButton dirty={form.isDirty} onClick={() => form.reset()} />
           </div>
         </form>
       </Form>
-      {!isMediumScreen && <LegalContact className="my-4 w-full sm:my-0" addressOnly />}
-      {isMediumScreen && (
-        <div className="w-full overflow-hidden rounded-md bg-accent md:mb-12">
+      {isLargeScreen ? (
+        <div className="mb-12 w-full overflow-hidden rounded-md bg-accent">
           <Suspense>
             <ContactFormMap />
           </Suspense>
         </div>
+      ) : (
+        <LegalContact className="my-4 w-full sm:my-0" addressOnly />
       )}
     </div>
   );

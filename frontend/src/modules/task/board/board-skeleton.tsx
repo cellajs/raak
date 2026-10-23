@@ -6,7 +6,7 @@ import type { Project } from 'sdk';
 import { useShallow } from 'zustand/react/shallow';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
-import { COLLAPSED_PANEL_MIN_WIDTH, PANEL_MIN_WIDTH } from '~/modules/common/board/board-layout';
+import { collapsedPanelMinWidth, panelMinWidth } from '~/modules/common/board/board-layout';
 import { BoardPanelHeader } from '~/modules/common/board/board-panel';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';
@@ -35,7 +35,7 @@ import { Skeleton } from '~/modules/ui/skeleton';
 import { cn } from '~/utils/cn';
 
 /** The share of the row an open panel gets when the row scrolls: `minWidth * 1.25` in resizable-panels.tsx, which keeps it private. */
-const IDEAL_PANEL_WIDTH = PANEL_MIN_WIDTH * 1.25;
+const IDEAL_PANEL_WIDTH = panelMinWidth * 1.25;
 const COLUMN_GAP = 8;
 // A phone wraps a card's title over its own footer row, so mobile cards stand taller than desktop rows
 const MOBILE_ROW_HEIGHT = 110;
@@ -103,7 +103,7 @@ export function BoardSkeleton({
     if (isMobile) return undefined;
     const gaps = Math.max(0, panels.length - 1) * COLUMN_GAP;
     const total = (openWidth: (panelId: string) => number) =>
-      panels.reduce((sum, { panelId }) => sum + (panelCollapseState[panelId] ? COLLAPSED_PANEL_MIN_WIDTH : openWidth(panelId)), gaps);
+      panels.reduce((sum, { panelId }) => sum + (panelCollapseState[panelId] ? collapsedPanelMinWidth : openWidth(panelId)), gaps);
     const ideal = total(() => IDEAL_PANEL_WIDTH);
     const stored = total((panelId) => defaultSizes[panelId]);
     // `(ideal - 100%) * 9999` is a switch on the parent's width: far above `stored` while the parent is narrower than `ideal`, negative once it fits.
@@ -171,8 +171,8 @@ export function BoardSkeleton({
             }
             // Open columns share the row in proportion to their widths, as the panel group does when it fills its container.
             const columnStyle = panelCollapseState[panelId]
-              ? { flex: 'none', width: COLLAPSED_PANEL_MIN_WIDTH }
-              : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: PANEL_MIN_WIDTH };
+              ? { flex: 'none', width: collapsedPanelMinWidth }
+              : { flex: `${defaultSizes[panelId]} 1 0px`, minWidth: panelMinWidth };
             return (
               <div key={panelId} className="flex h-full flex-col" style={columnStyle}>
                 {renderColumn(panel)}

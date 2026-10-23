@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import {
-  MOCK_REF_DATE,
   mockBatchResponse,
   mockChannelColumns,
   mockPaginated,
@@ -24,10 +23,16 @@ const projectName = mockUniqueEnforcer();
  * @param organizationId - Parent organization ID
  */
 const generateProjectBase = (id: string, name: string, createdAt: string, organizationId: string, tenantId: string) => {
-  const publicAt = faker.datatype.boolean() ? faker.date.between({ from: new Date(createdAt), to: MOCK_REF_DATE }).toISOString() : null;
-
   return {
-    ...mockChannelColumns('project', { id, name, createdAt, updatedAt: createdAt, tenantId, publicAt, channelIds: { organizationId } }),
+    ...mockChannelColumns('project', {
+      id,
+      name,
+      createdAt,
+      updatedAt: createdAt,
+      tenantId,
+      public: faker.datatype.boolean(),
+      channelIds: { organizationId },
+    }),
     organizationId,
   };
 };

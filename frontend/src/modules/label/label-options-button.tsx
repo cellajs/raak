@@ -1,10 +1,10 @@
 import { EllipsisVerticalIcon, LinkIcon, TrashIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from '~/hooks/use-copy-to-clipboard';
-import { ConfirmText } from '~/modules/common/confirm-text';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { DropdownerTriggerIcon } from '~/modules/common/dropdowner/trigger-icon';
 import { useDropdowner } from '~/modules/common/dropdowner/use-dropdowner';
+import { NamedText } from '~/modules/common/named-text';
 import { openPopConfirm } from '~/modules/common/popconfirm';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { DeleteLabels } from '~/modules/label/delete-labels';
@@ -29,7 +29,7 @@ export function LabelOptionsButton({ row, canManage }: { row: LabelRow; canManag
       const { remove } = useDropdowner.getState();
       const labels = deleteIds.map((id) => findLabelInCache(id)).filter((label): label is Label => !!label);
       openPopConfirm(
-        <ConfirmText i18nKey="c:delete_confirm.text" values={{ name: row.name }} />,
+        <NamedText i18nKey="c:delete_confirm.text" name={row.name} />,
         <DeleteLabels
           labels={labels.length ? labels : [row]}
           callback={() => {
