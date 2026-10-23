@@ -3,6 +3,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dialoger } from '~/modules/common/dialoger/use-dialoger';
+import type { IconComponent } from '~/modules/common/icons/types';
 import { UnsavedBadge } from '~/modules/common/unsaved-badge';
 import { CreateProjectForm } from '~/modules/project/create-project-form';
 import { SelectProjectForm } from '~/modules/project/select-project-form';
@@ -10,6 +11,30 @@ import { ToggleGroup, ToggleGroupItem } from '~/modules/ui/toggle-group';
 
 interface AddProjectsProps {
   mode?: 'create' | 'select';
+}
+
+interface AddProjectsOptionProps {
+  value: 'create' | 'select';
+  icon: IconComponent;
+  label: string;
+  ariaLabel: string;
+}
+
+function AddProjectsOption({ value, icon: Icon, label, ariaLabel }: AddProjectsOptionProps) {
+  const { t } = useTranslation();
+
+  return (
+    <ToggleGroupItem size="tile" variant="tile" value={value} aria-label={ariaLabel} className="w-auto grow py-6 sm:py-10">
+      <Icon className="size-12" strokeWidth={1} />
+      <div className="flex flex-col truncate pl-3">
+        <p>{label}</p>
+        <div className="mt-1 flex items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
+          <strong>{t('c:continue')}</strong>
+          <ChevronRightIcon className="ml-1" />
+        </div>
+      </div>
+    </ToggleGroupItem>
+  );
 }
 
 function AddProjects({ mode: baseMode }: AddProjectsProps) {
@@ -31,9 +56,7 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
               {baseTitle}
             </button>
           ) : (
-            <div className="flex items-center gap-2 max-sm:justify-center">
-              <UnsavedBadge title={baseTitle} />
-            </div>
+            <UnsavedBadge title={baseTitle} />
           )}
           <AnimatePresence>
             {nextMode && (
@@ -65,38 +88,18 @@ function AddProjects({ mode: baseMode }: AddProjectsProps) {
             exit={{ scale: 0.9, opacity: 0 }}
           >
             <ToggleGroup type="single" onValueChange={updateMode} className="w-full items-stretch gap-2 py-3 max-sm:flex-col sm:h-40 sm:gap-3">
-              <ToggleGroupItem
-                size="tile"
-                variant="tile"
+              <AddProjectsOption
                 value="create"
-                aria-label={t('c:create_resource', { resource: t('c:project').toLowerCase() })}
-                className="w-auto grow py-6 sm:py-10"
-              >
-                <ShrubIcon className="size-12" strokeWidth={1} />
-                <div className="flex flex-col truncate pl-3">
-                  <p>{t('c:create_project.text')}</p>
-                  <div className="mt-1 flex items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
-                    <strong>{t('c:continue')}</strong>
-                    <ChevronRightIcon className="ml-1" />
-                  </div>
-                </div>
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                size="tile"
-                variant="tile"
+                icon={ShrubIcon}
+                label={t('c:create_project.text')}
+                ariaLabel={t('c:create_resource', { resource: t('c:project').toLowerCase() })}
+              />
+              <AddProjectsOption
                 value="select"
-                aria-label={t('c:select_resource', { resource: t('c:project').toLowerCase() })}
-                className="w-auto grow py-6 sm:py-10"
-              >
-                <SquareMousePointerIcon className="size-12" strokeWidth={1} />
-                <div className="flex flex-col truncate pl-3">
-                  <div>{t('c:select_project')}</div>
-                  <div className="mt-1 flex items-center truncate opacity-50 transition-opacity group-hover/toggle:opacity-100">
-                    <strong>{t('c:continue')}</strong>
-                    <ChevronRightIcon className="ml-1" />
-                  </div>
-                </div>
-              </ToggleGroupItem>
+                icon={SquareMousePointerIcon}
+                label={t('c:select_project')}
+                ariaLabel={t('c:select_resource', { resource: t('c:project').toLowerCase() })}
+              />
             </ToggleGroup>
           </motion.div>
         )}

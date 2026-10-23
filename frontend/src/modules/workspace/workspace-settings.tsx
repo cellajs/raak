@@ -18,7 +18,7 @@ import { UpdateWorkspaceForm } from '~/modules/workspace/update-workspace-form';
 
 export function openWorkspaceSettingsSheet(workspace: Workspace, triggerRef: RefObject<HTMLButtonElement | null>) {
   sheeter.getState().create(
-    <div className="container w-full">
+    <div className="container">
       <WorkspaceSettings workspace={workspace} />
     </div>,
     {

@@ -12,7 +12,7 @@ import { fallbackContentRef } from '~/utils/fallback-content-ref';
 
 export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject<HTMLButtonElement | null>) => {
   sheeter.getState().create(
-    <div className="container w-full">
+    <div className="container">
       <MembersTable channel={project} isSheet />
     </div>,
     {
@@ -29,7 +29,7 @@ export const openProjectMembersSheet = (project: Project, triggerRef?: RefObject
 
 export const openProjectSettingsSheet = (project: EnrichedProject, triggerRef?: RefObject<HTMLButtonElement | null>) => {
   sheeter.getState().create(
-    <div className="container w-full">
+    <div className="container">
       <ProjectSettings project={project} />
     </div>,
     {
