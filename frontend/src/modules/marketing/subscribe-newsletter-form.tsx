@@ -32,7 +32,7 @@ export function SubscribeNewsletterForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <InputGroup className="mt-6 h-14 rounded-2xl bg-transparent ring-4 ring-primary/10 transition focus-within:ring-primary/20">
+      <InputGroup className="mt-6 h-14 rounded-2xl border-gray-300/60 bg-transparent ring-4 ring-primary/10 transition focus-within:border-gray-300 focus-within:ring-primary/20">
         <InputGroupInput
           type="email"
           name="email"
