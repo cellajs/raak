@@ -2,7 +2,7 @@ import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 import { defaultOrder, getEdgeOrder, getRelativeOrder, orderGap } from 'shared/utils/display-order';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
+import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { Task } from '~/modules/task/types';
 
@@ -29,7 +29,7 @@ export const getRelativeTaskOrder = (
   id: string,
   status?: TaskStatus,
 ) => {
-  const filteredTasks = status === undefined ? tasks : tasks.filter((t) => t.status === status && !isDraftTask(t));
+  const filteredTasks = status === undefined ? tasks : tasks.filter((task) => task.status === status && !isDraftTask(task));
 
   return getRelativeOrder(filteredTasks, order, id, edge, false);
 };
@@ -43,8 +43,8 @@ export const getNewStatusTaskOrder = (task: Task, newStatus: number, placed: Tas
 
   // Find the closest task with the new status
   const [closestTask] = tasks
-    .filter((t) => t.projectId === task.projectId && t.status === newStatus && !isDraftTask(t))
-    .sort((a, b) => sortTaskOrder(a, b, direction > 0));
+    .filter((other) => other.projectId === task.projectId && other.status === newStatus && !isDraftTask(other))
+    .sort((a, b) => compareTaskOrder(a, b, direction > 0));
 
   // Default order if no tasks found with the new status
   if (!closestTask) return defaultOrder;
@@ -63,18 +63,18 @@ const draftEmptyOrder = 2000;
  */
 export const getDraftDisplayOrder = (status: number, projectId: string) => {
   const tasks = cachedTasks();
-  const projectTasks = tasks.filter((t) => t.projectId === projectId && !isDraftTask(t) && t.status === status);
+  const projectTasks = tasks.filter((task) => task.projectId === projectId && !isDraftTask(task) && task.status === status);
 
   const atTop = status >= TaskStatus.Unstarted;
 
   if (projectTasks.length === 0) return atTop ? draftEmptyOrder : -draftEmptyOrder;
 
   if (atTop) {
-    const highest = Math.max(...projectTasks.map((t) => t.displayOrder));
+    const highest = Math.max(...projectTasks.map((task) => task.displayOrder));
     return highest + draftOrderGap;
   }
 
-  const lowest = Math.min(...projectTasks.map((t) => t.displayOrder));
+  const lowest = Math.min(...projectTasks.map((task) => task.displayOrder));
   return lowest - draftOrderGap;
 };
 

@@ -18,12 +18,12 @@ const scrollers = new Map<string, Set<PanelScroller>>();
  * Returns an unregister function for effect cleanup.
  */
 export const registerPanelScroller = (projectId: string, scroller: PanelScroller) => {
-  const set = scrollers.get(projectId) ?? new Set();
-  set.add(scroller);
-  scrollers.set(projectId, set);
+  const projectScrollers = scrollers.get(projectId) ?? new Set();
+  projectScrollers.add(scroller);
+  scrollers.set(projectId, projectScrollers);
   return () => {
-    set.delete(scroller);
-    if (set.size === 0 && scrollers.get(projectId) === set) scrollers.delete(projectId);
+    projectScrollers.delete(scroller);
+    if (projectScrollers.size === 0 && scrollers.get(projectId) === projectScrollers) scrollers.delete(projectId);
   };
 };
 

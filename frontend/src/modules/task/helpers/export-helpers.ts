@@ -6,7 +6,7 @@ import type { Task } from '~/modules/task/types';
 /** Applies print-friendly configuration before exporting a task table. */
 export const configureForExport = (tasks: Task[], projects: Omit<Project, 'counts'>[]): Task[] => {
   return tasks.map((task) => {
-    const project = projects.find((p) => p.id === task.projectId);
+    const project = projects.find((project) => project.id === task.projectId);
     return {
       ...task,
       summary: titleFromDocument(task.summary),
@@ -16,7 +16,7 @@ export const configureForExport = (tasks: Task[], projects: Omit<Project, 'count
       projectId: project?.name ?? '-',
       createdBy: task.createdBy?.name ?? '-',
       updatedBy: task.updatedBy?.name ?? '-',
-      assignedTo: task.assignedTo.map((m) => m.name),
+      assignedTo: task.assignedTo.map((member) => member.name),
     } as unknown as Task;
   });
 };

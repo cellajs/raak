@@ -10,7 +10,7 @@ import { DeleteTasks } from '~/modules/task/delete-tasks';
 import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { buildBulkFieldHandlers } from '~/modules/task/helpers/bulk-field-handlers';
 import { copyTasksToClipboard } from '~/modules/task/helpers/copy-tasks';
-import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
+import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -41,7 +41,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     return orderTasks?.(tasks) ?? tasks;
   };
 
-  const onCopy = async () => {
+  const handleCopy = async () => {
     const success = await copyTasksToClipboard(resolveSelected());
     if (!success) return toaster.error(t('c:copy_failed'));
     setCopied(true);
@@ -56,9 +56,9 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
     const bulk = buildBulkFieldHandlers(tasks, { taskMutation, user });
     const base = { triggerId: `selected-tasks-${dropdownType}`, triggerRef: { current: currentTarget } };
 
-    if (dropdownType === 'status') handleTaskDropdownClick({ ...base, dropdownType, value: bulk.status, onChange: bulk.onStatusChange });
-    else if (dropdownType === 'labels') handleTaskDropdownClick({ ...base, dropdownType, projectId, ...bulk.labels });
-    else handleTaskDropdownClick({ ...base, dropdownType, projectId, ...bulk.assignedTo });
+    if (dropdownType === 'status') openTaskDropdown({ ...base, dropdownType, value: bulk.status, onChange: bulk.onStatusChange });
+    else if (dropdownType === 'labels') openTaskDropdown({ ...base, dropdownType, projectId, ...bulk.labels });
+    else openTaskDropdown({ ...base, dropdownType, projectId, ...bulk.assignedTo });
   };
 
   const resourceOf = (count: number) => (count > 1 ? t('c:task_other') : t('c:task')).toLowerCase();
@@ -69,12 +69,12 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
 
     const { create, remove } = dialoger.getState();
     const removeDialog = () => remove('delete-tasks');
-    const onDeleted = () => {
+    const handleDeleted = () => {
       removeDialog();
       clearSelection();
     };
 
-    create(<DeleteTasks tasks={tasks} callback={onDeleted} onCancel={removeDialog} />, {
+    create(<DeleteTasks tasks={tasks} callback={handleDeleted} onCancel={removeDialog} />, {
       id: 'delete-tasks',
       triggerRef: { current: currentTarget },
       className: 'max-w-xl',
@@ -94,7 +94,7 @@ export function TaskSelectedButtons({ selectedTaskIds, clearSelection, organizat
   return (
     <SelectionActionBar count={selectedTaskIds.length} onClear={clearSelection}>
       <TooltipButton toolTipContent={t('c:copy_content')} side="top">
-        <Button variant="default" aria-label={t('c:copy_content')} onClick={onCopy}>
+        <Button variant="default" aria-label={t('c:copy_content')} onClick={handleCopy}>
           {copied ? <CheckIcon /> : <CopyIcon />}
           <span className="max-sm:hidden">{t('c:copy')}</span>
         </Button>

@@ -12,13 +12,13 @@ import { sheeter } from '~/modules/common/sheeter/use-sheeter';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
 import { boardSearchInputId } from '~/modules/task/board-search';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import type { DropdownsType } from '~/modules/task/dropdowns/types';
+import type { TaskDropdownType } from '~/modules/task/dropdowns/types';
 import { currentActiveTask } from '~/modules/task/helpers/active-task';
 import { closeCreateTaskForm, toggleCreateTaskForm } from '~/modules/task/helpers/create-task';
-import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
+import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
 import { buildFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskUpdateMutation } from '~/modules/task/query';
-import { TASK_SHEET_PARAM } from '~/modules/task/search-params-schemas';
+import { taskSheetParam } from '~/modules/task/search-params-schemas';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { useCurrentUser } from '~/modules/user/user-store';
 import { isHoverContentOpen } from '~/utils/is-hover-content-open';
@@ -41,7 +41,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     return Object.values(taskInteractionStore.getState().draftTasks).find((draft) => draft.id === currentItemId);
   };
 
-  const handleEscKeyPress = () => {
+  const handleEscape = () => {
     // The Escape that closes a tooltip or hover card stops there: the card and its sheet keep their state (WCAG 1.4.13).
     if (isHoverContentOpen()) return;
 
@@ -66,7 +66,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
       document.activeElement.blur();
     }
 
-    if (isSheetOpen) return sheeter.getState().remove(`${TASK_SHEET_PARAM}-${task.id}`);
+    if (isSheetOpen) return sheeter.getState().remove(`${taskSheetParam}-${task.id}`);
 
     const taskCard = document.getElementById(task.id);
     const state = taskCard?.dataset.state;
@@ -74,7 +74,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     return useTaskCardStore.getState().setTaskState(task.id, state === 'editing' ? 'expanded' : 'collapsed');
   };
 
-  const handleEnterKeyPress = () => {
+  const handleEnter = () => {
     const task = currentActiveTask(taskSheetId);
     if (!task) return;
 
@@ -84,7 +84,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     useTaskCardStore.getState().setTaskState(task.id, currentState === 'collapsed' ? 'expanded' : 'editing');
   };
 
-  const handleNKeyDown = () => {
+  const handleNewTask = () => {
     if (!projects.length) return;
     const { draftTasks } = taskInteractionStore.getState();
     const openDraftProjectId = Object.keys(draftTasks)[0];
@@ -92,13 +92,13 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     let targetProjectId: string | undefined = openDraftProjectId;
     if (!targetProjectId) targetProjectId = currentActiveTask(taskSheetId)?.projectId;
 
-    const targetProject = projects.find((p) => p.id === targetProjectId) ?? projects[0];
+    const targetProject = projects.find((project) => project.id === targetProjectId) ?? projects[0];
     if (isProjectReadOnly(targetProject.id)) return;
     toggleCreateTaskForm(targetProject);
   };
 
   // Open a field dropdown for the focused task
-  const hotKeyPress = (field: DropdownsType) => {
+  const openFieldDropdown = (field: TaskDropdownType) => {
     const targetTask = currentActiveTask(taskSheetId);
     if (!targetTask) return;
 
@@ -118,7 +118,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
     // The switch keeps each call matched to its discriminated-union member without a cast.
     switch (field) {
       case 'labels':
-        return handleTaskDropdownClick({
+        return openTaskDropdown({
           ...base,
           dropdownType: 'labels',
           value: targetTask.labels,
@@ -126,7 +126,7 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
           onChange: handlers.onLabelsChange,
         });
       case 'assignedTo':
-        return handleTaskDropdownClick({
+        return openTaskDropdown({
           ...base,
           dropdownType: 'assignedTo',
           value: targetTask.assignedTo,
@@ -134,9 +134,9 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
           onChange: handlers.onAssignedToChange,
         });
       case 'status':
-        return handleTaskDropdownClick({ ...base, dropdownType: 'status', value: targetTask.status, onChange: handlers.onStatusChange });
+        return openTaskDropdown({ ...base, dropdownType: 'status', value: targetTask.status, onChange: handlers.onStatusChange });
       case 'primaryLabel':
-        return handleTaskDropdownClick({
+        return openTaskDropdown({
           ...base,
           dropdownType: 'primaryLabel',
           value: targetTask.primaryLabelId,
@@ -148,15 +148,15 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
 
   // A letter alone fires by accident under speech input (WCAG 2.1.4); Alt + A is the account sheet, so assignee is U
   const actionHotkeys: HotkeyItem[] = [
-    ['Alt + U', () => hotKeyPress('assignedTo')],
-    ['Alt + L', () => hotKeyPress('labels')],
-    ['Alt + S', () => hotKeyPress('status')],
-    ['Alt + T', () => hotKeyPress('primaryLabel')],
-    ['Alt + N', handleNKeyDown],
+    ['Alt + U', () => openFieldDropdown('assignedTo')],
+    ['Alt + L', () => openFieldDropdown('labels')],
+    ['Alt + S', () => openFieldDropdown('status')],
+    ['Alt + T', () => openFieldDropdown('primaryLabel')],
+    ['Alt + N', handleNewTask],
   ];
 
   // Browser find cannot see virtualized cards: the first press lands in the search box, and a second press typed there is native find.
-  const handleFindKeyDown = (event: KeyboardEvent) => {
+  const handleFind = (event: KeyboardEvent) => {
     const input = document.getElementById(boardSearchInputId);
     if (!(input instanceof HTMLInputElement)) return;
     event.preventDefault();
@@ -165,10 +165,10 @@ export function TasksHotkeys({ projects }: TasksHotkeysProps) {
   };
 
   const stateHotkeys: HotkeyItem[] = [
-    ['Escape', handleEscKeyPress],
-    ['Enter', handleEnterKeyPress],
-    ['meta + f', handleFindKeyDown, { preventDefault: false }],
-    ['ctrl + f', handleFindKeyDown, { preventDefault: false }],
+    ['Escape', handleEscape],
+    ['Enter', handleEnter],
+    ['meta + f', handleFind, { preventDefault: false }],
+    ['ctrl + f', handleFind, { preventDefault: false }],
   ];
 
   const gridIgnoreTags = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', '[role="grid"]'];

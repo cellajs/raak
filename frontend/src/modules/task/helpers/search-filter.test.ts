@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Task } from '~/modules/task/types';
-import { searchFilterFunction } from './search-filter';
+import { matchesBoardSearch } from './search-filter';
 
 const paragraph = (text: string) =>
   JSON.stringify([{ id: '1', type: 'paragraph', props: {}, content: [{ type: 'text', text, styles: {} }], children: [] }]);
@@ -16,33 +16,33 @@ const task = (overrides: Partial<Task> = {}) =>
     ...overrides,
   }) as unknown as Task;
 
-describe('searchFilterFunction', () => {
+describe('matchesBoardSearch', () => {
   it('passes every task without a query, and the create form always', () => {
-    expect(searchFilterFunction({ q: '' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'missing' }, task({ _draft: true }))).toBe(true);
+    expect(matchesBoardSearch({ q: '' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'missing' }, task({ _draft: true }))).toBe(true);
   });
 
   it('matches description, label and assignee text', () => {
-    expect(searchFilterFunction({ q: 'drops' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'perform' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'kramer' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'missing' }, task())).toBe(false);
+    expect(matchesBoardSearch({ q: 'drops' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'perform' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'kramer' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'missing' }, task())).toBe(false);
   });
 
   it('ignores case and accents', () => {
-    expect(searchFilterFunction({ q: 'RENEE' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'cafe' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'joöst' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'RENEE' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'cafe' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'joöst' }, task())).toBe(true);
   });
 
   it('needs every word in all mode and one in any mode', () => {
-    expect(searchFilterFunction({ q: 'sync kramer' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: 'sync missing' }, task())).toBe(false);
-    expect(searchFilterFunction({ q: 'sync missing', matchMode: 'any' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'sync kramer' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: 'sync missing' }, task())).toBe(false);
+    expect(matchesBoardSearch({ q: 'sync missing', matchMode: 'any' }, task())).toBe(true);
   });
 
   it('strips the highlight marker', () => {
-    expect(searchFilterFunction({ q: '=drops' }, task())).toBe(true);
-    expect(searchFilterFunction({ q: '=' }, task({ description: null }))).toBe(true);
+    expect(matchesBoardSearch({ q: '=drops' }, task())).toBe(true);
+    expect(matchesBoardSearch({ q: '=' }, task({ description: null }))).toBe(true);
   });
 });

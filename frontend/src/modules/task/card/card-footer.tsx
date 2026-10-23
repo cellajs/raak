@@ -9,10 +9,10 @@ import { HighlightText } from '~/modules/common/match-highlight';
 import { TooltipButton } from '~/modules/common/tooltip-button';
 import { useReadOnlyHide, useReadOnlyInert } from '~/modules/project/use-read-only';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
-import type { DropdownsType } from '~/modules/task/dropdowns/types';
+import type { TaskDropdownType } from '~/modules/task/dropdowns/types';
 import { copyStartedTask } from '~/modules/task/helpers/copy-tasks';
-import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
-import { handleTaskSelect } from '~/modules/task/helpers/task-selection';
+import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
+import { setTaskSelected } from '~/modules/task/helpers/task-selection';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import { useTaskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
@@ -56,11 +56,11 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
       ? t('c:status_updated_at', { when: statusChangedRelative })
       : t('c:status_updated_on', { when: statusChangedRelative });
 
-  const onDropdownOpen = (currentTarget: EventTarget & HTMLButtonElement, dropdownType: DropdownsType) => {
+  const onDropdownOpen = (currentTarget: EventTarget & HTMLButtonElement, dropdownType: TaskDropdownType) => {
     const base = { triggerId: currentTarget.id, triggerRef: { current: currentTarget }, taskId: task.id };
 
     if (dropdownType === 'labels') {
-      handleTaskDropdownClick({
+      openTaskDropdown({
         ...base,
         dropdownType,
         value: task.labels,
@@ -70,11 +70,11 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
         initialSelectedCollapsed: !isMobile || isExpandedMobile,
       });
     } else if (dropdownType === 'assignedTo') {
-      handleTaskDropdownClick({ ...base, dropdownType, value: task.assignedTo, projectId: task.projectId, onChange: handlers.onAssignedToChange });
+      openTaskDropdown({ ...base, dropdownType, value: task.assignedTo, projectId: task.projectId, onChange: handlers.onAssignedToChange });
     } else if (dropdownType === 'status') {
-      handleTaskDropdownClick({ ...base, dropdownType, value: task.status, onChange: handlers.onStatusChange });
+      openTaskDropdown({ ...base, dropdownType, value: task.status, onChange: handlers.onStatusChange });
     } else {
-      handleTaskDropdownClick({
+      openTaskDropdown({
         ...base,
         dropdownType: 'primaryLabel',
         value: task.primaryLabelId,
@@ -141,7 +141,7 @@ export const TaskCardFooter = memo(function TaskCardFooter({ task, isSelected, i
             aria-label={t('c:select_resource', { resource: task.name })}
             checked={isSelected}
             disabled={hasSelectedLabels || isOtherProjectSelected}
-            onCheckedChange={(checked) => handleTaskSelect(checked, task)}
+            onCheckedChange={(checked) => setTaskSelected(checked, task)}
           />
         )}
         {/* Labels are rendered above on mobile when expanded */}

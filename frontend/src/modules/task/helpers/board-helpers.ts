@@ -5,8 +5,8 @@ import type { EnrichedProject } from '~/modules/project/types';
 import type { BoardPanelData, SectionsValue } from '~/modules/task/board/task-board-store';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
-import { sortTaskOrder } from '~/modules/task/helpers/sort-helpers';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
+import { compareTaskOrder } from '~/modules/task/helpers/sort-helpers';
 import { taskInteractionStore } from '~/modules/task/task-interaction-store';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { BoardSearchParams, ProjectResizablePanel, Task } from '~/modules/task/types';
@@ -24,7 +24,7 @@ export const prepareBoardTasks = (tasks: Task[], showAccepted: boolean, showIced
         (showIced && task.status === iced) ||
         (task.status !== accepted && task.status !== iced),
     )
-    .sort(sortTaskOrder);
+    .sort(compareTaskOrder);
 };
 
 /**
@@ -42,7 +42,7 @@ export const makePanelKey = (projectId: string, section: SectionsValue) => {
   const keyParts = Object.entries(section)
     .map(([key, values]) => {
       // Ensure consistent, lowercase-safe key format
-      const normalizedValues = values.map((v) => String(v).toLowerCase()).join('-');
+      const normalizedValues = values.map((value) => String(value).toLowerCase()).join('-');
       return `${key}-${normalizedValues}`;
     })
     .join('__'); // double underscore separates categories, e.g. status__impact
@@ -92,7 +92,7 @@ export const sortByMembership = (projects: EnrichedProject[]) => {
 /** Orders tasks as the board shows them: panels by membership, then status and display order. */
 export const sortTasksAsOnBoard = (tasks: Task[], projects: EnrichedProject[]) => {
   const panelIndex = new Map(sortByMembership(projects).map((project, index) => [project.id, index]));
-  return [...tasks].sort((a, b) => (panelIndex.get(a.projectId) ?? 0) - (panelIndex.get(b.projectId) ?? 0) || sortTaskOrder(a, b));
+  return [...tasks].sort((a, b) => (panelIndex.get(a.projectId) ?? 0) - (panelIndex.get(b.projectId) ?? 0) || compareTaskOrder(a, b));
 };
 
 /** projectId → split sections of one board; unsplit projects are absent. */
@@ -181,7 +181,7 @@ export const renderedPanelTasks = (
   const inPanel = tasks.filter(
     (task) =>
       task.projectId === panel.project.id &&
-      searchFilterFunction(search, task) &&
+      matchesBoardSearch(search, task) &&
       (!panel.sectionFilters || Object.entries(panel.sectionFilters).every(([key, value]) => value.includes(task[key as keyof SectionsValue]))),
   );
   return prepareBoardTasks(inPanel, prefs.expandAccepted, prefs.expandIced);

@@ -13,7 +13,7 @@ import { useSortColumns } from '~/modules/common/data-table/sort-columns';
 import { searchHighlightRowClass } from '~/modules/common/search-highlight';
 import { projectsListQueryOptions } from '~/modules/project/query';
 import { isProjectReadOnly } from '~/modules/project/use-read-only';
-import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { publicTasksTableQueryOptions } from '~/modules/task/public-query';
 import { deriveTasksQueryParams, tasksTableQueryOptions } from '~/modules/task/query';
 import { TableProjectsContext, useColumns } from '~/modules/task/table/tasks-columns';
@@ -95,12 +95,12 @@ export function TasksTable({ projects: projectsProp, workspace, publicView, orga
   // Stable row references prevent memoized rows from rerendering on unchanged offline filters.
   const rows = useMemo(() => {
     if (!fetchedRows) return undefined;
-    return isOnline || highlight ? fetchedRows : fetchedRows.filter((row) => searchFilterFunction(search, row));
+    return isOnline || highlight ? fetchedRows : fetchedRows.filter((row) => matchesBoardSearch(search, row));
   }, [fetchedRows, isOnline, highlight, search]);
 
   // Tint matches among the loaded rows in highlight mode (search-filter strips the marker)
   const rowClass = useMemo(
-    () => (highlight ? (row: Task) => (searchFilterFunction(search, row) ? searchHighlightRowClass : undefined) : undefined),
+    () => (highlight ? (row: Task) => (matchesBoardSearch(search, row) ? searchHighlightRowClass : undefined) : undefined),
     [highlight, search],
   );
 

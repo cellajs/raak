@@ -1,7 +1,7 @@
 import type { UserMinimalBase } from 'sdk';
 import type { TaskLabel, TaskStatusType } from '~/modules/task/types';
 
-export type DropdownsType = 'labels' | 'assignedTo' | 'status' | 'primaryLabel';
+export type TaskDropdownType = 'labels' | 'assignedTo' | 'status' | 'primaryLabel';
 
 /**
  * Optional id of the task this dropdown is editing. When present, the dropdown

@@ -1,7 +1,7 @@
 import { UsersIcon } from 'lucide-react';
 import { HighlightText } from '~/modules/common/match-highlight';
 import { hiddenMatchReason } from '~/modules/task/helpers/match-reason';
-import { useTaskSearchTerms } from '~/modules/task/helpers/use-task-search-terms';
+import { useTaskSearchTerms } from '~/modules/task/hooks/use-task-search-terms';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
 

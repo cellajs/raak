@@ -23,11 +23,11 @@ export const useLiveSelection = <T extends { id: string }>(
   // Reconcile only when the live field changes (deps intentionally exclude `selected`).
   useEffect(() => {
     const localIds = selected
-      .map((x) => x.id)
+      .map((item) => item.id)
       .sort()
       .join(',');
     const remoteIds = live
-      .map((x) => x.id)
+      .map((item) => item.id)
       .sort()
       .join(',');
     if (localIds !== remoteIds) setSelected(live);

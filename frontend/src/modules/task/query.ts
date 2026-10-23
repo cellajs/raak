@@ -12,7 +12,7 @@ import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { findLabelInCache } from '~/modules/label/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
-import { boardAcceptedCutOff } from '~/modules/task/task-properties';
+import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import type { Task, TaskLabel } from '~/modules/task/types';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheCreate, cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
@@ -71,7 +71,7 @@ type TaskUpdateMutationFnVariables = BaseUpdateParams & Partial<OptimisticCacheF
 
 type TaskCreateFullVars = CreateVariables<TaskCreateMutationFnVariables>;
 type TaskUpdateFullVars = UpdateVariables<UpdateTaskOps> & Partial<OptimisticCacheFields>;
-type TasksDeleteFullVars = DeleteVariables<Task>;
+type TaskDeleteFullVars = DeleteVariables<Task>;
 
 /** Retains API literal unions for task-list sorting and matching filters. */
 type TaskListFilters = Pick<GetTasksParam, 'projectId' | 'workspaceId' | 'q' | 'sort' | 'order' | 'matchMode'>;
@@ -123,18 +123,10 @@ const deriveTaskDescription = (description: string | null) => {
 };
 
 /** Every column the server derives from the description: merged from its response after a description write. */
-const TASK_DERIVED_DESCRIPTION_FIELDS = [
-  'summary',
-  'summaryLength',
-  'expandable',
-  'checkboxCount',
-  'checkedCount',
-  'attachments',
-  'keywords',
-] as const;
+const taskDerivedDescriptionFields = ['summary', 'summaryLength', 'expandable', 'checkboxCount', 'checkedCount', 'attachments', 'keywords'] as const;
 
 registerDescriptionDerivation('task', deriveTaskDescription);
-registerYjsOwnedFields('task', ['description', ...TASK_DERIVED_DESCRIPTION_FIELDS]);
+registerYjsOwnedFields('task', ['description', ...taskDerivedDescriptionFields]);
 
 const handleError = createResourceError('task');
 
@@ -166,7 +158,7 @@ export const updateTaskMutationFn = async ({ tenantId, organizationId, id, ops, 
   return updateTask({ body: { ops, stx: effectiveStx }, path: { id, organizationId, tenantId } });
 };
 
-const deleteTasksMutationFn = async ({ tenantId, organizationId, rows, stx }: TasksDeleteFullVars) => {
+const deleteTasksMutationFn = async ({ tenantId, organizationId, rows, stx }: TaskDeleteFullVars) => {
   const ids = rows.map(({ id }) => id);
   const effectiveStx = stx ?? createStxForDelete();
   return deleteTasks({ body: { ids, stx: effectiveStx }, path: { organizationId, tenantId } });
@@ -289,7 +281,7 @@ export const tasksCanonicalOptions = ({ organizationId, tenantId, projectId }: {
       const completeRead = carryUnansweredCreates(client, projectId);
       const read = await fetchAllPages(
         ({ limit, offset }) =>
-          getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOff } }),
+          getTasks({ path: { organizationId, tenantId }, query: { projectId, limit, offset, acceptedCutOff: boardAcceptedCutOffDays } }),
         appConfig.requestLimits.tasks,
       );
       return completeRead(read);
@@ -427,7 +419,7 @@ const taskUpdateOptions = (
       cached,
       serverEntity: updatedTask,
       mutatedKeys,
-      derivedKeys: { description: TASK_DERIVED_DESCRIPTION_FIELDS, status: ['statusChangedAt'] },
+      derivedKeys: { description: taskDerivedDescriptionFields, status: ['statusChangedAt'] },
       skipKeys: isProjectMove ? [] : ['labels', 'assignedTo'],
     });
 
@@ -445,7 +437,7 @@ const taskUpdateOptions = (
   },
 });
 
-const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteData, Error, TasksDeleteFullVars, { tasksToDelete: Task[] }> => ({
+const taskDeleteOptions = (queryClient: QueryClient): UseMutationOptions<DeleteData, Error, TaskDeleteFullVars, { tasksToDelete: Task[] }> => ({
   mutationKey: taskKeys.delete,
   scope: { id: 'task' },
   mutationFn: deleteTasksMutationFn,
@@ -523,7 +515,7 @@ export const useTaskDeleteMutation = (tenantId: string, organizationId: string) 
   const queryClient = useQueryClient();
   const mutation = useMutation(taskDeleteOptions(queryClient));
 
-  const prepare = (tasks: Task[]): PreparedVars<TasksDeleteFullVars> =>
+  const prepare = (tasks: Task[]): PreparedVars<TaskDeleteFullVars> =>
     prepareProductDelete(queryClient, taskKeys, taskKeys.list.org(organizationId), tasks, (rows) => ({
       tenantId,
       organizationId,

@@ -8,7 +8,7 @@ import type { Task } from '~/modules/task/types';
  * Collaborative edits patch caches while Yjs persists; with Yjs off, edits use the update mutation.
  */
 export const useTaskDescriptionUpdate = (task: Task) => {
-  const { mutateAsync: updateDesc } = useTaskUpdateMutation(task.tenantId, task.organizationId);
+  const { mutateAsync: updateTask } = useTaskUpdateMutation(task.tenantId, task.organizationId);
 
   return async (description: string, collaborative: boolean) => {
     if (collaborative) {
@@ -19,6 +19,6 @@ export const useTaskDescriptionUpdate = (task: Task) => {
       return;
     }
 
-    await persistStandaloneDescription('task', task, description, (ops) => updateDesc({ id: task.id, ops }));
+    await persistStandaloneDescription('task', task, description, (ops) => updateTask({ id: task.id, ops }));
   };
 };

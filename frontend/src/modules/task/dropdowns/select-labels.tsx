@@ -22,11 +22,10 @@ import {
   comboboxShellClass,
   HotkeyIndexBadge,
   matchDigitHotkey,
-} from '~/modules/task/dropdowns/combobox-scaffold';
+} from '~/modules/task/dropdowns/combobox-parts';
 import type { SelectLabelsProps } from '~/modules/task/dropdowns/types';
 import { getItemsSortedByName } from '~/modules/task/helpers/sort-helpers';
 import { useLiveSelection } from '~/modules/task/hooks/use-live-selection';
-import { labelColors } from '~/modules/task/task-styles';
 import type { TaskLabel } from '~/modules/task/types';
 import { Badge } from '~/modules/ui/badge';
 import { Combobox, ComboboxGroup, ComboboxGroupLabel, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
@@ -38,16 +37,39 @@ import { isTouchInteraction } from '~/utils/input-modality';
 
 // Sentinel prefix for the "create label" row's Combobox value, so it can't
 // collide with a real label name when selection flows through onValueChange.
-const CREATE_SENTINEL_PREFIX = '__create__';
+const createSentinelPrefix = '__create__';
 
 /** Suggested labels shown without a search; the digit hotkeys cover the same range. */
 const suggestedLabelCount = 8;
 
+const labelColors = [
+  '#A8E6CF',
+  '#D0F0FD',
+  '#D7CFF7',
+  '#FFE0B2',
+  '#FADADD',
+  '#FF6F61',
+  '#1DE9B6',
+  '#FFD54F',
+  '#40C4FF',
+  '#B388FF',
+  '#374785',
+  '#2E7D32',
+  '#D84315',
+  '#546E7A',
+  '#6A1B9A',
+  '#00B8D4',
+  '#5C6BC0',
+  '#B2DFDB',
+  '#CFD8DC',
+  '#4A90E2',
+];
+
 // The task label picker offers secondary tags and epics; primary labels have dedicated task-card UI.
 // Module-scoped so its identity is stable: an inline combine rebuilds `labels` every render,
-// cascading through the projectLabels / initLabels memos that depend on it by reference.
+// cascading through the projectLabels / allLabels memos that depend on it by reference.
 const combineTaskLabels = (results: { data?: { items: Label[] } }[]): Label[] =>
-  results.flatMap((r) => r.data?.items ?? []).filter((l) => l.mode !== 'primary');
+  results.flatMap((result) => result.data?.items ?? []).filter((label) => label.mode !== 'primary');
 
 const renderLabelItem = (
   label: Label | TaskLabel,
@@ -56,7 +78,7 @@ const renderLabelItem = (
   searchValue: string,
   hotkeyIndex?: number,
 ) => {
-  const isSelected = selectedLabels.some((l) => l.slug === label.slug);
+  const isSelected = selectedLabels.some((selected) => selected.slug === label.slug);
   const LabelModeIcon = label.mode === 'epic' ? FlagIcon : TagIcon;
   return (
     <ComboboxItem
@@ -90,7 +112,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
   const { data: workspaceProjectIds } = useInfiniteQuery({
     ...projectsListQueryOptions({ workspaceId: workspaceId ?? '' }),
     enabled: !!workspaceId,
-    select: (data) => data.pages.flatMap((page) => page.items.map((p) => p.id)),
+    select: (data) => data.pages.flatMap((page) => page.items.map((project) => project.id)),
   });
 
   // Labels are project-homed: aggregate the per-project canonical home lists client-side. Inside a
@@ -111,33 +133,33 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
 
   const { mutateAsync: createLabelMutation } = useLabelCreateMutation(tenantId, organizationId);
 
-  const [selectedLabels, setSelectedLabels] = useLiveSelection(taskId, (t) => t.labels, currentLabels);
+  const [selectedLabels, setSelectedLabels] = useLiveSelection(taskId, (task) => task.labels, currentLabels);
 
   const [searchValue, setSearchValue] = useState('');
   const [selectedCollapsed, setSelectedCollapsed] = useState(initialSelectedCollapsed ?? !isMobile);
 
-  const trackUsage = useLabelRecencyStore((s) => s.trackUsage);
-  const getScore = useLabelRecencyStore((s) => s.getScore);
+  const trackUsage = useLabelRecencyStore((state) => state.trackUsage);
+  const getScore = useLabelRecencyStore((state) => state.getScore);
 
-  const projectLabels = useMemo(() => labels.filter((l) => l.projectId === projectId), [labels, projectId]);
+  const projectLabels = useMemo(() => labels.filter((label) => label.projectId === projectId), [labels, projectId]);
 
-  // Derive initLabels directly from query data. Memoized so a keystroke (searchValue) doesn't rebuild
+  // Derive allLabels directly from query data. Memoized so a keystroke (searchValue) doesn't rebuild
   // it and invalidate the searchResults / suggestedLabels memos that depend on its identity.
-  const initLabels = useMemo(() => deduplicateLabels(labels, projectId, organizationId, usage), [labels, projectId, organizationId, usage]);
+  const allLabels = useMemo(() => deduplicateLabels(labels, projectId, organizationId, usage), [labels, projectId, organizationId, usage]);
 
   // Search results filtered by query
   const searchResults = useMemo(() => {
     if (!searchValue.length) return [];
     // Labels are meant to be lowercase, but older and seeded names carry capitals and spaces: normalize them as the input is
-    const matchedLabels = initLabels.filter(({ name }) => name.toLowerCase().replaceAll(' ', '-').includes(searchValue));
+    const matchedLabels = allLabels.filter(({ name }) => name.toLowerCase().replaceAll(' ', '-').includes(searchValue));
     return getItemsSortedByName(matchedLabels);
-  }, [searchValue, initLabels]);
+  }, [searchValue, allLabels]);
 
   // Top labels by recency → usedCount → name, excluding already-selected
   const suggestedLabels = useMemo(() => {
-    const selectedSlugs = new Set(selectedLabels.map((l) => l.slug));
-    return initLabels
-      .filter((l) => !selectedSlugs.has(l.slug))
+    const selectedSlugs = new Set(selectedLabels.map((label) => label.slug));
+    return allLabels
+      .filter((label) => !selectedSlugs.has(label.slug))
       .sort((a, b) => {
         const recency = getScore(organizationId, b.slug) - getScore(organizationId, a.slug);
         if (recency !== 0) return recency;
@@ -146,7 +168,7 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
         return a.name.localeCompare(b.name);
       })
       .slice(0, suggestedLabelCount);
-  }, [initLabels, selectedLabels, getScore, organizationId]);
+  }, [allLabels, selectedLabels, getScore, organizationId]);
 
   // Combined list for rendering (selected first, then suggested)
   const visibleLabels = useMemo(
@@ -164,8 +186,8 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     if (!value) return;
 
     // Create row selected (via click or Enter): strip sentinel and create.
-    if (value.startsWith(CREATE_SENTINEL_PREFIX)) {
-      return handleCreateClick(value.slice(CREATE_SENTINEL_PREFIX.length));
+    if (value.startsWith(createSentinelPrefix)) {
+      return handleCreateClick(value.slice(createSentinelPrefix.length));
     }
 
     setSearchValue('');
@@ -230,14 +252,14 @@ export function SelectLabels({ value: currentLabels, projectId, onChange, taskId
     const createdLabels = await createLabelMutation(newLabelData);
     // Creates never coalesce, so this always resolves to the created labels; the guard narrows the type.
     if (createdLabels === coalescedResult) return;
-    const finalLabels = updatedLabels.map((l) => (l.id === newLabel.id ? createdLabels[0] : l));
+    const finalLabels = updatedLabels.map((label) => (label.id === newLabel.id ? createdLabels[0] : label));
     setSelectedLabels(finalLabels);
     updateTaskLabels(finalLabels);
     trackUsage(organizationId, [newLabelData.slug]);
   };
 
-  const createItem = searchValue.trim() !== '' && !projectLabels.some((l) => l.slug === labelSlug(searchValue)) && (
-    <ComboboxItem value={`${CREATE_SENTINEL_PREFIX}${searchValue}`} className={cn(comboboxActionButtonClass, isMobile ? 'mb-1' : 'mt-1')}>
+  const createItem = searchValue.trim() !== '' && !projectLabels.some((label) => label.slug === labelSlug(searchValue)) && (
+    <ComboboxItem value={`${createSentinelPrefix}${searchValue}`} className={cn(comboboxActionButtonClass, isMobile ? 'mb-1' : 'mt-1')}>
       {t('c:create_resource', { resource: t('c:label').toLowerCase() })}
       <Badge className="ml-2 flex px-2 py-0" variant="plain">
         {searchValue}

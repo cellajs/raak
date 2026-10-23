@@ -23,7 +23,7 @@ export enum TaskStatus {
  * Number of days after which accepted tasks on the board are automatically moved to the backlog.
  * This is a soft rule to keep the board tidy, not a hard cutoff.
  */
-export const boardAcceptedCutOff = 14; //in days
+export const boardAcceptedCutOffDays = 14;
 
 /**
  * Task status options as array with metadata for rendering.
@@ -43,6 +43,7 @@ export const statusOptions = [
  * (`statusOptions[value]`), which only works while the array order happens to match
  * the enum values and breaks silently on reorder.
  */
-const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> => Object.fromEntries(options.map((o) => [o.value, o]));
+const byValue = <T extends { value: number }>(options: readonly T[]): Record<number, T> =>
+  Object.fromEntries(options.map((option) => [option.value, option]));
 
 export const statusOptionsByValue = byValue(statusOptions) as Record<(typeof statusOptions)[number]['value'], (typeof statusOptions)[number]>;

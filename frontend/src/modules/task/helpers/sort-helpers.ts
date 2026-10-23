@@ -6,10 +6,10 @@ export const getItemsSortedByName = <T extends { name: string }>(items: T[]): T[
   return items.slice().sort((a, b) => a.name.localeCompare(b.name, appConfig.defaultLanguage));
 };
 
-export const sortTaskOrder = (task1: Pick<Task, 'status' | 'displayOrder'>, task2: Pick<Task, 'status' | 'displayOrder'>, reverse = false) => {
+export const compareTaskOrder = (a: Pick<Task, 'status' | 'displayOrder'>, b: Pick<Task, 'status' | 'displayOrder'>, reverse = false) => {
   // Primary sort by status (lower status first)
-  if (task1.status !== task2.status) return task1.status - task2.status;
+  if (a.status !== b.status) return a.status - b.status;
 
   // Secondary sort by displayOrder within the same status
-  return reverse ? task1.displayOrder - task2.displayOrder : task2.displayOrder - task1.displayOrder;
+  return reverse ? a.displayOrder - b.displayOrder : b.displayOrder - a.displayOrder;
 };

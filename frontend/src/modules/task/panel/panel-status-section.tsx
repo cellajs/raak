@@ -9,7 +9,7 @@ import { hintFadeOut } from '~/modules/common/resizable-panels/resizable-panels'
 import { defaultPanelPrefs, type TogglableStatusType, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { triggerSectionGlow } from '~/modules/task/helpers/task-glow';
 import { useSectionEdgeVisibility } from '~/modules/task/hooks/use-section-edge-visibility';
-import { boardAcceptedCutOff } from '~/modules/task/task-properties';
+import { boardAcceptedCutOffDays } from '~/modules/task/task-properties';
 import { statusSectionColors } from '~/modules/task/task-styles';
 import type { TaskCounts } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -144,7 +144,7 @@ export function PanelStatusSection({ type, counts, projectId, onToggle, scrollRe
             {!isIced && (
               <>
                 <span>{t('c:since')}</span>
-                <span>{dateMini(dayjs().subtract(boardAcceptedCutOff, 'day').toISOString())}</span>
+                <span>{dateMini(dayjs().subtract(boardAcceptedCutOffDays, 'day').toISOString())}</span>
                 {counts.accepted !== counts.acceptedCutOff && showTotal && (
                   <div className="text-xs">
                     <span className="mr-2 ml-1">•</span>

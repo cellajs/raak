@@ -19,7 +19,7 @@ export const DraftTaskItem = memo(function DraftTaskItem({
   project: Project;
   onStatusChange: (status: TaskStatus) => void;
 }) {
-  const isFocused = useBoardFocusStore((s) => s.currentItemId === task.id);
+  const isFocused = useBoardFocusStore((state) => state.currentItemId === task.id);
   const itemRef = useRef<HTMLDivElement>(null);
   useItemControlsTabOrder(itemRef, task.id, isFocused);
   useEffect(() => (isFocused ? markCurrentItemMounted(task.id) : undefined), [isFocused, task.id]);

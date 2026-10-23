@@ -1,5 +1,4 @@
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { autoScrollForElements, autoScrollWindowForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { type RefObject, useEffect, useState } from 'react';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { canDropTaskIntoProject, isTaskData } from '~/modules/task/helpers/drag-and-drop';
@@ -50,24 +49,4 @@ export function usePanelDropTarget({ panelRef, projectId, tasks }: UsePanelDropT
   }, [projectId, panelRef]);
 
   return { highlightProject };
-}
-
-/**
- * Attach vertical auto-scroll to a scrollable element during drag operations.
- * Lives separately from `usePanelDropTarget` because the scroll viewport only
- * exists in the expanded state, while the drop target must be live in both.
- *
- * When `windowScroll` is set (mobile / windowScroll branches where the page
- * itself scrolls, so no element viewport is mounted), falls back to window
- * auto-scroll so dragging near the viewport edge still scrolls the page.
- * `windowScroll` is a dependency so the registration flips to the correct target
- * if the branch changes (e.g. crossing the mobile breakpoint) while mounted.
- */
-export function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScroll: boolean) {
-  useEffect(() => {
-    if (!windowScroll && scrollRef.current) {
-      return autoScrollForElements({ element: scrollRef.current, getAllowedAxis: () => 'vertical' });
-    }
-    return autoScrollWindowForElements({ getAllowedAxis: () => 'vertical' });
-  }, [scrollRef, windowScroll]);
 }

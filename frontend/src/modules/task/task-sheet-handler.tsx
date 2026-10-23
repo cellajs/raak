@@ -10,7 +10,7 @@ import { cachedTasks } from '~/modules/task/helpers/active-task';
 import { suppressGlowAttr, triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { subscribeToTaskCache } from '~/modules/task/hooks/use-tasks-total';
 import { taskKeys } from '~/modules/task/query';
-import { TASK_SHEET_PARAM } from '~/modules/task/search-params-schemas';
+import { taskSheetParam } from '~/modules/task/search-params-schemas';
 import { Badge } from '~/modules/ui/badge';
 import { queryClient } from '~/query/query-client';
 
@@ -52,18 +52,18 @@ function TaskSheetHandler() {
   }, [taskSheetId]);
 
   useUrlSheet({
-    searchParamKey: TASK_SHEET_PARAM,
+    searchParamKey: taskSheetParam,
     renderContent: (id, organizationId) => <TaskSheet id={id} organizationId={organizationId} />,
     onAfterClose: (id) => {
       // Check for mutations that happened while the sheet was open
-      const allTasksMutations = queryClient.getMutationCache().findAll({
+      const updateMutations = queryClient.getMutationCache().findAll({
         mutationKey: taskKeys.update,
         status: 'success',
         predicate: ({ state: { variables } }) => (variables as { id: string }).id === id,
       });
 
       // Add glow effect on updated task
-      if (allTasksMutations.length) triggerTaskGlow(id);
+      if (updateMutations.length) triggerTaskGlow(id);
 
       // Restore focus to task card
       focusItem(id);

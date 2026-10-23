@@ -1,6 +1,6 @@
 import { useSearch } from '@tanstack/react-router';
 import { useSyncExternalStore } from 'react';
-import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { type BaseTasksQueryParam, taskKeys } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';
 import { isQueryData } from '~/query/basic/mutate-query';
@@ -33,7 +33,7 @@ export const useTasksTotal = (queryParams?: BaseTasksQueryParam) => {
 
     return queries.reduce((total, [, data]) => {
       if (!isQueryData<Task>(data)) return total;
-      if (isSearching) return total + data.items.filter((task) => searchFilterFunction({ q, matchMode }, task)).length;
+      if (isSearching) return total + data.items.filter((task) => matchesBoardSearch({ q, matchMode }, task)).length;
       return total + data.total;
     }, 0);
   });

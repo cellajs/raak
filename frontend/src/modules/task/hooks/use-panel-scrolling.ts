@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { autoScrollForElements, autoScrollWindowForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
+import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { VirtualizerHandle } from 'virtua';
 import { useLatestRef } from '~/hooks/use-latest-ref';
 import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
@@ -7,9 +8,21 @@ import { isDraftTask } from '~/modules/task/helpers/draft-task';
 import { getTargetIndexByStatus } from '~/modules/task/helpers/order-helpers';
 import { registerPanelScroller } from '~/modules/task/helpers/panel-scroll-registry';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
-import { usePanelAutoScroll } from '~/modules/task/hooks/use-panel-drop-target';
 import { TaskStatus } from '~/modules/task/task-properties';
 import type { TaskProps } from '~/modules/task/types';
+
+/**
+ * Vertical auto-scroll during drags: of the viewport element, or of the window when the page itself scrolls
+ * (no viewport mounted). The registration follows a change of branch while mounted.
+ */
+function usePanelAutoScroll(scrollRef: RefObject<HTMLElement | null>, windowScroll: boolean) {
+  useEffect(() => {
+    if (!windowScroll && scrollRef.current) {
+      return autoScrollForElements({ element: scrollRef.current, getAllowedAxis: () => 'vertical' });
+    }
+    return autoScrollWindowForElements({ getAllowedAxis: () => 'vertical' });
+  }, [scrollRef, windowScroll]);
+}
 
 interface UsePanelScrollingOptions {
   projectId: string;
@@ -38,7 +51,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
     return registerPanelNav(panelId, {
       items: () => tasksRef.current.map(({ id, status }) => ({ id, group: status })),
       scrollTo: (taskId) => {
-        const index = tasksRef.current.findIndex((t) => t.id === taskId);
+        const index = tasksRef.current.findIndex((task) => task.id === taskId);
         if (index !== -1) virtualizerRef.current?.scrollToIndex(index, { align: 'nearest', smooth: false });
       },
       firstInView: () =>
@@ -91,7 +104,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
   usePanelAutoScroll(scrollViewportRef, isMobile || windowScroll);
 
   // Index of the first iced task in the sorted list, used by the section-toggle scroll below
-  const icedBoundaryIndex = useMemo(() => tasks.findIndex((t) => t.status === TaskStatus.Iced), [tasks]);
+  const icedBoundaryIndex = useMemo(() => tasks.findIndex((task) => task.status === TaskStatus.Iced), [tasks]);
 
   // Pending scroll action set by section toggle, consumed by the effect below
   const pendingScrollRef = useRef<{ action: 'accepted-open' | 'iced-open' } | { action: 'accepted-close'; anchorTaskId: string | null } | null>(null);
@@ -134,7 +147,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
         (scrollViewportRef.current ?? window).scrollTo({ top: 0 });
         return;
       }
-      const anchorIndex = tasks.findIndex((t) => t.id === pending.anchorTaskId);
+      const anchorIndex = tasks.findIndex((task) => task.id === pending.anchorTaskId);
       if (anchorIndex >= 0) virtualizer.scrollToIndex(anchorIndex, { align: 'start', smooth: false });
       return;
     }
@@ -148,7 +161,7 @@ export function usePanelScrolling({ projectId, panelId, tasks, isMobile, windowS
       requestAnimationFrame(() => {
         const v = virtualizerRef.current;
         if (!v) return;
-        const boundary = tasksRef.current.findIndex((t) => t.status !== TaskStatus.Accepted);
+        const boundary = tasksRef.current.findIndex((task) => task.status !== TaskStatus.Accepted);
         const lastAccepted = boundary === -1 ? tasksRef.current.length - 1 : boundary - 1;
         if (lastAccepted < 0) return;
         if (v.findItemIndex(v.scrollOffset) <= lastAccepted) return;

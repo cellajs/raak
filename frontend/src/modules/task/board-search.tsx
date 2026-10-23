@@ -49,26 +49,26 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
   const steps = useMatchSteps(matches?.ids ?? [], matches?.onStep ?? noStep, matches?.currentId);
   const canStep = !!matches?.onStep && steps.total > 0;
 
-  const handleClick: MouseEventHandler = (e) => {
-    const target = e.target as HTMLElement; // Cast the target to HTMLElement
+  const handleClick: MouseEventHandler = (event) => {
+    const target = event.target as HTMLElement; // Cast the target to HTMLElement
     if (target.id === 'search-close' && document.activeElement !== inputRef.current) inputRef.current?.focus();
 
     setCurrentItem(null);
   };
 
-  const preventInputBlur: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const preventInputBlur: MouseEventHandler = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
   };
 
-  const handleKeyDown: KeyboardEventHandler = (e) => {
-    if (e.key === 'Enter' && canStep) {
-      e.preventDefault();
-      if (e.shiftKey) steps.previous();
+  const handleKeyDown: KeyboardEventHandler = (event) => {
+    if (event.key === 'Enter' && canStep) {
+      event.preventDefault();
+      if (event.shiftKey) steps.previous();
       else steps.next();
       return;
     }
-    if (e.key !== 'Escape') return;
+    if (event.key !== 'Escape') return;
 
     if (inputValue) {
       setInputValue('');
@@ -115,7 +115,7 @@ export function BoardSearch({ children, isInWorkspace, toggleFocus, matches }: B
         aria-label={searchLabel}
         className={'h-10 w-full border-0 pl-0! shadow-none'}
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(event) => setInputValue(event.target.value)}
       />
 
       {inputValue && (

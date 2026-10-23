@@ -28,7 +28,7 @@ export const descriptionText = (task: Task) => searchableText(descriptionCache, 
 export const summaryText = (task: Task) => searchableText(summaryCache, task, task.summary);
 
 /** Whether a task matches the board search; list-tasks.ts is the server leg of the same rule. */
-export const searchFilterFunction = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
+export const matchesBoardSearch = (searchParams: { q?: string; matchMode?: BoardSearchParams['matchMode'] }, task: Task): boolean => {
   const { q, matchMode = 'all' } = searchParams;
   const { terms } = parseSearchQuery(q);
 

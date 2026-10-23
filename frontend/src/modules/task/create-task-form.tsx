@@ -26,11 +26,11 @@ import {
   newTaskFormDefaults,
   newTaskFormIsDirty,
 } from '~/modules/task/helpers/create-task';
+import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
+import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
 import { getNewTaskOrder } from '~/modules/task/helpers/order-helpers';
 import { revealTask } from '~/modules/task/helpers/panel-scroll-registry';
-import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
-import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { useTaskCreateMutation } from '~/modules/task/query';
 import { statusOptionsByValue, TaskStatus } from '~/modules/task/task-properties';
 import type { Task, TaskStatusType } from '~/modules/task/types';
@@ -66,7 +66,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   const setForm = useDraftStore((state) => state.setForm);
 
   const formId = `create-task-${projectId}`;
-  const isFocused = useBoardFocusStore((s) => s.currentItemId === formId);
+  const isFocused = useBoardFocusStore((state) => state.currentItemId === formId);
 
   const [defaultId] = useState(generateId());
   const [editorKey, setEditorKey] = useState(0);
@@ -74,7 +74,6 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
   const pendingCloseRef = useRef(false);
 
   const projectMembers = useProjectMembers(projectId, tenantId, organizationId);
-  const { attachmentsCreationCallback } = useUploadAttachments();
 
   const taskMutation = useTaskCreateMutation(tenantId, organizationId);
 
@@ -106,7 +105,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
     projectId,
     tenantId,
     organizationId,
-    attachmentsCreationCallback({ organizationId, tenantId, projectId }),
+    createTaskUploadPersister({ organizationId, tenantId, projectId }),
   );
 
   const handleCloseForm = () => {
@@ -124,13 +123,15 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
     if (isDialog) requestAnimationFrame(() => revealTask(projectId, defaultId));
   };
 
-  const onSubmit = async (values: NewTaskFormValues) => {
+  const handleFormSubmit = async (values: NewTaskFormValues) => {
     if (pendingCloseRef.current) return;
     const tasks = cachedTasks();
 
     // Only add user if task start and it's not already assigned
     const fullAssignedTo =
-      values.status === TaskStatus.Started ? [...new Map([user, ...values.assignedTo].map((u) => [u.id, u])).values()] : values.assignedTo;
+      values.status === TaskStatus.Started
+        ? [...new Map([user, ...values.assignedTo].map((assignee) => [assignee.id, assignee])).values()]
+        : values.assignedTo;
 
     const newTask = {
       // Task variables
@@ -200,7 +201,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
           tabIndex={isDialog || isFocused ? 0 : -1}
           onClick={handleFormClick}
           onKeyDown={handleFormKeyDown}
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(handleFormSubmit)}
           className={cn(
             className,
             'flex flex-col gap-2 sm:p-3 sm:pl-11',
@@ -226,7 +227,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                 className: cn('min-h-16 [&>.bn-editor]:min-h-16', isDialog && 'grow [&>.bn-editor]:grow'),
                 baseFilePanelProps,
                 trailingBlock: false,
-                onEnterClick: form.handleSubmit(onSubmit),
+                onEnterClick: form.handleSubmit(handleFormSubmit),
               }}
             />
           </Suspense>
@@ -282,7 +283,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                         id={`labels-${formId}`}
                         className="focus-effect absolute inset-0 rounded-md"
                         onClick={({ currentTarget }) =>
-                          handleTaskDropdownClick({
+                          openTaskDropdown({
                             dropdownType: 'labels',
                             value: labels,
                             projectId,
@@ -299,7 +300,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                         labels.map(({ name, id }) => (
                           <Chip
                             key={id}
-                            onRemove={() => onChange(labels.filter((l) => l.id !== id))}
+                            onRemove={() => onChange(labels.filter((label) => label.id !== id))}
                             removeLabel={t('c:remove_resource', { resource: name })}
                           >
                             {name}
@@ -335,7 +336,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                       id={`assignedTo-${formId}`}
                       type="button"
                       onClick={({ currentTarget }) =>
-                        handleTaskDropdownClick({
+                        openTaskDropdown({
                           dropdownType: 'assignedTo',
                           value,
                           projectId,
@@ -350,13 +351,13 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                         <>
                           <AvatarGroup limit={3}>
                             <AvatarGroupList>
-                              {value.map((user) => (
+                              {value.map((assignee) => (
                                 <EntityAvatar
                                   type="user"
-                                  key={user.id}
-                                  id={user.id}
-                                  name={user.name}
-                                  url={user.thumbnailUrl}
+                                  key={assignee.id}
+                                  id={assignee.id}
+                                  name={assignee.name}
+                                  url={assignee.thumbnailUrl}
                                   className="h-6 w-6 text-xs"
                                 />
                               ))}
@@ -408,7 +409,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                           className="relative rounded-none rounded-r border-l border-l-background/25"
                           id={`status-${formId}`}
                           onClick={({ currentTarget }) =>
-                            handleTaskDropdownClick({
+                            openTaskDropdown({
                               dropdownType: 'status',
                               value: form.getValues('status'),
                               onChange: handleStatusChange(onChange),
@@ -435,7 +436,7 @@ function CreateTaskForm({ projectId, organizationId, className, dialog: isDialog
                 aria-label={t('c:cancel')}
                 onClick={() => {
                   form.reset();
-                  setEditorKey((k) => k + 1);
+                  setEditorKey((count) => count + 1);
                 }}
               >
                 {t('c:cancel')}

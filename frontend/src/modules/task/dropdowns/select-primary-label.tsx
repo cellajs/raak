@@ -5,7 +5,7 @@ import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { usePrimaryLabels } from '~/modules/label/use-primary-labels';
-import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-scaffold';
+import { ComboboxHotkeyHint, HotkeyIndexBadge, matchDigitHotkey } from '~/modules/task/dropdowns/combobox-parts';
 import type { SelectPrimaryLabelProps } from '~/modules/task/dropdowns/types';
 import { useTaskQuery } from '~/modules/task/hooks/use-task-query';
 import { Combobox, ComboboxEmpty, ComboboxItem, ComboboxList } from '~/modules/ui/combobox';
@@ -66,7 +66,7 @@ export function SelectPrimaryLabel({ value: currentId, projectId, onChange, task
         <ComboboxHotkeyHint searching={isSearching}>T</ComboboxHotkeyHint>
         <ComboboxList className="p-1">
           {(label: Label) => {
-            const index = primaryLabels.findIndex((l) => l.id === label.id);
+            const index = primaryLabels.findIndex((primaryLabel) => primaryLabel.id === label.id);
             return (
               <ComboboxItem key={label.id} value={label} className="group flex h-9 w-full items-center gap-2 pr-2">
                 <PrimaryLabelIcon label={label} />

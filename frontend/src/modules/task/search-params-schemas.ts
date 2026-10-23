@@ -12,10 +12,10 @@ const taskViewSchema = z.enum(['board', 'table']).default('board').catch('board'
 export const boardSearchDefaults = { q: '', view: 'board', sort: 'createdAt', order: 'desc', matchMode: 'all' } as const;
 
 /** Search param holding the open task's id. Its presence is the sheet's open state. */
-export const TASK_SHEET_PARAM = 'taskSheetId';
+export const taskSheetParam = 'taskSheetId';
 
 const baseTaskViewSchema = z.object({
-  [TASK_SHEET_PARAM]: z.string().optional(),
+  [taskSheetParam]: z.string().optional(),
   userSheetId: z.string().optional(),
   // Attachments are project-homed, so their notification links resolve here; the globally mounted
   // dialog handler only sees params the route validates.

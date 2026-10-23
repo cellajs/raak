@@ -11,10 +11,10 @@ import { FloatingNavButton } from '~/modules/navigation/floating-nav/button';
 import type { EnrichedProject } from '~/modules/project/types';
 import { defaultPanelPrefs, type SectionsValue, useTaskBoardStore } from '~/modules/task/board/task-board-store';
 import { makePanelKey, prepareBoardTasks } from '~/modules/task/helpers/board-helpers';
-import { createTaskAction } from '~/modules/task/helpers/create-task-action';
 import { isDraftTask } from '~/modules/task/helpers/draft-task';
-import { searchFilterFunction } from '~/modules/task/helpers/search-filter';
+import { matchesBoardSearch } from '~/modules/task/helpers/search-filter';
 import { usePanelDropTarget } from '~/modules/task/hooks/use-panel-drop-target';
+import { openCreateTaskDialog } from '~/modules/task/mobile-create-task-dialog';
 import { TaskPanelCollapsed } from '~/modules/task/panel/panel-collapsed';
 import { TaskPanelContent } from '~/modules/task/panel/panel-content';
 import { TaskPanelHeader } from '~/modules/task/panel/panel-header';
@@ -52,7 +52,7 @@ export const BoardPanel = memo(function BoardPanel({
 
   // Filter tasks based on search and filters; the open create-form draft always stays visible
   const filteredTasks = useMemo(() => {
-    const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || searchFilterFunction({ q, matchMode }, task));
+    const matchedTasks = fetchedTasks.filter((task) => isDraftTask(task) || matchesBoardSearch({ q, matchMode }, task));
 
     const isHighlightMode = parseSearchQuery(q).highlight;
     if (!isHighlightMode) return matchedTasks;
@@ -104,7 +104,7 @@ export const BoardPanel = memo(function BoardPanel({
           <FloatingNavButton
             id="create-task"
             icon={PlusIcon}
-            onClick={() => createTaskAction(project.id, project.organizationId)}
+            onClick={() => openCreateTaskDialog(project.id, project.organizationId)}
             ariaLabel={t('c:create_resource', { resource: t('c:task').toLowerCase() })}
             className={showFab ? 'opacity-100' : 'pointer-events-none translate-y-16 scale-50 opacity-0'}
           />

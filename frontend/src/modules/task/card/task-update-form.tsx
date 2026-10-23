@@ -8,9 +8,9 @@ import { findProjectByIdOrSlug } from '~/modules/project/query';
 import { useProjectMembers } from '~/modules/project/use-project-members';
 import { TaskCardContentExpanded } from '~/modules/task/card/card-content-expanded';
 import { useTaskCardStore } from '~/modules/task/card/task-card-store';
+import { createTaskUploadPersister } from '~/modules/task/helpers/create-task-upload-persister';
 import { useTaskDescriptionUpdate } from '~/modules/task/hooks/use-task-description-update';
 import { useTaskFilePanelProps } from '~/modules/task/hooks/use-task-file-panel-props';
-import { useUploadAttachments } from '~/modules/task/hooks/use-upload-attachments';
 import { taskDescriptionGutterStyle } from '~/modules/task/task-styles';
 import type { Task } from '~/modules/task/types';
 import { cn } from '~/utils/cn';
@@ -41,7 +41,6 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
   const canEdit = isUnconditionalCan(project?.can?.task?.update);
 
   const projectMembers = useProjectMembers(task.projectId, tenantId, task.organizationId);
-  const { attachmentsCreationCallback } = useUploadAttachments();
   const updateData = useTaskDescriptionUpdate(task);
 
   const handleEscapeOrBlur = () => {
@@ -49,7 +48,7 @@ export function TaskUpdateForm({ task, contentApiRef, onEditorReady }: TaskUpdat
   };
 
   // Task linkage for uploads rides the description's attachmentId block props.
-  const baseFilePanel = useTaskFilePanelProps(task.projectId, tenantId, task.organizationId, attachmentsCreationCallback({ ...task }));
+  const baseFilePanel = useTaskFilePanelProps(task.projectId, tenantId, task.organizationId, createTaskUploadPersister(task));
 
   return (
     <div className={expandedWrapperStyle}>

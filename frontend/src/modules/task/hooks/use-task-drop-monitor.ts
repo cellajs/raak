@@ -114,8 +114,10 @@ export const useTaskDropMonitor = (tenantId: string, organizationId: string) => 
             }
 
             // Identify the drop target types (task or column) from Atlaskit's drop targets
-            const taskTargetData = dropTargets.find((el): el is DropTarget<TaskDraggableData> => isTaskData(el.data))?.data ?? null;
-            const columnTargetData = dropTargets.find((el): el is DropTarget<PanelDraggableData> => isPanelData(el.data))?.data ?? null;
+            const taskTargetData =
+              dropTargets.find((dropTarget): dropTarget is DropTarget<TaskDraggableData> => isTaskData(dropTarget.data))?.data ?? null;
+            const columnTargetData =
+              dropTargets.find((dropTarget): dropTarget is DropTarget<PanelDraggableData> => isPanelData(dropTarget.data))?.data ?? null;
 
             if (columnTargetData && !taskTargetData) {
               const {

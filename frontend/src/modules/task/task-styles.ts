@@ -58,26 +58,3 @@ export const statusSectionColors = {
   accepted: { fill: 'bg-green-50 dark:bg-green-950', text: 'text-green-700 dark:text-green-400', border: 'border-b border-b-green-500/10' },
   iced: { fill: 'bg-sky-50 dark:bg-sky-950', text: 'text-sky-700 dark:text-sky-400', border: 'border-t border-t-sky-500/10' },
 } as const;
-
-export const labelColors = [
-  '#A8E6CF',
-  '#D0F0FD',
-  '#D7CFF7',
-  '#FFE0B2',
-  '#FADADD',
-  '#FF6F61',
-  '#1DE9B6',
-  '#FFD54F',
-  '#40C4FF',
-  '#B388FF',
-  '#374785',
-  '#2E7D32',
-  '#D84315',
-  '#546E7A',
-  '#6A1B9A',
-  '#00B8D4',
-  '#5C6BC0',
-  '#B2DFDB',
-  '#CFD8DC',
-  '#4A90E2',
-];

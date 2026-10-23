@@ -29,7 +29,7 @@ export const getEdgeAndTargetOrder = (target: Task, source: Task, passedEdge: Ed
   // Filter tasks with the same status as the source item only if status has changed
   let targetOrder = target.displayOrder;
   if (isStatusChanged) {
-    const statusTasks = tasks.filter((el) => el.status === source.status && !isDraftTask(el));
+    const statusTasks = tasks.filter((task) => task.status === source.status && !isDraftTask(task));
     if (statusTasks.length) targetOrder = edge === 'top' ? statusTasks[0].displayOrder : statusTasks[statusTasks.length - 1].displayOrder;
     else targetOrder = defaultOrder;
   }

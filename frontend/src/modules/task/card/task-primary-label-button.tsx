@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { PrimaryLabelIcon } from '~/modules/label/primary-label-icon';
 import { useReadOnlyInert } from '~/modules/project/use-read-only';
-import { handleTaskDropdownClick } from '~/modules/task/helpers/task-dropdown';
+import { openTaskDropdown } from '~/modules/task/helpers/open-task-dropdown';
 import { useTaskFieldHandlers } from '~/modules/task/hooks/use-task-field-handlers';
 import type { Task } from '~/modules/task/types';
 import { Button } from '~/modules/ui/button';
@@ -20,7 +20,7 @@ export function TaskPrimaryLabelButton({ task, isSheet = false }: { task: Task; 
     <Button
       id={`primaryLabel-${task.id}${isSheet ? '-sheet' : ''}`}
       onClick={({ currentTarget }) =>
-        handleTaskDropdownClick({
+        openTaskDropdown({
           dropdownType: 'primaryLabel',
           value: task.primaryLabelId,
           projectId: task.projectId,

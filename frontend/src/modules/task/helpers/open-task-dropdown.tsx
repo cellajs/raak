@@ -50,7 +50,7 @@ const dropdownContent = (props: TaskDropdownProps) => {
   }
 };
 
-export function handleTaskDropdownClick(props: TaskDropdownProps) {
+export function openTaskDropdown(props: TaskDropdownProps) {
   const { dropdownType, triggerId, triggerRef } = props;
   const options: DropdownData = {
     id: dropdownType,
