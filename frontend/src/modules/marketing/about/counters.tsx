@@ -55,7 +55,7 @@ export function Counters() {
 
           return (
             <Card key={id} className="bg-background">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardHeader className="flex items-center justify-between pb-2">
                 <CardTitle className="font-medium text-sm sm:text-lg">{t(title)}</CardTitle>
                 <Icon className="size-4 text-muted-foreground sm:size-6" strokeWidth={1.5} />
               </CardHeader>

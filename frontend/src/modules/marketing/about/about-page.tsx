@@ -28,7 +28,7 @@ function AboutPage() {
     <>
       <MarketingNav />
 
-      <main className="container max-w-none px-0">
+      <main>
         {/* Hero landing */}
         <Hero key={'welcome'} title="about:title_1" text={isMobile ? undefined : 'about:text_1'}>
           {joinedToWaitlist ? (
@@ -48,7 +48,7 @@ function AboutPage() {
 
           <Button type="button" variant="ghost" size="lg" onClick={() => scrollToSectionById('product')} className="mt-8">
             <span>{t('about:why')}</span>
-            <ArrowDownIcon className="animate-bounce [animation-iteration-count:5] motion-reduce:animate-none" />
+            <ArrowDownIcon className="repeat-5 animate-bounce motion-reduce:animate-none" />
           </Button>
         </Hero>
 

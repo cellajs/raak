@@ -8,7 +8,7 @@ export function FAQ() {
   const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-3xl">
-      <Accordion className="w-full">
+      <Accordion>
         {faqsData.map((faq, index) => {
           const question = `about:faq.question_${index + 1}` as TKey;
           const answer = `about:faq.answer_${index + 1}` as TKey;
@@ -16,7 +16,7 @@ export function FAQ() {
 
           return (
             <AccordionItem key={faq.id} value={faq.id}>
-              <AccordionTrigger className="px-3 text-left text-xl">{t(question)}</AccordionTrigger>
+              <AccordionTrigger className="px-3 text-xl">{t(question)}</AccordionTrigger>
               <AccordionContent className="px-3 pb-8 text-lg">
                 <Trans
                   t={t}

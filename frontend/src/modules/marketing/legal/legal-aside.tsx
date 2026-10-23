@@ -98,7 +98,7 @@ export function LegalAside({ subjects, currentSubject, className }: LegalAsidePr
               </CollapsibleTrigger>
               {/* keepMounted preserves the data-spy-active marks the scroll spy sets on rows outside React */}
               <CollapsibleContent keepMounted className={collapsiblePanelClass}>
-                <div className="relative flex flex-col px-0 py-1">
+                <div className="flex flex-col py-1">
                   {subjectSections.map(({ id: sectionId, label: sectionLabel }) => (
                     <SpyNavItem
                       key={sectionId}
