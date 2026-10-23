@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { Spinner } from '~/modules/common/spinner';
 import { taskDescriptionGutterClass } from '~/modules/task/task-styles';

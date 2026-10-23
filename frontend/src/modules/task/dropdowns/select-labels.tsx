@@ -7,7 +7,7 @@ import { zLabel } from 'sdk/zod.gen';
 import { labelSlug } from 'shared/config/labels-config';
 import { generateId } from 'shared/utils/entity-id';
 import { useBreakpointBelow } from '~/hooks/use-breakpoints';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { deduplicateLabels } from '~/modules/label/group-labels';
 import { useLabelRecencyStore } from '~/modules/label/label-recency-store';

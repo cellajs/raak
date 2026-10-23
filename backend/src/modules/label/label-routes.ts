@@ -2,7 +2,7 @@ import { createXRoutes, json, jsonBody, xRoute } from '#/core/x-routes';
 import { actorGuard, orgGuard, tenantGuard } from '#/middlewares/guard';
 import { productCache } from '#/middlewares/product-cache';
 import { bulkPointsLimiter, singlePointsLimiter, syncReadLimiter } from '#/middlewares/rate-limiter/limiters';
-import { mockBatchLabelsResponse, mockLabelResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
+import { mockBatchLabelsResponse, mockPaginatedLabelsResponse } from '#/modules/label/label-mocks';
 import {
   labelCreateManyStxBodySchema,
   labelCreateResponseSchema,
@@ -17,6 +17,7 @@ const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
     method: 'post',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'label:write',
     xRateLimiter: [bulkPointsLimiter],
     summary: 'Create labels',
     description: 'Creates one or more labels within a project.',
@@ -30,6 +31,7 @@ const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
     method: 'get',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'label:read',
     // Sync-driven read backpressure on the delta path (template pattern for app product lists)
     xRateLimiter: [syncReadLimiter],
     summary: 'Get list of labels',
@@ -41,26 +43,29 @@ const labelsRoutes = createXRoutes(['labels', 'app', 'product'], {
     method: 'get',
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'label:read',
     xCache: [productCache('label')],
     summary: 'Get label',
     description: 'Retrieves a label by its ID.',
     request: { params: idInTenantOrgParamSchema },
-    responses: { 200: json('Label', labelSchema, mockLabelResponse()) },
+    responses: { 200: json('Label', labelSchema) },
   }),
   updateLabel: xRoute({
     method: 'put',
     path: '/{id}',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'label:write',
     xRateLimiter: [singlePointsLimiter],
     summary: 'Update label',
     description: 'Updates a label by ID.',
     request: { params: idInTenantOrgParamSchema, body: jsonBody(labelUpdateStxBodySchema) },
-    responses: { 200: json('Label updated', labelSchema, mockLabelResponse()) },
+    responses: { 200: json('Label updated', labelSchema) },
   }),
   deleteLabels: xRoute({
     method: 'delete',
     path: '/',
     xGuard: [actorGuard, tenantGuard, orgGuard],
+    xScope: 'label:write',
     xRateLimiter: [bulkPointsLimiter],
     summary: 'Delete labels',
     description: 'Deletes one or more labels by ID.',

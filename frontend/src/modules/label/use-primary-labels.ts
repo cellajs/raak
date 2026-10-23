@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Label } from 'sdk';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { labelsCanonicalOptions } from '~/modules/label/query';
 
 const primaryLabelsInOrder = (labels: Label[]): Label[] =>

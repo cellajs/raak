@@ -52,7 +52,6 @@ export function WorkspaceActionButtons() {
   ];
 
   const openMobileMenu = (currentTarget: HTMLButtonElement) => {
-    const isMobile = window.innerWidth < 640;
     const triggerRef = { current: currentTarget };
     const select = (action: () => void) => () => {
       dropdowner.getState().remove();
@@ -62,16 +61,16 @@ export function WorkspaceActionButtons() {
     dropdowner.getState().create(
       <>
         {actions.map(({ key, icon, label, onClick }) => (
-          <DropdownActionItem key={key} isMobile={isMobile} icon={icon} onSelect={select(() => onClick(triggerRef))}>
+          <DropdownActionItem key={key} icon={icon} onSelect={select(() => onClick(triggerRef))}>
             {label}
           </DropdownActionItem>
         ))}
         {project && projectMembership && (
           <>
-            <DropdownActionItem isMobile={isMobile} icon={UsersIcon} onSelect={select(() => openProjectMembersSheet(project, triggerRef))}>
+            <DropdownActionItem icon={UsersIcon} onSelect={select(() => openProjectMembersSheet(project, triggerRef))}>
               {t('c:project_members')}
             </DropdownActionItem>
-            <DropdownActionItem isMobile={isMobile} icon={SettingsIcon} onSelect={select(() => openProjectSettingsSheet(project, triggerRef))}>
+            <DropdownActionItem icon={SettingsIcon} onSelect={select(() => openProjectSettingsSheet(project, triggerRef))}>
               {t('c:resource_settings', { resource: t('c:project') })}
             </DropdownActionItem>
           </>

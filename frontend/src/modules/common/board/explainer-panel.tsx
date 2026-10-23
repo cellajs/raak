@@ -2,7 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { InfoIcon } from 'lucide-react';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { useAlertStore } from '~/modules/common/alerter/alert-store';
 import { BlockNoteFullHtml } from '~/modules/common/blocknote/lazy-full-html';
 import { LocalPanelShell } from '~/modules/common/board/local-panel-shell';

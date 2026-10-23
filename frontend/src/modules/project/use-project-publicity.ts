@@ -1,6 +1,6 @@
 import { useMatch } from '@tanstack/react-router';
 import type { Project } from 'sdk';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { findProjectByIdOrSlug, projectQueryKeys } from '~/modules/project/query';
 import { useIsWorkspaceRoute } from '~/modules/workspace/use-workspace-context';
 import { queryClient } from '~/query/query-client';

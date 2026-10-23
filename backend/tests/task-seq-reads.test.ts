@@ -101,13 +101,11 @@ describe('Task seq reads', async () => {
   });
 
   it('B3: limit above 1000 is rejected, not clamped', async () => {
-    // Validation failures are malformed requests: 400 via the app's defaultHook, never 403. The SDK's own request
-    // validation would refuse the limit before sending, so it is skipped to reach the server.
+    // Validation failures are malformed requests: 400 via the app's defaultHook, never 403.
     const result = await call(getTasks, {
       path: { organizationId: tenant.organization.id, tenantId: tenant.tenantId },
       query: { projectId, limit: 1001 },
       headers: { ...defaultHeaders, Cookie: tenant.sessionCookie },
-      requestValidator: undefined,
     });
     expect(result.response.status).toBe(400);
   });

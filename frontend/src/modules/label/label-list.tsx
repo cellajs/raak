@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { Label } from 'sdk';
 import { parseSearchQuery } from 'shared/utils/parse-search-query';
 import { matchesTerms } from 'shared/utils/text-match';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { ListFocusScope } from '~/modules/board-focus/list-focus-scope';
 import { firstItemInView, registerPanelNav } from '~/modules/board-focus/panel-nav-registry';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
@@ -111,7 +111,7 @@ function LabelListView({ labels, usage, isLoading, windowScroll, navPanelId, ...
 
   if (isLoading) return <Spinner className="my-8" />;
   if (!rows.length) {
-    return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleProps={{ resource: t('c:label_other').toLowerCase() }} />;
+    return <ContentPlaceholder icon={BirdIcon} title="c:no_resource_yet" titleOptions={{ resource: t('c:label_other').toLowerCase() }} />;
   }
 
   const list = (

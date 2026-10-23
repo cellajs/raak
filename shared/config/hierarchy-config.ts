@@ -9,14 +9,16 @@ export const roles = createRoleRegistry(['admin', 'member', 'guest'] as const);
  * the only parentless entity); parents before children, and order sets the ancestor chain. Products
  * may add `relatedChannels` (non-ancestor context refs, nullable id columns). Public readability is
  * a permission concern, not declared here. Channels may add `elevated` (roles whose product grants
- * cover the whole subtree, compiled into `hierarchy.elevatedGrants`); channels below the organization
- * may add `organizationRoles` (the complete escalation map for auto-created organization membership rows).
+ * cover the whole subtree, compiled into `hierarchy.elevatedGrants`) and `drafts` (the channel can
+ * start unpublished; `prepareRoles` are invited at once, the rest when it is published); channels below
+ * the organization may add `organizationRoles` (the complete escalation map for auto-created
+ * organization membership rows).
  *
  * @see cella/PERMISSIONS.md
  */
 export const hierarchy = createEntityHierarchy(roles)
   .user()
-  .organization({ roles: ['admin', 'member'], elevated: ['admin', 'member'] })
+  .organization({ roles: ['admin', 'member'], elevated: ['admin', 'member'], drafts: { prepareRoles: ['admin'] } })
   // Invites to a workspace or project auto-create the organization membership as a plain member.
   .channel('workspace', { parent: 'organization', roles: roles.all, organizationRoles: { admin: 'member', member: 'member', guest: 'member' } })
   .channel('project', { parent: 'organization', roles: roles.all, organizationRoles: { admin: 'member', member: 'member', guest: 'member' } })

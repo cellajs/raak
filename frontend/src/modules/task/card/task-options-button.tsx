@@ -30,7 +30,6 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
 
   const openOptionsDropdown = (currentTarget: HTMLButtonElement) => {
     const { create } = dropdowner.getState();
-    const isMobile = window.innerWidth < 640;
     // The button carries no `id`: a caller-supplied `id` on a Base UI tooltip trigger makes the tooltip flash and close.
     const triggerRef = { current: currentTarget };
 
@@ -52,7 +51,6 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
       <>
         {!isSheet && (
           <DropdownActionItem
-            isMobile={isMobile}
             icon={Maximize2Icon}
             onSelect={() => {
               setCurrentItem(null);
@@ -64,7 +62,6 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
           </DropdownActionItem>
         )}
         <DropdownActionItem
-          isMobile={isMobile}
           icon={CopyIcon}
           closeOnSelect={false}
           onSelect={async () => {
@@ -74,7 +71,6 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
           {t('c:copy_content')}
         </DropdownActionItem>
         <DropdownActionItem
-          isMobile={isMobile}
           icon={LinkIcon}
           closeOnSelect={false}
           onSelect={async () => {
@@ -83,7 +79,7 @@ export function TaskOptionsButton({ task, isSheet = false }: TaskOptionsButtonPr
         >
           {t('c:copy_as_link')}
         </DropdownActionItem>
-        <DropdownActionItem isMobile={isMobile} icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
+        <DropdownActionItem icon={TrashIcon} variant="destructive" onSelect={handleDeleteClick} closeOnSelect={false}>
           {t('c:delete')}
         </DropdownActionItem>
       </>,

@@ -24,7 +24,7 @@ export function WorkspacesGrid() {
         isFetching={isFetching}
         error={error}
         hasNextPage={hasNextPage}
-        fetchNextPage={fetchMore}
+        fetchMore={fetchMore}
         isFiltered={!!search.q}
       />
     </div>

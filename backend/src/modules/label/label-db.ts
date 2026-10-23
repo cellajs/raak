@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, doublePrecision, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, index, snakeCase, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import type { LabelMode } from 'shared/config/labels-config';
 import { tenantSelectPolicy, writeThroughPolicies } from '#/db/rls-helpers';
 import { channelRelationColumns, channelRelationIndexes } from '#/db/utils/channel-relation-columns';
@@ -28,6 +28,7 @@ export const labelsTable = snakeCase.table(
   },
   (table) => [
     ...productIndexes('labels', table),
+    index('labels_organization_id_name_index').on(table.organizationId, table.name, table.id),
     // One live primary label per slug within a project; secondary/epic labels are exempt.
     uniqueIndex('labels_project_primary_slug_unique')
       .on(table.projectId, table.slug)

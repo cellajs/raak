@@ -31,7 +31,7 @@ export function MenuSheetSectionButton({
   onToggleEditing,
 }: MenuSheetSectionButtonProps) {
   const { t } = useTranslation();
-  const toggleSection = useNavigationStore((state) => state.toggleSection);
+  const setSectionOpen = useNavigationStore((state) => state.setSectionOpen);
 
   // Cumulative over the section's non-archived, non-muted items.
   const sectionUnseenCount = useUnseenCount(channelIds);
@@ -40,7 +40,7 @@ export function MenuSheetSectionButton({
 
   return (
     <div className="sticky top-0 z-10 flex items-center bg-card py-2">
-      <Button onClick={() => toggleSection(options.entityType)} className="min-w-0 flex-1 justify-between" variant="ghost">
+      <Button onClick={() => setSectionOpen(options.entityType, !isSectionVisible)} className="min-w-0 flex-1 justify-between" variant="ghost">
         <div className="flex items-center">
           <span className="mr-1 flex items-center">{t(options.label)}</span>
           {/* Unseen count, or the item count while the section is collapsed. */}
@@ -67,7 +67,7 @@ export function MenuSheetSectionButton({
         {isSectionVisible && !!items.length && (
           <motion.div key={`settings-${options.entityType}`} {...widenMotion} className="shrink-0 max-sm:hidden">
             <TooltipButton toolTipContent={t('c:manage_content')} side="bottom" sideOffset={10}>
-              <Button className="shadow-none" variant={isEditing ? 'plain' : 'ghost'} size="icon" onClick={onToggleEditing}>
+              <Button variant={isEditing ? 'plain' : 'ghost'} size="icon" onClick={onToggleEditing}>
                 <Settings2Icon className="size-5" />
               </Button>
             </TooltipButton>

@@ -1,5 +1,5 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { ChevronsUpDownIcon, SearchIcon, UserIcon, UsersRoundIcon, XIcon } from 'lucide-react';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { ClockIcon, SearchIcon, UserIcon, UsersRoundIcon, XIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,8 @@ import { useDebounce } from '~/hooks/use-debounce';
 import { ComboboxSearchInput } from '~/modules/common/combobox-search-input';
 import { ContentPlaceholder } from '~/modules/common/content-placeholder';
 import { EntityAvatar } from '~/modules/common/entity-avatar';
-import { membersListQueryOptions } from '~/modules/memberships/query';
+import { InputTriggerChevron } from '~/modules/common/form-fields/input-trigger-button';
+import { inviteCheckQueryOptions } from '~/modules/memberships/query';
 import { Badge } from '~/modules/ui/badge';
 import {
   Combobox,
@@ -22,6 +23,7 @@ import {
   ComboboxPrimitive,
 } from '~/modules/ui/combobox';
 import { usersListQueryOptions } from '~/modules/user/query';
+import { inviteNote } from '~/modules/user/use-invite-check';
 
 const contentVariants = {
   hidden: { opacity: 0, y: -5, scale: 0.98 },
@@ -49,20 +51,11 @@ export function UserCombobox({ value, onChange, channel }: UserComboboxProps) {
   const { data, isFetching } = useInfiniteQuery(usersListQueryOptions({ q: debouncedSearchQuery }));
 
   const items = data?.pages.flatMap((page) => page.items) ?? [];
-  const userIds = items.map((user) => user.id).join(',');
 
-  const { data: membersData } = useInfiniteQuery({
-    ...membersListQueryOptions({
-      entityId: channel.id,
-      entityType: channel.entityType,
-      tenantId: channel.tenantId,
-      organizationId: channel.organizationId || channel.id,
-      userIds,
-    }),
-    enabled: items.length > 0,
-  });
-
-  const existingMemberIds = new Set(membersData?.pages.flatMap((page) => page.items.map((member) => member.id)) ?? []);
+  // The same check as typed addresses: a member is left out, one invited before shows when
+  const resultEmails = items.map((user) => user.email.toLowerCase()).sort();
+  const { data: outcomes } = useQuery({ ...inviteCheckQueryOptions(channel, resultEmails), placeholderData: keepPreviousData });
+  const outcomeByEmail = new Map((outcomes ?? []).map((outcome) => [outcome.email, outcome]));
 
   return (
     <Combobox<string, true>
@@ -113,7 +106,7 @@ export function UserCombobox({ value, onChange, channel }: UserComboboxProps) {
         ) : (
           <span className="ml-1 text-sm">{t('c:search_users')}</span>
         )}
-        <ChevronsUpDownIcon className="absolute right-0 mx-2 opacity-50" />
+        <InputTriggerChevron className="absolute right-0 mx-2" />
       </ComboboxPrimitive.Trigger>
 
       <ComboboxContent>
@@ -124,9 +117,9 @@ export function UserCombobox({ value, onChange, channel }: UserComboboxProps) {
               <motion.div key="empty-state" initial="hidden" animate="visible" exit="exit" variants={contentVariants}>
                 <ComboboxEmpty>
                   {debouncedSearchQuery.length ? (
-                    <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleProps={{ resource: t('c:user_other').toLowerCase() }} />
+                    <ContentPlaceholder icon={SearchIcon} title="c:no_resource_found" titleOptions={{ resource: t('c:user_other').toLowerCase() }} />
                   ) : (
-                    <ContentPlaceholder icon={UsersRoundIcon} title="c:invite_members_search.text" titleProps={{ appName: appConfig.name }} />
+                    <ContentPlaceholder icon={UsersRoundIcon} title="c:invite_members_search.text" titleOptions={{ appName: appConfig.name }} />
                   )}
                 </ComboboxEmpty>
               </motion.div>
@@ -134,7 +127,9 @@ export function UserCombobox({ value, onChange, channel }: UserComboboxProps) {
               items.length > 0 && (
                 <motion.div key="results" initial="hidden" animate="visible" exit="exit" variants={contentVariants}>
                   {items.map(({ id, name, email, entityType, thumbnailUrl }) => {
-                    const alreadyMember = existingMemberIds.has(id);
+                    const outcome = outcomeByEmail.get(email.toLowerCase());
+                    const alreadyMember = outcome?.outcome === 'member';
+                    const invitedNote = outcome?.outcome === 'remind' ? inviteNote(outcome, t) : undefined;
                     return (
                       <ComboboxItem key={id} value={email} disabled={alreadyMember} className="group/user-item justify-between">
                         <div className="flex items-center gap-2">
@@ -149,6 +144,12 @@ export function UserCombobox({ value, onChange, channel }: UserComboboxProps) {
                             <UserIcon />
                             <span className="max-sm:hidden">{t('c:already_member')}</span>
                           </Badge>
+                          {invitedNote && (
+                            <Badge size="sm" variant="plain">
+                              <ClockIcon />
+                              <span className="max-sm:hidden">{invitedNote}</span>
+                            </Badge>
+                          )}
                           <span className="group-data-disabled/user-item:hidden group-data-selected/user-item:hidden max-sm:hidden">{email}</span>
                           <ComboboxItemIndicator />
                         </div>

@@ -15,7 +15,7 @@ import { zCreateLabelsBody, zLabel } from 'sdk/zod.gen';
 import { appConfig } from 'shared';
 import { labelName } from 'shared/config/labels-config';
 import { isRecord } from 'shared/utils/as-record';
-import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
+import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-owned-fields';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { insertEntitiesIntoHome } from '~/query/basic/apply-entity-to-lists';
 import { cacheRemove, cacheUpdate, removeDetailQueriesById } from '~/query/basic/cache-mutations';
@@ -32,7 +32,7 @@ import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
-import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
+import { mergeServerResponse, writeEntityToCache } from '~/query/offline/update-success-utils';
 import { invalidateEmbeddingHosts, propagateEmbeddedProduct } from '~/query/realtime/propagation';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import { createResourceError } from '~/utils/resource-error';
@@ -187,7 +187,7 @@ const labelUpdateOptions = (
     const cached = findLabelInCache(updatedLabel.id);
     const mutatedKeys = variables.ops ? Object.keys(variables.ops) : [];
     const merged = mergeServerResponse({ cached, serverEntity: updatedLabel, mutatedKeys, derivedKeys: { description: ['keywords'] } });
-    syncEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
+    writeEntityToCache({ entity: merged, listKey: orgKey, detailKey: keys.detail.byId(updatedLabel.id), queryClient });
   },
   onSettled: (_data, error, variables) => {
     if (error) invalidateOrgLists(queryClient, variables.organizationId);

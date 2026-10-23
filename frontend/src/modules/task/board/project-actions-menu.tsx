@@ -2,7 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowRightIcon, EllipsisVerticalIcon, SettingsIcon, SquareSplitHorizontalIcon, UsersIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useOrganizationLayoutContext } from '~/hooks/use-route-context';
+import { useOrganizationLayoutContext } from '~/hooks/use-organization-layout-context';
 import { useBoardStore } from '~/modules/common/board/board-store';
 import { DropdownActionItem } from '~/modules/common/dropdowner/dropdown-action-item';
 import { dropdowner } from '~/modules/common/dropdowner/use-dropdowner';
@@ -52,7 +52,6 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
       <>
         {isInWorkspace && (
           <DropdownActionItem
-            isMobile={isMobile}
             icon={ArrowRightIcon}
             onSelect={closeThen(() =>
               navigate({
@@ -66,7 +65,6 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
         )}
         {!isInWorkspace && projectWorkspace && (
           <DropdownActionItem
-            isMobile={isMobile}
             icon={ArrowRightIcon}
             onSelect={closeThen(() =>
               navigate({
@@ -81,17 +79,16 @@ export function ProjectActionsMenu({ project, className }: ProjectActionsMenuPro
         )}
         {projectMembership && (
           <>
-            <DropdownActionItem isMobile={isMobile} icon={UsersIcon} onSelect={closeThen(() => openProjectMembersSheet(project, triggerRef))}>
+            <DropdownActionItem icon={UsersIcon} onSelect={closeThen(() => openProjectMembersSheet(project, triggerRef))}>
               {t('c:project_members')}
             </DropdownActionItem>
-            <DropdownActionItem isMobile={isMobile} icon={SettingsIcon} onSelect={closeThen(() => openProjectSettingsSheet(project, triggerRef))}>
+            <DropdownActionItem icon={SettingsIcon} onSelect={closeThen(() => openProjectSettingsSheet(project, triggerRef))}>
               {t('c:resource_settings', { resource: t('c:project') })}
             </DropdownActionItem>
           </>
         )}
         {!isMobile && (
           <DropdownActionItem
-            isMobile={isMobile}
             icon={SquareSplitHorizontalIcon}
             onSelect={closeThen(() =>
               viewSections

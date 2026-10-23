@@ -8,7 +8,7 @@ import { appConfig } from 'shared';
 import { isRecord } from 'shared/utils/as-record';
 import { deriveDocument } from 'shared/utils/derive-description-core';
 import { registerDescriptionDerivation } from '~/modules/common/blocknote/description-derivation';
-import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-editor';
+import { registerYjsOwnedFields } from '~/modules/common/blocknote/yjs-owned-fields';
 import { toaster } from '~/modules/common/toaster/toaster';
 import { findLabelInCache } from '~/modules/label/query';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
@@ -37,7 +37,7 @@ import { prepareProductDelete } from '~/query/offline/prepare-delete';
 import { buildPreparedHandlers, type PreparedVars } from '~/query/offline/prepared-mutation';
 import { squashIntoPendingCreate, squashPendingMutation } from '~/query/offline/squash-utils';
 import { createStxForCreate, createStxForDelete, createStxForUpdate } from '~/query/offline/stx-utils';
-import { mergeServerResponse, syncEntityToCache } from '~/query/offline/update-success-utils';
+import { mergeServerResponse, writeEntityToCache } from '~/query/offline/update-success-utils';
 import { resolveQueryOrgTenantIds } from '~/query/realtime/sync-priority';
 import type { QueryData } from '~/query/types';
 import { createResourceError } from '~/utils/resource-error';
@@ -388,7 +388,7 @@ const taskUpdateOptions = (
       const freshPrimary = findLabelInCache(variables.ops.primaryLabelId);
       if (freshPrimary) merged.primaryLabel = freshPrimary;
     }
-    syncEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
+    writeEntityToCache({ entity: merged, listKey: orgKey, detailKey, queryClient });
   },
   onSettled: (_data, error, variables) => {
     if (error) invalidateOrgLists(queryClient, variables.organizationId);

@@ -80,7 +80,7 @@ const ON_DEMAND_APP =
  * tab channel and storage warning (teardown, eviction, the sign-out list), and the parked-edits check the app layout
  * mounts. Each loads Yjs or BlockNote only on demand, so the boot path stays free of the editor chunk.
  */
-const YJS_REGISTRY = /[\\/]blocknote[\\/](yjs-editor|yjs-store|yjs-tab-channel|storage-warning|parked-notices-on-boot)\./;
+const YJS_REGISTRY = /[\\/]blocknote[\\/](yjs-owned-fields|yjs-store|yjs-tab-channel|storage-warning|parked-notices-on-boot)\./;
 
 /**
  * The docs modules boot-time code reads: the module registration, the query registry and the search params. Every
@@ -417,7 +417,6 @@ const viteConfig = {
       description: appConfig.description,
       keywords: appConfig.keywords,
       author: appConfig.company.name,
-      color: appConfig.themeColor,
       url: appConfig.frontendUrl,
       apiUrl: appConfig.backendUrl,
     }),
@@ -476,7 +475,8 @@ if (appConfig.has.pwa && !isStorybook) {
           start_url: '/',
           display: 'standalone',
           background_color: '#ffffff',
-          theme_color: '#222222',
+          // The light background, as Themer gives the theme-color meta: a manifest holds one color for both modes.
+          theme_color: '#ffffff',
           lang: 'en',
           scope: '/',
           icons: [
@@ -498,7 +498,8 @@ if (appConfig.has.pwa && !isStorybook) {
       // `replay-*` is Maple's session replay with rrweb, loaded only when replay is on.
       // `gleap-*` (support chat) and `maps-*` (map tiles) need the network to do anything.
       // The `grammars-*` chunks are precached, so code blocks and the docs code view highlight offline.
-      globIgnores: ['**/replay-*.js', '**/gleap-*.js', '**/maps-*.{js,css}', '**/static/common/flags/**/*'],
+      // Inter's Latin Extended file loads only for a page that uses its glyphs, so installs skip it.
+      globIgnores: ['**/replay-*.js', '**/gleap-*.js', '**/maps-*.{js,css}', '**/static/common/flags/**/*', '**/static/ui/inter-latin-ext-*'],
       maximumFileSizeToCacheInBytes: 100 * 1024 * 1024, // 100MB
     }),
   );

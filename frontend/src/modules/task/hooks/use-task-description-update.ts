@@ -1,4 +1,4 @@
-import { patchCollaborativeDescription, persistStandaloneDescription } from '~/modules/common/blocknote/use-description-update';
+import { patchCollaborativeDescription, persistStandaloneDescription } from '~/modules/common/blocknote/description-updater';
 import { triggerTaskGlow } from '~/modules/task/helpers/task-glow';
 import { useTaskUpdateMutation } from '~/modules/task/query';
 import type { Task } from '~/modules/task/types';

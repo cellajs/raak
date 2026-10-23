@@ -31,7 +31,7 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
 
   useTaskDropMonitor(project.tenantId, project.organizationId);
 
-  const coverUpdateCallback = (bannerUrl: string) => {
+  const onCoverUpdate = (bannerUrl: string) => {
     updateProject.mutate(
       { path: { id: project.id, organizationId: project.organizationId, tenantId: project.tenantId }, body: { bannerUrl } },
       { onSuccess: () => toaster.success(t('c:success.upload_cover')) },
@@ -45,7 +45,7 @@ export function ProjectPage({ project, organization, children }: ProjectPageProp
         canUpdate={canUpdate}
         organizationId={project.organizationId}
         parents={[organization]}
-        coverUpdateCallback={coverUpdateCallback}
+        onCoverUpdate={onCoverUpdate}
         panel={
           project.membership && (
             <Suspense>
